@@ -2,9 +2,15 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 /* $Id$ */
 
+#define _DATA_COLLECTION_
+
 #include <cisstCommon.h>
 #include <cisstOSAbstraction.h>
 #include <cisstMultiTask.h>
+
+#ifdef _DATA_COLLECTION_
+#include <cisstMultiTask/mtsCollector.h>
+#endif
 
 #include "sineTask.h"
 #include "displayTask.h"
@@ -37,10 +43,20 @@ int main(void)
         new displayTask("DISP", PeriodDisplay);
     displayTaskObject->Configure();
 
+	// create a data collector
+#ifdef	_DATA_COLLECTION_
+	mtsCollector * collector1 = new mtsCollector("collect_sine", 500 * cmn_ms );
+	//mtsCollector * collector2 = new mtsCollector("collect_cos", 1 * cmn_s );
+#endif
+
     // add the tasks to the task manager
     taskManager->AddTask(sineTaskObject);
-
     taskManager->AddTask(displayTaskObject);
+#ifdef	_DATA_COLLECTION_
+	taskManager->AddTask(collector1);
+	//taskManager->AddTask(collector2);
+#endif
+
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
 
@@ -56,7 +72,7 @@ int main(void)
 
     // wait until the close button of the UI is pressed
     while (1) {
-        
+		osaSleep( 10 * cmn_ms );	// to avoid CPU consumption for doing nothing
         if (displayTaskObject->GetExitFlag()) {
             break;
         }
