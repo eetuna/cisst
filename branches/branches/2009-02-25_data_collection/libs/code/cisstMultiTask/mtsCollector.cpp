@@ -54,9 +54,9 @@ void mtsCollector::Cleanup(void)
 //-------------------------------------------------------
 //	Signal Registration
 //-------------------------------------------------------
-bool mtsCollector::AddSignal(const string & taskName, 
-							 const string & signalName, 
-							 const string & format)
+bool mtsCollector::AddSignal(const std::string & taskName, 
+							 const std::string & signalName, 
+							 const std::string & format)
 {
 	return true;
 }
