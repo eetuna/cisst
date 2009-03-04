@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestSuite.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/RepeatedTest.h>
+
 #include <cppunit/ui/text/TestRunner.h>
 
 #include <string>
@@ -163,7 +164,13 @@ int main(int argc, const char *argv[])
         return 0;
     }
 
-    if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS) {
+	if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
+        ListAllTestsInTestSuite(allTests);
+		std::cout << "----------------------------------------------" << std::endl;
+    }
+
+    if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS ||
+		testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
         CppUnit::RepeatedTest * repeatedTest =
             new CppUnit::RepeatedTest(allTests, testParameters.GetNumIterations());
         CppUnit::TextUi::TestRunner runner;
