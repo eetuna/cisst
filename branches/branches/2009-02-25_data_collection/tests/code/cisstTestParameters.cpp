@@ -52,7 +52,7 @@ void cisstTestParameters::ParseCmdLine(int argc, const char * argv[])
             continue;
         }
 
-		if (strcmp(argv[1], "--listandrun") == 0 || strcmp(argv[1], "-z") == 0) {
+		if (strcmp(argv[1], "--listandrun") == 0 || strcmp(argv[1], "-R") == 0) {
             TestRunMode = RUN_AND_LIST_TESTS;
             ++argv;
             --argc;
