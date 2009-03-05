@@ -322,3 +322,14 @@ void mtsStateTable::CSVWrite(std::ostream& out, unsigned int *listColumn, unsign
     }
 }
 
+#ifdef _MTS_COLLECTOR_
+bool mtsStateTable::FindStateVectorDataName(const std::string & dataName) const
+{
+	for (unsigned int i = 0; i < StateVectorDataNames.size(); i++) {
+        if (StateVectorDataNames[i] == dataName) {
+            return true;
+        }
+    }
+    return false;
+}
+#endif

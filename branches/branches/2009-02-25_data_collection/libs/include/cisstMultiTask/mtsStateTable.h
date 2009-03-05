@@ -40,6 +40,9 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
+// Enable support functions for mtsCollector class
+#define	_MTS_COLLECTOR_
+
 // Forward declaration
 class osaTimeServer;
 
@@ -144,6 +147,12 @@ class CISST_EXPORT mtsStateTable {
         return (Ticks[timeIndex.Index()] == timeIndex.Ticks());
     }
     
+	/*! Check if the signal has been registered. */
+#ifdef _MTS_COLLECTOR_	
+	bool FindStateVectorDataName(const std::string & dataName) const;
+#endif
+	
+
 	/*! Read specified data to be used by a reader */
 	bool ReadFromReader(mtsStateDataId id, const mtsStateIndex &timeIndex,
                         cmnGenericObject &obj) const;
