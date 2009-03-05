@@ -47,6 +47,8 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
+// Enable support functions for mtsCollector class
+#define	_MTS_COLLECTOR_
 
 /*!
   \ingroup cisstMultiTask
@@ -364,6 +366,11 @@ public:
 
 	/*! Reset overran period flag. */
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
+
+	/*! Check if the signal has been registered. */
+#ifdef _MTS_COLLECTOR_		
+	bool FindStateVectorDataName(const std::string & dataName) const;
+#endif
 
 };
 
