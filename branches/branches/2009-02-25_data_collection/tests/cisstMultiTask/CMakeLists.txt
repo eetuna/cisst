@@ -18,11 +18,17 @@
 # all source files
 SET(SOURCE_FILES
     mtsCollectorTest.cpp
+	mtsStateTableTest.cpp
+	mtsTaskManagerTest.cpp
+	mtsTaskTest.cpp
     )
 
 # all header files
 SET(HEADER_FILES
     mtsCollectorTest.h
+	mtsStateTableTest.h
+	mtsTaskManagerTest.h
+	mtsTaskTest.h
     )
 
 # Add executable for C++ tests
