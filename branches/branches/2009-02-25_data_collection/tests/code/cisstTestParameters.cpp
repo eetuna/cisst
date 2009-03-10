@@ -108,7 +108,7 @@ int cisstTestParameters::PrintHelp(const char* programName) {
         << "-l, --list               print the available test instances" << std::endl
         << "-d, --dart               print CMake/ctest commands in DartTestfile.txt format" << std::endl 
         << "-r, --run                run the available test instances" << std::endl
-		<< "-z, --listandrun         print and run the available test instances" << std::endl
+		<< "-R, --listandrun         print and run the available test instances" << std::endl
         << "-t, --testname [name]    add the specified test case or suite to the list" << std::endl
         << "-o, --numinstances [n]   specify the number of instances to create of each test" << std::endl
         << "-i, --numiterations [n]  specify the number of iterations for each test instance" << std::endl;

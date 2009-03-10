@@ -167,7 +167,7 @@ int main(int argc, const char *argv[])
 	if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
         int testCount = ListAllTestsInTestSuite(allTests);
 		std::cout << "-------------------------------- Total " << testCount <<
-			"test(s)" << std::endl;
+			" test(s)" << std::endl;
     }
 
     if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS ||
