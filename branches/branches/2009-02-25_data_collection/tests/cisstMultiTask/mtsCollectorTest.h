@@ -2,13 +2,13 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCollectorTest.h 2009-03-02 mjung5 $
-  
-  Author(s):  Min Yang Jung
-  Created on: 2009-03-02
-  
-  (C) Copyright 2008-2009 Johns Hopkins University (JHU), All Rights
-  Reserved.
+$Id: mtsCollectorTest.h 2009-03-02 mjung5 $
+
+Author(s):  Min Yang Jung
+Created on: 2009-03-02
+
+(C) Copyright 2008-2009 Johns Hopkins University (JHU), All Rights
+Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -34,19 +34,19 @@ class mtsCollectorTestTask : public mtsTaskPeriodic {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
 protected:    
-	mtsStateData<cmnDouble> TestData;
+    mtsStateData<cmnDouble> TestData;
 
 public:
-	mtsCollectorTestTask(const std::string & collectorName, double period);
-	virtual ~mtsCollectorTestTask() {}
+    mtsCollectorTestTask(const std::string & collectorName, double period);
+    virtual ~mtsCollectorTestTask() {}
 
-	// implementation of four methods that are pure virtual in mtsTask
+    // implementation of four methods that are pure virtual in mtsTask
     void Configure(const std::string) {}
-	void Startup(void)	{}
-	void Run(void)		{}
+    void Startup(void)	{}
+    void Run(void)		{}
     void Cleanup(void)	{}
 
-	void AddDataToStateTable(const std::string & dataName);
+    void AddDataToStateTable(const std::string & dataName);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorTestTask);
@@ -55,47 +55,47 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorTestTask);
 class mtsCollectorTest: public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(mtsCollectorTest);
-	{		
-		// public variables and methods
-	    CPPUNIT_TEST(TestGetCollectorCount);
+    {		
+        // public variables and methods
+        CPPUNIT_TEST(TestGetCollectorCount);
         CPPUNIT_TEST_EXCEPTION(TestAddSignal, mtsCollector::mtsCollectorException);
-		CPPUNIT_TEST(TestAddSignalCleanUp);
-		CPPUNIT_TEST(TestRemoveSignal);
-		CPPUNIT_TEST(TestFindSignal);
-		CPPUNIT_TEST(TestCleanup);
-		CPPUNIT_TEST(TestSetTimeBaseDouble);
-		CPPUNIT_TEST(TestSetTimeBaseInt);
-		
-		// private variables and methods
-		CPPUNIT_TEST(TestInit);
-		CPPUNIT_TEST(TestClearTaskMap);
+        CPPUNIT_TEST(TestAddSignalCleanUp);
+        CPPUNIT_TEST(TestRemoveSignal);
+        CPPUNIT_TEST(TestFindSignal);
+        CPPUNIT_TEST(TestCleanup);
+        CPPUNIT_TEST(TestSetTimeBaseDouble);
+        CPPUNIT_TEST(TestSetTimeBaseInt);
 
-	}
+        // private variables and methods
+        CPPUNIT_TEST(TestInit);
+        CPPUNIT_TEST(TestClearTaskMap);
+
+    }
     CPPUNIT_TEST_SUITE_END();
-	
+
 private:
-	//mtsCollector * Collector;
-    
+    //mtsCollector * Collector;
+
 public:
     void setUp(void) {
-		//Collector = new mtsCollector("collector", 10 * cmn_ms);
+        //Collector = new mtsCollector("collector", 10 * cmn_ms);
     }
-    
+
     void tearDown(void) {
-		//delete Collector;
+        //delete Collector;
     }
-    
-	// public variables and methods
+
+    // public variables and methods
     void TestGetCollectorCount(void);
-	void TestAddSignal(void);
-	void TestAddSignalCleanUp(void);
-	void TestRemoveSignal(void);	
-	void TestFindSignal(void);
-	void TestCleanup(void);
-	void TestSetTimeBaseDouble(void);
-	void TestSetTimeBaseInt(void);
-	
-	// private variables and methods
-	void TestInit(void);
-	void TestClearTaskMap(void);
+    void TestAddSignal(void);
+    void TestAddSignalCleanUp(void);
+    void TestRemoveSignal(void);	
+    void TestFindSignal(void);
+    void TestCleanup(void);
+    void TestSetTimeBaseDouble(void);
+    void TestSetTimeBaseInt(void);
+
+    // private variables and methods
+    void TestInit(void);
+    void TestClearTaskMap(void);
 };
