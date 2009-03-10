@@ -28,25 +28,29 @@ mtsTaskManager * mtsCollector::taskManager = NULL;
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
 mtsCollector::mtsCollector(const std::string & collectorName, double period) : 	
-	mtsTaskPeriodic(collectorName, period, false)
+    TimeOffsetToZero(false),
+    mtsTaskPeriodic(collectorName, period, false)
 {
-	++CollectorCount;
+    ++CollectorCount;
 
-	if (taskManager == NULL) {
-		taskManager = mtsTaskManager::GetInstance();
-	}
+    if (taskManager == NULL) {
+        taskManager = mtsTaskManager::GetInstance();
+    }
 }
 
 mtsCollector::~mtsCollector()
 {
-	--CollectorCount;
+    --CollectorCount;
 
-	CMN_LOG_CLASS(5) << "Collector " << GetName() << " ends." << std::endl;
+    CMN_LOG_CLASS(5) << "Collector " << GetName() << " ends." << std::endl;
 }
 
 void mtsCollector::Init()
 {	
-	SignalCollection.clear();		
+    TimeOffsetToZero = false;
+    CollectingPeriod = 0.0; // collect nothing at start-up
+
+    ClearTaskMap();    
 }
 
 //-------------------------------------------------------
@@ -54,168 +58,170 @@ void mtsCollector::Init()
 //-------------------------------------------------------
 void mtsCollector::Startup(void)
 {
-	// initialization
-	Init();
+    // initialization
+    Init();
 }
 
 void mtsCollector::Run(void)
 {
-	// periodic execution
-	// for test 
-	static int i = 0;
-	CMN_LOG_CLASS(5) << "----- [ " << GetName() << " ] " << ++i << std::endl;
+    // periodic execution
+    // for test 
+    static int i = 0;
+    CMN_LOG_CLASS(5) << "----- [ " << GetName() << " ] " << ++i << std::endl;
 }
 
 void mtsCollector::Cleanup(void)
 {
-	// clean up
+    // clean up
+    ClearTaskMap();
 }
 
 //-------------------------------------------------------
 //	Signal Management
 //-------------------------------------------------------
 bool mtsCollector::AddSignal(const std::string & taskName, 
-							 const std::string & signalName, 
-							 const std::string & format)
+                             const std::string & signalName, 
+                             const std::string & format)
 {	
-	CMN_ASSERT(taskManager);
+    CMN_ASSERT(taskManager);
 
-	// Ensure that the specified task is under the control of the task manager.
-	//
-	//	TODO: Should the task be an instance of mtsTaskPeriodic???
-	//
-	mtsTask * task = taskManager->GetTask(taskName);
-	if (task == NULL) {
-		CMN_LOG_CLASS(5) << "Unknown task: " << taskName << std::endl;
-		return false;
-	}
+    // Ensure that the specified task is under the control of the task manager.
+    mtsTask * task = taskManager->GetTask(taskName);
+    if (task == NULL) {
+        CMN_LOG_CLASS(5) << "Unknown task: " << taskName << std::endl;
+        return false;
+    }
 
-	// Prevent duplicate signal registration
-	if (FindSignal(taskName, signalName)) {
-		CMN_LOG_CLASS(5) << "Already registered signal: " << taskName 
-			<< ", " << signalName << std::endl;
-		return false;
-	}
+    // Prevent duplicate signal registration
+    if (FindSignal(taskName, signalName)) {
+        CMN_LOG_CLASS(5) << "Already registered signal: " << taskName 
+            << ", " << signalName << std::endl;
 
-	// Check if the specified signal has been added to the state table.
-	//if (task->FindStateVectorDataName(signalName)) {
-	//	//
-	//	// TODO: Throw an exception if already collecting
-	//	// TODO: test unit: how to test throwing an exception? (add a test unit)
-	//	//
-	//	CMN_LOG_CLASS(5) << "Already registered signal: " << signalName << std::endl;
-	//	return false;
-	//}
-	
-	// Add a signal
-	SignalCollection.insert(make_pair(taskName, signalName));
-	CMN_LOG_CLASS(5) << "Signal added: " << taskName << ", " << signalName << std::endl;
+        //return false;
+        throw mtsCollector::mtsCollectorException(
+            "Already collecting signal: " + taskName + ", " + signalName);
+    }
 
-	// Adaptively control a period of the collector task in order to be sure that 
-	// the collector task has always the minimum period among all tasks added.
+    // Double check: check if the specified signal has been already added to the state table.
+    if (task->GetStateVectorID(signalName) >= 0) {  // 0: Toc, 1: Tic, 2: Period, >3: user
+        CMN_LOG_CLASS(5) << "Already registered signal: " << taskName
+            << ", " << signalName << std::endl;
 
-	return true;
+        //return false;
+        throw mtsCollector::mtsCollectorException(
+            "Already collecting signal: " + taskName + ", " + signalName);
+    }
+
+    // Add a signal    
+    TaskMap::iterator itr = taskMap.find(taskName);
+    if (itr == taskMap.end()) {  // If the task is new
+        // Create a new instance of SignalMap
+        SignalMap * signalMap = new SignalMap();
+        CMN_ASSERT(signalMap);
+
+        signalMap->insert(make_pair(signalName, task));
+        taskMap.insert(make_pair(taskName, signalMap));
+    } else {    // If the task has one or more signals being collected
+        itr->second->insert(make_pair(signalName, task));
+    }
+
+    CMN_LOG_CLASS(5) << "Signal added: " << taskName << ", " << signalName << std::endl;
+
+    return true;
 }
 
 bool mtsCollector::RemoveSignal(const std::string & taskName, const std::string & signalName)
 {
-	// If no signal data is being collected.
-	if (SignalCollection.empty()) {
-		CMN_LOG_CLASS(5) << "No signal data is being collected." << std::endl;
-		return false;
-	}
+    // If no signal data is being collected.
+    if (taskMap.empty()) {
+        CMN_LOG_CLASS(5) << "No signal data is being collected." << std::endl;
+        return false;
+    }
 
-	// If finding a nonregistered task or signal
-	if (!FindSignal(taskName, signalName)) {
-		CMN_LOG_CLASS(5) << "Unknown task and/or signal: " << taskName 
-			<< ", " << signalName << std::endl;
-		return false;
-	}
+    // If finding a nonregistered task or signal
+    if (!FindSignal(taskName, signalName)) {
+        CMN_LOG_CLASS(5) << "Unknown task and/or signal: " << taskName 
+            << ", " << signalName << std::endl;
+        return false;
+    }
 
-	// Remove a signal from the list
-	SignalMap::const_iterator itr = SignalCollection.find(taskName);
-	CMN_ASSERT(itr != SignalCollection.end());
+    // Remove a signal from the list
+    TaskMap::iterator itr = taskMap.find(taskName);
+    CMN_ASSERT(itr != taskMap.end());
 
-	// The specified task is found. Now try to find a signal with the given signal name
-	SignalMap::const_iterator itrOnePastTheLast;
-	itrOnePastTheLast = SignalCollection.upper_bound(taskName);
-	for (; itr != itrOnePastTheLast; ++itr) {
-		if (itr->second == signalName) {
-			SignalCollection.erase(itr);
-			CMN_LOG_CLASS(5) << "Signal removed: " << taskName 
-				<< ", " << signalName << std::endl;
+    SignalMap * signalMap = itr->second;
+    SignalMap::iterator _itr = signalMap->find(signalName);
+    CMN_ASSERT(_itr != signalMap->end());
+    signalMap->erase(_itr);
 
-			return true;
-		}
-	}
-	
-	// This should not occur.
-	CMN_ASSERT(false);
+    // Clean-up
+    if (signalMap->empty()) {
+        delete signalMap;
+        taskMap.erase(itr);
+    }
 
-	return false;
+    CMN_LOG_CLASS(5) << "Signal removed: " << taskName << ", " << signalName << std::endl;
+
+    return true;
 }
 
 bool mtsCollector::FindSignal(const std::string & taskName, const std::string & signalName)
 {
-	if (SignalCollection.empty()) return false;
+    if (taskMap.empty()) return false;	
 
-	// First, try to find a signal with the given task name
-	SignalMap::const_iterator itr = SignalCollection.find(taskName);
-	if (itr == SignalCollection.end()) {
-		return false;	// no task found
-	}
-
-	// The specified task is found. Now try to find a signal with the given signal name
-	SignalMap::const_iterator itrOnePastTheLast;
-	itrOnePastTheLast = SignalCollection.upper_bound(taskName);
-	for (; itr != itrOnePastTheLast; ++itr) {
-		if (itr->second == signalName) {
-			return true;	// found the specified task
-		}
-	}
-
-	// no signal found
-	return false;
+    TaskMap::const_iterator itr = taskMap.find(taskName);
+    if (itr == taskMap.end()) {
+        return false;
+    } else {
+        SignalMap * signalMap = itr->second;
+        SignalMap::const_iterator _itr = signalMap->find(signalName);
+        if (_itr == signalMap->end()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 }
 
-//
-//	TODO: Write unit-tests for this method!!!
-//
-void mtsCollector::AdjustPeriod(const double newPeriod)
+//-------------------------------------------------------
+//	Collecting Data
+//-------------------------------------------------------
+void mtsCollector::SetTimeBase(const double deltaT, const bool offsetToZero)
 {
-	CMN_ASSERT(taskManager);
+    // Ensure that there is a task being collected.
+    if (taskMap.empty() || CollectingPeriod == 0.0) {
+        return;
+    }
 
-	double minPeriod = GetAveragePeriod();
-	double period = 0.0;
+    CollectingPeriod = deltaT;
+    TimeOffsetToZero = offsetToZero;
 
-	mtsTaskPeriodic * taskPeriodic = NULL;
-	SignalMap::const_iterator itrTask = SignalCollection.begin();
+    //
+    // TODO: CONTINUE TO IMPLEMENT HERE...    
+    //
+}
 
-	//SignalMap::const_iterator itrSignal, itrLast;
-	for (; itrTask != SignalCollection.end(); ++itrTask ) {
-		//
-		//	TODO: 1 signal per 1 task? or N signal per 1 task??
-		//
-		//itrLast = SignalCollection.find(itrTask->first);
-		//for (; itrSignal != itrLast; ++itrSignal ) {
-		//}
-		taskPeriodic = dynamic_cast<mtsTaskPeriodic *>(taskManager->GetTask(itrTask->first));
-		if (taskPeriodic) {
-			period = taskPeriodic->GetPeriodicity();
-		} else {
-			period = taskPeriodic->GetAveragePeriod();
-		}		
+void mtsCollector::SetTimeBase(const int deltaStride, const bool offsetToZero)
+{
+    // Check if the number of task being collected is one.
+    //if (!taskMap.count() != 1) {
+    //    return -1;
+    //}
+}
 
-		if (minPeriod > period) {
-			minPeriod = period;
-		}
-	}
+//-------------------------------------------------------
+//	Miscellaneous Functions
+//-------------------------------------------------------
+void mtsCollector::ClearTaskMap(void)
+{
+    if (!taskMap.empty()) {        
+        TaskMap::iterator itr = taskMap.begin();
+        SignalMap::iterator _itr;
+        for (; itr != taskMap.end(); ++itr) {
+            itr->second->clear();
+            delete itr->second;
+        }
 
-	minPeriod *= 0.5;
-	
-	//
-	//	TODO: How to control the period of the collector task automatically?
-	//
-
-	CMN_LOG_CLASS(5) << "Signal period updated: " << minPeriod << std::endl;
+        taskMap.clear();
+    }
 }
