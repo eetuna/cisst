@@ -58,14 +58,17 @@ class mtsCollectorTest: public CppUnit::TestFixture
 	{		
 		// public variables and methods
 	    CPPUNIT_TEST(TestGetCollectorCount);
-		CPPUNIT_TEST(TestGetSignalCount);
-
-		CPPUNIT_TEST(TestAddSignal);		
+        CPPUNIT_TEST_EXCEPTION(TestAddSignal, mtsCollector::mtsCollectorException);
+		CPPUNIT_TEST(TestAddSignalCleanUp);
 		CPPUNIT_TEST(TestRemoveSignal);
 		CPPUNIT_TEST(TestFindSignal);
+		CPPUNIT_TEST(TestCleanup);
+		CPPUNIT_TEST(TestSetTimeBaseDouble);
+		CPPUNIT_TEST(TestSetTimeBaseInt);
 		
 		// private variables and methods
 		CPPUNIT_TEST(TestInit);
+		CPPUNIT_TEST(TestClearTaskMap);
 
 	}
     CPPUNIT_TEST_SUITE_END();
@@ -84,12 +87,15 @@ public:
     
 	// public variables and methods
     void TestGetCollectorCount(void);
-	void TestGetSignalCount(void);
-
 	void TestAddSignal(void);
+	void TestAddSignalCleanUp(void);
 	void TestRemoveSignal(void);	
 	void TestFindSignal(void);
+	void TestCleanup(void);
+	void TestSetTimeBaseDouble(void);
+	void TestSetTimeBaseInt(void);
 	
 	// private variables and methods
 	void TestInit(void);
+	void TestClearTaskMap(void);
 };

@@ -49,8 +49,11 @@ void mtsCollectorTest::TestGetCollectorCount(void)
 	mtsCollector a("collector-1", 10 * cmn_ms);
 	CPPUNIT_ASSERT_EQUAL((unsigned int) 1, mtsCollector::GetCollectorCount());
 
-	mtsCollector b("collector-2", 10 * cmn_ms);
-    CPPUNIT_ASSERT_EQUAL((unsigned int) 2, mtsCollector::GetCollectorCount());    
+	mtsCollector * b = new mtsCollector("collector-2", 10 * cmn_ms);
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 2, mtsCollector::GetCollectorCount());
+	
+	delete b;
+	CPPUNIT_ASSERT_EQUAL((unsigned int) 1, mtsCollector::GetCollectorCount());
 }
 
 void mtsCollectorTest::TestAddSignal(void)
@@ -59,30 +62,25 @@ void mtsCollectorTest::TestAddSignal(void)
 	const std::string signalName = "Data_TestAddSignal";	
 
 	mtsCollector collector("collector", 10 * cmn_ms);
-	mtsCollectorTestTask TaskA(taskName, 10 * cmn_ms );
+    // The following object has to be created in a dynamic way so that the object can
+    // be deleted outside this unit test. (It'll be deleted at
+    // mtsCollectorTest::TestAddSignalCleanUp().)
+	mtsCollectorTestTask * TaskA = new mtsCollectorTestTask(taskName, 10 * cmn_ms );
 
 	mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 	CPPUNIT_ASSERT(taskManager);
 
-	// In case of a task that are not under the control of the manager	
-	CPPUNIT_ASSERT(!collector.AddSignal(taskName, "", ""));
+	// In case of a task that are not under the control of the manager
+    CPPUNIT_ASSERT(!collector.AddSignal(taskName, "", ""));
 
 	// Put it under the control of the manager.	
-	CPPUNIT_ASSERT(taskManager->AddTask(&TaskA));
+	CPPUNIT_ASSERT(taskManager->AddTask(TaskA));
 
-	//TaskA.AddDataToStateTable(signalName);
 	CPPUNIT_ASSERT(collector.AddSignal(taskName, signalName, ""));
-	
-	// Prevent duplicate signal registration
-	CPPUNIT_ASSERT(!collector.AddSignal(taskName, signalName, ""));
 
-	// Remove a task not to cause potential side-effect when using mtsTaskManager
-	//taskManager->
-		
-	// Throw an exception if already collecting
-	//
-	// TODO: IMPLEMENT ME~~~~!!!!!
-	//
+	// Prevent duplicate signal registration
+    // The following line should throw a mtsCollectorException.
+	CPPUNIT_ASSERT(!collector.AddSignal(taskName, signalName, ""));
 
 	/*
 	// 1. Test if a task of which name is taskName actually exists.
@@ -116,6 +114,32 @@ void mtsCollectorTest::TestAddSignal(void)
 	// NOP
 }
 
+/* This class is not inteded to test mtsCollector::AddSignalCleanup() method. 
+   That is, there is no such method in mtsCollector.
+   This is for cleaning up a temporary task generated and registered at
+   mtsCollectorTest::AddSignal() where mtsTaskManager::RemoveTask() cannot be called
+   because an exception is throwed. */
+void mtsCollectorTest::TestAddSignalCleanUp(void)
+{	
+	const std::string taskName = "Task_TestAddSignal";
+	const std::string signalName = "Data_TestAddSignal";	
+
+	mtsCollector collector("collector", 10 * cmn_ms);
+
+	mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+	CPPUNIT_ASSERT(taskManager);
+
+    mtsCollectorTestTask * task = 
+        dynamic_cast<mtsCollectorTestTask*>(taskManager->GetTask(taskName));
+    CPPUNIT_ASSERT(task);
+
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(task));
+
+    // Don't forget
+    delete task;
+}
+
 void mtsCollectorTest::TestRemoveSignal(void)
 {
 	const std::string taskName = "Task_TestRemoveSignal";
@@ -125,16 +149,12 @@ void mtsCollectorTest::TestRemoveSignal(void)
 	mtsCollectorTestTask TaskA(taskName, 10 * cmn_ms );
 
 	// 1. Try removing a signal from the empty signal list
-	//
-	//	TODO: need a method such as mtsTaskManager::RemoveTask() to test the following code.
-	//
-	//CPPUNIT_ASSERT(!collector.RemoveSignal(taskName, signalName));
+    CPPUNIT_ASSERT(!collector.RemoveSignal(taskName, signalName));
 
 	// Add a signal
 	mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 	CPPUNIT_ASSERT(taskManager);
-	CPPUNIT_ASSERT(taskManager->AddTask(&TaskA));
-	//TaskA.AddDataToStateTable(signalName);
+	CPPUNIT_ASSERT(taskManager->AddTask(&TaskA));	
 	CPPUNIT_ASSERT(collector.AddSignal(taskName, signalName, ""));
 
 	// 2. Try removing a signal with incorrect task name
@@ -145,6 +165,9 @@ void mtsCollectorTest::TestRemoveSignal(void)
 
 	// 4. Try removing a signal in a correct way
 	CPPUNIT_ASSERT(collector.RemoveSignal(taskName, signalName));
+
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&TaskA));	
 }
 
 void mtsCollectorTest::TestFindSignal(void)
@@ -161,8 +184,7 @@ void mtsCollectorTest::TestFindSignal(void)
 	// Add a signal
 	mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 	CPPUNIT_ASSERT(taskManager);
-	CPPUNIT_ASSERT(taskManager->AddTask(&TaskA));
-	//TaskA.AddDataToStateTable(signalName);
+	CPPUNIT_ASSERT(taskManager->AddTask(&TaskA));	
 	CPPUNIT_ASSERT(collector.AddSignal(taskName, signalName, ""));
 	
 	// return false if finding a nonregistered task or signal
@@ -171,18 +193,69 @@ void mtsCollectorTest::TestFindSignal(void)
 	
 	// return true if finding a correct one
 	CPPUNIT_ASSERT(collector.FindSignal(taskName, signalName));
+
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&TaskA));
 	
 }
 
-void mtsCollectorTest::TestGetSignalCount(void)
+void mtsCollectorTest::TestCleanup(void)
 {
-	CPPUNIT_ASSERT_EQUAL((unsigned int) 0, mtsCollector::GetCollectorCount());
-	
-	mtsCollector collector1("collector1", 10 * cmn_ms);
-	CPPUNIT_ASSERT_EQUAL((unsigned int) 1, mtsCollector::GetCollectorCount());
-	
-	mtsCollector collector2("collector2", 10 * cmn_ms);
-	CPPUNIT_ASSERT_EQUAL((unsigned int) 2, mtsCollector::GetCollectorCount());
+	mtsCollector collector("collector", 10 * cmn_ms);	
+
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+	CPPUNIT_ASSERT(taskManager);
+
+    // Put tasks for this test under the control of the taskManager so that
+    // mtsCollector::AddSignal() works correctly.
+    mtsCollectorTestTask task1("task1", 10 * cmn_ms );
+    mtsCollectorTestTask task2("task2", 10 * cmn_ms );
+    mtsCollectorTestTask task3("task3", 10 * cmn_ms );
+    CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+    CPPUNIT_ASSERT(taskManager->AddTask(&task2));
+    CPPUNIT_ASSERT(taskManager->AddTask(&task3));
+    {
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1-1", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1-2", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("task2", "signal2", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("task3", "signal3", ""));
+
+        collector.ClearTaskMap();
+        CPPUNIT_ASSERT(collector.taskMap.size() == 0);
+    }
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task2));
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task3));
+}
+
+void mtsCollectorTest::TestSetTimeBaseDouble(void)
+{
+    const double defaultPeriod = (double) 10 * cmn_ms;
+    const double newPeriod = (double) 20 * cmn_ms;
+
+    mtsCollector collector("collector", defaultPeriod);       
+
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    CPPUNIT_ASSERT(taskManager);
+
+    mtsCollectorTestTask task1("task1", defaultPeriod);
+    CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+    CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1", ""));
+    {
+        collector.SetTimeBase(newPeriod, true);
+        CPPUNIT_ASSERT_EQUAL(newPeriod, collector.CollectingPeriod);
+        CPPUNIT_ASSERT(true == collector.TimeOffsetToZero);
+
+        collector.SetTimeBase(newPeriod, false);
+        CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
+    }
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
+}
+
+void mtsCollectorTest::TestSetTimeBaseInt(void)
+{
 }
 
 //-----------------------------------------------------------------------------
@@ -194,12 +267,64 @@ void mtsCollectorTest::TestInit(void)
 {
 	mtsCollector collector("collector", 10 * cmn_ms);
 	
-	CPPUNIT_ASSERT(collector.SignalCollection.empty());
-	collector.SignalCollection.insert(make_pair(std::string("a"), std::string("1")));
-	CPPUNIT_ASSERT(1 == collector.SignalCollection.size());
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+	CPPUNIT_ASSERT(taskManager);
+
+    // Put tasks for this test under the control of the taskManager so that
+    // mtsCollector::AddSignal() works correctly.
+    mtsCollectorTestTask task1("taskA", 10 * cmn_ms );
+    mtsCollectorTestTask task2("taskB", 10 * cmn_ms );
+    mtsCollectorTestTask task3("taskC", 10 * cmn_ms );
+    CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+    CPPUNIT_ASSERT(taskManager->AddTask(&task2));
+    CPPUNIT_ASSERT(taskManager->AddTask(&task3));
+    {
+        CPPUNIT_ASSERT(collector.AddSignal("taskA", "signal1-1", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("taskA", "signal1-2", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("taskB", "signal2", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("taskC", "signal3", ""));
+
+        collector.Init();
+		
+        CPPUNIT_ASSERT(collector.taskMap.size() == 0);
+		CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
+        CPPUNIT_ASSERT_EQUAL(0.0, collector.CollectingPeriod);
+    }
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task2));
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task3));
+}
+
+void mtsCollectorTest::TestClearTaskMap(void)
+{
+	mtsCollector collector("collector", 10 * cmn_ms);
 	
-	collector.SignalCollection.clear();
-	CPPUNIT_ASSERT(collector.SignalCollection.empty());
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+	CPPUNIT_ASSERT(taskManager);
+
+    // Put tasks for this test under the control of the taskManager so that
+    // mtsCollector::AddSignal() works correctly.
+    mtsCollectorTestTask task1("task1", 10 * cmn_ms );
+    mtsCollectorTestTask task2("task2", 10 * cmn_ms );
+    mtsCollectorTestTask task3("task3", 10 * cmn_ms );
+
+    CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+    CPPUNIT_ASSERT(taskManager->AddTask(&task2));
+    CPPUNIT_ASSERT(taskManager->AddTask(&task3));
+    {
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1-1", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1-2", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("task2", "signal2", ""));
+        CPPUNIT_ASSERT(collector.AddSignal("task3", "signal3", ""));
+
+        collector.ClearTaskMap();
+        CPPUNIT_ASSERT(collector.taskMap.size() == 0);
+    }
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task2));
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task3));
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsCollectorTest);
