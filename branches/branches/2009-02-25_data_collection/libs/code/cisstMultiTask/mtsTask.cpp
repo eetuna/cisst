@@ -299,8 +299,8 @@ bool mtsTask::WaitToTerminate(double timeout)
 }
 
 #ifdef _MTS_COLLECTOR_
-bool mtsTask::FindStateVectorDataName(const std::string & dataName) const
+int mtsTask::GetStateVectorID(const std::string & dataName) const
 {	
-	return StateTable.FindStateVectorDataName(dataName);
+    return StateTable.GetStateVectorID(dataName);
 }
 #endif
