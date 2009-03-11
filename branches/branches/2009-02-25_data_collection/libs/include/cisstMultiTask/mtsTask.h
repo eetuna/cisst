@@ -369,7 +369,7 @@ public:
 
 	/*! Check if the signal has been registered. */
 #ifdef _MTS_COLLECTOR_		
-	bool FindStateVectorDataName(const std::string & dataName) const;
+	int GetStateVectorID(const std::string & dataName) const;
 #endif
 
 };
