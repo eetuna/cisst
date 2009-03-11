@@ -40,6 +40,9 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
+// Enable this macro for unit-test purposes only
+#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
+
 /*!
   \ingroup cisstMultiTask
 
@@ -72,7 +75,11 @@ public:
     // Default mailbox size -- perhaps this should be specified elsewhere
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
+#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
 protected:
+#else
+public:
+#endif
 
     /*! Mapping of task name (key) and pointer to mtsTask object. */
     TaskMapType TaskMap;
@@ -103,6 +110,9 @@ protected:
 
     /*! Put a task under the control of the Manager. */
     bool AddTask(mtsTask * task);
+
+    /*! Pull out a task from the Manager. */
+    bool RemoveTask(mtsTask * task);
 
     /*! Put a device under the control of the Manager. */
     bool AddDevice(mtsDevice * device);
