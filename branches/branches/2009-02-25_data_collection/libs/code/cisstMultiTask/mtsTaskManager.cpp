@@ -52,7 +52,16 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
     if (ret)
        CMN_LOG_CLASS(3) << "AddTask: added task named "
                         << task->GetName() << std::endl;
-    return true;
+    return ret;
+}
+
+
+bool mtsTaskManager::RemoveTask(mtsTask * task) {
+    bool ret = TaskMap.RemoveItem(task->GetName(), 1);
+    if (ret)
+       CMN_LOG_CLASS(3) << "RemoveTask: removed task named "
+                        << task->GetName() << std::endl;
+    return ret;
 }
 
 
