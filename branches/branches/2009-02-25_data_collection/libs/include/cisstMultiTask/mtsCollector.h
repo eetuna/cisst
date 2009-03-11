@@ -112,9 +112,6 @@ public:
     /*! Specify a sampling period and set a flag to apply time offset for making 
     time base as zero. That is, if offsetToZero is true, start time is subtracted 
     from each time measurement before outputting data. 
-
-    Returns a current value which is either deltaT (double) or deltaStride (int).
-
     This method is overloaded so as to support collecting based on a stride.
     For example, if we want to collect just from a single task, deltaT could be 
     an "int", which would specify a stride. (e.g., 1 means all values, 2 means 
