@@ -43,6 +43,9 @@ http://www.cisst.org/cisst/license.txt.
 // Enable support functions for mtsCollector class
 #define	_MTS_COLLECTOR_
 
+// Enable this macro for unit-test purposes only
+#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
+
 // Forward declaration
 class osaTimeServer;
 
@@ -65,7 +68,12 @@ typedef int mtsStateDataId;
   State Table elsewhere in the documentation.
  */
 class CISST_EXPORT mtsStateTable {
- protected:
+
+#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
+protected:
+#else
+public:
+#endif
 	/*! The number of rows of the state data table. */
 	unsigned int HistoryLength;
 	
@@ -148,8 +156,8 @@ class CISST_EXPORT mtsStateTable {
     }
     
 	/*! Check if the signal has been registered. */
-#ifdef _MTS_COLLECTOR_	
-	bool FindStateVectorDataName(const std::string & dataName) const;
+#ifdef _MTS_COLLECTOR_
+	int GetStateVectorID(const std::string & dataName) const;
 #endif
 	
 
