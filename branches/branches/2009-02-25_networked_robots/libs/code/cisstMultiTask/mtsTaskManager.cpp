@@ -25,19 +25,28 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
-
+#include <cisstOSAbstraction/osaSleep.h>
+#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
+#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
-
-mtsTaskManager::mtsTaskManager() : TaskMap("Task"), DeviceMap("Device") {
+mtsTaskManager::mtsTaskManager(void) : 
+    TaskMap("Task"), DeviceMap("Device"), Proxy(NULL)
+{
     __os_init();
     TimeServer.SetTimeOrigin();
+
+    TaskManagerTypeMember = TASK_MANAGER_LOCAL;
 }
 
 
 mtsTaskManager::~mtsTaskManager(){
     this->Kill();
+
+    if (Proxy) {
+        delete Proxy;
+    }
 }
 
 
@@ -52,7 +61,20 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
     if (ret)
        CMN_LOG_CLASS(3) << "AddTask: added task named "
                         << task->GetName() << std::endl;
-    return true;
+    return ret;
+}
+
+
+bool mtsTaskManager::RemoveTask(mtsTask * task) {
+    // MJUNG: TODO: This very simple implementation considers TaskMap only.
+    // There are much more things to be done if we want RemoveTask() to work
+    // correctly because removing a task is tightly coupled with the CISST
+    // multithreaded and object-oriented architecture.
+    bool ret = TaskMap.RemoveItem(task->GetName(), 1);
+    if (ret)
+       CMN_LOG_CLASS(3) << "RemoveTask: removed task named "
+                        << task->GetName() << std::endl;
+    return ret;
 }
 
 
@@ -304,3 +326,26 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
     return true;
 }
 
+void mtsTaskManager::SetTaskManagerMode(const TaskManagerType newType)
+{
+    if (TaskManagerTypeMember == newType) return;
+
+    // Transition from LOCAL to NETWORK
+    if (TaskManagerTypeMember == TASK_MANAGER_LOCAL) {
+        if (Proxy) {
+            delete Proxy;
+        }
+
+        if (newType == TASK_MANAGER_SERVER) {
+            Proxy = new mtsTaskManagerProxyServer;
+            Proxy->StartProxy(this);
+        } else {
+            Proxy = new mtsTaskManagerProxyClient;
+            Proxy->StartProxy(this);
+        }
+    } else {
+        // Transition from NETWORK to LOCAL
+        // 1. stop the running thread (regardless of the task manager type)
+        // 2. kill the thread
+    }
+}

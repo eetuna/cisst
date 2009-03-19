@@ -29,6 +29,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManager_h
 #define _mtsTaskManager_h
 
+// Proxy implementation
+#define _PROXY_
+
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstOSAbstraction/osaThreadBuddy.h>
@@ -40,6 +43,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
+// Enable this macro for unit-test purposes only
+#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
+
+class mtsTaskManagerProxyCommon;
+
 /*!
   \ingroup cisstMultiTask
 
@@ -49,9 +57,8 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    
-    /*! Typedef for task name and pointer map. */
 
+    /*! Typedef for task name and pointer map. */
     typedef mtsMap<mtsTask> TaskMapType;
 
     /*! Typedef for device name and pointer map. */
@@ -72,7 +79,18 @@ public:
     // Default mailbox size -- perhaps this should be specified elsewhere
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
+    /*! Task manager operation mode definition */
+    typedef enum { 
+        TASK_MANAGER_LOCAL,     // no proxy feature supported
+        TASK_MANAGER_SERVER,    // This task manager will act as a server
+        TASK_MANAGER_CLIENT     // This task manager will act as a client
+    } TaskManagerType;
+
+#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
 protected:
+#else
+public:
+#endif
 
     /*! Mapping of task name (key) and pointer to mtsTask object. */
     TaskMapType TaskMap;
@@ -87,6 +105,12 @@ protected:
     /*! Time server used by all tasks. */
     osaTimeServer TimeServer;
 
+    /*! Type of TaskManager */
+    TaskManagerType TaskManagerTypeMember;
+
+    /*! Proxy instance. This will be dynamically created. */
+    mtsTaskManagerProxyCommon * Proxy;
+    
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */
     mtsTaskManager(void);
@@ -103,6 +127,9 @@ protected:
 
     /*! Put a task under the control of the Manager. */
     bool AddTask(mtsTask * task);
+
+    /*! Pull out a task from the Manager. */
+    bool RemoveTask(mtsTask * task);
 
     /*! Put a device under the control of the Manager. */
     bool AddDevice(mtsDevice * device);
@@ -175,11 +202,21 @@ protected:
     inline void Kill(void) {
         __os_exit();
     }
+
+    //-------------------------------------------------------------------------
+    //  Proxy-related
+    //-------------------------------------------------------------------------
+
+    /*! Set the mode of this TaskManager. Unless the TaskManagerType is LOCAL, 
+        initialize an proxy processing object. */
+    void SetTaskManagerMode(const TaskManagerType type);
+
+    inline const bool IsProxySupported() const {
+        return (TaskManagerTypeMember != TASK_MANAGER_LOCAL);
+    }
 };
 
-
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)
-
 
 #endif // _mtsTaskManager_h
 
