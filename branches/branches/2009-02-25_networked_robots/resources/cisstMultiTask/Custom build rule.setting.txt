@@ -1,0 +1,16 @@
+##### Command Line #####
+
+slice2cpp -IC:\Ice-3.3.0\slice -IC:\Ice-3.3.0\cpp\include\ D:\Sources\CISST\prj.003.network.robots\resources\cisstMultiTask\$(InputFileName)
+copy $(ProjectDir)\$(InputName).h D:\Sources\CISST\prj.003.network.robots\libs\include\cisstMultiTask
+copy $(ProjectDir)\$(InputName).cpp D:\Sources\CISST\prj.003.network.robots\libs\code\cisstMultiTask
+del $(ProjectDir)\$(InputName).h
+del $(ProjectDir)\$(InputName).cpp
+
+##### Description #####
+Compiling ($InputFileName)
+
+##### Outputs #####
+$(InputFileName).h $(InputFileName).cpp
+
+##### Additional Dependencies #####
+C:\Ice-3.3.0\cpp\slice\Ice\Identity.ice
