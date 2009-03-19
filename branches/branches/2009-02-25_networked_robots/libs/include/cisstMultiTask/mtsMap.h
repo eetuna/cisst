@@ -49,23 +49,31 @@ http://www.cisst.org/cisst/license.txt.
 template <class _ItemType>
 class mtsMap {
 public:
-  typedef std::map<std::string, _ItemType *> MapType;
+    typedef std::map<std::string, _ItemType *> MapType;
+
 protected:
-  MapType Map;
-  std::string MapName;
+    MapType Map;
+    std::string MapName;
+
 public:
-  mtsMap() : Map(), MapName("???") {}
-  mtsMap(const std::string & mapName) : Map(), MapName(mapName) {}
-  ~mtsMap() {}
-  bool AddItem(const std::string & name, _ItemType * item, cmnLogger::LoDType lod = 99);
-  _ItemType *GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
-  std::vector<std::string> GetNames() const;
-  const MapType &GetMap() const { return Map; }
-  MapType &GetMap() { return Map; }
-  void ToStream(std::ostream & outputStream) const;
-  void Cleanup(void);  // needed?
-  // free all memory
-  void DeleteAll(void);
+    mtsMap() : Map(), MapName("???") {}
+    mtsMap(const std::string & mapName) : Map(), MapName(mapName) {}
+    ~mtsMap() {}
+
+    bool AddItem(const std::string & name, _ItemType * item, cmnLogger::LoDType lod = 99);
+    bool RemoveItem(const std::string & name, cmnLogger::LoDType lod = 99);
+    _ItemType *GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
+  
+    std::vector<std::string> GetNames() const;
+    const MapType &GetMap() const   { return Map; }
+    MapType &GetMap()               { return Map; }
+    const int GetCount()            { return Map.size(); }
+  
+    void ToStream(std::ostream & outputStream) const;
+    void Cleanup(void);  // needed?
+  
+    // free all memory
+    void DeleteAll(void);
 };
 
 template <class _ItemType>
@@ -79,6 +87,20 @@ bool mtsMap<_ItemType>::AddItem(const std::string & name, _ItemType *item, cmnLo
         return false;
     }
     Map[name] = item;
+    return true;
+}
+
+template <class _ItemType>
+bool mtsMap<_ItemType>::RemoveItem(const std::string & name, cmnLogger::LoDType lod)
+{
+    // check if this name already exists
+    typename MapType::iterator iterator = Map.find(name);
+    if (iterator == Map.end()) {
+        CMN_LOG(lod) << "a " << MapName << " item named " << name
+                     << " doesn't exist." << std::endl;
+        return false;
+    }
+    Map.erase(iterator);
     return true;
 }
 
