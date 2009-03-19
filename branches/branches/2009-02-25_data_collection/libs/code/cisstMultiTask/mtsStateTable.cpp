@@ -27,6 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <iostream>
 #include <string>
 
+int mtsStateTable::StateVectorBaseIDForUser;
+
 mtsStateTable::mtsStateTable(int size) :
 		HistoryLength(size), NumberStateData(0), IndexWriter(0),IndexReader(0),
 		StateVector(NumberStateData), StateVectorDataNames(NumberStateData),
@@ -50,6 +52,11 @@ mtsStateTable::mtsStateTable(int size) :
     TicId = NewElement("Tic", &Tic);
     // Add Period to the StateTable.
     PeriodId = NewElement("Period", &Period);
+
+    // Currently there are three signals maintained internally at StateTable.
+    // : "Toc", "Tic", "Period". So the value of StateVectorBaseIDForUser is 
+    // currently 3.
+    StateVectorBaseIDForUser = StateVector.size();
 }
 
 /* All the const methods that can be called from reader or writer */

@@ -74,6 +74,7 @@ protected:
 #else
 public:
 #endif
+
 	/*! The number of rows of the state data table. */
 	unsigned int HistoryLength;
 	
@@ -230,6 +231,8 @@ public:
     void CSVWrite(std::ostream& out, bool nonZeroOnly = false);
     void CSVWrite(std::ostream& out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
 
+    /*! A base column index of StateTable for a signal registered by user. */
+    static int StateVectorBaseIDForUser;
 };
 
 
