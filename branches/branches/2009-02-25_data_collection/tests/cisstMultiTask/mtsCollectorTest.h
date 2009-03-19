@@ -65,10 +65,14 @@ class mtsCollectorTest: public CppUnit::TestFixture
         CPPUNIT_TEST(TestCleanup);
         CPPUNIT_TEST(TestSetTimeBaseDouble);
         CPPUNIT_TEST(TestSetTimeBaseInt);
+        CPPUNIT_TEST(TestStart);
+        CPPUNIT_TEST(TestStop);
 
         // private variables and methods
         CPPUNIT_TEST(TestInit);
         CPPUNIT_TEST(TestClearTaskMap);
+        CPPUNIT_TEST(TestCollect);
+        CPPUNIT_TEST(TestIsAnySignalRegistered);
 
     }
     CPPUNIT_TEST_SUITE_END();
@@ -94,8 +98,12 @@ public:
     void TestCleanup(void);
     void TestSetTimeBaseDouble(void);
     void TestSetTimeBaseInt(void);
+    void TestStart(void);
+    void TestStop(void);
 
     // private variables and methods
     void TestInit(void);
     void TestClearTaskMap(void);
+    void TestCollect();
+    void TestIsAnySignalRegistered();
 };

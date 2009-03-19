@@ -19,11 +19,12 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include "mtsCollectorTest.h"
+
 #include <cisstCommon/cmnUnits.h>
 #include <cisstMultiTask/mtsCollector.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-
-#include "mtsCollectorTest.h"
+#include <cisstOSAbstraction/osaStopwatch.h>
 
 #include <string.h>
 
@@ -241,21 +242,149 @@ void mtsCollectorTest::TestSetTimeBaseDouble(void)
 
     mtsCollectorTestTask task1("task1", defaultPeriod);
     CPPUNIT_ASSERT(taskManager->AddTask(&task1));
-    CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1", ""));
-    {
+    {    
+        // If there is no task registered to mtsTaskManager, SetTimeBase does NOP.
+        double currentPeriod = collector.CollectingPeriod;
         collector.SetTimeBase(newPeriod, true);
-        CPPUNIT_ASSERT_EQUAL(newPeriod, collector.CollectingPeriod);
-        CPPUNIT_ASSERT(true == collector.TimeOffsetToZero);
-
-        collector.SetTimeBase(newPeriod, false);
+        CPPUNIT_ASSERT_EQUAL(currentPeriod, collector.CollectingPeriod);
+        CPPUNIT_ASSERT_EQUAL((unsigned int) 0, collector.CollectingStride);
         CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
+
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1", ""));
+        CPPUNIT_ASSERT(collector.taskMap.size() == 1);
+        {
+            collector.SetTimeBase(newPeriod, true);
+            CPPUNIT_ASSERT_EQUAL(newPeriod, collector.CollectingPeriod);
+            CPPUNIT_ASSERT_EQUAL((unsigned int) 0, collector.CollectingStride);
+            CPPUNIT_ASSERT(true == collector.TimeOffsetToZero);
+
+            collector.SetTimeBase(newPeriod, false);
+            CPPUNIT_ASSERT_EQUAL((unsigned int) 0, collector.CollectingStride);
+            CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
+        }
     }
-    // Remove a task not to cause potential side-effect during the unit-test process
     CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
 }
 
 void mtsCollectorTest::TestSetTimeBaseInt(void)
 {
+    const unsigned int newStride = 2;
+
+    mtsCollector collector("collector", 10 * cmn_ms);
+
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    CPPUNIT_ASSERT(taskManager);
+
+    mtsCollectorTestTask task1("task1", 10 * cmn_ms);
+    CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+    {
+        // If there is no task registered to mtsTaskManager, SetTimeBase does NOP.   
+        int currentStride = collector.CollectingStride;
+        collector.SetTimeBase((unsigned int) 1, true);
+        CPPUNIT_ASSERT_EQUAL((unsigned int) currentStride, collector.CollectingStride);
+        CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
+
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1", ""));
+        CPPUNIT_ASSERT(collector.taskMap.size() == 1);
+        {
+            collector.SetTimeBase(newStride, true);
+            CPPUNIT_ASSERT_EQUAL(0.0, collector.CollectingPeriod);
+            CPPUNIT_ASSERT_EQUAL(newStride, collector.CollectingStride);
+            CPPUNIT_ASSERT(true == collector.TimeOffsetToZero);
+
+            collector.SetTimeBase(newStride, false);
+            CPPUNIT_ASSERT_EQUAL(0.0, collector.CollectingPeriod);
+            CPPUNIT_ASSERT_EQUAL(newStride, collector.CollectingStride);
+            CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
+        }
+    }
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
+}
+
+void mtsCollectorTest::TestStart(void)
+{
+    const double accuracy = 0.000001;
+    
+    mtsCollector collector("collector", 10 * cmn_ms);    
+    
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStart, accuracy);
+    CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_STOP);
+    CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+        
+    collector.Status = mtsCollector::COLLECTOR_WAIT_START;
+    collector.Start(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStart, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_WAIT_START);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+    }
+    
+    collector.Status = mtsCollector::COLLECTOR_WAIT_STOP;
+    collector.Start(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStart, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_WAIT_STOP);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+    }
+    
+    collector.Status = mtsCollector::COLLECTOR_COLLECTING;
+    collector.Start(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStart, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_COLLECTING);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+    }
+    
+    collector.Status = mtsCollector::COLLECTOR_STOP;
+    collector.Start(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, collector.DelayedStart, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_WAIT_START);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == true);
+    }
+}
+
+void mtsCollectorTest::TestStop(void)
+{
+const double accuracy = 0.000001;
+    
+    mtsCollector collector("collector", 10 * cmn_ms);    
+    
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStop, accuracy);
+    CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_STOP);
+    CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+        
+    collector.Status = mtsCollector::COLLECTOR_WAIT_START;
+    collector.Stop(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStop, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_WAIT_START);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+    }
+    
+    collector.Status = mtsCollector::COLLECTOR_WAIT_STOP;
+    collector.Stop(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStop, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_WAIT_STOP);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+    }
+    
+    collector.Status = mtsCollector::COLLECTOR_STOP;
+    collector.Stop(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStop, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_STOP);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == false);
+    }
+    
+    collector.Status = mtsCollector::COLLECTOR_COLLECTING;
+    collector.Stop(1.0);
+    {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, collector.DelayedStop, accuracy);
+        CPPUNIT_ASSERT(collector.Status == mtsCollector::COLLECTOR_WAIT_STOP);
+        CPPUNIT_ASSERT(collector.Stopwatch.IsRunning() == true);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -286,9 +415,16 @@ void mtsCollectorTest::TestInit(void)
 
         collector.Init();
 
-        CPPUNIT_ASSERT(collector.taskMap.size() == 0);
-        CPPUNIT_ASSERT(false == collector.TimeOffsetToZero);
-        CPPUNIT_ASSERT_EQUAL(0.0, collector.CollectingPeriod);
+        // tests for correct variable initialization        
+        CPPUNIT_ASSERT(collector.taskMap.size()     == 0);
+        CPPUNIT_ASSERT(collector.TimeOffsetToZero   == false);
+        CPPUNIT_ASSERT(collector.Status             == mtsCollector::COLLECTOR_STOP);
+        CPPUNIT_ASSERT_EQUAL((unsigned int) 0, collector.CollectingStride);
+
+        const double accuracy = 0.00001;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStart, accuracy);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.DelayedStop, accuracy);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, collector.CollectingPeriod, accuracy);
     }
     // Remove a task not to cause potential side-effect during the unit-test process
     CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
@@ -325,6 +461,42 @@ void mtsCollectorTest::TestClearTaskMap(void)
     CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
     CPPUNIT_ASSERT(taskManager->RemoveTask(&task2));
     CPPUNIT_ASSERT(taskManager->RemoveTask(&task3));
+}
+
+void mtsCollectorTest::TestCollect(void)
+{
+    osaStopwatch Stopwatch;
+    Stopwatch.Reset();
+    //Stopwatch.Start();
+    
+    // Test Start() -> Collect()
+    //
+    //  Make unit-tests HERE!!!!!!
+    //
+    
+    // Test Stop() -> Collect()
+    //
+    //  Make unit-tests HERE!!!!!!
+    //
+}
+
+void mtsCollectorTest::TestIsAnySignalRegistered(void)
+{
+    mtsCollector collector("collector", 10 * cmn_ms);
+
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    CPPUNIT_ASSERT(taskManager);
+
+    mtsCollectorTestTask task1("task1", 10 * cmn_ms );
+
+    CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+    {
+        CPPUNIT_ASSERT(collector.IsAnySignalRegistered() == false);
+        CPPUNIT_ASSERT(collector.AddSignal("task1", "signal1-1", ""));
+        CPPUNIT_ASSERT(collector.IsAnySignalRegistered() == true);
+    }
+    // Remove a task not to cause potential side-effect during the unit-test process
+    CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsCollectorTest);

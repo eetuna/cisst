@@ -163,11 +163,11 @@ void mtsTaskTest::TestGetSignalCount(void)
 //-----------------------------------------------------------------------------
 void mtsStateTableTest::TestGetStateVectorID(void)
 {
-	const int default_column_count = 3;	// Toc, Tic, Period
+	const int default_column_count = mtsStateTable::StateVectorBaseIDForUser;
 	const int user_column_count = 2;	// Data1, Data2
 	const int total_column_count = default_column_count + user_column_count;
 	
-	const std::string names[total_column_count] = { 
+	const std::string names[10] = {
 		// added by default
 		"Toc", 
 		"Tic", 
@@ -180,10 +180,14 @@ void mtsStateTableTest::TestGetStateVectorID(void)
 	
 	CPPUNIT_ASSERT(default_column_count == StateTable.StateVectorDataNames.size());
 	{
-		StateTable.StateVectorDataNames.push_back("Data1");
-		StateTable.StateVectorDataNames.push_back("Data2");
+		StateTable.StateVectorDataNames.push_back(names[3]);
+		StateTable.StateVectorDataNames.push_back(names[4]);
 	}
 	CPPUNIT_ASSERT(total_column_count == StateTable.StateVectorDataNames.size());
+
+    for (int i = 0; i < total_column_count; ++i) {
+        CPPUNIT_ASSERT(i == StateTable.GetStateVectorID(names[i]));
+    }
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsStateTableTest);
