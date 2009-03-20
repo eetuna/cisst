@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3Cursor.h,v 1.7 2009/02/23 16:55:06 anton Exp $
+  $Id$
 
   Author(s):	Anton Deguet
   Created on:	2009-02-04
@@ -57,11 +57,14 @@ public:
 
     virtual void Set2D(bool is2D);
 
+    virtual void SetClutched(bool clutched);
+
 protected:
     void UpdateColor(void);
 
     bool IsPressed;
     bool Is2D;
+    bool IsClutched;
 };
 
 

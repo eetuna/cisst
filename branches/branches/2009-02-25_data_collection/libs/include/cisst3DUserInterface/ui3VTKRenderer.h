@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3VTKRenderer.h,v 1.8 2009/02/17 06:02:52 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-05-23
@@ -25,9 +25,14 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstVector/vctTransformationTypes.h>
+#include <cisstStereoVision/svlRenderTargets.h>
 
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
+
+#include <vtkUnsignedCharArray.h>
+
 
 /*!
  Class that implements the interface between VTK and the SAW framework.
@@ -42,7 +47,7 @@ public:
     /*!
      Constructor
     */
-    ui3VTKRenderer(void);
+    ui3VTKRenderer(unsigned int width, unsigned int height, double viewangle, vctFrm3 & cameraframe, svlRenderTargetBase* target = 0);
 
     /*!
      Destructor
@@ -51,6 +56,11 @@ public:
 
     void Render(void);
 
+    void SetViewAngle(double angle);
+    double GetViewAngle(void);
+    
+    void SetWindowPosition(int x, int y);
+
     void Add(ui3VisibleObject * object);
 
 private:
@@ -58,6 +68,13 @@ private:
     vtkRenderWindow * RenderWindow;
     vtkRenderWindowInteractor * RenderWindowInteractor;
     vtkCamera * Camera;
+    vtkUnsignedCharArray * OffScreenBuffer;
+
+    unsigned int Width;
+    unsigned int Height;
+    double ViewAngle;
+    vctFrm3 CameraFrame;
+    svlRenderTargetBase* Target;
 };
 
 

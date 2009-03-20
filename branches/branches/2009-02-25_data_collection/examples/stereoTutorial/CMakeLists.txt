@@ -14,4 +14,7 @@
 
 PROJECT(stereoTutorial)
 
-SUBDIRS(example1 example2 example3)
+ADD_SUBDIRECTORY(example1)
+ADD_SUBDIRECTORY(example2)
+ADD_SUBDIRECTORY(example3)
+ADD_SUBDIRECTORY(example4)

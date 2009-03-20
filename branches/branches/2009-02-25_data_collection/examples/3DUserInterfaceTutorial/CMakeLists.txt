@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.3 2009/02/03 21:09:06 anton Exp $
+# $Id$
 #
 
 project(3DUserInterfaceExample)
@@ -16,8 +16,25 @@ else (VTK_FOUND)
     message (FATAL ERROR "VTK not found")
 endif (VTK_FOUND)
 
+IF(CISST_SVL_HAS_OPENCV)
+    # Link each example against the OpenCV library if enabled
+    FIND_PACKAGE(OpenCV)
+    INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+    LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
+ENDIF(CISST_SVL_HAS_OPENCV)
+
+OPTION(HAS_DAVINCI "Build using the daVinci API" OFF)
+IF(HAS_DAVINCI)
+   FIND_PATH(daVinci_INCLUDE_DIRS cisstDaVinciAPI.h)
+   IF(daVinci_INCLUDE_DIRS)
+       INCLUDE_DIRECTORIES(${daVinci_INCLUDE_DIRS})
+   ENDIF(daVinci_INCLUDE_DIRS)
+   FIND_LIBRARY(daVinci_LIBRARIES cisstDaVinciAPI)
+ENDIF(HAS_DAVINCI)
+
 
 add_executable(${PROJECT_NAME}
+               main.cpp
                example1.cpp
                example1.h
                )
@@ -25,11 +42,20 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
                       vtkRendering
                       ${CMAKE_THREAD_LIBS_INIT}
+                      ${OpenCV_LIBRARIES}
+                      ${daVinci_LIBRARIES}
                       )
 
-CISST_REQUIRES(${PROJECT_NAME} "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstImage;cisstStereoVision;cisstDevices;cisstParameterTypes;cisst3DUserInterface")
+IF(UNIX)
+    # Link each executable against the X11 library
+    FIND_PACKAGE(X11 REQUIRED)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${X11_LIBRARIES})
 
-# IF(WIN32)
-#  set(CMAKE_EXE_LINKER_FLAGS
-#      "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib")
-# ENDIF(WIN32)
+    IF(CISST_SVL_HAS_LIBDC1394)
+        # Also link the examples using live camera source against the DC1394 library if enabled
+        TARGET_LINK_LIBRARIES(${PROJECT_NAME} dc1394)
+    ENDIF(CISST_SVL_HAS_LIBDC1394)
+ENDIF(UNIX)
+
+
+CISST_REQUIRES(${PROJECT_NAME} "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstImage;cisstStereoVision;cisstDevices;cisstParameterTypes;cisst3DUserInterface")

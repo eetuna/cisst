@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3MenuButton.h,v 1.2 2009/02/17 04:14:11 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-05-23
@@ -51,8 +51,6 @@ public:
     ui3MenuButton(const std::string & description, const std::string & iconFile,
                   void (_classType::*action)(void), _classType * classInstantiation,
                   double buttonSize):
-        Handle(0),
-        ActorHandle(0),
         CheckButton(false),
         Position(0.0, 0.0, 0.0),
         CheckState(false),
@@ -91,20 +89,6 @@ public:
     bool CreateVTKObjects(void);
 
     vtkProp3D * GetVTKProp(void);
-
-    /*!
-     Returns the control handle of the button.
-
-     \return                Control handle
-    */
-    virtual ui3Handle GetHandle();
-
-    /*!
-     Returns the handle of the VTK actor created for the button.
-
-     \return                VTK actor handle
-    */
-    virtual ui3Handle GetActorHandle();
 
     /*!
      Sets the checked state of the check button.
@@ -195,14 +179,6 @@ protected:
      Flag indicates enable state: true=enabled, false=disabled.
     */
     bool EnableState;
-    /*!
-     Control handle of the button.
-    */
-    ui3Handle Handle;
-    /*!
-     Handle of the VTK actor created for the button.
-    */
-    ui3Handle ActorHandle;
 
     vtkBMPReader * BMPReader;
     vtkTexture * Texture;
@@ -222,3 +198,4 @@ protected:
 
 
 #endif // _ui3MenuButton_h
+

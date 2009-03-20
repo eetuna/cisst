@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3BehaviorBase.h,v 1.15 2009/02/24 02:43:13 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-05-23
@@ -24,9 +24,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsTaskContinuous.h>
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsStateData.h>
 #include <cisstParameterTypes/prmPositionCartesianGet.h>
 #include <cisstParameterTypes/prmEventButton.h>
-
+#include <cisstStereoVision/svlStreamManager.h>
 
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3InputDeviceBase.h>
@@ -41,6 +42,7 @@ class ui3BehaviorBase: public mtsTaskContinuous
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
     friend class ui3Manager;
+    friend class ui3VideoInterfaceFilter;
 
 private:
     void Run(void);
@@ -55,9 +57,9 @@ public:
       Enumerated behavior states
     */
     typedef enum {
-        Foreground,
-        Background,
-        Idle
+        Foreground, // running, receives GUI events
+        Background, // running, doesn't receive events
+        Idle // not running 
     } StateType;
     
 public:
@@ -179,55 +181,6 @@ protected:
      Stores user interface buttons.
     */
     ui3MenuBar * MenuBar;
-    /*!
-     Maps control handles to callback methods.
-    */
-    std::map<ui3Handle, ControlCallbackType> CallbackMap;
-
-    /*!
-     Assigns a callback method for the specified control handle.
-
-     \param ctrlhandle          Handle of the control (button) on the menu bar
-     \param method              Specifies the vertical screen coordinate
-    */
-    virtual void RegisterCallback(ui3Handle ctrlhandle, ControlCallbackType method);
-
-    /*!
-     Removes a callback method association for the specified control handle.
-
-     \param ctrlhandle          Handle of the control (button) on the menu bar
-    */
-    virtual void UnregisterCallback(ui3Handle ctrlhandle);
-
-    /*!
-     Enables input action callbacks or the specified input device.
-
-     \param inputid             Input device identifier
-    */
-    virtual void SubscribeInputCallback(unsigned int inputid);
-
-    /*!
-     Disables input action callbacks for the specified input device.
-
-     \param inputid             Input device identifier
-    */
-    virtual void UnsubscribeInputCallback(unsigned int inputid);
-
-    /*!
-     This method is called automatically by ui3BehaviorBase::DispatchGUIEvents
-     if any input actions occur that the application previously subscribed for
-     using the ui3BehaviorBase::SubscribeInputCallback method.
-
-     \param inputid             Input device identifier
-     \param action              Action identifier
-    */
-    virtual void OnInputAction(unsigned int inputid, ui3InputDeviceBase::InputAction action);
-
-    /*!
-     Automatically interprets relevant UI events and calls registered callback
-     methods if needed.
-    */
-    virtual void DispatchGUIEvents(void);
 
     /*! Method called when this behavior becomes active, i.e. the user selected it from the previous menu */
     void SetStateForeground(void);
@@ -235,9 +188,63 @@ protected:
 
 protected:
 
+    /*!
+     If there are any video sources connected to the behavior, this method is
+     called by SVL pipelines every time a new stream sample arrives.
+     Attention:
+      This method is heavily multithreaded. It is used by all asynchronous
+      streams attached to the behavior. It may be called from several
+      independent stream threads simultaneously.
+    */
+    virtual void OnStreamSample(svlSample* sample, int streamindex);
+
+    /*!
+     Adds a new SVL source interface to the behavior and
+     returns the stream index for the new interface.
+    */
+    int AddStream(svlStreamType type, const std::string & streamname);
+
+    /*!
+     Returns image width if the specified stream is of image type.
+     Otherwise or if the SVL pipeline is not yet initialized,
+     the return value is 0.
+    */
+    unsigned int GetStreamWidth(const int streamindex, unsigned int channel = 0);
+    unsigned int GetStreamWidth(const std::string & streamname, unsigned int channel = 0);
+
+    /*!
+     Returns image height if the specified stream is of image type.
+     Otherwise or if the SVL pipeline is not yet initialized,
+     the return value is 0.
+    */
+    unsigned int GetStreamHeight(const int streamindex, unsigned int channel = 0);
+    unsigned int GetStreamHeight(const std::string & streamname, unsigned int channel = 0);
+
+    /*!
+     Returns the index of the first stream named as the specified string.
+     If no matching stream is found, the return value is negative.
+    */
+    int GetStreamIndexFromName(const std::string & streamname);
+
+    vctDynamicVector<ui3VideoInterfaceFilter*> Streams;
+    vctDynamicVector<std::string> StreamNames;
+
+public:
+    /*!
+     Returns a pointer to the filter that interfaces the behavior
+     with StereoVision pipelines. Using the its pointer, the filter
+     can be connected to a pipeline.
+    */
+    svlFilterBase* GetStreamSamplerFilter(const std::string & streamname);
+
+protected:
+
     void AddMenuBar(bool isManager = false);
 
     void SetState(const StateType & newState);
+
+    virtual void RightMasterButtonCallback(const prmEventButton & event);
+    virtual void LeftMasterButtonCallback(const prmEventButton & event);
 
     /*!
      State variable for storing the current UI state of the behavior.
@@ -248,6 +255,12 @@ protected:
      This member is set by the UI manager upon creating the behavior.
     */
     ui3Manager * Manager;
+
+    mtsFunctionRead RightMasterPositionFunction, LeftMasterPositionFunction;
+
+private:
+    /*! Event triggers, used by ui3Manager only */
+    mtsFunctionWrite RightMasterButtonEvent, LeftMasterButtonEvent;
 };
 
 

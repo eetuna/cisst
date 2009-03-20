@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3Manager.h,v 1.13 2009/02/24 14:58:26 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-05-23
@@ -26,8 +26,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3BehaviorBase.h>
 #include <cisst3DUserInterface/ui3SceneManager.h>
 #include <cisst3DUserInterface/ui3VTKRenderer.h>
-#include <cisst3DUserInterface/ui3VideoSourceBase.h>
 #include <cisst3DUserInterface/ui3Cursor.h>
+#include <cisst3DUserInterface/ui3ImagePlane.h>
+
 
 /*!
  Provides a default implementation for the main user interface manager.
@@ -74,7 +75,7 @@ public:
      \return                Success flag: true=success, false=error
     */
     // more parameters needed for setting up the input device
-    virtual bool SetupVideoSource(const std::string& calibfile);
+//    virtual bool SetupVideoSource(const std::string& calibfile);
 
     /*!
      Configures the connection between the UI manager and the input device(s) .
@@ -83,25 +84,34 @@ public:
      \param configfile      Input device configuration file
      \return                Success flag: true=success, false=error
     */
-    virtual bool SetupRightMaster(mtsDevice * device, const std::string & providedInterface,
-                                  vctFrm3 & transformation, double scale = 1.0);
-
-    virtual bool SetupRightMasterButton(mtsDevice * device, const std::string & providedInterface);
-
-    virtual bool SetupLeftMaster(mtsDevice * device, const std::string & providedInterface,
-                                 vctFrm3 & transformation, double scale = 1.0);
-
-    virtual bool SetupLeftMasterButton(mtsDevice * device, const std::string & providedInterface);
+    virtual bool SetupRightMaster(mtsDevice * positionDevice, const std::string & positionInterface,
+                                  mtsDevice * buttonDevice, const std::string & buttonInterface,
+                                  mtsDevice * clutchDevice, const std::string & clutchInterface,
+                                  const vctFrm3 & transformation = vctFrm3::Identity(),
+                                  double scale = 1.0);
+                                 
+    virtual bool SetupLeftMaster(mtsDevice * positionDevice, const std::string & positionInterface,
+                                 mtsDevice * buttonDevice, const std::string & buttonInterface,
+                                 mtsDevice * clutchDevice, const std::string & clutchInterface,
+                                 const vctFrm3 & transformation = vctFrm3::Identity(),
+                                 double scale = 1.0);
+                                 
+    virtual bool SetupMaM(mtsDevice * mamDevice, const std::string & mamInterface);
 
     /*!
-     Configures the image display.
-
-     \param width           Display window width
-     \param height          Display window height
-     \param mode            Display mode: mono mode or one of the stereo modes
-     \return                Success flag: true=success, false=error
+     Adds a render window to the UI Manager.
     */
-    virtual bool SetupDisplay(unsigned int width, unsigned int height, DisplayMode mode);
+    virtual bool AddRenderer(unsigned int width, unsigned int height, int x, int y, vctFrm3 & cameraframe, double viewangle, const std::string & renderername);
+
+    /*!
+     Assigns an external render target for the renderer.
+    */
+    virtual bool SetRenderTargetToRenderer(const std::string & renderername, svlRenderTargetBase* rendertarget);
+
+    /*!
+     Assigns a video backgrond to a render window.
+    */
+    virtual bool AddVideoBackgroundToRenderer(const std::string & renderername, const std::string & streamname, unsigned int videochannel = 0);
 
     /*! Returns a pointer to the main user interface manager object,
      i.e. this object.
@@ -134,37 +144,6 @@ public:
     virtual bool SaveConfiguration(const std::string & configFile) const;
 
     /*!
-     Returns a flag signaling whether the application is in
-     interface/interaction/input/master-as-mouse mode.
-     
-     \return                User interface/interaction/input/master-as-mouse mode flag
-    */
-    bool IsInUIMode(void) const;
-
-    /*!
-     Returns the current position of the pointer.
-
-     \param inputid         Input device identifier
-     \return                3D Cartesian coordinates of the pointer in camera frame
-    */
-    vct3 GetPointerPosition(unsigned int inputId) const;
-
-    /*!
-     Returns the current position of the cursor.
-
-     \note
-     The cursor is usually rendered at the same position as the pointer, however
-     the UI manager or the behavior are allowed to remap cursor rendering coordinates
-     for special scenarios.
-     For the sake of simplicity, when in tele-operated mode, theis function returns
-     the pointer positions although the cursor will not be rendered by default.
-
-     \param inputid         Input device identifier
-     \return                3D Cartesian coordinates of the cursor in camera frame
-    */
-    vct3 GetCursorPosition(unsigned int inputId) const;
-
-    /*!
      Adds a behavior to the behavior list. The corresponding icon file has to
      contain images for all behavior states on a single bitmap.
      The method also sets the ui3BehaviorBase::Manager and the
@@ -179,9 +158,9 @@ public:
      \param iconfile        Image file storing all the behavior states on a singe bitmap.
      \return                Unique handle assigned to the behavior
     */
-    virtual ui3Handle AddBehavior(ui3BehaviorBase * behavior,
-                                  unsigned int position,
-                                  const std::string & iconfile);
+    virtual bool AddBehavior(ui3BehaviorBase * behavior,
+                             unsigned int position,
+                             const std::string & iconfile);
 
     /*!
      Initializes all registered behaviors, starts the user interface thread,
@@ -193,13 +172,6 @@ public:
      \return                Success flag: true=success, false=error
     */
     virtual void Startup(void);
-
-    /*!
-     Terminates the running user interface main loop started earlier by calling the
-     ui3Manager::Start method. It first stops the executing thread then releases
-     the registered behaviors.
-    */
-    // virtual void Stop(void);
 
     /*!
      Called by the main user interface thread. Should not be called directly by
@@ -251,6 +223,24 @@ public:
     virtual bool RunNoInput(void);
 
 
+protected:
+
+    typedef struct tagRendererStruct {
+        unsigned int width;
+        unsigned int height;
+        int windowposx;
+        int windowposy;
+        vctFrm3 cameraframe;
+        double viewangle;
+        std::string name;
+        ui3VTKRenderer* renderer;
+        svlRenderTargetBase* rendertarget;
+        int streamindex;
+        unsigned int streamchannel;
+        ui3ImagePlane* imageplane;
+    } _RendererStruct;
+
+
 private:
 
     inline ui3VisibleObject * GetVisibleObject(void) {
@@ -263,12 +253,6 @@ private:
     }
 
     void SetActiveBehavior(ui3BehaviorBase * newBehavior);
-
-    /*!
-     Flag signaling whether the application is in user
-     interface/interaction/input/master-as-mouse mode.
-    */
-    bool UIMode;
 
     /*!
      Flag signalling whether the user interface loop has been successfully initialized.
@@ -291,21 +275,21 @@ private:
      Scene manager object that maintains the consistency and thread safety of 3D scene.
     */
     ui3SceneManager * SceneManager;
-    
+
     /*!
      Input device interface module. (???)
     */
     ui3InputDeviceBase InputDevice;
 
     /*!
-     VTK 3D graphics renderer module. (???)
+     3D graphics renderer modules.
     */
-    ui3VTKRenderer * Renderer;
+    vctDynamicVector<_RendererStruct*> Renderers;
 
     /*!
-     Video capture module. (???)
+     Background video stream event callback.
     */
-    ui3VideoSourceBase VideoSource;
+    void OnStreamSample(svlSample* sample, int streamindex);
 
     /*! Keep a pointer on singleton task manager to make it easier to access */
     mtsTaskManager * TaskManager;
@@ -313,10 +297,18 @@ private:
     // functions which will be bound to commands
     mtsFunctionRead RightMasterGetCartesianPosition;
     mtsFunctionRead LeftMasterGetCartesianPosition;
-    
+
     // event handlers
     void RightMasterButtonEventHandler(const prmEventButton & buttonEvent);
     void LeftMasterButtonEventHandler(const prmEventButton & buttonEvent);
+    void RightMasterClutchEventHandler(const prmEventButton & buttonEvent);
+    void LeftMasterClutchEventHandler(const prmEventButton & buttonEvent);
+    void EnterMaMModeEventHandler(void);
+    void LeaveMaMModeEventHandler(void);
+
+    // hide/show all objects controlled by the ui3Manager
+    void HideAll(void);
+    void ShowAll(void);
 
     // cursors
     ui3Cursor * RightCursor;
@@ -326,13 +318,31 @@ private:
     bool RightButtonPressed, RightButtonReleased;
     bool LeftButtonPressed, LeftButtonReleased;
 
-    // transformation between inputs and scen
+    // MaM (MastersAsMice) mode
+    bool MaM;
+public:
+    inline bool MastersAsMice(void) const {
+        return this->MaM;
+    }
+private:
+
+    // transformation between inputs and scene
     vctFrm3 RightTransform;
     vctFrm3 LeftTransform;
+
+    // positions in the state table, for behaviors to read
+    mtsStateData<prmPositionCartesianGet> RightMasterPosition, LeftMasterPosition; 
+
+    // arm clutch
+    bool RightMasterClutch;
+    bool LeftMasterClutch;
 
     // scale
     double RightScale;
     double LeftScale;
+
+    bool RightMasterExists;
+    bool LeftMasterExists;
 };
 
 

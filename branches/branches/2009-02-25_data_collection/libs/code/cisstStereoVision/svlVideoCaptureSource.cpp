@@ -58,6 +58,10 @@ http://www.cisst.org/cisst/license.txt.
 #include "vidOCVSource.h"
 #endif // CISST_SVL_HAS_OPENCV
 
+#if (CISST_SVL_HAS_MIL == ON)
+#include "vidMILDevice.h"
+#endif // CISST_SVL_HAS_MIL
+
 using namespace std;
 
 #define MAX_PROPERTIES_BUFFER_SIZE      65536
@@ -104,6 +108,9 @@ svlVideoCaptureSource::svlVideoCaptureSource(bool stereo) :
 #if (CISST_SVL_HAS_OPENCV == ON)
     NumberOfSupportedAPIs ++;
 #endif // CISST_SVL_HAS_OPENCV
+#if (CISST_SVL_HAS_MIL == ON)
+    NumberOfSupportedAPIs ++;
+#endif // CISST_SVL_HAS_MIL
 
     // Allocate capture API handler array
     DeviceObj = new CVideoCaptureSourceBase*[NumberOfSupportedAPIs];
@@ -199,6 +206,15 @@ int svlVideoCaptureSource::Initialize(svlSample* inputdata)
             }
 #endif // CISST_SVL_HAS_DIRECTSHOW
         }
+        else if (platform == MatroxImaging) {
+#if (CISST_SVL_HAS_MIL == ON)
+            // Check if Matrox device supports capture
+            if (dynamic_cast<CMILDevice*>(DeviceObj[API[i]])->EnableCapture(APIDeviceID[i]) == false) {
+                ret = SVL_VCS_UNABLE_TO_OPEN;
+                goto labError;
+            }
+#endif // CISST_SVL_HAS_MIL
+        }
         else {
             if (Format[i]) DeviceObj[API[i]]->SetFormat(Format[i][0], APIChannelID[i]);
         }
@@ -278,7 +294,15 @@ int svlVideoCaptureSource::Release()
 {
     for (unsigned int i = 0; i < NumberOfSupportedAPIs; i ++) {
         if (DeviceObj[i]) {
-            delete DeviceObj[i];
+            if (DeviceObj[i]->GetPlatformType() == MatroxImaging) {
+#if (CISST_SVL_HAS_MIL == ON)
+                // Object is a singleton, should not be deleted
+                dynamic_cast<CMILDevice*>(DeviceObj[i])->Release();
+#endif // CISST_SVL_HAS_MIL
+            }
+            else {
+                delete DeviceObj[i];
+            }
             DeviceObj[i] = 0;
         }
     }
@@ -355,6 +379,17 @@ int svlVideoCaptureSource::CreateCaptureAPIHandlers()
         }
         j ++;
 #endif // CISST_SVL_HAS_OPENCV
+#if (CISST_SVL_HAS_MIL == ON)
+        if (EnumeratedDevices[DeviceID[i]].platform == MatroxImaging) {
+            // getting API specific device and channel IDs
+            APIDeviceID[i] = EnumeratedDevices[DeviceID[i]].id;
+            APIChannelID[i] = chperapi[j];
+
+            API[i] = j;
+            chperapi[j] ++;
+        }
+        j ++;
+#endif // CISST_SVL_HAS_MIL
     }
 
     // Instantiate capture device handlers and
@@ -395,6 +430,13 @@ int svlVideoCaptureSource::CreateCaptureAPIHandlers()
     }
     j ++;
 #endif // CISST_SVL_HAS_OPENCV
+#if (CISST_SVL_HAS_MIL == ON)
+    if (chperapi[j] > 0) {
+        DeviceObj[j] = CMILDevice::GetInstance();
+        if (DeviceObj[j]->SetStreamCount(chperapi[j]) != SVL_OK) goto labError;
+    }
+    j ++;
+#endif // CISST_SVL_HAS_MIL
 
     ret = SVL_OK;
 
@@ -909,6 +951,22 @@ int svlVideoCaptureSource::GetDeviceList(DeviceInfo **deviceinfolist, bool updat
         }
         j ++;
 #endif // CISST_SVL_HAS_OPENCV
+#if (CISST_SVL_HAS_MIL == ON)
+        apideviceinfos[j] = 0;
+        apidevicecounts[j] = 0;
+        CMILDevice *mildevice = CMILDevice::GetInstance();
+        if (mildevice) {
+            apidevicecounts[j] = mildevice->GetDeviceList(&(apideviceinfos[j]));
+            if (apidevicecounts[j] > 0) {
+                apiformats[j] = new ImageFormat*[apidevicecounts[j]];
+                apiformatcounts[j] = new int[apidevicecounts[j]];
+                for (i = 0; i < apidevicecounts[j]; i ++)
+                    apiformatcounts[j][i] = mildevice->GetFormatList(i, &(apiformats[j][i]));
+            }
+            if (apidevicecounts[j] > 0) NumberOfEnumeratedDevices += apidevicecounts[j];
+        }
+        j ++;
+#endif // CISST_SVL_HAS_MIL
 
         if (NumberOfEnumeratedDevices > 0) {
             // Allocate the ONE device info array

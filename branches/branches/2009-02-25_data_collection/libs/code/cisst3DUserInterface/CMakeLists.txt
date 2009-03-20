@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.6 2009/02/17 22:00:10 anton Exp $
+# $Id$
 #
 # CMakeLists for cisst3DUserInterface
 #
@@ -17,6 +17,16 @@
 # set the library name
 SET(LIBRARY cisst3DUserInterface)
 
+# set dependencies
+SET(DEPENDENCIES
+    cisstCommon
+    cisstVector
+    cisstOSAbstraction
+    cisstStereoVision
+    cisstMultiTask
+    cisstParameterTypes
+    )
+
 # Find VTK settings
 FIND_PACKAGE(VTK REQUIRED)
 IF(NOT VTK_USE_RENDERING)
@@ -24,9 +34,18 @@ IF(NOT VTK_USE_RENDERING)
 ENDIF(NOT VTK_USE_RENDERING)
 INCLUDE(${VTK_USE_FILE})
 
+IF(CISST_SVL_HAS_OPENCV)
+    # Link each example against the OpenCV library if enabled
+    FIND_PACKAGE(OpenCV)
+    INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+    #LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
+    #TARGET_LINK_LIBRARIES(stereoTutorialSimpleStream ${OpenCV_LIBRARIES})
+ENDIF(CISST_SVL_HAS_OPENCV)
+
 # all source files
 SET(SOURCE_FILES
     ui3BehaviorBase.cpp
+    ui3ImagePlane.cpp
     ui3Cursor.cpp
     ui3InputDeviceBase.cpp
     ui3Manager.cpp
@@ -34,7 +53,7 @@ SET(SOURCE_FILES
     ui3MenuButton.cpp
     ui3SceneManager.cpp
     ui3VTKRenderer.cpp
-    ui3VideoSourceBase.cpp
+    ui3VideoInterfaceFilter.cpp
     ui3VisibleObject.cpp
     )
 
@@ -42,6 +61,7 @@ SET(SOURCE_FILES
 SET(HEADER_FILES
     ui3ForwardDeclarations.h
     ui3BehaviorBase.h
+    ui3ImagePlane.h
     ui3Cursor.h
     ui3InputDeviceBase.h
     ui3Manager.h
@@ -50,11 +70,21 @@ SET(HEADER_FILES
     ui3SceneManager.h
     ui3VTKRenderer.h
     ui3VTKForwardDeclarations.h
-    ui3VideoSourceBase.h
+    ui3VideoInterfaceFilter.h
     ui3VisibleObject.h
     )
+
+# Linux specific VTK off-screen rendering helper class
+IF(UNIX)
+    IF(CMAKE_SYSTEM_NAME MATCHES Linux)
+        SET(SOURCE_FILES
+            ${SOURCE_FILES}
+            vtkXOpenGLOffScreenRenderWindow.cxx
+            vtkXOpenGLOffScreenRenderWindow.h     #private header
+            )
+    ENDIF(CMAKE_SYSTEM_NAME MATCHES Linux)
+ENDIF(UNIX)
 
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
-CISST_REQUIRES(cisst3DUserInterface "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision;cisstMultiTask")

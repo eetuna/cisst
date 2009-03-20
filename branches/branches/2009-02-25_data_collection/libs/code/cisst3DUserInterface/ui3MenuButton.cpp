@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3MenuButton.cpp,v 1.3 2009/02/17 06:02:52 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-06-10
@@ -80,16 +80,6 @@ vtkProp3D * ui3MenuButton::GetVTKProp(void)
 }
 
 
-ui3Handle ui3MenuButton::GetHandle()
-{
-    return Handle;
-}
-
-ui3Handle ui3MenuButton::GetActorHandle()
-{
-    return ActorHandle;
-}
-
 void ui3MenuButton::SetCheck(bool state)
 {
 }
@@ -153,3 +143,4 @@ bool ui3MenuButton::IsCursorOver(const vct2 & cursor2D)
     return (cursor2D.GreaterOrEqual(this->BottomLeft2D)
             && cursor2D.LesserOrEqual(this->TopRight2D));
 }
+

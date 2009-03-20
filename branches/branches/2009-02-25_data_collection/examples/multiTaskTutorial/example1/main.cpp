@@ -57,6 +57,7 @@ int main(void)
 	//taskManager->AddTask(collector2);
 #endif
 
+    taskManager->AddTask(displayTaskObject);
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
 
@@ -72,7 +73,7 @@ int main(void)
 
     // wait until the close button of the UI is pressed
     while (1) {
-		osaSleep( 10 * cmn_ms );	// to avoid CPU consumption for doing nothing
+        osaSleep(100.0 * cmn_ms); // sleep to save CPU
         if (displayTaskObject->GetExitFlag()) {
             break;
         }

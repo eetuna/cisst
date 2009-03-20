@@ -23,7 +23,7 @@ SET(DEPENDENCIES
     cisstOSAbstraction
     cisstVector
     cisstImage
-    cisstNumerical)
+    )
 
 # all source files
 SET(SOURCE_FILES
@@ -43,6 +43,7 @@ SET(SOURCE_FILES
     svlVideoFileWriter.cpp
     svlImageFileSource.cpp
     svlImageFileWriter.cpp
+    svlRenderTargets.cpp
     svlDummySource.cpp
     svlDeinterlacer.cpp
     ipDeinterlacing.h              # private header
@@ -69,12 +70,6 @@ SET(SOURCE_FILES
     svlImageFlipRotate.cpp
     # Trackers
     trackers/msbruteforce/svlTrackerMSBruteForce.cpp
-    trackers/cisst/svlTrackerCisst.cpp
-    trackers/cisst/trkCisstWSSD.h      # private header
-    trackers/cisst/trkCisstWSSD.cpp
-    trackers/cisst/trkCisstNCC.h       # private header
-    trackers/cisst/trkCisstNCC.cpp
-    trackers/cisst/trkCisstBase.h      # private header
     )
 
 # all header files
@@ -91,6 +86,7 @@ SET(HEADER_FILES
     svlVideoFileWriter.h
     svlImageFileSource.h
     svlImageFileWriter.h
+    svlRenderTargets.h
     svlDummySource.h
     svlDeinterlacer.h
     svlComputationalStereo.h
@@ -108,9 +104,30 @@ SET(HEADER_FILES
     svlStereoImageJoiner.h
     svlImageFlipRotate.h
 # Trackers
-    trackers/svlTrackerCisst.h
     trackers/svlTrackerMSBruteForce.h
     )
+
+
+# cisstNumerical dependency
+OPTION(CISST_SVL_USE_NUMERICAL "cisstStereoVision to use cisstNumerical" OFF)
+IF(CISST_SVL_USE_NUMERICAL)
+  SET(DEPENDENCIES
+      cisstNumerical
+      )
+  SET(SOURCE_FILES
+      # Trackers
+      trackers/cisst/svlTrackerCisst.cpp
+      trackers/cisst/trkCisstWSSD.h      # private header
+      trackers/cisst/trkCisstWSSD.cpp
+      trackers/cisst/trkCisstNCC.h       # private header
+      trackers/cisst/trkCisstNCC.cpp
+      trackers/cisst/trkCisstBase.h      # private header
+      )
+  SET(HEADER_FILES
+      # Trackers
+      trackers/svlTrackerCisst.h
+      )
+ENDIF(CISST_SVL_USE_NUMERICAL)
 
 
 # OpenCV
@@ -138,6 +155,35 @@ IF(CISST_SVL_HAS_OPENCV)
 ENDIF(CISST_SVL_HAS_OPENCV)
 
 
+# TO DO: add windows support
+IF(UNIX)
+
+# Matrox Imaging Library
+OPTION(CISST_SVL_HAS_MIL "Compile MIL extensions" OFF)
+IF(CISST_SVL_HAS_MIL)
+  FIND_PATH(CISST_SVL_MIL_INCLUDE
+            NAMES mil.h
+            PATHS "/opt/matrox_imaging/mil/include"
+            )
+  INCLUDE_DIRECTORIES(${CISST_SVL_MIL_INCLUDE})
+  FIND_LIBRARY(CISST_SVL_MIL_LIBRARY
+               NAMES mil
+               PATHS "/opt/matrox_imaging/mil/lib"
+               )
+  LINK_LIBRARIES(${CISST_SVL_MIL_LIBRARY})
+
+  SET(SOURCE_FILES
+      ${SOURCE_FILES}
+      vidMILDevice.h        # private header
+      vidMILDevice.cpp
+      )
+ENDIF(CISST_SVL_HAS_MIL)
+
+ELSE(UNIX)
+  SET(CISST_SVL_HAS_MIL "OFF" CACHE INTERNAL "SVL Has MIL")
+ENDIF(UNIX)
+
+
 # Windows specific
 IF(WIN32)
   # generic windows specific files
@@ -161,29 +207,11 @@ IF(WIN32)
     FIND_PACKAGE(DirectShow)
     INCLUDE_DIRECTORIES(${DIRECTSHOW_INCLUDE_DIR} ${DIRECTX_INCLUDE_DIR})
 
-    # Find samples and compiled samples
-    SET(CISST_SVL_DS_SDK_DIR "C:/Program Files/Microsoft Platform SDK for Windows Server 2003 R2/Samples")
-    FIND_PATH(CISST_SVL_DS_CROSSBAR_PATH 
-              NAMES crossbar.h
-              PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/Capture/AMCap")
-    FIND_FILE(CISST_SVL_DS_CROSSBAR_OBJ
-              NAMES crossbar.obj
-              PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/Capture/AMCap/XP32_RETAIL")
-    CONFIGURE_FILE(${CISST_SVL_DS_CROSSBAR_OBJ}
-                   ${CMAKE_CURRENT_SOURCE_DIR}/crossbar-copy.obj COPYONLY)
-    FIND_PATH(CISST_SVL_DS_BASECLASSES_PATH 
-              NAMES streams.h
-              PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/BaseClasses")
-    FIND_LIBRARY(CISST_SVL_DS_strmbase_LIB
-                 NAMES strmbase
-                 PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/BaseClasses/XP32_RETAIL")
-
-    INCLUDE_DIRECTORIES(${CISST_SVL_DS_CROSSBAR_PATH} ${CISST_SVL_DS_BASECLASSES_PATH})
-
     SET(SOURCE_FILES
         ${SOURCE_FILES}
-	    crossbar-copy.obj       # hack, file copied from SDK sample directory as CMake doesn't allow absolute paths
-        vidDirectShowSource.h   # private header
+        vidDirectShowInputSelector.h    # private header
+        vidDirectShowInputSelector.cpp
+        vidDirectShowSource.h           # private header
         vidDirectShowSource.cpp
         )
 

@@ -16,11 +16,9 @@ displayTask::displayTask(const std::string & taskName, double period):
     mtsRequiredInterface * requiredInterface = AddRequiredInterface("Robot");
 	if (requiredInterface) {
         // bound the mtsFunction to the command provided by the interface 
-        requiredInterface->AddFunction("GetPosition", GetCartesianPosition, mtsRequired);
-        requiredInterface->AddFunction("GetVelocity", GetCartesianVelocity, mtsOptional);
+        requiredInterface->AddFunction("GetPositionCartesian", GetCartesianPosition, mtsRequired);
+        requiredInterface->AddFunction("GetVelocityCartesian", GetCartesianVelocity, mtsOptional);
         requiredInterface->AddFunction("GetPositionJoint", GetJointPosition, mtsOptional);
-        requiredInterface->AddEventHandlerWrite(&displayTask::Button1EventHandler, this,
-                                                "Buttons", prmEventButton());
     }
     // to communicate with the interface of the resource
     requiredInterface = AddRequiredInterface("Button1");
@@ -132,7 +130,7 @@ void displayTask::Run(void)
 
 void displayTask::Button1EventHandler(const prmEventButton & buttonEvent)
 {
-    if (buttonEvent.Type() == prmEventButton::CLICKED) {
+    if (buttonEvent.Type() == prmEventButton::PRESSED) {
         UI.Button1->value(true);
     } else {
         UI.Button1->value(false);
@@ -141,7 +139,7 @@ void displayTask::Button1EventHandler(const prmEventButton & buttonEvent)
 
 void displayTask::Button2EventHandler(const prmEventButton & buttonEvent)
 {
-    if (buttonEvent.Type() == prmEventButton::CLICKED) {
+    if (buttonEvent.Type() == prmEventButton::PRESSED) {
         UI.Button2->value(true);
     } else {
         UI.Button2->value(false);
