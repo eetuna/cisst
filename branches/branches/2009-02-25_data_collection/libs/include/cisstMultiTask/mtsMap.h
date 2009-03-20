@@ -49,48 +49,27 @@ http://www.cisst.org/cisst/license.txt.
 template <class _ItemType>
 class mtsMap {
 public:
-    typedef std::map<std::string, _ItemType *> MapType;
-
+  typedef std::map<std::string, _ItemType *> MapType;
 protected:
-    MapType Map;
-    std::string MapName;
-
+  MapType Map;
+  std::string MapName;
 public:
-<<<<<<< .working
-    mtsMap() : Map(), MapName("???") {}
-    mtsMap(const std::string & mapName) : Map(), MapName(mapName) {}
-    ~mtsMap() {}
-
-    bool AddItem(const std::string & name, _ItemType * item, cmnLogger::LoDType lod = 99);
-    bool RemoveItem(const std::string & name, cmnLogger::LoDType lod = 99);
-    _ItemType *GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
-  
-    std::vector<std::string> GetNames() const;
-    const MapType &GetMap() const   { return Map; }
-    MapType &GetMap()               { return Map; }
-    const int GetCount()            { return Map.size(); }
-  
-    void ToStream(std::ostream & outputStream) const;
-    void Cleanup(void);  // needed?
-  
-    // free all memory
-    void DeleteAll(void);
-=======
   mtsMap() : Map(), MapName("???") {}
   mtsMap(const std::string & mapName) : Map(), MapName(mapName) {}
   ~mtsMap() {}
   bool AddItem(const std::string & name, _ItemType * item, cmnLogger::LoDType lod = 99);
+  bool RemoveItem(const std::string & name, cmnLogger::LoDType lod = 99);
   _ItemType *GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
   std::vector<std::string> GetNames() const;
   typedef void (_ItemType::*VoidFuncPtr)(void);
   void ForEachVoid(VoidFuncPtr f);
   const MapType &GetMap() const { return Map; }
-  MapType &GetMap() { return Map; }
+  MapType &GetMap() { return Map; }  
   void ToStream(std::ostream & outputStream) const;
   void Cleanup(void) { ForEachVoid(&_ItemType::Cleanup); }  // needed?
+  const int GetCount() { return Map.size(); }
   // free all memory
   void DeleteAll(void);
->>>>>>> .merge-right.r187
 };
 
 template <class _ItemType>
