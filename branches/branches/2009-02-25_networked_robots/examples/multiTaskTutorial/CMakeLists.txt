@@ -17,7 +17,7 @@ PROJECT(multiTaskTutorial)
 # Threads for cisstOSAbstraction
 FIND_PACKAGE(Threads REQUIRED)
 
-SUBDIRS(example1 example2 example3 example6)
+SUBDIRS(example1 example2 example3 example6 example1-2)
 IF(CISST_HAS_SWIG_PYTHON)
   SUBDIRS(example4 example5)
 ENDIF(CISST_HAS_SWIG_PYTHON)
