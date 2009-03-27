@@ -17,13 +17,13 @@
 
 # all source files
 SET(SOURCE_FILES
-    mtsTaskProxyTest.cpp
+    #mtsTaskProxyTest.cpp
     mtsTaskManagerTest.cpp
     )
 
 # all header files
 SET(HEADER_FILES
-    mtsTaskProxyTest.h
+    #mtsTaskProxyTest.h
     mtsTaskManagerTest.h
     )
 
