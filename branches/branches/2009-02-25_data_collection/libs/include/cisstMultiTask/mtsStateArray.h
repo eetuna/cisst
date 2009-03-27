@@ -30,7 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnLogger.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstMultiTask/mtsStateArrayBase.h>
-#include <cisstMultiTask/mtsVector.h>
+//#include <cisstMultiTask/mtsVector.h>
+#include <cisstMultiTask/mtsHistory.h>
 
 #include <vector>
 #include <typeinfo>
@@ -81,10 +82,12 @@ public:
     
 	/* Create the array of data. */
 	inline mtsStateArrayBase * Create(const cmnGenericObject * objectExample,
-                                              size_type size) {
+                                      size_type size) {
         const value_type * typedObjectExample = dynamic_cast<const value_type *>(objectExample);
         if (typedObjectExample) {
             this->Data.resize(size, *typedObjectExample);
+            this->DataClassServices = objectExample->Services();
+            CMN_ASSERT(this->DataClassServices);
         } else {
             CMN_LOG(1) << "mtsStateArray: Create used with an object example of the wrong type, received: "
                        << objectExample->Services()->GetName()
@@ -118,7 +121,8 @@ public:
     //@}
 
 	/*! Get data vector from array. */
-	virtual bool GetHistory(index_type indexStart, index_type indexEnd, mtsVector<_elementType> &data) const;
+	//virtual bool GetHistory(index_type indexStart, index_type indexEnd, mtsVector<_elementType> &data) const;
+    virtual bool GetHistory(index_type indexStart, index_type indexEnd, mtsHistory<_elementType> &data) const;
 };
 
 
@@ -167,7 +171,8 @@ bool mtsStateArray<_elementType>::Get(index_type index, cmnGenericObject & objec
 
 template <class _elementType>
 bool mtsStateArray<_elementType>::GetHistory(index_type indexStart, index_type indexEnd,
-                                            mtsVector<_elementType> &data) const
+                                            //mtsVector<_elementType> &data) const
+                                            mtsHistory<_elementType> &data) const
 {
     // Make sure vector is big enough
     unsigned int numToCopy = (Data.size() + indexEnd - indexStart + 1)%Data.size();

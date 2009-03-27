@@ -45,6 +45,9 @@ protected:
 	/*! Protected constructor. Does nothing. */
 	inline mtsStateArrayBase(void){};
 
+    /*! Class services associated to the element contained */
+    cmnClassServicesBase * DataClassServices;
+
 public:
     typedef unsigned int index_type;
     typedef unsigned int size_type;

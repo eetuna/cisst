@@ -457,9 +457,10 @@ mtsCommandQualifiedReadBase * mtsTaskInterface::AddCommandReadHistory(const mtsS
     mtsCommandQualifiedReadBase *result;
     AccessorType *stateAcc = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
     if (stateAcc) {
-        result = new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, mtsVector<_elementType> >
+        result = new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, mtsHistory<_elementType>/*mtsVector<_elementType>*/ >
                                             (&AccessorType::GetHistory, stateAcc, commandName,
-                                             mtsStateIndex(), mtsVector<_elementType>());
+                                             //mtsStateIndex(), mtsVector<_elementType>());
+                                             mtsStateIndex(), mtsHistory<_elementType>());
         CommandsQualifiedRead.AddItem(commandName, result, 1);
     }
     return result;

@@ -2,14 +2,14 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 /* $Id$ */
 
-#define _DATA_COLLECTION_
+//#define _DATA_COLLECTION_
 
 #include <cisstCommon.h>
 #include <cisstOSAbstraction.h>
 #include <cisstMultiTask.h>
 
 #ifdef _DATA_COLLECTION_
-#include <cisstMultiTask/mtsCollector.h>
+#include <cisstMultiTask/mtsCollectorBase.h>
 #endif
 
 #include "sineTask.h"
@@ -45,7 +45,7 @@ int main(void)
 
 	// create a data collector
 #ifdef	_DATA_COLLECTION_
-	mtsCollector * collector1 = new mtsCollector("collect_sine", 500 * cmn_ms );
+	mtsCollectorBase * collector1 = new mtsCollectorBase("collect_sine", 500 * cmn_ms );
 	//mtsCollector * collector2 = new mtsCollector("collect_cos", 1 * cmn_s );
 #endif
 

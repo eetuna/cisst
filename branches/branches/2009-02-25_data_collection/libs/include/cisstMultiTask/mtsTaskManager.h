@@ -40,9 +40,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-// Enable this macro for unit-test purposes only
-#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
-
 /*!
   \ingroup cisstMultiTask
 
@@ -51,6 +48,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
     
+    friend class mtsTaskManagerTest;
+
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
     
     /*! Typedef for task name and pointer map. */
@@ -75,11 +74,7 @@ public:
     // Default mailbox size -- perhaps this should be specified elsewhere
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
-#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
 protected:
-#else
-public:
-#endif
 
     /*! Mapping of task name (key) and pointer to mtsTask object. */
     TaskMapType TaskMap;

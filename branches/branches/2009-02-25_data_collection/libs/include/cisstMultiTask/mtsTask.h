@@ -40,15 +40,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsHistory.h>
 
 #include <set>
 #include <map>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
-
-// Enable support functions for mtsCollector class
-#define	_MTS_COLLECTOR_
 
 /*!
   \ingroup cisstMultiTask
@@ -64,6 +62,9 @@ class CISST_EXPORT mtsTask: public mtsDevice
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
     friend class mtsTaskManager;
+    friend class mtsCollectorDump;
+
+    friend class mtsCollectorBaseTest;
 
 public:
     typedef mtsDevice BaseType;
@@ -371,11 +372,15 @@ public:
 	/*! Reset overran period flag. */
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
 
-	/*! Check if the signal has been registered. */
-#ifdef _MTS_COLLECTOR_		
-	int GetStateVectorID(const std::string & dataName) const;
-#endif
+    /********************* Methods for data collection ********************/
 
+	/*! Check if the signal has been registered. */
+	int GetStateVectorID(const std::string & dataName) const;
+
+    /*! Fetch data from state table using accessor (mtsStateTable::AccessorBase). */
+    void GetStateTableHistory(mtsHistoryBase * history, 
+                              const unsigned int signalIndex,
+                              const unsigned int lastFetchIndex);
 };
 
 

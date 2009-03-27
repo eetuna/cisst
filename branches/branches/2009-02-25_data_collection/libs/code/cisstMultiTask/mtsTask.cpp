@@ -321,9 +321,27 @@ bool mtsTask::WaitToTerminate(double timeout)
 	return true;
 }
 
-#ifdef _MTS_COLLECTOR_
 int mtsTask::GetStateVectorID(const std::string & dataName) const
 {	
     return StateTable.GetStateVectorID(dataName);
 }
-#endif
+
+void mtsTask::GetStateTableHistory(mtsHistoryBase * history,
+                                   const unsigned int signalIndex,
+                                   const unsigned int lastFetchIndex)
+{
+    //StateTable.GetStateTableHistory(history, signalIndex, lastFetchIndex);
+
+    //mtsStateTable::AccessorBase * acc = StateTable.GetAccessor(signalName);
+    //CMN_ASSERT(acc);
+
+    //mtsStateTable::Accessor<_appropriate_type> * accessor = 
+    //   dynamic_cast<Accessor<_appropriate_type> *>(acc);
+
+    //accessor->GetHistory(StateTable.GetIndexReader(), mtsVector_container_with_appropriate_type);
+
+    // Get an object from StateArray
+    //StateTable.GetStateDataElement(0))
+
+    //history = new mtsHistory<
+}

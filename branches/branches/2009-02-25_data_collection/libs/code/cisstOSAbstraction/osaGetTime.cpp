@@ -37,6 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #if (CISST_OS == CISST_WINDOWS)
 #include <windows.h>
+#include <time.h>
 #endif // CISST_WINDOWS
 
 
@@ -61,5 +62,28 @@ double osaGetTime(void) {
     timerFrequency = (double)liTimerFrequency.QuadPart;
     time = (double)liTimeNow.QuadPart/timerFrequency;
     return time;
+#endif // CISST_WINDOWS
+}
+
+void osaGetDateTimeString(std::string & str)
+{
+#if (CISST_OS == CISST_LINUX_RTAI)
+    str = "TODO";
+#endif // CISST_LINUX_RTAI
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+    str = "TODO";
+#endif // CISST_LINUX || CISST_DARWIN || CISST_SOLARIS
+#if (CISST_OS == CISST_WINDOWS)
+    time_t _time; time(&_time);
+    tm _tm; localtime_s(&_tm, &_time);
+    char buf[50];
+    sprintf_s(buf, 50, "%d%s%02d%s%02d%s%02d%s%02d%s%02d.txt",
+        _tm.tm_year + 1900, "-",
+        _tm.tm_mon + 1, "-",
+        _tm.tm_mday, "_",
+        _tm.tm_hour, "-",
+        _tm.tm_min, "-",
+        _tm.tm_sec);
+    str = buf;
 #endif // CISST_WINDOWS
 }

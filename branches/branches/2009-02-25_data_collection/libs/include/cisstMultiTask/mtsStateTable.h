@@ -31,19 +31,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsStateArrayBase.h>
 #include <cisstMultiTask/mtsStateArray.h>
 #include <cisstMultiTask/mtsStateIndex.h>
-
+#include <cisstMultiTask/mtsHistory.h>
 
 #include <vector>
 #include <iostream>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
-
-// Enable support functions for mtsCollector class
-#define	_MTS_COLLECTOR_
-
-// Enable this macro for unit-test purposes only
-#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
 
 // Forward declaration
 class osaTimeServer;
@@ -67,6 +61,13 @@ typedef int mtsStateDataId;
   State Table elsewhere in the documentation.
  */
 class CISST_EXPORT mtsStateTable {
+
+    friend class mtsCollectorDump;
+
+    friend class mtsTaskTest;
+    friend class mtsStateTableTest;
+    friend class mtsCollectorBaseTest;
+
 public:
     class AccessorBase {
     protected:
@@ -106,7 +107,8 @@ public:
         // Get a vector of data, starting and ending at the specified time indices (inclusive).
         // For now, set the start index based on the vector size. In the future, we
         // should define a new parameter type that consists of a pair of mtsStateIndex.
-        bool GetHistory(const mtsStateIndex & end, mtsVector<_elementType> & data) const {
+        //bool GetHistory(const mtsStateIndex & end, mtsVector<_elementType> & data) const {
+        bool GetHistory(const mtsStateIndex & end, mtsHistory<_elementType> & data) const {
             bool ret = false;
             if (data.size() > 0) {
                 mtsStateIndex start = end;
@@ -125,11 +127,7 @@ public:
         }
     };
 
-#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
 protected:
-#else
-public:
-#endif
 
 	/*! The number of rows of the state data table. */
 	unsigned int HistoryLength;
@@ -209,10 +207,7 @@ public:
     }
     
 	/*! Check if the signal has been registered. */
-#ifdef _MTS_COLLECTOR_
 	int GetStateVectorID(const std::string & dataName) const;
-#endif
-	
 
 	/*! Add an element to the table. Should be called during startup
 	    of a real time loop.  All the non-const methods, that can be
@@ -229,7 +224,7 @@ public:
       This element is the same type as the state data table entry. */
     template<class _elementType>
     _elementType * GetStateDataElement(mtsStateDataId id) const {
-        return StateVectorElements[index];
+        return StateVectorElements[id]; // WEIRD???
     }
 
     /*! Return pointer to accessor functions for the state data element.
@@ -281,8 +276,14 @@ public:
      */
     void CSVWrite(std::ostream& out, bool nonZeroOnly = false);
     void CSVWrite(std::ostream& out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
+    
     /*! A base column index of StateTable for a signal registered by user. */
     static int StateVectorBaseIDForUser;
+
+    /*! Fetch state table data. */
+    //void GetStateTableHistory(mtsDoubleVecHistory & history,
+    //                          const unsigned int signalIndex,
+    //                          const unsigned int lastFetchIndex);
 };
 
 

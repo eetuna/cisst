@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-$Id: mtsCollectorTest.h 2009-03-02 mjung5 $
+$Id: mtsCollectorBaseTest.h 2009-03-02 mjung5 $
 
 Author(s):  Min Yang Jung
 Created on: 2009-03-02
@@ -22,23 +22,19 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-//#include <cisstCommon/cmnClassServices.h>
-//#include <cisstCommon/cmnClassRegister.h>
-#include <cisstMultiTask/mtsCollector.h>
+#include <cisstMultiTask/mtsCollectorBase.h>
 #include <cisstMultiTask/mtsStateData.h>
 
 #include <string>
 
-// To be used for TestAddSignal() ---------------------------------------------
-class mtsCollectorTestTask : public mtsTaskPeriodic {
+class mtsCollectorBaseTestTask : public mtsTaskPeriodic {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-
 protected:    
     mtsStateData<cmnDouble> TestData;
 
 public:
-    mtsCollectorTestTask(const std::string & collectorName, double period);
-    virtual ~mtsCollectorTestTask() {}
+    mtsCollectorBaseTestTask(const std::string & collectorName, double period);
+    virtual ~mtsCollectorBaseTestTask() {}
 
     // implementation of four methods that are pure virtual in mtsTask
     void Configure(const std::string) {}
@@ -49,29 +45,50 @@ public:
     void AddDataToStateTable(const std::string & dataName);
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorTestTask);
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorBaseTestTask);
+
+/*
+class mtsCollectorBaseTestAux : public mtsCollectorBase {
+public:
+    mtsCollectorBaseTestAux(const std::string & collectorName,
+                            double period = 100 * cmn_ms)
+        : mtsCollectorBase(collectorName, period) {}
+
+    bool AddSignal(const std::string & taskName, 
+                   const std::string & signalName, 
+                   const std::string & format = "") { return true; }
+
+    bool RemoveSignal(const std::string & taskName, 
+                      const std::string & signalName) { return true; }
+
+    bool FindSignal(const std::string & taskName, 
+                    const std::string & signalName) { return true; }
+
+    void Collect(void) {}
+};
+*/
 
 // Tester class ---------------------------------------------------------------
-class mtsCollectorTest: public CppUnit::TestFixture
+class mtsCollectorBaseTest: public CppUnit::TestFixture
 {
-    CPPUNIT_TEST_SUITE(mtsCollectorTest);
+    CPPUNIT_TEST_SUITE(mtsCollectorBaseTest);
     {		
         // public variables and methods
         CPPUNIT_TEST(TestGetCollectorCount);
-        CPPUNIT_TEST_EXCEPTION(TestAddSignal, mtsCollector::mtsCollectorException);
-        CPPUNIT_TEST(TestAddSignalCleanUp);
-        CPPUNIT_TEST(TestRemoveSignal);
-        CPPUNIT_TEST(TestFindSignal);
+        //CPPUNIT_TEST_EXCEPTION(TestAddSignal, mtsCollectorBase::mtsCollectorBaseException);
+        //CPPUNIT_TEST(TestAddSignalCleanUp);
+        //CPPUNIT_TEST(TestRemoveSignal);
+        //CPPUNIT_TEST(TestFindSignal);
         CPPUNIT_TEST(TestCleanup);
-        CPPUNIT_TEST(TestSetTimeBaseDouble);
-        CPPUNIT_TEST(TestSetTimeBaseInt);
+        //CPPUNIT_TEST(TestSetTimeBaseDouble);
+        //CPPUNIT_TEST(TestSetTimeBaseInt);
         CPPUNIT_TEST(TestStart);
         CPPUNIT_TEST(TestStop);
 
         // private variables and methods
         CPPUNIT_TEST(TestInit);
         CPPUNIT_TEST(TestClearTaskMap);
-        CPPUNIT_TEST(TestCollect);
+        //CPPUNIT_TEST(TestCollect);
         CPPUNIT_TEST(TestIsAnySignalRegistered);
 
     }
@@ -91,19 +108,19 @@ public:
 
     // public variables and methods
     void TestGetCollectorCount(void);
-    void TestAddSignal(void);
-    void TestAddSignalCleanUp(void);
-    void TestRemoveSignal(void);	
-    void TestFindSignal(void);
+    //void TestAddSignal(void);
+    //void TestAddSignalCleanUp(void);
+    //void TestRemoveSignal(void);	
+    //void TestFindSignal(void);
     void TestCleanup(void);
-    void TestSetTimeBaseDouble(void);
-    void TestSetTimeBaseInt(void);
+    //void TestSetTimeBaseDouble(void);
+    //void TestSetTimeBaseInt(void);
     void TestStart(void);
     void TestStop(void);
 
     // private variables and methods
     void TestInit(void);
     void TestClearTaskMap(void);
-    void TestCollect();
+    //void TestCollect();
     void TestIsAnySignalRegistered();
 };

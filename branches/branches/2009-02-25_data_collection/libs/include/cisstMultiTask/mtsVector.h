@@ -127,6 +127,9 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsUCharVec);
 typedef mtsVector<bool> mtsBoolVec;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsBoolVec);
 
+/*
+// MJUNG: moved to mtsHistory.h
+
 // PK: the StateTable GetHistory implementation will require an mtsVector
 //     for every parameter type!!
 
@@ -137,6 +140,7 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleHistory);
 // Following is for a vector of cmnVector<double>
 typedef mtsVector<mtsDoubleVec> mtsDoubleVecHistory;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleVecHistory);
+*/
 
 
 #endif // _mtsVector_h

@@ -51,7 +51,7 @@ mtsStateTable::mtsStateTable(int size) :
 
     // Currently there are three signals maintained internally at StateTable.
     // : "Toc", "Tic", "Period". So the value of StateVectorBaseIDForUser is 
-    // currently 3.
+    // set to 3.
     StateVectorBaseIDForUser = StateVector.size();
 }
 
@@ -270,7 +270,6 @@ void mtsStateTable::CSVWrite(std::ostream& out, unsigned int *listColumn, unsign
     }
 }
 
-#ifdef _MTS_COLLECTOR_
 int mtsStateTable::GetStateVectorID(const std::string & dataName) const
 {
 	for (unsigned int i = 0; i < StateVectorDataNames.size(); i++) {
@@ -280,4 +279,28 @@ int mtsStateTable::GetStateVectorID(const std::string & dataName) const
     }
     return -1;
 }
-#endif
+
+//void mtsStateTable::GetStateTableHistory(mtsDoubleVecHistory & history,
+//                                         const unsigned int signalIndex,
+//                                         const unsigned int lastFetchIndex)
+//{
+//    /*
+//    //for (int i = 0; i < StateVector.size(); ++i) {
+//    mtsDoubleHistory historyElement;
+//    if (lastFetchIndex < IndexReader) {
+//    } else {
+//    }
+//    for (int i = lastFetchIndex; i < 
+//    historyElement.Add((*StateVector[signalIndex])[3])
+//        
+//    //}
+//
+//    out << i << " " << Ticks[i] << " ";
+//            for (unsigned int j = 0; j < StateVector.size(); j++)  {
+//                if (StateVector[j]) {
+//                    out << (*StateVector[j])[i] << " ";
+//                }
+//            }
+//            out << std::endl;
+//    */
+//}

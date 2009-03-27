@@ -158,12 +158,12 @@ void mtsTaskTest::TestGetSignalCount(void)
 
 //-----------------------------------------------------------------------------
 //	Tests for private variables and methods
-//
-//	Be sure that _OPEN_PRIVATE_FOR_UNIT_TEST_ macro is enabled at mtsStateTable.h
 //-----------------------------------------------------------------------------
 void mtsStateTableTest::TestGetStateVectorID(void)
 {
-	const int default_column_count = mtsStateTable::StateVectorBaseIDForUser;
+    mtsStateTable StateTable;
+
+    const int default_column_count = mtsStateTable::StateVectorBaseIDForUser;
 	const int user_column_count = 2;	// Data1, Data2
 	const int total_column_count = default_column_count + user_column_count;
 	
@@ -176,14 +176,12 @@ void mtsStateTableTest::TestGetStateVectorID(void)
 		"Data1", 
 		"Data2" };	
 	
-	mtsStateTable StateTable;
-	
-	CPPUNIT_ASSERT(default_column_count == StateTable.StateVectorDataNames.size());
+	CPPUNIT_ASSERT_EQUAL(default_column_count, (int) StateTable.StateVectorDataNames.size());
 	{
 		StateTable.StateVectorDataNames.push_back(names[3]);
 		StateTable.StateVectorDataNames.push_back(names[4]);
 	}
-	CPPUNIT_ASSERT(total_column_count == StateTable.StateVectorDataNames.size());
+	CPPUNIT_ASSERT_EQUAL(total_column_count, (int) StateTable.StateVectorDataNames.size());
 
     for (int i = 0; i < total_column_count; ++i) {
         CPPUNIT_ASSERT(i == StateTable.GetStateVectorID(names[i]));

@@ -17,7 +17,7 @@
 
 # all source files
 SET(SOURCE_FILES
-    mtsCollectorTest.cpp
+    mtsCollectorBaseTest.cpp
 	mtsStateTableTest.cpp
 	mtsTaskManagerTest.cpp
 	mtsTaskTest.cpp
@@ -25,7 +25,7 @@ SET(SOURCE_FILES
 
 # all header files
 SET(HEADER_FILES
-    mtsCollectorTest.h
+    mtsCollectorBaseTest.h
 	mtsStateTableTest.h
 	mtsTaskManagerTest.h
 	mtsTaskTest.h

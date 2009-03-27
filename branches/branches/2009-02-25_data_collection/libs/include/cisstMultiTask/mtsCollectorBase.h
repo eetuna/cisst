@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCollector.h 2009-03-02 mjung5
+  $Id: mtsCollectorBase.h 2009-03-02 mjung5
 
   Author(s):  Min Yang Jung
   Created on: 2009-02-25
@@ -25,15 +25,14 @@ http://www.cisst.org/cisst/license.txt.
   \brief A data collection tool
 */
 
-#ifndef _mtsCollector_h
-#define _mtsCollector_h
+#ifndef _mtsCollectorBase_h
+#define _mtsCollectorBase_h
 
 #include <cisstCommon/cmnUnits.h>
 #include <cisstOSAbstraction/osaStopwatch.h>
 #include <cisstMultiTask/mtsTaskPeriodic.h>
-#include <cisstMultiTask/mtsExport.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstMultiTask/mtsCollectorBuffer.h>
+#include <cisstMultiTask/mtsHistory.h>
 
 #include <string>
 #include <map>
@@ -42,37 +41,33 @@ http://www.cisst.org/cisst/license.txt.
 // If the following line is commented out, C2491 error is generated.
 #include <cisstMultiTask/mtsExport.h>
 
-// Enable this macro for unit-test purposes only
-#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
-
 /*!
 \ingroup cisstMultiTask
 
 This class provides a way to collect data from state table in real-time.
 Collected data can be either saved as a log file or displayed in GUI like an oscilloscope.
 */
-class CISST_EXPORT mtsCollector : public mtsTaskPeriodic
+class CISST_EXPORT mtsCollectorBase : public mtsTaskPeriodic
 {
+    friend class mtsCollectorBaseTest;
+
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
+    //-------------------- Auxiliary class definition -------------------------
 public:
-    class mtsCollectorException : public std::runtime_error {
+    class mtsCollectorBaseException : public std::runtime_error {
     private:
         std::string ExceptionDescription;    // exception descriptor
 
     public:
-        mtsCollectorException(std::string exceptionDescription) 
+        mtsCollectorBaseException(std::string exceptionDescription) 
             : ExceptionDescription(exceptionDescription),
-            std::runtime_error("mtsCollectorException") {}
+            std::runtime_error("mtsCollectorBaseException") {}
 
         const std::string GetExceptionDescription(void) const { return ExceptionDescription; }    
-    };    
+    };
 
-#ifdef _OPEN_PRIVATE_FOR_UNIT_TEST_
-public:
-#else
 protected:
-#endif
 
     /*! State definition of the collector */
     typedef enum { 
@@ -81,12 +76,13 @@ protected:
         COLLECTOR_COLLECTING,   // Currently collecting data
         COLLECTOR_WAIT_STOP     // Stop(void) has been called. Wait for some time elapsed.
     } CollectorStatus;
+
     CollectorStatus Status;
 
     class SignalMapElement {
     public:
         mtsTask * Task;
-        mtsCollectorBuffer Buffer;
+        mtsHistoryBase * History;
     
         SignalMapElement(void) {}
         ~SignalMapElement(void) {}
@@ -104,8 +100,8 @@ protected:
     bool TimeOffsetToZero;    
 
     /*! Current collecting period in seconds */
-    double CollectingPeriod;
-    unsigned int CollectingStride;
+    double SamplingInterval;
+    unsigned int SamplingStride;
 
     /*! For delayed start(void) end stop(void) */
     double DelayedStart;
@@ -120,23 +116,24 @@ protected:
     inline const bool IsAnySignalRegistered() const { return !taskMap.empty(); }
 
 public:
-    mtsCollector(const std::string & collectorName, double period = 100 * cmn_ms);
-    virtual ~mtsCollector(void);
+    mtsCollectorBase(const std::string & collectorName, double periodicityInSeconds);
+    virtual ~mtsCollectorBase(void);
 
     //------------ Thread management functions (called internally) -----------//
     /*! set some initial values */
     void Startup(void);
 
-    /*! performed periodically */
+    /*! Performed periodically */
     void Run(void);
 
     /*! clean-up */
     void Cleanup(void);
 
     //----------------- Signal registration for collection ------------------//
-    /*! Add a signal to the list */
-    bool AddSignal(const std::string & taskName, const std::string & signalName, 
-        const std::string & format);	// format is currently meaningless.
+    /*! Add a signal to the list. Currently 'format' argument is meaningless. */
+    virtual bool AddSignal(const std::string & taskName, 
+                           const std::string & signalName = "", 
+                           const std::string & format = "") = 0;
 
     /*! Remove a signal from the list */
     bool RemoveSignal(const std::string & taskName, const std::string & signalName);
@@ -152,25 +149,21 @@ public:
     For example, if we want to collect just from a single task, deltaT could be 
     an "int", which would specify a stride. (e.g., 1 means all values, 2 means 
     every other value, etc.)  */
-    void SetTimeBase(const double deltaT, const bool offsetToZero);
-    void SetTimeBase(const unsigned int deltaStride, const bool offsetToZero);
+    void SetTimeBase(const double samplingIntervalInSeconds, const bool offsetToZero);
+    void SetTimeBase(const unsigned int samplingStride, const bool offsetToZero);
 
     /*! Begin collecting data. Data collection will begin after delayedStart 
     second(s). If it is zero (by default), it means 'start now'. */
-    void Start(const double delayedStart = 0.0);
+    void Start(const double delayedStartInSeconds = 0.0);
 
     /*! End collecting data. Data collection will end after delayedStop
     second(s). If it is zero (by default), it means 'stop now'. */
-    void Stop(const double delayedStop = 0.0);
+    void Stop(const double delayedStopInSeconds = 0.0);
 
     //---------------------- Miscellaneous functions ------------------------//
     inline static const unsigned int GetCollectorCount(void) { return CollectorCount; }
 
-#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
 protected:
-#else
-public:
-#endif
 
     /*! Initialize this collector instance */
     void Init(void);
@@ -179,10 +172,10 @@ public:
     void ClearTaskMap(void);
 
     /*! Collect data */
-    void Collect(void);
+    virtual void Collect(void) = 0;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollector)
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorBase)
 
-#endif // _mtsCollector_h
+#endif // _mtsCollectorBase_h
 

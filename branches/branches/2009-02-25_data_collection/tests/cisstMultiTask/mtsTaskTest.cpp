@@ -67,8 +67,6 @@ void mtsTaskTest::TestGetStateVectorID(void)
 
 //-----------------------------------------------------------------------------
 //	Tests for private variables and methods
-//
-//	Be sure that _OPEN_PRIVATE_FOR_UNIT_TEST_ macro is enabled at mtsTask.h
 //-----------------------------------------------------------------------------
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsTaskTest);
