@@ -49,8 +49,3 @@ mtsTaskManagerProxyCommon::mtsTaskManagerProxyCommon()
 mtsTaskManagerProxyCommon::~mtsTaskManagerProxyCommon()
 {
 }
-
-void mtsTaskManagerProxyCommon::mtsTaskManagerProxyI::printString(const std::string &s, const Ice::Current &)
-{
-    std::cout << s << std::endl;
-}

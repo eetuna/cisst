@@ -39,7 +39,12 @@ class CISST_EXPORT mtsTaskManagerProxyClient : public mtsTaskManagerProxyCommon 
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-    mtsTaskManagerProxy::PrinterPrx Printer;
+    //mtsTaskManagerProxy::PrinterPrx Printer;
+    ///////////////////////////////////////////////////////////////////////////
+    // From SLICE definition
+    mtsTaskManagerProxy::TaskManagerPrx TaskManagerProxy;
+    ///////////////////////////////////////////////////////////////////////////
+
     bool RunnableFlag;
 
     void Init(void);
@@ -54,7 +59,14 @@ public:
     static void Runner(ThreadArguments * arguments);
 
     inline const bool IsRunnable() const { return RunnableFlag; }
-    inline mtsTaskManagerProxy::PrinterPrx GetPrinter() const { return Printer; }
+
+    //inline mtsTaskManagerProxy::PrinterPrx GetPrinter() const { return Printer; }
+    ///////////////////////////////////////////////////////////////////////////
+    // From SLICE definition
+    inline mtsTaskManagerProxy::TaskManagerPrx GetTaskManagerProxy() const {
+        return TaskManagerProxy; 
+    }    
+    ///////////////////////////////////////////////////////////////////////////
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient)

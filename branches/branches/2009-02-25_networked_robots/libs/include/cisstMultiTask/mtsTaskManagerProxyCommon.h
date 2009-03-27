@@ -41,14 +41,6 @@ class CISST_EXPORT mtsTaskManagerProxyCommon { //: public Ice::Application {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
 protected:
-    ///////////////////////////////////////////////////////////////////////////
-    // From SLICE definition
-    class mtsTaskManagerProxyI : public mtsTaskManagerProxy::Printer {
-    public:
-        virtual void printString(const std::string& s, const Ice::Current& cur);
-    };
-    ///////////////////////////////////////////////////////////////////////////
-
     class ThreadArguments {
     public:
         mtsTaskManager * taskManager;
@@ -66,11 +58,6 @@ protected:
             return 0;
         }
     };
-
-    ///////////////////////////////////////////////////////////////////////////
-    // From SLICE definition
-    mtsTaskManagerProxy::PrinterPrx Printer;
-    ///////////////////////////////////////////////////////////////////////////
 
     /*! Was the initiliazation successful? */
     bool InitSuccessFlag;

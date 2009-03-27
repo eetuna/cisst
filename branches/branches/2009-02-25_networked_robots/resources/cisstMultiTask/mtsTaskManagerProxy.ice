@@ -31,6 +31,17 @@ http://www.cisst.org/cisst/license.txt.
 
 module mtsTaskManagerProxy
 {
+	sequence<string> TaskNameSeq;
+	
+	struct TaskInfo {
+		//string taskManagerID;
+		TaskNameSeq taskNames;	// task name (Unicode supported)
+	};
+	
+	interface TaskManagerChannel {
+		void ShareTaskInfo(TaskInfo myTaskInfo, out TaskInfo peerTaskInfo);
+	};
+
 /*
 	interface CallbackReceiver
 	{
@@ -42,10 +53,11 @@ module mtsTaskManagerProxy
 		void AddTask(Ice::Identity ident);
 	};
 */
+
 	
-	interface Printer {
-		void printString(string s);
-	};
+//	interface Printer {
+//		void printString(string s);
+//	};
 };
 
 #endif // _mtsTaskManagerProxy_h

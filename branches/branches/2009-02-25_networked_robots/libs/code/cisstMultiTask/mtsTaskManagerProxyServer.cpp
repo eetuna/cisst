@@ -36,16 +36,16 @@ void mtsTaskManagerProxyServer::Init(void)
     try {
         IceCommunicator = Ice::initialize();
         IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
-                "SimplePrinterAdapter", // the name of the adapter
+                "TaskInfoSharingAdapter", // the name of the adapter
                 // instructs the adapter to listen for incoming requests 
                 // using the default protocol (TCP) at port number 10000
                 "default -p 10000");
 
-        // Create a servant for Printer interface
-        Ice::ObjectPtr object = new mtsTaskManagerProxyI;
+        // Create a servant for TaskManager interface
+        Ice::ObjectPtr object = new mtsTaskManagerProxyServer::TaskManagerI;
 
         // Inform the object adapter of the presence of a new servant
-        IceAdapter->add(object, IceCommunicator->stringToIdentity("SimplePrinter"));
+        IceAdapter->add(object, IceCommunicator->stringToIdentity("TaskInfoSharing"));
         
         InitSuccessFlag = true;
         CMN_LOG_CLASS(3) << "Server proxy initialization success. " << std::endl;
