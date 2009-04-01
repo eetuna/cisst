@@ -41,17 +41,13 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsTaskManagerProxyCommon 
 
     ///////////////////////////////////////////////////////////////////////////
     // From SLICE definition
-    class TaskManagerChannelI : public ::mtsTaskManagerProxy::TaskManagerChannel {
+    class TaskManagerChannelI : public mtsTaskManagerProxy::TaskManagerCommunicator {
     public:
-        virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current&);
+        virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
+                                   ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
+                                   const ::Ice::Current&);
     };
-
-    void TaskManagerChannelI::ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current&)
-    {
-        //
-    }
-
-    mtsTaskManagerProxy::TaskManagerPrx TaskManagerProxy;
+    //
     ///////////////////////////////////////////////////////////////////////////
 
     Ice::ObjectAdapterPtr IceAdapter;

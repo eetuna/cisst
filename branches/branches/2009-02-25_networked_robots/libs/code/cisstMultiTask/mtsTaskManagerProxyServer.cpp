@@ -23,6 +23,31 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
+//-----------------------------------------------------------------------------
+// From SLICE definition
+void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
+    const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
+    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
+    const ::Ice::Current&)
+{
+    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
+    for (; it != clientTaskInfo.taskNames.end(); ++it) {
+        std::cout << "CLIENT TASK NAME: " << *it << std::endl;
+    }
+
+    mtsTaskManagerProxy::TaskInfo myTaskInfo;
+    myTaskInfo.taskNames.push_back("Server 1");
+    myTaskInfo.taskNames.push_back("Server 2");
+    myTaskInfo.taskNames.push_back("Server 3");
+    myTaskInfo.taskNames.push_back("Server 4");
+
+    serverTaskInfo.taskNames.insert(
+        serverTaskInfo.taskNames.begin(),
+        myTaskInfo.taskNames.begin(),
+        myTaskInfo.taskNames.end());
+}
+//-----------------------------------------------------------------------------
+
 mtsTaskManagerProxyServer::mtsTaskManagerProxyServer() 
 {
 }
@@ -35,17 +60,21 @@ void mtsTaskManagerProxyServer::Init(void)
 {
     try {
         IceCommunicator = Ice::initialize();
+
+        std::string ObjectIdentityName = TaskManagerCommunicatorIdentity;
+        std::string ObjectAdapterName = TaskManagerCommunicatorIdentity + "Adapter";
+
         IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
-                "TaskInfoSharingAdapter", // the name of the adapter
+                ObjectAdapterName.c_str(), // the name of the adapter
                 // instructs the adapter to listen for incoming requests 
                 // using the default protocol (TCP) at port number 10000
                 "default -p 10000");
 
         // Create a servant for TaskManager interface
-        Ice::ObjectPtr object = new mtsTaskManagerProxyServer::TaskManagerI;
+        Ice::ObjectPtr object = new mtsTaskManagerProxyServer::TaskManagerChannelI;
 
         // Inform the object adapter of the presence of a new servant
-        IceAdapter->add(object, IceCommunicator->stringToIdentity("TaskInfoSharing"));
+        IceAdapter->add(object, IceCommunicator->stringToIdentity(ObjectIdentityName));
         
         InitSuccessFlag = true;
         CMN_LOG_CLASS(3) << "Server proxy initialization success. " << std::endl;
@@ -61,7 +90,7 @@ void mtsTaskManagerProxyServer::Init(void)
         try {
             IceCommunicator->destroy();
         } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Server proxy initialization failed. " << std::endl;
+            CMN_LOG_CLASS(3) << "Server proxy initialization failed: " << e << std::endl;
         }
     }
 }
@@ -120,7 +149,7 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
 
             CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
         } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Proxy cleanup failed." << std::endl;
+            CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
         }
     }    
 }

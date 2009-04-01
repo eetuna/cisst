@@ -44,6 +44,7 @@ mtsTaskManagerProxyCommon::mtsTaskManagerProxyCommon()
       IceCommunicator(NULL)
 {
     IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
+    TaskManagerCommunicatorIdentity = ICE_TASKMANAGER_COMMUNICATOR_IDENTITY;
 }
 
 mtsTaskManagerProxyCommon::~mtsTaskManagerProxyCommon()

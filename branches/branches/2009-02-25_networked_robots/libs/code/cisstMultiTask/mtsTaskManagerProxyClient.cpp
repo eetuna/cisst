@@ -37,10 +37,12 @@ void mtsTaskManagerProxyClient::Init(void)
 {
     try {
         IceCommunicator = Ice::initialize();
-        Ice::ObjectPrx base = IceCommunicator->stringToProxy(
-            "SimplePrinter:default -p 10000");
-        TaskManagerChannelProxy = mtsTaskManagerProxy::TaskManagerChannelPrx::checkedCast(base);
-        if (!TaskManagerChannelProxy) {
+
+        std::string stringifiedProxy = TaskManagerCommunicatorIdentity + ":default -p 10000";
+        Ice::ObjectPrx base = IceCommunicator->stringToProxy(stringifiedProxy);
+
+        TaskManagerCommunicatorProxy = mtsTaskManagerProxy::TaskManagerCommunicatorPrx::checkedCast(base);
+        if (!TaskManagerCommunicatorProxy) {
             throw "Invalid proxy";
         }
 
@@ -59,7 +61,7 @@ void mtsTaskManagerProxyClient::Init(void)
         try {
             IceCommunicator->destroy();
         } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Client proxy initialization failed. " << std::endl;
+            CMN_LOG_CLASS(3) << "Client proxy initialization failed: " << e << std::endl;
         }
     }
 }
@@ -88,16 +90,23 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
         dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
 
     try {
-        // for test purpose
-        int count = 0;
-        char buf[50];        
+        mtsTaskManagerProxy::TaskInfo myTaskInfo, peerTaskInfo;
+        myTaskInfo.taskNames.push_back("Client 1");
+        myTaskInfo.taskNames.push_back("Client 2");
+        myTaskInfo.taskNames.push_back("Client 3");
+        myTaskInfo.taskNames.push_back("Client 4");
 
-        while(ProxyClient->IsRunnable()) {            
-            sprintf(buf, "Hello World: %d", ++count);
-            //ProxyClient->GetTaskManagerProxy()->ShareTaskInfo();
+        //while(ProxyClient->IsRunnable()) {
+            ProxyClient->GetTaskManagerCommunicatorProxy()->ShareTaskInfo(myTaskInfo, peerTaskInfo);
 
-            osaSleep(0.5);
-        }
+            mtsTaskManagerProxy::TaskNameSeq::const_iterator it = 
+                peerTaskInfo.taskNames.begin();
+            for (; it != peerTaskInfo.taskNames.end(); ++it) {
+                std::cout << "SERVER TASK NAME: " << *it << std::endl;
+            }
+
+            //osaSleep(0.5);
+        //}
     } catch (const Ice::Exception& e) {
         //CMN_LOG_CLASS(3) << "Proxy initialization error: " << e << std::endl;
         std::cout << "ProxyClientRunner ERROR: " << e << std::endl;
@@ -119,7 +128,7 @@ void mtsTaskManagerProxyClient::OnThreadEnd()
 
             CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
         } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Proxy cleanup failed." << std::endl;
+            CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
         }
     }    
 }

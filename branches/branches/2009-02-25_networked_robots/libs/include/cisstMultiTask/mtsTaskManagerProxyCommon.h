@@ -32,6 +32,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <IceUtil/IceUtil.h>
 #include <Ice/Ice.h>
 
+#define ICE_TASKMANAGER_COMMUNICATOR_IDENTITY "TaskManagerCommunicator"
+
 /*  Limitations of Ice::Application
     Ice::Application is a singleton class that creates a single communicator.
     If you are using multiple communicators, you cannot use Ice::Application.
@@ -83,6 +85,9 @@ protected:
 
     /*! run() and its overloaded function family are defined by Ice::Application */
     //virtual int run(int argc, char* argv[]) = 0;
+
+    /*! Settings for ICE components */
+    std::string TaskManagerCommunicatorIdentity;
 
 public:
     mtsTaskManagerProxyCommon(void);

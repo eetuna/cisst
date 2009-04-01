@@ -53,6 +53,10 @@ SET(SOURCE_FILES
     mtsTaskFromCallback.cpp
 
     mtsTaskManager.cpp
+    mtsTaskManagerProxy.cpp
+    mtsTaskManagerProxyCommon.cpp    
+    mtsTaskManagerProxyClient.cpp
+    mtsTaskManagerProxyServer.cpp
     )
 
 # all header files
@@ -106,6 +110,10 @@ SET(HEADER_FILES
     mtsTaskFromCallback.h
     
     mtsTaskManager.h
+    mtsTaskManagerProxy.h
+    mtsTaskManagerProxyCommon.h
+    mtsTaskManagerProxyClient.h
+    mtsTaskManagerProxyServer.h
     )
 
 

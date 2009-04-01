@@ -38,8 +38,8 @@ module mtsTaskManagerProxy
 		TaskNameSeq taskNames;	// task name (Unicode supported)
 	};
 	
-	interface TaskManagerChannel {
-		void ShareTaskInfo(TaskInfo myTaskInfo, out TaskInfo peerTaskInfo);
+	interface TaskManagerCommunicator {
+		void ShareTaskInfo(TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
 	};
 
 /*
