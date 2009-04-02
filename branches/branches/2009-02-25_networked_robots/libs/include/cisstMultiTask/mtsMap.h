@@ -65,6 +65,7 @@ public:
     _ItemType *GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
   
     std::vector<std::string> GetNames() const;
+    void GetNames(std::vector<std::string>& taskNameContainer) const;
     const MapType &GetMap() const   { return Map; }
     MapType &GetMap()               { return Map; }
     const int GetCount()            { return Map.size(); }
@@ -124,6 +125,15 @@ std::vector<std::string> mtsMap<_ItemType>::GetNames(void) const {
         names.push_back(iter->first);
     }
     return names;
+}
+
+template <class _ItemType>
+void mtsMap<_ItemType>::GetNames(std::vector<std::string>& taskNameContainer) const 
+{
+    typename MapType::const_iterator iter;
+    for (iter = Map.begin(); iter != Map.end(); ++iter) {
+        taskNameContainer.push_back(iter->first);
+    }
 }
 
 template <class _ItemType>
