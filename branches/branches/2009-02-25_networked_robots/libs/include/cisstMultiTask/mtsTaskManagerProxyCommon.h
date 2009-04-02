@@ -43,6 +43,7 @@ class CISST_EXPORT mtsTaskManagerProxyCommon { //: public Ice::Application {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
 protected:
+    //--------------------- Auxiliary Class Definition ----------------------//
     class ThreadArguments {
     public:
         mtsTaskManager * taskManager;
@@ -61,6 +62,7 @@ protected:
         }
     };
 
+    //-------------------------- Thread Management --------------------------//
     /*! Was the initiliazation successful? */
     bool InitSuccessFlag;
 
@@ -70,9 +72,6 @@ protected:
     /*! Worker thread for network communication */
     osaThread WorkerThread;
 
-    /*! Ice communicator for proxy */
-    Ice::CommunicatorPtr IceCommunicator;
-
     /*! Containers for thread creation */
     ProxyWorker ProxyWorkerInfo;
     ThreadArguments Arguments;
@@ -80,18 +79,16 @@ protected:
     /*! Ice module initialization */
     virtual void Init(void) = 0;
 
-    /*! A function to be run by a thread */
-    //virtual void Run(ThreadArguments * arguments) = 0;
-
-    /*! run() and its overloaded function family are defined by Ice::Application */
-    //virtual int run(int argc, char* argv[]) = 0;
-
+    //---------------------------- ICE Related ------------------------------//
     /*! Settings for ICE components */
     std::string TaskManagerCommunicatorIdentity;
 
+    /*! Ice communicator for proxy */
+    Ice::CommunicatorPtr IceCommunicator;
+
 public:
     mtsTaskManagerProxyCommon(void);
-    virtual ~mtsTaskManagerProxyCommon();    
+    virtual ~mtsTaskManagerProxyCommon();
 
     /*! Initialize and start a proxy. Returns immediately. */
     virtual void StartProxy(mtsTaskManager * callingTaskManager) = 0;
@@ -99,7 +96,9 @@ public:
     /*! Called when the worker thread ends. */
     virtual void OnThreadEnd(void) = 0;
 
+    //------------------------------- Getters -------------------------------//
     inline const bool IsInitalized() const  { return InitSuccessFlag; }
+    
     inline const bool IsRunning() const     { return RunningFlag; }    
 
     inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }

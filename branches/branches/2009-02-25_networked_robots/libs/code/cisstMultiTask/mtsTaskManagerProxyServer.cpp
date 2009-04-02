@@ -23,31 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
-//-----------------------------------------------------------------------------
-// From SLICE definition
-void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
-    const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
-    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
-    const ::Ice::Current&)
-{
-    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
-    for (; it != clientTaskInfo.taskNames.end(); ++it) {
-        std::cout << "CLIENT TASK NAME: " << *it << std::endl;
-    }
-
-    mtsTaskManagerProxy::TaskInfo myTaskInfo;
-    myTaskInfo.taskNames.push_back("Server 1");
-    myTaskInfo.taskNames.push_back("Server 2");
-    myTaskInfo.taskNames.push_back("Server 3");
-    myTaskInfo.taskNames.push_back("Server 4");
-
-    serverTaskInfo.taskNames.insert(
-        serverTaskInfo.taskNames.begin(),
-        myTaskInfo.taskNames.begin(),
-        myTaskInfo.taskNames.end());
-}
-//-----------------------------------------------------------------------------
-
 mtsTaskManagerProxyServer::mtsTaskManagerProxyServer() 
 {
 }
@@ -130,11 +105,9 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments * arguments)
         // Blocking call
         ic->waitForShutdown();
     } catch (const Ice::Exception& e) {
-        //CMN_LOG_CLASS(3) << "Proxy initialization error: " << e << std::endl;
-        std::cout << "ProxyServerRunner ERROR: " << e << std::endl;
+        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << e << std::endl;
     } catch (const char * msg) {
-        //CMN_LOG_CLASS(3) << "Proxy initialization error: " << msg << std::endl;        
-        std::cout << "ProxyServerRunner ERROR: " << msg << std::endl;
+        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << msg << std::endl;        
     }
 
     ProxyServer->OnThreadEnd();
@@ -153,3 +126,22 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
         }
     }    
 }
+
+//-----------------------------------------------------------------------------
+// From SLICE definition
+void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
+    const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
+    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
+    const ::Ice::Current&)
+{
+    // Get the names of tasks' being managed by the peer TaskManager.
+    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
+    for (; it != clientTaskInfo.taskNames.end(); ++it) {
+        CMN_LOG_CLASS_AUX(mtsTaskManager::GetInstance(), 5) << 
+            "CLIENT TASK NAME: " << *it << std::endl;
+    }
+
+    // Send my information to the peer ('peers' in the future).
+    mtsTaskManager::GetInstance()->GetNamesOfTasks(serverTaskInfo.taskNames);
+}
+//-----------------------------------------------------------------------------

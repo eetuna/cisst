@@ -91,28 +91,41 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
 
     try {
         mtsTaskManagerProxy::TaskInfo myTaskInfo, peerTaskInfo;
-        myTaskInfo.taskNames.push_back("Client 1");
-        myTaskInfo.taskNames.push_back("Client 2");
-        myTaskInfo.taskNames.push_back("Client 3");
-        myTaskInfo.taskNames.push_back("Client 4");
+        
+        std::vector<std::string> myTaskNames;
+        mtsTaskManager::GetInstance()->GetNamesOfTasks(myTaskNames);
 
-        //while(ProxyClient->IsRunnable()) {
-            ProxyClient->GetTaskManagerCommunicatorProxy()->ShareTaskInfo(myTaskInfo, peerTaskInfo);
+        myTaskInfo.taskNames.insert(
+            myTaskInfo.taskNames.end(),
+            myTaskNames.begin(),
+            myTaskNames.end());
 
-            mtsTaskManagerProxy::TaskNameSeq::const_iterator it = 
-                peerTaskInfo.taskNames.begin();
-            for (; it != peerTaskInfo.taskNames.end(); ++it) {
-                std::cout << "SERVER TASK NAME: " << *it << std::endl;
+        // FOR TEST
+        bool flag = true;
+
+        while(ProxyClient->IsRunnable()) {            
+            //
+            //  TODO: If this should be done in a nonblocking way, AMI feature can be applied.
+            //
+            if (flag) {
+                // The following operation is a blocking call.
+                ProxyClient->GetTaskManagerCommunicatorProxy()->ShareTaskInfo(myTaskInfo, peerTaskInfo);
+
+                mtsTaskManagerProxy::TaskNameSeq::const_iterator it = 
+                    peerTaskInfo.taskNames.begin();
+                for (; it != peerTaskInfo.taskNames.end(); ++it) {
+                    CMN_LOG_CLASS_AUX(ProxyClient, 5) << "SERVER TASK NAME: " << *it << std::endl;
+                }
+
+                flag = false;
             }
 
-            //osaSleep(0.5);
-        //}
-    } catch (const Ice::Exception& e) {
-        //CMN_LOG_CLASS(3) << "Proxy initialization error: " << e << std::endl;
-        std::cout << "ProxyClientRunner ERROR: " << e << std::endl;
+            osaSleep(1 * cmn_ms);
+        }
+    } catch (const Ice::Exception& e) {        
+        CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << e << std::endl;        
     } catch (const char * msg) {
-        //CMN_LOG_CLASS(3) << "Proxy initialization error: " << msg << std::endl;        
-        std::cout << "ProxyClientRunner ERROR: " << msg << std::endl;
+        CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << msg << std::endl;        
     }
 
     ProxyClient->OnThreadEnd();

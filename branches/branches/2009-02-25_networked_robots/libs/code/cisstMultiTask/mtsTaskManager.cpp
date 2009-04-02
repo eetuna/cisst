@@ -106,6 +106,11 @@ std::vector<std::string> mtsTaskManager::GetNamesOfTasks(void) const {
     return TaskMap.GetNames();
 }
 
+void mtsTaskManager::GetNamesOfTasks(std::vector<std::string>& taskNameContainer) const
+{
+    return TaskMap.GetNames(taskNameContainer);
+}
+
 
 mtsDevice * mtsTaskManager::GetDevice(const std::string & deviceName) {
     return DeviceMap.GetItem(deviceName, 1);

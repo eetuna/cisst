@@ -22,8 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManagerProxyClient_h
 #define _mtsTaskManagerProxyClient_h
 
-#include <set>
-
 #include <Ice/Ice.h>
 #include <cisstMultiTask/mtsTaskManagerProxy.h>
 #include <cisstMultiTask/mtsTaskManagerProxyCommon.h>
@@ -35,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 
   TODO: add class summary here
 */
+
 class CISST_EXPORT mtsTaskManagerProxyClient : public mtsTaskManagerProxyCommon {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);

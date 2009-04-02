@@ -143,6 +143,9 @@ public:
 
     /*! List all tasks already added */
     std::vector<std::string> GetNamesOfTasks(void) const;
+    
+    /*! Fetch all tasks already added. (overloaded) */
+    void GetNamesOfTasks(std::vector<std::string>& taskNameContainer) const;
 
     /*! Retrieve a device by name.  Return 0 if the device is not
         known. */
