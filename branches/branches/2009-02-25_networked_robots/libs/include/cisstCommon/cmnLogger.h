@@ -79,6 +79,10 @@ http://www.cisst.org/cisst/license.txt.
         (void*)0:\
     ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - Class " << Services()->GetName() << ": ")
  
+#define CMN_LOG_CLASS_AUX(_instance, lod) \
+    ((lod > cmnLogger::GetLoD()) || (lod > _instance->Services()->GetLoD()))?\
+        (void*)0:\
+        ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - Class " << _instance->Services()->GetName() << ": ")
 
 
 /*! This macro is used to log human readable information within the
