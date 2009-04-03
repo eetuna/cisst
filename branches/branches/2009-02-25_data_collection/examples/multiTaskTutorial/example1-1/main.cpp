@@ -96,7 +96,7 @@ int main(void)
     // Start some time later (5 seconds in the following case)
     //Collector->Start(5);
 
-    // wait until the close button of the UI is pressed    
+    // wait until the close button of the UI is pressed
     while (1) {
         osaSleep(10.0 * cmn_ms); // sleep to save CPU
         if (displayTaskObject->GetExitFlag()) {

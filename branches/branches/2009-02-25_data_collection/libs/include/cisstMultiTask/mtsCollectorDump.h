@@ -109,7 +109,7 @@ private:
 public:
     /*! There are two ways of specifying the periodicity of mtsCollectorDump class.
         One is to explicitly specify it and the other one is to pass a pointer to the task 
-        that you want to monitor. In case of the latter, a period is automatically set.
+        that you want to collect data from. In case of the latter, a period is automatically set.
     */
     mtsCollectorDump(const std::string & collectorName, const double periodicityInSeconds);
     mtsCollectorDump(const std::string & collectorName, const mtsTaskPeriodic * targetTask);
