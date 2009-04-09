@@ -8,8 +8,10 @@
 
 CMN_IMPLEMENT_SERVICES(displayTask);
 
-displayTask::displayTask(const std::string & taskName, double period):
-    mtsTaskPeriodic(taskName, period, false, 5000),
+displayTask::displayTask(const std::string & taskName, 
+                         mtsCollectorBase * dataCollector, 
+                         double period):
+    mtsTaskPeriodic(taskName, period, false, dataCollector, 5000),
     ExitFlag(false),
     DataVec(10)
 {

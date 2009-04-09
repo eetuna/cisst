@@ -34,7 +34,7 @@ class displayTask: public mtsTaskPeriodic {
     
  public:
     // see sineTask.h documentation
-    displayTask(const std::string & taskName, double period);
+    displayTask(const std::string & taskName, mtsCollectorBase * dataCollector, double period);
     ~displayTask() {};
     void Configure(const std::string & CMN_UNUSED(filename) = "");
     void Startup(void);
