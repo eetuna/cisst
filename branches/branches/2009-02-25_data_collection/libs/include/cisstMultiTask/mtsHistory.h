@@ -41,12 +41,15 @@ http://www.cisst.org/cisst/license.txt.
 */
 class mtsHistoryBase : public cmnGenericObject
 {
-    friend class mtsHistoryTest;
+    friend class mtsHistoryBaseTest;
 
 public:
     mtsHistoryBase() {}
     mtsHistoryBase(const mtsHistoryBase & other) : cmnGenericObject(other) {}
     virtual ~mtsHistoryBase() {}
+
+    /*! In the derived class, vctDynamicVector::SetSize() should be called. */
+    virtual void SetHistorySize(const int historySize) = 0;
 
     // Methods to be used by GetHistory() (maybe: [], ...)
 };
@@ -75,6 +78,9 @@ public:
 
     /*! Constructor with memory allocation for a given size. */
     inline mtsHistory(size_type size) : VectorType(size) {}
+
+    /*! Set the size of history buffer */
+    inline void SetHistorySize(const int historySize) { SetSize(historySize); }
 
     /*! Assignment from vector base class.  This operator assign the
       data from one vector to another, it doesn't replace the object
