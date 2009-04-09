@@ -36,7 +36,9 @@ protected:
 	mtsStateData<cmnDouble> TestData;
 
 public:
-	mtsTaskManagerTestTask(const std::string & collectorName, double period);
+	mtsTaskManagerTestTask(const std::string & collectorName, 
+                           mtsCollectorBase * dataCollector = NULL,
+                           double period = 10 * cmn_ms);
 	virtual ~mtsTaskManagerTestTask() {}
 
 	// implementation of four methods that are pure virtual in mtsTask

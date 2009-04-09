@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
@@ -41,6 +41,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsHistory.h>
+#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 
 #include <set>
 #include <map>
@@ -57,6 +58,9 @@ http://www.cisst.org/cisst/license.txt.
   It is derived from mtsDevice, so it also contains the provided and required
   interfaces, with their lists of commands.
 */
+
+class mtsCollectorBase;
+
 class CISST_EXPORT mtsTask: public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
@@ -123,6 +127,51 @@ protected:
     
     RequiredInterfacesMapType RequiredInterfaces; // Interfaces we can send commands to
 
+    //-----------------------------
+    //  Data collection related 
+    //-----------------------------
+    /*! True if collectData flag is set at the constructor. */
+    bool CollectData;
+
+    /*! Flag for enabling or disabling trigger. */
+    bool TriggerEnabled;
+
+    class dataCollectionInfo {
+    public:
+        /*! Instance of data collector. */
+        mtsCollectorBase * Collector;
+
+        /*! The event payload used for generating event to wake up the collector. */
+        cmnUInt EventData;
+
+        /*! Provided interface for data collection. */
+        mtsProvidedInterface * ProvidedInterface;
+
+        /*! Function bound to the command used to send the data collection event. */
+        mtsFunctionWrite TriggerEvent;
+
+        /*! Number of data that are newly generated and are to be fetched by the 
+        data collection tool. */
+        unsigned int NewDataCount;
+
+        /*! If the ratio of NewDataCount to HistoryLength is greater than this value,
+            an event is triggered so that the data collector fetches all data.*/
+        double EventTriggeringRatio;
+
+        /*! If NewDataCount becomes greater than this vaule, an event for data collection
+            is generated. Though this value is redundant in some respect (because
+            EventTriggeringRatio is already defined), this value is kept for the purpose 
+            of efficiency. */
+        unsigned int EventTriggeringLimit;
+
+        dataCollectionInfo() : Collector(NULL), ProvidedInterface(NULL),
+            NewDataCount(0), EventTriggeringRatio(0.3), EventTriggeringLimit(0) {}
+
+        ~dataCollectionInfo() {}
+    };
+
+    dataCollectionInfo DataCollectionInfo;
+
     /********************* Methods to connect interfaces  *****************/
 
     bool ConnectRequiredInterface(const std::string & requiredInterfaceName,
@@ -184,8 +233,12 @@ public:
         This is the task base class. Tasks should be derived from one of the
         existing derived classes:  mtsTaskContinuous, mtsTaskPeriodic, and
         mtsTaskFromCallback.
+        If you want to collect state data from this task, create an instance of
+        mtsCollectorBase and pass the pointer to it as 'dataCollector' argument.
+        (see mtsCollectorBase, mtsCollectorDump)
 
         \param name  The name for the task
+        \param dataCollector  Pointer to the instance of mtsCollectorBase
         \param sizeStateTable The history size of the state table
 
         \note The full string name is maintained in the class member data
@@ -196,7 +249,9 @@ public:
 
         \sa mtsDevice, mtsTaskContinuous, mtsTaskPeriodic, mtsTaskFromCallback
 	 */
-	mtsTask(const std::string & name, unsigned int sizeStateTable = 256);
+	mtsTask(const std::string & name, 
+            mtsCollectorBase * dataCollector = NULL,
+            unsigned int sizeStateTable = 256);
 
 	/*! Default Destructor. */
 	virtual ~mtsTask();
@@ -381,6 +436,13 @@ public:
     void GetStateTableHistory(mtsHistoryBase * history, 
                               const unsigned int signalIndex,
                               const unsigned int lastFetchIndex);
+
+    /*! Enable trigger. */
+    void ResetDataCollectionTrigger(void);
+
+    inline const std::string GetDataCollectorProvidedInterfaceName() const { 
+        return std::string("DCEventGenerator"); 
+    }
 };
 
 

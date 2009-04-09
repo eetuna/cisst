@@ -101,17 +101,23 @@ public:
 
     /*! Create a task with name 'name' and set the state table size.  The
         execution of this task will rely on a callback from an external thread.
+        If you want to collect state data from this task, create an instance of
+        mtsCollectorBase and pass the pointer to it as 'dataCollector' argument.
+        (see mtsCollectorBase, mtsCollectorDump)
 
         \param name The name of the task
+        \param dataCollector  Pointer to the instance of mtsCollectorBase
         \param sizeStateTable The history size of the state table
 
-        \note See note in mtsTask regarding length of string name.
+        \note See note in mtsTask regarding length of string name.yyyy
 
         \sa mtsTask, mtsTaskContinuous, mtsTaskPeriodic
 
      */
-    mtsTaskFromCallback(const std::string & name, unsigned int sizeStateTable = 256) :
-        mtsTask(name, sizeStateTable), inRunInternal(false) {}
+    mtsTaskFromCallback(const std::string & name, 
+                        mtsCollectorBase * dataCollector = NULL,
+                        unsigned int sizeStateTable = 256) :
+        mtsTask(name, dataCollector, sizeStateTable), inRunInternal(false) {}
 
     /*! Default Destructor. */
     virtual ~mtsTaskFromCallback() {}
@@ -167,8 +173,9 @@ protected:
 public:
 
     mtsTaskFromCallbackAdapter(const std::string & name,
+                               mtsCollectorBase * dataCollector = NULL,
                                unsigned int sizeStateTable = 256) :
-      mtsTaskFromCallback(name, sizeStateTable),
+      mtsTaskFromCallback(name, dataCollector, sizeStateTable),
       callbackData() { }
 
     ~mtsTaskFromCallbackAdapter() {}

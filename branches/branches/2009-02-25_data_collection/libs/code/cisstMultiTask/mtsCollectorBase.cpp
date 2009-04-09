@@ -27,10 +27,10 @@ mtsTaskManager * mtsCollectorBase::taskManager;
 //-------------------------------------------------------
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
-mtsCollectorBase::mtsCollectorBase(const std::string & collectorName, 
-                                   double periodicityInSeconds) :
-    TimeOffsetToZero(false),
-    mtsTaskPeriodic(collectorName, periodicityInSeconds, false)
+mtsCollectorBase::mtsCollectorBase(const std::string & collectorName) : 
+    TimeOffsetToZero(false),    
+    IsRunnable(false),
+    mtsTaskContinuous(collectorName)
 {
     ++CollectorCount;
 
@@ -55,8 +55,8 @@ void mtsCollectorBase::Init()
     Status = COLLECTOR_STOP;
     DelayedStart = 0.0;
     DelayedStop = 0.0;
-    SamplingInterval = Period;
-    SamplingStride = 0;
+    //SamplingInterval = Period;
+    //SamplingStride = 0;
 
     ClearTaskMap();
 }
@@ -64,10 +64,6 @@ void mtsCollectorBase::Init()
 //-------------------------------------------------------
 //	Thread management functions (called internally)
 //-------------------------------------------------------
-void mtsCollectorBase::Startup(void)
-{
-}
-
 void mtsCollectorBase::Run()
 {
     if (!IsAnySignalRegistered()) return;
@@ -83,6 +79,7 @@ void mtsCollectorBase::Run()
                     // Start collecting
                     DelayedStart = 0.0;
                     Status = COLLECTOR_COLLECTING;
+                    IsRunnable = true;
                     Stopwatch.Stop();
                 }
             } else {
@@ -98,6 +95,7 @@ void mtsCollectorBase::Run()
                     // Stop collecting
                     DelayedStop = 0.0;
                     Status = COLLECTOR_STOP;
+                    IsRunnable = false;
                     Stopwatch.Stop();
                 }
             } else {
@@ -115,7 +113,8 @@ void mtsCollectorBase::Run()
         return;
     }
 
-    Collect();
+    // Replaced with command pattern.
+    //Collect();
 }
 
 void mtsCollectorBase::Cleanup(void)
@@ -180,6 +179,7 @@ bool mtsCollectorBase::FindSignal(const std::string & taskName, const std::strin
 //-------------------------------------------------------
 //	Collecting Data
 //-------------------------------------------------------
+/*
 void mtsCollectorBase::SetTimeBase(const double samplingIntervalInSeconds, const bool offsetToZero)
 {
     // Ensure that there is a task being collected.
@@ -213,6 +213,7 @@ void mtsCollectorBase::SetTimeBase(const unsigned int samplingStride, const bool
     SamplingStride = samplingStride;
     TimeOffsetToZero = offsetToZero;
 }
+*/
 
 void mtsCollectorBase::Start(const double delayedStartInSecond)
 {    

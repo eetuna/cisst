@@ -31,8 +31,9 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManagerTestTask);
 
 //-----------------------------------------------------------------------------
 mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName, 
-										   double period) :
-	mtsTaskPeriodic(collectorName, period, false, 5000)
+                                               mtsCollectorBase * dataCollector,
+                                               double period) :
+	mtsTaskPeriodic(collectorName, period, false, dataCollector, 5000)
 {
 }
 
@@ -41,7 +42,7 @@ mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName
 //-----------------------------------------------------------------------------
 void mtsTaskManagerTest::TestAddTask(void)
 {
-	mtsTaskManagerTestTask task1("task1", 10 * cmn_ms), task2("task2", 10 * cmn_ms);
+	mtsTaskManagerTestTask task1("task1"), task2("task2");
 	mtsTaskManager TaskManager;
 	
 	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.GetCount());
@@ -62,9 +63,9 @@ void mtsTaskManagerTest::TestRemoveTask(void)
 {
 	const std::string name1 = "task1", name2 = "task2";
 	
-	mtsTaskManagerTestTask task1(name1, 10 * cmn_ms), 
-                           task2(name2, 10 * cmn_ms), 
-                           task3("dummy", 10 * cmn_ms);
+	mtsTaskManagerTestTask task1(name1),
+                           task2(name2),
+                           task3("dummy");
 	mtsTaskManager TaskManager;
 	
 	TaskManager.AddTask(&task1);

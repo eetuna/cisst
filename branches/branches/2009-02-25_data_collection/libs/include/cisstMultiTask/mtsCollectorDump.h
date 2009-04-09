@@ -31,6 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsCollectorBase.h>
 #include <cisstMultiTask/mtsHistory.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
 
 #include <string>
 #include <iostream>
@@ -47,7 +48,7 @@ txt, bin, etc.)
 
 TODO:
 
-1) Serialization/Deseriliazation for binary output
+1) Serialization/Deserialiazation for binary output
 2) Support for different output file format (csv, bin, etc.)
 
 */
@@ -65,7 +66,7 @@ private:
     unsigned int TableHistoryLength;
 
     /*! Local counter to support sampling-by-stride mode. */
-    unsigned int SamplingStrideCounter;
+    //unsigned int SamplingStrideCounter;
 
     /*! Local counter to support sampling-by-time mode. */
     double LastToc;
@@ -76,52 +77,83 @@ private:
     /*! If this flag is set, all signals are collected. */
     bool CollectAllSignal;
 
+    /*! If this is unset, this dump thread wakes up. */
+    bool WaitingForTrigger;
+
     /*! Output file stream */
     std::ofstream LogFile;
 
+    /*! Container to retrieve total number of to-be-fetched data from data thread */
+    cmnUInt NewElementCount;
+
+    /*! Void command to enable a data thread's trigger. */
+    mtsFunctionVoid DataCollectionEventReset;
+
+    //------------------------- Thread-related Methods ----------------------//
+    void Run(void);
+    void Startup(void);
+
+    //--------------------------------- Methods -----------------------------//
     /*! Initialization */
     void Initialize(void);
 
     /*! Fetch state table data */
-    bool (mtsCollectorDump::*FetchStateTableData)(const mtsStateTable * table, 
-                                const unsigned int startIdx, 
-                                const unsigned int endIdx);
+    //bool (mtsCollectorDump::*FetchStateTableData)(const mtsStateTable * table, 
+    //                            const unsigned int startIdx, 
+    //                            const unsigned int endIdx);
 
-    bool FetchStateTableDataAll       (const mtsStateTable * table, 
-                                       const unsigned int startIdx, 
-                                       const unsigned int endIdx);
-    bool FetchStateTableDataByTime    (const mtsStateTable * table, 
-                                       const unsigned int startIdx, 
-                                       const unsigned int endIdx);
-    bool FetchStateTableDataByStride  (const mtsStateTable * table, 
-                                       const unsigned int startIdx, 
-                                       const unsigned int endIdx);
+    bool FetchStateTableData(const mtsStateTable * table, 
+                             const unsigned int startIdx, 
+                             const unsigned int endIdx);
 
     /*! Print out the signal names which are being collected. */
     void PrintHeader(void);
+    
+    /*! When this function is called (called by the data thread as a form of an event),
+        bulk-fetch is performed and data is dumped to a log fie. */
+    void DataCollectionEventHandler(const cmnUInt & value);
+
+    /*! Fetch bulk data from StateTable. */
+    void Collect(void);
 
     /*! Convert string to double. */
+    //
+    //  TODO: implement me!!!
+    //
     inline double ConvertToDouble(const std::string& s)
     {
         return 0.0;
-    }
+    }    
 
 public:
     /*! There are two ways of specifying the periodicity of mtsCollectorDump class.
         One is to explicitly specify it and the other one is to pass a pointer to the task 
         that you want to collect data from. In case of the latter, a period is automatically set.
     */
-    mtsCollectorDump(const std::string & collectorName, const double periodicityInSeconds);
-    mtsCollectorDump(const std::string & collectorName, const mtsTaskPeriodic * targetTask);
+    mtsCollectorDump(const std::string & collectorName);
     ~mtsCollectorDump(void);
 
     /*! Add a signal to the list. Currently 'format' argument is meaningless. */
     bool AddSignal(const std::string & taskName,
-                   const std::string & signalName,
+                   const std::string & signalName = "",
                    const std::string & format = "");
 
-    /*! Called periodically */
-    void Collect(void);
+    //--------------------------------- Settings ----------------------------//
+    static std::string GetDataCollectorRequiredInterfaceName() { 
+        return std::string("DCEventHandler"); 
+    }
+
+    static std::string GetDataCollectorEventName() {
+        return std::string("DCEvent");
+    }
+
+    static std::string GetDataCollectorResetEventName() {
+        return std::string("DCEventReset");
+    }
+
+    static double GetEventTriggeringRatio() {
+        return 0.1;
+    }
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorDump)

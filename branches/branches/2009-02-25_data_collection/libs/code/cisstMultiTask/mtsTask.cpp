@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
@@ -26,6 +26,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
+#include <cisstMultiTask/mtsCollectorDump.h>
+
 #include <iostream>
 #include <string>
 
@@ -54,6 +56,27 @@ void mtsTask::DoRunInternal(void)
 	StateTable.Start();
 	this->Run();
     StateTable.Advance();
+
+    // Check if the event for data collection should be triggered.
+    if (CollectData) {
+        if (TriggerEnabled) {
+            if (++DataCollectionInfo.NewDataCount >= DataCollectionInfo.EventTriggeringLimit) {
+                //
+                //  To-be-fetched data should not be overwritten while data collector
+                //  is fetching them. (e.g., if there are quite many column vectors (=signals)
+                //  in StateTable, logging takes quite a long time which might result in
+                //  data overwritten. 
+                //  In order to prevent this case, 'eventTriggeringRatio' (see constructor)
+                //  has to be defined appropriately.
+                //
+                DataCollectionInfo.EventData = DataCollectionInfo.NewDataCount;
+                DataCollectionInfo.TriggerEvent(DataCollectionInfo.EventData);
+
+                DataCollectionInfo.NewDataCount = 0;
+                TriggerEnabled = false;
+            }
+        }
+    }
 }
   
 void mtsTask::StartupInternal(void) {
@@ -81,8 +104,10 @@ void mtsTask::StartupInternal(void) {
     // Call user-supplied startup function
     this->Startup();
     // StateChange should already be locked
-    if (success)
+    if (success) {
        TaskState = READY;
+       TriggerEnabled = false;
+    }
     else
         CMN_LOG_CLASS(1) << "ERROR: Task " << GetName() << " cannot be started." << std::endl;
     StateChange.Unlock();
@@ -147,7 +172,9 @@ void mtsTask::Sleep(double timeInSeconds)
 
 /********************* Task constructor and destructor *****************/
 
-mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
+mtsTask::mtsTask(const std::string & name, 
+                 mtsCollectorBase * dataCollector,
+                 unsigned int sizeStateTable) :
     mtsDevice(name),
     Thread(),
     TaskState(CONSTRUCTED),
@@ -156,8 +183,39 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
     OverranPeriod(false),
     ThreadStartData(0),
     retValue(0),
-    RequiredInterfaces("RequiredInterfaces")
-{
+    RequiredInterfaces("RequiredInterfaces")    
+{    
+    CollectData = (dataCollector == NULL ? false : true);
+
+    // If the data of this task is to be collected, create a provided interface
+    // dedicated for that purpose.
+    if (CollectData) {
+        DataCollectionInfo.Collector = dataCollector;
+
+        DataCollectionInfo.ProvidedInterface 
+            = AddProvidedInterface(GetDataCollectorProvidedInterfaceName());
+        if (DataCollectionInfo.ProvidedInterface) {
+            // Trigerring reset command registration
+            DataCollectionInfo.ProvidedInterface->AddCommandVoid(
+                &mtsTask::ResetDataCollectionTrigger, this, 
+                mtsCollectorDump::GetDataCollectorResetEventName());
+
+            // Data collection event registration
+            DataCollectionInfo.TriggerEvent.Bind(
+                DataCollectionInfo.ProvidedInterface->AddEventWrite(
+                    mtsCollectorDump::GetDataCollectorEventName(), 
+                    DataCollectionInfo.EventData));
+        }
+
+        // Determine the ratio value for event triggering.        
+        //
+        // TODO: an adaptive scaling feature according to 'sizeStateTable' might be useful.
+        //
+        const double eventTriggeringRatio = mtsCollectorDump::GetEventTriggeringRatio();
+
+        DataCollectionInfo.EventTriggeringLimit = 
+            (unsigned int) (sizeStateTable * eventTriggeringRatio);
+    }
 }
 
 mtsTask::~mtsTask()
@@ -324,6 +382,11 @@ bool mtsTask::WaitToTerminate(double timeout)
 int mtsTask::GetStateVectorID(const std::string & dataName) const
 {	
     return StateTable.GetStateVectorID(dataName);
+}
+
+void mtsTask::ResetDataCollectionTrigger(void)
+{ 
+    TriggerEnabled = true;
 }
 
 void mtsTask::GetStateTableHistory(mtsHistoryBase * history,

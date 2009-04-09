@@ -97,8 +97,9 @@ void mtsTaskPeriodic::StartInternal(void)
 /********************* Task constructor and destructor *****************/
 
 mtsTaskPeriodic::mtsTaskPeriodic(const std::string & name, double periodicityInSeconds,
-                                 bool isHardRealTime, unsigned int sizeStateTable, bool newThread):
-    mtsTaskContinuous(name, sizeStateTable, newThread),
+                                 bool isHardRealTime, mtsCollectorBase * dataCollector,
+                                 unsigned int sizeStateTable, bool newThread):
+    mtsTaskContinuous(name, dataCollector, sizeStateTable, newThread),
     ThreadBuddy(),
 	Period(periodicityInSeconds),
     IsHardRealTime(isHardRealTime)

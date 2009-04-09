@@ -33,8 +33,9 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorBaseTestTask);
 
 //-----------------------------------------------------------------------------
 mtsCollectorBaseTestTask::mtsCollectorBaseTestTask(const std::string & collectorName, 
-                                           double period) :
-mtsTaskPeriodic(collectorName, period, false, 5000)
+                                                   mtsCollectorBase * dataCollector,
+                                                   double period) :
+    mtsTaskPeriodic(collectorName, period, false, dataCollector, 5000)
 {
 }
 
@@ -71,7 +72,7 @@ void mtsCollectorBaseTest::TestAddSignal(void)
     // The following object has to be created in a dynamic way so that the object can
     // be deleted outside this unit test. (It'll be deleted at
     // mtsCollectorBaseTest::TestAddSignalCleanUp().)
-    mtsCollectorBaseTestTask * TaskA = new mtsCollectorBaseTestTask(taskName, 10 * cmn_ms );
+    mtsCollectorBaseTestTask * TaskA = new mtsCollectorBaseTestTask(taskName);
 
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     CPPUNIT_ASSERT(taskManager);
@@ -87,7 +88,7 @@ void mtsCollectorBaseTest::TestAddSignal(void)
     mtsCollectorBase collector2("collector2", 
         mtsCollectorBase::COLLECTOR_TYPE_DUMP, 10 * cmn_ms);
         
-    mtsCollectorBaseTestTask TaskB("TaskB", 10 * cmn_ms );
+    mtsCollectorBaseTestTask TaskB("TaskB");
     CPPUNIT_ASSERT(taskManager->AddTask(&TaskB));
     {
         CPPUNIT_ASSERT(collector2.AddSignal("TaskB", "SignalB-1"));
@@ -136,7 +137,7 @@ void mtsCollectorBaseTest::TestRemoveSignal(void)
 
     mtsCollectorBase collector("collector", 
         mtsCollectorBase::COLLECTOR_TYPE_SAMPLE, 10 * cmn_ms);
-    mtsCollectorBaseTestTask TaskA(taskName, 10 * cmn_ms );
+    mtsCollectorBaseTestTask TaskA(taskName);
 
     // 1. Try removing a signal from the empty signal list
     CPPUNIT_ASSERT(!collector.RemoveSignal(taskName, signalName));
@@ -167,7 +168,7 @@ void mtsCollectorBaseTest::TestFindSignal(void)
 
     mtsCollectorBase collector("collector", 
         mtsCollectorBase::COLLECTOR_TYPE_SAMPLE, 10 * cmn_ms);
-    mtsCollectorBaseTestTask TaskA(taskName, 10 * cmn_ms );
+    mtsCollectorBaseTestTask TaskA(taskName);
 
     // return false if the signal list is empty
     CPPUNIT_ASSERT(!collector.FindSignal(taskName, signalName));
@@ -200,9 +201,9 @@ void mtsCollectorBaseTest::TestCleanup(void)
 
     // Put tasks for this test under the control of the taskManager so that
     // mtsCollectorBase::AddSignal() works correctly.
-    mtsCollectorBaseTestTask task1("task1", 10 * cmn_ms );
-    mtsCollectorBaseTestTask task2("task2", 10 * cmn_ms );
-    mtsCollectorBaseTestTask task3("task3", 10 * cmn_ms );
+    mtsCollectorBaseTestTask task1("task1");
+    mtsCollectorBaseTestTask task2("task2");
+    mtsCollectorBaseTestTask task3("task3");
     CPPUNIT_ASSERT(taskManager->AddTask(&task1));
     CPPUNIT_ASSERT(taskManager->AddTask(&task2));
     CPPUNIT_ASSERT(taskManager->AddTask(&task3));
@@ -399,9 +400,9 @@ void mtsCollectorBaseTest::TestInit(void)
 
     // Put tasks for this test under the control of the taskManager so that
     // mtsCollectorBase::AddSignal() works correctly.
-    mtsCollectorBaseTestTask task1("taskA", 10 * cmn_ms );
-    mtsCollectorBaseTestTask task2("taskB", 10 * cmn_ms );
-    mtsCollectorBaseTestTask task3("taskC", 10 * cmn_ms );
+    mtsCollectorBaseTestTask task1("taskA");
+    mtsCollectorBaseTestTask task2("taskB");
+    mtsCollectorBaseTestTask task3("taskC");
     CPPUNIT_ASSERT(taskManager->AddTask(&task1));
     CPPUNIT_ASSERT(taskManager->AddTask(&task2));
     CPPUNIT_ASSERT(taskManager->AddTask(&task3));
@@ -444,9 +445,9 @@ void mtsCollectorBaseTest::TestClearTaskMap(void)
 
     // Put tasks for this test under the control of the taskManager so that
     // mtsCollectorBase::AddSignal() works correctly.
-    mtsCollectorBaseTestTask task1("task1", 10 * cmn_ms );
-    mtsCollectorBaseTestTask task2("task2", 10 * cmn_ms );
-    mtsCollectorBaseTestTask task3("task3", 10 * cmn_ms );
+    mtsCollectorBaseTestTask task1("task1");
+    mtsCollectorBaseTestTask task2("task2");
+    mtsCollectorBaseTestTask task3("task3");
 
     CPPUNIT_ASSERT(taskManager->AddTask(&task1));
     CPPUNIT_ASSERT(taskManager->AddTask(&task2));
@@ -497,7 +498,7 @@ void mtsCollectorBaseTest::TestIsAnySignalRegistered(void)
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     CPPUNIT_ASSERT(taskManager);
 
-    mtsCollectorBaseTestTask task1("task1", 10 * cmn_ms );    
+    mtsCollectorBaseTestTask task1("task1");    
     task1.StateTable.StateVectorDataNames.push_back("signal1-1");
     CPPUNIT_ASSERT(taskManager->AddTask(&task1));
     {

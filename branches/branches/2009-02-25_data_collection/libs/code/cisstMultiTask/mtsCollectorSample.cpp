@@ -25,8 +25,7 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorSample)
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
 mtsCollectorSample::mtsCollectorSample(const std::string & collectorName, double period)
-    : mtsCollectorBase(collectorName, period), 
-      NextReadIndex(0)
+    : mtsCollectorBase(collectorName), NextReadIndex(0)
 {
 }
 
@@ -47,6 +46,11 @@ bool mtsCollectorSample::AddSignal(const std::string & taskName,
 //-------------------------------------------------------
 //	Collecting Data
 //-------------------------------------------------------
-void mtsCollectorSample::Collect(void)
+//void mtsCollectorSample::Collect(void)
+//{
+//}
+
+
+void mtsCollectorSample::Startup(void)
 {
 }

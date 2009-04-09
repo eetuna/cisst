@@ -93,6 +93,7 @@ public:
         \param name The name of the task
         \param periodicityInSeconds The task period, in seconds
         \param isHardRealTime True if task should run in hard real time
+        \param dataCollector  Pointer to the instance of mtsCollectorBase
         \param sizeStateTable The history size of the state table
         \param newThread True if a new thread should be created for this task
 
@@ -100,8 +101,12 @@ public:
               in mtsTaskContinuous regarding newThread parameter.
 
 	 */
-	mtsTaskPeriodic(const std::string & name, double periodicityInSeconds, bool isHardRealTime = false,
-                    unsigned int sizeStateTable = 256, bool newThread = true);
+	mtsTaskPeriodic(const std::string & name, 
+                    double periodicityInSeconds, 
+                    bool isHardRealTime = false,
+                    mtsCollectorBase * dataCollector = NULL,
+                    unsigned int sizeStateTable = 256, 
+                    bool newThread = true);
 
 	/*! Default Destructor. */
 	virtual ~mtsTaskPeriodic();

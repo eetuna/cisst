@@ -47,7 +47,7 @@ http://www.cisst.org/cisst/license.txt.
 This class provides a way to collect data from state table in real-time.
 Collected data can be either saved as a log file or displayed in GUI like an oscilloscope.
 */
-class CISST_EXPORT mtsCollectorBase : public mtsTaskPeriodic
+class CISST_EXPORT mtsCollectorBase : public mtsTaskContinuous
 {
     friend class mtsCollectorBaseTest;
 
@@ -99,9 +99,12 @@ protected:
     /*! If this flag is set, start time is subtracted from each time measurement. */
     bool TimeOffsetToZero;    
 
+    /*! A child collector class can run only if this flag is set. */
+    bool IsRunnable;
+
     /*! Current collecting period in seconds */
-    double SamplingInterval;
-    unsigned int SamplingStride;
+    //double SamplingInterval;
+    //unsigned int SamplingStride;
 
     /*! For delayed start(void) end stop(void) */
     double DelayedStart;
@@ -116,15 +119,15 @@ protected:
     inline const bool IsAnySignalRegistered() const { return !taskMap.empty(); }
 
 public:
-    mtsCollectorBase(const std::string & collectorName, double periodicityInSeconds);
+    mtsCollectorBase(const std::string & collectorName);
     virtual ~mtsCollectorBase(void);
 
     //------------ Thread management functions (called internally) -----------//
     /*! set some initial values */
-    void Startup(void);
+    virtual void Startup(void) = 0;
 
     /*! Performed periodically */
-    void Run(void);
+    virtual void Run(void);
 
     /*! clean-up */
     void Cleanup(void);
@@ -149,8 +152,8 @@ public:
     For example, if we want to collect just from a single task, deltaT could be 
     an "int", which would specify a stride. (e.g., 1 means all values, 2 means 
     every other value, etc.)  */
-    void SetTimeBase(const double samplingIntervalInSeconds, const bool offsetToZero);
-    void SetTimeBase(const unsigned int samplingStride, const bool offsetToZero);
+    //void SetTimeBase(const double samplingIntervalInSeconds, const bool offsetToZero);
+    //void SetTimeBase(const unsigned int samplingStride, const bool offsetToZero);
 
     /*! Begin collecting data. Data collection will begin after delayedStart 
     second(s). If it is zero (by default), it means 'start now'. */
@@ -172,7 +175,7 @@ protected:
     void ClearTaskMap(void);
 
     /*! Collect data */
-    virtual void Collect(void) = 0;
+    //virtual void Collect(void) = 0;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorBase)

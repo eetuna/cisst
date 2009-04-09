@@ -75,6 +75,7 @@ public:
 	/*! Create a task with name 'name' that has a state table of the specified size.
 
         \param name The name of the task
+        \param dataCollector  Pointer to the instance of mtsCollectorBase
         \param sizeStateTable The history size of the state table
         \param newThread True if a new thread should be created for this task
 
@@ -103,7 +104,10 @@ public:
         \sa mtsTask, mtsTaskPeriodic, mtsTaskFromCallback
        
 	 */
-	mtsTaskContinuous(const std::string & name, unsigned int sizeStateTable = 256, bool newThread = true);
+	mtsTaskContinuous(const std::string & name, 
+                      mtsCollectorBase * dataCollector = NULL,
+                      unsigned int sizeStateTable = 256, 
+                      bool newThread = true);
 
 	/*! Default Destructor. */
 	virtual ~mtsTaskContinuous();

@@ -25,18 +25,10 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorDump)
 //-------------------------------------------------------
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
-mtsCollectorDump::mtsCollectorDump(const std::string & collectorName, 
-                                   double periodicityInSeconds)
-    : mtsCollectorBase(collectorName, periodicityInSeconds)      
+mtsCollectorDump::mtsCollectorDump(const std::string & collectorName) 
+    : mtsCollectorBase(collectorName), WaitingForTrigger(true)
 {
     Initialize();    
-}
-
-mtsCollectorDump::mtsCollectorDump(const std::string & collectorName, 
-                                   const mtsTaskPeriodic * targetTask)
-    : mtsCollectorBase(collectorName, targetTask->GetPeriodicity() / 2.0)
-{
-    Initialize();
 }
 
 mtsCollectorDump::~mtsCollectorDump()
@@ -48,15 +40,64 @@ void mtsCollectorDump::Initialize()
 {
     LastReadIndex = -1;
     TableHistoryLength = 0;
-    SamplingStrideCounter = 0;
+    //SamplingStrideCounter = 0;
     LastToc = 0.0;
     
     IsThisFirstRunning = true;
     CollectAllSignal = false;
 
-    FetchStateTableData = NULL;    
+    // Create a required interface to listen an event trigerred by another task(s).
+    mtsRequiredInterface * requiredInterface = 
+        AddRequiredInterface(GetDataCollectorRequiredInterfaceName());
+
+    if (requiredInterface) {
+        // Create a void command to enable a data thread's trigger.
+        requiredInterface->AddFunction(
+            GetDataCollectorResetEventName(), DataCollectionEventReset);
+
+        // Create an event handler to wake up this thread.
+        requiredInterface->AddEventHandlerWrite(
+            &mtsCollectorDump::DataCollectionEventHandler, this,
+            GetDataCollectorEventName(), NewElementCount, false);
+    }
 }
 
+void mtsCollectorDump::DataCollectionEventHandler(const cmnUInt & value)
+{
+    CMN_LOG(5) << "DCEvent has arrived (number of data: " << value << ")" << std::endl;
+
+    WaitingForTrigger = false;
+
+    Wakeup();
+}
+
+//-------------------------------------------------------
+//	Thread Management
+//-------------------------------------------------------
+void mtsCollectorDump::Startup(void)
+{
+    WaitingForTrigger = false;
+
+    DataCollectionEventReset();
+}
+
+void mtsCollectorDump::Run(void)
+{
+    mtsCollectorBase::Run();
+
+    if (!IsRunnable) return;
+
+    DataCollectionEventReset();
+    WaitingForTrigger = true;
+    while (WaitingForTrigger) {
+        WaitForWakeup();
+    }
+    
+    // Collect data
+    Collect();
+
+    ProcessQueuedEvents();
+}
 
 //-------------------------------------------------------
 //	Signal Management
@@ -139,16 +180,9 @@ bool mtsCollectorDump::AddSignal(const std::string & taskName,
 //	Collecting Data
 //-------------------------------------------------------
 void mtsCollectorDump::Collect(void)
-{    
-    if (IsThisFirstRunning) {
-        // Choose an appropriate fecth method
-        if (SamplingStride != 0) {
-            FetchStateTableData = &mtsCollectorDump::FetchStateTableDataByStride;
-        } else {
-            FetchStateTableData = &mtsCollectorDump::FetchStateTableDataByTime;
-        }
-
-        // Print header
+{
+    // If this is the first time calling, print out brief information on the target task. 
+    if (IsThisFirstRunning) {        
         PrintHeader();
     }
 
@@ -176,7 +210,8 @@ void mtsCollectorDump::Collect(void)
     //    
     if (StartIndex < EndIndex) {
         // normal case
-        if ((this->*FetchStateTableData)(table, StartIndex, EndIndex)) {
+        //if ((this->*FetchStateTableData)(table, StartIndex, EndIndex)) {
+        if (FetchStateTableData(table, StartIndex, EndIndex)) {
             LastReadIndex = EndIndex;
         }
     } else if (StartIndex == EndIndex) {
@@ -184,106 +219,25 @@ void mtsCollectorDump::Collect(void)
     } else {
         // Wrap-around case
         // First part: from the last read index to the bottom of the array
-        if ((this->*FetchStateTableData)(table, StartIndex, table->HistoryLength - 1)) {
+        //if ((this->*FetchStateTableData)(table, StartIndex, table->HistoryLength - 1)) {
+        if (FetchStateTableData(table, StartIndex, table->HistoryLength - 1)) {
             // Second part: from the top of the array to the IndexReader
-            if ((this->*FetchStateTableData)(table, 0, table->IndexReader)) {
+            //if ((this->*FetchStateTableData)(table, 0, table->IndexReader)) {
+            if (FetchStateTableData(table, 0, table->IndexReader)) {
                 LastReadIndex = table->IndexReader;
             }
         }
     }
 }
 
-bool mtsCollectorDump::FetchStateTableDataAll(const mtsStateTable * table, 
-                                              const unsigned int startIdx, 
-                                              const unsigned int endIdx)
-{
-    SignalMap::const_iterator itr;
-    int signalIndex = 0;
-
-    for (unsigned int i = startIdx; i <= endIdx; ++i) {
-        LogFile << table->Ticks[i] << " ";
-        {
-            for (itr = taskMap.begin()->second->begin();
-                itr != taskMap.begin()->second->end(); ++itr)
-            {
-                if (!CollectAllSignal) {
-                    signalIndex = table->GetStateVectorID(itr->first);
-                    if (signalIndex == -1) continue;
-
-                    LogFile << (*table->StateVector[signalIndex])[i] << " ";
-                } else {
-                    for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
-                        LogFile << (*table->StateVector[j])[i] << " ";
-                    }
-                }
-            }
-        }
-        LogFile << std::endl;
-    }
-
-    return true;
-}
-
-bool mtsCollectorDump::FetchStateTableDataByTime(const mtsStateTable * table, 
-                                                 const unsigned int startIdx, 
-                                                 const unsigned int endIdx)
-{
-    SignalMap::const_iterator itr;
-    int signalIndex = 0;
-    double currentTic = 0.0;
-
-    for (unsigned int i = startIdx; i <= endIdx; ++i) {
-        //
-        //  TODO: HOW TO CONVERT cmnGenericObject INTO DOUBLE???
-        //
-        currentTic = 0;//(*table->StateVector[table->TicId])[startIdx];
-        //
-        //
-        //
-        if (currentTic < LastToc + SamplingInterval) continue;
-
-        LogFile << table->Ticks[i] << " ";
-        {
-            for (itr = taskMap.begin()->second->begin();
-                itr != taskMap.begin()->second->end(); ++itr)
-            {
-                if (!CollectAllSignal) {
-                    signalIndex = table->GetStateVectorID(itr->first);
-                    if (signalIndex == -1) continue;
-
-                    LogFile << (*table->StateVector[signalIndex])[i] << " ";
-                } else {
-                    for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
-                        LogFile << (*table->StateVector[j])[i] << " ";
-                    }
-                }
-            }
-        }
-        LogFile << std::endl;
-    }
-
-    //
-    //  TODO: HOW TO CONVERT cmnGenericObject INTO DOUBLE???
-    //
-    LastToc = 0;//(*table->StateVector[table->TocId])[endIdx];
-
-    return true;
-}
-
-bool mtsCollectorDump::FetchStateTableDataByStride(const mtsStateTable * table, 
-                                                   const unsigned int startIdx, 
-                                                   const unsigned int endIdx)
+bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table, 
+                                           const unsigned int startIdx, 
+                                           const unsigned int endIdx)
 {
     SignalMap::const_iterator itr;
     int signalIndex = 0;    
 
     for (unsigned int i = startIdx; i <= endIdx; ++i) {
-        if (SamplingStrideCounter++ % SamplingStride != 0) continue;
-
-        //
-        // MJUNG: Do I need to reset SamplingStrideCounter to prevent overflow?
-        // (I don't think so but it's theoretically possible.)
-        //
         LogFile << table->Ticks[i] << " ";
         {
             for (itr = taskMap.begin()->second->begin();
@@ -321,6 +275,14 @@ void mtsCollectorDump::PrintHeader(void)
 
     mtsStateTable * table = &task->StateTable;
     CMN_ASSERT(table);
+
+    // Print out some information on the task being collected.
+    LogFile << "-------------------------------------------------------------------------------" << std::endl;
+    LogFile << "Task Name          : " << taskName << std::endl;
+    LogFile << "Date & Time        : " << currentDateTime << std::endl;
+    LogFile << "Total signal count : " << table->NumberStateData << std::endl;
+    LogFile << "-------------------------------------------------------------------------------" << std::endl;
+    LogFile << std::endl;
 
     if (CollectAllSignal) {
         LogFile << "Ticks ";

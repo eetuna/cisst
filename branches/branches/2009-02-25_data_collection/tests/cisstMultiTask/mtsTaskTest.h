@@ -35,7 +35,9 @@ class mtsTaskTestTask : public mtsTaskPeriodic {
 	//mtsStateData<cmnDouble> TestData;
 
 public:
-	mtsTaskTestTask(const std::string & collectorName, double period);
+	mtsTaskTestTask(const std::string & collectorName, 
+                    mtsCollectorBase * dataCollector, 
+                    double period);
 	virtual ~mtsTaskTestTask() {}
 
 	// implementation of four methods that are pure virtual in mtsTask

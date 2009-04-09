@@ -68,7 +68,9 @@ public:
                    const std::string & format = "");
 
     /*! Called periodically */
-    void Collect(void);
+    //void Collect(void);
+
+    void Startup(void);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorSample)
