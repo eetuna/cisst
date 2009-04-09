@@ -88,6 +88,7 @@ void mtsCollectorDump::Run(void)
     if (!IsRunnable) return;
 
     DataCollectionEventReset();
+
     WaitingForTrigger = true;
     while (WaitingForTrigger) {
         WaitForWakeup();

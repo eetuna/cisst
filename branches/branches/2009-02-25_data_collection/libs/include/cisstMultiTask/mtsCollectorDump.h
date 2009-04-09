@@ -152,7 +152,7 @@ public:
     }
 
     static double GetEventTriggeringRatio() {
-        return 0.1;
+        return 0.3;
     }
 };
 

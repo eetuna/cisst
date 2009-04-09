@@ -234,6 +234,16 @@ mtsTask::~mtsTask()
 void mtsTask::Kill(void)
 {
     CMN_LOG_CLASS(7) << "Kill " << Name << std::endl;
+
+    // Sleep for some time so that data collector fetches remaining data.
+    if (CollectData) {
+        if (TriggerEnabled) {
+            DataCollectionInfo.EventData = 0;   // redundant value
+            DataCollectionInfo.TriggerEvent(DataCollectionInfo.EventData);
+            TriggerEnabled = false;
+        }
+    }
+
     StateChange.Lock();
     // If we get here, we cannot be in the INITIALIZING or FINISHING
     // states because we are holding the StateChange Mutex. 
