@@ -35,7 +35,7 @@ http://www.cisst.org/cisst/license.txt.
 // This class handles the interface to the state table. Note that there are a few things mixed
 // in here that could be separated:
 //
-// 1) The class can be used for variables that just need to be set (write-only). In this case, the
+// 1) The class can be used for variables that just need to be set (write-only). In this case, 
 //    the Id and Table fields are not used, and AddToStateTable() would not be called. It would
 //    only be necessary to call AddWriteCommandToInterface(). This functionality could be moved
 //    to a base class.
