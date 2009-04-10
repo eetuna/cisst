@@ -2,10 +2,10 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskManagerProxyClient.cpp 145 2009-03-18 23:32:40Z mjung5 $
+  $Id: mtsProxyBaseClient.cpp 145 2009-03-18 23:32:40Z mjung5 $
 
   Author(s):  Min Yang Jung
-  Created on: 2009-03-17
+  Created on: 2009-04-10
 
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -19,22 +19,21 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
+#include <cisstMultiTask/mtsProxyBaseClient.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
-CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyClient);
+CMN_IMPLEMENT_SERVICES(mtsProxyBaseClient);
 
-mtsTaskManagerProxyClient::mtsTaskManagerProxyClient()
-{
-    RunnableFlag = false;
-}
-
-mtsTaskManagerProxyClient::~mtsTaskManagerProxyClient()
+mtsProxyBaseClient::mtsProxyBaseClient() 
+    : RunnableFlag(false)
 {
 }
 
-/*
-void mtsTaskManagerProxyClient::Init(void)
+mtsProxyBaseClient::~mtsProxyBaseClient()
+{
+}
+
+void mtsProxyBaseClient::Init(void)
 {
     try {
         IceCommunicator = Ice::initialize();
@@ -42,10 +41,10 @@ void mtsTaskManagerProxyClient::Init(void)
         std::string stringifiedProxy = TaskManagerCommunicatorIdentity + ":default -p 10000";
         Ice::ObjectPrx base = IceCommunicator->stringToProxy(stringifiedProxy);
 
-        TaskManagerCommunicatorProxy = mtsTaskManagerProxy::TaskManagerCommunicatorPrx::checkedCast(base);
-        if (!TaskManagerCommunicatorProxy) {
-            throw "Invalid proxy";
-        }
+        //TaskManagerCommunicatorProxy = mtsTaskManagerProxy::TaskManagerCommunicatorPrx::checkedCast(base);
+        //if (!TaskManagerCommunicatorProxy) {
+        //    throw "Invalid proxy";
+        //}
 
         InitSuccessFlag = true;
         RunnableFlag = true;
@@ -67,7 +66,7 @@ void mtsTaskManagerProxyClient::Init(void)
     }
 }
 
-void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
+void mtsProxyBaseClient::StartProxy(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
@@ -75,7 +74,7 @@ void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
 
     if (InitSuccessFlag) {
         // Create a worker thread here and returns immediately.
-        Arguments.Runner = mtsTaskManagerProxyClient::Runner;
+        Arguments.Runner = mtsProxyBaseClient::Runner;
         Arguments.proxy = this;
         Arguments.taskManager = callingTaskManager;
 
@@ -84,11 +83,11 @@ void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
     }
 }
 
-void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
+void mtsProxyBaseClient::Runner(ThreadArguments * arguments)
 {
     mtsTaskManager * TaskManager = arguments->taskManager;
-    mtsTaskManagerProxyClient * ProxyClient = 
-        dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
+    mtsProxyBaseClient * ProxyClient = 
+        dynamic_cast<mtsProxyBaseClient*>(arguments->proxy);
 
     try {
         mtsTaskManagerProxy::TaskInfo myTaskInfo, peerTaskInfo;
@@ -104,25 +103,25 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
         // FOR TEST
         bool flag = true;
 
-        while(ProxyClient->IsRunnable()) {            
-            //
-            //  TODO: If this should be done in a nonblocking way, AMI feature can be applied.
-            //
-            if (flag) {
-                // The following operation is a blocking call.
-                ProxyClient->GetTaskManagerCommunicatorProxy()->ShareTaskInfo(myTaskInfo, peerTaskInfo);
+        //while(ProxyClient->IsRunnable()) {            
+        //    //
+        //    //  TODO: If this should be done in a nonblocking way, AMI feature can be applied.
+        //    //
+        //    if (flag) {
+        //        // The following operation is a blocking call.
+        //        ProxyClient->GetTaskManagerCommunicatorProxy()->ShareTaskInfo(myTaskInfo, peerTaskInfo);
 
-                mtsTaskManagerProxy::TaskNameSeq::const_iterator it = 
-                    peerTaskInfo.taskNames.begin();
-                for (; it != peerTaskInfo.taskNames.end(); ++it) {
-                    CMN_LOG_CLASS_AUX(ProxyClient, 5) << "SERVER TASK NAME: " << *it << std::endl;
-                }
+        //        mtsTaskManagerProxy::TaskNameSeq::const_iterator it = 
+        //            peerTaskInfo.taskNames.begin();
+        //        for (; it != peerTaskInfo.taskNames.end(); ++it) {
+        //            CMN_LOG_CLASS_AUX(ProxyClient, 5) << "SERVER TASK NAME: " << *it << std::endl;
+        //        }
 
-                flag = false;
-            }
+        //        flag = false;
+        //    }
 
-            osaSleep(1 * cmn_ms);
-        }
+        //    osaSleep(1 * cmn_ms);
+        //}
     } catch (const Ice::Exception& e) {        
         CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << e << std::endl;        
     } catch (const char * msg) {
@@ -132,7 +131,7 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
     ProxyClient->OnThreadEnd();
 }
 
-void mtsTaskManagerProxyClient::OnThreadEnd()
+void mtsProxyBaseClient::OnThreadEnd()
 {
     if (IceCommunicator) {
         try {
@@ -146,4 +145,3 @@ void mtsTaskManagerProxyClient::OnThreadEnd()
         }
     }    
 }
-*/

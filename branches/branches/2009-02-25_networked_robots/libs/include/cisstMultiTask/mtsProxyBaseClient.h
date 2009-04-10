@@ -2,10 +2,10 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskManagerProxyClient.h 142 2009-03-11 23:02:34Z mjung5 $
+  $Id: mtsProxyBaseClient.h 142 2009-03-11 23:02:34Z mjung5 $
 
   Author(s):  Min Yang Jung
-  Created on: 2009-03-17
+  Created on: 2009-04-10
 
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -19,11 +19,10 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#ifndef _mtsTaskManagerProxyClient_h
-#define _mtsTaskManagerProxyClient_h
+#ifndef _mtsProxyBaseClient_h
+#define _mtsProxyBaseClient_h
 
-#include <Ice/Ice.h>
-#include <cisstMultiTask/mtsProxyBaseClient.h>
+#include <cisstMultiTask/mtsProxyBaseCommon.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -33,28 +32,39 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 
-class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient {
+class CISST_EXPORT mtsProxyBaseClient : public mtsProxyBaseCommon {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
     ///////////////////////////////////////////////////////////////////////////
     // From SLICE definition
-    mtsTaskManagerProxy::TaskManagerCommunicatorPrx TaskManagerCommunicatorProxy;
+    //mtsTaskManagerProxy::TaskManagerCommunicatorPrx TaskManagerCommunicatorProxy;
     ///////////////////////////////////////////////////////////////////////////
+protected:
+    bool RunnableFlag;
+
+    void Init(void);
 
 public:
-    mtsTaskManagerProxyClient(void);
-    virtual ~mtsTaskManagerProxyClient();
+    mtsProxyBaseClient(void);
+    virtual ~mtsProxyBaseClient();
+
+    void StartProxy(mtsTaskManager * callingTaskManager);    
+    void OnThreadEnd(void);
+
+    static void Runner(ThreadArguments * arguments);
+
+    inline const bool IsRunnable() const { return RunnableFlag; }
 
     ///////////////////////////////////////////////////////////////////////////
     // From SLICE definition
-    inline mtsTaskManagerProxy::TaskManagerCommunicatorPrx GetTaskManagerCommunicatorProxy() const {
-        return TaskManagerCommunicatorProxy; 
-    }    
+    //inline mtsTaskManagerProxy::TaskManagerCommunicatorPrx GetTaskManagerCommunicatorProxy() const {
+    //    return TaskManagerCommunicatorProxy; 
+    //}    
     ///////////////////////////////////////////////////////////////////////////
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient)
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsProxyBaseClient)
 
-#endif // _mtsTaskManagerProxyClient_h
+#endif // _mtsProxyBaseClient_h
 

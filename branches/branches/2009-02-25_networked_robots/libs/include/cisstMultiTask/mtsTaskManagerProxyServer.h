@@ -22,20 +22,17 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManagerProxyServer_h
 #define _mtsTaskManagerProxyServer_h
 
-#include <cisstMultiTask/mtsTaskManagerProxy.h>
-#include <cisstMultiTask/mtsTaskManagerProxyCommon.h>
-#include <Ice/Ice.h>
+#include <cisstMultiTask/mtsProxyBaseServer.h>
+#include <cisstMultiTask/mtsExport.h>
 
 #include <set>
-
-#include <cisstMultiTask/mtsExport.h>
 
 /*!
   \ingroup cisstMultiTask
 
   TODO: add class summary here
 */
-class CISST_EXPORT mtsTaskManagerProxyServer : public mtsTaskManagerProxyCommon {
+class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
@@ -50,20 +47,17 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsTaskManagerProxyCommon 
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    Ice::ObjectAdapterPtr IceAdapter;
-
-    void Init(void);
-
 public:
     mtsTaskManagerProxyServer(void);
     virtual ~mtsTaskManagerProxyServer();
 
-    void StartProxy(mtsTaskManager * callingTaskManager);    
-    void OnThreadEnd(void);
+    void Init(void);
 
-    inline Ice::ObjectAdapterPtr GetIceAdapter() const { return IceAdapter; }
+    void StartProxy(mtsTaskManager * callingTaskManager);
 
-    static void Runner(ThreadArguments * arguments);
+    void Runner(ThreadArguments * arguments);
+
+    void OnThreadEnd();
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyServer)

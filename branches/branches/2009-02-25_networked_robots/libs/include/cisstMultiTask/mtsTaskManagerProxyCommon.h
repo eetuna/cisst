@@ -22,91 +22,17 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManagerProxyCommon_h
 #define _mtsTaskManagerProxyCommon_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegister.h>
-#include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstMultiTask/mtsTaskManagerProxy.h>
-#include <cisstOSAbstraction/osaThread.h>
-#include <cisstMultiTask/mtsExport.h>
+#include <cisstMultiTask/mtsProxyBaseCommon.h>
 
-#include <IceUtil/IceUtil.h>
-#include <Ice/Ice.h>
-
-#define ICE_TASKMANAGER_COMMUNICATOR_IDENTITY "TaskManagerCommunicator"
-
-/*  Limitations of Ice::Application
-    Ice::Application is a singleton class that creates a single communicator.
-    If you are using multiple communicators, you cannot use Ice::Application.
-*/
-class CISST_EXPORT mtsTaskManagerProxyCommon { //: public Ice::Application {
+class CISST_EXPORT mtsTaskManagerProxyCommon : public mtsProxyBaseCommon {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-protected:
-    //--------------------- Auxiliary Class Definition ----------------------//
-    class ThreadArguments {
-    public:
-        mtsTaskManager * taskManager;
-        mtsTaskManagerProxyCommon * proxy;
-        void (*Runner)(ThreadArguments *);
-    };
-
-    class ProxyWorker {
-    public:
-        ProxyWorker(void) {}
-        virtual ~ProxyWorker(void) {}
-
-        void * Run(ThreadArguments * argument) {
-            argument->Runner(argument);
-            return 0;
-        }
-    };
-
-    //-------------------------- Thread Management --------------------------//
-    /*! Was the initiliazation successful? */
-    bool InitSuccessFlag;
-
-    /*! Is this thread running? */
-    bool RunningFlag;
-
-    /*! Worker thread for network communication */
-    osaThread WorkerThread;
-
-    /*! Containers for thread creation */
-    ProxyWorker ProxyWorkerInfo;
-    ThreadArguments Arguments;
-
-    /*! Ice module initialization */
-    virtual void Init(void) = 0;
-
-    //---------------------------- ICE Related ------------------------------//
-    /*! Settings for ICE components */
-    std::string TaskManagerCommunicatorIdentity;
-
-    /*! Ice communicator for proxy */
-    Ice::CommunicatorPtr IceCommunicator;
-
 public:
-    mtsTaskManagerProxyCommon(void);
-    virtual ~mtsTaskManagerProxyCommon();
+    mtsTaskManagerProxyCommon(void) {}
+    ~mtsTaskManagerProxyCommon() {}
 
-    /*! Initialize and start a proxy. Returns immediately. */
-    virtual void StartProxy(mtsTaskManager * callingTaskManager) = 0;
-    
-    /*! Called when the worker thread ends. */
-    virtual void OnThreadEnd(void) = 0;
-
-    //------------------------------- Getters -------------------------------//
-    inline const bool IsInitalized() const  { return InitSuccessFlag; }
-    
-    inline const bool IsRunning() const     { return RunningFlag; }    
-
-    inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }
-
-    //
-    // TODO: should replace this with map<communicatorPtr, mtsTaskManagerProxy *>
-    //
-    static Ice::CommunicatorPtr communicator;
+    std::string GetCommunicatorIdentity() const { return "TaskManagerCommunicator"; }
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyCommon)

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskManagerProxyServer.cpp 145 2009-03-18 23:32:40Z mjung5 $
+  $Id: mtsProxyBaseServer.cpp 145 2009-03-18 23:32:40Z mjung5 $
 
   Author(s):  Min Yang Jung
   Created on: 2009-03-17
@@ -19,37 +19,37 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
+#include <cisstMultiTask/mtsProxyBaseServer.h>
 
-CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
+CMN_IMPLEMENT_SERVICES(mtsProxyBaseServer);
 
-mtsTaskManagerProxyServer::mtsTaskManagerProxyServer() 
+mtsProxyBaseServer::mtsProxyBaseServer() 
 {
 }
 
-mtsTaskManagerProxyServer::~mtsTaskManagerProxyServer()
+mtsProxyBaseServer::~mtsProxyBaseServer()
 {
 }
 
-void mtsTaskManagerProxyServer::Init(void)
+void mtsProxyBaseServer::Init(void)
 {
     try {
         IceCommunicator = Ice::initialize();
 
-        std::string ObjectIdentityName = TaskManagerCommunicatorIdentity;
-        std::string ObjectAdapterName = TaskManagerCommunicatorIdentity + "Adapter";
+        //std::string ObjectIdentityName = TaskManagerCommunicatorIdentity;
+        //std::string ObjectAdapterName = TaskManagerCommunicatorIdentity + "Adapter";
 
-        IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
-                ObjectAdapterName.c_str(), // the name of the adapter
-                // instructs the adapter to listen for incoming requests 
-                // using the default protocol (TCP) at port number 10000
-                "default -p 10000");
+        //IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
+        //        ObjectAdapterName.c_str(), // the name of the adapter
+        //        // instructs the adapter to listen for incoming requests 
+        //        // using the default protocol (TCP) at port number 10000
+        //        "default -p 10000");
 
-        // Create a servant for TaskManager interface
-        Ice::ObjectPtr object = new mtsTaskManagerProxyServer::TaskManagerChannelI;
+        //// Create a servant for TaskManager interface
+        //Ice::ObjectPtr object = new mtsProxyBaseServer::TaskManagerChannelI;
 
-        // Inform the object adapter of the presence of a new servant
-        IceAdapter->add(object, IceCommunicator->stringToIdentity(ObjectIdentityName));
+        //// Inform the object adapter of the presence of a new servant
+        //IceAdapter->add(object, IceCommunicator->stringToIdentity(ObjectIdentityName));
         
         InitSuccessFlag = true;
         CMN_LOG_CLASS(3) << "Server proxy initialization success. " << std::endl;
@@ -70,7 +70,7 @@ void mtsTaskManagerProxyServer::Init(void)
     }
 }
 
-void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
+void mtsProxyBaseServer::StartProxy(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
@@ -80,7 +80,7 @@ void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
         //mtsTaskManagerProxyCommon::communicator = IceCommunicator;
 
         // Create a worker thread here and returns immediately.
-        Arguments.Runner = &mtsTaskManagerProxyServer::Runner;
+        Arguments.Runner = &mtsProxyBaseServer::Runner;
         Arguments.proxy = this;
         Arguments.taskManager = callingTaskManager;
 
@@ -89,11 +89,11 @@ void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
     }
 }
 
-void mtsTaskManagerProxyServer::Runner(ThreadArguments * arguments)
+void mtsProxyBaseServer::Runner(ThreadArguments * arguments)
 {
     mtsTaskManager * TaskManager = arguments->taskManager;
-    mtsTaskManagerProxyServer * ProxyServer = 
-        dynamic_cast<mtsTaskManagerProxyServer*>(arguments->proxy);
+    mtsProxyBaseServer * ProxyServer = 
+        dynamic_cast<mtsProxyBaseServer*>(arguments->proxy);
     Ice::CommunicatorPtr ic = ProxyServer->GetIceCommunicator();
 
     try {
@@ -113,7 +113,7 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments * arguments)
     ProxyServer->OnThreadEnd();
 }
 
-void mtsTaskManagerProxyServer::OnThreadEnd()
+void mtsProxyBaseServer::OnThreadEnd()
 {
     if (IceCommunicator) {
         try {
@@ -129,19 +129,19 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
 
 //-----------------------------------------------------------------------------
 // From SLICE definition
-void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
-    const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
-    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
-    const ::Ice::Current&)
-{
-    // Get the names of tasks' being managed by the peer TaskManager.
-    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
-    for (; it != clientTaskInfo.taskNames.end(); ++it) {
-        CMN_LOG_CLASS_AUX(mtsTaskManager::GetInstance(), 5) << 
-            "CLIENT TASK NAME: " << *it << std::endl;
-    }
-
-    // Send my information to the peer ('peers' in the future).
-    mtsTaskManager::GetInstance()->GetNamesOfTasks(serverTaskInfo.taskNames);
-}
+//void mtsProxyBaseServer::TaskManagerChannelI::ShareTaskInfo(
+//    const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
+//    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
+//    const ::Ice::Current&)
+//{
+//    // Get the names of tasks' being managed by the peer TaskManager.
+//    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
+//    for (; it != clientTaskInfo.taskNames.end(); ++it) {
+//        CMN_LOG_CLASS_AUX(mtsTaskManager::GetInstance(), 5) << 
+//            "CLIENT TASK NAME: " << *it << std::endl;
+//    }
+//
+//    // Send my information to the peer ('peers' in the future).
+//    mtsTaskManager::GetInstance()->GetNamesOfTasks(serverTaskInfo.taskNames);
+//}
 //-----------------------------------------------------------------------------
