@@ -43,9 +43,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-// Enable this macro for unit-test purposes only
-#define	_OPEN_PRIVATE_FOR_UNIT_TEST_
-
 class mtsTaskManagerProxyCommon;
 
 /*!
@@ -56,6 +53,8 @@ class mtsTaskManagerProxyCommon;
 */
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
     
+    friend class mtsTaskManagerTest;
+
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
     /*! Typedef for task name and pointer map. */
@@ -86,11 +85,7 @@ public:
         TASK_MANAGER_CLIENT     // This task manager will act as a client
     } TaskManagerType;
 
-#ifndef _OPEN_PRIVATE_FOR_UNIT_TEST_
 protected:
-#else
-public:
-#endif
 
     /*! Mapping of task name (key) and pointer to mtsTask object. */
     TaskMapType TaskMap;

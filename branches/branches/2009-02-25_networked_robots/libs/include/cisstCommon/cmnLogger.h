@@ -77,7 +77,7 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_LOG_CLASS(lod) \
     ((lod > cmnLogger::GetLoD()) || (lod > Services()->GetLoD()))?\
         (void*)0:\
-    ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - Class " << Services()->GetName() << ": ")
+        ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - Class " << Services()->GetName() << ": ")
  
 #define CMN_LOG_CLASS_AUX(_instance, lod) \
     ((lod > cmnLogger::GetLoD()) || (lod > _instance->Services()->GetLoD()))?\

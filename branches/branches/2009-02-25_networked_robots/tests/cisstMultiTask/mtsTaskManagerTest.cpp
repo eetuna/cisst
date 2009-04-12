@@ -69,10 +69,4 @@ void mtsTaskManagerTest::TestAddTask(void)
 	//CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
 }
 
-//-----------------------------------------------------------------------------
-//	Tests for private variables and methods
-//
-//	Be sure that _OPEN_PRIVATE_FOR_UNIT_TEST_ macro is enabled at mtsTaskManager.h
-//-----------------------------------------------------------------------------
-
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsTaskManagerTest);
