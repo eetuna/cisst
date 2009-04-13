@@ -204,8 +204,8 @@ protected:
     //  Proxy-related
     //-------------------------------------------------------------------------
 
-    /*! Set the mode of this TaskManager. Unless the TaskManagerType is LOCAL, 
-        initialize an proxy processing object. */
+    /*! Set the operation mode of TaskManager. If TaskManager is not LOCAL and 
+        this method is called, a proxy object is initialized and starts. */
     void SetTaskManagerMode(const TaskManagerType type);
 
     inline const bool IsProxySupported() const {

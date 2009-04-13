@@ -72,8 +72,8 @@ void displayTask::Run(void)
                          << " - Amplitude: " << AmplitudeData.Data << std::endl;
     }
     // log some extra information
-    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
-                     << " - Data: " << Data << std::endl;
+    //CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
+    //                 << " - Data: " << Data << std::endl;
 #ifdef CISST_GETVECTOR
     CMN_LOG_CLASS(7) << "Last 10: " << DataVec << std::endl;
 #endif

@@ -62,11 +62,19 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
 
 //-----------------------------------------------------------------------------
 // From SLICE definition
+//-----------------------------------------------------------------------------
 void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
     const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
     ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
     const ::Ice::Current&)
 {
+    //
+    // 4/13 TODO:
+    // - Task Name, Interface Name should be received.
+    // - How to define the id of TaskManager instance? (need to define the name
+    //   of cmnGenericObject?)
+    //
+
     // Get the names of tasks' being managed by the peer TaskManager.
     mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
     for (; it != clientTaskInfo.taskNames.end(); ++it) {
@@ -77,4 +85,3 @@ void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
     // Send my information to the peer ('peers' in the future).
     mtsTaskManager::GetInstance()->GetNamesOfTasks(serverTaskInfo.taskNames);
 }
-//-----------------------------------------------------------------------------

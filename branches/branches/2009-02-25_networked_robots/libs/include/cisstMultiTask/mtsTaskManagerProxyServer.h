@@ -39,16 +39,24 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-    ///////////////////////////////////////////////////////////////////////////
+    //-------------------------------------------------------------------------
     // From SLICE definition
+    //-------------------------------------------------------------------------
     class TaskManagerChannelI : public mtsTaskManagerProxy::TaskManagerCommunicator {
     public:
+        /*! Called when the connected client requests task information. */
         virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
                                    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
                                    const ::Ice::Current&);
+
+        //
+        //  TODO: What if a client/server disconnects abruptly so that data integrity of
+        //  two sides are ruined? How to gurantee both peers have synchronized data?
+        //  => Periodically let them communicate to each other (periodic synchronization)
+        //  => What if a server collapses? (DISASTER... Thus the p2p architecture rather than
+        //  the server-client architecture has a merit in this case.)
+        //
     };
-    //
-    ///////////////////////////////////////////////////////////////////////////
 
 public:
     mtsTaskManagerProxyServer(void) {}
