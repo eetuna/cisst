@@ -22,10 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsProxyBaseCommon_h
 #define _mtsProxyBaseCommon_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegister.h>
-#include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstMultiTask/mtsTaskManagerProxy.h>
+//#include <cisstCommon/cmnGenericObject.h>
+//#include <cisstCommon/cmnClassRegister.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstMultiTask/mtsExport.h>
 
@@ -34,28 +32,27 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <string>
 
-//#define ICE_TASKMANAGER_COMMUNICATOR_IDENTITY "TaskManagerCommunicator"
-
+template<class _ArgumentType>
 class CISST_EXPORT mtsProxyBaseCommon {
     
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-
 protected:
     //--------------------- Auxiliary Class Definition ----------------------//
+    template<class _ArgumentType>
     class ThreadArguments {
     public:
-        mtsTaskManager * taskManager;
+        _ArgumentType * argument;
         mtsProxyBaseCommon * proxy;
-        void (*Runner)(ThreadArguments *);
+        void (*Runner)(ThreadArguments<_ArgumentType> *);
     };
 
+    template<class _ArgumentType>
     class ProxyWorker {
     public:
         ProxyWorker(void) {}
         virtual ~ProxyWorker(void) {}
 
-        void * Run(ThreadArguments * argument) {
-            argument->Runner(argument);
+        void * Run(ThreadArguments<_ArgumentType> * arguments) {
+            arguments->Runner(arguments);
             return 0;
         }
     };
@@ -71,8 +68,11 @@ protected:
     osaThread WorkerThread;
 
     /*! Containers for thread creation */
-    ProxyWorker ProxyWorkerInfo;
-    ThreadArguments Arguments;    
+    ProxyWorker<_ArgumentType> ProxyWorkerInfo;
+    ThreadArguments<_ArgumentType> ThreadArgumentsInfo;
+
+    //template<class _ArgumentType>
+    //virtual void Runner(ThreadArguments<_ArgumentType> * arguments) = 0;
 
     //---------------------------- ICE Related ------------------------------//
     /*! Settings for ICE components */
@@ -81,24 +81,39 @@ protected:
     /*! Ice communicator for proxy */
     Ice::CommunicatorPtr IceCommunicator;
 
+    /*! Ice default logger */
+    Ice::LoggerPtr Logger;
+
     /*! Ice module initialization */
     virtual void Init(void) = 0;
 
-    /*! Define a string that represents unique ID. */
-    virtual std::string GetCommunicatorIdentity() const = 0;
+    /*! Ice run-time */
+    Ice::CommunicatorPtr communicator;
 
-    //
-    // TODO: should replace this with map<communicatorPtr, mtsTaskManagerProxy *>
-    //
-    //static Ice::CommunicatorPtr communicator;
-    //Ice::CommunicatorPtr communicator;
+    /*! Define a string that represents unique ID. */
+    typedef enum {
+        TASK_MANAGER_COMMUNICATOR,
+    } CommunicatorIdentity;
+
+    std::string GetCommunicatorIdentity(CommunicatorIdentity id) const 
+    {
+        switch (id) {
+            case TASK_MANAGER_COMMUNICATOR:
+                return "TaskManagerCommunicator";
+        }
+
+        return "NOT_DEFINED";
+    }
 
 public:
-    mtsProxyBaseCommon(void);
-    virtual ~mtsProxyBaseCommon();
+    mtsProxyBaseCommon(void) : RunningFlag(false), InitSuccessFlag(false), IceCommunicator(NULL)
+    {
+        //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
+    }
+    virtual ~mtsProxyBaseCommon() {}
 
     /*! Initialize and start a proxy. Returns immediately. */
-    virtual void StartProxy(mtsTaskManager * callingTaskManager) = 0;
+    virtual void StartProxy(_ArgumentType * callingClass) = 0;
     
     /*! Called when the worker thread ends. */
     virtual void OnThreadEnd(void) = 0;
@@ -106,11 +121,11 @@ public:
     //------------------------------- Getters -------------------------------//
     inline const bool IsInitalized() const  { return InitSuccessFlag; }
     
-    inline const bool IsRunning() const     { return RunningFlag; }    
+    inline const bool IsRunning() const     { return RunningFlag; }
 
-    inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }    
+    inline const Ice::LoggerPtr GetLogger() const { return Logger; }
+
+    //inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }    
 };
-
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsProxyBaseCommon)
 
 #endif // _mtsProxyBaseCommon_h

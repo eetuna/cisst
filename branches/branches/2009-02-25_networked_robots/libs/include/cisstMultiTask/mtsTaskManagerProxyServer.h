@@ -22,7 +22,10 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManagerProxyServer_h
 #define _mtsTaskManagerProxyServer_h
 
+#include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
+#include <cisstMultiTask/mtsTaskManagerProxy.h>
+
 #include <cisstMultiTask/mtsExport.h>
 
 #include <set>
@@ -32,7 +35,7 @@ http://www.cisst.org/cisst/license.txt.
 
   TODO: add class summary here
 */
-class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer {
+class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTaskManager> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
@@ -48,16 +51,16 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer {
     ///////////////////////////////////////////////////////////////////////////
 
 public:
-    mtsTaskManagerProxyServer(void);
-    virtual ~mtsTaskManagerProxyServer();
+    mtsTaskManagerProxyServer(void) {}
+    ~mtsTaskManagerProxyServer() {}
 
-    void Init(void);
+    Ice::ObjectPtr CreateServant() { 
+        return new mtsTaskManagerProxyServer::TaskManagerChannelI;
+    }
 
     void StartProxy(mtsTaskManager * callingTaskManager);
 
-    void Runner(ThreadArguments * arguments);
-
-    void OnThreadEnd();
+    static void Runner(ThreadArguments<mtsTaskManager> * arguments);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyServer)

@@ -54,13 +54,8 @@ SET(SOURCE_FILES
 
     mtsTaskManager.cpp
     mtsTaskManagerProxy.cpp
-    mtsTaskManagerProxyCommon.cpp    
     mtsTaskManagerProxyClient.cpp
     mtsTaskManagerProxyServer.cpp
-    
-    mtsProxyBaseCommon.cpp
-    mtsProxyBaseClient.cpp
-    mtsProxyBaseServer.cpp
     )
 
 # all header files
@@ -115,7 +110,6 @@ SET(HEADER_FILES
     
     mtsTaskManager.h
     mtsTaskManagerProxy.h
-    mtsTaskManagerProxyCommon.h
     mtsTaskManagerProxyClient.h
     mtsTaskManagerProxyServer.h
     

@@ -23,53 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
-mtsTaskManagerProxyServer::mtsTaskManagerProxyServer() 
-{
-}
-
-mtsTaskManagerProxyServer::~mtsTaskManagerProxyServer()
-{
-}
-
-void mtsTaskManagerProxyServer::Init(void)
-{
-    try {
-        IceCommunicator = Ice::initialize();
-
-        std::string ObjectIdentityName = TaskManagerCommunicatorIdentity;
-        std::string ObjectAdapterName = TaskManagerCommunicatorIdentity + "Adapter";
-
-        IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
-                ObjectAdapterName.c_str(), // the name of the adapter
-                // instructs the adapter to listen for incoming requests 
-                // using the default protocol (TCP) at port number 10000
-                "default -p 10000");
-
-        // Create a servant for TaskManager interface
-        Ice::ObjectPtr object = new mtsTaskManagerProxyServer::TaskManagerChannelI;
-
-        // Inform the object adapter of the presence of a new servant
-        IceAdapter->add(object, IceCommunicator->stringToIdentity(ObjectIdentityName));
-        
-        InitSuccessFlag = true;
-        CMN_LOG_CLASS(3) << "Server proxy initialization success. " << std::endl;
-        return;
-    } catch (const Ice::Exception& e) {
-        CMN_LOG_CLASS(3) << "Server proxy initialization error: " << e << std::endl;
-    } catch (const char * msg) {
-        CMN_LOG_CLASS(3) << "Server proxy initialization error: " << msg << std::endl;
-    }
-
-    if (IceCommunicator) {
-        InitSuccessFlag = false;
-        try {
-            IceCommunicator->destroy();
-        } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Server proxy initialization failed: " << e << std::endl;
-        }
-    }
-}
-
 void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
@@ -80,30 +33,24 @@ void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
         //mtsTaskManagerProxyCommon::communicator = IceCommunicator;
 
         // Create a worker thread here and returns immediately.
-        Arguments.Runner = &mtsTaskManagerProxyServer::Runner;
-        Arguments.proxy = this;
-        Arguments.taskManager = callingTaskManager;
+        ThreadArgumentsInfo.argument = callingTaskManager;
+        ThreadArgumentsInfo.proxy = this;
+        ThreadArgumentsInfo.Runner = mtsTaskManagerProxyServer::Runner;
 
-        WorkerThread.Create<ProxyWorker, ThreadArguments *>(
-            &ProxyWorkerInfo, &ProxyWorker::Run, &Arguments, "C-PRX");
+        WorkerThread.Create<ProxyWorker<mtsTaskManager>, ThreadArguments<mtsTaskManager>*>(
+            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, "C-PRX");
     }
 }
 
-void mtsTaskManagerProxyServer::Runner(ThreadArguments * arguments)
+void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * arguments)
 {
-    mtsTaskManager * TaskManager = arguments->taskManager;
+    //mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
+
     mtsTaskManagerProxyServer * ProxyServer = 
         dynamic_cast<mtsTaskManagerProxyServer*>(arguments->proxy);
-    Ice::CommunicatorPtr ic = ProxyServer->GetIceCommunicator();
-
+    
     try {
-        // Activate the adapter. The adapter is initially created in a 
-        // holding state. The server starts to process incoming requests
-        // from clients as soon as the adapter is activated.
-        ProxyServer->GetIceAdapter()->activate();
-
-        // Blocking call
-        ic->waitForShutdown();
+        ProxyServer->ActivateServer();
     } catch (const Ice::Exception& e) {
         CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << e << std::endl;
     } catch (const char * msg) {
@@ -111,20 +58,6 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments * arguments)
     }
 
     ProxyServer->OnThreadEnd();
-}
-
-void mtsTaskManagerProxyServer::OnThreadEnd()
-{
-    if (IceCommunicator) {
-        try {
-            IceCommunicator->destroy();
-            RunningFlag = false;
-
-            CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
-        } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
-        }
-    }    
 }
 
 //-----------------------------------------------------------------------------

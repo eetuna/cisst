@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsProxyBaseClient_h
 
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
+#include <cisstOSAbstraction/osaSleep.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -32,29 +33,83 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 
-class CISST_EXPORT mtsProxyBaseClient : public mtsProxyBaseCommon {
+template<class _ArgumentType>
+class CISST_EXPORT mtsProxyBaseClient : public mtsProxyBaseCommon<_ArgumentType> {
     
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-
-    ///////////////////////////////////////////////////////////////////////////
-    // From SLICE definition
-    //mtsTaskManagerProxy::TaskManagerCommunicatorPrx TaskManagerCommunicatorProxy;
-    ///////////////////////////////////////////////////////////////////////////
 protected:
     bool RunnableFlag;
+    Ice::ObjectPrx ProxyObject;
 
-    void Init(void);
+    virtual void CreateProxy() = 0;
+
+    void Init(void)
+    {
+        try {
+            IceCommunicator = Ice::initialize();
+
+            std::string stringifiedProxy = 
+                GetCommunicatorIdentity(TASK_MANAGER_COMMUNICATOR) + ":default -p 10705";
+            ProxyObject = IceCommunicator->stringToProxy(stringifiedProxy);
+
+            // If a proxy fails to be created, an exception is thrown.
+            CreateProxy();
+
+            InitSuccessFlag = true;
+            RunnableFlag = true;
+
+            Logger = IceCommunicator->getLogger();
+            Logger->trace("mtsProxyBaseClient", "Client proxy initialization success");
+            //CMN_LOG_CLASS(3) << "Client proxy initialization success. " << std::endl;
+            return;
+        } catch (const Ice::Exception& e) {
+            Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
+            Logger->trace("mtsProxyBaseClient", e.what());
+            //CMN_LOG_CLASS(3) << "Client proxy initialization error: " << e << std::endl;
+        } catch (const char * msg) {
+            Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
+            Logger->trace("mtsProxyBaseClient", msg);
+            //CMN_LOG_CLASS(3) << "Client proxy initialization error: " << msg << std::endl;
+        }
+
+        if (IceCommunicator) {
+            InitSuccessFlag = false;
+            try {
+                IceCommunicator->destroy();
+            } catch (const Ice::Exception& e) {
+                Logger->trace("mtsProxyBaseClient", "Client proxy clean-up error");
+                Logger->trace("mtsProxyBaseClient", e.what());
+                //CMN_LOG_CLASS(3) << "Client proxy initialization failed: " << e << std::endl;
+            }
+        }
+    }
 
 public:
-    mtsProxyBaseClient(void);
-    virtual ~mtsProxyBaseClient();
-
-    void StartProxy(mtsTaskManager * callingTaskManager);    
-    void OnThreadEnd(void);
-
-    static void Runner(ThreadArguments * arguments);
+    mtsProxyBaseClient(void) : RunnableFlag(false) {}
+    virtual ~mtsProxyBaseClient() {}
 
     inline const bool IsRunnable() const { return RunnableFlag; }
+
+    //virtual void Runner(ThreadArguments<_ArgumentType> * arguments) = 0;
+
+    virtual void StartProxy(_ArgumentType * callingClass) = 0;
+
+    void OnThreadEnd(void)
+    {
+        if (IceCommunicator) {
+            try {
+                IceCommunicator->destroy();
+                RunningFlag = false;
+                RunnableFlag = false;
+
+                Logger->trace("mtsProxyBaseClient", "Client proxy clean-up success.");
+                //CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
+            } catch (const Ice::Exception& e) {
+                Logger->trace("mtsProxyBaseClient", "Client proxy clean-up failed.");
+                Logger->trace("mtsProxyBaseClient", e.what());
+                //CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
+            }
+        }    
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // From SLICE definition
@@ -64,7 +119,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsProxyBaseClient)
+//typedef mtsProxyBaseClient<mtsTaskManager> mtsTaskManagerProxyClient;
+//CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient);
 
 #endif // _mtsProxyBaseClient_h
 

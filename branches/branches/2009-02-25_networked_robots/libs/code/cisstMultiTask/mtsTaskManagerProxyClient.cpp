@@ -24,49 +24,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyClient);
 
-mtsTaskManagerProxyClient::mtsTaskManagerProxyClient()
-{
-    RunnableFlag = false;
-}
-
-mtsTaskManagerProxyClient::~mtsTaskManagerProxyClient()
-{
-}
-
-/*
-void mtsTaskManagerProxyClient::Init(void)
-{
-    try {
-        IceCommunicator = Ice::initialize();
-
-        std::string stringifiedProxy = TaskManagerCommunicatorIdentity + ":default -p 10000";
-        Ice::ObjectPrx base = IceCommunicator->stringToProxy(stringifiedProxy);
-
-        TaskManagerCommunicatorProxy = mtsTaskManagerProxy::TaskManagerCommunicatorPrx::checkedCast(base);
-        if (!TaskManagerCommunicatorProxy) {
-            throw "Invalid proxy";
-        }
-
-        InitSuccessFlag = true;
-        RunnableFlag = true;
-        CMN_LOG_CLASS(3) << "Client proxy initialization success. " << std::endl;
-        return;
-    } catch (const Ice::Exception& e) {
-        CMN_LOG_CLASS(3) << "Client proxy initialization error: " << e << std::endl;
-    } catch (const char * msg) {
-        CMN_LOG_CLASS(3) << "Client proxy initialization error: " << msg << std::endl;
-    }
-
-    if (IceCommunicator) {
-        InitSuccessFlag = false;
-        try {
-            IceCommunicator->destroy();
-        } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Client proxy initialization failed: " << e << std::endl;
-        }
-    }
-}
-
 void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
@@ -75,18 +32,19 @@ void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
 
     if (InitSuccessFlag) {
         // Create a worker thread here and returns immediately.
-        Arguments.Runner = mtsTaskManagerProxyClient::Runner;
-        Arguments.proxy = this;
-        Arguments.taskManager = callingTaskManager;
+        ThreadArgumentsInfo.argument = callingTaskManager;
+        ThreadArgumentsInfo.proxy = this;        
+        ThreadArgumentsInfo.Runner = mtsTaskManagerProxyClient::Runner;
 
-        WorkerThread.Create<ProxyWorker, ThreadArguments *>(
-            &ProxyWorkerInfo, &ProxyWorker::Run, &Arguments, "S-PRX");
+        WorkerThread.Create<ProxyWorker<mtsTaskManager>, ThreadArguments<mtsTaskManager>*>(
+            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, "S-PRX");
     }
 }
 
-void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
+void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * arguments)
 {
-    mtsTaskManager * TaskManager = arguments->taskManager;
+    mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
+
     mtsTaskManagerProxyClient * ProxyClient = 
         dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
 
@@ -112,10 +70,13 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
                 // The following operation is a blocking call.
                 ProxyClient->GetTaskManagerCommunicatorProxy()->ShareTaskInfo(myTaskInfo, peerTaskInfo);
 
+                std::string s;
                 mtsTaskManagerProxy::TaskNameSeq::const_iterator it = 
                     peerTaskInfo.taskNames.begin();
                 for (; it != peerTaskInfo.taskNames.end(); ++it) {
-                    CMN_LOG_CLASS_AUX(ProxyClient, 5) << "SERVER TASK NAME: " << *it << std::endl;
+                    s = "SERVER TASK NAME: " + (*it);
+                    ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", s);
+                    //CMN_LOG_CLASS_AUX(ProxyClient, 5) << "SERVER TASK NAME: " << *it << std::endl;
                 }
 
                 flag = false;
@@ -123,27 +84,15 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments * arguments)
 
             osaSleep(1 * cmn_ms);
         }
-    } catch (const Ice::Exception& e) {        
-        CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << e << std::endl;        
+    } catch (const Ice::Exception& e) {
+        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
+        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", e.what());
+        //CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << e << std::endl;        
     } catch (const char * msg) {
-        CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << msg << std::endl;        
+        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
+        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", msg);
+        //CMN_LOG_CLASS_AUX(ProxyClient, 3) << "Proxy initialization error: " << msg << std::endl;        
     }
 
     ProxyClient->OnThreadEnd();
 }
-
-void mtsTaskManagerProxyClient::OnThreadEnd()
-{
-    if (IceCommunicator) {
-        try {
-            IceCommunicator->destroy();
-            RunningFlag = false;
-            RunnableFlag = false;
-
-            CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
-        } catch (const Ice::Exception& e) {
-            CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
-        }
-    }    
-}
-*/

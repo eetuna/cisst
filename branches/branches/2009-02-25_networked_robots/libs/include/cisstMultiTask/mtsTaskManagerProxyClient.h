@@ -22,8 +22,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManagerProxyClient_h
 #define _mtsTaskManagerProxyClient_h
 
-#include <Ice/Ice.h>
+#include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
+#include <cisstMultiTask/mtsTaskManagerProxy.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -33,7 +34,7 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 
-class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient {
+class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTaskManager> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
@@ -43,15 +44,27 @@ class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient {
     ///////////////////////////////////////////////////////////////////////////
 
 public:
-    mtsTaskManagerProxyClient(void);
-    virtual ~mtsTaskManagerProxyClient();
+    mtsTaskManagerProxyClient() {}
+    ~mtsTaskManagerProxyClient() {}
+
+    void CreateProxy() {
+        TaskManagerCommunicatorProxy = 
+            mtsTaskManagerProxy::TaskManagerCommunicatorPrx::checkedCast(ProxyObject);
+        if (!TaskManagerCommunicatorProxy) {
+            throw "Invalid proxy";
+        }
+    }
+
+    void StartProxy(mtsTaskManager * callingTaskManager);
+
+    static void Runner(ThreadArguments<mtsTaskManager> * arguments);
 
     ///////////////////////////////////////////////////////////////////////////
     // From SLICE definition
     inline mtsTaskManagerProxy::TaskManagerCommunicatorPrx GetTaskManagerCommunicatorProxy() const {
         return TaskManagerCommunicatorProxy; 
     }    
-    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////    
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient)

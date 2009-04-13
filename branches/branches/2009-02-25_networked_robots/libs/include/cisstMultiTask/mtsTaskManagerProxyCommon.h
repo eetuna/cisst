@@ -23,16 +23,15 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsTaskManagerProxyCommon_h
 
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
+#include <cisstMultiTask/mtsTaskManager.h>
 
-class CISST_EXPORT mtsTaskManagerProxyCommon : public mtsProxyBaseCommon {
+class CISST_EXPORT mtsTaskManagerProxyCommon : public mtsProxyBaseCommon<mtsTaskManager> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
 public:
-    mtsTaskManagerProxyCommon(void) {}
-    ~mtsTaskManagerProxyCommon() {}
-
-    std::string GetCommunicatorIdentity() const { return "TaskManagerCommunicator"; }
+    mtsTaskManagerProxyCommon();
+    ~mtsTaskManagerProxyCommon();
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyCommon)

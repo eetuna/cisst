@@ -29,15 +29,13 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManager_h
 #define _mtsTaskManager_h
 
-// Proxy implementation
-#define _PROXY_
-
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsMap.h>
+#include <cisstMultiTask/mtsProxyBaseCommon.h>
 
 #include <set>
 
@@ -104,7 +102,8 @@ protected:
     TaskManagerType TaskManagerTypeMember;
 
     /*! Proxy instance. This will be dynamically created. */
-    mtsTaskManagerProxyCommon * Proxy;
+    //mtsTaskManagerProxyCommon * Proxy;
+    mtsProxyBaseCommon<mtsTaskManager> * Proxy;
     
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */
