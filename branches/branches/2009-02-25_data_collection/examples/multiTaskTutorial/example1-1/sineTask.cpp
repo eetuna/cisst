@@ -9,10 +9,10 @@
 // required to implement the class services, see cisstCommon
 CMN_IMPLEMENT_SERVICES(sineTask);
 
-sineTask::sineTask(const std::string & taskName, mtsCollectorBase * dataCollector, double period):
+sineTask::sineTask(const std::string & taskName, double period):
     // base constructor, same task name and period.  Set the length of
     // state table to 5000
-    mtsTaskPeriodic(taskName, period, false, dataCollector, 5000)
+    mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // add SineData to the StateTable defined in mtsTask
     StateTable.AddData(SineData, "SineData1");

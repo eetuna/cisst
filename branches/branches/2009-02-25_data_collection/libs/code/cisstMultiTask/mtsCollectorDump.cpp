@@ -56,15 +56,15 @@ void mtsCollectorDump::Initialize()
             GetDataCollectorResetEventName(), DataCollectionEventReset);
 
         // Create an event handler to wake up this thread.
-        requiredInterface->AddEventHandlerWrite(
+        requiredInterface->AddEventHandlerVoid(
             &mtsCollectorDump::DataCollectionEventHandler, this,
-            GetDataCollectorEventName(), NewElementCount, false);
+            GetDataCollectorEventName(), false);
     }
 }
 
-void mtsCollectorDump::DataCollectionEventHandler(const cmnUInt & value)
+void mtsCollectorDump::DataCollectionEventHandler()
 {
-    CMN_LOG(5) << "DCEvent has arrived (number of data: " << value << ")" << std::endl;
+    CMN_LOG(5) << "DCEvent has arrived." << std::endl;
 
     WaitingForTrigger = false;
 
@@ -171,6 +171,8 @@ bool mtsCollectorDump::AddSignal(const std::string & taskName,
         CMN_LOG_CLASS(5) << "Signal added: task name = " << taskName
                 << ", signal name = " << signalName << std::endl;
     } else {
+        // Actually no task has been added; however, this is handled by FetchStateTableData()
+        // later with the help of CollectAllSignal flag.
         CMN_LOG_CLASS(5) << "All signals added: task name = " << taskName << std::endl;
     }
 
@@ -183,8 +185,14 @@ bool mtsCollectorDump::AddSignal(const std::string & taskName,
 void mtsCollectorDump::Collect(void)
 {
     // If this is the first time calling, print out brief information on the target task. 
-    if (IsThisFirstRunning) {        
+    if (IsThisFirstRunning) {
         PrintHeader();
+
+        // Active data collectors in all registered tasks.
+        TaskMap::const_iterator it = taskMap.begin();
+        for (; it != taskMap.end(); ++it) {
+            it->second->begin()->second.Task->ActivateDataCollection(true);
+        }
     }
 
     if (taskMap.empty()) return;
@@ -211,7 +219,6 @@ void mtsCollectorDump::Collect(void)
     //    
     if (StartIndex < EndIndex) {
         // normal case
-        //if ((this->*FetchStateTableData)(table, StartIndex, EndIndex)) {
         if (FetchStateTableData(table, StartIndex, EndIndex)) {
             LastReadIndex = EndIndex;
         }
@@ -220,12 +227,11 @@ void mtsCollectorDump::Collect(void)
     } else {
         // Wrap-around case
         // First part: from the last read index to the bottom of the array
-        //if ((this->*FetchStateTableData)(table, StartIndex, table->HistoryLength - 1)) {
         if (FetchStateTableData(table, StartIndex, table->HistoryLength - 1)) {
             // Second part: from the top of the array to the IndexReader
-            //if ((this->*FetchStateTableData)(table, 0, table->IndexReader)) {
-            if (FetchStateTableData(table, 0, table->IndexReader)) {
-                LastReadIndex = table->IndexReader;
+            const unsigned int indexReader = table->IndexReader;
+            if (FetchStateTableData(table, 0, indexReader)) {
+                LastReadIndex = indexReader;
             }
         }
     }
@@ -235,27 +241,48 @@ bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table,
                                            const unsigned int startIdx, 
                                            const unsigned int endIdx)
 {
+    int idx = 0, signalIndex = 0;
+    std::ostringstream line;
+    std::vector<std::string> vecLines;
+    
     SignalMap::const_iterator itr;
-    int signalIndex = 0;    
 
-    for (unsigned int i = startIdx; i <= endIdx; ++i) {
-        LogFile << table->Ticks[i] << " ";
-        {
-            for (itr = taskMap.begin()->second->begin();
-                itr != taskMap.begin()->second->end(); ++itr)
-            {
-                if (!CollectAllSignal) {
-                    signalIndex = table->GetStateVectorID(itr->first);
-                    if (signalIndex == -1) continue;
+    for (itr = taskMap.begin()->second->begin(); 
+        itr != taskMap.begin()->second->end(); ++itr) 
+    {        
+        idx = 0;
+        for (unsigned int i = startIdx; i <= endIdx; ++i) {
+            line.str("");
+            line << table->Ticks[i] << " ";
+            vecLines.push_back(line.str());
+        }
 
-                    LogFile << (*table->StateVector[signalIndex])[i] << " ";
-                } else {
-                    for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
-                        LogFile << (*table->StateVector[j])[i] << " ";
-                    }
+        if (!CollectAllSignal) {
+            signalIndex = table->GetStateVectorID(itr->first);
+            if (signalIndex == -1) continue;
+            
+            idx = 0;
+            for (unsigned int i = startIdx; i <= endIdx; ++i) {
+                line.str("");
+                line << (*table->StateVector[signalIndex])[i] << " ";
+                vecLines[idx++].append(line.str());
+            }
+        } else {            
+            for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
+                idx = 0;
+                for (unsigned int i = startIdx; i <= endIdx; ++i) {
+                    line.str("");
+                    line << (*table->StateVector[j])[i] << " ";
+                    vecLines[idx++].append(line.str());
                 }
             }
         }
+    }
+    
+    idx = 0;
+    std::vector<std::string>::const_iterator it = vecLines.begin();
+    for (; it != vecLines.end(); ++it) {
+        LogFile << vecLines[idx++];
         LogFile << std::endl;
     }
 

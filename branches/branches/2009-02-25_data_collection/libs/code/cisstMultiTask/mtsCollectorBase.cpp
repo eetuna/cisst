@@ -81,6 +81,12 @@ void mtsCollectorBase::Run()
                     Status = COLLECTOR_COLLECTING;
                     IsRunnable = true;
                     Stopwatch.Stop();
+
+                    // Call Collect() method to activate the data collection feature 
+                    // of all registered tasks. Normally, Collect() is called by
+                    // an event generated from another task of which data is being
+                    // collected.
+                    Collect();
                 }
             } else {
                 return;

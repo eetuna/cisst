@@ -31,8 +31,8 @@ CMN_IMPLEMENT_SERVICES(mtsTaskTestTask);
 
 //-----------------------------------------------------------------------------
 mtsTaskTestTask::mtsTaskTestTask(const std::string & collectorName, 
-                                 mtsCollectorBase * dataCollector, double period) :
-	mtsTaskPeriodic(collectorName, period, false, dataCollector, 5000)
+                                 double period) :
+	mtsTaskPeriodic(collectorName, period, false, 5000)
 {
 }
 
@@ -54,7 +54,7 @@ void mtsTaskTest::TestGetStateVectorID(void)
 		"Data1", 
 		"Data2" };	
 	
-	mtsTaskTestTask task("task", false, 10 * cmn_ms);
+	mtsTaskTestTask task("task", 10 * cmn_ms);
     mtsStateTable StateTable;
 	
 	CPPUNIT_ASSERT(default_column_count == StateTable.StateVectorDataNames.size());

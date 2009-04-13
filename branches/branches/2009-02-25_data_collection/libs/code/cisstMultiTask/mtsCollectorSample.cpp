@@ -46,9 +46,9 @@ bool mtsCollectorSample::AddSignal(const std::string & taskName,
 //-------------------------------------------------------
 //	Collecting Data
 //-------------------------------------------------------
-//void mtsCollectorSample::Collect(void)
-//{
-//}
+void mtsCollectorSample::Collect(void)
+{
+}
 
 
 void mtsCollectorSample::Startup(void)

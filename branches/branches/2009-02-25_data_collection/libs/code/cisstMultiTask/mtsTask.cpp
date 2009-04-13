@@ -58,22 +58,24 @@ void mtsTask::DoRunInternal(void)
     StateTable.Advance();
 
     // Check if the event for data collection should be triggered.
-    if (CollectData) {
-        if (TriggerEnabled) {
-            if (++DataCollectionInfo.NewDataCount >= DataCollectionInfo.EventTriggeringLimit) {
-                //
-                //  To-be-fetched data should not be overwritten while data collector
-                //  is fetching them. (e.g., if there are quite many column vectors (=signals)
-                //  in StateTable, logging takes quite a long time which might result in
-                //  data overwritten. 
-                //  In order to prevent this case, 'eventTriggeringRatio' (see constructor)
-                //  has to be defined appropriately.
-                //
-                DataCollectionInfo.EventData = DataCollectionInfo.NewDataCount;
-                DataCollectionInfo.TriggerEvent(DataCollectionInfo.EventData);
+    if (DataCollectionInfo.CollectData) {
+        if (DataCollectionInfo.TriggerEnabled) {
+            if (DataCollectionInfo.EventTriggeringLimit > 0) {
+                if (++DataCollectionInfo.NewDataCount >= DataCollectionInfo.EventTriggeringLimit) {
+                    //
+                    //  To-be-fetched data should not be overwritten while data collector
+                    //  is fetching them. (e.g., if there are quite many column vectors (=signals)
+                    //  in StateTable, logging takes quite a long time which might result in
+                    //  data overwritten. 
+                    //  In order to prevent this case, 'eventTriggeringRatio' (see constructor)
+                    //  has to be defined appropriately.
+                    //
+                    //DataCollectionInfo.EventData = DataCollectionInfo.NewDataCount;
+                    DataCollectionInfo.TriggerEvent();//DataCollectionInfo.EventData);
 
-                DataCollectionInfo.NewDataCount = 0;
-                TriggerEnabled = false;
+                    DataCollectionInfo.NewDataCount = 0;
+                    DataCollectionInfo.TriggerEnabled = false;
+                }
             }
         }
     }
@@ -106,7 +108,7 @@ void mtsTask::StartupInternal(void) {
     // StateChange should already be locked
     if (success) {
        TaskState = READY;
-       TriggerEnabled = false;
+       DataCollectionInfo.TriggerEnabled = false;
     }
     else
         CMN_LOG_CLASS(1) << "ERROR: Task " << GetName() << " cannot be started." << std::endl;
@@ -173,7 +175,6 @@ void mtsTask::Sleep(double timeInSeconds)
 /********************* Task constructor and destructor *****************/
 
 mtsTask::mtsTask(const std::string & name, 
-                 mtsCollectorBase * dataCollector,
                  unsigned int sizeStateTable) :
     mtsDevice(name),
     Thread(),
@@ -185,36 +186,35 @@ mtsTask::mtsTask(const std::string & name,
     retValue(0),
     RequiredInterfaces("RequiredInterfaces")    
 {    
-    CollectData = (dataCollector == NULL ? false : true);
+    DataCollectionInfo.CollectData = false;
 
-    // If the data of this task is to be collected, create a provided interface
-    // dedicated for that purpose.
-    if (CollectData) {
-        DataCollectionInfo.Collector = dataCollector;
+    // Create a provided interface dedicated for data collection purpose.
+    // We assume that data of every task is to be collected.
+    mtsProvidedInterface * prov = 
+        AddProvidedInterface(GetDataCollectorProvidedInterfaceName());
+    if (prov) {
+        // Trigerring reset command registration
+        prov->AddCommandVoid(&mtsTask::ResetDataCollectionTrigger, this, 
+            mtsCollectorDump::GetDataCollectorResetEventName());
 
-        DataCollectionInfo.ProvidedInterface 
-            = AddProvidedInterface(GetDataCollectorProvidedInterfaceName());
-        if (DataCollectionInfo.ProvidedInterface) {
-            // Trigerring reset command registration
-            DataCollectionInfo.ProvidedInterface->AddCommandVoid(
-                &mtsTask::ResetDataCollectionTrigger, this, 
-                mtsCollectorDump::GetDataCollectorResetEventName());
+        // Data collection event registration
+        DataCollectionInfo.TriggerEvent.Bind(
+            prov->AddEventVoid(mtsCollectorDump::GetDataCollectorEventName()));
+    } else {
+        CMN_LOG_CLASS(3) << "mtsTask constructor: interface creation failed." << std::endl;
+    }
 
-            // Data collection event registration
-            DataCollectionInfo.TriggerEvent.Bind(
-                DataCollectionInfo.ProvidedInterface->AddEventWrite(
-                    mtsCollectorDump::GetDataCollectorEventName(), 
-                    DataCollectionInfo.EventData));
-        }
-
-        // Determine the ratio value for event triggering.        
-        //
-        // TODO: an adaptive scaling feature according to 'sizeStateTable' might be useful.
-        //
+    // Determine the ratio value for event triggering.
+    //
+    // TODO: an adaptive scaling feature according to 'sizeStateTable' might be useful.
+    //
+    if (prov) {
         const double eventTriggeringRatio = mtsCollectorDump::GetEventTriggeringRatio();
-
         DataCollectionInfo.EventTriggeringLimit = 
             (unsigned int) (sizeStateTable * eventTriggeringRatio);
+    } else {
+        // This will block a data fetch event to be generated.
+        DataCollectionInfo.EventTriggeringLimit = 0;
     }
 }
 
@@ -236,11 +236,10 @@ void mtsTask::Kill(void)
     CMN_LOG_CLASS(7) << "Kill " << Name << std::endl;
 
     // Sleep for some time so that data collector fetches remaining data.
-    if (CollectData) {
-        if (TriggerEnabled) {
-            DataCollectionInfo.EventData = 0;   // redundant value
-            DataCollectionInfo.TriggerEvent(DataCollectionInfo.EventData);
-            TriggerEnabled = false;
+    if (DataCollectionInfo.CollectData) {
+        if (DataCollectionInfo.TriggerEnabled) {
+            DataCollectionInfo.TriggerEvent();
+            DataCollectionInfo.TriggerEnabled = false;
         }
     }
 
@@ -396,7 +395,7 @@ int mtsTask::GetStateVectorID(const std::string & dataName) const
 
 void mtsTask::ResetDataCollectionTrigger(void)
 { 
-    TriggerEnabled = true;
+    DataCollectionInfo.TriggerEnabled = true;
 }
 
 void mtsTask::GetStateTableHistory(mtsHistoryBase * history,

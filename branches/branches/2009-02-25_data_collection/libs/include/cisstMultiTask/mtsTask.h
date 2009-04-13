@@ -41,7 +41,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsHistory.h>
-#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
 
 #include <set>
 #include <map>
@@ -129,26 +129,18 @@ protected:
 
     //-----------------------------
     //  Data collection related 
-    //-----------------------------
-    /*! True if collectData flag is set at the constructor. */
-    bool CollectData;
-
-    /*! Flag for enabling or disabling trigger. */
-    bool TriggerEnabled;
-
+    //-----------------------------    
     class dataCollectionInfo {
     public:
-        /*! Instance of data collector. */
-        mtsCollectorBase * Collector;
+        /*! True if collectData flag is set at the constructor. */
+        bool CollectData;
 
-        /*! The event payload used for generating event to wake up the collector. */
-        cmnUInt EventData;
-
-        /*! Provided interface for data collection. */
-        mtsProvidedInterface * ProvidedInterface;
+        /*! Flag for enabling or disabling trigger. */
+        bool TriggerEnabled;
 
         /*! Function bound to the command used to send the data collection event. */
-        mtsFunctionWrite TriggerEvent;
+        //mtsFunctionWrite TriggerEvent;
+        mtsFunctionVoid TriggerEvent;
 
         /*! Number of data that are newly generated and are to be fetched by the 
         data collection tool. */
@@ -164,8 +156,8 @@ protected:
             of efficiency. */
         unsigned int EventTriggeringLimit;
 
-        dataCollectionInfo() : Collector(NULL), ProvidedInterface(NULL),
-            NewDataCount(0), EventTriggeringRatio(0.3), EventTriggeringLimit(0) {}
+        dataCollectionInfo() : CollectData(false), TriggerEnabled(false), NewDataCount(0),
+            EventTriggeringRatio(0.3), EventTriggeringLimit(0) {}
 
         ~dataCollectionInfo() {}
     };
@@ -233,12 +225,8 @@ public:
         This is the task base class. Tasks should be derived from one of the
         existing derived classes:  mtsTaskContinuous, mtsTaskPeriodic, and
         mtsTaskFromCallback.
-        If you want to collect state data from this task, create an instance of
-        mtsCollectorBase and pass the pointer to it as 'dataCollector' argument.
-        (see mtsCollectorBase, mtsCollectorDump)
 
         \param name  The name for the task
-        \param dataCollector  Pointer to the instance of mtsCollectorBase
         \param sizeStateTable The history size of the state table
 
         \note The full string name is maintained in the class member data
@@ -250,7 +238,6 @@ public:
         \sa mtsDevice, mtsTaskContinuous, mtsTaskPeriodic, mtsTaskFromCallback
 	 */
 	mtsTask(const std::string & name, 
-            mtsCollectorBase * dataCollector = NULL,
             unsigned int sizeStateTable = 256);
 
 	/*! Default Destructor. */
@@ -439,6 +426,11 @@ public:
 
     /*! Enable trigger. */
     void ResetDataCollectionTrigger(void);
+
+    /*! Activate or deactivate data collector. */
+    void ActivateDataCollection(const bool activate) { 
+        DataCollectionInfo.CollectData = activate;
+    }
 
     inline const std::string GetDataCollectorProvidedInterfaceName() const { 
         return std::string("DCEventGenerator"); 

@@ -76,7 +76,6 @@ public:
 
         \param name The name of the task
         \param dataCollector  Pointer to the instance of mtsCollectorBase
-        \param sizeStateTable The history size of the state table
         \param newThread True if a new thread should be created for this task
 
         \note See note in mtsTask regarding length of string name.
@@ -105,7 +104,6 @@ public:
        
 	 */
 	mtsTaskContinuous(const std::string & name, 
-                      mtsCollectorBase * dataCollector = NULL,
                       unsigned int sizeStateTable = 256, 
                       bool newThread = true);
 

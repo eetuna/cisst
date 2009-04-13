@@ -57,10 +57,9 @@ void mtsTaskContinuous::StartInternal(void)
 /********************* Task constructor and destructor *****************/
 
 mtsTaskContinuous::mtsTaskContinuous(const std::string & name, 
-                                     mtsCollectorBase * dataCollector,
                                      unsigned int sizeStateTable, 
                                      bool newThread):
-    mtsTask(name, dataCollector, sizeStateTable),
+    mtsTask(name, sizeStateTable),
     NewThread(newThread),
     CaptureThread(false)
 {

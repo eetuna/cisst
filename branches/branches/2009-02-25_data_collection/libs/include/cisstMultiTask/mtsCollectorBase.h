@@ -175,7 +175,7 @@ protected:
     void ClearTaskMap(void);
 
     /*! Collect data */
-    //virtual void Collect(void) = 0;
+    virtual void Collect(void) = 0;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorBase)

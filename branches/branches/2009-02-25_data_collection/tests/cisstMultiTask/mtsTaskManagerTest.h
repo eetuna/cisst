@@ -37,7 +37,6 @@ protected:
 
 public:
 	mtsTaskManagerTestTask(const std::string & collectorName, 
-                           mtsCollectorBase * dataCollector = NULL,
                            double period = 10 * cmn_ms);
 	virtual ~mtsTaskManagerTestTask() {}
 

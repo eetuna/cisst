@@ -31,9 +31,8 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManagerTestTask);
 
 //-----------------------------------------------------------------------------
 mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName, 
-                                               mtsCollectorBase * dataCollector,
                                                double period) :
-	mtsTaskPeriodic(collectorName, period, false, dataCollector, 5000)
+	mtsTaskPeriodic(collectorName, period, false, 5000)
 {
 }
 

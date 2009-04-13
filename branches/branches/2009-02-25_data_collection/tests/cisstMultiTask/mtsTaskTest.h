@@ -36,7 +36,6 @@ class mtsTaskTestTask : public mtsTaskPeriodic {
 
 public:
 	mtsTaskTestTask(const std::string & collectorName, 
-                    mtsCollectorBase * dataCollector, 
                     double period);
 	virtual ~mtsTaskTestTask() {}
 

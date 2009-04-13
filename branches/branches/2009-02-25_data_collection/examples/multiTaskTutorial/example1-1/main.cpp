@@ -34,8 +34,8 @@ int main(void)
 
     // create a data collector
     mtsCollectorDump * Collector = new mtsCollectorDump("DC_SIN");
-    sineTask * sineTaskObject = new sineTask("SIN", Collector, PeriodSine);
-    displayTask * displayTaskObject = new displayTask("DISP", NULL, PeriodDisplay);    
+    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
+    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);    
     {
         displayTaskObject->Configure();
     }

@@ -68,7 +68,7 @@ public:
                    const std::string & format = "");
 
     /*! Called periodically */
-    //void Collect(void);
+    void Collect(void);
 
     void Startup(void);
 };

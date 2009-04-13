@@ -111,7 +111,7 @@ private:
     
     /*! When this function is called (called by the data thread as a form of an event),
         bulk-fetch is performed and data is dumped to a log fie. */
-    void DataCollectionEventHandler(const cmnUInt & value);
+    void DataCollectionEventHandler();
 
     /*! Fetch bulk data from StateTable. */
     void Collect(void);

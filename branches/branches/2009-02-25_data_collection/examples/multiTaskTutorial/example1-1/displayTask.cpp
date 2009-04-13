@@ -9,9 +9,8 @@
 CMN_IMPLEMENT_SERVICES(displayTask);
 
 displayTask::displayTask(const std::string & taskName, 
-                         mtsCollectorBase * dataCollector, 
                          double period):
-    mtsTaskPeriodic(taskName, period, false, dataCollector, 5000),
+    mtsTaskPeriodic(taskName, period, false, 5000),
     ExitFlag(false),
     DataVec(10)
 {
@@ -77,8 +76,8 @@ void displayTask::Run(void)
                          << " - Amplitude: " << AmplitudeData.Data << std::endl;
     }
     // log some extra information
-    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
-                     << " - Data: " << Data << std::endl;
+    //CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
+    //                 << " - Data: " << Data << std::endl;
     // Following displays the history (last 10 values)
     //CMN_LOG_CLASS(7) << "Last 10: " << DataVec << std::endl;
     // update the UI, process UI events 
