@@ -40,11 +40,11 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
 
 void displayTask::Startup(void) 
 {
-    const cmnGenericObject *obj = Generator.GetDataHistory.GetCommand()->GetArgument2Prototype();
+    const mtsGenericObject *obj = Generator.GetDataHistory.GetCommand()->GetArgument2Prototype();
     CMN_LOG_CLASS(1) << "GetHistory prototype = " << obj->Services()->GetName() << std::endl;
 #if 0
     // Future plans:  use mtsHistoryBase instead of mtsVector (equivalently, could use mtsVectorBase)
-    cmnGenericObject *newObj = obj->Services()->Create();
+    mtsGenericObject *newObj = obj->Services()->Create();
     mtsHistoryBase *newObjDerived = dynamic_cast<mtsHistoryBase *>(newObj);
     newObjDerived->SetSize(10);
 #endif

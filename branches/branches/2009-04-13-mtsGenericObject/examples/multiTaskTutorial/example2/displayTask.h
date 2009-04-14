@@ -15,9 +15,9 @@ class displayTask: public mtsTaskPeriodic {
     double StartValue;
     
  protected:
-    cmnDouble Data;
-    cmnDouble Amplitude;
-    cmnDouble TriggerValue;
+    mtsDouble Data;
+    mtsDouble Amplitude;
+    mtsDouble TriggerValue;
     volatile bool WaitingForTrigger;
 
     struct GeneratorStruct {
@@ -33,7 +33,7 @@ class displayTask: public mtsTaskPeriodic {
     } Clock;
 
     // event handler
-    void HandleTrigger(const cmnDouble & value);
+    void HandleTrigger(const mtsDouble & value);
 
     displayUI UI;
     

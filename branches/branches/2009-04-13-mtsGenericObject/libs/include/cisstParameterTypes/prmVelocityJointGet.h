@@ -28,8 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _prmVelocityJointGet_h
 
 //basic includes
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTypes.h>
 #include <cisstParameterTypes/prmMacros.h>
@@ -39,7 +38,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*! motion command arguments for joint angle based motion
 */
-class CISST_EXPORT prmVelocityJointGet: public cmnGenericObject
+class CISST_EXPORT prmVelocityJointGet: public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
 
@@ -69,9 +68,9 @@ public:
     virtual ~prmVelocityJointGet();
 
     /*! Allocate memory based on an existing object of the same type.  The
-    object is provided via a cmnGenericObject pointer.  If a dynamic cast
+    object is provided via a mtsGenericObject pointer.  If a dynamic cast
     to this type is not possible, this method returns false. */
-    bool inline Allocate(const cmnGenericObject * model)
+    bool inline Allocate(const mtsGenericObject * model)
     {
         const ThisType * pointer = dynamic_cast<const ThisType *>(model);
         if (pointer == 0) {

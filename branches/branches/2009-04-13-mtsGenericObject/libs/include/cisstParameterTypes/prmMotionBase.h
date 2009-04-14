@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _prmMotionBase_h
 
 // basic includes
-#include <cisstCommon/cmnClassRegister.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 
 #include <cisstParameterTypes/prmTypes.h>
 #include <cisstParameterTypes/prmMacros.h>
@@ -33,7 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   base class for motion arguments 
 */
-class CISST_EXPORT prmMotionBase: public cmnGenericObject
+class CISST_EXPORT prmMotionBase: public mtsGenericObject
 {
  public:
     /* default constructor*/

@@ -39,7 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstParameterTypes/prmExport.h>
 
 /*! Cartesian position get command argument */
-class CISST_EXPORT prmPositionCartesianGet: public cmnGenericObject
+class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
 

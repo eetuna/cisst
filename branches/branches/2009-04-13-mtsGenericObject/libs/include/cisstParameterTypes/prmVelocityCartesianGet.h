@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmVelocityCartesianGet_h
 #define _prmVelocityCartesianGet_h
 
+#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTransformationManager.h>
 #include <cisstParameterTypes/prmTypes.h>
@@ -37,7 +38,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 /*! Cartesian velocity get command argument */
-class CISST_EXPORT prmVelocityCartesianGet: public cmnGenericObject
+class CISST_EXPORT prmVelocityCartesianGet: public mtsGenericObject
 {
 	CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
 

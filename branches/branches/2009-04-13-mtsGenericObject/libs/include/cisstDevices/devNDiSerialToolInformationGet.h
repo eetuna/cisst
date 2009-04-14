@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _devNDiSerialToolInformationGet_h
 
 
+#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTypes.h>
 #include <cisstParameterTypes/prmMacros.h>
@@ -34,7 +35,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstDevices/devExport.h>
 
 
-class CISST_EXPORT devNDiSerialToolInformationGet: public cmnGenericObject
+class CISST_EXPORT devNDiSerialToolInformationGet: public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
     

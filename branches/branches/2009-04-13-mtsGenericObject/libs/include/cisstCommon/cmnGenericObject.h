@@ -85,12 +85,6 @@ public:
     /*! De-serialize the content of the object without any extra
       information, i.e. no class type nor format version. */
     virtual void DeSerializeRaw(std::istream & inputStream);
-
-    /*! Set timestamp if not valid. This is only meaningful if the
-        derived class contains a timestamp and overrides this method.
-      \param timeStamp timestamp in seconds
-      \returns true if timestamp was set. */
-    virtual bool SetTimestampIfNotValid(double CMN_UNUSED(timeStamp)) { return false; }
 };
 
 
