@@ -32,10 +32,10 @@ http://www.cisst.org/cisst/license.txt.
 // main function
 int main(void) {
     // add cout for all log
-    cmnLogger::GetMultiplexer()->AddChannel(std::cout, 5);
+    cmnLogger::GetMultiplexer()->AddChannel(std::cout, cmnLogger::RUN_ERROR);
     cmnLogger::HaltDefaultLog();
-    cmnLogger::ResumeDefaultLog(10);
-    cmnClassRegister::SetLoD("osaSerialPort", 10);
+    cmnLogger::ResumeDefaultLog(cmnLogger::VERY_VERBOSE);
+    cmnClassRegister::SetLoD("osaSerialPort", cmnLogger::VERY_VERBOSE);
 
     osaSerialPort serialPort;
     serialPort.SetPortNumber(1);

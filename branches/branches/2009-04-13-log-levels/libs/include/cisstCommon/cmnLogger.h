@@ -23,7 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Declaration of cmnLogger amd macros for logging
+  \brief Declaration of cmnLogger amd macros for human readable logging
   \ingroup cisstCommon
 */
 
@@ -31,6 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _cmnLogger_h
 
 #include <cisstCommon/cmnPortability.h>
+#include <cisstCommon/cmnLogLoD.h>
 #include <cisstCommon/cmnLODOutputMultiplexer.h>
 #include <cisstCommon/cmnMultiplexerStreambuf.h>
 #include <cisstCommon/cmnLODMultiplexerStreambuf.h>
@@ -80,6 +81,16 @@ http://www.cisst.org/cisst/license.txt.
     ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - Class " << Services()->GetName() << ": ")
  
 
+#define CMN_LOG_CLASS_INIT_ERROR   CMN_LOG_CLASS(cmnLogLoD::INIT_ERROR)
+#define CMN_LOG_CLASS_INIT_WARNING CMN_LOG_CLASS(cmnLogLoD::INIT_WARNING)
+#define CMN_LOG_CLASS_INIT_VERBOSE CMN_LOG_CLASS(cmnLogLoD::INIT_VERBOSE)
+#define CMN_LOG_CLASS_INIT_DEBUG   CMN_LOG_CLASS(cmnLogLoD::INIT_DEBUG)
+#define CMN_LOG_CLASS_RUN_ERROR    CMN_LOG_CLASS(cmnLogLoD::RUN_ERROR)
+#define CMN_LOG_CLASS_RUN_WARNING  CMN_LOG_CLASS(cmnLogLoD::RUN_WARNING)
+#define CMN_LOG_CLASS_RUN_VERBOSE  CMN_LOG_CLASS(cmnLogLoD::RUN_VERBOSE)
+#define CMN_LOG_CLASS_RUN_DEBUG    CMN_LOG_CLASS(cmnLogLoD::RUN_DEBUG)
+#define CMN_LOG_CLASS_VERY_VERBOSE CMN_LOG_CLASS(cmnLogLoD::VERY_VERBOSE)
+
 
 /*! This macro is used to log human readable information within the
   scope of a global function (e.g. main()).  It can also be used in
@@ -108,7 +119,15 @@ http://www.cisst.org/cisst/license.txt.
     (void*)0: \
     ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - ")
 
-
+#define CMN_LOG_INIT_ERROR   CMN_LOG(cmnLogLoD::INIT_ERROR)
+#define CMN_LOG_INIT_WARNING CMN_LOG(cmnLogLoD::INIT_WARNING)
+#define CMN_LOG_INIT_VERBOSE CMN_LOG(cmnLogLoD::INIT_VERBOSE)
+#define CMN_LOG_INIT_DEBUG   CMN_LOG(cmnLogLoD::INIT_DEBUG)
+#define CMN_LOG_RUN_ERROR    CMN_LOG(cmnLogLoD::RUN_ERROR)
+#define CMN_LOG_RUN_WARNING  CMN_LOG(cmnLogLoD::RUN_WARNING)
+#define CMN_LOG_RUN_VERBOSE  CMN_LOG(cmnLogLoD::RUN_VERBOSE)
+#define CMN_LOG_RUN_DEBUG    CMN_LOG(cmnLogLoD::RUN_DEBUG)
+#define CMN_LOG_VERY_VERBOSE CMN_LOG(cmnLogLoD::VERY_VERBOSE)
 
 
 /*! This macro is used to add useful information to Log macros
@@ -126,17 +145,6 @@ http://www.cisst.org/cisst/license.txt.
 */
 #define CMN_LOG_DETAILS \
     "File: " << __FILE__ << " Line: " << __LINE__ << " - "
-
-
-
-/*!
-  This macro is used to defined the default level of details for
-  classes across the cisst package.  Its usage is recommended but not
-  mandatory.
-  
-  \sa #CMN_LOG and #CMN_LOG_CLASS
-*/
-#define CMN_LOG_DEFAULT_LOD 5
 
 
 
@@ -193,7 +201,9 @@ class CISST_EXPORT cmnLogger {
 
  public:
     /*! Type used to define the logging level of detail. */
-    typedef short LoDType;
+    typedef cmnLODMultiplexerStreambuf<char> StreamBufType;
+
+    typedef cmnLogLoD::Type LogLoDType;
 
  private:
     /*! Global Level of Detail used to filter all messages.
@@ -220,30 +230,30 @@ class CISST_EXPORT cmnLogger {
       beginning and only the critical messages during the normal
       operations.
     */
-    LoDType LoD;
+    LogLoDType LoD;
 
     /*! Single multiplexer used to stream the log out */    
     cmnLODMultiplexerStreambuf<char> LoDMultiplexerStreambuf;
 
     /*! Instance specific implementation of SetLoD.  \sa SetLoD */
-    inline void SetLoDInstance(LoDType lod) {
-        CMN_LOG(2) << "Class cmnLogger: Level of Detail set to " << lod << std::endl;
+    inline void SetLoDInstance(LogLoDType lod) {
+        CMN_LOG(cmnLogLoD::INIT_WARNING) << "Class cmnLogger: Level of Detail set to " << lod << std::endl;
         LoD = lod;
     }
 
     /*! Instance specific implementation of GetLoD.  \sa GetLoD */
-    inline LoDType GetLoDInstance(void) const {
+    inline LogLoDType GetLoDInstance(void) const {
         return LoD;
     }
 
     /*! Instance specific implementation of GetMultiplexer.
       \sa GetMultiplexer */
-    inline cmnLODMultiplexerStreambuf<char>* GetMultiplexerInstance(void) {
+    inline StreamBufType * GetMultiplexerInstance(void) {
         return &(LoDMultiplexerStreambuf);
     }
 
     /*! Create and get a pointer on the default log file. */
-    std::ofstream* DefaultLogFile(const char * defaultLogFileName = "cisstLog.txt");
+    std::ofstream * DefaultLogFile(const std::string & defaultLogFileName = "cisstLog.txt");
 
     /*! Instance specific implementation of HaltDefaultLog. */
     inline void HaltDefaultLogInstance(void) {
@@ -251,7 +261,7 @@ class CISST_EXPORT cmnLogger {
     }
 
     /*! Instance specific implementation of ResumeDefaultLog. */
-    inline void ResumeDefaultLogInstance(LoDType newLoD = CMN_LOG_DEFAULT_LOD) {
+    inline void ResumeDefaultLogInstance(LogLoDType newLoD = cmnLogLoD::RUN_ERROR) {
         LoDMultiplexerStreambuf.AddChannel(*(DefaultLogFile()), newLoD);
     }
 
@@ -259,7 +269,7 @@ class CISST_EXPORT cmnLogger {
  protected:
     /*! Constructor.  The only constructor must be private in order to
       ensure that the class register is a singleton. */
-    cmnLogger(const char * defaultLogFileName = "cisstLog.txt");
+    cmnLogger(const std::string & defaultLogFileName = "cisstLog.txt");
 
  public:
     /*! The log is instantiated as a singleton.  To access
@@ -269,7 +279,7 @@ class CISST_EXPORT cmnLogger {
       method's scope. 
 
       \return A pointer to the log. */
-    static cmnLogger* Instance(void);
+    static cmnLogger * Instance(void);
 
 
     /*! Set the global Level of Detail to filter the log messages.
@@ -277,7 +287,7 @@ class CISST_EXPORT cmnLogger {
       \param lod The global level of detail used to filter the log.
 
       \sa SetLoDInstance */
-    static void SetLoD(LoDType lod) {
+    static void SetLoD(LogLoDType lod) {
         Instance()->SetLoDInstance(lod);
     }
 
@@ -287,7 +297,7 @@ class CISST_EXPORT cmnLogger {
       \return The global level of detail used to filter the log.
       
       \sa GetLoDInstance */
-    static LoDType GetLoD(void) {
+    static LogLoDType GetLoD(void) {
         return Instance()->GetLoDInstance();
     }
 
@@ -299,7 +309,7 @@ class CISST_EXPORT cmnLogger {
 
       \sa GetMultiplexerInstance
     */
-    static cmnLODMultiplexerStreambuf<char>* GetMultiplexer(void) {
+    static StreamBufType * GetMultiplexer(void) {
         return Instance()->GetMultiplexerInstance();
     }
  
@@ -317,7 +327,7 @@ class CISST_EXPORT cmnLogger {
       this can be halted by using HaltDefaultLog().  Using
       ResumeDefaultLog() allows to resume the log to "cisstLog.txt"
       without losing previous logs. */
-    static void ResumeDefaultLog(LoDType newLoD = CMN_LOG_DEFAULT_LOD) {
+    static void ResumeDefaultLog(LogLoDType newLoD = cmnLogLoD::RUN_ERROR) {
         Instance()->ResumeDefaultLogInstance(newLoD);
     }
 
