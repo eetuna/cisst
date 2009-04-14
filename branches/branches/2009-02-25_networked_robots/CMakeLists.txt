@@ -211,7 +211,7 @@ FOREACH(lib ${CISST_LIBS})
   ENDIF(BUILD_LIBS_${lib})
 ENDFOREACH(lib)
 
-# Contional builds
+# Conditional builds
 IF(BUILD_TESTS)
   # Settings for CTest
   ENABLE_TESTING()
