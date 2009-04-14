@@ -41,8 +41,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-class mtsTaskManagerProxyCommon;
-
 /*!
   \ingroup cisstMultiTask
 
@@ -102,7 +100,6 @@ protected:
     TaskManagerType TaskManagerTypeMember;
 
     /*! Proxy instance. This will be dynamically created. */
-    //mtsTaskManagerProxyCommon * Proxy;
     mtsProxyBaseCommon<mtsTaskManager> * Proxy;
     
     /*! Constructor.  Protected because this is a singleton.

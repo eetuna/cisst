@@ -30,8 +30,6 @@ void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
     Init();
 
     if (InitSuccessFlag) {
-        //mtsTaskManagerProxyCommon::communicator = IceCommunicator;
-
         // Create a worker thread here and returns immediately.
         ThreadArgumentsInfo.argument = callingTaskManager;
         ThreadArgumentsInfo.proxy = this;

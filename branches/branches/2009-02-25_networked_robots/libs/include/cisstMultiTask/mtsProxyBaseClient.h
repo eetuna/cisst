@@ -45,11 +45,16 @@ protected:
     void Init(void)
     {
         try {
-            IceCommunicator = Ice::initialize();
+            Ice::InitializationData initData;
+            initData.properties = Ice::createProperties();
+            initData.properties->load(PropertyFileName);
 
-            std::string stringifiedProxy = 
-                GetCommunicatorIdentity(TASK_MANAGER_COMMUNICATOR) + ":default -p 10705";
-            ProxyObject = IceCommunicator->stringToProxy(stringifiedProxy);
+            IceCommunicator = Ice::initialize(initData);
+            
+            //std::string stringifiedProxy = 
+            //    GetCommunicatorIdentity(TASK_MANAGER_COMMUNICATOR) + ":default -p 10705";
+            //ProxyObject = IceCommunicator->stringToProxy(stringifiedProxy);
+            ProxyObject = IceCommunicator->propertyToProxy(PropertyName);
 
             // If a proxy fails to be created, an exception is thrown.
             CreateProxy();
@@ -84,12 +89,12 @@ protected:
     }
 
 public:
-    mtsProxyBaseClient(void) : RunnableFlag(false) {}
+    mtsProxyBaseClient(const std::string& propertyFileName, const std::string& propertyName)
+        : RunnableFlag(false), mtsProxyBaseCommon(propertyFileName, propertyName)
+    {}
     virtual ~mtsProxyBaseClient() {}
 
     inline const bool IsRunnable() const { return RunnableFlag; }
-
-    //virtual void Runner(ThreadArguments<_ArgumentType> * arguments) = 0;
 
     virtual void StartProxy(_ArgumentType * callingClass) = 0;
 
@@ -110,17 +115,7 @@ public:
             }
         }    
     }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // From SLICE definition
-    //inline mtsTaskManagerProxy::TaskManagerCommunicatorPrx GetTaskManagerCommunicatorProxy() const {
-    //    return TaskManagerCommunicatorProxy; 
-    //}    
-    ///////////////////////////////////////////////////////////////////////////
 };
-
-//typedef mtsProxyBaseClient<mtsTaskManager> mtsTaskManagerProxyClient;
-//CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient);
 
 #endif // _mtsProxyBaseClient_h
 

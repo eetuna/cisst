@@ -71,12 +71,15 @@ protected:
     ProxyWorker<_ArgumentType> ProxyWorkerInfo;
     ThreadArguments<_ArgumentType> ThreadArgumentsInfo;
 
-    //template<class _ArgumentType>
-    //virtual void Runner(ThreadArguments<_ArgumentType> * arguments) = 0;
-
     //---------------------------- ICE Related ------------------------------//
+    /*! Property file name which contains settings for proxy configuration. */
+    std::string PropertyFileName;
+
+    /*! Property name (one of setting option in 'PropertyFileName' file). */
+    std::string PropertyName;
+
     /*! Settings for ICE components */
-    std::string TaskManagerCommunicatorIdentity;
+    //std::string TaskManagerCommunicatorIdentity;
 
     /*! Ice communicator for proxy */
     Ice::CommunicatorPtr IceCommunicator;
@@ -84,29 +87,31 @@ protected:
     /*! Ice default logger */
     Ice::LoggerPtr Logger;
 
-    /*! Ice module initialization */
-    virtual void Init(void) = 0;
-
     /*! Ice run-time */
     Ice::CommunicatorPtr communicator;
+
+    /*! Ice module initialization */
+    virtual void Init(void) = 0;
 
     /*! Define a string that represents unique ID. */
     typedef enum {
         TASK_MANAGER_COMMUNICATOR,
     } CommunicatorIdentity;
 
-    std::string GetCommunicatorIdentity(CommunicatorIdentity id) const 
-    {
-        switch (id) {
-            case TASK_MANAGER_COMMUNICATOR:
-                return "TaskManagerCommunicator";
-        }
+    //std::string GetCommunicatorIdentity(CommunicatorIdentity id) const 
+    //{
+    //    switch (id) {
+    //        case TASK_MANAGER_COMMUNICATOR:
+    //            return "TaskManagerCommunicator";
+    //    }
 
-        return "NOT_DEFINED";
-    }
+    //    return "NOT_DEFINED";
+    //}
 
 public:
-    mtsProxyBaseCommon(void) : RunningFlag(false), InitSuccessFlag(false), IceCommunicator(NULL)
+    mtsProxyBaseCommon(const std::string& propertyFileName, const std::string& propertyName) 
+        : RunningFlag(false), InitSuccessFlag(false), IceCommunicator(NULL),
+          PropertyFileName(propertyFileName), PropertyName(propertyName)
     {
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
     }
@@ -124,8 +129,6 @@ public:
     inline const bool IsRunning() const     { return RunningFlag; }
 
     inline const Ice::LoggerPtr GetLogger() const { return Logger; }
-
-    //inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }    
 };
 
 #endif // _mtsProxyBaseCommon_h

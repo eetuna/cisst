@@ -59,7 +59,10 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     };
 
 public:
-    mtsTaskManagerProxyServer(void) {}
+    mtsTaskManagerProxyServer(const std::string& propertyFileName, 
+                              const std::string& propertyName) 
+        : mtsProxyBaseServer(propertyFileName, propertyName)
+    {}
     ~mtsTaskManagerProxyServer() {}
 
     Ice::ObjectPtr CreateServant() { 

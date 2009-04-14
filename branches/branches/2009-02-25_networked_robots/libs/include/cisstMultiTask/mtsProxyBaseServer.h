@@ -25,8 +25,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
 #include <cisstMultiTask/mtsExport.h>
 
-#include <set>
-
 /*!
   \ingroup cisstMultiTask
 
@@ -46,20 +44,14 @@ protected:
         try {
             IceCommunicator = Ice::initialize();
 
-            std::string ObjectIdentityName = GetCommunicatorIdentity(TASK_MANAGER_COMMUNICATOR);
-            std::string ObjectAdapterName = ObjectIdentityName + "Adapter";
-
-            IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
-                    ObjectAdapterName.c_str(), // the name of the adapter
-                    // instructs the adapter to listen for incoming requests 
-                    // using the default protocol (TCP) at port number 10000
-                    "default -p 10705");
+            // Create an adapter (server-side only)
+            IceAdapter = IceCommunicator->createObjectAdapter(PropertyName);
 
             // Create a servant
             Servant = CreateServant();
 
             // Inform the object adapter of the presence of a new servant
-            IceAdapter->add(Servant, IceCommunicator->stringToIdentity(ObjectIdentityName));
+            IceAdapter->add(Servant, IceCommunicator->stringToIdentity(PropertyName));
 
             InitSuccessFlag = true;
             Logger = IceCommunicator->getLogger();
@@ -90,11 +82,11 @@ protected:
     }
 
 public:
-    mtsProxyBaseServer(void) {}
+    mtsProxyBaseServer(const std::string& propertyFileName, const std::string& propertyName) 
+        : mtsProxyBaseCommon(propertyFileName, propertyName) 
+    {}
     virtual ~mtsProxyBaseServer() {}
     
-    //virtual void Runner(ThreadArguments<_ArgumentType> * arguments) = 0;
-
     virtual void StartProxy(_ArgumentType * callingClass) = 0;
 
     void ActivateServer()

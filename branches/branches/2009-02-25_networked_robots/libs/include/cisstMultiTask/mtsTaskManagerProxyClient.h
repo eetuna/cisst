@@ -44,7 +44,10 @@ class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTask
     ///////////////////////////////////////////////////////////////////////////
 
 public:
-    mtsTaskManagerProxyClient() {}
+    mtsTaskManagerProxyClient(const std::string& propertyFileName, 
+                              const std::string& propertyName) 
+        : mtsProxyBaseClient(propertyFileName, propertyName)
+    {}
     ~mtsTaskManagerProxyClient() {}
 
     void CreateProxy() {

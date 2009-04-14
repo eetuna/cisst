@@ -1,18 +1,13 @@
 #
 # The client reads this property to create the reference to the
-# "CallbackSender" object in the server.
+# "hello" object in the server.
 #
-CallbackSender.Proxy=sender:tcp -p 10000
+TaskManagerCommunicator.Proxy=TaskManagerCommunicator:tcp -p 10705
 
 #
 # Warn about connection exceptions
 #
 Ice.Warn.Connections=1
-
-#
-# Client-side ACM must be disabled for bidirectional connections.
-#
-Ice.ACM.Client=0
 
 #
 # Network Tracing
@@ -31,4 +26,3 @@ Ice.ACM.Client=0
 # 1 = trace protocol messages
 #
 #Ice.Trace.Protocol=1
-

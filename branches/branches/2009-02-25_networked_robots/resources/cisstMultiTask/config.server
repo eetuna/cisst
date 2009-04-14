@@ -1,9 +1,9 @@
 #
 # The server creates one single object adapter with the name
-# "Callback.Server". The following line sets the endpoints for this
+# "Hello". The following line sets the endpoints for this
 # adapter.
 #
-Callback.Server.Endpoints=tcp -p 10000
+TaskManagerCommunicator.Endpoints=tcp -p 10705
 
 #
 # Warn about connection exceptions
@@ -27,4 +27,3 @@ Ice.Warn.Connections=1
 # 1 = trace protocol messages
 #
 #Ice.Trace.Protocol=1
-

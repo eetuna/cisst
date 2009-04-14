@@ -342,10 +342,10 @@ void mtsTaskManager::SetTaskManagerMode(const TaskManagerType newType)
         }
 
         if (newType == TASK_MANAGER_SERVER) {
-            Proxy = new mtsTaskManagerProxyServer;
+            Proxy = new mtsTaskManagerProxyServer("config.server", "TaskManagerCommunicator");
             Proxy->StartProxy(this);
         } else {
-            Proxy = new mtsTaskManagerProxyClient;
+            Proxy = new mtsTaskManagerProxyClient("config.client", "TaskManagerCommunicator.Proxy");
             Proxy->StartProxy(this);
         }
     } else {
