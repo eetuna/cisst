@@ -26,7 +26,8 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorDump)
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
 mtsCollectorDump::mtsCollectorDump(const std::string & collectorName) 
-    : mtsCollectorBase(collectorName), WaitingForTrigger(true)
+    : mtsCollectorBase(collectorName), WaitingForTrigger(true),
+      ElapsedTimeForProcessing(0.0), ElapsedTimeForFileIO(0.0)
 {
     Initialize();    
 }
@@ -64,7 +65,7 @@ void mtsCollectorDump::Initialize()
 
 void mtsCollectorDump::DataCollectionEventHandler()
 {
-    CMN_LOG(5) << "DCEvent has arrived." << std::endl;
+    //CMN_LOG(5) << "DCEvent has arrived." << std::endl;
 
     WaitingForTrigger = false;
 
@@ -247,6 +248,11 @@ bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table,
     
     SignalMap::const_iterator itr;
 
+    // Performance measurement
+    osaStopwatch stopWatch;
+    stopWatch.Reset();
+    stopWatch.Start();
+
     for (itr = taskMap.begin()->second->begin(); 
         itr != taskMap.begin()->second->end(); ++itr) 
     {        
@@ -278,13 +284,21 @@ bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table,
             }
         }
     }
+
+    stopWatch.Stop();
+    ElapsedTimeForProcessing += stopWatch.GetElapsedTime();
     
     idx = 0;
     std::vector<std::string>::const_iterator it = vecLines.begin();
+
+    stopWatch.Reset();
+    stopWatch.Start();
     for (; it != vecLines.end(); ++it) {
         LogFile << vecLines[idx++];
         LogFile << std::endl;
     }
+    stopWatch.Stop();
+    ElapsedTimeForFileIO += stopWatch.GetElapsedTime();
 
     return true;
 }
