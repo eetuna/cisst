@@ -89,6 +89,10 @@ private:
     /*! Void command to enable a data thread's trigger. */
     mtsFunctionVoid DataCollectionEventReset;
 
+    /*! Performance measurement variables */
+    double ElapsedTimeForProcessing;
+    double ElapsedTimeForFileIO;
+
     //------------------------- Thread-related Methods ----------------------//
     void Run(void);
     void Startup(void);
@@ -98,10 +102,6 @@ private:
     void Initialize(void);
 
     /*! Fetch state table data */
-    //bool (mtsCollectorDump::*FetchStateTableData)(const mtsStateTable * table, 
-    //                            const unsigned int startIdx, 
-    //                            const unsigned int endIdx);
-
     bool FetchStateTableData(const mtsStateTable * table, 
                              const unsigned int startIdx, 
                              const unsigned int endIdx);
@@ -116,15 +116,6 @@ private:
     /*! Fetch bulk data from StateTable. */
     void Collect(void);
 
-    /*! Convert string to double. */
-    //
-    //  TODO: implement me!!!
-    //
-    inline double ConvertToDouble(const std::string& s)
-    {
-        return 0.0;
-    }    
-
 public:
     /*! There are two ways of specifying the periodicity of mtsCollectorDump class.
         One is to explicitly specify it and the other one is to pass a pointer to the task 
@@ -137,6 +128,19 @@ public:
     bool AddSignal(const std::string & taskName,
                    const std::string & signalName = "",
                    const std::string & format = "");
+
+    //--------------------------------- Getters -----------------------------//
+    inline const double GetElapsedTimeForProcessing() {
+        double ret = ElapsedTimeForProcessing;
+        ElapsedTimeForProcessing = 0.0;
+        return ret;
+    }
+
+    inline const double GetElapsedTimeForFileIO() { 
+        double ret = ElapsedTimeForFileIO; 
+        ElapsedTimeForFileIO = 0.0;
+        return ret;
+    }
 
     //--------------------------------- Settings ----------------------------//
     static std::string GetDataCollectorRequiredInterfaceName() { 
