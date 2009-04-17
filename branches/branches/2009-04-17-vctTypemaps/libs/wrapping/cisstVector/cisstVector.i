@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
     // Put header files here
     #include "cisstVector/cisstVector.i.h"
 %}
-
+/*
 %ignore *::operator[]; // We define __setitem__ and __getitem__
 %ignore *::operator=; // Just to avoid warnings
 
@@ -68,4 +68,8 @@ http://www.cisst.org/cisst/license.txt.
 // %include "cisstVector/vctMatrixRotation3.i"
 // %include "cisstVector/vctAxisAngleRotation3.i"
 // %include "cisstVector/vctFrame.i"
+
+*/
+
+%include "cisstVector/vctDynamicVectorTypemaps.i"
 
