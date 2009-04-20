@@ -55,9 +55,9 @@ public:
     typedef vctFixedStrideVectorIterator<value_type, -DEFAULT_STRIDE> reverse_iterator;
 #endif // SWIG
 
-    vctDynamicVectorOwner()
-        : Size(0)
-        , Data(0)
+    vctDynamicVectorOwner():
+        Size(0),
+        Data(0)
     {}
     
     vctDynamicVectorOwner(size_type size):
@@ -71,52 +71,52 @@ public:
     }
     
     size_type size(void) const {
-        return Size;
+        return this->Size;
     }
 
-    int stride() const
+    stride_type stride(void) const
     {
         return DEFAULT_STRIDE;
     }
     
     pointer Pointer(index_type index = 0) {
-        return Data + index;
+        return reinterpret_cast<pointer>(this->Data) + index;
     }
     
     const_pointer Pointer(index_type index = 0) const {
-        return Data + index;
+        return reinterpret_cast<const_pointer>(this->Data) + index;
     }
     
     const_iterator begin(void) const {
-        return const_iterator(Data);
+        return const_iterator(this->Pointer());
     }
 
     const_iterator end(void) const {
-        return const_iterator(Data + Size);
+        return const_iterator(this->Pointer() + this->Size);
     }
 
     iterator begin(void) {
-        return iterator(Data);
+        return iterator(this->Pointer());
     }
 
     iterator end(void) {
-        return iterator(Data + Size);
+        return iterator(this->Pointer() + this->Size);
     }
 
     const_reverse_iterator rbegin(void) const {
-        return const_reverse_iterator(Data + Size - 1);
+        return const_reverse_iterator(this->Pointer() + this->Size - 1);
     }
 
     const_reverse_iterator rend(void) const {
-        return const_reverse_iterator(Data - 1);
+        return const_reverse_iterator(this->Pointer() - 1);
     }
 
     reverse_iterator rbegin(void) {
-        return reverse_iterator(Data + Size-1);
+        return reverse_iterator(this->Pointer() + this->Size - 1);
     }
 
     reverse_iterator rend(void) {
-        return reverse_iterator(Data - 1);
+        return reverse_iterator(this->Pointer() - 1);
     }
 
     /*!  Non-preserving resize operation.  This method discards of all
@@ -129,7 +129,7 @@ public:
       null (0).
      */
     void SetSize(size_type size) {
-        if (size == Size) return;
+        if (size == this->Size) return;
         Disown();
         Own(size, (size == 0) ? 0 : new value_type[size]);
     }
@@ -138,21 +138,21 @@ public:
       Reset this owner's data pointer and size to zero.  Return the
       old data pointer without freeing memory.
      */
-    value_type * Release()
+    pointer Release(void)
     {
-        value_type * oldData = Data;
-        Data = 0;
-        Size = 0;
+        pointer oldData = this->Pointer();
+        this->Data = 0;
+        this->Size = 0;
         return oldData;
     }
 
     /*! Have this owner take ownership of a new data pointer. Return
       the old data pointer without freeing memory.
     */
-    value_type * Own(size_type size, value_type * data) {
-        value_type * oldData = Data;
-        Size = size;
-        Data = data;
+    pointer Own(size_type size, pointer data) {
+        pointer oldData = this->Pointer();
+        this->Size = size;
+        this->Data = reinterpret_cast<byte_pointer>(data);
         return oldData;
     }
 
@@ -160,15 +160,15 @@ public:
       pointer and size to zero.
     */
     void Disown(void) {
-        delete[] Data;
-        Size = 0;
-        Data = 0;
+        delete[] this->Data;
+        this->Size = 0;
+        this->Data = 0;
     }
     
 
 protected:
     size_type Size;
-    value_type* Data;
+    byte_pointer Data;
 
 private:
     // copy constructor private to prevent any call

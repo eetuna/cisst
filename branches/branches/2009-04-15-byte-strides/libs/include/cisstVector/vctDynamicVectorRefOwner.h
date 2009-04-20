@@ -44,6 +44,8 @@ public:
     /* define most types from vctContainerTraits */
     VCT_CONTAINER_TRAITS_TYPEDEFS(_elementType);
 
+    enum {TYPE_SIZE = sizeof(value_type)}; 
+
     /*! The type of this owner. */
     typedef vctDynamicVectorRefOwner<_elementType> ThisType;
 
@@ -54,77 +56,88 @@ public:
     typedef vctVarStrideVectorIterator<value_type> reverse_iterator;
 
 
-    vctDynamicVectorRefOwner()
-        : Size(0)
-        , Stride(1)
-        , Data(0)
+    vctDynamicVectorRefOwner():
+        Size(0),
+        ByteStride(TYPE_SIZE),
+        Data(0)
     {}
 
-    vctDynamicVectorRefOwner(size_type size, value_type * data, stride_type stride = 1)
-        : Size(size)
-        , Stride(stride)
-        , Data(data)
+    vctDynamicVectorRefOwner(size_type size, pointer data, stride_type stride = 1):
+        Size(size),
+        ByteStride(stride * TYPE_SIZE),
+        Data(reinterpret_cast<byte_pointer>(data))
     {}
 
-    void SetRef(size_type size, value_type * data, stride_type stride = 1)
+    void SetRef(size_type size, pointer data, stride_type stride = 1)
     {
-        Size = size;
-        Stride = stride;
-        Data = data;
+        this->Size = size;
+        this->ByteStride = stride * TYPE_SIZE;
+        this->Data = reinterpret_cast<byte_pointer>(data);
     }
 
     size_type size(void) const {
-        return Size;
+        return this->Size;
     }
 
     stride_type stride(void) const {
-        return Stride;
-    }
-    
-    pointer Pointer(int index = 0) {
-        return Data + Stride * index;
+        return this->ByteStride / TYPE_SIZE;
     }
 
-    const_pointer Pointer(int index = 0) const {
-        return Data + Stride * index;
+    stride_type byte_stride(void) const {
+        return this->ByteStride;
+    }
+    
+    pointer Pointer(index_type index = 0) {
+        return reinterpret_cast<pointer>(this->Data + this->ByteStride * index);
+    }
+
+    const_pointer Pointer(index_type index = 0) const {
+        return reinterpret_cast<pointer>(this->Data + this->ByteStride * index);
     }
     
     const_iterator begin(void) const {
-        return const_iterator(Data, Stride);
+        return const_iterator(reinterpret_cast<const_pointer>(this->Data),
+                              this->stride());
     }
      
     const_iterator end(void) const {
-        return const_iterator(Data + Size * Stride, Stride);
+        return const_iterator(reinterpret_cast<const_pointer>(this->Data + this->Size * this->ByteStride),
+                              this->stride());
     }
 
     iterator begin(void) {
-        return iterator(Data, Stride);
+        return iterator(reinterpret_cast<pointer>(this->Data), this->stride());
     }
      
     iterator end(void) {
-        return iterator(Data + Size * Stride, Stride);
+        return iterator(reinterpret_cast<pointer>(this->Data + this->Size * this->ByteStride),
+                        this->stride());
     }
 
     const_reverse_iterator rbegin(void) const {
-      return const_reverse_iterator(Data + (Size-1) * Stride, -Stride);
+        return const_reverse_iterator(reinterpret_cast<const_pointer>(this->Data + (this->Size-1) * this->ByteStride),
+                                      -this->stride());
     }
      
     const_reverse_iterator rend(void) const {
-      return const_reverse_iterator(Data - Stride, -Stride);
+        return const_reverse_iterator(reinterpret_cast<const_pointer>(this->Data - this->ByteStride),
+                                      -this->stride());
     }
 
     reverse_iterator rbegin(void) {
-      return reverse_iterator(Data + (Size-1) * Stride, -Stride);
+        return reverse_iterator(reinterpret_cast<pointer>(this->Data + (this->Size-1) * this->ByteStride),
+                                -this->stride());
     }
      
     reverse_iterator rend(void) {
-      return reverse_iterator(Data - Stride, -Stride);
+        return reverse_iterator(reinterpret_cast<pointer>(this->Data - this->ByteStride),
+                                -this->stride());
     }
 
 protected:
     size_type Size;
-    int Stride;
-    value_type* Data;
+    stride_type ByteStride;
+    byte_pointer Data;
     
 private:
     // copy constructor private to prevent any call

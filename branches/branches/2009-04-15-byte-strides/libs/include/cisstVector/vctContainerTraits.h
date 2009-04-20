@@ -49,7 +49,9 @@ http://www.cisst.org/cisst/license.txt.
     typedef value_type * pointer; \
     typedef const value_type * const_pointer; \
     typedef double NormType; \
-    typedef double AngleType
+    typedef double AngleType; \
+    typedef char byte_type; \
+    typedef byte_type * byte_pointer
 
 
 /*! Macro used to define nArray-specific types based on the type of
