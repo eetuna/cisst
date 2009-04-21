@@ -156,6 +156,13 @@ protected:
             of efficiency. */
         unsigned int EventTriggeringLimit;
 
+        const bool CanGenerateEvent() const {
+            return (CollectData &&                  // global mask
+                    TriggerEnabled &&               // triggering mask
+                    EventTriggeringLimit > 0 &&     // to avoid multiplication overhead
+                    NewDataCount >= EventTriggeringLimit);
+        }
+
         dataCollectionInfo() : CollectData(false), TriggerEnabled(false), NewDataCount(0),
             EventTriggeringRatio(0.3), EventTriggeringLimit(0) {}
 
@@ -432,9 +439,14 @@ public:
         DataCollectionInfo.CollectData = activate;
     }
 
-    inline const std::string GetDataCollectorProvidedInterfaceName() const { 
+    inline static std::string GetDataCollectorProvidedInterfaceName() { 
         return std::string("DCEventGenerator"); 
     }
+
+#ifdef TASK_TIMING_ANALYSIS
+    void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
+        std::vector<cmnDouble>& vecPeriod);
+#endif
 };
 
 

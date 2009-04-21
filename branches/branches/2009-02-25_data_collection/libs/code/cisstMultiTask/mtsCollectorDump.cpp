@@ -26,8 +26,10 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorDump)
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
 mtsCollectorDump::mtsCollectorDump(const std::string & collectorName) 
-    : mtsCollectorBase(collectorName), WaitingForTrigger(true),
-      ElapsedTimeForProcessing(0.0), ElapsedTimeForFileIO(0.0)
+    : mtsCollectorBase(collectorName), WaitingForTrigger(true)
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+      , ElapsedTimeForProcessing(0.0)
+#endif
 {
     Initialize();    
 }
@@ -65,7 +67,7 @@ void mtsCollectorDump::Initialize()
 
 void mtsCollectorDump::DataCollectionEventHandler()
 {
-    //CMN_LOG(5) << "DCEvent has arrived." << std::endl;
+    CMN_LOG(5) << "DCEvent has arrived." << std::endl;
 
     WaitingForTrigger = false;
 
@@ -242,16 +244,18 @@ bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table,
                                            const unsigned int startIdx, 
                                            const unsigned int endIdx)
 {
+    /*
     int idx = 0, signalIndex = 0;
     std::ostringstream line;
     std::vector<std::string> vecLines;
     
     SignalMap::const_iterator itr;
 
-    // Performance measurement
-    osaStopwatch stopWatch;
-    stopWatch.Reset();
-    stopWatch.Start();
+    // Performance measurement  
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    StopWatch.Reset();
+    StopWatch.Start();
+#endif
 
     for (itr = taskMap.begin()->second->begin(); 
         itr != taskMap.begin()->second->end(); ++itr) 
@@ -285,20 +289,64 @@ bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table,
         }
     }
 
-    stopWatch.Stop();
-    ElapsedTimeForProcessing += stopWatch.GetElapsedTime();
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    StopWatch.Stop();
+    ElapsedTimeForProcessing += StopWatch.GetElapsedTime();
+#endif
     
     idx = 0;
     std::vector<std::string>::const_iterator it = vecLines.begin();
 
-    stopWatch.Reset();
-    stopWatch.Start();
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    StopWatch.Reset();
+    StopWatch.Start();
+#endif
     for (; it != vecLines.end(); ++it) {
         LogFile << vecLines[idx++];
         LogFile << std::endl;
     }
-    stopWatch.Stop();
-    ElapsedTimeForFileIO += stopWatch.GetElapsedTime();
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    StopWatch.Stop();
+    ElapsedTimeForFileIO += StopWatch.GetElapsedTime();
+#endif
+
+    return true;
+    */
+
+    SignalMap::const_iterator itr;
+    int signalIndex = 0;    
+
+    // Performance measurement
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    StopWatch.Reset();
+    StopWatch.Start();
+#endif
+
+    for (unsigned int i = startIdx; i <= endIdx; ++i) {
+        LogFile << table->Ticks[i] << " ";
+        {
+            for (itr = taskMap.begin()->second->begin();
+                itr != taskMap.begin()->second->end(); ++itr)
+            {
+                if (!CollectAllSignal) {
+                    signalIndex = table->GetStateVectorID(itr->first);
+                    if (signalIndex == -1) continue;
+
+                    LogFile << (*table->StateVector[signalIndex])[i] << " ";
+                } else {
+                    for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
+                        LogFile << (*table->StateVector[j])[i] << " ";
+                    }
+                }
+            }
+        }
+        LogFile << std::endl;
+    }
+
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    StopWatch.Stop();
+    ElapsedTimeForProcessing += StopWatch.GetElapsedTime();
+#endif
 
     return true;
 }

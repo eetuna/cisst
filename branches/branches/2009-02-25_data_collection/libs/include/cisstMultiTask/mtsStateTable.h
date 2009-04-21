@@ -46,6 +46,9 @@ class osaTimeServer;
   Data Table.  Typedef'ed to an int */
 typedef int mtsStateDataId;
 
+// Enable this if you want to obtain the detailed information on a running task's 
+// execution timing.
+#define TASK_TIMING_ANALYSIS
 
 /*!
   \ingroup cisstMultiTask
@@ -182,10 +185,15 @@ protected:
     /*! The average period over the last HistoryLength samples. */
     double AvgPeriod;
 
+#ifdef TASK_TIMING_ANALYSIS
+    std::vector<cmnDouble> ExecutionTimingHistory;
+    std::vector<cmnDouble> PeriodHistory;
+#endif
+
 	/*! Write specified data. */
 	bool Write(mtsStateDataId id, const cmnGenericObject &obj);
 
- public:
+public:
 	/*! Constructor. Constructs a state table with a default
 	  size of 256 rows. */
 	mtsStateTable(int size = 256);
@@ -284,6 +292,11 @@ protected:
     //void GetStateTableHistory(mtsDoubleVecHistory & history,
     //                          const unsigned int signalIndex,
     //                          const unsigned int lastFetchIndex);
+
+#ifdef TASK_TIMING_ANALYSIS
+    void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
+        std::vector<cmnDouble>& vecPeriod);
+#endif
 };
 
 

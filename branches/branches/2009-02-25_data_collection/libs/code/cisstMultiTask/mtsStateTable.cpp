@@ -53,6 +53,12 @@ mtsStateTable::mtsStateTable(int size) :
     // : "Toc", "Tic", "Period". So the value of StateVectorBaseIDForUser is 
     // set to 3.
     StateVectorBaseIDForUser = StateVector.size();
+
+    // Initialze
+#ifdef TASK_TIMING_ANALYSIS
+    ExecutionTimingHistory.clear();
+    PeriodHistory.clear();
+#endif
 }
 
 /* All the const methods that can be called from reader or writer */
@@ -113,6 +119,9 @@ void mtsStateTable::Start(void) {
         cmnDouble oldTic;
         StateVector[TicId]->Get(IndexReader, oldTic);
         Period = Tic - oldTic;  // in seconds
+#ifdef TASK_TIMING_ANALYSIS
+        PeriodHistory.push_back(Period);
+#endif
     }
 }
 
@@ -158,8 +167,13 @@ void mtsStateTable::Advance(void) {
         }
     }
     // Get the Toc value and write it to the state table.
-    if (TimeServer)
+    if (TimeServer) {
     	Toc = TimeServer->GetRelativeTime(); // in seconds
+#ifdef TASK_TIMING_ANALYSIS
+        cmnDouble executionTime = Toc - Tic;
+        ExecutionTimingHistory.push_back(executionTime);
+#endif
+    }
     Write(TocId, Toc);
     // now increment the IndexWriter and set its Tick value
     IndexWriter = newIndexWriter;
@@ -278,6 +292,18 @@ int mtsStateTable::GetStateVectorID(const std::string & dataName) const
         }
     }
     return -1;
+}
+
+void mtsStateTable::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
+                                          std::vector<cmnDouble>& vecPeriod)
+{
+#define COPY_VECTOR(_src, _dest)\
+    _dest.clear();\
+    _dest.insert(_dest.begin(), _src.begin(), _src.end());
+    
+    COPY_VECTOR(ExecutionTimingHistory, vecExecutionTime);
+    COPY_VECTOR(PeriodHistory, vecPeriod);
+#undef COPY_VECTOR
 }
 
 //void mtsStateTable::GetStateTableHistory(mtsDoubleVecHistory & history,

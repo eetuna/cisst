@@ -50,7 +50,7 @@ int main(void)
 
     try {
         // Example A. Selectively register signals to the data collector.
-        AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "1");
+        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "1");
         //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "2");
         //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "3");
         //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "4");
@@ -62,7 +62,7 @@ int main(void)
         //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "10");
 
         // Example B. Register ALL signals to the data collector.
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName());
+        AddSignalFlag = Collector->AddSignal(sineTaskObject->GetName());
     } catch (mtsCollectorBase::mtsCollectorBaseException e) {
         cout << "ERROR: Adding a signal failed." << endl;
     }
@@ -75,8 +75,8 @@ int main(void)
 
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
-    taskManager->Connect("DC_SIN", Collector->GetDataCollectorRequiredInterfaceName(),
-                         "SIN", sineTaskObject->GetDataCollectorProvidedInterfaceName());
+    taskManager->Connect("DC_SIN", mtsCollectorDump::GetDataCollectorRequiredInterfaceName(),
+                         "SIN", mtsTask::GetDataCollectorProvidedInterfaceName());
 
     // generate a nice tasks diagram
     std::ofstream dotFile("example1.dot"); 

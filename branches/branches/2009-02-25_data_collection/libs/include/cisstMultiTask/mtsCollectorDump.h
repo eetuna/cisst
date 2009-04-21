@@ -52,6 +52,10 @@ TODO:
 2) Support for different output file format (csv, bin, etc.)
 
 */
+
+// Enable this macro to measure the elapsed time for data collection
+//#define COLLECTOR_OVERHEAD_MEASUREMENT
+
 class CISST_EXPORT mtsCollectorDump : public mtsCollectorBase
 {
     friend class mtsCollectorDumpTest;
@@ -90,8 +94,10 @@ private:
     mtsFunctionVoid DataCollectionEventReset;
 
     /*! Performance measurement variables */
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
     double ElapsedTimeForProcessing;
-    double ElapsedTimeForFileIO;
+    osaStopwatch StopWatch;
+#endif
 
     //------------------------- Thread-related Methods ----------------------//
     void Run(void);
@@ -130,17 +136,13 @@ public:
                    const std::string & format = "");
 
     //--------------------------------- Getters -----------------------------//
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
     inline const double GetElapsedTimeForProcessing() {
         double ret = ElapsedTimeForProcessing;
         ElapsedTimeForProcessing = 0.0;
         return ret;
     }
-
-    inline const double GetElapsedTimeForFileIO() { 
-        double ret = ElapsedTimeForFileIO; 
-        ElapsedTimeForFileIO = 0.0;
-        return ret;
-    }
+#endif
 
     //--------------------------------- Settings ----------------------------//
     static std::string GetDataCollectorRequiredInterfaceName() { 

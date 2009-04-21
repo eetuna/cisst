@@ -53,31 +53,26 @@ bool mtsTask::ConnectRequiredInterface(const std::string & requiredInterfaceName
 
 void mtsTask::DoRunInternal(void)
 {
-	StateTable.Start();
-	this->Run();
+    StateTable.Start();
+    this->Run();
     StateTable.Advance();
 
-    // Check if the event for data collection should be triggered.
-    if (DataCollectionInfo.CollectData) {
-        if (DataCollectionInfo.TriggerEnabled) {
-            if (DataCollectionInfo.EventTriggeringLimit > 0) {
-                if (++DataCollectionInfo.NewDataCount >= DataCollectionInfo.EventTriggeringLimit) {
-                    //
-                    //  To-be-fetched data should not be overwritten while data collector
-                    //  is fetching them. (e.g., if there are quite many column vectors (=signals)
-                    //  in StateTable, logging takes quite a long time which might result in
-                    //  data overwritten. 
-                    //  In order to prevent this case, 'eventTriggeringRatio' (see constructor)
-                    //  has to be defined appropriately.
-                    //
-                    //DataCollectionInfo.EventData = DataCollectionInfo.NewDataCount;
-                    DataCollectionInfo.TriggerEvent();//DataCollectionInfo.EventData);
+    ++DataCollectionInfo.NewDataCount;
 
-                    DataCollectionInfo.NewDataCount = 0;
-                    DataCollectionInfo.TriggerEnabled = false;
-                }
-            }
-        }
+    // Check if the event for data collection should be triggered.
+    if (DataCollectionInfo.CanGenerateEvent()) {
+        //
+        //  To-be-fetched data should not be overwritten while data collector
+        //  is fetching them. (e.g., if there are quite many column vectors (=signals)
+        //  in StateTable, logging takes quite a long time which might result in
+        //  data overwritten. 
+        //  In order to prevent this case, 'eventTriggeringRatio' (see constructor)
+        //  has to be defined appropriately.
+        //
+        DataCollectionInfo.TriggerEvent();
+
+        DataCollectionInfo.NewDataCount = 0;
+        DataCollectionInfo.TriggerEnabled = false;
     }
 }
   
@@ -397,6 +392,15 @@ void mtsTask::ResetDataCollectionTrigger(void)
 { 
     DataCollectionInfo.TriggerEnabled = true;
 }
+
+#ifdef TASK_TIMING_ANALYSIS
+void mtsTask::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
+                                    std::vector<cmnDouble>& vecPeriod)
+{
+    StateTable.GetTimingAnalysisData(vecExecutionTime, vecPeriod);
+}
+
+#endif
 
 void mtsTask::GetStateTableHistory(mtsHistoryBase * history,
                                    const unsigned int signalIndex,
