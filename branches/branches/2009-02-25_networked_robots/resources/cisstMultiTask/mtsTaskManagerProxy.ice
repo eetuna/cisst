@@ -39,7 +39,11 @@ module mtsTaskManagerProxy
 	};
 	
 	interface TaskManagerCommunicator {
-		void ShareTaskInfo(TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
+        // TMclient --> TMserver
+        void SendMyTaskInfo(TaskInfo clientTaskInfo);
+        
+        // TMserver --> TMclient
+		void SendCurrentTaskInfo(TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
 	};
 
 /*

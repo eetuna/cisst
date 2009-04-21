@@ -12,8 +12,32 @@
 
 using namespace std;
 
+void help(const char * programName)
+{
+    cerr << endl 
+         << "Usage: multiTaskTutorialExample1-2 [OPTIONS]" << endl << endl
+         << "  -s, --server          run Task Manager as a server (global Task Manager)" << endl
+         << "  -c, --client          run Task Manager as a client" << endl << endl;
+}
+
 int main(int argc, char * argv[])
 {
+    // Check arguments
+    bool RunGlobalTaskManager = false;
+    if (argc != 2) {
+        help(argv[0]);
+        return 1;
+    } else {
+        if (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "--server") == 0) {
+            RunGlobalTaskManager = true;
+        } else if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--client") == 0) {
+            RunGlobalTaskManager = false;
+        } else {
+            help(argv[0]);
+            return 1;
+        }
+    }
+
     // log configuration
     cmnLogger::SetLoD(10);
     cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
@@ -26,6 +50,19 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoD("mtsTaskInterface", 10);
     cmnClassRegister::SetLoD("mtsTaskManager", 10);
 
+    // Get the TaskManager instance and set an operation mode
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    CMN_ASSERT(taskManager);
+
+    // Currently don't consider the case that state transition occurs from
+    // TASK_MANAGER_CLIENT/SERVER to TASK_MANAGER_LOCAL.
+    if (RunGlobalTaskManager) {
+        taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_SERVER);
+    } else {
+        taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_CLIENT);
+    }
+
+    /*
     // create our two tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
     const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
@@ -105,6 +142,7 @@ int main(int argc, char * argv[])
     WAIT_FOR_SAFE_TERMINATION(task4);
     WAIT_FOR_SAFE_TERMINATION(task5);
     WAIT_FOR_SAFE_TERMINATION(displayTaskObject);
+    */
 
     return 0;
 }

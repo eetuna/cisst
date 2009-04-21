@@ -338,6 +338,7 @@ void mtsTaskManager::SetTaskManagerMode(const TaskManagerType newType)
     // Transition from LOCAL to NETWORK
     if (TaskManagerTypeMember == TASK_MANAGER_LOCAL) {
         if (Proxy) {
+            // TODO: safe clean-up (waiting for proxy's complete termination)
             delete Proxy;
         }
 
@@ -352,5 +353,8 @@ void mtsTaskManager::SetTaskManagerMode(const TaskManagerType newType)
         // Transition from NETWORK to LOCAL
         // 1. stop the running thread (regardless of the task manager type)
         // 2. kill the thread
+
+        // Currently don't consider the case that state transition occurs from
+        // TASK_MANAGER_CLIENT/SERVER to TASK_MANAGER_LOCAL.
     }
 }
