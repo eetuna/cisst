@@ -45,13 +45,19 @@ protected:
     void Init(void)
     {
         try {
-            Ice::InitializationData initData;
-            initData.properties = Ice::createProperties();
-            initData.properties->load(PropertyFileName);
+            //Ice::InitializationData initData;
+            //initData.properties = Ice::createProperties();
+            //initData.properties->load(PropertyFileName);
 
-            IceCommunicator = Ice::initialize(initData);
+            //IceCommunicator = Ice::initialize(initData);
+            IceCommunicator = Ice::initialize();
             
-            ProxyObject = IceCommunicator->propertyToProxy(PropertyName);
+            // Create Logger
+            Logger = IceCommunicator->getLogger();
+            
+            //ProxyObject = IceCommunicator->propertyToProxy(PropertyName);
+            std::string stringfiedProxy = PropertyName + ":default -p 10705";
+            ProxyObject = IceCommunicator->stringToProxy(stringfiedProxy);
 
             // If a proxy fails to be created, an exception is thrown.
             CreateProxy();
@@ -59,7 +65,7 @@ protected:
             InitSuccessFlag = true;
             RunnableFlag = true;
 
-            Logger = IceCommunicator->getLogger();
+            
             Logger->trace("mtsProxyBaseClient", "Client proxy initialization success");
             //CMN_LOG_CLASS(3) << "Client proxy initialization success. " << std::endl;
             return;

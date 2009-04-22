@@ -42,16 +42,26 @@ protected:
     void Init(void)
     {
         try {
+            //Ice::InitializationData initData;
+            //initData.properties = Ice::createProperties();
+            //initData.properties->load(PropertyFileName);           
+            //IceCommunicator = Ice::initialize(initData);
             IceCommunicator = Ice::initialize();
+            
+            // Create Logger
+            Logger = IceCommunicator->getLogger();
 
             // Create an adapter (server-side only)
-            IceAdapter = IceCommunicator->createObjectAdapter(PropertyName);
+            //IceAdapter = IceCommunicator->createObjectAdapter(PropertyName);
+            IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
+                "TaskManagerServerAdapter", "tcp -p 10705");
 
             // Create a servant
             Servant = CreateServant();
 
             // Inform the object adapter of the presence of a new servant
-            IceAdapter->add(Servant, IceCommunicator->stringToIdentity(PropertyName));
+            //IceAdapter->add(Servant, IceCommunicator->stringToIdentity(PropertyName));
+            IceAdapter->add(Servant, IceCommunicator->stringToIdentity("TaskManagerServerSender"));
 
             // Activate the adapter. The adapter is initially created in a 
             // holding state. The server starts to process incoming requests
@@ -59,30 +69,22 @@ protected:
             IceAdapter->activate();
 
             InitSuccessFlag = true;
-
-            Logger = IceCommunicator->getLogger();
-            Logger->trace("mtsProxyBaseServer", "Server proxy initialization success");
-
-            //CMN_LOG_CLASS(3) << "Server proxy initialization success. " << std::endl;
-            return;
+            
+            Logger->trace("mtsProxyBaseServer", "mtsProxyBaseServer initialization: success");
         } catch (const Ice::Exception& e) {
             Logger->trace("mtsProxyBaseServer", "Server proxy initialization error");
             Logger->trace("mtsProxyBaseServer", e.what());
-            //CMN_LOG_CLASS(3) << "Server proxy initialization error: " << e << std::endl;
         } catch (const char * msg) {
             Logger->trace("mtsProxyBaseServer", "Server proxy initialization error");
             Logger->trace("mtsProxyBaseServer", msg);
-            //CMN_LOG_CLASS(3) << "Server proxy initialization error: " << msg << std::endl;
         }
 
-        if (IceCommunicator) {
-            InitSuccessFlag = false;
+        if (!InitSuccessFlag) {
             try {
                 IceCommunicator->destroy();
             } catch (const Ice::Exception& e) {
                 Logger->trace("mtsProxyBaseServer", "Server proxy clean-up error");
                 Logger->trace("mtsProxyBaseServer", e.what());
-                //CMN_LOG_CLASS(3) << "Server proxy initialization failed: " << e << std::endl;
             }
         }
     }
@@ -95,32 +97,13 @@ public:
     
     virtual void StartProxy(_ArgumentType * callingClass) = 0;
 
-    void StartServer()
-    {
-        //
-        // TODO
-        //
-        Servant->Start();
-
-        // Blocking call
-        IceCommunicator->waitForShutdown();
-    }
-
-    void EndServant()
-    {
-        //
-        // TODO
-        //
-        Servant->Destroy();
-    }
-
-    void OnThreadEnd(void)
+    virtual void OnThreadEnd(void)
     {
         //
         // TODO: EndServant() should be placed somewhere in this method.
         //
         if (IceCommunicator) {
-            try {
+            try {                
                 IceCommunicator->destroy();
                 RunningFlag = false;
 

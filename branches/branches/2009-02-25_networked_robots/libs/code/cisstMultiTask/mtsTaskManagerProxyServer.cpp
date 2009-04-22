@@ -20,6 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
+#include <cisstCommon/cmnAssert.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
@@ -40,6 +41,14 @@ void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
     }
 }
 
+void mtsTaskManagerProxyServer::StartServer()
+{
+    Sender->Start();
+
+    // This is a blocking call that should run in a different thread.
+    IceCommunicator->waitForShutdown();
+}
+
 void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * arguments)
 {
     mtsTaskManagerProxyServer * ProxyServer = 
@@ -47,19 +56,22 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
     
     try {
         ProxyServer->StartServer();
-    } catch (...) {
-        ProxyServer->EndServant();
+    } catch (const Ice::Exception& e) {
+        ProxyServer->OnThreadEnd();
+        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << e << std::endl;
+    } catch (const char * msg) {
+        ProxyServer->OnThreadEnd();
+        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << msg << std::endl;        
     }
-    ProxyServer->EndServant();
-    //catch (const Ice::Exception& e) {
-    //    ProxyServer->EndServant();
-    //    CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << e << std::endl;
-    //} catch (const char * msg) {
-    //    ProxyServer->OnThreadEnd();
-    //    CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << msg << std::endl;        
-    //}
 
     ProxyServer->OnThreadEnd();
+}
+
+void mtsTaskManagerProxyServer::OnThreadEnd()
+{
+    mtsProxyBaseServer::OnThreadEnd();
+
+    this->Sender->Destroy();
 }
 
 //-----------------------------------------------------------------------------

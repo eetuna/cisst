@@ -52,7 +52,25 @@ int main(int argc, char * argv[])
 
     // Get the TaskManager instance and set an operation mode
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    CMN_ASSERT(taskManager);
+
+    // create our two tasks
+    const double PeriodSine = 1 * cmn_ms; // in milliseconds
+    const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
+    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
+    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
+    displayTaskObject->Configure();
+
+    // add the tasks to the task manager
+    taskManager->AddTask(sineTaskObject);
+    taskManager->AddTask(displayTaskObject);
+
+    // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
+    taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
+
+    // create the tasks, i.e. find the commands
+    taskManager->CreateAll();
+    // start the periodic Run
+    taskManager->StartAll();
 
     // Currently don't consider the case that state transition occurs from
     // TASK_MANAGER_CLIENT/SERVER to TASK_MANAGER_LOCAL.
@@ -62,65 +80,8 @@ int main(int argc, char * argv[])
         taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_CLIENT);
     }
 
-    /*
-    // create our two tasks
-    const double PeriodSine = 1 * cmn_ms; // in milliseconds
-    const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
-
-    // Get the TaskManager instance
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-
-    // Create a displayTask instance
-    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
-    displayTaskObject->Configure();
-    taskManager->AddTask(displayTaskObject);
-
-    sineTask * task1 = NULL;
-    sineTask * task2 = NULL;
-    sineTask * task3 = NULL;
-    sineTask * task4 = NULL;
-    sineTask * task5 = NULL;
-
-    if (argc == 1) {
-        // Server
-        task1 = new sineTask("SIN_1", PeriodSine);
-        task2 = new sineTask("SIN_2", PeriodSine * 10);
-        task3 = new sineTask("SIN_3", PeriodSine * 100);
-
-        taskManager->AddTask(task1);
-        taskManager->AddTask(task2);
-        taskManager->AddTask(task3);        
-
-        taskManager->Connect("DISP", "DataGenerator", "SIN_1", "MainInterface");
-
-        taskManager->CreateAll();
-        taskManager->StartAll();
-
-        taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_SERVER);
-    } else {
-        // Client
-        task1 = new sineTask("COS_1", PeriodSine);
-        task2 = new sineTask("COS_2", PeriodSine * 2);
-        task3 = new sineTask("COS_3", PeriodSine * 20);
-        task4 = new sineTask("COS_4", PeriodSine * 200);
-        task5 = new sineTask("COS_5", PeriodSine * 2000);
-
-        taskManager->AddTask(task1);
-        taskManager->AddTask(task2);
-        taskManager->AddTask(task3);
-        taskManager->AddTask(task4);
-        taskManager->AddTask(task5);
-
-        taskManager->Connect("DISP", "DataGenerator", "COS_1", "MainInterface");
-
-        taskManager->CreateAll();
-        taskManager->StartAll();
-
-        taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_CLIENT);
-    }
-
     while (1) {
-        osaSleep(100 * cmn_ms);
+        osaSleep(10 * cmn_ms);
         if (displayTaskObject->GetExitFlag()) {
             break;
         }
@@ -130,19 +91,8 @@ int main(int argc, char * argv[])
     taskManager->KillAll();
 
     osaSleep(PeriodDisplay * 2);
-
-#define WAIT_FOR_SAFE_TERMINATION(_instance)\
-    if (_instance) {\
-        while (!_instance->IsTerminated()) osaSleep(PeriodDisplay);\
-    }
-
-    WAIT_FOR_SAFE_TERMINATION(task1);
-    WAIT_FOR_SAFE_TERMINATION(task2);
-    WAIT_FOR_SAFE_TERMINATION(task3);
-    WAIT_FOR_SAFE_TERMINATION(task4);
-    WAIT_FOR_SAFE_TERMINATION(task5);
-    WAIT_FOR_SAFE_TERMINATION(displayTaskObject);
-    */
+    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+    while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
 
     return 0;
 }

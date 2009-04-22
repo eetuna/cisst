@@ -80,6 +80,11 @@ public:
         }
     }
 
+    void Test()
+    {
+        TaskManagerServer->SendCurrentTaskInfo();
+    }
+
     inline mtsTaskManagerProxy::TaskManagerServerPrx GetTaskManagerServerProxy() const {
         return TaskManagerServer; 
     }    

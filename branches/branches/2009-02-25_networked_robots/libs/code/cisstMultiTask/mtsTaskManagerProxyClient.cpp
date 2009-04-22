@@ -45,7 +45,6 @@ void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
         adapter->activate();
         TaskManagerServer->ice_getConnection()->setAdapter(adapter);
         TaskManagerServer->AddClient(ident);
-        //IceCommunicator->watiForShutdown();
 
         // Create a worker thread here and returns immediately.
         ThreadArgumentsInfo.argument = callingTaskManager;
@@ -66,6 +65,7 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
 
     try {
         ProxyClient->GetIceCommunicator()->waitForShutdown();
+        ProxyClient->Test();
         /*
         mtsTaskManagerProxy::TaskInfo myTaskInfo, peerTaskInfo;
         

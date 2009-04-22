@@ -95,16 +95,6 @@ protected:
         TASK_MANAGER_COMMUNICATOR,
     } CommunicatorIdentity;
 
-    //std::string GetCommunicatorIdentity(CommunicatorIdentity id) const 
-    //{
-    //    switch (id) {
-    //        case TASK_MANAGER_COMMUNICATOR:
-    //            return "TaskManagerCommunicator";
-    //    }
-
-    //    return "NOT_DEFINED";
-    //}
-
 public:
     mtsProxyBaseCommon(const std::string& propertyFileName, const std::string& propertyName) 
         : RunningFlag(false), InitSuccessFlag(false), IceCommunicator(NULL),

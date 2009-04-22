@@ -38,14 +38,36 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTaskManager> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-
-    //-------------------------------------------------------------------------
-    // From SLICE definition
-    //-------------------------------------------------------------------------
-public:
+    
     class TaskManagerServerI;
     typedef IceUtil::Handle<TaskManagerServerI> TaskManagerServerIPtr;
 
+protected:
+    TaskManagerServerIPtr Sender;
+
+public:
+    mtsTaskManagerProxyServer(const std::string& propertyFileName, 
+                              const std::string& propertyName) 
+        : mtsProxyBaseServer(propertyFileName, propertyName)
+    {}
+    ~mtsTaskManagerProxyServer() {}
+
+    Ice::ObjectPtr CreateServant() {
+        Sender = new TaskManagerServerI(IceCommunicator);
+        return Sender;
+    }
+
+    void StartServer();
+
+    void StartProxy(mtsTaskManager * callingTaskManager);
+
+    static void Runner(ThreadArguments<mtsTaskManager> * arguments);
+
+    void OnThreadEnd();
+
+    //------------------------------------------------------------------------- 
+    //  Proxy Implementation (Sender)
+    //-------------------------------------------------------------------------    
     class TaskManagerServerI : public mtsTaskManagerProxy::TaskManagerServer,
                                public IceUtil::Monitor<IceUtil::Mutex> 
     {
@@ -83,22 +105,7 @@ public:
 
         virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
         virtual void SendCurrentTaskInfo(const ::Ice::Current&);
-    };
-
-public:
-    mtsTaskManagerProxyServer(const std::string& propertyFileName, 
-                              const std::string& propertyName) 
-        : mtsProxyBaseServer(propertyFileName, propertyName)
-    {}
-    ~mtsTaskManagerProxyServer() {}
-
-    Ice::ObjectPtr CreateServant() {
-        return new mtsTaskManagerProxyServer::TaskManagerServerI(IceCommunicator);
-    }
-
-    void StartProxy(mtsTaskManager * callingTaskManager);
-
-    static void Runner(ThreadArguments<mtsTaskManager> * arguments);
+    };    
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyServer)
