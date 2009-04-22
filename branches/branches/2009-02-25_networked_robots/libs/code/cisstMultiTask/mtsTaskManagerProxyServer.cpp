@@ -42,22 +42,27 @@ void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
 
 void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * arguments)
 {
-    //mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
-
     mtsTaskManagerProxyServer * ProxyServer = 
         dynamic_cast<mtsTaskManagerProxyServer*>(arguments->proxy);
     
     try {
-        ProxyServer->ActivateServer();
-    } catch (const Ice::Exception& e) {
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << e << std::endl;
-    } catch (const char * msg) {
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << msg << std::endl;        
+        ProxyServer->StartServer();
+    } catch (...) {
+        ProxyServer->EndServant();
     }
+    ProxyServer->EndServant();
+    //catch (const Ice::Exception& e) {
+    //    ProxyServer->EndServant();
+    //    CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << e << std::endl;
+    //} catch (const char * msg) {
+    //    ProxyServer->OnThreadEnd();
+    //    CMN_LOG_CLASS_AUX(ProxyServer, 3) << "Proxy initialization error: " << msg << std::endl;        
+    //}
 
     ProxyServer->OnThreadEnd();
 }
 
+/*
 //-----------------------------------------------------------------------------
 // From SLICE definition
 //-----------------------------------------------------------------------------
@@ -83,3 +88,4 @@ void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
     // Send my information to the peer ('peers' in the future).
     mtsTaskManager::GetInstance()->GetNamesOfTasks(serverTaskInfo.taskNames);
 }
+*/

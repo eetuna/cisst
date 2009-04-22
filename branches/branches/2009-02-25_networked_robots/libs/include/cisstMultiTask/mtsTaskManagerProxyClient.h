@@ -38,11 +38,6 @@ class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTask
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-    ///////////////////////////////////////////////////////////////////////////
-    // From SLICE definition
-    mtsTaskManagerProxy::TaskManagerCommunicatorPrx TaskManagerCommunicatorProxy;
-    ///////////////////////////////////////////////////////////////////////////
-
 public:
     mtsTaskManagerProxyClient(const std::string& propertyFileName, 
                               const std::string& propertyName) 
@@ -50,24 +45,44 @@ public:
     {}
     ~mtsTaskManagerProxyClient() {}
 
-    void CreateProxy() {
-        TaskManagerCommunicatorProxy = 
-            mtsTaskManagerProxy::TaskManagerCommunicatorPrx::checkedCast(ProxyObject);
-        if (!TaskManagerCommunicatorProxy) {
-            throw "Invalid proxy";
-        }
-    }
-
     void StartProxy(mtsTaskManager * callingTaskManager);
 
     static void Runner(ThreadArguments<mtsTaskManager> * arguments);
 
-    ///////////////////////////////////////////////////////////////////////////
+    //-------------------------------------------------------------------------
     // From SLICE definition
-    inline mtsTaskManagerProxy::TaskManagerCommunicatorPrx GetTaskManagerCommunicatorProxy() const {
-        return TaskManagerCommunicatorProxy; 
+    //-------------------------------------------------------------------------
+protected:
+    mtsTaskManagerProxy::TaskManagerServerPrx TaskManagerServer;
+
+    class TaskManagerClientI : public mtsTaskManagerProxy::TaskManagerClient
+    {
+    public:
+        virtual void ReceiveData(::Ice::Int num, const ::Ice::Current&)
+        {
+            std::cout << "###################### " << num << std::endl;
+        }
+    
+        virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current&)
+        {
+            //
+            // TO BE IMPLEMENTED
+            //
+        }
+    };
+
+public:
+    void CreateProxy() {
+        TaskManagerServer = 
+            mtsTaskManagerProxy::TaskManagerServerPrx::checkedCast(ProxyObject);
+        if (!TaskManagerServer) {
+            throw "Invalid proxy";
+        }
+    }
+
+    inline mtsTaskManagerProxy::TaskManagerServerPrx GetTaskManagerServerProxy() const {
+        return TaskManagerServer; 
     }    
-    ///////////////////////////////////////////////////////////////////////////    
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient)

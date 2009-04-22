@@ -87,9 +87,6 @@ protected:
     /*! Ice default logger */
     Ice::LoggerPtr Logger;
 
-    /*! Ice run-time */
-    Ice::CommunicatorPtr communicator;
-
     /*! Ice module initialization */
     virtual void Init(void) = 0;
 
@@ -129,6 +126,8 @@ public:
     inline const bool IsRunning() const     { return RunningFlag; }
 
     inline const Ice::LoggerPtr GetLogger() const { return Logger; }
+
+    inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }
 };
 
 #endif // _mtsProxyBaseCommon_h

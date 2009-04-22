@@ -20,48 +20,49 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 //
-//	This Slice file defines the communication specification between 
-//	mtsTaskManager objects across networks.
+// This Slice file defines the communication specification between 
+// Task Manager server and Task Manager client across networks.
 //
 
-#ifndef _mtsTaskManagerProxy_h
-#define _mtsTaskManagerProxy_h
+#ifndef _mtsTaskManagerProxy_ICE_h
+#define _mtsTaskManagerProxy_ICE_h
 
 #include <Ice/Identity.ice>
 
 module mtsTaskManagerProxy
 {
-	sequence<string> TaskNameSeq;
-	
-	struct TaskInfo {
-		//string taskManagerID;
-		TaskNameSeq taskNames;	// task name (Unicode supported)
-	};
-	
-	interface TaskManagerCommunicator {
-        // TMclient --> TMserver
-        void SendMyTaskInfo(TaskInfo clientTaskInfo);
-        
-        // TMserver --> TMclient
-		void SendCurrentTaskInfo(TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
-	};
 
-/*
-	interface CallbackReceiver
-	{
-		void cbReceiveTaskCount(int num);	// cb represents 'call back'
-	};
+sequence<string> TaskNameSeq;
 
-	interface CallbackSender
-	{
-		void AddTask(Ice::Identity ident);
-	};
-*/
-
-	
-//	interface Printer {
-//		void printString(string s);
-//	};
+struct TaskInfo {
+    //string taskManagerID;
+    TaskNameSeq taskNames;	// task name (Unicode supported)
 };
 
-#endif // _mtsTaskManagerProxy_h
+//-----------------------------------------------------------------------------
+// Interface for TaskManager client
+//-----------------------------------------------------------------------------
+interface TaskManagerClient
+{
+    // passive (callback)
+    void ReceiveData(int num);
+    
+    // active
+    void SendMyTaskInfo(TaskInfo clientTaskInfo);
+};
+
+//-----------------------------------------------------------------------------
+// Interface for TaskManager server
+//-----------------------------------------------------------------------------
+interface TaskManagerServer
+{
+    // passive
+    void AddClient(Ice::Identity ident);
+
+    // active
+    void SendCurrentTaskInfo();//TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
+};
+
+};
+
+#endif // _mtsTaskManagerProxy_ICE_h

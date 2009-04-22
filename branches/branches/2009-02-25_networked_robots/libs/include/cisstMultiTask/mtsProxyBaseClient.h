@@ -51,9 +51,6 @@ protected:
 
             IceCommunicator = Ice::initialize(initData);
             
-            //std::string stringifiedProxy = 
-            //    GetCommunicatorIdentity(TASK_MANAGER_COMMUNICATOR) + ":default -p 10705";
-            //ProxyObject = IceCommunicator->stringToProxy(stringifiedProxy);
             ProxyObject = IceCommunicator->propertyToProxy(PropertyName);
 
             // If a proxy fails to be created, an exception is thrown.

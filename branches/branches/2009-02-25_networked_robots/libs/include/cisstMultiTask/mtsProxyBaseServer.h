@@ -53,7 +53,13 @@ protected:
             // Inform the object adapter of the presence of a new servant
             IceAdapter->add(Servant, IceCommunicator->stringToIdentity(PropertyName));
 
+            // Activate the adapter. The adapter is initially created in a 
+            // holding state. The server starts to process incoming requests
+            // from clients as soon as the adapter is activated.
+            IceAdapter->activate();
+
             InitSuccessFlag = true;
+
             Logger = IceCommunicator->getLogger();
             Logger->trace("mtsProxyBaseServer", "Server proxy initialization success");
 
@@ -89,19 +95,30 @@ public:
     
     virtual void StartProxy(_ArgumentType * callingClass) = 0;
 
-    void ActivateServer()
+    void StartServer()
     {
-        // Activate the adapter. The adapter is initially created in a 
-        // holding state. The server starts to process incoming requests
-        // from clients as soon as the adapter is activated.
-        IceAdapter->activate();
+        //
+        // TODO
+        //
+        //Servant->Start();
 
         // Blocking call
         IceCommunicator->waitForShutdown();
     }
 
+    void EndServant()
+    {
+        //
+        // TODO
+        //
+        //Servant->destroy();
+    }
+
     void OnThreadEnd(void)
     {
+        //
+        // TODO: EndServant() should be placed somewhere in this method.
+        //
         if (IceCommunicator) {
             try {
                 IceCommunicator->destroy();

@@ -39,21 +39,15 @@
 #   endif
 #endif
 
-#ifndef ICE_ENABLE_DLL
-#   ifdef ICE_ENABLE_DLL_EXPORTS
-#       define ICE_ENABLE_DLL ICE_DECLSPEC_EXPORT
-#   else
-#       define ICE_ENABLE_DLL ICE_DECLSPEC_IMPORT
-#   endif
-#endif
-
 namespace IceProxy
 {
 
 namespace mtsTaskManagerProxy
 {
 
-class TaskManagerCommunicator;
+class TaskManagerClient;
+
+class TaskManagerServer;
 
 }
 
@@ -62,28 +56,41 @@ class TaskManagerCommunicator;
 namespace mtsTaskManagerProxy
 {
 
-class TaskManagerCommunicator;
-ICE_ENABLE_DLL bool operator==(const TaskManagerCommunicator&, const TaskManagerCommunicator&);
-ICE_ENABLE_DLL bool operator<(const TaskManagerCommunicator&, const TaskManagerCommunicator&);
+class TaskManagerClient;
+bool operator==(const TaskManagerClient&, const TaskManagerClient&);
+bool operator<(const TaskManagerClient&, const TaskManagerClient&);
+
+class TaskManagerServer;
+bool operator==(const TaskManagerServer&, const TaskManagerServer&);
+bool operator<(const TaskManagerServer&, const TaskManagerServer&);
 
 }
 
 namespace IceInternal
 {
 
-ICE_ENABLE_DLL ::Ice::Object* upCast(::mtsTaskManagerProxy::TaskManagerCommunicator*);
-ICE_ENABLE_DLL ::IceProxy::Ice::Object* upCast(::IceProxy::mtsTaskManagerProxy::TaskManagerCommunicator*);
+::Ice::Object* upCast(::mtsTaskManagerProxy::TaskManagerClient*);
+::IceProxy::Ice::Object* upCast(::IceProxy::mtsTaskManagerProxy::TaskManagerClient*);
+
+::Ice::Object* upCast(::mtsTaskManagerProxy::TaskManagerServer*);
+::IceProxy::Ice::Object* upCast(::IceProxy::mtsTaskManagerProxy::TaskManagerServer*);
 
 }
 
 namespace mtsTaskManagerProxy
 {
 
-typedef ::IceInternal::Handle< ::mtsTaskManagerProxy::TaskManagerCommunicator> TaskManagerCommunicatorPtr;
-typedef ::IceInternal::ProxyHandle< ::IceProxy::mtsTaskManagerProxy::TaskManagerCommunicator> TaskManagerCommunicatorPrx;
+typedef ::IceInternal::Handle< ::mtsTaskManagerProxy::TaskManagerClient> TaskManagerClientPtr;
+typedef ::IceInternal::ProxyHandle< ::IceProxy::mtsTaskManagerProxy::TaskManagerClient> TaskManagerClientPrx;
 
-ICE_ENABLE_DLL void __read(::IceInternal::BasicStream*, TaskManagerCommunicatorPrx&);
-ICE_ENABLE_DLL void __patch__TaskManagerCommunicatorPtr(void*, ::Ice::ObjectPtr&);
+void __read(::IceInternal::BasicStream*, TaskManagerClientPrx&);
+void __patch__TaskManagerClientPtr(void*, ::Ice::ObjectPtr&);
+
+typedef ::IceInternal::Handle< ::mtsTaskManagerProxy::TaskManagerServer> TaskManagerServerPtr;
+typedef ::IceInternal::ProxyHandle< ::IceProxy::mtsTaskManagerProxy::TaskManagerServer> TaskManagerServerPrx;
+
+void __read(::IceInternal::BasicStream*, TaskManagerServerPrx&);
+void __patch__TaskManagerServerPtr(void*, ::Ice::ObjectPtr&);
 
 }
 
@@ -96,8 +103,8 @@ struct TaskInfo
 {
     ::mtsTaskManagerProxy::TaskNameSeq taskNames;
 
-    ICE_ENABLE_DLL bool operator==(const TaskInfo&) const;
-    ICE_ENABLE_DLL bool operator<(const TaskInfo&) const;
+    bool operator==(const TaskInfo&) const;
+    bool operator<(const TaskInfo&) const;
     bool operator!=(const TaskInfo& __rhs) const
     {
         return !operator==(__rhs);
@@ -115,8 +122,8 @@ struct TaskInfo
         return !operator<(__rhs);
     }
 
-    ICE_ENABLE_DLL void __write(::IceInternal::BasicStream*) const;
-    ICE_ENABLE_DLL void __read(::IceInternal::BasicStream*);
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
 };
 
 }
@@ -127,222 +134,470 @@ namespace IceProxy
 namespace mtsTaskManagerProxy
 {
 
-class TaskManagerCommunicator : virtual public ::IceProxy::Ice::Object
+class TaskManagerClient : virtual public ::IceProxy::Ice::Object
 {
 public:
 
-    void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo, ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo)
+    void ReceiveData(::Ice::Int num)
     {
-        ShareTaskInfo(clientTaskInfo, serverTaskInfo, 0);
+        ReceiveData(num, 0);
     }
-    void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo, ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, const ::Ice::Context& __ctx)
+    void ReceiveData(::Ice::Int num, const ::Ice::Context& __ctx)
     {
-        ShareTaskInfo(clientTaskInfo, serverTaskInfo, &__ctx);
+        ReceiveData(num, &__ctx);
     }
     
 private:
 
-    ICE_ENABLE_DLL void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+    void ReceiveData(::Ice::Int, const ::Ice::Context*);
+    
+public:
+
+    void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo)
+    {
+        SendMyTaskInfo(clientTaskInfo, 0);
+    }
+    void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo, const ::Ice::Context& __ctx)
+    {
+        SendMyTaskInfo(clientTaskInfo, &__ctx);
+    }
+    
+private:
+
+    void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
     
 public:
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_context(const ::Ice::Context& __context) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_context(const ::Ice::Context& __context) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_context(__context).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_context(__context).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_context(__context).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_context(__context).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_adapterId(const std::string& __id) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_adapterId(const std::string& __id) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_adapterId(__id).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_adapterId(__id).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_adapterId(__id).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_adapterId(__id).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_endpoints(const ::Ice::EndpointSeq& __endpoints) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_endpoints(const ::Ice::EndpointSeq& __endpoints) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_endpoints(__endpoints).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_endpoints(__endpoints).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_endpoints(__endpoints).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_endpoints(__endpoints).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_locatorCacheTimeout(int __timeout) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_locatorCacheTimeout(int __timeout) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_locatorCacheTimeout(__timeout).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_locatorCacheTimeout(__timeout).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_locatorCacheTimeout(__timeout).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_locatorCacheTimeout(__timeout).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_connectionCached(bool __cached) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_connectionCached(bool __cached) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_connectionCached(__cached).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_connectionCached(__cached).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_connectionCached(__cached).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_connectionCached(__cached).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_endpointSelection(::Ice::EndpointSelectionType __est) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_endpointSelection(::Ice::EndpointSelectionType __est) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_endpointSelection(__est).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_endpointSelection(__est).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_endpointSelection(__est).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_endpointSelection(__est).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_secure(bool __secure) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_secure(bool __secure) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_secure(__secure).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_secure(__secure).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_secure(__secure).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_secure(__secure).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_preferSecure(bool __preferSecure) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_preferSecure(bool __preferSecure) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_preferSecure(__preferSecure).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_preferSecure(__preferSecure).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_preferSecure(__preferSecure).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_preferSecure(__preferSecure).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_router(const ::Ice::RouterPrx& __router) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_router(const ::Ice::RouterPrx& __router) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_router(__router).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_router(__router).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_router(__router).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_router(__router).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_locator(const ::Ice::LocatorPrx& __locator) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_locator(const ::Ice::LocatorPrx& __locator) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_locator(__locator).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_locator(__locator).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_locator(__locator).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_locator(__locator).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_collocationOptimized(bool __co) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_collocationOptimized(bool __co) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_collocationOptimized(__co).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_collocationOptimized(__co).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_collocationOptimized(__co).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_collocationOptimized(__co).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_twoway() const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_twoway() const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_twoway().get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_twoway().get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_twoway().get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_twoway().get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_oneway() const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_oneway() const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_oneway().get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_oneway().get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_oneway().get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_oneway().get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_batchOneway() const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_batchOneway() const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_batchOneway().get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_batchOneway().get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_batchOneway().get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_batchOneway().get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_datagram() const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_datagram() const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_datagram().get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_datagram().get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_datagram().get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_datagram().get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_batchDatagram() const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_batchDatagram() const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_batchDatagram().get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_batchDatagram().get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_batchDatagram().get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_batchDatagram().get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_compress(bool __compress) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_compress(bool __compress) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_compress(__compress).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_compress(__compress).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_compress(__compress).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_compress(__compress).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_timeout(int __timeout) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_timeout(int __timeout) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_timeout(__timeout).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_timeout(__timeout).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_timeout(__timeout).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_timeout(__timeout).get());
     #endif
     }
     
-    ::IceInternal::ProxyHandle<TaskManagerCommunicator> ice_connectionId(const std::string& __id) const
+    ::IceInternal::ProxyHandle<TaskManagerClient> ice_connectionId(const std::string& __id) const
     {
     #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
         typedef ::IceProxy::Ice::Object _Base;
-        return dynamic_cast<TaskManagerCommunicator*>(_Base::ice_connectionId(__id).get());
+        return dynamic_cast<TaskManagerClient*>(_Base::ice_connectionId(__id).get());
     #else
-        return dynamic_cast<TaskManagerCommunicator*>(::IceProxy::Ice::Object::ice_connectionId(__id).get());
+        return dynamic_cast<TaskManagerClient*>(::IceProxy::Ice::Object::ice_connectionId(__id).get());
     #endif
     }
     
-    ICE_ENABLE_DLL static const ::std::string& ice_staticId();
+    static const ::std::string& ice_staticId();
 
 private: 
 
-    ICE_ENABLE_DLL virtual ::IceInternal::Handle< ::IceDelegateM::Ice::Object> __createDelegateM();
-    ICE_ENABLE_DLL virtual ::IceInternal::Handle< ::IceDelegateD::Ice::Object> __createDelegateD();
-    ICE_ENABLE_DLL virtual ::IceProxy::Ice::Object* __newInstance() const;
+    virtual ::IceInternal::Handle< ::IceDelegateM::Ice::Object> __createDelegateM();
+    virtual ::IceInternal::Handle< ::IceDelegateD::Ice::Object> __createDelegateD();
+    virtual ::IceProxy::Ice::Object* __newInstance() const;
+};
+
+class TaskManagerServer : virtual public ::IceProxy::Ice::Object
+{
+public:
+
+    void AddClient(const ::Ice::Identity& ident)
+    {
+        AddClient(ident, 0);
+    }
+    void AddClient(const ::Ice::Identity& ident, const ::Ice::Context& __ctx)
+    {
+        AddClient(ident, &__ctx);
+    }
+    
+private:
+
+    void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
+    
+public:
+
+    void SendCurrentTaskInfo()
+    {
+        SendCurrentTaskInfo(0);
+    }
+    void SendCurrentTaskInfo(const ::Ice::Context& __ctx)
+    {
+        SendCurrentTaskInfo(&__ctx);
+    }
+    
+private:
+
+    void SendCurrentTaskInfo(const ::Ice::Context*);
+    
+public:
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_context(const ::Ice::Context& __context) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_context(__context).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_context(__context).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_adapterId(const std::string& __id) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_adapterId(__id).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_adapterId(__id).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_endpoints(const ::Ice::EndpointSeq& __endpoints) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_endpoints(__endpoints).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_endpoints(__endpoints).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_locatorCacheTimeout(int __timeout) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_locatorCacheTimeout(__timeout).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_locatorCacheTimeout(__timeout).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_connectionCached(bool __cached) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_connectionCached(__cached).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_connectionCached(__cached).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_endpointSelection(::Ice::EndpointSelectionType __est) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_endpointSelection(__est).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_endpointSelection(__est).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_secure(bool __secure) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_secure(__secure).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_secure(__secure).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_preferSecure(bool __preferSecure) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_preferSecure(__preferSecure).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_preferSecure(__preferSecure).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_router(const ::Ice::RouterPrx& __router) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_router(__router).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_router(__router).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_locator(const ::Ice::LocatorPrx& __locator) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_locator(__locator).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_locator(__locator).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_collocationOptimized(bool __co) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_collocationOptimized(__co).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_collocationOptimized(__co).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_twoway() const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_twoway().get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_twoway().get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_oneway() const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_oneway().get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_oneway().get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_batchOneway() const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_batchOneway().get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_batchOneway().get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_datagram() const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_datagram().get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_datagram().get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_batchDatagram() const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_batchDatagram().get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_batchDatagram().get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_compress(bool __compress) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_compress(__compress).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_compress(__compress).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_timeout(int __timeout) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_timeout(__timeout).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_timeout(__timeout).get());
+    #endif
+    }
+    
+    ::IceInternal::ProxyHandle<TaskManagerServer> ice_connectionId(const std::string& __id) const
+    {
+    #if defined(_MSC_VER) && (_MSC_VER < 1300) // VC++ 6 compiler bug
+        typedef ::IceProxy::Ice::Object _Base;
+        return dynamic_cast<TaskManagerServer*>(_Base::ice_connectionId(__id).get());
+    #else
+        return dynamic_cast<TaskManagerServer*>(::IceProxy::Ice::Object::ice_connectionId(__id).get());
+    #endif
+    }
+    
+    static const ::std::string& ice_staticId();
+
+private: 
+
+    virtual ::IceInternal::Handle< ::IceDelegateM::Ice::Object> __createDelegateM();
+    virtual ::IceInternal::Handle< ::IceDelegateD::Ice::Object> __createDelegateD();
+    virtual ::IceProxy::Ice::Object* __newInstance() const;
 };
 
 }
@@ -355,11 +610,22 @@ namespace IceDelegate
 namespace mtsTaskManagerProxy
 {
 
-class ICE_ENABLE_DLL TaskManagerCommunicator : virtual public ::IceDelegate::Ice::Object
+class TaskManagerClient : virtual public ::IceDelegate::Ice::Object
 {
 public:
 
-    virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*) = 0;
+    virtual void ReceiveData(::Ice::Int, const ::Ice::Context*) = 0;
+
+    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*) = 0;
+};
+
+class TaskManagerServer : virtual public ::IceDelegate::Ice::Object
+{
+public:
+
+    virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*) = 0;
+
+    virtual void SendCurrentTaskInfo(const ::Ice::Context*) = 0;
 };
 
 }
@@ -372,12 +638,24 @@ namespace IceDelegateM
 namespace mtsTaskManagerProxy
 {
 
-class ICE_ENABLE_DLL TaskManagerCommunicator : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerCommunicator,
-                                               virtual public ::IceDelegateM::Ice::Object
+class TaskManagerClient : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerClient,
+                          virtual public ::IceDelegateM::Ice::Object
 {
 public:
 
-    virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+    virtual void ReceiveData(::Ice::Int, const ::Ice::Context*);
+
+    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+};
+
+class TaskManagerServer : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer,
+                          virtual public ::IceDelegateM::Ice::Object
+{
+public:
+
+    virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
+
+    virtual void SendCurrentTaskInfo(const ::Ice::Context*);
 };
 
 }
@@ -390,12 +668,24 @@ namespace IceDelegateD
 namespace mtsTaskManagerProxy
 {
 
-class ICE_ENABLE_DLL TaskManagerCommunicator : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerCommunicator,
-                                               virtual public ::IceDelegateD::Ice::Object
+class TaskManagerClient : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerClient,
+                          virtual public ::IceDelegateD::Ice::Object
 {
 public:
 
-    virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+    virtual void ReceiveData(::Ice::Int, const ::Ice::Context*);
+
+    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+};
+
+class TaskManagerServer : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer,
+                          virtual public ::IceDelegateD::Ice::Object
+{
+public:
+
+    virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
+
+    virtual void SendCurrentTaskInfo(const ::Ice::Context*);
 };
 
 }
@@ -405,12 +695,12 @@ public:
 namespace mtsTaskManagerProxy
 {
 
-class ICE_ENABLE_DLL TaskManagerCommunicator : virtual public ::Ice::Object
+class TaskManagerClient : virtual public ::Ice::Object
 {
 public:
 
-    typedef TaskManagerCommunicatorPrx ProxyType;
-    typedef TaskManagerCommunicatorPtr PointerType;
+    typedef TaskManagerClientPrx ProxyType;
+    typedef TaskManagerClientPtr PointerType;
     
     virtual ::Ice::ObjectPtr ice_clone() const;
 
@@ -419,8 +709,39 @@ public:
     virtual const ::std::string& ice_id(const ::Ice::Current& = ::Ice::Current()) const;
     static const ::std::string& ice_staticId();
 
-    virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current& = ::Ice::Current()) = 0;
-    ::Ice::DispatchStatus ___ShareTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&);
+    virtual void ReceiveData(::Ice::Int, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___ReceiveData(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___SendMyTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual void __write(::IceInternal::BasicStream*) const;
+    virtual void __read(::IceInternal::BasicStream*, bool);
+    virtual void __write(const ::Ice::OutputStreamPtr&) const;
+    virtual void __read(const ::Ice::InputStreamPtr&, bool);
+};
+
+class TaskManagerServer : virtual public ::Ice::Object
+{
+public:
+
+    typedef TaskManagerServerPrx ProxyType;
+    typedef TaskManagerServerPtr PointerType;
+    
+    virtual ::Ice::ObjectPtr ice_clone() const;
+
+    virtual bool ice_isA(const ::std::string&, const ::Ice::Current& = ::Ice::Current()) const;
+    virtual ::std::vector< ::std::string> ice_ids(const ::Ice::Current& = ::Ice::Current()) const;
+    virtual const ::std::string& ice_id(const ::Ice::Current& = ::Ice::Current()) const;
+    static const ::std::string& ice_staticId();
+
+    virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___AddClient(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual void SendCurrentTaskInfo(const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___SendCurrentTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&);
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

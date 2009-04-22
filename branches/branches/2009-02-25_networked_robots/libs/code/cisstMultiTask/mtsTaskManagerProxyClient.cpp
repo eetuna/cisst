@@ -29,8 +29,24 @@ void mtsTaskManagerProxyClient::StartProxy(mtsTaskManager * callingTaskManager)
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
     Init();
-
+    
     if (InitSuccessFlag) {
+        // Client configuration for bidirectional communication
+        // (see 
+        // http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.7.html
+        // for more information.)
+        Ice::ObjectAdapterPtr adapter = IceCommunicator->createObjectAdapter("");
+        Ice::Identity ident;
+        ident.name = IceUtil::generateUUID();
+        ident.category = "";
+
+        mtsTaskManagerProxy::TaskManagerClientPtr client = new TaskManagerClientI;
+        adapter->add(client, ident);
+        adapter->activate();
+        TaskManagerServer->ice_getConnection()->setAdapter(adapter);
+        TaskManagerServer->AddClient(ident);
+        //IceCommunicator->watiForShutdown();
+
         // Create a worker thread here and returns immediately.
         ThreadArgumentsInfo.argument = callingTaskManager;
         ThreadArgumentsInfo.proxy = this;        
@@ -49,6 +65,8 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
         dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
 
     try {
+        ProxyClient->GetIceCommunicator()->waitForShutdown();
+        /*
         mtsTaskManagerProxy::TaskInfo myTaskInfo, peerTaskInfo;
         
         std::vector<std::string> myTaskNames;
@@ -84,6 +102,7 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
 
             osaSleep(1 * cmn_ms);
         }
+        */
     } catch (const Ice::Exception& e) {
         ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
         ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", e.what());

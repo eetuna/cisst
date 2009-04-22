@@ -42,20 +42,23 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     //-------------------------------------------------------------------------
     // From SLICE definition
     //-------------------------------------------------------------------------
-    class TaskManagerChannelI : public mtsTaskManagerProxy::TaskManagerCommunicator {
+    class TaskManagerServerI : public mtsTaskManagerProxy::TaskManagerServer {
     public:
-        /*! Called when the connected client requests task information. */
-        virtual void ShareTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
-                                   ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
-                                   const ::Ice::Current&);
+        virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current&)
+        {
+            //
+            // TODO
+            //
+            std::cout << "---------------------- AddClient()" << std::endl;
+        }
 
-        //
-        //  TODO: What if a client/server disconnects abruptly so that data integrity of
-        //  two sides are ruined? How to gurantee both peers have synchronized data?
-        //  => Periodically let them communicate to each other (periodic synchronization)
-        //  => What if a server collapses? (DISASTER... Thus the p2p architecture rather than
-        //  the server-client architecture has a merit in this case.)
-        //
+        virtual void SendCurrentTaskInfo(const ::Ice::Current& = ::Ice::Current())
+        {
+            //
+            // TODO
+            //
+            std::cout << "---------------------- SendCurrentTaskInfo()" << std::endl;
+        }
     };
 
 public:
@@ -65,8 +68,8 @@ public:
     {}
     ~mtsTaskManagerProxyServer() {}
 
-    Ice::ObjectPtr CreateServant() { 
-        return new mtsTaskManagerProxyServer::TaskManagerChannelI;
+    Ice::ObjectPtr CreateServant() {
+        return new mtsTaskManagerProxyServer::TaskManagerServerI;
     }
 
     void StartProxy(mtsTaskManager * callingTaskManager);
