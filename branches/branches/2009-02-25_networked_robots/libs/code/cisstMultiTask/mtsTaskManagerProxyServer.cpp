@@ -62,10 +62,105 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
     ProxyServer->OnThreadEnd();
 }
 
-/*
 //-----------------------------------------------------------------------------
 // From SLICE definition
 //-----------------------------------------------------------------------------
+mtsTaskManagerProxyServer::TaskManagerServerI::TaskManagerServerI(
+    const Ice::CommunicatorPtr& communicator) 
+    : _communicator(communicator),
+      _destroy(false),
+      _TaskManagerServer(new TaskManagerServerThread(this))
+{
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::Start()
+{
+    std::cout << "============================ TaskManagerServerI::Start" << std::endl;
+
+    _TaskManagerServer->start();
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
+{
+    int num = 0;
+    while(true)
+    {
+        std::set<mtsTaskManagerProxy::TaskManagerClientPrx> clients;
+        {
+            IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+            timedWait(IceUtil::Time::seconds(2));
+
+            if(_destroy)
+            {
+                break;
+            }
+
+            clients = _clients;
+        }
+
+        if(!clients.empty())
+        {
+            ++num;
+            for(std::set<mtsTaskManagerProxy::TaskManagerClientPrx>::iterator p 
+                = clients.begin(); p != clients.end(); ++p)
+            {
+                try
+                {
+                    (*p)->ReceiveData(num);
+                }
+                catch(const IceUtil::Exception& ex)
+                {
+                    std::cerr << "removing client `" << _communicator->identityToString((*p)->ice_getIdentity()) << "':\n"
+                        << ex << std::endl;
+
+                    IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+                    _clients.erase(*p);
+                }
+            }
+        }
+    }
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::Destroy()
+{
+    std::cout << "============================ TaskManagerServerI::Destroy" << std::endl;
+
+    IceUtil::ThreadPtr callbackSenderThread;
+
+    {
+        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+
+        std::cout << "destroying callback sender" << std::endl;
+        _destroy = true;
+
+        notify();
+
+        callbackSenderThread = _TaskManagerServer;
+        _TaskManagerServer = 0; // Resolve cyclic dependency.
+    }
+
+    callbackSenderThread->getThreadControl().join();
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
+    const ::Ice::Identity& ident, const ::Ice::Current& current)
+{
+    IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+
+    std::cout << "adding client: " << _communicator->identityToString(ident) << "'"<< std::endl;
+
+    mtsTaskManagerProxy::TaskManagerClientPrx client = 
+        mtsTaskManagerProxy::TaskManagerClientPrx::uncheckedCast(current.con->createProxy(ident));
+    _clients.insert(client);
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::SendCurrentTaskInfo(
+    const ::Ice::Current&)
+{
+    std::cout << "============================ TaskManagerServerI::SendCurrentTaskInfo" << std::endl;
+}
+
+/*
 void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
     const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
     ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 

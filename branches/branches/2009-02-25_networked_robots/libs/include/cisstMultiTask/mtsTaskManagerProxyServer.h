@@ -42,23 +42,47 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     //-------------------------------------------------------------------------
     // From SLICE definition
     //-------------------------------------------------------------------------
-    class TaskManagerServerI : public mtsTaskManagerProxy::TaskManagerServer {
-    public:
-        virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current&)
-        {
-            //
-            // TODO
-            //
-            std::cout << "---------------------- AddClient()" << std::endl;
-        }
+public:
+    class TaskManagerServerI;
+    typedef IceUtil::Handle<TaskManagerServerI> TaskManagerServerIPtr;
 
-        virtual void SendCurrentTaskInfo(const ::Ice::Current& = ::Ice::Current())
+    class TaskManagerServerI : public mtsTaskManagerProxy::TaskManagerServer,
+                               public IceUtil::Monitor<IceUtil::Mutex> 
+    {
+    private:
+        Ice::CommunicatorPtr _communicator;
+        bool _destroy;
+        std::set<mtsTaskManagerProxy::TaskManagerClientPrx> _clients;
+        IceUtil::ThreadPtr _TaskManagerServer;
+
+        class TaskManagerServerThread : public IceUtil::Thread
         {
-            //
-            // TODO
-            //
-            std::cout << "---------------------- SendCurrentTaskInfo()" << std::endl;
-        }
+        public:
+
+            TaskManagerServerThread(const TaskManagerServerIPtr& callbackSender) :
+              _callbackSender(callbackSender)
+              {
+              }
+
+              virtual void run()
+              {
+                  _callbackSender->Run();
+              }
+
+        private:
+
+            const TaskManagerServerIPtr _callbackSender;
+        };        
+
+    public:
+        TaskManagerServerI(const Ice::CommunicatorPtr&);
+
+        void Start();
+        void Run();
+        void Destroy();
+
+        virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
+        virtual void SendCurrentTaskInfo(const ::Ice::Current&);
     };
 
 public:
@@ -69,7 +93,7 @@ public:
     ~mtsTaskManagerProxyServer() {}
 
     Ice::ObjectPtr CreateServant() {
-        return new mtsTaskManagerProxyServer::TaskManagerServerI;
+        return new mtsTaskManagerProxyServer::TaskManagerServerI(IceCommunicator);
     }
 
     void StartProxy(mtsTaskManager * callingTaskManager);

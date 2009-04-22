@@ -100,7 +100,7 @@ public:
         //
         // TODO
         //
-        //Servant->Start();
+        Servant->Start();
 
         // Blocking call
         IceCommunicator->waitForShutdown();
@@ -111,7 +111,7 @@ public:
         //
         // TODO
         //
-        //Servant->destroy();
+        Servant->Destroy();
     }
 
     void OnThreadEnd(void)
