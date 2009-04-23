@@ -7,6 +7,7 @@
 
    PythonException      Placeholder for a Python exception message
    @mystery@            Bookmark for strange code behavior
+   TODO                 todo
 *****************************************************************************/
 
 %header %{
@@ -416,7 +417,7 @@
 
 
 /******************************************************************************
-  TYPEMAPS (in) FOR vctDynamicVectorRef<int>
+  TYPEMAPS (in, out) FOR vctDynamicVectorRef<int>
 ******************************************************************************/
 
 
@@ -457,6 +458,42 @@
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size, data, stride);
+}
+
+
+%typemap(out) vctDynamicVectorRef<int>
+{
+    /*****************************************************************************
+    *   %typemap(out) vctDynamicVectorRef<int>
+    *   Returning a vctDynamicVectorRef
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
+
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
+
+    npy_intp *sizes = PyDimMem_NEW(1);
+    sizes[0] = $1.size();
+    $result = PyArray_SimpleNew(1, sizes, vctPythonTestPythonType<$1_ltype::value_type>());  // TODO: clean this up
+
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicVectorRef<int> TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicVectorRef<int> container
+    const npy_intp size = PyArray_DIM($result, 0);
+    const npy_intp stride = PyArray_STRIDE($result, 0) /
+                                sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data =
+        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer =
+        vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
+
+    // Copy the data from the vctDynamicVectorRef<int> to the temporary container
+    tempContainer = $1;
 }
 
 
@@ -522,7 +559,7 @@
 
 
 /******************************************************************************
-  TYPEMAPS (in) FOR vctDynamicConstVectorRef<int>
+  TYPEMAPS (in, out) FOR vctDynamicConstVectorRef<int>
 ******************************************************************************/
 
 
@@ -562,6 +599,42 @@
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size, data, stride);
+}
+
+
+%typemap(out) vctDynamicConstVectorRef<int>
+{
+    /*****************************************************************************
+    *   %typemap(out) vctDynamicConstVectorRef<int>
+    *   Returning a vctDynamicConstVectorRef
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
+
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
+
+    npy_intp *sizes = PyDimMem_NEW(1);
+    sizes[0] = $1.size();
+    $result = PyArray_SimpleNew(1, sizes, vctPythonTestPythonType<$1_ltype::value_type>());  // TODO: clean this up
+
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicConstVectorRef<int> TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicVectorRef<int> container
+    const npy_intp size = PyArray_DIM($result, 0);
+    const npy_intp stride = PyArray_STRIDE($result, 0) /
+                                sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data =
+        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer =
+        vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
+
+    // Copy the data from the vctDynamicConstVectorRef<int> to the temporary container
+    tempContainer = $1;
 }
 
 
