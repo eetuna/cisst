@@ -37,7 +37,7 @@ template<class _ArgumentType>
 class CISST_EXPORT mtsProxyBaseClient : public mtsProxyBaseCommon<_ArgumentType> {
     
 protected:
-    bool RunnableFlag;
+    bool Runnable;
     Ice::ObjectPrx ProxyObject;
 
     virtual void CreateProxy() = 0;
@@ -63,7 +63,7 @@ protected:
             CreateProxy();
 
             InitSuccessFlag = true;
-            RunnableFlag = true;
+            Runnable = true;
 
             
             Logger->trace("mtsProxyBaseClient", "Client proxy initialization success");
@@ -93,21 +93,20 @@ protected:
 
 public:
     mtsProxyBaseClient(const std::string& propertyFileName, const std::string& propertyName)
-        : RunnableFlag(false), mtsProxyBaseCommon(propertyFileName, propertyName)
+        : Runnable(false), mtsProxyBaseCommon(propertyFileName, propertyName)
     {}
     virtual ~mtsProxyBaseClient() {}
 
-    inline const bool IsRunnable() const { return RunnableFlag; }
+    inline const bool IsRunnable() const { return Runnable; }
 
-    virtual void StartProxy(_ArgumentType * callingClass) = 0;
+    virtual void Start(_ArgumentType * callingClass) = 0;
 
-    void OnThreadEnd(void)
+    virtual void OnThreadEnd(void)
     {
         if (IceCommunicator) {
             try {
                 IceCommunicator->destroy();
-                RunningFlag = false;
-                RunnableFlag = false;
+                Runnable = false;
 
                 Logger->trace("mtsProxyBaseClient", "Client proxy clean-up success.");
                 //CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;

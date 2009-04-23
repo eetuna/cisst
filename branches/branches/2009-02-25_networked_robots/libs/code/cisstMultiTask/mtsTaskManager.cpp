@@ -343,11 +343,11 @@ void mtsTaskManager::SetTaskManagerMode(const TaskManagerType newType)
         }
 
         if (newType == TASK_MANAGER_SERVER) {
-            Proxy = new mtsTaskManagerProxyServer("config.server", "TaskManagerServer");
-            Proxy->StartProxy(this);
+            Proxy = new mtsTaskManagerProxyServer("TODO: implement me", "TaskManagerServer");
+            Proxy->Start(this);
         } else {
-            Proxy = new mtsTaskManagerProxyClient("config.client", "TaskManagerServerSender");
-            Proxy->StartProxy(this);
+            Proxy = new mtsTaskManagerProxyClient("TODO: implement me", "TaskManagerServerSender");
+            Proxy->Start(this);
         }
     } else {
         // Transition from NETWORK to LOCAL

@@ -35,7 +35,7 @@ module mtsTaskManagerProxy
 sequence<string> TaskNameSeq;
 
 struct TaskInfo {
-    //string taskManagerID;
+    string taskManagerID;
     TaskNameSeq taskNames;	// task name (Unicode supported)
 };
 
@@ -44,11 +44,10 @@ struct TaskInfo {
 //-----------------------------------------------------------------------------
 interface TaskManagerClient
 {
-    // passive (callback)
+    // from server
     void ReceiveData(int num);
     
-    // active
-    void SendMyTaskInfo(TaskInfo clientTaskInfo);
+    //void SendMyTaskInfo(TaskInfo clientTaskInfo);
 };
 
 //-----------------------------------------------------------------------------
@@ -56,11 +55,14 @@ interface TaskManagerClient
 //-----------------------------------------------------------------------------
 interface TaskManagerServer
 {
-    // passive
+    // from clients
     void AddClient(Ice::Identity ident);
+    ["cpp:const"] idempotent void UpdateTaskInfo(TaskInfo localTaskInfo);
+    
+    void ReceiveDataFromClient(int num);
 
     // active
-    void SendCurrentTaskInfo();//TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
+    //void SendCurrentTaskInfo();//TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
 };
 
 };

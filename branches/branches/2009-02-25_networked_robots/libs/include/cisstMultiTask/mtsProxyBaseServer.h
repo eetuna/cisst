@@ -95,7 +95,7 @@ public:
     {}
     virtual ~mtsProxyBaseServer() {}
     
-    virtual void StartProxy(_ArgumentType * callingClass) = 0;
+    virtual void Start(_ArgumentType * callingClass) = 0;
 
     virtual void OnThreadEnd(void)
     {
@@ -105,7 +105,6 @@ public:
         if (IceCommunicator) {
             try {                
                 IceCommunicator->destroy();
-                RunningFlag = false;
 
                 Logger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
                 //CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;

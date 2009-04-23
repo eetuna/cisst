@@ -38,11 +38,11 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTaskManager> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    
+
+protected:
     class TaskManagerServerI;
     typedef IceUtil::Handle<TaskManagerServerI> TaskManagerServerIPtr;
 
-protected:
     TaskManagerServerIPtr Sender;
 
 public:
@@ -52,60 +52,55 @@ public:
     {}
     ~mtsTaskManagerProxyServer() {}
 
+    //------------------- Methods for proxy implementation ------------------//
+    /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
-        Sender = new TaskManagerServerI(IceCommunicator);
+        Sender = new TaskManagerServerI(IceCommunicator, Logger, this);
         return Sender;
     }
+    
+    /*! Entry point to run a proxy. */
+    void Start(mtsTaskManager * callingTaskManager);
 
+    /*! Start a send thread and wait for shutdown (blocking call). */
     void StartServer();
 
-    void StartProxy(mtsTaskManager * callingTaskManager);
-
+    /*! Thread runner */
     static void Runner(ThreadArguments<mtsTaskManager> * arguments);
 
+    /*! Clean up thread-related resources. */
     void OnThreadEnd();
 
-    //------------------------------------------------------------------------- 
-    //  Proxy Implementation (Sender)
-    //-------------------------------------------------------------------------    
+    //-------------------------------------------------------------------------
+    //  Definition by mtsTaskManagerProxy.ice
+    //-------------------------------------------------------------------------
+protected:
     class TaskManagerServerI : public mtsTaskManagerProxy::TaskManagerServer,
                                public IceUtil::Monitor<IceUtil::Mutex> 
     {
     private:
-        Ice::CommunicatorPtr _communicator;
-        bool _destroy;
+        Ice::CommunicatorPtr Communicator;
+        bool Runnable;
         std::set<mtsTaskManagerProxy::TaskManagerClientPrx> _clients;
-        IceUtil::ThreadPtr _TaskManagerServer;
-
-        class TaskManagerServerThread : public IceUtil::Thread
-        {
-        public:
-
-            TaskManagerServerThread(const TaskManagerServerIPtr& callbackSender) :
-              _callbackSender(callbackSender)
-              {
-              }
-
-              virtual void run()
-              {
-                  _callbackSender->Run();
-              }
-
-        private:
-
-            const TaskManagerServerIPtr _callbackSender;
-        };        
+        IceUtil::ThreadPtr Sender;
+        Ice::LoggerPtr Logger;
+        mtsTaskManagerProxyServer * TaskManagerServer;
 
     public:
-        TaskManagerServerI(const Ice::CommunicatorPtr&);
+        TaskManagerServerI(const Ice::CommunicatorPtr& communicator, 
+                           const Ice::LoggerPtr& logger,
+                           mtsTaskManagerProxyServer * taskManagerServer);
 
         void Start();
         void Run();
         void Destroy();
 
-        virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
-        virtual void SendCurrentTaskInfo(const ::Ice::Current&);
-    };    
+        void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
+        void ReceiveDataFromClient(::Ice::Int num, const ::Ice::Current&);
+        void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current&) const;
+    };
+
+    //------------------ Methods for global task manager --------------------//
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyServer)

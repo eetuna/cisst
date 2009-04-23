@@ -101,6 +101,7 @@ typedef ::std::vector< ::std::string> TaskNameSeq;
 
 struct TaskInfo
 {
+    ::std::string taskManagerID;
     ::mtsTaskManagerProxy::TaskNameSeq taskNames;
 
     bool operator==(const TaskInfo&) const;
@@ -150,21 +151,6 @@ public:
 private:
 
     void ReceiveData(::Ice::Int, const ::Ice::Context*);
-    
-public:
-
-    void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo)
-    {
-        SendMyTaskInfo(clientTaskInfo, 0);
-    }
-    void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo, const ::Ice::Context& __ctx)
-    {
-        SendMyTaskInfo(clientTaskInfo, &__ctx);
-    }
-    
-private:
-
-    void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
     
 public:
     
@@ -386,18 +372,33 @@ private:
     
 public:
 
-    void SendCurrentTaskInfo()
+    void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo)
     {
-        SendCurrentTaskInfo(0);
+        UpdateTaskInfo(localTaskInfo, 0);
     }
-    void SendCurrentTaskInfo(const ::Ice::Context& __ctx)
+    void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Context& __ctx)
     {
-        SendCurrentTaskInfo(&__ctx);
+        UpdateTaskInfo(localTaskInfo, &__ctx);
     }
     
 private:
 
-    void SendCurrentTaskInfo(const ::Ice::Context*);
+    void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+    
+public:
+
+    void ReceiveDataFromClient(::Ice::Int num)
+    {
+        ReceiveDataFromClient(num, 0);
+    }
+    void ReceiveDataFromClient(::Ice::Int num, const ::Ice::Context& __ctx)
+    {
+        ReceiveDataFromClient(num, &__ctx);
+    }
+    
+private:
+
+    void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*);
     
 public:
     
@@ -615,8 +616,6 @@ class TaskManagerClient : virtual public ::IceDelegate::Ice::Object
 public:
 
     virtual void ReceiveData(::Ice::Int, const ::Ice::Context*) = 0;
-
-    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*) = 0;
 };
 
 class TaskManagerServer : virtual public ::IceDelegate::Ice::Object
@@ -625,7 +624,9 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*) = 0;
 
-    virtual void SendCurrentTaskInfo(const ::Ice::Context*) = 0;
+    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*) = 0;
+
+    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*) = 0;
 };
 
 }
@@ -644,8 +645,6 @@ class TaskManagerClient : virtual public ::IceDelegate::mtsTaskManagerProxy::Tas
 public:
 
     virtual void ReceiveData(::Ice::Int, const ::Ice::Context*);
-
-    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
 };
 
 class TaskManagerServer : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer,
@@ -655,7 +654,9 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
-    virtual void SendCurrentTaskInfo(const ::Ice::Context*);
+    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+
+    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*);
 };
 
 }
@@ -674,8 +675,6 @@ class TaskManagerClient : virtual public ::IceDelegate::mtsTaskManagerProxy::Tas
 public:
 
     virtual void ReceiveData(::Ice::Int, const ::Ice::Context*);
-
-    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
 };
 
 class TaskManagerServer : virtual public ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer,
@@ -685,7 +684,9 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
-    virtual void SendCurrentTaskInfo(const ::Ice::Context*);
+    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
+
+    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*);
 };
 
 }
@@ -712,9 +713,6 @@ public:
     virtual void ReceiveData(::Ice::Int, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___ReceiveData(::IceInternal::Incoming&, const ::Ice::Current&);
 
-    virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current& = ::Ice::Current()) = 0;
-    ::Ice::DispatchStatus ___SendMyTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&);
-
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 
     virtual void __write(::IceInternal::BasicStream*) const;
@@ -740,8 +738,11 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___AddClient(::IceInternal::Incoming&, const ::Ice::Current&);
 
-    virtual void SendCurrentTaskInfo(const ::Ice::Current& = ::Ice::Current()) = 0;
-    ::Ice::DispatchStatus ___SendCurrentTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&);
+    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current& = ::Ice::Current()) const = 0;
+    ::Ice::DispatchStatus ___UpdateTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&) const;
+
+    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___ReceiveDataFromClient(::IceInternal::Incoming&, const ::Ice::Current&);
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

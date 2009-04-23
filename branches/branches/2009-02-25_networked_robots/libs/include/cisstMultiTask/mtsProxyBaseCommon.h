@@ -57,12 +57,20 @@ protected:
         }
     };
 
+    template<class _SenderType>
+    class SendThread : public IceUtil::Thread
+    {
+    private:
+        const _SenderType Sender;
+
+    public:
+        SendThread(const _SenderType& sender) : Sender(sender) {}          
+        virtual void run() { Sender->Run(); }
+    };
+
     //-------------------------- Thread Management --------------------------//
     /*! Was the initiliazation successful? */
     bool InitSuccessFlag;
-
-    /*! Is this thread running? */
-    bool RunningFlag;
 
     /*! Worker thread for network communication */
     osaThread WorkerThread;
@@ -78,34 +86,40 @@ protected:
     /*! Property name (one of setting option in 'PropertyFileName' file). */
     std::string PropertyName;
 
-    /*! Settings for ICE components */
-    //std::string TaskManagerCommunicatorIdentity;
-
     /*! Ice communicator for proxy */
     Ice::CommunicatorPtr IceCommunicator;
 
     /*! Ice default logger */
     Ice::LoggerPtr Logger;
 
+    /*! Global UID */
+    std::string GUID;
+
     /*! Ice module initialization */
     virtual void Init(void) = 0;
 
-    /*! Define a string that represents unique ID. */
-    typedef enum {
-        TASK_MANAGER_COMMUNICATOR,
-    } CommunicatorIdentity;
+    /*! Get global UID of this object. This must be unique over networks. */
+    //
+    // TODO: IP + Process ID + object ID (???)
+    //
+    const std::string GetGUID() {
+        if (GUID.empty()) {
+            GUID = IceUtil::generateUUID();
+        }
+        return GUID;
+    }
 
 public:
     mtsProxyBaseCommon(const std::string& propertyFileName, const std::string& propertyName) 
-        : RunningFlag(false), InitSuccessFlag(false), IceCommunicator(NULL),
-          PropertyFileName(propertyFileName), PropertyName(propertyName)
+        : InitSuccessFlag(false), IceCommunicator(NULL),
+          PropertyFileName(propertyFileName), PropertyName(propertyName), GUID("")
     {
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
     }
     virtual ~mtsProxyBaseCommon() {}
 
     /*! Initialize and start a proxy. Returns immediately. */
-    virtual void StartProxy(_ArgumentType * callingClass) = 0;
+    virtual void Start(_ArgumentType * callingClass) = 0;
     
     /*! Called when the worker thread ends. */
     virtual void OnThreadEnd(void) = 0;
@@ -113,8 +127,6 @@ public:
     //------------------------------- Getters -------------------------------//
     inline const bool IsInitalized() const  { return InitSuccessFlag; }
     
-    inline const bool IsRunning() const     { return RunningFlag; }
-
     inline const Ice::LoggerPtr GetLogger() const { return Logger; }
 
     inline Ice::CommunicatorPtr GetIceCommunicator() const { return IceCommunicator; }

@@ -38,6 +38,18 @@ class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTask
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
+protected:
+    /*! Send thread.
+        We need a seperate send thread because the bi-directional communication is
+        used between proxies. This is the major limitation of using bi-directional 
+        communication. (Another approach is to use Glacier2.) */
+    class TaskManagerClientI;
+    typedef IceUtil::Handle<TaskManagerClientI> TaskManagerClientIPtr;
+    TaskManagerClientIPtr Sender;
+
+    /*! TaskManagerServer proxy */
+    mtsTaskManagerProxy::TaskManagerServerPrx TaskManagerServer;
+
 public:
     mtsTaskManagerProxyClient(const std::string& propertyFileName, 
                               const std::string& propertyName) 
@@ -45,49 +57,58 @@ public:
     {}
     ~mtsTaskManagerProxyClient() {}
 
-    void StartProxy(mtsTaskManager * callingTaskManager);
-
-    static void Runner(ThreadArguments<mtsTaskManager> * arguments);
-
-    //-------------------------------------------------------------------------
-    // From SLICE definition
-    //-------------------------------------------------------------------------
-protected:
-    mtsTaskManagerProxy::TaskManagerServerPrx TaskManagerServer;
-
-    class TaskManagerClientI : public mtsTaskManagerProxy::TaskManagerClient
-    {
-    public:
-        virtual void ReceiveData(::Ice::Int num, const ::Ice::Current&)
-        {
-            std::cout << "###################### " << num << std::endl;
-        }
-    
-        virtual void SendMyTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current&)
-        {
-            //
-            // TO BE IMPLEMENTED
-            //
-        }
-    };
-
-public:
+    /*! Create a proxy object and a send thread. */
     void CreateProxy() {
         TaskManagerServer = 
             mtsTaskManagerProxy::TaskManagerServerPrx::checkedCast(ProxyObject);
         if (!TaskManagerServer) {
             throw "Invalid proxy";
         }
+
+        Sender = new TaskManagerClientI(IceCommunicator, Logger, TaskManagerServer, this);
     }
 
-    void Test()
+    /*! Entry point to run a proxy. */
+    void Start(mtsTaskManager * callingTaskManager);
+
+    /*! Start a send thread and wait for shutdown (blocking call). */
+    void StartClient();
+
+    /*! Thread runner */
+    static void Runner(ThreadArguments<mtsTaskManager> * arguments);
+
+    /*! Clean up thread-related resources. */
+    void OnThreadEnd();
+
+    //-------------------------------------------------------------------------
+    //  Definition by mtsTaskManagerProxy.ice
+    //-------------------------------------------------------------------------
+protected:
+    class TaskManagerClientI : public mtsTaskManagerProxy::TaskManagerClient,
+                               public IceUtil::Monitor<IceUtil::Mutex>
     {
-        TaskManagerServer->SendCurrentTaskInfo();
-    }
+    private:
+        Ice::CommunicatorPtr Communicator;
+        bool Runnable;
+        //std::set<mtsTaskManagerProxy::TaskManagerServerPrx> _servers;
+        
+        IceUtil::ThreadPtr Sender;
+        Ice::LoggerPtr Logger;
+        mtsTaskManagerProxy::TaskManagerServerPrx Server;
+        mtsTaskManagerProxyClient * TaskManagerClient;
 
-    inline mtsTaskManagerProxy::TaskManagerServerPrx GetTaskManagerServerProxy() const {
-        return TaskManagerServer; 
-    }    
+    public:
+        TaskManagerClientI(const Ice::CommunicatorPtr& communicator,                           
+                           const Ice::LoggerPtr& logger,
+                           const mtsTaskManagerProxy::TaskManagerServerPrx& server,
+                           mtsTaskManagerProxyClient * taskManagerClient);
+
+        void Start();
+        void Run();
+        void Destroy();
+
+        virtual void ReceiveData(::Ice::Int num, const ::Ice::Current&);
+    };
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient)

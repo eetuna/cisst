@@ -24,12 +24,16 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
-void mtsTaskManagerProxyServer::StartProxy(mtsTaskManager * callingTaskManager)
+#define mtsTaskManagerProxyServerLogger(_log) Logger->trace("mtsTaskManagerProxyServer", _log)
+
+//#define _COMMUNICATION_TEST_
+
+void mtsTaskManagerProxyServer::Start(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
     Init();
-
+    
     if (InitSuccessFlag) {
         // Create a worker thread here and returns immediately.
         ThreadArgumentsInfo.argument = callingTaskManager;
@@ -57,11 +61,9 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
     try {
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
-        ProxyServer->OnThreadEnd();
         CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << e << std::endl;
     } catch (const char * msg) {
-        ProxyServer->OnThreadEnd();
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << msg << std::endl;        
+        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << msg << std::endl;
     }
 
     ProxyServer->OnThreadEnd();
@@ -71,25 +73,28 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
 {
     mtsProxyBaseServer::OnThreadEnd();
 
-    this->Sender->Destroy();
+    Sender->Destroy();
 }
 
-//-----------------------------------------------------------------------------
-// From SLICE definition
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+//  Definition by mtsTaskManagerProxy.ice
+//-------------------------------------------------------------------------
 mtsTaskManagerProxyServer::TaskManagerServerI::TaskManagerServerI(
-    const Ice::CommunicatorPtr& communicator) 
-    : _communicator(communicator),
-      _destroy(false),
-      _TaskManagerServer(new TaskManagerServerThread(this))
+    const Ice::CommunicatorPtr& communicator,
+    const Ice::LoggerPtr& logger,
+    mtsTaskManagerProxyServer * taskManagerServer) 
+    : Communicator(communicator), Logger(logger),
+      TaskManagerServer(taskManagerServer),
+      Runnable(true),
+      Sender(new SendThread<TaskManagerServerIPtr>(this))
 {
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Start()
 {
-    std::cout << "============================ TaskManagerServerI::Start" << std::endl;
+    mtsTaskManagerProxyServerLogger("Send thread starts");
 
-    _TaskManagerServer->start();
+    Sender->start();
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
@@ -102,7 +107,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
             IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
             timedWait(IceUtil::Time::seconds(2));
 
-            if(_destroy)
+            if(!Runnable)
             {
                 break;
             }
@@ -110,6 +115,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
             clients = _clients;
         }
 
+#ifdef _COMMUNICATION_TEST_
         if(!clients.empty())
         {
             ++num;
@@ -118,11 +124,12 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
             {
                 try
                 {
+                    std::cout << "server sends: " << num << std::endl;
                     (*p)->ReceiveData(num);
                 }
                 catch(const IceUtil::Exception& ex)
                 {
-                    std::cerr << "removing client `" << _communicator->identityToString((*p)->ice_getIdentity()) << "':\n"
+                    std::cerr << "removing client `" << Communicator->identityToString((*p)->ice_getIdentity()) << "':\n"
                         << ex << std::endl;
 
                     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
@@ -130,25 +137,26 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
                 }
             }
         }
+#endif
     }
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Destroy()
 {
-    std::cout << "============================ TaskManagerServerI::Destroy" << std::endl;
+    mtsTaskManagerProxyServerLogger("Send thread is terminating.");
 
     IceUtil::ThreadPtr callbackSenderThread;
 
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        std::cout << "destroying callback sender" << std::endl;
-        _destroy = true;
+        mtsTaskManagerProxyServerLogger("Destroying sender.");
+        Runnable = false;
 
         notify();
 
-        callbackSenderThread = _TaskManagerServer;
-        _TaskManagerServer = 0; // Resolve cyclic dependency.
+        callbackSenderThread = Sender;
+        Sender = 0; // Resolve cyclic dependency.
     }
 
     callbackSenderThread->getThreadControl().join();
@@ -159,40 +167,33 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
 {
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-    std::cout << "adding client: " << _communicator->identityToString(ident) << "'"<< std::endl;
+    std::string log = "Adding client: " + Communicator->identityToString(ident);
+    mtsTaskManagerProxyServerLogger(log.c_str());
 
     mtsTaskManagerProxy::TaskManagerClientPrx client = 
         mtsTaskManagerProxy::TaskManagerClientPrx::uncheckedCast(current.con->createProxy(ident));
-    _clients.insert(client);
+    _clients.insert(client);    
 }
 
-void mtsTaskManagerProxyServer::TaskManagerServerI::SendCurrentTaskInfo(
-    const ::Ice::Current&)
+void mtsTaskManagerProxyServer::TaskManagerServerI::ReceiveDataFromClient(
+    ::Ice::Int num, const ::Ice::Current&)
 {
-    std::cout << "============================ TaskManagerServerI::SendCurrentTaskInfo" << std::endl;
+    std::cout << "------------ server recv data " << num << std::endl;
 }
 
-/*
-void mtsTaskManagerProxyServer::TaskManagerChannelI::ShareTaskInfo(
-    const ::mtsTaskManagerProxy::TaskInfo& clientTaskInfo,
-    ::mtsTaskManagerProxy::TaskInfo& serverTaskInfo, 
-    const ::Ice::Current&)
+void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskInfo(
+    const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Current& current) const
 {
-    //
-    // 4/13 TODO:
-    // - Task Name, Interface Name should be received.
-    // - How to define the id of TaskManager instance? (need to define the name
-    //   of cmnGenericObject?)
-    //
-
-    // Get the names of tasks' being managed by the peer TaskManager.
-    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = clientTaskInfo.taskNames.begin();
-    for (; it != clientTaskInfo.taskNames.end(); ++it) {
-        CMN_LOG_CLASS_AUX(mtsTaskManager::GetInstance(), 5) << 
-            "CLIENT TASK NAME: " << *it << std::endl;
+    /*
+    std::vector<std::string>::const_iterator it = localTaskInfo.taskNames.begin();
+    for (; it != localTaskInfo.taskNames.end(); ++it) {
+        //std::cout << current.requestId;
+        //std::cout << Communicator->identityToString(current.id) << " ] : ";
+        //std::cerr << current.con->toString() << std::endl;
+        std::cout << "[ " << localTaskInfo.taskManagerID << " ] ";
+        std::cout << *it << std::endl;        
     }
-
-    // Send my information to the peer ('peers' in the future).
-    mtsTaskManager::GetInstance()->GetNamesOfTasks(serverTaskInfo.taskNames);
+    */
+    
+    
 }
-*/
