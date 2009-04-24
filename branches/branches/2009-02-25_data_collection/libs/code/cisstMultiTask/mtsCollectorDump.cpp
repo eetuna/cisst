@@ -26,7 +26,7 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorDump)
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
 mtsCollectorDump::mtsCollectorDump(const std::string & collectorName) 
-    : mtsCollectorBase(collectorName), WaitingForTrigger(true)
+    : mtsCollectorBase(collectorName), WaitingForTrigger(true), SamplingInterval(1)
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
       , ElapsedTimeForProcessing(0.0)
 #endif
@@ -322,7 +322,17 @@ bool mtsCollectorDump::FetchStateTableData(const mtsStateTable * table,
     StopWatch.Start();
 #endif
 
+    unsigned int counter = 0;
     for (unsigned int i = startIdx; i <= endIdx; ++i) {
+        // Skip some records, if specified.
+        if (SamplingInterval > 1) {
+            if (++counter == SamplingInterval) {
+                counter = 0;
+            } else {
+                continue;
+            }
+        }
+
         LogFile << table->Ticks[i] << " ";
         {
             for (itr = taskMap.begin()->second->begin();

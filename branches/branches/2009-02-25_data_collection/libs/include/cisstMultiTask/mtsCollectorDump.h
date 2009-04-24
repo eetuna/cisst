@@ -84,11 +84,11 @@ private:
     /*! If this is unset, this dump thread wakes up. */
     bool WaitingForTrigger;
 
+    /*! A stride value for data collector to skip several records. */
+    unsigned int SamplingInterval;
+
     /*! Output file stream */
     std::ofstream LogFile;
-
-    /*! Container to retrieve total number of to-be-fetched data from data thread */
-    cmnUInt NewElementCount;
 
     /*! Void command to enable a data thread's trigger. */
     mtsFunctionVoid DataCollectionEventReset;
@@ -134,6 +134,11 @@ public:
     bool AddSignal(const std::string & taskName,
                    const std::string & signalName = "",
                    const std::string & format = "");
+
+    /*! Set a stride so that data collector can skip several values. */
+    void SetSamplingInterval(const unsigned int samplingInterval) {
+        SamplingInterval = (samplingInterval > 0 ? samplingInterval : 1);
+    }
 
     //--------------------------------- Getters -----------------------------//
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
