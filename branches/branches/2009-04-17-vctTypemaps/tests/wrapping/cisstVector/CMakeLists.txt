@@ -49,7 +49,8 @@ FOREACH(proxyTest ${PROXY_TESTS})
 
   SET_SOURCE_FILES_PROPERTIES(${interface} PROPERTIES CPLUSPLUS ON)
   SET_SOURCE_FILES_PROPERTIES(${interface}
-                            PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
+                            PROPERTIES SWIG_FLAGS "-v;-modern;-fvirtual")
+                           #PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
   SWIG_ADD_MODULE(${module} python ${interface})
   IF(WIN32)
     SWIG_LINK_LIBRARIES(${module}
