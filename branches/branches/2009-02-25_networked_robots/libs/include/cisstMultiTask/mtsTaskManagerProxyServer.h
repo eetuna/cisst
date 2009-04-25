@@ -25,10 +25,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxy.h>
+#include <cisstMultiTask/mtsMap.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
 #include <set>
+#include <map>
+#include <string>
 
 /*!
   \ingroup cisstMultiTask
@@ -39,18 +42,52 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-protected:
-    class TaskManagerServerI;
-    typedef IceUtil::Handle<TaskManagerServerI> TaskManagerServerIPtr;
-
-    TaskManagerServerIPtr Sender;
+    friend class TaskManagerServerI;
 
 public:
-    mtsTaskManagerProxyServer(const std::string& propertyFileName, 
-                              const std::string& propertyName) 
-        : mtsProxyBaseServer(propertyFileName, propertyName)
-    {}
-    ~mtsTaskManagerProxyServer() {}
+    class TaskInfo {
+    //protected:
+    public:
+        const std::string TaskName;
+        const std::string TaskManagerID;
+        std::vector<std::string> ConnectedTaskList;
+    public:
+        TaskInfo(const std::string& taskName, const std::string& taskManagerID) 
+            : TaskName(taskName), TaskManagerID(taskManagerID) {}
+    };
+
+    /*! Map for managing tasks. */
+    typedef std::map<std::string, TaskInfo> GlobalTaskMapType; // (task name, task information)
+
+    /*! Map for managing task managers. */
+    typedef std::map<std::string, GlobalTaskMapType> GlobalTaskManagerMapType; // (task manager name, TaskListType)
+
+    /*! Map for fast look-up */
+    typedef std::map<std::string, std::string> GlobalTaskNameMapType; // (task name, task manager name)
+
+protected:
+    //--------------------------- Protected member data ---------------------//
+    /*! Definitions for send thread */
+    class TaskManagerServerI;
+    typedef IceUtil::Handle<TaskManagerServerI> TaskManagerServerIPtr;
+    TaskManagerServerIPtr Sender;
+    
+    /*! Map for managing tasks. */
+    GlobalTaskMapType TaskMap;
+
+    /*! Map for managing task managers. */
+    GlobalTaskManagerMapType TaskManagerMap;
+
+    /* Map for fast look-up */
+    GlobalTaskNameMapType TaskNameMap;
+
+    //-------------------------- Protected methods --------------------------//
+    /*! Resource clean-up */
+    void OnClose();
+
+    GlobalTaskMapType * GetTaskMap(const std::string taskManagerID);
+
+    void TestShowMe();
 
     //------------------- Methods for proxy implementation ------------------//
     /*! Create a servant which serves TaskManager clients. */
@@ -70,6 +107,23 @@ public:
 
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
+    
+public:
+    mtsTaskManagerProxyServer(const std::string& propertyFileName, 
+                              const std::string& propertyName) 
+        : mtsProxyBaseServer(propertyFileName, propertyName)
+    {}
+    ~mtsTaskManagerProxyServer();
+    
+    //----------------------------- Proxy Support ---------------------------//
+    /*! Update the information of all tasks. */
+    void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
+
+    /*! Add a task. Return false if the specified task has been already registered. */
+    //const bool AddTask(const std::string taskName);
+
+    /*! Remove a task. Return false if the specified task is not found. */
+    //const bool RemoveTask(const std::string taskName);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice
@@ -96,8 +150,8 @@ protected:
         void Destroy();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
-        void ReceiveDataFromClient(::Ice::Int num, const ::Ice::Current&);
-        void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current&) const;
+        //void ReceiveDataFromClient(::Ice::Int num, const ::Ice::Current&);
+        void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&) const;
     };
 
     //------------------ Methods for global task manager --------------------//

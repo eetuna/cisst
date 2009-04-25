@@ -99,26 +99,26 @@ namespace mtsTaskManagerProxy
 
 typedef ::std::vector< ::std::string> TaskNameSeq;
 
-struct TaskInfo
+struct TaskList
 {
     ::std::string taskManagerID;
     ::mtsTaskManagerProxy::TaskNameSeq taskNames;
 
-    bool operator==(const TaskInfo&) const;
-    bool operator<(const TaskInfo&) const;
-    bool operator!=(const TaskInfo& __rhs) const
+    bool operator==(const TaskList&) const;
+    bool operator<(const TaskList&) const;
+    bool operator!=(const TaskList& __rhs) const
     {
         return !operator==(__rhs);
     }
-    bool operator<=(const TaskInfo& __rhs) const
+    bool operator<=(const TaskList& __rhs) const
     {
         return operator<(__rhs) || operator==(__rhs);
     }
-    bool operator>(const TaskInfo& __rhs) const
+    bool operator>(const TaskList& __rhs) const
     {
         return !operator<(__rhs) && !operator==(__rhs);
     }
-    bool operator>=(const TaskInfo& __rhs) const
+    bool operator>=(const TaskList& __rhs) const
     {
         return !operator<(__rhs);
     }
@@ -372,33 +372,18 @@ private:
     
 public:
 
-    void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo)
+    void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo)
     {
-        UpdateTaskInfo(localTaskInfo, 0);
+        AddTaskManager(localTaskInfo, 0);
     }
-    void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Context& __ctx)
+    void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Context& __ctx)
     {
-        UpdateTaskInfo(localTaskInfo, &__ctx);
-    }
-    
-private:
-
-    void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
-    
-public:
-
-    void ReceiveDataFromClient(::Ice::Int num)
-    {
-        ReceiveDataFromClient(num, 0);
-    }
-    void ReceiveDataFromClient(::Ice::Int num, const ::Ice::Context& __ctx)
-    {
-        ReceiveDataFromClient(num, &__ctx);
+        AddTaskManager(localTaskInfo, &__ctx);
     }
     
 private:
 
-    void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*);
+    void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
     
 public:
     
@@ -624,9 +609,7 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*) = 0;
 
-    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*) = 0;
-
-    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*) = 0;
+    virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*) = 0;
 };
 
 }
@@ -654,9 +637,7 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
-    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
-
-    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*);
+    virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
 };
 
 }
@@ -684,9 +665,7 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
-    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Context*);
-
-    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Context*);
+    virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
 };
 
 }
@@ -738,11 +717,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___AddClient(::IceInternal::Incoming&, const ::Ice::Current&);
 
-    virtual void UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo&, const ::Ice::Current& = ::Ice::Current()) const = 0;
-    ::Ice::DispatchStatus ___UpdateTaskInfo(::IceInternal::Incoming&, const ::Ice::Current&) const;
-
-    virtual void ReceiveDataFromClient(::Ice::Int, const ::Ice::Current& = ::Ice::Current()) = 0;
-    ::Ice::DispatchStatus ___ReceiveDataFromClient(::IceInternal::Incoming&, const ::Ice::Current&);
+    virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current& = ::Ice::Current()) const = 0;
+    ::Ice::DispatchStatus ___AddTaskManager(::IceInternal::Incoming&, const ::Ice::Current&) const;
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

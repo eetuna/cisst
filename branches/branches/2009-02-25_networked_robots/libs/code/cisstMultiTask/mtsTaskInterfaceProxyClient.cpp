@@ -2,10 +2,10 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskManagerProxyClient.cpp 145 2009-03-18 23:32:40Z mjung5 $
+  $Id: mtsTaskInterfaceProxyClient.cpp 145 2009-03-18 23:32:40Z mjung5 $
 
   Author(s):  Min Yang Jung
-  Created on: 2009-03-17
+  Created on: 2009-04-24
 
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -19,17 +19,15 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
+#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
-CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyClient);
+CMN_IMPLEMENT_SERVICES(mtsTaskInterfaceProxyClient);
 
-#define mtsTaskManagerProxyClientLogger(_log) \
-    Logger->trace("mtsTaskManagerProxyClient", _log)
+#define mtsTaskInterfaceProxyClientLogger(_log) \
+    Logger->trace("mtsTaskInterfaceProxyClient", _log)
 
-//#define _COMMUNICATION_TEST_
-
-void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
+void mtsTaskInterfaceProxyClient::Start(mtsTask * callingTask)
 {
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
@@ -37,32 +35,29 @@ void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
     
     if (InitSuccessFlag) {
         // Client configuration for bidirectional communication
-        // (see 
-        // http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.7.html
-        // for more information.)
         Ice::ObjectAdapterPtr adapter = IceCommunicator->createObjectAdapter("");
         Ice::Identity ident;
         ident.name = GetGUID();
         ident.category = "";
 
-        mtsTaskManagerProxy::TaskManagerClientPtr client = 
-            new TaskManagerClientI(IceCommunicator, Logger, TaskManagerServer, this);
+        mtsTaskInterfaceProxy::TaskInterfaceClientPtr client = 
+            new TaskInterfaceClientI(IceCommunicator, Logger, TaskInterfaceServer, this);
         adapter->add(client, ident);
         adapter->activate();
-        TaskManagerServer->ice_getConnection()->setAdapter(adapter);
-        TaskManagerServer->AddClient(ident);
+        TaskInterfaceServer->ice_getConnection()->setAdapter(adapter);
+        TaskInterfaceServer->AddClient(ident);
 
         // Create a worker thread here and returns immediately.
-        ThreadArgumentsInfo.argument = callingTaskManager;
+        ThreadArgumentsInfo.argument = callingTask;
         ThreadArgumentsInfo.proxy = this;        
-        ThreadArgumentsInfo.Runner = mtsTaskManagerProxyClient::Runner;
+        ThreadArgumentsInfo.Runner = mtsTaskInterfaceProxyClient::Runner;
 
-        WorkerThread.Create<ProxyWorker<mtsTaskManager>, ThreadArguments<mtsTaskManager>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, "S-PRX");
+        WorkerThread.Create<ProxyWorker<mtsTask>, ThreadArguments<mtsTask>*>(
+            &ProxyWorkerInfo, &ProxyWorker<mtsTask>::Run, &ThreadArgumentsInfo, "S-PRX");
     }
 }
 
-void mtsTaskManagerProxyClient::StartClient()
+void mtsTaskInterfaceProxyClient::StartClient()
 {
     Sender->Start();
 
@@ -70,27 +65,27 @@ void mtsTaskManagerProxyClient::StartClient()
     IceCommunicator->waitForShutdown();
 }
 
-void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * arguments)
+void mtsTaskInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
 {
     mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
 
-    mtsTaskManagerProxyClient * ProxyClient = 
-        dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
+    mtsTaskInterfaceProxyClient * ProxyClient = 
+        dynamic_cast<mtsTaskInterfaceProxyClient*>(arguments->proxy);
 
     try {
         ProxyClient->StartClient();        
     } catch (const Ice::Exception& e) {
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", e.what());
+        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", "exception");
+        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", e.what());
     } catch (const char * msg) {
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", msg);
+        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", "exception");
+        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", msg);
     }
 
     ProxyClient->OnThreadEnd();
 }
 
-void mtsTaskManagerProxyClient::OnThreadEnd()
+void mtsTaskInterfaceProxyClient::OnThreadEnd()
 {
     mtsProxyBaseClient::OnThreadEnd();
 
@@ -98,42 +93,37 @@ void mtsTaskManagerProxyClient::OnThreadEnd()
 }
 
 //-------------------------------------------------------------------------
-//  Definition by mtsTaskManagerProxy.ice
+//  Definition by mtsTaskInterfaceProxy.ice
 //-------------------------------------------------------------------------
-mtsTaskManagerProxyClient::TaskManagerClientI::TaskManagerClientI(
+mtsTaskInterfaceProxyClient::TaskInterfaceClientI::TaskInterfaceClientI(
     const Ice::CommunicatorPtr& communicator,                           
     const Ice::LoggerPtr& logger,
-    const mtsTaskManagerProxy::TaskManagerServerPrx& server,
-    mtsTaskManagerProxyClient * taskManagerClient)
+    const mtsTaskInterfaceProxy::TaskInterfaceServerPrx& server,
+    mtsTaskInterfaceProxyClient * taskInterfaceClient)
     : Runnable(true), 
       Communicator(communicator), Logger(logger),
-      Server(server), TaskManagerClient(taskManagerClient),      
-      Sender(new SendThread<TaskManagerClientIPtr>(this))      
+      Server(server), TaskInterfaceClient(taskInterfaceClient),      
+      Sender(new SendThread<TaskInterfaceClientIPtr>(this))      
 {
 }
 
-void mtsTaskManagerProxyClient::TaskManagerClientI::Start()
+void mtsTaskInterfaceProxyClient::TaskInterfaceClientI::Start()
 {
-    mtsTaskManagerProxyClientLogger("Send thread starts");
+    mtsTaskInterfaceProxyClientLogger("Send thread starts");
 
     Sender->start();
 }
 
-void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
+void mtsTaskInterfaceProxyClient::TaskInterfaceClientI::Run()
 {
     bool flag = true;
 
     while(true)
     {
-#ifdef _COMMUNICATION_TEST_
-        static int num = 0;
-        std::cout << "client send: " << ++num << std::endl;
-        Server->ReceiveDataFromClient(num);
-#endif
-
         if (flag) {
             // Send a set of task names
-            mtsTaskManagerProxy::TaskList localTaskList;
+            /*
+            mtsTaskInterfaceProxy::TaskList localTaskList;
             std::vector<std::string> myTaskNames;
             mtsTaskManager::GetInstance()->GetNamesOfTasks(myTaskNames);
 
@@ -145,6 +135,7 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
             localTaskList.taskManagerID = TaskManagerClient->GetGUID();
 
             Server->AddTaskManager(localTaskList);
+            */
 
             flag = false;
         }
@@ -156,16 +147,16 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
     }
 }
 
-void mtsTaskManagerProxyClient::TaskManagerClientI::Destroy()
+void mtsTaskInterfaceProxyClient::TaskInterfaceClientI::Destroy()
 {
-    mtsTaskManagerProxyClientLogger("Send thread is terminating.");
+    mtsTaskInterfaceProxyClientLogger("Send thread is terminating.");
 
     IceUtil::ThreadPtr callbackSenderThread;
 
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        mtsTaskManagerProxyClientLogger("Destroying sender.");
+        mtsTaskInterfaceProxyClientLogger("Destroying sender.");
         Runnable = false;
 
         notify();
@@ -177,8 +168,8 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Destroy()
     callbackSenderThread->getThreadControl().join();
 }
 
-void mtsTaskManagerProxyClient::TaskManagerClientI::ReceiveData(
-    ::Ice::Int num, const ::Ice::Current&)
-{
-    std::cout << "------------ client recv data " << num << std::endl;
-}
+//void mtsTaskInterfaceProxyClient::TaskInterfaceClientI::ReceiveData(
+//    ::Ice::Int num, const ::Ice::Current&)
+//{
+//    std::cout << "------------ client recv data " << num << std::endl;
+//}

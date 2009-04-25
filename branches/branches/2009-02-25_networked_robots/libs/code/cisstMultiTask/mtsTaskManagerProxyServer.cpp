@@ -28,6 +28,15 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
 //#define _COMMUNICATION_TEST_
 
+mtsTaskManagerProxyServer::~mtsTaskManagerProxyServer()
+{
+    OnClose();
+}
+
+void mtsTaskManagerProxyServer::OnClose()
+{
+}
+
 void mtsTaskManagerProxyServer::Start(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
@@ -75,6 +84,85 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
 
     Sender->Destroy();
 }
+
+mtsTaskManagerProxyServer::GlobalTaskMapType *
+    mtsTaskManagerProxyServer::GetTaskMap(const std::string taskManagerID)
+{
+    GlobalTaskManagerMapType::iterator it = TaskManagerMap.find(taskManagerID);
+    if (it == TaskManagerMap.end()) {
+        return 0;
+    } else {
+        return &(it->second);
+    }
+}
+
+void mtsTaskManagerProxyServer::TestShowMe()
+{
+    GlobalTaskManagerMapType::const_iterator it = TaskManagerMap.begin();
+    for (; it != TaskManagerMap.end(); ++it) {
+        std::cout << "--------------------------------- " << it->first << std::endl;
+        GlobalTaskMapType::const_iterator itr = it->second.begin();
+        for (; itr != it->second.end(); ++itr) {
+            std::cout << "\t" << itr->first;
+            std::cout << " (" << itr->second.TaskManagerID << ", ";
+            std::cout << itr->second.TaskName << ", ";
+            std::cout << itr->second.ConnectedTaskList.size() << std::endl;
+        }
+    }
+}
+
+void mtsTaskManagerProxyServer::AddTaskManager(
+    const ::mtsTaskManagerProxy::TaskList& localTaskInfo)
+{
+    const std::string taskManagerID = localTaskInfo.taskManagerID;
+
+    GlobalTaskMapType newTaskMap;
+    GlobalTaskMapType * taskMap = GetTaskMap(taskManagerID);
+    
+    // If this task manager has not been registered,
+    if (taskMap == 0) {
+        taskMap = &newTaskMap;
+    }
+
+    std::string taskName;
+    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = localTaskInfo.taskNames.begin();
+    for (; it != localTaskInfo.taskNames.end(); ++it) {
+        taskName = *it;
+        TaskInfo taskInfo(taskName, taskManagerID);
+        taskMap->insert(make_pair(taskName, taskInfo));
+
+        //
+        // TODO: task name duplicity check!!! and if there is any duplications,
+        // an task name duplication exception should be generated!!!
+        //
+
+        TaskNameMap.insert(make_pair(taskName, taskManagerID));
+    }
+
+    TaskManagerMap.insert(make_pair(taskManagerID, *taskMap));
+
+    // FOR TEST
+    TestShowMe();
+}
+
+/*
+const bool mtsTaskManagerProxyServer::AddTask(const std::string taskManagerName,
+                                              const std::string taskName)
+{
+    // TODO: Check if there is a task that has been already registered as the same name.
+    //
+    // TODO: task name duplicity check!!! and if there is any duplications,
+    // an task name duplication exception should be generated!!!
+    //
+
+    return true;
+}
+
+const bool mtsTaskManagerProxyServer::RemoveTask(const std::string taskName)
+{
+    return true;
+}
+*/
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
@@ -175,14 +263,14 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
     _clients.insert(client);    
 }
 
-void mtsTaskManagerProxyServer::TaskManagerServerI::ReceiveDataFromClient(
-    ::Ice::Int num, const ::Ice::Current&)
-{
-    std::cout << "------------ server recv data " << num << std::endl;
-}
+//void mtsTaskManagerProxyServer::TaskManagerServerI::ReceiveDataFromClient(
+//    ::Ice::Int num, const ::Ice::Current&)
+//{
+//    std::cout << "------------ server recv data " << num << std::endl;
+//}
 
-void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskInfo(
-    const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Current& current) const
+void mtsTaskManagerProxyServer::TaskManagerServerI::AddTaskManager(
+    const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current) const
 {
     /*
     std::vector<std::string>::const_iterator it = localTaskInfo.taskNames.begin();
@@ -194,6 +282,6 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskInfo(
         std::cout << *it << std::endl;        
     }
     */
-    
-    
+
+    TaskManagerServer->AddTaskManager(localTaskInfo);
 }

@@ -32,12 +32,19 @@ http://www.cisst.org/cisst/license.txt.
 module mtsTaskManagerProxy
 {
 
+// Data structure definition
 sequence<string> TaskNameSeq;
 
-struct TaskInfo {
+struct TaskList {
     string taskManagerID;
     TaskNameSeq taskNames;	// task name (Unicode supported)
 };
+
+// Exception definition
+//exception InvalidTaskNameError {
+	//string msg1;
+	//string msg2;
+//};
 
 //-----------------------------------------------------------------------------
 // Interface for TaskManager client
@@ -46,8 +53,6 @@ interface TaskManagerClient
 {
     // from server
     void ReceiveData(int num);
-    
-    //void SendMyTaskInfo(TaskInfo clientTaskInfo);
 };
 
 //-----------------------------------------------------------------------------
@@ -56,13 +61,9 @@ interface TaskManagerClient
 interface TaskManagerServer
 {
     // from clients
-    void AddClient(Ice::Identity ident);
-    ["cpp:const"] idempotent void UpdateTaskInfo(TaskInfo localTaskInfo);
-    
-    void ReceiveDataFromClient(int num);
-
-    // active
-    //void SendCurrentTaskInfo();//TaskInfo clientTaskInfo, out TaskInfo serverTaskInfo);
+    void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
+		
+	["cpp:const"] idempotent void AddTaskManager(TaskList localTaskInfo);
 };
 
 };

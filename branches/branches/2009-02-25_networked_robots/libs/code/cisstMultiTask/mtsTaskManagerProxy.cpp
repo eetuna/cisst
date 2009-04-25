@@ -33,9 +33,7 @@ static const ::std::string __mtsTaskManagerProxy__TaskManagerClient__ReceiveData
 
 static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__AddClient_name = "AddClient";
 
-static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__UpdateTaskInfo_name = "UpdateTaskInfo";
-
-static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__ReceiveDataFromClient_name = "ReceiveDataFromClient";
+static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__AddTaskManager_name = "AddTaskManager";
 
 ::Ice::Object* IceInternal::upCast(::mtsTaskManagerProxy::TaskManagerClient* p) { return p; }
 ::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsTaskManagerProxy::TaskManagerClient* p) { return p; }
@@ -76,7 +74,7 @@ mtsTaskManagerProxy::__read(::IceInternal::BasicStream* __is, ::mtsTaskManagerPr
 }
 
 bool
-mtsTaskManagerProxy::TaskInfo::operator==(const TaskInfo& __rhs) const
+mtsTaskManagerProxy::TaskList::operator==(const TaskList& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -94,7 +92,7 @@ mtsTaskManagerProxy::TaskInfo::operator==(const TaskInfo& __rhs) const
 }
 
 bool
-mtsTaskManagerProxy::TaskInfo::operator<(const TaskInfo& __rhs) const
+mtsTaskManagerProxy::TaskList::operator<(const TaskList& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -120,7 +118,7 @@ mtsTaskManagerProxy::TaskInfo::operator<(const TaskInfo& __rhs) const
 }
 
 void
-mtsTaskManagerProxy::TaskInfo::__write(::IceInternal::BasicStream* __os) const
+mtsTaskManagerProxy::TaskList::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(taskManagerID);
     if(taskNames.size() == 0)
@@ -134,7 +132,7 @@ mtsTaskManagerProxy::TaskInfo::__write(::IceInternal::BasicStream* __os) const
 }
 
 void
-mtsTaskManagerProxy::TaskInfo::__read(::IceInternal::BasicStream* __is)
+mtsTaskManagerProxy::TaskList::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(taskManagerID);
     __is->read(taskNames);
@@ -215,7 +213,7 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddClient(const ::Ice::Identit
 }
 
 void
-IceProxy::mtsTaskManagerProxy::TaskManagerServer::UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Context* __ctx)
+IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -225,37 +223,12 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::UpdateTaskInfo(const ::mtsTask
         {
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
-            __del->UpdateTaskInfo(localTaskInfo, __ctx);
+            __del->AddTaskManager(localTaskInfo, __ctx);
             return;
         }
         catch(const ::IceInternal::LocalExceptionWrapper& __ex)
         {
             __handleExceptionWrapperRelaxed(__delBase, __ex, 0, __cnt);
-        }
-        catch(const ::Ice::LocalException& __ex)
-        {
-            __handleException(__delBase, __ex, 0, __cnt);
-        }
-    }
-}
-
-void
-IceProxy::mtsTaskManagerProxy::TaskManagerServer::ReceiveDataFromClient(::Ice::Int num, const ::Ice::Context* __ctx)
-{
-    int __cnt = 0;
-    while(true)
-    {
-        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
-        try
-        {
-            __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
-            __del->ReceiveDataFromClient(num, __ctx);
-            return;
-        }
-        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
-        {
-            __handleExceptionWrapper(__delBase, __ex, 0);
         }
         catch(const ::Ice::LocalException& __ex)
         {
@@ -367,52 +340,13 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddClient(const ::Ice::Ide
 }
 
 void
-IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Context* __context)
+IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskManagerProxy__TaskManagerServer__UpdateTaskInfo_name, ::Ice::Idempotent, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskManagerProxy__TaskManagerServer__AddTaskManager_name, ::Ice::Idempotent, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
         localTaskInfo.__write(__os);
-    }
-    catch(const ::Ice::LocalException& __ex)
-    {
-        __og.abort(__ex);
-    }
-    bool __ok = __og.invoke();
-    if(!__og.is()->b.empty())
-    {
-        try
-        {
-            if(!__ok)
-            {
-                try
-                {
-                    __og.throwUserException();
-                }
-                catch(const ::Ice::UserException& __ex)
-                {
-                    ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
-                    throw __uue;
-                }
-            }
-            __og.is()->skipEmptyEncaps();
-        }
-        catch(const ::Ice::LocalException& __ex)
-        {
-            throw ::IceInternal::LocalExceptionWrapper(__ex, false);
-        }
-    }
-}
-
-void
-IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::ReceiveDataFromClient(::Ice::Int num, const ::Ice::Context* __context)
-{
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskManagerProxy__TaskManagerServer__ReceiveDataFromClient_name, ::Ice::Normal, __context);
-    try
-    {
-        ::IceInternal::BasicStream* __os = __og.os();
-        __os->write(num);
     }
     catch(const ::Ice::LocalException& __ex)
     {
@@ -573,13 +507,13 @@ IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::AddClient(const ::Ice::Ide
 }
 
 void
-IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::UpdateTaskInfo(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Context* __context)
+IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
     public:
 
-        _DirectI(const ::mtsTaskManagerProxy::TaskInfo& localTaskInfo, const ::Ice::Current& __current) : 
+        _DirectI(const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& __current) : 
             ::IceInternal::Direct(__current),
             _m_localTaskInfo(localTaskInfo)
         {
@@ -593,84 +527,20 @@ IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::UpdateTaskInfo(const ::mts
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
             }
-            servant->UpdateTaskInfo(_m_localTaskInfo, _current);
+            servant->AddTaskManager(_m_localTaskInfo, _current);
             return ::Ice::DispatchOK;
         }
         
     private:
         
-        const ::mtsTaskManagerProxy::TaskInfo& _m_localTaskInfo;
+        const ::mtsTaskManagerProxy::TaskList& _m_localTaskInfo;
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskManagerProxy__TaskManagerServer__UpdateTaskInfo_name, ::Ice::Idempotent, __context);
+    __initCurrent(__current, __mtsTaskManagerProxy__TaskManagerServer__AddTaskManager_name, ::Ice::Idempotent, __context);
     try
     {
         _DirectI __direct(localTaskInfo, __current);
-        try
-        {
-            __direct.servant()->__collocDispatch(__direct);
-        }
-        catch(...)
-        {
-            __direct.destroy();
-            throw;
-        }
-        __direct.destroy();
-    }
-    catch(const ::Ice::SystemException&)
-    {
-        throw;
-    }
-    catch(const ::IceInternal::LocalExceptionWrapper&)
-    {
-        throw;
-    }
-    catch(const ::std::exception& __ex)
-    {
-        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
-    }
-    catch(...)
-    {
-        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
-    }
-}
-
-void
-IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::ReceiveDataFromClient(::Ice::Int num, const ::Ice::Context* __context)
-{
-    class _DirectI : public ::IceInternal::Direct
-    {
-    public:
-
-        _DirectI(::Ice::Int num, const ::Ice::Current& __current) : 
-            ::IceInternal::Direct(__current),
-            _m_num(num)
-        {
-        }
-        
-        virtual ::Ice::DispatchStatus
-        run(::Ice::Object* object)
-        {
-            ::mtsTaskManagerProxy::TaskManagerServer* servant = dynamic_cast< ::mtsTaskManagerProxy::TaskManagerServer*>(object);
-            if(!servant)
-            {
-                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
-            }
-            servant->ReceiveDataFromClient(_m_num, _current);
-            return ::Ice::DispatchOK;
-        }
-        
-    private:
-        
-        ::Ice::Int _m_num;
-    };
-    
-    ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskManagerProxy__TaskManagerServer__ReceiveDataFromClient_name, ::Ice::Normal, __context);
-    try
-    {
-        _DirectI __direct(num, __current);
         try
         {
             __direct.servant()->__collocDispatch(__direct);
@@ -917,36 +787,22 @@ mtsTaskManagerProxy::TaskManagerServer::___AddClient(::IceInternal::Incoming& __
 }
 
 ::Ice::DispatchStatus
-mtsTaskManagerProxy::TaskManagerServer::___UpdateTaskInfo(::IceInternal::Incoming& __inS, const ::Ice::Current& __current) const
+mtsTaskManagerProxy::TaskManagerServer::___AddTaskManager(::IceInternal::Incoming& __inS, const ::Ice::Current& __current) const
 {
     __checkMode(::Ice::Idempotent, __current.mode);
     ::IceInternal::BasicStream* __is = __inS.is();
     __is->startReadEncaps();
-    ::mtsTaskManagerProxy::TaskInfo localTaskInfo;
+    ::mtsTaskManagerProxy::TaskList localTaskInfo;
     localTaskInfo.__read(__is);
     __is->endReadEncaps();
-    UpdateTaskInfo(localTaskInfo, __current);
-    return ::Ice::DispatchOK;
-}
-
-::Ice::DispatchStatus
-mtsTaskManagerProxy::TaskManagerServer::___ReceiveDataFromClient(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
-{
-    __checkMode(::Ice::Normal, __current.mode);
-    ::IceInternal::BasicStream* __is = __inS.is();
-    __is->startReadEncaps();
-    ::Ice::Int num;
-    __is->read(num);
-    __is->endReadEncaps();
-    ReceiveDataFromClient(num, __current);
+    AddTaskManager(localTaskInfo, __current);
     return ::Ice::DispatchOK;
 }
 
 static ::std::string __mtsTaskManagerProxy__TaskManagerServer_all[] =
 {
     "AddClient",
-    "ReceiveDataFromClient",
-    "UpdateTaskInfo",
+    "AddTaskManager",
     "ice_id",
     "ice_ids",
     "ice_isA",
@@ -956,7 +812,7 @@ static ::std::string __mtsTaskManagerProxy__TaskManagerServer_all[] =
 ::Ice::DispatchStatus
 mtsTaskManagerProxy::TaskManagerServer::__dispatch(::IceInternal::Incoming& in, const ::Ice::Current& current)
 {
-    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskManagerProxy__TaskManagerServer_all, __mtsTaskManagerProxy__TaskManagerServer_all + 7, current.operation);
+    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskManagerProxy__TaskManagerServer_all, __mtsTaskManagerProxy__TaskManagerServer_all + 6, current.operation);
     if(r.first == r.second)
     {
         throw ::Ice::OperationNotExistException(__FILE__, __LINE__, current.id, current.facet, current.operation);
@@ -970,25 +826,21 @@ mtsTaskManagerProxy::TaskManagerServer::__dispatch(::IceInternal::Incoming& in, 
         }
         case 1:
         {
-            return ___ReceiveDataFromClient(in, current);
+            return ___AddTaskManager(in, current);
         }
         case 2:
         {
-            return ___UpdateTaskInfo(in, current);
+            return ___ice_id(in, current);
         }
         case 3:
         {
-            return ___ice_id(in, current);
+            return ___ice_ids(in, current);
         }
         case 4:
         {
-            return ___ice_ids(in, current);
-        }
-        case 5:
-        {
             return ___ice_isA(in, current);
         }
-        case 6:
+        case 5:
         {
             return ___ice_ping(in, current);
         }

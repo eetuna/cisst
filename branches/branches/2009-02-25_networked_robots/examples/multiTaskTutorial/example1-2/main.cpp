@@ -10,32 +10,57 @@
 #include "displayTask.h"
 #include "displayUI.h"
 
+#include <string>
+
 using namespace std;
+
+//
+// TODO:
+//  1. link task interface proxy instance to mtsTask (differentiate prov. vs. req.)
+//  2. Confirm that task interface proxy works well
+//  3. transform current methods into network version
+//
 
 void help(const char * programName)
 {
     cerr << endl 
-         << "Usage: multiTaskTutorialExample1-2 [OPTIONS]" << endl << endl
+         << "Usage: multiTaskTutorialExample1-2 [OPTIONS] [ID]" << endl 
+         << endl
+         << "[OPTIONS]" << endl
          << "  -s, --server          run Task Manager as a server (global Task Manager)" << endl
-         << "  -c, --client          run Task Manager as a client" << endl << endl;
+         << "  -c, --client          run Task Manager as a client" << endl
+         << endl
+         << "[ID]"
+         << "  Set client ID. Required when -c is selected" << endl
+         << endl;
 }
 
 int main(int argc, char * argv[])
 {
+    string taskName1 = "SIN-", taskName2 = "DISP-";
+
     // Check arguments
     bool RunGlobalTaskManager = false;
-    if (argc != 2) {
-        help(argv[0]);
-        return 1;
-    } else {
+
+    if (argc == 2) {
         if (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "--server") == 0) {
             RunGlobalTaskManager = true;
-        } else if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--client") == 0) {
-            RunGlobalTaskManager = false;
         } else {
             help(argv[0]);
             return 1;
         }
+    } else if (argc == 3) {
+        if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--client") == 0) {
+            RunGlobalTaskManager = false;
+            taskName1 += argv[2];
+            taskName2 += argv[2];
+        } else {
+            help(argv[0]);
+            return 1;
+        }
+    } else {
+        help(argv[0]);
+        return 1;
     }
 
     // log configuration
@@ -56,8 +81,8 @@ int main(int argc, char * argv[])
     // create our two tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
     const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
-    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
-    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
+    sineTask * sineTaskObject = new sineTask(taskName1, PeriodSine);
+    displayTask * displayTaskObject = new displayTask(taskName2, PeriodDisplay);
     displayTaskObject->Configure();
 
     // add the tasks to the task manager
@@ -65,7 +90,7 @@ int main(int argc, char * argv[])
     taskManager->AddTask(displayTaskObject);
 
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
-    taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
+    taskManager->Connect(taskName2, "DataGenerator", taskName1, "MainInterface");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
