@@ -127,5 +127,10 @@ SET(HEADER_FILES
     )
 
 
+# Ice
+LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
+                optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
+
+
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 

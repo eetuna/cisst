@@ -42,6 +42,10 @@ ADD_EXECUTABLE(multiTaskTutorialExample1-2
 # this program 
 TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${FLTK_LIBRARIES})
 
+# TODO: DEBUG/RELEASE VERSION???
+TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${ICE_LIBRARY_DIR}/Iced.lib)
+TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${ICE_LIBRARY_DIR}/IceUtild.lib)
+
 # link with the cisst libraries
 CISST_REQUIRES("multiTaskTutorialExample1-2" "cisstCommon;cisstOSAbstraction;cisstMultiTask")
 
