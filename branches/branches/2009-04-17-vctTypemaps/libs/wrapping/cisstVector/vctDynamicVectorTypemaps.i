@@ -132,6 +132,16 @@
         }
         return true;
     }
+
+
+    bool vctPythonTestNotReferenced(PyObject *input)
+    {
+        if (PyArray_REFCOUNT(input) > 5) {      // TODO: what is the correct value to test against?  4?
+            PyErr_SetString(PyExc_ValueError, "You have tried to resize the array.  The array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
+            return false;
+        }
+        return true;
+    }
 %}
 
 
@@ -218,10 +228,12 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
+    if (!(   vctPythonTestIsPyArray($input)
           && vctPythonTestIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctPythonTestIs1DArray($input)
-          && vctPythonTestIsWritable($input))
+          && vctPythonTestIsWritable($input)
+          && vctPythonTestOwnsData($input)
+          && vctPythonTestNotReferenced($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -230,6 +242,9 @@
     /*****************************************************************************
      COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicVector<int>
     *****************************************************************************/
+
+    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
+    // of copying using a vctDynamicVectorRef?
 
     // Create a temporary vctDynamicVectorRef<int> container
     const npy_intp size = PyArray_DIM($input, 0);
@@ -263,37 +278,30 @@
     const $*1_ltype::size_type output_size = $1->size();
 
     if (input_size != output_size) {
-        // Attempt to resize the PyArray.  Check that the PyArray owns its own
-        // memory and that it does not have any references on it.
+        // Resize the PyArray by:
+        //  1)  Creating an array containing the new size
+        //  2)  Pass that array to the resizing function given by NumPy API
 
-        if (!vctPythonTestOwnsData($input)) {
-            return NULL;
-        } else if (PyArray_REFCOUNT($input) > 4) {
-            PyErr_SetString(PyExc_ValueError, "You have tried to resize the array.  The array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
-            return NULL;
-        } else {
-            // Resize the PyArray by:
-            //  1)  Creating an array containing the new size
-            //  2)  Pass that array to the resizing function given by NumPy API
-
-            npy_intp *sizes = PyDimMem_NEW(1);              // create an array of sizes; dimension 1
-            sizes[0] = output_size;                         // set the size
-            PyArray_Dims dims;                              // create a PyArray_Dims object to hand to PyArray_Resize
-            dims.ptr = sizes;
-            dims.len = 1;
-            PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);   // resize the PyArray
-                                                                              // @mystery@
-                                                                              // Why does setting the third parameter to be 1
-                                                                              // result in Python errors during unit testing?
-                                                                              // I've already checked that there are no extraneous
-                                                                              // references, but the Python errors are telling me
-                                                                              // otherwise!
-        }
+        npy_intp *sizes = PyDimMem_NEW(1);              // create an array of sizes; dimension 1
+        sizes[0] = output_size;                         // set the size
+        PyArray_Dims dims;                              // create a PyArray_Dims object to hand to PyArray_Resize
+        dims.ptr = sizes;
+        dims.len = 1;
+        PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);   // resize the PyArray
+                                                                          // @mystery@
+                                                                          // Why does setting the third parameter to be 1
+                                                                          // result in Python errors during unit testing?
+                                                                          // I've already checked that there are no extraneous
+                                                                          // references, but the Python errors are telling me
+                                                                          // otherwise!
     }
 
     /*************************************************************************
      COPY THE DATA TO THE PYARRAY
     *************************************************************************/
+
+    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
+    // of copying using a vctDynamicVectorRef?
 
     // Create a temporary vctDynamicVectorRef<int> container
     const npy_intp size = PyArray_DIM($input, 0);
