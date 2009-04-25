@@ -16,4 +16,10 @@ public:
             param.resize(size);
         }
     }
+
+    void in_vctDynamicVectorRef(vctDynamicVectorRef<int> param, unsigned int dummy) {
+        copy.SetSize(param.size());
+        copy.Assign(param);
+        param += 1;
+    }
 };
