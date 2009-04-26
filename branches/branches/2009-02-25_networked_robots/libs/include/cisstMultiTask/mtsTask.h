@@ -41,6 +41,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
+#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsTaskInterfaceProxyServer.h>
+
 #include <set>
 #include <map>
 
@@ -365,6 +368,17 @@ public:
 	/*! Reset overran period flag. */
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
 
+    /***************************  Proxy-related ******************************/
+protected:
+    /*! Task interface communicator ID */
+    const std::string TaskInterfaceCommunicatorID;
+
+    /*! Proxy instance. This will be dynamically created. */
+    mtsProxyBaseCommon<mtsTask> * Proxy;
+
+public:
+    /*! Start a proxy */
+    //void StartProxy();
 };
 
 

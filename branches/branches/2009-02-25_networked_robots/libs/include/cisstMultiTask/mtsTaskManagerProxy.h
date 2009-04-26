@@ -127,6 +127,36 @@ struct TaskList
     void __read(::IceInternal::BasicStream*);
 };
 
+struct ProvidedInterfaceInfo
+{
+    ::std::string interfaceName;
+    ::std::string adapterName;
+    ::std::string endpointInfo;
+    ::std::string communicatorID;
+
+    bool operator==(const ProvidedInterfaceInfo&) const;
+    bool operator<(const ProvidedInterfaceInfo&) const;
+    bool operator!=(const ProvidedInterfaceInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const ProvidedInterfaceInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const ProvidedInterfaceInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const ProvidedInterfaceInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
 }
 
 namespace IceProxy
@@ -386,6 +416,21 @@ private:
     void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
     
 public:
+
+    bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo& newProvidedInterfaceInfo)
+    {
+        return AddProvidedInterface(newProvidedInterfaceInfo, 0);
+    }
+    bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo& newProvidedInterfaceInfo, const ::Ice::Context& __ctx)
+    {
+        return AddProvidedInterface(newProvidedInterfaceInfo, &__ctx);
+    }
+    
+private:
+
+    bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
+    
+public:
     
     ::IceInternal::ProxyHandle<TaskManagerServer> ice_context(const ::Ice::Context& __context) const
     {
@@ -610,6 +655,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*) = 0;
 
     virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*) = 0;
+
+    virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*) = 0;
 };
 
 }
@@ -638,6 +685,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
     virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
+
+    virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
 };
 
 }
@@ -666,6 +715,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
     virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
+
+    virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
 };
 
 }
@@ -717,8 +768,11 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___AddClient(::IceInternal::Incoming&, const ::Ice::Current&);
 
-    virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current& = ::Ice::Current()) const = 0;
-    ::Ice::DispatchStatus ___AddTaskManager(::IceInternal::Incoming&, const ::Ice::Current&) const;
+    virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___AddTaskManager(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___AddProvidedInterface(::IceInternal::Incoming&, const ::Ice::Current&);
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

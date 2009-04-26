@@ -40,6 +40,13 @@ struct TaskList {
     TaskNameSeq taskNames;	// task name (Unicode supported)
 };
 
+struct ProvidedInterfaceInfo {
+	string interfaceName;
+	string adapterName;
+	string endpointInfo;
+	string communicatorID;
+};
+
 // Exception definition
 //exception InvalidTaskNameError {
 	//string msg1;
@@ -62,8 +69,11 @@ interface TaskManagerServer
 {
     // from clients
     void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
-		
-	["cpp:const"] idempotent void AddTaskManager(TaskList localTaskInfo);
+    
+	//["cpp:const"] idempotent void AddTaskManager(TaskList localTaskInfo);
+	void AddTaskManager(TaskList localTaskInfo);
+	
+	bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
 };
 
 };

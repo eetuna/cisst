@@ -35,7 +35,55 @@ http://www.cisst.org/cisst/license.txt.
 template<class _ArgumentType>
 class CISST_EXPORT mtsProxyBaseCommon {
     
+public:
+    /*! Proxy type definition. 
+
+        Proxy server: a proxy that WORKS AS a server
+        Proxy client: a proxy that WORKS AS a client
+        Server proxy: a proxy FOR a server, which works at a client
+        Client proxy: a proxy FOR a client, which works at a server
+        
+        That is, 'proxy server'='client proxy' and 'proxy client'='server proxy'.
+    */
+    typedef enum {
+        PROXY_SERVER,    // Proxy server = Client proxy
+        PROXY_CLIENT     // Proxy client = Server proxy
+    } ProxyType;
+
+    class ProxyLogger : public Ice::Logger
+    {
+    public:
+        void print(const ::std::string& log) {
+            Log(log);
+        }
+        void trace(const ::std::string& log1, const ::std::string& log2) {
+            Log(log1, log2);
+        }
+        void warning(const ::std::string& log) {
+            Log(log);
+        }
+        void error(const ::std::string& log) {
+            Log(log);
+        }
+
+        void Log(const std::string& className, const std::string& description)
+        {
+            std::string log = className + ": ";
+            log += description;
+
+            OutputDebugString(log.c_str());
+        }
+
+    protected:
+        void Log(const std::string& log)
+        {
+            OutputDebugString(log.c_str());
+        }        
+    };
+
 protected:
+    ProxyType ProxyTypeMember;
+
     //--------------------- Auxiliary Class Definition ----------------------//
     template<class _ArgumentType>
     class ThreadArguments {
@@ -110,9 +158,12 @@ protected:
     }
 
 public:
-    mtsProxyBaseCommon(const std::string& propertyFileName, const std::string& propertyName) 
-        : InitSuccessFlag(false), IceCommunicator(NULL),
-          PropertyFileName(propertyFileName), PropertyName(propertyName), GUID("")
+    mtsProxyBaseCommon(const std::string& propertyFileName, 
+                       const std::string& propertyName,
+                       const ProxyType proxyType)
+        : InitSuccessFlag(false), IceCommunicator(NULL), GUID(""),
+          PropertyFileName(propertyFileName), PropertyName(propertyName),
+          ProxyTypeMember(proxyType)
     {
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
     }

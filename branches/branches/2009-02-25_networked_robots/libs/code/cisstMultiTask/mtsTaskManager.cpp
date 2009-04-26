@@ -26,18 +26,18 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstOSAbstraction/osaSleep.h>
+
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 mtsTaskManager::mtsTaskManager(void) : 
-    TaskMap("Task"), DeviceMap("Device"), Proxy(NULL)
+    TaskMap("Task"), DeviceMap("Device"), Proxy(NULL), 
+    TaskManagerCommunicatorID("TaskManagerServerSender")
 {
     __os_init();
-    TimeServer.SetTimeOrigin();
-
-    TaskManagerTypeMember = TASK_MANAGER_LOCAL;
+    TimeServer.SetTimeOrigin();    
 }
 
 
@@ -331,30 +331,29 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
     return true;
 }
 
-void mtsTaskManager::SetTaskManagerMode(const TaskManagerType newType)
+void mtsTaskManager::StartProxy()
 {
-    if (TaskManagerTypeMember == newType) return;
-
-    // Transition from LOCAL to NETWORK
-    if (TaskManagerTypeMember == TASK_MANAGER_LOCAL) {
-        if (Proxy) {
-            // TODO: safe clean-up (waiting for proxy's complete termination)
-            delete Proxy;
-        }
-
-        if (newType == TASK_MANAGER_SERVER) {
-            Proxy = new mtsTaskManagerProxyServer("TODO: implement me", "TaskManagerServer");
-            Proxy->Start(this);
-        } else {
-            Proxy = new mtsTaskManagerProxyClient("TODO: implement me", "TaskManagerServerSender");
-            Proxy->Start(this);
-        }
+    if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {
+        Proxy = new mtsTaskManagerProxyServer(
+            "TaskManagerServerAdapter", "tcp -p 10705", TaskManagerCommunicatorID);
+        Proxy->Start(this);
     } else {
-        // Transition from NETWORK to LOCAL
-        // 1. stop the running thread (regardless of the task manager type)
-        // 2. kill the thread
-
-        // Currently don't consider the case that state transition occurs from
-        // TASK_MANAGER_CLIENT/SERVER to TASK_MANAGER_LOCAL.
+        Proxy = new mtsTaskManagerProxyClient(":default -p 10705", TaskManagerCommunicatorID);
+        Proxy->Start(this);
     }
+}
+
+bool mtsTaskManager::AddProvidedInterface(
+    const std::string & newProvidedInterfaceName,
+    const std::string & adapterName,
+    const std::string & endpointInfo,
+    const std::string & communicatorID)
+{
+    CMN_ASSERT(GetTaskManagerType() == TASK_MANAGER_CLIENT);
+
+    mtsTaskManagerProxyClient * proxy = dynamic_cast<mtsTaskManagerProxyClient*>(Proxy);
+    CMN_ASSERT(proxy);
+
+    return proxy->AddProvidedInterface(
+        newProvidedInterfaceName, adapterName, endpointInfo,communicatorID);
 }

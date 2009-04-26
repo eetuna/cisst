@@ -26,6 +26,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
+#include <cisstMultiTask/mtsTaskManager.h>
+
+#include <cisstMultiTask/mtsTaskInterfaceProxyServer.h>
+#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
+
 #include <iostream>
 #include <string>
 
@@ -156,7 +161,8 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
     OverranPeriod(false),
     ThreadStartData(0),
     retValue(0),
-    RequiredInterfaces("RequiredInterfaces")
+    RequiredInterfaces("RequiredInterfaces"),
+    TaskInterfaceCommunicatorID("TaskInterfaceServerSender")
 {
 }
 
@@ -205,14 +211,68 @@ const char *mtsTask::TaskStateName(TaskStateType state) const
 
 /********************* Methods to manage interfaces *******************/
 	
-bool mtsTask::AddProvidedInterface(const std::string & newInterfaceName) {
-    return ProvidedInterfaces.AddItem(newInterfaceName, new mtsTaskInterface(newInterfaceName, this));
+bool mtsTask::AddProvidedInterface(const std::string & newInterfaceName) 
+{
+    // The global task manager should not have any provided interfaces, nor required interfaces.
+    mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
+    if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_SERVER) {
+        CMN_LOG_CLASS(3) << "mtsTask: Global task manager cannot have provided interfaces." << std::endl;
+        return false;
+    }
+
+    bool ret = ProvidedInterfaces.AddItem(newInterfaceName, new mtsTaskInterface(newInterfaceName, this));    
+
+    if (ret) {
+        const std::string adapterName = "TaskInterfaceServerAdapter";
+        const std::string endpointInfo = "tcp -p 11705";
+        const std::string communicatorID = TaskInterfaceCommunicatorID;
+
+        Proxy = new mtsTaskInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
+        Proxy->Start(this);
+
+        // Inform the global task manager of the existence on a newly created 
+        // provided interface with the access information.
+        if (!TaskManager->AddProvidedInterface(
+            newInterfaceName, adapterName, endpointInfo, communicatorID)) {
+            Proxy->GetLogger()->trace("mtsTask::AddProvidedInterface", "prov. interf. addition failed.");
+            return false;
+        }
+        
+    } else {
+        CMN_LOG_CLASS(3) << "mtsTask: AddProvidedInterface() failed." << std::endl;
+        CMN_LOG_CLASS(3) << "mtsTask: Proxy server wasn't created." << std::endl;
+    }
+    
+    return ret;
 }
 
 
 mtsRequiredInterface *mtsTask::AddRequiredInterface(const std::string & requiredInterfaceName,
-                                                    mtsRequiredInterface *requiredInterface) {
-    return RequiredInterfaces.AddItem(requiredInterfaceName, requiredInterface)?requiredInterface:0;
+                                                    mtsRequiredInterface *requiredInterface)
+{
+    // The global task manager should not have any provided interfaces, nor required interfaces.
+    mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
+    if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_SERVER) {
+        CMN_LOG_CLASS(3) << "mtsTask: Global task manager cannot have required interfaces." << std::endl;
+        return 0;
+    }
+
+    bool ret = RequiredInterfaces.AddItem(requiredInterfaceName, requiredInterface);
+
+    if (ret) {
+        const std::string endpointInfo = ":default -p 11705";
+        const std::string communicatorID = TaskInterfaceCommunicatorID;
+
+        Proxy = new mtsTaskInterfaceProxyClient(endpointInfo, communicatorID);
+        Proxy->Start(this);
+
+        return requiredInterface;
+    } else {
+        CMN_LOG_CLASS(3) << "mtsTask: AddRequiredInterface() failed." << std::endl;
+        CMN_LOG_CLASS(3) << "mtsTask: Proxy client wasn't created." << std::endl;
+
+        return 0;
+    }
 }
 
 mtsRequiredInterface *mtsTask::AddRequiredInterface(const std::string & requiredInterfaceName) {

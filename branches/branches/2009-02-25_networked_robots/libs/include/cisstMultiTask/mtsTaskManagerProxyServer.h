@@ -109,15 +109,20 @@ protected:
     void OnThreadEnd();
     
 public:
-    mtsTaskManagerProxyServer(const std::string& propertyFileName, 
-                              const std::string& propertyName) 
-        : mtsProxyBaseServer(propertyFileName, propertyName)
+    mtsTaskManagerProxyServer(const std::string& adapterName,
+                              const std::string& endpointInfo,
+                              const std::string& communicatorID)
+        : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID)
     {}
     ~mtsTaskManagerProxyServer();
     
     //----------------------------- Proxy Support ---------------------------//
     /*! Update the information of all tasks. */
     void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
+
+    /*! Add a new provided interface. */
+    bool AddProvidedInterface(
+        const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
     /*! Add a task. Return false if the specified task has been already registered. */
     //const bool AddTask(const std::string taskName);
@@ -150,8 +155,8 @@ protected:
         void Destroy();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
-        //void ReceiveDataFromClient(::Ice::Int num, const ::Ice::Current&);
-        void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&) const;
+        void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&);
+        bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current&);
     };
 
     //------------------ Methods for global task manager --------------------//

@@ -77,14 +77,14 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
     mtsTaskManagerProxyClient * ProxyClient = 
         dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
 
+    ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "Proxy client starts.");
+
     try {
         ProxyClient->StartClient();        
     } catch (const Ice::Exception& e) {
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", e.what());
+        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient exception: ", e.what());
     } catch (const char * msg) {
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "exception");
-        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", msg);
+        ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient exception: ", msg);
     }
 
     ProxyClient->OnThreadEnd();
@@ -92,9 +92,25 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
 
 void mtsTaskManagerProxyClient::OnThreadEnd()
 {
+    mtsTaskManagerProxyClientLogger("Proxy client ends.");
+
     mtsProxyBaseClient::OnThreadEnd();
 
     Sender->Destroy();
+}
+
+bool mtsTaskManagerProxyClient::AddProvidedInterface(
+    const std::string & newProvidedInterfaceName,
+    const std::string & adapterName,
+    const std::string & endpointInfo,
+    const std::string & communicatorID)
+{
+    ::mtsTaskManagerProxy::ProvidedInterfaceInfo info;
+    info.adapterName = adapterName;
+    info.endpointInfo = endpointInfo;
+    info.communicatorID = communicatorID;
+
+    return TaskManagerServer->AddProvidedInterface(info);
 }
 
 //-------------------------------------------------------------------------

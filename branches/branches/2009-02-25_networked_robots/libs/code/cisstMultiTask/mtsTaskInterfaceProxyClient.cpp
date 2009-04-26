@@ -24,8 +24,11 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskInterfaceProxyClient);
 
+//
+// TODO: Make a file logger which is compatible with CISST logger or ICE logger
+//
 #define mtsTaskInterfaceProxyClientLogger(_log) \
-    Logger->trace("mtsTaskInterfaceProxyClient", _log)
+            Logger->trace("mtsTaskInterfaceProxyClient", _log);
 
 void mtsTaskInterfaceProxyClient::Start(mtsTask * callingTask)
 {
@@ -72,14 +75,14 @@ void mtsTaskInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
     mtsTaskInterfaceProxyClient * ProxyClient = 
         dynamic_cast<mtsTaskInterfaceProxyClient*>(arguments->proxy);
 
+    ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", "Proxy client starts.");
+
     try {
         ProxyClient->StartClient();        
     } catch (const Ice::Exception& e) {
-        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", "exception");
-        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", e.what());
+        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient exception: ", e.what());
     } catch (const char * msg) {
-        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", "exception");
-        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient", msg);
+        ProxyClient->GetLogger()->trace("mtsTaskInterfaceProxyClient exception: ", msg);
     }
 
     ProxyClient->OnThreadEnd();
@@ -87,6 +90,8 @@ void mtsTaskInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
 
 void mtsTaskInterfaceProxyClient::OnThreadEnd()
 {
+    mtsTaskInterfaceProxyClientLogger("Proxy client ends.");
+
     mtsProxyBaseClient::OnThreadEnd();
 
     Sender->Destroy();

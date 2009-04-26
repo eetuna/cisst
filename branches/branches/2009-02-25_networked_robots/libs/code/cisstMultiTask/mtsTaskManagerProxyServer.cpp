@@ -67,12 +67,14 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
     mtsTaskManagerProxyServer * ProxyServer = 
         dynamic_cast<mtsTaskManagerProxyServer*>(arguments->proxy);
     
+    ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server starts.");
+
     try {
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << e << std::endl;
+        ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer error: ", e.what());
     } catch (const char * msg) {
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskManagerProxyServer error: " << msg << std::endl;
+        ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer error: ", msg);
     }
 
     ProxyServer->OnThreadEnd();
@@ -80,6 +82,8 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
 
 void mtsTaskManagerProxyServer::OnThreadEnd()
 {
+    mtsTaskManagerProxyServerLogger("Proxy server ends.");
+
     mtsProxyBaseServer::OnThreadEnd();
 
     Sender->Destroy();
@@ -100,9 +104,10 @@ void mtsTaskManagerProxyServer::TestShowMe()
 {
     GlobalTaskManagerMapType::const_iterator it = TaskManagerMap.begin();
     for (; it != TaskManagerMap.end(); ++it) {
+        std::cout << std::endl;
         std::cout << "--------------------------------- " << it->first << std::endl;
         GlobalTaskMapType::const_iterator itr = it->second.begin();
-        for (; itr != it->second.end(); ++itr) {
+        for (; itr != it->second.end(); ++itr) {            
             std::cout << "\t" << itr->first;
             std::cout << " (" << itr->second.TaskManagerID << ", ";
             std::cout << itr->second.TaskName << ", ";
@@ -143,6 +148,12 @@ void mtsTaskManagerProxyServer::AddTaskManager(
 
     // FOR TEST
     TestShowMe();
+}
+
+bool mtsTaskManagerProxyServer::AddProvidedInterface(
+    const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
+{
+    return true;
 }
 
 /*
@@ -263,25 +274,25 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
     _clients.insert(client);    
 }
 
+void mtsTaskManagerProxyServer::TaskManagerServerI::AddTaskManager(
+    const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current)
+{
+    //std::cout << current.requestId;
+    //std::cout << Communicator->identityToString(current.id) << " ] : ";
+    //std::cerr << current.con->toString() << std::endl;
+
+    TaskManagerServer->AddTaskManager(localTaskInfo);
+}
+
+bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
+    const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo,
+    const ::Ice::Current & current)
+{
+    return TaskManagerServer->AddProvidedInterface(providedInterfaceInfo);
+}
+
 //void mtsTaskManagerProxyServer::TaskManagerServerI::ReceiveDataFromClient(
 //    ::Ice::Int num, const ::Ice::Current&)
 //{
 //    std::cout << "------------ server recv data " << num << std::endl;
 //}
-
-void mtsTaskManagerProxyServer::TaskManagerServerI::AddTaskManager(
-    const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current) const
-{
-    /*
-    std::vector<std::string>::const_iterator it = localTaskInfo.taskNames.begin();
-    for (; it != localTaskInfo.taskNames.end(); ++it) {
-        //std::cout << current.requestId;
-        //std::cout << Communicator->identityToString(current.id) << " ] : ";
-        //std::cerr << current.con->toString() << std::endl;
-        std::cout << "[ " << localTaskInfo.taskManagerID << " ] ";
-        std::cout << *it << std::endl;        
-    }
-    */
-
-    TaskManagerServer->AddTaskManager(localTaskInfo);
-}

@@ -35,18 +35,22 @@ class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_ArgumentType>
 
 protected:
     Ice::ObjectAdapterPtr IceAdapter;
-    Ice::ObjectPtr Servant;    
+    Ice::ObjectPtr Servant;
+    const std::string AdapterName;
+    const std::string EndpointInfo;
+    const std::string CommunicatorID;
 
     virtual Ice::ObjectPtr CreateServant() = 0;
 
     void Init(void)
     {
         try {
-            //Ice::InitializationData initData;
+            Ice::InitializationData initData;
+            initData.logger = new mtsProxyBaseCommon<_ArgumentType>::ProxyLogger();
             //initData.properties = Ice::createProperties();
             //initData.properties->load(PropertyFileName);           
             //IceCommunicator = Ice::initialize(initData);
-            IceCommunicator = Ice::initialize();
+            IceCommunicator = Ice::initialize(initData);
             
             // Create Logger
             Logger = IceCommunicator->getLogger();
@@ -54,14 +58,13 @@ protected:
             // Create an adapter (server-side only)
             //IceAdapter = IceCommunicator->createObjectAdapter(PropertyName);
             IceAdapter = IceCommunicator->createObjectAdapterWithEndpoints(
-                "TaskManagerServerAdapter", "tcp -p 10705");
+                AdapterName, EndpointInfo);
 
             // Create a servant
             Servant = CreateServant();
 
             // Inform the object adapter of the presence of a new servant
-            //IceAdapter->add(Servant, IceCommunicator->stringToIdentity(PropertyName));
-            IceAdapter->add(Servant, IceCommunicator->stringToIdentity("TaskManagerServerSender"));
+            IceAdapter->add(Servant, IceCommunicator->stringToIdentity(CommunicatorID));
 
             // Activate the adapter. The adapter is initially created in a 
             // holding state. The server starts to process incoming requests
@@ -90,8 +93,11 @@ protected:
     }
 
 public:
-    mtsProxyBaseServer(const std::string& propertyFileName, const std::string& propertyName) 
-        : mtsProxyBaseCommon(propertyFileName, propertyName) 
+    mtsProxyBaseServer(const std::string& adapterName,
+                       const std::string& endpointInfo,
+                       const std::string& communicatorID)
+        : AdapterName(adapterName), EndpointInfo(endpointInfo), CommunicatorID(communicatorID),
+          mtsProxyBaseCommon("", "", PROXY_SERVER)
     {}
     virtual ~mtsProxyBaseServer() {}
     

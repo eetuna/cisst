@@ -52,7 +52,7 @@ protected:
 
 public:
     mtsTaskManagerProxyClient(const std::string& propertyFileName, 
-                              const std::string& propertyName) 
+                              const std::string& propertyName)
         : mtsProxyBaseClient(propertyFileName, propertyName)
     {}
     ~mtsTaskManagerProxyClient() {}
@@ -79,6 +79,16 @@ public:
 
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
+
+    //-------------------------------------------------------------------------
+    //  
+    //-------------------------------------------------------------------------
+    /*! Add a new provided interface. */
+    bool AddProvidedInterface(
+        const std::string & newProvidedInterfaceName,
+        const std::string & adapterName,
+        const std::string & endpointInfo,
+        const std::string & communicatorID);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice

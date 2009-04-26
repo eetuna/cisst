@@ -24,7 +24,8 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskInterfaceProxyServer);
 
-#define mtsTaskInterfaceProxyServerLogger(_log) Logger->trace("mtsTaskInterfaceProxyServer", _log)
+#define mtsTaskInterfaceProxyServerLogger(_log) \
+            Logger->trace("mtsTaskInterfaceProxyServer", _log);
 
 mtsTaskInterfaceProxyServer::~mtsTaskInterfaceProxyServer()
 {
@@ -65,12 +66,14 @@ void mtsTaskInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     mtsTaskInterfaceProxyServer * ProxyServer = 
         dynamic_cast<mtsTaskInterfaceProxyServer*>(arguments->proxy);
     
+    ProxyServer->GetLogger()->trace("mtsTaskInterfaceProxyServer", "Proxy server starts.");
+
     try {
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskInterfaceProxyServer error: " << e << std::endl;
+        ProxyServer->GetLogger()->trace("mtsTaskInterfaceProxyServer error: ", e.what());
     } catch (const char * msg) {
-        CMN_LOG_CLASS_AUX(ProxyServer, 3) << "mtsTaskInterfaceProxyServer error: " << msg << std::endl;
+        ProxyServer->GetLogger()->trace("mtsTaskInterfaceProxyServer error: ", msg);
     }
 
     ProxyServer->OnThreadEnd();
@@ -78,6 +81,8 @@ void mtsTaskInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
 
 void mtsTaskInterfaceProxyServer::OnThreadEnd()
 {
+    mtsTaskInterfaceProxyServerLogger("Proxy server ends.");
+
     mtsProxyBaseServer::OnThreadEnd();
 
     Sender->Destroy();

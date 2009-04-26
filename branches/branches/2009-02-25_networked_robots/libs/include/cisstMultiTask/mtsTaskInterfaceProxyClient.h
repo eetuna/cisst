@@ -49,7 +49,7 @@ protected:
 
 public:
     mtsTaskInterfaceProxyClient(const std::string& propertyFileName, 
-                              const std::string& propertyName) 
+                                const std::string& propertyName) 
         : mtsProxyBaseClient(propertyFileName, propertyName)
     {}
     ~mtsTaskInterfaceProxyClient() {}

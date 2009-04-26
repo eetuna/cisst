@@ -74,11 +74,10 @@ public:
     // Default mailbox size -- perhaps this should be specified elsewhere
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
-    /*! Task manager operation mode definition */
-    typedef enum { 
-        TASK_MANAGER_LOCAL,     // no proxy feature supported
-        TASK_MANAGER_SERVER,    // This task manager will act as a server
-        TASK_MANAGER_CLIENT     // This task manager will act as a client
+    // Typedef for task manager type
+    typedef enum {
+        TASK_MANAGER_SERVER, // global task manager
+        TASK_MANAGER_CLIENT  // conventional task manager
     } TaskManagerType;
 
 protected:
@@ -96,12 +95,6 @@ protected:
     /*! Time server used by all tasks. */
     osaTimeServer TimeServer;
 
-    /*! Type of TaskManager */
-    TaskManagerType TaskManagerTypeMember;
-
-    /*! Proxy instance. This will be dynamically created. */
-    mtsProxyBaseCommon<mtsTaskManager> * Proxy;
-    
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */
     mtsTaskManager(void);
@@ -200,14 +193,32 @@ protected:
     //-------------------------------------------------------------------------
     //  Proxy-related
     //-------------------------------------------------------------------------
+protected:
+    /*! Task manager type (server or client) */
+    TaskManagerType TaskManagerTypeMember;
 
-    /*! Set the operation mode of TaskManager. If TaskManager is not LOCAL and 
-        this method is called, a proxy object is initialized and starts. */
-    void SetTaskManagerMode(const TaskManagerType type);
+    /*! Task manager communicator ID */
+    const std::string TaskManagerCommunicatorID;
 
-    inline const bool IsProxySupported() const {
-        return (TaskManagerTypeMember != TASK_MANAGER_LOCAL);
+    /*! Proxy instance. This will be dynamically created. */
+    mtsProxyBaseCommon<mtsTaskManager> * Proxy;
+
+public:
+    void SetTaskManagerType(const TaskManagerType taskManagerType) {
+        TaskManagerTypeMember = taskManagerType;
     }
+
+    /*! Start a proxy */
+    void StartProxy();
+
+    /*! Inform the global task manager of the addition of a new provided interface. */
+    bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
+                              const std::string& adapterName,
+                              const std::string& endpointInfo,
+                              const std::string& communicatorID);
+
+    /*! Getter */
+    const TaskManagerType GetTaskManagerType() const { return TaskManagerTypeMember; }
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)

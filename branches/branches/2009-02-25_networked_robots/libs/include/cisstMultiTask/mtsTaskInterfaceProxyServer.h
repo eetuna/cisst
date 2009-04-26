@@ -72,9 +72,10 @@ protected:
     void OnThreadEnd();
     
 public:
-    mtsTaskInterfaceProxyServer(const std::string& propertyFileName, 
-                                const std::string& propertyName) 
-        : mtsProxyBaseServer(propertyFileName, propertyName)
+    mtsTaskInterfaceProxyServer(const std::string& adapterName,
+                                const std::string& endpointInfo,
+                                const std::string& communicatorID)
+        : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID)
     {}
     ~mtsTaskInterfaceProxyServer();
     
