@@ -1,3 +1,7 @@
+###################################
+# Authors: Daniel Li, Anton Deguet
+###################################
+
 #######################
 # PLACEHOLDER STRINGS TO LOOK FOR:
 #
@@ -110,6 +114,42 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         goodvar = numpy.ones(10, dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
+    # Test if the C object reads the vector correctly
+    def StdTestThrowUnlessReadsCorrectly(self, function):
+        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        exec('self.CObject.' + function + '(v, 0)')
+
+        for i in xrange(v.size):
+            # Test if the C object read the vector correctly
+            assert(self.CObject.copy[i] == v[i])
+
+    # Test if the C object reads and modifies the vector correctly
+    def StdTestThrowUnlessReadsWritesCorrectly(self, function):
+        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        vOrig = copy.deepcopy(v)
+        exec('self.CObject.' + function + '(v, 0)')
+
+        for i in xrange(v.size):
+            # Test if the C object read the vector correctly
+            assert(self.CObject.copy[i] == vOrig[i])
+            # Test if the C object modified the vector correctly
+            assert(v[i] == vOrig[i] + 1)
+
+    # Test if the C object reads, modifies, and resizes the vector correctly
+    def StdTestThrowUnlessReadsWritesResizesCorrectly(self, function):
+        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        vOrig = copy.deepcopy(v)
+        SIZEFACTOR = 2
+        exec('self.CObject.' + function + '(v, SIZEFACTOR)')
+
+        assert(v.size == vOrig.size * SIZEFACTOR)
+        for i in xrange(vOrig.size):
+            # Test if the C object read the vector correctly
+            assert(self.CObject.copy[i] == vOrig[i])
+            # Test if the C object modified the vector correctly
+            assert(v[i] == vOrig[i] + 1)
+        # QUESTION: [1, 2, 3, 4, 5] --> [1, 2, 3, 4, 5, 1, 2, 3, 4, 5] ?
+
     # Tests
 
     def Test_in_argout_vctDynamicVector_ref(self):
@@ -124,35 +164,8 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessNotReferenced(MY_NAME)
 
         # Perform specialized tests
-
-        # Test if the C object reads and modifies the vector correctly
-        # def StdTestThrowUnlessReadsWritesCorrectly(self, function):
-        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
-        vOrig = copy.deepcopy(v)
-        self.CObject.in_argout_vctDynamicVector_ref(v, 0)
-
-        for i in xrange(v.size):
-            # Test if the C object read the vector correctly
-            assert(self.CObject.copy[i] == vOrig[i])
-            # Test if the C object modified the vector correctly
-            assert(v[i] == vOrig[i] + 1)
-
-
-
-        # Test if the C object reads, modifies, and resizes the vector correctly
-        # def StdTestThrowUnlessReadsWritesResizesCorrectly(self, function):
-        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
-        vOrig = copy.deepcopy(v)
-        SIZEFACTOR = 2
-        self.CObject.in_argout_vctDynamicVector_ref(v, SIZEFACTOR)
-
-        assert(v.size == vOrig.size * SIZEFACTOR)
-        for i in xrange(vOrig.size):
-            # Test if the C object read the vector correctly
-            assert(self.CObject.copy[i] == vOrig[i])
-            # Test if the C object modified the vector correctly
-            assert(v[i] == vOrig[i] + 1)
-        # QUESTION: [1, 2, 3, 4, 5] --> [1, 2, 3, 4, 5, 1, 2, 3, 4, 5] ?
+        self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.StdTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
 
     def Test_in_vctDynamicVectorRef(self):
         MY_NAME = 'in_vctDynamicVectorRef'
@@ -164,15 +177,59 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessWritable(MY_NAME)
 
         # Perform specialized tests
+        self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
 
-        # Test if the C object reads and modifies the vector correctly
-        # def StdTestThrowUnlessReadsWritesCorrectly(self, function):
-        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
-        vOrig = copy.deepcopy(v)
-        self.CObject.in_vctDynamicVectorRef(v, 0)
+    def Test_in_vctDynamicConstVectorRef(self):
+        MY_NAME = 'in_vctDynamicConstVectorRef'
 
-        for i in xrange(v.size):
-            # Test if the C object read the vector correctly
-            assert(self.CObject.copy[i] == vOrig[i])
-            # Test if the C object modified the vector correctly
-            assert(v[i] == vOrig[i] + 1)
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessIsArray(MY_NAME)
+        self.StdTestThrowUnlessDataType(MY_NAME)
+        self.StdTestThrowUnlessDimension1(MY_NAME)
+
+        # Perform specialized tests
+        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+    def Test_in_argout_const_vctDynamicConstVectorRef_ref(self):
+        MY_NAME = 'in_argout_const_vctDynamicConstVectorRef_ref'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessIsArray(MY_NAME)
+        self.StdTestThrowUnlessDataType(MY_NAME)
+        self.StdTestThrowUnlessDimension1(MY_NAME)
+
+        # Perform specialized tests
+        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+    def Test_in_argout_const_vctDynamicVectorRef_ref(self):
+        MY_NAME = 'in_argout_const_vctDynamicVectorRef_ref'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessIsArray(MY_NAME)
+        self.StdTestThrowUnlessDataType(MY_NAME)
+        self.StdTestThrowUnlessDimension1(MY_NAME)
+
+        # Perform specialized tests
+        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+    def Test_in_vctDynamicVector(self):
+        MY_NAME = 'in_vctDynamicVector'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessIsArray(MY_NAME)
+        self.StdTestThrowUnlessDataType(MY_NAME)
+        self.StdTestThrowUnlessDimension1(MY_NAME)
+
+        # Perform specialized tests
+        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+    def Test_in_argout_const_vctDynamicVector_ref(self):
+        MY_NAME = 'in_argout_const_vctDynamicVector_ref'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessIsArray(MY_NAME)
+        self.StdTestThrowUnlessDataType(MY_NAME)
+        self.StdTestThrowUnlessDimension1(MY_NAME)
+
+        # Perform specialized tests
+        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)

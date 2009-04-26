@@ -22,4 +22,29 @@ public:
         copy.Assign(param);
         param += 1;
     }
+
+    void in_vctDynamicConstVectorRef(vctDynamicConstVectorRef<int> param, unsigned int dummy) {
+        copy.SetSize(param.size());
+        copy.Assign(param);
+    }
+
+    void in_argout_const_vctDynamicConstVectorRef_ref(const vctDynamicConstVectorRef<int> &param, unsigned int dummy) {
+        copy.SetSize(param.size());
+        copy.Assign(param);
+    }
+
+    void in_argout_const_vctDynamicVectorRef_ref(const vctDynamicVectorRef<int> &param, unsigned int dummy) {
+        copy.SetSize(param.size());
+        copy.Assign(param);
+    }
+
+    void in_vctDynamicVector(vctDynamicVector<int> param, unsigned int dummy) {
+        copy.SetSize(param.size());
+        copy.Assign(param);
+    }
+
+    void in_argout_const_vctDynamicVector_ref(const vctDynamicVector<int> &param, unsigned int dummy) {
+        copy.SetSize(param.size());
+        copy.Assign(param);
+    }
 };
