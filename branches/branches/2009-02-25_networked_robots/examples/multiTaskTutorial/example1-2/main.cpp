@@ -8,11 +8,18 @@
 
 #include "sineTask.h"
 #include "displayTask.h"
+#include "UITask.h"
 #include "displayUI.h"
 
 #include <string>
 
 using namespace std;
+
+/*
+    Server task : SIN - provided interface
+
+    Client task : DISP - required interface
+*/
 
 //
 // TODO:
@@ -24,36 +31,37 @@ using namespace std;
 void help(const char * programName)
 {
     cerr << endl 
-         << "Usage: multiTaskTutorialExample1-2 [OPTIONS] [ID]" << endl 
+         << "Usage: multiTaskTutorialExample1-2 [OPTIONS]" << endl 
          << endl
          << "[OPTIONS]" << endl
-         << "  -s, --server          run Task Manager as a server (global Task Manager)" << endl
-         << "  -c, --client          run Task Manager as a client" << endl
-         << endl
-         << "[ID]"
-         << "  Set client ID. Required when -c is selected" << endl
+         << "  -s,    run a server task manager (global task manager)" << endl
+         << "  -cs,   run a client task manager with a server task" << endl
+         << "  -cc,   run a client task manager with a client task" << endl
          << endl;
 }
 
 int main(int argc, char * argv[])
 {
-    string taskName1 = "SIN-", taskName2 = "DISP-";
+    string serverTaskName = "SIN", clientTaskName = "DISP";
 
     // Check arguments
-    bool RunGlobalTaskManager = false;
+    bool IsGlobalTaskManager = false;
+    bool IsServerTask = false;
 
     if (argc == 2) {
-        if (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "--server") == 0) {
-            RunGlobalTaskManager = true;
-        } else {
-            help(argv[0]);
-            return 1;
-        }
-    } else if (argc == 3) {
-        if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--client") == 0) {
-            RunGlobalTaskManager = false;
-            taskName1 += argv[2];
-            taskName2 += argv[2];
+        if (strcmp(argv[1], "-s") == 0) {
+            IsGlobalTaskManager = true;
+        } else if (strcmp(argv[1], "-cs") == 0 || strcmp(argv[1], "-cc") == 0) {
+            IsGlobalTaskManager = false;
+
+            // Create a server task
+            if (strcmp(argv[1], "-cs") == 0) {
+                IsServerTask = true;
+            } 
+            // Create a client task
+            else {
+                IsServerTask = false;
+            }
         } else {
             help(argv[0]);
             return 1;
@@ -75,40 +83,90 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoD("mtsTaskInterface", 10);
     cmnClassRegister::SetLoD("mtsTaskManager", 10);
 
-    // Get the TaskManager instance and set an operation mode
+    //-------------------------------------------------------------------------
+    // Create default local tasks
+    //-------------------------------------------------------------------------
+    // Get the TaskManager instance and set operation mode
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 
-    // create our two tasks
-    const double PeriodSine = 1 * cmn_ms; // in milliseconds
-    const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
-    sineTask * sineTaskObject = new sineTask(taskName1, PeriodSine);
-    displayTask * displayTaskObject = new displayTask(taskName2, PeriodDisplay);
-    displayTaskObject->Configure();
+    const double PeriodDisplay = 50 * cmn_ms;
 
-    // add the tasks to the task manager
-    taskManager->AddTask(sineTaskObject);
-    taskManager->AddTask(displayTaskObject);
+    sineTask * sineTaskObject = NULL;
+    displayTask * displayTaskObject = NULL;
+    UITask * UITaskObject = NULL;
 
-    // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
-    taskManager->Connect(taskName2, "DataGenerator", taskName1, "MainInterface");
+    if (IsGlobalTaskManager) {
+        UITaskObject = new UITask("UITask", PeriodDisplay);
+        UITaskObject->Configure();
+
+        taskManager->AddTask(UITaskObject);
+
+        taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_SERVER);
+        taskManager->StartProxy();
+    } else {
+        //-------------------------------------------------------------------------
+        // Create a task which works via network
+        //-------------------------------------------------------------------------
+        const double PeriodSine = 1 * cmn_ms;        
+
+        if (IsServerTask) {
+            sineTaskObject = new sineTask(serverTaskName, PeriodSine);
+            UITaskObject = new UITask("UITask", PeriodDisplay);
+            UITaskObject->Configure();
+            
+            taskManager->AddTask(UITaskObject);
+            taskManager->AddTask(sineTaskObject);
+        } else {
+            displayTaskObject = new displayTask(clientTaskName, PeriodDisplay);
+            displayTaskObject->Configure();
+
+            taskManager->AddTask(displayTaskObject);        
+        }
+
+        // Set the type of task manager either as a server or as a client.
+        // mtsTaskManager::SetTaskManagerType() should be called before
+        // executing mtsTaskManager::Connect()
+        taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
+        taskManager->StartProxy();
+
+        //
+        // TODO: Hide this waiting routine inside mtsTaskManager using events or other things.
+        //
+        osaSleep(1 * cmn_s);
+
+        // Connect the tasks across networks
+        if (!IsServerTask) {
+            taskManager->Connect(clientTaskName, "DataGenerator", serverTaskName, "MainInterface");
+        }
+    }
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
     // start the periodic Run
     taskManager->StartAll();
 
-    // Currently don't consider the case that state transition occurs from
-    // TASK_MANAGER_CLIENT/SERVER to TASK_MANAGER_LOCAL.
-    if (RunGlobalTaskManager) {
-        taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_SERVER);
+    if (IsGlobalTaskManager) {
+        while (1) {
+            osaSleep(10 * cmn_ms);
+            if (UITaskObject->GetExitFlag()) {
+                break;
+            }
+        }
     } else {
-        taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_CLIENT);
-    }
-
-    while (1) {
-        osaSleep(10 * cmn_ms);
-        if (displayTaskObject->GetExitFlag()) {
-            break;
+        if (IsServerTask) {
+            while (1) {
+                osaSleep(10 * cmn_ms);
+                if (UITaskObject->GetExitFlag()) {
+                    break;
+                }
+            }
+        } else {
+            while (1) {
+                osaSleep(10 * cmn_ms);
+                if (displayTaskObject->GetExitFlag()) {
+                    break;
+                }
+            }
         }
     }
 
@@ -116,8 +174,17 @@ int main(int argc, char * argv[])
     taskManager->KillAll();
 
     osaSleep(PeriodDisplay * 2);
-    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
-    while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+
+    if (IsGlobalTaskManager) {
+        while (!UITaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+    } else {
+        if (IsServerTask) {
+            while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+            while (!UITaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+        } else {
+            while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+        }
+    }
 
     return 0;
 }
