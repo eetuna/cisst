@@ -497,8 +497,11 @@
                                 sizeof($1_ltype::value_type);
     const $1_ltype::pointer data =
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
-    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer =
-        vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
+    vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
+    // TODO: Which is better?
+    //  vctDynamicVectorRef<$1_ltype::value_type> tempContainer = vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
+    //  or
+    //  vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the vctDynamicVectorRef to the temporary container
     tempContainer = $1;

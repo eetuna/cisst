@@ -117,6 +117,13 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     # Test if the C object reads the vector correctly
     def StdTestThrowUnlessReadsCorrectly(self, function):
         v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        # QUESTION: Should I make a copy of v in order to avoid the case where
+        # a typemap that should have read-only access actually changes v to be
+        # 0-sized, thereby making the loop below not run?  In other words, I'd
+        # do this:
+        #    vOrig = copy.deepcopy(v)
+        # And instead of the existing for loop declaration, I'd have:
+        #    for i in xrange(vOrig.size):
         exec('self.CObject.' + function + '(v, 0)')
 
         for i in xrange(v.size):
@@ -233,3 +240,13 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
         # Perform specialized tests
         self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+    def Test_out_vctDynamicVector(self):
+        MY_NAME = 'out_vctDynamicVector'
+
+        # Perform specialized tests
+        SIZE = 10
+        v = self.CObject.out_vctDynamicVector(SIZE)
+        assert(v.size == SIZE)  # to make sure v.size isn't zero
+        for i in xrange(v.size):
+            assert(self.CObject.copy[i] == v[i])

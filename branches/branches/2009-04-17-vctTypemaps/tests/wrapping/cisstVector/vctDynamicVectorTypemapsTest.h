@@ -47,4 +47,10 @@ public:
         copy.SetSize(param.size());
         copy.Assign(param);
     }
+
+    vctDynamicVector<int> out_vctDynamicVector(unsigned int size) {
+        copy.SetSize(size);
+        vctRandom(copy, 0, 10);
+        return copy;
+    }
 };
