@@ -77,11 +77,21 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   SET(HEADERS ${HEADERS} ${LIBRARY_MAIN_HEADER})
 
   # Add the library
-  ADD_LIBRARY(${LIBRARY}
-              ${IS_SHARED}
-              ${SOURCES}
-              ${HEADERS}
-              )
+  IF (LIBRARY MATCHES "cisstMultiTask")
+    ADD_LIBRARY(${LIBRARY}
+                  ${IS_SHARED}
+                  ${SOURCES}
+                  ${HEADERS}
+                  ${ICE_RESOURCE_FILES}
+                 )
+  ELSE (LIBRARY MATCHES "cisstMultiTask")
+    ADD_LIBRARY(${LIBRARY}
+                  ${IS_SHARED}
+                  ${SOURCES}
+                  ${HEADERS}
+                 )
+  ENDIF (LIBRARY MATCHES "cisstMultiTask")
+  
   INSTALL_TARGETS(/lib ${LIBRARY})
 
 
@@ -107,11 +117,12 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   INSTALL_FILES(/include/
                 ".h"
                 ${LIBRARY_MAIN_HEADER})
-
+                
   # ICE
-  IF (PROJECT_NAME MATCHES "${cisstMultiTask}")
+  IF (LIBRARY MATCHES "cisstMultiTask")
     INCLUDE_DIRECTORIES(${${PROJECT_NAME}_SOURCE_DIR}/include/${LIBRARY})
-  ENDIF(PROJECT_NAME MATCHES "${cisstMultiTask}")
+    SOURCE_GROUP(Resources FILES ${ICE_RESOURCE_FILES})
+  ENDIF(LIBRARY MATCHES "cisstMultiTask")
 
 ENDIF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
 

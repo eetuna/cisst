@@ -60,6 +60,8 @@ SET(SOURCE_FILES
     mtsTaskInterfaceProxy.cpp
     mtsTaskInterfaceProxyClient.cpp
     mtsTaskInterfaceProxyServer.cpp
+
+    mtsTaskGlobal.cpp
     )
 
 # all header files
@@ -120,14 +122,21 @@ SET(HEADER_FILES
     mtsTaskManagerProxy.h
     mtsTaskManagerProxyClient.h
     mtsTaskManagerProxyServer.h
-    
+        
     mtsTaskInterfaceProxy.h
     mtsTaskInterfaceProxyClient.h
     mtsTaskInterfaceProxyServer.h
+    
+    mtsTaskGlobal.h
     )
-
-
-# Ice
+    
+SET(ICE_RESOURCE_FILES
+      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.client
+      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.server
+      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskInterfaceProxy.ice
+      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskManagerProxy.ice
+    )    
+   
 LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
                 optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
 
