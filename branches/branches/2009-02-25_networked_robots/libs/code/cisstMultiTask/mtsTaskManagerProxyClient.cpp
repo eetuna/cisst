@@ -103,12 +103,15 @@ bool mtsTaskManagerProxyClient::AddProvidedInterface(
     const std::string & newProvidedInterfaceName,
     const std::string & adapterName,
     const std::string & endpointInfo,
-    const std::string & communicatorID)
+    const std::string & communicatorID,
+    const std::string & taskName)
 {
     ::mtsTaskManagerProxy::ProvidedInterfaceInfo info;
     info.adapterName = adapterName;
     info.endpointInfo = endpointInfo;
     info.communicatorID = communicatorID;
+    info.taskName = taskName;
+    info.interfaceName = newProvidedInterfaceName;
 
     return TaskManagerServer->AddProvidedInterface(info);
 }

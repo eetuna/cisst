@@ -102,10 +102,9 @@ int main(int argc, char * argv[])
         taskManager->AddTask(UITaskObject);
 
         taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_SERVER);
-        taskManager->StartProxy();
     } else {
         //-------------------------------------------------------------------------
-        // Create a task which works via network
+        // Create a task which works over networks
         //-------------------------------------------------------------------------
         const double PeriodSine = 1 * cmn_ms;        
 
@@ -127,7 +126,6 @@ int main(int argc, char * argv[])
         // mtsTaskManager::SetTaskManagerType() should be called before
         // executing mtsTaskManager::Connect()
         taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
-        taskManager->StartProxy();
 
         //
         // TODO: Hide this waiting routine inside mtsTaskManager using events or other things.

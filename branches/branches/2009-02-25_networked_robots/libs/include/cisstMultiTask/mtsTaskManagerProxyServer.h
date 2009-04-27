@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsProxyBaseServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxy.h>
 #include <cisstMultiTask/mtsMap.h>
+#include <cisstMultiTask/mtsTaskGlobal.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -45,25 +46,12 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     friend class TaskManagerServerI;
 
 public:
-    class TaskInfo {
-    //protected:
-    public:
-        const std::string TaskName;
-        const std::string TaskManagerID;
-        std::vector<std::string> ConnectedTaskList;
-    public:
-        TaskInfo(const std::string& taskName, const std::string& taskManagerID) 
-            : TaskName(taskName), TaskManagerID(taskManagerID) {}
-    };
+    /*! Container: (in: task name, out: task information) */
+    typedef std::map<std::string, mtsTaskGlobal> GlobalTaskMapType;
 
-    /*! Map for managing tasks. */
-    typedef std::map<std::string, TaskInfo> GlobalTaskMapType; // (task name, task information)
-
-    /*! Map for managing task managers. */
-    typedef std::map<std::string, GlobalTaskMapType> GlobalTaskManagerMapType; // (task manager name, TaskListType)
-
-    /*! Map for fast look-up */
-    typedef std::map<std::string, std::string> GlobalTaskNameMapType; // (task name, task manager name)
+    /*! Container: (in: task manager ID, out: list of task names) */
+    typedef std::vector<std::string> TaskList;
+    typedef std::map<std::string, TaskList> GlobalTaskManagerMapType;
 
 protected:
     //--------------------------- Protected member data ---------------------//
@@ -73,23 +61,49 @@ protected:
     TaskManagerServerIPtr Sender;
     
     /*! Map for managing tasks. */
-    GlobalTaskMapType TaskMap;
+    GlobalTaskMapType GlobalTaskMap;
 
     /*! Map for managing task managers. */
-    GlobalTaskManagerMapType TaskManagerMap;
-
-    /* Map for fast look-up */
-    GlobalTaskNameMapType TaskNameMap;
+    GlobalTaskManagerMapType GlobalTaskManagerMap;
 
     //-------------------------- Protected methods --------------------------//
     /*! Resource clean-up */
     void OnClose();
 
-    GlobalTaskMapType * GetTaskMap(const std::string taskManagerID);
+    //----------------------- Proxy Implementation --------------------------//
+    
+    //-----------------------------------
+    //  Task Manager Processing
+    //-----------------------------------
+    /*! Update the information of all tasks. 
+        If a task manager of which name is identical to the one speicified 
+        already exists, the old one is removed first and completely replaced 
+        with the new one. */
+    void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localmtsTaskGlobal);
 
-    void TestShowMe();
+    /*! Check if a specific task manager exists. */
+    const bool FindTaskManager(const std::string taskManagerID) const;
 
-    //------------------- Methods for proxy implementation ------------------//
+    /*! Remove a specific task manager. */
+    const bool RemoveTaskManager(const std::string taskManagerID);
+
+    /*! Add a new provided interface. */
+    bool AddProvidedInterface(
+        const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
+
+    //-----------------------------------
+    //  Task Processing
+    //-----------------------------------
+    /*! Return the information on the specified task. */
+    mtsTaskGlobal * GetTask(const std::string & taskName);
+
+    /*! Add a task. Return false if the specified task has been already registered. */
+    //const bool AddTask(const std::string taskName);
+
+    /*! Remove a task. Return false if the specified task is not found. */
+    //const bool RemoveTask(const std::string taskName);
+
+    //---------------------------- Proxy Support ----------------------------//
     /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
         Sender = new TaskManagerServerI(IceCommunicator, Logger, this);
@@ -115,20 +129,6 @@ public:
         : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID)
     {}
     ~mtsTaskManagerProxyServer();
-    
-    //----------------------------- Proxy Support ---------------------------//
-    /*! Update the information of all tasks. */
-    void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
-
-    /*! Add a new provided interface. */
-    bool AddProvidedInterface(
-        const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
-
-    /*! Add a task. Return false if the specified task has been already registered. */
-    //const bool AddTask(const std::string taskName);
-
-    /*! Remove a task. Return false if the specified task is not found. */
-    //const bool RemoveTask(const std::string taskName);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice
@@ -158,8 +158,6 @@ protected:
         void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&);
         bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current&);
     };
-
-    //------------------ Methods for global task manager --------------------//
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyServer)

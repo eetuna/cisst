@@ -76,6 +76,7 @@ public:
 
     // Typedef for task manager type
     typedef enum {
+        TASK_MANAGER_LOCAL,
         TASK_MANAGER_SERVER, // global task manager
         TASK_MANAGER_CLIENT  // conventional task manager
     } TaskManagerType;
@@ -203,19 +204,25 @@ protected:
     /*! Proxy instance. This will be dynamically created. */
     mtsProxyBaseCommon<mtsTaskManager> * Proxy;
 
+    /*! Start proxies.
+        Task manager should start two kinds of proxies:
+            mtsTaskManagerProxy and mtsTaskInterfaceProxy
+    */
+    void StartProxy();
+
 public:
     void SetTaskManagerType(const TaskManagerType taskManagerType) {
         TaskManagerTypeMember = taskManagerType;
-    }
 
-    /*! Start a proxy */
-    void StartProxy();
+        StartProxy();
+    }
 
     /*! Inform the global task manager of the addition of a new provided interface. */
     bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
-                              const std::string& adapterName,
-                              const std::string& endpointInfo,
-                              const std::string& communicatorID);
+                              const std::string & adapterName,
+                              const std::string & endpointInfo,
+                              const std::string & communicatorID,
+                              const std::string & taskName);
 
     /*! Getter */
     const TaskManagerType GetTaskManagerType() const { return TaskManagerTypeMember; }

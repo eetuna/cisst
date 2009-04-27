@@ -26,8 +26,9 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
 #define mtsTaskManagerProxyServerLogger(_log) Logger->trace("mtsTaskManagerProxyServer", _log)
 
-//#define _COMMUNICATION_TEST_
-
+//-----------------------------------------------------------------------------
+//  Constructor, Destructor, Initializer
+//-----------------------------------------------------------------------------
 mtsTaskManagerProxyServer::~mtsTaskManagerProxyServer()
 {
     OnClose();
@@ -37,6 +38,9 @@ void mtsTaskManagerProxyServer::OnClose()
 {
 }
 
+//-----------------------------------------------------------------------------
+//  Proxy Start-up
+//-----------------------------------------------------------------------------
 void mtsTaskManagerProxyServer::Start(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
@@ -89,91 +93,105 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
     Sender->Destroy();
 }
 
-mtsTaskManagerProxyServer::GlobalTaskMapType *
-    mtsTaskManagerProxyServer::GetTaskMap(const std::string taskManagerID)
+//-----------------------------------------------------------------------------
+//  Task Manager Processing
+//-----------------------------------------------------------------------------
+
+//mtsTaskManagerProxyServer::GlobalTaskMapType *
+//    mtsTaskManagerProxyServer::GetTaskMap(const std::string taskManagerID)
+//{
+//    GlobalTaskManagerMapType::iterator it = GlobalTaskManagerMap.find(taskManagerID);
+//    if (it == GlobalTaskManagerMap.end()) {
+//        return 0;
+//    } else {
+//        return &(it->second);
+//    }
+//}
+const bool mtsTaskManagerProxyServer::FindTaskManager(const std::string taskManagerID) const
 {
-    GlobalTaskManagerMapType::iterator it = TaskManagerMap.find(taskManagerID);
-    if (it == TaskManagerMap.end()) {
-        return 0;
+    GlobalTaskManagerMapType::const_iterator it = GlobalTaskManagerMap.find(taskManagerID);
+    if (it == GlobalTaskManagerMap.end()) {
+        return false;
     } else {
-        return &(it->second);
+        return true;
     }
 }
 
-void mtsTaskManagerProxyServer::TestShowMe()
+const bool mtsTaskManagerProxyServer::RemoveTaskManager(const std::string taskManagerID)
 {
-    GlobalTaskManagerMapType::const_iterator it = TaskManagerMap.begin();
-    for (; it != TaskManagerMap.end(); ++it) {
-        std::cout << std::endl;
-        std::cout << "--------------------------------- " << it->first << std::endl;
-        GlobalTaskMapType::const_iterator itr = it->second.begin();
-        for (; itr != it->second.end(); ++itr) {            
-            std::cout << "\t" << itr->first;
-            std::cout << " (" << itr->second.TaskManagerID << ", ";
-            std::cout << itr->second.TaskName << ", ";
-            std::cout << itr->second.ConnectedTaskList.size() << std::endl;
-        }
+    GlobalTaskManagerMapType::iterator it = GlobalTaskManagerMap.find(taskManagerID);
+    if (it == GlobalTaskManagerMap.end()) {
+        Logger->error("Can't find a task manager: " + taskManagerID);
+        return false;
+    } else {
+        GlobalTaskManagerMap.erase(it);
+        return true;
     }
 }
 
+//-----------------------------------------------------------------------------
+//  Proxy Server Implementation
+//-----------------------------------------------------------------------------
 void mtsTaskManagerProxyServer::AddTaskManager(
     const ::mtsTaskManagerProxy::TaskList& localTaskInfo)
 {
+    Logger->trace("mtsTaskManagerProxyServer", "Adding a new task manager.....");
+
     const std::string taskManagerID = localTaskInfo.taskManagerID;
 
-    GlobalTaskMapType newTaskMap;
-    GlobalTaskMapType * taskMap = GetTaskMap(taskManagerID);
-    
-    // If this task manager has not been registered,
-    if (taskMap == 0) {
-        taskMap = &newTaskMap;
+    const bool exist = FindTaskManager(taskManagerID);
+    if (exist) {
+        CMN_ASSERT(RemoveTaskManager(taskManagerID));
     }
 
-    std::string taskName;
-    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = localTaskInfo.taskNames.begin();
-    for (; it != localTaskInfo.taskNames.end(); ++it) {
-        taskName = *it;
-        TaskInfo taskInfo(taskName, taskManagerID);
-        taskMap->insert(make_pair(taskName, taskInfo));
+    TaskList newTaskList;
+    {
+        mtsTaskManagerProxy::TaskNameSeq::const_iterator it = localTaskInfo.taskNames.begin();
+        std::string taskName;
+        for (; it != localTaskInfo.taskNames.end(); ++it) {
+            taskName = *it;
+            newTaskList.push_back(taskName);
+            Logger->trace("mtsTaskManagerProxyServer", "Adding a new task");
+            Logger->trace("New task", "(" + taskManagerID + ", " + taskName + ")");
 
-        //
-        // TODO: task name duplicity check!!! and if there is any duplications,
-        // an task name duplication exception should be generated!!!
-        //
-
-        TaskNameMap.insert(make_pair(taskName, taskManagerID));
+            mtsTaskGlobal taskInfo(taskName, taskManagerID);
+            GlobalTaskMap.insert(make_pair(taskName, taskInfo));
+            Logger->print(taskInfo.ShowTaskInfo());
+        }
     }
-
-    TaskManagerMap.insert(make_pair(taskManagerID, *taskMap));
-
-    // FOR TEST
-    TestShowMe();
+    GlobalTaskManagerMap.insert(make_pair(taskManagerID, newTaskList));
 }
 
 bool mtsTaskManagerProxyServer::AddProvidedInterface(
     const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
-    return true;
+    Logger->trace("mtsTaskManagerProxyServer", "Adding a new provided interface.....");
+
+    mtsTaskGlobal * taskInfo = NULL;
+
+    // Check if the task has been registered.
+    const std::string taskName = providedInterfaceInfo.taskName;
+    GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
+    if (it == GlobalTaskMap.end()) {
+        Logger->error("No task found: " + taskName);
+        return false;
+    }
+
+    // Add a new provided interface to the task
+    bool ret = it->second.AddProvidedInterface(providedInterfaceInfo);
+    Logger->print(GetTask(taskName)->ShowTaskInfo());
+    return ret;
 }
 
-/*
-const bool mtsTaskManagerProxyServer::AddTask(const std::string taskManagerName,
-                                              const std::string taskName)
+mtsTaskGlobal * mtsTaskManagerProxyServer::GetTask(const std::string & taskName)
 {
-    // TODO: Check if there is a task that has been already registered as the same name.
-    //
-    // TODO: task name duplicity check!!! and if there is any duplications,
-    // an task name duplication exception should be generated!!!
-    //
-
-    return true;
+    GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
+    if (it == GlobalTaskMap.end()) {
+        return 0;
+    } else {
+        return &it->second;
+    }
 }
-
-const bool mtsTaskManagerProxyServer::RemoveTask(const std::string taskName)
-{
-    return true;
-}
-*/
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
@@ -277,10 +295,6 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
 void mtsTaskManagerProxyServer::TaskManagerServerI::AddTaskManager(
     const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current)
 {
-    //std::cout << current.requestId;
-    //std::cout << Communicator->identityToString(current.id) << " ] : ";
-    //std::cerr << current.con->toString() << std::endl;
-
     TaskManagerServer->AddTaskManager(localTaskInfo);
 }
 
@@ -290,9 +304,3 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
 {
     return TaskManagerServer->AddProvidedInterface(providedInterfaceInfo);
 }
-
-//void mtsTaskManagerProxyServer::TaskManagerServerI::ReceiveDataFromClient(
-//    ::Ice::Int num, const ::Ice::Current&)
-//{
-//    std::cout << "------------ server recv data " << num << std::endl;
-//}

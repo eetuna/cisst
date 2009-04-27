@@ -378,7 +378,7 @@ protected:
 
 public:
     /*! Start a proxy */
-    //void StartProxy();
+    void StartInterfaceProxy();
 };
 
 

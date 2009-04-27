@@ -129,6 +129,7 @@ struct TaskList
 
 struct ProvidedInterfaceInfo
 {
+    ::std::string taskName;
     ::std::string interfaceName;
     ::std::string adapterName;
     ::std::string endpointInfo;

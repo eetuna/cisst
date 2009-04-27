@@ -41,6 +41,7 @@ struct TaskList {
 };
 
 struct ProvidedInterfaceInfo {
+	string taskName;
 	string interfaceName;
 	string adapterName;
 	string endpointInfo;

@@ -88,7 +88,8 @@ public:
         const std::string & newProvidedInterfaceName,
         const std::string & adapterName,
         const std::string & endpointInfo,
-        const std::string & communicatorID);
+        const std::string & communicatorID,
+        const std::string & taskName);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice

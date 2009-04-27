@@ -147,6 +147,10 @@ mtsTaskManagerProxy::ProvidedInterfaceInfo::operator==(const ProvidedInterfaceIn
     {
         return true;
     }
+    if(taskName != __rhs.taskName)
+    {
+        return false;
+    }
     if(interfaceName != __rhs.interfaceName)
     {
         return false;
@@ -170,6 +174,14 @@ bool
 mtsTaskManagerProxy::ProvidedInterfaceInfo::operator<(const ProvidedInterfaceInfo& __rhs) const
 {
     if(this == &__rhs)
+    {
+        return false;
+    }
+    if(taskName < __rhs.taskName)
+    {
+        return true;
+    }
+    else if(__rhs.taskName < taskName)
     {
         return false;
     }
@@ -211,6 +223,7 @@ mtsTaskManagerProxy::ProvidedInterfaceInfo::operator<(const ProvidedInterfaceInf
 void
 mtsTaskManagerProxy::ProvidedInterfaceInfo::__write(::IceInternal::BasicStream* __os) const
 {
+    __os->write(taskName);
     __os->write(interfaceName);
     __os->write(adapterName);
     __os->write(endpointInfo);
@@ -220,6 +233,7 @@ mtsTaskManagerProxy::ProvidedInterfaceInfo::__write(::IceInternal::BasicStream* 
 void
 mtsTaskManagerProxy::ProvidedInterfaceInfo::__read(::IceInternal::BasicStream* __is)
 {
+    __is->read(taskName);
     __is->read(interfaceName);
     __is->read(adapterName);
     __is->read(endpointInfo);

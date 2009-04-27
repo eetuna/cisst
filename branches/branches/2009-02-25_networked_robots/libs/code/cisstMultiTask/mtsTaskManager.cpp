@@ -34,7 +34,8 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 mtsTaskManager::mtsTaskManager(void) : 
     TaskMap("Task"), DeviceMap("Device"), Proxy(NULL), 
-    TaskManagerCommunicatorID("TaskManagerServerSender")
+    TaskManagerCommunicatorID("TaskManagerServerSender"),
+    TaskManagerTypeMember(TASK_MANAGER_LOCAL)
 {
     __os_init();
     TimeServer.SetTimeOrigin();    
@@ -333,6 +334,7 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
 
 void mtsTaskManager::StartProxy()
 {
+    // Start the task manager proxy
     if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {
         Proxy = new mtsTaskManagerProxyServer(
             "TaskManagerServerAdapter", "tcp -p 10705", TaskManagerCommunicatorID);
@@ -341,13 +343,25 @@ void mtsTaskManager::StartProxy()
         Proxy = new mtsTaskManagerProxyClient(":default -p 10705", TaskManagerCommunicatorID);
         Proxy->Start(this);
     }
+
+    osaSleep(500 * cmn_ms);
+
+    // Start the task interface proxy. Currently it is assumed that there is only
+    // one provided interface and one required interface.
+    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
+    //const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    //for (; taskIterator != taskEndIterator; ++taskIterator) {
+        // Start task interface proxy objects
+        taskIterator->second->StartInterfaceProxy();
+    //}
 }
 
 bool mtsTaskManager::AddProvidedInterface(
     const std::string & newProvidedInterfaceName,
     const std::string & adapterName,
     const std::string & endpointInfo,
-    const std::string & communicatorID)
+    const std::string & communicatorID,
+    const std::string & taskName)
 {
     CMN_ASSERT(GetTaskManagerType() == TASK_MANAGER_CLIENT);
 
@@ -355,5 +369,5 @@ bool mtsTaskManager::AddProvidedInterface(
     CMN_ASSERT(proxy);
 
     return proxy->AddProvidedInterface(
-        newProvidedInterfaceName, adapterName, endpointInfo,communicatorID);
+        newProvidedInterfaceName, adapterName, endpointInfo, communicatorID, taskName);
 }
