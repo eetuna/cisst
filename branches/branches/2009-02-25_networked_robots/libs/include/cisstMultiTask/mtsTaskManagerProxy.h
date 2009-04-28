@@ -158,6 +158,34 @@ struct ProvidedInterfaceInfo
     void __read(::IceInternal::BasicStream*);
 };
 
+struct RequiredInterfaceInfo
+{
+    ::std::string taskName;
+    ::std::string interfaceName;
+
+    bool operator==(const RequiredInterfaceInfo&) const;
+    bool operator<(const RequiredInterfaceInfo&) const;
+    bool operator!=(const RequiredInterfaceInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const RequiredInterfaceInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const RequiredInterfaceInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const RequiredInterfaceInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
 }
 
 namespace IceProxy
@@ -432,6 +460,51 @@ private:
     bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
     
 public:
+
+    bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo& newRequiredInterfaceInfo)
+    {
+        return AddRequiredInterface(newRequiredInterfaceInfo, 0);
+    }
+    bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo& newRequiredInterfaceInfo, const ::Ice::Context& __ctx)
+    {
+        return AddRequiredInterface(newRequiredInterfaceInfo, &__ctx);
+    }
+    
+private:
+
+    bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Context*);
+    
+public:
+
+    bool IsRegisteredProvidedInterface(const ::std::string& taskName, const ::std::string& providedInterfaceName)
+    {
+        return IsRegisteredProvidedInterface(taskName, providedInterfaceName, 0);
+    }
+    bool IsRegisteredProvidedInterface(const ::std::string& taskName, const ::std::string& providedInterfaceName, const ::Ice::Context& __ctx)
+    {
+        return IsRegisteredProvidedInterface(taskName, providedInterfaceName, &__ctx);
+    }
+    
+private:
+
+    bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Context*);
+    
+public:
+
+    bool GetProvidedInterfaceInfo(const ::std::string& taskName, const ::std::string& providedInterfaceName, ::mtsTaskManagerProxy::ProvidedInterfaceInfo& info)
+    {
+        return GetProvidedInterfaceInfo(taskName, providedInterfaceName, info, 0);
+    }
+    bool GetProvidedInterfaceInfo(const ::std::string& taskName, const ::std::string& providedInterfaceName, ::mtsTaskManagerProxy::ProvidedInterfaceInfo& info, const ::Ice::Context& __ctx)
+    {
+        return GetProvidedInterfaceInfo(taskName, providedInterfaceName, info, &__ctx);
+    }
+    
+private:
+
+    bool GetProvidedInterfaceInfo(const ::std::string&, const ::std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
+    
+public:
     
     ::IceInternal::ProxyHandle<TaskManagerServer> ice_context(const ::Ice::Context& __context) const
     {
@@ -658,6 +731,12 @@ public:
     virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*) = 0;
 
     virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*) = 0;
+
+    virtual bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Context*) = 0;
+
+    virtual bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Context*) = 0;
+
+    virtual bool GetProvidedInterfaceInfo(const ::std::string&, const ::std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*) = 0;
 };
 
 }
@@ -688,6 +767,12 @@ public:
     virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
 
     virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
+
+    virtual bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Context*);
+
+    virtual bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Context*);
+
+    virtual bool GetProvidedInterfaceInfo(const ::std::string&, const ::std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
 };
 
 }
@@ -718,6 +803,12 @@ public:
     virtual void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Context*);
 
     virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
+
+    virtual bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Context*);
+
+    virtual bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Context*);
+
+    virtual bool GetProvidedInterfaceInfo(const ::std::string&, const ::std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Context*);
 };
 
 }
@@ -774,6 +865,15 @@ public:
 
     virtual bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___AddProvidedInterface(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___AddRequiredInterface(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Current& = ::Ice::Current()) const = 0;
+    ::Ice::DispatchStatus ___IsRegisteredProvidedInterface(::IceInternal::Incoming&, const ::Ice::Current&) const;
+
+    virtual bool GetProvidedInterfaceInfo(const ::std::string&, const ::std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current& = ::Ice::Current()) const = 0;
+    ::Ice::DispatchStatus ___GetProvidedInterfaceInfo(::IceInternal::Incoming&, const ::Ice::Current&) const;
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

@@ -37,6 +37,12 @@ static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__AddTaskMana
 
 static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__AddProvidedInterface_name = "AddProvidedInterface";
 
+static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__AddRequiredInterface_name = "AddRequiredInterface";
+
+static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__IsRegisteredProvidedInterface_name = "IsRegisteredProvidedInterface";
+
+static const ::std::string __mtsTaskManagerProxy__TaskManagerServer__GetProvidedInterfaceInfo_name = "GetProvidedInterfaceInfo";
+
 ::Ice::Object* IceInternal::upCast(::mtsTaskManagerProxy::TaskManagerClient* p) { return p; }
 ::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsTaskManagerProxy::TaskManagerClient* p) { return p; }
 
@@ -240,6 +246,64 @@ mtsTaskManagerProxy::ProvidedInterfaceInfo::__read(::IceInternal::BasicStream* _
     __is->read(communicatorID);
 }
 
+bool
+mtsTaskManagerProxy::RequiredInterfaceInfo::operator==(const RequiredInterfaceInfo& __rhs) const
+{
+    if(this == &__rhs)
+    {
+        return true;
+    }
+    if(taskName != __rhs.taskName)
+    {
+        return false;
+    }
+    if(interfaceName != __rhs.interfaceName)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool
+mtsTaskManagerProxy::RequiredInterfaceInfo::operator<(const RequiredInterfaceInfo& __rhs) const
+{
+    if(this == &__rhs)
+    {
+        return false;
+    }
+    if(taskName < __rhs.taskName)
+    {
+        return true;
+    }
+    else if(__rhs.taskName < taskName)
+    {
+        return false;
+    }
+    if(interfaceName < __rhs.interfaceName)
+    {
+        return true;
+    }
+    else if(__rhs.interfaceName < interfaceName)
+    {
+        return false;
+    }
+    return false;
+}
+
+void
+mtsTaskManagerProxy::RequiredInterfaceInfo::__write(::IceInternal::BasicStream* __os) const
+{
+    __os->write(taskName);
+    __os->write(interfaceName);
+}
+
+void
+mtsTaskManagerProxy::RequiredInterfaceInfo::__read(::IceInternal::BasicStream* __is)
+{
+    __is->read(taskName);
+    __is->read(interfaceName);
+}
+
 void
 IceProxy::mtsTaskManagerProxy::TaskManagerClient::ReceiveData(::Ice::Int num, const ::Ice::Context* __ctx)
 {
@@ -356,6 +420,81 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddProvidedInterface(const ::m
         catch(const ::IceInternal::LocalExceptionWrapper& __ex)
         {
             __handleExceptionWrapper(__delBase, __ex, 0);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
+bool
+IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo& newRequiredInterfaceInfo, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__AddRequiredInterface_name);
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
+            return __del->AddRequiredInterface(newRequiredInterfaceInfo, __ctx);
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapper(__delBase, __ex, 0);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
+bool
+IceProxy::mtsTaskManagerProxy::TaskManagerServer::IsRegisteredProvidedInterface(const ::std::string& taskName, const ::std::string& providedInterfaceName, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__IsRegisteredProvidedInterface_name);
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
+            return __del->IsRegisteredProvidedInterface(taskName, providedInterfaceName, __ctx);
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapperRelaxed(__delBase, __ex, 0, __cnt);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
+bool
+IceProxy::mtsTaskManagerProxy::TaskManagerServer::GetProvidedInterfaceInfo(const ::std::string& taskName, const ::std::string& providedInterfaceName, ::mtsTaskManagerProxy::ProvidedInterfaceInfo& info, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__GetProvidedInterfaceInfo_name);
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
+            return __del->GetProvidedInterfaceInfo(taskName, providedInterfaceName, info, __ctx);
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapperRelaxed(__delBase, __ex, 0, __cnt);
         }
         catch(const ::Ice::LocalException& __ex)
         {
@@ -536,6 +675,132 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddProvidedInterface(const
         bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
+        __is->read(__ret);
+        __is->endReadEncaps();
+        return __ret;
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+    }
+}
+
+bool
+IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo& newRequiredInterfaceInfo, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskManagerProxy__TaskManagerServer__AddRequiredInterface_name, ::Ice::Normal, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        newRequiredInterfaceInfo.__write(__os);
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    try
+    {
+        if(!__ok)
+        {
+            try
+            {
+                __og.throwUserException();
+            }
+            catch(const ::Ice::UserException& __ex)
+            {
+                ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                throw __uue;
+            }
+        }
+        bool __ret;
+        ::IceInternal::BasicStream* __is = __og.is();
+        __is->startReadEncaps();
+        __is->read(__ret);
+        __is->endReadEncaps();
+        return __ret;
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+    }
+}
+
+bool
+IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::IsRegisteredProvidedInterface(const ::std::string& taskName, const ::std::string& providedInterfaceName, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskManagerProxy__TaskManagerServer__IsRegisteredProvidedInterface_name, ::Ice::Idempotent, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        __os->write(taskName);
+        __os->write(providedInterfaceName);
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    try
+    {
+        if(!__ok)
+        {
+            try
+            {
+                __og.throwUserException();
+            }
+            catch(const ::Ice::UserException& __ex)
+            {
+                ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                throw __uue;
+            }
+        }
+        bool __ret;
+        ::IceInternal::BasicStream* __is = __og.is();
+        __is->startReadEncaps();
+        __is->read(__ret);
+        __is->endReadEncaps();
+        return __ret;
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+    }
+}
+
+bool
+IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::GetProvidedInterfaceInfo(const ::std::string& taskName, const ::std::string& providedInterfaceName, ::mtsTaskManagerProxy::ProvidedInterfaceInfo& info, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskManagerProxy__TaskManagerServer__GetProvidedInterfaceInfo_name, ::Ice::Idempotent, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        __os->write(taskName);
+        __os->write(providedInterfaceName);
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    try
+    {
+        if(!__ok)
+        {
+            try
+            {
+                __og.throwUserException();
+            }
+            catch(const ::Ice::UserException& __ex)
+            {
+                ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                throw __uue;
+            }
+        }
+        bool __ret;
+        ::IceInternal::BasicStream* __is = __og.is();
+        __is->startReadEncaps();
+        info.__read(__is);
         __is->read(__ret);
         __is->endReadEncaps();
         return __ret;
@@ -776,6 +1041,216 @@ IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::AddProvidedInterface(const
     try
     {
         _DirectI __direct(__result, newProvidedInterfaceInfo, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
+    return __result;
+}
+
+bool
+IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo& newRequiredInterfaceInfo, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(bool& __result, const ::mtsTaskManagerProxy::RequiredInterfaceInfo& newRequiredInterfaceInfo, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _result(__result),
+            _m_newRequiredInterfaceInfo(newRequiredInterfaceInfo)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsTaskManagerProxy::TaskManagerServer* servant = dynamic_cast< ::mtsTaskManagerProxy::TaskManagerServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            _result = servant->AddRequiredInterface(_m_newRequiredInterfaceInfo, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        bool& _result;
+        const ::mtsTaskManagerProxy::RequiredInterfaceInfo& _m_newRequiredInterfaceInfo;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsTaskManagerProxy__TaskManagerServer__AddRequiredInterface_name, ::Ice::Normal, __context);
+    bool __result;
+    try
+    {
+        _DirectI __direct(__result, newRequiredInterfaceInfo, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
+    return __result;
+}
+
+bool
+IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::IsRegisteredProvidedInterface(const ::std::string& taskName, const ::std::string& providedInterfaceName, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(bool& __result, const ::std::string& taskName, const ::std::string& providedInterfaceName, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _result(__result),
+            _m_taskName(taskName),
+            _m_providedInterfaceName(providedInterfaceName)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsTaskManagerProxy::TaskManagerServer* servant = dynamic_cast< ::mtsTaskManagerProxy::TaskManagerServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            _result = servant->IsRegisteredProvidedInterface(_m_taskName, _m_providedInterfaceName, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        bool& _result;
+        const ::std::string& _m_taskName;
+        const ::std::string& _m_providedInterfaceName;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsTaskManagerProxy__TaskManagerServer__IsRegisteredProvidedInterface_name, ::Ice::Idempotent, __context);
+    bool __result;
+    try
+    {
+        _DirectI __direct(__result, taskName, providedInterfaceName, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
+    return __result;
+}
+
+bool
+IceDelegateD::mtsTaskManagerProxy::TaskManagerServer::GetProvidedInterfaceInfo(const ::std::string& taskName, const ::std::string& providedInterfaceName, ::mtsTaskManagerProxy::ProvidedInterfaceInfo& info, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(bool& __result, const ::std::string& taskName, const ::std::string& providedInterfaceName, ::mtsTaskManagerProxy::ProvidedInterfaceInfo& info, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _result(__result),
+            _m_taskName(taskName),
+            _m_providedInterfaceName(providedInterfaceName),
+            _m_info(info)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsTaskManagerProxy::TaskManagerServer* servant = dynamic_cast< ::mtsTaskManagerProxy::TaskManagerServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            _result = servant->GetProvidedInterfaceInfo(_m_taskName, _m_providedInterfaceName, _m_info, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        bool& _result;
+        const ::std::string& _m_taskName;
+        const ::std::string& _m_providedInterfaceName;
+        ::mtsTaskManagerProxy::ProvidedInterfaceInfo& _m_info;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsTaskManagerProxy__TaskManagerServer__GetProvidedInterfaceInfo_name, ::Ice::Idempotent, __context);
+    bool __result;
+    try
+    {
+        _DirectI __direct(__result, taskName, providedInterfaceName, info, __current);
         try
         {
             __direct.servant()->__collocDispatch(__direct);
@@ -1050,11 +1525,65 @@ mtsTaskManagerProxy::TaskManagerServer::___AddProvidedInterface(::IceInternal::I
     return ::Ice::DispatchOK;
 }
 
+::Ice::DispatchStatus
+mtsTaskManagerProxy::TaskManagerServer::___AddRequiredInterface(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+{
+    __checkMode(::Ice::Normal, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::mtsTaskManagerProxy::RequiredInterfaceInfo newRequiredInterfaceInfo;
+    newRequiredInterfaceInfo.__read(__is);
+    __is->endReadEncaps();
+    ::IceInternal::BasicStream* __os = __inS.os();
+    bool __ret = AddRequiredInterface(newRequiredInterfaceInfo, __current);
+    __os->write(__ret);
+    return ::Ice::DispatchOK;
+}
+
+::Ice::DispatchStatus
+mtsTaskManagerProxy::TaskManagerServer::___IsRegisteredProvidedInterface(::IceInternal::Incoming& __inS, const ::Ice::Current& __current) const
+{
+    __checkMode(::Ice::Idempotent, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::std::string taskName;
+    ::std::string providedInterfaceName;
+    __is->read(taskName);
+    __is->read(providedInterfaceName);
+    __is->endReadEncaps();
+    ::IceInternal::BasicStream* __os = __inS.os();
+    bool __ret = IsRegisteredProvidedInterface(taskName, providedInterfaceName, __current);
+    __os->write(__ret);
+    return ::Ice::DispatchOK;
+}
+
+::Ice::DispatchStatus
+mtsTaskManagerProxy::TaskManagerServer::___GetProvidedInterfaceInfo(::IceInternal::Incoming& __inS, const ::Ice::Current& __current) const
+{
+    __checkMode(::Ice::Idempotent, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::std::string taskName;
+    ::std::string providedInterfaceName;
+    __is->read(taskName);
+    __is->read(providedInterfaceName);
+    __is->endReadEncaps();
+    ::IceInternal::BasicStream* __os = __inS.os();
+    ::mtsTaskManagerProxy::ProvidedInterfaceInfo info;
+    bool __ret = GetProvidedInterfaceInfo(taskName, providedInterfaceName, info, __current);
+    info.__write(__os);
+    __os->write(__ret);
+    return ::Ice::DispatchOK;
+}
+
 static ::std::string __mtsTaskManagerProxy__TaskManagerServer_all[] =
 {
     "AddClient",
     "AddProvidedInterface",
+    "AddRequiredInterface",
     "AddTaskManager",
+    "GetProvidedInterfaceInfo",
+    "IsRegisteredProvidedInterface",
     "ice_id",
     "ice_ids",
     "ice_isA",
@@ -1064,7 +1593,7 @@ static ::std::string __mtsTaskManagerProxy__TaskManagerServer_all[] =
 ::Ice::DispatchStatus
 mtsTaskManagerProxy::TaskManagerServer::__dispatch(::IceInternal::Incoming& in, const ::Ice::Current& current)
 {
-    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskManagerProxy__TaskManagerServer_all, __mtsTaskManagerProxy__TaskManagerServer_all + 7, current.operation);
+    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskManagerProxy__TaskManagerServer_all, __mtsTaskManagerProxy__TaskManagerServer_all + 10, current.operation);
     if(r.first == r.second)
     {
         throw ::Ice::OperationNotExistException(__FILE__, __LINE__, current.id, current.facet, current.operation);
@@ -1082,21 +1611,33 @@ mtsTaskManagerProxy::TaskManagerServer::__dispatch(::IceInternal::Incoming& in, 
         }
         case 2:
         {
-            return ___AddTaskManager(in, current);
+            return ___AddRequiredInterface(in, current);
         }
         case 3:
         {
-            return ___ice_id(in, current);
+            return ___AddTaskManager(in, current);
         }
         case 4:
         {
-            return ___ice_ids(in, current);
+            return ___GetProvidedInterfaceInfo(in, current);
         }
         case 5:
         {
-            return ___ice_isA(in, current);
+            return ___IsRegisteredProvidedInterface(in, current);
         }
         case 6:
+        {
+            return ___ice_id(in, current);
+        }
+        case 7:
+        {
+            return ___ice_ids(in, current);
+        }
+        case 8:
+        {
+            return ___ice_isA(in, current);
+        }
+        case 9:
         {
             return ___ice_ping(in, current);
         }

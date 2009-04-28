@@ -32,6 +32,13 @@ http://www.cisst.org/cisst/license.txt.
 module mtsTaskManagerProxy
 {
 
+//
+//
+//  MJUNG: TODO: Multiple [provided, required] interface => USE dictionary (SLICE)!!!
+//	refer to: mtsTask.h
+//
+//
+
 // Data structure definition
 sequence<string> TaskNameSeq;
 
@@ -46,6 +53,11 @@ struct ProvidedInterfaceInfo {
 	string adapterName;
 	string endpointInfo;
 	string communicatorID;
+};
+
+struct RequiredInterfaceInfo {
+	string taskName;
+	string interfaceName;
 };
 
 // Exception definition
@@ -75,6 +87,14 @@ interface TaskManagerServer
 	void AddTaskManager(TaskList localTaskInfo);
 	
 	bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
+	
+	bool AddRequiredInterface(RequiredInterfaceInfo newRequiredInterfaceInfo);
+	
+	["cpp:const"] idempotent bool IsRegisteredProvidedInterface(
+		string taskName, string providedInterfaceName);
+		
+	["cpp:const"] idempotent bool GetProvidedInterfaceInfo(
+		string taskName, string providedInterfaceName, out ProvidedInterfaceInfo info);
 };
 
 };

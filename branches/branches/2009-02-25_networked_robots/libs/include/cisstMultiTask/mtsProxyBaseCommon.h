@@ -60,10 +60,10 @@ public:
             Log(log1, log2);
         }
         void warning(const ::std::string& log) {
-            Log(log);
+            Log("##### WARNING: " + log);
         }
         void error(const ::std::string& log) {
-            Log(log);
+            Log("##### ERROR: " + log);
         }
 
         void Log(const std::string& className, const std::string& description)
@@ -71,7 +71,7 @@ public:
             std::string log = className + ": ";
             log += description;
 
-            OutputDebugString(log.c_str());
+            Log(log);
         }
 
     protected:

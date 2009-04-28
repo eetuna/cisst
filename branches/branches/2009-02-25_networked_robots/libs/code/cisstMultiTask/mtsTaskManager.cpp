@@ -33,9 +33,10 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 mtsTaskManager::mtsTaskManager(void) : 
-    TaskMap("Task"), DeviceMap("Device"), Proxy(NULL), 
+    TaskMap("Task"), DeviceMap("Device"),
     TaskManagerCommunicatorID("TaskManagerServerSender"),
-    TaskManagerTypeMember(TASK_MANAGER_LOCAL)
+    TaskManagerTypeMember(TASK_MANAGER_LOCAL),
+    Proxy(0), ProxyServer(0), ProxyClient(0)
 {
     __os_init();
     TimeServer.SetTimeOrigin();    
@@ -295,15 +296,57 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     }
     // check if the resource name corresponds to an existing task or device
     mtsDevice* resourceDevice = DeviceMap.GetItem(resourceTaskName);
-    if (!resourceDevice)
-       resourceDevice = TaskMap.GetItem(resourceTaskName);
+    if (!resourceDevice) {        
+        resourceDevice = TaskMap.GetItem(resourceTaskName);
+    }
     // find the interface pointer from the resource
     mtsDeviceInterface * resourceInterface;
     if (resourceDevice)
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
     else {
-        CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
-        return false;
+        if (GetTaskManagerType() == TASK_MANAGER_LOCAL) {
+            CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
+            return false;
+        } else {
+            // For the use of consistent notation
+            mtsTask * clientTask = userTask;
+
+            // Ask the global task manager (TMServer) if the specified task providing
+            // the specific provided interface has been registered.
+            if (IsRegisteredProvidedInterface(resourceTaskName, providedInterfaceName))            
+            {
+                // If (task, provided interface) exists,
+                // 1) Retrieve information from the global task manager to connect
+                //    the requested provided interface (mtsTaskInterfaceProxyServer).
+                mtsTaskManagerProxy::ProvidedInterfaceInfo info;
+                if (!GetProvidedInterfaceInfo(resourceTaskName, providedInterfaceName, info)) {
+                    CMN_LOG_CLASS(1) << "Connect through networks: failed to retrieve proxy information: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
+                    return false;
+                }
+
+                // 2) Using the information, start a proxy client (=server proxy, mtsTaskInterfaceProxyClient object).
+                clientTask->StartProxyClient(info.endpointInfo, info.communicatorID);
+
+                //resourceInterface = GetTaskInterfaceServerProxy();
+                //
+                // TODO: mtsTaskInterfaceProxyServer should inherit from mtsDeviceInterface for
+                // compatibility.            
+                //
+                //OutputDebugString("################## TRUE");
+                //
+                //
+                //  CONTINUE TO IMPLEMENT HERE .........
+                //
+                //
+                //mtsTaskManagerProxy::ProvidedInterfaceInfo
+            }            
+            else 
+            {
+                // If it does not, return false;
+                CMN_LOG_CLASS(1) << "Connect through networks: can not find a task or device named " << resourceTaskName << std::endl;
+                return false;
+            }
+        }
     }
 
     // check the interface pointer we got
@@ -332,15 +375,17 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
     return true;
 }
 
-void mtsTaskManager::StartProxy()
+void mtsTaskManager::StartProxyServer()
 {
     // Start the task manager proxy
     if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {
         Proxy = new mtsTaskManagerProxyServer(
             "TaskManagerServerAdapter", "tcp -p 10705", TaskManagerCommunicatorID);
+        ProxyServer = dynamic_cast<mtsTaskManagerProxyServer *>(Proxy);
         Proxy->Start(this);
     } else {
         Proxy = new mtsTaskManagerProxyClient(":default -p 10705", TaskManagerCommunicatorID);
+        ProxyClient = dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
         Proxy->Start(this);
     }
 
@@ -352,22 +397,37 @@ void mtsTaskManager::StartProxy()
     //const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
     //for (; taskIterator != taskEndIterator; ++taskIterator) {
         // Start task interface proxy objects
-        taskIterator->second->StartInterfaceProxy();
+        taskIterator->second->StartProxyServer();
     //}
 }
 
-bool mtsTaskManager::AddProvidedInterface(
+const bool mtsTaskManager::AddProvidedInterface(
     const std::string & newProvidedInterfaceName,
     const std::string & adapterName,
     const std::string & endpointInfo,
     const std::string & communicatorID,
     const std::string & taskName)
 {
-    CMN_ASSERT(GetTaskManagerType() == TASK_MANAGER_CLIENT);
-
-    mtsTaskManagerProxyClient * proxy = dynamic_cast<mtsTaskManagerProxyClient*>(Proxy);
-    CMN_ASSERT(proxy);
-
-    return proxy->AddProvidedInterface(
+    return ProxyClient->AddProvidedInterface(
         newProvidedInterfaceName, adapterName, endpointInfo, communicatorID, taskName);
+}
+
+const bool mtsTaskManager::AddRequiredInterface(
+    const std::string & newRequiredInterfaceName,const std::string & taskName)
+{
+    return ProxyClient->AddRequiredInterface(newRequiredInterfaceName, taskName);
+}
+
+const bool mtsTaskManager::IsRegisteredProvidedInterface(
+    const std::string & taskName, const std::string & providedInterfaceName)
+{
+    return ProxyClient->IsRegisteredProvidedInterface(taskName, providedInterfaceName);
+}
+
+const bool mtsTaskManager::GetProvidedInterfaceInfo(
+    const ::std::string & taskName,
+    const std::string & providedInterfaceName,
+    ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const
+{
+    return ProxyClient->GetProvidedInterfaceInfo(taskName, providedInterfaceName, info);
 }

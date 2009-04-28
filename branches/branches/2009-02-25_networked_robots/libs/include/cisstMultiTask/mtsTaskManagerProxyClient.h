@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskManagerProxyClient_h
 #define _mtsTaskManagerProxyClient_h
 
-#include <cisstMultiTask/mtsTaskManager.h>
+//#include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
 #include <cisstMultiTask/mtsTaskManagerProxy.h>
 
@@ -34,10 +34,9 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 
-class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTaskManager> {
-    
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+class mtsTaskManager;
 
+class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTaskManager> {
 protected:
     /*! Send thread.
         We need a seperate send thread because the bi-directional communication is
@@ -84,12 +83,21 @@ public:
     //  
     //-------------------------------------------------------------------------
     /*! Add a new provided interface. */
-    bool AddProvidedInterface(
-        const std::string & newProvidedInterfaceName,
-        const std::string & adapterName,
-        const std::string & endpointInfo,
-        const std::string & communicatorID,
-        const std::string & taskName);
+    bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
+                              const std::string & adapterName,
+                              const std::string & endpointInfo,
+                              const std::string & communicatorID,
+                              const std::string & taskName);
+
+    bool AddRequiredInterface(const std::string & newRequiredInterfaceName,
+                              const std::string & taskName);
+
+    bool IsRegisteredProvidedInterface(const std::string & taskName, 
+                                       const std::string & providedInterfaceName) const;
+
+    bool GetProvidedInterfaceInfo(const ::std::string & taskName,
+                                  const std::string & providedInterfaceName,
+                                  ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice
@@ -121,8 +129,6 @@ protected:
         virtual void ReceiveData(::Ice::Int num, const ::Ice::Current&);
     };
 };
-
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManagerProxyClient)
 
 #endif // _mtsTaskManagerProxyClient_h
 

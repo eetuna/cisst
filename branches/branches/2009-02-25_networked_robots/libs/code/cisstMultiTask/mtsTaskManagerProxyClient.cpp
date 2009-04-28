@@ -19,10 +19,9 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstOSAbstraction/osaSleep.h>
-
-CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyClient);
 
 #define mtsTaskManagerProxyClientLogger(_log) \
     Logger->trace("mtsTaskManagerProxyClient", _log)
@@ -113,7 +112,44 @@ bool mtsTaskManagerProxyClient::AddProvidedInterface(
     info.taskName = taskName;
     info.interfaceName = newProvidedInterfaceName;
 
+    GetLogger()->trace("TMClient", ">>>>> SEND: AddProvidedInterface: " 
+        + info.taskName + ", " + info.interfaceName);
+
     return TaskManagerServer->AddProvidedInterface(info);
+}
+
+bool mtsTaskManagerProxyClient::AddRequiredInterface(
+    const std::string & newRequiredInterfaceName, const std::string & taskName)
+{
+    ::mtsTaskManagerProxy::RequiredInterfaceInfo info;
+    info.taskName = taskName;
+    info.interfaceName = newRequiredInterfaceName;
+
+    GetLogger()->trace("TMClient", ">>>>> SEND: AddRequiredInterface: " 
+        + info.taskName + ", " + info.interfaceName);
+
+    return TaskManagerServer->AddRequiredInterface(info);
+}
+
+bool mtsTaskManagerProxyClient::IsRegisteredProvidedInterface(
+    const std::string & taskName, const std::string & providedInterfaceName) const
+{
+    GetLogger()->trace("TMClient", ">>>>> SEND: IsRegisteredProvidedInterface: " 
+        + taskName + ", " + providedInterfaceName);
+
+    return TaskManagerServer->IsRegisteredProvidedInterface(
+        taskName, providedInterfaceName);
+}
+
+bool mtsTaskManagerProxyClient::GetProvidedInterfaceInfo(
+    const ::std::string & taskName, const std::string & providedInterfaceName,
+    ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const
+{
+    GetLogger()->trace("TMClient", ">>>>> SEND: GetProvidedInterfaceInfo: " 
+        + taskName + ", " + providedInterfaceName);
+
+    return TaskManagerServer->GetProvidedInterfaceInfo(
+        taskName, providedInterfaceName, info);
 }
 
 //-------------------------------------------------------------------------

@@ -25,7 +25,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxy.h>
-#include <cisstMultiTask/mtsMap.h>
 #include <cisstMultiTask/mtsTaskGlobal.h>
 
 #include <cisstMultiTask/mtsExport.h>
@@ -39,6 +38,8 @@ http://www.cisst.org/cisst/license.txt.
 
   TODO: add class summary here
 */
+class mtsTaskGlobal;
+
 class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTaskManager> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
@@ -90,6 +91,17 @@ protected:
     /*! Add a new provided interface. */
     bool AddProvidedInterface(
         const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
+
+    bool AddRequiredInterface(
+        const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo);
+
+    bool IsRegisteredProvidedInterface(
+        const std::string & taskName, const std::string & providedInterfaceName) const;
+
+    bool GetProvidedInterfaceInfo(
+        const std::string & taskName, const std::string & providedInterfaceName,
+        mtsTaskManagerProxy::ProvidedInterfaceInfo & info);
+
 
     //-----------------------------------
     //  Task Processing
@@ -157,6 +169,10 @@ protected:
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
         void AddTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&);
         bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current&);
+        bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Current&);
+        bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Current&) const;
+        bool GetProvidedInterfaceInfo(const ::std::string&, const std::string&, 
+            ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info, const ::Ice::Current&) const;
     };
 };
 

@@ -377,8 +377,11 @@ protected:
     mtsProxyBaseCommon<mtsTask> * Proxy;
 
 public:
-    /*! Start a proxy */
-    void StartInterfaceProxy();
+    /*! Start a proxy server (provided interface, mtsTaskInterfaceProxyServer). */
+    void StartProxyServer();
+
+    /*! Start a proxy client (required interface, mtsTaskInterfaceProxyClient). */
+    void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
 };
 
 

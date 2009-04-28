@@ -130,7 +130,7 @@ int main(int argc, char * argv[])
         //
         // TODO: Hide this waiting routine inside mtsTaskManager using events or other things.
         //
-        osaSleep(1 * cmn_s);
+        osaSleep(0.5 * cmn_ms);
 
         // Connect the tasks across networks
         if (!IsServerTask) {

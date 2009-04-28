@@ -129,6 +129,16 @@ const bool mtsTaskManagerProxyServer::RemoveTaskManager(const std::string taskMa
     }
 }
 
+mtsTaskGlobal * mtsTaskManagerProxyServer::GetTask(const std::string & taskName)
+{
+    GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
+    if (it == GlobalTaskMap.end()) {
+        return 0;
+    } else {
+        return &it->second;
+    }
+}
+
 //-----------------------------------------------------------------------------
 //  Proxy Server Implementation
 //-----------------------------------------------------------------------------
@@ -180,16 +190,52 @@ bool mtsTaskManagerProxyServer::AddProvidedInterface(
     // Add a new provided interface to the task
     bool ret = it->second.AddProvidedInterface(providedInterfaceInfo);
     Logger->print(GetTask(taskName)->ShowTaskInfo());
+
     return ret;
 }
 
-mtsTaskGlobal * mtsTaskManagerProxyServer::GetTask(const std::string & taskName)
+bool mtsTaskManagerProxyServer::AddRequiredInterface(
+    const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo)
+{
+    Logger->trace("mtsTaskManagerProxyServer", "Adding a new required interface.....");
+
+    mtsTaskGlobal * taskInfo = NULL;
+
+    // Check if the task has been registered.
+    const std::string taskName = requiredInterfaceInfo.taskName;
+    GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
+    if (it == GlobalTaskMap.end()) {
+        Logger->error("No task found: " + taskName);
+        return false;
+    }
+
+    // Add a new required interface to the task
+    bool ret = it->second.AddRequiredInterface(requiredInterfaceInfo);
+    Logger->print(GetTask(taskName)->ShowTaskInfo());
+
+    return ret;
+}
+
+bool mtsTaskManagerProxyServer::IsRegisteredProvidedInterface(
+    const std::string & taskName, const std::string & providedInterfaceName) const
+{
+    GlobalTaskMapType::const_iterator it = GlobalTaskMap.find(taskName);
+    if (it == GlobalTaskMap.end()) {
+        return false;
+    } else {
+        return it->second.IsRegisteredProvidedInterface(providedInterfaceName);
+    }
+}
+
+bool mtsTaskManagerProxyServer::GetProvidedInterfaceInfo(
+    const std::string & taskName, const std::string & providedInterfaceName,
+    mtsTaskManagerProxy::ProvidedInterfaceInfo & info)
 {
     GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
     if (it == GlobalTaskMap.end()) {
-        return 0;
+        return false;
     } else {
-        return &it->second;
+        return it->second.GetProvidedInterfaceInfo(providedInterfaceName, info);
     }
 }
 
@@ -302,5 +348,40 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
     const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo,
     const ::Ice::Current & current)
 {
+    Logger->trace("TMServer", "<<<<< RECV: AddProvidedInterface: " 
+        + providedInterfaceInfo.taskName + ", " + providedInterfaceInfo.interfaceName);
+
     return TaskManagerServer->AddProvidedInterface(providedInterfaceInfo);
+}
+
+bool mtsTaskManagerProxyServer::TaskManagerServerI::AddRequiredInterface(
+    const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo,
+    const ::Ice::Current & current)
+{
+    Logger->trace("TMServer", "<<<<< RECV: AddRequiredInterface: " 
+        + requiredInterfaceInfo.taskName + ", " + requiredInterfaceInfo.interfaceName);
+
+    return TaskManagerServer->AddRequiredInterface(requiredInterfaceInfo);
+}
+
+bool mtsTaskManagerProxyServer::TaskManagerServerI::IsRegisteredProvidedInterface(
+    const ::std::string & taskName, const ::std::string & providedInterfaceName,
+    const ::Ice::Current & current) const
+{
+    Logger->trace("TMServer", "<<<<< RECV: IsRegisteredProvidedInterface: " 
+        + taskName + ", " + providedInterfaceName);
+
+    return TaskManagerServer->IsRegisteredProvidedInterface(
+        taskName, providedInterfaceName);
+}
+
+bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceInfo(
+    const ::std::string & taskName, const ::std::string & providedInterfaceName,
+    ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info, const ::Ice::Current & current) const
+{
+    Logger->trace("TMServer", "<<<<< RECV: GetProvidedInterfaceInfo: " 
+        + taskName + ", " + providedInterfaceName);
+
+    return TaskManagerServer->GetProvidedInterfaceInfo(
+        taskName, providedInterfaceName, info);
 }

@@ -31,11 +31,14 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnAssert.h>
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsMap.h>
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
+#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
+#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 
 #include <set>
 
@@ -47,6 +50,10 @@ http://www.cisst.org/cisst/license.txt.
   The Task Manager is used to manage the connections between tasks
   and devices.  It is a Singleton object.
 */
+class mtsTaskManager;
+class mtsTaskManagerProxyServer;
+class mtsTaskManagerProxyClient;
+
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
     
     friend class mtsTaskManagerTest;
@@ -195,6 +202,12 @@ protected:
     //  Proxy-related
     //-------------------------------------------------------------------------
 protected:
+    /*! Dynamic-casted proxy object. 
+        Both are initialized as null pointer and only one of them is used. 
+        (mtsTaskManager cannot have both of them) */
+    mtsTaskManagerProxyServer * ProxyServer;
+    mtsTaskManagerProxyClient * ProxyClient;
+
     /*! Task manager type (server or client) */
     TaskManagerType TaskManagerTypeMember;
 
@@ -204,28 +217,39 @@ protected:
     /*! Proxy instance. This will be dynamically created. */
     mtsProxyBaseCommon<mtsTaskManager> * Proxy;
 
-    /*! Start proxies.
-        Task manager should start two kinds of proxies:
-            mtsTaskManagerProxy and mtsTaskInterfaceProxy
-    */
-    void StartProxy();
+    /*! Start proxy servers. */
+    void StartProxyServer();
 
 public:
     void SetTaskManagerType(const TaskManagerType taskManagerType) {
         TaskManagerTypeMember = taskManagerType;
 
-        StartProxy();
+        StartProxyServer();
     }
 
     /*! Inform the global task manager of the addition of a new provided interface. */
-    bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
-                              const std::string & adapterName,
-                              const std::string & endpointInfo,
-                              const std::string & communicatorID,
-                              const std::string & taskName);
+    const bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
+                                    const std::string & adapterName,
+                                    const std::string & endpointInfo,
+                                    const std::string & communicatorID,
+                                    const std::string & taskName);
+
+    const bool AddRequiredInterface(const std::string & newRequiredInterfaceName,
+                                    const std::string & taskName);
+
+    const bool IsRegisteredProvidedInterface(const std::string & taskName,
+                                             const std::string & providedInterfaceName);
+
+    const bool GetProvidedInterfaceInfo(const ::std::string & taskName,
+                                        const std::string & providedInterfaceName,
+                                        ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
 
     /*! Getter */
-    const TaskManagerType GetTaskManagerType() const { return TaskManagerTypeMember; }
+    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
+
+    //inline mtsTaskManagerProxyClient * GetTaskManagerProxyClient() {
+    //    return dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
+    //}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)
