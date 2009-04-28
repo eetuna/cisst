@@ -108,7 +108,7 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_DECLARE_SERVICES(hasDynamicCreation, lod) \
     public: \
       enum {HAS_DYNAMIC_CREATION = hasDynamicCreation}; \
-      static const cmnLogLoD::Type InitialLoD = lod; \
+      static const cmnLogLoD InitialLoD = lod; \
       static cmnClassServicesBase * ClassServices(void); \
       virtual cmnClassServicesBase * const Services(void) const \
       { \
@@ -125,7 +125,7 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_DECLARE_SERVICES_EXPORT(hasDynamicCreation, lod) \
     public: \
       enum {HAS_DYNAMIC_CREATION = hasDynamicCreation}; \
-      static const cmnLogLoD::Type InitialLoD = lod; \
+      static const cmnLogLoD InitialLoD = lod; \
       CISST_EXPORT static cmnClassServicesBase * ClassServices(void); \
       virtual cmnClassServicesBase * const Services(void) const \
       { \

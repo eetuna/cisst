@@ -27,10 +27,10 @@ http://www.cisst.org/cisst/license.txt.
 
 
 cmnLogger::cmnLogger(const std::string & defaultLogFileName):
-    LoD(cmnLogLoD::VERY_VERBOSE),
+    LoD(CMN_LOG_LOD_VERY_VERBOSE),
     LoDMultiplexerStreambuf()
 {
-    LoDMultiplexerStreambuf.AddChannel(*(DefaultLogFile(defaultLogFileName)), cmnLogLoD::RUN_ERROR);
+    LoDMultiplexerStreambuf.AddChannel(*(DefaultLogFile(defaultLogFileName)), CMN_LOG_LOD_RUN_ERROR);
 }
 
 

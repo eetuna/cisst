@@ -119,7 +119,7 @@ class cmnLODMultiplexerStreambuf : public std::basic_streambuf<_element, _trait>
     /*! 
       The type of Level of Detail
      */
-    typedef cmnLogLoD::Type LogLoDType;
+    typedef cmnLogLoD LogLoDType;
 
     typedef std::pair<ChannelType *, LogLoDType> ElementType;
   
@@ -136,7 +136,7 @@ class cmnLODMultiplexerStreambuf : public std::basic_streambuf<_element, _trait>
       \param fileStream Default Filestream
      */
     cmnLODMultiplexerStreambuf(std::ofstream & fileStream) {
-        this->AddChannel(fileStream.rdbuf(), cmnLogLoD::VERY_VERBOSE);
+        this->AddChannel(fileStream.rdbuf(), CMN_LOG_LOD_VERY_VERBOSE);
     }
 
     /*!

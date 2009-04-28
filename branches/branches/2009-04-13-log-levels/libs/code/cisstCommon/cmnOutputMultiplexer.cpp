@@ -39,7 +39,7 @@ std::ostream & cmnOutputMultiplexer::AddChannel(ChannelType * channel)
 
     if (it == m_ChannelContainer.end()) {
         m_ChannelContainer.insert(it, channel);
-        m_Streambuf.AddChannel( channel->rdbuf(), cmnLogLoD::NONE );
+        m_Streambuf.AddChannel( channel->rdbuf(), CMN_LOG_LOD_NONE );
     }
 
     return (*this);

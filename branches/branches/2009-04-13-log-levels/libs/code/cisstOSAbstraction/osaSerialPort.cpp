@@ -538,7 +538,7 @@ int osaSerialPort::Read(char * data, int nBytes)
     int numBytes = read(FileDescriptor, data, nBytes); // get chars if there
 
     // this is only to log a message of level 8
-    const cmnLogLoD::Type lod = cmnLogLoD::VERY_VERBOSE;
+    const cmnLogLoD lod = CMN_LOG_LOD_VERY_VERBOSE;
     if (numBytes > 0) {
         char * message;
         // create a message only if this is required.  based on CMN_LOG_CLASS code
@@ -618,7 +618,7 @@ int osaSerialPort::Read(unsigned char * data, int nBytes)
     int numBytes = read(FileDescriptor, data, nBytes); // get chars if there
 
     // this is only to log a message of level 8
-    const cmnLogLoD::Type lod = cmnLogLoD::VERY_VERBOSE;
+    const cmnLogLoD lod = CMN_LOG_LOD_VERY_VERBOSE;
     char* message;
     // create a message only if this is required.  based on CMN_LOG_CLASS code
     if ((lod > cmnLogger::GetLoD()) || (lod > Services()->GetLoD())) {

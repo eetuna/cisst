@@ -55,7 +55,7 @@ public:
       \param typeInfo Runtime type as defined by C++ RTTI
       \param lod The Log Level of Detail setting to be used with this class.
     */
-    cmnClassServicesBase(const std::string & className, const std::type_info * typeInfo, LogLoDType lod = cmnLogLoD::RUN_ERROR):
+    cmnClassServicesBase(const std::string & className, const std::type_info * typeInfo, LogLoDType lod = CMN_LOG_LOD_RUN_ERROR):
         TypeInfoMember(typeInfo),
         LoDMember(lod)
     {

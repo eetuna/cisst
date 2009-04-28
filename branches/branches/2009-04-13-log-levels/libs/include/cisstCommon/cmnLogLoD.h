@@ -32,21 +32,21 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnPortability.h>
 
-class cmnLogLoD {
- public:
-    typedef enum Type {
-        NONE = 0,
-        INIT_ERROR,
-        INIT_WARNING,
-        INIT_VERBOSE,
-        INIT_DEBUG,
-        RUN_ERROR,
-        RUN_WARNING,
-        RUN_VERBOSE,
-        RUN_DEBUG,
-        VERY_VERBOSE
+// class cmnLogLoD {
+//  public:
+    typedef enum cmnLogLoD {
+        CMN_LOG_LOD_NONE = 0,
+        CMN_LOG_LOD_INIT_ERROR,
+        CMN_LOG_LOD_INIT_WARNING,
+        CMN_LOG_LOD_INIT_VERBOSE,
+        CMN_LOG_LOD_INIT_DEBUG,
+        CMN_LOG_LOD_RUN_ERROR,
+        CMN_LOG_LOD_RUN_WARNING,
+        CMN_LOG_LOD_RUN_VERBOSE,
+        CMN_LOG_LOD_RUN_DEBUG,
+        CMN_LOG_LOD_VERY_VERBOSE
     };  
-};
+// };
 
 #endif // _cmnLogLoD_h
 
