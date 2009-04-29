@@ -5,9 +5,12 @@
 #######################
 # PLACEHOLDER STRINGS TO LOOK FOR:
 #
-# QUESTION      question to ask Anton
 # TODO          todo
 #######################
+
+# TODO: If I have time, Document why self.CObject[i] works and check which typemap(s) used
+# TODO: Check that StdTestThrowUnlessReads[Writes][Resizes]Correctly mirror each other
+# TODO: Clean this code up
 
 import copy
 import numpy
@@ -35,7 +38,6 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
         # Give an array; expect no exception
         goodvar = numpy.ones(10, dtype=numpy.int32)
-        # QUESTION: Should the test give any array (not just a 1D array of ints)?
         exec('self.CObject.' + function + '(goodvar, 0)')
 
     # Tests that the typemap throws an exception if the data type isn't int
@@ -117,18 +119,14 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     # Test if the C object reads the vector correctly
     def StdTestThrowUnlessReadsCorrectly(self, function):
         v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
-        # QUESTION: Should I make a copy of v in order to avoid the case where
-        # a typemap that should have read-only access actually changes v to be
-        # 0-sized, thereby making the loop below not run?  In other words, I'd
-        # do this:
-        #    vOrig = copy.deepcopy(v)
-        # And instead of the existing for loop declaration, I'd have:
-        #    for i in xrange(vOrig.size):
+        size = v.size;
         exec('self.CObject.' + function + '(v, 0)')
 
-        for i in xrange(v.size):
+        assert(self.CObject.size() == size)
+        assert(v.size == size)
+        for i in xrange(size):
             # Test if the C object read the vector correctly
-            assert(self.CObject.copy[i] == v[i])
+            assert(self.CObject[i] == v[i])
 
     # Test if the C object reads and modifies the vector correctly
     def StdTestThrowUnlessReadsWritesCorrectly(self, function):
@@ -136,9 +134,11 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         vOrig = copy.deepcopy(v)
         exec('self.CObject.' + function + '(v, 0)')
 
-        for i in xrange(v.size):
+        assert(self.CObject.size() == vOrig.size)
+        assert(v.size == vOrig.size)
+        for i in xrange(vOrig.size):
             # Test if the C object read the vector correctly
-            assert(self.CObject.copy[i] == vOrig[i])
+            assert(self.CObject[i] == vOrig[i])
             # Test if the C object modified the vector correctly
             assert(v[i] == vOrig[i] + 1)
 
@@ -149,13 +149,19 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         SIZEFACTOR = 2
         exec('self.CObject.' + function + '(v, SIZEFACTOR)')
 
+        assert(self.CObject.size() == vOrig.size)
+        # TODO: Should I resize CObject.copy as well?  More generally, should I
+        # look at making the C++ code for in_argout_vctDynamicVector_ref (see
+        # the .h file) better?
         assert(v.size == vOrig.size * SIZEFACTOR)
         for i in xrange(vOrig.size):
             # Test if the C object read the vector correctly
-            assert(self.CObject.copy[i] == vOrig[i])
+            assert(self.CObject[i] == vOrig[i])
             # Test if the C object modified the vector correctly
             assert(v[i] == vOrig[i] + 1)
-        # QUESTION: [1, 2, 3, 4, 5] --> [1, 2, 3, 4, 5, 1, 2, 3, 4, 5] ?
+            # Test if the C object resized the vector correctly
+            for j in xrange(SIZEFACTOR):
+                assert(vOrig[i] + 1 == v[i + (vOrig.size * j)])
 
     # Tests
 
@@ -248,5 +254,18 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         SIZE = 10
         v = self.CObject.out_vctDynamicVector(SIZE)
         assert(v.size == SIZE)  # to make sure v.size isn't zero
+                                # TODO: do this for (almost) all tests
         for i in xrange(v.size):
-            assert(self.CObject.copy[i] == v[i])
+            assert(self.CObject[i] == v[i])
+
+# We currently do not support the vctDynamicVectorRef out typemap
+#     def Test_out_vctDynamicVectorRef(self):
+#         MY_NAME = 'out_vctDynamicVectorRef'
+
+#         # Perform specialized tests
+#         SIZE = 10
+#         v = self.CObject.out_vctDynamicVectorRef(SIZE)
+# #         assert(v.size == SIZE)  # to make sure v.size isn't zero
+# #                                 # TODO: do this for (almost) all tests
+# #         for i in xrange(v.size):
+# #             assert(self.CObject[i] == v[i])
