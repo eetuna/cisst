@@ -1,11 +1,10 @@
 /******************************************************************************
- Authors: Daniel Li, Mitch Williams, Anton Deguet
+ Authors: Daniel Li, Anton Deguet
 ******************************************************************************/
 
 /*****************************************************************************
  PLACEHOLDER STRINGS TO LOOK FOR:
 
-   @mystery@            Bookmark for strange code behavior
    TODO                 todo
 *****************************************************************************/
 
@@ -31,8 +30,7 @@
 %header %{
 
     #include <cisstCommon/cmnAssert.h>
-    #include <cisstVector/vctFixedSizeConstVectorBase.h>
-    #include <cisstVector/vctDynamicConstVectorBase.h>
+    #include <cisstVector/vctDynamicConstMatrixBase.h>
 
     bool vctThrowUnlessIsPyArray(PyObject * input)
     {
@@ -73,10 +71,10 @@
         return NPY_INT32;
     }
 
-    bool vctThrowUnlessDimension1(PyObject * input)
+    bool vctThrowUnlessDimension2(PyObject * input)
     {
-        if (PyArray_NDIM(input) != 1) {
-            PyErr_SetString(PyExc_ValueError, "Array must be 1D");
+        if (PyArray_NDIM(input) != 2) {
+            PyErr_SetString(PyExc_ValueError, "Array must be 2D (matrix)");
             return false;
         }
 
@@ -118,15 +116,15 @@
 
 
 /******************************************************************************
-  TYPEMAPS (in, out) FOR vctDynamicVector
+  TYPEMAPS (in) FOR vctDynamicMatrix
 ******************************************************************************/
 
 
-%typemap(in) vctDynamicVector
+%typemap(in) vctDynamicMatrix
 {
     /*****************************************************************************
-    *   %typemap(in) vctDynamicVector
-    *   Passing a vctDynamicVector by copy
+    *   %typemap(in) vctDynamicMatrix
+    *   Passing a vctDynamicMatrix by copy
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -134,61 +132,45 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input))
+          && vctThrowUnlessDimension2($input))
         ) {
           return NULL;
     }
 
     /*****************************************************************************
-     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicVector
+     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicMatrix
     *****************************************************************************/
 
-    // Create a temporary vctDynamicVectorRef container
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($1_ltype::value_type);
+    // Create a temporary vctDynamicMatrixRef container
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
     const $1_ltype::pointer data =
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
+    const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
-    // Copy the data from the temporary container to the vctDynamicVector
-    $1.SetSize(size);
+    // Copy the data from the temporary container to the vctDynamicMatrix
+    $1.SetSize(tempContainer.sizes());
     $1.Assign(tempContainer);
 }
 
 
-%typemap(out) vctDynamicVector
-{
-    /* Return vector by copy
-       Using: %typemap(out) vctDynamicVector
-     */
-
-    //Create a new PyArray and set its size
-    npy_intp* sizes = PyDimMem_NEW(1);
-    sizes[0] = $1.size();
-
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());
-
-    // copy data returned by C function into new PyArray
-    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );
-}
-
-
 /******************************************************************************
-  TYPEMAPS (in, argout, out) FOR vctDynamicVector &
+  TYPEMAPS (in, argout, out) FOR vctDynamicMatrix &
 ******************************************************************************/
 
 
-%typemap(in) vctDynamicVector &
+%typemap(in) vctDynamicMatrix &
 {
     /*****************************************************************************
-    *   %typemap(in) vctDynamicVector &
-    *   Passing a vctDynamicVector by reference
+    *   %typemap(in) vctDynamicMatrix &
+    *   Passing a vctDynamicMatrix by reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this typemap.
@@ -201,7 +183,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input)
+          && vctThrowUnlessDimension2($input)
           && vctThrowUnlessIsWritable($input)
           && vctThrowUnlessOwnsData($input)
           && vctThrowUnlessNotReferenced($input))
@@ -210,30 +192,31 @@
     }
 
     /*****************************************************************************
-     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicVector
+     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicMatrix
     *****************************************************************************/
 
     // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicVectorRef?
+    // of copying using a vctDynamicMatrixRef?
 
-    // Create a temporary vctDynamicVectorRef container
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
+    // Create a temporary vctDynamicMatrixRef container
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data =
         reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
+    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
-    // Create the vctDynamicVector
+    // Create the vctDynamicMatrix
     $1 = new $*1_ltype(tempContainer);
 }
 
 
-%typemap(argout) vctDynamicVector &
+%typemap(argout) vctDynamicMatrix &
 {
     /*****************************************************************************
-    *   %typemap(argout) vctDynamicVector &
-    *   Passing a vctDynamicVector by reference
+    *   %typemap(argout) vctDynamicMatrix &
+    *   Passing a vctDynamicMatrix by reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -243,19 +226,23 @@
      CHECK IF THE CONTAINER HAS BEEN RESIZED
     *************************************************************************/
 
-    const $*1_ltype::size_type input_size = PyArray_DIM($input, 0);
-    const $*1_ltype::size_type output_size = $1->size();
+    const $*1_ltype::size_type input_size0 = PyArray_DIM($input, 0);
+    const $*1_ltype::size_type input_size1 = PyArray_DIM($input, 1);
+    const $*1_ltype::size_type output_size0 = $1->sizes()[0];
+    const $*1_ltype::size_type output_size1 = $1->sizes()[1];
 
-    if (input_size != output_size) {
+    if (   input_size0 != output_size0
+        || input_size1 != output_size1) {
         // Resize the PyArray by:
         //  1)  Creating an array containing the new size
         //  2)  Pass that array to the resizing function given by NumPy API
 
-        npy_intp *sizes = PyDimMem_NEW(1);              // create an array of sizes; dimension 1
-        sizes[0] = output_size;                         // set the size
+        npy_intp *sizes = PyDimMem_NEW(2);              // create an array of sizes; dimension 2
+        sizes[0] = output_size0;                        // set the size
+        sizes[1] = output_size1;
         PyArray_Dims dims;                              // create a PyArray_Dims object to hand to PyArray_Resize
         dims.ptr = sizes;
-        dims.len = 1;
+        dims.len = 2;
         PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);   // resize the PyArray
                                                                           // @mystery@
                                                                           // Why does setting the third parameter to be 1
@@ -270,18 +257,18 @@
     *************************************************************************/
 
     // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicVectorRef?
+    // of copying using a vctDynamicMatrixRef?
 
-    // Create a temporary vctDynamicVectorRef container
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
+    // Create a temporary vctDynamicMatrixRef container
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data =
         reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    vctDynamicVectorRef<$*1_ltype::value_type> tempContainer =
-        vctDynamicVectorRef<$*1_ltype::value_type>(size, data, stride);
+    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
-    // Copy the data from the temporary container to the vctDynamicVector
+    // Copy the data from the temporary container to the vctDynamicMatrix
     tempContainer.Assign($1->Pointer());
 
     /*************************************************************************
@@ -293,31 +280,16 @@
 }
 
 
-%typemap(out) vctDynamicVector &
-{
-    /* Return vector by reference
-       Using: %typemap(out) vctDynamicVector &
-     */
-
-    //Create new size array and set size
-    npy_intp* sizeOfReturnedVector = PyDimMem_NEW(1);
-    sizeOfReturnedVector[0] = $1->size();
-
-    //create a new PyArray from the reference returned by the C function
-    $result = PyArray_SimpleNewFromData(1, sizeOfReturnedVector, vctPythonType<$*1_ltype::value_type>(),  $1->Pointer() );
-}
-
-
 /******************************************************************************
-  TYPEMAPS (in, argout, out) FOR const vctDynamicVector &
+  TYPEMAPS (in, argout, out) FOR const vctDynamicMatrix &
 ******************************************************************************/
 
 
-%typemap(in) const vctDynamicVector &
+%typemap(in) const vctDynamicMatrix &
 {
     /*****************************************************************************
-    *   %typemap(in) const vctDynamicVector &
-    *   Passing a vctDynamicVector by const &
+    *   %typemap(in) const vctDynamicMatrix &
+    *   Passing a vctDynamicMatrix by const &
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -330,34 +302,34 @@
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input))
+          && vctThrowUnlessDimension2($input))
         ) {
           return NULL;
     }
 
     /*****************************************************************************
-     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicVector
+     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicMatrix
     *****************************************************************************/
 
-    // Create a temporary vctDynamicVectorRef container
+    // Create a temporary vctDynamicMatrixRef container
     const npy_intp size = PyArray_DIM($input, 0);
     const npy_intp stride = PyArray_STRIDE($input, 0) /
                                 sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data =
         reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer =
-        vctDynamicVectorRef<$*1_ltype::value_type>(size, data, stride);
+    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer =
+        vctDynamicMatrixRef<$*1_ltype::value_type>(size, data, stride);
 
-    // Create the vctDynamicVector
+    // Create the vctDynamicMatrix
     $1 = new $*1_ltype(tempContainer);
 }
 
 
-%typemap(argout) const vctDynamicVector &
+%typemap(argout) const vctDynamicMatrix &
 {
     /**************************************************************************
-    *   %typemap(argout) const vctDynamicVector &
-    *   Passing a vctDynamicVector by const reference
+    *   %typemap(argout) const vctDynamicMatrix &
+    *   Passing a vctDynamicMatrix by const reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -372,10 +344,10 @@
 }
 
 
-%typemap(out) const vctDynamicVector &
+%typemap(out) const vctDynamicMatrix &
 {
     /* Return vector by const reference
-       Using: %typemap(out) const vctDynamicVector &
+       Using: %typemap(out) const vctDynamicMatrix &
      */
 
     /* To imitate const functionality, set the writable flag to false */
@@ -390,15 +362,15 @@
 
 
 /******************************************************************************
-  TYPEMAPS (in, out) FOR vctDynamicVectorRef
+  TYPEMAPS (in, out) FOR vctDynamicMatrixRef
 ******************************************************************************/
 
 
-%typemap(in) vctDynamicVectorRef
+%typemap(in) vctDynamicMatrixRef
 {
     /*************************************************************************
-    *   %typemap(in) vctDynamicVectorRef
-    *   Passing a vctDynamicVectorRef by copy
+    *   %typemap(in) vctDynamicMatrixRef
+    *   Passing a vctDynamicMatrixRef by copy
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic
     *   behind this typemap.
@@ -412,14 +384,14 @@
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input)
+          && vctThrowUnlessDimension2($input)
           && vctThrowUnlessIsWritable($input))
         ) {
           return NULL;
     }
 
     /*************************************************************************
-     SET THE SIZE, STRIDE AND DATA POINTER OF THE vctDynamicVectorRef
+     SET THE SIZE, STRIDE AND DATA POINTER OF THE vctDynamicMatrixRef
      OBJECT (NAMED `$1') TO MATCH THAT OF THE PYARRAY (NAMED `$input')
     *************************************************************************/
 
@@ -434,12 +406,12 @@
 
 
 
-%typemap(out) vctDynamicVectorRef
+%typemap(out) vctDynamicMatrixRef
 {
-#if 0     // We currently do not support the vctDynamicVectorRef out typemap
+#if 0     // We currently do not support the vctDynamicMatrixRef out typemap
     /*****************************************************************************
-    *   %typemap(out) vctDynamicVectorRef
-    *   Returning a vctDynamicVectorRef
+    *   %typemap(out) vctDynamicMatrixRef
+    *   Returning a vctDynamicMatrixRef
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -454,37 +426,33 @@
     $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
 
     /*****************************************************************************
-     COPY THE DATA FROM THE vctDynamicVectorRef TO THE PYARRAY
+     COPY THE DATA FROM THE vctDynamicMatrixRef TO THE PYARRAY
     *****************************************************************************/
 
-    // Create a temporary vctDynamicVectorRef container
+    // Create a temporary vctDynamicMatrixRef container
     const npy_intp size = PyArray_DIM($result, 0);      // TODO: change to: $1.size()
     const npy_intp stride = PyArray_STRIDE($result, 0) /
                                 sizeof($1_ltype::value_type);       // TODO: change to: 1
     const $1_ltype::pointer data =
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
-    vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
-    // TODO: Which is better?
-    //  vctDynamicVectorRef<$1_ltype::value_type> tempContainer = vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
-    //  or
-    //  vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
+    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
-    // Copy the data from the vctDynamicVectorRef to the temporary container
+    // Copy the data from the vctDynamicMatrixRef to the temporary container
     tempContainer.Assign($1);
 #endif  // 0
 }
 
 
 /******************************************************************************
-  TYPEMAPS (in, argout) FOR const vctDynamicVectorRef &
+  TYPEMAPS (in, argout) FOR const vctDynamicMatrixRef &
 ******************************************************************************/
 
 
-%typemap(in) const vctDynamicVectorRef &
+%typemap(in) const vctDynamicMatrixRef &
 {
     /**************************************************************************
-    *   %typemap(in) const vctDynamicVectorRef &
-    *   Passing a vctDynamicVectorRef by const reference
+    *   %typemap(in) const vctDynamicMatrixRef &
+    *   Passing a vctDynamicMatrixRef by const reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -497,16 +465,16 @@
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input))
+          && vctThrowUnlessDimension2($input))
         ) {
           return NULL;
     }
 
     /*****************************************************************************
-     CREATE A vctDynamicVectorRef TO POINT TO THE DATA OF THE PYARRAY
+     CREATE A vctDynamicMatrixRef TO POINT TO THE DATA OF THE PYARRAY
     *****************************************************************************/
 
-    // Create the vctDynamicVectorRef
+    // Create the vctDynamicMatrixRef
     const npy_intp size = PyArray_DIM($input, 0);
     const npy_intp stride = PyArray_STRIDE($input, 0) /
                                 sizeof($*1_ltype::value_type);
@@ -516,11 +484,11 @@
 }
 
 
-%typemap(argout) const vctDynamicVectorRef &
+%typemap(argout) const vctDynamicMatrixRef &
 {
     /**************************************************************************
-    *   %typemap(argout) const vctDynamicVectorRef &
-    *   Passing a vctDynamicVectorRef by const reference
+    *   %typemap(argout) const vctDynamicMatrixRef &
+    *   Passing a vctDynamicMatrixRef by const reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -536,15 +504,15 @@
 
 
 /******************************************************************************
-  TYPEMAPS (in, out) FOR vctDynamicConstVectorRef
+  TYPEMAPS (in, out) FOR vctDynamicConstMatrixRef
 ******************************************************************************/
 
 
-%typemap(in) vctDynamicConstVectorRef
+%typemap(in) vctDynamicConstMatrixRef
 {
     /*****************************************************************************
-    *   %typemap(in) vctDynamicConstVectorRef
-    *   Passing a vctDynamicConstVectorRef by copy
+    *   %typemap(in) vctDynamicConstMatrixRef
+    *   Passing a vctDynamicConstMatrixRef by copy
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -557,14 +525,14 @@
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input))
+          && vctThrowUnlessDimension2($input))
         ) {
           return NULL;
     }
 
     /*****************************************************************************
      SET THE SIZE, STRIDE, AND DATA POINTER OF THE
-     vctDynamicConstVectorRef OBJECT (NAMED `$1') TO MATCH THAT OF THE
+     vctDynamicConstMatrixRef OBJECT (NAMED `$1') TO MATCH THAT OF THE
      PYARRAY (NAMED `$input')
     *****************************************************************************/
 
@@ -578,11 +546,11 @@
 }
 
 
-%typemap(out) vctDynamicConstVectorRef
+%typemap(out) vctDynamicConstMatrixRef
 {
     /*****************************************************************************
-    *   %typemap(out) vctDynamicConstVectorRef
-    *   Returning a vctDynamicConstVectorRef
+    *   %typemap(out) vctDynamicConstMatrixRef
+    *   Returning a vctDynamicConstMatrixRef
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -597,33 +565,33 @@
     $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
 
     /*****************************************************************************
-     COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY
+     COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY
     *****************************************************************************/
 
-    // Create a temporary vctDynamicVectorRef container
+    // Create a temporary vctDynamicMatrixRef container
     const npy_intp size = PyArray_DIM($result, 0);
     const npy_intp stride = PyArray_STRIDE($result, 0) /
                                 sizeof($1_ltype::value_type);
     const $1_ltype::pointer data =
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
-    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer =
-        vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
+    const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer =
+        vctDynamicMatrixRef<$1_ltype::value_type>(size, data, stride);
 
-    // Copy the data from the vctDynamicConstVectorRef to the temporary container
+    // Copy the data from the vctDynamicConstMatrixRef to the temporary container
     tempContainer = $1;
 }
 
 
 /******************************************************************************
-  TYPEMAPS (in, argout) FOR const vctDynamicConstVectorRef &
+  TYPEMAPS (in, argout) FOR const vctDynamicConstMatrixRef &
 ******************************************************************************/
 
 
-%typemap(in) const vctDynamicConstVectorRef &
+%typemap(in) const vctDynamicConstMatrixRef &
 {
     /**************************************************************************
-    *   %typemap(in) const vctDynamicConstVectorRef &
-    *   Passing a vctDynamicConstVectorRef by const reference
+    *   %typemap(in) const vctDynamicConstMatrixRef &
+    *   Passing a vctDynamicConstMatrixRef by const reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -636,16 +604,16 @@
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension1($input))
+          && vctThrowUnlessDimension2($input))
         ) {
           return NULL;
     }
 
     /*****************************************************************************
-     CREATE A vctDynamicConstVectorRef TO POINT TO THE DATA OF THE PYARRAY
+     CREATE A vctDynamicConstMatrixRef TO POINT TO THE DATA OF THE PYARRAY
     *****************************************************************************/
 
-    // Create the vctDynamicConstVectorRef
+    // Create the vctDynamicConstMatrixRef
     const npy_intp size = PyArray_DIM($input, 0);
     const npy_intp stride = PyArray_STRIDE($input, 0) /
                                 sizeof($*1_ltype::value_type);
@@ -656,11 +624,11 @@
 }
 
 
-%typemap(argout) const vctDynamicConstVectorRef &
+%typemap(argout) const vctDynamicConstMatrixRef &
 {
     /**************************************************************************
-    *   %typemap(argout) const vctDynamicConstVectorRef &
-    *   Passing a vctDynamicConstVectorRef by const reference
+    *   %typemap(argout) const vctDynamicConstMatrixRef &
+    *   Passing a vctDynamicConstMatrixRef by const reference
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
     *   this type map.
@@ -680,38 +648,37 @@
 **************************************************************************/
 
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
-%apply vctDynamicVector {vctFixedSizeVector<elementType, size>};
-%apply vctDynamicVector & {vctFixedSizeVector<elementType, size> &};
-%apply const vctDynamicVector & {const vctFixedSizeVector<elementType, size> &};
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, size)
+%apply vctDynamicMatrix {vctFixedSizeMatrix<elementType, size>};
+%apply vctDynamicMatrix & {vctFixedSizeMatrix<elementType, size> &};
+%apply const vctDynamicMatrix & {const vctFixedSizeMatrix<elementType, size> &};
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(elementType)
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 2);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 3);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 4);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 5);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 6);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 7);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 8);
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(elementType)
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 2);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 3);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 4);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 5);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 6);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 7);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8);
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(elementType)
-%apply vctDynamicVector         {vctDynamicVector<elementType>};
-%apply vctDynamicVector &       {vctDynamicVector<elementType> &};
-%apply const vctDynamicVector & {const vctDynamicVector<elementType> &};
+%define VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(elementType)
+%apply vctDynamicMatrix         {vctDynamicMatrix<elementType>};
+%apply vctDynamicMatrix &       {vctDynamicMatrix<elementType> &};
+%apply const vctDynamicMatrix & {const vctDynamicMatrix<elementType> &};
 
-%apply vctDynamicVectorRef         {vctDynamicVectorRef<elementType>};
-%apply const vctDynamicVectorRef & {const vctDynamicVectorRef<elementType> &};
+%apply vctDynamicMatrixRef         {vctDynamicMatrixRef<elementType>};
+%apply const vctDynamicMatrixRef & {const vctDynamicMatrixRef<elementType> &};
 
-%apply vctDynamicConstVectorRef         {vctDynamicConstVectorRef<elementType>};
-%apply const vctDynamicConstVectorRef & {const vctDynamicConstVectorRef<elementType> &};
+%apply vctDynamicConstMatrixRef         {vctDynamicConstMatrixRef<elementType>};
+%apply const vctDynamicConstMatrixRef & {const vctDynamicConstMatrixRef<elementType> &};
 %enddef
 
-%import <cisstVector/vctFixedSizeVectorTypes.h>
-%import <cisstVector/vctDynamicVectorTypes.h>
+%import <cisstVector/vctDynamicMatrixTypes.h>
 
-VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(int);
-VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(double);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
