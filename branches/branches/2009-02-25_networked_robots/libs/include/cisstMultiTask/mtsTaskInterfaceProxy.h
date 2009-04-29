@@ -94,6 +94,174 @@ void __patch__TaskInterfaceServerPtr(void*, ::Ice::ObjectPtr&);
 
 }
 
+namespace mtsTaskInterfaceProxy
+{
+
+struct CommandVoidInfo
+{
+    ::std::string Name;
+
+    bool operator==(const CommandVoidInfo&) const;
+    bool operator<(const CommandVoidInfo&) const;
+    bool operator!=(const CommandVoidInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const CommandVoidInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const CommandVoidInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const CommandVoidInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
+struct CommandWriteInfo
+{
+    ::std::string Name;
+    ::std::string ArgumentTypeName;
+
+    bool operator==(const CommandWriteInfo&) const;
+    bool operator<(const CommandWriteInfo&) const;
+    bool operator!=(const CommandWriteInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const CommandWriteInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const CommandWriteInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const CommandWriteInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
+struct CommandReadInfo
+{
+    ::std::string Name;
+    ::std::string ArgumentTypeName;
+
+    bool operator==(const CommandReadInfo&) const;
+    bool operator<(const CommandReadInfo&) const;
+    bool operator!=(const CommandReadInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const CommandReadInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const CommandReadInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const CommandReadInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
+struct CommandQualifiedReadInfo
+{
+    ::std::string Name;
+    ::std::string Argument1TypeName;
+    ::std::string Argument2TypeName;
+
+    bool operator==(const CommandQualifiedReadInfo&) const;
+    bool operator<(const CommandQualifiedReadInfo&) const;
+    bool operator!=(const CommandQualifiedReadInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const CommandQualifiedReadInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const CommandQualifiedReadInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const CommandQualifiedReadInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
+typedef ::std::vector< ::mtsTaskInterfaceProxy::CommandVoidInfo> CommandVoidSeq;
+void __writeCommandVoidSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::CommandVoidInfo*, const ::mtsTaskInterfaceProxy::CommandVoidInfo*);
+void __readCommandVoidSeq(::IceInternal::BasicStream*, CommandVoidSeq&);
+
+typedef ::std::vector< ::mtsTaskInterfaceProxy::CommandWriteInfo> CommandWriteSeq;
+void __writeCommandWriteSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::CommandWriteInfo*, const ::mtsTaskInterfaceProxy::CommandWriteInfo*);
+void __readCommandWriteSeq(::IceInternal::BasicStream*, CommandWriteSeq&);
+
+typedef ::std::vector< ::mtsTaskInterfaceProxy::CommandReadInfo> CommandReadSeq;
+void __writeCommandReadSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::CommandReadInfo*, const ::mtsTaskInterfaceProxy::CommandReadInfo*);
+void __readCommandReadSeq(::IceInternal::BasicStream*, CommandReadSeq&);
+
+typedef ::std::vector< ::mtsTaskInterfaceProxy::CommandQualifiedReadInfo> CommandQualifiedReadSeq;
+void __writeCommandQualifiedReadSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::CommandQualifiedReadInfo*, const ::mtsTaskInterfaceProxy::CommandQualifiedReadInfo*);
+void __readCommandQualifiedReadSeq(::IceInternal::BasicStream*, CommandQualifiedReadSeq&);
+
+struct ProvidedInterfaceSpecification
+{
+    ::std::string interfaceName;
+    ::mtsTaskInterfaceProxy::CommandVoidSeq commandsVoid;
+    ::mtsTaskInterfaceProxy::CommandWriteSeq commandsWrite;
+    ::mtsTaskInterfaceProxy::CommandReadSeq commandsRead;
+    ::mtsTaskInterfaceProxy::CommandQualifiedReadSeq commandsQualifiedRead;
+
+    bool operator==(const ProvidedInterfaceSpecification&) const;
+    bool operator<(const ProvidedInterfaceSpecification&) const;
+    bool operator!=(const ProvidedInterfaceSpecification& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const ProvidedInterfaceSpecification& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const ProvidedInterfaceSpecification& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const ProvidedInterfaceSpecification& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
+typedef ::std::vector< ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification> ProvidedInterfaceSpecificationSeq;
+void __writeProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification*, const ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification*);
+void __readProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream*, ProvidedInterfaceSpecificationSeq&);
+
+}
+
 namespace IceProxy
 {
 
@@ -321,6 +489,21 @@ private:
     void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
     
 public:
+
+    bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications)
+    {
+        return GetProvidedInterfaceSpecification(providedInterfaceSpecifications, 0);
+    }
+    bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context& __ctx)
+    {
+        return GetProvidedInterfaceSpecification(providedInterfaceSpecifications, &__ctx);
+    }
+    
+private:
+
+    bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*);
+    
+public:
     
     ::IceInternal::ProxyHandle<TaskInterfaceServer> ice_context(const ::Ice::Context& __context) const
     {
@@ -541,6 +724,8 @@ class TaskInterfaceServer : virtual public ::IceDelegate::Ice::Object
 public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*) = 0;
+
+    virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*) = 0;
 };
 
 }
@@ -565,6 +750,8 @@ class TaskInterfaceServer : virtual public ::IceDelegate::mtsTaskInterfaceProxy:
 public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
+
+    virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*);
 };
 
 }
@@ -589,6 +776,8 @@ class TaskInterfaceServer : virtual public ::IceDelegate::mtsTaskInterfaceProxy:
 public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
+
+    virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*);
 };
 
 }
@@ -634,6 +823,9 @@ public:
 
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___AddClient(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Current& = ::Ice::Current()) const = 0;
+    ::Ice::DispatchStatus ___GetProvidedInterfaceSpecification(::IceInternal::Incoming&, const ::Ice::Current&) const;
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

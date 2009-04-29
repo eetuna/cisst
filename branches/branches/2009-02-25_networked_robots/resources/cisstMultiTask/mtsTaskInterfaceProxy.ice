@@ -33,22 +33,84 @@ http://www.cisst.org/cisst/license.txt.
 
 module mtsTaskInterfaceProxy
 {
+	//-----------------------------------------------------------------------------
+	//	Data Structure Definition
+	//-----------------------------------------------------------------------------
+	struct CommandVoidInfo { 
+		string Name;
+	};
+	
+	struct CommandWriteInfo { 
+		string Name;
+		string ArgumentTypeName;
+	};
+	
+	struct CommandReadInfo { 
+		string Name;
+		string ArgumentTypeName;
+	};
+	
+	struct CommandQualifiedReadInfo { 
+		string Name;
+		string Argument1TypeName;
+		string Argument2TypeName;
+	};
+	
+	/*
+	struct EventVoidInfo { 
+		string Name;
+	};
+	
+	struct EventWriteInfo { 
+		string Name;
+	};
+	*/
 
-//-----------------------------------------------------------------------------
-// Interface for Required Interface (client)
-//-----------------------------------------------------------------------------
-interface TaskInterfaceClient
-{
-};
+	sequence<CommandVoidInfo> CommandVoidSeq;
+	sequence<CommandWriteInfo> CommandWriteSeq;
+	sequence<CommandReadInfo> CommandReadSeq;
+	sequence<CommandQualifiedReadInfo> CommandQualifiedReadSeq;
+    //sequence<EventVoidInfo> EventVoidSeq;
+    //sequence<EventWriteInfo> EventWriteSeq;
+    
+	// Data structure definition
+	struct ProvidedInterfaceSpecification {
+		// Identity
+		string interfaceName;
+		
+		// Commands
+		CommandVoidSeq commandsVoid;
+		CommandWriteSeq commandsWrite;
+		CommandReadSeq commandsRead;
+		CommandQualifiedReadSeq commandsQualifiedRead;
+		//EventVoidSeq eventsVoid;
+		//EventWriteSeq eventsWrite;
+		
+		// Events: this isn't supported at this time. Event handling will be implemented.
+		//sequence<EventVoidInfo> eventsVoid;
+		//sequence<EventWriteInfo> eventsWrite;
+	};
+	
+	sequence<ProvidedInterfaceSpecification> ProvidedInterfaceSpecificationSeq;
 
-//-----------------------------------------------------------------------------
-// Interface for Provided Interface (server)
-//-----------------------------------------------------------------------------
-interface TaskInterfaceServer
-{
-    // from clients
-    void AddClient(Ice::Identity ident);
-};
+	//-----------------------------------------------------------------------------
+	// Interface for Required Interface (Proxy Client)
+	//-----------------------------------------------------------------------------
+	interface TaskInterfaceClient
+	{
+	};
+
+	//-----------------------------------------------------------------------------
+	// Interface for Provided Interface (Proxy Server)
+	//-----------------------------------------------------------------------------
+	interface TaskInterfaceServer
+	{
+		// from clients
+		void AddClient(Ice::Identity ident);
+		
+		["cpp:const"] idempotent bool GetProvidedInterfaceSpecification(
+			out ProvidedInterfaceSpecificationSeq providedInterfaceSpecifications);
+	};
 
 };
 

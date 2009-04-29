@@ -39,6 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
+#include <cisstMultiTask/mtsTaskInterfaceProxy.h>
 
 #include <set>
 
@@ -110,6 +111,17 @@ protected:
     /*! Destructor.  Does OS-specific cleanup. */
     virtual ~mtsTaskManager();
 
+    /*! Connect across networks. To provide user with the concept of 'transparency,'
+        this is called internally. (only by public Connect() method) */
+    bool ConnectRemote(const std::string & resourceTaskName, const std::string & providedInterfaceName,
+                       const std::string & userTaskName, const std::string & interfaceRequiredName,
+                       mtsTask * userTask);
+
+    /*! Create a provided interface proxy and populate it with the complete specification 
+        on the remote provided interface. */
+    bool CreateProvidedInterfaceProxy(const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
+                                      mtsTask * serverProxyTask);
+
  public:
     /*! Create the static instance of this class. */
     static mtsTaskManager * GetInstance(void) ;
@@ -152,7 +164,7 @@ protected:
     */
     bool Connect(const std::string & userTaskName, const std::string & requiredInterfaceName,
                  const std::string & resourceTaskName, const std::string & providedInterfaceName);
-    
+
     /*! Disconnect the required interface of a user task to the provided
       interface of a resource task (or device).
     */
@@ -203,8 +215,8 @@ protected:
     //-------------------------------------------------------------------------
 protected:
     /*! Dynamic-casted proxy object. 
-        Both are initialized as null pointer and only one of them is used. 
-        (mtsTaskManager cannot have both of them) */
+        Both are initialized as null pointer and either one of them must be null and
+        the other be valid pointer. */
     mtsTaskManagerProxyServer * ProxyServer;
     mtsTaskManagerProxyClient * ProxyClient;
 
@@ -217,39 +229,37 @@ protected:
     /*! Proxy instance. This will be dynamically created. */
     mtsProxyBaseCommon<mtsTaskManager> * Proxy;
 
-    /*! Start proxy servers. */
-    void StartProxyServer();
+    /*! Start a task interface proxy according to its type. */
+    void StartTaskInterfaceProxy();
 
 public:
+    /*! Set the type of task manager-global task manager (server) or conventional
+        task manager (client)-and start an appropriate task manager proxy.
+        Also start a task interface proxy. */
     void SetTaskManagerType(const TaskManagerType taskManagerType) {
         TaskManagerTypeMember = taskManagerType;
-
-        StartProxyServer();
+        StartTaskInterfaceProxy();
     }
 
     /*! Inform the global task manager of the addition of a new provided interface. */
-    const bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
+    const bool InvokeAddProvidedInterface(const std::string & newProvidedInterfaceName,
                                     const std::string & adapterName,
                                     const std::string & endpointInfo,
                                     const std::string & communicatorID,
                                     const std::string & taskName);
 
-    const bool AddRequiredInterface(const std::string & newRequiredInterfaceName,
+    const bool InvokeAddRequiredInterface(const std::string & newRequiredInterfaceName,
                                     const std::string & taskName);
 
-    const bool IsRegisteredProvidedInterface(const std::string & taskName,
+    const bool InvokeIsRegisteredProvidedInterface(const std::string & taskName,
                                              const std::string & providedInterfaceName);
 
-    const bool GetProvidedInterfaceInfo(const ::std::string & taskName,
+    const bool InvokeGetProvidedInterfaceInfo(const ::std::string & taskName,
                                         const std::string & providedInterfaceName,
                                         ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
 
     /*! Getter */
     inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
-
-    //inline mtsTaskManagerProxyClient * GetTaskManagerProxyClient() {
-    //    return dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
-    //}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)

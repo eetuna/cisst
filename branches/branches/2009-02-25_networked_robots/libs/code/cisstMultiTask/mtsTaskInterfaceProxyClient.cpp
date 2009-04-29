@@ -98,6 +98,17 @@ void mtsTaskInterfaceProxyClient::OnThreadEnd()
 }
 
 //-------------------------------------------------------------------------
+//  Send Methods
+//-------------------------------------------------------------------------
+const bool mtsTaskInterfaceProxyClient::GetProvidedInterfaceSpecification(
+        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const
+{
+    GetLogger()->trace("TIClient", ">>>>> SEND: GetProvidedInterfaceSpecification");
+
+    return TaskInterfaceServer->GetProvidedInterfaceSpecification(specs);
+}
+
+//-------------------------------------------------------------------------
 //  Definition by mtsTaskInterfaceProxy.ice
 //-------------------------------------------------------------------------
 mtsTaskInterfaceProxyClient::TaskInterfaceClientI::TaskInterfaceClientI(
@@ -172,9 +183,3 @@ void mtsTaskInterfaceProxyClient::TaskInterfaceClientI::Destroy()
 
     callbackSenderThread->getThreadControl().join();
 }
-
-//void mtsTaskInterfaceProxyClient::TaskInterfaceClientI::ReceiveData(
-//    ::Ice::Int num, const ::Ice::Current&)
-//{
-//    std::cout << "------------ client recv data " << num << std::endl;
-//}

@@ -78,6 +78,12 @@ public:
     void OnThreadEnd();
 
     //-------------------------------------------------------------------------
+    //
+    //-------------------------------------------------------------------------
+    const bool GetProvidedInterfaceSpecification(
+        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const;
+
+    //-------------------------------------------------------------------------
     //  Definition by mtsTaskInterfaceProxy.ice
     //-------------------------------------------------------------------------
 protected:

@@ -28,6 +28,8 @@ class sineTask: public mtsTaskPeriodic {
     void Startup(void);    // set some initial values
     void Run(void);        // performed periodically
     void Cleanup(void) {}; // user defined cleanup
+
+    void CommandVoidTest(void);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(sineTask);
@@ -35,10 +37,10 @@ CMN_DECLARE_SERVICES_INSTANTIATION(sineTask);
 #endif // _sineTask_h
 
 /*
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---

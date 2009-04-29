@@ -23,8 +23,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsTaskInterfaceProxyServer_h
 
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsProxyBaseServer.h>
 #include <cisstMultiTask/mtsTaskInterfaceProxy.h>
+#include <cisstMultiTask/mtsProxyBaseServer.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -35,6 +35,8 @@ http://www.cisst.org/cisst/license.txt.
 
   TODO: add class summary here
 */
+class mtsTask;
+
 class CISST_EXPORT mtsTaskInterfaceProxyServer : public mtsProxyBaseServer<mtsTask> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
@@ -47,12 +49,16 @@ protected:
     class TaskInterfaceServerI;
     typedef IceUtil::Handle<TaskInterfaceServerI> TaskInterfaceServerIPtr;
     TaskInterfaceServerIPtr Sender;
+
+    mtsTask * ConnectedTask;
     
     //-------------------------- Protected methods --------------------------//
     /*! Resource clean-up */
     void OnClose();
 
-    //------------------- Methods for proxy implementation ------------------//
+    //----------------------- Proxy Implementation --------------------------//
+
+    //---------------------------- Proxy Support ----------------------------//
     /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
         Sender = new TaskInterfaceServerI(IceCommunicator, Logger, this);
@@ -75,13 +81,18 @@ public:
     mtsTaskInterfaceProxyServer(const std::string& adapterName,
                                 const std::string& endpointInfo,
                                 const std::string& communicatorID)
-        : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID)
+        : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID),
+          ConnectedTask(0)
     {}
     ~mtsTaskInterfaceProxyServer();
     
+    void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
+
     //----------------------------- Proxy Support ---------------------------//
     /*! Update the information of all tasks. */
-    //void AddTaskManager(const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
+    const bool GetProvidedInterfaceSpecification(
+        ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
+
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskInterfaceProxy.ice
@@ -108,6 +119,9 @@ protected:
         void Destroy();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
+        bool GetProvidedInterfaceSpecification(
+            ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
+            const ::Ice::Current&) const;
     };
 
     //------------------ Methods for global task manager --------------------//

@@ -23,8 +23,9 @@ sineTask::sineTask(const std::string & taskName, double period):
     AddCommandRead(&mtsStateTable::GetIndexReader, &StateTable,
                    "MainInterface", "GetStateIndex");
     // add command to modify the sine amplitude 
-    SineAmplitude.AddWriteCommandToTask(this, "MainInterface",
-                                        "SetAmplitude");
+    SineAmplitude.AddWriteCommandToTask(this, "MainInterface", "SetAmplitude");
+    // add command to test commandVoid
+    this->AddCommandVoid(&sineTask::CommandVoidTest, this, "MainInterface", "VoidTest");
 }
 
 void sineTask::Startup(void) {
@@ -41,11 +42,18 @@ void sineTask::Run(void) {
         * sin(2 * cmnPI * static_cast<double>(now.Ticks()) * Period / 10.0);
 }
 
+void sineTask::CommandVoidTest(void)
+{
+    static int n = 0;
+
+    std::cout << "###################### " << ++n << std::endl;
+}
+
 /*
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 

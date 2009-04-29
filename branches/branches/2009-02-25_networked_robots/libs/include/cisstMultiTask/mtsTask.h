@@ -376,12 +376,24 @@ protected:
     /*! Proxy instance. This will be dynamically created. */
     mtsProxyBaseCommon<mtsTask> * Proxy;
 
+    /*! Dynamic-casted proxy object. 
+        Both are initialized as null pointer and either one of them must be null and
+        the other be valid pointer. */
+    mtsTaskInterfaceProxyServer * ProxyServer;
+    mtsTaskInterfaceProxyClient * ProxyClient;
+
+
 public:
     /*! Start a proxy server (provided interface, mtsTaskInterfaceProxyServer). */
     void StartProxyServer();
 
     /*! Start a proxy client (required interface, mtsTaskInterfaceProxyClient). */
     void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
+
+    /*! Get the information on the provided interface that includes complete representation 
+        of it as a set of string. */
+    const bool GetProvidedInterfaceSpecification(
+        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec);
 };
 
 

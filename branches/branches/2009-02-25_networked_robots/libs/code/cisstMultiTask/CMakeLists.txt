@@ -62,6 +62,7 @@ SET(SOURCE_FILES
     mtsTaskInterfaceProxyServer.cpp
 
     mtsTaskGlobal.cpp
+    mtsTaskProxy.cpp
     )
 
 # all header files
@@ -128,6 +129,7 @@ SET(HEADER_FILES
     mtsTaskInterfaceProxyServer.h
     
     mtsTaskGlobal.h
+    mtsTaskProxy.h
     )
     
 SET(ICE_RESOURCE_FILES

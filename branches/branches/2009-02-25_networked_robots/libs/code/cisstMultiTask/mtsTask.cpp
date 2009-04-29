@@ -162,7 +162,8 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
     ThreadStartData(0),
     retValue(0),
     RequiredInterfaces("RequiredInterfaces"),
-    TaskInterfaceCommunicatorID("TaskInterfaceServerSender")
+    TaskInterfaceCommunicatorID("TaskInterfaceServerSender"),
+    ProxyServer(0), ProxyClient(0)
 {
 }
 
@@ -338,6 +339,9 @@ void mtsTask::StartProxyServer()
     //}
 
     const std::string adapterName = "TaskInterfaceServerAdapter";
+    //
+    // TODO: avoid using hard-coded proxy access information
+    //
     const std::string endpointInfo = "tcp -p 11705";
     const std::string endpointInfoForClient = ":default -p 11705";
     const std::string communicatorID = TaskInterfaceCommunicatorID;
@@ -345,10 +349,13 @@ void mtsTask::StartProxyServer()
     Proxy = new mtsTaskInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
     Proxy->Start(this);
     Proxy->GetLogger()->trace("mtsTask", "Provided interface proxy starts.");
+    ProxyServer = dynamic_cast<mtsTaskInterfaceProxyServer *>(Proxy);
+
+    return;
 
     // Inform the global task manager of the existence on a newly created 
     // provided interface with the access information.
-    if (!TaskManager->AddProvidedInterface(
+    if (!TaskManager->InvokeAddProvidedInterface(
         iterator->first, adapterName, endpointInfoForClient, communicatorID, Name)) 
     {
         Proxy->GetLogger()->error("Failed to add provided interface: " + iterator->first);
@@ -378,19 +385,24 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
     RequiredInterfacesMapType::MapType::iterator iterator = 
         RequiredInterfaces.GetMap().begin();
 
-    //const std::string communicatorID = TaskInterfaceCommunicatorID;
-
     Proxy = new mtsTaskInterfaceProxyClient(endpointInfo, communicatorID);
     Proxy->Start(this);
     Proxy->GetLogger()->trace("mtsTask", "Required interface proxy starts.");
+    ProxyClient = dynamic_cast<mtsTaskInterfaceProxyClient *>(Proxy);
 
     // Inform the global task manager of the existence on a newly created 
     // required interface.
-    if (!TaskManager->AddRequiredInterface(iterator->first, Name)) 
+    if (!TaskManager->InvokeAddRequiredInterface(iterator->first, Name)) 
     {
         Proxy->GetLogger()->error("Failed to add required interface: " + iterator->first);
         return;
     } else {
         Proxy->GetLogger()->trace("mtsTask", "Registered required interface: " + iterator->first);
     }
+}
+
+const bool mtsTask::GetProvidedInterfaceSpecification(
+    mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec)
+{
+    return ProxyClient->GetProvidedInterfaceSpecification(spec);
 }

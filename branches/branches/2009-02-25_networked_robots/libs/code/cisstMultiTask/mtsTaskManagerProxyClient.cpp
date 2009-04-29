@@ -98,6 +98,9 @@ void mtsTaskManagerProxyClient::OnThreadEnd()
     Sender->Destroy();
 }
 
+//-------------------------------------------------------------------------
+//  Send Methods
+//-------------------------------------------------------------------------
 bool mtsTaskManagerProxyClient::AddProvidedInterface(
     const std::string & newProvidedInterfaceName,
     const std::string & adapterName,

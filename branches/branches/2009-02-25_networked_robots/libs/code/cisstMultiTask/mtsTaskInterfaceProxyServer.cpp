@@ -19,8 +19,10 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsTaskInterfaceProxyServer.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstMultiTask/mtsTaskInterfaceProxyServer.h>
+#include <cisstMultiTask/mtsTask.h>
+#include <cisstMultiTask/mtsDeviceInterface.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskInterfaceProxyServer);
 
@@ -66,6 +68,14 @@ void mtsTaskInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     mtsTaskInterfaceProxyServer * ProxyServer = 
         dynamic_cast<mtsTaskInterfaceProxyServer*>(arguments->proxy);
     
+    ProxyServer->SetConnectedTask(arguments->argument);
+    
+    //
+    // TEST
+    //
+    //mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq specs;
+    //ProxyServer->GetProvidedInterfaceSpecification(specs);
+
     ProxyServer->GetLogger()->trace("mtsTaskInterfaceProxyServer", "Proxy server starts.");
 
     try {
@@ -86,6 +96,76 @@ void mtsTaskInterfaceProxyServer::OnThreadEnd()
     mtsProxyBaseServer::OnThreadEnd();
 
     Sender->Destroy();
+}
+
+//-------------------------------------------------------------------------
+//  Task Processing
+//-------------------------------------------------------------------------
+const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
+    ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs)
+{
+    CMN_ASSERT(ConnectedTask);
+
+    // 1) Iterate all provided interfaces
+    mtsDeviceInterface * providedInterface;    
+
+    std::vector<std::string> namesOfProvidedInterfaces = 
+        ConnectedTask->GetNamesOfProvidedInterfaces();
+    std::vector<std::string>::const_iterator it = namesOfProvidedInterfaces.begin();
+    for (; it != namesOfProvidedInterfaces.end(); ++it) {
+        mtsTaskInterfaceProxy::ProvidedInterfaceSpecification providedInterfaceSpec;
+
+        // 1) Get a provided interface object
+        providedInterface = ConnectedTask->GetProvidedInterface(*it);
+        CMN_ASSERT(providedInterface);
+
+        // 2) Get an provided interface name
+        providedInterfaceSpec.interfaceName = providedInterface->GetName();
+
+        // 3) Extract all the information on registered command objects, events, and so on.
+#define ITERATE_COMMAND_OBJECT_BEGIN( _commandType ) \
+        mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType = \
+            providedInterface->Commands##_commandType##.GetMap().begin();\
+        mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType##End = \
+            providedInterface->Commands##_commandType##.GetMap().end();\
+        for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
+            mtsTaskInterfaceProxy::Command##_commandType##Info info;
+
+#define ITERATE_COMMAND_OBJECT_END( _commandType ) \
+            providedInterfaceSpec.commands##_commandType##.push_back(info);\
+        }
+
+        // 3-1) Command: Read
+        ITERATE_COMMAND_OBJECT_BEGIN(Void);
+            info.Name = iteratorVoid->second->Name;
+        ITERATE_COMMAND_OBJECT_END(Void);
+
+        // 3-2) Command: Write
+        ITERATE_COMMAND_OBJECT_BEGIN(Write);
+            info.Name = iteratorWrite->second->Name;
+            info.ArgumentTypeName = iteratorWrite->second->GetArgumentClassServices()->GetName();
+        ITERATE_COMMAND_OBJECT_END(Write);
+
+        // 3-3) Command: Read
+        ITERATE_COMMAND_OBJECT_BEGIN(Read);
+            info.Name = iteratorRead->second->Name;
+            info.ArgumentTypeName = iteratorRead->second->GetArgumentClassServices()->GetName();
+        ITERATE_COMMAND_OBJECT_END(Read);
+
+        // 3-4) Command: QualifiedRead
+        ITERATE_COMMAND_OBJECT_BEGIN(QualifiedRead);
+            info.Name = iteratorQualifiedRead->second->Name;
+            info.Argument1TypeName = iteratorQualifiedRead->second->GetArgument1Prototype()->Services()->GetName();
+            info.Argument2TypeName = iteratorQualifiedRead->second->GetArgument2Prototype()->Services()->GetName();
+        ITERATE_COMMAND_OBJECT_END(QualifiedRead);
+
+        // TODO: 
+        // 4) Extract events information (void, write)
+
+        specs.push_back(providedInterfaceSpec);
+    }
+
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -174,6 +254,9 @@ void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::Destroy()
     callbackSenderThread->getThreadControl().join();
 }
 
+//-----------------------------------------------------------------------------
+//  Proxy Server Implementation
+//-----------------------------------------------------------------------------
 void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::AddClient(
     const ::Ice::Identity& ident, const ::Ice::Current& current)
 {
@@ -185,4 +268,13 @@ void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::AddClient(
     mtsTaskInterfaceProxy::TaskInterfaceClientPrx client = 
         mtsTaskInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
     _clients.insert(client);    
+}
+
+bool mtsTaskInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaceSpecification(
+    ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs, 
+    const ::Ice::Current& current) const
+{
+    Logger->trace("TIServer", "<<<<< RECV: GetProvidedInterfaceSpecification");
+
+    return TaskInterfaceServer->GetProvidedInterfaceSpecification(specs);
 }

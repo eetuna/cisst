@@ -31,71 +31,69 @@ http://www.cisst.org/cisst/license.txt.
 
 module mtsTaskManagerProxy
 {
+	//-----------------------------------------------------------------------------
+	//	Data Structure Definition
+	//
+	//  TODO: Multiple [provided, required] interface => USE dictionary (SLICE)!!!
+	//	refer to: mtsTask.h
+	//-----------------------------------------------------------------------------
+	sequence<string> TaskNameSeq;
 
-//
-//
-//  MJUNG: TODO: Multiple [provided, required] interface => USE dictionary (SLICE)!!!
-//	refer to: mtsTask.h
-//
-//
+	struct TaskList {
+		string taskManagerID;
+		TaskNameSeq taskNames;	// task name (Unicode supported)
+	};
 
-// Data structure definition
-sequence<string> TaskNameSeq;
+	struct ProvidedInterfaceInfo {
+		string taskName;
+		string interfaceName;
+		string adapterName;
+		string endpointInfo;
+		string communicatorID;
+	};
 
-struct TaskList {
-    string taskManagerID;
-    TaskNameSeq taskNames;	// task name (Unicode supported)
-};
+	struct RequiredInterfaceInfo {
+		string taskName;
+		string interfaceName;
+	};
 
-struct ProvidedInterfaceInfo {
-	string taskName;
-	string interfaceName;
-	string adapterName;
-	string endpointInfo;
-	string communicatorID;
-};
+	//-----------------------------------------------------------------------------
+	// Exception Definition
+	//-----------------------------------------------------------------------------
+	//exception InvalidTaskNameError {
+		//string msg1;
+		//string msg2;
+	//};
 
-struct RequiredInterfaceInfo {
-	string taskName;
-	string interfaceName;
-};
+	//-----------------------------------------------------------------------------
+	// Interface for TaskManager client
+	//-----------------------------------------------------------------------------
+	interface TaskManagerClient
+	{
+		// from server
+		void ReceiveData(int num);
+	};
 
-// Exception definition
-//exception InvalidTaskNameError {
-	//string msg1;
-	//string msg2;
-//};
-
-//-----------------------------------------------------------------------------
-// Interface for TaskManager client
-//-----------------------------------------------------------------------------
-interface TaskManagerClient
-{
-    // from server
-    void ReceiveData(int num);
-};
-
-//-----------------------------------------------------------------------------
-// Interface for TaskManager server
-//-----------------------------------------------------------------------------
-interface TaskManagerServer
-{
-    // from clients
-    void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
-    
-	//["cpp:const"] idempotent void AddTaskManager(TaskList localTaskInfo);
-	void AddTaskManager(TaskList localTaskInfo);
-	
-	bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
-	
-	bool AddRequiredInterface(RequiredInterfaceInfo newRequiredInterfaceInfo);
-	
-	["cpp:const"] idempotent bool IsRegisteredProvidedInterface(
-		string taskName, string providedInterfaceName);
+	//-----------------------------------------------------------------------------
+	// Interface for TaskManager server
+	//-----------------------------------------------------------------------------
+	interface TaskManagerServer
+	{
+		// from clients
+		void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
+	    
+		void AddTaskManager(TaskList localTaskInfo);
 		
-	["cpp:const"] idempotent bool GetProvidedInterfaceInfo(
-		string taskName, string providedInterfaceName, out ProvidedInterfaceInfo info);
-};
+		bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
+		
+		bool AddRequiredInterface(RequiredInterfaceInfo newRequiredInterfaceInfo);
+		
+		["cpp:const"] idempotent bool IsRegisteredProvidedInterface(
+			string taskName, string providedInterfaceName);
+			
+		["cpp:const"] idempotent bool GetProvidedInterfaceInfo(
+			string taskName, string providedInterfaceName, out ProvidedInterfaceInfo info);
+	};
 
 };
 
