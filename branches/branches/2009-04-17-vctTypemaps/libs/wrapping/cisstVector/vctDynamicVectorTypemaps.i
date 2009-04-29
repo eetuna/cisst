@@ -35,24 +35,24 @@
     #include <cisstVector/vctFixedSizeConstVectorBase.h>
     #include <cisstVector/vctDynamicConstVectorBase.h>
 
-    bool vctPythonTestIsPyArray(PyObject * input)
+    bool vctThrowUnlessIsPyArray(PyObject * input)
     {
         if (!PyArray_Check(input)) {
-            PyErr_SetString(PyExc_TypeError, "Not a NumPy array");
+            PyErr_SetString(PyExc_TypeError, "Object must be a NumPy array");
             return false;
         }
         return true;
     }
 
     template <class _elementType>
-    bool vctPythonTestIsSameTypeArray(PyObject * input)
+    bool vctThrowUnlessIsSameTypeArray(PyObject * input)
     {
         PyErr_SetString(PyExc_ValueError, "Unsupported data type");
         return false;
     }
 
     template <>
-    bool vctPythonTestIsSameTypeArray<int>(PyObject * input)
+    bool vctThrowUnlessIsSameTypeArray<int>(PyObject * input)
     {
         if (PyArray_ObjectType(input, 0) != NPY_INT32) {
             PyErr_SetString(PyExc_ValueError, "Array must be of type int");
@@ -63,56 +63,29 @@
     }
 
     template <class _elementType>
-    int vctPythonTestPythonType(void)
+    int vctPythonType(void)
     {
         return NPY_NOTYPE; // unsupported type
     }
 
     template <>
-    int vctPythonTestPythonType<int>(void)
+    int vctPythonType<int>(void)
     {
         return NPY_INT32;
     }
 
-    bool vctPythonTestIs1DArray(PyObject * input)
+    bool vctThrowUnlessDimension1(PyObject * input)
     {
         if (PyArray_NDIM(input) != 1) {
-            PyErr_SetString(PyExc_ValueError, "Array must be 1-dimensional");
+            PyErr_SetString(PyExc_ValueError, "Array must be 1D");
             return false;
         }
 
         return true;
     }
 
-    bool vctPythonTestIs2DArray(PyObject * input)
-    {
-        if (PyArray_NDIM(input) != 2) {
-            PyErr_SetString(PyExc_ValueError, "Array must be of dimension two (matrix)");
-            return false;
-        }
-        return true;
-    }
 
-    template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
-    bool vctPythonTestVectorSize(const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & input,
-                                 unsigned int desiredSize)
-    {
-        if (input.size() != desiredSize) {
-            PyErr_SetString(PyExc_ValueError, "Input vector's size must match fixed size's one");
-            return false;
-        }
-        return true;
-    }
-
-    template <class _vectorOwnerType, typename _elementType>
-    bool vctPythonTestVectorSize(const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & input,
-                                 unsigned int desiredSize)
-    {
-        return true;
-    }
-
-
-    bool vctPythonTestIsWritable(PyObject *input)
+    bool vctThrowUnlessIsWritable(PyObject *input)
     {
         int flags = PyArray_FLAGS(input);
         if(!(flags & NPY_WRITEABLE)) {
@@ -123,10 +96,10 @@
     }
 
 
-    bool vctPythonTestOwnsData(PyObject * input)
+    bool vctThrowUnlessOwnsData(PyObject * input)
     {
         int flags = PyArray_FLAGS(input);
-        if(!(flags & NPY_OWNDATA)){
+        if(!(flags & NPY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError, "Array must own its data");
             return false;
         }
@@ -134,10 +107,10 @@
     }
 
 
-    bool vctPythonTestNotReferenced(PyObject *input)
+    bool vctThrowUnlessNotReferenced(PyObject *input)
     {
         if (PyArray_REFCOUNT(input) > 5) {      // TODO: what is the correct value to test against?  4?
-            PyErr_SetString(PyExc_ValueError, "You have tried to resize the array.  The array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
+            PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
             return false;
         }
         return true;
@@ -165,9 +138,9 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input))
+    if (!(vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -200,7 +173,7 @@
     npy_intp* sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
 
-    $result = PyArray_SimpleNew(1, sizes, vctPythonTestPythonType<$1_ltype::value_type>());
+    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());
 
     // copy data returned by C function into new PyArray
     memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );
@@ -227,12 +200,12 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
-    if (!(   vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input)
-          && vctPythonTestIsWritable($input)
-          && vctPythonTestOwnsData($input)
-          && vctPythonTestNotReferenced($input))
+    if (!(   vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input)
+          && vctThrowUnlessIsWritable($input)
+          && vctThrowUnlessOwnsData($input)
+          && vctThrowUnlessNotReferenced($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -337,7 +310,7 @@
     sizeOfReturnedVector[0] = $1->size();
 
     //create a new PyArray from the reference returned by the C function
-    $result = PyArray_SimpleNewFromData(1, sizeOfReturnedVector, vctPythonTestPythonType<$*1_ltype::value_type>(),  $1->Pointer() );
+    $result = PyArray_SimpleNewFromData(1, sizeOfReturnedVector, vctPythonType<$*1_ltype::value_type>(),  $1->Pointer() );
 }
 
 
@@ -361,9 +334,9 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input))
+    if (!(vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -419,7 +392,7 @@
     sizes[0] = $1->size();
 
     //NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonTestPythonType<$*1_ltype::value_type>()), 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -444,10 +417,10 @@
      IS WRITABLE
     *************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input)
-          && vctPythonTestIsWritable($input))
+    if (!(vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input)
+          && vctThrowUnlessIsWritable($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -486,7 +459,7 @@
 
     npy_intp *sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
-    $result = PyArray_SimpleNew(1, sizes, vctPythonTestPythonType<$1_ltype::value_type>());  // TODO: clean this up
+    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicVectorRef TO THE PYARRAY
@@ -530,9 +503,9 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input))
+    if (!(vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -591,9 +564,9 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input))
+    if (!(vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
@@ -631,7 +604,7 @@
 
     npy_intp *sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
-    $result = PyArray_SimpleNew(1, sizes, vctPythonTestPythonType<$1_ltype::value_type>());  // TODO: clean this up
+    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY
@@ -671,9 +644,9 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctPythonTestIsPyArray($input)
-          && vctPythonTestIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctPythonTestIs1DArray($input))
+    if (!(vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input))
         ) {
           // PyErr_SetString(PyExc_TypeError, "PythonException");
           return NULL;
