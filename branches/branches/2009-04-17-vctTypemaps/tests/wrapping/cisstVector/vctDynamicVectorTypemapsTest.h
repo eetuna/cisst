@@ -72,7 +72,7 @@ public:
     /* We currently do not support the vctDynamicVectorRef out typemap
     vctDynamicVectorRef<int> out_vctDynamicVectorRef(unsigned int size) throw(std::exception) {
         copy.SetSize(size);
-        vctRandom(copy, 0, 10);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return vctDynamicVectorRef<int>(copy);
     }*/
 
