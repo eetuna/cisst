@@ -80,6 +80,7 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     friend class mtsTask;
     friend class mtsTaskPeriodic;
     friend class mtsTaskInterfaceProxyServer;
+    friend class mtsTaskManager;
  public:
 
     /*! Typedef for a map of name of zero argument command and name of

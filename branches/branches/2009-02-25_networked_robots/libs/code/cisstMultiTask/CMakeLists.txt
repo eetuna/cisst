@@ -130,6 +130,9 @@ SET(HEADER_FILES
     
     mtsTaskGlobal.h
     mtsTaskProxy.h
+    mtsCommandVoidProxy.h
+    mtsCommandWriteProxy.h
+    mtsCommandReadProxy.h
     )
     
 SET(ICE_RESOURCE_FILES

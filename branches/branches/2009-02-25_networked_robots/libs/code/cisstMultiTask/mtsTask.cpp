@@ -351,8 +351,6 @@ void mtsTask::StartProxyServer()
     Proxy->GetLogger()->trace("mtsTask", "Provided interface proxy starts.");
     ProxyServer = dynamic_cast<mtsTaskInterfaceProxyServer *>(Proxy);
 
-    return;
-
     // Inform the global task manager of the existence on a newly created 
     // provided interface with the access information.
     if (!TaskManager->InvokeAddProvidedInterface(

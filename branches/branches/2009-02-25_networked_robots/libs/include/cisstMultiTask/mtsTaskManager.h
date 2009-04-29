@@ -113,9 +113,10 @@ protected:
 
     /*! Connect across networks. To provide user with the concept of 'transparency,'
         this is called internally. (only by public Connect() method) */
-    bool ConnectRemote(const std::string & resourceTaskName, const std::string & providedInterfaceName,
-                       const std::string & userTaskName, const std::string & interfaceRequiredName,
-                       mtsTask * userTask);
+    mtsDeviceInterface * GetResourceInterface(
+        const std::string & resourceTaskName, const std::string & providedInterfaceName,
+        const std::string & userTaskName, const std::string & interfaceRequiredName,
+        mtsTask * userTask);
 
     /*! Create a provided interface proxy and populate it with the complete specification 
         on the remote provided interface. */

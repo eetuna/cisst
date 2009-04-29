@@ -159,6 +159,9 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
             info.Argument2TypeName = iteratorQualifiedRead->second->GetArgument2Prototype()->Services()->GetName();
         ITERATE_COMMAND_OBJECT_END(QualifiedRead);
 
+#undef ITERATE_COMMAND_OBJECT_BEGIN
+#undef ITERATE_COMMAND_OBJECT_END
+
         // TODO: 
         // 4) Extract events information (void, write)
 
@@ -262,8 +265,7 @@ void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::AddClient(
 {
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-    std::string log = "Adding client: " + Communicator->identityToString(ident);
-    mtsTaskInterfaceProxyServerLogger(log.c_str());
+    Logger->trace("TIServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(ident));
 
     mtsTaskInterfaceProxy::TaskInterfaceClientPrx client = 
         mtsTaskInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));

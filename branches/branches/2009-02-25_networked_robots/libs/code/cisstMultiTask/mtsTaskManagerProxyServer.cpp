@@ -145,9 +145,9 @@ mtsTaskGlobal * mtsTaskManagerProxyServer::GetTask(const std::string & taskName)
 void mtsTaskManagerProxyServer::AddTaskManager(
     const ::mtsTaskManagerProxy::TaskList& localTaskInfo)
 {
-    Logger->trace("mtsTaskManagerProxyServer", "Adding a new task manager.....");
-
     const std::string taskManagerID = localTaskInfo.taskManagerID;
+
+    Logger->trace("mtsTaskManagerProxyServer", "<<<<< RECV: AddTaskManager: " + taskManagerID);
 
     const bool exist = FindTaskManager(taskManagerID);
     if (exist) {
@@ -175,7 +175,8 @@ void mtsTaskManagerProxyServer::AddTaskManager(
 bool mtsTaskManagerProxyServer::AddProvidedInterface(
     const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
-    Logger->trace("mtsTaskManagerProxyServer", "Adding a new provided interface.....");
+    Logger->trace("mtsTaskManagerProxyServer", "<<<<< RECV: AddProvidedInterface: " + 
+        providedInterfaceInfo.interfaceName);
 
     mtsTaskGlobal * taskInfo = NULL;
 
@@ -197,7 +198,8 @@ bool mtsTaskManagerProxyServer::AddProvidedInterface(
 bool mtsTaskManagerProxyServer::AddRequiredInterface(
     const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo)
 {
-    Logger->trace("mtsTaskManagerProxyServer", "Adding a new required interface.....");
+    Logger->trace("mtsTaskManagerProxyServer", "<<<<< RECV: AddRequiredInterface: " + 
+        requiredInterfaceInfo.interfaceName);
 
     mtsTaskGlobal * taskInfo = NULL;
 
@@ -330,8 +332,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
 {
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-    std::string log = "Adding client: " + Communicator->identityToString(ident);
-    mtsTaskManagerProxyServerLogger(log.c_str());
+    Logger->trace("TMServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(ident));
 
     mtsTaskManagerProxy::TaskManagerClientPrx client = 
         mtsTaskManagerProxy::TaskManagerClientPrx::uncheckedCast(current.con->createProxy(ident));

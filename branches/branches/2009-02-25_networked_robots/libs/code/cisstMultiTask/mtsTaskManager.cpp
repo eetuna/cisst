@@ -19,16 +19,20 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsTaskProxy.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstOSAbstraction/osaSleep.h>
 
+#include <cisstMultiTask/mtsTaskProxy.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
+
+#include <cisstMultiTask/mtsCommandVoidProxy.h>
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
+#include <cisstMultiTask/mtsCommandReadProxy.h>
+//#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
@@ -308,17 +312,13 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
             CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
             return false;
         } else {
-            if (ConnectRemote(resourceTaskName, providedInterfaceName, 
-                              userTaskName, interfaceRequiredName, 
-                              userTask)) 
+            resourceInterface = GetResourceInterface(resourceTaskName, providedInterfaceName, 
+                                    userTaskName, interfaceRequiredName, 
+                                    userTask);
+            if (!resourceInterface)
             {
-                // SUCCESS
-            }            
-            else 
-            {
-                // If it does not, return false;
                 CMN_LOG_CLASS(1) << "Connect through networks: can not find a task or device named " << resourceTaskName << std::endl;
-                return false;
+                return false;                
             }
         }
     }
@@ -342,10 +342,13 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     return true;
 }
 
-bool mtsTaskManager::ConnectRemote(const std::string & resourceTaskName, const std::string & providedInterfaceName,
-                                   const std::string & userTaskName, const std::string & interfaceRequiredName,
-                                   mtsTask * userTask)
+mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
+    const std::string & resourceTaskName, const std::string & providedInterfaceName,
+    const std::string & userTaskName, const std::string & interfaceRequiredName,
+    mtsTask * userTask)
 {
+    mtsDeviceInterface * resourceInterface = NULL;
+
     // For the use of consistent notation
     mtsTask * clientTask = userTask;
 
@@ -359,7 +362,7 @@ bool mtsTaskManager::ConnectRemote(const std::string & resourceTaskName, const s
         mtsTaskManagerProxy::ProvidedInterfaceInfo info;
         if (!InvokeGetProvidedInterfaceInfo(resourceTaskName, providedInterfaceName, info)) {
             CMN_LOG_CLASS(1) << "Connect over networks: failed to retrieve proxy information: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
-            return false;
+            return NULL;
         }
 
         // 2) Using the information, start a proxy client (=server proxy, mtsTaskInterfaceProxyClient object).
@@ -370,7 +373,7 @@ bool mtsTaskManager::ConnectRemote(const std::string & resourceTaskName, const s
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq specs;
         if (!clientTask->GetProvidedInterfaceSpecification(specs)) {
             CMN_LOG_CLASS(1) << "Connect over networks: failed to retrieve provided interface specification: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
-            return false;
+            return NULL;
         }
 
         // 4) Extract and present the complete information on this provided interface 
@@ -405,18 +408,26 @@ bool mtsTaskManager::ConnectRemote(const std::string & resourceTaskName, const s
             CMN_ASSERT(serverProxyTask);
 
             if (!CreateProvidedInterfaceProxy(*it, serverProxyTask)) {
-                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy FAILED: " << it->interfaceName << std::endl;
-                return false;
+                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy FAILED: " << serverTaskProxyName << std::endl;
+                return NULL;
             }
-        }
 
-        //resourceInterface = GetTaskInterfaceServerProxy();
-        //
-        // TODO: mtsTaskInterfaceProxyServer should inherit from mtsDeviceInterface for
-        // compatibility. 
+            // Add this proxy task to the task manager
+            if (!AddTask(serverProxyTask)) {
+                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Adding task failed: " << serverTaskProxyName << std::endl;
+                return NULL;
+            }
+
+            resourceInterface = serverProxyTask->GetProvidedInterface(providedInterfaceName);
+
+            //
+            // TODO: Currently, it is assumed that there is only one provided interface.
+            //
+            return resourceInterface;
+        }
     }
 
-    return true;
+    return NULL;
 }
 
 bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::string & requiredInterfaceName,
@@ -434,18 +445,66 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
         return false;
     }
 
-    // 2) Restore Commands
+    // 2) Restore Commands by creating command proxies specified by the provided interface
     mtsDeviceInterface * localProvidedInterface = task->GetProvidedInterface(spec.interfaceName);
     CMN_ASSERT(localProvidedInterface);
 
+#define ITERATE_COMMAND_OBJECT_BEGIN( _commandType ) \
+    {\
+        mtsTaskInterfaceProxy::Command##_commandType##Seq::const_iterator it \
+            = spec.commands##_commandType##.begin();\
+        for (; it != spec.commands##_commandType##.end(); ++it) {
+
+#define ITERATE_COMMAND_OBJECT_END \
+        }\
+    }
+
     // 2-1) Void
-    localProvidedInterface->AddCommandVoid(
+    ITERATE_COMMAND_OBJECT_BEGIN(Void)
+        mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(it->Name);
+        CMN_ASSERT(newCommandVoid);
+        //localProvidedInterface->CommandsVoid.AddItem(it->Name, newCommandVoid, 1);
+        localProvidedInterface->GetCommandVoidMap().AddItem(it->Name, newCommandVoid, 1);
+    ITERATE_COMMAND_OBJECT_END
+    
     // 2-2) Read
+    ITERATE_COMMAND_OBJECT_BEGIN(Read)
+        std::string commandName = it->Name;
+        cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
+        mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(commandName, prototype);
+        CMN_ASSERT(newCommandRead);
+        //localProvidedInterface->CommandsRead.AddItem(commandName, newCommandRead);
+        localProvidedInterface->GetCommandReadMap().AddItem(commandName, newCommandRead);
+    ITERATE_COMMAND_OBJECT_END
+
     // 2-3) Write
+    ITERATE_COMMAND_OBJECT_BEGIN(Write)
+        std::string commandName = it->Name;
+        cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
+        mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(commandName, prototype);
+        CMN_ASSERT(newCommandWrite);
+        //localProvidedInterface->CommandsWrite.AddItem(commandName, newCommandWrite);
+        localProvidedInterface->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
+    ITERATE_COMMAND_OBJECT_END
+
     // 2-4) QualifiedRead
+    //ITERATE_COMMAND_OBJECT_BEGIN(QualifiedRead)
+    //    std::string commandName = it->Name;
+    //    cmnGenericObject * prototype1 = cmnClassRegister::Create(it->Argument1TypeName);
+    //    cmnGenericObject * prototype2 = cmnClassRegister::Create(it->Argument2TypeName);
+    //    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = 
+    //        new mtsCommandQualifiedReadProxy(commandName, prototype1, prototype2);
+    //    CMN_ASSERT(newCommandQualifiedRead);
+    //    localProvidedInterface->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
+    //ITERATE_COMMAND_OBJECT_END
+
+#undef ITERATE_COMMAND_OBJECT_BEGIN
+#undef ITERATE_COMMAND_OBJECT_END
 
     // TODO:
-    // 2) Restore Events
+    //
+    // 3) Restore Events
+    //
 
     return true;
 }

@@ -126,6 +126,7 @@ void mtsRequiredInterface::Disconnect(void)
 bool mtsRequiredInterface::BindCommandsAndEvents(void)
 {
     bool success = true;
+    /*
     // First, do the command pointers
     CommandPointerVoidMapType::MapType::iterator iterVoid;
     for (iterVoid = CommandPointersVoid.GetMap().begin(); iterVoid != CommandPointersVoid.GetMap().end(); iterVoid++)
@@ -140,6 +141,17 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
     for (iterQualRead = CommandPointersQualifiedRead.GetMap().begin();
          iterQualRead != CommandPointersQualifiedRead.GetMap().end(); iterQualRead++)
         success &= iterQualRead->second->Bind(OtherInterface->GetCommandQualifiedRead(iterQualRead->first));
+        */
+    CommandPointerReadMapType::MapType::iterator iterRead;
+    for (iterRead = CommandPointersRead.GetMap().begin(); iterRead != CommandPointersRead.GetMap().end(); iterRead++) {
+        mtsCommandReadBase * base = OtherInterface->GetCommandRead(iterRead->first);
+        success &= iterRead->second->Bind(base);
+    }
+    CommandPointerWriteMapType::MapType::iterator iterWrite;
+    for (iterWrite = CommandPointersWrite.GetMap().begin(); iterWrite != CommandPointersWrite.GetMap().end(); iterWrite++) {
+        mtsCommandWriteBase * base = OtherInterface->GetCommandWrite(iterWrite->first);
+        success &= iterWrite->second->Bind(base);
+    }
 
     if (!success)
         CMN_LOG_CLASS(1) << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
