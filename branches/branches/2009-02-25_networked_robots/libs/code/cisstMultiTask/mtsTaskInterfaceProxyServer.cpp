@@ -71,10 +71,10 @@ void mtsTaskInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     ProxyServer->SetConnectedTask(arguments->argument);
     
     //
-    // TEST
+    // GetProvidedInterfaceSpecification TEST
     //
-    //mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq specs;
-    //ProxyServer->GetProvidedInterfaceSpecification(specs);
+    mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq spec;
+    ProxyServer->GetProvidedInterfaceSpecification(spec);
 
     ProxyServer->GetLogger()->trace("mtsTaskInterfaceProxyServer", "Proxy server starts.");
 
@@ -107,7 +107,7 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
     CMN_ASSERT(ConnectedTask);
 
     // 1) Iterate all provided interfaces
-    mtsDeviceInterface * providedInterface;    
+    mtsDeviceInterface * providedInterfaceForDevice = NULL;    
 
     std::vector<std::string> namesOfProvidedInterfaces = 
         ConnectedTask->GetNamesOfProvidedInterfaces();
@@ -116,51 +116,59 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecification providedInterfaceSpec;
 
         // 1) Get a provided interface object
-        providedInterface = ConnectedTask->GetProvidedInterface(*it);
-        CMN_ASSERT(providedInterface);
+        providedInterfaceForDevice = ConnectedTask->GetProvidedInterface(*it);
+        CMN_ASSERT(providedInterfaceForDevice);
 
-        // 2) Get an provided interface name
-        providedInterfaceSpec.interfaceName = providedInterface->GetName();
+        // 2) Get a provided interface name.
+        providedInterfaceSpec.interfaceName = providedInterfaceForDevice->GetName();
 
+        // Determine the type of the provided interface: is it mtsDeviceInterface or 
+        // mtsTaskInterface?
+        if (dynamic_cast<mtsTaskInterface*>(providedInterfaceForDevice)) {
+            providedInterfaceSpec.providedInterfaceForTask = true;
+        } else {
+            providedInterfaceSpec.providedInterfaceForTask = false;
+        }
+            
         // 3) Extract all the information on registered command objects, events, and so on.
-#define ITERATE_COMMAND_OBJECT_BEGIN( _commandType ) \
+#define ITERATE_INTERFACE_BEGIN( _commandType ) \
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType = \
-            providedInterface->Commands##_commandType##.GetMap().begin();\
+            providedInterfaceForDevice->Commands##_commandType##.GetMap().begin();\
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType##End = \
-            providedInterface->Commands##_commandType##.GetMap().end();\
+            providedInterfaceForDevice->Commands##_commandType##.GetMap().end();\
         for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
             mtsTaskInterfaceProxy::Command##_commandType##Info info;
 
-#define ITERATE_COMMAND_OBJECT_END( _commandType ) \
+#define ITERATE_INTERFACE_END( _commandType ) \
             providedInterfaceSpec.commands##_commandType##.push_back(info);\
         }
 
-        // 3-1) Command: Read
-        ITERATE_COMMAND_OBJECT_BEGIN(Void);
+        // 3-1) Command: Void
+        ITERATE_INTERFACE_BEGIN(Void);
             info.Name = iteratorVoid->second->Name;
-        ITERATE_COMMAND_OBJECT_END(Void);
+        ITERATE_INTERFACE_END(Void);
 
         // 3-2) Command: Write
-        ITERATE_COMMAND_OBJECT_BEGIN(Write);
+        ITERATE_INTERFACE_BEGIN(Write);
             info.Name = iteratorWrite->second->Name;
             info.ArgumentTypeName = iteratorWrite->second->GetArgumentClassServices()->GetName();
-        ITERATE_COMMAND_OBJECT_END(Write);
+        ITERATE_INTERFACE_END(Write);
 
         // 3-3) Command: Read
-        ITERATE_COMMAND_OBJECT_BEGIN(Read);
+        ITERATE_INTERFACE_BEGIN(Read);
             info.Name = iteratorRead->second->Name;
             info.ArgumentTypeName = iteratorRead->second->GetArgumentClassServices()->GetName();
-        ITERATE_COMMAND_OBJECT_END(Read);
+        ITERATE_INTERFACE_END(Read);
 
         // 3-4) Command: QualifiedRead
-        ITERATE_COMMAND_OBJECT_BEGIN(QualifiedRead);
+        ITERATE_INTERFACE_BEGIN(QualifiedRead);
             info.Name = iteratorQualifiedRead->second->Name;
             info.Argument1TypeName = iteratorQualifiedRead->second->GetArgument1Prototype()->Services()->GetName();
             info.Argument2TypeName = iteratorQualifiedRead->second->GetArgument2Prototype()->Services()->GetName();
-        ITERATE_COMMAND_OBJECT_END(QualifiedRead);
+        ITERATE_INTERFACE_END(QualifiedRead);
 
-#undef ITERATE_COMMAND_OBJECT_BEGIN
-#undef ITERATE_COMMAND_OBJECT_END
+#undef ITERATE_INTERFACE_BEGIN
+#undef ITERATE_INTERFACE_END
 
         // TODO: 
         // 4) Extract events information (void, write)

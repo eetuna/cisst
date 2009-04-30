@@ -121,7 +121,7 @@ protected:
     /*! Create a provided interface proxy and populate it with the complete specification 
         on the remote provided interface. */
     bool CreateProvidedInterfaceProxy(const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
-                                      mtsTask * serverProxyTask);
+                                      mtsTask * task);
 
  public:
     /*! Create the static instance of this class. */

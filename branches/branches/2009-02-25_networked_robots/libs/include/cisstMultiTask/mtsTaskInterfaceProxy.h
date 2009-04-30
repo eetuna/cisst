@@ -228,6 +228,7 @@ void __readCommandQualifiedReadSeq(::IceInternal::BasicStream*, CommandQualified
 struct ProvidedInterfaceSpecification
 {
     ::std::string interfaceName;
+    bool providedInterfaceForTask;
     ::mtsTaskInterfaceProxy::CommandVoidSeq commandsVoid;
     ::mtsTaskInterfaceProxy::CommandWriteSeq commandsWrite;
     ::mtsTaskInterfaceProxy::CommandReadSeq commandsRead;

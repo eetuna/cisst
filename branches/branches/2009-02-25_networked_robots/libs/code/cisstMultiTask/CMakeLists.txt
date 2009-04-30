@@ -130,6 +130,7 @@ SET(HEADER_FILES
     
     mtsTaskGlobal.h
     mtsTaskProxy.h
+    mtsDeviceProxy.h
     mtsCommandVoidProxy.h
     mtsCommandWriteProxy.h
     mtsCommandReadProxy.h

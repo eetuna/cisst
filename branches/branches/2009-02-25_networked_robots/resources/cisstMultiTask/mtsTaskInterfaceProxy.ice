@@ -66,9 +66,9 @@ module mtsTaskInterfaceProxy
 	};
 	*/
 
-	sequence<CommandVoidInfo> CommandVoidSeq;
-	sequence<CommandWriteInfo> CommandWriteSeq;
-	sequence<CommandReadInfo> CommandReadSeq;
+	sequence<CommandVoidInfo>          CommandVoidSeq;
+	sequence<CommandWriteInfo>         CommandWriteSeq;
+	sequence<CommandReadInfo>          CommandReadSeq;
 	sequence<CommandQualifiedReadInfo> CommandQualifiedReadSeq;
     //sequence<EventVoidInfo> EventVoidSeq;
     //sequence<EventWriteInfo> EventWriteSeq;
@@ -78,10 +78,15 @@ module mtsTaskInterfaceProxy
 		// Identity
 		string interfaceName;
 		
+		// Flag to determine the type of this provided interface.
+		// true, if this interface is of mtsTaskInterface type.
+		// false, if this interface is of mtsDeviceInterface type.
+		bool providedInterfaceForTask;
+		
 		// Commands
-		CommandVoidSeq commandsVoid;
-		CommandWriteSeq commandsWrite;
-		CommandReadSeq commandsRead;
+		CommandVoidSeq          commandsVoid;
+		CommandWriteSeq         commandsWrite;
+		CommandReadSeq          commandsRead;
 		CommandQualifiedReadSeq commandsQualifiedRead;
 		//EventVoidSeq eventsVoid;
 		//EventWriteSeq eventsWrite;

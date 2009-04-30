@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandVoidProxy.h>
 #include <cisstMultiTask/mtsCommandWriteProxy.h>
 #include <cisstMultiTask/mtsCommandReadProxy.h>
-//#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
+#include <cisstMultiTask/mtsCommandQueuedWriteProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
@@ -395,26 +395,28 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
                      TC: the name of the client task
                      RI: the name of the required interface
             */
-            std::string serverTaskProxyName = resourceTaskName;
-            //serverTaskProxyName = resourceTaskName + ":"          // TS
+            std::string serverProxyName = resourceTaskName;
+            //serverProxyName = resourceTaskName + ":"          // TS
             //                      it->interfaceName + "-Network-" // PI
             //                      userTaskName + ":"              // TC
             //                      interfaceRequiredName;          // RI
 
             //
-            //  TODO: inherit from mtsTaskPeriodic(period value)? or mtsTaskContinuous?
             //
-            mtsTaskProxy * serverProxyTask = new mtsTaskProxy(serverTaskProxyName, 1 * cmn_ms);
+            //
+            //
+
+            mtsTaskProxy * serverProxyTask = new mtsTaskProxy(serverProxyName, 1 * cmn_ms);
             CMN_ASSERT(serverProxyTask);
 
             if (!CreateProvidedInterfaceProxy(*it, serverProxyTask)) {
-                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy FAILED: " << serverTaskProxyName << std::endl;
+                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy FAILED: " << serverProxyName << std::endl;
                 return NULL;
             }
 
             // Add this proxy task to the task manager
             if (!AddTask(serverProxyTask)) {
-                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Adding task failed: " << serverTaskProxyName << std::endl;
+                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Adding task failed: " << serverProxyName << std::endl;
                 return NULL;
             }
 
@@ -446,60 +448,90 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     }
 
     // 2) Restore Commands by creating command proxies specified by the provided interface
-    mtsDeviceInterface * localProvidedInterface = task->GetProvidedInterface(spec.interfaceName);
-    CMN_ASSERT(localProvidedInterface);
+    mtsDeviceInterface * providedInterface = task->GetProvidedInterface(spec.interfaceName);
+    CMN_ASSERT(providedInterface);
 
-#define ITERATE_COMMAND_OBJECT_BEGIN( _commandType ) \
+#define ITERATE_INTERFACE_BEGIN( _commandType ) \
     {\
         mtsTaskInterfaceProxy::Command##_commandType##Seq::const_iterator it \
             = spec.commands##_commandType##.begin();\
-        for (; it != spec.commands##_commandType##.end(); ++it) {
+        for (; it != spec.commands##_commandType##.end(); ++it) {\
+            std::string commandName = it->Name;
 
-#define ITERATE_COMMAND_OBJECT_END \
+#define ITERATE_INTERFACE_END \
         }\
     }
 
     // 2-1) Void
-    ITERATE_COMMAND_OBJECT_BEGIN(Void)
-        mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(it->Name);
+    ITERATE_INTERFACE_BEGIN(Void)
+        mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(commandName);
         CMN_ASSERT(newCommandVoid);
-        //localProvidedInterface->CommandsVoid.AddItem(it->Name, newCommandVoid, 1);
-        localProvidedInterface->GetCommandVoidMap().AddItem(it->Name, newCommandVoid, 1);
-    ITERATE_COMMAND_OBJECT_END
-    
-    // 2-2) Read
-    ITERATE_COMMAND_OBJECT_BEGIN(Read)
-        std::string commandName = it->Name;
-        cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
-        mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(commandName, prototype);
-        CMN_ASSERT(newCommandRead);
-        //localProvidedInterface->CommandsRead.AddItem(commandName, newCommandRead);
-        localProvidedInterface->GetCommandReadMap().AddItem(commandName, newCommandRead);
-    ITERATE_COMMAND_OBJECT_END
+        //providedInterface->CommandsVoid.AddItem(it->Name, newCommandVoid, 1);
+        providedInterface->GetCommandVoidMap().AddItem(it->Name, newCommandVoid, 1);
+    ITERATE_INTERFACE_END
 
-    // 2-3) Write
-    ITERATE_COMMAND_OBJECT_BEGIN(Write)
-        std::string commandName = it->Name;
+    // 2-2) Write
+    ITERATE_INTERFACE_BEGIN(Write)
         cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
         mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(commandName, prototype);
         CMN_ASSERT(newCommandWrite);
-        //localProvidedInterface->CommandsWrite.AddItem(commandName, newCommandWrite);
-        localProvidedInterface->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
-    ITERATE_COMMAND_OBJECT_END
+        //providedInterface->CommandsWrite.AddItem(commandName, newCommandWrite);
+        providedInterface->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
+    ITERATE_INTERFACE_END
+
+    // 2-3) Read
+    ITERATE_INTERFACE_BEGIN(Read)
+        cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
+        mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(commandName, prototype);
+        CMN_ASSERT(newCommandRead);
+        //providedInterface->CommandsRead.AddItem(commandName, newCommandRead);
+        providedInterface->GetCommandReadMap().AddItem(commandName, newCommandRead);
+    ITERATE_INTERFACE_END
 
     // 2-4) QualifiedRead
-    //ITERATE_COMMAND_OBJECT_BEGIN(QualifiedRead)
-    //    std::string commandName = it->Name;
+    //ITERATE_INTERFACE_BEGIN(QualifiedRead)
     //    cmnGenericObject * prototype1 = cmnClassRegister::Create(it->Argument1TypeName);
     //    cmnGenericObject * prototype2 = cmnClassRegister::Create(it->Argument2TypeName);
     //    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = 
     //        new mtsCommandQualifiedReadProxy(commandName, prototype1, prototype2);
     //    CMN_ASSERT(newCommandQualifiedRead);
-    //    localProvidedInterface->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
-    //ITERATE_COMMAND_OBJECT_END
+    //    providedInterface->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
+    //ITERATE_INTERFACE_END
 
-#undef ITERATE_COMMAND_OBJECT_BEGIN
-#undef ITERATE_COMMAND_OBJECT_END
+    if (spec.providedInterfaceForTask) {
+        mtsTaskInterface * providedInterfaceForTask = dynamic_cast<mtsTaskInterface *>(providedInterface);
+        CMN_ASSERT(providedInterfaceForTask);
+
+        // 2-1) Void
+        ITERATE_INTERFACE_BEGIN(Void)
+            //
+            //  TODO: Is it ok to use mtsCommandVoidProxy instead of mtsCommandVoidBase?
+            //  refer to mtsTaskInterface.h:157 (mtsCommandVoidBase * AddCommandVoid())
+            //
+            mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(commandName);
+            CMN_ASSERT(newCommandVoid);
+            mtsCommandQueuedVoidBase * newCommandQueuedVoid = new mtsCommandQueuedVoid(0, newCommandVoid);
+            CMN_ASSERT(newCommandQueuedVoid);
+            providedInterfaceForTask->CommandsQueuedVoid.AddItem(commandName, newCommandQueuedVoid, 1);
+        ITERATE_INTERFACE_END
+
+        // 2-2) Write
+        ITERATE_INTERFACE_BEGIN(Write)
+        //
+            //  TODO: Is it ok to use mtsCommandWriteProxy instead of mtsCommandWriteBase?
+            //  refer to mtsTaskInterface.h:157 (mtsCommandVoidBase * AddCommandWrite())
+            //
+            cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
+            mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(commandName, prototype);
+            CMN_ASSERT(newCommandWrite);
+            mtsCommandQueuedWriteBase * newCommandQueuedWrite = new mtsCommandQueuedWriteProxy(newCommandWrite);
+            CMN_ASSERT(newCommandQueuedWrite);
+            providedInterfaceForTask->CommandsQueuedWrite.AddItem(commandName, newCommandQueuedWrite, 1);
+        ITERATE_INTERFACE_END
+    }
+
+#undef ITERATE_INTERFACE_BEGIN
+#undef ITERATE_INTERFACE_END
 
     // TODO:
     //

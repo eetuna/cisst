@@ -55,6 +55,8 @@ public:
 
     /*! The execute method. */
     virtual BaseType::ReturnType Execute(ArgumentType & argument) {
+        static int cnt = 0;
+        std::cout << "mtsCommandWriteProxy called (" << ++cnt << "): " << Name << std::endl;
         return BaseType::DEV_OK;
     }
 

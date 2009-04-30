@@ -422,6 +422,10 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::operator==(const Provided
     {
         return false;
     }
+    if(providedInterfaceForTask != __rhs.providedInterfaceForTask)
+    {
+        return false;
+    }
     if(commandsVoid != __rhs.commandsVoid)
     {
         return false;
@@ -453,6 +457,14 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::operator<(const ProvidedI
         return true;
     }
     else if(__rhs.interfaceName < interfaceName)
+    {
+        return false;
+    }
+    if(providedInterfaceForTask < __rhs.providedInterfaceForTask)
+    {
+        return true;
+    }
+    else if(__rhs.providedInterfaceForTask < providedInterfaceForTask)
     {
         return false;
     }
@@ -495,6 +507,7 @@ void
 mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(interfaceName);
+    __os->write(providedInterfaceForTask);
     if(commandsVoid.size() == 0)
     {
         __os->writeSize(0);
@@ -533,6 +546,7 @@ void
 mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(interfaceName);
+    __is->read(providedInterfaceForTask);
     ::mtsTaskInterfaceProxy::__readCommandVoidSeq(__is, commandsVoid);
     ::mtsTaskInterfaceProxy::__readCommandWriteSeq(__is, commandsWrite);
     ::mtsTaskInterfaceProxy::__readCommandReadSeq(__is, commandsRead);
@@ -555,7 +569,7 @@ mtsTaskInterfaceProxy::__readProvidedInterfaceSpecificationSeq(::IceInternal::Ba
 {
     ::Ice::Int sz;
     __is->readSize(sz);
-    __is->startSeq(sz, 5);
+    __is->startSeq(sz, 6);
     v.resize(sz);
     for(int i = 0; i < sz; ++i)
     {
