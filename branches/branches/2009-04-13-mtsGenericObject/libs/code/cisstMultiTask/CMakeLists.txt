@@ -27,6 +27,7 @@ SET(DEPENDENCIES
 # all source files
 SET(SOURCE_FILES
     mtsVector.cpp
+    mtsMatrix.cpp
     mtsGenericObjectProxy.cpp
 
     mtsMulticastCommandVoid.cpp
@@ -59,6 +60,7 @@ SET(SOURCE_FILES
 # all header files
 SET(HEADER_FILES
     mtsVector.h
+    mtsMatrix.h
     mtsMap.h
 
     mtsGenericObject.h
