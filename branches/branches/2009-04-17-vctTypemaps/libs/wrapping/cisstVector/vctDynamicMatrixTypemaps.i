@@ -5,14 +5,8 @@
 /*****************************************************************************
  PLACEHOLDER STRINGS TO LOOK FOR:
 
-   TODO                 todo
+   TODO
 *****************************************************************************/
-
-%header %{
-#include <Python.h>
-#include <arrayobject.h>
-#include <math.h>
-%}
 
 #define CISST_EXPORT
 #define CISST_DEPRECATED
@@ -25,93 +19,6 @@
 
 %init %{
         import_array()   /* Initial function for NumPy */
-%}
-
-%header %{
-
-    #include <cisstCommon/cmnAssert.h>
-    #include <cisstVector/vctDynamicConstMatrixBase.h>
-
-    bool vctThrowUnlessIsPyArray(PyObject * input)
-    {
-        if (!PyArray_Check(input)) {
-            PyErr_SetString(PyExc_TypeError, "Object must be a NumPy array");
-            return false;
-        }
-        return true;
-    }
-
-    template <class _elementType>
-    bool vctThrowUnlessIsSameTypeArray(PyObject * input)
-    {
-        PyErr_SetString(PyExc_ValueError, "Unsupported data type");
-        return false;
-    }
-
-    template <>
-    bool vctThrowUnlessIsSameTypeArray<int>(PyObject * input)
-    {
-        if (PyArray_ObjectType(input, 0) != NPY_INT32) {
-            PyErr_SetString(PyExc_ValueError, "Array must be of type int");
-            return false;
-        }
-
-        return true;
-    }
-
-    template <class _elementType>
-    int vctPythonType(void)
-    {
-        return NPY_NOTYPE; // unsupported type
-    }
-
-    template <>
-    int vctPythonType<int>(void)
-    {
-        return NPY_INT32;
-    }
-
-    bool vctThrowUnlessDimension2(PyObject * input)
-    {
-        if (PyArray_NDIM(input) != 2) {
-            PyErr_SetString(PyExc_ValueError, "Array must be 2D (matrix)");
-            return false;
-        }
-
-        return true;
-    }
-
-
-    bool vctThrowUnlessIsWritable(PyObject *input)
-    {
-        int flags = PyArray_FLAGS(input);
-        if(!(flags & NPY_WRITEABLE)) {
-            PyErr_SetString(PyExc_ValueError, "Array must be writable");
-            return false;
-        }
-        return true;
-    }
-
-
-    bool vctThrowUnlessOwnsData(PyObject * input)
-    {
-        int flags = PyArray_FLAGS(input);
-        if(!(flags & NPY_OWNDATA)) {
-            PyErr_SetString(PyExc_ValueError, "Array must own its data");
-            return false;
-        }
-        return true;
-    }
-
-
-    bool vctThrowUnlessNotReferenced(PyObject *input)
-    {
-        if (PyArray_REFCOUNT(input) > 5) {      // TODO: what is the correct value to test against?  4?
-            PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
-            return false;
-        }
-        return true;
-    }
 %}
 
 
@@ -135,7 +42,7 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input))
         ) {
@@ -161,6 +68,7 @@
 }
 
 
+#if 0
 /******************************************************************************
   TYPEMAPS (in, argout, out) FOR vctDynamicMatrix &
 ******************************************************************************/
@@ -243,13 +151,7 @@
         PyArray_Dims dims;                              // create a PyArray_Dims object to hand to PyArray_Resize
         dims.ptr = sizes;
         dims.len = 2;
-        PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);   // resize the PyArray
-                                                                          // @mystery@
-                                                                          // Why does setting the third parameter to be 1
-                                                                          // result in Python errors during unit testing?
-                                                                          // I've already checked that there are no extraneous
-                                                                          // references, but the Python errors are telling me
-                                                                          // otherwise!
+        PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);
     }
 
     /*************************************************************************
@@ -682,3 +584,4 @@ VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
+#endif

@@ -54,7 +54,7 @@ http://www.cisst.org/cisst/license.txt.
 %include "cisstVector/vctContainerTraits.h"
 
 // Define some basic flags
-%include "cisstVector/vctForwardDeclarations.h" 
+%include "cisstVector/vctForwardDeclarations.h"
 
 // Include per type of container
 %include "cisstVector/vctDynamicVector.i"
@@ -72,4 +72,4 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 %include "cisstVector/vctDynamicVectorTypemaps.i"
-
+%include "cisstVector/vctDynamicMatrixTypemaps.i"

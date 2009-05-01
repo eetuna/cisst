@@ -6,11 +6,11 @@
 # Reserved.
 
 # --- begin cisst license - do not edit ---
-# 
+#
 # This software is provided "as is" under an open source license, with
 # no warranty.  The complete license can be found in license.txt and
 # http://www.cisst.org/cisst/license.txt.
-# 
+#
 # --- end cisst license ---
 
 # CMakeLists.txt for cisstNumerical wrapping tests
@@ -28,9 +28,9 @@ INCLUDE(${SWIG_USE_FILE})
 INCLUDE_DIRECTORIES("C:/Python25/Lib/site-packages/numpy/core/include/numpy")
 # Python libraries
 IF(WIN32)
-  LINK_LIBRARIES(debug ${PYTHON_DEBUG_LIBRARIES} optimized ${PYTHON_LIBRARIES}) 
+  LINK_LIBRARIES(debug ${PYTHON_DEBUG_LIBRARIES} optimized ${PYTHON_LIBRARIES})
 ELSE(WIN32)
-  LINK_LIBRARIES(${PYTHON_LIBRARIES}) 
+  LINK_LIBRARIES(${PYTHON_LIBRARIES})
 ENDIF(WIN32)
 
 # Threads for Python
@@ -41,7 +41,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CISST_SWIG_INCLUDE_DIR})
 
 # We are using C++ code
-SET(PROXY_TESTS vctDynamicVectorTypemapsTest)
+SET(PROXY_TESTS vctDynamicVectorTypemapsTest vctDynamicMatrixTypemapsTest)
 FOREACH(proxyTest ${PROXY_TESTS})
   SET(interface ${CMAKE_CURRENT_SOURCE_DIR}/${proxyTest}.i)
   SET(module ${proxyTest}Python)
@@ -50,7 +50,7 @@ FOREACH(proxyTest ${PROXY_TESTS})
   SET_SOURCE_FILES_PROPERTIES(${interface} PROPERTIES CPLUSPLUS ON)
   SET_SOURCE_FILES_PROPERTIES(${interface}
                             PROPERTIES SWIG_FLAGS "-v;-modern;-fvirtual")
-                           #PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
+#                           PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
   SWIG_ADD_MODULE(${module} python ${interface})
   IF(WIN32)
     SWIG_LINK_LIBRARIES(${module}
@@ -91,7 +91,7 @@ ELSE(CMAKE_CONFIGURATION_TYPES)
                  ${EXECUTABLE_OUTPUT_PATH}/cisstVectorTests.py
                  IMMEDIATE @ONLY@)
 ENDIF(CMAKE_CONFIGURATION_TYPES)
-      
+
 # Run the script to generate the list of tests automatically
 ADD_CUSTOM_TARGET(cisstVector_CREATE_PYTHON_TESTS_LIST ALL
                   COMMAND ${PYTHON_EXECUTABLE} ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/cisstVectorTests.py -d ${PYTHON_EXECUTABLE} > ${DART_TEST_FILE_AUTO}
@@ -102,7 +102,8 @@ ADD_DEPENDENCIES(cisstVector_CREATE_PYTHON_TESTS_LIST
                  cisstVector
                  _cisstCommonPython
                  _cisstVectorPython
-                 _vctDynamicVectorTypemapsTestPython)
+                 _vctDynamicVectorTypemapsTestPython
+                 _vctDynamicMatrixTypemapsTestPython)
 
 FILE(APPEND ${DART_TEST_FILE} "INCLUDE(\"${DART_TEST_FILE_AUTO}\")\n")
 
@@ -110,5 +111,5 @@ FILE(APPEND ${DART_TEST_FILE} "INCLUDE(\"${DART_TEST_FILE_AUTO}\")\n")
 # Add all the test lists
 SET_DIRECTORY_PROPERTIES(PROPERTIES TEST_INCLUDE_FILE
                          ${DART_TEST_FILE})
-                         
+
 

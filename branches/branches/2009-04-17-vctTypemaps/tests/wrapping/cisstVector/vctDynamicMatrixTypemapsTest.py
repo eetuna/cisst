@@ -16,17 +16,17 @@ import copy
 import numpy
 import unittest
 
-from vctDynamicVectorTypemapsTestPython import vctDynamicVectorTypemapsTest
+from vctDynamicMatrixTypemapsTestPython import vctDynamicMatrixTypemapsTest
 import sys
 
-class DynamicVectorTypemapsTest(unittest.TestCase):
+class DynamicMatrixTypemapsTest(unittest.TestCase):
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctDynamicVectorTypemapsTest()
+        self.CObject = vctDynamicMatrixTypemapsTest()
 
 
     ###########################################################################
@@ -46,9 +46,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
-        #self.CObject.in_argout_vctDynamicVector_ref(goodvar, 0)      # DEBUG
-        #print sys.getrefcount(goodvar)                               # DEBUG
+        goodvar = numpy.ones((5,5), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -57,30 +55,30 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give an array of floats; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.float64)
+            badvar = numpy.ones((5,5), dtype=numpy.float64)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones((5,5), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
-    # Tests that the typemap throws an exception if the array isn't 1D
-    def StdTestThrowUnlessDimension1(self, function):
-        # Give a 2D array; expect an exception
+    # Tests that the typemap throws an exception if the array isn't 2D
+    def StdTestThrowUnlessDimension2(self, function):
+        # Give a 1D array; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.array([[1, 2, 3], [4, 5, 6]])
+            badvar = numpy.ones(10, dtype=numpy.int32)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
-        # Give a 1D array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        # Give a 2D array; expect no exception
+        goodvar = numpy.ones((5,5), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -89,7 +87,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give a non-writable array; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.int32)
+            badvar = numpy.ones((5,5), dtype=numpy.int32)
             badvar.setflags(write=False)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -97,7 +95,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones((5,5), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -105,7 +103,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give a non-memory owning array; expect an exception
         exceptionOccurred = False
         try:
-            temp = numpy.ones(10, dtype=numpy.int32)
+            temp = numpy.ones((5,5), dtype=numpy.int32)
             badvar = temp[:]
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -113,7 +111,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a memory-owning array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones((5,5), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -121,7 +119,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give an array with a reference on it; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.int32)
+            badvar = numpy.ones((5,5), dtype=numpy.int32)
             temp = badvar
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -129,18 +127,20 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array with no references; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones((5,5), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
     # Test if the C object reads the vector correctly
     def StdTestThrowUnlessReadsCorrectly(self, function):
-        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
-        size = v.size;
+        v = numpy.ones((5,5), dtype=numpy.int32)   # TODO: randomize the vector
+        rows = v.shape[0]
+        cols = v.shape[1]
+        size = v.size
         exec('self.CObject.' + function + '(v, 0)')
 
-        assert(self.CObject.size() == size)
-        assert(v.size == size)
+        assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
+        assert(v.shape[0] == rows and v.shape[1] == cols)
         for i in xrange(size):
             # Test if the C object read the vector correctly
             assert(self.CObject[i] == v[i])
@@ -148,7 +148,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
     # Test if the C object reads and modifies the vector correctly
     def StdTestThrowUnlessReadsWritesCorrectly(self, function):
-        vNew = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        vNew = numpy.ones((5,5), dtype=numpy.int32)   # TODO: randomize the vector
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         exec('self.CObject.' + function + '(vNew, 0)')
@@ -164,7 +164,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
     # Test if the C object reads, modifies, and resizes the vector correctly
     def StdTestThrowUnlessReadsWritesResizesCorrectly(self, function):
-        vNew = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        vNew = numpy.ones((5,5), dtype=numpy.int32)   # TODO: randomize the vector
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         SIZEFACTOR = 3
@@ -187,114 +187,114 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     #   tests that test the typemaps.  One test per typemap!                  #
     ###########################################################################
 
-    def Test_in_argout_vctDynamicVector_ref(self):
-        MY_NAME = 'in_argout_vctDynamicVector_ref'
+#     def Test_in_argout_vctDynamicMatrix_ref(self):
+#         MY_NAME = 'in_argout_vctDynamicMatrix_ref'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimension1(MY_NAME)
+#         self.StdTestThrowUnlessWritable(MY_NAME)
+#         self.StdTestThrowUnlessOwnsData(MY_NAME)
+#         self.StdTestThrowUnlessNotReferenced(MY_NAME)
+
+#         # Perform specialized tests
+#         self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+#         self.StdTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+
+
+#     def Test_in_vctDynamicMatrixRef(self):
+#         MY_NAME = 'in_vctDynamicMatrixRef'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimension1(MY_NAME)
+#         self.StdTestThrowUnlessWritable(MY_NAME)
+
+#         # Perform specialized tests
+#         self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+
+
+#     def Test_in_vctDynamicConstMatrixRef(self):
+#         MY_NAME = 'in_vctDynamicConstMatrixRef'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimension1(MY_NAME)
+
+#         # Perform specialized tests
+#         self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+
+#     def Test_in_argout_const_vctDynamicConstMatrixRef_ref(self):
+#         MY_NAME = 'in_argout_const_vctDynamicConstMatrixRef_ref'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimension1(MY_NAME)
+
+#         # Perform specialized tests
+#         self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+
+#     def Test_in_argout_const_vctDynamicMatrixRef_ref(self):
+#         MY_NAME = 'in_argout_const_vctDynamicMatrixRef_ref'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimension1(MY_NAME)
+
+#         # Perform specialized tests
+#         self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+
+
+    def Test_in_vctDynamicMatrix(self):
+        MY_NAME = 'in_vctDynamicMatrix'
 
         # Perform battery of standard tests
         self.StdTestThrowUnlessIsArray(MY_NAME)
         self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
-        self.StdTestThrowUnlessOwnsData(MY_NAME)
-        self.StdTestThrowUnlessNotReferenced(MY_NAME)
+        self.StdTestThrowUnlessDimension2(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-        self.StdTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+#        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_in_vctDynamicVectorRef(self):
-        MY_NAME = 'in_vctDynamicVectorRef'
+#     def Test_in_argout_const_vctDynamicMatrix_ref(self):
+#         MY_NAME = 'in_argout_const_vctDynamicMatrix_ref'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimension1(MY_NAME)
 
-        # Perform specialized tests
-        self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-
-
-    def Test_in_vctDynamicConstVectorRef(self):
-        MY_NAME = 'in_vctDynamicConstVectorRef'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-
-        # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+#         # Perform specialized tests
+#         self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_in_argout_const_vctDynamicConstVectorRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicConstVectorRef_ref'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-
-        # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
-
-
-    def Test_in_argout_const_vctDynamicVectorRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicVectorRef_ref'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-
-        # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
-
-
-    def Test_in_vctDynamicVector(self):
-        MY_NAME = 'in_vctDynamicVector'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-
-        # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
-
-
-    def Test_in_argout_const_vctDynamicVector_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicVector_ref'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-
-        # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
-
-
-    def Test_out_vctDynamicVector(self):
-        MY_NAME = 'out_vctDynamicVector'
-
-        # Perform specialized tests
-        SIZE = 10
-        v = self.CObject.out_vctDynamicVector(SIZE)
-        assert(v.size == SIZE)  # to make sure v.size isn't zero
-                                # TODO: do this for (almost) all tests
-        for i in xrange(v.size):
-            assert(self.CObject[i] == v[i])
-
-
-# We currently do not support the vctDynamicVectorRef out typemap
-#     def Test_out_vctDynamicVectorRef(self):
-#         MY_NAME = 'out_vctDynamicVectorRef'
+#     def Test_out_vctDynamicMatrix(self):
+#         MY_NAME = 'out_vctDynamicMatrix'
 
 #         # Perform specialized tests
 #         SIZE = 10
-#         v = self.CObject.out_vctDynamicVectorRef(SIZE)
+#         v = self.CObject.out_vctDynamicMatrix(SIZE)
+#         assert(v.size == SIZE)  # to make sure v.size isn't zero
+#                                 # TODO: do this for (almost) all tests
+#         for i in xrange(v.size):
+#             assert(self.CObject[i] == v[i])
+
+
+# We currently do not support the vctDynamicMatrixRef out typemap
+#     def Test_out_vctDynamicMatrixRef(self):
+#         MY_NAME = 'out_vctDynamicMatrixRef'
+
+#         # Perform specialized tests
+#         SIZE = 10
+#         v = self.CObject.out_vctDynamicMatrixRef(SIZE)
 # #         assert(v.size == SIZE)  # to make sure v.size isn't zero
 # #                                 # TODO: do this for (almost) all tests
 # #         for i in xrange(v.size):

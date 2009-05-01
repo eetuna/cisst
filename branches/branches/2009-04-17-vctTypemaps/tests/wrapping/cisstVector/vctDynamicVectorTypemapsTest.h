@@ -9,11 +9,15 @@
 
 class vctDynamicVectorTypemapsTest
 {
-public:
+
+protected:
+
     vctDynamicVector<int> copy;
 
-    vctDynamicVectorTypemapsTest() {
-    }
+public:
+
+    vctDynamicVectorTypemapsTest()
+    {}
 
     void in_argout_vctDynamicVector_ref(vctDynamicVector<int> &param, unsigned int sizefactor) {
         copy.SetSize(param.size());
@@ -84,7 +88,7 @@ public:
         copy.at(index) = value;
     }
 
-    unsigned int size() const {
+    inline unsigned int size() const {
         return copy.size();
     }
 };
