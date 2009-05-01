@@ -95,6 +95,25 @@
     }
 
 
+    template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
+    bool vctThrowUnlessCorrectVectorSize(const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & input,
+                                 unsigned int desiredSize)
+    {
+        if (input.size() != desiredSize) {
+            PyErr_SetString(PyExc_ValueError, "Input vector's size must be same as fixed size's size");
+            return false;
+        }
+        return true;
+    }
+
+    template <class _vectorOwnerType, typename _elementType>
+    bool vctThrowUnlessCorrectVectorSize(const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & input,
+                                 unsigned int desiredSize)
+    {
+        return true;
+    }
+
+
     bool vctThrowUnlessOwnsData(PyObject * input)
     {
         int flags = PyArray_FLAGS(input);
