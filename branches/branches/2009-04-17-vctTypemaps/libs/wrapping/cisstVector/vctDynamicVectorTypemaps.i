@@ -97,10 +97,13 @@
 
     template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
     bool vctThrowUnlessCorrectVectorSize(const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & input,
-                                 unsigned int desiredSize)
+                                         unsigned int desiredSize)
     {
         if (input.size() != desiredSize) {
-            PyErr_SetString(PyExc_ValueError, "Input vector's size must be same as fixed size's size");
+            std::stringstream stream;
+            stream << "Input vector's size must be " << desiredSize;
+            std::string msg = stream.str();
+            PyErr_SetString(PyExc_ValueError, msg.c_str());
             return false;
         }
         return true;
