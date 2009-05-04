@@ -73,12 +73,29 @@ public:
         return copy;
     }
 
-    /* We currently do not support the vctDynamicVectorRef out typemap
-    vctDynamicVectorRef<int> out_vctDynamicVectorRef(unsigned int size) throw(std::exception) {
+    vctDynamicVector<int> &out_vctDynamicVector_ref(unsigned int size) {
+        copy.SetSize(size);
+        vctRandom(copy, 0, 10);
+        return copy;
+    }
+
+    const vctDynamicVector<int> &out_const_vctDynamicVector_ref(unsigned int size) {
+        copy.SetSize(size);
+        vctRandom(copy, 0, 10);
+        return copy;
+    }
+
+    vctDynamicVectorRef<int> out_vctDynamicVectorRef(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return vctDynamicVectorRef<int>(copy);
-    }*/
+    }
+
+    vctDynamicConstVectorRef<int> out_vctDynamicConstVectorRef(unsigned int size) {
+        copy.SetSize(size);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        return vctDynamicConstVectorRef<int>(copy);
+    }
 
     inline int __getitem__(unsigned int index) const throw(std::out_of_range) {
         return copy.at(index);

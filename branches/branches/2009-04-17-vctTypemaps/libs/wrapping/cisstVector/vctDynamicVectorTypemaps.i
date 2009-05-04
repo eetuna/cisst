@@ -331,11 +331,10 @@
 
 
 
-%typemap(out) vctDynamicVectorRef
+%typemap(out, optimal="1") vctDynamicVectorRef
 {
-#if 0     // We currently do not support the vctDynamicVectorRef out typemap
     /*****************************************************************************
-    *   %typemap(out) vctDynamicVectorRef
+    *   %typemap(out, optimal="1") vctDynamicVectorRef
     *   Returning a vctDynamicVectorRef
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
@@ -355,20 +354,14 @@
     *****************************************************************************/
 
     // Create a temporary vctDynamicVectorRef container
-    const npy_intp size = PyArray_DIM($result, 0);      // TODO: change to: $1.size()
-    const npy_intp stride = PyArray_STRIDE($result, 0) /
-                                sizeof($1_ltype::value_type);       // TODO: change to: 1
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    const npy_intp size = $1.size();
+    const npy_intp stride = 1;
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
     vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
-    // TODO: Which is better?
-    //  vctDynamicVectorRef<$1_ltype::value_type> tempContainer = vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
-    //  or
-    //  vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the vctDynamicVectorRef to the temporary container
     tempContainer.Assign($1);
-#endif  // 0
 }
 
 
@@ -475,6 +468,7 @@
 }
 
 
+// TODO: Why does this out typemap work without the ``optimal'' flag?
 %typemap(out) vctDynamicConstVectorRef
 {
     /*****************************************************************************
@@ -498,16 +492,14 @@
     *****************************************************************************/
 
     // Create a temporary vctDynamicVectorRef container
-    const npy_intp size = PyArray_DIM($result, 0);
-    const npy_intp stride = PyArray_STRIDE($result, 0) /
-                                sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
-    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer =
-        vctDynamicVectorRef<$1_ltype::value_type>(size, data, stride);
+    const npy_intp size = $1.size();
+    const npy_intp stride = 1;
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the vctDynamicConstVectorRef to the temporary container
-    tempContainer = $1;
+    tempContainer.Assign($1);
 }
 
 

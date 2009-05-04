@@ -71,20 +71,35 @@ public:
         copy.Assign(param);
     }
 
-#if 0
-    vctDynamicMatrix<int> out_vctDynamicMatrix(unsigned int size) {
-        copy.SetSize(size);
-        vctRandom(copy, 0, 10);
+    vctDynamicMatrix<int> out_vctDynamicMatrix(unsigned int rows, unsigned int cols) {
+        copy.SetSize(rows, cols);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    /* We currently do not support the vctDynamicMatrixRef out typemap
-    vctDynamicMatrixRef<int> out_vctDynamicMatrixRef(unsigned int size) throw(std::exception) {
-        copy.SetSize(size);
+    vctDynamicMatrix<int> &out_vctDynamicMatrix_ref(unsigned int rows, unsigned int cols) {
+        copy.SetSize(rows, cols);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
-        return vctDynamicMatrixRef<int>(copy);
-    }*/
-#endif
+        return copy;
+    }
+
+    const vctDynamicMatrix<int> &out_const_vctDynamicMatrix_ref(unsigned int rows, unsigned int cols) {
+        copy.SetSize(rows, cols);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        return copy;
+    }
+
+    vctDynamicMatrixRef<int> out_vctDynamicMatrixRef(unsigned int rows, unsigned int cols) {
+        copy.SetSize(rows, cols);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        return copy;
+    }
+
+    vctDynamicConstMatrixRef<int> out_vctDynamicConstMatrixRef(unsigned int rows, unsigned int cols) {
+        copy.SetSize(rows, cols);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        return copy;
+    }
 
     inline int GetItem(unsigned int rowIndex, unsigned int colIndex) const
     throw(std::out_of_range) {

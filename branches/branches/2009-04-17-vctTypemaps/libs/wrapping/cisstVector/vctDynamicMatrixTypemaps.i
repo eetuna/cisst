@@ -23,7 +23,7 @@
 
 
 /******************************************************************************
-  TYPEMAPS (in) FOR vctDynamicMatrix
+  TYPEMAPS (in, out) FOR vctDynamicMatrix
 ******************************************************************************/
 
 
@@ -58,13 +58,36 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+
     const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctDynamicMatrix
     $1.SetSize(tempContainer.sizes());
     $1.Assign(tempContainer);
+}
+
+
+// TODO: Search for other uses of %typemap(out, optimal="1")
+
+
+%typemap(out) vctDynamicMatrix
+{
+    /* Return vector by copy
+       Using: %typemap(out) vctDynamicMatrix
+     */
+
+    // Create a new PyArray and set its size
+    npy_intp *sizes = PyDimMem_NEW(2);
+    sizes[0] = $1.rows();
+    sizes[1] = $1.cols();
+
+    // TODO: Understand what this does
+    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+
+    // TODO: Understand what this does
+    // copy data returned by C function into new PyArray
+    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type));
 }
 
 
@@ -181,6 +204,23 @@
 }
 
 
+%typemap(out) vctDynamicMatrix &
+{
+    /* Return vector by reference
+       Using: %typemap(out) vctDynamicMatrix &
+     */
+
+    // Create new size array and set size
+    npy_intp *sizes = PyDimMem_NEW(2);
+    sizes[0] = $1->rows();
+    sizes[1] = $1->cols();
+
+    // TODO: Understand what this does
+    // NPY_CARRAY = set flags for a C Array that is non-Read Only
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
+}
+
+
 /******************************************************************************
   TYPEMAPS (in, argout, out) FOR const vctDynamicMatrix &
 ******************************************************************************/
@@ -245,21 +285,21 @@
 }
 
 
-#if 0
 %typemap(out) const vctDynamicMatrix &
 {
     /* Return vector by const reference
        Using: %typemap(out) const vctDynamicMatrix &
      */
 
-    /* To imitate const functionality, set the writable flag to false */
+    // Create new size array and set size
+    npy_intp *sizes = PyDimMem_NEW(2);
+    sizes[0] = $1->rows();
+    sizes[1] = $1->cols();
 
-    //Create new size array and set size
-    npy_intp* sizes = PyDimMem_NEW(1);
-    sizes[0] = $1->size();
-
-    //NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    // TODO: Understand what this does
+    // To imitate const functionality, set the writable flag to false
+    // NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -268,7 +308,6 @@
 ******************************************************************************/
 
 
-#endif
 %typemap(in) vctDynamicMatrixRef
 {
     /*************************************************************************
@@ -309,11 +348,10 @@
 }
 
 
-%typemap(out) vctDynamicMatrixRef
+%typemap(out, optimal="1") vctDynamicMatrixRef
 {
-#if 0     // We currently do not support the vctDynamicMatrixRef out typemap
     /*****************************************************************************
-    *   %typemap(out) vctDynamicMatrixRef
+    *   %typemap(out, optimal="1") vctDynamicMatrixRef
     *   Returning a vctDynamicMatrixRef
     *
     *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
@@ -324,25 +362,26 @@
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    npy_intp *sizes = PyDimMem_NEW(1);
-    sizes[0] = $1.size();
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
+    npy_intp *sizes = PyDimMem_NEW(2);
+    sizes[0] = $1.rows();
+    sizes[1] = $1.cols();
+    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicMatrixRef TO THE PYARRAY
     *****************************************************************************/
 
     // Create a temporary vctDynamicMatrixRef container
-    const npy_intp size = PyArray_DIM($result, 0);      // TODO: change to: $1.size()
-    const npy_intp stride = PyArray_STRIDE($result, 0) /
-                                sizeof($1_ltype::value_type);       // TODO: change to: 1
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
-    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size, data, stride);
+    const npy_intp size0 = $1.rows();
+    const npy_intp size1 = $1.cols();
+    const npy_intp stride0 = size1;     // TODO: Why does this work?  Shouldn't it be:  stride0 = size1 * sizeof($1_ltype::value_type)
+    const npy_intp stride1 = 1;
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the vctDynamicMatrixRef to the temporary container
     tempContainer.Assign($1);
-#endif  // 0
 }
 
 
@@ -452,7 +491,7 @@
 }
 
 
-#if 0
+// TODO: Why does this out typemap work without the ``optimal'' flag?
 %typemap(out) vctDynamicConstMatrixRef
 {
     /*****************************************************************************
@@ -467,27 +506,27 @@
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    npy_intp *sizes = PyDimMem_NEW(1);
-    sizes[0] = $1.size();
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
+    npy_intp *sizes = PyDimMem_NEW(2);
+    sizes[0] = $1.rows();
+    sizes[1] = $1.cols();
+    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY
     *****************************************************************************/
 
     // Create a temporary vctDynamicMatrixRef container
-    const npy_intp size = PyArray_DIM($result, 0);
-    const npy_intp stride = PyArray_STRIDE($result, 0) /
-                                sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
-    const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer =
-        vctDynamicMatrixRef<$1_ltype::value_type>(size, data, stride);
+    const npy_intp size0 = PyArray_DIM($result, 0);
+    const npy_intp size1 = PyArray_DIM($result, 1);
+    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the vctDynamicConstMatrixRef to the temporary container
-    tempContainer = $1;
+    tempContainer.Assign($1);
 }
-#endif
 
 
 /******************************************************************************

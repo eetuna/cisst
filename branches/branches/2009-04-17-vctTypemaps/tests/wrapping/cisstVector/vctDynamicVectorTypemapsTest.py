@@ -9,7 +9,6 @@
 #######################
 
 # TODO: If I have time, Document why self.CObject[i] works and check which typemap(s) used
-# TODO: Check that StdTestThrowUnlessReads[Writes][Resizes]Correctly mirror each other
 # TODO: Clean this code up
 
 import copy
@@ -133,8 +132,22 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
+    def StdTestThrowUnlessReturnedVectorIsWritable(self, function):
+        # Expect the returned array to be writable
+        SIZE = 10
+        exec('v = self.CObject.' + function + '(SIZE)')
+        assert(v.flags['WRITEABLE'] == True)
+
+
+    def StdTestThrowUnlessReturnedVectorIsNonWritable(self, function):
+        # Expect the returned array to be non-writable
+        SIZE = 10
+        exec('v = self.CObject.' + function + '(SIZE)')
+        assert(v.flags['WRITEABLE'] == False)
+
+
     # Test if the C object reads the vector correctly
-    def StdTestThrowUnlessReadsCorrectly(self, function):
+    def SpecTestThrowUnlessReadsCorrectly(self, function):
         vNew = numpy.random.rand(10)
         vNew = numpy.floor(vNew * 100)
         vNew = numpy.array(vNew, dtype=numpy.int32)
@@ -152,7 +165,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
 
     # Test if the C object reads and modifies the vector correctly
-    def StdTestThrowUnlessReadsWritesCorrectly(self, function):
+    def SpecTestThrowUnlessReadsWritesCorrectly(self, function):
         vNew = numpy.random.rand(10)
         vNew = numpy.floor(vNew * 100)
         vNew = numpy.array(vNew, dtype=numpy.int32)
@@ -170,7 +183,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
 
     # Test if the C object reads, modifies, and resizes the vector correctly
-    def StdTestThrowUnlessReadsWritesResizesCorrectly(self, function):
+    def SpecTestThrowUnlessReadsWritesResizesCorrectly(self, function):
         vNew = numpy.random.rand(10)
         vNew = numpy.floor(vNew * 100)
         vNew = numpy.array(vNew, dtype=numpy.int32)
@@ -191,6 +204,16 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
                 assert(vOld[i] + 1 == vNew[i + size*j])
 
 
+    # Test if the C object returns a good vector
+    def SpecTestThrowUnlessReceivesCorrectVector(self, function):
+        SIZE = 10
+        exec('v = self.CObject.' + function + '(SIZE)')
+
+        assert(v.size == SIZE)
+        for i in xrange(SIZE):
+            assert(self.CObject[i] == v[i])
+
+
     ###########################################################################
     #   TEST FUNCTIONS - Put any new unit test here!  These are the unit      #
     #   tests that test the typemaps.  One test per typemap!                  #
@@ -208,8 +231,8 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessNotReferenced(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-        self.StdTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
 
 
     def Test_in_vctDynamicVectorRef(self):
@@ -222,7 +245,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessWritable(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
 
 
     def Test_in_vctDynamicConstVectorRef(self):
@@ -234,7 +257,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessDimension1(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
     def Test_in_argout_const_vctDynamicConstVectorRef_ref(self):
@@ -246,7 +269,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessDimension1(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
     def Test_in_argout_const_vctDynamicVectorRef_ref(self):
@@ -258,7 +281,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessDimension1(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
     def Test_in_vctDynamicVector(self):
@@ -270,7 +293,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessDimension1(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
     def Test_in_argout_const_vctDynamicVector_ref(self):
@@ -282,29 +305,54 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessDimension1(MY_NAME)
 
         # Perform specialized tests
-        self.StdTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
     def Test_out_vctDynamicVector(self):
         MY_NAME = 'out_vctDynamicVector'
 
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+
         # Perform specialized tests
-        SIZE = 10
-        v = self.CObject.out_vctDynamicVector(SIZE)
-        assert(v.size == SIZE)  # to make sure v.size isn't zero
-                                # TODO: do this for (almost) all tests
-        for i in xrange(v.size):
-            assert(self.CObject[i] == v[i])
+        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
 
 
-# We currently do not support the vctDynamicVectorRef out typemap
-#     def Test_out_vctDynamicVectorRef(self):
-#         MY_NAME = 'out_vctDynamicVectorRef'
+    def Test_out_vctDynamicVector_ref(self):
+        MY_NAME = 'out_vctDynamicVector_ref'
 
-#         # Perform specialized tests
-#         SIZE = 10
-#         v = self.CObject.out_vctDynamicVectorRef(SIZE)
-# #         assert(v.size == SIZE)  # to make sure v.size isn't zero
-# #                                 # TODO: do this for (almost) all tests
-# #         for i in xrange(v.size):
-# #             assert(self.CObject[i] == v[i])
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+
+
+    def Test_out_const_vctDynamicVector_ref(self):
+        MY_NAME = 'out_const_vctDynamicVector_ref'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedVectorIsNonWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+
+
+    def Test_out_vctDynamicVectorRef(self):
+        MY_NAME = 'out_vctDynamicVectorRef'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+
+
+    def Test_out_vctDynamicConstVectorRef(self):
+        MY_NAME = 'out_vctDynamicConstVectorRef'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedVectorIsNonWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
