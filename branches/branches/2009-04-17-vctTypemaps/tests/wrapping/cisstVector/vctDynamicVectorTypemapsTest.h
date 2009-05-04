@@ -19,14 +19,14 @@ public:
     vctDynamicVectorTypemapsTest()
     {}
 
-    void in_argout_vctDynamicVector_ref(vctDynamicVector<int> &param, unsigned int sizefactor) {
+    void in_argout_vctDynamicVector_ref(vctDynamicVector<int> &param, unsigned int sizeFactor) {
         copy.SetSize(param.size());
         copy.Assign(param);
         param += 1;
 
-        if (sizefactor != 0) {
+        if (sizeFactor != 0) {
             unsigned int size = param.size();
-            unsigned int newsize = size * sizefactor;
+            unsigned int newsize = size * sizeFactor;
             param.resize(newsize);
 
             // TODO: is there a better way to do this?

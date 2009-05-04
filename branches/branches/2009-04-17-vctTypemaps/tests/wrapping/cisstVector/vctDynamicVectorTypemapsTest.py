@@ -135,20 +135,27 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
     # Test if the C object reads the vector correctly
     def StdTestThrowUnlessReadsCorrectly(self, function):
-        v = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
-        size = v.size;
-        exec('self.CObject.' + function + '(v, 0)')
+        vNew = numpy.random.rand(10)
+        vNew = numpy.floor(vNew * 100)
+        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vOld = copy.deepcopy(vNew)
+        size = vNew.size
+        exec('self.CObject.' + function + '(vNew, 0)')
 
         assert(self.CObject.size() == size)
-        assert(v.size == size)
+        assert(vNew.size == size)
         for i in xrange(size):
             # Test if the C object read the vector correctly
-            assert(self.CObject[i] == v[i])
+            assert(self.CObject[i] == vOld[i])
+            # Test that the C object did not modify the vector
+            assert(vNew[i] == vOld[i])
 
 
     # Test if the C object reads and modifies the vector correctly
     def StdTestThrowUnlessReadsWritesCorrectly(self, function):
-        vNew = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        vNew = numpy.random.rand(10)
+        vNew = numpy.floor(vNew * 100)
+        vNew = numpy.array(vNew, dtype=numpy.int32)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         exec('self.CObject.' + function + '(vNew, 0)')
@@ -164,21 +171,23 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
     # Test if the C object reads, modifies, and resizes the vector correctly
     def StdTestThrowUnlessReadsWritesResizesCorrectly(self, function):
-        vNew = numpy.ones(10, dtype=numpy.int32)   # TODO: randomize the vector
+        vNew = numpy.random.rand(10)
+        vNew = numpy.floor(vNew * 100)
+        vNew = numpy.array(vNew, dtype=numpy.int32)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
-        SIZEFACTOR = 3
-        exec('self.CObject.' + function + '(vNew, SIZEFACTOR)')
+        SIZE_FACTOR = 3
+        exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
 
         assert(self.CObject.size() == size)
-        assert(vNew.size == size * SIZEFACTOR)
+        assert(vNew.size == size * SIZE_FACTOR)
         for i in xrange(size):
             # Test if the C object read the vector correctly
             assert(self.CObject[i] == vOld[i])
             # Test if the C object modified the vector correctly
             assert(vNew[i] == vOld[i] + 1)
             # Test if the C object resized the vector correctly
-            for j in xrange(SIZEFACTOR):
+            for j in xrange(SIZE_FACTOR):
                 assert(vOld[i] + 1 == vNew[i + size*j])
 
 

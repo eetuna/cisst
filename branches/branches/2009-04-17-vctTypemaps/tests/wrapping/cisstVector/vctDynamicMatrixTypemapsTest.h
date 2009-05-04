@@ -19,57 +19,59 @@ public:
     vctDynamicMatrixTypemapsTest()
     {}
 
-#if 0
-    void in_argout_vctDynamicMatrix_ref(vctDynamicMatrix<int> &param, unsigned int sizefactor) {
-        copy.SetSize(param.size());
+    void in_argout_vctDynamicMatrix_ref(vctDynamicMatrix<int> &param, unsigned int sizeFactor) {
+        copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
 
-        if (sizefactor != 0) {
-            unsigned int size = param.size();
-            unsigned int newsize = size * sizefactor;
-            param.resize(newsize);
+        if (sizeFactor != 0) {
+            unsigned int rowsOld = param.rows();
+            unsigned int colsOld = param.cols();
+            unsigned int rowsNew = rowsOld * sizeFactor;
+            unsigned int colsNew = colsOld * sizeFactor;
+            param.resize(rowsNew, colsNew);
 
             // TODO: is there a better way to do this?
-            for (unsigned int i = size; i < newsize; i++) {
-                param[i] = param[i % size];
+            for (unsigned int r = 0; r < rowsNew; r++) {
+                for (unsigned int c = 0; c < colsNew; c++) {
+                    param.at(r, c) = param.at(r % rowsOld, c % colsOld);
+                }
             }
         }
     }
 
     void in_vctDynamicMatrixRef(vctDynamicMatrixRef<int> param, unsigned int dummy) {
-        copy.SetSize(param.size());
+        copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
     }
 
     void in_vctDynamicConstMatrixRef(vctDynamicConstMatrixRef<int> param, unsigned int dummy) {
-        copy.SetSize(param.size());
+        copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
     void in_argout_const_vctDynamicConstMatrixRef_ref(const vctDynamicConstMatrixRef<int> &param, unsigned int dummy) {
-        copy.SetSize(param.size());
+        copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
     void in_argout_const_vctDynamicMatrixRef_ref(const vctDynamicMatrixRef<int> &param, unsigned int dummy) {
-        copy.SetSize(param.size());
+        copy.SetSize(param.sizes());
         copy.Assign(param);
     }
-#endif
 
     void in_vctDynamicMatrix(vctDynamicMatrix<int> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-#if 0
     void in_argout_const_vctDynamicMatrix_ref(const vctDynamicMatrix<int> &param, unsigned int dummy) {
-        copy.SetSize(param.size());
+        copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
+#if 0
     vctDynamicMatrix<int> out_vctDynamicMatrix(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);
@@ -84,24 +86,14 @@ public:
     }*/
 #endif
 
-    inline int getitem(unsigned int rowIndex, unsigned int colIndex) const
+    inline int GetItem(unsigned int rowIndex, unsigned int colIndex) const
     throw(std::out_of_range) {
         return copy.at(rowIndex, colIndex);
-    }
-
-    inline int __getitem__(unsigned int index) const
-    throw(std::out_of_range) {
-        return copy.at(index);
     }
 
     inline void SetItem(unsigned int rowIndex, unsigned int colIndex, int value)
     throw(std::out_of_range) {
         copy.at(rowIndex, colIndex) = value;
-    }
-
-    inline void __setitem__(unsigned int index, int value)
-    throw(std::out_of_range) {
-        copy.at(index) = value;
     }
 
     inline unsigned int rows() const {

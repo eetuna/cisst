@@ -178,7 +178,8 @@ bool vctThrowUnlessOwnsData(PyObject * input)
 
 bool vctThrowUnlessNotReferenced(PyObject *input)
 {
-    if (PyArray_REFCOUNT(input) > 4) {      // TODO: what is the correct value to test against?  4?
+    std::cout << "--- THE REFCOUNT IS SET AT 5 ---" << std::endl;
+    if (PyArray_REFCOUNT(input) > 5) {      // TODO: what is the correct value to test against?  4?
         PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
         return false;
     }

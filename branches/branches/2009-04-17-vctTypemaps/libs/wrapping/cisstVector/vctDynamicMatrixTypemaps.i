@@ -68,7 +68,6 @@
 }
 
 
-#if 0
 /******************************************************************************
   TYPEMAPS (in, argout, out) FOR vctDynamicMatrix &
 ******************************************************************************/
@@ -166,9 +165,9 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
+    vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctDynamicMatrix
     tempContainer.Assign($1->Pointer());
@@ -214,13 +213,13 @@
     *****************************************************************************/
 
     // Create a temporary vctDynamicMatrixRef container
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data =
         reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer =
-        vctDynamicMatrixRef<$*1_ltype::value_type>(size, data, stride);
+    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Create the vctDynamicMatrix
     $1 = new $*1_ltype(tempContainer);
@@ -246,6 +245,7 @@
 }
 
 
+#if 0
 %typemap(out) const vctDynamicMatrix &
 {
     /* Return vector by const reference
@@ -268,6 +268,7 @@
 ******************************************************************************/
 
 
+#endif
 %typemap(in) vctDynamicMatrixRef
 {
     /*************************************************************************
@@ -284,7 +285,7 @@
      IS WRITABLE
     *************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessIsWritable($input))
@@ -297,15 +298,15 @@
      OBJECT (NAMED `$1') TO MATCH THAT OF THE PYARRAY (NAMED `$input')
     *************************************************************************/
 
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($1_ltype::value_type);
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
     const $1_ltype::pointer data =
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
-    $1.SetRef(size, data, stride);
+    $1.SetRef(size0, size1, stride0, stride1, data);
 }
-
 
 
 %typemap(out) vctDynamicMatrixRef
@@ -365,7 +366,7 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input))
         ) {
@@ -377,12 +378,14 @@
     *****************************************************************************/
 
     // Create the vctDynamicMatrixRef
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data =
         reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    $1 = new $*1_ltype(size, data, stride);
+
+    $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
 }
 
 
@@ -425,7 +428,7 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input))
         ) {
@@ -438,16 +441,18 @@
      PYARRAY (NAMED `$input')
     *****************************************************************************/
 
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($1_ltype::value_type);
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
     const $1_ltype::pointer data =
         reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
-    $1.SetRef(size, data, stride);
+    $1.SetRef(size0, size1, stride0, stride1, data);
 }
 
 
+#if 0
 %typemap(out) vctDynamicConstMatrixRef
 {
     /*****************************************************************************
@@ -482,6 +487,7 @@
     // Copy the data from the vctDynamicConstMatrixRef to the temporary container
     tempContainer = $1;
 }
+#endif
 
 
 /******************************************************************************
@@ -504,7 +510,7 @@
      IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input))
         ) {
@@ -516,13 +522,14 @@
     *****************************************************************************/
 
     // Create the vctDynamicConstMatrixRef
-    const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data =
         reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(size, data, stride);
+    $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
 }
 
 
@@ -545,6 +552,7 @@
 }
 
 
+#if 0
 /**************************************************************************
 *                    Applying Typemaps to Other Types
 **************************************************************************/
