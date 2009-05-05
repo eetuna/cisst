@@ -401,11 +401,6 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
             //                      userTaskName + ":"              // TC
             //                      interfaceRequiredName;          // RI
 
-            //
-            //
-            //
-            //
-
             mtsTaskProxy * serverProxyTask = new mtsTaskProxy(serverProxyName, 1 * cmn_ms);
             CMN_ASSERT(serverProxyTask);
 

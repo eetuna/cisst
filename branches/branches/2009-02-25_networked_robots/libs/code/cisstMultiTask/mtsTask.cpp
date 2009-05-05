@@ -78,6 +78,9 @@ void mtsTask::StartupInternal(void) {
             connectedInterface->AllocateResourcesForCurrentThread();
             CMN_LOG_CLASS(3) << "StartupInternal: binding commands and events" << std::endl;
             success &= requiredIterator->second->BindCommandsAndEvents();
+
+            // Populate CommandProxyMap and send this information to the connected server task
+            success &= SendCommandProxyInfo(requiredIterator->second);
         } else {
             CMN_LOG_CLASS(2) << "StartupInternal: void pointer to required interface (required not connected to provided)" << std::endl;
             success = false;
@@ -403,4 +406,26 @@ const bool mtsTask::GetProvidedInterfaceSpecification(
     mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec)
 {
     return ProxyClient->GetProvidedInterfaceSpecification(spec);
+}
+
+const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterface)
+{
+    CMN_ASSERT(requiredInterface);
+
+    std::map<std::string, unsigned int> commandProxyInfoMap;
+    requiredInterface->GetCommandProxyInfo(commandProxyInfoMap);
+
+    mtsTaskInterfaceProxy::CommandProxyInfoSeq commandProxyInfo;
+    mtsTaskInterfaceProxy::CommandProxyInfo commandProxy;
+
+    std::map<std::string, unsigned int>::const_iterator it = commandProxyInfoMap.begin();
+    for (; it != commandProxyInfoMap.end(); ++it) {
+        commandProxy.Name = it->first;
+        commandProxy.ID = it->second;
+        commandProxyInfo.push_back(commandProxy);
+    }
+
+    ProxyClient->SendCommandProxyInfo(commandProxyInfo);
+
+    return true;
 }

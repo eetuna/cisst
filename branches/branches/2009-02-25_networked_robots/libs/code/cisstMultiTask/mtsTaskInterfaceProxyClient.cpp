@@ -108,6 +108,14 @@ const bool mtsTaskInterfaceProxyClient::GetProvidedInterfaceSpecification(
     return TaskInterfaceServer->GetProvidedInterfaceSpecification(specs);
 }
 
+void mtsTaskInterfaceProxyClient::SendCommandProxyInfo(
+        mtsTaskInterfaceProxy::CommandProxyInfoSeq & seq) const
+{
+    GetLogger()->trace("TIClient", ">>>>> SEND: SendCommandProxyInfo");
+
+    TaskInterfaceServer->SendCommandProxyInfo(seq);
+}
+
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskInterfaceProxy.ice
 //-------------------------------------------------------------------------

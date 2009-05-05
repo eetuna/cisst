@@ -93,6 +93,10 @@ public:
     const bool GetProvidedInterfaceSpecification(
         ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
 
+    /*! Build a map of (command proxy id, actual command pointer) */
+    void SendCommandProxyInfo(
+        const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq & commandProxyInfo);
+
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskInterfaceProxy.ice
@@ -122,6 +126,9 @@ protected:
         bool GetProvidedInterfaceSpecification(
             ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
             const ::Ice::Current&) const;
+        void SendCommandProxyInfo(
+            const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, 
+            const ::Ice::Current&);
     };
 
     //------------------ Methods for global task manager --------------------//

@@ -145,6 +145,9 @@ protected:
 
     /*! Send a human readable description of the interface. */
     void ToStream(std::ostream & outputStream) const;
+    
+    /*! Get the information on command proxies. */
+    void GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap);
 
 protected:
     template <class _CommandType>
@@ -163,6 +166,14 @@ protected:
         {  outputStream << *cmdPtr;
            if (!isRequired)
                outputStream << "(OPT)";
+        }
+        const unsigned int GetID() const
+        {
+            return (*cmdPtr)->GetCommandID();
+        }
+        const std::string GetName() const
+        {
+            return (*cmdPtr)->Name;
         }
     };
         

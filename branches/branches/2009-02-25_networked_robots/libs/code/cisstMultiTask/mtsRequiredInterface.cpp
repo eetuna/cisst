@@ -175,3 +175,54 @@ void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
     EventHandlersWrite.ToStream(outputStream);
 }
 
+void mtsRequiredInterface::GetCommandProxyInfo(
+    std::map<std::string, unsigned int> & commandProxyInfoMap)
+{
+    commandProxyInfoMap.clear();
+
+    CommandPointerVoidMapType::MapType::iterator iterVoid;
+    for (iterVoid = CommandPointersVoid.GetMap().begin(); 
+         iterVoid != CommandPointersVoid.GetMap().end(); 
+         iterVoid++)
+    {
+        commandProxyInfoMap.insert(
+            make_pair(iterVoid->second->GetName(), iterVoid->second->GetID()));        
+    }
+
+    CommandPointerWriteMapType::MapType::iterator iterWrite;
+    for (iterWrite = CommandPointersWrite.GetMap().begin(); 
+         iterWrite != CommandPointersWrite.GetMap().end(); 
+         iterWrite++)
+    {
+        commandProxyInfoMap.insert(
+            make_pair(iterWrite->second->GetName(), iterWrite->second->GetID()));        
+    }
+
+    CommandPointerReadMapType::MapType::iterator iterRead;
+    for (iterRead = CommandPointersRead.GetMap().begin(); 
+         iterRead != CommandPointersRead.GetMap().end(); 
+         iterRead++)
+    {
+        commandProxyInfoMap.insert(
+            make_pair(iterRead->second->GetName(), iterRead->second->GetID()));        
+    }
+
+    /*
+#define GET_COMMAND_PROXY_INFO( _commandType ) \
+    CommandPointer##_commandType##MapType::MapType::iterator iter##_commandType;\
+    for (iter##_commandType = CommandPointers##_commandType##.GetMap().begin(); \
+         iter##_commandType != CommandPointers##_commandType##.GetMap().end(); \
+         ++iter##_commandType)\
+    {\
+        commandProxyInfoMap.insert(\
+            make_pair(iterVoid->second->GetName(), iterVoid->second->GetID()));\
+    }
+
+    GET_COMMAND_PROXY_INFO(Void);
+    GET_COMMAND_PROXY_INFO(Write);
+    GET_COMMAND_PROXY_INFO(Read);
+    GET_COMMAND_PROXY_INFO(QualifiedRead);
+
+#undef GET_COMMAND_PROXY_INFO
+    */
+}

@@ -25,7 +25,7 @@ sineTask::sineTask(const std::string & taskName, double period):
     // add command to modify the sine amplitude 
     SineAmplitude.AddWriteCommandToTask(this, "MainInterface", "SetAmplitude");
     // add command to test commandVoid
-    this->AddCommandVoid(&sineTask::CommandVoidTest, this, "MainInterface", "VoidTest");
+    AddCommandVoid(&sineTask::CommandVoidTest, this, "MainInterface", "CommandVoid");
 }
 
 void sineTask::Startup(void) {
@@ -46,7 +46,7 @@ void sineTask::CommandVoidTest(void)
 {
     static int n = 0;
 
-    std::cout << "###################### " << ++n << std::endl;
+    std::cout << "CommandVoid test called:  " << ++n << std::endl;
 }
 
 /*

@@ -179,6 +179,13 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
     return true;
 }
 
+void mtsTaskInterfaceProxyServer::SendCommandProxyInfo(
+    const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq & commandProxyInfo)
+{
+    //
+}
+
+
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
 //-------------------------------------------------------------------------
@@ -287,4 +294,13 @@ bool mtsTaskInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaceSpec
     Logger->trace("TIServer", "<<<<< RECV: GetProvidedInterfaceSpecification");
 
     return TaskInterfaceServer->GetProvidedInterfaceSpecification(specs);
+}
+
+void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::SendCommandProxyInfo(
+    const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq & commandProxyInfo,
+    const ::Ice::Current&)
+{
+    Logger->trace("TIServer", "<<<<< RECV: SendCommandProxyInfo");
+
+    TaskInterfaceServer->SendCommandProxyInfo(commandProxyInfo);
 }

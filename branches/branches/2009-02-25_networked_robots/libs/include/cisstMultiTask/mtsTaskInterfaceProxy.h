@@ -261,6 +261,38 @@ typedef ::std::vector< ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification> 
 void __writeProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification*, const ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification*);
 void __readProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream*, ProvidedInterfaceSpecificationSeq&);
 
+struct CommandProxyInfo
+{
+    ::std::string Name;
+    ::Ice::Int ID;
+
+    bool operator==(const CommandProxyInfo&) const;
+    bool operator<(const CommandProxyInfo&) const;
+    bool operator!=(const CommandProxyInfo& __rhs) const
+    {
+        return !operator==(__rhs);
+    }
+    bool operator<=(const CommandProxyInfo& __rhs) const
+    {
+        return operator<(__rhs) || operator==(__rhs);
+    }
+    bool operator>(const CommandProxyInfo& __rhs) const
+    {
+        return !operator<(__rhs) && !operator==(__rhs);
+    }
+    bool operator>=(const CommandProxyInfo& __rhs) const
+    {
+        return !operator<(__rhs);
+    }
+
+    void __write(::IceInternal::BasicStream*) const;
+    void __read(::IceInternal::BasicStream*);
+};
+
+typedef ::std::vector< ::mtsTaskInterfaceProxy::CommandProxyInfo> CommandProxyInfoSeq;
+void __writeCommandProxyInfoSeq(::IceInternal::BasicStream*, const ::mtsTaskInterfaceProxy::CommandProxyInfo*, const ::mtsTaskInterfaceProxy::CommandProxyInfo*);
+void __readCommandProxyInfoSeq(::IceInternal::BasicStream*, CommandProxyInfoSeq&);
+
 }
 
 namespace IceProxy
@@ -505,6 +537,21 @@ private:
     bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*);
     
 public:
+
+    void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& commandProxyInfos)
+    {
+        SendCommandProxyInfo(commandProxyInfos, 0);
+    }
+    void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& commandProxyInfos, const ::Ice::Context& __ctx)
+    {
+        SendCommandProxyInfo(commandProxyInfos, &__ctx);
+    }
+    
+private:
+
+    void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, const ::Ice::Context*);
+    
+public:
     
     ::IceInternal::ProxyHandle<TaskInterfaceServer> ice_context(const ::Ice::Context& __context) const
     {
@@ -727,6 +774,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*) = 0;
 
     virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*) = 0;
+
+    virtual void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, const ::Ice::Context*) = 0;
 };
 
 }
@@ -753,6 +802,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
     virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*);
+
+    virtual void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, const ::Ice::Context*);
 };
 
 }
@@ -779,6 +830,8 @@ public:
     virtual void AddClient(const ::Ice::Identity&, const ::Ice::Context*);
 
     virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Context*);
+
+    virtual void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, const ::Ice::Context*);
 };
 
 }
@@ -827,6 +880,9 @@ public:
 
     virtual bool GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, const ::Ice::Current& = ::Ice::Current()) const = 0;
     ::Ice::DispatchStatus ___GetProvidedInterfaceSpecification(::IceInternal::Incoming&, const ::Ice::Current&) const;
+
+    virtual void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___SendCommandProxyInfo(::IceInternal::Incoming&, const ::Ice::Current&);
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

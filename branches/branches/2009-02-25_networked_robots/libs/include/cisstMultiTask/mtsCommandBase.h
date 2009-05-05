@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Anton Deguet 
+  Author(s):  Ankur Kapoor, Anton Deguet, Min Yang Jung
   Created on: 2006-05-02
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
@@ -42,6 +42,11 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
 */
 class mtsCommandBase {
+    /*! Command UID (unique ID). This ID is used by the mtsTaskInterfaceProxyServer 
+        to map a local command pointer which is represented as this UID to a remote 
+        actual command pointer. */
+    unsigned int CommandID;
+
 public:
     std::string Name;
 
@@ -62,9 +67,18 @@ public:
         MAILBOX_FULL = 16,
     };
     
-    /*! The constructor. Does nothing */
-    inline mtsCommandBase(void):Name("??") {}
-    inline mtsCommandBase(const std::string & name): Name(name) {}
+    /*! The constructor. */
+    mtsCommandBase(void) : Name("??")
+    {
+        //CommandID = ++CommandUID;
+    }
+
+    mtsCommandBase(const std::string & name) : Name(name)
+    {
+        static unsigned int CommandUID = 0;
+
+        CommandID = ++CommandUID;
+    }
     
     /*! The destructor. Does nothing */
     virtual ~mtsCommandBase() {}
@@ -83,8 +97,10 @@ public:
     /*! Returns number of arguments (parameters) expected by Execute
       method.  Must be overloaded in derived classes. */
     virtual unsigned int NumberOfArguments(void) const = 0;
-};
 
+    /*! Returns command ID. */
+    inline const unsigned int GetCommandID() const { return CommandID; }
+};
 
 /*! Stream out operator for all classes derived from mtsCommandBase.
   This operator uses the ToStream method so that the output can be

@@ -382,6 +382,19 @@ protected:
     mtsTaskInterfaceProxyServer * ProxyServer;
     mtsTaskInterfaceProxyClient * ProxyClient;
 
+    /*! Typedef for a map of (command object id, actual command object pointer).
+        This map is generated at a server task after a client task sends 
+        CommandProxyMapType object. This is used for mapping a proxy command object
+        of a client task to an actual command object of a server task.
+        (see mtsCommandBase::CommandUID) */
+    typedef std::map<unsigned int, mtsCommandVoidBase*>  CommandVoidMapType;
+    typedef std::map<unsigned int, mtsCommandWriteBase*> CommandWriteMapType;
+    typedef std::map<unsigned int, mtsCommandReadBase*>  CommandReadMapType;
+    typedef std::map<unsigned int, mtsCommandQualifiedReadBase*> CommandQualifiedReadMapType;
+    CommandVoidMapType  CommandVoidMap;
+    CommandWriteMapType CommandWriteMap;
+    CommandReadMapType  CommandReadMap;
+    CommandQualifiedReadMapType CommandQualifiedReadMap;
 
 public:
     /*! Start a proxy server (provided interface, mtsTaskInterfaceProxyServer). */
@@ -394,6 +407,9 @@ public:
         of it as a set of string. */
     const bool GetProvidedInterfaceSpecification(
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec);
+
+    /*! Populate and send CommandProxyMap to the connect server task. */
+    const bool SendCommandProxyInfo(mtsRequiredInterface * requiredInterface);
 };
 
 

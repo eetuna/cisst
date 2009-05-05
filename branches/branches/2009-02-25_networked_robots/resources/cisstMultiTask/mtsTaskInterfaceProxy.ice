@@ -98,6 +98,15 @@ module mtsTaskInterfaceProxy
 	
 	sequence<ProvidedInterfaceSpecification> ProvidedInterfaceSpecificationSeq;
 
+	/*! Typedef for a map of (command name, command object id). 
+        This map is populated at a client task and is sent to a server task.
+        (see mtsCommandBase::CommandUID) */
+    struct CommandProxyInfo {
+		string Name;
+		int    ID;
+    };
+    sequence<CommandProxyInfo> CommandProxyInfoSeq;
+    
 	//-----------------------------------------------------------------------------
 	// Interface for Required Interface (Proxy Client)
 	//-----------------------------------------------------------------------------
@@ -115,6 +124,8 @@ module mtsTaskInterfaceProxy
 		
 		["cpp:const"] idempotent bool GetProvidedInterfaceSpecification(
 			out ProvidedInterfaceSpecificationSeq providedInterfaceSpecifications);
+			
+		void SendCommandProxyInfo(CommandProxyInfoSeq commandProxyInfos);
 	};
 
 };

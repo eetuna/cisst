@@ -25,6 +25,7 @@ class displayTask: public mtsTaskPeriodic {
 
     struct {
        // functions which will be bound to commands
+       mtsFunctionVoid CommandVoid;
        mtsFunctionRead GetData;
        mtsFunctionRead GetStateIndex;
 #ifdef CISST_GETVECTOR

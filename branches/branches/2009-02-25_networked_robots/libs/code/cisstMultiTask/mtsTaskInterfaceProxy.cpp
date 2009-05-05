@@ -33,6 +33,8 @@ static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__AddClie
 
 static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name = "GetProvidedInterfaceSpecification";
 
+static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__SendCommandProxyInfo_name = "SendCommandProxyInfo";
+
 ::Ice::Object* IceInternal::upCast(::mtsTaskInterfaceProxy::TaskInterfaceClient* p) { return p; }
 ::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient* p) { return p; }
 
@@ -580,6 +582,91 @@ mtsTaskInterfaceProxy::__readProvidedInterfaceSpecificationSeq(::IceInternal::Ba
     __is->endSeq(sz);
 }
 
+bool
+mtsTaskInterfaceProxy::CommandProxyInfo::operator==(const CommandProxyInfo& __rhs) const
+{
+    if(this == &__rhs)
+    {
+        return true;
+    }
+    if(Name != __rhs.Name)
+    {
+        return false;
+    }
+    if(ID != __rhs.ID)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool
+mtsTaskInterfaceProxy::CommandProxyInfo::operator<(const CommandProxyInfo& __rhs) const
+{
+    if(this == &__rhs)
+    {
+        return false;
+    }
+    if(Name < __rhs.Name)
+    {
+        return true;
+    }
+    else if(__rhs.Name < Name)
+    {
+        return false;
+    }
+    if(ID < __rhs.ID)
+    {
+        return true;
+    }
+    else if(__rhs.ID < ID)
+    {
+        return false;
+    }
+    return false;
+}
+
+void
+mtsTaskInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __os) const
+{
+    __os->write(Name);
+    __os->write(ID);
+}
+
+void
+mtsTaskInterfaceProxy::CommandProxyInfo::__read(::IceInternal::BasicStream* __is)
+{
+    __is->read(Name);
+    __is->read(ID);
+}
+
+void
+mtsTaskInterfaceProxy::__writeCommandProxyInfoSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::CommandProxyInfo* begin, const ::mtsTaskInterfaceProxy::CommandProxyInfo* end)
+{
+    ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
+    __os->writeSize(size);
+    for(int i = 0; i < size; ++i)
+    {
+        begin[i].__write(__os);
+    }
+}
+
+void
+mtsTaskInterfaceProxy::__readCommandProxyInfoSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& v)
+{
+    ::Ice::Int sz;
+    __is->readSize(sz);
+    __is->startSeq(sz, 5);
+    v.resize(sz);
+    for(int i = 0; i < sz; ++i)
+    {
+        v[i].__read(__is);
+        __is->checkSeq();
+        __is->endElement();
+    }
+    __is->endSeq(sz);
+}
+
 const ::std::string&
 IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient::ice_staticId()
 {
@@ -646,6 +733,31 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecif
         catch(const ::IceInternal::LocalExceptionWrapper& __ex)
         {
             __handleExceptionWrapperRelaxed(__delBase, __ex, 0, __cnt);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
+void
+IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& commandProxyInfos, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            __del->SendCommandProxyInfo(commandProxyInfos, __ctx);
+            return;
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapper(__delBase, __ex, 0);
         }
         catch(const ::Ice::LocalException& __ex)
         {
@@ -747,6 +859,52 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
     catch(const ::Ice::LocalException& __ex)
     {
         throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+    }
+}
+
+void
+IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& commandProxyInfos, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__SendCommandProxyInfo_name, ::Ice::Normal, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        if(commandProxyInfos.size() == 0)
+        {
+            __os->writeSize(0);
+        }
+        else
+        {
+            ::mtsTaskInterfaceProxy::__writeCommandProxyInfoSeq(__os, &commandProxyInfos[0], &commandProxyInfos[0] + commandProxyInfos.size());
+        }
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    if(!__og.is()->b.empty())
+    {
+        try
+        {
+            if(!__ok)
+            {
+                try
+                {
+                    __og.throwUserException();
+                }
+                catch(const ::Ice::UserException& __ex)
+                {
+                    ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                    throw __uue;
+                }
+            }
+            __og.is()->skipEmptyEncaps();
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+        }
     }
 }
 
@@ -880,6 +1038,70 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
         throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
     }
     return __result;
+}
+
+void
+IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& commandProxyInfos, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& commandProxyInfos, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _m_commandProxyInfos(commandProxyInfos)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            servant->SendCommandProxyInfo(_m_commandProxyInfos, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq& _m_commandProxyInfos;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__SendCommandProxyInfo_name, ::Ice::Normal, __context);
+    try
+    {
+        _DirectI __direct(commandProxyInfos, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
 }
 
 ::Ice::ObjectPtr
@@ -1059,10 +1281,24 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___GetProvidedInterfaceSpecification
     return ::Ice::DispatchOK;
 }
 
+::Ice::DispatchStatus
+mtsTaskInterfaceProxy::TaskInterfaceServer::___SendCommandProxyInfo(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+{
+    __checkMode(::Ice::Normal, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::mtsTaskInterfaceProxy::CommandProxyInfoSeq commandProxyInfos;
+    ::mtsTaskInterfaceProxy::__readCommandProxyInfoSeq(__is, commandProxyInfos);
+    __is->endReadEncaps();
+    SendCommandProxyInfo(commandProxyInfos, __current);
+    return ::Ice::DispatchOK;
+}
+
 static ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer_all[] =
 {
     "AddClient",
     "GetProvidedInterfaceSpecification",
+    "SendCommandProxyInfo",
     "ice_id",
     "ice_ids",
     "ice_isA",
@@ -1072,7 +1308,7 @@ static ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer_all[] =
 ::Ice::DispatchStatus
 mtsTaskInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming& in, const ::Ice::Current& current)
 {
-    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskInterfaceProxy__TaskInterfaceServer_all, __mtsTaskInterfaceProxy__TaskInterfaceServer_all + 6, current.operation);
+    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskInterfaceProxy__TaskInterfaceServer_all, __mtsTaskInterfaceProxy__TaskInterfaceServer_all + 7, current.operation);
     if(r.first == r.second)
     {
         throw ::Ice::OperationNotExistException(__FILE__, __LINE__, current.id, current.facet, current.operation);
@@ -1090,17 +1326,21 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming& 
         }
         case 2:
         {
-            return ___ice_id(in, current);
+            return ___SendCommandProxyInfo(in, current);
         }
         case 3:
         {
-            return ___ice_ids(in, current);
+            return ___ice_id(in, current);
         }
         case 4:
         {
-            return ___ice_isA(in, current);
+            return ___ice_ids(in, current);
         }
         case 5:
+        {
+            return ___ice_isA(in, current);
+        }
+        case 6:
         {
             return ___ice_ping(in, current);
         }

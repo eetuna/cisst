@@ -18,6 +18,7 @@ displayTask::displayTask(const std::string & taskName, double period):
     // to communicate with the interface of the resource
     mtsRequiredInterface *req = AddRequiredInterface("DataGenerator");
     if (req) {
+       req->AddFunction("CommandVoid", Generator.CommandVoid);
        req->AddFunction("GetData", Generator.GetData);
        req->AddFunction("GetStateIndex", Generator.GetStateIndex);
 #ifdef CISST_GETVECTOR
@@ -56,8 +57,9 @@ void displayTask::Run(void)
     // get the current time index to display it in the UI
     const mtsStateIndex now = StateTable.GetIndexWriter();
     // get the data from the sine wave generator task
-    Generator.GetData(Data);
-    Generator.GetStateIndex(StateIndex);
+    Generator.CommandVoid();
+    //Generator.GetData(Data);
+    //Generator.GetStateIndex(StateIndex);
     UI.Data->value(Data.Data);
 #ifdef CISST_GETVECTOR
     Generator.GetDataVector(StateIndex, DataVec);

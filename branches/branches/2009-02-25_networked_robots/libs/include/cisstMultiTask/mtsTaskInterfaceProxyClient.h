@@ -78,10 +78,13 @@ public:
     void OnThreadEnd();
 
     //-------------------------------------------------------------------------
-    //
+    //  Send Methods
     //-------------------------------------------------------------------------
     const bool GetProvidedInterfaceSpecification(
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const;
+
+    void SendCommandProxyInfo(
+        mtsTaskInterfaceProxy::CommandProxyInfoSeq & seq) const;
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskInterfaceProxy.ice
