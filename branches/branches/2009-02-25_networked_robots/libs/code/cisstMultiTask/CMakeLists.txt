@@ -24,6 +24,13 @@ SET(DEPENDENCIES
     cisstOSAbstraction
     )
 
+#SET_SOURCE_FILES_PROPERTIES(
+#    mtsTaskInterfaceProxy.h PROPERTIES GENERATED TRUE
+#    mtsTaskInterfaceProxy.cpp PROPERTIES GENERATED TRUE
+#    mtsTaskManagerProxy.h PROPERTIES GENERATED TRUE
+#    mtsTaskManagerProxy.cpp PROPERTIES GENERATED TRUE
+#    )
+
 # all source files
 SET(SOURCE_FILES
     mtsVector.cpp
@@ -137,15 +144,14 @@ SET(HEADER_FILES
     )
     
 SET(ICE_RESOURCE_FILES
-      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.client
-      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.server
-      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskInterfaceProxy.ice
-      ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskManagerProxy.ice
+    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.client
+    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.server
+    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskInterfaceProxy.ice
+    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskManagerProxy.ice
     )    
    
 LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
                 optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
-
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 

@@ -122,6 +122,60 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   IF (LIBRARY MATCHES "cisstMultiTask")
     INCLUDE_DIRECTORIES(${${PROJECT_NAME}_SOURCE_DIR}/include/${LIBRARY})
     SOURCE_GROUP(Resources FILES ${ICE_RESOURCE_FILES})
+
+    SET(SLICE_FILES
+      mtsTaskInterfaceProxy
+      mtsTaskManagerProxy
+    )
+
+    FOREACH(slice_file ${SLICE_FILES})
+      ADD_CUSTOM_COMMAND(
+		OUTPUT  ${cisst_SOURCE_DIR}/libs/code/${slice_file}.cpp
+                ${cisst_SOURCE_DIR}/libs/include/${slice_file}.h
+        DEPENDS ${ICE_SLICE_DIR}/Ice/Identity.ice
+        COMMAND ${ICE_HOME}/bin/slice2cpp -I${ICE_SLICE_DIR} -I${ICE_INCLUDE_DIR}
+        ARGS    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/${slice_file}.ice
+        COMMENT "Compiling ${slice_file}.ice"
+      )      
+    ENDFOREACH(slice_file ${SLICE_FILES})
+
+    ADD_CUSTOM_TARGET(Ice_Build ALL 
+      DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsTaskInterfaceProxy.cpp ${cisst_SOURCE_DIR}/libs/include/mtsTaskInterfaceProxy.h
+      DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsTaskManagerProxy.cpp   ${cisst_SOURCE_DIR}/libs/include/mtsTaskManagerProxy.h
+    )
+
+    FOREACH(slice_file ${SLICE_FILES})
+      SET(UNIX_STYLE_PATH_BINARY "${cisst_BINARY_DIR}/libs/code/cisstMultiTask/")
+      SET(UNIX_STYLE_PATH_SOURCE_CODE "${cisst_SOURCE_DIR}/libs/code/cisstMultiTask/")
+      SET(UNIX_STYLE_PATH_SOURCE_INCLUDE "${cisst_SOURCE_DIR}/libs/include/cisstMultiTask/")
+      IF(WIN32)
+        SET(WINDOW_STYLE_PATH_BINARY ${UNIX_STYLE_PATH_BINARY})
+	SET(WINDOW_STYLE_PATH_SOURCE_CODE ${UNIX_STYLE_PATH_SOURCE_CODE})
+	SET(WINDOW_STYLE_PATH_SOURCE_INCLUDE ${UNIX_STYLE_PATH_SOURCE_INCLUDE})
+        FILE(TO_NATIVE_PATH ${UNIX_STYLE_PATH_BINARY} WINDOW_STYLE_PATH_BINARY)
+	FILE(TO_NATIVE_PATH ${UNIX_STYLE_PATH_SOURCE_CODE} WINDOW_STYLE_PATH_SOURCE_CODE)
+	FILE(TO_NATIVE_PATH ${UNIX_STYLE_PATH_SOURCE_INCLUDE} WINDOW_STYLE_PATH_SOURCE_INCLUDE)
+        ADD_CUSTOM_COMMAND(TARGET Ice_Build
+          POST_BUILD
+          COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\" copy \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\" \"${WINDOW_STYLE_PATH_SOURCE_CODE}\"
+          COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\" copy \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\" \"${WINDOW_STYLE_PATH_SOURCE_INCLUDE}\"
+          COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\" del \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\"
+          COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\" del \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\"
+        )
+      ELSE(WIN32)
+        #### TODO: ADD FILE_EXIST CHECK ROUTINE FOR UNIX, MAC, ETC. ####
+        ADD_CUSTOM_COMMAND(TARGET Ice_Build
+          POST_BUILD
+          COMMAND copy ${UNIX_STYLE_PATH_BINARY}${slice_file}.cpp ${UNIX_STYLE_PATH_SOURCE_CODE}
+          COMMAND copy ${UNIX_STYLE_PATH_BINARY}${slice_file}.h ${UNIX_STYLE_PATH_SOURCE_INCLUDE}
+          COMMAND del ${UNIX_STYLE_PATH_BINARY}${slice_file}.cpp
+          COMMAND del ${UNIX_STYLE_PATH_BINARY}${slice_file}.h
+        )
+      ENDIF(WIN32)
+    ENDFOREACH(slice_file ${SLICE_FILES})
+
+    ADD_DEPENDENCIES(${LIBRARY} Ice_Build)
+
   ENDIF(LIBRARY MATCHES "cisstMultiTask")
 
 ENDIF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
