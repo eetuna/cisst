@@ -73,3 +73,4 @@ http://www.cisst.org/cisst/license.txt.
 
 %include "cisstVector/vctDynamicVectorTypemaps.i"
 %include "cisstVector/vctDynamicMatrixTypemaps.i"
+%include "cisstVector/vctDynamicNArrayTypemaps.i"

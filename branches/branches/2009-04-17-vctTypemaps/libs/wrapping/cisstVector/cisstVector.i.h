@@ -44,6 +44,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector/vctDynamicConstVectorBase.h>
 #include <cisstVector/vctFixedSizeConstMatrixBase.h>
 #include <cisstVector/vctDynamicConstMatrixBase.h>
+#include <cisstVector/vctDynamicConstNArrayBase.h>
 
 bool vctThrowUnlessIsPyArray(PyObject * input)
 {
@@ -99,6 +100,20 @@ bool vctThrowUnlessDimension2(PyObject * input)
 {
     if (PyArray_NDIM(input) != 2) {
         PyErr_SetString(PyExc_ValueError, "Array must be 2D (matrix)");
+        return false;
+    }
+
+    return true;
+}
+
+
+bool vctThrowUnlessDimensionN(PyObject * input, unsigned int ndims)
+{
+    if (PyArray_NDIM(input) != ndims) {
+        std::stringstream stream;
+        stream << "Array must have " << ndims << " dimension(s)";
+        std::string msg = stream.str();
+        PyErr_SetString(PyExc_ValueError, msg.c_str());
         return false;
     }
 

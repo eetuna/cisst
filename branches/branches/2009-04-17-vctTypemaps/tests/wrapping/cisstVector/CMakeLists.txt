@@ -41,7 +41,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CISST_SWIG_INCLUDE_DIR})
 
 # We are using C++ code
-SET(PROXY_TESTS vctDynamicVectorTypemapsTest vctDynamicMatrixTypemapsTest)
+SET(PROXY_TESTS vctDynamicVectorTypemapsTest vctDynamicMatrixTypemapsTest vctDynamicNArrayTypemapsTest)
 FOREACH(proxyTest ${PROXY_TESTS})
   SET(interface ${CMAKE_CURRENT_SOURCE_DIR}/${proxyTest}.i)
   SET(module ${proxyTest}Python)
@@ -103,7 +103,8 @@ ADD_DEPENDENCIES(cisstVector_CREATE_PYTHON_TESTS_LIST
                  _cisstCommonPython
                  _cisstVectorPython
                  _vctDynamicVectorTypemapsTestPython
-                 _vctDynamicMatrixTypemapsTestPython)
+                 _vctDynamicMatrixTypemapsTestPython
+                 _vctDynamicNArrayTypemapsTestPython)
 
 FILE(APPEND ${DART_TEST_FILE} "INCLUDE(\"${DART_TEST_FILE_AUTO}\")\n")
 
