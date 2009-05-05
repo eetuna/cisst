@@ -509,7 +509,10 @@
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    //$result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
+    PyArray_Descr *descr = PyArray_DescrFromType(vctPythonType<$1_ltype::value_type>());
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, NULL, NPY_CONTIGUOUS | NPY_OWNDATA | NPY_ALIGNED, NULL);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY
@@ -591,7 +594,6 @@
 }
 
 
-#if 0
 /**************************************************************************
 *                    Applying Typemaps to Other Types
 **************************************************************************/
@@ -631,4 +633,3 @@ VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
-#endif

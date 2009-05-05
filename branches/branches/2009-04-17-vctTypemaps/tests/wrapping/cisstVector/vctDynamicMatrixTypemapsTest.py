@@ -361,6 +361,9 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
     def Test_out_vctDynamicConstMatrixRef(self):
         MY_NAME = 'out_vctDynamicConstMatrixRef'
 
+        exec('v = self.CObject.' + MY_NAME + '(5, 7)')
+        print v.flags
+
         # Perform battery of standard tests
         self.StdTestThrowUnlessReturnedMatrixIsNonWritable(MY_NAME)
 
