@@ -107,11 +107,12 @@ bool vctThrowUnlessDimension2(PyObject * input)
 }
 
 
-bool vctThrowUnlessDimensionN(PyObject * input, unsigned int ndims)
+template <class _containerType>
+bool vctThrowUnlessDimensionN(PyObject * input)
 {
-    if (PyArray_NDIM(input) != ndims) {
+    if (PyArray_NDIM(input) != _containerType::DIMENSION) {
         std::stringstream stream;
-        stream << "Array must have " << ndims << " dimension(s)";
+        stream << "Array must have " << _containerType::DIMENSION << " dimension(s)";
         std::string msg = stream.str();
         PyErr_SetString(PyExc_ValueError, msg.c_str());
         return false;
@@ -132,6 +133,7 @@ bool vctThrowUnlessIsWritable(PyObject *input)
 }
 
 
+// TODO: Make sure this is correct for FixedSize and Dynamic Vectors
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessCorrectVectorSize(const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & input,
                                      unsigned int desiredSize)

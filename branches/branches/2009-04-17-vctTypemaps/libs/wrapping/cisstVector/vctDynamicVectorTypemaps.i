@@ -576,8 +576,8 @@
 
 
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
-%apply vctDynamicVector {vctFixedSizeVector<elementType, size>};
-%apply vctDynamicVector & {vctFixedSizeVector<elementType, size> &};
+%apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
+%apply vctDynamicVector &       {vctFixedSizeVector<elementType, size> &};
 %apply const vctDynamicVector & {const vctFixedSizeVector<elementType, size> &};
 %enddef
 
@@ -608,5 +608,6 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 8);
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(unsigned int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(double);

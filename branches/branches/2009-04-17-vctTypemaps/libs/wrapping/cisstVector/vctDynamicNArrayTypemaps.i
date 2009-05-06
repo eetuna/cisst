@@ -471,7 +471,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN($input, 5))       // TODO: Generalize to n dimensions
+          && vctThrowUnlessDimensionN<$1_ltype>($input))
         ) {
           return NULL;
     }
@@ -482,21 +482,32 @@
      PYARRAY (NAMED `$input')
     *****************************************************************************/
 
-    const unsigned int ndim = ((PyArrayObject *) $input)->nd;
-//     const npy_intp size0 = PyArray_DIM($input, 0);
-//     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp *_sizes = PyArray_DIMS($input);
-    const vctFixedSizeVector<unsigned int, 5> sizes(_sizes);  // TODO: Generalize this
-//     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
-//     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
+    // dimensions
+    const unsigned int ndim = PyArray_NDIM($input);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    for (unsigned int i; i < ndim; i++) {
-        _strides[i] /= sizeof($1_ltype::value_type);
-    }
-    const vctFixedSizeVector<int, 5> strides(_strides); // TODO: Generalize this
+    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($1_ltype::value_type));
+
+    // data pointer
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(data, sizes, strides);
+
+#if 0
+    npy_intp *_sizes = PyArray_DIMS($input);
+    unsigned int *__sizes = reinterpret_cast<unsigned int *>(_sizes);
+    vctFixedSizeVector<unsigned int, 5> sizes(__sizes);
+#endif
 }
 
 

@@ -7,13 +7,20 @@
 #include <cisstVector.h>
 #include <iostream>
 
+#define MY_DIM 3
+
 class vctDynamicNArrayTypemapsTest
 {
 
+public:
+
+    // enum {MY_DIM = 3};
+    typedef vctDynamicNArray<int, MY_DIM> ArrayType;
+    //typedef ArrayType::nsize_type nsize_type;
+
 protected:
 
-    static const int NDIMS = 5;
-    vctDynamicNArray<int, NDIMS> copy;
+    ArrayType copy;
 
 public:
 
@@ -49,7 +56,7 @@ public:
     }
 #endif
 
-    void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<int, NDIMS> param, unsigned int dummy) {
+    void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<int, MY_DIM> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
@@ -104,23 +111,23 @@ public:
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
-
-    inline int GetItem(unsigned int rowIndex, unsigned int colIndex) const
-    throw(std::out_of_range) {
-        return copy.at(rowIndex, colIndex);
-    }
-
-    inline void SetItem(unsigned int rowIndex, unsigned int colIndex, int value)
-    throw(std::out_of_range) {
-        copy.at(rowIndex, colIndex) = value;
-    }
-
-    inline unsigned int rows() const {
-        return copy.rows();
-    }
-
-    inline unsigned int cols() const {
-        return copy.cols();
-    }
 #endif
+
+    inline int Dim(void) const {
+        return MY_DIM;
+    }
+
+    inline int GetItem(const unsigned int metaIndex) const
+    throw(std::out_of_range) {
+        return copy.at(metaIndex);
+    }
+
+    inline void SetItem(const unsigned int metaIndex, int value)
+    throw(std::out_of_range) {
+        copy.at(metaIndex) = value;
+    }
+
+    inline void sizes(vctFixedSizeVector<int, MY_DIM> &shape) const {
+        shape.Assign(copy.sizes());
+    }
 };

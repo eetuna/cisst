@@ -46,7 +46,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((2, 3, 4), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -55,30 +55,31 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         # Give an array of floats; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones((5, 7), dtype=numpy.float64)
+            badvar = numpy.ones((2, 3, 4), dtype=numpy.float64)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((2, 3, 4), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
-    # Tests that the typemap throws an exception if the array isn't 2D
-    def StdTestThrowUnlessDimension2(self, function):
-        # Give a 1D array; expect an exception
+    # Tests that the typemap throws an exception if the array isn't of the
+    # correct dimension
+    def StdTestThrowUnlessDimensionN(self, function):
+        # Give a (n-1)D array; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.int32)
+            badvar = numpy.ones((5, 7), dtype=numpy.int32)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
-        # Give a 2D array; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        # Give an n-D array; expect no exception
+        goodvar = numpy.ones((2, 3, 4), dtype=numpy.int32)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -149,22 +150,34 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
     # Test if the C object reads the vector correctly
     def SpecTestThrowUnlessReadsCorrectly(self, function):
-        vNew = numpy.random.rand(5, 7)
+        vNew = numpy.random.rand(2, 3, 4)
         vNew = numpy.floor(vNew * 100)
         vNew = numpy.array(vNew, dtype=numpy.int32)
         vOld = copy.deepcopy(vNew)
-        rows = vNew.shape[0]
-        cols = vNew.shape[1]
+        vSizes = numpy.array(vNew.shape)
+        vSize = vNew.size
         exec('self.CObject.' + function + '(vNew, 0)')
 
-        assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
-        assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
-        for r in xrange(rows):
-            for c in xrange(cols):
-                # Test if the C object read the vector correctly
-                assert(self.CObject.GetItem(r,c) == vOld[r,c])
-                # Test that the C object did not modify the vector
-                assert(vNew[r,c] == vOld[r,c])
+        cSizes = numpy.ones(3, dtype=numpy.int32)
+        self.CObject.sizes(cSizes)
+
+        assert((cSizes == vSizes).all())
+        assert((vNew.shape == vSizes).all())
+        for i in xrange(vSize):
+            # Convert metaindex i to tuple
+            index = i
+            indexList = []
+            for j in vSizes[::-1]:
+                r = index % j
+                index /= j
+                indexList.append(r)
+            indexList.reverse()
+            indexTuple = tuple(indexList)
+
+            # Test if the C object read the vector correctly
+            assert(self.CObject.GetItem(i) == vOld[indexTuple])
+            # Test that the C object did not modify the vector
+            assert(vNew[indexTuple] == vOld[indexTuple])
 
 
     # Test if the C object reads and modifies the vector correctly
@@ -229,33 +242,33 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     #   tests that test the typemaps.  One test per typemap!                  #
     ###########################################################################
 
-    def Test_in_argout_vctDynamicNArray_ref(self):
-        MY_NAME = 'in_argout_vctDynamicNArray_ref'
+#     def Test_in_argout_vctDynamicNArray_ref(self):
+#         MY_NAME = 'in_argout_vctDynamicNArray_ref'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
-        self.StdTestThrowUnlessOwnsData(MY_NAME)
-        self.StdTestThrowUnlessNotReferenced(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimensionN(MY_NAME)
+#         self.StdTestThrowUnlessWritable(MY_NAME)
+#         self.StdTestThrowUnlessOwnsData(MY_NAME)
+#         self.StdTestThrowUnlessNotReferenced(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+#         self.SpecTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
 
 
-    def Test_in_vctDynamicNArrayRef(self):
-        MY_NAME = 'in_vctDynamicNArrayRef'
+#     def Test_in_vctDynamicNArrayRef(self):
+#         MY_NAME = 'in_vctDynamicNArrayRef'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimensionN(MY_NAME)
+#         self.StdTestThrowUnlessWritable(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
 
 
     def Test_in_vctDynamicConstNArrayRef(self):
@@ -264,108 +277,108 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         # Perform battery of standard tests
         self.StdTestThrowUnlessIsArray(MY_NAME)
         self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessDimensionN(MY_NAME)
 
         # Perform specialized tests
         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_in_argout_const_vctDynamicConstNArrayRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicConstNArrayRef_ref'
+#     def Test_in_argout_const_vctDynamicConstNArrayRef_ref(self):
+#         MY_NAME = 'in_argout_const_vctDynamicConstNArrayRef_ref'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimensionN(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
-
-
-    def Test_in_argout_const_vctDynamicNArrayRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicNArrayRef_ref'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_in_vctDynamicNArray(self):
-        MY_NAME = 'in_vctDynamicNArray'
+#     def Test_in_argout_const_vctDynamicNArrayRef_ref(self):
+#         MY_NAME = 'in_argout_const_vctDynamicNArrayRef_ref'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimensionN(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
-
-
-    def Test_in_argout_const_vctDynamicNArray_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicNArray_ref'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_out_vctDynamicNArray(self):
-        MY_NAME = 'out_vctDynamicNArray'
+#     def Test_in_vctDynamicNArray(self):
+#         MY_NAME = 'in_vctDynamicNArray'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimensionN(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
-
-
-    def Test_out_vctDynamicNArray_ref(self):
-        MY_NAME = 'out_vctDynamicNArray_ref'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
-
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_out_const_vctDynamicNArray_ref(self):
-        MY_NAME = 'out_const_vctDynamicNArray_ref'
+#     def Test_in_argout_const_vctDynamicNArray_ref(self):
+#         MY_NAME = 'in_argout_const_vctDynamicNArray_ref'
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessIsArray(MY_NAME)
+#         self.StdTestThrowUnlessDataType(MY_NAME)
+#         self.StdTestThrowUnlessDimensionN(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
-
-
-    def Test_out_vctDynamicNArrayRef(self):
-        MY_NAME = 'out_vctDynamicNArrayRef'
-
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
-
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-    def Test_out_vctDynamicConstNArrayRef(self):
-        MY_NAME = 'out_vctDynamicConstNArrayRef'
+#     def Test_out_vctDynamicNArray(self):
+#         MY_NAME = 'out_vctDynamicNArray'
 
-        exec('v = self.CObject.' + MY_NAME + '(5, 7)')
-        print v.flags
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+
+#     def Test_out_vctDynamicNArray_ref(self):
+#         MY_NAME = 'out_vctDynamicNArray_ref'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
+
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+
+
+#     def Test_out_const_vctDynamicNArray_ref(self):
+#         MY_NAME = 'out_const_vctDynamicNArray_ref'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+
+
+#     def Test_out_vctDynamicNArrayRef(self):
+#         MY_NAME = 'out_vctDynamicNArrayRef'
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
+
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+
+
+#     def Test_out_vctDynamicConstNArrayRef(self):
+#         MY_NAME = 'out_vctDynamicConstNArrayRef'
+
+#         exec('v = self.CObject.' + MY_NAME + '(5, 7)')
+#         print v.flags
+
+#         # Perform battery of standard tests
+#         self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+
+#         # Perform specialized tests
+#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
