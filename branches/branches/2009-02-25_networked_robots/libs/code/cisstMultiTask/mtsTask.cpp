@@ -349,7 +349,7 @@ void mtsTask::StartInterfaceProxyServer()
     // TODO: avoid using hard-coded proxy access information
     //
     const std::string endpointInfo = "tcp -p 11705";
-    const std::string endpointInfoForClient = ":default -p 11705";
+    const std::string endpointInfoForClient = ":default -h 10.162.34.27 -p 11705";
     const std::string communicatorID = TaskInterfaceCommunicatorID;
 
     Proxy = new mtsTaskInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
