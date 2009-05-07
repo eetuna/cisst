@@ -71,11 +71,6 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-%include "cisstVector/vctContainerTraits.h"
-%include "cisstVector/vctDynamicConstNArrayBase.h"
-%include "cisstVector/vctDynamicNArrayBase.h"
-%include "cisstVector/vctDynamicNArray.h"
-
 %include "cisstVector/vctDynamicVectorTypemaps.i"
 %include "cisstVector/vctDynamicMatrixTypemaps.i"
 %include "cisstVector/vctDynamicNArrayTypemaps.i"

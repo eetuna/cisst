@@ -575,6 +575,8 @@
 **************************************************************************/
 
 
+// TODO: Clean this section up
+
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
 %apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
 %apply vctDynamicVector &       {vctFixedSizeVector<elementType, size> &};
@@ -602,9 +604,6 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 8);
 %apply vctDynamicConstVectorRef         {vctDynamicConstVectorRef<elementType>};
 %apply const vctDynamicConstVectorRef & {const vctDynamicConstVectorRef<elementType> &};
 %enddef
-
-%import <cisstVector/vctFixedSizeVectorTypes.h>
-%import <cisstVector/vctDynamicVectorTypes.h>
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(int);

@@ -7,7 +7,7 @@
 #include <cisstVector.h>
 #include <iostream>
 
-#define MY_DIM 3
+#define MY_DIM 4
 
 class vctDynamicNArrayTypemapsTest
 {
@@ -27,86 +27,88 @@ public:
     vctDynamicNArrayTypemapsTest()
     {}
 
-#if 0
-    void in_argout_vctDynamicNArray_ref(vctDynamicNArray<int, NDIMS> &param, unsigned int sizeFactor) {
+    void in_argout_vctDynamicNArray_ref(vctDynamicNArray<int, MY_DIM> &param, unsigned int sizeFactor) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
 
         if (sizeFactor != 0) {
-            unsigned int rowsOld = param.rows();
-            unsigned int colsOld = param.cols();
-            unsigned int rowsNew = rowsOld * sizeFactor;
-            unsigned int colsNew = colsOld * sizeFactor;
-            param.resize(rowsNew, colsNew);
+            const vctFixedSizeVector<unsigned int, MY_DIM> sizesOld(param.sizes());
+            const unsigned int sizeOld = param.size();
+            const vctFixedSizeVector<unsigned int, MY_DIM> sizesNew(sizesOld * sizeFactor);
+            const unsigned int sizeNew = sizeOld * sizeFactor;
+            param.SetSize(sizesNew);
 
             // TODO: is there a better way to do this?
+#if 0
             for (unsigned int r = 0; r < rowsNew; r++) {
                 for (unsigned int c = 0; c < colsNew; c++) {
                     param.at(r, c) = param.at(r % rowsOld, c % colsOld);
                 }
             }
+#endif
+            for (unsigned int i = 0; i < sizeNew; i++) {
+            }
         }
     }
 
-    void in_vctDynamicNArrayRef(vctDynamicNArrayRef<int, NDIMS> param, unsigned int dummy) {
+    void in_vctDynamicNArrayRef(vctDynamicNArrayRef<int, MY_DIM> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
     }
-#endif
 
     void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<int, MY_DIM> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
+    void in_argout_const_vctDynamicConstNArrayRef_ref(const vctDynamicConstNArrayRef<int, MY_DIM> &param, unsigned int dummy) {
+        copy.SetSize(param.sizes());
+        copy.Assign(param);
+    }
+
+    void in_argout_const_vctDynamicNArrayRef_ref(const vctDynamicNArrayRef<int, MY_DIM> &param, unsigned int dummy) {
+        copy.SetSize(param.sizes());
+        copy.Assign(param);
+    }
+
+    void in_vctDynamicNArray(vctDynamicNArray<int, MY_DIM> param, unsigned int dummy) {
+        copy.SetSize(param.sizes());
+        copy.Assign(param);
+    }
+
+    void in_argout_const_vctDynamicNArray_ref(const vctDynamicNArray<int, MY_DIM> &param, unsigned int dummy) {
+        copy.SetSize(param.sizes());
+        copy.Assign(param);
+    }
+
 #if 0
-    void in_argout_const_vctDynamicConstNArrayRef_ref(const vctDynamicConstNArrayRef<int, NDIMS> &param, unsigned int dummy) {
-        copy.SetSize(param.sizes());
-        copy.Assign(param);
-    }
-
-    void in_argout_const_vctDynamicNArrayRef_ref(const vctDynamicNArrayRef<int, NDIMS> &param, unsigned int dummy) {
-        copy.SetSize(param.sizes());
-        copy.Assign(param);
-    }
-
-    void in_vctDynamicNArray(vctDynamicNArray<int, NDIMS> param, unsigned int dummy) {
-        copy.SetSize(param.sizes());
-        copy.Assign(param);
-    }
-
-    void in_argout_const_vctDynamicNArray_ref(const vctDynamicNArray<int, NDIMS> &param, unsigned int dummy) {
-        copy.SetSize(param.sizes());
-        copy.Assign(param);
-    }
-
-    vctDynamicNArray<int, NDIMS> out_vctDynamicNArray(unsigned int rows, unsigned int cols) {
+    vctDynamicNArray<int, MY_DIM> out_vctDynamicNArray(unsigned int rows, unsigned int cols) {
         copy.SetSize(rows, cols);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicNArray<int, NDIMS> &out_vctDynamicNArray_ref(unsigned int rows, unsigned int cols) {
+    vctDynamicNArray<int, MY_DIM> &out_vctDynamicNArray_ref(unsigned int rows, unsigned int cols) {
         copy.SetSize(rows, cols);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    const vctDynamicNArray<int, NDIMS> &out_const_vctDynamicNArray_ref(unsigned int rows, unsigned int cols) {
+    const vctDynamicNArray<int, MY_DIM> &out_const_vctDynamicNArray_ref(unsigned int rows, unsigned int cols) {
         copy.SetSize(rows, cols);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicNArrayRef<int, NDIMS> out_vctDynamicNArrayRef(unsigned int rows, unsigned int cols) {
+    vctDynamicNArrayRef<int, MY_DIM> out_vctDynamicNArrayRef(unsigned int rows, unsigned int cols) {
         copy.SetSize(rows, cols);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicConstNArrayRef<int, NDIMS> out_vctDynamicConstNArrayRef(unsigned int rows, unsigned int cols) {
+    vctDynamicConstNArrayRef<int, MY_DIM> out_vctDynamicConstNArrayRef(unsigned int rows, unsigned int cols) {
         copy.SetSize(rows, cols);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;

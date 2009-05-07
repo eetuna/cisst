@@ -599,6 +599,8 @@
 **************************************************************************/
 
 
+// TODO: Clean this section up
+
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, size)
 %apply vctDynamicMatrix {vctFixedSizeMatrix<elementType, size>};
 %apply vctDynamicMatrix & {vctFixedSizeMatrix<elementType, size> &};
@@ -626,8 +628,6 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8);
 %apply vctDynamicConstMatrixRef         {vctDynamicConstMatrixRef<elementType>};
 %apply const vctDynamicConstMatrixRef & {const vctDynamicConstMatrixRef<elementType> &};
 %enddef
-
-%import <cisstVector/vctDynamicMatrixTypes.h>
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);

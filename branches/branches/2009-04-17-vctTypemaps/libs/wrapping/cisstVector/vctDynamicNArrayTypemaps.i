@@ -22,7 +22,6 @@
 %}
 
 
-#if 0
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicNArray
 ******************************************************************************/
@@ -45,7 +44,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimensionN<$1_ltype>($input))
         ) {
           return NULL;
     }
@@ -55,16 +54,27 @@
     *****************************************************************************/
 
     // Create a temporary vctDynamicNArrayRef container
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($1_ltype::value_type));
+
+    // data pointer
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
-    const vctDynamicNArrayRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    const vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the temporary container to the vctDynamicNArray
-    $1.SetSize(tempContainer.sizes());
+    $1.SetSize(sizes);
     $1.Assign(tempContainer);
 }
 
@@ -114,7 +124,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessDimensionN<$*1_ltype>($input)
           && vctThrowUnlessIsWritable($input)
           && vctThrowUnlessOwnsData($input)
           && vctThrowUnlessNotReferenced($input))
@@ -130,13 +140,24 @@
     // of copying using a vctDynamicNArrayRef?
 
     // Create a temporary vctDynamicNArrayRef container
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicNArrayRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($*1_ltype::value_type));
+
+    // data pointer
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
+    const vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Create the vctDynamicNArray
     $1 = new $*1_ltype(tempContainer);
@@ -157,23 +178,34 @@
      CHECK IF THE CONTAINER HAS BEEN RESIZED
     *************************************************************************/
 
-    const $*1_ltype::size_type input_size0 = PyArray_DIM($input, 0);
-    const $*1_ltype::size_type input_size1 = PyArray_DIM($input, 1);
-    const $*1_ltype::size_type output_size0 = $1->sizes()[0];
-    const $*1_ltype::size_type output_size1 = $1->sizes()[1];
+    // input sizes
+    npy_intp *_input_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _input_sizesRef(_input_sizes);
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> input_sizes;
+    input_sizes.Assign(_input_sizesRef);
 
-    if (   input_size0 != output_size0
-        || input_size1 != output_size1) {
+    // output sizes
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> output_sizes;
+    output_sizes.Assign($1->sizes());
+
+    if (input_sizes.Equal(output_sizes)) {
         // Resize the PyArray by:
         //  1)  Creating an array containing the new size
         //  2)  Pass that array to the resizing function given by NumPy API
 
-        npy_intp *sizes = PyDimMem_NEW(2);              // create an array of sizes; dimension 2
-        sizes[0] = output_size0;                        // set the size
-        sizes[1] = output_size1;
-        PyArray_Dims dims;                              // create a PyArray_Dims object to hand to PyArray_Resize
+        // create an array of sizes
+        //unsigned int sz = $*1_ltype::DIMENSION;
+        npy_intp *sizes = PyDimMem_NEW(4);
+
+        // set the sizes
+        for (unsigned int i = 0; i < $*1_ltype::DIMENSION; i++) {
+            sizes[i] = output_sizes.at(i);
+        }
+
+        // create a PyArray_Dims object to hand to PyArray_Resize()
+        PyArray_Dims dims;
         dims.ptr = sizes;
-        dims.len = 2;
+        dims.len = $*1_ltype::DIMENSION;
         PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);
     }
 
@@ -185,13 +217,25 @@
     // of copying using a vctDynamicNArrayRef?
 
     // Create a temporary vctDynamicNArrayRef container
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($*1_ltype::value_type));
+
+    // data pointer
     const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
-    vctDynamicNArrayRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    // temporary container
+    vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the temporary container to the vctDynamicNArray
     tempContainer.Assign($1->Pointer());
@@ -244,7 +288,7 @@
 
     if (!(vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimensionN<$*1_ltype>($input))
         ) {
           return NULL;
     }
@@ -254,13 +298,24 @@
     *****************************************************************************/
 
     // Create a temporary vctDynamicNArrayRef container
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicNArrayRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($*1_ltype::value_type));
+
+    // data pointer
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
+    const vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Create the vctDynamicNArray
     $1 = new $*1_ltype(tempContainer);
@@ -327,7 +382,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessDimensionN<$1_ltype>($input)
           && vctThrowUnlessIsWritable($input))
         ) {
           return NULL;
@@ -338,14 +393,23 @@
      OBJECT (NAMED `$1') TO MATCH THAT OF THE PYARRAY (NAMED `$input')
     *************************************************************************/
 
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
 
-    $1.SetRef(size0, size1, stride0, stride1, data);
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($1_ltype::value_type));
+
+    // data pointer
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+
+    $1.SetRef(data, sizes, strides);
 }
 
 
@@ -408,7 +472,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimensionN<$*1_ltype>($input))
         ) {
           return NULL;
     }
@@ -418,14 +482,27 @@
     *****************************************************************************/
 
     // Create the vctDynamicNArrayRef
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
+    // dimensions
+    const unsigned int ndim = PyArray_NDIM($input);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($*1_ltype::value_type));
+
+    // data pointer
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
+    $1 = new $*1_ltype(data, sizes, strides);
 }
 
 
@@ -446,7 +523,6 @@
     // Don't forget to free the memory we allocated in the `in' typemap
     delete $1;
 }
-#endif
 
 
 /******************************************************************************
@@ -482,9 +558,6 @@
      PYARRAY (NAMED `$input')
     *****************************************************************************/
 
-    // dimensions
-    const unsigned int ndim = PyArray_NDIM($input);
-
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
@@ -502,16 +575,9 @@
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(data, sizes, strides);
-
-#if 0
-    npy_intp *_sizes = PyArray_DIMS($input);
-    unsigned int *__sizes = reinterpret_cast<unsigned int *>(_sizes);
-    vctFixedSizeVector<unsigned int, 5> sizes(__sizes);
-#endif
 }
 
 
-#if 0
 // TODO: Why does this out typemap work without the ``optimal'' flag?
 %typemap(out) vctDynamicConstNArrayRef
 {
@@ -575,7 +641,7 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimensionN<$*1_ltype>($input))
         ) {
           return NULL;
     }
@@ -585,14 +651,27 @@
     *****************************************************************************/
 
     // Create the vctDynamicConstNArrayRef
-    const npy_intp size0 = PyArray_DIM($input, 0);
-    const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
+    // dimensions
+    const unsigned int ndim = PyArray_NDIM($input);
+
+    // sizes
+    npy_intp *_sizes = PyArray_DIMS($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    sizes.Assign(_sizesRef);
+
+    // strides
+    npy_intp *_strides = PyArray_STRIDES($input);
+    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    strides.Assign(_stridesRef);
+    strides.Divide(sizeof($*1_ltype::value_type));
+
+    // data pointer
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
+    $1 = new $*1_ltype(data, sizes, strides);
 }
 
 
@@ -620,38 +699,23 @@
 **************************************************************************/
 
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, size)
-%apply vctDynamicNArray {vctFixedSizeNArray<elementType, size>};
-%apply vctDynamicNArray & {vctFixedSizeNArray<elementType, size> &};
-%apply const vctDynamicNArray & {const vctFixedSizeNArray<elementType, size> &};
+%define VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, ndim)
+%apply vctDynamicNArray         {vctDynamicNArray<elementType, ndim>};
+%apply vctDynamicNArray &       {vctDynamicNArray<elementType, ndim> &};
+%apply const vctDynamicNArray & {const vctDynamicNArray<elementType, ndim> &};
+
+%apply vctDynamicNArrayRef         {vctDynamicNArrayRef<elementType, ndim>};
+%apply const vctDynamicNArrayRef & {const vctDynamicNArrayRef<elementType, ndim> &};
+
+%apply vctDynamicConstNArrayRef         {vctDynamicConstNArrayRef<elementType, ndim>};
+%apply const vctDynamicConstNArrayRef & {const vctDynamicConstNArrayRef<elementType, ndim> &};
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(elementType)
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 2);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 3);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 4);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 5);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 6);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 7);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8);
+
+%define VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS(elementType)
+VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 3);
+VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 4);
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(elementType)
-%apply vctDynamicNArray         {vctDynamicNArray<elementType>};
-%apply vctDynamicNArray &       {vctDynamicNArray<elementType> &};
-%apply const vctDynamicNArray & {const vctDynamicNArray<elementType> &};
 
-%apply vctDynamicNArrayRef         {vctDynamicNArrayRef<elementType>};
-%apply const vctDynamicNArrayRef & {const vctDynamicNArrayRef<elementType> &};
-
-%apply vctDynamicConstNArrayRef         {vctDynamicConstNArrayRef<elementType>};
-%apply const vctDynamicConstNArrayRef & {const vctDynamicConstNArrayRef<elementType> &};
-%enddef
-
-%import <cisstVector/vctDynamicNArrayTypes.h>
-
-VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
-VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
-#endif
+VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS(int);
