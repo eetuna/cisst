@@ -319,7 +319,7 @@ bool mtsTask::WaitToTerminate(double timeout)
 //
 //
 //
-void mtsTask::StartInterfaceProxyServer()
+void mtsTask::StartInterfaceProxyServer(const std::string & ServerTaskIP)
 {
     mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
     if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
@@ -349,7 +349,7 @@ void mtsTask::StartInterfaceProxyServer()
     // TODO: avoid using hard-coded proxy access information
     //
     const std::string endpointInfo = "tcp -p 11705";
-    const std::string endpointInfoForClient = ":default -h 10.162.34.27 -p 11705";
+    const std::string endpointInfoForClient = ":default -h " + ServerTaskIP + " -p 11705";
     const std::string communicatorID = TaskInterfaceCommunicatorID;
 
     Proxy = new mtsTaskInterfaceProxyServer(adapterName, endpointInfo, communicatorID);

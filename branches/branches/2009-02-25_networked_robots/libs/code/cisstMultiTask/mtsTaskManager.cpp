@@ -537,7 +537,7 @@ void mtsTaskManager::StartProxies()
         ProxyServer = dynamic_cast<mtsTaskManagerProxyServer *>(Proxy);
         Proxy->Start(this);
     } else {
-        Proxy = new mtsTaskManagerProxyClient(":default -h 10.162.34.27 -p 10705", TaskManagerCommunicatorID);
+        Proxy = new mtsTaskManagerProxyClient(":default -h " + GlobalTaskManagerIP + " -p 10705", TaskManagerCommunicatorID);
         ProxyClient = dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
         Proxy->Start(this);
 
@@ -548,7 +548,7 @@ void mtsTaskManager::StartProxies()
         TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
         const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
         for (; taskIterator != taskEndIterator; ++taskIterator) {
-            taskIterator->second->StartInterfaceProxyServer();
+            taskIterator->second->StartInterfaceProxyServer(ServerTaskIP);
         }
     }
 }

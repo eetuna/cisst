@@ -388,7 +388,7 @@ protected:
 
 public:
     /*! Start mtsTaskInterfaceProxyServer. */
-    void StartInterfaceProxyServer();
+    void StartInterfaceProxyServer(const std::string & ServerTaskIP);
 
     /*! Start a proxy client (required interface, mtsTaskInterfaceProxyClient). */
     void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);

@@ -274,6 +274,12 @@ public:
     //-------------------------------------------------------------------------
     //  Task Layer Processing
     //-------------------------------------------------------------------------
+
+    //
+    // TODO: FIX ME
+    //
+    std::string GlobalTaskManagerIP;
+    std::string ServerTaskIP;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)
