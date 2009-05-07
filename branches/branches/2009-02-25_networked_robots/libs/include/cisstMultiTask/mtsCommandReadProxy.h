@@ -35,40 +35,58 @@ http://www.cisst.org/cisst/license.txt.
 */
 class mtsCommandReadProxy: public mtsCommandReadBase {
 public:
-    typedef cmnGenericObject * ArgumentPointerType;
+    typedef cmnDouble ArgumentType;
     typedef mtsCommandReadBase BaseType;
 
 protected:
-    /*! Argument prototype */
-    ArgumentPointerType ArgumentPointerPrototype;
+    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+
+    /*! ID assigned by the server as a pointer to the actual command in server's
+        memory space. */
+    const int CommandSID;
 
 public:
-    mtsCommandReadProxy() : BaseType() {}
+    mtsCommandReadProxy(const int commandSID, 
+                        mtsTaskInterfaceProxyClient * providedInterfaceProxy) 
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
+    {}
 
-    mtsCommandReadProxy(const std::string & name, 
-                        ArgumentPointerType argumentProtoType) :
-        BaseType(name), ArgumentPointerPrototype(argumentProtoType)
+    mtsCommandReadProxy(const int commandSID,
+                         mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                         const std::string & name)
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
     {}
 
     /*! The destructor. Does nothing */
     virtual ~mtsCommandReadProxy() {}
 
     /*! The execute method. */
-    virtual BaseType::ReturnType Execute(ArgumentType & argument) {
+    virtual mtsCommandBase::ReturnType Execute(cmnGenericObject & argument) {
+        ArgumentType * data = dynamic_cast<ArgumentType *>(&argument);
+        if (data == NULL)
+            return mtsCommandBase::BAD_INPUT;
+        
+        //(ClassInstantiation->*Action)(*data);
         static int cnt = 0;
         std::cout << "mtsCommandReadProxy called (" << ++cnt << "): " << Name << std::endl;
-        return BaseType::DEV_OK;
-    }
 
+        ProvidedInterfaceProxy->InvokeExecuteCommandRead(CommandSID, *data);
+
+        return mtsCommandBase::DEV_OK;
+    }
+    
     /*! For debugging. Generate a human readable output for the
-      command object */
+        command object */
     void ToStream(std::ostream & outputStream) const {
         // TODO
     }
 
     /*! Return a pointer on the argument prototype */
     const cmnGenericObject * GetArgumentPrototype(void) const {
-        return ArgumentPointerPrototype;
+        //
+        // TODO: FIX ME
+        //
+        return reinterpret_cast<const cmnGenericObject *>(0x5678);
     }
 };
 

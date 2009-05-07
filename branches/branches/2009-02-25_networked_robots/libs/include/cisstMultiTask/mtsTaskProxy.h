@@ -2,10 +2,10 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskProxy.h 291 2009-04-28 01:49:13Z mjung5 $
+  $Id: mtsDeviceProxy.h 291 2009-04-28 01:49:13Z mjung5 $
 
   Author(s):  Min Yang Jung
-  Created on: 2009-04-28
+  Created on: 2009-05-06
 
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights Reserved.
 
@@ -24,31 +24,23 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a periodic task.
 */
 
-#ifndef _mtsTaskProxy_h
-#define _mtsTaskProxy_h
+#ifndef _mtsDeviceProxy_h
+#define _mtsDeviceProxy_h
 
-#include <cisstMultiTask/mtsTaskPeriodic.h>
+#include <cisstMultiTask/mtsDevice.h>
 
-//
-//  TODO: inherit from mtsTaskPeriodic(period value)? or mtsTaskContinuous?
-//
-class mtsTaskProxy : public mtsTaskPeriodic {
+class mtsDeviceProxy : public mtsDevice {
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-protected:
-
 public:
-    mtsTaskProxy(const std::string & taskName, double period);
-    ~mtsTaskProxy() {};
+    mtsDeviceProxy(const std::string & taskName, double period);
+    ~mtsDeviceProxy() {};
 
-    void Configure(const std::string & CMN_UNUSED(filename)) {};
-    void Startup(void) {};
-    void Run(void) { ProcessQueuedCommands(); }
-    void Cleanup(void) {};
+    void Configure() {}
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskProxy);
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceProxy);
 
-#endif // _mtsTaskProxy_h
+#endif // _mtsDeviceProxy_h
 

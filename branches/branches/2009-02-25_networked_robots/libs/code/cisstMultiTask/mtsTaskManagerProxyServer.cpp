@@ -147,8 +147,6 @@ void mtsTaskManagerProxyServer::AddTaskManager(
 {
     const std::string taskManagerID = localTaskInfo.taskManagerID;
 
-    Logger->trace("mtsTaskManagerProxyServer", "<<<<< RECV: AddTaskManager: " + taskManagerID);
-
     const bool exist = FindTaskManager(taskManagerID);
     if (exist) {
         CMN_ASSERT(RemoveTaskManager(taskManagerID));
@@ -175,9 +173,6 @@ void mtsTaskManagerProxyServer::AddTaskManager(
 bool mtsTaskManagerProxyServer::AddProvidedInterface(
     const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
-    Logger->trace("mtsTaskManagerProxyServer", "<<<<< RECV: AddProvidedInterface: " + 
-        providedInterfaceInfo.interfaceName);
-
     mtsTaskGlobal * taskInfo = NULL;
 
     // Check if the task has been registered.
@@ -198,9 +193,6 @@ bool mtsTaskManagerProxyServer::AddProvidedInterface(
 bool mtsTaskManagerProxyServer::AddRequiredInterface(
     const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo)
 {
-    Logger->trace("mtsTaskManagerProxyServer", "<<<<< RECV: AddRequiredInterface: " + 
-        requiredInterfaceInfo.interfaceName);
-
     mtsTaskGlobal * taskInfo = NULL;
 
     // Check if the task has been registered.

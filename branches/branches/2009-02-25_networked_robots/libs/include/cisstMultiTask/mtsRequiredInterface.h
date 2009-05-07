@@ -147,7 +147,16 @@ protected:
     void ToStream(std::ostream & outputStream) const;
     
     /*! Get the information on command proxies. */
-    void GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap);
+    typedef enum {
+        COMMAND_VOID,
+        COMMAND_WRITE,
+        COMMAND_READ,
+        COMMAND_QUALIFIED_READ
+        // TODO: ADD EVENTS
+    } CommandProxyType;
+
+    void GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap,
+                             const CommandProxyType commandProxyType);
 
 protected:
     template <class _CommandType>
@@ -167,7 +176,7 @@ protected:
            if (!isRequired)
                outputStream << "(OPT)";
         }
-        const unsigned int GetID() const
+        const unsigned int GetCommandID() const
         {
             return (*cmdPtr)->GetCommandID();
         }

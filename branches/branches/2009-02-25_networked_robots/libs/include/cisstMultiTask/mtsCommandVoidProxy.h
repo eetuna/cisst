@@ -29,6 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandVoidProxy_h
 
 #include <cisstMultiTask/mtsCommandVoidBase.h>
+#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -37,14 +38,28 @@ http://www.cisst.org/cisst/license.txt.
 */
 class mtsCommandVoidProxy: public mtsCommandVoidBase
 {
+protected:
+    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+
+    /*! ID assigned by the server as a pointer to the actual command in server's
+        memory space. */
+    const int CommandSID;
+
 public:
     typedef mtsCommandVoidBase BaseType;
     
     /*! The constructor. Does nothing */
-    mtsCommandVoidProxy(void): BaseType() {}
+    mtsCommandVoidProxy(const int commandSID, 
+                        mtsTaskInterfaceProxyClient * providedInterfaceProxy)
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
+    {}
     
     /*! Constructor with a name. */
-    mtsCommandVoidProxy(const std::string & name): BaseType(name) {}
+    mtsCommandVoidProxy(const int commandSID,
+                        mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                        const std::string & name)
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
+    {}
     
     /*! The destructor. Does nothing */
     ~mtsCommandVoidProxy() {}
@@ -53,17 +68,21 @@ public:
     BaseType::ReturnType Execute() {
         static int cnt = 0;
         std::cout << "mtsCommandVoidProxy called (" << ++cnt << "): " << Name << std::endl;
+
+        ProvidedInterfaceProxy->InvokeExecuteCommandVoid(CommandSID);
+
         return BaseType::DEV_OK;
     }
 
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandVoidProxy: " << Name << std::endl;
+        outputStream << "mtsCommandVoidProxy: " << Name << ": " <<  CommandID 
+            << ", " << CommandSID << std::endl;
     }
 
-    /*! Returns number of arguments (parameters) expected by Execute
-      method.  Overloaded for mtsCommandVoidProxy to return 0. */
+    /*! Returns number of arguments (parameters) expected by Execute().
+        Overloaded to return NULL. */
     unsigned int NumberOfArguments(void) const {
-        return 0;
+        return NULL;
     }
 };
 

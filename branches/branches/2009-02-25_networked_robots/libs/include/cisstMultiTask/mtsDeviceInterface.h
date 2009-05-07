@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
@@ -248,6 +248,50 @@ protected:
     CommandQualifiedReadMapType CommandsQualifiedRead; // Qualified Read (conversion, read at time index, ...)
     EventVoidMapType EventVoidGenerators; // Raise an event
     EventWriteMapType EventWriteGenerators; // Raise an event
+
+    //-------------------------------------------------------------------------
+    //  Interface Proxy Related
+    //-------------------------------------------------------------------------
+    /*! Typedef for a map of (command object proxy id, actual command object pointer).
+        When a client task sends CommandProxyInfo object, a server task calls 
+        BuildCommandProxyMap() to create map objects. These map objects are used as 
+        a look-up table for the fast and efficient execution of commands because
+        using an integer instead of a string is much more efficient to represent
+        the command object ID. (see mtsCommandBase::CommandUID)
+    */
+    typedef std::map<unsigned int, mtsCommandVoidBase*>  CommandVoidProxyMapType;
+    typedef std::map<unsigned int, mtsCommandWriteBase*> CommandWriteProxyMapType;
+    typedef std::map<unsigned int, mtsCommandReadBase*>  CommandReadProxyMapType;
+    typedef std::map<unsigned int, mtsCommandQualifiedReadBase*> CommandQualifiedReadProxyMapType;
+    CommandVoidProxyMapType  CommandVoidProxyMap;
+    CommandWriteProxyMapType CommandWriteProxyMap;
+    CommandReadProxyMapType  CommandReadProxyMap;
+    CommandQualifiedReadProxyMapType CommandQualifiedReadProxyMap;
+
+public:
+    ///*! Get the information on command proxies. */
+    //typedef enum {
+    //    COMMAND_VOID,
+    //    COMMAND_WRITE,
+    //    COMMAND_READ,
+    //    COMMAND_QUALIFIED_READ
+    //    // TODO: ADD EVENTS
+    //} CommandProxyType;
+
+    //void GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap,
+    //                         const CommandProxyType commandProxyType);
+
+    const bool AddCommandVoidProxyMapElement(const unsigned int commandVoidProxyID, 
+                                             const std::string & commandVoidProxyName);
+    const bool AddCommandWriteProxyMapElement(const unsigned int commandWriteProxyID, 
+                                              const std::string & commandWriteProxyName);
+    const bool AddCommandReadProxyMapElement(const unsigned int commandReadProxyID, 
+                                             const std::string & commandReadProxyName);
+    const bool AddCommandQualifiedReadProxyMapElement(const unsigned int commandQualifiedReadProxyID, 
+                                                      const std::string & commandQualifiedReadProxyName);
+
+    /*! Execute a void command. */
+    void ExecuteCommandVoid(const unsigned int commandID);
 
 };
 

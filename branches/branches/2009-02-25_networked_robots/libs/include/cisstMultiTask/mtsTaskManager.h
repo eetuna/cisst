@@ -111,18 +111,6 @@ protected:
     /*! Destructor.  Does OS-specific cleanup. */
     virtual ~mtsTaskManager();
 
-    /*! Connect across networks. To provide user with the concept of 'transparency,'
-        this is called internally. (only by public Connect() method) */
-    mtsDeviceInterface * GetResourceInterface(
-        const std::string & resourceTaskName, const std::string & providedInterfaceName,
-        const std::string & userTaskName, const std::string & interfaceRequiredName,
-        mtsTask * userTask);
-
-    /*! Create a provided interface proxy and populate it with the complete specification 
-        on the remote provided interface. */
-    bool CreateProvidedInterfaceProxy(const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
-                                      mtsTask * task);
-
  public:
     /*! Create the static instance of this class. */
     static mtsTaskManager * GetInstance(void) ;
@@ -230,8 +218,26 @@ protected:
     /*! Proxy instance. This will be dynamically created. */
     mtsProxyBaseCommon<mtsTaskManager> * Proxy;
 
-    /*! Start a task interface proxy according to its type. */
-    void StartTaskInterfaceProxy();
+    /*! Start two kinds of proxies
+        1) [Task Manager Layer] Start mtsTaskManagerProxyServer or mtsTaskManagerProxyClient.
+        2) [Task Layer] Iterating all tasks registered, start mtsTaskInterfaceProxyServer.
+    */
+    void StartProxies();
+
+    /*! Connect across networks. This is called internally from Connect(). */
+    mtsDeviceInterface * GetResourceInterface(
+        const std::string & resourceTaskName, const std::string & providedInterfaceName,
+        const std::string & userTaskName, const std::string & interfaceRequiredName,
+        mtsTask * userTask);
+
+    /*! Create a provided interface proxy and populate it with the complete specification 
+        on the remote provided interface. */
+    bool CreateProvidedInterfaceProxy(const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
+                                      mtsDevice * serverTaskProxy, mtsTask * clientTask);
+
+    /*! Try to connect at server-side. */
+    const bool ConnectAtServerSide(const std::string requiredInterfaceName,
+                                   const std::string providedInterfaceName);
 
 public:
     /*! Set the type of task manager-global task manager (server) or conventional
@@ -239,9 +245,15 @@ public:
         Also start a task interface proxy. */
     void SetTaskManagerType(const TaskManagerType taskManagerType) {
         TaskManagerTypeMember = taskManagerType;
-        StartTaskInterfaceProxy();
+        StartProxies();
     }
 
+    /*! Getter */
+    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
+
+    //-------------------------------------------------------------------------
+    //  Task Manager Layer Processing
+    //-------------------------------------------------------------------------
     /*! Inform the global task manager of the addition of a new provided interface. */
     const bool InvokeAddProvidedInterface(const std::string & newProvidedInterfaceName,
                                     const std::string & adapterName,
@@ -259,8 +271,9 @@ public:
                                         const std::string & providedInterfaceName,
                                         ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
 
-    /*! Getter */
-    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
+    //-------------------------------------------------------------------------
+    //  Task Layer Processing
+    //-------------------------------------------------------------------------
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)

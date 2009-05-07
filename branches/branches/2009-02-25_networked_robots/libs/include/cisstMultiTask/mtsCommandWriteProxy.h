@@ -35,29 +35,49 @@ http://www.cisst.org/cisst/license.txt.
 */
 class mtsCommandWriteProxy: public mtsCommandWriteBase {
 public:
-    typedef const cmnGenericObject * ArgumentPointerType;
+    typedef cmnDouble ArgumentType;
     typedef mtsCommandWriteBase BaseType;
 
 protected:
-    /*! Argument prototype */
-    ArgumentPointerType ArgumentPointerPrototype;
+    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+
+    /*! ID assigned by the server as a pointer to the actual command in server's
+        memory space. */
+    const int CommandSID;
 
 public:
-    mtsCommandWriteProxy() : BaseType() {}
+    mtsCommandWriteProxy(const int commandSID, 
+                        mtsTaskInterfaceProxyClient * providedInterfaceProxy) 
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
+    {}
 
-    mtsCommandWriteProxy(const std::string & name, 
-                         ArgumentPointerType argumentProtoType) :
-        BaseType(name), ArgumentPointerPrototype(argumentProtoType)
+    mtsCommandWriteProxy(const int commandSID,
+                         mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                         const std::string & name)
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
     {}
 
     /*! The destructor. Does nothing */
     virtual ~mtsCommandWriteProxy() {}
 
     /*! The execute method. */
-    virtual BaseType::ReturnType Execute(ArgumentType & argument) {
+    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
+        const ArgumentType * data = dynamic_cast<const ArgumentType *>(&argument);
+        if (data == NULL)
+            return mtsCommandBase::BAD_INPUT;
+        return this->Execute(*data);
+    }
+
+    inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
+        //(ClassInstantiation->*Action)(argument);
+
         static int cnt = 0;
-        std::cout << "mtsCommandWriteProxy called (" << ++cnt << "): " << Name << std::endl;
-        return BaseType::DEV_OK;
+        std::cout << "mtsCommandWriteProxy called (" << ++cnt << "): " << Name 
+            << ", " << argument << std::endl;
+
+        ProvidedInterfaceProxy->InvokeExecuteCommandWrite(CommandSID, argument);
+
+        return mtsCommandBase::DEV_OK;
     }
 
     /*! For debugging. Generate a human readable output for the
@@ -68,7 +88,10 @@ public:
 
     /*! Return a pointer on the argument prototype */
     const cmnGenericObject * GetArgumentPrototype(void) const {
-        return ArgumentPointerPrototype;
+        //
+        // TODO: FIX THIS
+        //
+        return reinterpret_cast<const cmnGenericObject *>(0x1234);
     }
 };
 

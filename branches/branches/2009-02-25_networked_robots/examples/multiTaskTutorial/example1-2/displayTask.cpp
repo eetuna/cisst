@@ -57,9 +57,9 @@ void displayTask::Run(void)
     // get the current time index to display it in the UI
     const mtsStateIndex now = StateTable.GetIndexWriter();
     // get the data from the sine wave generator task
-    Generator.CommandVoid();
-    //Generator.GetData(Data);
-    //Generator.GetStateIndex(StateIndex);
+    //Generator.CommandVoid();
+    Generator.GetData(Data);
+    Generator.GetStateIndex(StateIndex);
     UI.Data->value(Data.Data);
 #ifdef CISST_GETVECTOR
     Generator.GetDataVector(StateIndex, DataVec);
@@ -74,8 +74,8 @@ void displayTask::Run(void)
                          << " - Amplitude: " << AmplitudeData.Data << std::endl;
     }
     // log some extra information
-    //CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
-    //                 << " - Data: " << Data << std::endl;
+    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
+                     << " - Data: " << Data << std::endl;
 #ifdef CISST_GETVECTOR
     CMN_LOG_CLASS(7) << "Last 10: " << DataVec << std::endl;
 #endif

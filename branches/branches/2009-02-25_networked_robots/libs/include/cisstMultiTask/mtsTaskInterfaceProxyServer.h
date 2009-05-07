@@ -93,10 +93,16 @@ public:
     const bool GetProvidedInterfaceSpecification(
         ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
 
-    /*! Build a map of (command proxy id, actual command pointer) */
-    void SendCommandProxyInfo(
-        const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq & commandProxyInfo);
+    /*! Build a map of (command proxy id, actual command pointer) so that 
+        an actual command object can be called by a remote command object proxy. */
+    //void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfo & info) const;
 
+    /*! Execute actual command objects. */
+    void ExecuteCommandVoid(const int commandSID) const;
+    void ExecuteCommandWrite(const int commandSID, const double argument) const;
+    void ExecuteCommandRead(const int commandSID, double & argument);
+    void ExecuteCommandQualifiedRead(
+        const int commandSID, const double argument1, double & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskInterfaceProxy.ice
@@ -123,12 +129,19 @@ protected:
         void Destroy();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
+        
         bool GetProvidedInterfaceSpecification(
             ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
             const ::Ice::Current&) const;
-        void SendCommandProxyInfo(
-            const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq&, 
-            const ::Ice::Current&);
+        
+        //void SendCommandProxyInfo(
+        //    const ::mtsTaskInterfaceProxy::CommandProxyInfo&,
+        //    const ::Ice::Current&);
+        
+        void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
+        void ExecuteCommandWrite(::Ice::Int, ::Ice::Double, const ::Ice::Current&);
+        void ExecuteCommandRead(::Ice::Int, ::Ice::Double&, const ::Ice::Current&);
+        void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Current&);
     };
 
     //------------------ Methods for global task manager --------------------//

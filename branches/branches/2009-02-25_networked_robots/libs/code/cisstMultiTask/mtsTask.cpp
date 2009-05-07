@@ -80,7 +80,10 @@ void mtsTask::StartupInternal(void) {
             success &= requiredIterator->second->BindCommandsAndEvents();
 
             // Populate CommandProxyMap and send this information to the connected server task
-            success &= SendCommandProxyInfo(requiredIterator->second);
+            //if (ProxyClient) {
+            //    success &= SendCommandProxyInfo(requiredIterator->second);
+            //    //success &= SendCommandProxyInfo(connectedInterface);
+            //}
         } else {
             CMN_LOG_CLASS(2) << "StartupInternal: void pointer to required interface (required not connected to provided)" << std::endl;
             success = false;
@@ -166,7 +169,7 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
     retValue(0),
     RequiredInterfaces("RequiredInterfaces"),
     TaskInterfaceCommunicatorID("TaskInterfaceServerSender"),
-    ProxyServer(0), ProxyClient(0)
+    Proxy(0), ProxyServer(0), ProxyClient(0)
 {
 }
 
@@ -316,7 +319,7 @@ bool mtsTask::WaitToTerminate(double timeout)
 //
 //
 //
-void mtsTask::StartProxyServer()
+void mtsTask::StartInterfaceProxyServer()
 {
     mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
     if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
@@ -354,7 +357,7 @@ void mtsTask::StartProxyServer()
     Proxy->GetLogger()->trace("mtsTask", "Provided interface proxy starts.");
     ProxyServer = dynamic_cast<mtsTaskInterfaceProxyServer *>(Proxy);
 
-    // Inform the global task manager of the existence on a newly created 
+    // Inform the global task manager of the existence of a newly created 
     // provided interface with the access information.
     if (!TaskManager->InvokeAddProvidedInterface(
         iterator->first, adapterName, endpointInfoForClient, communicatorID, Name)) 
@@ -379,53 +382,160 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
         return;
     }
 
-    // Start a required interface proxy (proxy client, mtsTaskInterfaceProxyClient)
+    // Start a required interface proxy (proxy client, mtsTaskInterfaceProxyClient)    
+    RequiredInterfacesMapType::MapType::iterator iterator = 
+        RequiredInterfaces.GetMap().begin();
     //
     // TODO: I assume there is only one provided interface and one required interface
     //
-    RequiredInterfacesMapType::MapType::iterator iterator = 
-        RequiredInterfaces.GetMap().begin();
-
-    Proxy = new mtsTaskInterfaceProxyClient(endpointInfo, communicatorID);
-    Proxy->Start(this);
-    Proxy->GetLogger()->trace("mtsTask", "Required interface proxy starts.");
-    ProxyClient = dynamic_cast<mtsTaskInterfaceProxyClient *>(Proxy);
-
-    // Inform the global task manager of the existence on a newly created 
-    // required interface.
-    if (!TaskManager->InvokeAddRequiredInterface(iterator->first, Name)) 
     {
-        Proxy->GetLogger()->error("Failed to add required interface: " + iterator->first);
-        return;
-    } else {
-        Proxy->GetLogger()->trace("mtsTask", "Registered required interface: " + iterator->first);
+        Proxy = new mtsTaskInterfaceProxyClient(endpointInfo, communicatorID);
+        Proxy->Start(this);
+        Proxy->GetLogger()->trace("mtsTask", "Required interface proxy starts.");
+        ProxyClient = dynamic_cast<mtsTaskInterfaceProxyClient *>(Proxy);
+
+        // Inform the global task manager of the existence on a newly created 
+        // required interface.
+        if (!TaskManager->InvokeAddRequiredInterface(iterator->first, Name)) 
+        {
+            Proxy->GetLogger()->error("Failed to add required interface: " + iterator->first);
+        } else {
+            Proxy->GetLogger()->trace("mtsTask", "Registered required interface: " + iterator->first);
+        }
     }
 }
 
+//
+//  For a client task
+//
 const bool mtsTask::GetProvidedInterfaceSpecification(
     mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec)
 {
+    CMN_ASSERT(ProxyClient);
+
     return ProxyClient->GetProvidedInterfaceSpecification(spec);
 }
 
+/*
 const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterface)
 {
+    CMN_ASSERT(ProxyClient);
+
+    //CMN_ASSERT(providedInterfaceProxy);
     CMN_ASSERT(requiredInterface);
 
-    std::map<std::string, unsigned int> commandProxyInfoMap;
-    requiredInterface->GetCommandProxyInfo(commandProxyInfoMap);
+    mtsTaskInterfaceProxy::CommandProxyInfo info;
+    mtsTaskInterfaceProxy::CommandProxyElement element;
+    std::map<std::string, unsigned int> CommandProxyNameAndIDMap;
 
-    mtsTaskInterfaceProxy::CommandProxyInfoSeq commandProxyInfo;
-    mtsTaskInterfaceProxy::CommandProxyInfo commandProxy;
-
-    std::map<std::string, unsigned int>::const_iterator it = commandProxyInfoMap.begin();
-    for (; it != commandProxyInfoMap.end(); ++it) {
-        commandProxy.Name = it->first;
-        commandProxy.ID = it->second;
-        commandProxyInfo.push_back(commandProxy);
+    std::map<std::string, unsigned int>::const_iterator it;
+//#define SET_COMMAND_PROXY_INFO( _commandType, _commandTypeConst )\
+//    requiredInterface->GetCommandInfo(\
+//        CommandProxyNameAndIDMap, mtsDeviceInterface::COMMAND_##_commandTypeConst##);\
+//    it = CommandProxyNameAndIDMap.begin();\
+//    for (; it != CommandProxyNameAndIDMap.end(); ++it) {\
+//        element.Name = it->first;\
+//        element.ID = it->second;\
+//        info.CommandProxy##_commandType##Seq.push_back(element);\
+//    }
+#define SET_COMMAND_PROXY_INFO( _commandType, _commandTypeConst )\
+    requiredInterface->GetCommandProxyInfo(\
+        CommandProxyNameAndIDMap, mtsRequiredInterface::COMMAND_##_commandTypeConst##);\
+    it = CommandProxyNameAndIDMap.begin();\
+    for (; it != CommandProxyNameAndIDMap.end(); ++it) {\
+        element.Name = it->first;\
+        element.ID = it->second;\
+        info.CommandProxy##_commandType##Seq.push_back(element);\
     }
 
-    ProxyClient->SendCommandProxyInfo(commandProxyInfo);
+    SET_COMMAND_PROXY_INFO(Void, VOID);
+    SET_COMMAND_PROXY_INFO(Write, WRITE);
+    SET_COMMAND_PROXY_INFO(Read, READ);
+    SET_COMMAND_PROXY_INFO(QualifiedRead, QUALIFIED_READ);
+    //info.ConnectedProvidedInterfaceName = providedInterfaceProxy->GetName();
+    info.ConnectedProvidedInterfaceName = requiredInterface->GetConnectedInterface()->GetName();
+
+    ProxyClient->SendCommandProxyInfo(info);
 
     return true;
 }
+*/
+
+//void mtsTask::InvokeExecuteCommandVoid(const int commandSID) const
+//{
+//    CMN_ASSERT(ProxyClient);
+//
+//    if (TaskState != ACTIVE) return;
+//
+//    ProxyClient->InvokeExecuteCommandVoid(commandSID);
+//}
+
+//
+//  For a server task
+//
+
+// MJUNG: Currently it is assumed that one required interface connects to only
+// one provided interface. If a required interface connects to more than
+// one provided interface, appropriate changes should me made.
+// (see mtsTaskInterfaceProxy.ice)
+//void mtsTask::ReceiveCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfo & info)
+//{
+//    CMN_ASSERT(ProxyServer);
+//
+//    mtsDeviceInterface * providedInterface = GetProvidedInterface(info.ConnectedProvidedInterfaceName);
+//    CMN_ASSERT(providedInterface);
+//
+//    std::string commandName;
+//    unsigned int commandID;
+//
+//    mtsTaskInterfaceProxy::CommandProxyElementSeq::const_iterator it;
+//
+//    // Fetch a pointer to an actual command object
+////#define ADD_COMMAND_PROXY_INFO( _commandType )\
+////    it = info.CommandProxy##_commandType##Seq.begin();\
+////    for (; it != info.CommandProxy##_commandType##Seq.end(); ++it) {\
+////        commandID = it->ID;\
+////        commandName = it->Name;\
+////        CMN_ASSERT(providedInterface->AddCommand##_commandType##ProxyMapElement(commandID, commandName));\
+////        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));\
+////    }
+//
+//    it = info.CommandProxyVoidSeq.begin();
+//    for (; it != info.CommandProxyVoidSeq.end(); ++it) {
+//        commandID = it->ID;
+//        commandName = it->Name;
+//        CMN_ASSERT(providedInterface->AddCommandVoidProxyMapElement(commandID, commandName));
+//        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));
+//    }
+//
+//    it = info.CommandProxyWriteSeq.begin();
+//    for (; it != info.CommandProxyWriteSeq.end(); ++it) {
+//        commandID = it->ID;
+//        commandName = it->Name;
+//        CMN_ASSERT(providedInterface->AddCommandWriteProxyMapElement(commandID, commandName));
+//        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));
+//    }
+//
+//    it = info.CommandProxyReadSeq.begin();
+//    for (; it != info.CommandProxyReadSeq.end(); ++it) {
+//        commandID = it->ID;
+//        commandName = it->Name;
+//        CMN_ASSERT(providedInterface->AddCommandReadProxyMapElement(commandID, commandName));
+//        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));
+//    }
+//
+//    //ADD_COMMAND_PROXY_INFO(Void);
+//    //ADD_COMMAND_PROXY_INFO(Read);
+//    //ADD_COMMAND_PROXY_INFO(Write);
+//    //ADD_COMMAND_PROXY_INFO(QualifiedRead);
+//}
+
+//void mtsTask::ExecuteCommandVoid(const int commandSID)
+//{
+//    CMN_ASSERT(ProxyServer);
+//
+//    CommandLookupTableType::const_iterator it = CommandLookupTable.find(commandSID);
+//    CMN_ASSERT(it != CommandLookupTable.end());
+//
+//    it->second->ExecuteCommandVoid(commandID);
+//}

@@ -36,24 +36,30 @@ module mtsTaskInterfaceProxy
 	//-----------------------------------------------------------------------------
 	//	Data Structure Definition
 	//-----------------------------------------------------------------------------
+	
+	//------------------------------------- 1 -----------------------------------//
 	struct CommandVoidInfo { 
 		string Name;
+        int CommandSID;
 	};
 	
 	struct CommandWriteInfo { 
 		string Name;
 		string ArgumentTypeName;
+        int CommandSID;
 	};
 	
 	struct CommandReadInfo { 
 		string Name;
 		string ArgumentTypeName;
+        int CommandSID;
 	};
 	
 	struct CommandQualifiedReadInfo { 
 		string Name;
 		string Argument1TypeName;
 		string Argument2TypeName;
+        int CommandSID;
 	};
 	
 	/*
@@ -96,16 +102,33 @@ module mtsTaskInterfaceProxy
 		//sequence<EventWriteInfo> eventsWrite;
 	};
 	
+	//------------------------------------- 2 -----------------------------------//
 	sequence<ProvidedInterfaceSpecification> ProvidedInterfaceSpecificationSeq;
 
 	/*! Typedef for a map of (command name, command object id). 
         This map is populated at a client task and is sent to a server task.
         (see mtsCommandBase::CommandUID) */
-    struct CommandProxyInfo {
+    struct CommandProxyElement {
 		string Name;
 		int    ID;
     };
-    sequence<CommandProxyInfo> CommandProxyInfoSeq;
+    sequence<CommandProxyElement> CommandProxyElementSeq;
+    
+    struct CommandProxyInfo {
+		// MJUNG: Currently it is assumed that one required interface connects to only
+		// one provided interface. If a required interface connects to more than
+		// one provided interface, the following field (ConnectedProvidedInterfaceName)
+		// should be vectorized.
+		string ConnectedProvidedInterfaceName;
+		
+		CommandProxyElementSeq	CommandProxyVoidSeq;
+		CommandProxyElementSeq	CommandProxyWriteSeq;
+		CommandProxyElementSeq	CommandProxyReadSeq;
+		CommandProxyElementSeq	CommandProxyQualifiedReadSeq;
+    };
+    
+    //------------------------------------- 3 -----------------------------------//
+    
     
 	//-----------------------------------------------------------------------------
 	// Interface for Required Interface (Proxy Client)
@@ -125,7 +148,18 @@ module mtsTaskInterfaceProxy
 		["cpp:const"] idempotent bool GetProvidedInterfaceSpecification(
 			out ProvidedInterfaceSpecificationSeq providedInterfaceSpecifications);
 			
-		void SendCommandProxyInfo(CommandProxyInfoSeq commandProxyInfos);
+		//void SendCommandProxyInfo(CommandProxyInfo commandProxyInformation);
+		
+        //bool ConnectAtServerSide(string providedInterfaceName, string requiredInterfaceName);
+        
+		// Execute command objects across networks
+		// Here 'int' type is used instead of 'unsigned int' because SLICE does not
+		// support unsigned type.
+		// (see http://zeroc.com/doc/Ice-3.3.1/manual/Slice.5.8.html)
+		void ExecuteCommandVoid(int CommandSID);
+        void ExecuteCommandWrite(int CommandSID, double argument);
+        void ExecuteCommandRead(int CommandSID, out double argument);
+        void ExecuteCommandQualifiedRead(int CommandSID, double argument1, out double argument2);
 	};
 
 };

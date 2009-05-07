@@ -23,9 +23,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
+#include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 
-#include <cisstMultiTask/mtsTaskProxy.h>
+#include <cisstMultiTask/mtsDeviceProxy.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 
@@ -277,6 +278,9 @@ void mtsTaskManager::ToStreamDot(std::ostream & outputStream) const {
 bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string & interfaceRequiredName,
                              const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
+    // True if the resource task specified is provided by a remote task
+    bool RemoteConnect = false;
+
     const UserType fullUserName(userTaskName, interfaceRequiredName);
     const ResourceType fullResourceName(resourceTaskName, providedInterfaceName);
     const AssociationType association(fullUserName, fullResourceName);
@@ -311,7 +315,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         if (GetTaskManagerType() == TASK_MANAGER_LOCAL) {
             CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
             return false;
-        } else {
+        } else {            
             resourceInterface = GetResourceInterface(resourceTaskName, providedInterfaceName, 
                                     userTaskName, interfaceRequiredName, 
                                     userTask);
@@ -320,6 +324,8 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                 CMN_LOG_CLASS(1) << "Connect through networks: can not find a task or device named " << resourceTaskName << std::endl;
                 return false;                
             }
+
+            RemoteConnect = true;
         }
     }
 
@@ -333,6 +339,17 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     if (!(userTask->ConnectRequiredInterface(interfaceRequiredName, resourceInterface))) {
         CMN_LOG_CLASS(1) << "Connect: connection failed, does " << interfaceRequiredName << " exist?" << std::endl;
         return false;
+    }
+
+    // After creating a required interface proxy at the server task, try to connect it with 
+    // a provided interface at server side.
+    if (RemoteConnect) {
+        if (!ConnectAtServerSide(interfaceRequiredName, providedInterfaceName)) {
+            CMN_LOG_CLASS(1) << "Connect: connection at server side failed: " 
+                << interfaceRequiredName << "(req) - " 
+                << resourceInterface << "(prv)" << std::endl;
+            return false;
+        }
     }
 
     // connected, add to the map of connections
@@ -378,6 +395,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
 
         // 4) Extract and present the complete information on this provided interface 
         // as a set of string.
+        std::string serverProxyName;
         std::vector<mtsTaskInterfaceProxy::ProvidedInterfaceSpecification>::const_iterator it
             = specs.begin();
         for (; it != specs.end(); ++it) {
@@ -395,27 +413,28 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
                      TC: the name of the client task
                      RI: the name of the required interface
             */
-            std::string serverProxyName = resourceTaskName;
+            serverProxyName = resourceTaskName;
             //serverProxyName = resourceTaskName + ":"          // TS
             //                      it->interfaceName + "-Network-" // PI
             //                      userTaskName + ":"              // TC
             //                      interfaceRequiredName;          // RI
 
-            mtsTaskProxy * serverProxyTask = new mtsTaskProxy(serverProxyName, 1 * cmn_ms);
-            CMN_ASSERT(serverProxyTask);
+            mtsDeviceProxy * serverTaskProxy = new mtsDeviceProxy(serverProxyName);
+            CMN_ASSERT(serverTaskProxy);
 
-            if (!CreateProvidedInterfaceProxy(*it, serverProxyTask)) {
+            if (!CreateProvidedInterfaceProxy(*it, serverTaskProxy, clientTask)) {
                 CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy FAILED: " << serverProxyName << std::endl;
                 return NULL;
             }
 
             // Add this proxy task to the task manager
-            if (!AddTask(serverProxyTask)) {
+            //if (!AddTask(serverTaskProxy)) {
+            if (!AddDevice(serverTaskProxy)) {
                 CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Adding task failed: " << serverProxyName << std::endl;
                 return NULL;
             }
 
-            resourceInterface = serverProxyTask->GetProvidedInterface(providedInterfaceName);
+            resourceInterface = serverTaskProxy->GetProvidedInterface(providedInterfaceName);
 
             //
             // TODO: Currently, it is assumed that there is only one provided interface.
@@ -435,23 +454,28 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
 
 bool mtsTaskManager::CreateProvidedInterfaceProxy(
     const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
-    mtsTask * task)
+    mtsDevice * serverTaskProxy, mtsTask * clientTask)
 {
     // 1) Create a local provided interface (a provided interface proxy)
-    if (!task->AddProvidedInterface(spec.interfaceName)) {        
+    if (!serverTaskProxy->AddProvidedInterface(spec.interfaceName)) {
+        CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Could not add provided interface." << std::endl;
         return false;
     }
 
     // 2) Restore Commands by creating command proxies specified by the provided interface
-    mtsDeviceInterface * providedInterface = task->GetProvidedInterface(spec.interfaceName);
+    mtsDeviceInterface * providedInterface = serverTaskProxy->GetProvidedInterface(spec.interfaceName);
     CMN_ASSERT(providedInterface);
+
+    std::string commandName;
+    int commandSID;
 
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
     {\
         mtsTaskInterfaceProxy::Command##_commandType##Seq::const_iterator it \
             = spec.commands##_commandType##.begin();\
         for (; it != spec.commands##_commandType##.end(); ++it) {\
-            std::string commandName = it->Name;
+            commandName = it->Name;\
+            commandSID = it->CommandSID;
 
 #define ITERATE_INTERFACE_END \
         }\
@@ -459,28 +483,28 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 
     // 2-1) Void
     ITERATE_INTERFACE_BEGIN(Void)
-        mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(commandName);
+        mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(
+            commandSID, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandVoid);
-        //providedInterface->CommandsVoid.AddItem(it->Name, newCommandVoid, 1);
         providedInterface->GetCommandVoidMap().AddItem(it->Name, newCommandVoid, 1);
     ITERATE_INTERFACE_END
 
     // 2-2) Write
     ITERATE_INTERFACE_BEGIN(Write)
-        cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
-        mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(commandName, prototype);
+        //cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
+        mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(
+            commandSID, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandWrite);
-        //providedInterface->CommandsWrite.AddItem(commandName, newCommandWrite);
-        providedInterface->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
+        providedInterface->GetCommandWriteMap().AddItem(it->Name, newCommandWrite, 1);
     ITERATE_INTERFACE_END
 
     // 2-3) Read
     ITERATE_INTERFACE_BEGIN(Read)
-        cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
-        mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(commandName, prototype);
+        //cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
+        mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(
+            commandSID, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandRead);
-        //providedInterface->CommandsRead.AddItem(commandName, newCommandRead);
-        providedInterface->GetCommandReadMap().AddItem(commandName, newCommandRead);
+        providedInterface->GetCommandReadMap().AddItem(it->Name, newCommandRead, 1);
     ITERATE_INTERFACE_END
 
     // 2-4) QualifiedRead
@@ -493,38 +517,6 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     //    providedInterface->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
     //ITERATE_INTERFACE_END
 
-    if (spec.providedInterfaceForTask) {
-        mtsTaskInterface * providedInterfaceForTask = dynamic_cast<mtsTaskInterface *>(providedInterface);
-        CMN_ASSERT(providedInterfaceForTask);
-
-        // 2-1) Void
-        ITERATE_INTERFACE_BEGIN(Void)
-            //
-            //  TODO: Is it ok to use mtsCommandVoidProxy instead of mtsCommandVoidBase?
-            //  refer to mtsTaskInterface.h:157 (mtsCommandVoidBase * AddCommandVoid())
-            //
-            mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(commandName);
-            CMN_ASSERT(newCommandVoid);
-            mtsCommandQueuedVoidBase * newCommandQueuedVoid = new mtsCommandQueuedVoid(0, newCommandVoid);
-            CMN_ASSERT(newCommandQueuedVoid);
-            providedInterfaceForTask->CommandsQueuedVoid.AddItem(commandName, newCommandQueuedVoid, 1);
-        ITERATE_INTERFACE_END
-
-        // 2-2) Write
-        ITERATE_INTERFACE_BEGIN(Write)
-        //
-            //  TODO: Is it ok to use mtsCommandWriteProxy instead of mtsCommandWriteBase?
-            //  refer to mtsTaskInterface.h:157 (mtsCommandVoidBase * AddCommandWrite())
-            //
-            cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
-            mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(commandName, prototype);
-            CMN_ASSERT(newCommandWrite);
-            mtsCommandQueuedWriteBase * newCommandQueuedWrite = new mtsCommandQueuedWriteProxy(newCommandWrite);
-            CMN_ASSERT(newCommandQueuedWrite);
-            providedInterfaceForTask->CommandsQueuedWrite.AddItem(commandName, newCommandQueuedWrite, 1);
-        ITERATE_INTERFACE_END
-    }
-
 #undef ITERATE_INTERFACE_BEGIN
 #undef ITERATE_INTERFACE_END
 
@@ -536,7 +528,7 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     return true;
 }
 
-void mtsTaskManager::StartTaskInterfaceProxy()
+void mtsTaskManager::StartProxies()
 {
     // Start the task manager proxy
     if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {
@@ -548,20 +540,35 @@ void mtsTaskManager::StartTaskInterfaceProxy()
         Proxy = new mtsTaskManagerProxyClient(":default -p 10705", TaskManagerCommunicatorID);
         ProxyClient = dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
         Proxy->Start(this);
+
+        osaSleep(500 * cmn_ms);
+
+        // Start a task interface proxy. Currently it is assumed that there is only
+        // one provided interface and one required interface.
+        TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
+        const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+        for (; taskIterator != taskEndIterator; ++taskIterator) {
+            taskIterator->second->StartInterfaceProxyServer();
+        }
     }
-
-    osaSleep(500 * cmn_ms);
-
-    // Start the task interface proxy. Currently it is assumed that there is only
-    // one provided interface and one required interface.
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    //const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
-    //for (; taskIterator != taskEndIterator; ++taskIterator) {
-        // Start task interface proxy objects
-        taskIterator->second->StartProxyServer();
-    //}
 }
 
+const bool mtsTaskManager::ConnectAtServerSide(const std::string requiredInterfaceName,
+                                               const std::string providedInterfaceName)
+{
+    // 1. Create a required interface proxy at server side.
+    // 2. Connect the required interface proxy with the provided interface specified.
+    // 3. Inform the global task manager of the fact that two interfaces are connected.
+
+    //
+    //  TODO: IMPLEMENT ME
+    //
+    return true;
+}
+
+//
+//  Task Manager Layer Processing
+//
 const bool mtsTaskManager::InvokeAddProvidedInterface(
     const std::string & newProvidedInterfaceName,
     const std::string & adapterName,
@@ -592,3 +599,7 @@ const bool mtsTaskManager::InvokeGetProvidedInterfaceInfo(
 {
     return ProxyClient->GetProvidedInterfaceInfo(taskName, providedInterfaceName, info);
 }
+
+//
+//  Task Layer Processing
+//

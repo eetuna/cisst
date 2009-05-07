@@ -5,7 +5,7 @@
   $Id: mtsDeviceProxy.h 291 2009-04-28 01:49:13Z mjung5 $
 
   Author(s):  Min Yang Jung
-  Created on: 2009-04-29
+  Created on: 2009-05-06
 
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights Reserved.
 
@@ -31,17 +31,12 @@ http://www.cisst.org/cisst/license.txt.
 
 class mtsDeviceProxy : public mtsDevice {
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-
 public:
-    mtsDeviceProxy(const std::string & deviceName) : mtsDevice(deviceName)
-    {}
-    virtual ~mtsDeviceProxy() {};
+    mtsDeviceProxy(const std::string & deviceName) {}
+    ~mtsDeviceProxy() {};
 
-    void Configure(const std::string & CMN_UNUSED(filename)) {};
+    void Configure(const std::string & deviceName) {};
 };
-
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceProxy);
 
 #endif // _mtsDeviceProxy_h
 

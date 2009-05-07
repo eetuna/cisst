@@ -22,7 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObjectProxy.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
 
-
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterface)
 
 
@@ -198,3 +197,103 @@ void mtsDeviceInterface::ToStream(std::ostream & outputStream) const
     EventWriteGenerators.ToStream(outputStream);
 }
 
+//-------------------------------------------------------------------------
+//  Interface Proxy Related
+//-------------------------------------------------------------------------
+const bool mtsDeviceInterface::AddCommandVoidProxyMapElement(
+    const unsigned int commandVoidProxyID, const std::string & commandVoidProxyName)
+{
+    CommandVoidProxyMapType::const_iterator it = CommandVoidProxyMap.find(commandVoidProxyID);
+    if (it != CommandVoidProxyMap.end()) {
+        CMN_LOG_CLASS(3) << "AddCommandVoidProxyMapElement: already registered commandVoidProxy: "
+            << "(" << Name << ":" << commandVoidProxyName << "," << commandVoidProxyID << ")" << std::endl;
+        return false;
+    }
+
+    //mtsCommandVoidBase * commandVoid = this->GetCommandVoid(commandVoidProxyName);
+    mtsCommandVoidBase * commandVoid = CommandsVoid.GetItem(commandVoidProxyName, 1);
+
+    if (!commandVoid) {
+        CMN_LOG_CLASS(3) << "AddCommandVoidProxyMapElement: no such CommandVoid object exists: "
+            << "(" << Name << ":" << commandVoidProxyName << ")" << std::endl;
+        return false;
+    }
+    
+    CommandVoidProxyMap.insert(std::make_pair(commandVoidProxyID, commandVoid));
+
+    return true;
+}
+
+const bool mtsDeviceInterface::AddCommandWriteProxyMapElement(
+    const unsigned int commandWriteProxyID, const std::string & commandWriteProxyName)
+{
+    CommandWriteProxyMapType::const_iterator it = CommandWriteProxyMap.find(commandWriteProxyID);
+    if (it != CommandWriteProxyMap.end()) {
+        CMN_LOG_CLASS(3) << "AddCommandWriteProxyMapElement: already registered commandWriteProxy: "
+            << "(" << Name << ":" << commandWriteProxyName << "," << commandWriteProxyID << ")" << std::endl;
+        return false;
+    }
+
+    mtsCommandWriteBase * commandWrite = CommandsWrite.GetItem(commandWriteProxyName, 1);
+    if (!commandWrite) {
+        CMN_LOG_CLASS(3) << "AddCommandWriteProxyMapElement: no such CommandWrite object exists: "
+            << "(" << Name << ":" << commandWriteProxyName << ")" << std::endl;
+        return false;
+    }
+    
+    CommandWriteProxyMap.insert(std::make_pair(commandWriteProxyID, commandWrite));
+
+    return true;
+}
+
+const bool mtsDeviceInterface::AddCommandReadProxyMapElement(
+    const unsigned int commandReadProxyID, const std::string & commandReadProxyName)
+{
+    CommandReadProxyMapType::const_iterator it = CommandReadProxyMap.find(commandReadProxyID);
+    if (it != CommandReadProxyMap.end()) {
+        CMN_LOG_CLASS(3) << "AddCommandReadProxyMapElement: already registered commandReadProxy: "
+            << "(" << Name << ":" << commandReadProxyName << "," << commandReadProxyID << ")" << std::endl;
+        return false;
+    }
+
+    mtsCommandReadBase * commandRead = CommandsRead.GetItem(commandReadProxyName, 1);
+    if (!commandRead) {
+        CMN_LOG_CLASS(3) << "AddCommandReadProxyMapElement: no such CommandRead object exists: "
+            << "(" << Name << ":" << commandReadProxyName << ")" << std::endl;
+        return false;
+    }
+    
+    CommandReadProxyMap.insert(std::make_pair(commandReadProxyID, commandRead));
+
+    return true;
+}
+
+const bool mtsDeviceInterface::AddCommandQualifiedReadProxyMapElement(
+    const unsigned int commandQualifiedReadProxyID, const std::string & commandQualifiedReadProxyName)
+{
+    CommandQualifiedReadProxyMapType::const_iterator it = CommandQualifiedReadProxyMap.find(commandQualifiedReadProxyID);
+    if (it != CommandQualifiedReadProxyMap.end()) {
+        CMN_LOG_CLASS(3) << "AddCommandQualifiedReadProxyMapElement: already registered commandQualifiedReadProxy: "
+            << "(" << Name << ":" << commandQualifiedReadProxyName << "," << commandQualifiedReadProxyID << ")" << std::endl;
+        return false;
+    }
+
+    mtsCommandQualifiedReadBase * commandQualifiedRead = CommandsQualifiedRead.GetItem(commandQualifiedReadProxyName, 1);
+    if (!commandQualifiedRead) {
+        CMN_LOG_CLASS(3) << "AddCommandQualifiedReadProxyMapElement: no such CommandQualifiedRead object exists: "
+            << "(" << Name << ":" << commandQualifiedReadProxyName << ")" << std::endl;
+        return false;
+    }
+    
+    CommandQualifiedReadProxyMap.insert(std::make_pair(commandQualifiedReadProxyID, commandQualifiedRead));
+
+    return true;
+}
+
+void mtsDeviceInterface::ExecuteCommandVoid(const unsigned int commandID)
+{
+    CommandVoidProxyMapType::const_iterator it = CommandVoidProxyMap.find(commandID);
+    CMN_ASSERT(it != CommandVoidProxyMap.end());
+
+    it->second->Execute();
+}

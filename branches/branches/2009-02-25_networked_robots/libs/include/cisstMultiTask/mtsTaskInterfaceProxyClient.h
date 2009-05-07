@@ -83,8 +83,13 @@ public:
     const bool GetProvidedInterfaceSpecification(
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const;
 
-    void SendCommandProxyInfo(
-        mtsTaskInterfaceProxy::CommandProxyInfoSeq & seq) const;
+    //void SendCommandProxyInfo(mtsTaskInterfaceProxy::CommandProxyInfo & info) const;
+
+    void InvokeExecuteCommandVoid(const int commandSID) const;
+    void InvokeExecuteCommandWrite(const int commandSID, const cmnDouble & argument) const;
+    void InvokeExecuteCommandRead(const int commandSID, cmnDouble & argument);
+    void InvokeExecuteCommandQualifiedRead(
+        const int commandSID, const cmnDouble & argument1, cmnDouble & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskInterfaceProxy.ice

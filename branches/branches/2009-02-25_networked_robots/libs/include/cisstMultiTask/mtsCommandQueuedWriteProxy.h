@@ -34,12 +34,20 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsCommandQueuedWriteProxy: public mtsCommandQueuedWriteBase {
 public:
     typedef mtsCommandQueuedWriteBase BaseType;
+    typedef const cmnGenericObject * ArgumentPointerType;
 
-    inline mtsCommandQueuedWriteProxy(void) : BaseType() 
+protected:
+    mtsQueue<ArgumentPointerType> ArgumentsQueue;
+
+public:
+    inline mtsCommandQueuedWriteProxy(void) : 
+        BaseType(), 
+        ArgumentsQueue(0, ArgumentPointerType())
     {}
 
     inline mtsCommandQueuedWriteProxy(mtsCommandWriteProxy * actualCommand)
-        : BaseType(0, actualCommand)
+        : BaseType(0, actualCommand),
+          ArgumentsQueue(0, ArgumentPointerType())
         //
         // TODO:
         //      MailBox, Execute() method implementation!!!
@@ -48,17 +56,51 @@ public:
         //ActualCommand(actualCommand)
     {}
 
+    inline mtsCommandQueuedWriteProxy(mtsMailBox * mailBox, 
+                                      mtsCommandWriteBase * actualCommand, 
+                                      unsigned int size) :
+        BaseType(mailBox, actualCommand),
+        ArgumentsQueue(0, ArgumentPointerType())
+    {
+        ArgumentPointerType argumentPointPrototype = dynamic_cast<ArgumentPointerType>(this->GetArgumentPrototype());
+        if (argumentPointPrototype) {
+            ArgumentsQueue.SetSize(size, argumentPointPrototype);
+        } else {
+            CMN_LOG(1) << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
+                       << std::endl;
+        }
+    }
+
+    inline virtual ~mtsCommandQueuedWriteProxy() {}
+
+    mtsCommandQueuedWriteProxy * Clone(mtsMailBox* mailBox, unsigned int size) const    
+    { 
+        return new mtsCommandQueuedWriteProxy(mailBox, ActualCommand, size);
+    }
+
     const cmnGenericObject * GetArgumentPrototype(void) const
-    // TODO: FIX THIS
-    { return reinterpret_cast<const cmnGenericObject *>(1); }
-
-    mtsCommandQueuedWriteProxy * Clone(mtsMailBox* mailBox, unsigned int size) const
-    // TODO: FIX THIS
-    { return reinterpret_cast<mtsCommandQueuedWriteProxy * >(1); }
-
+    { 
+        return ActualCommand->GetArgumentPrototype();
+    }
+    
     // Allocate should be called when a task calls GetMethodXXX().
-    void Allocate(unsigned int size)
-    {}
+    inline void Allocate(unsigned int size)
+    {
+        if (ArgumentsQueue.GetSize() != size) {
+            if (ArgumentsQueue.GetSize() > 0) {
+                // Probably should never happen
+                CMN_LOG(3) << "Class mtsCommandQueuedWriteProxy: Allocate(): Changing ArgumentsQueue size from " << ArgumentsQueue.GetSize()
+                           << " to " << size << std::endl;
+            }
+            ArgumentPointerType argumentPointerPrototype = dynamic_cast<ArgumentPointerType>(this->GetArgumentPrototype());
+            if (argumentPointerPrototype) {
+                ArgumentsQueue.SetSize(size, argumentPointerPrototype);
+            } else {
+                CMN_LOG(1) << "Class mtsCommandQueuedWriteProxy: constructor: Can't find argument prototype from actual command."
+                           << std::endl;
+            }
+        }
+    }
 
     mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
         static int cnt = 0;
@@ -67,12 +109,16 @@ public:
     }
     
     const cmnGenericObject * ArgumentPeek(void) const
-    // TODO: FIX THIS
-    { return reinterpret_cast<const cmnGenericObject *>(1); }
+    {
+        return *ArgumentsQueue.Peek();
+    }
 
     cmnGenericObject * ArgumentGet(void)
-    // TODO: FIX THIS
-    { return reinterpret_cast<cmnGenericObject *>(1); }
+    {
+        // TODO: FIX THIS OR REMOVE THIS!
+        //return ArgumentsQueue.Get();
+        return reinterpret_cast<cmnGenericObject*>(0x1234);
+    }
 };
 
 #endif // _mtsCommandQueuedWrite_h

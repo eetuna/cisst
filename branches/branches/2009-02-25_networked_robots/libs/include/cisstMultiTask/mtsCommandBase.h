@@ -45,6 +45,7 @@ class mtsCommandBase {
     /*! Command UID (unique ID). This ID is used by the mtsTaskInterfaceProxyServer 
         to map a local command pointer which is represented as this UID to a remote 
         actual command pointer. */
+protected:
     unsigned int CommandID;
 
 public:

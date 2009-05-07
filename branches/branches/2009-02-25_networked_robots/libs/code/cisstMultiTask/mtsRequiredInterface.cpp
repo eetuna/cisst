@@ -176,17 +176,19 @@ void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
 }
 
 void mtsRequiredInterface::GetCommandProxyInfo(
-    std::map<std::string, unsigned int> & commandProxyInfoMap)
+    std::map<std::string, unsigned int> & commandProxyInfoMap,
+    const CommandProxyType commandProxyType)
 {
     commandProxyInfoMap.clear();
 
+    //*
     CommandPointerVoidMapType::MapType::iterator iterVoid;
     for (iterVoid = CommandPointersVoid.GetMap().begin(); 
          iterVoid != CommandPointersVoid.GetMap().end(); 
          iterVoid++)
     {
         commandProxyInfoMap.insert(
-            make_pair(iterVoid->second->GetName(), iterVoid->second->GetID()));        
+            make_pair(iterVoid->second->GetName(), iterVoid->second->GetCommandID()));
     }
 
     CommandPointerWriteMapType::MapType::iterator iterWrite;
@@ -195,7 +197,7 @@ void mtsRequiredInterface::GetCommandProxyInfo(
          iterWrite++)
     {
         commandProxyInfoMap.insert(
-            make_pair(iterWrite->second->GetName(), iterWrite->second->GetID()));        
+            make_pair(iterWrite->second->GetName(), iterWrite->second->GetCommandID()));        
     }
 
     CommandPointerReadMapType::MapType::iterator iterRead;
@@ -204,25 +206,59 @@ void mtsRequiredInterface::GetCommandProxyInfo(
          iterRead++)
     {
         commandProxyInfoMap.insert(
-            make_pair(iterRead->second->GetName(), iterRead->second->GetID()));        
+            make_pair(iterRead->second->GetName(), iterRead->second->GetCommandID()));        
     }
+    //*/
 
-    /*
-#define GET_COMMAND_PROXY_INFO( _commandType ) \
-    CommandPointer##_commandType##MapType::MapType::iterator iter##_commandType;\
-    for (iter##_commandType = CommandPointers##_commandType##.GetMap().begin(); \
-         iter##_commandType != CommandPointers##_commandType##.GetMap().end(); \
-         ++iter##_commandType)\
-    {\
-        commandProxyInfoMap.insert(\
-            make_pair(iterVoid->second->GetName(), iterVoid->second->GetID()));\
-    }
+//#define GET_COMMAND_PROXY_INFO( _commandType ) \
+//    Command##_commandType##MapType::MapType::iterator iter##_commandType;\
+//    for (iter##_commandType = Commands##_commandType##.GetMap().begin(); \
+//         iter##_commandType != Commands##_commandType##.GetMap().end(); \
+//         ++iter##_commandType)\
+//    {\
+//        commandProxyInfoMap.insert(\
+//            make_pair(iter##_commandType##->second->Name, iter##_commandType##->second->GetCommandID()));\
+//    }
 
-    GET_COMMAND_PROXY_INFO(Void);
-    GET_COMMAND_PROXY_INFO(Write);
-    GET_COMMAND_PROXY_INFO(Read);
-    GET_COMMAND_PROXY_INFO(QualifiedRead);
-
-#undef GET_COMMAND_PROXY_INFO
-    */
+//#define GET_COMMAND_PROXY_INFO( _commandType ) \
+//    CommandPointer##_commandType##MapType::MapType::iterator iter##_commandType;\
+//    for (iter##_commandType = CommandPointers##_commandType##.GetMap().begin(); \
+//         iter##_commandType != CommandPointers##_commandType##.GetMap().end(); \
+//         ++iter##_commandType)\
+//    {\
+//        commandProxyInfoMap.insert(\
+//            make_pair(iter##_commandType##->second->GetName(), iter##_commandType##->second->GetCommandID()));\
+//    }
+//
+//    switch (commandProxyType)
+//    {
+//    case COMMAND_VOID:  
+//        {
+//            GET_COMMAND_PROXY_INFO(Void);
+//        }
+//        break;
+//    
+//    case COMMAND_WRITE: 
+//        {
+//            GET_COMMAND_PROXY_INFO(Write);
+//        }
+//        break;
+//    
+//    case COMMAND_READ:  
+//        {
+//            GET_COMMAND_PROXY_INFO(Read);
+//        }
+//        break;
+//    
+//    //case COMMAND_QUALIFIED_READ:    
+//    //    {
+//    //        GET_COMMAND_PROXY_INFO(QualifiedRead);
+//    //    }
+//    //    break;
+//
+//    default:
+//        break;
+//    }
+//
+//#undef GET_COMMAND_PROXY_INFO
 }

@@ -28,43 +28,59 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQualifiedReadProxy_h
 #define _mtsCommandQualifiedReadProxy_h
 
-#include <cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h>
+#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
 
 /*!
   \ingroup cisstMultiTask
 */
 class mtsCommandQualifiedReadProxy: public mtsCommandQualifiedReadBase {
 public:
-    typedef const cmnGenericObject * Argument1PointerType;
-    typedef cmnGenericObject * Argument2PointerType;
+    typedef const cmnDouble Argument1Type;
+    typedef cmnDouble Argument2Type;
     typedef mtsCommandQualifiedReadBase BaseType;
 
 protected:
-    /*! Argument prototype */
-    Argument1PointerType Argument1PointerPrototype;
-    Argument2PointerType Argument2PointerPrototype;
+    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+
+    /*! ID assigned by the server as a pointer to the actual command in server's
+        memory space. */
+    const int CommandSID;
 
 public:
-    mtsCommandQualifiedReadProxy() : BaseType() {}
+    mtsCommandQualifiedReadProxy(const int commandSID, 
+                                 mtsTaskInterfaceProxyClient * providedInterfaceProxy) 
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
+    {}
 
-    mtsCommandQualifiedReadProxy(const std::string & name, 
-                                 Argument1PointerType argument1ProtoType,
-                                 Argument2PointerType argument2ProtoType) :
-        BaseType(name), 
-        Argument1PointerPrototype(argument1ProtoType),
-        Argument2PointerPrototype(argument2ProtoType)
+    mtsCommandQualifiedReadProxy(const int commandSID,
+                                 mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                                 const std::string & name)
+                         //ArgumentPointerType argumentProtoType) :
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
+        //, ArgumentPointerPrototype(argumentProtoType)
     {}
 
     /*! The destructor. Does nothing */
-    ~mtsCommandQualifiedReadProxy() {}
+    virtual ~mtsCommandQualifiedReadProxy() {}
 
-    /*! The execute method. */    
-    //mtsCommandBase::ReturnType Execute(Argument1PointerType & argument1, 
-    //                             Argument2PointerType & argument2) 
+    /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument1,
-                                               cmnGenericObject & argument2) {
-    { 
-        return BaseType::DEV_OK;
+                                               cmnGenericObject & argument2) 
+    {
+        Argument1Type * data1 = dynamic_cast<Argument1Type *>(&argument1);
+        if (data1 == NULL)
+            return mtsCommandBase::BAD_INPUT;
+        Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
+        if (data2 == NULL)
+            return mtsCommandBase::BAD_INPUT;
+        
+        static int cnt = 0;
+        std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
+
+        ProvidedInterfaceProxy->InvokeExecuteCommandQualifiedRead(
+            CommandSID, *data1, *data2);
+
+        return mtsCommandBase::DEV_OK;
     }
 
     /*! For debugging. Generate a human QualifiedReadable output for the
@@ -74,12 +90,11 @@ public:
     }
 
     /*! Return a pointer on the argument prototype */
-    Argument1PointerType GetArgument1Prototype(void) const {
-        return Argument1PointerPrototype;
-    }
-
-    Argument2PointerType GetArgument2Prototype(void) const {
-        return Argument2PointerPrototype;
+    const cmnGenericObject * GetArgumentPrototype(void) const {
+        //
+        // TODO: FIX THIS
+        //
+        return reinterpret_cast<const cmnGenericObject *>(0x12345678);
     }
 };
 

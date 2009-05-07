@@ -382,23 +382,13 @@ protected:
     mtsTaskInterfaceProxyServer * ProxyServer;
     mtsTaskInterfaceProxyClient * ProxyClient;
 
-    /*! Typedef for a map of (command object id, actual command object pointer).
-        This map is generated at a server task after a client task sends 
-        CommandProxyMapType object. This is used for mapping a proxy command object
-        of a client task to an actual command object of a server task.
-        (see mtsCommandBase::CommandUID) */
-    typedef std::map<unsigned int, mtsCommandVoidBase*>  CommandVoidMapType;
-    typedef std::map<unsigned int, mtsCommandWriteBase*> CommandWriteMapType;
-    typedef std::map<unsigned int, mtsCommandReadBase*>  CommandReadMapType;
-    typedef std::map<unsigned int, mtsCommandQualifiedReadBase*> CommandQualifiedReadMapType;
-    CommandVoidMapType  CommandVoidMap;
-    CommandWriteMapType CommandWriteMap;
-    CommandReadMapType  CommandReadMap;
-    CommandQualifiedReadMapType CommandQualifiedReadMap;
+    /*! A map for fast access to provided interfaces */
+    //typedef std::map<unsigned int, mtsDeviceInterface *> CommandLookupTableType;
+    //CommandLookupTableType CommandLookupTable;
 
 public:
-    /*! Start a proxy server (provided interface, mtsTaskInterfaceProxyServer). */
-    void StartProxyServer();
+    /*! Start mtsTaskInterfaceProxyServer. */
+    void StartInterfaceProxyServer();
 
     /*! Start a proxy client (required interface, mtsTaskInterfaceProxyClient). */
     void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
@@ -408,8 +398,28 @@ public:
     const bool GetProvidedInterfaceSpecification(
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec);
 
-    /*! Populate and send CommandProxyMap to the connect server task. */
-    const bool SendCommandProxyInfo(mtsRequiredInterface * requiredInterface);
+    //
+    //  For a client task
+    //
+    /*! Send a set of pairs of (command name, command proxy id) to the connected server task. */
+    //const bool SendCommandProxyInfo(mtsDeviceInterface * providedInterfaceProxy);
+    //const bool SendCommandProxyInfo(mtsRequiredInterface * requiredInterface);
+
+    /*! Invoke CommandVoid object at the server task. */
+    //void InvokeExecuteCommandVoid(const int commandSID) const;
+
+    //
+    //  For a server task
+    //
+    /*! Prepare a look-up table (command proxy id, actual command object pointer). */
+    //void ReceiveCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfo & info);
+
+    /*! Execute a void command. */
+    //void ExecuteCommandVoid(const int commandSID);
+
+    /*! Getters */
+    mtsTaskInterfaceProxyClient * GetProxyClient() const { return ProxyClient; }
+    mtsTaskInterfaceProxyServer * GetProxyServer() const { return ProxyServer; }
 };
 
 

@@ -70,11 +70,9 @@ void mtsTaskInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     
     ProxyServer->SetConnectedTask(arguments->argument);
     
-    //
-    // GetProvidedInterfaceSpecification TEST
-    //
-    mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq spec;
-    ProxyServer->GetProvidedInterfaceSpecification(spec);
+    //!!!!!!!!!!!!
+    //mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq spec;
+    //ProxyServer->GetProvidedInterfaceSpecification(spec);
 
     ProxyServer->GetLogger()->trace("mtsTaskInterfaceProxyServer", "Proxy server starts.");
 
@@ -107,7 +105,7 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
     CMN_ASSERT(ConnectedTask);
 
     // 1) Iterate all provided interfaces
-    mtsDeviceInterface * providedInterfaceForDevice = NULL;    
+    mtsDeviceInterface * providedInterface = NULL;    
 
     std::vector<std::string> namesOfProvidedInterfaces = 
         ConnectedTask->GetNamesOfProvidedInterfaces();
@@ -116,53 +114,52 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
         mtsTaskInterfaceProxy::ProvidedInterfaceSpecification providedInterfaceSpec;
 
         // 1) Get a provided interface object
-        providedInterfaceForDevice = ConnectedTask->GetProvidedInterface(*it);
-        CMN_ASSERT(providedInterfaceForDevice);
+        providedInterface = ConnectedTask->GetProvidedInterface(*it);
+        CMN_ASSERT(providedInterface);
 
         // 2) Get a provided interface name.
-        providedInterfaceSpec.interfaceName = providedInterfaceForDevice->GetName();
+        providedInterfaceSpec.interfaceName = providedInterface->GetName();
 
+        // TODO: Maybe I can just assume that only mtsDeviceInterface is used.
         // Determine the type of the provided interface: is it mtsDeviceInterface or 
         // mtsTaskInterface?
-        if (dynamic_cast<mtsTaskInterface*>(providedInterfaceForDevice)) {
-            providedInterfaceSpec.providedInterfaceForTask = true;
-        } else {
+        //if (dynamic_cast<mtsTaskInterface*>(providedInterface)) {
+        //    providedInterfaceSpec.providedInterfaceForTask = true;
+        //} else {
             providedInterfaceSpec.providedInterfaceForTask = false;
-        }
+        //}
             
         // 3) Extract all the information on registered command objects, events, and so on.
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType = \
-            providedInterfaceForDevice->Commands##_commandType##.GetMap().begin();\
+            providedInterface->Commands##_commandType##.GetMap().begin();\
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType##End = \
-            providedInterfaceForDevice->Commands##_commandType##.GetMap().end();\
+            providedInterface->Commands##_commandType##.GetMap().end();\
         for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
-            mtsTaskInterfaceProxy::Command##_commandType##Info info;
+            mtsTaskInterfaceProxy::Command##_commandType##Info info;\
+            info.Name = iterator##_commandType##->second->Name;\
+            info.CommandSID = reinterpret_cast<int>(iterator##_commandType##->second);
 
 #define ITERATE_INTERFACE_END( _commandType ) \
             providedInterfaceSpec.commands##_commandType##.push_back(info);\
         }
 
         // 3-1) Command: Void
-        ITERATE_INTERFACE_BEGIN(Void);
-            info.Name = iteratorVoid->second->Name;
+        ITERATE_INTERFACE_BEGIN(Void);            
         ITERATE_INTERFACE_END(Void);
 
         // 3-2) Command: Write
         ITERATE_INTERFACE_BEGIN(Write);
-            info.Name = iteratorWrite->second->Name;
             info.ArgumentTypeName = iteratorWrite->second->GetArgumentClassServices()->GetName();
         ITERATE_INTERFACE_END(Write);
 
         // 3-3) Command: Read
         ITERATE_INTERFACE_BEGIN(Read);
-            info.Name = iteratorRead->second->Name;
             info.ArgumentTypeName = iteratorRead->second->GetArgumentClassServices()->GetName();
         ITERATE_INTERFACE_END(Read);
 
         // 3-4) Command: QualifiedRead
         ITERATE_INTERFACE_BEGIN(QualifiedRead);
-            info.Name = iteratorQualifiedRead->second->Name;
             info.Argument1TypeName = iteratorQualifiedRead->second->GetArgument1Prototype()->Services()->GetName();
             info.Argument2TypeName = iteratorQualifiedRead->second->GetArgument2Prototype()->Services()->GetName();
         ITERATE_INTERFACE_END(QualifiedRead);
@@ -179,12 +176,59 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
     return true;
 }
 
+/*
 void mtsTaskInterfaceProxyServer::SendCommandProxyInfo(
-    const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq & commandProxyInfo)
+    const ::mtsTaskInterfaceProxy::CommandProxyInfo & info) const
 {
-    //
+    ConnectedTask->ReceiveCommandProxyInfo(info);
+}
+*/
+
+void mtsTaskInterfaceProxyServer::ExecuteCommandVoid(const int commandSID) const
+{    
+    mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandSID);
+    CMN_ASSERT(commandVoid);
+
+    commandVoid->Execute();
 }
 
+void mtsTaskInterfaceProxyServer::ExecuteCommandWrite(const int commandSID, const double argument) const
+{    
+    mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandSID);
+    CMN_ASSERT(commandWrite);
+
+    static char buf[100];
+    sprintf(buf, "ExecuteCommandWrite: %f", argument);
+    Logger->trace("TIServer", buf);
+
+    cmnDouble argumentWrapper(argument);
+    commandWrite->Execute(argumentWrapper);
+}
+
+void mtsTaskInterfaceProxyServer::ExecuteCommandRead(const int commandSID, double & argument)
+{    
+    mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);
+    CMN_ASSERT(commandRead);
+
+    cmnDouble argumentWrapper;
+    commandRead->Execute(argumentWrapper);
+    argument = argumentWrapper.Data;
+
+    static char buf[100];
+    sprintf(buf, "ExecuteCommandRead returns: %f", argument);
+    Logger->trace("TIServer", buf);
+}
+
+void mtsTaskInterfaceProxyServer::ExecuteCommandQualifiedRead(const int commandSID, const double argument1, double & argument2)
+{    
+    mtsCommandQualifiedReadBase * commandQualifiedRead = reinterpret_cast<mtsCommandQualifiedReadBase *>(commandSID);
+    CMN_ASSERT(commandQualifiedRead);
+
+    cmnDouble argument1Wrapper(argument1);
+    cmnDouble argument2Wrapper;
+    commandQualifiedRead->Execute(argument1Wrapper, argument2Wrapper);
+    argument2 = argument2Wrapper.Data;
+}
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
@@ -284,7 +328,7 @@ void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::AddClient(
 
     mtsTaskInterfaceProxy::TaskInterfaceClientPrx client = 
         mtsTaskInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
-    _clients.insert(client);    
+    _clients.insert(client);
 }
 
 bool mtsTaskInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaceSpecification(
@@ -296,11 +340,45 @@ bool mtsTaskInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaceSpec
     return TaskInterfaceServer->GetProvidedInterfaceSpecification(specs);
 }
 
+/*
 void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::SendCommandProxyInfo(
-    const ::mtsTaskInterfaceProxy::CommandProxyInfoSeq & commandProxyInfo,
+    const ::mtsTaskInterfaceProxy::CommandProxyInfo & info,
     const ::Ice::Current&)
 {
     Logger->trace("TIServer", "<<<<< RECV: SendCommandProxyInfo");
 
-    TaskInterfaceServer->SendCommandProxyInfo(commandProxyInfo);
+    TaskInterfaceServer->SendCommandProxyInfo(info);
+}
+*/
+
+void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandVoid(
+    ::Ice::Int sid, const ::Ice::Current&)
+{
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandVoid");
+
+    TaskInterfaceServer->ExecuteCommandVoid(sid);
+}
+
+void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandWrite(
+    ::Ice::Int sid, ::Ice::Double argument, const ::Ice::Current&)
+{
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandWrite");
+
+    TaskInterfaceServer->ExecuteCommandWrite(sid, argument);
+}
+
+void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandRead(
+    ::Ice::Int sid, ::Ice::Double& argument, const ::Ice::Current&)
+{
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandRead");
+
+    TaskInterfaceServer->ExecuteCommandRead(sid, argument);
+}
+
+void mtsTaskInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandQualifiedRead(
+    ::Ice::Int sid, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Current&)
+{
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandQualifiedRead");
+
+    TaskInterfaceServer->ExecuteCommandQualifiedRead(sid, argument1, argument2);
 }
