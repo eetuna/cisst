@@ -88,13 +88,21 @@
        Using: %typemap(out) vctDynamicNArray
      */
 
-    // Create a new PyArray and set its size
-    npy_intp *sizes = PyDimMem_NEW(2);
-    sizes[0] = $1.rows();
-    sizes[1] = $1.cols();
+    // Create a new PyArray and set its shape
+    unsigned int sz = $1_ltype::DIMENSION;
+    const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+    npy_intp *shape = PyDimMem_NEW(sz);
+    for (unsigned int i = 0; i < sz; i++) {
+        shape[i] = sizes.at(i);
+    }
 
     // TODO: Understand what this does
-    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    $result = PyArray_SimpleNew(sz, shape, vctPythonType<int>());
+    // TODO: For some reason, when I give the third argument as
+    //      vctPythonType<$1_ltype::value_type>()
+    // instead of
+    //      vctPythonType<int>()
+    // the compiler gives errors.
 
     // TODO: Understand what this does
     // copy data returned by C function into new PyArray
@@ -188,24 +196,24 @@
     vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> output_sizes;
     output_sizes.Assign($1->sizes());
 
-    if (input_sizes.Equal(output_sizes)) {
+    if (!input_sizes.Equal(output_sizes)) {
         // Resize the PyArray by:
         //  1)  Creating an array containing the new size
         //  2)  Pass that array to the resizing function given by NumPy API
 
         // create an array of sizes
-        //unsigned int sz = $*1_ltype::DIMENSION;
-        npy_intp *sizes = PyDimMem_NEW(4);
+        unsigned int sz = $*1_ltype::DIMENSION;
+        npy_intp *sizes = PyDimMem_NEW(sz);
 
         // set the sizes
-        for (unsigned int i = 0; i < $*1_ltype::DIMENSION; i++) {
+        for (unsigned int i = 0; i < sz; i++) {
             sizes[i] = output_sizes.at(i);
         }
 
         // create a PyArray_Dims object to hand to PyArray_Resize()
         PyArray_Dims dims;
         dims.ptr = sizes;
-        dims.len = $*1_ltype::DIMENSION;
+        dims.len = sz;
         PyArray_Resize((PyArrayObject *) $input, &dims, 0, NPY_CORDER);
     }
 
@@ -255,14 +263,17 @@
        Using: %typemap(out) vctDynamicNArray &
      */
 
-    // Create new size array and set size
-    npy_intp *sizes = PyDimMem_NEW(2);
-    sizes[0] = $1->rows();
-    sizes[1] = $1->cols();
+    // Create a new PyArray and set its shape
+    unsigned int sz = $*1_ltype::DIMENSION;
+    const vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes($1->sizes());
+    npy_intp *shape = PyDimMem_NEW(sz);
+    for (unsigned int i = 0; i < sz; i++) {
+        shape[i] = sizes.at(i);
+    }
 
     // TODO: Understand what this does
     // NPY_CARRAY = set flags for a C Array that is non-Read Only
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), sz, shape, NULL, $1->Pointer(), NPY_CARRAY, NULL);
 }
 
 
@@ -347,15 +358,18 @@
        Using: %typemap(out) const vctDynamicNArray &
      */
 
-    // Create new size array and set size
-    npy_intp *sizes = PyDimMem_NEW(2);
-    sizes[0] = $1->rows();
-    sizes[1] = $1->cols();
+    // Create a new PyArray and set its shape
+    unsigned int sz = $*1_ltype::DIMENSION;
+    const vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes($1->sizes());
+    npy_intp *shape = PyDimMem_NEW(sz);
+    for (unsigned int i = 0; i < sz; i++) {
+        shape[i] = sizes.at(i);
+    }
 
     // TODO: Understand what this does
     // To imitate const functionality, set the writable flag to false
     // NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), sz, shape, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -427,23 +441,30 @@
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    npy_intp *sizes = PyDimMem_NEW(2);
-    sizes[0] = $1.rows();
-    sizes[1] = $1.cols();
-    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    unsigned int sz = $1_ltype::DIMENSION;
+    const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+    npy_intp *shape = PyDimMem_NEW(sz);
+    for (unsigned int i = 0; i < sz; i++) {
+        shape[i] = sizes.at(i);
+    }
+
+    $result = PyArray_SimpleNew(sz, shape, vctPythonType<int>());
+    // TODO: For some reason, when I give the third argument as
+    //      vctPythonType<$1_ltype::value_type>()
+    // instead of
+    //      vctPythonType<int>()
+    // the compiler gives errors.
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicNArrayRef TO THE PYARRAY
     *****************************************************************************/
 
     // Create a temporary vctDynamicNArrayRef container
-    const npy_intp size0 = $1.rows();
-    const npy_intp size1 = $1.cols();
-    const npy_intp stride0 = size1;     // TODO: Why does this work?  Shouldn't it be:  stride0 = size1 * sizeof($1_ltype::value_type)
-    const npy_intp stride1 = 1;
+    // `sizes' defined above, don't need to redefine it
+    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides($1.strides());
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
 
-    vctDynamicNArrayRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the vctDynamicNArrayRef to the temporary container
     tempContainer.Assign($1);
@@ -593,26 +614,28 @@
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    npy_intp *sizes = PyDimMem_NEW(2);
-    sizes[0] = $1.rows();
-    sizes[1] = $1.cols();
-    //$result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
-    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    PyArray_Descr *descr = PyArray_DescrFromType(vctPythonType<$1_ltype::value_type>());
-    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, NULL, NPY_CONTIGUOUS | NPY_OWNDATA | NPY_ALIGNED, NULL);
+    unsigned int sz = $1_ltype::DIMENSION;
+    const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+    npy_intp *shape = PyDimMem_NEW(sz);
+    for (unsigned int i = 0; i < sz; i++) {
+        shape[i] = sizes.at(i);
+    }
+    $result = PyArray_SimpleNew(sz, shape, vctPythonType<int>());
+    // TODO: The following two lines make the test fail for some reason, so
+    // I'm resorting to the `PyArray_SimpleNew()' function (the line above) for now
+    //PyArray_Descr *descr = PyArray_DescrFromType(vctPythonType<$1_ltype::value_type>());
+    //$result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, NULL, NPY_CARRAY_RO, NULL);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstNArrayRef TO THE PYARRAY
     *****************************************************************************/
 
     // Create a temporary vctDynamicNArrayRef container
-    const npy_intp size0 = PyArray_DIM($result, 0);
-    const npy_intp size1 = PyArray_DIM($result, 1);
-    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof($1_ltype::value_type);
+    // `sizes' defined above, don't need to redefine it
+    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides($1.strides());
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
 
-    vctDynamicNArrayRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the vctDynamicConstNArrayRef to the temporary container
     tempContainer.Assign($1);
@@ -651,9 +674,6 @@
     *****************************************************************************/
 
     // Create the vctDynamicConstNArrayRef
-
-    // dimensions
-    const unsigned int ndim = PyArray_NDIM($input);
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
@@ -715,6 +735,7 @@
 %define VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS(elementType)
 VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 3);
 VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 4);
+VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 5);
 %enddef
 
 

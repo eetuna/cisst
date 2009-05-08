@@ -34,20 +34,14 @@ public:
 
         if (sizeFactor != 0) {
             const vctFixedSizeVector<unsigned int, MY_DIM> sizesOld(param.sizes());
-            const unsigned int sizeOld = param.size();
+            const unsigned int sizeOld = sizesOld.ProductOfElements();
             const vctFixedSizeVector<unsigned int, MY_DIM> sizesNew(sizesOld * sizeFactor);
-            const unsigned int sizeNew = sizeOld * sizeFactor;
+            const unsigned int sizeNew = sizesNew.ProductOfElements();
             param.SetSize(sizesNew);
 
-            // TODO: is there a better way to do this?
-#if 0
-            for (unsigned int r = 0; r < rowsNew; r++) {
-                for (unsigned int c = 0; c < colsNew; c++) {
-                    param.at(r, c) = param.at(r % rowsOld, c % colsOld);
-                }
-            }
-#endif
+            // Fill all elements with a non-zero value
             for (unsigned int i = 0; i < sizeNew; i++) {
+                param.at(i) = 17;       // TODO: modify this so it only fills the NEW elements, not ALL elements, with 17
             }
         }
     }
@@ -83,37 +77,45 @@ public:
         copy.Assign(param);
     }
 
-#if 0
-    vctDynamicNArray<int, MY_DIM> out_vctDynamicNArray(unsigned int rows, unsigned int cols) {
-        copy.SetSize(rows, cols);
+    vctDynamicNArray<int, MY_DIM> out_vctDynamicNArray(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+        vctFixedSizeVector<unsigned int, MY_DIM> sizes;
+        sizes.SetAll(5);
+        copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicNArray<int, MY_DIM> &out_vctDynamicNArray_ref(unsigned int rows, unsigned int cols) {
-        copy.SetSize(rows, cols);
+    vctDynamicNArray<int, MY_DIM> &out_vctDynamicNArray_ref(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+        vctFixedSizeVector<unsigned int, MY_DIM> sizes;
+        sizes.SetAll(5);
+        copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    const vctDynamicNArray<int, MY_DIM> &out_const_vctDynamicNArray_ref(unsigned int rows, unsigned int cols) {
-        copy.SetSize(rows, cols);
+    const vctDynamicNArray<int, MY_DIM> &out_const_vctDynamicNArray_ref(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+        vctFixedSizeVector<unsigned int, MY_DIM> sizes;
+        sizes.SetAll(5);
+        copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicNArrayRef<int, MY_DIM> out_vctDynamicNArrayRef(unsigned int rows, unsigned int cols) {
-        copy.SetSize(rows, cols);
+    vctDynamicNArrayRef<int, MY_DIM> out_vctDynamicNArrayRef(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+        vctFixedSizeVector<unsigned int, MY_DIM> sizes;
+        sizes.SetAll(5);
+        copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicConstNArrayRef<int, MY_DIM> out_vctDynamicConstNArrayRef(unsigned int rows, unsigned int cols) {
-        copy.SetSize(rows, cols);
+    vctDynamicConstNArrayRef<int, MY_DIM> out_vctDynamicConstNArrayRef(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+        vctFixedSizeVector<unsigned int, MY_DIM> sizes;
+        sizes.SetAll(5);
+        copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
-#endif
 
     inline int Dim(void) const {
         return MY_DIM;

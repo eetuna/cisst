@@ -172,20 +172,14 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
 
     def StdTestThrowUnlessReturnedNArrayIsWritable(self, function):
-        assert(False)
         # Expect the returned array to be writable
-        ROWS = 5
-        COLS = 7
-        exec('v = self.CObject.' + function + '(ROWS, COLS)')
+        exec('v = self.CObject.' + function + '()')
         assert(v.flags['WRITEABLE'] == True)
 
 
     def StdTestThrowUnlessReturnedNArrayIsNonWritable(self, function):
-        assert(False)
         # Expect the returned array to be non-writable
-        ROWS = 5
-        COLS = 7
-        exec('v = self.CObject.' + function + '(ROWS, COLS)')
+        exec('v = self.CObject.' + function + '()')
         assert(v.flags['WRITEABLE'] == False)
 
 
@@ -247,43 +241,50 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
             assert(vNew[indexTuple] == vOld[indexTuple] + 1)
 
 
-    # Test if the C object reads, modifies, and resizes the vector correctly
-    def SpecTestThrowUnlessReadsWritesResizesCorrectly(self, function):
-        assert(False)
-        vNew = numpy.random.rand(5, 7)
+    # Test if the C object resizes the vector correctly
+    def SpecTestThrowUnlessResizesCorrectly(self, function):
+        ndim = self.CObject.Dim()
+
+        sizes = self.HelperRandSizes(ndim)
+        vNew = numpy.random.random_sample(sizes)
         vNew = numpy.floor(vNew * 100)
         vNew = numpy.array(vNew, dtype=numpy.int32)
         vOld = copy.deepcopy(vNew)
-        rows = vNew.shape[0]
-        cols = vNew.shape[1]
+
+        vShape = numpy.array(sizes)
+        vSize = vNew.size
+
         SIZE_FACTOR = 3
+
         exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
 
-        assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
-        assert(vNew.shape[0] == rows * SIZE_FACTOR and vNew.shape[1] == cols * SIZE_FACTOR)
-        for r in xrange(rows):
-            for c in xrange(cols):
-                # Test if the C object read the vector correctly
-                assert(self.CObject.GetItem(r,c) == vOld[r,c])
-                # Test if the C object modified the vector correctly
-                assert(vNew[r,c] == vOld[r,c] + 1)
-                # Test if the C object resized the vector correctly
-                for r2 in xrange(SIZE_FACTOR):
-                    for c2 in xrange(SIZE_FACTOR):
-                        assert(vOld[r,c] + 1 == vNew[r + rows*r2, c + cols*c2])
+        cShape = numpy.ones(ndim, dtype=numpy.int32)
+        self.CObject.sizes(cShape)
+
+        assert((cShape == vShape).all())
+        vShapeNew = numpy.array(vNew.shape)
+        assert((vShapeNew == vShape * SIZE_FACTOR).all())
+        for i in xrange(vNew.size):
+            indexTuple = self.MetaIndexToTuple(i, vShape)
+
+            # Test if the C object resized the vector correctly
+            assert(vNew[indexTuple] == 17)
 
 
     # Test if the C object returns a good vector
     def SpecTestThrowUnlessReceivesCorrectNArray(self, function):
-        assert(False)
-        ROWS = 5
-        COLS = 7
-        exec('v = self.CObject.' + function + '(ROWS, COLS)')
+        ndim = self.CObject.Dim()
 
-        assert(v.shape[0] == ROWS and v.shape[1] == COLS)
-        for r in xrange(ROWS):
-            for c in xrange(COLS):
-                assert(self.CObject.GetItem(r,c) == v[r,c])
+        exec('v = self.CObject.' + function + '()')
+        vShape = v.shape
+        vSize = v.size
+
+        for i in xrange(ndim):
+            assert(vShape[i] == 5);
+
+        for i in xrange(vSize):
+            indexTuple = self.MetaIndexToTuple(i, vShape)
+            assert(self.CObject.GetItem(i) == v[indexTuple])
 
 
     ###########################################################################
@@ -304,7 +305,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Perform specialized tests
         self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessResizesCorrectly(MY_NAME)
 
 
     def Test_in_vctDynamicNArrayRef(self):
@@ -380,54 +381,51 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
 
 
-#     def Test_out_vctDynamicNArray(self):
-#         MY_NAME = 'out_vctDynamicNArray'
+    def Test_out_vctDynamicNArray(self):
+        MY_NAME = 'out_vctDynamicNArray'
 
-#         # Perform battery of standard tests
-#         self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
 
-#         # Perform specialized tests
-#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
-
-
-#     def Test_out_vctDynamicNArray_ref(self):
-#         MY_NAME = 'out_vctDynamicNArray_ref'
-
-#         # Perform battery of standard tests
-#         self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
-
-#         # Perform specialized tests
-#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
 
 
-#     def Test_out_const_vctDynamicNArray_ref(self):
-#         MY_NAME = 'out_const_vctDynamicNArray_ref'
+    def Test_out_vctDynamicNArray_ref(self):
+        MY_NAME = 'out_vctDynamicNArray_ref'
 
-#         # Perform battery of standard tests
-#         self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
 
-#         # Perform specialized tests
-#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
-
-
-#     def Test_out_vctDynamicNArrayRef(self):
-#         MY_NAME = 'out_vctDynamicNArrayRef'
-
-#         # Perform battery of standard tests
-#         self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
-
-#         # Perform specialized tests
-#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
 
 
-#     def Test_out_vctDynamicConstNArrayRef(self):
-#         MY_NAME = 'out_vctDynamicConstNArrayRef'
+    def Test_out_const_vctDynamicNArray_ref(self):
+        MY_NAME = 'out_const_vctDynamicNArray_ref'
 
-#         exec('v = self.CObject.' + MY_NAME + '(5, 7)')
-#         print v.flags
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
 
-#         # Perform battery of standard tests
-#         self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
 
-#         # Perform specialized tests
-#         self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+
+    def Test_out_vctDynamicNArrayRef(self):
+        MY_NAME = 'out_vctDynamicNArrayRef'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedNArrayIsWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)
+
+
+    def Test_out_vctDynamicConstNArrayRef(self):
+        MY_NAME = 'out_vctDynamicConstNArrayRef'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedNArrayIsNonWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectNArray(MY_NAME)

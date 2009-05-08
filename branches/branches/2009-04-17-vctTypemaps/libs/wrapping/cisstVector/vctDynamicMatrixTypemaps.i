@@ -374,7 +374,7 @@
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = $1.rows();
     const npy_intp size1 = $1.cols();
-    const npy_intp stride0 = size1;     // TODO: Why does this work?  Shouldn't it be:  stride0 = size1 * sizeof($1_ltype::value_type)
+    const npy_intp stride0 = size1;
     const npy_intp stride1 = 1;
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
 
