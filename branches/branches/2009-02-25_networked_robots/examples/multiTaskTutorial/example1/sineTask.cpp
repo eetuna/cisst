@@ -14,17 +14,18 @@ sineTask::sineTask(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // add SineData to the StateTable defined in mtsTask
-    SineData.AddToStateTable(StateTable, "SineData");
+    StateTable.AddData(SineData, "SineData");
     // add one interface, this will create an mtsTaskInterface
-    AddProvidedInterface("MainInterface"); 
-    // add command to access state table values to the interface
-    SineData.AddReadCommandToTask(this, "MainInterface", "GetData");
-    // following should be done automatically
-    AddCommandRead(&mtsStateTable::GetIndexReader, &StateTable,
-                   "MainInterface", "GetStateIndex");
-    // add command to modify the sine amplitude 
-    SineAmplitude.AddWriteCommandToTask(this, "MainInterface",
-                                        "SetAmplitude");
+    mtsProvidedInterface *prov = AddProvidedInterface("MainInterface");
+    if (prov) {
+        // add command to access state table values to the interface
+        prov->AddCommandReadState(StateTable, SineData, "GetData");
+        prov->AddCommandReadHistory(StateTable, SineData, "GetDataHistory");
+        // following should be done automatically
+        prov->AddCommandRead(&mtsStateTable::GetIndexReader, &StateTable, "GetStateIndex");
+        // add command to modify the sine amplitude 
+        prov->AddCommandWrite(&sineTask::SetAmplitude, this, "SetAmplitude");
+    }
 }
 
 void sineTask::Startup(void) {
@@ -37,7 +38,7 @@ void sineTask::Run(void) {
     // process the commands received, i.e. possible SetSineAmplitude
     ProcessQueuedCommands();
     // compute the new values based on the current time and amplitude
-    SineData = SineAmplitude.Data
+    SineData = SineAmplitude
         * sin(2 * cmnPI * static_cast<double>(now.Ticks()) * Period / 10.0);
 }
 

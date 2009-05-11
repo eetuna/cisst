@@ -75,7 +75,25 @@ svlStreamEntity& svlStreamManager::Trunk()
     return Entity;
 }
 
+svlStreamEntity& svlStreamManager::Branch(const std::string & name)
+{
+    // Search for branch
+    _BranchMap::iterator iterbranch;
+    for (iterbranch = Branches.begin(); iterbranch != Branches.end(); iterbranch ++) {
+        if (iterbranch->first->name == name) break;
+    }
+    if (iterbranch == Branches.end())
+        return InvalidEntity;
+
+    return *(iterbranch->first->entity);
+}
+
 svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter)
+{
+    return CreateBranchAfterFilter(filter, "");
+}
+
+svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter, const std::string & name)
 {
     if (Initialized ||
         GetBranchEntityOfFilter(filter) == 0 ||
@@ -84,10 +102,14 @@ svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter
 
     // Create branch stream object
     svlStreamManager* branchstream = new svlStreamManager();
-    // Add branch entity to the filter's branch list
+    // Create branch structure
+    _BranchStruct *branch = new _BranchStruct;
+    branch->entity = &(branchstream->Entity);
+    branch->name = name;
+    // Add branch to the filter's branch list
     filter->OutputBranches.push_back(&(branchstream->Entity));
-    // Add branch entity and the corresponding stream to branch map
-    Branches[&(branchstream->Entity)] = branchstream;
+    // Add branch and the corresponding stream to branch map
+    Branches[branch] = branchstream;
     // Create branch stream source
     svlStreamBranchSource* branchsource = new svlStreamBranchSource(filter->GetOutputType());
     // Add branch source to branch stream
@@ -102,8 +124,11 @@ int svlStreamManager::RemoveBranch(svlStreamEntity* entity)
     if (entity == 0) return SVL_FAIL;
     if (Initialized) return SVL_ALREADY_INITIALIZED;
 
-    // Check if the branch exists
-    _BranchMap::iterator iterbranch = Branches.find(entity);
+    // Search for branch
+    _BranchMap::iterator iterbranch;
+    for (iterbranch = Branches.begin(); iterbranch != Branches.end(); iterbranch ++) {
+        if (iterbranch->first->entity == entity) break;
+    }
     if (iterbranch == Branches.end())
         return SVL_FAIL;
 
@@ -118,6 +143,39 @@ int svlStreamManager::RemoveBranch(svlStreamEntity* entity)
         delete branchstream;
     }
 
+    // Delete branch structure
+    delete iterbranch->first;
+    // Remove branch from branch map
+    Branches.erase(iterbranch);
+
+    return SVL_OK;
+}
+
+int svlStreamManager::RemoveBranch(const std::string & name)
+{
+    if (Initialized) return SVL_ALREADY_INITIALIZED;
+
+    // Search for branch
+    _BranchMap::iterator iterbranch;
+    for (iterbranch = Branches.begin(); iterbranch != Branches.end(); iterbranch ++) {
+        if (iterbranch->first->name == name) break;
+    }
+    if (iterbranch == Branches.end())
+        return SVL_FAIL;
+
+    // Empty and delete branch stream
+    svlStreamManager* branchstream = iterbranch->second;
+    if (branchstream) {
+        // Remove every filter in the branch from the stream
+        branchstream->EmptyFilterList();
+        // Delete branch source
+        if (branchstream->StreamSource) delete branchstream->StreamSource;
+        // Delete branch stream
+        delete branchstream;
+    }
+
+    // Delete branch structure
+    delete iterbranch->first;
     // Remove branch from branch map
     Branches.erase(iterbranch);
 
@@ -620,7 +678,7 @@ svlStreamEntity* svlStreamManager::GetBranchEntityOfFilter(svlFilterBase* filter
     _BranchMap::iterator iterbranch;
     for (iterbranch = Branches.begin(); iterbranch != Branches.end(); iterbranch ++) {
         if (iterbranch->second->IsFilterInList(filter))
-            return iterbranch->first;
+            return iterbranch->first->entity;
     }
 
     return 0;
@@ -674,7 +732,7 @@ svlStreamEntity::svlStreamEntity() :
 
 int svlStreamEntity::Append(svlFilterBase* filter)
 {
-    if (filter == 0) return SVL_FAIL;
+    if (Stream == 0 || filter == 0) return SVL_FAIL;
     return Stream->AppendFilterToTrunk(filter);
 }
 
@@ -694,6 +752,18 @@ svlStreamControlMultiThread::svlStreamControlMultiThread(unsigned int threadcoun
 svlStreamControlMultiThread::~svlStreamControlMultiThread()
 { /* NOP */ }
 
+double svlStreamControlMultiThread::GetAbsoluteTime(osaTimeServer* timeserver)
+{
+    if (!timeserver) return -1.0;
+
+    osaAbsoluteTime abstime;
+
+    timeserver->RelativeToAbsolute(timeserver->GetRelativeTime(), abstime);
+
+    // Calculate time since UNIX creation
+    return abstime.sec + abstime.nsec / 1000000000.0;
+}
+
 void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
 {
     svlFilterBase *filter, *prevfilter;
@@ -701,7 +771,7 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
     svlFilterBase::ProcInfo info;
     svlSyncPoint *sync = baseref->SyncPoint;
     unsigned int counter = 0;
-    osaStopwatch timer;
+    osaTimeServer* timeserver = 0;
     int err = SVL_OK;
 
     // Initializing thread info structure
@@ -713,9 +783,9 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
     if (ThreadID == 0) {
     // Execute only on one thread - BEGIN
 
-        // Start timer for time stamping
-        timer.Reset();
-        timer.Start();
+        // Initialize time server for accessing absolute time
+        timeserver = new osaTimeServer;
+        timeserver->SetTimeOrigin();
 
     // Execute only on one thread - END
     }
@@ -733,9 +803,9 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
         if (ThreadID == 0) {
         // Execute only on one thread - BEGIN
 
-            if (filter->OutputData) {
-                // Get timestamp and assign it to the output sample
-                filter->OutputData->SetTimestamp(timer.GetElapsedTime());
+            if (filter->OutputData && filter->AutoTimestamp) {
+                // Get fresh timestamp and assign it to the output sample
+                filter->OutputData->SetTimestamp(GetAbsoluteTime(timeserver));
             }
 
         // Execute only on one thread - END
@@ -840,8 +910,8 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
     if (ThreadID == 0) {
     // Execute only on one thread - BEGIN
 
-        // Stop timer
-        timer.Stop();
+        // Delete time server
+        if (timeserver) delete timeserver;
 
     // Execute only on one thread - END
     }
@@ -876,6 +946,7 @@ svlFilterBase::svlFilterBase()
     Running = false;
     PrevInputTimestamp = -1.0;
     OutputFormatModified = false;
+    AutoTimestamp = true;
 }
 
 svlFilterBase::~svlFilterBase()
@@ -952,11 +1023,12 @@ svlFilterBase* svlFilterBase::GetDownstreamFilter()
     return NextFilter;
 }
 
-void svlFilterBase::SetFilterToSource(svlStreamType output)
+void svlFilterBase::SetFilterToSource(svlStreamType output, bool autotimestamp)
 {
     SupportedTypes.clear();
     InputType = svlTypeStreamSource;
     OutputType = output;
+    AutoTimestamp = autotimestamp;
 }
 
 int svlFilterBase::AddSupportedType(svlStreamType input, svlStreamType output)

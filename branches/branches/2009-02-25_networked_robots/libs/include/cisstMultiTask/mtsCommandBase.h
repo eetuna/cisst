@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Anton Deguet, Min Yang Jung
+  Author(s):  Ankur Kapoor, Anton Deguet 
   Created on: 2006-05-02
 
-  (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2006-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -42,15 +42,32 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
 */
 class mtsCommandBase {
-    /*! Command UID (unique ID). This ID is used by the mtsTaskInterfaceProxyServer 
-        to map a local command pointer which is represented as this UID to a remote 
-        actual command pointer. */
-protected:
-    unsigned int CommandID;
 
-public:
+private:
+    /*! Private copy constructor to prevent copies */
+    inline mtsCommandBase(const mtsCommandBase & CMN_UNUSED(other));
+
+protected:
+    /*! Name used for the command.  The name is provided to the
+      constructor and can be accessed using the method GetName(). */
     std::string Name;
 
+    /*! Flag used to determine is the command actually executes the
+      provided method or function.  This "gated" command can be useful
+      to turn on/off and event callback or to prevent calling a method
+      owned by an object being deleted. */
+    bool EnableFlag;
+
+    /*! Command UID (unique ID). */
+    unsigned int CommandID;
+
+    /*! Set a command id of this object. */
+    void SetCommandID() {
+        static unsigned int CommandUID = 0;
+        CommandID = ++CommandUID;
+    }
+
+public:
     /* use to bitshift and or for return value of a composite
        would limit the number of composite interfaces to 31 for
        an int return value
@@ -66,19 +83,24 @@ public:
         BAD_INPUT = 14,
         NO_INTERFACE = 15,
         MAILBOX_FULL = 16,
+        DISABLED = 17,
+        COMMAND_FAILED = 18  // Read or QualifiedRead returned 'false'
     };
     
-    /*! The constructor. */
-    mtsCommandBase(void) : Name("??")
+    /*! The constructor. Does nothing */
+    inline mtsCommandBase(void):
+        Name("??"),
+        EnableFlag(true)
     {
-        //CommandID = ++CommandUID;
+        SetCommandID();
     }
 
-    mtsCommandBase(const std::string & name) : Name(name)
+    /*! Constructor with command name. */
+    inline mtsCommandBase(const std::string & name):
+        Name(name),
+        EnableFlag(true)
     {
-        static unsigned int CommandUID = 0;
-
-        CommandID = ++CommandUID;
+        SetCommandID();
     }
     
     /*! The destructor. Does nothing */
@@ -101,7 +123,36 @@ public:
 
     /*! Returns command ID. */
     inline const unsigned int GetCommandID() const { return CommandID; }
+
+    /*! Set and access the "enable" flag.  This flag is used to
+      determine if the command actually uses the provided method or
+      function when it is executed. */
+    //@{
+    inline void Enable(void) {
+        this->EnableFlag = true;
+    }
+
+    inline void Disable(void) {
+        this->EnableFlag = false;
+    }
+
+    inline bool IsEnabled(void) const {
+        return this->EnableFlag;
+    }
+
+    inline bool IsDisabled(void) const {
+        return !(this->EnableFlag);
+    }
+    //@}
+
+    /*! Get the command name.  This method doesn't allow to change the
+      command name. */
+    inline const std::string & GetName(void) const {
+        return this->Name;
+    }
+
 };
+
 
 /*! Stream out operator for all classes derived from mtsCommandBase.
   This operator uses the ToStream method so that the output can be

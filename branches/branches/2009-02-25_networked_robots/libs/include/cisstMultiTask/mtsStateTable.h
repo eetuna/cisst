@@ -7,8 +7,7 @@
   Author(s):  Ankur Kapoor
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
-  Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -62,7 +61,73 @@ typedef int mtsStateDataId;
   State Table elsewhere in the documentation.
  */
 class CISST_EXPORT mtsStateTable {
- protected:
+public:
+    class AccessorBase {
+    protected:
+        const mtsStateTable &Table;
+        mtsStateDataId Id;   // Not currently used
+    public:
+        AccessorBase(const mtsStateTable &table, mtsStateDataId id): Table(table), Id(id) {}
+        virtual ~AccessorBase() {}
+        virtual void ToStream(std::ostream & outputStream, const mtsStateIndex & when) const = 0;
+    };
+
+    template <class _elementType>
+    class Accessor : public AccessorBase {
+        typedef _elementType value_type;
+        typedef typename mtsStateTable::Accessor<value_type> ThisType;
+        const mtsStateArray<value_type> &History;
+        value_type * Current;
+
+    public:
+        Accessor(const mtsStateTable &table, mtsStateDataId id, 
+                 const mtsStateArray<value_type> *history, value_type *data):
+            AccessorBase(table, id),
+            History(*history),
+            Current(data)
+        {}
+
+        void ToStream(std::ostream & outputStream, const mtsStateIndex & when) const
+        {
+            History.Element(when.Index()).ToStream(outputStream);
+        }
+
+
+        bool Get(const mtsStateIndex & when, value_type & data) const
+        { 
+		   data = History.Element(when.Index());
+           return Table.ValidateReadIndex(when);
+        }
+
+        bool GetLatest(value_type & data) const
+        {  return Get(Table.GetIndexReader(), data); }
+
+        void SetCurrent(const value_type & data)
+        { *Current = data; }
+
+        // Get a vector of data, starting and ending at the specified time indices (inclusive).
+        // For now, set the start index based on the vector size. In the future, we
+        // should define a new parameter type that consists of a pair of mtsStateIndex.
+        bool GetHistory(const mtsStateIndex & end, mtsVector<value_type> & data) const {
+            bool ret = false;
+            if (data.size() > 0) {
+                mtsStateIndex start = end;
+                start -= (data.size()-1);
+                if (Table.ValidateReadIndex(start) && Table.ValidateReadIndex(end)) {
+                    ret = History.GetHistory(start.Index(), end.Index(), data);
+                    // If GetHistory succeeded, then check if the data is still valid (has not been overwritten).
+                    // Here it is sufficient to just check the oldest index (start).
+                    if (ret)
+                        ret = Table.ValidateReadIndex(start);
+                }
+                else
+                    CMN_LOG(1) << "ReadVectorFromReader: data not available" << std::endl;
+            }
+            return ret;
+        }
+    };
+
+protected:
 	/*! The number of rows of the state data table. */
 	unsigned int HistoryLength;
 	
@@ -88,16 +153,9 @@ class CISST_EXPORT mtsStateTable {
 	  stores the names corresponding to the columns. */
 	std::vector<std::string> StateVectorDataNames;
 
-#if 0  // PK: I believe the following is obsolete
-	/*! This vector of boolean indicates if the data in the
-	   corresponding column under the write head is valid. */
-	std::vector<bool> DataValid;
-
-	/*! This sets the default policy on copying the previous data on
-	  the advance of the write head, if no valid data was written. If
-	  true data gets copied */
-	std::vector<bool> Copy;
-#endif
+    /*! The vector contains pointers to the accessor methods
+      (e.g., Get, GetLatest) from which command objects are created. */
+    std::vector<AccessorBase *> StateVectorAccessors;
 
 	/*! The vector contains the time stamp in counts or ticks per
 	  period of the task that the state table is associated with. */
@@ -123,6 +181,9 @@ class CISST_EXPORT mtsStateTable {
     /*! The average period over the last HistoryLength samples. */
     double AvgPeriod;
 
+	/*! Write specified data. */
+	bool Write(mtsStateDataId id, const cmnGenericObject &obj);
+
  public:
 	/*! Constructor. Constructs a state table with a default
 	  size of 256 rows. */
@@ -144,41 +205,40 @@ class CISST_EXPORT mtsStateTable {
         return (Ticks[timeIndex.Index()] == timeIndex.Ticks());
     }
     
-	/*! Read specified data to be used by a reader */
-	bool ReadFromReader(mtsStateDataId id, const mtsStateIndex &timeIndex,
-                        cmnGenericObject &obj) const;
-    
-	/*! Read specified data to be used by a reader (PK: do we need this?) */
-	bool ReadFromReader(const std::string & name, const mtsStateIndex & timeIndex,
-                        cmnGenericObject & obj);
-
-	/*! Read specified data vector to be used by a reader */
-    bool ReadVectorFromReader(mtsStateDataId id, const mtsStateIndex & timeIndexStart, 
-                              const mtsStateIndex & timeIndexEnd, cmnGenericObject & obj) const;
-
 	/*! Add an element to the table. Should be called during startup
 	    of a real time loop.  All the non-const methods, that can be
-	    called from a writer only. Returns index of data within state data table.
-        Note: the copy parameter is obsolete. */
+	    called from a writer only. Returns index of data within state data table. */
 	template <class _elementType>
-    mtsStateDataId NewElement(const std::string & name = "", _elementType * element = 0 /* ADV: ask PKAZ if still needed, bool copy = true*/);
+    mtsStateDataId NewElement(const std::string & name = "", _elementType * element = 0);
+
+    /*! Add an element to the table (alternative to NewElement). */
+    template <class _elementType>
+    void AddData(_elementType &element, const std::string & name = "")
+    { NewElement(name, &element); }
 
     /*! Return pointer to the state data element specified by the id.
       This element is the same type as the state data table entry. */
     template<class _elementType>
     _elementType * GetStateDataElement(mtsStateDataId id) const {
-        return StateVectorElements[index];
+        return StateVectorElements[id];
     }
+
+    /*! Return pointer to accessor functions for the state data element.
+        \param element Pointer to state data element (i.e., working copy)
+        \returns Pointer to accessor class (0 if not found)
+        \note This method is overloaded to accept the element pointer or string name.
+    */
+    mtsStateTable::AccessorBase *GetAccessor(const cmnGenericObject &element) const;
+
+    /*! Return pointer to accessor functions for the state data element.
+        \param name Name of state data element
+        \returns Pointer to accessor class (0 if not found)
+        \note This method is overloaded to accept the element pointer or string name.
+    */
+    mtsStateTable::AccessorBase *GetAccessor(const std::string &name) const;
 
 	/*! Get a handle for data to be used by a writer */
 	mtsStateIndex GetIndexWriter(void);
-
-	/*! Read specified data to be used by a writer */
-	bool ReadFromWriter(mtsStateDataId id, const mtsStateIndex & timeIndex, cmnGenericObject & obj);
-
-	/*! Write specified data. Please note our assumption that there is
-      only one writer for the table. PK: this is now obsolete (write done by Advance). */
-	bool Write(mtsStateDataId id, const cmnGenericObject &obj);
 
     /*! Start the current cycle. This just records the starting timestamp (Tic). */
     void Start(void);
@@ -212,32 +272,36 @@ class CISST_EXPORT mtsStateTable {
      */
     void CSVWrite(std::ostream& out, bool nonZeroOnly = false);
     void CSVWrite(std::ostream& out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
-
+    void CSVWrite(std::ostream& out, cmnGenericObject ** listColumn, unsigned int number, bool nonZeroOnly = false);
 };
 
 
-// overload mtsObjectName to provide the class name
-inline std::string mtsObjectName(const mtsStateTable * CMN_UNUSED(object))
-{
-    return "mtsStateTable";
-}
-
-
 template <class _elementType>
-mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType * element /* ADV: ask PKAZ if still needed, bool copy*/) {
+mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType * element) {
     mtsStateArray<_elementType> * elementHistory =
         new mtsStateArray<_elementType>(*element,
                                         HistoryLength);
     StateVector.push_back(elementHistory);
     NumberStateData = StateVector.size();
     StateVectorElements.push_back(element); 
-#if 0
-    DataValid.push_back(false);
-    Copy.push_back(copy);
-#endif
     StateVectorDataNames.push_back(name);
+    AccessorBase *acc = new Accessor<_elementType>(*this, NumberStateData-1, elementHistory, element);
+    StateVectorAccessors.push_back(acc);
     return NumberStateData-1;
 }
+
+
+// overload mtsObjectName for mtsStateTable
+inline std::string mtsObjectName(const mtsStateTable * CMN_UNUSED(object)) {
+    return "mtsStateTable";
+}
+
+// overload mtsObjectName for mtsStateTable::Accessor
+template <class _elementType>
+inline std::string mtsObjectName(const mtsStateTable::Accessor<_elementType> * CMN_UNUSED(accessor)) {
+    return "mtsStateTable::Accessor";
+}
+
 
 #endif // _mtsStateTable_h
 

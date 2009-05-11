@@ -140,6 +140,16 @@ protected:
     void Disconnect(void);  // this could work if we use function objects rather than ptrs, or have special NOP command object
     bool BindCommandsAndEvents(void);
 
+    void DisableAllEvents() {
+        EventHandlersVoid.ForEachVoid(&mtsCommandBase::Disable);
+        EventHandlersWrite.ForEachVoid(&mtsCommandBase::Disable);
+    }
+
+    void EnableAllEvents() {
+        EventHandlersVoid.ForEachVoid(&mtsCommandBase::Enable);
+        EventHandlersWrite.ForEachVoid(&mtsCommandBase::Enable);
+    }
+
     /*! Process any queued events. */
     unsigned int ProcessMailBoxes(void);
 
@@ -182,7 +192,7 @@ protected:
         }
         const std::string GetName() const
         {
-            return (*cmdPtr)->Name;
+            return (*cmdPtr)->GetName();
         }
     };
         

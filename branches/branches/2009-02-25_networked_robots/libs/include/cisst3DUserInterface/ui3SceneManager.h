@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3SceneManager.h,v 1.11 2009/02/23 16:55:06 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-05-23
@@ -25,7 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
-
+#include <cisstVector/vctDynamicVector.h>
+#include <cisstOSAbstraction/osaMutex.h>
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 
@@ -41,18 +42,26 @@ class ui3SceneManager: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
+    friend class ui3VTKRenderer;
+
 public:
     typedef void * VTKHandleType;
 
     /*!
      Constructor
     */
-    ui3SceneManager(ui3VTKRenderer * renderer);
+    ui3SceneManager();
 
     /*!
      Destructor
     */
     ~ui3SceneManager();
+
+    /*!
+     Adds a renderer to the list of renderers.
+     All objects that are added to the scene will be registered to all renderers.
+    */
+    bool AddRenderer(ui3VTKRenderer* renderer);
 
     /*!
      Creates a VTK actor, adds it to the list of actors and returns the associated
@@ -88,6 +97,17 @@ public:
 	vtkPropAssembly * GetVTKProp(void);
 
 protected:
+    inline void Lock(void)
+    {
+        this->Mutex.Lock();
+    }
+
+    inline void Unlock(void)
+    {
+        this->Mutex.Unlock();
+    }
+
+protected:
     typedef std::map<VTKHandleType, vtkProp3D *> PropMapType;
     typedef PropMapType::iterator PropIteratorType;
     typedef PropMapType::value_type PropPairType;
@@ -104,7 +124,7 @@ protected:
 
     VTKHandleType LockHandle;
 
-    ui3VTKRenderer * Renderer;
+    vctDynamicVector<ui3VTKRenderer*> Renderers;
 };
 
 

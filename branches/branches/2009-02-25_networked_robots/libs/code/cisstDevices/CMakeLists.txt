@@ -3,7 +3,7 @@
 #
 # CMakeLists for cisstDevice
 #
-# (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2008-2009 Johns Hopkins University (JHU), All Rights
 # Reserved.
 # 
 # --- begin cisst license - do not edit ---
@@ -35,6 +35,7 @@ set(HEADER_FILES
     devNull.h
     devNDiSerial.h
     devNDiSerialToolInformationGet.h
+    devSartoriusSerial.h
     devExport.h
     )
 
@@ -42,6 +43,7 @@ set(SOURCE_FILES
     devNull.cpp
     devNDiSerial.cpp
     devNDiSerialToolInformationGet.cpp
+    devSartoriusSerial.cpp
     )
 
 if(CISST_DEV_HAS_SENSABLEHD)
@@ -75,6 +77,11 @@ INSTALL_FILES(/include/cisstDevices
 SET_SOURCE_FILES_PROPERTIES("${CISST_DEV_CONFIG_FILE}"
                             PROPERTIES GENERATED TRUE)
 SET(HEADERS ${CISST_DEV_CONFIG_FILE})
+
+# Create the CMake config file
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cisstDevicesBuild.cmake.in
+               ${cisst_BINARY_DIR}/cisstDevicesBuild.cmake
+               @ONLY)
 
 # Finally create the library
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)

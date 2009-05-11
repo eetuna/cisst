@@ -12,9 +12,7 @@
 # 
 # --- end cisst license ---
 
-PROJECT(devicesTutorial)
+project(devicesTutorial)
 
-# Threads for cisstOSAbstraction
-FIND_PACKAGE(Threads REQUIRED)
-
-SUBDIRS(example1)
+add_subdirectory(example1)
+add_subdirectory(example2)

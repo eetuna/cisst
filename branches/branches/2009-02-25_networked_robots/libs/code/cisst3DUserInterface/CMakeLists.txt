@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.6 2009/02/17 22:00:10 anton Exp $
+# $Id$
 #
 # CMakeLists for cisst3DUserInterface
 #
@@ -17,6 +17,16 @@
 # set the library name
 SET(LIBRARY cisst3DUserInterface)
 
+# set dependencies
+SET(DEPENDENCIES
+    cisstCommon
+    cisstVector
+    cisstOSAbstraction
+    cisstStereoVision
+    cisstMultiTask
+    cisstParameterTypes
+    )
+
 # Find VTK settings
 FIND_PACKAGE(VTK REQUIRED)
 IF(NOT VTK_USE_RENDERING)
@@ -24,17 +34,28 @@ IF(NOT VTK_USE_RENDERING)
 ENDIF(NOT VTK_USE_RENDERING)
 INCLUDE(${VTK_USE_FILE})
 
+IF(CISST_SVL_HAS_OPENCV)
+    # Link each example against the OpenCV library if enabled
+    FIND_PACKAGE(OpenCV)
+    INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+    #LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
+    #TARGET_LINK_LIBRARIES(stereoTutorialSimpleStream ${OpenCV_LIBRARIES})
+ENDIF(CISST_SVL_HAS_OPENCV)
+
 # all source files
 SET(SOURCE_FILES
     ui3BehaviorBase.cpp
-    ui3Cursor.cpp
+    ui3CursorSphere.cpp
+    ui3ImagePlane.cpp
     ui3InputDeviceBase.cpp
     ui3Manager.cpp
+    ui3MasterArm.cpp
     ui3MenuBar.cpp
     ui3MenuButton.cpp
     ui3SceneManager.cpp
+    ui3SlaveArm.cpp
     ui3VTKRenderer.cpp
-    ui3VideoSourceBase.cpp
+    ui3VideoInterfaceFilter.cpp
     ui3VisibleObject.cpp
     )
 
@@ -42,19 +63,36 @@ SET(SOURCE_FILES
 SET(HEADER_FILES
     ui3ForwardDeclarations.h
     ui3BehaviorBase.h
-    ui3Cursor.h
+    ui3CursorBase.h
+    ui3CursorSphere.h
+    ui3ImagePlane.h
     ui3InputDeviceBase.h
     ui3Manager.h
+    ui3MasterArm.h
+    ui3SlaveArm.h
     ui3MenuBar.h
     ui3MenuButton.h
     ui3SceneManager.h
     ui3VTKRenderer.h
     ui3VTKForwardDeclarations.h
-    ui3VideoSourceBase.h
+    ui3VideoInterfaceFilter.h
     ui3VisibleObject.h
     )
 
-
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
-CISST_REQUIRES(cisst3DUserInterface "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision;cisstMultiTask")
+
+# find icons
+
+set(CISST_UI3_ICONS_DIR "${cisst_SOURCE_DIR}/libs/etc/cisst3DUserInterface/icons")
+file(GLOB CISST_UI3_ICONS RELATIVE ${CISST_UI3_ICONS_DIR} ${CISST_UI3_ICONS_DIR}/*.png)
+
+# post build command to copy icons in build tree
+foreach(icon ${CISST_UI3_ICONS})
+  add_custom_command(TARGET cisst3DUserInterface
+                     POST_BUILD
+                     COMMAND ${CMAKE_COMMAND}
+                     ARGS -E copy_if_different
+                            ${CISST_UI3_ICONS_DIR}/${icon}
+                            ${cisst_BINARY_DIR}/etc/cisst3DUserInterface/icons/${icon})
+endforeach(icon)

@@ -14,10 +14,13 @@
 
 PROJECT(multiTaskTutorial)
 
-# Threads for cisstOSAbstraction
-FIND_PACKAGE(Threads REQUIRED)
+ADD_SUBDIRECTORY(example1)
+ADD_SUBDIRECTORY(example1-2)
+ADD_SUBDIRECTORY(example2)
+ADD_SUBDIRECTORY(example3)
+ADD_SUBDIRECTORY(example6)
 
-SUBDIRS(example1 example2 example3 example6 example1-2)
 IF(CISST_HAS_SWIG_PYTHON)
-  SUBDIRS(example4 example5)
+  ADD_SUBDIRECTORY(example4)
+  ADD_SUBDIRECTORY(example5)
 ENDIF(CISST_HAS_SWIG_PYTHON)

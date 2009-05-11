@@ -7,7 +7,7 @@
   Author(s):	Anton Deguet
   Created on:	2007-10-07
 
-  (C) Copyright 2007-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2007-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -59,6 +59,7 @@ template <class _argumentType> class mtsMulticastCommandWrite;
 
 // interfaces and tasks
 class mtsDeviceInterface;
+typedef mtsDeviceInterface mtsProvidedInterface;
 class mtsDevice;
 class mtsTaskInterface;
 class mtsRequiredInterface;
@@ -67,6 +68,7 @@ class mtsTaskPeriodic;
 class mtsTaskManager;
 
 class mtsMailBox;
+class mtsStateTable;
 
 // mts vectors
 template <class _elementType> class mtsVector;

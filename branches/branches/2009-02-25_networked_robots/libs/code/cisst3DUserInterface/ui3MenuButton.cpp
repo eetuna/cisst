@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ui3MenuButton.cpp,v 1.3 2009/02/17 06:02:52 anton Exp $
+  $Id$
 
   Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
   Created on:	2008-06-10
@@ -19,10 +19,11 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-
+#include <cisstConfig.h>
+#include <cisstCommon/cmnPath.h>
 #include <cisst3DUserInterface/ui3MenuButton.h>
 
-#include <vtkBMPReader.h>
+#include <vtkPNGReader.h>
 #include <vtkTexture.h>
 #include <vtkPlaneSource.h>
 #include <vtkPolyDataMapper.h>
@@ -37,14 +38,24 @@ ui3MenuButton::~ui3MenuButton()
 
 bool ui3MenuButton::CreateVTKObjects(void)
 {
-    this->BMPReader = vtkBMPReader::New();
-    CMN_ASSERT(this->BMPReader);
-    this->BMPReader->SetFileName(this->IconFile.c_str());
+    this->PNGReader = vtkPNGReader::New();
+    CMN_ASSERT(this->PNGReader);
+    cmnPath path;
+    // this is were the icons have been copied by CMake post build rule
+    path.Add(std::string(CISST_BUILD_ROOT) + "/etc/cisst3DUserInterface/icons");
+    // in case the user provided a full path, search from / as well
+    path.Add("/", cmnPath::TAIL);
+    std::string iconFullName = path.Find(this->IconFile, cmnPath::READ);
+    if (iconFullName == "") {
+        CMN_LOG(2) << "CreateVTKObjects: can find \"" << this->IconFile
+                   << "\" in path: " << path << std::endl;
+    }
+    this->PNGReader->SetFileName(iconFullName.c_str());
     
     // Create a texture object for the button.
     this->Texture = vtkTexture::New();
     CMN_ASSERT(this->Texture);
-    this->Texture->SetInput(this->BMPReader->GetOutput());
+    this->Texture->SetInput(this->PNGReader->GetOutput());
     this->Texture->InterpolateOn();
 
     // Create the button plane
@@ -79,16 +90,6 @@ vtkProp3D * ui3MenuButton::GetVTKProp(void)
     return this->Actor;
 }
 
-
-ui3Handle ui3MenuButton::GetHandle()
-{
-    return Handle;
-}
-
-ui3Handle ui3MenuButton::GetActorHandle()
-{
-    return ActorHandle;
-}
 
 void ui3MenuButton::SetCheck(bool state)
 {
@@ -153,3 +154,4 @@ bool ui3MenuButton::IsCursorOver(const vct2 & cursor2D)
     return (cursor2D.GreaterOrEqual(this->BottomLeft2D)
             && cursor2D.LesserOrEqual(this->TopRight2D));
 }
+

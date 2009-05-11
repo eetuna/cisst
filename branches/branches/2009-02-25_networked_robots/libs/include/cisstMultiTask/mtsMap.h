@@ -67,11 +67,14 @@ public:
     std::vector<std::string> GetNames() const;
     void GetNames(std::vector<std::string>& taskNameContainer) const;
     const MapType &GetMap() const   { return Map; }
-    MapType &GetMap()               { return Map; }
+    MapType &GetMap() { return Map; }
     const int GetCount()            { return Map.size(); }
+        
+    typedef void (_ItemType::*VoidFuncPtr)(void);
+    void ForEachVoid(VoidFuncPtr f);
   
     void ToStream(std::ostream & outputStream) const;
-    void Cleanup(void);  // needed?
+    void Cleanup(void) { ForEachVoid(&_ItemType::Cleanup); }  // needed?
   
     // free all memory
     void DeleteAll(void);
@@ -128,6 +131,14 @@ std::vector<std::string> mtsMap<_ItemType>::GetNames(void) const {
 }
 
 template <class _ItemType>
+void mtsMap<_ItemType>::ForEachVoid(VoidFuncPtr f)
+{
+    typename MapType::iterator iter;
+    for (iter = Map.begin(); iter != Map.end(); iter++)
+        (iter->second->*f)();
+}
+
+template <class _ItemType>
 void mtsMap<_ItemType>::GetNames(std::vector<std::string>& taskNameContainer) const 
 {
     typename MapType::const_iterator iter;
@@ -144,20 +155,8 @@ void mtsMap<_ItemType>::ToStream(std::ostream & outputStream) const
     for (iter = Map.begin();
          iter != Map.end();
          ++iter, ++counter) {
-        outputStream << "- " << MapName << "[" << counter << "]: "
-                     << *(iter->second) << std::endl;
-    }
-}
-
-
-template <class _ItemType>
-void mtsMap<_ItemType>::Cleanup(void) {
-    typename MapType::iterator iterator = Map.begin();
-    const typename MapType::iterator end = Map.end();
-    for (;
-         iterator != end;
-         ++iterator) {
-        iterator->second->Cleanup();
+        outputStream << "- " << MapName << "[" << counter << "] (\""
+                     << iter->first << "\"): " << *(iter->second) << std::endl;
     }
 }
 

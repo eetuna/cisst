@@ -7,7 +7,7 @@
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -48,14 +48,24 @@ public:
     /*! Typedef for the specific interface. */
     typedef _classType ClassType;
 
+    /*! This type. */
+    typedef mtsCommandRead<ClassType, ArgumentType> ThisType;
+
     /*! Typedef for pointer to member function of the specific interface
       class. */
-    typedef void(_classType::*ActionType)(ArgumentType &) const;
+    typedef void(_classType::*ActionTypeOld)(ArgumentType &) const;
+    typedef bool(_classType::*ActionType)(ArgumentType &) const;
+
+private:
+    /*! Private copy constructor to prevent copies */
+    inline mtsCommandRead(const ThisType & CMN_UNUSED(other));
 
 protected:
     /*! The pointer to member function of the receiver class that
       is to be invoked for a particular instance of the command*/
+    // PKAZ 3/17/09: for now, support void return (ActionTypeOld) for backward compatibility
     ActionType Action;
+    ActionTypeOld ActionOld;
 
     /*! Stores the receiver object of the command */
     ClassType * ClassInstantiation;
@@ -77,6 +87,15 @@ public:
                    const ArgumentType & argumentPrototype):
         BaseType(name),
         Action(action),
+        ActionOld(0),
+        ClassInstantiation(classInstantiation),
+        ArgumentPrototype(argumentPrototype)
+    {}
+    mtsCommandRead(ActionTypeOld action, ClassType * classInstantiation, const std::string & name,
+                   const ArgumentType & argumentPrototype):
+        BaseType(name),
+        Action(0),
+        ActionOld(action),
         ClassInstantiation(classInstantiation),
         ArgumentPrototype(argumentPrototype)
     {}
@@ -91,11 +110,21 @@ public:
       \param obj The data passed to the operation method
     */
     virtual mtsCommandBase::ReturnType Execute(cmnGenericObject & argument) {
-        ArgumentType * data = dynamic_cast< ArgumentType * >(&argument);
-        if (data == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        (ClassInstantiation->*Action)(*data);
-        return mtsCommandBase::DEV_OK;
+        if (this->IsEnabled()) {
+            ArgumentType * data = dynamic_cast< ArgumentType * >(&argument);
+            if (data == 0) {
+                return mtsCommandBase::BAD_INPUT;
+            }
+            mtsCommandBase::ReturnType ret = mtsCommandBase::DEV_OK;
+            if (Action) {
+                if (!(ClassInstantiation->*Action)(*data))
+                    ret = mtsCommandBase::COMMAND_FAILED;
+            }
+            else if (ActionOld)
+                (ClassInstantiation->*ActionOld)(*data);
+            return ret;
+        }
+        return mtsCommandBase::DISABLED;
     }
 
     /* commented in base class */
@@ -108,7 +137,8 @@ public:
         outputStream << "mtsCommandRead: ";
         if (this->ClassInstantiation) {
             outputStream << this->Name << "(" << this->ArgumentPrototype.ClassServices()->GetName() << "&) using class/object \""
-                         << mtsObjectName(this->ClassInstantiation) << "\"";
+                         << mtsObjectName(this->ClassInstantiation) << "\" currently "
+                         << (this->IsEnabled() ? "enabled" : "disabled");
         } else {
             outputStream << "Not initialized properly";
         }

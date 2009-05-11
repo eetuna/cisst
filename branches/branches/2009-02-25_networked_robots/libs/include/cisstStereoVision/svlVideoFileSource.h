@@ -44,12 +44,21 @@ public:
 
 protected:
     virtual int Initialize(svlSample* inputdata = 0);
+    virtual int OnStart(unsigned int procCount);
     virtual int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata = 0);
     virtual int Release();
 
 private:
     vctDynamicVector<void*> VideoObj;
+    vctDynamicVector<FILE*> VideoFile;
     vctDynamicVector<std::string> FilePath;
+    vctDynamicVector<unsigned int> FilePartCount;
+
+    vctDynamicVector<unsigned char*> YUVBuffer;
+    vctDynamicVector<unsigned int> YUVBufferSize;
+    vctDynamicVector<unsigned char*> CompressedBuffer;
+    vctDynamicVector<unsigned int> CompressedBufferSize;
+    vctDynamicVector<double> FirstTimestamp;
 
     double Hertz;
     osaStopwatch Timer;

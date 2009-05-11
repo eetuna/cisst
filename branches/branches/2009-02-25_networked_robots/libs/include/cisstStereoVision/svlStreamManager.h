@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <map>
 
 #include <cisstOSAbstraction/osaThread.h>
+#include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstStereoVision/svlStreamDefs.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 
@@ -118,7 +119,7 @@ protected:
     virtual void OnStop();
     virtual int Release();
 
-    void SetFilterToSource(svlStreamType output);
+    void SetFilterToSource(svlStreamType output, bool autotimestamp = true);
     int AddSupportedType(svlStreamType input, svlStreamType output);
     void UpdateOutputFormat();
     int IsDataValid(svlStreamType type, svlSample* data);
@@ -129,6 +130,7 @@ private:
     bool Running;
     bool OutputSampleModified;
     bool OutputFormatModified;
+    bool AutoTimestamp;
     double PrevInputTimestamp;
     _StreamTypeMap SupportedTypes;
     _OutputBranchList OutputBranches;
@@ -152,7 +154,11 @@ class CISST_EXPORT svlStreamManager
 friend class svlStreamEntity;
 friend class svlStreamControlMultiThread;
 
-    typedef std::map<svlStreamEntity*, svlStreamManager*> _BranchMap;
+    typedef struct tagBranchStruct {
+        svlStreamEntity* entity;
+        std::string name;
+    } _BranchStruct;
+    typedef std::map<_BranchStruct*, svlStreamManager*> _BranchMap;
     typedef std::vector<svlFilterBase*> _FilterList;
 
 public:
@@ -161,8 +167,11 @@ public:
     ~svlStreamManager();
 
     svlStreamEntity& Trunk();
+    svlStreamEntity& Branch(const std::string & name);
     svlStreamEntity* CreateBranchAfterFilter(svlFilterBase* filter);
+    svlStreamEntity* CreateBranchAfterFilter(svlFilterBase* filter, const std::string & name);
     int RemoveBranch(svlStreamEntity* entity);
+    int RemoveBranch(const std::string & name);
     int RemoveFilter(svlFilterBase* filter);
     int EmptyFilterList();
 
@@ -203,6 +212,7 @@ private:
     osaCriticalSection* CS;
 
     svlStreamEntity Entity;
+    svlStreamEntity InvalidEntity;
     _BranchMap Branches;
     _FilterList Filters;
     svlFilterBase* StreamSource;
@@ -228,6 +238,8 @@ public:
 
 private:
     svlStreamControlMultiThread();
+
+    double GetAbsoluteTime(osaTimeServer* timeserver);
 
     unsigned int ThreadID;
     unsigned int ThreadCount;

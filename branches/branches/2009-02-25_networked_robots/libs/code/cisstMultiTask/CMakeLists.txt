@@ -143,14 +143,14 @@ SET(HEADER_FILES
     )
     
 SET(ICE_RESOURCE_FILES
-    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.client
-    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/config.server
-    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskInterfaceProxy.ice
-    ${cisst_SOURCE_DIR}/resources/${LIBRARY}/mtsTaskManagerProxy.ice
+    ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client
+    ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.server
+    ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskInterfaceProxy.ice
+    ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskManagerProxy.ice
     )    
    
 LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
-                optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
+                  optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 

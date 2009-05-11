@@ -7,7 +7,7 @@
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2005-05-02
 
-  (C) Copyright 2005-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2005-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -30,16 +30,6 @@ void mtsCommandQueuedVoidBase::ToStream(std::ostream & outputStream) const {
     } else {
         outputStream << "Undefined";
     }
-    outputStream << "\" for command " << *(this->ActualCommand);
+    outputStream << "\" for command " << *(this->ActualCommand)
+                 << " currently " << (this->IsEnabled() ? "enabled" : "disabled");
 }
-
-    
-mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(void) {
-    if (this->MailBox->Write(this))
-        return mtsCommandBase::DEV_OK;
-    else {
-        CMN_LOG(5) << "mtsCommandQueuedVoidBase: Unable to write to mail box." << std::endl;
-        return mtsCommandBase::MAILBOX_FULL;
-    }
-}
-

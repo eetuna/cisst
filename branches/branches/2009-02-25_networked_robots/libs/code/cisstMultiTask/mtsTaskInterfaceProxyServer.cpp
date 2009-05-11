@@ -137,7 +137,7 @@ const bool mtsTaskInterfaceProxyServer::GetProvidedInterfaceSpecification(
             providedInterface->Commands##_commandType##.GetMap().end();\
         for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
             mtsTaskInterfaceProxy::Command##_commandType##Info info;\
-            info.Name = iterator##_commandType##->second->Name;\
+            info.Name = iterator##_commandType##->second->GetName();\
             info.CommandSID = reinterpret_cast<int>(iterator##_commandType##->second);
 
 #define ITERATE_INTERFACE_END( _commandType ) \

@@ -59,25 +59,26 @@ devLoPoMoCo::devLoPoMoCo(const std::string& deviceName, unsigned int numberOfBoa
 	AddCommandVoid(&devLoPoMoCo::LoadMotorVoltages, this, "WriteInterface", "LoadMotorVoltages");
 	AddCommandVoid(&devLoPoMoCo::LoadCurrentLimits, this, "WriteInterface", "LoadCurrentLimits");
 	AddCommandVoid(&devLoPoMoCo::LoadMotorVoltagesCurrentLimits, this, "WriteInterface", "LoadMotorVoltagesCurrentLimits");
+	AddCommandVoid(&devLoPoMoCo::EnableAll, this, "WriteInterface", "EnableAll");
+	AddCommandVoid(&devLoPoMoCo::DisableAll, this, "WriteInterface", "DisableAll");
 
 	// read commands
-	AddCommandRead(&devLoPoMoCo::GetPositions, this, "WriteInterface", "GetPositions");
-	AddCommandRead(&devLoPoMoCo::GetVelocities, this, "WriteInterface", "GetVelocities");
-	AddCommandRead(&devLoPoMoCo::GetMotorCurrents, this, "WriteInterface", "GetMotorCurrents");
-	AddCommandRead(&devLoPoMoCo::GetPotFeedbacks, this, "WriteInterface", "GetPotFeedbacks");
-	AddCommandRead(&devLoPoMoCo::GetDigitalInput, this, "WriteInterface", "GetDigitalInput");
+	AddCommandRead(&devLoPoMoCo::GetPositions, this, "WriteInterface", "GetPositions", mtsLongVec(numberOfAxes));
+	AddCommandRead(&devLoPoMoCo::GetVelocities, this, "WriteInterface", "GetVelocities", mtsShortVec(numberOfAxes));
+	AddCommandRead(&devLoPoMoCo::GetMotorCurrents, this, "WriteInterface", "GetMotorCurrents",mtsShortVec(numberOfAxes));
+	AddCommandRead(&devLoPoMoCo::GetPotFeedbacks, this, "WriteInterface", "GetPotFeedbacks",mtsShortVec(numberOfAxes));
+	AddCommandRead(&devLoPoMoCo::GetDigitalInput, this, "WriteInterface", "GetDigitalInput",mtsIntVec(numberOfAxes));
+    // GSF -- GetLatchedIndex might only be available with 0xCCDD FPGA (MR-Robot)
+	AddCommandRead(&devLoPoMoCo::GetLatchedIndex, this, "WriteInterface", "GetLatchedIndex",mtsShortVec(numberOfAxes));
 
 	// Write methods
 	// method , object carrying the method , interface name , command name and argument prototype
 	AddCommandWrite(&devLoPoMoCo::SetMotorVoltages, this, "WriteInterface", "SetMotorVoltages", mtsShortVec(numberOfAxes));
 	AddCommandWrite(&devLoPoMoCo::SetCurrentLimits, this, "WriteInterface", "SetCurrentLimits", mtsShortVec(numberOfAxes));
-    AddCommandWrite(&devLoPoMoCo::SetDigitalOutput, this, "WriteInterface", "SetDigitalOutput", mtsIntVec(4)); 
+    AddCommandWrite(&devLoPoMoCo::SetDigitalOutput, this, "WriteInterface", "SetDigitalOutput", mtsIntVec(numberOfBoards));
 
-#if 0
-	AddCommandWrite(&devLoPoMoCo::Enable, this, "WriteInterface", "Enable", cmnShort);
-	AddCommandWrite(&devLoPoMoCo::Disable, this, "WriteInterface", "Disable", cmnShort);
-#endif
-
+	AddCommandWrite(&devLoPoMoCo::Enable, this, "WriteInterface", "Enable", cmnShort());
+	AddCommandWrite(&devLoPoMoCo::Disable, this, "WriteInterface", "Disable", cmnShort());
 	AddCommandWrite(&devLoPoMoCo::ResetEncoders, this, "WriteInterface", "ResetEncoders", cmnShort());
 	AddCommandWrite(&devLoPoMoCo::SetPositions, this, "WriteInterface", "SetPositions", mtsLongVec(numberOfAxes));
 
@@ -113,11 +114,11 @@ devLoPoMoCo::~devLoPoMoCo() {
 
 void devLoPoMoCo::parseInputArgument(const std::string &inputArgument, std::string &relativeFilePath, std::string &fileName)
 {
-    unsigned int posSeperator = inputArgument.find('/', 0);
-    while (posSeperator != inputArgument.npos) {
-        relativeFilePath = inputArgument.substr(0, posSeperator);
-        fileName = inputArgument.substr(posSeperator+1, inputArgument.size());
-        posSeperator = inputArgument.find('/', posSeperator+1); // find the next '/'
+    unsigned int posSeparator = inputArgument.find('/', 0);
+    while (posSeparator != inputArgument.npos) {
+        relativeFilePath = inputArgument.substr(0, posSeparator);
+        fileName = inputArgument.substr(posSeparator+1, inputArgument.size());
+        posSeparator = inputArgument.find('/', posSeparator+1); // find the next '/'
     }
 
     relativeFilePath += "/"; // append a '/' at the end
@@ -174,10 +175,11 @@ void devLoPoMoCo::ConfigureOneBoard(const std::string& filename, const int board
 	// the latest version return 0xb0b || 0xS0 where S = ~(switch value)
 	// version 1 boards return 0xa0a
 	// some Board[boardIndex] with 10K50E also return 0xc0c
+    // The MR-Robot FPGA (which emulates a LoPoMoCo) returns 0xCCDD
 	CMN_LOG_CLASS(3) << "Version: " << version << std::endl;
-	if (!( ( version & 0xFF0F )== 0xb0b || (version == 0xa0a) || (version == 0xc0c) )) { 
+	if (!( ( version & 0xFF0F )== 0xb0b || (version == 0xa0a) || (version == 0xc0c) || (version == 0xCCDD) )) {
         CMN_LOG_CLASS(3) << "WARNING: Could not find a LoPoMoCo board at address (decimal) " << BaseAddress[boardIndex] << std::endl;
-        CMN_LOG_CLASS(3) << "Actually, this just means that the version number does not match" <<std::endl; 
+        CMN_LOG_CLASS(3) << "Actually, this just means that the version number does not match" <<std::endl;
     }
 
 	//unsigned short listEncoders[] = {1, 1, 1, 1};
@@ -189,7 +191,12 @@ void devLoPoMoCo::ConfigureOneBoard(const std::string& filename, const int board
 	//Board->SetEncoderPreloadRegister(0x007FFFFF);
 	//Board->PreLoadEncoders(listEncoders);
 	//Board->DisableAllMotors();
-	Board[boardIndex]->EnableAllMotors();
+    if (version == 0xCCDD) {
+        // Start with all valves/motors disabled (off)
+        Board[boardIndex]->DisableAllMotors();
+    }
+    else
+        Board[boardIndex]->EnableAllMotors();
 
 	int axis;
 	//read in the conversion factors
@@ -272,6 +279,13 @@ void devLoPoMoCo::Configure(const std::string& filename){ //, const std::string 
 		allFilesDefined &= xmlConfig.GetXMLValue(context.c_str(), path, configFiles[boardIndex]);
 	}
 
+    // Backward compatibility: if there is just one board and we failed to find a config file 
+    // entry in the passed XML file, then use the passed XML file as the config file.
+    if (!allFilesDefined && (numberOfBoards == 1)) {
+        parseInputArgument(filename, relativePathToConfigFiles, configFiles[0]);
+        allFilesDefined = true;
+    }
+
 	if(allFilesDefined) {
 		for (boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
 			//configFiles[boardIndex].insert(0, RelativePathToConfigFiles);
@@ -284,7 +298,6 @@ void devLoPoMoCo::Configure(const std::string& filename){ //, const std::string 
 	}
 }
 
-#if 0
 /*! axisIndex is a flat index into the composite device with multiple boards,
  *  this axisIndex is mapped onto the correct board index and axis index within that board
  *  action taken on "Board" is always with respect to a 4 axes board
@@ -313,7 +326,6 @@ void devLoPoMoCo::Disable(const cmnShort & axisIndex) {
 		<< StartAxis[boardIndex]<< ", " << EndAxis[boardIndex] << "]" << std::endl;
 	}
 }
-#endif
 
 void devLoPoMoCo::ResetEncoders(const cmnShort & axisIndex) {
 	unsigned short listEncoders[] = { 0, 0, 0, 0 };
@@ -330,6 +342,18 @@ void devLoPoMoCo::ResetEncoders(const cmnShort & axisIndex) {
 		CMN_LOG_CLASS(5) << "Resetting encoder " << axisIndex.Data
 		<< " failed since the index is out of range ["
 		<< StartAxis[boardIndex] << ", " << EndAxis[boardIndex] << "]" << std::endl;
+	}
+}
+
+void devLoPoMoCo::EnableAll(void) {
+	for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
+		Board[boardIndex]->EnableAllMotors();
+	}
+}
+
+void devLoPoMoCo::DisableAll(void) {
+	for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
+		Board[boardIndex]->DisableAllMotors();
 	}
 }
 
@@ -362,6 +386,7 @@ void devLoPoMoCo::StartPotFeedbackConv(void) {
 // would be documented where needed.
 void devLoPoMoCo::GetPositions(mtsLongVec & Positions) const {
 	for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
+        //Board[boardIndex]->SetEncoderIndices(true, MaxAxis[boardIndex], 0x00);
 		for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++) {
 			//EncoderPeriods.Data[axis] = Board->GetEncoderPeriod();
 			//EncoderFrequencies.Data[axis] = Board->GetEncoderFrequency();
@@ -372,19 +397,16 @@ void devLoPoMoCo::GetPositions(mtsLongVec & Positions) const {
 	}
 }
 
-/* ! TODO: ERROR: Tian: EncoderFrequencies is not set ANYWHERE!8? */
 void devLoPoMoCo::GetVelocities(mtsShortVec& Velocities) const {
-#if 0
-	for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
-		for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++) {
-			//TODO: EncoderFrequencies[axis] or [axis + StartAxis[boardIndex]
-			Velocities[axis + StartAxis[boardIndex] = EncoderFrequencies.Data[axis];
-		}
-	}
-#endif
+    for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
+        for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++) {
+            Board[boardIndex]->SetEncoderIndices(false, MaxAxis[boardIndex], axis);
+            Velocities[axis + StartAxis[boardIndex]] = Board[boardIndex]->GetEncoderFrequency();
+        }
+    }
 }
 
-
+// Precondition:  StartConvCurrentFeedback should be called before calling GetPotFeedback
 void devLoPoMoCo::GetMotorCurrents(mtsShortVec & MotorCurrents) const {
 	bool ADInterruptPending = false;
 	for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
@@ -394,29 +416,27 @@ void devLoPoMoCo::GetMotorCurrents(mtsShortVec & MotorCurrents) const {
 			for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++) {
 				MotorCurrents[axis + StartAxis[boardIndex]] = Board[boardIndex]->GetADFIFO();
 			}
-		} else { 
+		} else {
             for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++)
                 MotorCurrents[axis + StartAxis[boardIndex]] = 0x8000;
-        } 
+        }
 	}
 }
- 
+
+// Precondition:  StartConvPotFeedback should be called before calling GetPotFeedback
 void devLoPoMoCo::GetPotFeedbacks(mtsShortVec & PotFeedbacks) const {
 	bool ADInterruptPending = false;
 	for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
 		Board[boardIndex]->SetPotFeedbackMaxIndex(MaxAxis[boardIndex]);
-        // Do start conversion and getting raw pot value back-to-back  
-		Board[boardIndex]->StartConvPotFeedback();        
-		//ADInterruptPending = Board[boardIndex]->PollADInterruptPending(20); //5 * MaxAxis[boardIndex]);
-        ADInterruptPending = Board[boardIndex]->PollADInterruptPending(10 * MaxAxis[boardIndex]);
+		ADInterruptPending = Board[boardIndex]->PollADInterruptPending(20); //5 * MaxAxis[boardIndex]);
 		if (ADInterruptPending == true) {
 			for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++) {
 				PotFeedbacks[axis + StartAxis[boardIndex]] = Board[boardIndex]->GetADFIFO();
 			}
-		} else { 
+		} else {
             for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++)
                 PotFeedbacks[axis + StartAxis[boardIndex]] = 0x8000;
-        } 
+        }
 	}
 }
 
@@ -540,3 +560,14 @@ void devLoPoMoCo::CurrentLimitsToDAC(const mtsDoubleVec& fromData, mtsShortVec& 
 	}
 }
 
+// GSF - added 11/13/07 to get latched index values
+// Might only be available in Version 0xCCDD FPGA (MR-Robot)
+void devLoPoMoCo::GetLatchedIndex(mtsShortVec & latchedIndex) const
+{
+    for (int boardIndex = 0; boardIndex < numberOfBoards; boardIndex++) {
+        for (unsigned int axis = 0; axis <= MaxAxis[boardIndex]; axis++) {
+            Board[boardIndex]->SetEncoderIndices(false, MaxAxis[boardIndex], axis);
+            latchedIndex[axis+StartAxis[boardIndex]] = Board[boardIndex]->GetEncoderIndex() - 0x007FFFFF;
+        }
+    }
+}

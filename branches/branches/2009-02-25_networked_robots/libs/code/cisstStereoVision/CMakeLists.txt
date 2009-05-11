@@ -23,7 +23,7 @@ SET(DEPENDENCIES
     cisstOSAbstraction
     cisstVector
     cisstImage
-    cisstNumerical)
+    )
 
 # all source files
 SET(SOURCE_FILES
@@ -39,10 +39,9 @@ SET(SOURCE_FILES
     ftImagePPM.h                   # private header
     ftImagePPM.cpp
     svlVideoCaptureSource.cpp
-    svlVideoFileSource.cpp
-    svlVideoFileWriter.cpp
     svlImageFileSource.cpp
     svlImageFileWriter.cpp
+    svlRenderTargets.cpp
     svlDummySource.cpp
     svlDeinterlacer.cpp
     ipDeinterlacing.h              # private header
@@ -69,12 +68,6 @@ SET(SOURCE_FILES
     svlImageFlipRotate.cpp
     # Trackers
     trackers/msbruteforce/svlTrackerMSBruteForce.cpp
-    trackers/cisst/svlTrackerCisst.cpp
-    trackers/cisst/trkCisstWSSD.h      # private header
-    trackers/cisst/trkCisstWSSD.cpp
-    trackers/cisst/trkCisstNCC.h       # private header
-    trackers/cisst/trkCisstNCC.cpp
-    trackers/cisst/trkCisstBase.h      # private header
     )
 
 # all header files
@@ -87,10 +80,9 @@ SET(HEADER_FILES
     svlGenericFilter.h
     svlFileHandlers.h
     svlVideoCaptureSource.h
-    svlVideoFileSource.h
-    svlVideoFileWriter.h
     svlImageFileSource.h
     svlImageFileWriter.h
+    svlRenderTargets.h
     svlDummySource.h
     svlDeinterlacer.h
     svlComputationalStereo.h
@@ -108,9 +100,31 @@ SET(HEADER_FILES
     svlStereoImageJoiner.h
     svlImageFlipRotate.h
 # Trackers
-    trackers/svlTrackerCisst.h
     trackers/svlTrackerMSBruteForce.h
     )
+
+
+# cisstNumerical dependency
+IF(BUILD_LIBS_cisstNumerical)
+  SET(DEPENDENCIES
+      cisstNumerical
+      )
+  SET(SOURCE_FILES
+      ${SOURCE_FILES}
+      # Trackers
+      trackers/cisst/svlTrackerCisst.cpp
+      trackers/cisst/trkCisstWSSD.h      # private header
+      trackers/cisst/trkCisstWSSD.cpp
+      trackers/cisst/trkCisstNCC.h       # private header
+      trackers/cisst/trkCisstNCC.cpp
+      trackers/cisst/trkCisstBase.h      # private header
+      )
+  SET(HEADER_FILES
+      ${HEADER_FILES}
+      # Trackers
+      trackers/svlTrackerCisst.h
+      )
+ENDIF(BUILD_LIBS_cisstNumerical)
 
 
 # OpenCV
@@ -118,7 +132,6 @@ OPTION(CISST_SVL_HAS_OPENCV "Compile OpenCV extensions" OFF)
 IF(CISST_SVL_HAS_OPENCV)
   FIND_PACKAGE(OpenCV)
   INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-  LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
   LINK_LIBRARIES(${OpenCV_LIBRARIES})
 
   SET(SOURCE_FILES
@@ -138,6 +151,65 @@ IF(CISST_SVL_HAS_OPENCV)
 ENDIF(CISST_SVL_HAS_OPENCV)
 
 
+OPTION(CISST_SVL_HAS_ZLIB "Use ZLIB extensions" OFF)
+IF(CISST_SVL_HAS_ZLIB)
+    FIND_PACKAGE(ZLIB)
+    IF(ZLIB_FOUND)
+        INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
+        LINK_LIBRARIES(${ZLIB_LIBRARIES})
+
+        IF(NOT WIN32)
+            SET(SOURCE_FILES
+                ${SOURCE_FILES}
+                svlVideoFileSource.cpp
+                )
+            SET(HEADER_FILES
+                ${HEADER_FILES}
+                svlVideoFileSource.h
+                )
+        ENDIF(NOT WIN32)
+
+        SET(SOURCE_FILES
+            ${SOURCE_FILES}
+            svlVideoFileWriter.cpp
+            )
+        SET(HEADER_FILES
+            ${HEADER_FILES}
+            svlVideoFileWriter.h
+            )
+    ENDIF(ZLIB_FOUND)
+ENDIF(CISST_SVL_HAS_ZLIB)
+
+
+# TO DO: add windows support
+IF(UNIX)
+
+# Matrox Imaging Library
+OPTION(CISST_SVL_HAS_MIL "Compile MIL extensions" OFF)
+IF(CISST_SVL_HAS_MIL)
+  FIND_PATH(CISST_SVL_MIL_INCLUDE
+            NAMES mil.h
+            PATHS "/opt/matrox_imaging/mil/include"
+            )
+  INCLUDE_DIRECTORIES(${CISST_SVL_MIL_INCLUDE})
+  FIND_LIBRARY(CISST_SVL_MIL_LIBRARY
+               NAMES mil
+               PATHS "/opt/matrox_imaging/mil/lib"
+               )
+  LINK_LIBRARIES(${CISST_SVL_MIL_LIBRARY})
+
+  SET(SOURCE_FILES
+      ${SOURCE_FILES}
+      vidMILDevice.h        # private header
+      vidMILDevice.cpp
+      )
+ENDIF(CISST_SVL_HAS_MIL)
+
+ELSE(UNIX)
+  SET(CISST_SVL_HAS_MIL "OFF" CACHE INTERNAL "SVL Has MIL")
+ENDIF(UNIX)
+
+
 # Windows specific
 IF(WIN32)
   # generic windows specific files
@@ -148,10 +220,14 @@ IF(WIN32)
     VfWAvi.h                 # private header
     VfWAvi.cpp
     svlImageWindow.cpp
+    svlVideoFileSource.cpp
+    svlVideoFileWriterAVI.cpp
     )
   SET(HEADER_FILES
     ${HEADER_FILES}
     svlImageWindow.h
+    svlVideoFileSource.h
+    svlVideoFileWriterAVI.h
     )
 
   OPTION(CISST_SVL_HAS_DIRECTSHOW "Compile DirectShow extensions" OFF)
@@ -161,29 +237,11 @@ IF(WIN32)
     FIND_PACKAGE(DirectShow)
     INCLUDE_DIRECTORIES(${DIRECTSHOW_INCLUDE_DIR} ${DIRECTX_INCLUDE_DIR})
 
-    # Find samples and compiled samples
-    SET(CISST_SVL_DS_SDK_DIR "C:/Program Files/Microsoft Platform SDK for Windows Server 2003 R2/Samples")
-    FIND_PATH(CISST_SVL_DS_CROSSBAR_PATH 
-              NAMES crossbar.h
-              PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/Capture/AMCap")
-    FIND_FILE(CISST_SVL_DS_CROSSBAR_OBJ
-              NAMES crossbar.obj
-              PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/Capture/AMCap/XP32_RETAIL")
-    CONFIGURE_FILE(${CISST_SVL_DS_CROSSBAR_OBJ}
-                   ${CMAKE_CURRENT_SOURCE_DIR}/crossbar-copy.obj COPYONLY)
-    FIND_PATH(CISST_SVL_DS_BASECLASSES_PATH 
-              NAMES streams.h
-              PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/BaseClasses")
-    FIND_LIBRARY(CISST_SVL_DS_strmbase_LIB
-                 NAMES strmbase
-                 PATHS "${CISST_SVL_DS_SDK_DIR}/Multimedia/DirectShow/BaseClasses/XP32_RETAIL")
-
-    INCLUDE_DIRECTORIES(${CISST_SVL_DS_CROSSBAR_PATH} ${CISST_SVL_DS_BASECLASSES_PATH})
-
     SET(SOURCE_FILES
         ${SOURCE_FILES}
-	    crossbar-copy.obj       # hack, file copied from SDK sample directory as CMake doesn't allow absolute paths
-        vidDirectShowSource.h   # private header
+        vidDirectShowInputSelector.h    # private header
+        vidDirectShowInputSelector.cpp
+        vidDirectShowSource.h           # private header
         vidDirectShowSource.cpp
         )
 
@@ -287,6 +345,11 @@ SET_SOURCE_FILES_PROPERTIES("${CISST_SVL_CONFIG_FILE}"
                             PROPERTIES GENERATED TRUE)
 SET(HEADERS ${CISST_SVL_CONFIG_FILE})
 
+# Create the CMake config file
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cisstStereoVisionBuild.cmake.in
+               ${cisst_BINARY_DIR}/cisstStereoVisionBuild.cmake
+               @ONLY)
+
 # Finally create the library
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
@@ -297,7 +360,6 @@ IF(WIN32)
                           ${DIRECTSHOW_strmiids_LIBRARY}
                           ${DIRECTSHOW_Vfw32_LIBRARY}
                           ${DIRECTSHOW_WinMM_LIBRARY}
-                          ${CISST_SVL_DS_strmbase_LIB}
                           )
     SET(CMAKE_SHARED_LINKER_FLAGS
         "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib")
