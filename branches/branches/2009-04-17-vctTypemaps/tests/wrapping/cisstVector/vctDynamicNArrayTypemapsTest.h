@@ -9,13 +9,14 @@
 
 #define MY_DIM 4
 
+template <class _elementType>
 class vctDynamicNArrayTypemapsTest
 {
 
 public:
 
-    // enum {MY_DIM = 3};
-    typedef vctDynamicNArray<int, MY_DIM> ArrayType;
+    // enum {MY_DIM = 4};     // SWIG cannot understand enums
+    typedef vctDynamicNArray<_elementType, MY_DIM> ArrayType;
     //typedef ArrayType::nsize_type nsize_type;
 
 protected:
@@ -27,7 +28,7 @@ public:
     vctDynamicNArrayTypemapsTest()
     {}
 
-    void in_argout_vctDynamicNArray_ref(vctDynamicNArray<int, MY_DIM> &param, unsigned int sizeFactor) {
+    void in_argout_vctDynamicNArray_ref(vctDynamicNArray<_elementType, MY_DIM> &param, unsigned int sizeFactor) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
@@ -46,38 +47,38 @@ public:
         }
     }
 
-    void in_vctDynamicNArrayRef(vctDynamicNArrayRef<int, MY_DIM> param, unsigned int dummy) {
+    void in_vctDynamicNArrayRef(vctDynamicNArrayRef<_elementType, MY_DIM> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
     }
 
-    void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<int, MY_DIM> param, unsigned int dummy) {
+    void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<_elementType, MY_DIM> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicConstNArrayRef_ref(const vctDynamicConstNArrayRef<int, MY_DIM> &param, unsigned int dummy) {
+    void in_argout_const_vctDynamicConstNArrayRef_ref(const vctDynamicConstNArrayRef<_elementType, MY_DIM> &param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicNArrayRef_ref(const vctDynamicNArrayRef<int, MY_DIM> &param, unsigned int dummy) {
+    void in_argout_const_vctDynamicNArrayRef_ref(const vctDynamicNArrayRef<_elementType, MY_DIM> &param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_vctDynamicNArray(vctDynamicNArray<int, MY_DIM> param, unsigned int dummy) {
+    void in_vctDynamicNArray(vctDynamicNArray<_elementType, MY_DIM> param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicNArray_ref(const vctDynamicNArray<int, MY_DIM> &param, unsigned int dummy) {
+    void in_argout_const_vctDynamicNArray_ref(const vctDynamicNArray<_elementType, MY_DIM> &param, unsigned int dummy) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    vctDynamicNArray<int, MY_DIM> out_vctDynamicNArray(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicNArray<_elementType, MY_DIM> out_vctDynamicNArray(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
         vctFixedSizeVector<unsigned int, MY_DIM> sizes;
         sizes.SetAll(5);
         copy.SetSize(sizes);
@@ -85,7 +86,7 @@ public:
         return copy;
     }
 
-    vctDynamicNArray<int, MY_DIM> &out_vctDynamicNArray_ref(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicNArray<_elementType, MY_DIM> &out_vctDynamicNArray_ref(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
         vctFixedSizeVector<unsigned int, MY_DIM> sizes;
         sizes.SetAll(5);
         copy.SetSize(sizes);
@@ -93,7 +94,7 @@ public:
         return copy;
     }
 
-    const vctDynamicNArray<int, MY_DIM> &out_const_vctDynamicNArray_ref(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    const vctDynamicNArray<_elementType, MY_DIM> &out_const_vctDynamicNArray_ref(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
         vctFixedSizeVector<unsigned int, MY_DIM> sizes;
         sizes.SetAll(5);
         copy.SetSize(sizes);
@@ -101,7 +102,7 @@ public:
         return copy;
     }
 
-    vctDynamicNArrayRef<int, MY_DIM> out_vctDynamicNArrayRef(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicNArrayRef<_elementType, MY_DIM> out_vctDynamicNArrayRef(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
         vctFixedSizeVector<unsigned int, MY_DIM> sizes;
         sizes.SetAll(5);
         copy.SetSize(sizes);
@@ -109,7 +110,7 @@ public:
         return copy;
     }
 
-    vctDynamicConstNArrayRef<int, MY_DIM> out_vctDynamicConstNArrayRef(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicConstNArrayRef<_elementType, MY_DIM> out_vctDynamicConstNArrayRef(/*vctFixedSizeVector<unsigned int, MY_DIM> sizes*/) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
         vctFixedSizeVector<unsigned int, MY_DIM> sizes;
         sizes.SetAll(5);
         copy.SetSize(sizes);
@@ -117,21 +118,21 @@ public:
         return copy;
     }
 
-    inline int Dim(void) const {
+    inline unsigned int Dim(void) const {
         return MY_DIM;
     }
 
-    inline int GetItem(const unsigned int metaIndex) const
+    inline _elementType GetItem(const unsigned int metaIndex) const
     throw(std::out_of_range) {
         return copy.at(metaIndex);
     }
 
-    inline void SetItem(const unsigned int metaIndex, int value)
+    inline void SetItem(const unsigned int metaIndex, _elementType value)
     throw(std::out_of_range) {
         copy.at(metaIndex) = value;
     }
 
-    inline void sizes(vctFixedSizeVector<int, MY_DIM> &shape) const {
+    inline void sizes(vctFixedSizeVector<_elementType, MY_DIM> &shape) const {
         shape.Assign(copy.sizes());
     }
 };

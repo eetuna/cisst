@@ -39,7 +39,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS TWO-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -97,12 +97,8 @@
     }
 
     // TODO: Understand what this does
-    $result = PyArray_SimpleNew(sz, shape, vctPythonType<int>());
-    // TODO: For some reason, when I give the third argument as
-    //      vctPythonType<$1_ltype::value_type>()
-    // instead of
-    //      vctPythonType<int>()
-    // the compiler gives errors.
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(sz, shape, type);
 
     // TODO: Understand what this does
     // copy data returned by C function into new PyArray
@@ -127,7 +123,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, IS ONE-DIMENSIONAL, AND IS WRITABLE
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -294,7 +290,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(vctThrowUnlessIsPyArray($input)
@@ -390,7 +386,7 @@
 
     /*************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS
-     TYPEMAP IS A PYARRAY, IS OF NUMPY DTYPE int, IS ONE-DIMENSIONAL, AND
+     TYPEMAP IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND
      IS WRITABLE
     *************************************************************************/
 
@@ -448,12 +444,8 @@
         shape[i] = sizes.at(i);
     }
 
-    $result = PyArray_SimpleNew(sz, shape, vctPythonType<int>());
-    // TODO: For some reason, when I give the third argument as
-    //      vctPythonType<$1_ltype::value_type>()
-    // instead of
-    //      vctPythonType<int>()
-    // the compiler gives errors.
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(sz, shape, type);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicNArrayRef TO THE PYARRAY
@@ -488,7 +480,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -563,7 +555,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS N-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS N-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -620,7 +612,8 @@
     for (unsigned int i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
-    $result = PyArray_SimpleNew(sz, shape, vctPythonType<int>());
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(sz, shape, type);
     // TODO: The following two lines make the test fail for some reason, so
     // I'm resorting to the `PyArray_SimpleNew()' function (the line above) for now
     //PyArray_Descr *descr = PyArray_DescrFromType(vctPythonType<$1_ltype::value_type>());
@@ -659,7 +652,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -723,14 +716,11 @@
 %apply vctDynamicNArray         {vctDynamicNArray<elementType, ndim>};
 %apply vctDynamicNArray &       {vctDynamicNArray<elementType, ndim> &};
 %apply const vctDynamicNArray & {const vctDynamicNArray<elementType, ndim> &};
-
 %apply vctDynamicNArrayRef         {vctDynamicNArrayRef<elementType, ndim>};
 %apply const vctDynamicNArrayRef & {const vctDynamicNArrayRef<elementType, ndim> &};
-
 %apply vctDynamicConstNArrayRef         {vctDynamicConstNArrayRef<elementType, ndim>};
 %apply const vctDynamicConstNArrayRef & {const vctDynamicConstNArrayRef<elementType, ndim> &};
 %enddef
-
 
 %define VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS(elementType)
 VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 3);
@@ -740,3 +730,4 @@ VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS_ONE_DIMENSION(elementType, 5);
 
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS(int);
+VCT_TYPEMAPS_APPLY_DYNAMIC_NARRAYS(double);

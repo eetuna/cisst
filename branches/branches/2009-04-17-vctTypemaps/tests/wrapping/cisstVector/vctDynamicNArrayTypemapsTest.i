@@ -9,3 +9,6 @@
 %}
 
 %include "vctDynamicNArrayTypemapsTest.h"
+
+%template(vctDynamicNArrayTypemapsTest_int) vctDynamicNArrayTypemapsTest<int>;
+%template(vctDynamicNArrayTypemapsTest_double) vctDynamicNArrayTypemapsTest<double>;

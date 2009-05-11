@@ -16,17 +16,18 @@ import copy
 import numpy
 import unittest
 
-from vctDynamicNArrayTypemapsTestPython import vctDynamicNArrayTypemapsTest
-import sys
+from vctDynamicNArrayTypemapsTestPython import vctDynamicNArrayTypemapsTest_double
 
 class DynamicNArrayTypemapsTest(unittest.TestCase):
+
+    dtype = numpy.double
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctDynamicNArrayTypemapsTest()
+        self.CObject = vctDynamicNArrayTypemapsTest_double()
 
 
     ###########################################################################
@@ -39,7 +40,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         # TODO: Limit sizes to be something other than [1, 10]; possibly [3, 7]
         sizes = numpy.random.rand(ndim)
         sizes = numpy.floor(sizes * 10) + 1  # `+ 1' to avoid 0-sized dimension
-        sizes = numpy.array(sizes, dtype=numpy.int32)
+        sizes = numpy.array(sizes, dtype=self.dtype)
         sizes = tuple(sizes)
         return sizes
 
@@ -75,7 +76,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Give an array; expect no exception
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        goodvar = numpy.ones(sizes, dtype=numpy.int32)
+        goodvar = numpy.ones(sizes, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -85,7 +86,10 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             sizes = self.HelperRandSizes(self.CObject.Dim())
-            badvar = numpy.ones(sizes, dtype=numpy.float64)
+            if (self.dtype != numpy.float64):
+                badvar = numpy.ones(sizes, dtype=numpy.float64)
+            else:
+                badvar = numpy.ones(sizes, dtype=numpy.int32)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
@@ -93,7 +97,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Give an int; expect no exception
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        goodvar = numpy.ones(sizes, dtype=numpy.int32)
+        goodvar = numpy.ones(sizes, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -104,7 +108,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             sizes = self.HelperRandSizes(self.CObject.Dim() - 1)
-            badvar = numpy.ones(sizes, dtype=numpy.int32)
+            badvar = numpy.ones(sizes, dtype=self.dtype)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
@@ -112,7 +116,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Give an n-D array; expect no exception
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        goodvar = numpy.ones(sizes, dtype=numpy.int32)
+        goodvar = numpy.ones(sizes, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -122,7 +126,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             sizes = self.HelperRandSizes(self.CObject.Dim())
-            badvar = numpy.ones(sizes, dtype=numpy.int32)
+            badvar = numpy.ones(sizes, dtype=self.dtype)
             badvar.setflags(write=False)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -131,7 +135,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Give a writable array; expect no exception
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        goodvar = numpy.ones(sizes, dtype=numpy.int32)
+        goodvar = numpy.ones(sizes, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -140,7 +144,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             sizes = self.HelperRandSizes(self.CObject.Dim())
-            temp = numpy.ones(sizes, dtype=numpy.int32)
+            temp = numpy.ones(sizes, dtype=self.dtype)
             badvar = temp[:]
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -149,7 +153,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Give a memory-owning array; expect no exception
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        goodvar = numpy.ones(sizes, dtype=numpy.int32)
+        goodvar = numpy.ones(sizes, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -158,7 +162,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             sizes = self.HelperRandSizes(self.CObject.Dim())
-            badvar = numpy.ones(sizes, dtype=numpy.int32)
+            badvar = numpy.ones(sizes, dtype=self.dtype)
             temp = badvar
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -167,7 +171,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         # Give an array with no references; expect no exception
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        goodvar = numpy.ones(sizes, dtype=numpy.int32)
+        goodvar = numpy.ones(sizes, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -190,7 +194,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         sizes = self.HelperRandSizes(ndim)
         vNew = numpy.random.random_sample(sizes)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
 
         vShape = numpy.array(sizes)
@@ -198,7 +202,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         exec('self.CObject.' + function + '(vNew, 0)')
 
-        cShape = numpy.ones(ndim, dtype=numpy.int32)
+        cShape = numpy.ones(ndim, dtype=self.dtype)
         self.CObject.sizes(cShape)
 
         assert((cShape == vShape).all())
@@ -219,7 +223,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         sizes = self.HelperRandSizes(ndim)
         vNew = numpy.random.random_sample(sizes)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
 
         vShape = numpy.array(sizes)
@@ -227,7 +231,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         exec('self.CObject.' + function + '(vNew, 0)')
 
-        cShape = numpy.ones(ndim, dtype=numpy.int32)
+        cShape = numpy.ones(ndim, dtype=self.dtype)
         self.CObject.sizes(cShape)
 
         assert((cShape == vShape).all())
@@ -248,7 +252,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         sizes = self.HelperRandSizes(ndim)
         vNew = numpy.random.random_sample(sizes)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
 
         vShape = numpy.array(sizes)
@@ -258,7 +262,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
 
-        cShape = numpy.ones(ndim, dtype=numpy.int32)
+        cShape = numpy.ones(ndim, dtype=self.dtype)
         self.CObject.sizes(cShape)
 
         assert((cShape == vShape).all())
