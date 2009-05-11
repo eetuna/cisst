@@ -9,3 +9,6 @@
 %}
 
 %include "vctDynamicVectorTypemapsTest.h"
+
+%template(vctDynamicVectorTypemapsTest_int) vctDynamicVectorTypemapsTest<int>;
+%template(vctDynamicVectorTypemapsTest_double) vctDynamicVectorTypemapsTest<double>;

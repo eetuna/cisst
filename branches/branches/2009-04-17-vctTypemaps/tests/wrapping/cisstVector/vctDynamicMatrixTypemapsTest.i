@@ -9,3 +9,6 @@
 %}
 
 %include "vctDynamicMatrixTypemapsTest.h"
+
+%template(vctDynamicMatrixTypemapsTest_int) vctDynamicMatrixTypemapsTest<int>;
+%template(vctDynamicMatrixTypemapsTest_double) vctDynamicMatrixTypemapsTest<double>;

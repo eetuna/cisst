@@ -7,19 +7,20 @@
 #include <cisstVector.h>
 #include <iostream>
 
+template <class _elementType>
 class vctDynamicVectorTypemapsTest
 {
 
 protected:
 
-    vctDynamicVector<int> copy;
+    vctDynamicVector<_elementType> copy;
 
 public:
 
     vctDynamicVectorTypemapsTest()
     {}
 
-    void in_argout_vctDynamicVector_ref(vctDynamicVector<int> &param, unsigned int sizeFactor) {
+    void in_argout_vctDynamicVector_ref(vctDynamicVector<_elementType> &param, unsigned int sizeFactor) {
         copy.SetSize(param.size());
         copy.Assign(param);
         param += 1;
@@ -36,72 +37,74 @@ public:
         }
     }
 
-    void in_vctDynamicVectorRef(vctDynamicVectorRef<int> param, unsigned int dummy) {
+    void in_vctDynamicVectorRef(vctDynamicVectorRef<_elementType> param, unsigned int dummy) {
         copy.SetSize(param.size());
         copy.Assign(param);
         param += 1;
     }
 
-    void in_vctDynamicConstVectorRef(vctDynamicConstVectorRef<int> param, unsigned int dummy) {
+    void in_vctDynamicConstVectorRef(vctDynamicConstVectorRef<_elementType> param, unsigned int dummy) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicConstVectorRef_ref(const vctDynamicConstVectorRef<int> &param, unsigned int dummy) {
+    void in_argout_const_vctDynamicConstVectorRef_ref(const vctDynamicConstVectorRef<_elementType> &param, unsigned int dummy) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicVectorRef_ref(const vctDynamicVectorRef<int> &param, unsigned int dummy) {
+    void in_argout_const_vctDynamicVectorRef_ref(const vctDynamicVectorRef<_elementType> &param, unsigned int dummy) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_vctDynamicVector(vctDynamicVector<int> param, unsigned int dummy) {
+    void in_vctDynamicVector(vctDynamicVector<_elementType> param, unsigned int dummy) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicVector_ref(const vctDynamicVector<int> &param, unsigned int dummy) {
+    void in_argout_const_vctDynamicVector_ref(const vctDynamicVector<_elementType> &param, unsigned int dummy) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    vctDynamicVector<int> out_vctDynamicVector(unsigned int size) {
+    vctDynamicVector<_elementType> out_vctDynamicVector(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);
         return copy;
     }
 
-    vctDynamicVector<int> &out_vctDynamicVector_ref(unsigned int size) {
+    vctDynamicVector<_elementType> &out_vctDynamicVector_ref(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);
         return copy;
     }
 
-    const vctDynamicVector<int> &out_const_vctDynamicVector_ref(unsigned int size) {
+    const vctDynamicVector<_elementType> &out_const_vctDynamicVector_ref(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);
         return copy;
     }
 
-    vctDynamicVectorRef<int> out_vctDynamicVectorRef(unsigned int size) {
+    vctDynamicVectorRef<_elementType> out_vctDynamicVectorRef(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
-        return vctDynamicVectorRef<int>(copy);
+        return vctDynamicVectorRef<_elementType>(copy);
     }
 
-    vctDynamicConstVectorRef<int> out_vctDynamicConstVectorRef(unsigned int size) {
+    vctDynamicConstVectorRef<_elementType> out_vctDynamicConstVectorRef(unsigned int size) {
         copy.SetSize(size);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
-        return vctDynamicConstVectorRef<int>(copy);
+        return vctDynamicConstVectorRef<_elementType>(copy);
     }
 
-    inline int __getitem__(unsigned int index) const throw(std::out_of_range) {
+    inline _elementType __getitem__(unsigned int index) const
+    throw(std::out_of_range) {
         return copy.at(index);
     }
 
-    inline void __setitem__(unsigned int index, int value) throw(std::out_of_range) {
+    inline void __setitem__(unsigned int index, _elementType value)
+    throw(std::out_of_range) {
         copy.at(index) = value;
     }
 

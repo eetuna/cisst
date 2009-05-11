@@ -15,17 +15,19 @@ import copy
 import numpy
 import unittest
 
-from vctDynamicVectorTypemapsTestPython import vctDynamicVectorTypemapsTest
+from vctDynamicVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_double
 import sys
 
 class DynamicVectorTypemapsTest(unittest.TestCase):
+
+    dtype = numpy.double
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctDynamicVectorTypemapsTest()
+        self.CObject = vctDynamicVectorTypemapsTest_double()
 
 
     ###########################################################################
@@ -45,7 +47,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones(10, dtype=self.dtype)
         #self.CObject.in_argout_vctDynamicVector_ref(goodvar, 0)      # DEBUG
         #print sys.getrefcount(goodvar)                               # DEBUG
         exec('self.CObject.' + function + '(goodvar, 0)')
@@ -56,14 +58,17 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give an array of floats; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.float64)
+            if (self.dtype != numpy.float64):
+                badvar = numpy.ones(10, dtype=numpy.float64)
+            else:
+                badvar = numpy.ones(10, dtype=numpy.int32)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones(10, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -79,7 +84,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a 1D array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones(10, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -88,7 +93,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give a non-writable array; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.int32)
+            badvar = numpy.ones(10, dtype=self.dtype)
             badvar.setflags(write=False)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -96,7 +101,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones(10, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -104,7 +109,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give a non-memory owning array; expect an exception
         exceptionOccurred = False
         try:
-            temp = numpy.ones(10, dtype=numpy.int32)
+            temp = numpy.ones(10, dtype=self.dtype)
             badvar = temp[:]
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -112,7 +117,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a memory-owning array; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones(10, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -120,7 +125,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         # Give an array with a reference on it; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.int32)
+            badvar = numpy.ones(10, dtype=self.dtype)
             temp = badvar
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -128,7 +133,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array with no references; expect no exception
-        goodvar = numpy.ones(10, dtype=numpy.int32)
+        goodvar = numpy.ones(10, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -150,7 +155,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReadsCorrectly(self, function):
         vNew = numpy.random.rand(10)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         exec('self.CObject.' + function + '(vNew, 0)')
@@ -168,7 +173,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReadsWritesCorrectly(self, function):
         vNew = numpy.random.rand(10)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         exec('self.CObject.' + function + '(vNew, 0)')
@@ -186,7 +191,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReadsWritesResizesCorrectly(self, function):
         vNew = numpy.random.rand(10)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         SIZE_FACTOR = 3

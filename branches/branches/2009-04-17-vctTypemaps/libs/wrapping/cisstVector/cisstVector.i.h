@@ -73,6 +73,17 @@ bool vctThrowUnlessIsSameTypeArray<int>(PyObject * input)
     return true;
 }
 
+template <>
+bool vctThrowUnlessIsSameTypeArray<double>(PyObject * input)
+{
+    if (PyArray_ObjectType(input, 0) != NPY_DOUBLE) {
+        PyErr_SetString(PyExc_ValueError, "Array must be of type double");
+        return false;
+    }
+
+    return true;
+}
+
 template <class _elementType>
 int vctPythonType(void)
 {
@@ -85,16 +96,21 @@ int vctPythonType<int>(void)
     return NPY_INT32;
 }
 
+template <>
+int vctPythonType<double>(void)
+{
+    return NPY_DOUBLE;
+}
+
 bool vctThrowUnlessDimension1(PyObject * input)
 {
     if (PyArray_NDIM(input) != 1) {
-        PyErr_SetString(PyExc_ValueError, "Array must be 1D");
+        PyErr_SetString(PyExc_ValueError, "Array must be 1D (vector)");
         return false;
     }
 
     return true;
 }
-
 
 bool vctThrowUnlessDimension2(PyObject * input)
 {
@@ -105,7 +121,6 @@ bool vctThrowUnlessDimension2(PyObject * input)
 
     return true;
 }
-
 
 template <class _containerType>
 bool vctThrowUnlessDimensionN(PyObject * input)
@@ -120,7 +135,6 @@ bool vctThrowUnlessDimensionN(PyObject * input)
 
     return true;
 }
-
 
 bool vctThrowUnlessIsWritable(PyObject *input)
 {

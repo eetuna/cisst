@@ -9,24 +9,25 @@
 #######################
 
 # TODO: If I have time, Document why self.CObject[i] works and check which typemap(s) used
-# TODO: Check that SpecTestThrowUnlessReads[Writes][Resizes]Correctly mirror each other
 # TODO: Clean this code up
 
 import copy
 import numpy
 import unittest
 
-from vctDynamicMatrixTypemapsTestPython import vctDynamicMatrixTypemapsTest
+from vctDynamicMatrixTypemapsTestPython import vctDynamicMatrixTypemapsTest_double
 import sys
 
 class DynamicMatrixTypemapsTest(unittest.TestCase):
+
+    dtype = numpy.double
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctDynamicMatrixTypemapsTest()
+        self.CObject = vctDynamicMatrixTypemapsTest_double()
 
 
     ###########################################################################
@@ -46,7 +47,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((5, 7), dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -55,14 +56,17 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         # Give an array of floats; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones((5, 7), dtype=numpy.float64)
+            if (self.dtype != numpy.float64):
+                badvar = numpy.ones((5, 7), dtype=numpy.float64)
+            else:
+                badvar = numpy.ones((5, 7), dtype=numpy.int32)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((5, 7), dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -71,14 +75,14 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         # Give a 1D array; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones(10, dtype=numpy.int32)
+            badvar = numpy.ones(10, dtype=self.dtype)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a 2D array; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((5, 7), dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -87,7 +91,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         # Give a non-writable array; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones((5, 7), dtype=numpy.int32)
+            badvar = numpy.ones((5, 7), dtype=self.dtype)
             badvar.setflags(write=False)
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -95,7 +99,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((5, 7), dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -103,7 +107,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         # Give a non-memory owning array; expect an exception
         exceptionOccurred = False
         try:
-            temp = numpy.ones((5, 7), dtype=numpy.int32)
+            temp = numpy.ones((5, 7), dtype=self.dtype)
             badvar = temp[:]
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -111,7 +115,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a memory-owning array; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((5, 7), dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -119,7 +123,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         # Give an array with a reference on it; expect an exception
         exceptionOccurred = False
         try:
-            badvar = numpy.ones((5, 7), dtype=numpy.int32)
+            badvar = numpy.ones((5, 7), dtype=self.dtype)
             temp = badvar
             exec('self.CObject.' + function + '(badvar, 0)')
         except:
@@ -127,7 +131,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give an array with no references; expect no exception
-        goodvar = numpy.ones((5, 7), dtype=numpy.int32)
+        goodvar = numpy.ones((5, 7), dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -151,7 +155,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReadsCorrectly(self, function):
         vNew = numpy.random.rand(5, 7)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         rows = vNew.shape[0]
         cols = vNew.shape[1]
@@ -171,7 +175,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReadsWritesCorrectly(self, function):
         vNew = numpy.random.rand(5, 7)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         rows = vNew.shape[0]
         cols = vNew.shape[1]
@@ -191,7 +195,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReadsWritesResizesCorrectly(self, function):
         vNew = numpy.random.rand(5, 7)
         vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=numpy.int32)
+        vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         rows = vNew.shape[0]
         cols = vNew.shape[1]

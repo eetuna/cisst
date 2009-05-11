@@ -39,7 +39,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS TWO-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -108,7 +108,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, IS ONE-DIMENSIONAL, AND IS WRITABLE
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -238,7 +238,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(vctThrowUnlessIsPyArray($input)
@@ -320,7 +320,7 @@
 
     /*************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS
-     TYPEMAP IS A PYARRAY, IS OF NUMPY DTYPE int, IS ONE-DIMENSIONAL, AND
+     TYPEMAP IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND
      IS WRITABLE
     *************************************************************************/
 
@@ -402,7 +402,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -464,7 +464,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -549,7 +549,7 @@
 
     /*****************************************************************************
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
-     IS A PYARRAY, IS OF NUMPY DTYPE int, AND IS ONE-DIMENSIONAL
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
     if (!(   vctThrowUnlessIsPyArray($input)
@@ -598,8 +598,15 @@
 *                    Applying Typemaps to Other Types
 **************************************************************************/
 
-
-// TODO: Clean this section up
+%define VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(elementType)
+%apply vctDynamicMatrix         {vctDynamicMatrix<elementType>};
+%apply vctDynamicMatrix &       {vctDynamicMatrix<elementType> &};
+%apply const vctDynamicMatrix & {const vctDynamicMatrix<elementType> &};
+%apply vctDynamicMatrixRef         {vctDynamicMatrixRef<elementType>};
+%apply const vctDynamicMatrixRef & {const vctDynamicMatrixRef<elementType> &};
+%apply vctDynamicConstMatrixRef         {vctDynamicConstMatrixRef<elementType>};
+%apply const vctDynamicConstMatrixRef & {const vctDynamicConstMatrixRef<elementType> &};
+%enddef
 
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, size)
 %apply vctDynamicMatrix {vctFixedSizeMatrix<elementType, size>};
@@ -617,19 +624,8 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 7);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8);
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(elementType)
-%apply vctDynamicMatrix         {vctDynamicMatrix<elementType>};
-%apply vctDynamicMatrix &       {vctDynamicMatrix<elementType> &};
-%apply const vctDynamicMatrix & {const vctDynamicMatrix<elementType> &};
-
-%apply vctDynamicMatrixRef         {vctDynamicMatrixRef<elementType>};
-%apply const vctDynamicMatrixRef & {const vctDynamicMatrixRef<elementType> &};
-
-%apply vctDynamicConstMatrixRef         {vctDynamicConstMatrixRef<elementType>};
-%apply const vctDynamicConstMatrixRef & {const vctDynamicConstMatrixRef<elementType> &};
-%enddef
-
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
+
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
