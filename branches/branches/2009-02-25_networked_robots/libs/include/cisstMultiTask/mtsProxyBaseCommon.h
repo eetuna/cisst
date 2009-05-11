@@ -77,7 +77,11 @@ public:
     protected:
         void Log(const std::string& log)
         {
+#if (CISST_OS == CISST_WINDOWS)
             OutputDebugString(log.c_str());
+#else
+            std::cout << log.c_str() << std::endl;
+#endif
         }        
     };
 
