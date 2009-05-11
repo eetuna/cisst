@@ -16,7 +16,7 @@ import copy
 import numpy
 import unittest
 
-from vctDynamicNArrayTypemapsTestPython import vctDynamicNArrayTypemapsTest_double
+from vctDynamicNArrayTypemapsTestPython import vctDynamicNArrayTypemapsTest_double_4
 
 class DynamicNArrayTypemapsTest(unittest.TestCase):
 
@@ -27,7 +27,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctDynamicNArrayTypemapsTest_double()
+        self.CObject = vctDynamicNArrayTypemapsTest_double_4()
 
 
     ###########################################################################
