@@ -8,9 +8,9 @@
 // **********************************************************************
 
 // Ice version 3.3.0
-// Generated from file `mtsTaskInterfaceProxy.ice'
+// Generated from file `mtsDeviceInterfaceProxy.ice'
 
-#include <mtsTaskInterfaceProxy.h>
+#include <mtsDeviceInterfaceProxy.h>
 #include <Ice/LocalException.h>
 #include <Ice/ObjectFactory.h>
 #include <Ice/BasicStream.h>
@@ -29,26 +29,26 @@
 #   endif
 #endif
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__AddClient_name = "AddClient";
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__AddClient_name = "AddClient";
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name = "GetProvidedInterfaceSpecification";
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name = "GetProvidedInterfaceSpecification";
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandVoid_name = "ExecuteCommandVoid";
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandVoid_name = "ExecuteCommandVoid";
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandWrite_name = "ExecuteCommandWrite";
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandWrite_name = "ExecuteCommandWrite";
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name = "ExecuteCommandRead";
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name = "ExecuteCommandRead";
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name = "ExecuteCommandQualifiedRead";
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name = "ExecuteCommandQualifiedRead";
 
-::Ice::Object* IceInternal::upCast(::mtsTaskInterfaceProxy::TaskInterfaceClient* p) { return p; }
-::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient* p) { return p; }
+::Ice::Object* IceInternal::upCast(::mtsDeviceInterfaceProxy::TaskInterfaceClient* p) { return p; }
+::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient* p) { return p; }
 
-::Ice::Object* IceInternal::upCast(::mtsTaskInterfaceProxy::TaskInterfaceServer* p) { return p; }
-::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer* p) { return p; }
+::Ice::Object* IceInternal::upCast(::mtsDeviceInterfaceProxy::TaskInterfaceServer* p) { return p; }
+::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer* p) { return p; }
 
 void
-mtsTaskInterfaceProxy::__read(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::TaskInterfaceClientPrx& v)
+mtsDeviceInterfaceProxy::__read(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::TaskInterfaceClientPrx& v)
 {
     ::Ice::ObjectPrx proxy;
     __is->read(proxy);
@@ -58,13 +58,13 @@ mtsTaskInterfaceProxy::__read(::IceInternal::BasicStream* __is, ::mtsTaskInterfa
     }
     else
     {
-        v = new ::IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient;
+        v = new ::IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient;
         v->__copyFrom(proxy);
     }
 }
 
 void
-mtsTaskInterfaceProxy::__read(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::TaskInterfaceServerPrx& v)
+mtsDeviceInterfaceProxy::__read(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::TaskInterfaceServerPrx& v)
 {
     ::Ice::ObjectPrx proxy;
     __is->read(proxy);
@@ -74,13 +74,13 @@ mtsTaskInterfaceProxy::__read(::IceInternal::BasicStream* __is, ::mtsTaskInterfa
     }
     else
     {
-        v = new ::IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer;
+        v = new ::IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer;
         v->__copyFrom(proxy);
     }
 }
 
 bool
-mtsTaskInterfaceProxy::CommandVoidInfo::operator==(const CommandVoidInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandVoidInfo::operator==(const CommandVoidInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -98,7 +98,7 @@ mtsTaskInterfaceProxy::CommandVoidInfo::operator==(const CommandVoidInfo& __rhs)
 }
 
 bool
-mtsTaskInterfaceProxy::CommandVoidInfo::operator<(const CommandVoidInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandVoidInfo::operator<(const CommandVoidInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -124,21 +124,21 @@ mtsTaskInterfaceProxy::CommandVoidInfo::operator<(const CommandVoidInfo& __rhs) 
 }
 
 void
-mtsTaskInterfaceProxy::CommandVoidInfo::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::CommandVoidInfo::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(Name);
     __os->write(CommandSID);
 }
 
 void
-mtsTaskInterfaceProxy::CommandVoidInfo::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::CommandVoidInfo::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(Name);
     __is->read(CommandSID);
 }
 
 bool
-mtsTaskInterfaceProxy::CommandWriteInfo::operator==(const CommandWriteInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandWriteInfo::operator==(const CommandWriteInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -160,7 +160,7 @@ mtsTaskInterfaceProxy::CommandWriteInfo::operator==(const CommandWriteInfo& __rh
 }
 
 bool
-mtsTaskInterfaceProxy::CommandWriteInfo::operator<(const CommandWriteInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandWriteInfo::operator<(const CommandWriteInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -194,7 +194,7 @@ mtsTaskInterfaceProxy::CommandWriteInfo::operator<(const CommandWriteInfo& __rhs
 }
 
 void
-mtsTaskInterfaceProxy::CommandWriteInfo::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::CommandWriteInfo::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(Name);
     __os->write(ArgumentTypeName);
@@ -202,7 +202,7 @@ mtsTaskInterfaceProxy::CommandWriteInfo::__write(::IceInternal::BasicStream* __o
 }
 
 void
-mtsTaskInterfaceProxy::CommandWriteInfo::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::CommandWriteInfo::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(Name);
     __is->read(ArgumentTypeName);
@@ -210,7 +210,7 @@ mtsTaskInterfaceProxy::CommandWriteInfo::__read(::IceInternal::BasicStream* __is
 }
 
 bool
-mtsTaskInterfaceProxy::CommandReadInfo::operator==(const CommandReadInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandReadInfo::operator==(const CommandReadInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -232,7 +232,7 @@ mtsTaskInterfaceProxy::CommandReadInfo::operator==(const CommandReadInfo& __rhs)
 }
 
 bool
-mtsTaskInterfaceProxy::CommandReadInfo::operator<(const CommandReadInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandReadInfo::operator<(const CommandReadInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -266,7 +266,7 @@ mtsTaskInterfaceProxy::CommandReadInfo::operator<(const CommandReadInfo& __rhs) 
 }
 
 void
-mtsTaskInterfaceProxy::CommandReadInfo::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::CommandReadInfo::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(Name);
     __os->write(ArgumentTypeName);
@@ -274,7 +274,7 @@ mtsTaskInterfaceProxy::CommandReadInfo::__write(::IceInternal::BasicStream* __os
 }
 
 void
-mtsTaskInterfaceProxy::CommandReadInfo::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::CommandReadInfo::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(Name);
     __is->read(ArgumentTypeName);
@@ -282,7 +282,7 @@ mtsTaskInterfaceProxy::CommandReadInfo::__read(::IceInternal::BasicStream* __is)
 }
 
 bool
-mtsTaskInterfaceProxy::CommandQualifiedReadInfo::operator==(const CommandQualifiedReadInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandQualifiedReadInfo::operator==(const CommandQualifiedReadInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -308,7 +308,7 @@ mtsTaskInterfaceProxy::CommandQualifiedReadInfo::operator==(const CommandQualifi
 }
 
 bool
-mtsTaskInterfaceProxy::CommandQualifiedReadInfo::operator<(const CommandQualifiedReadInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandQualifiedReadInfo::operator<(const CommandQualifiedReadInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -350,7 +350,7 @@ mtsTaskInterfaceProxy::CommandQualifiedReadInfo::operator<(const CommandQualifie
 }
 
 void
-mtsTaskInterfaceProxy::CommandQualifiedReadInfo::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::CommandQualifiedReadInfo::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(Name);
     __os->write(Argument1TypeName);
@@ -359,7 +359,7 @@ mtsTaskInterfaceProxy::CommandQualifiedReadInfo::__write(::IceInternal::BasicStr
 }
 
 void
-mtsTaskInterfaceProxy::CommandQualifiedReadInfo::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::CommandQualifiedReadInfo::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(Name);
     __is->read(Argument1TypeName);
@@ -368,7 +368,7 @@ mtsTaskInterfaceProxy::CommandQualifiedReadInfo::__read(::IceInternal::BasicStre
 }
 
 void
-mtsTaskInterfaceProxy::__writeCommandVoidSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::CommandVoidInfo* begin, const ::mtsTaskInterfaceProxy::CommandVoidInfo* end)
+mtsDeviceInterfaceProxy::__writeCommandVoidSeq(::IceInternal::BasicStream* __os, const ::mtsDeviceInterfaceProxy::CommandVoidInfo* begin, const ::mtsDeviceInterfaceProxy::CommandVoidInfo* end)
 {
     ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
     __os->writeSize(size);
@@ -379,7 +379,7 @@ mtsTaskInterfaceProxy::__writeCommandVoidSeq(::IceInternal::BasicStream* __os, c
 }
 
 void
-mtsTaskInterfaceProxy::__readCommandVoidSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::CommandVoidSeq& v)
+mtsDeviceInterfaceProxy::__readCommandVoidSeq(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::CommandVoidSeq& v)
 {
     ::Ice::Int sz;
     __is->readSize(sz);
@@ -395,7 +395,7 @@ mtsTaskInterfaceProxy::__readCommandVoidSeq(::IceInternal::BasicStream* __is, ::
 }
 
 void
-mtsTaskInterfaceProxy::__writeCommandWriteSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::CommandWriteInfo* begin, const ::mtsTaskInterfaceProxy::CommandWriteInfo* end)
+mtsDeviceInterfaceProxy::__writeCommandWriteSeq(::IceInternal::BasicStream* __os, const ::mtsDeviceInterfaceProxy::CommandWriteInfo* begin, const ::mtsDeviceInterfaceProxy::CommandWriteInfo* end)
 {
     ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
     __os->writeSize(size);
@@ -406,7 +406,7 @@ mtsTaskInterfaceProxy::__writeCommandWriteSeq(::IceInternal::BasicStream* __os, 
 }
 
 void
-mtsTaskInterfaceProxy::__readCommandWriteSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::CommandWriteSeq& v)
+mtsDeviceInterfaceProxy::__readCommandWriteSeq(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::CommandWriteSeq& v)
 {
     ::Ice::Int sz;
     __is->readSize(sz);
@@ -422,7 +422,7 @@ mtsTaskInterfaceProxy::__readCommandWriteSeq(::IceInternal::BasicStream* __is, :
 }
 
 void
-mtsTaskInterfaceProxy::__writeCommandReadSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::CommandReadInfo* begin, const ::mtsTaskInterfaceProxy::CommandReadInfo* end)
+mtsDeviceInterfaceProxy::__writeCommandReadSeq(::IceInternal::BasicStream* __os, const ::mtsDeviceInterfaceProxy::CommandReadInfo* begin, const ::mtsDeviceInterfaceProxy::CommandReadInfo* end)
 {
     ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
     __os->writeSize(size);
@@ -433,7 +433,7 @@ mtsTaskInterfaceProxy::__writeCommandReadSeq(::IceInternal::BasicStream* __os, c
 }
 
 void
-mtsTaskInterfaceProxy::__readCommandReadSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::CommandReadSeq& v)
+mtsDeviceInterfaceProxy::__readCommandReadSeq(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::CommandReadSeq& v)
 {
     ::Ice::Int sz;
     __is->readSize(sz);
@@ -449,7 +449,7 @@ mtsTaskInterfaceProxy::__readCommandReadSeq(::IceInternal::BasicStream* __is, ::
 }
 
 void
-mtsTaskInterfaceProxy::__writeCommandQualifiedReadSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::CommandQualifiedReadInfo* begin, const ::mtsTaskInterfaceProxy::CommandQualifiedReadInfo* end)
+mtsDeviceInterfaceProxy::__writeCommandQualifiedReadSeq(::IceInternal::BasicStream* __os, const ::mtsDeviceInterfaceProxy::CommandQualifiedReadInfo* begin, const ::mtsDeviceInterfaceProxy::CommandQualifiedReadInfo* end)
 {
     ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
     __os->writeSize(size);
@@ -460,7 +460,7 @@ mtsTaskInterfaceProxy::__writeCommandQualifiedReadSeq(::IceInternal::BasicStream
 }
 
 void
-mtsTaskInterfaceProxy::__readCommandQualifiedReadSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::CommandQualifiedReadSeq& v)
+mtsDeviceInterfaceProxy::__readCommandQualifiedReadSeq(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::CommandQualifiedReadSeq& v)
 {
     ::Ice::Int sz;
     __is->readSize(sz);
@@ -476,7 +476,7 @@ mtsTaskInterfaceProxy::__readCommandQualifiedReadSeq(::IceInternal::BasicStream*
 }
 
 bool
-mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::operator==(const ProvidedInterfaceSpecification& __rhs) const
+mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification::operator==(const ProvidedInterfaceSpecification& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -510,7 +510,7 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::operator==(const Provided
 }
 
 bool
-mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::operator<(const ProvidedInterfaceSpecification& __rhs) const
+mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification::operator<(const ProvidedInterfaceSpecification& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -568,7 +568,7 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::operator<(const ProvidedI
 }
 
 void
-mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(interfaceName);
     __os->write(providedInterfaceForTask);
@@ -578,7 +578,7 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::Ba
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandVoidSeq(__os, &commandsVoid[0], &commandsVoid[0] + commandsVoid.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandVoidSeq(__os, &commandsVoid[0], &commandsVoid[0] + commandsVoid.size());
     }
     if(commandsWrite.size() == 0)
     {
@@ -586,7 +586,7 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::Ba
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandWriteSeq(__os, &commandsWrite[0], &commandsWrite[0] + commandsWrite.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandWriteSeq(__os, &commandsWrite[0], &commandsWrite[0] + commandsWrite.size());
     }
     if(commandsRead.size() == 0)
     {
@@ -594,7 +594,7 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::Ba
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandReadSeq(__os, &commandsRead[0], &commandsRead[0] + commandsRead.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandReadSeq(__os, &commandsRead[0], &commandsRead[0] + commandsRead.size());
     }
     if(commandsQualifiedRead.size() == 0)
     {
@@ -602,23 +602,23 @@ mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__write(::IceInternal::Ba
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandQualifiedReadSeq(__os, &commandsQualifiedRead[0], &commandsQualifiedRead[0] + commandsQualifiedRead.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandQualifiedReadSeq(__os, &commandsQualifiedRead[0], &commandsQualifiedRead[0] + commandsQualifiedRead.size());
     }
 }
 
 void
-mtsTaskInterfaceProxy::ProvidedInterfaceSpecification::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(interfaceName);
     __is->read(providedInterfaceForTask);
-    ::mtsTaskInterfaceProxy::__readCommandVoidSeq(__is, commandsVoid);
-    ::mtsTaskInterfaceProxy::__readCommandWriteSeq(__is, commandsWrite);
-    ::mtsTaskInterfaceProxy::__readCommandReadSeq(__is, commandsRead);
-    ::mtsTaskInterfaceProxy::__readCommandQualifiedReadSeq(__is, commandsQualifiedRead);
+    ::mtsDeviceInterfaceProxy::__readCommandVoidSeq(__is, commandsVoid);
+    ::mtsDeviceInterfaceProxy::__readCommandWriteSeq(__is, commandsWrite);
+    ::mtsDeviceInterfaceProxy::__readCommandReadSeq(__is, commandsRead);
+    ::mtsDeviceInterfaceProxy::__readCommandQualifiedReadSeq(__is, commandsQualifiedRead);
 }
 
 void
-mtsTaskInterfaceProxy::__writeProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification* begin, const ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecification* end)
+mtsDeviceInterfaceProxy::__writeProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream* __os, const ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification* begin, const ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification* end)
 {
     ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
     __os->writeSize(size);
@@ -629,7 +629,7 @@ mtsTaskInterfaceProxy::__writeProvidedInterfaceSpecificationSeq(::IceInternal::B
 }
 
 void
-mtsTaskInterfaceProxy::__readProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& v)
+mtsDeviceInterfaceProxy::__readProvidedInterfaceSpecificationSeq(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq& v)
 {
     ::Ice::Int sz;
     __is->readSize(sz);
@@ -645,7 +645,7 @@ mtsTaskInterfaceProxy::__readProvidedInterfaceSpecificationSeq(::IceInternal::Ba
 }
 
 bool
-mtsTaskInterfaceProxy::CommandProxyElement::operator==(const CommandProxyElement& __rhs) const
+mtsDeviceInterfaceProxy::CommandProxyElement::operator==(const CommandProxyElement& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -663,7 +663,7 @@ mtsTaskInterfaceProxy::CommandProxyElement::operator==(const CommandProxyElement
 }
 
 bool
-mtsTaskInterfaceProxy::CommandProxyElement::operator<(const CommandProxyElement& __rhs) const
+mtsDeviceInterfaceProxy::CommandProxyElement::operator<(const CommandProxyElement& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -689,21 +689,21 @@ mtsTaskInterfaceProxy::CommandProxyElement::operator<(const CommandProxyElement&
 }
 
 void
-mtsTaskInterfaceProxy::CommandProxyElement::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::CommandProxyElement::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(Name);
     __os->write(ID);
 }
 
 void
-mtsTaskInterfaceProxy::CommandProxyElement::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::CommandProxyElement::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(Name);
     __is->read(ID);
 }
 
 void
-mtsTaskInterfaceProxy::__writeCommandProxyElementSeq(::IceInternal::BasicStream* __os, const ::mtsTaskInterfaceProxy::CommandProxyElement* begin, const ::mtsTaskInterfaceProxy::CommandProxyElement* end)
+mtsDeviceInterfaceProxy::__writeCommandProxyElementSeq(::IceInternal::BasicStream* __os, const ::mtsDeviceInterfaceProxy::CommandProxyElement* begin, const ::mtsDeviceInterfaceProxy::CommandProxyElement* end)
 {
     ::Ice::Int size = static_cast< ::Ice::Int>(end - begin);
     __os->writeSize(size);
@@ -714,7 +714,7 @@ mtsTaskInterfaceProxy::__writeCommandProxyElementSeq(::IceInternal::BasicStream*
 }
 
 void
-mtsTaskInterfaceProxy::__readCommandProxyElementSeq(::IceInternal::BasicStream* __is, ::mtsTaskInterfaceProxy::CommandProxyElementSeq& v)
+mtsDeviceInterfaceProxy::__readCommandProxyElementSeq(::IceInternal::BasicStream* __is, ::mtsDeviceInterfaceProxy::CommandProxyElementSeq& v)
 {
     ::Ice::Int sz;
     __is->readSize(sz);
@@ -730,7 +730,7 @@ mtsTaskInterfaceProxy::__readCommandProxyElementSeq(::IceInternal::BasicStream* 
 }
 
 bool
-mtsTaskInterfaceProxy::CommandProxyInfo::operator==(const CommandProxyInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandProxyInfo::operator==(const CommandProxyInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -760,7 +760,7 @@ mtsTaskInterfaceProxy::CommandProxyInfo::operator==(const CommandProxyInfo& __rh
 }
 
 bool
-mtsTaskInterfaceProxy::CommandProxyInfo::operator<(const CommandProxyInfo& __rhs) const
+mtsDeviceInterfaceProxy::CommandProxyInfo::operator<(const CommandProxyInfo& __rhs) const
 {
     if(this == &__rhs)
     {
@@ -810,7 +810,7 @@ mtsTaskInterfaceProxy::CommandProxyInfo::operator<(const CommandProxyInfo& __rhs
 }
 
 void
-mtsTaskInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __os) const
 {
     __os->write(ConnectedProvidedInterfaceName);
     if(CommandProxyVoidSeq.size() == 0)
@@ -819,7 +819,7 @@ mtsTaskInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __o
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyVoidSeq[0], &CommandProxyVoidSeq[0] + CommandProxyVoidSeq.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyVoidSeq[0], &CommandProxyVoidSeq[0] + CommandProxyVoidSeq.size());
     }
     if(CommandProxyWriteSeq.size() == 0)
     {
@@ -827,7 +827,7 @@ mtsTaskInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __o
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyWriteSeq[0], &CommandProxyWriteSeq[0] + CommandProxyWriteSeq.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyWriteSeq[0], &CommandProxyWriteSeq[0] + CommandProxyWriteSeq.size());
     }
     if(CommandProxyReadSeq.size() == 0)
     {
@@ -835,7 +835,7 @@ mtsTaskInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __o
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyReadSeq[0], &CommandProxyReadSeq[0] + CommandProxyReadSeq.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyReadSeq[0], &CommandProxyReadSeq[0] + CommandProxyReadSeq.size());
     }
     if(CommandProxyQualifiedReadSeq.size() == 0)
     {
@@ -843,46 +843,46 @@ mtsTaskInterfaceProxy::CommandProxyInfo::__write(::IceInternal::BasicStream* __o
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyQualifiedReadSeq[0], &CommandProxyQualifiedReadSeq[0] + CommandProxyQualifiedReadSeq.size());
+        ::mtsDeviceInterfaceProxy::__writeCommandProxyElementSeq(__os, &CommandProxyQualifiedReadSeq[0], &CommandProxyQualifiedReadSeq[0] + CommandProxyQualifiedReadSeq.size());
     }
 }
 
 void
-mtsTaskInterfaceProxy::CommandProxyInfo::__read(::IceInternal::BasicStream* __is)
+mtsDeviceInterfaceProxy::CommandProxyInfo::__read(::IceInternal::BasicStream* __is)
 {
     __is->read(ConnectedProvidedInterfaceName);
-    ::mtsTaskInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyVoidSeq);
-    ::mtsTaskInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyWriteSeq);
-    ::mtsTaskInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyReadSeq);
-    ::mtsTaskInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyQualifiedReadSeq);
+    ::mtsDeviceInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyVoidSeq);
+    ::mtsDeviceInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyWriteSeq);
+    ::mtsDeviceInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyReadSeq);
+    ::mtsDeviceInterfaceProxy::__readCommandProxyElementSeq(__is, CommandProxyQualifiedReadSeq);
 }
 
 const ::std::string&
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient::ice_staticId()
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_staticId()
 {
-    return ::mtsTaskInterfaceProxy::TaskInterfaceClient::ice_staticId();
+    return ::mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_staticId();
 }
 
 ::IceInternal::Handle< ::IceDelegateM::Ice::Object>
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient::__createDelegateM()
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient::__createDelegateM()
 {
-    return ::IceInternal::Handle< ::IceDelegateM::Ice::Object>(new ::IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceClient);
+    return ::IceInternal::Handle< ::IceDelegateM::Ice::Object>(new ::IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceClient);
 }
 
 ::IceInternal::Handle< ::IceDelegateD::Ice::Object>
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient::__createDelegateD()
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient::__createDelegateD()
 {
-    return ::IceInternal::Handle< ::IceDelegateD::Ice::Object>(new ::IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceClient);
+    return ::IceInternal::Handle< ::IceDelegateD::Ice::Object>(new ::IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceClient);
 }
 
 ::IceProxy::Ice::Object*
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceClient::__newInstance() const
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient::__newInstance() const
 {
     return new TaskInterfaceClient;
 }
 
 void
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Identity& ident, const ::Ice::Context* __ctx)
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Identity& ident, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -891,7 +891,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Ide
         try
         {
             __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->AddClient(ident, __ctx);
             return;
         }
@@ -907,7 +907,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Ide
 }
 
 bool
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context* __ctx)
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecification(::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -915,9 +915,9 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecif
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-            __checkTwowayOnly(__mtsTaskInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name);
+            __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name);
             __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             return __del->GetProvidedInterfaceSpecification(providedInterfaceSpecifications, __ctx);
         }
         catch(const ::IceInternal::LocalExceptionWrapper& __ex)
@@ -932,7 +932,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecif
 }
 
 void
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::Int CommandSID, const ::Ice::Context* __ctx)
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::Int CommandSID, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -941,7 +941,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::
         try
         {
             __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->ExecuteCommandVoid(CommandSID, __ctx);
             return;
         }
@@ -957,7 +957,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::
 }
 
 void
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice::Int CommandSID, ::Ice::Double argument, const ::Ice::Context* __ctx)
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice::Int CommandSID, ::Ice::Double argument, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -966,7 +966,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice:
         try
         {
             __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->ExecuteCommandWrite(CommandSID, argument, __ctx);
             return;
         }
@@ -982,7 +982,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice:
 }
 
 void
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::Int CommandSID, ::Ice::Double& argument, const ::Ice::Context* __ctx)
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::Int CommandSID, ::Ice::Double& argument, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -990,9 +990,9 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-            __checkTwowayOnly(__mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name);
+            __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name);
             __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->ExecuteCommandRead(CommandSID, argument, __ctx);
             return;
         }
@@ -1008,7 +1008,7 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::
 }
 
 void
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __ctx)
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __ctx)
 {
     int __cnt = 0;
     while(true)
@@ -1016,9 +1016,9 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRea
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-            __checkTwowayOnly(__mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name);
+            __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name);
             __delBase = __getDelegate(false);
-            ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsTaskInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->ExecuteCommandQualifiedRead(CommandSID, argument1, argument2, __ctx);
             return;
         }
@@ -1034,33 +1034,33 @@ IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRea
 }
 
 const ::std::string&
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::ice_staticId()
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_staticId()
 {
-    return ::mtsTaskInterfaceProxy::TaskInterfaceServer::ice_staticId();
+    return ::mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_staticId();
 }
 
 ::IceInternal::Handle< ::IceDelegateM::Ice::Object>
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::__createDelegateM()
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::__createDelegateM()
 {
-    return ::IceInternal::Handle< ::IceDelegateM::Ice::Object>(new ::IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer);
+    return ::IceInternal::Handle< ::IceDelegateM::Ice::Object>(new ::IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer);
 }
 
 ::IceInternal::Handle< ::IceDelegateD::Ice::Object>
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::__createDelegateD()
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::__createDelegateD()
 {
-    return ::IceInternal::Handle< ::IceDelegateD::Ice::Object>(new ::IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer);
+    return ::IceInternal::Handle< ::IceDelegateD::Ice::Object>(new ::IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer);
 }
 
 ::IceProxy::Ice::Object*
-IceProxy::mtsTaskInterfaceProxy::TaskInterfaceServer::__newInstance() const
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::__newInstance() const
 {
     return new TaskInterfaceServer;
 }
 
 void
-IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Identity& ident, const ::Ice::Context* __context)
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Identity& ident, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__AddClient_name, ::Ice::Normal, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__AddClient_name, ::Ice::Normal, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
@@ -1097,9 +1097,9 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice:
 }
 
 bool
-IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context* __context)
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecification(::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name, ::Ice::Idempotent, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name, ::Ice::Idempotent, __context);
     bool __ok = __og.invoke();
     try
     {
@@ -1118,7 +1118,7 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
         bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
-        ::mtsTaskInterfaceProxy::__readProvidedInterfaceSpecificationSeq(__is, providedInterfaceSpecifications);
+        ::mtsDeviceInterfaceProxy::__readProvidedInterfaceSpecificationSeq(__is, providedInterfaceSpecifications);
         __is->read(__ret);
         __is->endReadEncaps();
         return __ret;
@@ -1130,9 +1130,9 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
 }
 
 void
-IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::Int CommandSID, const ::Ice::Context* __context)
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::Int CommandSID, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandVoid_name, ::Ice::Normal, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandVoid_name, ::Ice::Normal, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
@@ -1169,9 +1169,9 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::I
 }
 
 void
-IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice::Int CommandSID, ::Ice::Double argument, const ::Ice::Context* __context)
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice::Int CommandSID, ::Ice::Double argument, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandWrite_name, ::Ice::Normal, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandWrite_name, ::Ice::Normal, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
@@ -1209,9 +1209,9 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::
 }
 
 void
-IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::Int CommandSID, ::Ice::Double& argument, const ::Ice::Context* __context)
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::Int CommandSID, ::Ice::Double& argument, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name, ::Ice::Normal, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name, ::Ice::Normal, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
@@ -1248,9 +1248,9 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::I
 }
 
 void
-IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __context)
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __context)
 {
-    ::IceInternal::Outgoing __og(__handler.get(), __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name, ::Ice::Normal, __context);
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name, ::Ice::Normal, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
@@ -1288,7 +1288,7 @@ IceDelegateM::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifie
 }
 
 void
-IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Identity& ident, const ::Ice::Context* __context)
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::Identity& ident, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
@@ -1303,7 +1303,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice:
         virtual ::Ice::DispatchStatus
         run(::Ice::Object* object)
         {
-            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
             if(!servant)
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
@@ -1318,7 +1318,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice:
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__AddClient_name, ::Ice::Normal, __context);
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__AddClient_name, ::Ice::Normal, __context);
     try
     {
         _DirectI __direct(ident, __current);
@@ -1352,13 +1352,13 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice:
 }
 
 bool
-IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecification(::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context* __context)
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpecification(::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
     public:
 
-        _DirectI(bool& __result, ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Current& __current) : 
+        _DirectI(bool& __result, ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq& providedInterfaceSpecifications, const ::Ice::Current& __current) : 
             ::IceInternal::Direct(__current),
             _result(__result),
             _m_providedInterfaceSpecifications(providedInterfaceSpecifications)
@@ -1368,7 +1368,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
         virtual ::Ice::DispatchStatus
         run(::Ice::Object* object)
         {
-            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
             if(!servant)
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
@@ -1380,11 +1380,11 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
     private:
         
         bool& _result;
-        ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq& _m_providedInterfaceSpecifications;
+        ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq& _m_providedInterfaceSpecifications;
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name, ::Ice::Idempotent, __context);
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name, ::Ice::Idempotent, __context);
     bool __result;
     try
     {
@@ -1420,7 +1420,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSp
 }
 
 void
-IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::Int CommandSID, const ::Ice::Context* __context)
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice::Int CommandSID, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
@@ -1435,7 +1435,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::I
         virtual ::Ice::DispatchStatus
         run(::Ice::Object* object)
         {
-            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
             if(!servant)
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
@@ -1450,7 +1450,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::I
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandVoid_name, ::Ice::Normal, __context);
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandVoid_name, ::Ice::Normal, __context);
     try
     {
         _DirectI __direct(CommandSID, __current);
@@ -1484,7 +1484,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::I
 }
 
 void
-IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice::Int CommandSID, ::Ice::Double argument, const ::Ice::Context* __context)
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ice::Int CommandSID, ::Ice::Double argument, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
@@ -1500,7 +1500,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::
         virtual ::Ice::DispatchStatus
         run(::Ice::Object* object)
         {
-            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
             if(!servant)
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
@@ -1516,7 +1516,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandWrite_name, ::Ice::Normal, __context);
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandWrite_name, ::Ice::Normal, __context);
     try
     {
         _DirectI __direct(CommandSID, argument, __current);
@@ -1550,7 +1550,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::
 }
 
 void
-IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::Int CommandSID, ::Ice::Double& argument, const ::Ice::Context* __context)
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice::Int CommandSID, ::Ice::Double& argument, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
@@ -1566,7 +1566,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::I
         virtual ::Ice::DispatchStatus
         run(::Ice::Object* object)
         {
-            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
             if(!servant)
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
@@ -1582,7 +1582,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::I
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name, ::Ice::Normal, __context);
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name, ::Ice::Normal, __context);
     try
     {
         _DirectI __direct(CommandSID, argument, __current);
@@ -1616,7 +1616,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::I
 }
 
 void
-IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __context)
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __context)
 {
     class _DirectI : public ::IceInternal::Direct
     {
@@ -1633,7 +1633,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifie
         virtual ::Ice::DispatchStatus
         run(::Ice::Object* object)
         {
-            ::mtsTaskInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServer*>(object);
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
             if(!servant)
             {
                 throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
@@ -1650,7 +1650,7 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifie
     };
     
     ::Ice::Current __current;
-    __initCurrent(__current, __mtsTaskInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name, ::Ice::Normal, __context);
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name, ::Ice::Normal, __context);
     try
     {
         _DirectI __direct(CommandSID, argument1, argument2, __current);
@@ -1684,44 +1684,44 @@ IceDelegateD::mtsTaskInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifie
 }
 
 ::Ice::ObjectPtr
-mtsTaskInterfaceProxy::TaskInterfaceClient::ice_clone() const
+mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_clone() const
 {
     throw ::Ice::CloneNotImplementedException(__FILE__, __LINE__);
     return 0; // to avoid a warning with some compilers
 }
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceClient_ids[2] =
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceClient_ids[2] =
 {
     "::Ice::Object",
-    "::mtsTaskInterfaceProxy::TaskInterfaceClient"
+    "::mtsDeviceInterfaceProxy::TaskInterfaceClient"
 };
 
 bool
-mtsTaskInterfaceProxy::TaskInterfaceClient::ice_isA(const ::std::string& _s, const ::Ice::Current&) const
+mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_isA(const ::std::string& _s, const ::Ice::Current&) const
 {
-    return ::std::binary_search(__mtsTaskInterfaceProxy__TaskInterfaceClient_ids, __mtsTaskInterfaceProxy__TaskInterfaceClient_ids + 2, _s);
+    return ::std::binary_search(__mtsDeviceInterfaceProxy__TaskInterfaceClient_ids, __mtsDeviceInterfaceProxy__TaskInterfaceClient_ids + 2, _s);
 }
 
 ::std::vector< ::std::string>
-mtsTaskInterfaceProxy::TaskInterfaceClient::ice_ids(const ::Ice::Current&) const
+mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_ids(const ::Ice::Current&) const
 {
-    return ::std::vector< ::std::string>(&__mtsTaskInterfaceProxy__TaskInterfaceClient_ids[0], &__mtsTaskInterfaceProxy__TaskInterfaceClient_ids[2]);
+    return ::std::vector< ::std::string>(&__mtsDeviceInterfaceProxy__TaskInterfaceClient_ids[0], &__mtsDeviceInterfaceProxy__TaskInterfaceClient_ids[2]);
 }
 
 const ::std::string&
-mtsTaskInterfaceProxy::TaskInterfaceClient::ice_id(const ::Ice::Current&) const
+mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_id(const ::Ice::Current&) const
 {
-    return __mtsTaskInterfaceProxy__TaskInterfaceClient_ids[1];
+    return __mtsDeviceInterfaceProxy__TaskInterfaceClient_ids[1];
 }
 
 const ::std::string&
-mtsTaskInterfaceProxy::TaskInterfaceClient::ice_staticId()
+mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_staticId()
 {
-    return __mtsTaskInterfaceProxy__TaskInterfaceClient_ids[1];
+    return __mtsDeviceInterfaceProxy__TaskInterfaceClient_ids[1];
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceClient::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::TaskInterfaceClient::__write(::IceInternal::BasicStream* __os) const
 {
     __os->writeTypeId(ice_staticId());
     __os->startWriteSlice();
@@ -1734,7 +1734,7 @@ mtsTaskInterfaceProxy::TaskInterfaceClient::__write(::IceInternal::BasicStream* 
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceClient::__read(::IceInternal::BasicStream* __is, bool __rid)
+mtsDeviceInterfaceProxy::TaskInterfaceClient::__read(::IceInternal::BasicStream* __is, bool __rid)
 {
     if(__rid)
     {
@@ -1751,84 +1751,84 @@ mtsTaskInterfaceProxy::TaskInterfaceClient::__read(::IceInternal::BasicStream* _
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceClient::__write(const ::Ice::OutputStreamPtr&) const
+mtsDeviceInterfaceProxy::TaskInterfaceClient::__write(const ::Ice::OutputStreamPtr&) const
 {
     Ice::MarshalException ex(__FILE__, __LINE__);
-    ex.reason = "type mtsTaskInterfaceProxy::TaskInterfaceClient was not generated with stream support";
+    ex.reason = "type mtsDeviceInterfaceProxy::TaskInterfaceClient was not generated with stream support";
     throw ex;
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceClient::__read(const ::Ice::InputStreamPtr&, bool)
+mtsDeviceInterfaceProxy::TaskInterfaceClient::__read(const ::Ice::InputStreamPtr&, bool)
 {
     Ice::MarshalException ex(__FILE__, __LINE__);
-    ex.reason = "type mtsTaskInterfaceProxy::TaskInterfaceClient was not generated with stream support";
+    ex.reason = "type mtsDeviceInterfaceProxy::TaskInterfaceClient was not generated with stream support";
     throw ex;
 }
 
 void 
-mtsTaskInterfaceProxy::__patch__TaskInterfaceClientPtr(void* __addr, ::Ice::ObjectPtr& v)
+mtsDeviceInterfaceProxy::__patch__TaskInterfaceClientPtr(void* __addr, ::Ice::ObjectPtr& v)
 {
-    ::mtsTaskInterfaceProxy::TaskInterfaceClientPtr* p = static_cast< ::mtsTaskInterfaceProxy::TaskInterfaceClientPtr*>(__addr);
+    ::mtsDeviceInterfaceProxy::TaskInterfaceClientPtr* p = static_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceClientPtr*>(__addr);
     assert(p);
-    *p = ::mtsTaskInterfaceProxy::TaskInterfaceClientPtr::dynamicCast(v);
+    *p = ::mtsDeviceInterfaceProxy::TaskInterfaceClientPtr::dynamicCast(v);
     if(v && !*p)
     {
-        IceInternal::Ex::throwUOE(::mtsTaskInterfaceProxy::TaskInterfaceClient::ice_staticId(), v->ice_id());
+        IceInternal::Ex::throwUOE(::mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_staticId(), v->ice_id());
     }
 }
 
 bool
-mtsTaskInterfaceProxy::operator==(const ::mtsTaskInterfaceProxy::TaskInterfaceClient& l, const ::mtsTaskInterfaceProxy::TaskInterfaceClient& r)
+mtsDeviceInterfaceProxy::operator==(const ::mtsDeviceInterfaceProxy::TaskInterfaceClient& l, const ::mtsDeviceInterfaceProxy::TaskInterfaceClient& r)
 {
     return static_cast<const ::Ice::Object&>(l) == static_cast<const ::Ice::Object&>(r);
 }
 
 bool
-mtsTaskInterfaceProxy::operator<(const ::mtsTaskInterfaceProxy::TaskInterfaceClient& l, const ::mtsTaskInterfaceProxy::TaskInterfaceClient& r)
+mtsDeviceInterfaceProxy::operator<(const ::mtsDeviceInterfaceProxy::TaskInterfaceClient& l, const ::mtsDeviceInterfaceProxy::TaskInterfaceClient& r)
 {
     return static_cast<const ::Ice::Object&>(l) < static_cast<const ::Ice::Object&>(r);
 }
 
 ::Ice::ObjectPtr
-mtsTaskInterfaceProxy::TaskInterfaceServer::ice_clone() const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_clone() const
 {
     throw ::Ice::CloneNotImplementedException(__FILE__, __LINE__);
     return 0; // to avoid a warning with some compilers
 }
 
-static const ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer_ids[2] =
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer_ids[2] =
 {
     "::Ice::Object",
-    "::mtsTaskInterfaceProxy::TaskInterfaceServer"
+    "::mtsDeviceInterfaceProxy::TaskInterfaceServer"
 };
 
 bool
-mtsTaskInterfaceProxy::TaskInterfaceServer::ice_isA(const ::std::string& _s, const ::Ice::Current&) const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_isA(const ::std::string& _s, const ::Ice::Current&) const
 {
-    return ::std::binary_search(__mtsTaskInterfaceProxy__TaskInterfaceServer_ids, __mtsTaskInterfaceProxy__TaskInterfaceServer_ids + 2, _s);
+    return ::std::binary_search(__mtsDeviceInterfaceProxy__TaskInterfaceServer_ids, __mtsDeviceInterfaceProxy__TaskInterfaceServer_ids + 2, _s);
 }
 
 ::std::vector< ::std::string>
-mtsTaskInterfaceProxy::TaskInterfaceServer::ice_ids(const ::Ice::Current&) const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_ids(const ::Ice::Current&) const
 {
-    return ::std::vector< ::std::string>(&__mtsTaskInterfaceProxy__TaskInterfaceServer_ids[0], &__mtsTaskInterfaceProxy__TaskInterfaceServer_ids[2]);
+    return ::std::vector< ::std::string>(&__mtsDeviceInterfaceProxy__TaskInterfaceServer_ids[0], &__mtsDeviceInterfaceProxy__TaskInterfaceServer_ids[2]);
 }
 
 const ::std::string&
-mtsTaskInterfaceProxy::TaskInterfaceServer::ice_id(const ::Ice::Current&) const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_id(const ::Ice::Current&) const
 {
-    return __mtsTaskInterfaceProxy__TaskInterfaceServer_ids[1];
+    return __mtsDeviceInterfaceProxy__TaskInterfaceServer_ids[1];
 }
 
 const ::std::string&
-mtsTaskInterfaceProxy::TaskInterfaceServer::ice_staticId()
+mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_staticId()
 {
-    return __mtsTaskInterfaceProxy__TaskInterfaceServer_ids[1];
+    return __mtsDeviceInterfaceProxy__TaskInterfaceServer_ids[1];
 }
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::___AddClient(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___AddClient(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
 {
     __checkMode(::Ice::Normal, __current.mode);
     ::IceInternal::BasicStream* __is = __inS.is();
@@ -1841,12 +1841,12 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___AddClient(::IceInternal::Incoming
 }
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::___GetProvidedInterfaceSpecification(::IceInternal::Incoming& __inS, const ::Ice::Current& __current) const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___GetProvidedInterfaceSpecification(::IceInternal::Incoming& __inS, const ::Ice::Current& __current) const
 {
     __checkMode(::Ice::Idempotent, __current.mode);
     __inS.is()->skipEmptyEncaps();
     ::IceInternal::BasicStream* __os = __inS.os();
-    ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq providedInterfaceSpecifications;
+    ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq providedInterfaceSpecifications;
     bool __ret = GetProvidedInterfaceSpecification(providedInterfaceSpecifications, __current);
     if(providedInterfaceSpecifications.size() == 0)
     {
@@ -1854,14 +1854,14 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___GetProvidedInterfaceSpecification
     }
     else
     {
-        ::mtsTaskInterfaceProxy::__writeProvidedInterfaceSpecificationSeq(__os, &providedInterfaceSpecifications[0], &providedInterfaceSpecifications[0] + providedInterfaceSpecifications.size());
+        ::mtsDeviceInterfaceProxy::__writeProvidedInterfaceSpecificationSeq(__os, &providedInterfaceSpecifications[0], &providedInterfaceSpecifications[0] + providedInterfaceSpecifications.size());
     }
     __os->write(__ret);
     return ::Ice::DispatchOK;
 }
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandVoid(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandVoid(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
 {
     __checkMode(::Ice::Normal, __current.mode);
     ::IceInternal::BasicStream* __is = __inS.is();
@@ -1874,7 +1874,7 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandVoid(::IceInternal:
 }
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandWrite(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandWrite(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
 {
     __checkMode(::Ice::Normal, __current.mode);
     ::IceInternal::BasicStream* __is = __inS.is();
@@ -1889,7 +1889,7 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandWrite(::IceInternal
 }
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandRead(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandRead(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
 {
     __checkMode(::Ice::Normal, __current.mode);
     ::IceInternal::BasicStream* __is = __inS.is();
@@ -1905,7 +1905,7 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandRead(::IceInternal:
 }
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandQualifiedRead(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandQualifiedRead(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
 {
     __checkMode(::Ice::Normal, __current.mode);
     ::IceInternal::BasicStream* __is = __inS.is();
@@ -1922,7 +1922,7 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::___ExecuteCommandQualifiedRead(::Ice
     return ::Ice::DispatchOK;
 }
 
-static ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer_all[] =
+static ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer_all[] =
 {
     "AddClient",
     "ExecuteCommandQualifiedRead",
@@ -1937,15 +1937,15 @@ static ::std::string __mtsTaskInterfaceProxy__TaskInterfaceServer_all[] =
 };
 
 ::Ice::DispatchStatus
-mtsTaskInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming& in, const ::Ice::Current& current)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming& in, const ::Ice::Current& current)
 {
-    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsTaskInterfaceProxy__TaskInterfaceServer_all, __mtsTaskInterfaceProxy__TaskInterfaceServer_all + 10, current.operation);
+    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsDeviceInterfaceProxy__TaskInterfaceServer_all, __mtsDeviceInterfaceProxy__TaskInterfaceServer_all + 10, current.operation);
     if(r.first == r.second)
     {
         throw ::Ice::OperationNotExistException(__FILE__, __LINE__, current.id, current.facet, current.operation);
     }
 
-    switch(r.first - __mtsTaskInterfaceProxy__TaskInterfaceServer_all)
+    switch(r.first - __mtsDeviceInterfaceProxy__TaskInterfaceServer_all)
     {
         case 0:
         {
@@ -1994,7 +1994,7 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming& 
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceServer::__write(::IceInternal::BasicStream* __os) const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::__write(::IceInternal::BasicStream* __os) const
 {
     __os->writeTypeId(ice_staticId());
     __os->startWriteSlice();
@@ -2007,7 +2007,7 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::__write(::IceInternal::BasicStream* 
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceServer::__read(::IceInternal::BasicStream* __is, bool __rid)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::__read(::IceInternal::BasicStream* __is, bool __rid)
 {
     if(__rid)
     {
@@ -2024,41 +2024,41 @@ mtsTaskInterfaceProxy::TaskInterfaceServer::__read(::IceInternal::BasicStream* _
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceServer::__write(const ::Ice::OutputStreamPtr&) const
+mtsDeviceInterfaceProxy::TaskInterfaceServer::__write(const ::Ice::OutputStreamPtr&) const
 {
     Ice::MarshalException ex(__FILE__, __LINE__);
-    ex.reason = "type mtsTaskInterfaceProxy::TaskInterfaceServer was not generated with stream support";
+    ex.reason = "type mtsDeviceInterfaceProxy::TaskInterfaceServer was not generated with stream support";
     throw ex;
 }
 
 void
-mtsTaskInterfaceProxy::TaskInterfaceServer::__read(const ::Ice::InputStreamPtr&, bool)
+mtsDeviceInterfaceProxy::TaskInterfaceServer::__read(const ::Ice::InputStreamPtr&, bool)
 {
     Ice::MarshalException ex(__FILE__, __LINE__);
-    ex.reason = "type mtsTaskInterfaceProxy::TaskInterfaceServer was not generated with stream support";
+    ex.reason = "type mtsDeviceInterfaceProxy::TaskInterfaceServer was not generated with stream support";
     throw ex;
 }
 
 void 
-mtsTaskInterfaceProxy::__patch__TaskInterfaceServerPtr(void* __addr, ::Ice::ObjectPtr& v)
+mtsDeviceInterfaceProxy::__patch__TaskInterfaceServerPtr(void* __addr, ::Ice::ObjectPtr& v)
 {
-    ::mtsTaskInterfaceProxy::TaskInterfaceServerPtr* p = static_cast< ::mtsTaskInterfaceProxy::TaskInterfaceServerPtr*>(__addr);
+    ::mtsDeviceInterfaceProxy::TaskInterfaceServerPtr* p = static_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServerPtr*>(__addr);
     assert(p);
-    *p = ::mtsTaskInterfaceProxy::TaskInterfaceServerPtr::dynamicCast(v);
+    *p = ::mtsDeviceInterfaceProxy::TaskInterfaceServerPtr::dynamicCast(v);
     if(v && !*p)
     {
-        IceInternal::Ex::throwUOE(::mtsTaskInterfaceProxy::TaskInterfaceServer::ice_staticId(), v->ice_id());
+        IceInternal::Ex::throwUOE(::mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_staticId(), v->ice_id());
     }
 }
 
 bool
-mtsTaskInterfaceProxy::operator==(const ::mtsTaskInterfaceProxy::TaskInterfaceServer& l, const ::mtsTaskInterfaceProxy::TaskInterfaceServer& r)
+mtsDeviceInterfaceProxy::operator==(const ::mtsDeviceInterfaceProxy::TaskInterfaceServer& l, const ::mtsDeviceInterfaceProxy::TaskInterfaceServer& r)
 {
     return static_cast<const ::Ice::Object&>(l) == static_cast<const ::Ice::Object&>(r);
 }
 
 bool
-mtsTaskInterfaceProxy::operator<(const ::mtsTaskInterfaceProxy::TaskInterfaceServer& l, const ::mtsTaskInterfaceProxy::TaskInterfaceServer& r)
+mtsDeviceInterfaceProxy::operator<(const ::mtsDeviceInterfaceProxy::TaskInterfaceServer& l, const ::mtsDeviceInterfaceProxy::TaskInterfaceServer& r)
 {
     return static_cast<const ::Ice::Object&>(l) < static_cast<const ::Ice::Object&>(r);
 }

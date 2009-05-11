@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskInterfaceProxyServer.h 142 2009-03-11 23:02:34Z mjung5 $
+  $Id: mtsDeviceInterfaceProxyServer.h 142 2009-03-11 23:02:34Z mjung5 $
 
   Author(s):  Min Yang Jung
   Created on: 2009-04-24
@@ -19,11 +19,11 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#ifndef _mtsTaskInterfaceProxyServer_h
-#define _mtsTaskInterfaceProxyServer_h
+#ifndef _mtsDeviceInterfaceProxyServer_h
+#define _mtsDeviceInterfaceProxyServer_h
 
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsTaskInterfaceProxy.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
 
 #include <cisstMultiTask/mtsExport.h>
@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 class mtsTask;
 
-class CISST_EXPORT mtsTaskInterfaceProxyServer : public mtsProxyBaseServer<mtsTask> {
+class CISST_EXPORT mtsDeviceInterfaceProxyServer : public mtsProxyBaseServer<mtsTask> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
@@ -78,24 +78,24 @@ protected:
     void OnThreadEnd();
     
 public:
-    mtsTaskInterfaceProxyServer(const std::string& adapterName,
+    mtsDeviceInterfaceProxyServer(const std::string& adapterName,
                                 const std::string& endpointInfo,
                                 const std::string& communicatorID)
         : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID),
           ConnectedTask(0)
     {}
-    ~mtsTaskInterfaceProxyServer();
+    ~mtsDeviceInterfaceProxyServer();
     
     void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
 
     //----------------------------- Proxy Support ---------------------------//
     /*! Update the information of all tasks. */
     const bool GetProvidedInterfaceSpecification(
-        ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
+        ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
 
     /*! Build a map of (command proxy id, actual command pointer) so that 
         an actual command object can be called by a remote command object proxy. */
-    //void SendCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfo & info) const;
+    //void SendCommandProxyInfo(const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info) const;
 
     /*! Execute actual command objects. */
     void ExecuteCommandVoid(const int commandSID) const;
@@ -105,24 +105,24 @@ public:
         const int commandSID, const double argument1, double & argument2);
 
     //-------------------------------------------------------------------------
-    //  Definition by mtsTaskInterfaceProxy.ice
+    //  Definition by mtsDeviceInterfaceProxy.ice
     //-------------------------------------------------------------------------
 protected:
-    class TaskInterfaceServerI : public mtsTaskInterfaceProxy::TaskInterfaceServer,
+    class TaskInterfaceServerI : public mtsDeviceInterfaceProxy::TaskInterfaceServer,
                                  public IceUtil::Monitor<IceUtil::Mutex> 
     {
     private:
         Ice::CommunicatorPtr Communicator;
         bool Runnable;
-        std::set<mtsTaskInterfaceProxy::TaskInterfaceClientPrx> _clients;
+        std::set<mtsDeviceInterfaceProxy::TaskInterfaceClientPrx> _clients;
         IceUtil::ThreadPtr Sender;
         Ice::LoggerPtr Logger;
-        mtsTaskInterfaceProxyServer * TaskInterfaceServer;
+        mtsDeviceInterfaceProxyServer * TaskInterfaceServer;
 
     public:
         TaskInterfaceServerI(const Ice::CommunicatorPtr& communicator, 
                              const Ice::LoggerPtr& logger,
-                             mtsTaskInterfaceProxyServer * taskInterfaceServer);
+                             mtsDeviceInterfaceProxyServer * taskInterfaceServer);
 
         void Start();
         void Run();
@@ -131,11 +131,11 @@ protected:
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
         
         bool GetProvidedInterfaceSpecification(
-            ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
+            ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
             const ::Ice::Current&) const;
         
         //void SendCommandProxyInfo(
-        //    const ::mtsTaskInterfaceProxy::CommandProxyInfo&,
+        //    const ::mtsDeviceInterfaceProxy::CommandProxyInfo&,
         //    const ::Ice::Current&);
         
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
@@ -147,7 +147,7 @@ protected:
     //------------------ Methods for global task manager --------------------//
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskInterfaceProxyServer)
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceInterfaceProxyServer)
 
-#endif // _mtsTaskInterfaceProxyServer_h
+#endif // _mtsDeviceInterfaceProxyServer_h
 

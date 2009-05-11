@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskInterfaceProxyClient.h 142 2009-03-11 23:02:34Z mjung5 $
+  $Id: mtsDeviceInterfaceProxyClient.h 142 2009-03-11 23:02:34Z mjung5 $
 
   Author(s):  Min Yang Jung
   Created on: 2009-04-24
@@ -19,12 +19,12 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#ifndef _mtsTaskInterfaceProxyClient_h
-#define _mtsTaskInterfaceProxyClient_h
+#ifndef _mtsDeviceInterfaceProxyClient_h
+#define _mtsDeviceInterfaceProxyClient_h
 
 #include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
-#include <cisstMultiTask/mtsTaskInterfaceProxy.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -34,7 +34,7 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 
-class CISST_EXPORT mtsTaskInterfaceProxyClient : public mtsProxyBaseClient<mtsTask> {
+class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mtsTask> {
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
@@ -45,19 +45,19 @@ protected:
     TaskInterfaceClientIPtr Sender;
 
     /*! TaskInterfaceServer proxy */
-    mtsTaskInterfaceProxy::TaskInterfaceServerPrx TaskInterfaceServer;
+    mtsDeviceInterfaceProxy::TaskInterfaceServerPrx TaskInterfaceServer;
 
 public:
-    mtsTaskInterfaceProxyClient(const std::string& propertyFileName, 
+    mtsDeviceInterfaceProxyClient(const std::string& propertyFileName, 
                                 const std::string& propertyName) 
         : mtsProxyBaseClient(propertyFileName, propertyName)
     {}
-    ~mtsTaskInterfaceProxyClient() {}
+    ~mtsDeviceInterfaceProxyClient() {}
 
     /*! Create a proxy object and a send thread. */
     void CreateProxy() {
         TaskInterfaceServer = 
-            mtsTaskInterfaceProxy::TaskInterfaceServerPrx::checkedCast(ProxyObject);
+            mtsDeviceInterfaceProxy::TaskInterfaceServerPrx::checkedCast(ProxyObject);
         if (!TaskInterfaceServer) {
             throw "Invalid proxy";
         }
@@ -81,9 +81,9 @@ public:
     //  Send Methods
     //-------------------------------------------------------------------------
     const bool GetProvidedInterfaceSpecification(
-        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const;
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const;
 
-    //void SendCommandProxyInfo(mtsTaskInterfaceProxy::CommandProxyInfo & info) const;
+    //void SendCommandProxyInfo(mtsDeviceInterfaceProxy::CommandProxyInfo & info) const;
 
     void InvokeExecuteCommandVoid(const int commandSID) const;
     void InvokeExecuteCommandWrite(const int commandSID, const cmnDouble & argument) const;
@@ -92,10 +92,10 @@ public:
         const int commandSID, const cmnDouble & argument1, cmnDouble & argument2);
 
     //-------------------------------------------------------------------------
-    //  Definition by mtsTaskInterfaceProxy.ice
+    //  Definition by mtsDeviceInterfaceProxy.ice
     //-------------------------------------------------------------------------
 protected:
-    class TaskInterfaceClientI : public mtsTaskInterfaceProxy::TaskInterfaceClient,
+    class TaskInterfaceClientI : public mtsDeviceInterfaceProxy::TaskInterfaceClient,
                                public IceUtil::Monitor<IceUtil::Mutex>
     {
     private:
@@ -104,14 +104,14 @@ protected:
         
         IceUtil::ThreadPtr Sender;
         Ice::LoggerPtr Logger;
-        mtsTaskInterfaceProxy::TaskInterfaceServerPrx Server;
-        mtsTaskInterfaceProxyClient * TaskInterfaceClient;
+        mtsDeviceInterfaceProxy::TaskInterfaceServerPrx Server;
+        mtsDeviceInterfaceProxyClient * TaskInterfaceClient;
 
     public:
         TaskInterfaceClientI(const Ice::CommunicatorPtr& communicator,                           
                            const Ice::LoggerPtr& logger,
-                           const mtsTaskInterfaceProxy::TaskInterfaceServerPrx& server,
-                           mtsTaskInterfaceProxyClient * TaskInterfaceClient);
+                           const mtsDeviceInterfaceProxy::TaskInterfaceServerPrx& server,
+                           mtsDeviceInterfaceProxyClient * TaskInterfaceClient);
 
         void Start();
         void Run();
@@ -119,7 +119,7 @@ protected:
     };
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskInterfaceProxyClient)
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceInterfaceProxyClient)
 
-#endif // _mtsTaskInterfaceProxyClient_h
+#endif // _mtsDeviceInterfaceProxyClient_h
 

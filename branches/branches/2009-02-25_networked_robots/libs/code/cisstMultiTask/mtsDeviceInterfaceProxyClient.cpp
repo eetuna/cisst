@@ -43,7 +43,7 @@ void mtsDeviceInterfaceProxyClient::Start(mtsTask * callingTask)
         ident.name = GetGUID();
         ident.category = "";
 
-        mtsTaskInterfaceProxy::TaskInterfaceClientPtr client = 
+        mtsDeviceInterfaceProxy::TaskInterfaceClientPtr client = 
             new TaskInterfaceClientI(IceCommunicator, Logger, TaskInterfaceServer, this);
         adapter->add(client, ident);
         adapter->activate();
@@ -101,7 +101,7 @@ void mtsDeviceInterfaceProxyClient::OnThreadEnd()
 //  Send Methods
 //-------------------------------------------------------------------------
 const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaceSpecification(
-        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const
 {
     GetLogger()->trace("TIClient", ">>>>> SEND: GetProvidedInterfaceSpecification");
 
@@ -110,7 +110,7 @@ const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaceSpecification(
 
 /*
 void mtsDeviceInterfaceProxyClient::SendCommandProxyInfo(
-    mtsTaskInterfaceProxy::CommandProxyInfo & info) const
+    mtsDeviceInterfaceProxy::CommandProxyInfo & info) const
 {
     GetLogger()->trace("TIClient", ">>>>> SEND: SendCommandProxyInfo");
 
@@ -163,12 +163,12 @@ void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedRead(
 }
 
 //-------------------------------------------------------------------------
-//  Definition by mtsTaskInterfaceProxy.ice
+//  Definition by mtsDeviceInterfaceProxy.ice
 //-------------------------------------------------------------------------
 mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::TaskInterfaceClientI(
     const Ice::CommunicatorPtr& communicator,                           
     const Ice::LoggerPtr& logger,
-    const mtsTaskInterfaceProxy::TaskInterfaceServerPrx& server,
+    const mtsDeviceInterfaceProxy::TaskInterfaceServerPrx& server,
     mtsDeviceInterfaceProxyClient * taskInterfaceClient)
     : Runnable(true), 
       Communicator(communicator), Logger(logger),
@@ -193,7 +193,7 @@ void mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::Run()
         if (flag) {
             // Send a set of task names
             /*
-            mtsTaskInterfaceProxy::TaskList localTaskList;
+            mtsDeviceInterfaceProxy::TaskList localTaskList;
             std::vector<std::string> myTaskNames;
             mtsTaskManager::GetInstance()->GetNamesOfTasks(myTaskNames);
 

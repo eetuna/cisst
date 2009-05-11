@@ -71,7 +71,7 @@ void mtsDeviceInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     ProxyServer->SetConnectedTask(arguments->argument);
     
     //!!!!!!!!!!!!
-    //mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq spec;
+    //mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq spec;
     //ProxyServer->GetProvidedInterfaceSpecification(spec);
 
     ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer", "Proxy server starts.");
@@ -100,7 +100,7 @@ void mtsDeviceInterfaceProxyServer::OnThreadEnd()
 //  Task Processing
 //-------------------------------------------------------------------------
 const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaceSpecification(
-    ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs)
+    ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs)
 {
     CMN_ASSERT(ConnectedTask);
 
@@ -111,7 +111,7 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaceSpecification(
         ConnectedTask->GetNamesOfProvidedInterfaces();
     std::vector<std::string>::const_iterator it = namesOfProvidedInterfaces.begin();
     for (; it != namesOfProvidedInterfaces.end(); ++it) {
-        mtsTaskInterfaceProxy::ProvidedInterfaceSpecification providedInterfaceSpec;
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification providedInterfaceSpec;
 
         // 1) Get a provided interface object
         providedInterface = ConnectedTask->GetProvidedInterface(*it);
@@ -136,7 +136,7 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaceSpecification(
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType##End = \
             providedInterface->Commands##_commandType##.GetMap().end();\
         for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
-            mtsTaskInterfaceProxy::Command##_commandType##Info info;\
+            mtsDeviceInterfaceProxy::Command##_commandType##Info info;\
             info.Name = iterator##_commandType##->second->GetName();\
             info.CommandSID = reinterpret_cast<int>(iterator##_commandType##->second);
 
@@ -178,7 +178,7 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaceSpecification(
 
 /*
 void mtsDeviceInterfaceProxyServer::SendCommandProxyInfo(
-    const ::mtsTaskInterfaceProxy::CommandProxyInfo & info) const
+    const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info) const
 {
     ConnectedTask->ReceiveCommandProxyInfo(info);
 }
@@ -256,7 +256,7 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Run()
     int num = 0;
     while(true)
     {
-        std::set<mtsTaskInterfaceProxy::TaskInterfaceClientPrx> clients;
+        std::set<mtsDeviceInterfaceProxy::TaskInterfaceClientPrx> clients;
         {
             IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
             timedWait(IceUtil::Time::seconds(2));
@@ -273,7 +273,7 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Run()
         if(!clients.empty())
         {
             ++num;
-            for(std::set<mtsTaskInterfaceProxy::TaskInterfaceClientPrx>::iterator p 
+            for(std::set<mtsDeviceInterfaceProxy::TaskInterfaceClientPrx>::iterator p 
                 = clients.begin(); p != clients.end(); ++p)
             {
                 try
@@ -326,13 +326,13 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::AddClient(
 
     Logger->trace("TIServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(ident));
 
-    mtsTaskInterfaceProxy::TaskInterfaceClientPrx client = 
-        mtsTaskInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
+    mtsDeviceInterfaceProxy::TaskInterfaceClientPrx client = 
+        mtsDeviceInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
     _clients.insert(client);
 }
 
 bool mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaceSpecification(
-    ::mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs, 
+    ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs, 
     const ::Ice::Current& current) const
 {
     Logger->trace("TIServer", "<<<<< RECV: GetProvidedInterfaceSpecification");
@@ -342,7 +342,7 @@ bool mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaceSp
 
 /*
 void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::SendCommandProxyInfo(
-    const ::mtsTaskInterfaceProxy::CommandProxyInfo & info,
+    const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info,
     const ::Ice::Current&)
 {
     Logger->trace("TIServer", "<<<<< RECV: SendCommandProxyInfo");
