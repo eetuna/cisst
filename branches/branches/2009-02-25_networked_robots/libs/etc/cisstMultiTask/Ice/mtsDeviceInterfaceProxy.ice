@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskInterfaceProxy.ice 2009-03-16 mjung5 $
+  $Id: mtsDeviceInterfaceProxy.ice 2009-03-16 mjung5 $
   
   Author(s):  Min Yang Jung
   Created on: 2009-04-24
@@ -26,12 +26,12 @@ http://www.cisst.org/cisst/license.txt.
 // as a client.
 //
 
-#ifndef _mtsTaskInterfaceProxy_ICE_h
-#define _mtsTaskInterfaceProxy_ICE_h
+#ifndef _mtsDeviceInterfaceProxy_ICE_h
+#define _mtsDeviceInterfaceProxy_ICE_h
 
 #include <Ice/Identity.ice>
 
-module mtsTaskInterfaceProxy
+module mtsDeviceInterfaceProxy
 {
 	//-----------------------------------------------------------------------------
 	//	Data Structure Definition
@@ -164,4 +164,4 @@ module mtsTaskInterfaceProxy
 
 };
 
-#endif // _mtsTaskInterfaceProxy_ICE_h
+#endif // _mtsDeviceInterfaceProxy_ICE_h
