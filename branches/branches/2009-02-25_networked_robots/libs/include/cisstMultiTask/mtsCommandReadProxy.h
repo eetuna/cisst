@@ -39,7 +39,7 @@ public:
     typedef mtsCommandReadBase BaseType;
 
 protected:
-    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
@@ -47,12 +47,12 @@ protected:
 
 public:
     mtsCommandReadProxy(const int commandSID, 
-                        mtsTaskInterfaceProxyClient * providedInterfaceProxy) 
+                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
     {}
 
     mtsCommandReadProxy(const int commandSID,
-                         mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name)
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
     {}

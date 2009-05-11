@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandVoidProxy_h
 
 #include <cisstMultiTask/mtsCommandVoidBase.h>
-#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -39,7 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 class mtsCommandVoidProxy: public mtsCommandVoidBase
 {
 protected:
-    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
@@ -50,13 +50,13 @@ public:
     
     /*! The constructor. Does nothing */
     mtsCommandVoidProxy(const int commandSID, 
-                        mtsTaskInterfaceProxyClient * providedInterfaceProxy)
+                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy)
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
     {}
     
     /*! Constructor with a name. */
     mtsCommandVoidProxy(const int commandSID,
-                        mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                         const std::string & name)
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
     {}

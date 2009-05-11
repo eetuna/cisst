@@ -126,7 +126,7 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
     SOURCE_GROUP(Resources FILES ${ICE_RESOURCE_FILES})
 
     SET(SLICE_FILES
-      mtsTaskInterfaceProxy
+      mtsDeviceInterfaceProxy
       mtsTaskManagerProxy
     )
 
@@ -142,8 +142,8 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
     ENDFOREACH(slice_file ${SLICE_FILES})
 
     ADD_CUSTOM_TARGET(BUILD_ICE ALL 
-      DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsTaskInterfaceProxy.cpp ${cisst_SOURCE_DIR}/libs/include/mtsTaskInterfaceProxy.h
-      DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsTaskManagerProxy.cpp   ${cisst_SOURCE_DIR}/libs/include/mtsTaskManagerProxy.h
+      DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsDeviceInterfaceProxy.cpp ${cisst_SOURCE_DIR}/libs/include/mtsDeviceInterfaceProxy.h
+      DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsTaskManagerProxy.cpp     ${cisst_SOURCE_DIR}/libs/include/mtsTaskManagerProxy.h
     )
 
     FOREACH(slice_file ${SLICE_FILES})

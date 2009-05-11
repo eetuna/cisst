@@ -81,7 +81,7 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     friend class mtsDevice;
     friend class mtsTask;
     friend class mtsTaskPeriodic;
-    friend class mtsTaskInterfaceProxyServer;
+    friend class mtsDeviceInterfaceProxyServer;
     friend class mtsTaskManager;
  public:
 
@@ -352,6 +352,7 @@ public:
     //void GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap,
     //                         const CommandProxyType commandProxyType);
 
+    /*
     const bool AddCommandVoidProxyMapElement(const unsigned int commandVoidProxyID, 
                                              const std::string & commandVoidProxyName);
     const bool AddCommandWriteProxyMapElement(const unsigned int commandWriteProxyID, 
@@ -360,6 +361,7 @@ public:
                                              const std::string & commandReadProxyName);
     const bool AddCommandQualifiedReadProxyMapElement(const unsigned int commandQualifiedReadProxyID, 
                                                       const std::string & commandQualifiedReadProxyName);
+    */
 
     /*! Execute a void command. */
     void ExecuteCommandVoid(const unsigned int commandID);

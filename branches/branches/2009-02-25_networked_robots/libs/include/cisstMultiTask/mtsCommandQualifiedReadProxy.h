@@ -40,7 +40,7 @@ public:
     typedef mtsCommandQualifiedReadBase BaseType;
 
 protected:
-    mtsTaskInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
@@ -48,12 +48,12 @@ protected:
 
 public:
     mtsCommandQualifiedReadProxy(const int commandSID, 
-                                 mtsTaskInterfaceProxyClient * providedInterfaceProxy) 
+                                 mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
     {}
 
     mtsCommandQualifiedReadProxy(const int commandSID,
-                                 mtsTaskInterfaceProxyClient * providedInterfaceProxy,
+                                 mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                                  const std::string & name)
                          //ArgumentPointerType argumentProtoType) :
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)

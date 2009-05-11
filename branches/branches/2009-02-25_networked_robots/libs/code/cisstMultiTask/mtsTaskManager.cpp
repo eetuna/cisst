@@ -375,19 +375,19 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
     {
         // If (task, provided interface) exists,
         // 1) Retrieve information from the global task manager to connect
-        //    the requested provided interface (mtsTaskInterfaceProxyServer).                
+        //    the requested provided interface (mtsDeviceInterfaceProxyServer).                
         mtsTaskManagerProxy::ProvidedInterfaceInfo info;
         if (!InvokeGetProvidedInterfaceInfo(resourceTaskName, providedInterfaceName, info)) {
             CMN_LOG_CLASS(1) << "Connect over networks: failed to retrieve proxy information: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
             return NULL;
         }
 
-        // 2) Using the information, start a proxy client (=server proxy, mtsTaskInterfaceProxyClient object).
+        // 2) Using the information, start a proxy client (=server proxy, mtsDeviceInterfaceProxyClient object).
         clientTask->StartProxyClient(info.endpointInfo, info.communicatorID);
 
         // 3) From the interface proxy server, get the complete information on the provided 
         //    interface as a set of string.
-        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq specs;
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq specs;
         if (!clientTask->GetProvidedInterfaceSpecification(specs)) {
             CMN_LOG_CLASS(1) << "Connect over networks: failed to retrieve provided interface specification: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
             return NULL;
@@ -396,7 +396,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
         // 4) Extract and present the complete information on this provided interface 
         // as a set of string.
         std::string serverProxyName;
-        std::vector<mtsTaskInterfaceProxy::ProvidedInterfaceSpecification>::const_iterator it
+        std::vector<mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification>::const_iterator it
             = specs.begin();
         for (; it != specs.end(); ++it) {
             //
@@ -453,7 +453,7 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
 }
 
 bool mtsTaskManager::CreateProvidedInterfaceProxy(
-    const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
+    const mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification & spec,
     mtsDevice * serverTaskProxy, mtsTask * clientTask)
 {
     // 1) Create a local provided interface (a provided interface proxy)
@@ -471,7 +471,7 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
     {\
-        mtsTaskInterfaceProxy::Command##_commandType##Seq::const_iterator it \
+        mtsDeviceInterfaceProxy::Command##_commandType##Seq::const_iterator it \
             = spec.commands##_commandType##.begin();\
         for (; it != spec.commands##_commandType##.end(); ++it) {\
             commandName = it->Name;\

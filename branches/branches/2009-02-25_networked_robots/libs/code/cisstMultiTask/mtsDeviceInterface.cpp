@@ -217,6 +217,7 @@ void mtsDeviceInterface::ToStream(std::ostream & outputStream) const
 //-------------------------------------------------------------------------
 //  Interface Proxy Related
 //-------------------------------------------------------------------------
+/*
 const bool mtsDeviceInterface::AddCommandVoidProxyMapElement(
     const unsigned int commandVoidProxyID, const std::string & commandVoidProxyName)
 {
@@ -314,3 +315,4 @@ void mtsDeviceInterface::ExecuteCommandVoid(const unsigned int commandID)
 
     it->second->Execute();
 }
+*/

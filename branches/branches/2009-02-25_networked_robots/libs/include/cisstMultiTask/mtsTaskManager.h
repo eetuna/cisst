@@ -39,7 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
-#include <cisstMultiTask/mtsTaskInterfaceProxy.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
 #include <set>
 
@@ -220,7 +220,7 @@ protected:
 
     /*! Start two kinds of proxies
         1) [Task Manager Layer] Start mtsTaskManagerProxyServer or mtsTaskManagerProxyClient.
-        2) [Task Layer] Iterating all tasks registered, start mtsTaskInterfaceProxyServer.
+        2) [Task Layer] Iterating all tasks registered, start mtsDeviceInterfaceProxyServer.
     */
     void StartProxies();
 
@@ -232,7 +232,7 @@ protected:
 
     /*! Create a provided interface proxy and populate it with the complete specification 
         on the remote provided interface. */
-    bool CreateProvidedInterfaceProxy(const mtsTaskInterfaceProxy::ProvidedInterfaceSpecification & spec,
+    bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification & spec,
                                       mtsDevice * serverTaskProxy, mtsTask * clientTask);
 
     /*! Try to connect at server-side. */

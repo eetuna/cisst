@@ -41,8 +41,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
-#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
-#include <cisstMultiTask/mtsTaskInterfaceProxyServer.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
 
 #include <set>
 #include <map>
@@ -383,24 +383,24 @@ protected:
     /*! Dynamic-casted proxy object. 
         Both are initialized as null pointer and either one of them must be null and
         the other be valid pointer. */
-    mtsTaskInterfaceProxyServer * ProxyServer;
-    mtsTaskInterfaceProxyClient * ProxyClient;
+    mtsDeviceInterfaceProxyServer * ProxyServer;
+    mtsDeviceInterfaceProxyClient * ProxyClient;
 
     /*! A map for fast access to provided interfaces */
     //typedef std::map<unsigned int, mtsDeviceInterface *> CommandLookupTableType;
     //CommandLookupTableType CommandLookupTable;
 
 public:
-    /*! Start mtsTaskInterfaceProxyServer. */
+    /*! Start mtsDeviceInterfaceProxyServer. */
     void StartInterfaceProxyServer(const std::string & ServerTaskIP);
 
-    /*! Start a proxy client (required interface, mtsTaskInterfaceProxyClient). */
+    /*! Start a proxy client (required interface, mtsDeviceInterfaceProxyClient). */
     void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
 
     /*! Get the information on the provided interface that includes complete representation 
         of it as a set of string. */
     const bool GetProvidedInterfaceSpecification(
-        mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec);
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec);
 
     //
     //  For a client task
@@ -416,14 +416,14 @@ public:
     //  For a server task
     //
     /*! Prepare a look-up table (command proxy id, actual command object pointer). */
-    //void ReceiveCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfo & info);
+    //void ReceiveCommandProxyInfo(const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info);
 
     /*! Execute a void command. */
     //void ExecuteCommandVoid(const int commandSID);
 
     /*! Getters */
-    mtsTaskInterfaceProxyClient * GetProxyClient() const { return ProxyClient; }
-    mtsTaskInterfaceProxyServer * GetProxyServer() const { return ProxyServer; }
+    mtsDeviceInterfaceProxyClient * GetProxyClient() const { return ProxyClient; }
+    mtsDeviceInterfaceProxyServer * GetProxyServer() const { return ProxyServer; }
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
 };

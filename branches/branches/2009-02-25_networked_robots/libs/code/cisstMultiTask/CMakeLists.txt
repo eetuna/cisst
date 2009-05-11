@@ -25,8 +25,8 @@ SET(DEPENDENCIES
     )
 
 #SET_SOURCE_FILES_PROPERTIES(
-#    mtsTaskInterfaceProxy.h PROPERTIES GENERATED TRUE
-#    mtsTaskInterfaceProxy.cpp PROPERTIES GENERATED TRUE
+#    mtsDeviceInterfaceProxy.h PROPERTIES GENERATED TRUE
+#    mtsDeviceInterfaceProxy.cpp PROPERTIES GENERATED TRUE
 #    mtsTaskManagerProxy.h PROPERTIES GENERATED TRUE
 #    mtsTaskManagerProxy.cpp PROPERTIES GENERATED TRUE
 #    )
@@ -45,7 +45,6 @@ SET(SOURCE_FILES
     mtsCommandQueuedVoidBase.cpp
     mtsCommandQueuedWriteBase.cpp
 
-    mtsDeviceInterface.cpp
     mtsDevice.cpp
 
     mtsMailBox.cpp
@@ -64,9 +63,10 @@ SET(SOURCE_FILES
     mtsTaskManagerProxyClient.cpp
     mtsTaskManagerProxyServer.cpp
     
-    mtsTaskInterfaceProxy.cpp
-    mtsTaskInterfaceProxyClient.cpp
-    mtsTaskInterfaceProxyServer.cpp
+    mtsDeviceInterface.cpp
+    mtsDeviceInterfaceProxy.cpp
+    mtsDeviceInterfaceProxyClient.cpp
+    mtsDeviceInterfaceProxyServer.cpp
 
     mtsTaskGlobal.cpp
     )
@@ -102,7 +102,7 @@ SET(HEADER_FILES
     mtsExport.h
     mtsForwardDeclarations.h
 
-    mtsDeviceInterface.h
+    
     mtsDevice.h
 
     mtsQueue.h
@@ -130,9 +130,10 @@ SET(HEADER_FILES
     mtsTaskManagerProxyClient.h
     mtsTaskManagerProxyServer.h
         
-    mtsTaskInterfaceProxy.h
-    mtsTaskInterfaceProxyClient.h
-    mtsTaskInterfaceProxyServer.h
+    mtsDeviceInterface.h
+    mtsDeviceInterfaceProxy.h
+    mtsDeviceInterfaceProxyClient.h
+    mtsDeviceInterfaceProxyServer.h
     
     mtsTaskGlobal.h
     mtsDeviceProxy.h
@@ -145,12 +146,12 @@ SET(HEADER_FILES
 SET(ICE_RESOURCE_FILES
     ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client
     ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.server
-    ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskInterfaceProxy.ice
+    ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsDeviceInterfaceProxy.ice
     ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskManagerProxy.ice
     )    
    
 LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
-                  optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
+                optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 

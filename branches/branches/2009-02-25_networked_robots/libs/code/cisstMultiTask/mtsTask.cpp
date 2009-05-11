@@ -28,8 +28,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstMultiTask/mtsTaskManager.h>
 
-#include <cisstMultiTask/mtsTaskInterfaceProxyServer.h>
-#include <cisstMultiTask/mtsTaskInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
 
 #include <iostream>
 #include <string>
@@ -360,7 +360,7 @@ void mtsTask::StartInterfaceProxyServer(const std::string & ServerTaskIP)
         return;
     }
 
-    // Start a provided interface proxy (proxy server, mtsTaskInterfaceProxyServer)    
+    // Start a provided interface proxy (proxy server, mtsDeviceInterfaceProxyServer)    
     //
     // TODO: I assume there is only one provided interface and one required interface
     //
@@ -381,10 +381,10 @@ void mtsTask::StartInterfaceProxyServer(const std::string & ServerTaskIP)
     const std::string endpointInfoForClient = ":default -h " + ServerTaskIP + " -p 11705";
     const std::string communicatorID = TaskInterfaceCommunicatorID;
 
-    Proxy = new mtsTaskInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
+    Proxy = new mtsDeviceInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
     Proxy->Start(this);
     Proxy->GetLogger()->trace("mtsTask", "Provided interface proxy starts.");
-    ProxyServer = dynamic_cast<mtsTaskInterfaceProxyServer *>(Proxy);
+    ProxyServer = dynamic_cast<mtsDeviceInterfaceProxyServer *>(Proxy);
 
     // Inform the global task manager of the existence of a newly created 
     // provided interface with the access information.
@@ -411,17 +411,17 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
         return;
     }
 
-    // Start a required interface proxy (proxy client, mtsTaskInterfaceProxyClient)    
+    // Start a required interface proxy (proxy client, mtsDeviceInterfaceProxyClient)    
     RequiredInterfacesMapType::MapType::iterator iterator = 
         RequiredInterfaces.GetMap().begin();
     //
     // TODO: I assume there is only one provided interface and one required interface
     //
     {
-        Proxy = new mtsTaskInterfaceProxyClient(endpointInfo, communicatorID);
+        Proxy = new mtsDeviceInterfaceProxyClient(endpointInfo, communicatorID);
         Proxy->Start(this);
         Proxy->GetLogger()->trace("mtsTask", "Required interface proxy starts.");
-        ProxyClient = dynamic_cast<mtsTaskInterfaceProxyClient *>(Proxy);
+        ProxyClient = dynamic_cast<mtsDeviceInterfaceProxyClient *>(Proxy);
 
         // Inform the global task manager of the existence on a newly created 
         // required interface.
@@ -438,7 +438,7 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
 //  For a client task
 //
 const bool mtsTask::GetProvidedInterfaceSpecification(
-    mtsTaskInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec)
+    mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec)
 {
     CMN_ASSERT(ProxyClient);
 
@@ -453,8 +453,8 @@ const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterfac
     //CMN_ASSERT(providedInterfaceProxy);
     CMN_ASSERT(requiredInterface);
 
-    mtsTaskInterfaceProxy::CommandProxyInfo info;
-    mtsTaskInterfaceProxy::CommandProxyElement element;
+    mtsDeviceInterfaceProxy::CommandProxyInfo info;
+    mtsDeviceInterfaceProxy::CommandProxyElement element;
     std::map<std::string, unsigned int> CommandProxyNameAndIDMap;
 
     std::map<std::string, unsigned int>::const_iterator it;
@@ -506,8 +506,8 @@ const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterfac
 // MJUNG: Currently it is assumed that one required interface connects to only
 // one provided interface. If a required interface connects to more than
 // one provided interface, appropriate changes should me made.
-// (see mtsTaskInterfaceProxy.ice)
-//void mtsTask::ReceiveCommandProxyInfo(const ::mtsTaskInterfaceProxy::CommandProxyInfo & info)
+// (see mtsDeviceInterfaceProxy.ice)
+//void mtsTask::ReceiveCommandProxyInfo(const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info)
 //{
 //    CMN_ASSERT(ProxyServer);
 //
@@ -517,7 +517,7 @@ const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterfac
 //    std::string commandName;
 //    unsigned int commandID;
 //
-//    mtsTaskInterfaceProxy::CommandProxyElementSeq::const_iterator it;
+//    mtsDeviceInterfaceProxy::CommandProxyElementSeq::const_iterator it;
 //
 //    // Fetch a pointer to an actual command object
 ////#define ADD_COMMAND_PROXY_INFO( _commandType )\
