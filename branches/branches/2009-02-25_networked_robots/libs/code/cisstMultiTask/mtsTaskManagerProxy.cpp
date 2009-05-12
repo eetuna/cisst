@@ -1,13 +1,13 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2009 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2008 ZeroC, Inc. All rights reserved.
 //
 // This copy of Ice is licensed to you under the terms described in the
 // ICE_LICENSE file included in this distribution.
 //
 // **********************************************************************
 
-// Ice version 3.3.1
+// Ice version 3.3.0
 // Generated from file `mtsTaskManagerProxy.ice'
 
 #include <mtsTaskManagerProxy.h>
@@ -24,7 +24,7 @@
 #   if ICE_INT_VERSION % 100 > 50
 #       error Beta header file detected
 #   endif
-#   if ICE_INT_VERSION % 100 < 1
+#   if ICE_INT_VERSION % 100 < 0
 #       error Ice patch level mismatch!
 #   endif
 #endif
@@ -313,9 +313,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerClient::ReceiveData(::Ice::Int num, co
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerClient* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerClient*>(__delBase.get());
             __del->ReceiveData(num, __ctx);
@@ -365,9 +362,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddClient(const ::Ice::Identit
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
             __del->AddClient(ident, __ctx);
@@ -393,9 +387,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddTaskManager(const ::mtsTask
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
             __del->AddTaskManager(localTaskInfo, __ctx);
@@ -421,9 +412,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddProvidedInterface(const ::m
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__AddProvidedInterface_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
@@ -449,9 +437,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::AddRequiredInterface(const ::m
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__AddRequiredInterface_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
@@ -477,9 +462,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::IsRegisteredProvidedInterface(
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__IsRegisteredProvidedInterface_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
@@ -505,9 +487,6 @@ IceProxy::mtsTaskManagerProxy::TaskManagerServer::GetProvidedInterfaceInfo(const
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
-#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
-            IceUtil::DummyBCC dummy;
-#endif
             __checkTwowayOnly(__mtsTaskManagerProxy__TaskManagerServer__GetProvidedInterfaceInfo_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer* __del = dynamic_cast< ::IceDelegate::mtsTaskManagerProxy::TaskManagerServer*>(__delBase.get());
@@ -679,7 +658,6 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddProvidedInterface(const
         __og.abort(__ex);
     }
     bool __ok = __og.invoke();
-    bool __ret;
     try
     {
         if(!__ok)
@@ -694,6 +672,7 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddProvidedInterface(const
                 throw __uue;
             }
         }
+        bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
         __is->read(__ret);
@@ -720,7 +699,6 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddRequiredInterface(const
         __og.abort(__ex);
     }
     bool __ok = __og.invoke();
-    bool __ret;
     try
     {
         if(!__ok)
@@ -735,6 +713,7 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::AddRequiredInterface(const
                 throw __uue;
             }
         }
+        bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
         __is->read(__ret);
@@ -762,7 +741,6 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::IsRegisteredProvidedInterf
         __og.abort(__ex);
     }
     bool __ok = __og.invoke();
-    bool __ret;
     try
     {
         if(!__ok)
@@ -777,6 +755,7 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::IsRegisteredProvidedInterf
                 throw __uue;
             }
         }
+        bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
         __is->read(__ret);
@@ -804,7 +783,6 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::GetProvidedInterfaceInfo(c
         __og.abort(__ex);
     }
     bool __ok = __og.invoke();
-    bool __ret;
     try
     {
         if(!__ok)
@@ -819,6 +797,7 @@ IceDelegateM::mtsTaskManagerProxy::TaskManagerServer::GetProvidedInterfaceInfo(c
                 throw __uue;
             }
         }
+        bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
         info.__read(__is);

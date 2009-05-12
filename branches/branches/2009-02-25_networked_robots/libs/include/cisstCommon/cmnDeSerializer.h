@@ -192,6 +192,25 @@ class CISST_EXPORT cmnDeSerializer: public cmnGenericObject {
             }
         }
     }
+
+    inline void DeSerialize(cmnGenericObject & object) {
+        // get object services
+        cmnClassServicesBase * servicesPointerRemote;
+        cmnDeSerializeRaw(this->InputStream, servicesPointerRemote);
+        if (servicesPointerRemote == 0) {
+            this->DeSerializeServices();
+            // read again to deserialize coming object
+            this->DeSerialize(object);
+        } else {
+            const const_iterator end = ServicesContainer.end();
+            const const_iterator iterator = ServicesContainer.find(servicesPointerRemote);
+            if (iterator == end) {
+                CMN_LOG_CLASS(5) << "DeSerialize: Can't find corresponding class information" << std::endl;
+            } else {
+                object.DeSerializeRaw(this->InputStream);
+            }
+        }
+    }
     
 
  private:

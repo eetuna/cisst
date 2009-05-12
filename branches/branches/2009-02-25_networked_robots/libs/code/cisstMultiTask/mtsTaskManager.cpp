@@ -385,6 +385,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
         // 2) Using the information, start a proxy client (=server proxy, mtsDeviceInterfaceProxyClient object).
         clientTask->StartProxyClient(info.endpointInfo, info.communicatorID);
 
+        osaSleep(1*cmn_s);
         // 3) From the interface proxy server, get the complete information on the provided 
         //    interface as a set of string.
         mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq specs;

@@ -85,9 +85,10 @@ public:
         cmnDeSerializer DeSerializer(StreamBufferOutput);
 
         cmnGenericObject * obj = 0;
-        obj = DeSerializer.DeSerialize();
+        //obj = DeSerializer.DeSerialize();
+        DeSerializer.DeSerialize(argument);
 
-        argument = *obj;
+        //argument = *obj;
 
         return mtsCommandBase::DEV_OK;
     }
