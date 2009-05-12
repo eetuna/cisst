@@ -48,7 +48,7 @@
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input))
         ) {
@@ -77,6 +77,69 @@
 {
     /* Return vector by copy
        Using: %typemap(out) vctDynamicVector
+     */
+
+    //Create a new PyArray and set its size
+    npy_intp* sizes = PyDimMem_NEW(1);
+    sizes[0] = $1.size();
+
+    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());
+
+    // copy data returned by C function into new PyArray
+    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );
+}
+
+
+/******************************************************************************
+  TYPEMAPS (in, out) FOR vctFixedSizeVector
+******************************************************************************/
+
+
+%typemap(in) vctFixedSizeVector
+{
+    /*****************************************************************************
+    *   %typemap(in) vctFixedSizeVector
+    *   Passing a vctFixedSizeVector by copy
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
+
+    /*****************************************************************************
+     CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
+    *****************************************************************************/
+
+    std::cout << std::endl << "Using %typemap(in) vctFixedSizeVector\n\n";
+
+    if (!(   vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessDimension1($input))
+        ) {
+          return NULL;
+    }
+
+    /*****************************************************************************
+     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctFixedSizeVector
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicVectorRef container
+    const npy_intp size = PyArray_DIM($input, 0);
+    const npy_intp stride = PyArray_STRIDE($input, 0) /
+                                sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data =
+        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
+
+    // Copy the data from the temporary container to the vctFixedSizeVector
+    $1.Assign(tempContainer);
+}
+
+
+%typemap(out) vctFixedSizeVector
+{
+    /* Return vector by copy
+       Using: %typemap(out) vctFixedSizeVector
      */
 
     //Create a new PyArray and set its size
@@ -585,7 +648,8 @@
 %enddef
 
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
-%apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
+//%apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
+%apply vctFixedSizeVector       {vctFixedSizeVector<elementType, size>};
 %apply vctDynamicVector &       {vctFixedSizeVector<elementType, size> &};
 %apply const vctDynamicVector & {const vctFixedSizeVector<elementType, size> &};
 %enddef
@@ -603,6 +667,4 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 8);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
 
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(unsigned int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(double);

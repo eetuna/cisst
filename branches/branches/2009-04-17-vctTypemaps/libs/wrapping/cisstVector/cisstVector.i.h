@@ -84,6 +84,17 @@ bool vctThrowUnlessIsSameTypeArray<double>(PyObject * input)
     return true;
 }
 
+template <>
+bool vctThrowUnlessIsSameTypeArray<unsigned int>(PyObject * input)
+{
+    if (PyArray_ObjectType(input, 0) != NPY_UINT32) {
+        PyErr_SetString(PyExc_ValueError, "Array must be of type unsigned int");
+        return false;
+    }
+
+    return true;
+}
+
 template <class _elementType>
 int vctPythonType(void)
 {
@@ -100,6 +111,12 @@ template <>
 int vctPythonType<double>(void)
 {
     return NPY_DOUBLE;
+}
+
+template <>
+int vctPythonType<unsigned int>(void)
+{
+    return NPY_UINT32;
 }
 
 bool vctThrowUnlessDimension1(PyObject * input)
