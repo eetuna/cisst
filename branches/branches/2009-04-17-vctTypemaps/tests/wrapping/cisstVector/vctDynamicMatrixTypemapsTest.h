@@ -7,6 +7,8 @@
 #include <cisstVector.h>
 #include <iostream>
 
+// TODO: fix the CMakeLists.txt file
+
 template <class _elementType>
 class vctDynamicMatrixTypemapsTest
 {

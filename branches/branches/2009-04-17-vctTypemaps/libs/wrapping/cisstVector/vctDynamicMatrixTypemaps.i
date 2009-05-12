@@ -22,6 +22,9 @@
 %}
 
 
+// TODO: Expand to include rowmajor / colmajor
+
+
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicMatrix
 ******************************************************************************/
@@ -83,9 +86,74 @@
     sizes[1] = $1.cols();
 
     // TODO: Understand what this does
-    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(2, sizes, type);
 
     // TODO: Understand what this does
+    // copy data returned by C function into new PyArray
+    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type));
+}
+
+
+/******************************************************************************
+  TYPEMAPS (in, out) FOR vctFixedSizeMatrix
+******************************************************************************/
+
+
+%typemap(in) vctFixedSizeMatrix
+{
+    /*****************************************************************************
+    *   %typemap(in) vctFixedSizeMatrix
+    *   Passing a vctFixedSizeMatrix by copy
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
+
+    /*****************************************************************************
+     CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
+     IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS TWO-DIMENSIONAL
+    *****************************************************************************/
+
+    if (!(   vctThrowUnlessIsPyArray($input)
+          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessDimension2($input))
+        ) {
+          return NULL;
+    }
+
+    /*****************************************************************************
+     COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctFixedSizeMatrix
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicMatrixRef container
+    const npy_intp size0 = PyArray_DIM($input, 0);
+    const npy_intp size1 = PyArray_DIM($input, 1);
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+
+    const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+
+    // Copy the data from the temporary container to the vctFixedSizeMatrix
+    $1.Assign(tempContainer);
+}
+
+
+%typemap(out) vctFixedSizeMatrix
+{
+    /* Return vector by copy
+       Using: %typemap(out) vctFixedSizeMatrix
+     */
+
+    // Create a new PyArray and set its size
+    npy_intp *sizes = PyDimMem_NEW(2);
+    sizes[0] = $1.rows();
+    sizes[1] = $1.cols();
+
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(2, sizes, type);
+
     // copy data returned by C function into new PyArray
     memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type));
 }
@@ -365,7 +433,8 @@
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-    $result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(2, sizes, type);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicMatrixRef TO THE PYARRAY
@@ -509,9 +578,10 @@
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-    //$result = PyArray_SimpleNew(2, sizes, vctPythonType<$1_ltype::value_type>());
+    int type = vctPythonType<$1_ltype::value_type>();
+    //$result = PyArray_SimpleNew(2, sizes, type);
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    PyArray_Descr *descr = PyArray_DescrFromType(vctPythonType<$1_ltype::value_type>());
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
     $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, NULL, NPY_CONTIGUOUS | NPY_OWNDATA | NPY_ALIGNED, NULL);
 
     /*****************************************************************************
@@ -609,8 +679,8 @@
 %enddef
 
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, size)
-%apply vctDynamicMatrix {vctFixedSizeMatrix<elementType, size>};
-%apply vctDynamicMatrix & {vctFixedSizeMatrix<elementType, size> &};
+%apply vctFixedSizeMatrix       {vctFixedSizeMatrix<elementType, size>};
+%apply vctDynamicMatrix &       {vctFixedSizeMatrix<elementType, size> &};
 %apply const vctDynamicMatrix & {const vctFixedSizeMatrix<elementType, size> &};
 %enddef
 
@@ -627,5 +697,4 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
 
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(unsigned int);
