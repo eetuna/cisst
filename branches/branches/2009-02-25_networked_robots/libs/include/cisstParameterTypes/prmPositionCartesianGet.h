@@ -109,7 +109,20 @@ class CISST_EXPORT prmPositionCartesianGet: public cmnGenericObject
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
+   /*! Serialize the content of the object without any extra
+      information, i.e. no class type nor format version.  The
+      "receiver" is supposed to already know what to expect. */ 
+    virtual void SerializeRaw(std::ostream & outputStream) const {
+        cmnSerializeRaw(outputStream, this->PositionMember);
+        cmnSerializeRaw(outputStream, this->StateIndexMember);
+    }
 
+    /*! De-serialize the content of the object without any extra
+      information, i.e. no class type nor format version. */
+    virtual void DeSerializeRaw(std::istream & inputStream) {
+        cmnDeSerializeRaw(inputStream, this->PositionMember);
+        cmnDeSerializeRaw(inputStream, this->StateIndexMember);
+    }
 }; // _prmPositionCartesianGet_h
 
 

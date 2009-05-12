@@ -29,6 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnSerializer.h>
+#include <cisstCommon/cmnDeSerializer.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -132,6 +134,23 @@ public:
 	bool operator!=(const mtsStateIndex & that) const {
 		return !(*this == that);
 	}
+
+    /*! Serialize the content of the object without any extra
+      information, i.e. no class type nor format version.  The
+      "receiver" is supposed to already know what to expect. */ 
+    virtual void SerializeRaw(std::ostream & outputStream) const {
+        cmnSerializeRaw(outputStream, this->TimeIndex);
+        cmnSerializeRaw(outputStream, this->TimeTicks);
+        cmnSerializeRaw(outputStream, this->BufferLength);
+    }
+
+    /*! De-serialize the content of the object without any extra
+      information, i.e. no class type nor format version. */
+    virtual void DeSerializeRaw(std::istream & inputStream) {
+        cmnDeSerializeRaw(inputStream, this->TimeIndex);
+        cmnDeSerializeRaw(inputStream, this->TimeTicks);
+        cmnDeSerializeRaw(inputStream, this->BufferLength);
+    }
 };
 
 

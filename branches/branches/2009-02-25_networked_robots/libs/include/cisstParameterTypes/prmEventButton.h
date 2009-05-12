@@ -73,6 +73,21 @@ class CISST_EXPORT prmEventButton: public cmnGenericObject
 
     /*! Overloaded ToStream */
     virtual void ToStream(std::ostream & outputStream) const;
+
+    /*! Serialize the content of the object without any extra
+      information, i.e. no class type nor format version.  The
+      "receiver" is supposed to already know what to expect. */ 
+    virtual void SerializeRaw(std::ostream & outputStream) const {
+        this->StateIndexMember.SerializeRaw(outputStream);
+        cmnSerializeRaw(outputStream, this->TypeMember);
+    }
+
+    /*! De-serialize the content of the object without any extra
+      information, i.e. no class type nor format version. */
+    virtual void DeSerializeRaw(std::istream & inputStream) {
+        this->StateIndexMember.DeSerializeRaw(inputStream);
+        cmnDeSerializeRaw(inputStream, this->TypeMember);
+    }
 };
 
 

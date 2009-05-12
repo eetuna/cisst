@@ -1,13 +1,13 @@
 // **********************************************************************
 //
-// Copyright (c) 2003-2008 ZeroC, Inc. All rights reserved.
+// Copyright (c) 2003-2009 ZeroC, Inc. All rights reserved.
 //
 // This copy of Ice is licensed to you under the terms described in the
 // ICE_LICENSE file included in this distribution.
 //
 // **********************************************************************
 
-// Ice version 3.3.0
+// Ice version 3.3.1
 // Generated from file `mtsDeviceInterfaceProxy.ice'
 
 #include <mtsDeviceInterfaceProxy.h>
@@ -24,7 +24,7 @@
 #   if ICE_INT_VERSION % 100 > 50
 #       error Beta header file detected
 #   endif
-#   if ICE_INT_VERSION % 100 < 0
+#   if ICE_INT_VERSION % 100 < 1
 #       error Ice patch level mismatch!
 #   endif
 #endif
@@ -896,6 +896,9 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::AddClient(const ::Ice::I
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
+#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
+            IceUtil::DummyBCC dummy;
+#endif
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->AddClient(ident, __ctx);
@@ -921,6 +924,9 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::GetProvidedInterfaceSpec
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
+#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
+            IceUtil::DummyBCC dummy;
+#endif
             __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
@@ -946,6 +952,9 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandVoid(::Ice
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
+#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
+            IceUtil::DummyBCC dummy;
+#endif
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->ExecuteCommandVoid(CommandSID, __ctx);
@@ -971,6 +980,9 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWrite(::Ic
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
+#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
+            IceUtil::DummyBCC dummy;
+#endif
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
             __del->ExecuteCommandWrite(CommandSID, argument, __ctx);
@@ -996,6 +1008,9 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandRead(::Ice
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
+#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
+            IceUtil::DummyBCC dummy;
+#endif
             __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandRead_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
@@ -1022,6 +1037,9 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedR
         ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
         try
         {
+#if defined(__BCPLUSPLUS__) && (__BCPLUSPLUS__ >= 0x0600) // C++Builder 2009 compiler bug
+            IceUtil::DummyBCC dummy;
+#endif
             __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name);
             __delBase = __getDelegate(false);
             ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
@@ -1184,6 +1202,7 @@ IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::GetProvidedInterface
 {
     ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__GetProvidedInterfaceSpecification_name, ::Ice::Idempotent, __context);
     bool __ok = __og.invoke();
+    bool __ret;
     try
     {
         if(!__ok)
@@ -1198,7 +1217,6 @@ IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::GetProvidedInterface
                 throw __uue;
             }
         }
-        bool __ret;
         ::IceInternal::BasicStream* __is = __og.is();
         __is->startReadEncaps();
         ::mtsDeviceInterfaceProxy::__readProvidedInterfaceSpecificationSeq(__is, providedInterfaceSpecifications);
