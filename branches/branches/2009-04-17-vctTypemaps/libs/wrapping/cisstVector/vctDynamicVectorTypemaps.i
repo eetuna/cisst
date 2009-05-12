@@ -146,7 +146,8 @@
     npy_intp* sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
 
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(1, sizes, type);    // SWIG does not support making `type' anonymous, e.g.: $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>()), when `$1_ltype::value_type' is templated by more than one parameter
 
     // copy data returned by C function into new PyArray
     memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );

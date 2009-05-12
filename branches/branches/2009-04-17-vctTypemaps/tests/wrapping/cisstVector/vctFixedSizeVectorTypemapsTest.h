@@ -23,6 +23,13 @@ public:
         copy.Assign(param);
     }
 
+    vctFixedSizeVector<unsigned int, 4> out_vctFixedSizeVector(void) {
+        unsigned int min = 0;
+        unsigned int max = 10;
+        vctRandom(copy, min, max);
+        return copy;
+    }
+
     inline unsigned int __getitem__(unsigned int index) const
     throw(std::out_of_range) {
         return copy.at(index);

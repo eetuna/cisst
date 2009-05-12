@@ -143,10 +143,8 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
 
 
     def StdTestThrowUnlessReturnedVectorIsWritable(self, function):
-        assert(False)
         # Expect the returned array to be writable
-        SIZE = 10
-        exec('v = self.CObject.' + function + '(SIZE)')
+        exec('v = self.CObject.' + function + '()')
         assert(v.flags['WRITEABLE'] == True)
 
 
@@ -221,12 +219,10 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
 
     # Test if the C object returns a good vector
     def SpecTestThrowUnlessReceivesCorrectVector(self, function):
-        assert(False)
-        SIZE = 10
-        exec('v = self.CObject.' + function + '(SIZE)')
+        exec('v = self.CObject.' + function + '()')
 
-        assert(v.size == SIZE)
-        for i in xrange(SIZE):
+        size = self.CObject.size()
+        for i in xrange(size):
             assert(self.CObject[i] == v[i])
 
 
@@ -245,3 +241,13 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
 
         # Perform specialized tests
         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+
+
+    def Test_out_vctFixedSizeVector(self):
+        MY_NAME = 'out_vctFixedSizeVector'
+
+        # Perform battery of standard tests
+        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+
+        # Perform specialized tests
+        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
