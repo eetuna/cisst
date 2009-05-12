@@ -21,6 +21,7 @@ from vctDynamicNArrayTypemapsTestPython import vctDynamicNArrayTypemapsTest_doub
 class DynamicNArrayTypemapsTest(unittest.TestCase):
 
     dtype = numpy.double
+    size_type = numpy.uint32
 
     ###########################################################################
     #   SET UP function                                                       #
@@ -202,7 +203,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         exec('self.CObject.' + function + '(vNew, 0)')
 
-        cShape = numpy.ones(ndim, dtype=self.dtype)
+        cShape = numpy.ones(ndim, dtype=self.size_type)
         self.CObject.sizes(cShape)
 
         assert((cShape == vShape).all())
@@ -231,7 +232,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         exec('self.CObject.' + function + '(vNew, 0)')
 
-        cShape = numpy.ones(ndim, dtype=self.dtype)
+        cShape = numpy.ones(ndim, dtype=self.size_type)
         self.CObject.sizes(cShape)
 
         assert((cShape == vShape).all())
@@ -262,7 +263,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
         exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
 
-        cShape = numpy.ones(ndim, dtype=self.dtype)
+        cShape = numpy.ones(ndim, dtype=self.size_type)
         self.CObject.sizes(cShape)
 
         assert((cShape == vShape).all())

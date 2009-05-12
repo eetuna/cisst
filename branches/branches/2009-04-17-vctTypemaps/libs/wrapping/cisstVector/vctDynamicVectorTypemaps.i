@@ -83,7 +83,8 @@
     npy_intp* sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
 
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(1, sizes, type);
 
     // copy data returned by C function into new PyArray
     memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );
@@ -109,8 +110,6 @@
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
-
-    std::cout << std::endl << "Using %typemap(in) vctFixedSizeVector\n\n";
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
@@ -193,10 +192,8 @@
 
     // Create a temporary vctDynamicVectorRef container
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
     const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
 
     // Create the vctDynamicVector
@@ -271,7 +268,8 @@
     sizeOfReturnedVector[0] = $1->size();
 
     //create a new PyArray from the reference returned by the C function
-    $result = PyArray_SimpleNewFromData(1, sizeOfReturnedVector, vctPythonType<$*1_ltype::value_type>(),  $1->Pointer() );
+    int type = vctPythonType<$*1_ltype::value_type>();
+    $result = PyArray_SimpleNewFromData(1, sizeOfReturnedVector, type,  $1->Pointer() );
 }
 
 
@@ -295,7 +293,7 @@
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input))
         ) {
@@ -308,12 +306,9 @@
 
     // Create a temporary vctDynamicVectorRef container
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
-    const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer =
-        vctDynamicVectorRef<$*1_ltype::value_type>(size, data, stride);
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
 
     // Create the vctDynamicVector
     $1 = new $*1_ltype(tempContainer);
@@ -352,7 +347,8 @@
     sizes[0] = $1->size();
 
     //NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    int type = vctPythonType<$*1_ltype::value_type>();
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -417,7 +413,8 @@
 
     npy_intp *sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(1, sizes, type);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicVectorRef TO THE PYARRAY
@@ -555,7 +552,8 @@
 
     npy_intp *sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
-    $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>());  // TODO: clean this up
+    int type = vctPythonType<$1_ltype::value_type>();
+    $result = PyArray_SimpleNew(1, sizes, type);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY
@@ -649,7 +647,6 @@
 %enddef
 
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
-//%apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
 %apply vctFixedSizeVector       {vctFixedSizeVector<elementType, size>};
 %apply vctDynamicVector &       {vctFixedSizeVector<elementType, size> &};
 %apply const vctDynamicVector & {const vctFixedSizeVector<elementType, size> &};

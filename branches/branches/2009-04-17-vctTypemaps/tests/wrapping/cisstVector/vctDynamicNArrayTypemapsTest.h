@@ -130,7 +130,7 @@ public:
         copy.at(metaIndex) = value;
     }
 
-    inline void sizes(vctFixedSizeVector<_elementType, _dimension> &shape) const {
+    inline void sizes(vctFixedSizeVector<unsigned int, _dimension> &shape) const {
         shape.Assign(copy.sizes());
     }
 };
