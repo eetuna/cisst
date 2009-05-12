@@ -285,7 +285,8 @@
 
     // TODO: Understand what this does
     // NPY_CARRAY = set flags for a C Array that is non-Read Only
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
+    int type = vctPythonType<$*1_ltype::value_type>();
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
 }
 
 
@@ -309,7 +310,7 @@
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input))
         ) {
@@ -325,8 +326,7 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
     const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Create the vctDynamicMatrix
@@ -364,10 +364,10 @@
     sizes[0] = $1->rows();
     sizes[1] = $1->cols();
 
-    // TODO: Understand what this does
     // To imitate const functionality, set the writable flag to false
     // NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    int type = vctPythonType<$*1_ltype::value_type>();
+    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 

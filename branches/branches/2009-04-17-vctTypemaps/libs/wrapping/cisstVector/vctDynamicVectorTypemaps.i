@@ -157,6 +157,7 @@
   TYPEMAPS (in, argout, out) FOR vctDynamicVector &
 ******************************************************************************/
 
+// TODO: Consider moving FixedSizeVectors into their own .i file
 
 %typemap(in) vctDynamicVector &
 {
