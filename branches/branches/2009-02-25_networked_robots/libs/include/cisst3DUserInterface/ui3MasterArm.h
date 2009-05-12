@@ -53,7 +53,7 @@ public:
     virtual ~ui3MasterArm();
 
     virtual bool SetInput(mtsDevice * positionDevice, const std::string & positionInterface,
-                          mtsDevice * buttonDevice, const std::string & buttonInterface,
+                          //mtsDevice * buttonDevice, const std::string & buttonInterface,
                           mtsDevice * clutchDevice, const std::string & clutchInterface,
                           const RoleType & role);
     

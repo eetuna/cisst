@@ -267,7 +267,7 @@ void devSensableHD::SetupInterfaces(void)
                                          deviceData->PositionCartesian.ReferenceFrame());
         
         // Add interfaces for button with events
-        providedInterface = this->AddProvidedInterface(interfaceName + "Button1");
+//        providedInterface = this->AddProvidedInterface(interfaceName + "Button1");
         deviceData->Button1Event.Bind(providedInterface->AddEventWrite("Button",
                                                                        prmEventButton()));
         providedInterface = this->AddProvidedInterface(interfaceName + "Button2");

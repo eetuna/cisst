@@ -44,7 +44,7 @@ ui3MasterArm::~ui3MasterArm()
 
 
 bool ui3MasterArm::SetInput(mtsDevice * positionDevice, const std::string & positionInterface,
-                            mtsDevice * buttonDevice, const std::string & buttonInterface,
+                            // mtsDevice * buttonDevice, const std::string & buttonInterface,
                             mtsDevice * clutchDevice, const std::string & clutchInterface,
                             const RoleType & role)
 {
@@ -77,21 +77,25 @@ bool ui3MasterArm::SetInput(mtsDevice * positionDevice, const std::string & posi
                                         positionDevice->GetName(), positionInterface);
 
     // setup master select button required interface 
-    requiredInterface = this->Manager->AddRequiredInterface(this->Name + "Button");
+/*
+requiredInterface = this->Manager->AddRequiredInterface(this->Name + "Button");
     if (requiredInterface) {
-        requiredInterface->AddEventHandlerWrite(&ui3MasterArm::ButtonEventHandler, this,
+*/
+    requiredInterface->AddEventHandlerWrite(&ui3MasterArm::ButtonEventHandler, this,
                                                 "Button", prmEventButton());
-    } else {
+/*
+} else {
         CMN_LOG_CLASS(1) << "SetInput: failed to add \""
                          << this->Name
                          << "\" interface, are you trying to set this arm twice?"
                          << std::endl;
         return false;
     }
+    */
     // connect the master button device to the master button required interface
-    this->Manager->TaskManager->Connect(this->Manager->GetName(), this->Name + "Button",
+/*    this->Manager->TaskManager->Connect(this->Manager->GetName(), this->Name + "Button",
                                         buttonDevice->GetName(), buttonInterface);
-
+*/
     // setup master clutch button required interface 
     requiredInterface = this->Manager->AddRequiredInterface(this->Name + "Clutch");
     if (requiredInterface) {

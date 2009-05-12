@@ -219,7 +219,7 @@ int main()
     ui3MasterArm * rightMaster = new ui3MasterArm("Omni1");
     guiManager.AddMasterArm(rightMaster);
     rightMaster->SetInput(sensable, "Omni1",
-                          sensable, "Omni1Button1",
+                          // sensable, "Omni1Button1",
                           sensable, "Omni1Button2",
                           ui3MasterArm::PRIMARY);
     rightMaster->SetTransformation(transform, 0.5 /* scale factor */);

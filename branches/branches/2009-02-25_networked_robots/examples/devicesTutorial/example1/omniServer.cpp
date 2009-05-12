@@ -40,8 +40,18 @@ int main(void)
 
     // connect the tasks
     taskManager->Connect("DISP", "Robot", "Omni", omniName);
-    taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
+    // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
     taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
+#endif
+
+#if 0
+    taskManager->GlobalTaskManagerIP = "10.164.200.79";
+    taskManager->ServerTaskIP = "10.162.34.64";
+
+    // Set the type of task manager either as a server or as a client.
+    // mtsTaskManager::SetTaskManagerType() should be called before
+    // executing mtsTaskManager::Connect()
+    taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
 #endif
 
     // generate a nice tasks diagram

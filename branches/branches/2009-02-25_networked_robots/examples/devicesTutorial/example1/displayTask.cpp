@@ -19,10 +19,10 @@ displayTask::displayTask(const std::string & taskName, double period):
         requiredInterface->AddFunction("GetPositionCartesian", GetCartesianPosition, mtsRequired);
         requiredInterface->AddFunction("GetVelocityCartesian", GetCartesianVelocity, mtsOptional);
         requiredInterface->AddFunction("GetPositionJoint", GetJointPosition, mtsOptional);
-    }
+/*    }
     // to communicate with the interface of the resource
     requiredInterface = AddRequiredInterface("Button1");
-	if (requiredInterface) {
+	if (requiredInterface) { */
         requiredInterface->AddEventHandlerWrite(&displayTask::Button1EventHandler, this,
                                                 "Button", prmEventButton());
     }
@@ -42,9 +42,9 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
 void displayTask::Startup(void) 
 {
     // find the interface which has been connected to our resource port
-    mtsDeviceInterface * interface = GetProvidedInterfaceFor("Robot");
+    mtsDeviceInterface * providedInterface = GetProvidedInterfaceFor("Robot");
     // make sure an interface has been connected
-    if (interface) {
+    if (providedInterface) {
         // get a pointer on tip node --- name is hardcoded, bad, need a way to query all possible names
         // from the interface
         this->TipTransformationPointer = prmTransformationManager::GetTransformationNodePtr("OmniTip");
