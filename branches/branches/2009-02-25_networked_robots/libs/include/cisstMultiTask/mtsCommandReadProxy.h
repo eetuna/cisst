@@ -29,13 +29,14 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandReadProxy_h
 
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstCommon/cmnSerializer.h>
 
 /*!
   \ingroup cisstMultiTask
 */
 class mtsCommandReadProxy: public mtsCommandReadBase {
 public:
-    typedef cmnDouble ArgumentType;
+    //typedef cmnDouble ArgumentType;
     typedef mtsCommandReadBase BaseType;
 
 protected:
@@ -48,13 +49,15 @@ protected:
 public:
     mtsCommandReadProxy(const int commandSID, 
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
-        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), 
+          BaseType()
     {}
 
     mtsCommandReadProxy(const int commandSID,
                          mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name)
-        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
+        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), 
+          BaseType(name)
     {}
 
     /*! The destructor. Does nothing */
@@ -62,15 +65,29 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(cmnGenericObject & argument) {
-        ArgumentType * data = dynamic_cast<ArgumentType *>(&argument);
-        if (data == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        
-        //(ClassInstantiation->*Action)(*data);
         static int cnt = 0;
         std::cout << "mtsCommandReadProxy called (" << ++cnt << "): " << Name << std::endl;
 
-        ProvidedInterfaceProxy->InvokeExecuteCommandRead(CommandSID, *data);
+        //// serialization
+        //std::stringstream ss;
+        //cmnSerializer serialization(ss);
+        //serialization.Serialize(argument);
+        //std::string dummy = ss.str();
+        std::string returnValue;
+        
+        //std::cout << "#################### " << s.size() << std::endl;
+
+        ProvidedInterfaceProxy->InvokeExecuteCommandReadSerialized(CommandSID, returnValue);
+
+        // deserialization
+        std::stringstream StreamBufferOutput;
+        StreamBufferOutput << returnValue;
+        cmnDeSerializer DeSerializer(StreamBufferOutput);
+
+        cmnGenericObject * obj = 0;
+        obj = DeSerializer.DeSerialize();
+
+        argument = *obj;
 
         return mtsCommandBase::DEV_OK;
     }

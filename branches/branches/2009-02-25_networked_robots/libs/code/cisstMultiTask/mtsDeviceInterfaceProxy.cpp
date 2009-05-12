@@ -41,6 +41,12 @@ static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__Execu
 
 static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name = "ExecuteCommandQualifiedRead";
 
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandWriteSerialized_name = "ExecuteCommandWriteSerialized";
+
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandReadSerialized_name = "ExecuteCommandReadSerialized";
+
+static const ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedReadSerialized_name = "ExecuteCommandQualifiedReadSerialized";
+
 ::Ice::Object* IceInternal::upCast(::mtsDeviceInterfaceProxy::TaskInterfaceClient* p) { return p; }
 ::IceProxy::Ice::Object* IceInternal::upCast(::IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceClient* p) { return p; }
 
@@ -1033,6 +1039,83 @@ IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedR
     }
 }
 
+void
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWriteSerialized(::Ice::Int CommandSID, const ::std::string& argument, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            __del->ExecuteCommandWriteSerialized(CommandSID, argument, __ctx);
+            return;
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapper(__delBase, __ex, 0);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
+void
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandReadSerialized(::Ice::Int CommandSID, ::std::string& argument, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandReadSerialized_name);
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            __del->ExecuteCommandReadSerialized(CommandSID, argument, __ctx);
+            return;
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapper(__delBase, __ex, 0);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
+void
+IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedReadSerialized(::Ice::Int CommandSID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Context* __ctx)
+{
+    int __cnt = 0;
+    while(true)
+    {
+        ::IceInternal::Handle< ::IceDelegate::Ice::Object> __delBase;
+        try
+        {
+            __checkTwowayOnly(__mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedReadSerialized_name);
+            __delBase = __getDelegate(false);
+            ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer* __del = dynamic_cast< ::IceDelegate::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(__delBase.get());
+            __del->ExecuteCommandQualifiedReadSerialized(CommandSID, argument1, argument2, __ctx);
+            return;
+        }
+        catch(const ::IceInternal::LocalExceptionWrapper& __ex)
+        {
+            __handleExceptionWrapper(__delBase, __ex, 0);
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            __handleException(__delBase, __ex, 0, __cnt);
+        }
+    }
+}
+
 const ::std::string&
 IceProxy::mtsDeviceInterfaceProxy::TaskInterfaceServer::ice_staticId()
 {
@@ -1251,6 +1334,125 @@ void
 IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedRead(::Ice::Int CommandSID, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Context* __context)
 {
     ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedRead_name, ::Ice::Normal, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        __os->write(CommandSID);
+        __os->write(argument1);
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    try
+    {
+        if(!__ok)
+        {
+            try
+            {
+                __og.throwUserException();
+            }
+            catch(const ::Ice::UserException& __ex)
+            {
+                ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                throw __uue;
+            }
+        }
+        ::IceInternal::BasicStream* __is = __og.is();
+        __is->startReadEncaps();
+        __is->read(argument2);
+        __is->endReadEncaps();
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+    }
+}
+
+void
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWriteSerialized(::Ice::Int CommandSID, const ::std::string& argument, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandWriteSerialized_name, ::Ice::Normal, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        __os->write(CommandSID);
+        __os->write(argument);
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    if(!__og.is()->b.empty())
+    {
+        try
+        {
+            if(!__ok)
+            {
+                try
+                {
+                    __og.throwUserException();
+                }
+                catch(const ::Ice::UserException& __ex)
+                {
+                    ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                    throw __uue;
+                }
+            }
+            __og.is()->skipEmptyEncaps();
+        }
+        catch(const ::Ice::LocalException& __ex)
+        {
+            throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+        }
+    }
+}
+
+void
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandReadSerialized(::Ice::Int CommandSID, ::std::string& argument, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandReadSerialized_name, ::Ice::Normal, __context);
+    try
+    {
+        ::IceInternal::BasicStream* __os = __og.os();
+        __os->write(CommandSID);
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        __og.abort(__ex);
+    }
+    bool __ok = __og.invoke();
+    try
+    {
+        if(!__ok)
+        {
+            try
+            {
+                __og.throwUserException();
+            }
+            catch(const ::Ice::UserException& __ex)
+            {
+                ::Ice::UnknownUserException __uue(__FILE__, __LINE__, __ex.ice_name());
+                throw __uue;
+            }
+        }
+        ::IceInternal::BasicStream* __is = __og.is();
+        __is->startReadEncaps();
+        __is->read(argument);
+        __is->endReadEncaps();
+    }
+    catch(const ::Ice::LocalException& __ex)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(__ex, false);
+    }
+}
+
+void
+IceDelegateM::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedReadSerialized(::Ice::Int CommandSID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Context* __context)
+{
+    ::IceInternal::Outgoing __og(__handler.get(), __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedReadSerialized_name, ::Ice::Normal, __context);
     try
     {
         ::IceInternal::BasicStream* __os = __og.os();
@@ -1683,6 +1885,206 @@ IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualif
     }
 }
 
+void
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandWriteSerialized(::Ice::Int CommandSID, const ::std::string& argument, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(::Ice::Int CommandSID, const ::std::string& argument, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _m_CommandSID(CommandSID),
+            _m_argument(argument)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            servant->ExecuteCommandWriteSerialized(_m_CommandSID, _m_argument, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        ::Ice::Int _m_CommandSID;
+        const ::std::string& _m_argument;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandWriteSerialized_name, ::Ice::Normal, __context);
+    try
+    {
+        _DirectI __direct(CommandSID, argument, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
+}
+
+void
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandReadSerialized(::Ice::Int CommandSID, ::std::string& argument, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(::Ice::Int CommandSID, ::std::string& argument, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _m_CommandSID(CommandSID),
+            _m_argument(argument)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            servant->ExecuteCommandReadSerialized(_m_CommandSID, _m_argument, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        ::Ice::Int _m_CommandSID;
+        ::std::string& _m_argument;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandReadSerialized_name, ::Ice::Normal, __context);
+    try
+    {
+        _DirectI __direct(CommandSID, argument, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
+}
+
+void
+IceDelegateD::mtsDeviceInterfaceProxy::TaskInterfaceServer::ExecuteCommandQualifiedReadSerialized(::Ice::Int CommandSID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Context* __context)
+{
+    class _DirectI : public ::IceInternal::Direct
+    {
+    public:
+
+        _DirectI(::Ice::Int CommandSID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Current& __current) : 
+            ::IceInternal::Direct(__current),
+            _m_CommandSID(CommandSID),
+            _m_argument1(argument1),
+            _m_argument2(argument2)
+        {
+        }
+        
+        virtual ::Ice::DispatchStatus
+        run(::Ice::Object* object)
+        {
+            ::mtsDeviceInterfaceProxy::TaskInterfaceServer* servant = dynamic_cast< ::mtsDeviceInterfaceProxy::TaskInterfaceServer*>(object);
+            if(!servant)
+            {
+                throw ::Ice::OperationNotExistException(__FILE__, __LINE__, _current.id, _current.facet, _current.operation);
+            }
+            servant->ExecuteCommandQualifiedReadSerialized(_m_CommandSID, _m_argument1, _m_argument2, _current);
+            return ::Ice::DispatchOK;
+        }
+        
+    private:
+        
+        ::Ice::Int _m_CommandSID;
+        const ::std::string& _m_argument1;
+        ::std::string& _m_argument2;
+    };
+    
+    ::Ice::Current __current;
+    __initCurrent(__current, __mtsDeviceInterfaceProxy__TaskInterfaceServer__ExecuteCommandQualifiedReadSerialized_name, ::Ice::Normal, __context);
+    try
+    {
+        _DirectI __direct(CommandSID, argument1, argument2, __current);
+        try
+        {
+            __direct.servant()->__collocDispatch(__direct);
+        }
+        catch(...)
+        {
+            __direct.destroy();
+            throw;
+        }
+        __direct.destroy();
+    }
+    catch(const ::Ice::SystemException&)
+    {
+        throw;
+    }
+    catch(const ::IceInternal::LocalExceptionWrapper&)
+    {
+        throw;
+    }
+    catch(const ::std::exception& __ex)
+    {
+        ::IceInternal::LocalExceptionWrapper::throwWrapper(__ex);
+    }
+    catch(...)
+    {
+        throw ::IceInternal::LocalExceptionWrapper(::Ice::UnknownException(__FILE__, __LINE__, "unknown c++ exception"), false);
+    }
+}
+
 ::Ice::ObjectPtr
 mtsDeviceInterfaceProxy::TaskInterfaceClient::ice_clone() const
 {
@@ -1922,13 +2324,65 @@ mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandQualifiedRead(::I
     return ::Ice::DispatchOK;
 }
 
+::Ice::DispatchStatus
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandWriteSerialized(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+{
+    __checkMode(::Ice::Normal, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::Ice::Int CommandSID;
+    ::std::string argument;
+    __is->read(CommandSID);
+    __is->read(argument);
+    __is->endReadEncaps();
+    ExecuteCommandWriteSerialized(CommandSID, argument, __current);
+    return ::Ice::DispatchOK;
+}
+
+::Ice::DispatchStatus
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandReadSerialized(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+{
+    __checkMode(::Ice::Normal, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::Ice::Int CommandSID;
+    __is->read(CommandSID);
+    __is->endReadEncaps();
+    ::IceInternal::BasicStream* __os = __inS.os();
+    ::std::string argument;
+    ExecuteCommandReadSerialized(CommandSID, argument, __current);
+    __os->write(argument);
+    return ::Ice::DispatchOK;
+}
+
+::Ice::DispatchStatus
+mtsDeviceInterfaceProxy::TaskInterfaceServer::___ExecuteCommandQualifiedReadSerialized(::IceInternal::Incoming& __inS, const ::Ice::Current& __current)
+{
+    __checkMode(::Ice::Normal, __current.mode);
+    ::IceInternal::BasicStream* __is = __inS.is();
+    __is->startReadEncaps();
+    ::Ice::Int CommandSID;
+    ::std::string argument1;
+    __is->read(CommandSID);
+    __is->read(argument1);
+    __is->endReadEncaps();
+    ::IceInternal::BasicStream* __os = __inS.os();
+    ::std::string argument2;
+    ExecuteCommandQualifiedReadSerialized(CommandSID, argument1, argument2, __current);
+    __os->write(argument2);
+    return ::Ice::DispatchOK;
+}
+
 static ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer_all[] =
 {
     "AddClient",
     "ExecuteCommandQualifiedRead",
+    "ExecuteCommandQualifiedReadSerialized",
     "ExecuteCommandRead",
+    "ExecuteCommandReadSerialized",
     "ExecuteCommandVoid",
     "ExecuteCommandWrite",
+    "ExecuteCommandWriteSerialized",
     "GetProvidedInterfaceSpecification",
     "ice_id",
     "ice_ids",
@@ -1939,7 +2393,7 @@ static ::std::string __mtsDeviceInterfaceProxy__TaskInterfaceServer_all[] =
 ::Ice::DispatchStatus
 mtsDeviceInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming& in, const ::Ice::Current& current)
 {
-    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsDeviceInterfaceProxy__TaskInterfaceServer_all, __mtsDeviceInterfaceProxy__TaskInterfaceServer_all + 10, current.operation);
+    ::std::pair< ::std::string*, ::std::string*> r = ::std::equal_range(__mtsDeviceInterfaceProxy__TaskInterfaceServer_all, __mtsDeviceInterfaceProxy__TaskInterfaceServer_all + 13, current.operation);
     if(r.first == r.second)
     {
         throw ::Ice::OperationNotExistException(__FILE__, __LINE__, current.id, current.facet, current.operation);
@@ -1957,33 +2411,45 @@ mtsDeviceInterfaceProxy::TaskInterfaceServer::__dispatch(::IceInternal::Incoming
         }
         case 2:
         {
-            return ___ExecuteCommandRead(in, current);
+            return ___ExecuteCommandQualifiedReadSerialized(in, current);
         }
         case 3:
         {
-            return ___ExecuteCommandVoid(in, current);
+            return ___ExecuteCommandRead(in, current);
         }
         case 4:
         {
-            return ___ExecuteCommandWrite(in, current);
+            return ___ExecuteCommandReadSerialized(in, current);
         }
         case 5:
         {
-            return ___GetProvidedInterfaceSpecification(in, current);
+            return ___ExecuteCommandVoid(in, current);
         }
         case 6:
         {
-            return ___ice_id(in, current);
+            return ___ExecuteCommandWrite(in, current);
         }
         case 7:
         {
-            return ___ice_ids(in, current);
+            return ___ExecuteCommandWriteSerialized(in, current);
         }
         case 8:
         {
-            return ___ice_isA(in, current);
+            return ___GetProvidedInterfaceSpecification(in, current);
         }
         case 9:
+        {
+            return ___ice_id(in, current);
+        }
+        case 10:
+        {
+            return ___ice_ids(in, current);
+        }
+        case 11:
+        {
+            return ___ice_isA(in, current);
+        }
+        case 12:
         {
             return ___ice_ping(in, current);
         }

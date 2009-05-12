@@ -88,8 +88,11 @@ public:
     void InvokeExecuteCommandVoid(const int commandSID) const;
     void InvokeExecuteCommandWrite(const int commandSID, const cmnDouble & argument) const;
     void InvokeExecuteCommandRead(const int commandSID, cmnDouble & argument);
-    void InvokeExecuteCommandQualifiedRead(
-        const int commandSID, const cmnDouble & argument1, cmnDouble & argument2);
+    void InvokeExecuteCommandQualifiedRead(const int commandSID, const cmnDouble & argument1, cmnDouble & argument2);
+
+    void InvokeExecuteCommandWriteSerialized(const int commandSID, const std::string & argument) const;
+    void InvokeExecuteCommandReadSerialized(const int commandSID, std::string & argument);
+    void InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice

@@ -162,6 +162,37 @@ void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedRead(
     argument2 = out;
 }
 
+//
+//  Command Object with Serialization
+//
+void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandWriteSerialized(const int commandSID, const std::string & argument) const
+{
+    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");
+    
+    TaskInterfaceServer->ExecuteCommandWriteSerialized(commandSID, argument);
+}
+
+void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandReadSerialized(const int commandSID, std::string & argument)
+{
+    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandReadSerialized");
+    
+    TaskInterfaceServer->ExecuteCommandReadSerialized(commandSID, argument);
+}
+
+void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2)
+{
+    ////GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");
+    //
+    //double value = argument1.Data;
+    //double outValue = 0.0;
+
+    //TaskInterfaceServer->ExecuteCommandQualifiedRead(commandSID, value, outValue);
+
+    //cmnDouble out(outValue);
+    //argument2 = out;
+}
+
+
 //-------------------------------------------------------------------------
 //  Definition by mtsDeviceInterfaceProxy.ice
 //-------------------------------------------------------------------------

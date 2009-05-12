@@ -541,7 +541,7 @@ void mtsTaskManager::StartProxies()
         ProxyClient = dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
         Proxy->Start(this);
 
-        osaSleep(500 * cmn_ms);
+        osaSleep(1000 * cmn_ms);
 
         // Start a task interface proxy. Currently it is assumed that there is only
         // one provided interface and one required interface.

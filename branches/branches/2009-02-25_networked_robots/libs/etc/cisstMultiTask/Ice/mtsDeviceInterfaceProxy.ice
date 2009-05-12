@@ -156,10 +156,16 @@ module mtsDeviceInterfaceProxy
 		// Here 'int' type is used instead of 'unsigned int' because SLICE does not
 		// support unsigned type.
 		// (see http://zeroc.com/doc/Ice-3.3.1/manual/Slice.5.8.html)
+		// (Also see http://www.zeroc.com/doc/Ice-3.3.1/manual/Cpp.7.6.html for
+		// Mapping for simple built-in types)
 		void ExecuteCommandVoid(int CommandSID);
         void ExecuteCommandWrite(int CommandSID, double argument);
         void ExecuteCommandRead(int CommandSID, out double argument);
-        void ExecuteCommandQualifiedRead(int CommandSID, double argument1, out double argument2);
+        void ExecuteCommandQualifiedRead(int CommandSID, double argument1, out double argument2);        
+        
+        void ExecuteCommandWriteSerialized(int CommandSID, string argument);        
+        void ExecuteCommandReadSerialized(int CommandSID, out string argument);
+        void ExecuteCommandQualifiedReadSerialized(int CommandSID, string argument1, out string argument2);
 	};
 
 };

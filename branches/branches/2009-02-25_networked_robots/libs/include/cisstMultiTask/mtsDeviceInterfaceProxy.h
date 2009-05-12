@@ -632,6 +632,51 @@ private:
     void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Context*);
     
 public:
+
+    void ExecuteCommandWriteSerialized(::Ice::Int CommandSID, const ::std::string& argument)
+    {
+        ExecuteCommandWriteSerialized(CommandSID, argument, 0);
+    }
+    void ExecuteCommandWriteSerialized(::Ice::Int CommandSID, const ::std::string& argument, const ::Ice::Context& __ctx)
+    {
+        ExecuteCommandWriteSerialized(CommandSID, argument, &__ctx);
+    }
+    
+private:
+
+    void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Context*);
+    
+public:
+
+    void ExecuteCommandReadSerialized(::Ice::Int CommandSID, ::std::string& argument)
+    {
+        ExecuteCommandReadSerialized(CommandSID, argument, 0);
+    }
+    void ExecuteCommandReadSerialized(::Ice::Int CommandSID, ::std::string& argument, const ::Ice::Context& __ctx)
+    {
+        ExecuteCommandReadSerialized(CommandSID, argument, &__ctx);
+    }
+    
+private:
+
+    void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Context*);
+    
+public:
+
+    void ExecuteCommandQualifiedReadSerialized(::Ice::Int CommandSID, const ::std::string& argument1, ::std::string& argument2)
+    {
+        ExecuteCommandQualifiedReadSerialized(CommandSID, argument1, argument2, 0);
+    }
+    void ExecuteCommandQualifiedReadSerialized(::Ice::Int CommandSID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Context& __ctx)
+    {
+        ExecuteCommandQualifiedReadSerialized(CommandSID, argument1, argument2, &__ctx);
+    }
+    
+private:
+
+    void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Context*);
+    
+public:
     
     ::IceInternal::ProxyHandle<TaskInterfaceServer> ice_context(const ::Ice::Context& __context) const
     {
@@ -862,6 +907,12 @@ public:
     virtual void ExecuteCommandRead(::Ice::Int, ::Ice::Double&, const ::Ice::Context*) = 0;
 
     virtual void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Context*) = 0;
+
+    virtual void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Context*) = 0;
+
+    virtual void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Context*) = 0;
+
+    virtual void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Context*) = 0;
 };
 
 }
@@ -896,6 +947,12 @@ public:
     virtual void ExecuteCommandRead(::Ice::Int, ::Ice::Double&, const ::Ice::Context*);
 
     virtual void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Context*);
+
+    virtual void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Context*);
+
+    virtual void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Context*);
+
+    virtual void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Context*);
 };
 
 }
@@ -930,6 +987,12 @@ public:
     virtual void ExecuteCommandRead(::Ice::Int, ::Ice::Double&, const ::Ice::Context*);
 
     virtual void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Context*);
+
+    virtual void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Context*);
+
+    virtual void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Context*);
+
+    virtual void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Context*);
 };
 
 }
@@ -990,6 +1053,15 @@ public:
 
     virtual void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Current& = ::Ice::Current()) = 0;
     ::Ice::DispatchStatus ___ExecuteCommandQualifiedRead(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___ExecuteCommandWriteSerialized(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___ExecuteCommandReadSerialized(::IceInternal::Incoming&, const ::Ice::Current&);
+
+    virtual void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current& = ::Ice::Current()) = 0;
+    ::Ice::DispatchStatus ___ExecuteCommandQualifiedReadSerialized(::IceInternal::Incoming&, const ::Ice::Current&);
 
     virtual ::Ice::DispatchStatus __dispatch(::IceInternal::Incoming&, const ::Ice::Current&);
 

@@ -206,7 +206,7 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandWrite(const int commandSID, co
 }
 
 void mtsDeviceInterfaceProxyServer::ExecuteCommandRead(const int commandSID, double & argument)
-{    
+{
     mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);
     CMN_ASSERT(commandRead);
 
@@ -228,6 +228,64 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedRead(const int comman
     cmnDouble argument2Wrapper;
     commandQualifiedRead->Execute(argument1Wrapper, argument2Wrapper);
     argument2 = argument2Wrapper.Data;
+}
+
+void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int commandSID, const std::string argument) const
+{
+    mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandSID);
+    CMN_ASSERT(commandWrite);
+
+    static char buf[100];
+    sprintf(buf, "ExecuteCommandWriteSerialized: %d bytes received", argument.size());
+    Logger->trace("TIServer", buf);
+    
+    std::stringstream ss;
+    ss << argument;
+    cmnDeSerializer DeSerializer(ss);
+
+    cmnGenericObject * obj = 0;
+    obj = DeSerializer.DeSerialize();
+
+    commandWrite->Execute(*obj);
+
+    std::cout << *obj << std::endl;
+}
+
+void mtsDeviceInterfaceProxyServer::ExecuteCommandReadSerialized(const int commandSID, std::string & argument)
+{
+    mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);    
+    CMN_ASSERT(commandRead);
+
+    // Deserialization
+    //static char buf[100];
+    //sprintf(buf, "ExecuteCommandReadSerialized: %d bytes received", argument.size());
+    //Logger->trace("TIServer", buf);
+    //
+    //std::stringstream ss;
+    //ss << argument;
+    //cmnDeSerializer DeSerializer(ss);
+
+    //cmnGenericObject * obj = 0;
+    //obj = DeSerializer.DeSerialize();
+
+    // Create a placeholder
+    cmnGenericObject * obj = commandRead->GetArgumentClassServices()->Create();
+    {
+        commandRead->Execute(*obj);
+
+        // Serialization
+        std::stringstream StreamBufferOutput;
+        cmnSerializer serialization(StreamBufferOutput);
+        serialization.Serialize(*obj);
+        std::string s = StreamBufferOutput.str();
+
+        argument = s;
+    }
+    delete obj;    
+}
+
+void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string argument1, std::string & argument2)
+{
 }
 
 //-------------------------------------------------------------------------
@@ -381,4 +439,25 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandQualifie
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandQualifiedRead");
 
     TaskInterfaceServer->ExecuteCommandQualifiedRead(sid, argument1, argument2);
+}
+
+void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandWriteSerialized(
+    ::Ice::Int sid, const ::std::string& argument, const ::Ice::Current&)
+{
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandWriteSerialized");
+
+    TaskInterfaceServer->ExecuteCommandWriteSerialized(sid, argument);
+}
+
+void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandReadSerialized(
+    ::Ice::Int sid, ::std::string& argument, const ::Ice::Current&)
+{
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandReadSerialized");
+
+    TaskInterfaceServer->ExecuteCommandReadSerialized(sid, argument);
+}
+
+void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandQualifiedReadSerialized(
+    ::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current&)
+{
 }

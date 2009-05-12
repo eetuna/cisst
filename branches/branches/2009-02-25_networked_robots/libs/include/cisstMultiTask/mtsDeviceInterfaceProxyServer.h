@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
+#include <cisstCommon/cmnDeSerializer.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -84,6 +85,7 @@ public:
         : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID),
           ConnectedTask(0)
     {}
+
     ~mtsDeviceInterfaceProxyServer();
     
     void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
@@ -101,8 +103,11 @@ public:
     void ExecuteCommandVoid(const int commandSID) const;
     void ExecuteCommandWrite(const int commandSID, const double argument) const;
     void ExecuteCommandRead(const int commandSID, double & argument);
-    void ExecuteCommandQualifiedRead(
-        const int commandSID, const double argument1, double & argument2);
+    void ExecuteCommandQualifiedRead(const int commandSID, const double argument1, double & argument2);
+
+    void ExecuteCommandWriteSerialized(const int commandSID, const std::string argument) const;
+    void ExecuteCommandReadSerialized(const int commandSID, std::string & argument);
+    void ExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
@@ -134,14 +139,15 @@ protected:
             ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
             const ::Ice::Current&) const;
         
-        //void SendCommandProxyInfo(
-        //    const ::mtsDeviceInterfaceProxy::CommandProxyInfo&,
-        //    const ::Ice::Current&);
-        
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
         void ExecuteCommandWrite(::Ice::Int, ::Ice::Double, const ::Ice::Current&);
         void ExecuteCommandRead(::Ice::Int, ::Ice::Double&, const ::Ice::Current&);
         void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Current&);
+
+        void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
+        void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Current&);
+        void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current&);
+
     };
 
     //------------------ Methods for global task manager --------------------//

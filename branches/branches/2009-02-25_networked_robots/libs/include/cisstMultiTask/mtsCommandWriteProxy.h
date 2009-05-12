@@ -29,13 +29,13 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandWriteProxy_h
 
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstCommon/cmnSerializer.h>
 
 /*!
   \ingroup cisstMultiTask
 */
 class mtsCommandWriteProxy: public mtsCommandWriteBase {
 public:
-    typedef cmnDouble ArgumentType;
     typedef mtsCommandWriteBase BaseType;
 
 protected:
@@ -58,24 +58,23 @@ public:
     {}
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCommandWriteProxy() {}
+    virtual ~mtsCommandWriteProxy() 
+    {}
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
-        const ArgumentType * data = dynamic_cast<const ArgumentType *>(&argument);
-        if (data == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        return this->Execute(*data);
-    }
-
-    inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
-        //(ClassInstantiation->*Action)(argument);
-
         static int cnt = 0;
         std::cout << "mtsCommandWriteProxy called (" << ++cnt << "): " << Name 
             << ", " << argument << std::endl;
+        
+        std::stringstream ss;
+        cmnSerializer serialization(ss);
+        serialization.Serialize(argument);
+        std::string s = ss.str();
 
-        ProvidedInterfaceProxy->InvokeExecuteCommandWrite(CommandSID, argument);
+        //std::cout << "[arg: " << argument << " #### " << s << " ### : " << s.size() << std::endl;
+        
+        ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, s);
 
         return mtsCommandBase::DEV_OK;
     }
