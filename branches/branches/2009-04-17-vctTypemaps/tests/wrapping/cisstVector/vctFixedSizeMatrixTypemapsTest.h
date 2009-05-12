@@ -7,6 +7,9 @@
 #include <cisstVector.h>
 #include <iostream>
 
+// TODO: Check if the `delete $1' statements are actually part of the .cxx file;
+//       i.e. that the argout typemaps are actually being used
+
 class vctFixedSizeMatrixTypemapsTest
 {
 
@@ -26,6 +29,29 @@ public:
     vctFixedSizeMatrix<unsigned int, 4, 4> out_vctFixedSizeMatrix(void) {
         unsigned int min = 0;
         unsigned int max = 10;
+        vctRandom(copy, min, max);     // TODO: this is actually not random!
+        return copy;
+    }
+
+    void in_argout_vctFixedSizeMatrix_ref(vctFixedSizeMatrix<unsigned int, 4, 4> &param) {
+        copy.Assign(param);
+        param += 1;
+    }
+
+    vctFixedSizeMatrix<unsigned int, 4, 4> &out_vctFixedSizeMatrix_ref(void) {
+        unsigned int min = 0;
+        unsigned int max = 0;
+        vctRandom(copy, min, max);     // TODO: this is actually not random!
+        return copy;
+    }
+
+    void in_argout_const_vctFixedSizeMatrix_ref(const vctFixedSizeMatrix<unsigned int, 4, 4> &param) {
+        copy.Assign(param);
+    }
+
+    const vctFixedSizeMatrix<unsigned int, 4, 4> &out_const_vctFixedSizeMatrix_ref(void) {
+        unsigned int min = 0;
+        unsigned int max = 0;
         vctRandom(copy, min, max);     // TODO: this is actually not random!
         return copy;
     }

@@ -678,20 +678,18 @@
 %apply const vctDynamicConstMatrixRef & {const vctDynamicConstMatrixRef<elementType> &};
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, size)
-%apply vctFixedSizeMatrix       {vctFixedSizeMatrix<elementType, size>};
-%apply vctDynamicMatrix &       {vctFixedSizeMatrix<elementType, size> &};
-%apply const vctDynamicMatrix & {const vctFixedSizeMatrix<elementType, size> &};
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, rows, cols)
+%apply vctFixedSizeMatrix       {vctFixedSizeMatrix<elementType, rows, cols>};
+%apply vctDynamicMatrix &       {vctFixedSizeMatrix<elementType, rows, cols> &};
+%apply const vctDynamicMatrix & {const vctFixedSizeMatrix<elementType, rows, cols> &};
 %enddef
 
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(elementType)
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 2);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 3);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 4);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 5);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 6);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 7);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 2, 2);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 3, 3);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 4, 4);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 5, 5);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 6, 6);
 %enddef
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
