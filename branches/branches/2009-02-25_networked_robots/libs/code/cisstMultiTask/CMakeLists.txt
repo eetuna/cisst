@@ -141,6 +141,7 @@ SET(HEADER_FILES
     mtsCommandWriteProxy.h
     mtsCommandReadProxy.h
     mtsCommandQualifiedReadProxy.h
+    mtsEventWriteGeneratorProxy.h
     )
     
 SET(ICE_RESOURCE_FILES
