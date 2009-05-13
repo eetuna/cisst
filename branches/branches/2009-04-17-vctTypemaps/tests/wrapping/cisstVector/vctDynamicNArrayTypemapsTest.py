@@ -178,13 +178,17 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
     def StdTestThrowUnlessReturnedNArrayIsWritable(self, function):
         # Expect the returned array to be writable
-        exec('v = self.CObject.' + function + '()')
+        sizes = self.HelperRandSizes(self.CObject.Dim())
+        sizes = numpy.array(sizes, dtype=numpy.uint32)
+        exec('v = self.CObject.' + function + '(sizes)')
         assert(v.flags['WRITEABLE'] == True)
 
 
     def StdTestThrowUnlessReturnedNArrayIsNonWritable(self, function):
         # Expect the returned array to be non-writable
-        exec('v = self.CObject.' + function + '()')
+        sizes = self.HelperRandSizes(self.CObject.Dim())
+        sizes = numpy.array(sizes, dtype=numpy.uint32)
+        exec('v = self.CObject.' + function + '(sizes)')
         assert(v.flags['WRITEABLE'] == False)
 
 
@@ -279,13 +283,15 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     # Test if the C object returns a good vector
     def SpecTestThrowUnlessReceivesCorrectNArray(self, function):
         ndim = self.CObject.Dim()
+        sizes = self.HelperRandSizes(self.CObject.Dim())
+        sizes = numpy.array(sizes, dtype=numpy.uint32)
 
-        exec('v = self.CObject.' + function + '()')
+        exec('v = self.CObject.' + function + '(sizes)')
         vShape = v.shape
         vSize = v.size
 
         for i in xrange(ndim):
-            assert(vShape[i] == 5);
+            assert(vShape[i] == sizes[i]);
 
         for i in xrange(vSize):
             indexTuple = self.MetaIndexToTuple(i, vShape)

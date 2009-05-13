@@ -15,19 +15,19 @@ import copy
 import numpy
 import unittest
 
-from vctFixedSizeVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest
+from vctFixedSizeVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_double_4
 import sys
 
 class FixedSizeVectorTypemapsTest(unittest.TestCase):
 
-    dtype = numpy.uint32
+    dtype = numpy.double
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctFixedSizeVectorTypemapsTest()
+        self.CObject = vctFixedSizeVectorTypemapsTest_double_4()
 
 
     ###########################################################################

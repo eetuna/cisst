@@ -61,10 +61,8 @@
 
     // Create a temporary vctDynamicVectorRef container
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
     const vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the temporary container to the vctDynamicVector
@@ -666,4 +664,6 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 8);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
 
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(int);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(unsigned int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(double);

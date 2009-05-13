@@ -9,3 +9,7 @@
 %}
 
 %include "vctFixedSizeVectorTypemapsTest.h"
+
+%template(vctFixedSizeVectorTypemapsTest_int_4) vctFixedSizeVectorTypemapsTest<int, 4>;
+%template(vctFixedSizeVectorTypemapsTest_uint_4) vctFixedSizeVectorTypemapsTest<unsigned int, 4>;
+%template(vctFixedSizeVectorTypemapsTest_double_4) vctFixedSizeVectorTypemapsTest<double, 4>;
