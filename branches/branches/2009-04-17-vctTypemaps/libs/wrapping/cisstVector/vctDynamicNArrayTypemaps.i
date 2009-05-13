@@ -84,25 +84,40 @@
 
 %typemap(out) vctDynamicNArray
 {
-    /* Return vector by copy
-       Using: %typemap(out) vctDynamicNArray
-     */
+    /*****************************************************************************
+    *   %typemap(out) vctDynamicNArray
+    *   Returning a vctDynamicNArray
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
 
-    // Create a new PyArray and set its shape
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
+
     unsigned int sz = $1_ltype::DIMENSION;
     const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
     for (unsigned int i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
-
-    // TODO: Understand what this does
     int type = vctPythonType<$1_ltype::value_type>();
     $result = PyArray_SimpleNew(sz, shape, type);
 
-    // TODO: Understand what this does
-    // copy data returned by C function into new PyArray
-    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type));
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicConstNArrayRef TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicNArrayRef container
+    // `sizes' defined above, don't need to redefine it
+    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides($1.strides());
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+
+    // Copy the data from the vctDynamicConstNArrayRef to the temporary container
+    tempContainer.Assign($1);
 }
 
 
@@ -139,9 +154,6 @@
     /*****************************************************************************
      COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicNArray
     *****************************************************************************/
-
-    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicNArrayRef?
 
     // Create a temporary vctDynamicNArrayRef container
 
@@ -216,9 +228,6 @@
     /*************************************************************************
      COPY THE DATA TO THE PYARRAY
     *************************************************************************/
-
-    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicNArrayRef?
 
     // Create a temporary vctDynamicNArrayRef container
 

@@ -73,19 +73,37 @@
 
 %typemap(out) vctDynamicVector
 {
-    /* Return vector by copy
-       Using: %typemap(out) vctDynamicVector
-     */
+    /*****************************************************************************
+    *   %typemap(out) vctDynamicVector
+    *   Returning a vctDynamicVector
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
+
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
 
     //Create a new PyArray and set its size
     npy_intp* sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
-
     int type = vctPythonType<$1_ltype::value_type>();
     $result = PyArray_SimpleNew(1, sizes, type);
 
-    // copy data returned by C function into new PyArray
-    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicVectorRef container
+    const npy_intp size = $1.size();
+    const npy_intp stride = 1;
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
+
+    // Copy the data from the vctDynamicConstVectorRef to the temporary container
+    tempContainer.Assign($1);
 }
 
 
@@ -135,19 +153,37 @@
 
 %typemap(out) vctFixedSizeVector
 {
-    /* Return vector by copy
-       Using: %typemap(out) vctFixedSizeVector
-     */
+    /*****************************************************************************
+    *   %typemap(out) vctFixedSizeVector
+    *   Returning a vctFixedSizeVector
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
+
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
 
     //Create a new PyArray and set its size
     npy_intp* sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
-
     int type = vctPythonType<$1_ltype::value_type>();
-    $result = PyArray_SimpleNew(1, sizes, type);    // SWIG does not support making `type' anonymous, e.g.: $result = PyArray_SimpleNew(1, sizes, vctPythonType<$1_ltype::value_type>()), when `$1_ltype::value_type' is templated by more than one parameter
+    $result = PyArray_SimpleNew(1, sizes, type);
 
-    // copy data returned by C function into new PyArray
-    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type) );
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicVectorRef container
+    const npy_intp size = $1.size();
+    const npy_intp stride = 1;
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
+
+    // Copy the data from the vctDynamicConstVectorRef to the temporary container
+    tempContainer.Assign($1);
 }
 
 
@@ -185,9 +221,6 @@
     /*****************************************************************************
      COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicVector
     *****************************************************************************/
-
-    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicVectorRef?
 
     // Create a temporary vctDynamicVectorRef container
     const npy_intp size = PyArray_DIM($input, 0);
@@ -233,9 +266,6 @@
     /*************************************************************************
      COPY THE DATA TO THE PYARRAY
     *************************************************************************/
-
-    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicVectorRef?
 
     // Create a temporary vctDynamicVectorRef container
     const npy_intp size = PyArray_DIM($input, 0);

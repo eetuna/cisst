@@ -76,22 +76,39 @@
 
 %typemap(out) vctDynamicMatrix
 {
-    /* Return vector by copy
-       Using: %typemap(out) vctDynamicMatrix
-     */
+    /*****************************************************************************
+    *   %typemap(out) vctDynamicMatrix
+    *   Return a vctDynamicMatrix by copy
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
 
-    // Create a new PyArray and set its size
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
+
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-
-    // TODO: Understand what this does
     int type = vctPythonType<$1_ltype::value_type>();
     $result = PyArray_SimpleNew(2, sizes, type);
 
-    // TODO: Understand what this does
-    // copy data returned by C function into new PyArray
-    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type));
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicMatrixRef container
+    const npy_intp size0 = PyArray_DIM($result, 0);
+    const npy_intp size1 = PyArray_DIM($result, 1);
+    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+
+    // Copy the data from the vctDynamicConstMatrixRef to the temporary container
+    tempContainer.Assign($1);
 }
 
 
@@ -142,20 +159,39 @@
 
 %typemap(out) vctFixedSizeMatrix
 {
-    /* Return vector by copy
-       Using: %typemap(out) vctFixedSizeMatrix
-     */
+    /*****************************************************************************
+    *   %typemap(out) vctFixedSizeMatrix
+    *   Return a vctFixedSizeMatrix by copy
+    *
+    *   See the documentation ``Developer's Guide to Writing Typemaps'' for documentation on the logic behind
+    *   this type map.
+    *****************************************************************************/
 
-    // Create a new PyArray and set its size
+    /*****************************************************************************
+     CREATE A NEW PYARRAY OBJECT
+    *****************************************************************************/
+
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-
     int type = vctPythonType<$1_ltype::value_type>();
     $result = PyArray_SimpleNew(2, sizes, type);
 
-    // copy data returned by C function into new PyArray
-    memcpy(PyArray_DATA($result), $1.Pointer(), $1.size() * sizeof($1_ltype::value_type));
+    /*****************************************************************************
+     COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY
+    *****************************************************************************/
+
+    // Create a temporary vctDynamicMatrixRef container
+    const npy_intp size0 = PyArray_DIM($result, 0);
+    const npy_intp size1 = PyArray_DIM($result, 1);
+    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof($1_ltype::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+
+    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+
+    // Copy the data from the vctDynamicConstMatrixRef to the temporary container
+    tempContainer.Assign($1);
 }
 
 
@@ -192,9 +228,6 @@
     /*****************************************************************************
      COPY THE DATA OF THE PYARRAY (NAMED `$input') TO THE vctDynamicMatrix
     *****************************************************************************/
-
-    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicMatrixRef?
 
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($input, 0);
@@ -247,9 +280,6 @@
     /*************************************************************************
      COPY THE DATA TO THE PYARRAY
     *************************************************************************/
-
-    // TODO: Since the PyArray is guaranteed to be contiguous, should we use memcpy instead
-    // of copying using a vctDynamicMatrixRef?
 
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($input, 0);
