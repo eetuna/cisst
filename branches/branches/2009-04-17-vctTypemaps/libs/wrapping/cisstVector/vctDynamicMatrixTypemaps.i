@@ -24,6 +24,8 @@
 
 // TODO: Expand to include rowmajor / colmajor
 
+// TODO: Incorporate check `vctThrowUnlessCorrectMatrixSize()'
+
 
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicMatrix

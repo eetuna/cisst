@@ -27,6 +27,8 @@
 // Summary: How to create functions with multiple return values, such as:
 // x,y,z = spam(4,5)
 
+// TODO: Incorporate check `vctThrowUnlessCorrectVectorSize()'
+
 
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicVector

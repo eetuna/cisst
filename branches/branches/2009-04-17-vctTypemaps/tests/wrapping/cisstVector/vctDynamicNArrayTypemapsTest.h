@@ -78,31 +78,31 @@ public:
         copy.Assign(param);
     }
 
-    vctDynamicNArray<_elementType, _dimension> out_vctDynamicNArray(vctFixedSizeVector<size_type, _dimension> sizes) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicNArray<_elementType, _dimension> out_vctDynamicNArray(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicNArray<_elementType, _dimension> &out_vctDynamicNArray_ref(vctFixedSizeVector<size_type, _dimension> sizes) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicNArray<_elementType, _dimension> &out_vctDynamicNArray_ref(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    const vctDynamicNArray<_elementType, _dimension> &out_const_vctDynamicNArray_ref(vctFixedSizeVector<size_type, _dimension> sizes) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    const vctDynamicNArray<_elementType, _dimension> &out_const_vctDynamicNArray_ref(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicNArrayRef<_elementType, _dimension> out_vctDynamicNArrayRef(vctFixedSizeVector<size_type, _dimension> sizes) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicNArrayRef<_elementType, _dimension> out_vctDynamicNArrayRef(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
-    vctDynamicConstNArrayRef<_elementType, _dimension> out_vctDynamicConstNArrayRef(vctFixedSizeVector<size_type, _dimension> sizes) {     // TODO: I think there's something wrong with the vctFixedSizeVector in typemap
+    vctDynamicConstNArrayRef<_elementType, _dimension> out_vctDynamicConstNArrayRef(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;

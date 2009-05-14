@@ -22,7 +22,6 @@ public:
     vctFixedSizeVectorTypemapsTest()
     {}
 
-    // TODO: Should we support returning a FixedSize vector of different length; in other words, emulating resizing?
     void in_argout_vctFixedSizeVector_ref(vctFixedSizeVector<_elementType, _size> &param) {
         copy.Assign(param);
         param += 1;
