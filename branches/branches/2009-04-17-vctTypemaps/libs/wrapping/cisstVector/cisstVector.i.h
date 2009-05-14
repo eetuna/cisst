@@ -164,14 +164,17 @@ bool vctThrowUnlessIsWritable(PyObject *input)
 }
 
 
-// TODO: Make sure this is correct for FixedSize and Dynamic Vectors
+// TODO: Make sure this is correct for FixedSize and Dynamic Vectors and Matrices
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
-bool vctThrowUnlessCorrectVectorSize(const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & input,
-                                     unsigned int desiredSize)
+bool vctThrowUnlessCorrectVectorSize(PyObject *input,
+                                     const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
 {
-    if (input.size() != desiredSize) {
+    unsigned int inputSize = PyArray_DIM(input, 0);
+    unsigned int targetSize = target.size();
+
+    if (inputSize != targetSize) {
         std::stringstream stream;
-        stream << "Input vector's size must be " << desiredSize;
+        stream << "Input vector's size must be " << targetSize;
         std::string msg = stream.str();
         PyErr_SetString(PyExc_ValueError, msg.c_str());
         return false;
@@ -187,15 +190,19 @@ bool vctThrowUnlessCorrectVectorSize(const vctDynamicConstVectorBase<_vectorOwne
 }
 
 
-template <unsigned int _rows, unsigned int _cols, int _rowStride,
-          int _colStride, class _elementType, class _dataPtrType>
-bool vctThrowUnlessCorrectMatrixSize(const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & input,
-                                     unsigned int desiredRows, unsigned int desiredCols)
+template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
+bool vctThrowUnlessCorrectMatrixSize(PyObject *input,
+                                     const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> &target)
 {
-    if (   input.rows() != desiredRows
-        || input.cols() != desiredCols) {
+    unsigned int inputRows = PyArray_DIM(input, 0);
+    unsigned int inputCols = PyArray_DIM(input, 1);
+    unsigned int targetRows = target.rows();
+    unsigned int targetCols = target.cols();
+
+    if (   inputRows != targetRows
+        || inputCols != targetCols) {
         std::stringstream stream;
-        stream << "Input matrix's size must be " << desiredRows << " rows by " << desiredCols << " columns";
+        stream << "Input matrix's size must be " << targetRows << " rows by " << targetCols << " columns";
         std::string msg = stream.str();
         PyErr_SetString(PyExc_ValueError, msg.c_str());
         return false;

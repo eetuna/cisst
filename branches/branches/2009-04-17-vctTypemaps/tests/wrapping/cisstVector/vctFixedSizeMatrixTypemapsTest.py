@@ -90,6 +90,25 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         exec('self.CObject.' + function + '(goodvar)')
 
 
+    # Tests that the typemap throws an exception if there is a size mismatch
+    def StdTestThrowUnlessCorrectMatrixSize(self, function):
+        shape = tuple(self.CObject.sizes())
+        shapePlusOne = (shape[0] + 1, shape[1] + 1)
+
+        # Give a `rows+1, cols+1' array; expect an exception
+        exceptionOccurred = False
+        try:
+            badvar = numpy.ones(shapePlusOne, dtype=self.dtype)
+            exec('self.CObject.' + function + '(badvar)')
+        except:
+            exceptionOccurred = True
+        assert(exceptionOccurred)
+
+        # Give a `rows, cols' array; expect no exception
+        goodvar = numpy.ones(shape, dtype=self.dtype)
+        exec('self.CObject.' + function + '(goodvar)')
+
+
     # Tests that the typemap throws an exception if the array isn't writable
     def StdTestThrowUnlessWritable(self, function):
         shape = tuple(self.CObject.sizes())
@@ -105,42 +124,6 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
-        goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
-
-
-    def StdTestThrowUnlessOwnsData(self, function):
-        shape = tuple(self.CObject.sizes())
-
-        # Give a non-memory owning array; expect an exception
-        exceptionOccurred = False
-        try:
-            temp = numpy.ones(shape, dtype=self.dtype)
-            badvar = temp[:]
-            exec('self.CObject.' + function + '(badvar)')
-        except:
-            exceptionOccurred = True
-        assert(exceptionOccurred)
-
-        # Give a memory-owning array; expect no exception
-        goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
-
-
-    def StdTestThrowUnlessNotReferenced(self, function):
-        shape = tuple(self.CObject.sizes())
-
-        # Give an array with a reference on it; expect an exception
-        exceptionOccurred = False
-        try:
-            badvar = numpy.ones(shape, dtype=self.dtype)
-            temp = badvar
-            exec('self.CObject.' + function + '(badvar)')
-        except:
-            exceptionOccurred = True
-        assert(exceptionOccurred)
-
-        # Give an array with no references; expect no exception
         goodvar = numpy.ones(shape, dtype=self.dtype)
         exec('self.CObject.' + function + '(goodvar)')
 
@@ -225,6 +208,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessIsArray(MY_NAME)
         self.StdTestThrowUnlessDataType(MY_NAME)
         self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessCorrectMatrixSize(MY_NAME)
 
         # Perform specialized tests
         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
@@ -247,9 +231,8 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessIsArray(MY_NAME)
         self.StdTestThrowUnlessDataType(MY_NAME)
         self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessCorrectMatrixSize(MY_NAME)
         self.StdTestThrowUnlessWritable(MY_NAME)
-        self.StdTestThrowUnlessOwnsData(MY_NAME)
-        self.StdTestThrowUnlessNotReferenced(MY_NAME)
 
         # Perform specialized tests
         self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
@@ -272,6 +255,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         self.StdTestThrowUnlessIsArray(MY_NAME)
         self.StdTestThrowUnlessDataType(MY_NAME)
         self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessCorrectMatrixSize(MY_NAME)
 
         # Perform specialized tests
         self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
