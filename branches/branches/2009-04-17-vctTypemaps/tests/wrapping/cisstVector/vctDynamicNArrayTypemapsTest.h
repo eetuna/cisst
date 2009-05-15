@@ -86,25 +86,25 @@ public:
 
     vctDynamicNArray<_elementType, _dimension> &out_vctDynamicNArray_ref(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     const vctDynamicNArray<_elementType, _dimension> &out_const_vctDynamicNArray_ref(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     vctDynamicNArrayRef<_elementType, _dimension> out_vctDynamicNArrayRef(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     vctDynamicConstNArrayRef<_elementType, _dimension> out_vctDynamicConstNArrayRef(vctFixedSizeVector<size_type, _dimension> sizes) {
         copy.SetSize(sizes);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 

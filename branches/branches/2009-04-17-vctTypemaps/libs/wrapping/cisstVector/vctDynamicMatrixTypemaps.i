@@ -24,8 +24,6 @@
 
 // TODO: Expand to include rowmajor / colmajor
 
-// TODO: Incorporate check `vctThrowUnlessCorrectMatrixSize()'
-
 
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicMatrix
@@ -232,7 +230,6 @@
     sizes[0] = $1->rows();
     sizes[1] = $1->cols();
 
-    // TODO: Understand what this does
     // NPY_CARRAY = set flags for a C Array that is non-Read Only
     int type = vctPythonType<$*1_ltype::value_type>();
     $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);

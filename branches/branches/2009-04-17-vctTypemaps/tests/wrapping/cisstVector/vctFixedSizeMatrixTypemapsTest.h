@@ -7,9 +7,6 @@
 #include <cisstVector.h>
 #include <iostream>
 
-// TODO: Check if the `delete $1' statements are actually part of the .cxx file;
-//       i.e. that the argout typemaps are actually being used
-
 typedef unsigned int size_type;
 
 template <class _elementType, size_type _rows, size_type _cols>
@@ -44,7 +41,7 @@ public:
     vctFixedSizeMatrix<_elementType, _rows, _cols> &out_vctFixedSizeMatrix_ref(void) {
         _elementType min = 0;
         _elementType max = 0;
-        vctRandom(copy, min, max);     // TODO: this is actually not random!
+        vctRandom(copy, min, max);
         return copy;
     }
 
@@ -55,7 +52,7 @@ public:
     const vctFixedSizeMatrix<_elementType, _rows, _cols> &out_const_vctFixedSizeMatrix_ref(void) {
         _elementType min = 0;
         _elementType max = 0;
-        vctRandom(copy, min, max);     // TODO: this is actually not random!
+        vctRandom(copy, min, max);
         return copy;
     }
 

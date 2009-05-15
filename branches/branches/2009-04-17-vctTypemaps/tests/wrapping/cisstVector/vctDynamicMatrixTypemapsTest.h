@@ -84,25 +84,25 @@ public:
 
     vctDynamicMatrix<_elementType> &out_vctDynamicMatrix_ref(size_type rows, size_type cols) {
         copy.SetSize(rows, cols);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     const vctDynamicMatrix<_elementType> &out_const_vctDynamicMatrix_ref(size_type rows, size_type cols) {
         copy.SetSize(rows, cols);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     vctDynamicMatrixRef<_elementType> out_vctDynamicMatrixRef(size_type rows, size_type cols) {
         copy.SetSize(rows, cols);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     vctDynamicConstMatrixRef<_elementType> out_vctDynamicConstMatrixRef(size_type rows, size_type cols) {
         copy.SetSize(rows, cols);
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 

@@ -90,7 +90,7 @@ public:
         copy.SetSize(size);
         size_type min = 0;
         size_type max = 10;
-        vctRandom(copy, 0, 10);
+        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
         return copy;
     }
 
@@ -98,7 +98,7 @@ public:
         copy.SetSize(size);
         size_type min = 0;
         size_type max = 10;
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return vctDynamicVectorRef<_elementType>(copy);
     }
 
@@ -106,7 +106,7 @@ public:
         copy.SetSize(size);
         size_type min = 0;
         size_type max = 10;
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return vctDynamicConstVectorRef<_elementType>(copy);
     }
 

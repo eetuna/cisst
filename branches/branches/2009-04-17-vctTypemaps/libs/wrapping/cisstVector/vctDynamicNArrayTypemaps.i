@@ -276,7 +276,6 @@
         shape[i] = sizes.at(i);
     }
 
-    // TODO: Understand what this does
     // NPY_CARRAY = set flags for a C Array that is non-Read Only
     $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), sz, shape, NULL, $1->Pointer(), NPY_CARRAY, NULL);
 }
@@ -371,7 +370,6 @@
         shape[i] = sizes.at(i);
     }
 
-    // TODO: Understand what this does
     // To imitate const functionality, set the writable flag to false
     // NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
     $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), sz, shape, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
