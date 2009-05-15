@@ -230,9 +230,10 @@
     sizes[0] = $1->rows();
     sizes[1] = $1->cols();
 
-    // NPY_CARRAY = set flags for a C Array that is non-Read Only
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$*1_ltype::value_type>();
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
 }
 
 
@@ -311,10 +312,10 @@
     sizes[0] = $1->rows();
     sizes[1] = $1->cols();
 
-    // To imitate const functionality, set the writable flag to false
-    // NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$*1_ltype::value_type>();
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -522,11 +523,11 @@
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-    int type = vctPythonType<$1_ltype::value_type>();
-    //$result = PyArray_SimpleNew(2, sizes, type);
+
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
+    int type = vctPythonType<$1_ltype::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
-    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, NULL, NPY_CONTIGUOUS | NPY_OWNDATA | NPY_ALIGNED, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr,  2, sizes, NULL, NULL, NPY_CARRAY_RO, NULL);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY

@@ -295,9 +295,10 @@
     npy_intp* sizes = PyDimMem_NEW(1);
     sizes[0] = $1->size();
 
-    //NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$*1_ltype::value_type>();
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(type), 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 1, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -496,8 +497,11 @@
 
     npy_intp *sizes = PyDimMem_NEW(1);
     sizes[0] = $1.size();
+
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$1_ltype::value_type>();
-    $result = PyArray_SimpleNew(1, sizes, type);
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr,  1, sizes, NULL, NULL, NPY_CARRAY_RO, NULL);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY

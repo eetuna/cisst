@@ -276,8 +276,10 @@
         shape[i] = sizes.at(i);
     }
 
-    // NPY_CARRAY = set flags for a C Array that is non-Read Only
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), sz, shape, NULL, $1->Pointer(), NPY_CARRAY, NULL);
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
+    int type = vctPythonType<$*1_ltype::value_type>();
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, $1->Pointer(), NPY_CARRAY, NULL);
 }
 
 
@@ -370,9 +372,10 @@
         shape[i] = sizes.at(i);
     }
 
-    // To imitate const functionality, set the writable flag to false
-    // NPY_CARRAY_RO = set flags for a C Array that is Read Only (i.e. const)
-    $result = PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(vctPythonType<$*1_ltype::value_type>()), sz, shape, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
+    int type = vctPythonType<$*1_ltype::value_type>();
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
 
 
@@ -503,9 +506,6 @@
 
     // Create the vctDynamicNArrayRef
 
-    // dimensions
-    const unsigned int ndim = PyArray_NDIM($input);
-
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
@@ -615,16 +615,16 @@
 
     unsigned int sz = $1_ltype::DIMENSION;
     const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+
     npy_intp *shape = PyDimMem_NEW(sz);
     for (unsigned int i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
+
+    // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$1_ltype::value_type>();
-    $result = PyArray_SimpleNew(sz, shape, type);
-    // TODO: The following two lines make the test fail for some reason, so
-    // I'm resorting to the `PyArray_SimpleNew()' function (the line above) for now
-    //PyArray_Descr *descr = PyArray_DescrFromType(vctPythonType<$1_ltype::value_type>());
-    //$result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, NULL, NPY_CARRAY_RO, NULL);
+    PyArray_Descr *descr = PyArray_DescrFromType(type);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, NULL, NPY_CARRAY_RO, NULL);
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstNArrayRef TO THE PYARRAY
