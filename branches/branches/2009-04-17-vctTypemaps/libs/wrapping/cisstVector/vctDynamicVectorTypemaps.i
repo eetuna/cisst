@@ -27,8 +27,6 @@
 // Summary: How to create functions with multiple return values, such as:
 // x,y,z = spam(4,5)
 
-// TODO: Incorporate check `vctThrowUnlessCorrectVectorSize()'
-
 
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicVector
@@ -65,6 +63,7 @@
     const npy_intp size = PyArray_DIM($input, 0);
     const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+
     const vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the temporary container to the vctDynamicVector
@@ -146,6 +145,7 @@
     const npy_intp size = PyArray_DIM($input, 0);
     const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
     const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
 
     // Create the vctDynamicVector
@@ -174,7 +174,6 @@
         // Resize the PyArray by:
         //  1)  Creating an array containing the new size
         //  2)  Pass that array to the resizing function given by NumPy API
-
         npy_intp *sizes = PyDimMem_NEW(1);              // create an array of sizes; dimension 1
         sizes[0] = output_size;                         // set the size
         PyArray_Dims dims;                              // create a PyArray_Dims object to hand to PyArray_Resize
@@ -257,6 +256,7 @@
     const npy_intp size = PyArray_DIM($input, 0);
     const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
     const vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
 
     // Create the vctDynamicVector
@@ -322,7 +322,7 @@
      IS WRITABLE
     *************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input)
           && vctThrowUnlessIsWritable($input))
@@ -336,10 +336,8 @@
     *************************************************************************/
 
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size, data, stride);
 }
@@ -401,7 +399,7 @@
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input))
         ) {
@@ -414,10 +412,9 @@
 
     // Create the vctDynamicVectorRef
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
     $1 = new $*1_ltype(size, data, stride);
 }
 
@@ -461,7 +458,7 @@
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input))
         ) {
@@ -475,10 +472,8 @@
     *****************************************************************************/
 
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size, data, stride);
 }
@@ -540,7 +535,7 @@
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(vctThrowUnlessIsPyArray($input)
+    if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input))
         ) {
@@ -553,10 +548,8 @@
 
     // Create the vctDynamicConstVectorRef
     const npy_intp size = PyArray_DIM($input, 0);
-    const npy_intp stride = PyArray_STRIDE($input, 0) /
-                                sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
     $1 = new $*1_ltype(size, data, stride);
 }

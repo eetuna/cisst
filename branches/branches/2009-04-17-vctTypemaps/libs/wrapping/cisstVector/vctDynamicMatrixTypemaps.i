@@ -153,8 +153,8 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
     const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Create the vctDynamicMatrix
@@ -276,6 +276,7 @@
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
     const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+
     const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Create the vctDynamicMatrix
@@ -358,8 +359,7 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size0, size1, stride0, stride1, data);
 }
@@ -439,8 +439,7 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
     $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
 }
@@ -502,8 +501,7 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data =
-        reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size0, size1, stride0, stride1, data);
 }
@@ -587,8 +585,7 @@
     const npy_intp size1 = PyArray_DIM($input, 1);
     const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
     const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data =
-        reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
 
     $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
 }
