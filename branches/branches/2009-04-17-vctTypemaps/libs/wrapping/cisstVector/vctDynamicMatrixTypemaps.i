@@ -66,7 +66,7 @@
     const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctDynamicMatrix
-    $1.SetSize(tempContainer.sizes());
+    $1.SetSize(tempContainer.sizes(), tempContainer.StorageOrder());
     $1.Assign(tempContainer);
 }
 
@@ -208,7 +208,7 @@
     vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctDynamicMatrix
-    tempContainer.Assign($1->Pointer());
+    tempContainer.Assign(*($1));
 
     /*************************************************************************
      CLEAN UP
@@ -233,7 +233,7 @@
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$*1_ltype::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
-    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, $1->Pointer(), NPY_CARRAY, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, $1->Pointer(), $1->StorageOrder() ? NPY_CARRAY : NPY_FARRAY, NULL);
 }
 
 

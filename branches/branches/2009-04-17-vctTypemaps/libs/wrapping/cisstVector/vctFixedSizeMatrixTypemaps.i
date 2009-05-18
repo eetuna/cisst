@@ -177,7 +177,7 @@
     vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctFixedSizeMatrix
-    tempContainer.Assign($1->Pointer());
+    tempContainer.Assign(*($1));
 
     /*************************************************************************
      CLEAN UP

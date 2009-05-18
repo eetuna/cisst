@@ -179,12 +179,13 @@ bool vctThrowUnlessCorrectVectorSize(PyObject *input,
         PyErr_SetString(PyExc_ValueError, msg.c_str());
         return false;
     }
+
     return true;
 }
 
 template <class _vectorOwnerType, typename _elementType>
 bool vctThrowUnlessCorrectVectorSize(const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & input,
-                             unsigned int desiredSize)
+                                     unsigned int desiredSize)
 {
     return true;
 }
@@ -207,6 +208,7 @@ bool vctThrowUnlessCorrectMatrixSize(PyObject *input,
         PyErr_SetString(PyExc_ValueError, msg.c_str());
         return false;
     }
+
     return true;
 }
 

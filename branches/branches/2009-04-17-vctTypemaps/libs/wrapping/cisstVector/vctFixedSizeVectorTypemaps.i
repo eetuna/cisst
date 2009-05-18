@@ -168,7 +168,7 @@
     vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the temporary container to the vctFixedSizeVector
-    tempContainer.Assign($1->Pointer());
+    tempContainer.Assign(*($1));
 
     /*************************************************************************
      CLEAN UP

@@ -194,7 +194,7 @@
     vctDynamicVectorRef<$*1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the temporary container to the vctDynamicVector
-    tempContainer.Assign($1->Pointer());
+    tempContainer.Assign(*($1));
 
     /*************************************************************************
      CLEAN UP
@@ -501,7 +501,8 @@
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$1_ltype::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
-    $result = PyArray_NewFromDescr(&PyArray_Type, descr,  1, sizes, NULL, NULL, NPY_CARRAY_RO, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr,  1, sizes, NULL, NULL, NPY_CARRAY, NULL);
+    PyArray_FLAGS($result) &= ~NPY_WRITEABLE;
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstVectorRef TO THE PYARRAY

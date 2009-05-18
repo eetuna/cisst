@@ -251,7 +251,7 @@
     vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the temporary container to the vctDynamicNArray
-    tempContainer.Assign($1->Pointer());
+    tempContainer.Assign(*($1));
 
     /*************************************************************************
      CLEAN UP

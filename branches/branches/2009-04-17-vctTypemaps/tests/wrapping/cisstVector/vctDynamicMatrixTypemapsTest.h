@@ -25,7 +25,7 @@ public:
     {}
 
     void in_argout_vctDynamicMatrix_ref(vctDynamicMatrix<_elementType> &param, size_type sizeFactor) {
-        copy.SetSize(param.sizes());
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
         param += 1;
 
@@ -46,33 +46,34 @@ public:
     }
 
     void in_vctDynamicMatrixRef(vctDynamicMatrixRef<_elementType> param, size_type dummy) {
-        copy.SetSize(param.sizes());
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
         param += 1;
     }
 
     void in_vctDynamicConstMatrixRef(vctDynamicConstMatrixRef<_elementType> param, size_type dummy) {
-        copy.SetSize(param.sizes());
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
     }
 
     void in_argout_const_vctDynamicConstMatrixRef_ref(const vctDynamicConstMatrixRef<_elementType> &param, size_type dummy) {
-        copy.SetSize(param.sizes());
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
     }
 
     void in_argout_const_vctDynamicMatrixRef_ref(const vctDynamicMatrixRef<_elementType> &param, size_type dummy) {
-        copy.SetSize(param.sizes());
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
     }
 
     void in_vctDynamicMatrix(vctDynamicMatrix<_elementType> param, size_type dummy) {
-        copy.SetSize(param.sizes());
+        std::cout << param.StorageOrder() << std::endl;
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
     }
 
     void in_argout_const_vctDynamicMatrix_ref(const vctDynamicMatrix<_elementType> &param, size_type dummy) {
-        copy.SetSize(param.sizes());
+        copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
     }
 
@@ -122,5 +123,9 @@ public:
 
     inline size_type cols() const {
         return copy.cols();
+    }
+
+    inline char StorageOrder(void) const {
+        return copy.StorageOrder() ? 'C' : 'F';
     }
 };

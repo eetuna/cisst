@@ -153,67 +153,94 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
 
     # Test if the C object reads the vector correctly
     def SpecTestThrowUnlessReadsCorrectly(self, function):
-        vNew = numpy.random.rand(5, 7)
-        vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=self.dtype)
-        vOld = copy.deepcopy(vNew)
-        rows = vNew.shape[0]
-        cols = vNew.shape[1]
-        exec('self.CObject.' + function + '(vNew, 0)')
+        STORAGE_ORDER = ['C', 'F']
 
-        assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
-        assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
-        for r in xrange(rows):
-            for c in xrange(cols):
-                # Test if the C object read the vector correctly
-                assert(self.CObject.GetItem(r,c) == vOld[r,c])
-                # Test that the C object did not modify the vector
-                assert(vNew[r,c] == vOld[r,c])
+        for stord in STORAGE_ORDER:
+            vNew = numpy.random.rand(5, 7)
+            vNew = numpy.floor(vNew * 100)
+            vNew = numpy.array(vNew, dtype=self.dtype, order=stord)
+            vOld = copy.deepcopy(vNew)
+            vOld = numpy.array(vOld, order=stord)
+            rows = vNew.shape[0]
+            cols = vNew.shape[1]
+            exec('self.CObject.' + function + '(vNew, 0)')
+
+            assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
+            assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
+            try:
+                assert(self.CObject.StorageOrder() == stord)
+            except:
+                print self.CObject.StorageOrder(), stord
+                raise
+            for r in xrange(rows):
+                for c in xrange(cols):
+                    # Test if the C object read the vector correctly
+                    assert(self.CObject.GetItem(r,c) == vOld[r,c])
+                    # Test that the C object did not modify the vector
+                    assert(vNew[r,c] == vOld[r,c])
 
 
     # Test if the C object reads and modifies the vector correctly
     def SpecTestThrowUnlessReadsWritesCorrectly(self, function):
-        vNew = numpy.random.rand(5, 7)
-        vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=self.dtype)
-        vOld = copy.deepcopy(vNew)
-        rows = vNew.shape[0]
-        cols = vNew.shape[1]
-        exec('self.CObject.' + function + '(vNew, 0)')
+        STORAGE_ORDER = ['C', 'F']
 
-        assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
-        assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
-        for r in xrange(rows):
-            for c in xrange(cols):
-                # Test if the C object read the vector correctly
-                assert(self.CObject.GetItem(r,c) == vOld[r,c])
-                # Test if the C object modified the vector correctly
-                assert(vNew[r,c] == vOld[r,c] + 1)
+        for stord in STORAGE_ORDER:
+            vNew = numpy.random.rand(5, 7)
+            vNew = numpy.floor(vNew * 100)
+            vNew = numpy.array(vNew, dtype=self.dtype, order=stord)
+            vOld = copy.deepcopy(vNew)
+            vOld = numpy.array(vOld, order=stord)
+            rows = vNew.shape[0]
+            cols = vNew.shape[1]
+            exec('self.CObject.' + function + '(vNew, 0)')
+
+            assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
+            assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
+            try:
+                assert(self.CObject.StorageOrder() == stord)
+            except:
+                print self.CObject.StorageOrder(), stord
+                raise
+            for r in xrange(rows):
+                for c in xrange(cols):
+                    # Test if the C object read the vector correctly
+                    assert(self.CObject.GetItem(r,c) == vOld[r,c])
+                    # Test if the C object modified the vector correctly
+                    assert(vNew[r,c] == vOld[r,c] + 1)
 
 
     # Test if the C object reads, modifies, and resizes the vector correctly
     def SpecTestThrowUnlessReadsWritesResizesCorrectly(self, function):
-        vNew = numpy.random.rand(5, 7)
-        vNew = numpy.floor(vNew * 100)
-        vNew = numpy.array(vNew, dtype=self.dtype)
-        vOld = copy.deepcopy(vNew)
-        rows = vNew.shape[0]
-        cols = vNew.shape[1]
-        SIZE_FACTOR = 3
-        exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
+        STORAGE_ORDER = ['C', 'F']
 
-        assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
-        assert(vNew.shape[0] == rows * SIZE_FACTOR and vNew.shape[1] == cols * SIZE_FACTOR)
-        for r in xrange(rows):
-            for c in xrange(cols):
-                # Test if the C object read the vector correctly
-                assert(self.CObject.GetItem(r,c) == vOld[r,c])
-                # Test if the C object modified the vector correctly
-                assert(vNew[r,c] == vOld[r,c] + 1)
-                # Test if the C object resized the vector correctly
-                for r2 in xrange(SIZE_FACTOR):
-                    for c2 in xrange(SIZE_FACTOR):
-                        assert(vOld[r,c] + 1 == vNew[r + rows*r2, c + cols*c2])
+        for stord in STORAGE_ORDER:
+            vNew = numpy.random.rand(5, 7)
+            vNew = numpy.floor(vNew * 100)
+            vNew = numpy.array(vNew, dtype=self.dtype, order=stord)
+            vOld = copy.deepcopy(vNew)
+            vOld = numpy.array(vOld, order=stord)
+            rows = vNew.shape[0]
+            cols = vNew.shape[1]
+            SIZE_FACTOR = 3
+            exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
+
+            assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
+            assert(vNew.shape[0] == rows * SIZE_FACTOR and vNew.shape[1] == cols * SIZE_FACTOR)
+            try:
+                assert(self.CObject.StorageOrder() == stord)
+            except:
+                print self.CObject.StorageOrder(), stord
+                raise
+            for r in xrange(rows):
+                for c in xrange(cols):
+                    # Test if the C object read the vector correctly
+                    assert(self.CObject.GetItem(r,c) == vOld[r,c])
+                    # Test if the C object modified the vector correctly
+                    assert(vNew[r,c] == vOld[r,c] + 1)
+                    # Test if the C object resized the vector correctly
+                    for r2 in xrange(SIZE_FACTOR):
+                        for c2 in xrange(SIZE_FACTOR):
+                            assert(vOld[r,c] + 1 == vNew[r + rows*r2, c + cols*c2])
 
 
     # Test if the C object returns a good vector
@@ -366,7 +393,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         MY_NAME = 'out_vctDynamicConstMatrixRef'
 
         exec('v = self.CObject.' + MY_NAME + '(5, 7)')
-        print v.flags
+        #print v.flags
 
         # Perform battery of standard tests
         self.StdTestThrowUnlessReturnedMatrixIsNonWritable(MY_NAME)
