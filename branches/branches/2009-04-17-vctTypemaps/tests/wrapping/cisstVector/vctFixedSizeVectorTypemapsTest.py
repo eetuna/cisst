@@ -15,7 +15,7 @@ import copy
 import numpy
 import unittest
 
-from vctFixedSizeVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_double_4
+from cisstVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_double_4
 import sys
 
 class FixedSizeVectorTypemapsTest(unittest.TestCase):

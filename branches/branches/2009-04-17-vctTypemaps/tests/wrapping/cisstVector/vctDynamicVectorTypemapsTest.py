@@ -15,7 +15,7 @@ import copy
 import numpy
 import unittest
 
-from vctDynamicVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_double
+from cisstVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_double
 import sys
 
 class DynamicVectorTypemapsTest(unittest.TestCase):

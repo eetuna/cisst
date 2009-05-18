@@ -16,7 +16,7 @@ import copy
 import numpy
 import unittest
 
-from vctDynamicNArrayTypemapsTestPython import vctDynamicNArrayTypemapsTest_double_4
+from cisstVectorTypemapsTestPython import vctDynamicNArrayTypemapsTest_double_4
 
 class DynamicNArrayTypemapsTest(unittest.TestCase):
 
