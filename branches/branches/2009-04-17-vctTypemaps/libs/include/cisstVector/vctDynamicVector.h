@@ -299,6 +299,21 @@ public:
     void SetSize(size_type size) {
         this->Vector.SetSize(size);
     }
+
+    // Documented in base class.
+    template <class __vectorOwnerType, typename __elementType>
+    inline void ForceAssign(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
+        this->SetSize(other.size());
+        this->Assign(other);
+    }
+
+    // Documented in base class.
+    template <unsigned int __size, int __stride, class __elementType, class __dataPtrType>
+    inline void ForceAssign(const vctFixedSizeConstVectorBase<__size, __stride, __elementType, __dataPtrType>
+                                  & other) {
+        this->SetSize(other.size());
+        this->Assign(other);
+    }
 };
 
 

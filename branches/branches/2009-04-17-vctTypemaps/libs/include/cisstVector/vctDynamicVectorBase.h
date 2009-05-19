@@ -288,16 +288,14 @@ public:
     */
     //@{
     template <class __vectorOwnerType, typename __elementType>
-    inline ThisType & ForceAssign(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
-        this->SetSize(other.size());
-        return this->Assign(other);
+    inline void ForceAssign(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
+        this->Assign(other);
     }
     
     template <unsigned int __size, int __stride, class __elementType, class __dataPtrType>
-    inline ThisType & ForceAssign(const vctFixedSizeConstVectorBase<__size, __stride, __elementType, __dataPtrType>
+    inline void ForceAssign(const vctFixedSizeConstVectorBase<__size, __stride, __elementType, __dataPtrType>
                                   & other) {
-        this->SetSize(other.size());
-        return this->Assign(other);
+        this->Assign(other);
     }
     //@}
 

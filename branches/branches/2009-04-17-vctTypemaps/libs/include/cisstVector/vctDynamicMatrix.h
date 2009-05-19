@@ -336,6 +336,24 @@ public:
         this->Matrix.SetSize(matrixSize, this->StorageOrder());
     }
     //@}
+
+    // Documented in base class.
+    template <class __matrixOwnerType, typename __elementType>
+    inline void ForceAssign(const vctDynamicConstMatrixBase<__matrixOwnerType, __elementType> & other) {
+        this->SetSize(other.sizes(), other.StorageOrder());
+        this->Assign(other);
+    }
+
+    // Documented in base class.
+    template <unsigned int __rows, unsigned int __cols,
+              int __rowStride, int __colStride,
+              class __elementType, class __dataPtrType>
+    inline void ForceAssign(const vctFixedSizeConstMatrixBase<__rows, __cols,
+                                                                    __rowStride, __colStride,
+                                                                    __elementType, __dataPtrType>  & other) {
+        this->SetSize(other.sizes(), other.StorageOrder());
+        this->Assign(other);
+    }
 };
 
 

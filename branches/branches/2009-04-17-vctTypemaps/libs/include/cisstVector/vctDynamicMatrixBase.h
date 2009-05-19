@@ -534,19 +534,17 @@ public:
     */
     //@{
     template <class __matrixOwnerType, typename __elementType>
-    inline ThisType & ForceAssign(const vctDynamicConstMatrixBase<__matrixOwnerType, __elementType> & other) {
-        this->SetSize(other.size());
-        return this->Assign(other);
+    inline void ForceAssign(const vctDynamicConstMatrixBase<__matrixOwnerType, __elementType> & other) {
+        this->Assign(other);
     }
     
     template <unsigned int __rows, unsigned int __cols,
               int __rowStride, int __colStride,
               class __elementType, class __dataPtrType>
-    inline ThisType & ForceAssign(const vctFixedSizeConstMatrixBase<__rows, __cols,
+    inline void ForceAssign(const vctFixedSizeConstMatrixBase<__rows, __cols,
                                                                     __rowStride, __colStride,
                                                                     __elementType, __dataPtrType>  & other) {
-        this->SetSize(other.size());
-        return this->Assign(other);
+        this->Assign(other);
     }
     //@}
 
