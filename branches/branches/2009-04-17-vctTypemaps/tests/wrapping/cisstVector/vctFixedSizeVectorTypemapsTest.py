@@ -41,7 +41,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = 0.0
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
@@ -49,7 +49,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         # Give an array; expect no exception
         size = self.CObject.size()
         goodvar = numpy.ones(size, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if the data type isn't int
@@ -63,14 +63,14 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
                 badvar = numpy.ones(size, dtype=numpy.float64)
             else:
                 badvar = numpy.ones(size, dtype=numpy.int32)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
         goodvar = numpy.ones(size, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if the array isn't 1D
@@ -79,7 +79,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = numpy.array([[1, 2, 3], [4, 5, 6]])
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
@@ -87,7 +87,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         # Give a 1D array; expect no exception
         size = self.CObject.size()
         goodvar = numpy.ones(size, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if there is a size mismatch
@@ -98,14 +98,14 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = numpy.ones(size + 1, dtype=self.dtype)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a `size' array; expect no exception
         goodvar = numpy.ones(size, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if the array isn't writable
@@ -117,25 +117,25 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         try:
             badvar = numpy.ones(size, dtype=self.dtype)
             badvar.setflags(write=False)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
         goodvar = numpy.ones(size, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     def StdTestThrowUnlessReturnedVectorIsWritable(self, function):
         # Expect the returned array to be writable
-        exec('v = self.CObject.' + function + '()')
+        v = function()
         assert(v.flags['WRITEABLE'] == True)
 
 
     def StdTestThrowUnlessReturnedVectorIsNonWritable(self, function):
         # Expect the returned array to be non-writable
-        exec('v = self.CObject.' + function + '()')
+        v = function()
         assert(v.flags['WRITEABLE'] == False)
 
 
@@ -147,7 +147,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
-        exec('self.CObject.' + function + '(vNew)')
+        function(vNew)
 
         assert(self.CObject.size() == size)
         assert(vNew.size == size)
@@ -166,7 +166,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
         vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
-        exec('self.CObject.' + function + '(vNew)')
+        function(vNew)
 
         assert(self.CObject.size() == size)
         assert(vNew.size == size)
@@ -179,7 +179,7 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
 
     # Test if the C object returns a good vector
     def SpecTestThrowUnlessReceivesCorrectVector(self, function):
-        exec('v = self.CObject.' + function + '()')
+        v = function()
 
         size = self.CObject.size()
         for i in xrange(size):
@@ -192,70 +192,70 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def Test_in_argout_vctFixedSizeVector_ref(self):
-        MY_NAME = 'in_argout_vctFixedSizeVector_ref'
+        function = self.CObject.in_argout_vctFixedSizeVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessCorrectVectorSize(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
+        self.StdTestThrowUnlessCorrectVectorSize(function)
+        self.StdTestThrowUnlessWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
 
 
     def Test_out_vctFixedSizeVector_ref(self):
-        MY_NAME = 'out_vctFixedSizeVector_ref'
+        function = self.CObject.out_vctFixedSizeVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_in_vctFixedSizeVector(self):
-        MY_NAME = 'in_vctFixedSizeVector'
+        function = self.CObject.in_vctFixedSizeVector
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessCorrectVectorSize(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
+        self.StdTestThrowUnlessCorrectVectorSize(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_vctFixedSizeVector(self):
-        MY_NAME = 'out_vctFixedSizeVector'
+        function = self.CObject.out_vctFixedSizeVector
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_in_argout_const_vctFixedSizeVector_ref(self):
-        MY_NAME = 'in_argout_const_vctFixedSizeVector_ref'
+        function = self.CObject.in_argout_const_vctFixedSizeVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessCorrectVectorSize(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
+        self.StdTestThrowUnlessCorrectVectorSize(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_const_vctFixedSizeVector_ref(self):
-        MY_NAME = 'out_const_vctFixedSizeVector_ref'
+        function = self.CObject.out_const_vctFixedSizeVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsNonWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)

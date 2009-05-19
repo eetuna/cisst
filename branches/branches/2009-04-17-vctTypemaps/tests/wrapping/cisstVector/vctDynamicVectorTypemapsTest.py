@@ -41,14 +41,14 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = 0.0
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an array; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     # Tests that the typemap throws an exception if the data type isn't int
@@ -60,14 +60,14 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
                 badvar = numpy.ones(10, dtype=numpy.float64)
             else:
                 badvar = numpy.ones(10, dtype=numpy.int32)
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     # Tests that the typemap throws an exception if the array isn't 1D
@@ -76,14 +76,14 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = numpy.array([[1, 2, 3], [4, 5, 6]])
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a 1D array; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     # Tests that the typemap throws an exception if the array isn't writable
@@ -93,14 +93,14 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         try:
             badvar = numpy.ones(10, dtype=self.dtype)
             badvar.setflags(write=False)
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     def StdTestThrowUnlessOwnsData(self, function):
@@ -109,14 +109,14 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         try:
             temp = numpy.ones(10, dtype=self.dtype)
             badvar = temp[:]
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a memory-owning array; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     def StdTestThrowUnlessNotReferenced(self, function):
@@ -125,27 +125,27 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         try:
             badvar = numpy.ones(10, dtype=self.dtype)
             temp = badvar
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an array with no references; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     def StdTestThrowUnlessReturnedVectorIsWritable(self, function):
         # Expect the returned array to be writable
         SIZE = 10
-        exec('v = self.CObject.' + function + '(SIZE)')
+        v = function(SIZE)
         assert(v.flags['WRITEABLE'] == True)
 
 
     def StdTestThrowUnlessReturnedVectorIsNonWritable(self, function):
         # Expect the returned array to be non-writable
         SIZE = 10
-        exec('v = self.CObject.' + function + '(SIZE)')
+        v = function(SIZE)
         assert(v.flags['WRITEABLE'] == False)
 
 
@@ -156,7 +156,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
-        exec('self.CObject.' + function + '(vNew, 0)')
+        function(vNew, 0)
 
         assert(self.CObject.size() == size)
         assert(vNew.size == size)
@@ -174,7 +174,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         vNew = numpy.array(vNew, dtype=self.dtype)
         vOld = copy.deepcopy(vNew)
         size = vNew.size
-        exec('self.CObject.' + function + '(vNew, 0)')
+        function(vNew, 0)
 
         assert(self.CObject.size() == size)
         assert(vNew.size == size)
@@ -193,7 +193,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
         vOld = copy.deepcopy(vNew)
         size = vNew.size
         SIZE_FACTOR = 3
-        exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
+        function(vNew, SIZE_FACTOR)
 
         assert(self.CObject.size() == size)
         assert(vNew.size == size * SIZE_FACTOR)
@@ -210,7 +210,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     # Test if the C object returns a good vector
     def SpecTestThrowUnlessReceivesCorrectVector(self, function):
         SIZE = 10
-        exec('v = self.CObject.' + function + '(SIZE)')
+        v = function(SIZE)
 
         assert(v.size == SIZE)
         for i in xrange(SIZE):
@@ -223,139 +223,139 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def Test_in_argout_vctDynamicVector_ref(self):
-        MY_NAME = 'in_argout_vctDynamicVector_ref'
+        function = self.CObject.in_argout_vctDynamicVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
-        self.StdTestThrowUnlessOwnsData(MY_NAME)
-        self.StdTestThrowUnlessNotReferenced(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
+        self.StdTestThrowUnlessWritable(function)
+        self.StdTestThrowUnlessOwnsData(function)
+        self.StdTestThrowUnlessNotReferenced(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
+        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(function)
 
 
     def Test_in_vctDynamicVectorRef(self):
-        MY_NAME = 'in_vctDynamicVectorRef'
+        function = self.CObject.in_vctDynamicVectorRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
+        self.StdTestThrowUnlessWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
 
 
     def Test_in_vctDynamicConstVectorRef(self):
-        MY_NAME = 'in_vctDynamicConstVectorRef'
+        function = self.CObject.in_vctDynamicConstVectorRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicConstVectorRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicConstVectorRef_ref'
+        function = self.CObject.in_argout_const_vctDynamicConstVectorRef_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicVectorRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicVectorRef_ref'
+        function = self.CObject.in_argout_const_vctDynamicVectorRef_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_vctDynamicVector(self):
-        MY_NAME = 'in_vctDynamicVector'
+        function = self.CObject.in_vctDynamicVector
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicVector_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicVector_ref'
+        function = self.CObject.in_argout_const_vctDynamicVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension1(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension1(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_vctDynamicVector(self):
-        MY_NAME = 'out_vctDynamicVector'
+        function = self.CObject.out_vctDynamicVector
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_vctDynamicVector_ref(self):
-        MY_NAME = 'out_vctDynamicVector_ref'
+        function = self.CObject.out_vctDynamicVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_const_vctDynamicVector_ref(self):
-        MY_NAME = 'out_const_vctDynamicVector_ref'
+        function = self.CObject.out_const_vctDynamicVector_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsNonWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_vctDynamicVectorRef(self):
-        MY_NAME = 'out_vctDynamicVectorRef'
+        function = self.CObject.out_vctDynamicVectorRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_vctDynamicConstVectorRef(self):
-        MY_NAME = 'out_vctDynamicConstVectorRef'
+        function = self.CObject.out_vctDynamicConstVectorRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsNonWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectVector(function)

@@ -41,14 +41,14 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = 0.0
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an array; expect no exception
         goodvar = numpy.ones((5, 7), dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     # Tests that the typemap throws an exception if the data type isn't int
@@ -60,14 +60,14 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
                 badvar = numpy.ones((5, 7), dtype=numpy.float64)
             else:
                 badvar = numpy.ones((5, 7), dtype=numpy.int32)
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
         goodvar = numpy.ones((5, 7), dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     # Tests that the typemap throws an exception if the array isn't 2D
@@ -76,14 +76,14 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = numpy.ones(10, dtype=self.dtype)
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a 2D array; expect no exception
         goodvar = numpy.ones((5, 7), dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     # Tests that the typemap throws an exception if the array isn't writable
@@ -93,14 +93,14 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         try:
             badvar = numpy.ones((5, 7), dtype=self.dtype)
             badvar.setflags(write=False)
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
         goodvar = numpy.ones((5, 7), dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     def StdTestThrowUnlessOwnsData(self, function):
@@ -109,14 +109,14 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         try:
             temp = numpy.ones((5, 7), dtype=self.dtype)
             badvar = temp[:]
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a memory-owning array; expect no exception
         goodvar = numpy.ones((5, 7), dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     def StdTestThrowUnlessNotReferenced(self, function):
@@ -125,21 +125,21 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         try:
             badvar = numpy.ones((5, 7), dtype=self.dtype)
             temp = badvar
-            exec('self.CObject.' + function + '(badvar, 0)')
+            function(badvar, 0)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an array with no references; expect no exception
         goodvar = numpy.ones((5, 7), dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar, 0)')
+        function(goodvar, 0)
 
 
     def StdTestThrowUnlessReturnedMatrixIsWritable(self, function):
         # Expect the returned array to be writable
         ROWS = 5
         COLS = 7
-        exec('v = self.CObject.' + function + '(ROWS, COLS)')
+        v = function(ROWS, COLS)
         assert(v.flags['WRITEABLE'] == True)
 
 
@@ -147,7 +147,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
         # Expect the returned array to be non-writable
         ROWS = 5
         COLS = 7
-        exec('v = self.CObject.' + function + '(ROWS, COLS)')
+        v = function(ROWS, COLS)
         assert(v.flags['WRITEABLE'] == False)
 
 
@@ -163,15 +163,11 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
             vOld = numpy.array(vOld, order=stord)
             rows = vNew.shape[0]
             cols = vNew.shape[1]
-            exec('self.CObject.' + function + '(vNew, 0)')
+            function(vNew, 0)
 
             assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
             assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
-            try:
-                assert(self.CObject.StorageOrder() == stord)
-            except:
-                print self.CObject.StorageOrder(), stord
-                raise
+            assert(self.CObject.StorageOrder() == stord)
             for r in xrange(rows):
                 for c in xrange(cols):
                     # Test if the C object read the vector correctly
@@ -192,15 +188,11 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
             vOld = numpy.array(vOld, order=stord)
             rows = vNew.shape[0]
             cols = vNew.shape[1]
-            exec('self.CObject.' + function + '(vNew, 0)')
+            function(vNew, 0)
 
             assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
             assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
-            try:
-                assert(self.CObject.StorageOrder() == stord)
-            except:
-                print self.CObject.StorageOrder(), stord
-                raise
+            assert(self.CObject.StorageOrder() == stord)
             for r in xrange(rows):
                 for c in xrange(cols):
                     # Test if the C object read the vector correctly
@@ -222,15 +214,11 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
             rows = vNew.shape[0]
             cols = vNew.shape[1]
             SIZE_FACTOR = 3
-            exec('self.CObject.' + function + '(vNew, SIZE_FACTOR)')
+            function(vNew, SIZE_FACTOR)
 
             assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
             assert(vNew.shape[0] == rows * SIZE_FACTOR and vNew.shape[1] == cols * SIZE_FACTOR)
-            try:
-                assert(self.CObject.StorageOrder() == stord)
-            except:
-                print self.CObject.StorageOrder(), stord
-                raise
+            assert(self.CObject.StorageOrder() == stord)
             for r in xrange(rows):
                 for c in xrange(cols):
                     # Test if the C object read the vector correctly
@@ -247,7 +235,7 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReceivesCorrectMatrix(self, function):
         ROWS = 5
         COLS = 7
-        exec('v = self.CObject.' + function + '(ROWS, COLS)')
+        v = function(ROWS, COLS)
 
         assert(v.shape[0] == ROWS and v.shape[1] == COLS)
         for r in xrange(ROWS):
@@ -261,142 +249,139 @@ class DynamicMatrixTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def Test_in_argout_vctDynamicMatrix_ref(self):
-        MY_NAME = 'in_argout_vctDynamicMatrix_ref'
+        function = self.CObject.in_argout_vctDynamicMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
-        self.StdTestThrowUnlessOwnsData(MY_NAME)
-        self.StdTestThrowUnlessNotReferenced(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
+        self.StdTestThrowUnlessWritable(function)
+        self.StdTestThrowUnlessOwnsData(function)
+        self.StdTestThrowUnlessNotReferenced(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
-        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
+        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(function)
 
 
     def Test_in_vctDynamicMatrixRef(self):
-        MY_NAME = 'in_vctDynamicMatrixRef'
+        function = self.CObject.in_vctDynamicMatrixRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
+        self.StdTestThrowUnlessWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
 
 
     def Test_in_vctDynamicConstMatrixRef(self):
-        MY_NAME = 'in_vctDynamicConstMatrixRef'
+        function = self.CObject.in_vctDynamicConstMatrixRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicConstMatrixRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicConstMatrixRef_ref'
+        function = self.CObject.in_argout_const_vctDynamicConstMatrixRef_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicMatrixRef_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicMatrixRef_ref'
+        function = self.CObject.in_argout_const_vctDynamicMatrixRef_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_vctDynamicMatrix(self):
-        MY_NAME = 'in_vctDynamicMatrix'
+        function = self.CObject.in_vctDynamicMatrix
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicMatrix_ref(self):
-        MY_NAME = 'in_argout_const_vctDynamicMatrix_ref'
+        function = self.CObject.in_argout_const_vctDynamicMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_vctDynamicMatrix(self):
-        MY_NAME = 'out_vctDynamicMatrix'
+        function = self.CObject.out_vctDynamicMatrix
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)
 
 
     def Test_out_vctDynamicMatrix_ref(self):
-        MY_NAME = 'out_vctDynamicMatrix_ref'
+        function = self.CObject.out_vctDynamicMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)
 
 
     def Test_out_const_vctDynamicMatrix_ref(self):
-        MY_NAME = 'out_const_vctDynamicMatrix_ref'
+        function = self.CObject.out_const_vctDynamicMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsNonWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsNonWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)
 
 
     def Test_out_vctDynamicMatrixRef(self):
-        MY_NAME = 'out_vctDynamicMatrixRef'
+        function = self.CObject.out_vctDynamicMatrixRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)
 
 
     def Test_out_vctDynamicConstMatrixRef(self):
-        MY_NAME = 'out_vctDynamicConstMatrixRef'
-
-        exec('v = self.CObject.' + MY_NAME + '(5, 7)')
-        #print v.flags
+        function = self.CObject.out_vctDynamicConstMatrixRef
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsNonWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsNonWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)

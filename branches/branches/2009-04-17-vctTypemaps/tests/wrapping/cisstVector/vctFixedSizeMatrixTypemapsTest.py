@@ -41,7 +41,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = 0.0
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
@@ -49,7 +49,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         # Give an array; expect no exception
         shape = tuple(self.CObject.sizes())
         goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if the data type isn't int
@@ -63,14 +63,14 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
                 badvar = numpy.ones(shape, dtype=numpy.float64)
             else:
                 badvar = numpy.ones(shape, dtype=numpy.int32)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give an int; expect no exception
         goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if the array isn't 2D
@@ -79,7 +79,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = numpy.ones(10, dtype=self.dtype)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
@@ -87,7 +87,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         # Give a 2D array; expect no exception
         shape = tuple(self.CObject.sizes())
         goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if there is a size mismatch
@@ -99,14 +99,14 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         exceptionOccurred = False
         try:
             badvar = numpy.ones(shapePlusOne, dtype=self.dtype)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a `rows, cols' array; expect no exception
         goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     # Tests that the typemap throws an exception if the array isn't writable
@@ -118,25 +118,25 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         try:
             badvar = numpy.ones(shape, dtype=self.dtype)
             badvar.setflags(write=False)
-            exec('self.CObject.' + function + '(badvar)')
+            function(badvar)
         except:
             exceptionOccurred = True
         assert(exceptionOccurred)
 
         # Give a writable array; expect no exception
         goodvar = numpy.ones(shape, dtype=self.dtype)
-        exec('self.CObject.' + function + '(goodvar)')
+        function(goodvar)
 
 
     def StdTestThrowUnlessReturnedMatrixIsWritable(self, function):
         # Expect the returned array to be writable
-        exec('v = self.CObject.' + function + '()')
+        v = function()
         assert(v.flags['WRITEABLE'] == True)
 
 
     def StdTestThrowUnlessReturnedMatrixIsNonWritable(self, function):
         # Expect the returned array to be non-writable
-        exec('v = self.CObject.' + function + '()')
+        v = function()
         assert(v.flags['WRITEABLE'] == False)
 
 
@@ -150,7 +150,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         vOld = copy.deepcopy(vNew)
         rows = vNew.shape[0]
         cols = vNew.shape[1]
-        exec('self.CObject.' + function + '(vNew)')
+        function(vNew)
 
         assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
         assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
@@ -172,7 +172,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
         vOld = copy.deepcopy(vNew)
         rows = vNew.shape[0]
         cols = vNew.shape[1]
-        exec('self.CObject.' + function + '(vNew)')
+        function(vNew)
 
         assert(self.CObject.rows() == rows and self.CObject.cols() == cols)
         assert(vNew.shape[0] == rows and vNew.shape[1] == cols)
@@ -186,7 +186,7 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
 
     # Test if the C object returns a good vector
     def SpecTestThrowUnlessReceivesCorrectMatrix(self, function):
-        exec('v = self.CObject.' + function + '()')
+        v = function()
 
         rows = self.CObject.rows()
         cols = self.CObject.cols()
@@ -202,70 +202,70 @@ class FixedSizeMatrixTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def Test_in_vctFixedSizeMatrix(self):
-        MY_NAME = 'in_vctFixedSizeMatrix'
+        function = self.CObject.in_vctFixedSizeMatrix
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessCorrectMatrixSize(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
+        self.StdTestThrowUnlessCorrectMatrixSize(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_vctFixedSizeMatrix(self):
-        MY_NAME = 'out_vctFixedSizeMatrix'
+        function = self.CObject.out_vctFixedSizeMatrix
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)
 
 
     def Test_in_argout_vctFixedSizeMatrix_ref(self):
-        MY_NAME = 'in_argout_vctFixedSizeMatrix_ref'
+        function = self.CObject.in_argout_vctFixedSizeMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessCorrectMatrixSize(MY_NAME)
-        self.StdTestThrowUnlessWritable(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
+        self.StdTestThrowUnlessCorrectMatrixSize(function)
+        self.StdTestThrowUnlessWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
 
 
     def Test_out_vctFixedSizeMatrix_ref(self):
-        MY_NAME = 'out_vctFixedSizeMatrix_ref'
+        function = self.CObject.out_vctFixedSizeMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)
 
 
     def Test_in_argout_const_vctFixedSizeMatrix_ref(self):
-        MY_NAME = 'in_argout_const_vctFixedSizeMatrix_ref'
+        function = self.CObject.in_argout_const_vctFixedSizeMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(MY_NAME)
-        self.StdTestThrowUnlessDataType(MY_NAME)
-        self.StdTestThrowUnlessDimension2(MY_NAME)
-        self.StdTestThrowUnlessCorrectMatrixSize(MY_NAME)
+        self.StdTestThrowUnlessIsArray(function)
+        self.StdTestThrowUnlessDataType(function)
+        self.StdTestThrowUnlessDimension2(function)
+        self.StdTestThrowUnlessCorrectMatrixSize(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(MY_NAME)
+        self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_const_vctFixedSizeMatrix_ref(self):
-        MY_NAME = 'out_const_vctFixedSizeMatrix_ref'
+        function = self.CObject.out_const_vctFixedSizeMatrix_ref
 
         # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedMatrixIsNonWritable(MY_NAME)
+        self.StdTestThrowUnlessReturnedMatrixIsNonWritable(function)
 
         # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectMatrix(MY_NAME)
+        self.SpecTestThrowUnlessReceivesCorrectMatrix(function)

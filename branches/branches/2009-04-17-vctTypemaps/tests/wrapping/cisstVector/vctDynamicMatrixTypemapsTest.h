@@ -67,7 +67,6 @@ public:
     }
 
     void in_vctDynamicMatrix(vctDynamicMatrix<_elementType> param, size_type dummy) {
-        std::cout << param.StorageOrder() << std::endl;
         copy.SetSize(param.sizes(), param.StorageOrder());
         copy.Assign(param);
     }
