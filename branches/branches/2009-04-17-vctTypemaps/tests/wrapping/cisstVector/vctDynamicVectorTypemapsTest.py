@@ -48,8 +48,6 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
         # Give an array; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        #self.CObject.in_argout_vctDynamicVector_ref(goodvar, 0)      # DEBUG
-        #print sys.getrefcount(goodvar)                               # DEBUG
         exec('self.CObject.' + function + '(goodvar, 0)')
 
 
@@ -134,9 +132,7 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
 
         # Give an array with no references; expect no exception
         goodvar = numpy.ones(10, dtype=self.dtype)
-        print sys.getrefcount(goodvar)
         exec('self.CObject.' + function + '(goodvar, 0)')
-        print sys.getrefcount(goodvar)
 
 
     def StdTestThrowUnlessReturnedVectorIsWritable(self, function):

@@ -527,7 +527,8 @@
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
     int type = vctPythonType<$1_ltype::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
-    $result = PyArray_NewFromDescr(&PyArray_Type, descr,  2, sizes, NULL, NULL, NPY_CARRAY_RO, NULL);
+    $result = PyArray_NewFromDescr(&PyArray_Type, descr,  2, sizes, NULL, NULL, NPY_CARRAY, NULL);
+    PyArray_FLAGS($result) &= ~NPY_WRITEABLE;
 
     /*****************************************************************************
      COPY THE DATA FROM THE vctDynamicConstMatrixRef TO THE PYARRAY

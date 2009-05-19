@@ -48,7 +48,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
 
     # Converts a given metaindex `index' on an array of shape `shape' to a
     # tuple index
-    def MetaIndexToTuple(self, index, shape):
+    def HelperMetaIndexToTuple(self, index, shape):
         indexList = []
         for j in shape[::-1]:
             r = index % j
@@ -213,7 +213,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         assert((cShape == vShape).all())
         assert((vNew.shape == vShape).all())
         for i in xrange(vSize):
-            indexTuple = self.MetaIndexToTuple(i, vShape)
+            indexTuple = self.HelperMetaIndexToTuple(i, vShape)
 
             # Test if the C object read the vector correctly
             assert(self.CObject.GetItem(i) == vOld[indexTuple])
@@ -242,7 +242,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         assert((cShape == vShape).all())
         assert((vNew.shape == vShape).all())
         for i in xrange(vSize):
-            indexTuple = self.MetaIndexToTuple(i, vShape)
+            indexTuple = self.HelperMetaIndexToTuple(i, vShape)
 
             # Test if the C object read the vector correctly
             assert(self.CObject.GetItem(i) == vOld[indexTuple])
@@ -274,7 +274,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         vShapeNew = numpy.array(vNew.shape)
         assert((vShapeNew == vShape * SIZE_FACTOR).all())
         for i in xrange(vNew.size):
-            indexTuple = self.MetaIndexToTuple(i, vShape)
+            indexTuple = self.HelperMetaIndexToTuple(i, vShape)
 
             # Test if the C object resized the vector correctly
             assert(vNew[indexTuple] == 17)
@@ -294,7 +294,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
             assert(vShape[i] == sizes[i]);
 
         for i in xrange(vSize):
-            indexTuple = self.MetaIndexToTuple(i, vShape)
+            indexTuple = self.HelperMetaIndexToTuple(i, vShape)
             assert(self.CObject.GetItem(i) == v[indexTuple])
 
 
