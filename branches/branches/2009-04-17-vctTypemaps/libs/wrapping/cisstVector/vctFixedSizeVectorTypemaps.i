@@ -62,7 +62,7 @@
     const vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the temporary container to the vctFixedSizeVector
-    $1.Assign(tempContainer);
+    $1.ForceAssign(tempContainer);
 }
 
 

@@ -22,12 +22,6 @@
 %}
 
 
-// TODO: Look at Mitch's documentation:
-// NumPyVectorTestingFramework.doc, section "30.9.3 Using typemaps to return arguments"
-// Summary: How to create functions with multiple return values, such as:
-// x,y,z = spam(4,5)
-
-
 /******************************************************************************
   TYPEMAPS (in, out) FOR vctDynamicVector
 ******************************************************************************/
@@ -68,8 +62,7 @@
     const vctDynamicVectorRef<$1_ltype::value_type> tempContainer(size, data, stride);
 
     // Copy the data from the temporary container to the vctDynamicVector
-    $1.SetSize(size);
-    $1.Assign(tempContainer);
+    $1.ForceAssign(tempContainer);
 }
 
 
