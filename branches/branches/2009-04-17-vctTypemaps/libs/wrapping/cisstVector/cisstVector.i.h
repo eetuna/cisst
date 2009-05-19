@@ -164,7 +164,6 @@ bool vctThrowUnlessIsWritable(PyObject *input)
 }
 
 
-// TODO: Make sure this is correct for FixedSize and Dynamic Vectors and Matrices
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessCorrectVectorSize(PyObject *input,
                                      const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
@@ -184,8 +183,8 @@ bool vctThrowUnlessCorrectVectorSize(PyObject *input,
 }
 
 template <class _vectorOwnerType, typename _elementType>
-bool vctThrowUnlessCorrectVectorSize(const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & input,
-                                     unsigned int desiredSize)
+bool vctThrowUnlessCorrectVectorSize(PyObject *input,
+                                     const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> &target)
 {
     return true;
 }
@@ -213,16 +212,57 @@ bool vctThrowUnlessCorrectMatrixSize(PyObject *input,
 }
 
 
-template <class _vectorOwnerType, typename _elementType>
-bool vctThrowUnlessCorrectMatrixSize(const vctDynamicConstMatrixBase<_vectorOwnerType, _elementType> & input,
-                                     unsigned int desiredRows, unsigned int desiredCols)
+template <class _matrixOwnerType, typename _elementType>
+bool vctThrowUnlessCorrectMatrixSize(PyObject *input,
+                                     const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> &target)
 {
     return true;
 }
 
 
+bool vctThrowUnlessOwnsData(PyObject *input)
+{
+    int flags = PyArray_FLAGS(input);
+    if(!(flags & NPY_OWNDATA)) {
+        PyErr_SetString(PyExc_ValueError, "Array must own its data");
+        return false;
+    }
+    return true;
+}
 
-bool vctThrowUnlessOwnsData(PyObject * input)
+
+template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
+bool vctThrowUnlessOwnsData(PyObject *input,
+                            const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
+{
+    return true;
+}
+
+
+template <class _vectorOwnerType, typename _elementType>
+bool vctThrowUnlessOwnsData(PyObject *input,
+                            const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> &target)
+{
+    int flags = PyArray_FLAGS(input);
+    if(!(flags & NPY_OWNDATA)) {
+        PyErr_SetString(PyExc_ValueError, "Array must own its data");
+        return false;
+    }
+    return true;
+}
+
+
+template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
+bool vctThrowUnlessOwnsData(PyObject *input,
+                            const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> &target)
+{
+    return true;
+}
+
+
+template <class _matrixOwnerType, typename _elementType>
+bool vctThrowUnlessOwnsData(PyObject *input,
+                            const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> &target)
 {
     int flags = PyArray_FLAGS(input);
     if(!(flags & NPY_OWNDATA)) {
@@ -241,6 +281,49 @@ bool vctThrowUnlessNotReferenced(PyObject *input)
     }
     return true;
 }
+
+
+template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
+bool vctThrowUnlessNotReferenced(PyObject *input,
+                                 const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
+{
+    return true;
+}
+
+
+template <class _vectorOwnerType, typename _elementType>
+bool vctThrowUnlessNotReferenced(PyObject *input,
+                                 const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> &target)
+{
+    if (PyArray_REFCOUNT(input) > 4) {
+        PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
+        return false;
+    }
+    return true;
+}
+
+
+template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
+bool vctThrowUnlessNotReferenced(PyObject *input,
+                                 const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> &target)
+{
+    return true;
+}
+
+
+template <class _matrixOwnerType, typename _elementType>
+bool vctThrowUnlessNotReferenced(PyObject *input,
+                                 const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> &target)
+{
+    if (PyArray_REFCOUNT(input) > 4) {
+        PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
+        return false;
+    }
+    return true;
+}
+
+
+
 
 
 

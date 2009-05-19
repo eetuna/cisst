@@ -125,7 +125,9 @@
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension1($input)
           && vctThrowUnlessCorrectVectorSize($input, *($1))
-          && vctThrowUnlessIsWritable($input))
+          && vctThrowUnlessIsWritable($input)
+          && vctThrowUnlessOwnsData($input, *($1))
+          && vctThrowUnlessNotReferenced($input, *($1)))
         ) {
           return NULL;
     }

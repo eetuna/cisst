@@ -47,7 +47,8 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, $1))
         ) {
           return NULL;
     }
@@ -135,9 +136,10 @@
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, *($1))
           && vctThrowUnlessIsWritable($input)
-          && vctThrowUnlessOwnsData($input)
-          && vctThrowUnlessNotReferenced($input))
+          && vctThrowUnlessOwnsData($input, *($1))
+          && vctThrowUnlessNotReferenced($input, *($1)))
         ) {
           return NULL;
     }
@@ -259,7 +261,8 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, *($1)))
         ) {
           return NULL;
     }
@@ -343,6 +346,7 @@
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
           && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, $1)
           && vctThrowUnlessIsWritable($input))
         ) {
           return NULL;
@@ -423,7 +427,8 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, *($1)))
         ) {
           return NULL;
     }
@@ -484,7 +489,8 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, $1))
         ) {
           return NULL;
     }
@@ -570,7 +576,8 @@
 
     if (!(   vctThrowUnlessIsPyArray($input)
           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimension2($input))
+          && vctThrowUnlessDimension2($input)
+          && vctThrowUnlessCorrectMatrixSize($input, *($1)))
         ) {
           return NULL;
     }
