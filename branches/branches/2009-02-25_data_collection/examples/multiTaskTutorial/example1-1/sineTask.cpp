@@ -15,15 +15,15 @@ sineTask::sineTask(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // add SineData to the StateTable defined in mtsTask
-    StateTable.AddData(SineData, "SineData1");
-    StateTable.AddData(SineData, "SineData2");
-    StateTable.AddData(SineData, "SineData3");
-    StateTable.AddData(SineData, "SineData4");
-    StateTable.AddData(SineData, "SineData5");
-    StateTable.AddData(SineData, "SineData6");
-    StateTable.AddData(SineData, "SineData7");
-    StateTable.AddData(SineData, "SineData8");
-    StateTable.AddData(SineData, "SineData9");
+    StateTable.AddData(SineData, "SineData01");
+    StateTable.AddData(SineData, "SineData02");
+    StateTable.AddData(SineData, "SineData03");
+    StateTable.AddData(SineData, "SineData04");
+    StateTable.AddData(SineData, "SineData05");
+    StateTable.AddData(SineData, "SineData06");
+    StateTable.AddData(SineData, "SineData07");
+    StateTable.AddData(SineData, "SineData08");
+    StateTable.AddData(SineData, "SineData09");
     StateTable.AddData(SineData, "SineData10");
 
     // add one interface, this will create an mtsTaskInterface
@@ -42,6 +42,7 @@ sineTask::sineTask(const std::string & taskName, double period):
     std::string timeStamp; 
     osaGetDateTimeString(timeStamp);
     fileName += timeStamp;
+    fileName += ".txt";
     
     logFile.open(fileName.c_str(), std::ios::out);
 }

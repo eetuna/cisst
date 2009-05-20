@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor
+  Author(s):  Ankur Kapoor, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
@@ -39,14 +39,17 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
+#define STATE_TABLE_DEFAULT_NAME "mtsStateTable"
+
 // Forward declaration
 class osaTimeServer;
+class mtsCollectorState;
 
 /*! mtsStateDataId.  Unique identifier for the columns of the State
   Data Table.  Typedef'ed to an int */
 typedef int mtsStateDataId;
 
-// Enable this if you want to obtain the detailed information on a running task's 
+// Enable this if you want to obtain the detailed information on running task's 
 // execution timing.
 #define TASK_TIMING_ANALYSIS
 
@@ -65,11 +68,38 @@ typedef int mtsStateDataId;
  */
 class CISST_EXPORT mtsStateTable {
 
-    friend class mtsCollectorDump;
-
+    friend class mtsCollectorState;
     friend class mtsTaskTest;
     friend class mtsStateTableTest;
     friend class mtsCollectorBaseTest;
+
+    class DataCollectionInfoStruct {
+    public:
+        /*! True if collectData flag is set at the constructor. */
+        bool CollectData;
+
+        /* True if data collection event can be triggered (false by default). */
+        bool TriggerEnabled;
+
+        /*! Function bound to the command used to send the data collection event. */
+        //mtsFunctionWrite TriggerEvent;
+        //mtsFunctionVoid TriggerEvent;
+
+        /*! Number of data that are newly generated and are to be fetched by the 
+        data collection tool. */
+        unsigned int NewDataCount;
+
+        /*! If NewDataCount becomes greater than this vaule, an event for data collection
+            is generated. Though this value is redundant in some respect (because
+            EventTriggeringRatio is already defined), this value is kept for the purpose 
+            of efficiency. */
+        unsigned int EventTriggeringLimit;
+
+        DataCollectionInfoStruct() : CollectData(false), TriggerEnabled(false), NewDataCount(0),
+            EventTriggeringLimit(0) {}
+
+        ~DataCollectionInfoStruct() {}
+    };
 
 public:
     class AccessorBase {
@@ -185,6 +215,14 @@ protected:
     /*! The average period over the last HistoryLength samples. */
     double AvgPeriod;
 
+    /*! The name of this state table. */
+    std::string StateTableName;
+
+    /*! Data collection event handler. */
+    mtsCommandVoidBase * DataCollectionEventHandler;
+
+    DataCollectionInfoStruct DataCollectionInfo;
+
 #ifdef TASK_TIMING_ANALYSIS
     std::vector<cmnDouble> ExecutionTimingHistory;
     std::vector<cmnDouble> PeriodHistory;
@@ -196,10 +234,10 @@ protected:
 public:
 	/*! Constructor. Constructs a state table with a default
 	  size of 256 rows. */
-	mtsStateTable(int size = 256);
+    mtsStateTable(int size = 256, const std::string & stateTableName = STATE_TABLE_DEFAULT_NAME);
 
-	/*! Default destructor. Does nothing */
-	~mtsStateTable() {}
+	/*! Default destructor. */
+	~mtsStateTable();
 
 	/*! Get a handle for data to be used by a reader.  All the const
       methods, that can be called from a reader and writer. */
@@ -288,10 +326,30 @@ public:
     /*! A base column index of StateTable for a signal registered by user. */
     static int StateVectorBaseIDForUser;
 
+    //-------------------------------------------------------------------------
+    //  Data Collection
+    //-------------------------------------------------------------------------
     /*! Fetch state table data. */
     //void GetStateTableHistory(mtsDoubleVecHistory & history,
     //                          const unsigned int signalIndex,
     //                          const unsigned int lastFetchIndex);
+
+    /*! Return the name of this state table. */
+    const std::string GetStateTableName() const { return StateTableName; }
+
+    /*! Enable data collection event trigger. */
+    void ResetDataCollectionTrigger() { 
+        DataCollectionInfo.TriggerEnabled = true;
+    }
+
+    /*! Set an event handler to inform the data collector about the event that data
+        in this state table is populated. */
+    void SetDataCollectionEventHandler(mtsCollectorState * collector);
+
+    /*! Determine a ratio to generate a data collection event. */
+    void SetDataCollectionEventTriggeringRatio(const double eventTriggeringRatio);
+
+    void GenerateDataCollectionEvent();
 
 #ifdef TASK_TIMING_ANALYSIS
     void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,

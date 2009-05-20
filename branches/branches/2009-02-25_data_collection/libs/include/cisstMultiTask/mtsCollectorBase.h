@@ -53,8 +53,14 @@ class CISST_EXPORT mtsCollectorBase : public mtsTaskContinuous
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-    //-------------------- Auxiliary class definition -------------------------
+    //-------------------- Auxiliary class definition -----------------------//
 public:
+    typedef enum {
+        COLLECTOR_LOG_FORMAT_PLAIN_TEXT,
+        COLLECTOR_LOG_FORMAT_BINARY,
+        COLLECTOR_LOG_FORMAT_CSV
+    } CollectorLogFormat;
+
     class mtsCollectorBaseException : public std::runtime_error {
     private:
         std::string ExceptionDescription;    // exception descriptor
@@ -67,6 +73,7 @@ public:
         const std::string GetExceptionDescription(void) const { return ExceptionDescription; }    
     };
 
+    //------------------------- Protected Members ---------------------------//
 protected:
 
     /*! State definition of the collector */
@@ -78,6 +85,7 @@ protected:
     } CollectorStatus;
 
     CollectorStatus Status;
+    CollectorLogFormat LogFormat;
 
     class SignalMapElement {
     public:
@@ -116,10 +124,10 @@ protected:
     static mtsTaskManager * taskManager;
 
     /*! Check if there is any signal registered. */
-    inline const bool IsAnySignalRegistered() const { return !taskMap.empty(); }
+    //inline const bool IsAnySignalRegistered() const { return !taskMap.empty(); }
 
 public:
-    mtsCollectorBase(const std::string & collectorName);
+    mtsCollectorBase(const std::string & collectorName, const CollectorLogFormat logFormat);
     virtual ~mtsCollectorBase(void);
 
     //------------ Thread management functions (called internally) -----------//
@@ -134,9 +142,9 @@ public:
 
     //----------------- Signal registration for collection ------------------//
     /*! Add a signal to the list. Currently 'format' argument is meaningless. */
-    virtual bool AddSignal(const std::string & taskName, 
-                           const std::string & signalName = "", 
-                           const std::string & format = "") = 0;
+    //virtual bool AddSignal(const std::string & taskName, 
+    //                       const std::string & signalName = "", 
+    //                       const std::string & format = "") = 0;
 
     /*! Remove a signal from the list */
     bool RemoveSignal(const std::string & taskName, const std::string & signalName);

@@ -75,22 +75,22 @@ class mtsCollectorBaseTest: public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE(mtsCollectorBaseTest);
     {		
         // public variables and methods
-        CPPUNIT_TEST(TestGetCollectorCount);
-        //CPPUNIT_TEST_EXCEPTION(TestAddSignal, mtsCollectorBase::mtsCollectorBaseException);
-        //CPPUNIT_TEST(TestAddSignalCleanUp);
-        //CPPUNIT_TEST(TestRemoveSignal);
-        //CPPUNIT_TEST(TestFindSignal);
-        CPPUNIT_TEST(TestCleanup);
-        //CPPUNIT_TEST(TestSetTimeBaseDouble);
-        //CPPUNIT_TEST(TestSetTimeBaseInt);
-        CPPUNIT_TEST(TestStart);
-        CPPUNIT_TEST(TestStop);
+        //CPPUNIT_TEST(TestGetCollectorCount);
+        ////CPPUNIT_TEST_EXCEPTION(TestAddSignal, mtsCollectorBase::mtsCollectorBaseException);
+        ////CPPUNIT_TEST(TestAddSignalCleanUp);
+        ////CPPUNIT_TEST(TestRemoveSignal);
+        ////CPPUNIT_TEST(TestFindSignal);
+        //CPPUNIT_TEST(TestCleanup);
+        ////CPPUNIT_TEST(TestSetTimeBaseDouble);
+        ////CPPUNIT_TEST(TestSetTimeBaseInt);
+        //CPPUNIT_TEST(TestStart);
+        //CPPUNIT_TEST(TestStop);
 
-        // private variables and methods
-        CPPUNIT_TEST(TestInit);
-        CPPUNIT_TEST(TestClearTaskMap);
-        //CPPUNIT_TEST(TestCollect);
-        CPPUNIT_TEST(TestIsAnySignalRegistered);
+        //// private variables and methods
+        //CPPUNIT_TEST(TestInit);
+        //CPPUNIT_TEST(TestClearTaskMap);
+        ////CPPUNIT_TEST(TestCollect);
+        //CPPUNIT_TEST(TestIsAnySignalRegistered);
 
     }
     CPPUNIT_TEST_SUITE_END();

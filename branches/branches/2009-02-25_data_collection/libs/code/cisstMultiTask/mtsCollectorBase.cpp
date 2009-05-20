@@ -27,9 +27,11 @@ mtsTaskManager * mtsCollectorBase::taskManager;
 //-------------------------------------------------------
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
-mtsCollectorBase::mtsCollectorBase(const std::string & collectorName) : 
+mtsCollectorBase::mtsCollectorBase(const std::string & collectorName, 
+                                   const CollectorLogFormat logFormat) : 
     TimeOffsetToZero(false),    
     IsRunnable(false),
+    LogFormat(logFormat),
     mtsTaskContinuous(collectorName)
 {
     ++CollectorCount;
@@ -66,7 +68,7 @@ void mtsCollectorBase::Init()
 //-------------------------------------------------------
 void mtsCollectorBase::Run()
 {
-    if (!IsAnySignalRegistered()) return;
+    //if (!IsAnySignalRegistered()) return;
     if (Status == COLLECTOR_STOP) return;
 
     // Check for the state transition

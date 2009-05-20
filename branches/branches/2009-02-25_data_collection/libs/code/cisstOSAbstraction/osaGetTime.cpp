@@ -77,7 +77,7 @@ void osaGetDateTimeString(std::string & str)
     time_t _time; time(&_time);
     tm _tm; localtime_s(&_tm, &_time);
     char buf[50];
-    sprintf_s(buf, 50, "%d%s%02d%s%02d%s%02d%s%02d%s%02d.txt",
+    sprintf_s(buf, 50, "%d%s%02d%s%02d%s%02d%s%02d%s%02d",
         _tm.tm_year + 1900, "-",
         _tm.tm_mon + 1, "-",
         _tm.tm_mday, "_",

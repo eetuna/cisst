@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor
+  Author(s):  Ankur Kapoor, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
@@ -18,25 +18,25 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstCommon/cmnAssert.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstMultiTask/mtsStateTable.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstCommon/cmnAssert.h>
+#include <cisstMultiTask/mtsCollectorState.h>
 
 #include <iostream>
 #include <string>
 
 int mtsStateTable::StateVectorBaseIDForUser;
 
-mtsStateTable::mtsStateTable(int size) :
+mtsStateTable::mtsStateTable(int size, const std::string & stateTableName) :
 		HistoryLength(size), NumberStateData(0), IndexWriter(0),IndexReader(0),
 		StateVector(NumberStateData), StateVectorDataNames(NumberStateData),
         Ticks(size, mtsStateIndex::TimeTicksType(0)),
-        Tic(0.0),
-        Toc(0.0),
-        Period(0.0),
-        SumOfPeriods(0.0),
-        AvgPeriod(0.0)
+        Tic(0.0), Toc(0.0), Period(0.0),
+        SumOfPeriods(0.0), AvgPeriod(0.0),
+        StateTableName(stateTableName), 
+        DataCollectionEventHandler(NULL)
 {
 
     // Get a pointer to the time server
@@ -61,6 +61,12 @@ mtsStateTable::mtsStateTable(int size) :
 #endif
 }
 
+mtsStateTable::~mtsStateTable()
+{
+    if (DataCollectionEventHandler) {
+        delete DataCollectionEventHandler;
+    }
+}
 /* All the const methods that can be called from reader or writer */
 
 mtsStateIndex mtsStateTable::GetIndexReader(void) const {
@@ -180,6 +186,21 @@ void mtsStateTable::Advance(void) {
     Ticks[IndexWriter] = Ticks[tmpIndex] + 1;
     // move index reader to recently written data
     IndexReader = tmpIndex;
+
+    // Check if data collection event should be generated.
+    if (DataCollectionEventHandler) {
+        ++DataCollectionInfo.NewDataCount;
+
+        if (DataCollectionInfo.TriggerEnabled) {
+            // Check if the event for data collection should be triggered.
+            if (DataCollectionInfo.NewDataCount > DataCollectionInfo.EventTriggeringLimit) {
+                DataCollectionEventHandler->Execute();
+
+                DataCollectionInfo.NewDataCount = 0;
+                DataCollectionInfo.TriggerEnabled = false;
+            }
+        }
+    }
 }
 
 void mtsStateTable::ToStream(std::ostream& out) const {
@@ -306,27 +327,26 @@ void mtsStateTable::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTi
 #undef COPY_VECTOR
 }
 
-//void mtsStateTable::GetStateTableHistory(mtsDoubleVecHistory & history,
-//                                         const unsigned int signalIndex,
-//                                         const unsigned int lastFetchIndex)
-//{
-//    /*
-//    //for (int i = 0; i < StateVector.size(); ++i) {
-//    mtsDoubleHistory historyElement;
-//    if (lastFetchIndex < IndexReader) {
-//    } else {
-//    }
-//    for (int i = lastFetchIndex; i < 
-//    historyElement.Add((*StateVector[signalIndex])[3])
-//        
-//    //}
-//
-//    out << i << " " << Ticks[i] << " ";
-//            for (unsigned int j = 0; j < StateVector.size(); j++)  {
-//                if (StateVector[j]) {
-//                    out << (*StateVector[j])[i] << " ";
-//                }
-//            }
-//            out << std::endl;
-//    */
-//}
+void mtsStateTable::SetDataCollectionEventHandler(mtsCollectorState * collector)
+{
+    DataCollectionEventHandler = new mtsCommandVoidMethod<mtsCollectorState>(
+        &mtsCollectorState::DataCollectionEventHandler, collector, collector->GetName());
+
+    CMN_ASSERT(DataCollectionEventHandler);
+}
+
+void mtsStateTable::SetDataCollectionEventTriggeringRatio(const double eventTriggeringRatio)
+{
+    DataCollectionInfo.EventTriggeringLimit = 
+        (unsigned int) (HistoryLength * eventTriggeringRatio);
+}
+
+void mtsStateTable::GenerateDataCollectionEvent() 
+{
+    if (DataCollectionEventHandler) {
+        //
+        //  TODO: REPLACE THE FOLLOWING LINE WITH mtsVoidFunction.
+        //
+        DataCollectionEventHandler->Execute();
+    }
+}

@@ -55,8 +55,7 @@ SET(SOURCE_FILES
     mtsTaskManager.cpp
 	
 	mtsCollectorBase.cpp
-    mtsCollectorDump.cpp
-    mtsCollectorSample.cpp
+    mtsCollectorState.cpp    
     
     mtsHistory.cpp
     )
@@ -113,9 +112,8 @@ SET(HEADER_FILES
     
     mtsTaskManager.h
 	
-	mtsCollectorBase.h
-    mtsCollectorDump.h
-    mtsCollectorSample.h
+	mtsCollectorBase.h    
+    mtsCollectorState.h
     
     mtsHistory.h
     )

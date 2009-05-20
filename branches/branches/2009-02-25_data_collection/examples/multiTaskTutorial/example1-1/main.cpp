@@ -26,43 +26,39 @@ int main(void)
     cmnClassRegister::SetLoD("mtsTaskInterface", 10);
     cmnClassRegister::SetLoD("mtsTaskManager", 10);
 
-    // create our two tasks
+    // Create user tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
     const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
 
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-
-    // create a data collector
-    mtsCollectorDump * Collector = new mtsCollectorDump("DC_SIN");
     sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
     displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);    
-    {
-        displayTaskObject->Configure();
-    }
+    displayTaskObject->Configure();
 
     // add the tasks to the task manager
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     taskManager->AddTask(sineTaskObject);
     taskManager->AddTask(displayTaskObject);
 
     // data collector setup
-    bool AddSignalFlag = true;
-    const string signalName = "SineData";  // from sineTask constructor
+    mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName());
 
-    try {
+    bool AddSignalFlag = true;
+    try {        
         // Example A. Selectively register signals to the data collector.
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "1");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "2");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "3");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "4");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "5");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "6");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "7");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "8");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "9");
-        //AddSignalFlag &= Collector->AddSignal(sineTaskObject->GetName(), signalName + "10");
+        const string signalName = "SineData";  // from sineTask constructor
+        AddSignalFlag &= Collector->AddSignal(signalName + "01");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "02");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "03");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "04");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "05");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "06");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "07");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "08");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "09");
+        //AddSignalFlag &= Collector->AddSignal(signalName + "10");
 
         // Example B. Register ALL signals to the data collector.
-        AddSignalFlag = Collector->AddSignal(sineTaskObject->GetName());
+        //AddSignalFlag = Collector->AddSignal();
     } catch (mtsCollectorBase::mtsCollectorBaseException e) {
         cout << "ERROR: Adding a signal failed." << endl;
     }
@@ -75,8 +71,6 @@ int main(void)
 
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
-    taskManager->Connect("DC_SIN", mtsCollectorDump::GetDataCollectorRequiredInterfaceName(),
-                         "SIN", mtsTask::GetDataCollectorProvidedInterfaceName());
 
     // generate a nice tasks diagram
     std::ofstream dotFile("example1.dot"); 
@@ -89,7 +83,7 @@ int main(void)
     taskManager->StartAll();
 
     // Start immediately
-    Collector->SetSamplingInterval(10);
+    //Collector->SetSamplingInterval(10);
     Collector->Start(0);
     // Start some time later (5 seconds in the following case)
     //Collector->Start(5);

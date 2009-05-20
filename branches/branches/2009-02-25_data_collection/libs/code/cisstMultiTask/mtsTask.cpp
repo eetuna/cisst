@@ -26,7 +26,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsCollectorDump.h>
 
 #include <iostream>
 #include <string>
@@ -56,24 +55,6 @@ void mtsTask::DoRunInternal(void)
     StateTable.Start();
     this->Run();
     StateTable.Advance();
-
-    ++DataCollectionInfo.NewDataCount;
-
-    // Check if the event for data collection should be triggered.
-    if (DataCollectionInfo.CanGenerateEvent()) {
-        //
-        //  To-be-fetched data should not be overwritten while data collector
-        //  is fetching them. (e.g., if there are quite many column vectors (=signals)
-        //  in StateTable, logging takes quite a long time which might result in
-        //  data overwritten. 
-        //  In order to prevent this case, 'eventTriggeringRatio' (see constructor)
-        //  has to be defined appropriately.
-        //
-        DataCollectionInfo.TriggerEvent();
-
-        DataCollectionInfo.NewDataCount = 0;
-        DataCollectionInfo.TriggerEnabled = false;
-    }
 }
   
 void mtsTask::StartupInternal(void) {
@@ -102,8 +83,7 @@ void mtsTask::StartupInternal(void) {
     this->Startup();
     // StateChange should already be locked
     if (success) {
-       TaskState = READY;
-       DataCollectionInfo.TriggerEnabled = false;
+       TaskState = READY;       
     }
     else
         CMN_LOG_CLASS(1) << "ERROR: Task " << GetName() << " cannot be started." << std::endl;
@@ -181,36 +161,6 @@ mtsTask::mtsTask(const std::string & name,
     retValue(0),
     RequiredInterfaces("RequiredInterfaces")    
 {    
-    DataCollectionInfo.CollectData = false;
-
-    // Create a provided interface dedicated for data collection purpose.
-    // We assume that data of every task is to be collected.
-    mtsProvidedInterface * prov = 
-        AddProvidedInterface(GetDataCollectorProvidedInterfaceName());
-    if (prov) {
-        // Trigerring reset command registration
-        prov->AddCommandVoid(&mtsTask::ResetDataCollectionTrigger, this, 
-            mtsCollectorDump::GetDataCollectorResetEventName());
-
-        // Data collection event registration
-        DataCollectionInfo.TriggerEvent.Bind(
-            prov->AddEventVoid(mtsCollectorDump::GetDataCollectorEventName()));
-    } else {
-        CMN_LOG_CLASS(3) << "mtsTask constructor: interface creation failed." << std::endl;
-    }
-
-    // Determine the ratio value for event triggering.
-    //
-    // TODO: an adaptive scaling feature according to 'sizeStateTable' might be useful.
-    //
-    if (prov) {
-        const double eventTriggeringRatio = mtsCollectorDump::GetEventTriggeringRatio();
-        DataCollectionInfo.EventTriggeringLimit = 
-            (unsigned int) (sizeStateTable * eventTriggeringRatio);
-    } else {
-        // This will block a data fetch event to be generated.
-        DataCollectionInfo.EventTriggeringLimit = 0;
-    }
 }
 
 mtsTask::~mtsTask()
@@ -230,13 +180,8 @@ void mtsTask::Kill(void)
 {
     CMN_LOG_CLASS(7) << "Kill " << Name << std::endl;
 
-    // Sleep for some time so that data collector fetches remaining data.
-    if (DataCollectionInfo.CollectData) {
-        if (DataCollectionInfo.TriggerEnabled) {
-            DataCollectionInfo.TriggerEvent();
-            DataCollectionInfo.TriggerEnabled = false;
-        }
-    }
+    // Generate a data collection event not to lose any data when killing a thread.
+    StateTable.GenerateDataCollectionEvent();
 
     StateChange.Lock();
     // If we get here, we cannot be in the INITIALIZING or FINISHING
@@ -383,16 +328,6 @@ bool mtsTask::WaitToTerminate(double timeout)
 	return true;
 }
 
-int mtsTask::GetStateVectorID(const std::string & dataName) const
-{	
-    return StateTable.GetStateVectorID(dataName);
-}
-
-void mtsTask::ResetDataCollectionTrigger(void)
-{ 
-    DataCollectionInfo.TriggerEnabled = true;
-}
-
 #ifdef TASK_TIMING_ANALYSIS
 void mtsTask::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
                                     std::vector<cmnDouble>& vecPeriod)
@@ -401,23 +336,3 @@ void mtsTask::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
 }
 
 #endif
-
-void mtsTask::GetStateTableHistory(mtsHistoryBase * history,
-                                   const unsigned int signalIndex,
-                                   const unsigned int lastFetchIndex)
-{
-    //StateTable.GetStateTableHistory(history, signalIndex, lastFetchIndex);
-
-    //mtsStateTable::AccessorBase * acc = StateTable.GetAccessor(signalName);
-    //CMN_ASSERT(acc);
-
-    //mtsStateTable::Accessor<_appropriate_type> * accessor = 
-    //   dynamic_cast<Accessor<_appropriate_type> *>(acc);
-
-    //accessor->GetHistory(StateTable.GetIndexReader(), mtsVector_container_with_appropriate_type);
-
-    // Get an object from StateArray
-    //StateTable.GetStateDataElement(0))
-
-    //history = new mtsHistory<
-}

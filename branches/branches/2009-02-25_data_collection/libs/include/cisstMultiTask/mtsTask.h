@@ -59,16 +59,12 @@ http://www.cisst.org/cisst/license.txt.
   interfaces, with their lists of commands.
 */
 
-class mtsCollectorBase;
-
 class CISST_EXPORT mtsTask: public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
     friend class mtsTaskManager;
-    friend class mtsCollectorDump;
-
-    friend class mtsCollectorBaseTest;
+    //friend class mtsCollectorState;
 
 public:
     typedef mtsDevice BaseType;
@@ -126,50 +122,6 @@ protected:
     typedef mtsMap<mtsRequiredInterface> RequiredInterfacesMapType;
     
     RequiredInterfacesMapType RequiredInterfaces; // Interfaces we can send commands to
-
-    //-----------------------------
-    //  Data collection related 
-    //-----------------------------    
-    class dataCollectionInfo {
-    public:
-        /*! True if collectData flag is set at the constructor. */
-        bool CollectData;
-
-        /*! Flag for enabling or disabling trigger. */
-        bool TriggerEnabled;
-
-        /*! Function bound to the command used to send the data collection event. */
-        //mtsFunctionWrite TriggerEvent;
-        mtsFunctionVoid TriggerEvent;
-
-        /*! Number of data that are newly generated and are to be fetched by the 
-        data collection tool. */
-        unsigned int NewDataCount;
-
-        /*! If the ratio of NewDataCount to HistoryLength is greater than this value,
-            an event is triggered so that the data collector fetches all data.*/
-        double EventTriggeringRatio;
-
-        /*! If NewDataCount becomes greater than this vaule, an event for data collection
-            is generated. Though this value is redundant in some respect (because
-            EventTriggeringRatio is already defined), this value is kept for the purpose 
-            of efficiency. */
-        unsigned int EventTriggeringLimit;
-
-        const bool CanGenerateEvent() const {
-            return (CollectData &&                  // global mask
-                    TriggerEnabled &&               // triggering mask
-                    EventTriggeringLimit > 0 &&     // to avoid multiplication overhead
-                    NewDataCount >= EventTriggeringLimit);
-        }
-
-        dataCollectionInfo() : CollectData(false), TriggerEnabled(false), NewDataCount(0),
-            EventTriggeringRatio(0.3), EventTriggeringLimit(0) {}
-
-        ~dataCollectionInfo() {}
-    };
-
-    dataCollectionInfo DataCollectionInfo;
 
     /********************* Methods to connect interfaces  *****************/
 
@@ -313,6 +265,16 @@ public:
     /*! Return the average period. */
     double GetAveragePeriod(void) const { return StateTable.GetAveragePeriod(); }
 
+    /*! Return the name of this state table. */
+    const std::string GetStateTableName() const { return StateTable.GetStateTableName(); }
+
+    /*! Return the pointer to the state table. 
+        TODO: If a task can have more than one state table, this method should be
+        changed so that it should iterate a state table container. */
+    mtsStateTable * GetStateTable(const std::string & stateTableName = STATE_TABLE_DEFAULT_NAME) {
+        return (stateTableName == GetStateTableName() ? &StateTable : NULL);
+    }
+
     /********************* Methods to manage interfaces *******************/
 	
     /* documented in base class */
@@ -420,28 +382,6 @@ public:
 
 	/*! Reset overran period flag. */
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
-
-    /********************* Methods for data collection ********************/
-
-	/*! Check if the signal has been registered. */
-	int GetStateVectorID(const std::string & dataName) const;
-
-    /*! Fetch data from state table using accessor (mtsStateTable::AccessorBase). */
-    void GetStateTableHistory(mtsHistoryBase * history, 
-                              const unsigned int signalIndex,
-                              const unsigned int lastFetchIndex);
-
-    /*! Enable trigger. */
-    void ResetDataCollectionTrigger(void);
-
-    /*! Activate or deactivate data collector. */
-    void ActivateDataCollection(const bool activate) { 
-        DataCollectionInfo.CollectData = activate;
-    }
-
-    inline static std::string GetDataCollectorProvidedInterfaceName() { 
-        return std::string("DCEventGenerator"); 
-    }
 
 #ifdef TASK_TIMING_ANALYSIS
     void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
