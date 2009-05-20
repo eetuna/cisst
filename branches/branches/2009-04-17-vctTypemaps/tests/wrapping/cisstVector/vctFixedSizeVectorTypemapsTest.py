@@ -1,6 +1,23 @@
-###################################
-# Authors: Daniel Li, Anton Deguet
-###################################
+# -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# ex: set softtabstop=4 shiftwidth=4 tabstop=4 expandtab:
+
+#
+# $Id: $
+#
+# Author(s):  Daniel Li, Anton Deguet
+# Created on: 2009-05-20
+#
+# (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+# Reserved.
+#
+# --- begin cisst license - do not edit ---
+#
+# This software is provided "as is" under an open source license, with
+# no warranty.  The complete license can be found in license.txt and
+# http://www.cisst.org/cisst/license.txt.
+#
+# --- end cisst license ---
+#
 
 #######################
 # PLACEHOLDER STRINGS TO LOOK FOR:
@@ -9,25 +26,23 @@
 #######################
 
 # TODO: If I have time, Document why self.CObject[i] works and check which typemap(s) used
-# TODO: Clean this code up
 
 import copy
 import numpy
 import unittest
 
-from cisstVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_double_4
-import sys
+import cisstVectorTypemapsTestTypes
 
 class FixedSizeVectorTypemapsTest(unittest.TestCase):
 
-    dtype = numpy.double
+    types = cisstVectorTypemapsTestTypes.vctFixedSizeVectorTypemapsTest_types
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctFixedSizeVectorTypemapsTest_double_4()
+        pass
 
 
     ###########################################################################
@@ -192,70 +207,94 @@ class FixedSizeVectorTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def Test_in_argout_vctFixedSizeVector_ref(self):
-        function = self.CObject.in_argout_vctFixedSizeVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
-        self.StdTestThrowUnlessCorrectVectorSize(function)
-        self.StdTestThrowUnlessWritable(function)
+            function = self.CObject.in_argout_vctFixedSizeVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+            self.StdTestThrowUnlessCorrectVectorSize(function)
+            self.StdTestThrowUnlessWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsWritesCorrectly(function)
 
 
     def Test_out_vctFixedSizeVector_ref(self):
-        function = self.CObject.out_vctFixedSizeVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+            function = self.CObject.out_vctFixedSizeVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_in_vctFixedSizeVector(self):
-        function = self.CObject.in_vctFixedSizeVector
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
-        self.StdTestThrowUnlessCorrectVectorSize(function)
+            function = self.CObject.in_vctFixedSizeVector
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+            self.StdTestThrowUnlessCorrectVectorSize(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_vctFixedSizeVector(self):
-        function = self.CObject.out_vctFixedSizeVector
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+            function = self.CObject.out_vctFixedSizeVector
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_in_argout_const_vctFixedSizeVector_ref(self):
-        function = self.CObject.in_argout_const_vctFixedSizeVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
-        self.StdTestThrowUnlessCorrectVectorSize(function)
+            function = self.CObject.in_argout_const_vctFixedSizeVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+            self.StdTestThrowUnlessCorrectVectorSize(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_const_vctFixedSizeVector_ref(self):
-        function = self.CObject.out_const_vctFixedSizeVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
+            function = self.CObject.out_const_vctFixedSizeVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)

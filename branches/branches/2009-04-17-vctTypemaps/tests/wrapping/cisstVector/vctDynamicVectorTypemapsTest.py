@@ -1,6 +1,23 @@
-###################################
-# Authors: Daniel Li, Anton Deguet
-###################################
+# -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# ex: set softtabstop=4 shiftwidth=4 tabstop=4 expandtab:
+
+#
+# $Id: $
+#
+# Author(s):  Daniel Li, Anton Deguet
+# Created on: 2009-05-20
+#
+# (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+# Reserved.
+#
+# --- begin cisst license - do not edit ---
+#
+# This software is provided "as is" under an open source license, with
+# no warranty.  The complete license can be found in license.txt and
+# http://www.cisst.org/cisst/license.txt.
+#
+# --- end cisst license ---
+#
 
 #######################
 # PLACEHOLDER STRINGS TO LOOK FOR:
@@ -9,26 +26,23 @@
 #######################
 
 # TODO: If I have time, Document why self.CObject[i] works and check which typemap(s) used
-# TODO: Clean this code up
 
 import copy
 import numpy
 import unittest
 
-from cisstVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_double
-import sys
+import cisstVectorTypemapsTestTypes
 
 class DynamicVectorTypemapsTest(unittest.TestCase):
 
-    dtype = numpy.double
+    types = cisstVectorTypemapsTestTypes.vctDynamicVectorTypemapsTest_types
 
     ###########################################################################
     #   SET UP function                                                       #
     ###########################################################################
 
     def setUp(self):
-        self.CObject = vctDynamicVectorTypemapsTest_double()
-
+        pass
 
     ###########################################################################
     #   STANDARD TESTS - These are the library of tests that will be called   #
@@ -223,139 +237,187 @@ class DynamicVectorTypemapsTest(unittest.TestCase):
     ###########################################################################
 
     def Test_in_argout_vctDynamicVector_ref(self):
-        function = self.CObject.in_argout_vctDynamicVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
-        self.StdTestThrowUnlessWritable(function)
-        self.StdTestThrowUnlessOwnsData(function)
-        self.StdTestThrowUnlessNotReferenced(function)
+            function = self.CObject.in_argout_vctDynamicVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
-        self.SpecTestThrowUnlessReadsWritesResizesCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+            self.StdTestThrowUnlessWritable(function)
+            self.StdTestThrowUnlessOwnsData(function)
+            self.StdTestThrowUnlessNotReferenced(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsWritesCorrectly(function)
+            self.SpecTestThrowUnlessReadsWritesResizesCorrectly(function)
 
 
     def Test_in_vctDynamicVectorRef(self):
-        function = self.CObject.in_vctDynamicVectorRef
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
-        self.StdTestThrowUnlessWritable(function)
+            function = self.CObject.in_vctDynamicVectorRef
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsWritesCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+            self.StdTestThrowUnlessWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsWritesCorrectly(function)
 
 
     def Test_in_vctDynamicConstVectorRef(self):
-        function = self.CObject.in_vctDynamicConstVectorRef
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
+            function = self.CObject.in_vctDynamicConstVectorRef
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicConstVectorRef_ref(self):
-        function = self.CObject.in_argout_const_vctDynamicConstVectorRef_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
+            function = self.CObject.in_argout_const_vctDynamicConstVectorRef_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicVectorRef_ref(self):
-        function = self.CObject.in_argout_const_vctDynamicVectorRef_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
+            function = self.CObject.in_argout_const_vctDynamicVectorRef_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_vctDynamicVector(self):
-        function = self.CObject.in_vctDynamicVector
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
+            function = self.CObject.in_vctDynamicVector
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_in_argout_const_vctDynamicVector_ref(self):
-        function = self.CObject.in_argout_const_vctDynamicVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessIsArray(function)
-        self.StdTestThrowUnlessDataType(function)
-        self.StdTestThrowUnlessDimension1(function)
+            function = self.CObject.in_argout_const_vctDynamicVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReadsCorrectly(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessIsArray(function)
+            self.StdTestThrowUnlessDataType(function)
+            self.StdTestThrowUnlessDimension1(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReadsCorrectly(function)
 
 
     def Test_out_vctDynamicVector(self):
-        function = self.CObject.out_vctDynamicVector
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+            function = self.CObject.out_vctDynamicVector
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_vctDynamicVector_ref(self):
-        function = self.CObject.out_vctDynamicVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+            function = self.CObject.out_vctDynamicVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_const_vctDynamicVector_ref(self):
-        function = self.CObject.out_const_vctDynamicVector_ref
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
+            function = self.CObject.out_const_vctDynamicVector_ref
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_vctDynamicVectorRef(self):
-        function = self.CObject.out_vctDynamicVectorRef
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+            function = self.CObject.out_vctDynamicVectorRef
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
 
 
     def Test_out_vctDynamicConstVectorRef(self):
-        function = self.CObject.out_vctDynamicConstVectorRef
+        for (dtype, CObject) in self.types.iteritems():
+            self.dtype = dtype
+            self.CObject = CObject()
 
-        # Perform battery of standard tests
-        self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
+            function = self.CObject.out_vctDynamicConstVectorRef
 
-        # Perform specialized tests
-        self.SpecTestThrowUnlessReceivesCorrectVector(function)
+            # Perform battery of standard tests
+            self.StdTestThrowUnlessReturnedVectorIsNonWritable(function)
+
+            # Perform specialized tests
+            self.SpecTestThrowUnlessReceivesCorrectVector(function)
