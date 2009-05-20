@@ -75,15 +75,8 @@ class CISST_EXPORT mtsStateTable {
 
     class DataCollectionInfoStruct {
     public:
-        /*! True if collectData flag is set at the constructor. */
-        bool CollectData;
-
         /* True if data collection event can be triggered (false by default). */
         bool TriggerEnabled;
-
-        /*! Function bound to the command used to send the data collection event. */
-        //mtsFunctionWrite TriggerEvent;
-        //mtsFunctionVoid TriggerEvent;
 
         /*! Number of data that are newly generated and are to be fetched by the 
         data collection tool. */
@@ -95,8 +88,8 @@ class CISST_EXPORT mtsStateTable {
             of efficiency. */
         unsigned int EventTriggeringLimit;
 
-        DataCollectionInfoStruct() : CollectData(false), TriggerEnabled(false), NewDataCount(0),
-            EventTriggeringLimit(0) {}
+        DataCollectionInfoStruct() : TriggerEnabled(false), NewDataCount(0), EventTriggeringLimit(0)
+        {}
 
         ~DataCollectionInfoStruct() {}
     };
