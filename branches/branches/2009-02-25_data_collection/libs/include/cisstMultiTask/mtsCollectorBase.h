@@ -123,22 +123,28 @@ protected:
     static unsigned int CollectorCount;
     static mtsTaskManager * taskManager;
 
-    /*! Check if there is any signal registered. */
-    //inline const bool IsAnySignalRegistered() const { return !taskMap.empty(); }
+    /*! Initialize this collector instance */
+    void Init(void);
 
-public:
-    mtsCollectorBase(const std::string & collectorName, const CollectorLogFormat logFormat);
-    virtual ~mtsCollectorBase(void);
+    /*! Clean up internal data. */
+    void Cleanup(void);
 
-    //------------ Thread management functions (called internally) -----------//
-    /*! set some initial values */
+    /*! Clear TaskMap */
+    void ClearTaskMap(void);
+
+    /*! Set some initial values */
     virtual void Startup(void) = 0;
+
+    /*! Collect data */
+    virtual void Collect(void) = 0;
 
     /*! Performed periodically */
     virtual void Run(void);
 
-    /*! clean-up */
-    void Cleanup(void);
+public:
+    mtsCollectorBase(const std::string & collectorName, const CollectorLogFormat logFormat);
+
+    virtual ~mtsCollectorBase(void);
 
     //----------------- Signal registration for collection ------------------//
     /*! Add a signal to the list. Currently 'format' argument is meaningless. */
@@ -147,10 +153,10 @@ public:
     //                       const std::string & format = "") = 0;
 
     /*! Remove a signal from the list */
-    bool RemoveSignal(const std::string & taskName, const std::string & signalName);
+    //bool RemoveSignal(const std::string & taskName, const std::string & signalName);
 
     /*! Find a signal from the list */
-    bool FindSignal(const std::string & taskName, const std::string & signalName);
+    //bool FindSignal(const std::string & taskName, const std::string & signalName);
 
     //-------------------------- Data Collection ----------------------------//
     /*! Specify a sampling period and set a flag to apply time offset for making 
@@ -174,16 +180,6 @@ public:
     //---------------------- Miscellaneous functions ------------------------//
     inline static const unsigned int GetCollectorCount(void) { return CollectorCount; }
 
-protected:
-
-    /*! Initialize this collector instance */
-    void Init(void);
-
-    /*! Clear TaskMap */
-    void ClearTaskMap(void);
-
-    /*! Collect data */
-    virtual void Collect(void) = 0;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorBase)

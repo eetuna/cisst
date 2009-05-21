@@ -120,69 +120,65 @@ void mtsCollectorBase::Run()
         CMN_LOG_CLASS(3) << "The collector stopped." << std::endl;
         return;
     }
-
-    // Replaced with command pattern.
-    //Collect();
 }
 
 void mtsCollectorBase::Cleanup(void)
 {
-    // clean up
     ClearTaskMap();
 }
 
-bool mtsCollectorBase::RemoveSignal(const std::string & taskName, const std::string & signalName)
-{
-    // If no signal data is being collected.
-    if (taskMap.empty()) {
-        CMN_LOG_CLASS(5) << "No signal data is being collected." << std::endl;
-        return false;
-    }
+//bool mtsCollectorBase::RemoveSignal(const std::string & taskName, const std::string & signalName)
+//{
+//    // If no signal data is being collected.
+//    if (taskMap.empty()) {
+//        CMN_LOG_CLASS(5) << "No signal data is being collected." << std::endl;
+//        return false;
+//    }
+//
+//    // If finding a nonregistered task or signal
+//    if (!FindSignal(taskName, signalName)) {
+//        CMN_LOG_CLASS(5) << "Unknown task and/or signal: " << taskName 
+//            << ", " << signalName << std::endl;
+//        return false;
+//    }
+//
+//    // Remove a signal from the list
+//    TaskMap::iterator itr = taskMap.find(taskName);
+//    CMN_ASSERT(itr != taskMap.end());
+//
+//    SignalMap * signalMap = itr->second;
+//    SignalMap::iterator _itr = signalMap->find(signalName);
+//    CMN_ASSERT(_itr != signalMap->end());
+//    signalMap->erase(_itr);
+//
+//    // Clean-up
+//    if (signalMap->empty()) {
+//        delete signalMap;
+//        taskMap.erase(itr);
+//    }
+//
+//    CMN_LOG_CLASS(5) << "Signal removed: " << taskName << ", " << signalName << std::endl;
+//
+//    return true;
+//}
 
-    // If finding a nonregistered task or signal
-    if (!FindSignal(taskName, signalName)) {
-        CMN_LOG_CLASS(5) << "Unknown task and/or signal: " << taskName 
-            << ", " << signalName << std::endl;
-        return false;
-    }
-
-    // Remove a signal from the list
-    TaskMap::iterator itr = taskMap.find(taskName);
-    CMN_ASSERT(itr != taskMap.end());
-
-    SignalMap * signalMap = itr->second;
-    SignalMap::iterator _itr = signalMap->find(signalName);
-    CMN_ASSERT(_itr != signalMap->end());
-    signalMap->erase(_itr);
-
-    // Clean-up
-    if (signalMap->empty()) {
-        delete signalMap;
-        taskMap.erase(itr);
-    }
-
-    CMN_LOG_CLASS(5) << "Signal removed: " << taskName << ", " << signalName << std::endl;
-
-    return true;
-}
-
-bool mtsCollectorBase::FindSignal(const std::string & taskName, const std::string & signalName)
-{
-    if (taskMap.empty()) return false;
-
-    TaskMap::const_iterator itr = taskMap.find(taskName);
-    if (itr == taskMap.end()) {
-        return false;
-    } else {
-        SignalMap * signalMap = itr->second;
-        SignalMap::const_iterator _itr = signalMap->find(signalName);
-        if (_itr == signalMap->end()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-}
+//bool mtsCollectorBase::FindSignal(const std::string & taskName, const std::string & signalName)
+//{
+//    if (taskMap.empty()) return false;
+//
+//    TaskMap::const_iterator itr = taskMap.find(taskName);
+//    if (itr == taskMap.end()) {
+//        return false;
+//    } else {
+//        SignalMap * signalMap = itr->second;
+//        SignalMap::const_iterator _itr = signalMap->find(signalName);
+//        if (_itr == signalMap->end()) {
+//            return false;
+//        } else {
+//            return true;
+//        }
+//    }
+//}
 
 //-------------------------------------------------------
 //	Collecting Data
