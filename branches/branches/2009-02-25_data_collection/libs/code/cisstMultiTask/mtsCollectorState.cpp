@@ -41,6 +41,27 @@ mtsCollectorState::mtsCollectorState(const std::string & targetTaskName,
       , ElapsedTimeForProcessing(0.0)
 #endif
 {
+    // Check if there is the specified task and the specified state table.
+    mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
+    TargetTask = TaskManager->GetTask(TargetTaskName);
+    if (!TargetTask) {
+        cmnThrow(std::runtime_error("mtsCollectorState::Initialize(): No such task exists."));
+    }
+    Initialize();
+}
+
+mtsCollectorState::mtsCollectorState(const mtsTask & targetTask,
+                                     const mtsCollectorBase::CollectorLogFormat collectorLogFormat,
+                                     const std::string & targetStateTableName)
+    : mtsCollectorBase("mtsCollectorState", collectorLogFormat),
+      LastReadIndex(-1), TableHistoryLength(0), SamplingInterval(1), LastToc(0),
+      WaitingForTrigger(true), CollectAllSignal(false), FirstRunningFlag(true),
+      TargetTaskName(targetTask->GetName()), TargetStateTableName(targetStateTableName),
+      TargetTask(targetTask), TargetStateTable(NULL)
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+      , ElapsedTimeForProcessing(0.0)
+#endif
+{
     Initialize();
 }
 
@@ -53,20 +74,10 @@ mtsCollectorState::~mtsCollectorState()
 
 void mtsCollectorState::Initialize()
 {
-    // Check if there is the specified task and the specified state table.
-    mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
-    TargetTask = TaskManager->GetTask(TargetTaskName);
-    if (!TargetTask) {
-        cmnThrow(std::runtime_error("mtsCollectorState::Initialize(): No such task exists."));
-    }
-
     TargetStateTable = TargetTask->GetStateTable(TargetStateTableName);
     if (!TargetStateTable) {
         cmnThrow(std::runtime_error("mtsCollectorState::Initialize(): No such state table exists."));
     }
-
-    CMN_ASSERT(TargetTask);
-    CMN_ASSERT(TargetStateTable);
 
     // Bind a command and an event.
     // Command (Collector -> Target task) : Create a void command to enable the state table's data collection trigger.
@@ -157,7 +168,7 @@ bool mtsCollectorState::AddSignal(const std::string & signalName,
             CMN_LOG_CLASS(5) << "Cannot find: " << signalName << std::endl;
 
             throw mtsCollectorState::mtsCollectorBaseException(
-                "Cannot find: task name = " + signalName);
+                "Cannot find: signal name = " + signalName);
         }
 
         // Add a signal
@@ -177,7 +188,7 @@ bool mtsCollectorState::AddSignal(const std::string & signalName,
     return true;
 }
 
-const bool mtsCollectorState::IsRegisteredSignal(const std::string & signalName) const
+bool mtsCollectorState::IsRegisteredSignal(const std::string & signalName) const
 {
     RegisteredSignalElementType::const_iterator it = RegisteredSignalElements.begin();
     for (; it != RegisteredSignalElements.end(); ++it) {
@@ -187,8 +198,9 @@ const bool mtsCollectorState::IsRegisteredSignal(const std::string & signalName)
     return false;
 }
 
-void mtsCollectorState::AddSignalElement(const std::string & signalName, const unsigned int signalID)
+bool mtsCollectorState::AddSignalElement(const std::string & signalName, const unsigned int signalID)
 {
+  // Return instead of CMN_ASSERT
     CMN_ASSERT(!IsRegisteredSignal(signalName));
 
     SignalElement element;
@@ -266,6 +278,7 @@ void mtsCollectorState::PrintHeader(void)
         LogFile << "Task Name          : " << TargetTask->GetName() << std::endl;
         LogFile << "Date & Time        : " << currentDateTime << std::endl;
         LogFile << "Total signal count : " << RegisteredSignalElements.size() << std::endl;
+        LogFile << "Data format        : " << "Text" << std::endl;
         LogFile << "-------------------------------------------------------------------------------" << std::endl;
         LogFile << std::endl;
 
@@ -277,6 +290,8 @@ void mtsCollectorState::PrintHeader(void)
         }
 
         LogFile << std::endl;
+        LogFile << "-------------------------------------------------------------------------------" << std::endl;
+        LogFile << "END_HEADER" << std::endl;
     }
     LogFile.close();
 
@@ -365,17 +380,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     std::ofstream LogFile;
     LogFile.open(LogFileName.c_str(), std::ios::app);
     {
-        int signalIndex = 0;
-        unsigned int counter = 0;
-        for (unsigned int i = startIdx; i <= endIdx; ++i) {
-            // Skip some records, if specified.
-            if (SamplingInterval > 1) {
-                if (++counter == SamplingInterval) {
-                    counter = 0;
-                } else {
-                    continue;
-                }
-            }
+        for (unsigned int i = startIdx+offset; i <= endIdx; i += SamplingInterval) {
 
             LogFile << TargetStateTable->Ticks[i] << " ";
             {
@@ -385,6 +390,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
             }
             LogFile << std::endl;
         }
+        offset = endIdx%SamplingInterval or something like that;
     }
     LogFile.close();
 

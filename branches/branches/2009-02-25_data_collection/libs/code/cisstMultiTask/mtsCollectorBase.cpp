@@ -183,6 +183,7 @@ void mtsCollectorBase::Cleanup(void)
 //-------------------------------------------------------
 //	Collecting Data
 //-------------------------------------------------------
+// PK: These should return a bool, rather than a silent return for an invalid parameter.
 /*
 void mtsCollectorBase::SetTimeBase(const double samplingIntervalInSeconds, const bool offsetToZero)
 {
