@@ -31,14 +31,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsCollectorBase.h>
 #include <cisstMultiTask/mtsHistory.h>
-//#include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
 #include <cisstMultiTask/mtsStateTable.h>
-//#include <cisstMultiTask/mtsMap.h>
 
 #include <string>
-//#include <iostream>
-//#include <fstream>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -76,6 +72,9 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     typedef std::vector<SignalElement> RegisteredSignalElementType;
     RegisteredSignalElementType RegisteredSignalElements;
 
+    /*! Offset */
+    unsigned int OffsetForNextRead;
+
     /*! Data index which should be read at the next time */
     int LastReadIndex;
 
@@ -99,7 +98,6 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 
     /*! Output file name. */
     std::string LogFileName;
-    //std::ofstream LogFile;
 
     /*! Void command to enable a data thread's trigger. */
     mtsCommandVoidBase * DataCollectionTriggerResetCommand;
@@ -128,10 +126,10 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 
     /*! Check if the signal specified by a user has been already registered. 
         This is to avoid duplicate signal registration. */
-    const bool IsRegisteredSignal(const std::string & signalName) const;
+    bool IsRegisteredSignal(const std::string & signalName) const;
 
     /*! Add a signal element. Called internally by mtsCollectorState::AddSignal(). */
-    void AddSignalElement(const std::string & signalName, const unsigned int signalID);
+    bool AddSignalElement(const std::string & signalName, const unsigned int signalID);
 
     void SetDataCollectionTriggerResetCommand();
 
@@ -154,7 +152,7 @@ public:
     mtsCollectorState(const std::string & targetTaskName,
                       const mtsCollectorBase::CollectorLogFormat collectorLogFormat = mtsCollectorBase::COLLECTOR_LOG_FORMAT_PLAIN_TEXT,
                       const std::string & targetStateTableName = STATE_TABLE_DEFAULT_NAME);
-    mtsCollectorState(const mtsTask & targetTask,
+    mtsCollectorState(mtsTask * targetTask,
                       const mtsCollectorBase::CollectorLogFormat collectorLogFormat = mtsCollectorBase::COLLECTOR_LOG_FORMAT_PLAIN_TEXT,
                       const std::string & targetStateTableName = STATE_TABLE_DEFAULT_NAME);
     ~mtsCollectorState(void);

@@ -33,31 +33,27 @@ mtsCollectorState::mtsCollectorState(const std::string & targetTaskName,
                                      const mtsCollectorBase::CollectorLogFormat collectorLogFormat,
                                      const std::string & targetStateTableName)
     : mtsCollectorBase("mtsCollectorState", collectorLogFormat),
-      LastReadIndex(-1), TableHistoryLength(0), SamplingInterval(1), LastToc(0),
-      WaitingForTrigger(true), CollectAllSignal(false), FirstRunningFlag(true),
-      TargetTaskName(targetTaskName), TargetStateTableName(targetStateTableName),
-      TargetTask(NULL), TargetStateTable(NULL)
+      TargetTaskName(targetTaskName), TargetTask(NULL),
+      TargetStateTableName(targetStateTableName), TargetStateTable(NULL)
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
       , ElapsedTimeForProcessing(0.0)
 #endif
 {
-    // Check if there is the specified task and the specified state table.
-    mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
-    TargetTask = TaskManager->GetTask(TargetTaskName);
+    // Check if there is the specified task and the specified state table.    
+    TargetTask = taskManager->GetTask(TargetTaskName);
     if (!TargetTask) {
         cmnThrow(std::runtime_error("mtsCollectorState::Initialize(): No such task exists."));
     }
+
     Initialize();
 }
 
-mtsCollectorState::mtsCollectorState(const mtsTask & targetTask,
+mtsCollectorState::mtsCollectorState(mtsTask * targetTask,
                                      const mtsCollectorBase::CollectorLogFormat collectorLogFormat,
                                      const std::string & targetStateTableName)
     : mtsCollectorBase("mtsCollectorState", collectorLogFormat),
-      LastReadIndex(-1), TableHistoryLength(0), SamplingInterval(1), LastToc(0),
-      WaitingForTrigger(true), CollectAllSignal(false), FirstRunningFlag(true),
-      TargetTaskName(targetTask->GetName()), TargetStateTableName(targetStateTableName),
-      TargetTask(targetTask), TargetStateTable(NULL)
+      TargetTaskName(TargetTask->GetName()), TargetTask(targetTask),
+      TargetStateTableName(targetStateTableName), TargetStateTable(NULL)
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
       , ElapsedTimeForProcessing(0.0)
 #endif
@@ -74,6 +70,16 @@ mtsCollectorState::~mtsCollectorState()
 
 void mtsCollectorState::Initialize()
 {
+    LastReadIndex = -1;
+    TableHistoryLength = 0;
+    SamplingInterval = 1;
+    LastToc = 0;
+    OffsetForNextRead = 0;
+
+    WaitingForTrigger = true;
+    CollectAllSignal = false;
+    FirstRunningFlag = true;
+
     TargetStateTable = TargetTask->GetStateTable(TargetStateTableName);
     if (!TargetStateTable) {
         cmnThrow(std::runtime_error("mtsCollectorState::Initialize(): No such state table exists."));
@@ -95,12 +101,8 @@ void mtsCollectorState::Initialize()
 
 void mtsCollectorState::SetDataCollectionTriggerResetCommand()
 {
-    CMN_ASSERT(TargetStateTable);
-
     DataCollectionTriggerResetCommand = new mtsCommandVoidMethod<mtsStateTable>(
         &mtsStateTable::ResetDataCollectionTrigger, TargetStateTable, TargetStateTable->GetStateTableName());
-    
-    CMN_ASSERT(DataCollectionTriggerResetCommand);
 }
 
 void mtsCollectorState::DataCollectionEventHandler()
@@ -143,41 +145,35 @@ void mtsCollectorState::Run(void)
 bool mtsCollectorState::AddSignal(const std::string & signalName, 
                                   const std::string & format)
 {	
-    CMN_ASSERT(taskManager);
-
     // Check if a user wants to collect all signals
     CollectAllSignal = (signalName.length() == 0);
 
     if (!CollectAllSignal) {
-        // Prevent duplicate signal registration
-        //
-        //  TODO: (Re)Move FindSignal() method to the mtsCollector class.
-        //
-        //if (FindSignal(taskName, signalName)) {
-        if (IsRegisteredSignal(signalName)) {
-            CMN_LOG_CLASS(5) << "Already registered signal: " << signalName << std::endl;
-
-            throw mtsCollectorState::mtsCollectorBaseException(
-                "Already collecting signal: " + signalName);
-        }
-
         // Check if the specified signal does exist in the state table.
-        CMN_ASSERT(TargetTask);
         int StateVectorID = TargetStateTable->GetStateVectorID(signalName); // 0: Toc, 1: Tic, 2: Period, >=3: user
         if (StateVectorID == -1) {  // 0: Toc, 1: Tic, 2: Period, >3: user
             CMN_LOG_CLASS(5) << "Cannot find: " << signalName << std::endl;
 
-            throw mtsCollectorState::mtsCollectorBaseException(
-                "Cannot find: signal name = " + signalName);
+            //throw mtsCollectorState::mtsCollectorBaseException(
+            //    "Cannot find: signal name = " + signalName);
+            return false;
         }
 
         // Add a signal
-        AddSignalElement(signalName, StateVectorID);
+        if (!AddSignalElement(signalName, StateVectorID)) {
+            CMN_LOG_CLASS(5) << "Already registered signal: " << signalName << std::endl;
+
+            //throw mtsCollectorState::mtsCollectorBaseException(
+            //    "Already collecting signal: " + signalName);
+            return false;
+        }
     } else {        
         // Add all signals in the state table
-        CMN_ASSERT(TargetTask);
         for (unsigned int i = 0; i < TargetStateTable->StateVectorDataNames.size(); ++i) {
-            AddSignalElement(TargetStateTable->StateVectorDataNames[i], i);
+            if (!AddSignalElement(TargetStateTable->StateVectorDataNames[i], i)) {
+                CMN_LOG_CLASS(5) << "Already registered signal: " << TargetStateTable->StateVectorDataNames[i] << std::endl;
+                return false;
+            }
         }
 
     }
@@ -200,8 +196,10 @@ bool mtsCollectorState::IsRegisteredSignal(const std::string & signalName) const
 
 bool mtsCollectorState::AddSignalElement(const std::string & signalName, const unsigned int signalID)
 {
-  // Return instead of CMN_ASSERT
-    CMN_ASSERT(!IsRegisteredSignal(signalName));
+    // Prevent duplicate signal registration
+    if (IsRegisteredSignal(signalName)) {
+        return false;
+    }
 
     SignalElement element;
     element.Name = signalName;
@@ -210,6 +208,8 @@ bool mtsCollectorState::AddSignalElement(const std::string & signalName, const u
     RegisteredSignalElements.push_back(element);
 
     CMN_LOG_CLASS(5) << "Signal added: " << signalName << std::endl;
+
+    return true;
 }
 
 //-------------------------------------------------------
@@ -258,6 +258,13 @@ void mtsCollectorState::Collect(void)
             }
         }
     }
+
+    // OffsetForNextRead = 0;
+
+    //// Set an offset value for the next run.
+    //offset = (SamplingInterval - (endIndex + 1) % SamplingInterval) % SamplingInterval;
+    //unsigned int nextStartIndex = (endIndex + 1) + offset;
+    //if (nextStartIndex >= TableHistoryLength - 1)
 }
 
 void mtsCollectorState::PrintHeader(void)
@@ -274,12 +281,15 @@ void mtsCollectorState::PrintHeader(void)
     LogFile.open(LogFileName.c_str(), std::ios::out);
     {
         // Print out some information on the state table.
-        LogFile << "-------------------------------------------------------------------------------" << std::endl;
-        LogFile << "Task Name          : " << TargetTask->GetName() << std::endl;
-        LogFile << "Date & Time        : " << currentDateTime << std::endl;
-        LogFile << "Total signal count : " << RegisteredSignalElements.size() << std::endl;
-        LogFile << "Data format        : " << "Text" << std::endl;
-        LogFile << "-------------------------------------------------------------------------------" << std::endl;
+
+        // All lines in the header should be preceded by '#' which represents 
+        // the line contains header information rather than collected data.
+        LogFile << "#------------------------------------------------------------------------------" << std::endl;
+        LogFile << "# Task Name          : " << TargetTask->GetName() << std::endl;
+        LogFile << "# Date & Time        : " << currentDateTime << std::endl;
+        LogFile << "# Total signal count : " << RegisteredSignalElements.size() << std::endl;
+        LogFile << "# Data format        : " << "Text" << std::endl;
+        LogFile << "#------------------------------------------------------------------------------" << std::endl;
         LogFile << std::endl;
 
         LogFile << "Ticks ";
@@ -290,8 +300,8 @@ void mtsCollectorState::PrintHeader(void)
         }
 
         LogFile << std::endl;
-        LogFile << "-------------------------------------------------------------------------------" << std::endl;
-        LogFile << "END_HEADER" << std::endl;
+        LogFile << "#-------------------------------------------------------------------------------" << std::endl;
+        LogFile << "#" << std::endl;
     }
     LogFile.close();
 
@@ -299,11 +309,11 @@ void mtsCollectorState::PrintHeader(void)
 }
 
 bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table, 
-                                           const unsigned int startIdx, 
-                                           const unsigned int endIdx)
+                                           const unsigned int startIndex, 
+                                           const unsigned int endIndex)
 {
     /*
-    int idx = 0, signalIndex = 0;
+    int Index = 0, signalIndex = 0;
     std::ostringstream line;
     std::vector<std::string> vecLines;
     
@@ -318,8 +328,8 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     for (itr = taskMap.begin()->second->begin(); 
         itr != taskMap.begin()->second->end(); ++itr) 
     {        
-        idx = 0;
-        for (unsigned int i = startIdx; i <= endIdx; ++i) {
+        Index = 0;
+        for (unsigned int i = startIndex; i <= endIndex; ++i) {
             line.str("");
             line << table->Ticks[i] << " ";
             vecLines.push_back(line.str());
@@ -329,19 +339,19 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
             signalIndex = table->GetStateVectorID(itr->first);
             if (signalIndex == -1) continue;
             
-            idx = 0;
-            for (unsigned int i = startIdx; i <= endIdx; ++i) {
+            Index = 0;
+            for (unsigned int i = startIndex; i <= endIndex; ++i) {
                 line.str("");
                 line << (*table->StateVector[signalIndex])[i] << " ";
-                vecLines[idx++].append(line.str());
+                vecLines[Index++].append(line.str());
             }
         } else {            
             for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
-                idx = 0;
-                for (unsigned int i = startIdx; i <= endIdx; ++i) {
+                Index = 0;
+                for (unsigned int i = startIndex; i <= endIndex; ++i) {
                     line.str("");
                     line << (*table->StateVector[j])[i] << " ";
-                    vecLines[idx++].append(line.str());
+                    vecLines[Index++].append(line.str());
                 }
             }
         }
@@ -352,7 +362,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     ElapsedTimeForProcessing += StopWatch.GetElapsedTime();
 #endif
     
-    idx = 0;
+    Index = 0;
     std::vector<std::string>::const_iterator it = vecLines.begin();
 
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
@@ -360,7 +370,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     StopWatch.Start();
 #endif
     for (; it != vecLines.end(); ++it) {
-        LogFile << vecLines[idx++];
+        LogFile << vecLines[Index++];
         LogFile << std::endl;
     }
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
@@ -380,7 +390,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     std::ofstream LogFile;
     LogFile.open(LogFileName.c_str(), std::ios::app);
     {
-        for (unsigned int i = startIdx+offset; i <= endIdx; i += SamplingInterval) {
+        for (unsigned int i = startIndex + OffsetForNextRead; i <= endIndex; i += SamplingInterval) {
 
             LogFile << TargetStateTable->Ticks[i] << " ";
             {
@@ -390,7 +400,6 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
             }
             LogFile << std::endl;
         }
-        offset = endIdx%SamplingInterval or something like that;
     }
     LogFile.close();
 
