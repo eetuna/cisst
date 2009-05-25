@@ -166,6 +166,8 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
     }
 }
 
+%include "cisstMultiTask/mtsCollectorBase.h"
+%include "cisstMultiTask/mtsCollectorState.h"
 
 // Wrap mtsVector
 %import "cisstMultiTask/mtsVector.h"

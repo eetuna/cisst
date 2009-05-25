@@ -83,7 +83,7 @@ int main(void)
     taskManager->StartAll();
 
     // Start immediately
-    //Collector->SetSamplingInterval(10);
+    Collector->SetSamplingInterval(4);
     Collector->Start(0);
     // Start some time later (5 seconds in the following case)
     //Collector->Start(5);

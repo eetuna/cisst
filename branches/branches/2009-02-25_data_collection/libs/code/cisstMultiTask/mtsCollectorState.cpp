@@ -107,8 +107,6 @@ void mtsCollectorState::SetDataCollectionTriggerResetCommand()
 
 void mtsCollectorState::DataCollectionEventHandler()
 {
-    CMN_LOG(5) << "DCEvent has arrived." << std::endl;
-
     WaitingForTrigger = false;
 
     Wakeup();
@@ -243,7 +241,7 @@ void mtsCollectorState::Collect(void)
     if (StartIndex < EndIndex) {
         // normal case
         if (FetchStateTableData(TargetStateTable, StartIndex, EndIndex)) {
-            LastReadIndex = EndIndex;
+            LastReadIndex = (EndIndex + (OffsetForNextRead - 1)) % TableHistoryLength;
         }
     } else if (StartIndex == EndIndex) {
         // No data to be read. Wait for the next run
@@ -254,17 +252,10 @@ void mtsCollectorState::Collect(void)
             // Second part: from the top of the array to the IndexReader
             const unsigned int indexReader = TargetStateTable->IndexReader;
             if (FetchStateTableData(TargetStateTable, 0, indexReader)) {
-                LastReadIndex = indexReader;
+                LastReadIndex = (indexReader + (OffsetForNextRead - 1)) % TableHistoryLength;
             }
         }
     }
-
-    // OffsetForNextRead = 0;
-
-    //// Set an offset value for the next run.
-    //offset = (SamplingInterval - (endIndex + 1) % SamplingInterval) % SamplingInterval;
-    //unsigned int nextStartIndex = (endIndex + 1) + offset;
-    //if (nextStartIndex >= TableHistoryLength - 1)
 }
 
 void mtsCollectorState::PrintHeader(void)
@@ -290,9 +281,9 @@ void mtsCollectorState::PrintHeader(void)
         LogFile << "# Total signal count : " << RegisteredSignalElements.size() << std::endl;
         LogFile << "# Data format        : " << "Text" << std::endl;
         LogFile << "#------------------------------------------------------------------------------" << std::endl;
-        LogFile << std::endl;
+        LogFile << "#" << std::endl;
 
-        LogFile << "Ticks ";
+        LogFile << "# Ticks ";
 
         RegisteredSignalElementType::const_iterator it = RegisteredSignalElements.begin();
         for (; it != RegisteredSignalElements.end(); ++it) {
@@ -301,7 +292,6 @@ void mtsCollectorState::PrintHeader(void)
 
         LogFile << std::endl;
         LogFile << "#-------------------------------------------------------------------------------" << std::endl;
-        LogFile << "#" << std::endl;
     }
     LogFile.close();
 
@@ -312,75 +302,6 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
                                            const unsigned int startIndex, 
                                            const unsigned int endIndex)
 {
-    /*
-    int Index = 0, signalIndex = 0;
-    std::ostringstream line;
-    std::vector<std::string> vecLines;
-    
-    SignalMap::const_iterator itr;
-
-    // Performance measurement  
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    StopWatch.Reset();
-    StopWatch.Start();
-#endif
-
-    for (itr = taskMap.begin()->second->begin(); 
-        itr != taskMap.begin()->second->end(); ++itr) 
-    {        
-        Index = 0;
-        for (unsigned int i = startIndex; i <= endIndex; ++i) {
-            line.str("");
-            line << table->Ticks[i] << " ";
-            vecLines.push_back(line.str());
-        }
-
-        if (!CollectAllSignal) {
-            signalIndex = table->GetStateVectorID(itr->first);
-            if (signalIndex == -1) continue;
-            
-            Index = 0;
-            for (unsigned int i = startIndex; i <= endIndex; ++i) {
-                line.str("");
-                line << (*table->StateVector[signalIndex])[i] << " ";
-                vecLines[Index++].append(line.str());
-            }
-        } else {            
-            for (unsigned int j = 0; j < table->StateVector.size(); ++j) {
-                Index = 0;
-                for (unsigned int i = startIndex; i <= endIndex; ++i) {
-                    line.str("");
-                    line << (*table->StateVector[j])[i] << " ";
-                    vecLines[Index++].append(line.str());
-                }
-            }
-        }
-    }
-
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    StopWatch.Stop();
-    ElapsedTimeForProcessing += StopWatch.GetElapsedTime();
-#endif
-    
-    Index = 0;
-    std::vector<std::string>::const_iterator it = vecLines.begin();
-
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    StopWatch.Reset();
-    StopWatch.Start();
-#endif
-    for (; it != vecLines.end(); ++it) {
-        LogFile << vecLines[Index++];
-        LogFile << std::endl;
-    }
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    StopWatch.Stop();
-    ElapsedTimeForFileIO += StopWatch.GetElapsedTime();
-#endif
-
-    return true;
-    */
-
     // Performance measurement
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
     StopWatch.Reset();
@@ -390,7 +311,8 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     std::ofstream LogFile;
     LogFile.open(LogFileName.c_str(), std::ios::app);
     {
-        for (unsigned int i = startIndex + OffsetForNextRead; i <= endIndex; i += SamplingInterval) {
+        unsigned int i;
+        for (i = startIndex; i <= endIndex; i += SamplingInterval) {
 
             LogFile << TargetStateTable->Ticks[i] << " ";
             {
@@ -400,6 +322,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
             }
             LogFile << std::endl;
         }
+        OffsetForNextRead = (i - endIndex == 0 ? SamplingInterval : i - endIndex);
     }
     LogFile.close();
 
