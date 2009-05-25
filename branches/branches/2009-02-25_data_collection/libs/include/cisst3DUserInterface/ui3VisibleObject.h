@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstVector/vctFixedSizeVectorTypes.h>
 #include <cisstVector/vctTransformationTypes.h>
 
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
@@ -38,6 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 class ui3VisibleObject: public cmnGenericObject
 {   
     friend class ui3SceneManager;
+    friend class ui3VisibleList;
 
 public:
 
@@ -46,31 +48,31 @@ public:
     /*!
      Destructor
     */
-    inline virtual ~ui3VisibleObject(void) {};
+    virtual ~ui3VisibleObject(void) {};
 
     virtual bool CreateVTKObjects(void) = 0;
 
     virtual vtkProp3D * GetVTKProp(void);
 
-    void Show(void);
+    virtual void Show(void);
 
-    void Hide(void);
+    virtual void Hide(void);
 
-    void SetPosition(vctDouble3 & position);
+    virtual void SetPosition(vctDouble3 & position);
 
-    void SetOrientation(vctDoubleMatRot3 & rotationMatrix);
+    virtual void SetOrientation(vctDoubleMatRot3 & rotationMatrix);
 
-    void SetTransformation(vctDoubleFrm3 & frame);
+    virtual void SetTransformation(vctDoubleFrm3 & frame);
 
-    void Lock(void);
+    virtual void Lock(void);
 
-    void Unlock(void);
+    virtual void Unlock(void);
 
 protected:
     
     typedef ui3SceneManager::VTKHandleType VTKHandleType;
 
-    inline void SetVTKHandle(VTKHandleType handle) {
+    void SetVTKHandle(VTKHandleType handle) {
         this->VTKHandle = handle;
     }
 

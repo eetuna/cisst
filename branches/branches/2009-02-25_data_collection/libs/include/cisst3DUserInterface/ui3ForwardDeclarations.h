@@ -23,34 +23,22 @@ http://www.cisst.org/cisst/license.txt.
 #define _ui3ForwardDeclarations_h
 
 
-#include <cisstVector/vctFixedSizeVectorTypes.h>
-#include <cisstOSAbstraction/osaThread.h>
-#include <cisstOSAbstraction/osaMutex.h>
-
-#include <map>
-#include <list>
-#include <string>
-
-#define INPUT_CLICK             0
-#define INPUT_DBCLICK           1
-#define INPUT_PRESSED           2
-#define INPUT_RELEASED          3
-#define INPUT_2NDCLICK          4
-#define INPUT_2NDDBCLICK        5
-#define INPUT_2NDPRESSED        6
-#define INPUT_2NDRELEASED       7
-
-class ui3UIThread;
-class ui3Manager;
 class ui3BehaviorBase;
-class ui3SceneManager;
-class ui3InputDeviceBase;
-class ui3VideoInterfaceFilter;
-class ui3VTKRenderer;
-class ui3VisibleObject;
+class ui3CursorBase;
+class ui3CursorSphere;
+class ui3ImagePlane;
+class ui3Manager;
+class ui3MasterArm;
 class ui3MenuBar;
 class ui3MenuButton;
-class ui3Cursor;
+class ui3SceneManager;
+class ui3SlaveArm;
+class ui3UIThread;
+class ui3VideoInterfaceFilter;
+class ui3VisibleList;
+class ui3VisibleObject;
+class ui3VTKRenderer;
+
 
 #endif // _ui3ForwardDeclarations_h
 

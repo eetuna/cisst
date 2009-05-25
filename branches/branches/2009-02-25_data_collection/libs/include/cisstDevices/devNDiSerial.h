@@ -185,7 +185,11 @@ private:
 
     bool ResponseOKAY(char* serialBuf);                   // determines whether or not reply is OKAY, used for freeports, initports and 
                                                           // Enableports, StartTrack
-    bool SetCommSettings(osaSerialPort::BaudRateType baud, osaSerialPort::ParityCheckingType parity, bool stopbits, bool hardwarecontrol);
+    bool SetCommSettings(osaSerialPort::BaudRateType baud,
+                         osaSerialPort::ParityCheckingType parity,
+                         osaSerialPort::StopBitsType stopBits,
+                         osaSerialPort::FlowControlType flowControl);
+
     void SystemBeep();                                    // sends a beep of length 2, if you want more, write another 
                                                           // function and enum and link it all up
 
@@ -242,7 +246,7 @@ public:
     Tool(void);
     
     // Position Information
-    mtsStateData<prmPositionCartesianGet> PositionCartesian;
+    prmPositionCartesianGet PositionCartesian;
     // Position Information Data
     void SetTranslation(double x, double y, double z);
     void SetRotation(double a, double b, double c, double d);
@@ -252,7 +256,7 @@ public:
     void SetPosition(prmPositionCartesianGet position);
     
     // ToolInformation
-    mtsStateData<devNDiSerialToolInformationGet> ToolInformation;
+    devNDiSerialToolInformationGet ToolInformation;
     // Tool Identifing information
     void SetName(std::string name);
     std::string GetName(void);

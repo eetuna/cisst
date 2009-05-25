@@ -23,10 +23,11 @@ http://www.cisst.org/cisst/license.txt.
 #define _ui3MenuButton_h
 
 
+#include <cisstVector/vctFixedSizeVectorTypes.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
+
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
-
-#include <cisstMultiTask/mtsFunctionVoid.h>
 
 
 /*!
@@ -57,7 +58,7 @@ public:
         PushState(false),
         HighlightState(false),
         EnableState(false),
-        BMPReader(0),
+        PNGReader(0),
         Texture(0),
         PlaneSource(0),
         Mapper(0),
@@ -162,7 +163,7 @@ protected:
     /*!
      Vector specifies the 3D Cartesian position of the button.
     */
-    vct3 Position;
+    vctDouble3 Position;
     /*!
      Flag indicates check state: true=checked, false=unchecked.
     */
@@ -180,7 +181,7 @@ protected:
     */
     bool EnableState;
 
-    vtkBMPReader * BMPReader;
+    vtkPNGReader * PNGReader;
     vtkTexture * Texture;
     vtkPlaneSource * PlaneSource;
     vtkPolyDataMapper * Mapper;

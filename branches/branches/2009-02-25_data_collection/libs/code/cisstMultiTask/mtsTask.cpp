@@ -203,7 +203,7 @@ void mtsTask::Kill(void)
 
 const char *mtsTask::TaskStateName(TaskStateType state) const
 {
-    static char *taskStateNames[] = { "constructed", "initializing", "ready", "active", "finishing", "finished" };
+    static const char * taskStateNames[] = { "constructed", "initializing", "ready", "active", "finishing", "finished" };
     if ((state < CONSTRUCTED) || (state > FINISHED))
         return "unknown";
     else
@@ -328,6 +328,13 @@ bool mtsTask::WaitToTerminate(double timeout)
 	return true;
 }
 
+
+void mtsTask::ToStream(std::ostream & outputStream) const
+{
+    outputStream << "Task name: " << Name << std::endl;
+    ProvidedInterfaces.ToStream(outputStream);
+    RequiredInterfaces.ToStream(outputStream);
+}
 #ifdef TASK_TIMING_ANALYSIS
 void mtsTask::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
                                     std::vector<cmnDouble>& vecPeriod)

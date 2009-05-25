@@ -31,15 +31,15 @@ http://www.cisst.org/cisst/license.txt.
 #include <vtkOpenGLRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkCamera.h>
-#if (CISST_OS == CISST_LINUX)
-    #include "vtkXOpenGLOffScreenRenderWindow.h"
-#endif //CISST_LINUX
-
 
 CMN_IMPLEMENT_SERVICES(ui3VTKRenderer);
 
 
-ui3VTKRenderer::ui3VTKRenderer(unsigned int width, unsigned int height, double viewangle, vctFrm3 & cameraframe, svlRenderTargetBase* target):
+ui3VTKRenderer::ui3VTKRenderer(ui3SceneManager* scene,
+                               unsigned int width, unsigned int height,
+                               double viewangle, vctFrm3 & cameraframe,
+                               svlRenderTargetBase* target) :
+    SceneManager(scene),
     Renderer(0),
     RenderWindow(0),
     RenderWindowInteractor(0),
@@ -51,27 +51,18 @@ ui3VTKRenderer::ui3VTKRenderer(unsigned int width, unsigned int height, double v
     CameraFrame(cameraframe),
     Target(target)
 {
+    CMN_ASSERT(this->SceneManager);
+
     // Create render window
     this->Renderer = vtkOpenGLRenderer::New();
     CMN_ASSERT(this->Renderer);
 
     if (this->Target) {
         // Setup off-screen rendering
-#if (CISST_OS == CISST_LINUX)
-// TO DO:
-//   Fix the off-screen renderer on Linux
-        //this->RenderWindow = vtkXOpenGLOffScreenRenderWindow::New();
-        //CMN_ASSERT(this->RenderWindow);
         this->RenderWindow = vtkOpenGLRenderWindow::New();
         CMN_ASSERT(this->RenderWindow);
         this->RenderWindow->OffScreenRenderingOn();
         this->RenderWindow->DoubleBufferOff();
-#else //CISST_LINUX
-        this->RenderWindow = vtkOpenGLRenderWindow::New();
-        CMN_ASSERT(this->RenderWindow);
-        this->RenderWindow->OffScreenRenderingOn();
-        this->RenderWindow->DoubleBufferOff();
-#endif //CISST_LINUX
         this->OffScreenBuffer = vtkUnsignedCharArray::New();
         CMN_ASSERT(this->OffScreenBuffer);
         this->OffScreenBuffer->Resize(this->Width * this->Height * 3);
@@ -108,6 +99,7 @@ ui3VTKRenderer::ui3VTKRenderer(unsigned int width, unsigned int height, double v
     this->RenderWindowInteractor->Initialize();
 }
 
+
 ui3VTKRenderer::~ui3VTKRenderer()
 {
 }
@@ -116,7 +108,10 @@ ui3VTKRenderer::~ui3VTKRenderer()
 void ui3VTKRenderer::Render(void)
 {
     if (this->RenderWindow) {
-        this->RenderWindow->Render();
+
+        this->SceneManager->Lock();
+            this->RenderWindow->Render();
+        this->SceneManager->Unlock();
 
         if (this->Target) {
             // Push VTK off-screen frame buffer to external render target
@@ -152,3 +147,4 @@ void ui3VTKRenderer::Add(ui3VisibleObject * object)
 {
     this->Renderer->AddViewProp(object->GetVTKProp());
 }
+

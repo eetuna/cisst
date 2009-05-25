@@ -39,8 +39,6 @@ SET(SOURCE_FILES
     ftImagePPM.h                   # private header
     ftImagePPM.cpp
     svlVideoCaptureSource.cpp
-    svlVideoFileSource.cpp
-    svlVideoFileWriter.cpp
     svlImageFileSource.cpp
     svlImageFileWriter.cpp
     svlRenderTargets.cpp
@@ -82,8 +80,6 @@ SET(HEADER_FILES
     svlGenericFilter.h
     svlFileHandlers.h
     svlVideoCaptureSource.h
-    svlVideoFileSource.h
-    svlVideoFileWriter.h
     svlImageFileSource.h
     svlImageFileWriter.h
     svlRenderTargets.h
@@ -109,12 +105,12 @@ SET(HEADER_FILES
 
 
 # cisstNumerical dependency
-OPTION(CISST_SVL_USE_NUMERICAL "cisstStereoVision to use cisstNumerical" OFF)
-IF(CISST_SVL_USE_NUMERICAL)
+IF(BUILD_LIBS_cisstNumerical)
   SET(DEPENDENCIES
       cisstNumerical
       )
   SET(SOURCE_FILES
+      ${SOURCE_FILES}
       # Trackers
       trackers/cisst/svlTrackerCisst.cpp
       trackers/cisst/trkCisstWSSD.h      # private header
@@ -124,10 +120,11 @@ IF(CISST_SVL_USE_NUMERICAL)
       trackers/cisst/trkCisstBase.h      # private header
       )
   SET(HEADER_FILES
+      ${HEADER_FILES}
       # Trackers
       trackers/svlTrackerCisst.h
       )
-ENDIF(CISST_SVL_USE_NUMERICAL)
+ENDIF(BUILD_LIBS_cisstNumerical)
 
 
 # OpenCV
@@ -135,7 +132,6 @@ OPTION(CISST_SVL_HAS_OPENCV "Compile OpenCV extensions" OFF)
 IF(CISST_SVL_HAS_OPENCV)
   FIND_PACKAGE(OpenCV)
   INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-  LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
   LINK_LIBRARIES(${OpenCV_LIBRARIES})
 
   SET(SOURCE_FILES
@@ -153,6 +149,36 @@ IF(CISST_SVL_HAS_OPENCV)
       trackers/svlTrackerOpenCV.h
       )
 ENDIF(CISST_SVL_HAS_OPENCV)
+
+
+OPTION(CISST_SVL_HAS_ZLIB "Use ZLIB extensions" OFF)
+IF(CISST_SVL_HAS_ZLIB)
+    FIND_PACKAGE(ZLIB)
+    IF(ZLIB_FOUND)
+        INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
+        LINK_LIBRARIES(${ZLIB_LIBRARIES})
+
+        IF(NOT WIN32)
+            SET(SOURCE_FILES
+                ${SOURCE_FILES}
+                svlVideoFileSource.cpp
+                )
+            SET(HEADER_FILES
+                ${HEADER_FILES}
+                svlVideoFileSource.h
+                )
+        ENDIF(NOT WIN32)
+
+        SET(SOURCE_FILES
+            ${SOURCE_FILES}
+            svlVideoFileWriter.cpp
+            )
+        SET(HEADER_FILES
+            ${HEADER_FILES}
+            svlVideoFileWriter.h
+            )
+    ENDIF(ZLIB_FOUND)
+ENDIF(CISST_SVL_HAS_ZLIB)
 
 
 # TO DO: add windows support
@@ -194,10 +220,14 @@ IF(WIN32)
     VfWAvi.h                 # private header
     VfWAvi.cpp
     svlImageWindow.cpp
+    svlVideoFileSource.cpp
+    svlVideoFileWriterAVI.cpp
     )
   SET(HEADER_FILES
     ${HEADER_FILES}
     svlImageWindow.h
+    svlVideoFileSource.h
+    svlVideoFileWriterAVI.h
     )
 
   OPTION(CISST_SVL_HAS_DIRECTSHOW "Compile DirectShow extensions" OFF)
@@ -315,6 +345,11 @@ SET_SOURCE_FILES_PROPERTIES("${CISST_SVL_CONFIG_FILE}"
                             PROPERTIES GENERATED TRUE)
 SET(HEADERS ${CISST_SVL_CONFIG_FILE})
 
+# Create the CMake config file
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cisstStereoVisionBuild.cmake.in
+               ${cisst_BINARY_DIR}/cisstStereoVisionBuild.cmake
+               @ONLY)
+
 # Finally create the library
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
@@ -325,7 +360,6 @@ IF(WIN32)
                           ${DIRECTSHOW_strmiids_LIBRARY}
                           ${DIRECTSHOW_Vfw32_LIBRARY}
                           ${DIRECTSHOW_WinMM_LIBRARY}
-                          ${CISST_SVL_DS_strmbase_LIB}
                           )
     SET(CMAKE_SHARED_LINKER_FLAGS
         "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib")

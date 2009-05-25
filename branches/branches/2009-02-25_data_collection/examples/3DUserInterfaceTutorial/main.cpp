@@ -19,19 +19,6 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-// includes for handling keyboard
-#ifdef _WIN32
-    #include <conio.h>
-#endif // _WIN32
-#ifdef __GNUC__
-    #include <curses.h>
-    #include <iostream>
-    #include <stdio.h>
-    #include <termios.h>
-    #include <sys/ioctl.h>
-    #include <fcntl.h>
-#endif // __GNUC__
-
 // temporary fix to configure input
 // possible values:
 #define UI3_NO_INPUT 0
@@ -40,7 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #define UI3_DAVINCI 3
 
 // change this based on your configuration
-#define UI3_INPUT UI3_NO_INPUT
+#define UI3_INPUT UI3_OMNI1
 
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstOSAbstraction/osaSleep.h>
@@ -52,15 +39,23 @@ http://www.cisst.org/cisst/license.txt.
 
 #if (UI3_INPUT == UI3_DAVINCI)
 #include <cisstDaVinciAPI/cisstDaVinciAPI.h>
+
+    #define RENDER_ON_OVERLAY
+    #ifdef RENDER_ON_OVERLAY
+        #define DEBUG_WINDOW_WITH_OVERLAY
+//        #define DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+    #endif
+    #define CAPTURE_SWAP_RGB
 #endif
 
-#define RENDER_ON_OVERLAY
-#define CAPTURE_SWAP_RGB
 
 
+
+#include <cisstCommon.h>
 #include <cisstStereoVision.h>
 
-#include "example1.h"
+#include "SimpleBehavior.h"
+#include "BehaviorWithSlave.h"
 
 int main()
 {
@@ -93,16 +88,16 @@ int main()
 
     ui3Manager guiManager;
 
-    CExampleBehavior behavior("Example1", &guiManager);
-    CExampleBehavior behavior2("Example2", &guiManager);
+    SimpleBehavior behavior("Example1", &guiManager);
+    BehaviorWithSlave behavior2("Example2", &guiManager);
 
     guiManager.AddBehavior(&behavior,       // behavior reference
-                           0,             // position in the menu bar: default
-                           "dvLUS_icon_128.bmp");            // icon file: no texture
+                           0,               // position in the menu bar: default
+                           "circle.png");   // icon file: no texture
 
     guiManager.AddBehavior(&behavior2,       // behavior reference
                            2,             // position in the menu bar: default
-                           "dvViewer_icon_128.bmp");            // icon file: no texture
+                           "square.png");            // icon file: no texture
 
     guiManager.Configure("config.xml");
 
@@ -112,7 +107,7 @@ int main()
 #ifndef RENDER_ON_OVERLAY
     svlStreamManager vidStream(2);  // running on multiple threads
 
-    svlVideoCaptureSource vidSource(true); // mono source
+    svlVideoCaptureSource vidSource(true); // stereo source
     cout << "Setup LEFT camera:" << endl;
     vidSource.DialogSetup(SVL_LEFT);
     cout << "Setup RIGHT camera:" << endl;
@@ -122,153 +117,183 @@ int main()
 #ifdef CAPTURE_SWAP_RGB
     svlRGBSwapper vidRGBSwapper;
     vidStream.Trunk().Append(&vidRGBSwapper);
-#endif
+#endif //CAPTURE_SWAP_RGB
 
     // add guiManager as a filter to the pipeline, so it will receive video frames
-    // "MonoVideoBackground" is defined in the UI Manager as a possible video interface
+    // "StereoVideo" is defined in the UI Manager as a possible video interface
     vidStream.Trunk().Append(guiManager.GetStreamSamplerFilter("StereoVideo"));
 
-/*
-    vidStream.CreateBranchAfterFilter(&vidSource, "Window");
-    svlImageWindow vidWindow;
-    vidStream.Branch("Window").Append(&vidWindow);
-*/
-#endif
+    vidStream.Initialize();
+#endif //RENDER_ON_OVERLAY
+
 ////////////////////////////////////////////////////////////////
 // setup renderers
 
     vctFrm3 camframe = vctFrm3::Identity();
-    guiManager.AddRenderer(640, 480,        // window size
+    camframe.Translation().X() = -3.5;
+
+#ifdef RENDER_ON_OVERLAY
+    guiManager.AddRenderer(svlRenderTargets::Get(0)->GetWidth(),  // render width
+                           svlRenderTargets::Get(0)->GetHeight(), // render height
                            0, 0,            // window position
                            camframe, 30.0,  // camera parameters
                            "LeftEyeView");  // name of renderer
-
-#ifdef RENDER_ON_OVERLAY
     // Sending renderer output to an external render target
     guiManager.SetRenderTargetToRenderer("LeftEyeView", svlRenderTargets::Get(0));
-#else
-    guiManager.AddVideoBackgroundToRenderer("LeftEyeView", "StereoVideo", SVL_LEFT);
-#endif
-
-    camframe.Translation().X() = 10.0;
-    guiManager.AddRenderer(640, 480,        // window size
-                           640, 0,          // window position
+#else //RENDER_ON_OVERLAY
+    guiManager.AddRenderer(vidSource.GetWidth(SVL_LEFT),  // render width
+                           vidSource.GetHeight(SVL_LEFT), // render height
+                           0, 0,            // window position
                            camframe, 30.0,  // camera parameters
-                           "RightEyeView"); // name of renderer
+                           "LeftEyeView");  // name of renderer
+    guiManager.AddVideoBackgroundToRenderer("LeftEyeView", "StereoVideo", SVL_LEFT);
+#endif //RENDER_ON_OVERLAY
+
+    camframe.Translation().X() = 3.5;
 
 #ifdef RENDER_ON_OVERLAY
+    guiManager.AddRenderer(svlRenderTargets::Get(1)->GetWidth(),  // render width
+                           svlRenderTargets::Get(1)->GetHeight(), // render height
+                           0, 0,            // window position
+                           camframe, 30.0,  // camera parameters
+                           "RightEyeView"); // name of renderer
     // Sending renderer output to an external render target
     guiManager.SetRenderTargetToRenderer("RightEyeView", svlRenderTargets::Get(1));
-#else
+#else //RENDER_ON_OVERLAY
+    guiManager.AddRenderer(vidSource.GetWidth(SVL_RIGHT),  // render width
+                           vidSource.GetHeight(SVL_RIGHT), // render height
+                           20, 20,          // window position
+                           camframe, 30.0,  // camera parameters
+                           "RightEyeView"); // name of renderer
     guiManager.AddVideoBackgroundToRenderer("RightEyeView", "StereoVideo", SVL_RIGHT);
-#endif
+#endif //RENDER_ON_OVERLAY
+
+#ifdef DEBUG_WINDOW_WITH_OVERLAY
+#ifdef DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+    svlStreamManager vidStream(1);
+
+    svlVideoCaptureSource vidSource(false); // mono source
+    cout << "Setup camera:" << endl;
+    vidSource.DialogSetup();
+    vidStream.Trunk().Append(&vidSource);
+
+    svlImageResizer vidResizer;
+    vidResizer.SetOutputSize(384, 216);
+    vidStream.Trunk().Append(&vidResizer);
+
+#ifdef CAPTURE_SWAP_RGB
+    svlRGBSwapper vidRGBSwapper;
+    vidStream.Trunk().Append(&vidRGBSwapper);
+#endif //CAPTURE_SWAP_RGB
+
+    // add guiManager as a filter to the pipeline, so it will receive video frames
+    // "MonoVideo" is defined in the UI Manager as a possible video interface
+    vidStream.Trunk().Append(guiManager.GetStreamSamplerFilter("MonoVideo"));
+
+    vidStream.Initialize();
+#endif //DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+
+    guiManager.AddRenderer(384,  // render width
+                           216,  // render height
+                           0, 0,            // window position
+                           camframe, 30.0,  // camera parameters
+                           "ThirdEyeView");  // name of renderer
+
+#ifdef DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+    guiManager.AddVideoBackgroundToRenderer("ThirdEyeView", "MonoVideo");
+    vidStream.Start();
+#endif //DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+#endif //DEBUG_WINDOW_WITH_OVERLAY
 
 ///////////////////////////////////////////////////////////////
 // start streaming
 
 #ifndef RENDER_ON_OVERLAY
     vidStream.Start();
-#endif
+#endif //RENDER_ON_OVERLAY
 
 
 #if (UI3_INPUT == UI3_OMNI1) || (UI3_INPUT == UI3_OMNI1_OMNI2)
     vctFrm3 transform;
     transform.Translation().Assign(+30.0, 0.0, -150.0); // recenter Omni's depth (right)
-    guiManager.SetupRightMaster(sensable, "Omni1",
-                                sensable, "Omni1Button1",
-                                sensable, "Omni1Button2",
-                                transform, 0.5 /* scale factor */);
+    ui3MasterArm * rightMaster = new ui3MasterArm("Omni1");
+    guiManager.AddMasterArm(rightMaster);
+    rightMaster->SetInput(sensable, "Omni1",
+                          sensable, "Omni1Button1",
+                          sensable, "Omni1Button2",
+                          ui3MasterArm::PRIMARY);
+    rightMaster->SetTransformation(transform, 0.5 /* scale factor */);
+    ui3CursorBase * rightCursor = new ui3CursorSphere(&guiManager);
+    rightMaster->SetCursor(rightCursor);
 #endif
 #if (UI3_INPUT == UI3_OMNI1_OMNI2)
     transform.Translation().Assign(-30.0, 0.0, -150.0); // recenter Omni's depth (left)
-    guiManager.SetupLeftMaster(sensable, "Omni2",
-                               sensable, "Omni2Button1",
-                               sensable, "Omni2Button2",
-                               transform, 0.5 /* scale factor */);
+    ui3MasterArm * leftMaster = new ui3MasterArm("Omni1");
+    guiManager.AddMasterArm(leftMaster);
+    leftMaster->SetInput(sensable, "Omni2",
+                         sensable, "Omni2Button1",
+                         sensable, "Omni2Button2",
+                         ui3MasterArm::SECONDARY);
+    leftMaster->SetTransformation(transform, 0.5 /* scale factor */);
+    ui3CursorBase * leftCursor = new ui3CursorSphere(&guiManager);
+    leftMaster->SetCursor(leftCursor);
 #endif
 
 #if (UI3_INPUT == UI3_DAVINCI)
     vctFrm3 transform;
     transform.Rotation().From(vctAxAnRot3(vctDouble3(0.0, 1.0, 0.0), cmnPI));
-    guiManager.SetupRightMaster(daVinci, "MTMR",
-                                daVinci, "MTMRButton",
-                                daVinci, "MTMRClutch",
-                                transform, 0.5 /* scale factor */);
-    transform.Rotation().From(vctAxAnRot3(vctDouble3(0.0, 1.0, 0.0), cmnPI));
-    guiManager.SetupLeftMaster(daVinci, "MTML",
-                               daVinci, "MTMLButton",
-                               daVinci, "MTMLClutch"
-                               transform, 0.5 /* scale factor */);
+
+    // setup first arm
+    ui3MasterArm * rightMaster = new ui3MasterArm("MTMR");
+    guiManager.AddMasterArm(rightMaster);
+    rightMaster->SetInput(daVinci, "MTMR",
+                          daVinci, "MTMRButton",
+                          daVinci, "MTMRClutch",
+                          ui3MasterArm::PRIMARY);
+    rightMaster->SetTransformation(transform, 0.5 /* scale factor */);
+    ui3CursorBase * rightCursor = new ui3CursorSphere(&guiManager);
+    rightCursor->SetAnchor(ui3CursorBase::CENTER_RIGHT);
+    rightMaster->SetCursor(rightCursor);
+
+    // setup second arm
+    ui3MasterArm * leftMaster = new ui3MasterArm("MTML");
+    guiManager.AddMasterArm(leftMaster);
+    leftMaster->SetInput(daVinci, "MTML",
+                         daVinci, "MTMLButton",
+                         daVinci, "MTMLClutch",
+                         ui3MasterArm::SECONDARY);
+    leftMaster->SetTransformation(transform, 0.5 /* scale factor */);
+    ui3CursorBase * leftCursor = new ui3CursorSphere(&guiManager);
+    leftCursor->SetAnchor(ui3CursorBase::CENTER_LEFT);
+    leftMaster->SetCursor(leftCursor);
+
+    // first slave arm, i.e. PSM1
+    ui3SlaveArm * slave1 = new ui3SlaveArm("Slave1");
+    guiManager.AddSlaveArm(slave1);
+    slave1->SetInput(daVinci, "PSM1");
+    slave1->SetTransformation(transform, 1.0 /* scale factor */);
+
+    // setup event for MaM transitions
     guiManager.SetupMaM(daVinci, "MastersAsMice");
 #endif
+
+    guiManager.ConnectAll();
 
     // following should be replaced by a utility function or method of ui3Manager 
     taskManager->CreateAll();
     taskManager->StartAll();
-    // replace by exit condition created by ui3Manager
-//    osaSleep(100.0 * cmn_s);
-
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // modify terminal settings for single key inputs
-    struct  termios ksettings;
-    struct  termios new_ksettings;
-    int     kbrd;
-    kbrd = open("/dev/tty",O_RDWR);
-
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCGETS, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TCSETS, &new_ksettings);
-        ioctl(kbrd, TIOCNOTTY);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCGETA, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TIOCSETA, &new_ksettings);
-        ////////////////////////////////////////////////////
-    #endif // (CISST_OS == CISST_DARWIN)
-#endif
-
-    // wait for keyboard input in command window
-#ifdef _WIN32
-    int ch;
-#endif
-#ifdef __GNUC__
-    char ch;
-#endif
 
     osaSleep(1.0 * cmn_s);
 
+    int ch;
+    
     cerr << endl << "Keyboard commands:" << endl << endl;
     cerr << "  In command window:" << endl;
     cerr << "    'q'   - Quit" << endl << endl;
     do {
-#ifdef _WIN32
-        ch = _getch();
-#endif
-#ifdef __GNUC__
-        ch = getchar();
-#endif
+        ch = cmnGetChar();
+        osaSleep(10.0 * cmn_ms);
     } while (ch != 'q');
-
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // reset terminal settings    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCSETS, &ksettings);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCSETA, &ksettings);
-    #endif // (CISST_OS == CISST_DARWIN)
-
-    close(kbrd);
-    ////////////////////////////////////////////////////
-#endif
 
     taskManager->KillAll();
 
@@ -278,7 +303,15 @@ int main()
     // It stops and disassembles the pipeline in proper
     // order even if it has several branches
     vidStream.EmptyFilterList();
-#endif
+#endif //RENDER_ON_OVERLAY
+
+#ifdef DEBUG_WINDOW_WITH_OVERLAY
+#ifdef DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+    // It stops and disassembles the pipeline in proper
+    // order even if it has several branches
+    vidStream.EmptyFilterList();
+#endif //DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
+#endif //DEBUG_WINDOW_WITH_OVERLAY
 
     return 0;
 }

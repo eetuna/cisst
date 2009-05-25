@@ -37,12 +37,13 @@ int main(void)
     std::string omniName("Omni1");
     devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");
 	taskManager->AddTask(robotObject);
-#endif
 
     // connect the tasks
     taskManager->Connect("DISP", "Robot", "Omni", omniName);
     taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
     taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
+#endif
+
     // generate a nice tasks diagram
     std::ofstream dotFile("example1.dot"); 
     taskManager->ToStreamDot(dotFile);

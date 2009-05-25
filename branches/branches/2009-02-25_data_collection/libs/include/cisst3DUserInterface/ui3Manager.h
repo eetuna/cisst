@@ -22,13 +22,15 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _ui3Manager_h
 #define _ui3Manager_h
 
+#include <cisstMultiTask/mtsMap.h>
+
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3BehaviorBase.h>
-#include <cisst3DUserInterface/ui3SceneManager.h>
-#include <cisst3DUserInterface/ui3VTKRenderer.h>
-#include <cisst3DUserInterface/ui3Cursor.h>
-#include <cisst3DUserInterface/ui3ImagePlane.h>
+#include <cisst3DUserInterface/ui3MasterArm.h>
 
+
+// forward declaration, to be moved to cisstStereoVision
+class svlRenderTargetBase;
 
 /*!
  Provides a default implementation for the main user interface manager.
@@ -38,11 +40,18 @@ class ui3Manager: public ui3BehaviorBase
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
     
     friend class ui3BehaviorBase;
+    friend class ui3MasterArm;
+    friend class ui3SlaveArm;
+
 public:
     /*!
      Typedef for list of behaviors
     */
-    typedef std::list<ui3BehaviorBase*> BehaviorList;
+    typedef std::list<ui3BehaviorBase *> BehaviorList;
+
+    typedef std::list<ui3MasterArm *> MasterArmList;
+
+    typedef mtsMap<ui3SlaveArm> SlaveArmList;
 
     /*!
      Enumerated display modes
@@ -84,18 +93,6 @@ public:
      \param configfile      Input device configuration file
      \return                Success flag: true=success, false=error
     */
-    virtual bool SetupRightMaster(mtsDevice * positionDevice, const std::string & positionInterface,
-                                  mtsDevice * buttonDevice, const std::string & buttonInterface,
-                                  mtsDevice * clutchDevice, const std::string & clutchInterface,
-                                  const vctFrm3 & transformation = vctFrm3::Identity(),
-                                  double scale = 1.0);
-                                 
-    virtual bool SetupLeftMaster(mtsDevice * positionDevice, const std::string & positionInterface,
-                                 mtsDevice * buttonDevice, const std::string & buttonInterface,
-                                 mtsDevice * clutchDevice, const std::string & clutchInterface,
-                                 const vctFrm3 & transformation = vctFrm3::Identity(),
-                                 double scale = 1.0);
-                                 
     virtual bool SetupMaM(mtsDevice * mamDevice, const std::string & mamInterface);
 
     /*!
@@ -158,9 +155,17 @@ public:
      \param iconfile        Image file storing all the behavior states on a singe bitmap.
      \return                Unique handle assigned to the behavior
     */
-    virtual bool AddBehavior(ui3BehaviorBase * behavior,
-                             unsigned int position,
-                             const std::string & iconfile);
+    bool AddBehavior(ui3BehaviorBase * behavior,
+                     unsigned int position,
+                     const std::string & iconfile);
+    
+    bool AddMasterArm(ui3MasterArm * arm);
+
+    bool AddSlaveArm(ui3SlaveArm * arm);
+
+    ui3SlaveArm * GetSlaveArm(const std::string & armName);
+
+    void ConnectAll(void);
 
     /*!
      Initializes all registered behaviors, starts the user interface thread,
@@ -240,6 +245,18 @@ protected:
         ui3ImagePlane* imageplane;
     } _RendererStruct;
 
+    class CVTKRendererProc
+    {
+    public:
+        CVTKRendererProc();
+
+        void* Proc(ui3Manager* baseref);
+
+        osaThreadSignal ThreadReadySignal;
+        bool KillThread;
+        bool ThreadKilled;
+    };
+
 
 private:
 
@@ -254,6 +271,8 @@ private:
 
     void SetActiveBehavior(ui3BehaviorBase * newBehavior);
 
+    void DispatchButtonEvent(const ui3MasterArm::RoleType & armRole, const prmEventButton & buttonEvent);
+
     /*!
      Flag signalling whether the user interface loop has been successfully initialized.
     */
@@ -267,9 +286,19 @@ private:
     ui3BehaviorBase * ActiveBehavior;
 
     /*!
-     Linked list of behaviors.
+      Linked list of behaviors.
     */
     BehaviorList Behaviors;
+
+    /*!
+      Linked list of master arms
+    */
+    MasterArmList MasterArms;
+
+    /*!
+      Map of std::string, slave arms
+    */
+    SlaveArmList SlaveArms;
 
     /*!
      Scene manager object that maintains the consistency and thread safety of 3D scene.
@@ -277,14 +306,29 @@ private:
     ui3SceneManager * SceneManager;
 
     /*!
-     Input device interface module. (???)
-    */
-    ui3InputDeviceBase InputDevice;
-
-    /*!
      3D graphics renderer modules.
     */
     vctDynamicVector<_RendererStruct*> Renderers;
+
+    /*!
+     3D graphics renderer procedure class.
+    */
+    CVTKRendererProc RendererProc;
+
+    /*!
+     3D graphics renderer thread.
+    */
+    osaThread* RendererThread;
+
+    /*!
+     Method to create VTK scenes.
+    */
+    bool SetupRenderers();
+
+    /*!
+     Method to release VTK scenes.
+    */
+    void ReleaseRenderers();
 
     /*!
      Background video stream event callback.
@@ -294,15 +338,7 @@ private:
     /*! Keep a pointer on singleton task manager to make it easier to access */
     mtsTaskManager * TaskManager;
 
-    // functions which will be bound to commands
-    mtsFunctionRead RightMasterGetCartesianPosition;
-    mtsFunctionRead LeftMasterGetCartesianPosition;
-
     // event handlers
-    void RightMasterButtonEventHandler(const prmEventButton & buttonEvent);
-    void LeftMasterButtonEventHandler(const prmEventButton & buttonEvent);
-    void RightMasterClutchEventHandler(const prmEventButton & buttonEvent);
-    void LeftMasterClutchEventHandler(const prmEventButton & buttonEvent);
     void EnterMaMModeEventHandler(void);
     void LeaveMaMModeEventHandler(void);
 
@@ -310,39 +346,19 @@ private:
     void HideAll(void);
     void ShowAll(void);
 
-    // cursors
-    ui3Cursor * RightCursor;
-    ui3Cursor * LeftCursor;
-
-    // button state, might be a better implementation for this (Anton)
-    bool RightButtonPressed, RightButtonReleased;
-    bool LeftButtonPressed, LeftButtonReleased;
-
     // MaM (MastersAsMice) mode
     bool MaM;
+    bool HasMaMDevice;
+
 public:
+
     inline bool MastersAsMice(void) const {
         return this->MaM;
     }
+
 private:
 
-    // transformation between inputs and scene
-    vctFrm3 RightTransform;
-    vctFrm3 LeftTransform;
 
-    // positions in the state table, for behaviors to read
-    mtsStateData<prmPositionCartesianGet> RightMasterPosition, LeftMasterPosition; 
-
-    // arm clutch
-    bool RightMasterClutch;
-    bool LeftMasterClutch;
-
-    // scale
-    double RightScale;
-    double LeftScale;
-
-    bool RightMasterExists;
-    bool LeftMasterExists;
 };
 
 

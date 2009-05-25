@@ -26,7 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
 #include <cisstVector/vctDynamicVector.h>
-
+#include <cisstOSAbstraction/osaMutex.h>
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 
@@ -41,6 +41,8 @@ http://www.cisst.org/cisst/license.txt.
 class ui3SceneManager: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+
+    friend class ui3VTKRenderer;
 
 public:
     typedef void * VTKHandleType;
@@ -93,6 +95,17 @@ public:
     bool Unlock(VTKHandleType propHandle);
 
 	vtkPropAssembly * GetVTKProp(void);
+
+protected:
+    inline void Lock(void)
+    {
+        this->Mutex.Lock();
+    }
+
+    inline void Unlock(void)
+    {
+        this->Mutex.Unlock();
+    }
 
 protected:
     typedef std::map<VTKHandleType, vtkProp3D *> PropMapType;

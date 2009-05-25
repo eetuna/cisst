@@ -24,7 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstDevices/devSensableHD.h>
 
-#include "example1.h"
+#include "SimpleBehavior.h"
 
 #include <vtkActor.h>
 #include <vtkAssembly.h>
@@ -32,17 +32,31 @@ http://www.cisst.org/cisst/license.txt.
 #include <vtkProperty.h>
 #include <vtkSphereSource.h>
 
-class BehaviorVisibleObject: public ui3VisibleObject
+class SimpleBehaviorVisibleObject: public ui3VisibleObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 public:
-    inline BehaviorVisibleObject(ui3Manager * manager, vctDouble3 position):
+    inline SimpleBehaviorVisibleObject(ui3Manager * manager, vctDouble3 position):
         ui3VisibleObject(manager),
         Source(0),
         Mapper(0),
         Actor(0),
-        Position(position)
+        Position(position),
+        Red(true)
     {}
+
+    inline ~SimpleBehaviorVisibleObject()
+    {
+        if (this->Actor) {
+            this->Actor->Delete();
+        }
+        if (this->Mapper) {
+            this->Mapper->Delete();
+        }
+        if (this->Source) {
+            this->Source->Delete();
+        }
+    }
 
     inline bool CreateVTKObjects(void) {
         this->Source = vtkSphereSource::New();
@@ -56,6 +70,7 @@ public:
         this->Actor = vtkActor::New();
         CMN_ASSERT(this->Actor);
         this->Actor->SetMapper(this->Mapper);
+        this->Actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
 
         this->Assembly->AddPart(this->Actor);
         this->SetPosition(this->Position);
@@ -63,58 +78,60 @@ public:
         return true;
     }
 
+    void ToggleColor(void) {
+        if (this->Red) {
+            this->Actor->GetProperty()->SetColor(0.0, 1.0, 0.0);
+            this->Red = false;
+        } else {
+            this->Actor->GetProperty()->SetColor(1.0, 0.0, 0.0);
+            this->Red = true;
+        }
+    }
+
 protected:
     vtkSphereSource * Source;
     vtkPolyDataMapper * Mapper;
     vtkActor * Actor;
     vctDouble3 Position; // initial position
+    bool Red;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(BehaviorVisibleObject);
-CMN_IMPLEMENT_SERVICES(BehaviorVisibleObject);
+CMN_DECLARE_SERVICES_INSTANTIATION(SimpleBehaviorVisibleObject);
+CMN_IMPLEMENT_SERVICES(SimpleBehaviorVisibleObject);
 
 
-CExampleBehavior::CExampleBehavior(const std::string & name, ui3Manager * manager):
-    ui3BehaviorBase(std::string("CExampleBehavior::") + name, 0),
+SimpleBehavior::SimpleBehavior(const std::string & name, ui3Manager * manager):
+    ui3BehaviorBase(std::string("SimpleBehavior::") + name, 0),
     Following(false),
     VisibleObject(0)
 {
     this->Position.X() = 0.0;
     this->Position.Y() = 0.0;
     this->Position.Z() = -100.0;
-    this->VisibleObject = new BehaviorVisibleObject(manager, this->Position);
+    this->VisibleObject = new SimpleBehaviorVisibleObject(manager, this->Position);
     CMN_ASSERT(this->VisibleObject);
+    this->VisibleObject->Show();
 }
 
 
-CExampleBehavior::~CExampleBehavior()
+SimpleBehavior::~SimpleBehavior()
 {
+    if (this->VisibleObject) {
+        delete this->VisibleObject;
+    }
 }
 
-
-void CExampleBehavior::ConfigureMenuBar()
+void SimpleBehavior::ConfigureMenuBar()
 {
-    this->MenuBar->AddClickButton("FirstButton",
+    this->MenuBar->AddClickButton("ToggleColor",
                                   1,
-                                  "",
-                                  &CExampleBehavior::FirstButtonCallback,
-                                  this);
+                                  "redo.png",
+                                  &SimpleBehaviorVisibleObject::ToggleColor,
+                                  dynamic_cast<SimpleBehaviorVisibleObject *>(this->VisibleObject));
 }
 
 
-void CExampleBehavior::Startup(void)
-{
-
-}
-
-
-void CExampleBehavior::Cleanup(void)
-{
-    // menu bar will release itself upon destruction
-}
-
-
-bool CExampleBehavior::RunForeground()
+bool SimpleBehavior::RunForeground()
 {
     if (this->Manager->MastersAsMice() != this->PreviousMaM) {
         this->PreviousMaM = this->Manager->MastersAsMice();
@@ -129,20 +146,21 @@ bool CExampleBehavior::RunForeground()
     }
     // running in foreground GUI mode
     prmPositionCartesianGet position;
-    this->RightMasterPositionFunction(position);
+
+    this->GetPrimaryMasterPosition(position);
+
     if (this->Following) {
         vctDouble3 deltaCursor;
         deltaCursor.DifferenceOf(position.Position().Translation(),
                                  this->PreviousCursorPosition);
         this->Position.Add(deltaCursor);
         this->VisibleObject->SetPosition(this->Position);
-        std::cout << this->Position << std::endl;
     }
     this->PreviousCursorPosition.Assign(position.Position().Translation());
     return true;
 }
 
-bool CExampleBehavior::RunBackground()
+bool SimpleBehavior::RunBackground()
 {
     // detect transition
     if (this->State != this->PreviousState) {
@@ -152,7 +170,7 @@ bool CExampleBehavior::RunBackground()
     return true;
 }
 
-bool CExampleBehavior::RunNoInput()
+bool SimpleBehavior::RunNoInput()
 {
     if (this->Manager->MastersAsMice() != this->PreviousMaM) {
         this->PreviousMaM = this->Manager->MastersAsMice();
@@ -161,23 +179,23 @@ bool CExampleBehavior::RunNoInput()
     return true;
 }
 
-void CExampleBehavior::Configure(const std::string & CMN_UNUSED(configFile))
+
+void SimpleBehavior::OnQuit()
 {
-    // load settings
+    this->VisibleObject->Hide();
 }
 
-bool CExampleBehavior::SaveConfiguration(const std::string & CMN_UNUSED(configFile))
+
+void SimpleBehavior::OnStart()
 {
-    // save settings
-    return true;
+    this->Position.X() = 0.0;
+    this->Position.Y() = 0.0;
+    this->Position.Z() = -100.0;
+    this->VisibleObject->Show();
 }
 
-void CExampleBehavior::FirstButtonCallback()
-{
-    CMN_LOG_CLASS(6) << "Behavior \"" << this->GetName() << "\" Button 1 pressed" << std::endl;
-}
 
-void CExampleBehavior::RightMasterButtonCallback(const prmEventButton & event)
+void SimpleBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
 {
     if (event.Type() == prmEventButton::PRESSED) {
         this->Following = true;
@@ -185,4 +203,3 @@ void CExampleBehavior::RightMasterButtonCallback(const prmEventButton & event)
         this->Following = false;
     }
 }
-

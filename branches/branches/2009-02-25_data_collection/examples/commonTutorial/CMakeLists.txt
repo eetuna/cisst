@@ -12,9 +12,7 @@
 # 
 # --- end cisst license ---
 
-ADD_EXECUTABLE(commonTutorial
-               main.cpp
-               portability.cpp
-               units.cpp)
-
-CISST_REQUIRES("commonTutorial" "cisstCommon")
+add_subdirectory(getChar)
+add_subdirectory(portability)
+add_subdirectory(serialization)
+add_subdirectory(units)

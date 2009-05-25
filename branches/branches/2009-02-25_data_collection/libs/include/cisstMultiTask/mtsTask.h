@@ -387,6 +387,8 @@ public:
     void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
         std::vector<cmnDouble>& vecPeriod);
 #endif
+    /*! Send a human readable description of the device. */
+    void ToStream(std::ostream & outputStream) const;
 };
 
 
