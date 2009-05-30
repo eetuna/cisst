@@ -189,7 +189,7 @@ public:
                                            const std::string targetPlainTextLogFileName);
 
     /*! Get the name of log file currently being written. */
-    std::string & GetLogFileName() { return LogFileName; }
+    const std::string & GetLogFileName() { return LogFileName; }
 
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
     inline const double GetElapsedTimeForProcessing() {
