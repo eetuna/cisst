@@ -272,6 +272,10 @@ class CISST_EXPORT cmnLogger {
         LoDMultiplexerStreambuf.AddChannel(*(DefaultLogFile()), newLoD);
     }
 
+    /*! Instance specific implementation of AddChannel */
+    inline void AddChannelInstance(std::ostream & outputStream, LogLoDType lod) {
+        LoDMultiplexerStreambuf.AddChannel(outputStream, lod);
+    }
 
  protected:
     /*! Constructor.  The only constructor must be private in order to
@@ -336,6 +340,14 @@ class CISST_EXPORT cmnLogger {
       without losing previous logs. */
     static void ResumeDefaultLog(LogLoDType newLoD = CMN_LOG_LOD_RUN_ERROR) {
         Instance()->ResumeDefaultLogInstance(newLoD);
+    }
+
+    /*! Add an output stream to the logger.  The level of detail
+      provided is used to filter the messages, i.e. any message with a
+      level of detail higher than the level associated to the output
+      stream will not be streamed. */
+    static void AddChannel(std::ostream & outputStream, LogLoDType lod = CMN_LOG_LOD_VERY_VERBOSE) {
+        Instance()->AddChannelInstance(outputStream, lod);
     }
 
 };
