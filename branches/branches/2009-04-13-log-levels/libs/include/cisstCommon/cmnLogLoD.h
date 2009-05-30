@@ -31,22 +31,37 @@ http://www.cisst.org/cisst/license.txt.
 #define _cmnLogLoD_h
 
 #include <cisstCommon/cmnPortability.h>
+#include <string>
 
-// class cmnLogLoD {
-//  public:
-    typedef enum cmnLogLoD {
-        CMN_LOG_LOD_NONE = 0,
-        CMN_LOG_LOD_INIT_ERROR,
-        CMN_LOG_LOD_INIT_WARNING,
-        CMN_LOG_LOD_INIT_VERBOSE,
-        CMN_LOG_LOD_INIT_DEBUG,
-        CMN_LOG_LOD_RUN_ERROR,
-        CMN_LOG_LOD_RUN_WARNING,
-        CMN_LOG_LOD_RUN_VERBOSE,
-        CMN_LOG_LOD_RUN_DEBUG,
-        CMN_LOG_LOD_VERY_VERBOSE
-    };  
-// };
+/*! Values used to represent the different level of details associated
+  to messages and filters used in cmnLogger.  The higher the value the
+  less important the message is.  Lower values are used for the
+  initialization phase (i.e. constructor, configuration, ...) while
+  the higher values are used for normal operations. */
+typedef enum cmnLogLoD {
+    CMN_LOG_LOD_NONE = 0,
+    CMN_LOG_LOD_INIT_ERROR,
+    CMN_LOG_LOD_INIT_WARNING,
+    CMN_LOG_LOD_INIT_VERBOSE,
+    CMN_LOG_LOD_INIT_DEBUG,
+    CMN_LOG_LOD_RUN_ERROR,
+    CMN_LOG_LOD_RUN_WARNING,
+    CMN_LOG_LOD_RUN_VERBOSE,
+    CMN_LOG_LOD_RUN_DEBUG,
+    CMN_LOG_LOD_VERY_VERBOSE
+};  
+
+/*! Human readable strings used to indicate the level of detail of a
+  message.  See also cmnLogger. */
+const char * const cmnLogLoDString[CMN_LOG_LOD_VERY_VERBOSE] = {"Unexpected",
+                                                                "Error (init)",
+                                                                "Warning (init)",
+                                                                "Message (init)",
+                                                                "Error (run)",
+                                                                "Warning (run)",
+                                                                "Message (run)",
+                                                                "Debug (run)",
+                                                                "Debug"};
 
 #endif // _cmnLogLoD_h
 

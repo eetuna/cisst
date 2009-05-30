@@ -78,9 +78,11 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_LOG_CLASS(lod) \
     ((lod > cmnLogger::GetLoD()) || (lod > Services()->GetLoD()))?\
         (void*)0:\
-    ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - Class " << Services()->GetName() << ": ")
+    ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << cmnLogLoDString[lod] << " - Class " << Services()->GetName() << ": ")
  
 
+/*! Macros defined to use #CMN_LOG_CLASS for a given level of detail. */
+//@{
 #define CMN_LOG_CLASS_INIT_ERROR   CMN_LOG_CLASS(CMN_LOG_LOD_INIT_ERROR)
 #define CMN_LOG_CLASS_INIT_WARNING CMN_LOG_CLASS(CMN_LOG_LOD_INIT_WARNING)
 #define CMN_LOG_CLASS_INIT_VERBOSE CMN_LOG_CLASS(CMN_LOG_LOD_INIT_VERBOSE)
@@ -90,6 +92,7 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_LOG_CLASS_RUN_VERBOSE  CMN_LOG_CLASS(CMN_LOG_LOD_RUN_VERBOSE)
 #define CMN_LOG_CLASS_RUN_DEBUG    CMN_LOG_CLASS(CMN_LOG_LOD_RUN_DEBUG)
 #define CMN_LOG_CLASS_VERY_VERBOSE CMN_LOG_CLASS(CMN_LOG_LOD_VERY_VERBOSE)
+//@}
 
 
 /*! This macro is used to log human readable information within the
@@ -117,8 +120,11 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_LOG(lod) \
     (lod > cmnLogger::GetLoD())? \
     (void*)0: \
-    ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << "LoD: " << lod << " - ")
+    ((cmnLODOutputMultiplexer(cmnLogger::GetMultiplexer(), lod).Ref()) << cmnLogLoDString[lod] << " - ")
 
+
+/*! Macros defined to use #CMN_LOG for a given level of detail. */
+//@{
 #define CMN_LOG_INIT_ERROR   CMN_LOG(CMN_LOG_LOD_INIT_ERROR)
 #define CMN_LOG_INIT_WARNING CMN_LOG(CMN_LOG_LOD_INIT_WARNING)
 #define CMN_LOG_INIT_VERBOSE CMN_LOG(CMN_LOG_LOD_INIT_VERBOSE)
@@ -128,11 +134,12 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_LOG_RUN_VERBOSE  CMN_LOG(CMN_LOG_LOD_RUN_VERBOSE)
 #define CMN_LOG_RUN_DEBUG    CMN_LOG(CMN_LOG_LOD_RUN_DEBUG)
 #define CMN_LOG_VERY_VERBOSE CMN_LOG(CMN_LOG_LOD_VERY_VERBOSE)
+//@}
 
 
 /*! This macro is used to add useful information to Log macros
   (#CMN_LOG_CLASS and #CMN_LOG). It provides the additional
-  functionality of logging the file and line number at which the
+  functionality of logging the file name and line number at which the
   message was generated.
 
   For example:
