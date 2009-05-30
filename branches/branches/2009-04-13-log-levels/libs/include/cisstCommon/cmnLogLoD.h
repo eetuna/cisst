@@ -31,7 +31,6 @@ http://www.cisst.org/cisst/license.txt.
 #define _cmnLogLoD_h
 
 #include <cisstCommon/cmnPortability.h>
-#include <string>
 
 /*! Values used to represent the different level of details associated
   to messages and filters used in cmnLogger.  The higher the value the
@@ -48,20 +47,24 @@ typedef enum cmnLogLoD {
     CMN_LOG_LOD_RUN_WARNING,
     CMN_LOG_LOD_RUN_VERBOSE,
     CMN_LOG_LOD_RUN_DEBUG,
-    CMN_LOG_LOD_VERY_VERBOSE
+    CMN_LOG_LOD_VERY_VERBOSE,
+    CMN_LOG_LOD_NOT_USED // used only to determine number of possible LoDs
 };  
 
 /*! Human readable strings used to indicate the level of detail of a
   message.  See also cmnLogger. */
-const char * const cmnLogLoDString[CMN_LOG_LOD_VERY_VERBOSE] = {"Unexpected",
-                                                                "Error (init)",
-                                                                "Warning (init)",
-                                                                "Message (init)",
-                                                                "Error (run)",
-                                                                "Warning (run)",
-                                                                "Message (run)",
-                                                                "Debug (run)",
-                                                                "Debug"};
+const char * const cmnLogLoDString[CMN_LOG_LOD_NOT_USED] = {
+    "Unexpected",
+    "Error (init)",
+    "Warning (init)",
+    "Message (init)",
+    "Debug (init)",
+    "Error (run)",
+    "Warning (run)",
+    "Message (run)",
+    "Debug (run)",
+    "Debug"
+};
 
 #endif // _cmnLogLoD_h
 
