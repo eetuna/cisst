@@ -41,9 +41,10 @@ http://www.cisst.org/cisst/license.txt.
 /*!
 \ingroup cisstMultiTask
 
-As a child class of mtsCollectorBase, this class provides the functionality of collecting
-signals from a single task and dumping them into a log file in a specified format. (csv, 
-txt, bin, etc.) 
+This class provides a way to collect all data in the state table without loss and leave
+them as a log file. The type of a log file can be plain text (ascii), csv, or binary.
+Also a state table to be collected can be specified in the constructor (this is for future
+design where a task can have more than two state table.)
 
 TODO:
 
@@ -72,10 +73,10 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     typedef std::vector<SignalElement> RegisteredSignalElementType;
     RegisteredSignalElementType RegisteredSignalElements;
 
-    /*! Offset */
+    /*! Offset to support a sampling stride. */
     unsigned int OffsetForNextRead;
 
-    /*! Data index which should be read at the next time */
+    /*! Data index which should be read at the next time. */
     int LastReadIndex;
 
     /*! Local copy to reduce the number of reference in Collect() method. */
@@ -99,7 +100,7 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     /*! Output file name. */
     std::string LogFileName;
 
-    /*! Void command to enable a data thread's trigger. */
+    /*! Void command to enable the target task's trigger. */
     mtsCommandVoidBase * DataCollectionTriggerResetCommand;
 
     /*! Performance measurement variables */
@@ -108,13 +109,20 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     osaStopwatch StopWatch;
 #endif
 
-    /*! The names of target task and the target state table. */
+    /*! Names of the target task and the target state table. */
     const std::string TargetTaskName;
     const std::string TargetStateTableName;
 
     /*! Pointers to the target task and the target state table. */
     mtsTask * TargetTask;
     mtsStateTable * TargetStateTable;
+
+    /*! String stream buffer for serialization. */
+    std::stringstream StringStreamBufferForSerialization;
+
+    /*! Serializer for binary logging. DeSerializer is used only at  
+        ConvertBinaryLogFileIntoPlainText() method so we don't define it here. */
+    cmnSerializer * Serializer;
 
     /*! Thread-related Methods */
     void Run(void);
@@ -140,6 +148,12 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 
     /*! Print out the signal names which are being collected. */
     void PrintHeader(void);
+
+    /*! Mark the end of the header. Called in case of binary log file. */
+    void MarkHeaderEnd(std::ofstream & logFile);
+
+    /*! Check if the given buffer contains the header mark. */
+    bool IsHeaderEndMark(const char * buf) const;
     
     /*! When this function is called (called by the data thread as a form of an event),
         bulk-fetch is performed and data is dumped to a log fie. */
@@ -147,6 +161,9 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 
     /*! Fetch bulk data from StateTable. */
     void Collect(void);
+
+    /*! Log file handle. */
+    std::ofstream LogFile;
 
 public:
     mtsCollectorState(const std::string & targetTaskName,
@@ -166,6 +183,13 @@ public:
     void SetSamplingInterval(const unsigned int samplingInterval) {
         SamplingInterval = (samplingInterval > 0 ? samplingInterval : 1);
     }
+
+    /*! Convert a binary log file into a plain text one. */
+    bool ConvertBinaryLogFileIntoPlainText(const std::string sourceBinaryLogFileName,
+                                           const std::string targetPlainTextLogFileName);
+
+    /*! Get the name of log file currently being written. */
+    std::string & GetLogFileName() { return LogFileName; }
 
 #ifdef COLLECTOR_OVERHEAD_MEASUREMENT
     inline const double GetElapsedTimeForProcessing() {

@@ -40,12 +40,15 @@ int main(void)
     taskManager->AddTask(displayTaskObject);
 
     // data collector setup
-    mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName());
+    // 1) Plain text (ASCII) format
+    //mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName());
+    // 2) Binary format using CISST serialization and deserialization (see commonTutorialSerializationRead/Write)
+    mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName(), mtsCollectorBase::COLLECTOR_LOG_FORMAT_BINARY);
 
     bool AddSignalFlag = true;
     try {        
-        // Example A. Selectively register signals to the data collector.
-        const string signalName = "SineData";  // from sineTask constructor
+        // Example A. Selectively choose signals of which data is to be collected.
+        const string signalName = "SineData";  // refer to sineTask constructor
         AddSignalFlag &= Collector->AddSignal(signalName + "01");
         //AddSignalFlag &= Collector->AddSignal(signalName + "02");
         //AddSignalFlag &= Collector->AddSignal(signalName + "03");
@@ -83,7 +86,7 @@ int main(void)
     taskManager->StartAll();
 
     // Start immediately
-    Collector->SetSamplingInterval(4);
+    //Collector->SetSamplingInterval(4);
     Collector->Start(0);
     // Start some time later (5 seconds in the following case)
     //Collector->Start(5);
@@ -101,6 +104,14 @@ int main(void)
     osaSleep(PeriodDisplay * 2);
     while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+
+    // Convert a binary log file to ASCII log.
+    if (!Collector->ConvertBinaryLogFileIntoPlainText(
+        Collector->GetLogFileName(), Collector->GetLogFileName() + ".converted.txt" )) 
+    {
+        cout << " Conversion failed." << std::endl;
+        return 1;
+    }
 
     return 0;
 }

@@ -1,5 +1,8 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
+/* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
+
 /*
-  $Id: mtsCollectorBase.cpp 2009-03-02 mjung5
+  $Id: mtsCollectorBase.cpp 188 2009-03-20 17:07:32Z mjung5 $
 
   Author(s):  Min Yang Jung
   Created on: 2009-03-20

@@ -61,7 +61,7 @@ void sineTask::Run(void) {
         * sin(2 * cmnPI * static_cast<double>(now.Ticks()) * Period / 10.0);
     
     static int i = 0;
-    logFile << i++ << " " << SineData.ToString() << " " << std::endl;
+    logFile << i++ << " " << SineData.ToString() << std::endl;
 }
 
 void sineTask::Cleanup(void)
