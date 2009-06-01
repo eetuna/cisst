@@ -20,11 +20,6 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-/*!
-  \file
-  \brief A data collection tool
-*/
-
 #ifndef _mtsCollectorState_h
 #define _mtsCollectorState_h
 
@@ -41,16 +36,10 @@ http://www.cisst.org/cisst/license.txt.
 /*!
 \ingroup cisstMultiTask
 
-This class provides a way to collect all data in the state table without loss and leave
-them as a log file. The type of a log file can be plain text (ascii), csv, or binary.
-Also a state table to be collected can be specified in the constructor (this is for future
-design where a task can have more than two state table.)
-
-TODO:
-
-1) Serialization/Deserialiazation for binary output
-2) Support for different output file format (csv, bin, etc.)
-
+This class provides a way to collect data in the state table without loss and make
+a log file. The type of a log file can be plain text (ascii), csv, or binary.
+A state table of which data is to be collected can be specified in the constructor. 
+This is intended for future usage where a task can have more than two state tables.
 */
 
 // Enable this macro to measure the elapsed time for data collection
@@ -73,7 +62,7 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     typedef std::vector<SignalElement> RegisteredSignalElementType;
     RegisteredSignalElementType RegisteredSignalElements;
 
-    /*! Offset to support a sampling stride. */
+    /*! Offset for a sampling stride. */
     unsigned int OffsetForNextRead;
 
     /*! Data index which should be read at the next time. */
@@ -82,16 +71,10 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     /*! Local copy to reduce the number of reference in Collect() method. */
     unsigned int TableHistoryLength;
 
-    /*! Local counter to support sampling-by-time mode. */
-    double LastToc;
-
     /*! Flag for PrintHeader() method. */
     bool FirstRunningFlag;
 
-    /*! True if a user want to collect data from all registered signals. */
-    bool CollectAllSignal;
-
-    /*! If this is unset, this collector thread wakes up. */
+    /*! When this flag is unset, this collector thread wakes up. */
     bool WaitingForTrigger;
 
     /*! A stride value for data collector to skip several records. */
@@ -103,11 +86,9 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     /*! Void command to enable the target task's trigger. */
     mtsCommandVoidBase * DataCollectionTriggerResetCommand;
 
-    /*! Performance measurement variables */
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    double ElapsedTimeForProcessing;
-    osaStopwatch StopWatch;
-#endif
+    /*! Delimiter used in a log file. Set by the constructor according to 
+        mtsCollectorBase::CollectorLogFormat. */
+    std::string Delimiter;
 
     /*! Names of the target task and the target state table. */
     const std::string TargetTaskName;
@@ -124,7 +105,13 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
         ConvertBinaryLogFileIntoPlainText() method so we don't define it here. */
     cmnSerializer * Serializer;
 
-    /*! Thread-related Methods */
+    /*! Performance measurement variables */
+#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
+    double ElapsedTimeForProcessing;
+    osaStopwatch StopWatch;
+#endif
+
+    /*! Thread-related methods */
     void Run(void);
 
     void Startup(void);
@@ -179,7 +166,9 @@ public:
     bool AddSignal(const std::string & signalName = "",
                    const std::string & format = "");
 
-    /*! Set a stride so that data collector can skip several values. */
+    /*! Set a sampling interval so that data collector can skip several values. 
+        This is useful when a frequency of the task is somewhat high and you don't want
+        to collect ALL data from it. */
     void SetSamplingInterval(const unsigned int samplingInterval) {
         SamplingInterval = (samplingInterval > 0 ? samplingInterval : 1);
     }

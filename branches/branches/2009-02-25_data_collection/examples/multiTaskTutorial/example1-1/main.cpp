@@ -12,6 +12,11 @@
 
 using namespace std;
 
+// Selectively enable one of the following macro according to the log file format.
+#define DATA_COLLECTION_PLAIN_TEXT
+//#define DATA_COLLECTION_PLAIN_TEXT_CSV
+//#define DATA_COLLECTION_BINARY
+
 int main(void)
 {
     // log configuration
@@ -40,16 +45,27 @@ int main(void)
     taskManager->AddTask(displayTaskObject);
 
     // data collector setup
+
     // 1) Plain text (ASCII) format
+#if defined(DATA_COLLECTION_PLAIN_TEXT)
+    mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName(), mtsCollectorBase::COLLECTOR_LOG_FORMAT_PLAIN_TEXT);
+    // Or you can use the default constructor for this log type.
     //mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName());
-    // 2) Binary format using CISST serialization and deserialization (see commonTutorialSerializationRead/Write)
+
+    // 2) Plain text (CSV) format
+#elif defined(DATA_COLLECTION_PLAIN_TEXT_CSV)
+    mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName(), mtsCollectorBase::COLLECTOR_LOG_FORMAT_CSV);
+
+    // 3) Binary format using CISST serialization and deserialization (see commonTutorialSerializationRead/Write)
+#elif defined(DATA_COLLECTION_BINARY)
     mtsCollectorState * Collector = new mtsCollectorState(sineTaskObject->GetName(), mtsCollectorBase::COLLECTOR_LOG_FORMAT_BINARY);
+#endif
 
     bool AddSignalFlag = true;
     try {        
         // Example A. Selectively choose signals of which data is to be collected.
-        const string signalName = "SineData";  // refer to sineTask constructor
-        AddSignalFlag &= Collector->AddSignal(signalName + "01");
+        const string signalName = "SineData";  // see sineTask constructor
+        //AddSignalFlag &= Collector->AddSignal(signalName + "01");
         //AddSignalFlag &= Collector->AddSignal(signalName + "02");
         //AddSignalFlag &= Collector->AddSignal(signalName + "03");
         //AddSignalFlag &= Collector->AddSignal(signalName + "04");
@@ -61,7 +77,7 @@ int main(void)
         //AddSignalFlag &= Collector->AddSignal(signalName + "10");
 
         // Example B. Register ALL signals to the data collector.
-        //AddSignalFlag = Collector->AddSignal();
+        AddSignalFlag = Collector->AddSignal();
     } catch (mtsCollectorBase::mtsCollectorBaseException e) {
         cout << "ERROR: Adding a signal failed." << endl;
     }
@@ -105,13 +121,17 @@ int main(void)
     while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
 
-    // Convert a binary log file to ASCII log.
+#ifdef DATA_COLLECTION_BINARY
+    /* In case of binary log file, you can use the method 
+       mtsCollector::ConvertBinaryLogFileIntoPlainText() to convert a binary log file into
+       a plain text (ASCII) file. */
     if (!Collector->ConvertBinaryLogFileIntoPlainText(
         Collector->GetLogFileName(), Collector->GetLogFileName() + ".converted.txt" )) 
     {
         cout << " Conversion failed." << std::endl;
         return 1;
     }
+#endif
 
     return 0;
 }
