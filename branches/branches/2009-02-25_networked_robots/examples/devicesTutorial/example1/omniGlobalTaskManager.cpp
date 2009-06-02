@@ -1,23 +1,20 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id$ */
+/* $Id: main.cpp 332 2009-05-11 00:57:59Z mjung5 $ */
 
 #include <cisstVector.h>
 #include <cisstOSAbstraction.h>
 #include <cisstDevices.h>
 
-#include "displayTask.h"
+#include "displayTask4GTM.h"
 #include "displayUI.h"
 
 using namespace std;
 
-bool IsGlobalTaskManager = false;
-bool IsServerTask = false;
-string GlobalTaskManagerIP;
-string ServerTaskIP;
-
 int main(void)
 {
+    string serverTaskName = "Omni", clientTaskName = "DISP";
+
     // log configuration
     cmnLogger::SetLoD(10);
     cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
@@ -32,37 +29,11 @@ int main(void)
     // create our two tasks
     const long PeriodDisplay = 10; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    displayTask * displayTaskObject =
-        new displayTask("DISP", PeriodDisplay * cmn_ms);
+    displayTask4GTM * displayTaskObject =
+        new displayTask4GTM("DISP", PeriodDisplay * cmn_ms);
     displayTaskObject->Configure();
     taskManager->AddTask(displayTaskObject);
-
-#if (CISST_DEV_HAS_SENSABLEHD == ON)
-    // name as defined in Sensable configuration
-    std::string omniName("Omni1");
-    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");
-	taskManager->AddTask(robotObject);
-
-    // connect the tasks
-    taskManager->Connect("DISP", "Robot", "Omni", omniName);
-    // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
-    taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
-#endif
-
-#if 0
-    taskManager->GlobalTaskManagerIP = "10.164.200.79";
-    taskManager->ServerTaskIP = "10.162.34.64";
-
-    // Set the type of task manager either as a server or as a client.
-    // mtsTaskManager::SetTaskManagerType() should be called before
-    // executing mtsTaskManager::Connect()
-    taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
-#endif
-
-    // generate a nice tasks diagram
-    std::ofstream dotFile("example1.dot"); 
-    taskManager->ToStreamDot(dotFile);
-    dotFile.close();
+    taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_SERVER);
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
@@ -86,7 +57,7 @@ int main(void)
 }
 
 /*
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights

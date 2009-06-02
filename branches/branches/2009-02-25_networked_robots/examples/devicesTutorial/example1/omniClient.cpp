@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id$ */
+/* $Id: main.cpp 332 2009-05-11 00:57:59Z mjung5 $ */
 
 #include <cisstVector.h>
 #include <cisstOSAbstraction.h>
@@ -10,11 +10,6 @@
 #include "displayUI.h"
 
 using namespace std;
-
-bool IsGlobalTaskManager = false;
-bool IsServerTask = false;
-string GlobalTaskManagerIP;
-string ServerTaskIP;
 
 int main(void)
 {
@@ -37,32 +32,14 @@ int main(void)
     displayTaskObject->Configure();
     taskManager->AddTask(displayTaskObject);
 
-#if (CISST_DEV_HAS_SENSABLEHD == ON)
-    // name as defined in Sensable configuration
-    std::string omniName("Omni1");
-    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");
-	taskManager->AddTask(robotObject);
-
-    // connect the tasks
-    taskManager->Connect("DISP", "Robot", "Omni", omniName);
-    // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
-    taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
-#endif
-
-#if 0
     taskManager->GlobalTaskManagerIP = "10.164.200.79";
     taskManager->ServerTaskIP = "10.162.34.64";
 
-    // Set the type of task manager either as a server or as a client.
-    // mtsTaskManager::SetTaskManagerType() should be called before
-    // executing mtsTaskManager::Connect()
     taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
-#endif
+    osaSleep(0.5 * cmn_s);
 
-    // generate a nice tasks diagram
-    std::ofstream dotFile("example1.dot"); 
-    taskManager->ToStreamDot(dotFile);
-    dotFile.close();
+    // connect the tasks
+    taskManager->Connect("DISP", "Robot", "Omni", "Omni1");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();

@@ -11,6 +11,11 @@
 
 using namespace std;
 
+bool IsGlobalTaskManager = false;
+bool IsServerTask = false;
+string GlobalTaskManagerIP;
+string ServerTaskIP;
+
 int main(void)
 {
     // log configuration
