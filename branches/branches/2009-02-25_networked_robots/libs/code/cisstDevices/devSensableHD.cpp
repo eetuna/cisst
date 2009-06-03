@@ -348,6 +348,7 @@ void devSensableHD::Start(void)
     // Check for errors
     if (HD_DEVICE_ERROR(error = hdGetError())) {
         CMN_LOG_CLASS(1) << "Start: Failed to start scheduler" << std::endl;
+        hduPrintError(stderr, &error, "HDAPI device error encountered.");
     }
     
     // Call base class Start function
