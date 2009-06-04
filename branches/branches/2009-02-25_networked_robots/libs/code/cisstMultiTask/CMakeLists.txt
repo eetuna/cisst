@@ -166,7 +166,6 @@ foreach(ice_include_dir ${ICE_INCLUDE_DIR})
 endforeach(ice_include_dir)
 
 foreach(slice_file ${SLICE_FILES})
-  message ("slice ${slice_file}")
   set(GENERATED_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.cpp")
   set(GENERATED_H_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.h")
 

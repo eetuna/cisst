@@ -23,7 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsDeviceInterfaceProxyServer_h
 
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+#include <mtsDeviceInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
 #include <cisstCommon/cmnDeSerializer.h>
 

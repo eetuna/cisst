@@ -24,7 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
-#include <cisstMultiTask/mtsTaskManagerProxy.h>
+#include <mtsTaskManagerProxy.h>
 #include <cisstMultiTask/mtsMap.h>
 
 #include <cisstMultiTask/mtsExport.h>
