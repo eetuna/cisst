@@ -32,6 +32,8 @@ FIND_PATH( ICE_HOME_INCLUDE_ICE Ice.h
   $ENV{ICE_HOME}/include/Ice
   # debian package installs Ice here
   /usr/include/Ice
+  # MacPort
+  /opt/local/include/Ice
   # Test standard installation points: generic symlinks first, then standard dirs, newer first
   /opt/Ice/include/Ice
   /opt/Ice-4/include/Ice
@@ -64,7 +66,7 @@ IF( ICE_HOME_INCLUDE_ICE )
     MESSAGE( STATUS "Setting ICE_HOME to ${ICE_HOME}" )
 
     # include and lib dirs are easy
-    SET( ICE_INCLUDE_DIR ${ICE_HOME}/include )
+    SET( ICE_INCLUDE_DIR ${ICE_HOME}/include ${ICE_HOME}/share/ice/slice )
     SET( ICE_LIBRARY_DIR ${ICE_HOME}/lib )
     
     # debian package splits off slice files into a different place
