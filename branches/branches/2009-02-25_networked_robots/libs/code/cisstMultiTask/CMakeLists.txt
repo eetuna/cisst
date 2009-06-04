@@ -179,7 +179,7 @@ foreach(slice_file ${SLICE_FILES})
 
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
     
-  set(EXTRA_SOURCE_FILES ${ICE_SOURCE_FILES} ${GENERATED_CPP_FILE})
+  set(EXTRA_SOURCE_FILES ${EXTRA_SOURCE_FILES} ${GENERATED_CPP_FILE})
 
 endforeach(slice_file ${SLICE_FILES})
 
