@@ -24,13 +24,6 @@ SET(DEPENDENCIES
     cisstOSAbstraction
     )
 
-#SET_SOURCE_FILES_PROPERTIES(
-#    mtsDeviceInterfaceProxy.h PROPERTIES GENERATED TRUE
-#    mtsDeviceInterfaceProxy.cpp PROPERTIES GENERATED TRUE
-#    mtsTaskManagerProxy.h PROPERTIES GENERATED TRUE
-#    mtsTaskManagerProxy.cpp PROPERTIES GENERATED TRUE
-#    )
-
 # all source files
 SET(SOURCE_FILES
     mtsVector.cpp
@@ -59,12 +52,10 @@ SET(SOURCE_FILES
     mtsTaskFromCallback.cpp
 
     mtsTaskManager.cpp
-    # mtsTaskManagerProxy.cpp
     mtsTaskManagerProxyClient.cpp
     mtsTaskManagerProxyServer.cpp
     
     mtsDeviceInterface.cpp
-    # mtsDeviceInterfaceProxy.cpp
     mtsDeviceInterfaceProxyClient.cpp
     mtsDeviceInterfaceProxyServer.cpp
 
@@ -101,7 +92,6 @@ SET(HEADER_FILES
 
     mtsExport.h
     mtsForwardDeclarations.h
-
     
     mtsDevice.h
 
@@ -126,12 +116,10 @@ SET(HEADER_FILES
     mtsProxyBaseServer.h
     
     mtsTaskManager.h
-    # mtsTaskManagerProxy.h
     mtsTaskManagerProxyClient.h
     mtsTaskManagerProxyServer.h
         
     mtsDeviceInterface.h
-    # mtsDeviceInterfaceProxy.h
     mtsDeviceInterfaceProxyClient.h
     mtsDeviceInterfaceProxyServer.h
     
@@ -172,23 +160,17 @@ foreach(slice_file ${SLICE_FILES})
   add_custom_command(
     OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask/${slice_file}.h
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    # first run slice2cpp
     COMMAND ${ICE_HOME}/bin/slice2cpp
     ARGS    -I${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
+    # then create a directory to copy the header file
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E make_directory ${cisst_BINARY_DIR}/libs/include/cisstMultiTask
+    # and finally copy the header file
     COMMAND ${CMAKE_COMMAND}
     ARGS -E copy_if_different ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask
     COMMENT "Compiling ${slice_file}.ice"
   )
-
-# ${CMAKE_COMMAND}
-               # ARGS -E copy_if_different
-               # \"${LIBRARY_MAIN_HEADER_TMP}\"
-               # \"${LIBRARY_MAIN_HEADER}\") 
-               
-  ADD_CUSTOM_COMMAND(
-    TARGET ${GENERATED_H_FILE}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask)
-
 
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
     
@@ -196,9 +178,14 @@ foreach(slice_file ${SLICE_FILES})
 
 endforeach(slice_file ${SLICE_FILES})
 
+# Finally add the library
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
- TARGET_LINK_LIBRARIES( cisstMultiTask 
-    optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
-    optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
+# if Ice is used, link against the required libraries
+target_link_libraries(
+  cisstMultiTask 
+  optimized ${ICE_LIBRARY_DIR}/Ice.lib
+  debug ${ICE_LIBRARY_DIR}/Iced.lib
+  optimized ${ICE_LIBRARY_DIR}/IceUtil.lib
+  debug ${ICE_LIBRARY_DIR}/IceUtild.lib)
 
