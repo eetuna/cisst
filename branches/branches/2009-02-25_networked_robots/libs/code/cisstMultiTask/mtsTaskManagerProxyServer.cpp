@@ -88,7 +88,7 @@ void mtsTaskManagerProxyServer::OnThreadEnd()
 {
     mtsTaskManagerProxyServerLogger("Proxy server ends.");
 
-    mtsProxyBaseServer::OnThreadEnd();
+    BaseType::OnThreadEnd();
 
     Sender->Destroy();
 }

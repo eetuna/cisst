@@ -162,6 +162,10 @@ SET(SLICE_FILES
   mtsTaskManagerProxy
 )
 
+foreach(ice_include_dir ${ICE_INCLUDE_DIR})
+  set(SLICE_OPTIONS ${SLICE_OPTIONS} -I${ice_include_dir})
+endforeach(ice_include_dir)
+
 FOREACH(slice_file ${SLICE_FILES})
   message ("slice ${slice_file}")
   set(GENERATED_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.cpp")
@@ -180,10 +184,10 @@ FOREACH(slice_file ${SLICE_FILES})
   ADD_CUSTOM_COMMAND(
   OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE}
  #           ${cisst_SOURCE_DIR}/libs/include/${slice_file}.h
-   DEPENDS ${ICE_SLICE_DIR}/Ice/Identity.ice 
+ #   DEPENDS ${ICE_SLICE_DIR}/Ice/Identity.ice 
    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
    COMMAND ${ICE_HOME}/bin/slice2cpp
-   ARGS    -I${ICE_SLICE_DIR} -I${ICE_INCLUDE_DIR} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
+   ARGS    -I${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
    COMMENT "Compiling ${slice_file}.ice"
    )
     

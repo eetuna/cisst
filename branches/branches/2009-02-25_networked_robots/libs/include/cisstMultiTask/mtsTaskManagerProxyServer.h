@@ -47,6 +47,8 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     friend class TaskManagerServerI;
 
 public:
+    typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
+
     /*! Container: (in: task name, out: task information) */
     typedef std::map<std::string, mtsTaskGlobal> GlobalTaskMapType;
 
@@ -135,10 +137,10 @@ protected:
     void OnThreadEnd();
     
 public:
-    mtsTaskManagerProxyServer(const std::string& adapterName,
-                              const std::string& endpointInfo,
-                              const std::string& communicatorID)
-        : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID)
+    mtsTaskManagerProxyServer(const std::string & adapterName,
+                              const std::string & endpointInfo,
+                              const std::string & communicatorID):
+        BaseType(adapterName, endpointInfo, communicatorID)
     {}
     ~mtsTaskManagerProxyServer();
 

@@ -473,8 +473,8 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
     {\
         mtsDeviceInterfaceProxy::Command##_commandType##Seq::const_iterator it \
-            = spec.commands##_commandType##.begin();\
-        for (; it != spec.commands##_commandType##.end(); ++it) {\
+            = spec.commands##_commandType.begin();                  \
+        for (; it != spec.commands##_commandType.end(); ++it) {     \
             commandName = it->Name;\
             commandSID = it->CommandSID;
 

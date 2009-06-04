@@ -38,7 +38,10 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
-protected:
+ public:
+    typedef mtsProxyBaseClient<mtsTask> BaseType;
+
+ protected:
     /*! Send thread set up. */
     class TaskInterfaceClientI;
     typedef IceUtil::Handle<TaskInterfaceClientI> TaskInterfaceClientIPtr;
@@ -47,10 +50,10 @@ protected:
     /*! TaskInterfaceServer proxy */
     mtsDeviceInterfaceProxy::TaskInterfaceServerPrx TaskInterfaceServer;
 
-public:
-    mtsDeviceInterfaceProxyClient(const std::string& propertyFileName, 
-                                const std::string& propertyName) 
-        : mtsProxyBaseClient(propertyFileName, propertyName)
+ public:
+    mtsDeviceInterfaceProxyClient(const std::string & propertyFileName, 
+                                  const std::string & propertyName) :
+        BaseType(propertyFileName, propertyName)
     {}
     ~mtsDeviceInterfaceProxyClient() {}
 

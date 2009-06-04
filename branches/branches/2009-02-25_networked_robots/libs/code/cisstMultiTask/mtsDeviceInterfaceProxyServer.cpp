@@ -91,7 +91,7 @@ void mtsDeviceInterfaceProxyServer::OnThreadEnd()
 {
     mtsDeviceInterfaceProxyServerLogger("Proxy server ends.");
 
-    mtsProxyBaseServer::OnThreadEnd();
+    BaseType::OnThreadEnd();
 
     Sender->Destroy();
 }
@@ -132,16 +132,16 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaceSpecification(
         // 3) Extract all the information on registered command objects, events, and so on.
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType = \
-            providedInterface->Commands##_commandType##.GetMap().begin();\
+            providedInterface->Commands##_commandType.GetMap().begin();\
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType##End = \
-            providedInterface->Commands##_commandType##.GetMap().end();\
+            providedInterface->Commands##_commandType.GetMap().end();\
         for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
             mtsDeviceInterfaceProxy::Command##_commandType##Info info;\
-            info.Name = iterator##_commandType##->second->GetName();\
-            info.CommandSID = reinterpret_cast<int>(iterator##_commandType##->second);
+            info.Name = iterator##_commandType->second->GetName();\
+            info.CommandSID = reinterpret_cast<int>(iterator##_commandType->second);
 
 #define ITERATE_INTERFACE_END( _commandType ) \
-            providedInterfaceSpec.commands##_commandType##.push_back(info);\
+            providedInterfaceSpec.commands##_commandType.push_back(info);\
         }
 
         // 3-1) Command: Void

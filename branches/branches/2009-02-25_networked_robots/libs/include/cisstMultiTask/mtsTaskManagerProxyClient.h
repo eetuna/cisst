@@ -37,6 +37,9 @@ http://www.cisst.org/cisst/license.txt.
 class mtsTaskManager;
 
 class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTaskManager> {
+ public:
+    typedef mtsProxyBaseClient<mtsTaskManager> BaseType;
+
 protected:
     /*! Send thread.
         We need a seperate send thread because the bi-directional communication is
@@ -50,9 +53,9 @@ protected:
     mtsTaskManagerProxy::TaskManagerServerPrx TaskManagerServer;
 
 public:
-    mtsTaskManagerProxyClient(const std::string& propertyFileName, 
-                              const std::string& propertyName)
-        : mtsProxyBaseClient(propertyFileName, propertyName)
+    mtsTaskManagerProxyClient(const std::string & propertyFileName, 
+                              const std::string & propertyName):
+        BaseType(propertyFileName, propertyName)
     {}
     ~mtsTaskManagerProxyClient() {}
 

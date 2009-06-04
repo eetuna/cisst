@@ -92,7 +92,7 @@ void mtsDeviceInterfaceProxyClient::OnThreadEnd()
 {
     mtsDeviceInterfaceProxyClientLogger("Proxy client ends.");
 
-    mtsProxyBaseClient::OnThreadEnd();
+    BaseType::OnThreadEnd();
 
     Sender->Destroy();
 }

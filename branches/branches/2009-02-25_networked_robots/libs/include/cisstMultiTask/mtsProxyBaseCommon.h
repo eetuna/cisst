@@ -89,21 +89,21 @@ protected:
     ProxyType ProxyTypeMember;
 
     //--------------------- Auxiliary Class Definition ----------------------//
-    template<class _ArgumentType>
+    template<class __ArgumentType>
     class ThreadArguments {
     public:
         _ArgumentType * argument;
         mtsProxyBaseCommon * proxy;
-        void (*Runner)(ThreadArguments<_ArgumentType> *);
+        void (*Runner)(ThreadArguments<__ArgumentType> *);
     };
 
-    template<class _ArgumentType>
+    template<class __ArgumentType>
     class ProxyWorker {
     public:
         ProxyWorker(void) {}
         virtual ~ProxyWorker(void) {}
 
-        void * Run(ThreadArguments<_ArgumentType> * arguments) {
+        void * Run(ThreadArguments<__ArgumentType> * arguments) {
             arguments->Runner(arguments);
             return 0;
         }
@@ -164,10 +164,13 @@ protected:
 public:
     mtsProxyBaseCommon(const std::string& propertyFileName, 
                        const std::string& propertyName,
-                       const ProxyType proxyType)
-        : InitSuccessFlag(false), IceCommunicator(NULL), GUID(""),
-          PropertyFileName(propertyFileName), PropertyName(propertyName),
-          ProxyTypeMember(proxyType)
+                       const ProxyType proxyType):
+        InitSuccessFlag(false),
+        IceCommunicator(NULL),
+        GUID(""),
+        PropertyFileName(propertyFileName),
+        PropertyName(propertyName),
+        ProxyTypeMember(proxyType)
     {
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
     }

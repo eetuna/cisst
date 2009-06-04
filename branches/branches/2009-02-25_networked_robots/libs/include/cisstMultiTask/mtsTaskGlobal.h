@@ -59,10 +59,11 @@ class mtsTaskGlobal {
         ProvidedInterfaceInfo(const std::string & adapterName,
                               const std::string & endpointInfo,
                               const std::string & communicatorID,
-                              const std::string & interfaceName)
-            : AdapterName(adapterName), EndpointInfo(endpointInfo), 
-              CommunicatorID(communicatorID), 
-              GenericInterfaceInfo(interfaceName)
+                              const std::string & interfaceName):
+            GenericInterfaceInfo(interfaceName),
+            AdapterName(adapterName),
+            EndpointInfo(endpointInfo), 
+            CommunicatorID(communicatorID)
         {}
 
         /*! Initialize this object. */

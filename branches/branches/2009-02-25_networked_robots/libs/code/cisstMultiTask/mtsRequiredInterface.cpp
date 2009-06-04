@@ -240,9 +240,8 @@ void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
     EventHandlersWrite.ToStream(outputStream);
 }
 
-void mtsRequiredInterface::GetCommandProxyInfo(
-    std::map<std::string, unsigned int> & commandProxyInfoMap,
-    const CommandProxyType commandProxyType)
+void mtsRequiredInterface::GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap,
+                                               const CommandProxyType commandProxyType)
 {
     commandProxyInfoMap.clear();
 

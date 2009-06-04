@@ -44,7 +44,10 @@ class CISST_EXPORT mtsDeviceInterfaceProxyServer : public mtsProxyBaseServer<mts
 
     friend class TaskInterfaceServerI;
 
-protected:
+ public:
+    typedef mtsProxyBaseServer<mtsTask> BaseType;
+
+ protected:
     //--------------------------- Protected member data ---------------------//
     /*! Definitions for send thread */
     class TaskInterfaceServerI;
@@ -80,10 +83,10 @@ protected:
     
 public:
     mtsDeviceInterfaceProxyServer(const std::string& adapterName,
-                                const std::string& endpointInfo,
-                                const std::string& communicatorID)
-        : mtsProxyBaseServer(adapterName, endpointInfo, communicatorID),
-          ConnectedTask(0)
+                                  const std::string& endpointInfo,
+                                  const std::string& communicatorID):
+        BaseType(adapterName, endpointInfo, communicatorID),
+        ConnectedTask(0)
     {}
 
     ~mtsDeviceInterfaceProxyServer();

@@ -69,9 +69,6 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     /*! A string identifying the 'Name' of the device. */
     std::string Name;
 
-    /*! True if this object is local: used for proxy-related processing. */
-    bool LocalObject;
-
     /*! Default constructor. Protected to prevent creation of a device
       without a name. */
     mtsDevice(void) {}
@@ -79,8 +76,11 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
  public:
     
     /*! Default constructor. Sets the name. */
-    mtsDevice(const std::string & deviceName)
-        : Name(deviceName), ProvidedInterfaces("ProvidedInterface"), LocalObject(true) {}
+    mtsDevice(const std::string & deviceName):
+        Name(deviceName),
+        ProvidedInterfaces("ProvidedInterface"),
+        LocalObject(true)
+    {}
     
     /*! Default destructor. Does nothing. */
     virtual ~mtsDevice() {}
@@ -129,6 +129,9 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     typedef mtsMap<mtsDeviceInterface> ProvidedInterfacesMapType;
     ProvidedInterfacesMapType ProvidedInterfaces;
     //@}
+
+    /*! True if this object is local: used for proxy-related processing. */
+    bool LocalObject;
 
  public:
 
