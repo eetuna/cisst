@@ -490,6 +490,7 @@ const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterfac
 }
 */
 
+
 //void mtsTask::InvokeExecuteCommandVoid(const int commandSID) const
 //{
 //    CMN_ASSERT(ProxyClient);
@@ -523,6 +524,7 @@ const bool mtsTask::SendCommandProxyInfo(mtsRequiredInterface * requiredInterfac
 ////#define ADD_COMMAND_PROXY_INFO( _commandType )\
 ////    it = info.CommandProxy##_commandType##Seq.begin();\
 ////    for (; it != info.CommandProxy##_commandType##Seq.end(); ++it) {\
+
 ////        commandID = it->ID;\
 ////        commandName = it->Name;\
 ////        CMN_ASSERT(providedInterface->AddCommand##_commandType##ProxyMapElement(commandID, commandName));\

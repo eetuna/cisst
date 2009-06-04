@@ -154,7 +154,6 @@ SET(ICE_RESOURCE_FILES
 #
 # ICE
 #
-#INCLUDE_DIRECTORIES(${${PROJECT_NAME}_SOURCE_DIR}/include/${LIBRARY})
 SOURCE_GROUP(Resources FILES ${ICE_RESOURCE_FILES})
 
 SET(SLICE_FILES
@@ -166,90 +165,26 @@ foreach(ice_include_dir ${ICE_INCLUDE_DIR})
   set(SLICE_OPTIONS ${SLICE_OPTIONS} -I${ice_include_dir})
 endforeach(ice_include_dir)
 
-FOREACH(slice_file ${SLICE_FILES})
+foreach(slice_file ${SLICE_FILES})
   message ("slice ${slice_file}")
   set(GENERATED_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.cpp")
   set(GENERATED_H_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.h")
-  #GET_SOURCE_FILE_PROPERTY(FOO ${GENERATED_CPP_FILE} GENERATED)
-  #message ("foo ${FOO}")
-  #SET_SOURCE_FILES_PROPERTIES(${GENERATED_CPP_FILE} GENERATED)
-  #GET_SOURCE_FILE_PROPERTY(FOO ${GENERATED_CPP_FILE} GENERATED)
-  #message ("foo ${FOO}")
 
-#  add_custom_target("${CMAKE_CURRENT_BINARY_DIR}/${GENERATED_CPP_FILE}"
-# "${ICE_HOME}/bin/slice2cpp -I${ICE_SLICE_DIR} -I${ICE_INCLUDE_DIR} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice"
-# DEPENDS   "${ICE_SLICE_DIR}/Ice/Identity.ice"
-#)
+  add_custom_command(
+    OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${ICE_HOME}/bin/slice2cpp
+    ARGS    -I${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
+    COMMENT "Compiling ${slice_file}.ice"
+  )
 
-  ADD_CUSTOM_COMMAND(
-  OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE}
- #           ${cisst_SOURCE_DIR}/libs/include/${slice_file}.h
- #   DEPENDS ${ICE_SLICE_DIR}/Ice/Identity.ice 
-   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-   COMMAND ${ICE_HOME}/bin/slice2cpp
-   ARGS    -I${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
-   COMMENT "Compiling ${slice_file}.ice"
-   )
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
     
-    SET(ICE_SOURCE_FILES ${ICE_SOURCE_FILES} ${GENERATED_CPP_FILE})
-    message("------------${CMAKE_CURRENT_BINARY_DIR}")
-    message("dir ${GENERATED_CPP_FILE}")
-     
-#   ADD_DEPENDENCIES(${LIBRARY} ${slice_file}.cpp)
+  set(EXTRA_SOURCE_FILES ${ICE_SOURCE_FILES} ${GENERATED_CPP_FILE})
 
-  #SET_SOURCE_FILES_PROPERTIES(${GENERATED_CPP_FILE} PROPERTIES GENERATED 1)
-ENDFOREACH(slice_file ${SLICE_FILES})
-
-   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
-   ADD_LIBRARY(cisstMultiTaskIce ${ICE_SOURCE_FILES})
-# ADD_CUSTOM_TARGET(BUILD_ICE ALL 
-  # DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsDeviceInterfaceProxy.cpp ${cisst_SOURCE_DIR}/libs/include/mtsDeviceInterfaceProxy.h
-  # DEPENDS ${cisst_SOURCE_DIR}/libs/code/mtsTaskManagerProxy.cpp     ${cisst_SOURCE_DIR}/libs/include/mtsTaskManagerProxy.h
-# )
-
-# FOREACH(slice_file ${SLICE_FILES})
-  # SET(UNIX_STYLE_PATH_BINARY "${cisst_BINARY_DIR}/libs/code/cisstMultiTask/")
-  # SET(UNIX_STYLE_PATH_SOURCE_CODE "${cisst_SOURCE_DIR}/libs/code/cisstMultiTask/")
-  # SET(UNIX_STYLE_PATH_SOURCE_INCLUDE "${cisst_SOURCE_DIR}/libs/include/cisstMultiTask/")
-  # IF(WIN32)
-    # SET(WINDOW_STYLE_PATH_BINARY ${UNIX_STYLE_PATH_BINARY})
-    # SET(WINDOW_STYLE_PATH_SOURCE_CODE ${UNIX_STYLE_PATH_SOURCE_CODE})
-    # SET(WINDOW_STYLE_PATH_SOURCE_INCLUDE ${UNIX_STYLE_PATH_SOURCE_INCLUDE})
-    # FILE(TO_NATIVE_PATH ${UNIX_STYLE_PATH_BINARY} WINDOW_STYLE_PATH_BINARY)
-# FILE(TO_NATIVE_PATH ${UNIX_STYLE_PATH_SOURCE_CODE} WINDOW_STYLE_PATH_SOURCE_CODE)
-# FILE(TO_NATIVE_PATH ${UNIX_STYLE_PATH_SOURCE_INCLUDE} WINDOW_STYLE_PATH_SOURCE_INCLUDE)
-    # ADD_CUSTOM_COMMAND(TARGET BUILD_ICE
-      # POST_BUILD
-      # COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\" copy \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\" \"${WINDOW_STYLE_PATH_SOURCE_CODE}\"
-      # COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\" copy \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\" \"${WINDOW_STYLE_PATH_SOURCE_INCLUDE}\"
-      # COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\" del \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.cpp\"
-      # COMMAND if exist \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\" del \"${WINDOW_STYLE_PATH_BINARY}${slice_file}.h\"
-    # )
-  # ELSE(WIN32)
-    # #### TODO: ADD FILE_EXIST CHECK ROUTINE FOR UNIX, MAC, ETC. ####
-    # ADD_CUSTOM_COMMAND(TARGET BUILD_ICE
-      # POST_BUILD
-      # COMMAND copy ${UNIX_STYLE_PATH_BINARY}${slice_file}.cpp ${UNIX_STYLE_PATH_SOURCE_CODE}
-      # COMMAND copy ${UNIX_STYLE_PATH_BINARY}${slice_file}.h ${UNIX_STYLE_PATH_SOURCE_INCLUDE}
-      # COMMAND del ${UNIX_STYLE_PATH_BINARY}${slice_file}.cpp
-      # COMMAND del ${UNIX_STYLE_PATH_BINARY}${slice_file}.h
-    # )
-  # ENDIF(WIN32)
-# ENDFOREACH(slice_file ${SLICE_FILES})
-
-# ADD_DEPENDENCIES(${LIBRARY} BUILD_ICE)
-
-
+endforeach(slice_file ${SLICE_FILES})
 
 # LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
                 # optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
-
-
-
-# FOREACH(slice_file ${SLICE_FILES})
-     
-# ADD_DEPENDENCIES(${LIBRARY} cisstMultiTaskIce)
-
-# ENDFOREACH(slice_file ${SLICE_FILES})

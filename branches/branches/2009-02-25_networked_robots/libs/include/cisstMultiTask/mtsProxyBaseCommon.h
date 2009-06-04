@@ -165,12 +165,12 @@ public:
     mtsProxyBaseCommon(const std::string& propertyFileName, 
                        const std::string& propertyName,
                        const ProxyType proxyType):
+        ProxyTypeMember(proxyType),
         InitSuccessFlag(false),
-        IceCommunicator(NULL),
-        GUID(""),
         PropertyFileName(propertyFileName),
         PropertyName(propertyName),
-        ProxyTypeMember(proxyType)
+        IceCommunicator(NULL),
+        GUID("")
     {
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
     }

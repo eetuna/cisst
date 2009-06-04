@@ -23,7 +23,8 @@
 # - SOURCE_FILES is a list of files, without any path (absolute or relative)
 # - HEADER_FILES is a list of files, without any path (absolute or relative)
 # - HEADERS is a list of header files with a full path (e.g. configured header)
-#
+# - EXTRA_SOURCE_FILES is a list of source files with full path
+
 # Invoke this macro from within a library's CMakeLists.txt to add that library
 # to a larger project.  The name of the project is given as a macro argument.
 #
@@ -44,6 +45,7 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   FOREACH(file ${SOURCE_FILES})
     SET(SOURCES ${SOURCES} ${${PROJECT_NAME}_SOURCE_DIR}/code/${LIBRARY}/${file})
   ENDFOREACH(file)
+  SET(SOURCES ${SOURCES} ${EXTRA_SOURCE_FILES})
 
 
   # Build header list with full path and generate a main header file for the library
