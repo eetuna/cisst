@@ -170,12 +170,25 @@ foreach(slice_file ${SLICE_FILES})
   set(GENERATED_H_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.h")
 
   add_custom_command(
-    OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE}
+    OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask/${slice_file}.h
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${ICE_HOME}/bin/slice2cpp
     ARGS    -I${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy_if_different ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask
     COMMENT "Compiling ${slice_file}.ice"
   )
+
+# ${CMAKE_COMMAND}
+               # ARGS -E copy_if_different
+               # \"${LIBRARY_MAIN_HEADER_TMP}\"
+               # \"${LIBRARY_MAIN_HEADER}\") 
+               
+  ADD_CUSTOM_COMMAND(
+    TARGET ${GENERATED_H_FILE}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask)
+
 
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
     
@@ -183,7 +196,9 @@ foreach(slice_file ${SLICE_FILES})
 
 endforeach(slice_file ${SLICE_FILES})
 
-# LINK_LIBRARIES( optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
-                # optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
-
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
+
+ TARGET_LINK_LIBRARIES( cisstMultiTask 
+    optimized ${ICE_LIBRARY_DIR}/Ice.lib        debug ${ICE_LIBRARY_DIR}/Iced.lib
+    optimized ${ICE_LIBRARY_DIR}/IceUtil.lib    debug ${ICE_LIBRARY_DIR}/IceUtild.lib )
+
