@@ -147,7 +147,7 @@ void displayTaskOmniClient::Button2EventHandler(const prmEventButton & buttonEve
 }
 
 /*
-  Author(s):  Anton Deguet, Peter Kazanzides 
+  Author(s):  Anton Deguet, Peter Kazanzides, Min Yang Jung
   Created on: 2008-04-08
 
   (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
