@@ -83,4 +83,17 @@ IF( ICE_HOME_INCLUDE_ICE )
     MESSAGE( STATUS "Setting ICEUTIL_HOME to ${ICEUTIL_HOME}" )
     MESSAGE( STATUS "Setting ICE_LIBRARY_DIR to ${ICE_LIBRARY_DIR}" )
 
+    # try to figure if the ice library is libIce or libZeroCIce on Mac OS with MacPort
+    if(APPLE)
+        find_library(ICE_LIBRARY_NAME_ZEROC_ICE NAMES ZeroCIce PATHS ${ICE_LIBRARY_DIR} NO_DEFAULT_PATH)
+	if(ICE_LIBRARY_NAME_ZEROC_ICE)
+            set(ICE_LIBRARY_NAME ZeroCIce)
+	else(ICE_LIBRARY_NAME_ZEROC_ICE)
+	    set(ICE_LIBRARY_NAME Ice)
+	endif(ICE_LIBRARY_NAME_ZEROC_ICE)
+    else(APPLE)
+        set(ICE_LIBRARY_NAME Ice)
+    endif(APPLE)
+    message(STATUS "Ice library name is ${ICE_LIBRARY_NAME}")
+
 ENDIF( ICE_HOME_INCLUDE_ICE )

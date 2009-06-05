@@ -182,10 +182,15 @@ endforeach(slice_file ${SLICE_FILES})
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
 # if Ice is used, link against the required libraries
-target_link_libraries(
-  cisstMultiTask 
-  optimized ${ICE_LIBRARY_DIR}/Ice.lib
-  debug ${ICE_LIBRARY_DIR}/Iced.lib
-  optimized ${ICE_LIBRARY_DIR}/IceUtil.lib
-  debug ${ICE_LIBRARY_DIR}/IceUtild.lib)
+link_directories(${ICE_LIBRARY_DIR})
+
+if(WIN32)
+  target_link_libraries(
+    cisstMultiTask 
+    optimized Ice debug Iced
+    optimized IceUtil debug IceUtild)
+else(WIN32)
+  target_link_libraries(
+    cisstMultiTask ${ICE_LIBRARY_NAME} IceUtil) 
+endif(WIN32)
 
