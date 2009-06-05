@@ -74,8 +74,8 @@ public:
         if (data2 == NULL)
             return mtsCommandBase::BAD_INPUT;
         
-        static int cnt = 0;
-        std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
+        //static int cnt = 0;
+        //std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
 
         ProvidedInterfaceProxy->InvokeExecuteCommandQualifiedRead(
             CommandSID, *data1, *data2);

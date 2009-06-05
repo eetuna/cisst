@@ -40,6 +40,7 @@ public:
     typedef mtsCommandReadBase BaseType;
 
 protected:
+    std::stringstream StreamBufferOutput;
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
@@ -60,35 +61,21 @@ public:
           BaseType(name)
     {}
 
-    /*! The destructor. Does nothing */
-    virtual ~mtsCommandReadProxy() {}
+    virtual ~mtsCommandReadProxy()
+    {}
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(cmnGenericObject & argument) {
-        static int cnt = 0;
-        std::cout << "mtsCommandReadProxy called (" << ++cnt << "): " << Name << std::endl;
-
-        //// serialization
-        //std::stringstream ss;
-        //cmnSerializer serialization(ss);
-        //serialization.Serialize(argument);
-        //std::string dummy = ss.str();
         std::string returnValue;
-        
-        //std::cout << "#################### " << s.size() << std::endl;
 
         ProvidedInterfaceProxy->InvokeExecuteCommandReadSerialized(CommandSID, returnValue);
 
-        // deserialization
-        std::stringstream StreamBufferOutput;
+        // Deserialization
+        StreamBufferOutput.str("");
         StreamBufferOutput << returnValue;
+
         cmnDeSerializer DeSerializer(StreamBufferOutput);
-
-        cmnGenericObject * obj = 0;
-        //obj = DeSerializer.DeSerialize();
         DeSerializer.DeSerialize(argument);
-
-        //argument = *obj;
 
         return mtsCommandBase::DEV_OK;
     }
@@ -96,7 +83,8 @@ public:
     /*! For debugging. Generate a human readable output for the
         command object */
     void ToStream(std::ostream & outputStream) const {
-        // TODO
+        outputStream << "mtsCommandReadProxy: ";
+        outputStream << "commandID is " << CommandSID << std::endl;
     }
 
     /*! Return a pointer on the argument prototype */

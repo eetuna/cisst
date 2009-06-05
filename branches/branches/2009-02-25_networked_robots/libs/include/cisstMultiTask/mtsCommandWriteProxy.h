@@ -39,23 +39,35 @@ public:
     typedef mtsCommandWriteBase BaseType;
 
 protected:
+    std::stringstream StreamBufferInput;
+    cmnSerializer * Serializer;
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
     const int CommandSID;
 
+    void Initialize() {
+        if (!Serializer) {
+            Serializer = new cmnSerializer(StreamBufferInput);
+        }
+    }
+
 public:
     mtsCommandWriteProxy(const int commandSID, 
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
-    {}
+    {
+        Initialize();
+    }
 
     mtsCommandWriteProxy(const int commandSID,
                          mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name)
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
-    {}
+    {
+        Initialize();
+    }
 
     /*! The destructor. Does nothing */
     virtual ~mtsCommandWriteProxy() 
@@ -63,18 +75,10 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
-        static int cnt = 0;
-        std::cout << "mtsCommandWriteProxy called (" << ++cnt << "): " << Name 
-            << ", " << argument << std::endl;
-        
-        std::stringstream ss;
-        cmnSerializer serialization(ss);
-        serialization.Serialize(argument);
-        std::string s = ss.str();
+        Serializer->Serialize(argument);
+        std::string streamData = StreamBufferInput.str();
 
-        //std::cout << "[arg: " << argument << " #### " << s << " ### : " << s.size() << std::endl;
-        
-        ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, s);
+        ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, streamData);
 
         return mtsCommandBase::DEV_OK;
     }
@@ -82,7 +86,8 @@ public:
     /*! For debugging. Generate a human readable output for the
       command object */
     void ToStream(std::ostream & outputStream) const {
-        // TODO
+        outputStream << "mtsCommandWriteProxy: ";
+        outputStream << "commandID is " << CommandSID << std::endl;
     }
 
     /*! Return a pointer on the argument prototype */

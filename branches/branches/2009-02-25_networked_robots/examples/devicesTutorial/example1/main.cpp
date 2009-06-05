@@ -69,7 +69,7 @@ int main(void)
     // cleanup
     taskManager->KillAll();
 
-    osaSleep(PeriodDisplay * 2);
+    osaSleep(2 * PeriodDisplay * cmn_ms);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
 
     return 0;

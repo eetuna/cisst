@@ -6,7 +6,7 @@
 #include <cisstOSAbstraction.h>
 #include <cisstDevices.h>
 
-#include "displayTask.h"
+#include "displayTaskOmniServer.h"
 #include "displayUI.h"
 
 using namespace std;
@@ -32,31 +32,34 @@ int main(void)
     // create our two tasks
     const long PeriodDisplay = 10; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    displayTask * displayTaskObject =
-        new displayTask("DISP", PeriodDisplay * cmn_ms);
+    displayTaskOmniServer * displayTaskObject =
+        new displayTaskOmniServer("DISP", PeriodDisplay * cmn_ms);
     displayTaskObject->Configure();
     taskManager->AddTask(displayTaskObject);
 
 #if (CISST_DEV_HAS_SENSABLEHD == ON)
     // name as defined in Sensable configuration
     std::string omniName("Omni1");
-    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");
+    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");    
 	taskManager->AddTask(robotObject);
-
-    // connect the tasks
-    taskManager->Connect("DISP", "Robot", "Omni", omniName);
-    // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
-    taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
 #endif
 
-#if 0
-    taskManager->GlobalTaskManagerIP = "10.164.200.79";
-    taskManager->ServerTaskIP = "10.162.34.64";
+    taskManager->GlobalTaskManagerIP = "localhost";
+    taskManager->ServerTaskIP = "localhost";
 
     // Set the type of task manager either as a server or as a client.
     // mtsTaskManager::SetTaskManagerType() should be called before
     // executing mtsTaskManager::Connect()
     taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
+
+    osaSleep(1 * cmn_s);
+
+    // Connect a required interface with a provided interface locally.
+#if (CISST_DEV_HAS_SENSABLEHD == ON)
+    // connect the tasks
+    taskManager->Connect("DISP", "LocalRobot", "Omni", omniName);
+    //taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
+    taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
 #endif
 
     // generate a nice tasks diagram
@@ -79,7 +82,7 @@ int main(void)
     // cleanup
     taskManager->KillAll();
 
-    osaSleep(PeriodDisplay * 2);
+    osaSleep(2 * PeriodDisplay * cmn_ms);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
 
     return 0;

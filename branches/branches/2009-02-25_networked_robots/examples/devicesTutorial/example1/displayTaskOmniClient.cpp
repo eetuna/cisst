@@ -1,45 +1,45 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: displayTask4GTM.cpp 332 2009-05-11 00:57:59Z mjung5 $ */
+/* $Id: displayTask.cpp 346 2009-05-12 06:54:49Z adeguet1 $ */
 
 
-#include "displayTask4GTM.h"
-#include "displayUI.h"
+#include "displayTaskOmniClient.h"
+#include "displayUIOmniClient.h"
 
-CMN_IMPLEMENT_SERVICES(displayTask4GTM);
+CMN_IMPLEMENT_SERVICES(displayTaskOmniClient);
 
-displayTask4GTM::displayTask4GTM(const std::string & taskName, double period):
+displayTaskOmniClient::displayTaskOmniClient(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 500),
     ExitFlag(false)
 {
     // to communicate with the interface of the resource
- //   mtsRequiredInterface * requiredInterface = AddRequiredInterface("Robot");
-	//if (requiredInterface) {
- //       // bound the mtsFunction to the command provided by the interface 
- //       requiredInterface->AddFunction("GetPositionCartesian", GetCartesianPosition, mtsRequired);
- //       requiredInterface->AddFunction("GetVelocityCartesian", GetCartesianVelocity, mtsOptional);
- //       requiredInterface->AddFunction("GetPositionJoint", GetJointPosition, mtsOptional);
- //   }
- //   // to communicate with the interface of the resource
+    mtsRequiredInterface * requiredInterface = AddRequiredInterface("Robot");
+	if (requiredInterface) {
+        // bound the mtsFunction to the command provided by the interface 
+        requiredInterface->AddFunction("GetPositionCartesian", GetCartesianPosition, mtsRequired);
+        //requiredInterface->AddFunction("GetVelocityCartesian", GetCartesianVelocity, mtsOptional);
+        //requiredInterface->AddFunction("GetPositionJoint", GetJointPosition, mtsOptional);
+    }
+    // to communicate with the interface of the resource
  //   requiredInterface = AddRequiredInterface("Button1");
-	//if (requiredInterface) {
- //       requiredInterface->AddEventHandlerWrite(&displayTask4GTM::Button1EventHandler, this,
+	//if (requiredInterface) { */
+ //       requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button1EventHandler, this,
  //                                               "Button", prmEventButton());
  //   }
  //   requiredInterface = AddRequiredInterface("Button2");
 	//if (requiredInterface) {
- //       requiredInterface->AddEventHandlerWrite(&displayTask4GTM::Button2EventHandler, this,
+ //       requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button2EventHandler, this,
  //                                               "Button", prmEventButton());
  //   }
 }
 
-void displayTask4GTM::Configure(const std::string & CMN_UNUSED(filename))
+void displayTaskOmniClient::Configure(const std::string & CMN_UNUSED(filename))
 {
     // define some values, ideally these come from a configuration
     // file and then configure the user interface
 }
 
-void displayTask4GTM::Startup(void) 
+void displayTaskOmniClient::Startup(void) 
 {
     // find the interface which has been connected to our resource port
     //mtsDeviceInterface * providedInterface = GetProvidedInterfaceFor("Robot");
@@ -82,18 +82,18 @@ void displayTask4GTM::Startup(void)
     UI.show(0, NULL);
 }
 
-void displayTask4GTM::Run(void)
+void displayTaskOmniClient::Run(void)
 {
     // process events
     this->ProcessQueuedEvents();
     // get the current state index to display it in the UI
-    //const mtsStateIndex now = StateTable.GetIndexWriter();
-    //// get the data from the sine wave generator task
-    //GetCartesianPosition(CartesianPosition);
-    //UI.X->value(CartesianPosition.Position().Translation().X());
-    //UI.Y->value(CartesianPosition.Position().Translation().Y());
-    //UI.Z->value(CartesianPosition.Position().Translation().Z());
-    //// get the position with respect to the latest set reference
+    const mtsStateIndex now = StateTable.GetIndexWriter();
+    // get the data from the sine wave generator task
+    GetCartesianPosition(CartesianPosition);
+    UI.X->value(CartesianPosition.Position().Translation().X());
+    UI.Y->value(CartesianPosition.Position().Translation().Y());
+    UI.Z->value(CartesianPosition.Position().Translation().Z());
+    // get the position with respect to the latest set reference
     //if (this->TipTransformationPointer != 0) {
     //    this->TipWrtReference = prmWRTReference(this->TipTransformationPointer,
     //                                            this->ReferenceTransformationPointer);
@@ -120,15 +120,15 @@ void displayTask4GTM::Run(void)
     //    UI.NewReference = false;
     //}
     // log some extra information
-    //CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
-    //                 << " - Data: " << CartesianPosition << std::endl;
+    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
+                     << " - Data: " << CartesianPosition << std::endl;
     // update the UI, process UI events 
     if (Fl::check() == 0) {
         ExitFlag = true;
     }
 }
 
-void displayTask4GTM::Button1EventHandler(const prmEventButton & buttonEvent)
+void displayTaskOmniClient::Button1EventHandler(const prmEventButton & buttonEvent)
 {
     //if (buttonEvent.Type() == prmEventButton::PRESSED) {
     //    UI.Button1->value(true);
@@ -137,7 +137,7 @@ void displayTask4GTM::Button1EventHandler(const prmEventButton & buttonEvent)
     //}
 }
 
-void displayTask4GTM::Button2EventHandler(const prmEventButton & buttonEvent)
+void displayTaskOmniClient::Button2EventHandler(const prmEventButton & buttonEvent)
 {
     //if (buttonEvent.Type() == prmEventButton::PRESSED) {
     //    UI.Button2->value(true);

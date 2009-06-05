@@ -6,8 +6,8 @@
 #include <cisstOSAbstraction.h>
 #include <cisstDevices.h>
 
-#include "displayTask.h"
-#include "displayUI.h"
+#include "displayTaskOmniClient.h"
+#include "displayUIOmniClient.h"
 
 using namespace std;
 
@@ -27,19 +27,23 @@ int main(void)
     // create our two tasks
     const long PeriodDisplay = 10; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    displayTask * displayTaskObject =
-        new displayTask("DISP", PeriodDisplay * cmn_ms);
-    displayTaskObject->Configure();
+    displayTaskOmniClient * displayTaskObject =
+        new displayTaskOmniClient("DISP", PeriodDisplay * cmn_ms);
     taskManager->AddTask(displayTaskObject);
 
-    taskManager->GlobalTaskManagerIP = "10.164.200.79";
-    taskManager->ServerTaskIP = "10.162.34.64";
+    taskManager->GlobalTaskManagerIP = "127.0.0.1";
+    taskManager->ServerTaskIP = "127.0.0.1";
 
     taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
-    osaSleep(0.5 * cmn_s);
+    osaSleep(1 * cmn_s);
 
     // connect the tasks
+#if (CISST_DEV_HAS_SENSABLEHD == ON)
+    // connect the tasks
     taskManager->Connect("DISP", "Robot", "Omni", "Omni1");
+    // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
+    //taskManager->Connect("DISP", "Button2", "Omni", "Omni1" + "Button2");
+#endif
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
@@ -56,7 +60,7 @@ int main(void)
     // cleanup
     taskManager->KillAll();
 
-    osaSleep(PeriodDisplay * 2);
+    osaSleep(2 * PeriodDisplay * cmn_ms);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
 
     return 0;

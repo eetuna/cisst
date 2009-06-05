@@ -6,8 +6,8 @@
 #include <cisstOSAbstraction.h>
 #include <cisstDevices.h>
 
-#include "displayTask4GTM.h"
-#include "displayUI.h"
+#include "displayTaskGlobalTaskManager.h"
+#include "displayUIGlobalTaskManager.h"
 
 using namespace std;
 
@@ -29,9 +29,8 @@ int main(void)
     // create our two tasks
     const long PeriodDisplay = 10; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    displayTask4GTM * displayTaskObject =
-        new displayTask4GTM("DISP", PeriodDisplay * cmn_ms);
-    displayTaskObject->Configure();
+    displayTaskGlobalTaskManager * displayTaskObject =
+        new displayTaskGlobalTaskManager("DISP", PeriodDisplay * cmn_ms);
     taskManager->AddTask(displayTaskObject);
     taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_SERVER);
 
@@ -50,7 +49,7 @@ int main(void)
     // cleanup
     taskManager->KillAll();
 
-    osaSleep(PeriodDisplay * 2);
+    osaSleep(2 * PeriodDisplay * cmn_ms);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
 
     return 0;
