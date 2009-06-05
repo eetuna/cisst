@@ -50,22 +50,5 @@ ADD_EXECUTABLE(multiTaskTutorialExample1-2
 # this program 
 TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${FLTK_LIBRARIES})
 
-# TODO: DEBUG/RELEASE VERSION???
-#TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${ICE_LIBRARY_DIR}/Iced.lib)
-#TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${ICE_LIBRARY_DIR}/IceUtild.lib)
-
 # link with the cisst libraries
 CISST_REQUIRES("multiTaskTutorialExample1-2" "cisstCommon;cisstOSAbstraction;cisstMultiTask")
-
-IF(CISST_HAS_LINUX_RTAI)
-  TARGET_LINK_LIBRARIES(multiTaskTutorialExample1-2 ${RTAI_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-ENDIF(CISST_HAS_LINUX_RTAI)
-
-# For apple applications with GUI
-IF(APPLE)
-  FIND_PROGRAM(APPLE_REZ Rez /Developer/Tools)
-  ADD_CUSTOM_COMMAND(TARGET multiTaskTutorialExample1-2
-                     POST_BUILD
-                     COMMAND ${APPLE_REZ}
-                     ARGS ${FLTK_INCLUDE_DIR}/FL/mac.r Carbon.r -o ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/multiTaskTutorialExample1-2)
-ENDIF(APPLE)
