@@ -58,8 +58,8 @@ void displayTask::Run(void)
     const mtsStateIndex now = StateTable.GetIndexWriter();
     // get the data from the sine wave generator task
     //Generator.CommandVoid();
-    //Generator.GetData(Data);
-    //Generator.GetStateIndex(StateIndex);
+    Generator.GetData(Data);
+    Generator.GetStateIndex(StateIndex);
     UI.Data->value(Data.Data);
 #ifdef CISST_GETVECTOR
     Generator.GetDataVector(StateIndex, DataVec);
@@ -68,7 +68,7 @@ void displayTask::Run(void)
     if (UI.AmplitudeChanged) {
         // retrieve the new amplitude and send it to the sine task
         AmplitudeData.Data = UI.Amplitude->value();
-        //Generator.SetAmplitude(AmplitudeData);
+        Generator.SetAmplitude(AmplitudeData);
         UI.AmplitudeChanged = false;
         CMN_LOG_CLASS(7) << "Run: " << now.Ticks()
                          << " - Amplitude: " << AmplitudeData.Data << std::endl;

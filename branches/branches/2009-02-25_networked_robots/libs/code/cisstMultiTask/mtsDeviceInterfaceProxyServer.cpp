@@ -36,6 +36,8 @@ mtsDeviceInterfaceProxyServer::~mtsDeviceInterfaceProxyServer()
 
 void mtsDeviceInterfaceProxyServer::OnClose()
 {
+    delete Serializer;
+    delete DeSerializer;
 }
 
 void mtsDeviceInterfaceProxyServer::Start(mtsTask * callingTask)
@@ -230,7 +232,7 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedRead(const int comman
     argument2 = argument2Wrapper.Data;
 }
 
-void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int commandSID, const std::string argument) const
+void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int commandSID, const std::string argument)
 {
     mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandSID);
     CMN_ASSERT(commandWrite);
@@ -238,17 +240,15 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int comm
     static char buf[100];
     sprintf(buf, "ExecuteCommandWriteSerialized: %d bytes received", argument.size());
     Logger->trace("TIServer", buf);
+
+    // Deserialization
+    DeSerializationBuffer.str("");
+    DeSerializationBuffer << argument;
     
-    std::stringstream ss;
-    ss << argument;
-    cmnDeSerializer DeSerializer(ss);
-
-    cmnGenericObject * obj = 0;
-    obj = DeSerializer.DeSerialize();
-
+    cmnGenericObject * obj = DeSerializer->DeSerialize();
     commandWrite->Execute(*obj);
 
-    std::cout << *obj << std::endl;
+    //std::cout << *obj << std::endl;
 }
 
 void mtsDeviceInterfaceProxyServer::ExecuteCommandReadSerialized(const int commandSID, std::string & argument)
@@ -256,28 +256,15 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandReadSerialized(const int comma
     mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);    
     CMN_ASSERT(commandRead);
 
-    // Deserialization
-    //static char buf[100];
-    //sprintf(buf, "ExecuteCommandReadSerialized: %d bytes received", argument.size());
-    //Logger->trace("TIServer", buf);
-    //
-    //std::stringstream ss;
-    //ss << argument;
-    //cmnDeSerializer DeSerializer(ss);
-
-    //cmnGenericObject * obj = 0;
-    //obj = DeSerializer.DeSerialize();
-
     // Create a placeholder
     cmnGenericObject * obj = commandRead->GetArgumentClassServices()->Create();
     {
         commandRead->Execute(*obj);
 
         // Serialization
-        std::stringstream StreamBufferOutput;
-        cmnSerializer serialization(StreamBufferOutput);
-        serialization.Serialize(*obj);
-        std::string s = StreamBufferOutput.str();
+        SerializationBuffer.str("");
+        Serializer->Serialize(*obj);
+        std::string s = SerializationBuffer.str();
 
         argument = s;
     }

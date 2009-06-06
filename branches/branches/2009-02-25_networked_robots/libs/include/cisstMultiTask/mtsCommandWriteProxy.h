@@ -38,36 +38,24 @@ class mtsCommandWriteProxy: public mtsCommandWriteBase {
 public:
     typedef mtsCommandWriteBase BaseType;
 
-protected:
-    std::stringstream StreamBufferInput;
-    cmnSerializer * Serializer;
+protected:    
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
     const int CommandSID;
-
-    void Initialize() {
-        if (!Serializer) {
-            Serializer = new cmnSerializer(StreamBufferInput);
-        }
-    }
-
+    
 public:
     mtsCommandWriteProxy(const int commandSID, 
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
-    {
-        Initialize();
-    }
+    {}
 
     mtsCommandWriteProxy(const int commandSID,
                          mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name)
         : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
-    {
-        Initialize();
-    }
+    {}
 
     /*! The destructor. Does nothing */
     virtual ~mtsCommandWriteProxy() 
@@ -75,10 +63,7 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
-        Serializer->Serialize(argument);
-        std::string streamData = StreamBufferInput.str();
-
-        ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, streamData);
+        ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, argument);
 
         return mtsCommandBase::DEV_OK;
     }

@@ -39,8 +39,7 @@ public:
     //typedef cmnDouble ArgumentType;
     typedef mtsCommandReadBase BaseType;
 
-protected:
-    std::stringstream StreamBufferOutput;
+protected:    
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
@@ -66,17 +65,7 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(cmnGenericObject & argument) {
-        std::string returnValue;
-
-        ProvidedInterfaceProxy->InvokeExecuteCommandReadSerialized(CommandSID, returnValue);
-
-        // Deserialization
-        StreamBufferOutput.str("");
-        StreamBufferOutput << returnValue;
-
-        cmnDeSerializer DeSerializer(StreamBufferOutput);
-        DeSerializer.DeSerialize(argument);
-
+        ProvidedInterfaceProxy->InvokeExecuteCommandReadSerialized(CommandSID, argument);
         return mtsCommandBase::DEV_OK;
     }
     

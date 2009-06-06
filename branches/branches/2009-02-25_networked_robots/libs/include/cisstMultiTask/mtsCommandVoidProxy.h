@@ -70,11 +70,7 @@ public:
 
     /*! The execute method. */
     BaseType::ReturnType Execute() {
-        static int cnt = 0;
-        std::cout << "mtsCommandVoidProxy called (" << ++cnt << "): " << Name << std::endl;
-
         ProvidedInterfaceProxy->InvokeExecuteCommandVoid(CommandSID);
-
         return BaseType::DEV_OK;
     }
 

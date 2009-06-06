@@ -98,6 +98,18 @@ void mtsDeviceInterfaceProxyClient::OnThreadEnd()
 }
 
 //-------------------------------------------------------------------------
+//  Serialization and Deserialization
+//-------------------------------------------------------------------------
+void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
+                                              std::string & serializedData)
+{
+    SerializationBuffer.str("");    
+    Serializer->Serialize(argument);
+
+    serializedData = SerializationBuffer.str();
+}
+
+//-------------------------------------------------------------------------
 //  Send Methods
 //-------------------------------------------------------------------------
 const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaceSpecification(
@@ -165,18 +177,29 @@ void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedRead(
 //
 //  Command Object with Serialization
 //
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandWriteSerialized(const int commandSID, const std::string & argument) const
+void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandWriteSerialized(const int commandSID, const cmnGenericObject & argument)
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");
+
+    // Serialization
+    std::string serializedData;
+    Serialize(argument, serializedData);
     
-    TaskInterfaceServer->ExecuteCommandWriteSerialized(commandSID, argument);
+    TaskInterfaceServer->ExecuteCommandWriteSerialized(commandSID, serializedData);
 }
 
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandReadSerialized(const int commandSID, std::string & argument)
+void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandReadSerialized(const int commandSID, cmnGenericObject & argument)
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandReadSerialized");
-    
-    TaskInterfaceServer->ExecuteCommandReadSerialized(commandSID, argument);
+
+    std::string serializedData;
+
+    TaskInterfaceServer->ExecuteCommandReadSerialized(commandSID, serializedData);
+
+    // Deserialization
+    DeSerializationBuffer.str("");
+    DeSerializationBuffer << serializedData;
+    DeSerializer->DeSerialize(argument);
 }
 
 void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2)

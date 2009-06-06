@@ -48,7 +48,6 @@ class CISST_EXPORT mtsDeviceInterfaceProxyServer : public mtsProxyBaseServer<mts
     typedef mtsProxyBaseServer<mtsTask> BaseType;
 
  protected:
-    //--------------------------- Protected member data ---------------------//
     /*! Definitions for send thread */
     class TaskInterfaceServerI;
     typedef IceUtil::Handle<TaskInterfaceServerI> TaskInterfaceServerIPtr;
@@ -56,13 +55,23 @@ class CISST_EXPORT mtsDeviceInterfaceProxyServer : public mtsProxyBaseServer<mts
 
     mtsTask * ConnectedTask;
     
-    //-------------------------- Protected methods --------------------------//
     /*! Resource clean-up */
     void OnClose();
 
-    //----------------------- Proxy Implementation --------------------------//
+    //-------------------------------------------------------------------------
+    //  Serialization and Deserialization
+    //-------------------------------------------------------------------------
+    /*! Buffers for serialization and deserialization. */
+    std::stringstream SerializationBuffer;
+    std::stringstream DeSerializationBuffer;
 
-    //---------------------------- Proxy Support ----------------------------//
+    /*! Serializer and DeSerializer. */
+    cmnSerializer * Serializer;
+    cmnDeSerializer * DeSerializer;
+
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation
+    //-------------------------------------------------------------------------
     /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
         Sender = new TaskInterfaceServerI(IceCommunicator, Logger, this);
@@ -87,13 +96,18 @@ public:
                                   const std::string& communicatorID):
         BaseType(adapterName, endpointInfo, communicatorID),
         ConnectedTask(0)
-    {}
+    {
+        Serializer = new cmnSerializer(SerializationBuffer);
+        DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
+    }
 
     ~mtsDeviceInterfaceProxyServer();
     
     void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
 
-    //----------------------------- Proxy Support ---------------------------//
+    //-------------------------------------------------------------------------
+    //  Proxy Support
+    //-------------------------------------------------------------------------
     /*! Update the information of all tasks. */
     const bool GetProvidedInterfaceSpecification(
         ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
@@ -108,7 +122,7 @@ public:
     void ExecuteCommandRead(const int commandSID, double & argument);
     void ExecuteCommandQualifiedRead(const int commandSID, const double argument1, double & argument2);
 
-    void ExecuteCommandWriteSerialized(const int commandSID, const std::string argument) const;
+    void ExecuteCommandWriteSerialized(const int commandSID, const std::string argument);
     void ExecuteCommandReadSerialized(const int commandSID, std::string & argument);
     void ExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string argument1, std::string & argument2);
 

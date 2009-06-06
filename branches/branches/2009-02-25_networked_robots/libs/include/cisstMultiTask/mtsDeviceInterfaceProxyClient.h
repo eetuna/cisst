@@ -50,12 +50,33 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     /*! TaskInterfaceServer proxy */
     mtsDeviceInterfaceProxy::TaskInterfaceServerPrx TaskInterfaceServer;
 
+    //-------------------------------------------------------------------------
+    //  Serialization and Deserialization
+    //-------------------------------------------------------------------------
+    /*! Buffers for serialization and deserialization. */
+    std::stringstream SerializationBuffer;
+    std::stringstream DeSerializationBuffer;
+
+    /*! Serializer and DeSerializer. */
+    cmnSerializer * Serializer;
+    cmnDeSerializer * DeSerializer;
+
+    void Serialize(const cmnGenericObject & argument, std::string & serializedData);
+
  public:
     mtsDeviceInterfaceProxyClient(const std::string & propertyFileName, 
                                   const std::string & propertyName) :
         BaseType(propertyFileName, propertyName)
-    {}
-    ~mtsDeviceInterfaceProxyClient() {}
+    {
+        Serializer = new cmnSerializer(SerializationBuffer);
+        DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
+    }
+
+    ~mtsDeviceInterfaceProxyClient()
+    {
+        delete Serializer;
+        delete DeSerializer;
+    }
 
     /*! Create a proxy object and a send thread. */
     void CreateProxy() {
@@ -93,8 +114,8 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     void InvokeExecuteCommandRead(const int commandSID, cmnDouble & argument);
     void InvokeExecuteCommandQualifiedRead(const int commandSID, const cmnDouble & argument1, cmnDouble & argument2);
 
-    void InvokeExecuteCommandWriteSerialized(const int commandSID, const std::string & argument) const;
-    void InvokeExecuteCommandReadSerialized(const int commandSID, std::string & argument);
+    void InvokeExecuteCommandWriteSerialized(const int commandSID, const cmnGenericObject & argument);
+    void InvokeExecuteCommandReadSerialized(const int commandSID, cmnGenericObject & argument);
     void InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
