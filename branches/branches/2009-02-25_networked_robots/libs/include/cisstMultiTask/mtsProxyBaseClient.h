@@ -74,11 +74,21 @@ protected:
             this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization success");
             return;
         } catch (const Ice::Exception& e) {
-            this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
-            this->Logger->trace("mtsProxyBaseClient", e.what());
+            if (this->Logger) {
+                this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
+                this->Logger->trace("mtsProxyBaseClient", e.what());
+            } else {
+                std::cout << "mtsProxyBaseClient: Client proxy initialization error." << std::endl;
+                std::cout << "mtsProxyBaseClient: " << e.what() << std::endl;
+            }
         } catch (const char * msg) {
-            this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
-            this->Logger->trace("mtsProxyBaseClient", msg);
+            if (this->Logger) {
+                this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
+                this->Logger->trace("mtsProxyBaseClient", msg);
+            } else {
+                std::cout << "mtsProxyBaseClient: Client proxy initialization error." << std::endl;
+                std::cout << "mtsProxyBaseClient: " << msg << std::endl;
+            }
         }
 
         if (!this->InitSuccessFlag) {
