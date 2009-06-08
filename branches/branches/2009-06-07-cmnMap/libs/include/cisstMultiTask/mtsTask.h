@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaMutex.h>
+
 #include <cisstMultiTask/mtsStateTable.h>
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
@@ -40,9 +41,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
-
-#include <set>
-#include <map>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -113,10 +111,10 @@ protected:
     void *ThreadStartData;
 
     /*! The return value for RunInternal. */
-    void *retValue;
+    void * ReturnValue;
 
     /*! Typedef for a map of connected interfaces (receiving commands). */
-    typedef mtsMap<mtsRequiredInterface> RequiredInterfacesMapType;
+    typedef cmnNamedMap<mtsRequiredInterface> RequiredInterfacesMapType;
     
     RequiredInterfacesMapType RequiredInterfaces; // Interfaces we can send commands to
 
@@ -172,7 +170,7 @@ protected:
     /*! Save any 'user data' that was passed to the thread start routine. */
     virtual void SaveThreadStartData(void *data) { ThreadStartData = data; }
 
-    virtual void SetThreadReturnValue(void *ret) { retValue = ret; }
+    virtual void SetThreadReturnValue(void *ret) { ReturnValue = ret; }
 
 public:
     /********************* Task constructor and destructor *****************/

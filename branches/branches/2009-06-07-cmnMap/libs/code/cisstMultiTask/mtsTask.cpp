@@ -93,7 +93,7 @@ void mtsTask::CleanupInternal() {
     // Call user-supplied cleanup function
 	this->Cleanup();
     // Perform Cleanup on all interfaces provided
-    ProvidedInterfaces.Cleanup();
+    ProvidedInterfaces.ForEachVoid(&mtsDeviceInterface::Cleanup);
     // StateChange should be locked by Kill().
 	TaskState = FINISHED;
     StateChange.Unlock();
@@ -155,7 +155,7 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
 	StateTable(sizeStateTable),
     OverranPeriod(false),
     ThreadStartData(0),
-    retValue(0),
+    ReturnValue(0),
     RequiredInterfaces("RequiredInterfaces")
 {
 }

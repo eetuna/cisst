@@ -56,6 +56,7 @@ SET(HEADER_FILES
     cmnLODOutputMultiplexer.h
     cmnMultiplexerStreambuf.h
     cmnMultiplexerStreambufProxy.h
+    cmnNamedMap.h
     cmnObjectRegister.h
     cmnOutputMultiplexer.h
     cmnPortability.h

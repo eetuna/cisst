@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaMutex.h>
+
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
 #include <cisstMultiTask/mtsCommandRead.h>
@@ -109,8 +110,8 @@ class CISST_EXPORT mtsTaskInterface: public mtsDeviceInterface {
     ThreadResourcesMapType ThreadResourcesMap;
 
 public:
-    typedef mtsMap<mtsCommandQueuedVoidBase> CommandQueuedVoidMapType;
-    typedef mtsMap<mtsCommandQueuedWriteBase> CommandQueuedWriteMapType;
+    typedef cmnNamedMap<mtsCommandQueuedVoidBase> CommandQueuedVoidMapType;
+    typedef cmnNamedMap<mtsCommandQueuedWriteBase> CommandQueuedWriteMapType;
 
     CommandQueuedVoidMapType CommandsQueuedVoid;
     CommandQueuedWriteMapType CommandsQueuedWrite;

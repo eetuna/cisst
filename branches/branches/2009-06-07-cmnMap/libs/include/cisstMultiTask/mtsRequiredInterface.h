@@ -24,12 +24,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstCommon/cmnNamedMap.h>
 
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
-#include <cisstMultiTask/mtsMap.h>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -177,24 +177,24 @@ protected:
     };
         
     /*! Typedef for a map of name of zero argument command and name of command. */
-    typedef mtsMap<CommandInfo<mtsCommandVoidBase> > CommandPointerVoidMapType;
+    typedef cmnNamedMap<CommandInfo<mtsCommandVoidBase> > CommandPointerVoidMapType;
     CommandPointerVoidMapType CommandPointersVoid; // Void (command)
     
     /*! Typedef for a map of name of one argument command and name of command. */
-    typedef mtsMap<CommandInfo<mtsCommandReadBase> > CommandPointerReadMapType;
+    typedef cmnNamedMap<CommandInfo<mtsCommandReadBase> > CommandPointerReadMapType;
     CommandPointerReadMapType CommandPointersRead; // Read (state read)
     
     /*! Typedef for a map of name of one argument command and name of command. */
-    typedef mtsMap<CommandInfo<mtsCommandWriteBase> > CommandPointerWriteMapType;
+    typedef cmnNamedMap<CommandInfo<mtsCommandWriteBase> > CommandPointerWriteMapType;
     CommandPointerWriteMapType CommandPointersWrite; // Write (command)
     
     /*! Typedef for a map of name of two argument command and name of command. */
-    typedef mtsMap<CommandInfo<mtsCommandQualifiedReadBase> > CommandPointerQualifiedReadMapType;
+    typedef cmnNamedMap<CommandInfo<mtsCommandQualifiedReadBase> > CommandPointerQualifiedReadMapType;
     CommandPointerQualifiedReadMapType CommandPointersQualifiedRead; // Qualified Read (conversion, read at time index, ...)
     
     /*! Typedef for a map of event name and event handler (command object). */
-    typedef mtsMap<mtsCommandVoidBase> EventHandlerVoidMapType;
-    typedef mtsMap<mtsCommandWriteBase> EventHandlerWriteMapType;
+    typedef cmnNamedMap<mtsCommandVoidBase> EventHandlerVoidMapType;
+    typedef cmnNamedMap<mtsCommandWriteBase> EventHandlerWriteMapType;
     EventHandlerVoidMapType EventHandlersVoid;
     EventHandlerWriteMapType EventHandlersWrite;
 
