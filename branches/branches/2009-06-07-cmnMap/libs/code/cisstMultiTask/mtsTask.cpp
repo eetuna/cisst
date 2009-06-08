@@ -156,7 +156,7 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
     OverranPeriod(false),
     ThreadStartData(0),
     ReturnValue(0),
-    RequiredInterfaces("RequiredInterfaces")
+    RequiredInterfaces("RequiredInterfaces", *this)
 {
 }
 

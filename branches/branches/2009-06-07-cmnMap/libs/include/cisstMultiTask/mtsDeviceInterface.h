@@ -121,12 +121,12 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
                        mtsDevice * device):
         Name(interfaceName),
         Device(device),
-        CommandsVoid("CommandVoid"),
-        CommandsRead("CommandRead"),
-        CommandsWrite("CommandWrite"),
-        CommandsQualifiedRead("CommandQualifiedRead"),
-        EventVoidGenerators("EventVoidGenerator"),
-        EventWriteGenerators("EventWriteGenerator")
+        CommandsVoid("CommandsVoid", *this),
+        CommandsRead("CommandsRead", *this),
+        CommandsWrite("CommandsWrite", *this),
+        CommandsQualifiedRead("CommandsQualifiedRead", *this),
+        EventVoidGenerators("EventVoidGenerators", *this),
+        EventWriteGenerators("EventWriteGenerators", *this)
     {}
 
     /*! Default destructor. Does nothing. */

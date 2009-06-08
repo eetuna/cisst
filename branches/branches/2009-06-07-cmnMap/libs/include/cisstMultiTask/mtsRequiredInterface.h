@@ -101,7 +101,7 @@ protected:
         Could use a boolean (useMbox) for last parameter or delete it completely, and decide
         whether or not to allocate a mailbox based on dynamic type of device.
     */
-    mtsRequiredInterface(const std::string & interfaceName, mtsMailBox *mbox = 0);
+    mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mailBox = 0);
 
     /*! Default destructor. */
     virtual ~mtsRequiredInterface();
@@ -216,10 +216,10 @@ public:
 
     template <class __classType>
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*method)(void),
-                                                __classType * classInstantiation,
-                                               const std::string & eventName,
-                                               bool queued = true);
-
+                                                    __classType * classInstantiation,
+                                                    const std::string & eventName,
+                                                    bool queued = true);
+    
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (*function)(void),
                                                     const std::string & eventName,
                                                     bool queued = true);
@@ -236,9 +236,9 @@ public:
 
 template <class __classType>
 inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (__classType::*method)(void),
-                                                                 __classType * classInstantiation,
-                                                                 const std::string & eventName,
-                                                                 bool queued) {
+                                                                      __classType * classInstantiation,
+                                                                      const std::string & eventName,
+                                                                      bool queued) {
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidMethod<__classType>(method, classInstantiation, eventName);
     if (queued) {
         if (MailBox)
@@ -252,8 +252,8 @@ inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (__cl
 }
 
 inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (*function)(void),
-                                                                 const std::string & eventName,
-                                                                 bool queued) {
+                                                                      const std::string & eventName,
+                                                                      bool queued) {
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidFunction(function, eventName);
     if (queued) {
         if (MailBox)
@@ -269,10 +269,10 @@ inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (*fun
 
 template <class __classType, class __argumentType>
 inline mtsCommandWriteBase * mtsRequiredInterface::AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
-                                                                   __classType * classInstantiation,
-                                                                   const std::string & eventName,
-                                                                   const __argumentType & argumentModel,
-                                                                   bool queued) {
+                                                                        __classType * classInstantiation,
+                                                                        const std::string & eventName,
+                                                                        const __argumentType & argumentModel,
+                                                                        bool queued) {
     mtsCommandWriteBase * actualCommand = new mtsCommandWrite<__classType, __argumentType>
                                           (method, classInstantiation, eventName, argumentModel);
     if (queued) {

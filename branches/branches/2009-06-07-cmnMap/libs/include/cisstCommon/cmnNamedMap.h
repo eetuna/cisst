@@ -57,13 +57,19 @@ public:
 protected:
     MapType Map;
     std::string MapName;
+    cmnClassServicesBase * OwnerServices;
+
+    inline cmnClassServicesBase * Services(void) const {
+        return this->OwnerServices;
+    }
 
 public:
     /*! Default constructor, initialize the internal map and set the
       map name to "undefined" */
     cmnNamedMap(void):
         Map(),
-        MapName("undefined")
+        MapName("undefined"),
+        OwnerServices(0)
     {}
 
     /*! Constructor with a map name.  The map name is useful for all
@@ -71,7 +77,19 @@ public:
       (e.g. std::cout) */
     cmnNamedMap(const std::string & mapName):
         Map(),
-        MapName(mapName)
+        MapName(mapName),
+        OwnerServices(0)
+    {}
+
+    /*! Constructor with a map name and a pointer a cmnGenericObject
+      (in most cases, use "*this").  The map name is useful for all
+      human readable log messages as well as string streaming
+      (e.g. std::cout).  The cmnGenericObject level of detail will be
+      used to filter the messages. */
+    cmnNamedMap(const std::string & mapName, const cmnGenericObject & owner):
+        Map(),
+        MapName(mapName),
+        OwnerServices(owner.Services())
     {}
 
     /*! Destructor.  Relies on std::map destructor. */
@@ -80,10 +98,10 @@ public:
     /*! Add an item to the internal map.  The log level of details is used to determine ... */ 
     bool AddItem(const std::string & name,
                  _elementType * item,
-                 cmnLogger::LoDType lod = 99);
+                 cmnLogger::LoDType lod = 5);
 
     /*! Get an item by name */
-    _elementType * GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
+    _elementType * GetItem(const std::string & name, cmnLogger::LoDType lod = 5) const;
 
     /*! List of names used, i.e. list of keys in the map */
     std::vector<std::string> GetNames() const;
@@ -122,9 +140,14 @@ bool cmnNamedMap<_elementType>::AddItem(const std::string & name, _elementType *
     // check if this name already exists
     const typename MapType::const_iterator iterator = Map.find(name);
     if (iterator != Map.end()) {
-        CMN_LOG(lod) << "a " << MapName << " item named " << name
-                     << " already exists." << std::endl;
-        return false;
+        if (this->Services()) {
+            CMN_LOG_CLASS(lod) << "map \"" << MapName << "\" already contains an item named \""
+                               << name << "\"." << std::endl;
+        } else {
+            CMN_LOG(lod) << "map \"" << MapName << "\" already contains an item named \""
+                         << name << "\"." << std::endl;
+        }
+    return false;
     }
     Map[name] = item;
     return true;
@@ -136,7 +159,11 @@ _elementType * cmnNamedMap<_elementType>::GetItem(const std::string & itemName, 
     if (iter != Map.end()) {
         return iter->second;
     } else {
-        CMN_LOG(lod) << "can't find \"" << itemName << "\" in " << MapName << std::endl;
+        if (this->Services()) {
+            CMN_LOG_CLASS(lod) << "can't find \"" << itemName << "\" in map \"" << MapName << "\"" << std::endl;
+        } else {
+            CMN_LOG(lod) << "can't find \"" << itemName << "\" in map \"" << MapName << "\"" << std::endl;
+        }
         return 0;
     }
 }
