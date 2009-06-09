@@ -15,32 +15,30 @@ using namespace std;
 int main(void)
 {
     // log configuration
-    cmnLogger::SetLoD(10);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
     osaThreadedLogFile threadedLog("example1-");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, 10);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
-    cmnClassRegister::SetLoD("sineTask", 10);
-    cmnClassRegister::SetLoD("displayTask", 10);
-    cmnClassRegister::SetLoD("mtsTaskInterface", 10);
-    cmnClassRegister::SetLoD("mtsTaskManager", 10);
+    cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("displayTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create our two tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
     const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    sineTask * sineTaskObject =
-        new sineTask("SIN", PeriodSine);
+    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
     
-    displayTask * displayTaskObject =
-        new displayTask("DISP", PeriodDisplay);
+    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
     displayTaskObject->Configure();
 
     // add the tasks to the task manager
     taskManager->AddTask(sineTaskObject);
-
     taskManager->AddTask(displayTaskObject);
+
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
 
@@ -55,18 +53,14 @@ int main(void)
     taskManager->StartAll();
 
     // wait until the close button of the UI is pressed
-    while (1) {
+    while (!displayTaskObject->IsTerminated()) {
         osaSleep(100.0 * cmn_ms); // sleep to save CPU
-        if (displayTaskObject->GetExitFlag()) {
-            break;
-        }
     }
     // cleanup
     taskManager->KillAll();
 
-    osaSleep(PeriodDisplay * 2);
-    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
-    while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+    osaSleep(PeriodSine * 2);
+    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodSine);
 
     return 0;
 }

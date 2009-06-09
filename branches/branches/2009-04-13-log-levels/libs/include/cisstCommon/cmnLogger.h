@@ -70,7 +70,7 @@ http://www.cisst.org/cisst/license.txt.
   any other output stream:
 
   \code
-  CMN_LOG_CLASS(4) << "This is a message of LoD 4" << this->x << std::endl;
+  CMN_LOG_CLASS_INIT_DEBUG << "This is a message of LoD 4" << this->x << std::endl;
   \endcode
 
   \param lod The log level of detail of the message.
@@ -112,7 +112,7 @@ http://www.cisst.org/cisst/license.txt.
   any other output stream:
 
   \code
-  CMN_LOG(1) << "This is a message of LoD 1" << argc << std::endl;
+  CMN_LOG_INIT_ERROR << "This is a message of LoD 1" << argc << std::endl;
   \endcode
 
   \param lod The log level of detail of the message.
@@ -144,7 +144,7 @@ http://www.cisst.org/cisst/license.txt.
 
   For example:
   \code
-  CMN_LOG(1) << CMN_LOG_DETAILS << "Error occurs" << std::endl;
+  CMN_LOG_INIT_ERROR << CMN_LOG_DETAILS << "Error occurs" << std::endl;
   \endcode
 
   For any error with a very common message, this helps the programmer
