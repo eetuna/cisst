@@ -102,7 +102,7 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     std::stringstream StringStreamBufferForSerialization;
 
     /*! Serializer for binary logging. DeSerializer is used only at  
-        ConvertBinaryLogFileIntoPlainText() method so we don't define it here. */
+        ConvertBinaryToText() method so we don't define it here. */
     cmnSerializer * Serializer;
 
     /*! Performance measurement variables */
@@ -174,7 +174,7 @@ public:
     }
 
     /*! Convert a binary log file into a plain text one. */
-    bool ConvertBinaryLogFileIntoPlainText(const std::string sourceBinaryLogFileName,
+    bool ConvertBinaryToText(const std::string sourceBinaryLogFileName,
                                            const std::string targetPlainTextLogFileName);
 
     /*! Get the name of log file currently being written. */

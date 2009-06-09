@@ -123,9 +123,9 @@ int main(void)
 
 #ifdef DATA_COLLECTION_BINARY
     /* In case of binary log file, you can use the method 
-       mtsCollector::ConvertBinaryLogFileIntoPlainText() to convert a binary log file into
+       mtsCollector::ConvertBinaryToText() to convert a binary log file into
        a plain text (ASCII) file. */
-    if (!Collector->ConvertBinaryLogFileIntoPlainText(
+    if (!Collector->ConvertBinaryToText(
         Collector->GetLogFileName(), Collector->GetLogFileName() + ".converted.txt" )) 
     {
         cout << " Conversion failed." << std::endl;

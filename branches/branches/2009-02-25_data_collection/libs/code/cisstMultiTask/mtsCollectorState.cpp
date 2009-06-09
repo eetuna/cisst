@@ -412,7 +412,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     return true;
 }
 
-bool mtsCollectorState::ConvertBinaryLogFileIntoPlainText(
+bool mtsCollectorState::ConvertBinaryToText(
     const std::string sourceBinaryLogFileName, const std::string targetPlainTextLogFileName)
 {
     // Try to open a binary log file (source).
