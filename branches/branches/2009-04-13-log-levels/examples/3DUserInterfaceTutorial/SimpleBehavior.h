@@ -22,27 +22,28 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisst3DUserInterface.h>
 
-class CExampleBehavior : public ui3BehaviorBase
+class SimpleBehavior: public ui3BehaviorBase
 {
 public:
-    CExampleBehavior(const std::string & name, ui3Manager * manager);
-    ~CExampleBehavior();
+    SimpleBehavior(const std::string & name, ui3Manager * manager);
+    ~SimpleBehavior();
 
-    void Startup(void);
-    void Cleanup(void);
+    void Startup(void) {}
+    void Cleanup(void) {}
     void ConfigureMenuBar(void);
     bool RunForeground(void);
     bool RunBackground(void);
     bool RunNoInput(void);
-    void Configure(const std::string & configFile);
-    bool SaveConfiguration(const std::string & configFile);
+    void OnQuit(void);
+    void OnStart(void);
+    void Configure(const std::string & CMN_UNUSED(configFile)) {}
+    bool SaveConfiguration(const std::string & CMN_UNUSED(configFile)) { return true; }
     inline ui3VisibleObject * GetVisibleObject(void) {
         return this->VisibleObject;
     }
 
 protected:
-    void FirstButtonCallback(void);
-    void RightMasterButtonCallback(const prmEventButton & event);
+    void PrimaryMasterButtonCallback(const prmEventButton & event);
     StateType PreviousState;
     bool PreviousMaM;
     vctDouble3 Position, PreviousCursorPosition;
@@ -51,4 +52,3 @@ protected:
 private:
     ui3VisibleObject * VisibleObject;
 };
-

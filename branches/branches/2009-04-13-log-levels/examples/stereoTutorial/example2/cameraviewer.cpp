@@ -190,10 +190,10 @@ public:
 //  CameraViewer  //
 ////////////////////
 
-int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int height)
+int CameraViewer(bool save, bool interpolation, int width, int height)
 {
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(2);
+    svlStreamManager viewer_stream(8);
     svlVideoCaptureSource viewer_source(false);
     svlImageResizer viewer_resizer;
     svlImageSampler viewer_icondrawer;
@@ -211,14 +211,8 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
 
     // setup writer
     if (save == true) {
-        if (viewer_writer.LoadCodecSettings("codec.dat") != SVL_OK) {
-            viewer_writer.DialogCodec();
-            viewer_writer.SetFramerate(static_cast<double>(fps));
-            viewer_writer.SetKeyFrameInteval(std::max(1u, fps / 3));
-        }
-        cout << endl;
         viewer_writer.DialogFilePath();
-        cout << endl;
+        viewer_writer.SetCompressionLevel(1); // 0-9
         viewer_writer.Pause();
     }
 
@@ -244,6 +238,7 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
     }
     viewer_window.SetCallback(&viewer_window_cb);
     viewer_window.SetTitleText("Camera Viewer");
+    viewer_window.EnableTimestampInTitle();
 
     // chain filters to pipeline
     if (viewer_stream.Trunk().Append(&viewer_source) != SVL_OK) goto labError;
@@ -351,7 +346,6 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
 
     // save settings
     viewer_source.SaveSettings("device.dat");
-    if (save == true) viewer_writer.SaveCodecSettings("codec.dat");
 
     // destroy pipeline
     viewer_stream.EmptyFilterList();
@@ -396,13 +390,13 @@ int ParseNumber(char* string, unsigned int maxlen)
 
 int main(int argc, char** argv)
 {
-    cerr << endl << "svlCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
+    cerr << endl << "stereoTutorialCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl;
-    cerr << "Enter 'svlCameraViewer -?' for help." << endl;
+    cerr << "Enter 'stereoTutorialCameraViewer -?' for help." << endl;
 
     //////////////////////////////
     // parsing arguments
-    int i, options, ivalue, width, height, fps;
+    int i, options, ivalue, width, height;
     bool interpolation, save;
 
     options = argc - 1;
@@ -410,7 +404,6 @@ int main(int argc, char** argv)
     width = -1;
     height = -1;
     save = false;
-    fps = 30;
 
     for (i = 1; i <= options; i ++) {
         if (argv[i][0] != '-') continue;
@@ -418,17 +411,16 @@ int main(int argc, char** argv)
         switch (argv[i][1]) {
             case '?':
                 cerr << "Command line format:" << endl;
-                cerr << "     svlCameraViewer [options]" << endl;
+                cerr << "     stereoTutorialCameraViewer [options]" << endl;
                 cerr << "Options:" << endl;
-                cerr << "     -f        Save video file" << endl;
-                cerr << "     -r#       Video file frame rate (frames per second) [default: 30]" << endl;
+                cerr << "     -v        Save video file" << endl;
                 cerr << "     -i        Interpolation ON [default: OFF]" << endl;
                 cerr << "     -w#       Displayed image width" << endl;
                 cerr << "     -h#       Displayed image height" << endl;
                 cerr << "Examples:" << endl;
-                cerr << "     svlCameraViewer" << endl;
-                cerr << "     svlCameraViewer -w800 -h600" << endl;
-                cerr << "     svlCameraViewer -f -i -w1024 -h768" << endl;
+                cerr << "     stereoTutorialCameraViewer" << endl;
+                cerr << "     stereoTutorialCameraViewer -w800 -h600" << endl;
+                cerr << "     stereoTutorialCameraViewer -v -i -w1024 -h768" << endl;
                 return 1;
             break;
 
@@ -436,7 +428,7 @@ int main(int argc, char** argv)
                 interpolation = true;
             break;
 
-            case 'f':
+            case 'v':
                 save = true;
             break;
 
@@ -450,11 +442,6 @@ int main(int argc, char** argv)
                 if (ivalue > 0) height = ivalue;
             break;
 
-            case 'r':
-                ivalue = ParseNumber(argv[i] + 2, 3);
-                if (ivalue > 0) fps = ivalue;
-            break;
-
             default:
                 // NOP
             break;
@@ -464,7 +451,7 @@ int main(int argc, char** argv)
     //////////////////////////////
     // starting viewer
 
-    CameraViewer(save, fps, interpolation, width, height);
+    CameraViewer(save, interpolation, width, height);
 
     cerr << "Quit" << endl;
     return 1;

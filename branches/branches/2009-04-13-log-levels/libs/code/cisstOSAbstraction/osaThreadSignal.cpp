@@ -29,6 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <sys/time.h>
 #include <cmath>
 #include <errno.h>
+#include <string.h>
 #ifdef USE_POSIX_SEMAPHORES
 #include <semaphore.h>
 #endif // USE_POSIX_SEMAPHORES
@@ -230,13 +231,16 @@ struct osaThreadSignalInternals
 osaThreadSignal::osaThreadSignal()
 {
     CMN_ASSERT(sizeof(Internals) >= SizeOfInternals());
+    memset(&Internals, 0, sizeof(Internals));
 
 #if (CISST_OS == CISST_WINDOWS)
 	INTERNALS(hEvent) = CreateEvent(NULL, FALSE, FALSE, NULL);
 #endif
 
 #if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
-    pthread_mutex_init(&INTERNALS(gnuMutex), 0);
+    if (pthread_mutex_init(&INTERNALS(gnuMutex), 0) != 0) {
+        CMN_LOG(1) << "Class osaThreadSignal: error in constructor \"" << strerror(errno) << "\"" << std::endl;
+    }
     pthread_cond_init(&INTERNALS(gnuCondition), 0);
     INTERNALS(Condition_State) = 0;
 #endif

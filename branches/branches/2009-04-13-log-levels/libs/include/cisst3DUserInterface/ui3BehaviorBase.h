@@ -42,6 +42,7 @@ class ui3BehaviorBase: public mtsTaskContinuous
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 
     friend class ui3Manager;
+    friend class ui3MasterArm;
     friend class ui3VideoInterfaceFilter;
 
 private:
@@ -185,7 +186,10 @@ protected:
     /*! Method called when this behavior becomes active, i.e. the user selected it from the previous menu */
     void SetStateForeground(void);
     void SetStateBackground(void);
+    void SetStateIdle(void);
 
+    virtual void OnQuit(void) {};
+    virtual void OnStart(void) {};
 protected:
 
     /*!
@@ -243,8 +247,8 @@ protected:
 
     void SetState(const StateType & newState);
 
-    virtual void RightMasterButtonCallback(const prmEventButton & event);
-    virtual void LeftMasterButtonCallback(const prmEventButton & event);
+    virtual void PrimaryMasterButtonCallback(const prmEventButton & event);
+    virtual void SecondaryMasterButtonCallback(const prmEventButton & event);
 
     /*!
      State variable for storing the current UI state of the behavior.
@@ -256,11 +260,11 @@ protected:
     */
     ui3Manager * Manager;
 
-    mtsFunctionRead RightMasterPositionFunction, LeftMasterPositionFunction;
+    mtsFunctionRead GetPrimaryMasterPosition, GetSecondaryMasterPosition;
 
 private:
     /*! Event triggers, used by ui3Manager only */
-    mtsFunctionWrite RightMasterButtonEvent, LeftMasterButtonEvent;
+    mtsFunctionWrite PrimaryMasterButtonEvent, SecondaryMasterButtonEvent;
 };
 
 
