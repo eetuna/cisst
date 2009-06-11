@@ -68,11 +68,14 @@ void displayTask::Run(void)
     // check if the user has entered a new amplitude in UI
     if (UI.AmplitudeChanged) {
         // retrieve the new amplitude and send it to the sine task
-        AmplitudeData.Data = UI.Amplitude->value();
+        AmplitudeData = UI.Amplitude->value();
+        AmplitudeData.SetTimestamp(mtsTaskManager::GetInstance()->GetTimeServer().GetRelativeTime());
+        AmplitudeData.SetValid(true);
+        // send it
         Generator.SetAmplitude(AmplitudeData);
         UI.AmplitudeChanged = false;
         CMN_LOG_CLASS(7) << "Run: " << now.Ticks()
-                         << " - Amplitude: " << AmplitudeData.Data << std::endl;
+                         << " - Amplitude: " << AmplitudeData << std::endl;
     }
     // log some extra information
     CMN_LOG_CLASS(7) << "Run : " << now.Ticks()

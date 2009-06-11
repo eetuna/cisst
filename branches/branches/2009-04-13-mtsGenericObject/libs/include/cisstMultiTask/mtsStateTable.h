@@ -242,12 +242,12 @@ protected:
 	 */
 	void Advance(void);
 
-    double GetTic() const { return Tic.Data; }
-    double GetToc() const { return Toc.Data; }
+    double GetTic(void) const { return Tic.Data; }
+    double GetToc(void) const { return Toc.Data; }
 
     /*! Return the moving average of the measured period (i.e., average of last
         HistoryLength values). */
-    double GetAveragePeriod() const { return AvgPeriod; }
+    double GetAveragePeriod(void) const { return AvgPeriod; }
 
     /*! For debugging, dumps the current data table to output
       stream. */

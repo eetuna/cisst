@@ -30,8 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 //basic includes
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsStateIndex.h>
+
 #include <cisstParameterTypes/prmTypes.h>
-#include <cisstParameterTypes/prmMacros.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
@@ -82,14 +82,14 @@ public:
 
     /*! Set and Get methods for the the velocity. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmVelocity, Velocity);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmVelocity, Velocity);
     //@}
 
     /*! Set and Get methods for time index.  Current time index, as
     provided for writer of the task providing the velocity
     data. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
     //@}
 
 

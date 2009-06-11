@@ -27,11 +27,11 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmPositionJointGet_h
 #define _prmPositionJointGet_h
 
-//basic includes
+// basic includes
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsStateIndex.h>
+
 #include <cisstParameterTypes/prmTypes.h>
-#include <cisstParameterTypes/prmMacros.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
@@ -82,14 +82,14 @@ public:
 
     /*! Set and Get methods for the the position. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmPosition, Position);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmPosition, Position);
     //@}
 
     /*! Set and Get methods for time index.  Current time index, as
     provided for writer of the task providing the position
     data. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
     //@}
 
 

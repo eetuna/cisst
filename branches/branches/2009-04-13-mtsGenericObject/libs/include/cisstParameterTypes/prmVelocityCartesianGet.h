@@ -31,7 +31,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTransformationManager.h>
 #include <cisstParameterTypes/prmTypes.h>
-#include <cisstParameterTypes/prmMacros.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
@@ -70,24 +69,24 @@ class CISST_EXPORT prmVelocityCartesianGet: public mtsGenericObject
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
     //@}
 
     /*! Set and Get methods for the moving frame for current
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
     //@}
 
     /*! Set and Get method the linear velocity parameter. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianVelocity, VelocityLinear);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianVelocity, VelocityLinear);
     //@}
 
     /*! Set and Get method the angular velocity parameter. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianVelocity, VelocityAngular);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianVelocity, VelocityAngular);
     //@}
 
 
@@ -121,7 +120,7 @@ class CISST_EXPORT prmVelocityCartesianGet: public mtsGenericObject
       provided for writer of the task providing the position
       data. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
+    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
     //@}
 
     

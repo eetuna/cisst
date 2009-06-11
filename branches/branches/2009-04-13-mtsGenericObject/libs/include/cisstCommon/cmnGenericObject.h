@@ -64,18 +64,15 @@ public:
 
       \sa cmnClassRegister cmnClassServiceBase
     */  
-    virtual cmnClassServicesBase* const Services(void) const = 0;
-
+    virtual const cmnClassServicesBase * Services(void) const = 0;
     
     /*! Formatted IO to a string.  This method relies on ToStream
       which should be overloaded for each class. */ 
     std::string ToString(void) const;
-
   
     /*! The default ToStream method returns the name of the class.
       This method must be overloaded to provide a useful message. */
     virtual void ToStream(std::ostream & outputStream) const;
-
 
     /*! Serialize the content of the object without any extra
         information, i.e. no class type nor format version.  The
