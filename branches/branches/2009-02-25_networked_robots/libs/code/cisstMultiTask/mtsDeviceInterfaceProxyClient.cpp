@@ -112,12 +112,12 @@ void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
 //-------------------------------------------------------------------------
 //  Send Methods
 //-------------------------------------------------------------------------
-const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaceSpecification(
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const
+const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaces(
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const
 {
-    GetLogger()->trace("TIClient", ">>>>> SEND: GetProvidedInterfaceSpecification");
+    GetLogger()->trace("TIClient", ">>>>> SEND: GetProvidedInterface");
 
-    return TaskInterfaceServer->GetProvidedInterfaceSpecification(specs);
+    return TaskInterfaceServer->GetProvidedInterfaces(providedInterfaces);
 }
 
 /*

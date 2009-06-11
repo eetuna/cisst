@@ -232,7 +232,7 @@ protected:
 
     /*! Create a provided interface proxy and populate it with the complete specification 
         on the remote provided interface. */
-    bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterfaceSpecification & spec,
+    bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
                                       mtsDevice * serverTaskProxy, mtsTask * clientTask);
 
     /*! Try to connect at server-side. */

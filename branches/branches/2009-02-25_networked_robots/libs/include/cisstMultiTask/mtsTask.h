@@ -399,8 +399,8 @@ public:
 
     /*! Get the information on the provided interface that includes complete representation 
         of it as a set of string. */
-    const bool GetProvidedInterfaceSpecification(
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec);
+    const bool GetProvidedInterfaces(
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
 
     //
     //  For a client task

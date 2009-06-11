@@ -34,10 +34,8 @@ http://www.cisst.org/cisst/license.txt.
 module mtsDeviceInterfaceProxy
 {
 	//-----------------------------------------------------------------------------
-	//	Data Structure Definition
+	//	Command and Event Object Definition
 	//-----------------------------------------------------------------------------
-	
-	//------------------------------------- 1 -----------------------------------//
 	struct CommandVoidInfo { 
 		string Name;
         int CommandSID;
@@ -72,15 +70,15 @@ module mtsDeviceInterfaceProxy
 	};
 	*/
 
-	sequence<CommandVoidInfo>          CommandVoidSeq;
-	sequence<CommandWriteInfo>         CommandWriteSeq;
-	sequence<CommandReadInfo>          CommandReadSeq;
-	sequence<CommandQualifiedReadInfo> CommandQualifiedReadSeq;
-    //sequence<EventVoidInfo> EventVoidSeq;
-    //sequence<EventWriteInfo> EventWriteSeq;
+	sequence<CommandVoidInfo>          CommandVoidSequence;
+	sequence<CommandWriteInfo>         CommandWriteSequence;
+	sequence<CommandReadInfo>          CommandReadSequence;
+	sequence<CommandQualifiedReadInfo> CommandQualifiedReadSequence;
+    //sequence<EventVoidInfo> EventVoidSequence;
+    //sequence<EventWriteInfo> EventWriteSequence;
     
 	// Data structure definition
-	struct ProvidedInterfaceSpecification {
+	struct ProvidedInterface {
 		// Identity
 		string interfaceName;
 		
@@ -90,20 +88,22 @@ module mtsDeviceInterfaceProxy
 		bool providedInterfaceForTask;
 		
 		// Commands
-		CommandVoidSeq          commandsVoid;
-		CommandWriteSeq         commandsWrite;
-		CommandReadSeq          commandsRead;
-		CommandQualifiedReadSeq commandsQualifiedRead;
-		//EventVoidSeq eventsVoid;
-		//EventWriteSeq eventsWrite;
+		CommandVoidSequence          commandsVoid;
+		CommandWriteSequence         commandsWrite;
+		CommandReadSequence          commandsRead;
+		CommandQualifiedReadSequence commandsQualifiedRead;
+		//EventVoidSequence eventsVoid;
+		//EventWriteSequence eventsWrite;
 		
 		// Events: this isn't supported at this time. Event handling will be implemented.
 		//sequence<EventVoidInfo> eventsVoid;
 		//sequence<EventWriteInfo> eventsWrite;
 	};
 	
-	//------------------------------------- 2 -----------------------------------//
-	sequence<ProvidedInterfaceSpecification> ProvidedInterfaceSpecificationSeq;
+	//-----------------------------------------------------------------------------
+	//	Provided Interface Related Definition
+	//-----------------------------------------------------------------------------
+	sequence<ProvidedInterface> ProvidedInterfaceSequence;
 
 	/*! Typedef for a map of (command name, command object id). 
         This map is populated at a client task and is sent to a server task.
@@ -127,9 +127,6 @@ module mtsDeviceInterfaceProxy
 		CommandProxyElementSeq	CommandProxyQualifiedReadSeq;
     };
     
-    //------------------------------------- 3 -----------------------------------//
-    
-    
 	//-----------------------------------------------------------------------------
 	// Interface for Required Interface (Proxy Client)
 	//-----------------------------------------------------------------------------
@@ -145,8 +142,8 @@ module mtsDeviceInterfaceProxy
 		// from clients
 		void AddClient(Ice::Identity ident);
 		
-		["cpp:const"] idempotent bool GetProvidedInterfaceSpecification(
-			out ProvidedInterfaceSpecificationSeq providedInterfaceSpecifications);
+		["cpp:const"] idempotent bool GetProvidedInterfaces(
+			out ProvidedInterfaceSequence providedInterfaces);
 			
 		//void SendCommandProxyInfo(CommandProxyInfo commandProxyInformation);
 		

@@ -437,12 +437,12 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
 //
 //  For a client task
 //
-const bool mtsTask::GetProvidedInterfaceSpecification(
-    mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & spec)
+const bool mtsTask::GetProvidedInterfaces(
+    mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces)
 {
     CMN_ASSERT(ProxyClient);
 
-    return ProxyClient->GetProvidedInterfaceSpecification(spec);
+    return ProxyClient->GetProvidedInterfaces(providedInterfaces);
 }
 
 /*

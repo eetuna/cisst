@@ -104,8 +104,8 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     //-------------------------------------------------------------------------
     //  Send Methods
     //-------------------------------------------------------------------------
-    const bool GetProvidedInterfaceSpecification(
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs) const;
+    const bool GetProvidedInterfaces(
+        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const;
 
     //void SendCommandProxyInfo(mtsDeviceInterfaceProxy::CommandProxyInfo & info) const;
 

@@ -109,8 +109,8 @@ public:
     //  Proxy Support
     //-------------------------------------------------------------------------
     /*! Update the information of all tasks. */
-    const bool GetProvidedInterfaceSpecification(
-        ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq & specs);
+    const bool GetProvidedInterfaces(
+        ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
 
     /*! Build a map of (command proxy id, actual command pointer) so that 
         an actual command object can be called by a remote command object proxy. */
@@ -152,8 +152,8 @@ protected:
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
         
-        bool GetProvidedInterfaceSpecification(
-            ::mtsDeviceInterfaceProxy::ProvidedInterfaceSpecificationSeq&, 
+        bool GetProvidedInterfaces(
+            ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence&, 
             const ::Ice::Current&) const;
         
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
