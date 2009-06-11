@@ -39,5 +39,15 @@
     }
 
 
+#define MTS_PROXY_CLASS_DECLARATION_FROM(className)                  \
+class className##Proxy: public mtsGenericObject, public className    \
+{                                                                    \
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_DEFAULT_LOD); \
+public:                                                              \
+    className##Proxy(void): mtsGenericObject(), className() {}       \
+};                                                                   \
+CMN_DECLARE_SERVICES_INSTANTIATION(className##Proxy)
+
+
 #endif // _mtsMacros_h
 

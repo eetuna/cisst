@@ -28,6 +28,7 @@ class mtsMacrosTest: public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(mtsMacrosTest);
     CPPUNIT_TEST(TestMTS_DECLARE_MEMBER_AND_ACCESSORS);
+    CPPUNIT_TEST(TestMTS_PROXY_CLASS_DECLARATION_FROM);
     CPPUNIT_TEST_SUITE_END();
     
 public:
@@ -37,6 +38,9 @@ public:
     
     /*! Test the MTS_DECLARE_MEMBER_AND_ACCESSORS */
     void TestMTS_DECLARE_MEMBER_AND_ACCESSORS(void);
+
+    /*! Test the MTS_PROXY_CLASS_DECLARATION_FROM */
+    void TestMTS_PROXY_CLASS_DECLARATION_FROM(void);
 };
 
 

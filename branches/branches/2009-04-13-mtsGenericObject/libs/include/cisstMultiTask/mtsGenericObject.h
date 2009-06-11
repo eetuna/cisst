@@ -65,7 +65,7 @@ public:
     /*! Constructor, initialize Timestamp to 0 and Valid flag to
       false. */
     inline mtsGenericObject(void):
-        TimestampMember(0),
+        TimestampMember(0.0),
         ValidMember(false)
     {}
 

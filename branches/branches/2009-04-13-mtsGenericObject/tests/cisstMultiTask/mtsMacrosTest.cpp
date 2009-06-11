@@ -23,14 +23,27 @@ http://www.cisst.org/cisst/license.txt.
 
 void mtsMacrosTest::TestMTS_DECLARE_MEMBER_AND_ACCESSORS(void)
 {
-  // create an object
-  mtsMacrosTestClassA objectA;
-  double placeHolder;
-  const double constant = 4321.45689;
-  objectA.SetValue(constant);
-  CPPUNIT_ASSERT(objectA.Value() == constant);
-  const double constant1 = constant + 10;
-  objectA.Value() = constant1;
-  objectA.GetValue(placeHolder);
-  CPPUNIT_ASSERT(placeHolder == constant1);
+    mtsMacrosTestClassA objectA;
+    double placeHolder;
+    const double constant = 4321.45689;
+    objectA.SetValue(constant);
+    CPPUNIT_ASSERT(objectA.Value() == constant);
+    const double constant1 = constant + 10;
+    objectA.Value() = constant1;
+    objectA.GetValue(placeHolder);
+    CPPUNIT_ASSERT(placeHolder == constant1);
+}
+
+
+void mtsMacrosTest::TestMTS_PROXY_CLASS_DECLARATION_FROM(void)
+{
+    mtsMacrosTestClassBProxy objectB;
+    CPPUNIT_ASSERT(objectB.Timestamp() == 0.0);
+    CPPUNIT_ASSERT(!objectB.Valid());
+    objectB.Value = 1.0;
+    CPPUNIT_ASSERT(objectB.Value == 1.0);
+    mtsGenericObject * mtsGOPtr = dynamic_cast<mtsGenericObject *>(&objectB);
+    CPPUNIT_ASSERT(mtsGOPtr);
+    cmnGenericObject * cmnGOPtr = dynamic_cast<cmnGenericObject *>(&objectB);
+    CPPUNIT_ASSERT(cmnGOPtr);
 }

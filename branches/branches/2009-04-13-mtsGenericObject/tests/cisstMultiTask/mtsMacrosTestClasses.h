@@ -33,4 +33,13 @@ class mtsMacrosTestClassA: public mtsGenericObject
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsMacrosTestClassA);
 
 
+class mtsMacrosTestClassB
+{
+public:
+    double Value;
+};
+
+MTS_PROXY_CLASS_DECLARATION_FROM(mtsMacrosTestClassB);
+
+
 #endif // _mtsMacrosTestClasses_h

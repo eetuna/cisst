@@ -23,3 +23,5 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsMacrosTestClassA);
 
+CMN_IMPLEMENT_SERVICES(mtsMacrosTestClassBProxy);
+
