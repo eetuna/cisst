@@ -162,7 +162,7 @@ foreach(slice_file ${SLICE_FILES})
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     # first run slice2cpp
     COMMAND ${ICE_HOME}/bin/slice2cpp
-    ARGS    -I${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
+    ARGS    -I ${ICE_SLICE_DIR} ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
     # then create a directory to copy the header file
     COMMAND ${CMAKE_COMMAND}
     ARGS -E make_directory ${cisst_BINARY_DIR}/libs/include/cisstMultiTask

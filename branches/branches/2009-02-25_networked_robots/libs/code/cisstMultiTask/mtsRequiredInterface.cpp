@@ -23,16 +23,16 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsRequiredInterface)
 
 
-mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mbox) :
-        Name(interfaceName),
-        MailBox(mbox),
-        OtherInterface(0),
-        CommandPointersVoid("CommandPointerVoid"),
-        CommandPointersRead("CommandPointerRead"),
-        CommandPointersWrite("CommandPointerWrite"),
-        CommandPointersQualifiedRead("CommandPointerQualifiedRead"),
-        EventHandlersVoid("EventHandlerVoid"),
-        EventHandlersWrite("EventHandlerWrite")
+mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mailBox) :
+    Name(interfaceName),
+    MailBox(mailBox),
+    OtherInterface(0),
+    CommandPointersVoid("CommandPointersVoid", *this),
+    CommandPointersRead("CommandPointersRead", *this),
+    CommandPointersWrite("CommandPointersWrite", *this),
+    CommandPointersQualifiedRead("CommandPointersQualifiedRead", *this),
+    EventHandlersVoid("EventHandlersVoid", *this),
+    EventHandlersWrite("EventHandlersWrite", *this)
 {
 }
 
@@ -134,11 +134,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterVoid++) {
         result = iterVoid->second->Bind(OtherInterface->GetCommandVoid(iterVoid->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for void command \""
-                             << iterVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for void command \""
+                                       << iterVoid->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for void command \""
-                             << iterVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void command \""
+                                     << iterVoid->first << "\"" << std::endl;
         }
         success &= result;
     }
@@ -148,11 +148,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterRead++) {
         result = iterRead->second->Bind(OtherInterface->GetCommandRead(iterRead->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for read command \""
-                             << iterRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
+                                       << iterRead->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for read command \""
-                             << iterRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
+                                     << iterRead->first << "\"" << std::endl;
         }
         success &= result;
     }
@@ -162,11 +162,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterWrite++) {
         result = iterWrite->second->Bind(OtherInterface->GetCommandWrite(iterWrite->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for write command \""
-                             << iterWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for write command \""
+                                       << iterWrite->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for write command \""
-                             << iterWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write command \""
+                                     << iterWrite->first << "\"" << std::endl;
         }
         success &= result;
     }
@@ -176,17 +176,17 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterQualRead++) {
         result = iterQualRead->second->Bind(OtherInterface->GetCommandQualifiedRead(iterQualRead->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for qualified read command \""
-                             << iterQualRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for qualified read command \""
+                                       << iterQualRead->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for qualified read command \""
-                             << iterQualRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for qualified read command \""
+                                     << iterQualRead->first << "\"" << std::endl;
         }
         success &= result;
     }
 
     if (!success) {
-        CMN_LOG_CLASS(1) << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
     }
 
     // Now, do the event handlers
@@ -196,11 +196,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterEventVoid++) {
         result = OtherInterface->AddObserver(iterEventVoid->first, iterEventVoid->second);
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed to add observer for void event \""
-                             << iterEventVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed to add observer for void event \""
+                                       << iterEventVoid->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded to add observer for void event \""
-                             << iterEventVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded to add observer for void event \""
+                                     << iterEventVoid->first << "\"" << std::endl;
         }
     }
 
@@ -210,11 +210,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterEventWrite++) {
         result = OtherInterface->AddObserver(iterEventWrite->first, iterEventWrite->second);
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed to add observer for write event \""
-                             << iterEventWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed to add observer for write event \""
+                                       << iterEventWrite->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded to add observer for write event \""
-                             << iterEventWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded to add observer for write event \""
+                                     << iterEventWrite->first << "\"" << std::endl;
         }
     }
     return success;
@@ -240,89 +240,3 @@ void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
     EventHandlersWrite.ToStream(outputStream);
 }
 
-void mtsRequiredInterface::GetCommandProxyInfo(std::map<std::string, unsigned int> & commandProxyInfoMap,
-                                               const CommandProxyType commandProxyType)
-{
-    commandProxyInfoMap.clear();
-
-    //*
-    CommandPointerVoidMapType::MapType::iterator iterVoid;
-    for (iterVoid = CommandPointersVoid.GetMap().begin(); 
-         iterVoid != CommandPointersVoid.GetMap().end(); 
-         iterVoid++)
-    {
-        commandProxyInfoMap.insert(
-            make_pair(iterVoid->second->GetName(), iterVoid->second->GetCommandID()));
-    }
-
-    CommandPointerWriteMapType::MapType::iterator iterWrite;
-    for (iterWrite = CommandPointersWrite.GetMap().begin(); 
-         iterWrite != CommandPointersWrite.GetMap().end(); 
-         iterWrite++)
-    {
-        commandProxyInfoMap.insert(
-            make_pair(iterWrite->second->GetName(), iterWrite->second->GetCommandID()));        
-    }
-
-    CommandPointerReadMapType::MapType::iterator iterRead;
-    for (iterRead = CommandPointersRead.GetMap().begin(); 
-         iterRead != CommandPointersRead.GetMap().end(); 
-         iterRead++)
-    {
-        commandProxyInfoMap.insert(
-            make_pair(iterRead->second->GetName(), iterRead->second->GetCommandID()));        
-    }
-    //*/
-
-//#define GET_COMMAND_PROXY_INFO( _commandType ) \
-//    Command##_commandType##MapType::MapType::iterator iter##_commandType;\
-//    for (iter##_commandType = Commands##_commandType##.GetMap().begin(); \
-//         iter##_commandType != Commands##_commandType##.GetMap().end(); \
-//         ++iter##_commandType)\
-//    {\
-//        commandProxyInfoMap.insert(\
-//            make_pair(iter##_commandType##->second->Name, iter##_commandType##->second->GetCommandID()));\
-//    }
-
-//#define GET_COMMAND_PROXY_INFO( _commandType ) \
-//    CommandPointer##_commandType##MapType::MapType::iterator iter##_commandType;\
-//    for (iter##_commandType = CommandPointers##_commandType##.GetMap().begin(); \
-//         iter##_commandType != CommandPointers##_commandType##.GetMap().end(); \
-//         ++iter##_commandType)\
-//    {\
-//        commandProxyInfoMap.insert(\
-//            make_pair(iter##_commandType##->second->GetName(), iter##_commandType##->second->GetCommandID()));\
-//    }
-//
-//    switch (commandProxyType)
-//    {
-//    case COMMAND_VOID:  
-//        {
-//            GET_COMMAND_PROXY_INFO(Void);
-//        }
-//        break;
-//    
-//    case COMMAND_WRITE: 
-//        {
-//            GET_COMMAND_PROXY_INFO(Write);
-//        }
-//        break;
-//    
-//    case COMMAND_READ:  
-//        {
-//            GET_COMMAND_PROXY_INFO(Read);
-//        }
-//        break;
-//    
-//    //case COMMAND_QUALIFIED_READ:    
-//    //    {
-//    //        GET_COMMAND_PROXY_INFO(QualifiedRead);
-//    //    }
-//    //    break;
-//
-//    default:
-//        break;
-//    }
-//
-//#undef GET_COMMAND_PROXY_INFO
-}

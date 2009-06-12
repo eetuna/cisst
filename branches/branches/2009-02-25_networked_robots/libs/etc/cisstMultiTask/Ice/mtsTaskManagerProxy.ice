@@ -59,6 +59,9 @@ module mtsTaskManagerProxy
 
 	//-----------------------------------------------------------------------------
 	// Exception Definition
+	//
+	// TODO: define and use exceptions at application layer.
+	//
 	//-----------------------------------------------------------------------------
 	//exception InvalidTaskNameError {
 		//string msg1;
@@ -67,27 +70,37 @@ module mtsTaskManagerProxy
 
 	//-----------------------------------------------------------------------------
 	// Interface for TaskManager client
+	//
+	// - This interface defines the interface of the task manager clients to be
+	//	 called by the global task manager
 	//-----------------------------------------------------------------------------
 	interface TaskManagerClient
 	{
-		// from server
+		// Test method
 		void ReceiveData(int num);
+		
+		bool ConnectAtServerSide(
+			string userTaskName, string interfaceRequiredName,
+			string resourceTaskName, string providedInterfaceName);
+		
 	};
 
 	//-----------------------------------------------------------------------------
 	// Interface for TaskManager server
+	//
+	// - This interface defines the interface of the global task server to receive
+	//	 events from the task manager clients.
 	//-----------------------------------------------------------------------------
 	interface TaskManagerServer
-	{
-		// From both types of task
+	{		
 		void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
 	    
 		void AddTaskManager(TaskList localTaskInfo);
 
-	    // From server task
+	    // from task manager client which manages a server task
 		bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
 		
-		// From client task
+		// from task manager client which manages a client task
 		bool AddRequiredInterface(RequiredInterfaceInfo newRequiredInterfaceInfo);
 
 		["cpp:const"] idempotent bool IsRegisteredProvidedInterface(

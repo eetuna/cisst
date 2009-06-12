@@ -22,23 +22,24 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObjectProxy.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
 
+
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterface)
 
 
 mtsCommandVoidBase * mtsDeviceInterface::GetCommandVoid(const std::string & commandName) const {
-    return CommandsVoid.GetItem(commandName, 1);
+    return CommandsVoid.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 mtsCommandReadBase * mtsDeviceInterface::GetCommandRead(const std::string & commandName) const {
-    return CommandsRead.GetItem(commandName, 1);
+    return CommandsRead.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 mtsCommandWriteBase * mtsDeviceInterface::GetCommandWrite(const std::string & commandName) const {
-    return CommandsWrite.GetItem(commandName, 1);
+    return CommandsWrite.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 mtsCommandQualifiedReadBase * mtsDeviceInterface::GetCommandQualifiedRead(const std::string & commandName) const {
-    return CommandsQualifiedRead.GetItem(commandName, 1);
+    return CommandsQualifiedRead.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 std::vector<std::string> mtsDeviceInterface::GetNamesOfCommands(void) const {
@@ -102,12 +103,12 @@ mtsCommandVoidBase * mtsDeviceInterface::AddEventVoid(const std::string & eventN
             return eventMulticastCommand;
         }
         delete eventMulticastCommand;
-        CMN_LOG_CLASS(1) << "AddEventVoid: unable to add event \""
-                         << eventName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddEventVoid: unable to add event \""
+                                 << eventName << "\"" << std::endl;
         return 0;
     }
-    CMN_LOG_CLASS(0) << "AddEventVoid: unable to create multi-cast command for event \""
-                     << eventName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddEventVoid: unable to create multi-cast command for event \""
+                             << eventName << "\"" << std::endl;
     return 0;
 }
 
@@ -116,10 +117,10 @@ bool mtsDeviceInterface::AddEvent(const std::string & name, mtsMulticastCommandV
 {
     if (EventWriteGenerators.GetItem(name)) {
         // Is this check really needed?
-        CMN_LOG_CLASS(3) << "AddEvent (void): event " << name << " already exists as write event, ignored." << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddEvent (void): event " << name << " already exists as write event, ignored." << std::endl;
         return false;
     }
-    return EventVoidGenerators.AddItem(name, generator, 1);
+    return EventVoidGenerators.AddItem(name, generator, CMN_LOG_LOD_INIT_ERROR);
 }
 
 
@@ -127,10 +128,10 @@ bool mtsDeviceInterface::AddEvent(const std::string & name, mtsMulticastCommandW
 {
     if (EventVoidGenerators.GetItem(name)) {
         // Is this check really needed?
-        CMN_LOG_CLASS(3) << "AddEvent (write): event " << name << " already exists as void event, ignored." << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddEvent (write): event " << name << " already exists as void event, ignored." << std::endl;
         return false;
     }
-    return EventWriteGenerators.AddItem(name, generator, 1);
+    return EventWriteGenerators.AddItem(name, generator, CMN_LOG_LOD_INIT_ERROR);
 }
 
 
@@ -152,7 +153,7 @@ bool mtsDeviceInterface::AddObserver(const std::string & eventName, mtsCommandVo
         multicastCommand->AddCommand(handler);
         return true;
     } else {
-        CMN_LOG_CLASS(1) << "AddObserver (void): cannot find event named \"" << eventName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddObserver (void): cannot find event named \"" << eventName << "\"" << std::endl;
         return false;
     }
 }
@@ -166,7 +167,7 @@ bool mtsDeviceInterface::AddObserver(const std::string & eventName, mtsCommandWr
         multicastCommand->AddCommand(handler);
         return true;
     } else {
-        CMN_LOG_CLASS(1) << "AddObserver (write): cannot find event named \"" << eventName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddObserver (write): cannot find event named \"" << eventName << "\"" << std::endl;
         return false;
     }
 }
@@ -188,12 +189,12 @@ unsigned int mtsDeviceInterface::AllocateResourcesForCurrentThread(void)
         }
     }
     if (!found) {
-        CMN_LOG_CLASS(3) << "AllocateResourcesForCurrentThread: new thread Id (" << consumerId << ")" << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResourcesForCurrentThread: new thread Id (" << consumerId << ")" << std::endl;
         ThreadIdCounters.resize(ThreadIdCounters.size() + 1,
                                 ThreadIdCounterPairType(consumerId, 1));
         return 1;
     } else {
-        CMN_LOG_CLASS(3) << "AllocateResourcesForCurrentThread: already registered thread Id (" << consumerId << ")" << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResourcesForCurrentThread: already registered thread Id (" << consumerId << ")" << std::endl;
         return (iterator->second)++;
     }
 }
@@ -214,105 +215,3 @@ void mtsDeviceInterface::ToStream(std::ostream & outputStream) const
     EventWriteGenerators.ToStream(outputStream);
 }
 
-//-------------------------------------------------------------------------
-//  Interface Proxy Related
-//-------------------------------------------------------------------------
-/*
-const bool mtsDeviceInterface::AddCommandVoidProxyMapElement(
-    const unsigned int commandVoidProxyID, const std::string & commandVoidProxyName)
-{
-    CommandVoidProxyMapType::const_iterator it = CommandVoidProxyMap.find(commandVoidProxyID);
-    if (it != CommandVoidProxyMap.end()) {
-        CMN_LOG_CLASS(3) << "AddCommandVoidProxyMapElement: already registered commandVoidProxy: "
-            << "(" << Name << ":" << commandVoidProxyName << "," << commandVoidProxyID << ")" << std::endl;
-        return false;
-    }
-
-    //mtsCommandVoidBase * commandVoid = this->GetCommandVoid(commandVoidProxyName);
-    mtsCommandVoidBase * commandVoid = CommandsVoid.GetItem(commandVoidProxyName, 1);
-
-    if (!commandVoid) {
-        CMN_LOG_CLASS(3) << "AddCommandVoidProxyMapElement: no such CommandVoid object exists: "
-            << "(" << Name << ":" << commandVoidProxyName << ")" << std::endl;
-        return false;
-    }
-    
-    CommandVoidProxyMap.insert(std::make_pair(commandVoidProxyID, commandVoid));
-
-    return true;
-}
-
-const bool mtsDeviceInterface::AddCommandWriteProxyMapElement(
-    const unsigned int commandWriteProxyID, const std::string & commandWriteProxyName)
-{
-    CommandWriteProxyMapType::const_iterator it = CommandWriteProxyMap.find(commandWriteProxyID);
-    if (it != CommandWriteProxyMap.end()) {
-        CMN_LOG_CLASS(3) << "AddCommandWriteProxyMapElement: already registered commandWriteProxy: "
-            << "(" << Name << ":" << commandWriteProxyName << "," << commandWriteProxyID << ")" << std::endl;
-        return false;
-    }
-
-    mtsCommandWriteBase * commandWrite = CommandsWrite.GetItem(commandWriteProxyName, 1);
-    if (!commandWrite) {
-        CMN_LOG_CLASS(3) << "AddCommandWriteProxyMapElement: no such CommandWrite object exists: "
-            << "(" << Name << ":" << commandWriteProxyName << ")" << std::endl;
-        return false;
-    }
-    
-    CommandWriteProxyMap.insert(std::make_pair(commandWriteProxyID, commandWrite));
-
-    return true;
-}
-
-const bool mtsDeviceInterface::AddCommandReadProxyMapElement(
-    const unsigned int commandReadProxyID, const std::string & commandReadProxyName)
-{
-    CommandReadProxyMapType::const_iterator it = CommandReadProxyMap.find(commandReadProxyID);
-    if (it != CommandReadProxyMap.end()) {
-        CMN_LOG_CLASS(3) << "AddCommandReadProxyMapElement: already registered commandReadProxy: "
-            << "(" << Name << ":" << commandReadProxyName << "," << commandReadProxyID << ")" << std::endl;
-        return false;
-    }
-
-    mtsCommandReadBase * commandRead = CommandsRead.GetItem(commandReadProxyName, 1);
-    if (!commandRead) {
-        CMN_LOG_CLASS(3) << "AddCommandReadProxyMapElement: no such CommandRead object exists: "
-            << "(" << Name << ":" << commandReadProxyName << ")" << std::endl;
-        return false;
-    }
-    
-    CommandReadProxyMap.insert(std::make_pair(commandReadProxyID, commandRead));
-
-    return true;
-}
-
-const bool mtsDeviceInterface::AddCommandQualifiedReadProxyMapElement(
-    const unsigned int commandQualifiedReadProxyID, const std::string & commandQualifiedReadProxyName)
-{
-    CommandQualifiedReadProxyMapType::const_iterator it = CommandQualifiedReadProxyMap.find(commandQualifiedReadProxyID);
-    if (it != CommandQualifiedReadProxyMap.end()) {
-        CMN_LOG_CLASS(3) << "AddCommandQualifiedReadProxyMapElement: already registered commandQualifiedReadProxy: "
-            << "(" << Name << ":" << commandQualifiedReadProxyName << "," << commandQualifiedReadProxyID << ")" << std::endl;
-        return false;
-    }
-
-    mtsCommandQualifiedReadBase * commandQualifiedRead = CommandsQualifiedRead.GetItem(commandQualifiedReadProxyName, 1);
-    if (!commandQualifiedRead) {
-        CMN_LOG_CLASS(3) << "AddCommandQualifiedReadProxyMapElement: no such CommandQualifiedRead object exists: "
-            << "(" << Name << ":" << commandQualifiedReadProxyName << ")" << std::endl;
-        return false;
-    }
-    
-    CommandQualifiedReadProxyMap.insert(std::make_pair(commandQualifiedReadProxyID, commandQualifiedRead));
-
-    return true;
-}
-
-void mtsDeviceInterface::ExecuteCommandVoid(const unsigned int commandID)
-{
-    CommandVoidProxyMapType::const_iterator it = CommandVoidProxyMap.find(commandID);
-    CMN_ASSERT(it != CommandVoidProxyMap.end());
-
-    it->second->Execute();
-}
-*/

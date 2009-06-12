@@ -108,9 +108,9 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_DECLARE_SERVICES(hasDynamicCreation, lod) \
     public: \
       enum {HAS_DYNAMIC_CREATION = hasDynamicCreation}; \
-      enum {INITIAL_LOD = lod}; \
+      enum {InitialLoD = lod}; \
       static cmnClassServicesBase * ClassServices(void); \
-      virtual cmnClassServicesBase * const Services(void) const \
+      virtual cmnClassServicesBase * Services(void) const \
       { \
           return this->ClassServices(); \
       } \
@@ -125,9 +125,9 @@ http://www.cisst.org/cisst/license.txt.
 #define CMN_DECLARE_SERVICES_EXPORT(hasDynamicCreation, lod) \
     public: \
       enum {HAS_DYNAMIC_CREATION = hasDynamicCreation}; \
-      enum {INITIAL_LOD = lod}; \
+      enum {InitialLoD = lod}; \
       CISST_EXPORT static cmnClassServicesBase * ClassServices(void); \
-      virtual cmnClassServicesBase * const Services(void) const \
+      virtual cmnClassServicesBase * Services(void) const \
       { \
           return this->ClassServices(); \
       } \
@@ -234,7 +234,7 @@ cmnClassServicesBase * cmnClassServicesInstantiate<className>(void) \
 { \
     static cmnClassServices<className::HAS_DYNAMIC_CREATION, className> classServices(#className, \
                                                                                       &typeid(className), \
-                                                                                      className::INITIAL_LOD); \
+                                                                                      static_cast<cmnLogLoD>(className::InitialLoD)); \
     return static_cast<cmnClassServicesBase *>(&classServices); \
 }
 
@@ -252,7 +252,7 @@ cmnClassServicesBase * className::ClassServices(void) \
 template<> \
 cmnClassServicesBase * className::ClassServicesPointer = className::ClassServices(); \
 template<> \
-cmnClassServicesBase * const className::Services(void) const \
+cmnClassServicesBase * className::Services(void) const \
 { \
    return this->ClassServices(); \
 } \
@@ -261,7 +261,7 @@ cmnClassServicesBase * cmnClassServicesInstantiate<className>(void) \
 { \
     static cmnClassServices<className::HAS_DYNAMIC_CREATION, className> classServices(#className, \
                                                                                       &typeid(className), \
-                                                                                      className::INITIAL_LOD); \
+                                                                                      static_cast<cmnLogLoD>(className::InitialLoD)); \
     return static_cast<cmnClassServicesBase *>(&classServices); \
 }
 //@}

@@ -70,7 +70,8 @@ public:
 
     /*! The execute method. */
     BaseType::ReturnType Execute() {
-        ProvidedInterfaceProxy->InvokeExecuteCommandVoid(CommandSID);
+        //!!!!!!!!!!
+        //ProvidedInterfaceProxy->InvokeExecuteCommandVoid(CommandSID);
         return BaseType::DEV_OK;
     }
 

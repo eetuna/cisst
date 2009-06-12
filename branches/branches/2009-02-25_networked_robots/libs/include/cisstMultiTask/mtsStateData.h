@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 // This class handles the interface to the state table. Note that there are a few things mixed
 // in here that could be separated:
 //
-// 1) The class can be used for variables that just need to be set (write-only). In this case, 
+// 1) The class can be used for variables that just need to be set (write-only). In this case, the
 //    the Id and Table fields are not used, and AddToStateTable() would not be called. It would
 //    only be necessary to call AddWriteCommandToInterface(). This functionality could be moved
 //    to a base class.
@@ -118,7 +118,7 @@ public:
         Id = Table->NewElement(dataName, &Data);
         Accessor = dynamic_cast<const AccessorType *>(table.GetAccessor(dataName));
         if (!Accessor)
-            CMN_LOG(1) << "mtsStateData: could not get data accessor for " << dataName << std::endl;
+            CMN_LOG_INIT_ERROR << "mtsStateData: could not get data accessor for " << dataName << std::endl;
     }
 
     /*! Adds command objects to the specified device interface. Note

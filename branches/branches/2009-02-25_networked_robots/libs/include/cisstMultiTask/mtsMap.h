@@ -22,6 +22,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsMap_h
 #define _mtsMap_h
 
+#if 0
+
+
 #include <map>
 #include <vector>
 #include <string>
@@ -49,39 +52,29 @@ http://www.cisst.org/cisst/license.txt.
 template <class _ItemType>
 class mtsMap {
 public:
-    typedef std::map<std::string, _ItemType *> MapType;
-
+  typedef std::map<std::string, _ItemType *> MapType;
 protected:
-    MapType Map;
-    std::string MapName;
-
+  MapType Map;
+  std::string MapName;
 public:
-    mtsMap() : Map(), MapName("???") {}
-    mtsMap(const std::string & mapName) : Map(), MapName(mapName) {}
-    ~mtsMap() {}
-
-    bool AddItem(const std::string & name, _ItemType * item, cmnLogger::LoDType lod = 99);
-    bool RemoveItem(const std::string & name, cmnLogger::LoDType lod = 99);
-    _ItemType *GetItem(const std::string & name, cmnLogger::LoDType lod = 99) const;
-  
-    std::vector<std::string> GetNames() const;
-    void GetNames(std::vector<std::string>& taskNameContainer) const;
-    const MapType &GetMap() const   { return Map; }
-    MapType &GetMap() { return Map; }
-    const int GetCount()            { return Map.size(); }
-        
-    typedef void (_ItemType::*VoidFuncPtr)(void);
-    void ForEachVoid(VoidFuncPtr f);
-  
-    void ToStream(std::ostream & outputStream) const;
-    void Cleanup(void) { ForEachVoid(&_ItemType::Cleanup); }  // needed?
-  
-    // free all memory
-    void DeleteAll(void);
+  mtsMap() : Map(), MapName("???") {}
+  mtsMap(const std::string & mapName) : Map(), MapName(mapName) {}
+  ~mtsMap() {}
+  bool AddItem(const std::string & name, _ItemType * item, cmnLogLoD lod = CMN_LOG_LOD_RUN_ERROR);
+  _ItemType *GetItem(const std::string & name, cmnLogLoD lod = CMN_LOG_LOD_RUN_ERROR) const;
+  std::vector<std::string> GetNames() const;
+  typedef void (_ItemType::*VoidFuncPtr)(void);
+  void ForEachVoid(VoidFuncPtr f);
+  const MapType &GetMap() const { return Map; }
+  MapType &GetMap() { return Map; }
+  void ToStream(std::ostream & outputStream) const;
+  void Cleanup(void) { ForEachVoid(&_ItemType::Cleanup); }  // needed?
+  // free all memory
+  void DeleteAll(void);
 };
 
 template <class _ItemType>
-bool mtsMap<_ItemType>::AddItem(const std::string & name, _ItemType *item, cmnLogger::LoDType lod)
+bool mtsMap<_ItemType>::AddItem(const std::string & name, _ItemType *item, cmnLogLoD lod)
 {
     // check if this name already exists
     typename MapType::const_iterator iterator = Map.find(name);
@@ -95,21 +88,7 @@ bool mtsMap<_ItemType>::AddItem(const std::string & name, _ItemType *item, cmnLo
 }
 
 template <class _ItemType>
-bool mtsMap<_ItemType>::RemoveItem(const std::string & name, cmnLogger::LoDType lod)
-{
-    // check if this name already exists
-    typename MapType::iterator iterator = Map.find(name);
-    if (iterator == Map.end()) {
-        CMN_LOG(lod) << "a " << MapName << " item named " << name
-                     << " doesn't exist." << std::endl;
-        return false;
-    }
-    Map.erase(iterator);
-    return true;
-}
-
-template <class _ItemType>
-_ItemType *mtsMap<_ItemType>::GetItem(const std::string & itemName, cmnLogger::LoDType lod) const {
+_ItemType *mtsMap<_ItemType>::GetItem(const std::string & itemName, cmnLogLoD lod) const {
     typename MapType::const_iterator iter;
     iter = Map.find(itemName);
     if (iter != Map.end())
@@ -139,15 +118,6 @@ void mtsMap<_ItemType>::ForEachVoid(VoidFuncPtr f)
 }
 
 template <class _ItemType>
-void mtsMap<_ItemType>::GetNames(std::vector<std::string>& taskNameContainer) const 
-{
-    typename MapType::const_iterator iter;
-    for (iter = Map.begin(); iter != Map.end(); ++iter) {
-        taskNameContainer.push_back(iter->first);
-    }
-}
-
-template <class _ItemType>
 void mtsMap<_ItemType>::ToStream(std::ostream & outputStream) const
 {
     unsigned int counter = 0;
@@ -173,3 +143,4 @@ void mtsMap<_ItemType>::DeleteAll(void) {
 
 #endif // _mtsMap_h
 
+#endif // if 0

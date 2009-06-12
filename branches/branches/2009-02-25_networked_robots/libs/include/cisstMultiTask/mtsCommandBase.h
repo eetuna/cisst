@@ -58,15 +58,6 @@ protected:
       owned by an object being deleted. */
     bool EnableFlag;
 
-    /*! Command UID (unique ID). */
-    unsigned int CommandID;
-
-    /*! Set a command id of this object. */
-    void SetCommandID() {
-        static unsigned int CommandUID = 0;
-        CommandID = ++CommandUID;
-    }
-
 public:
     /* use to bitshift and or for return value of a composite
        would limit the number of composite interfaces to 31 for
@@ -91,17 +82,13 @@ public:
     inline mtsCommandBase(void):
         Name("??"),
         EnableFlag(true)
-    {
-        SetCommandID();
-    }
+    {}
 
     /*! Constructor with command name. */
     inline mtsCommandBase(const std::string & name):
         Name(name),
         EnableFlag(true)
-    {
-        SetCommandID();
-    }
+    {}
     
     /*! The destructor. Does nothing */
     virtual ~mtsCommandBase() {}
@@ -120,9 +107,6 @@ public:
     /*! Returns number of arguments (parameters) expected by Execute
       method.  Must be overloaded in derived classes. */
     virtual unsigned int NumberOfArguments(void) const = 0;
-
-    /*! Returns command ID. */
-    inline const unsigned int GetCommandID() const { return CommandID; }
 
     /*! Set and access the "enable" flag.  This flag is used to
       determine if the command actually uses the provided method or

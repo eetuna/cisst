@@ -373,6 +373,7 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::AddClient(
 
     mtsDeviceInterfaceProxy::TaskInterfaceClientPrx client = 
         mtsDeviceInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
+    
     _clients.insert(client);
 }
 

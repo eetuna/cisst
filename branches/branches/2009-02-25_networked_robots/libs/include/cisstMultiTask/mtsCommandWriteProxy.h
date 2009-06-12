@@ -63,7 +63,8 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
-        ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, argument);
+        // !!!!!!!!!!
+        //ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, argument);
 
         return mtsCommandBase::DEV_OK;
     }

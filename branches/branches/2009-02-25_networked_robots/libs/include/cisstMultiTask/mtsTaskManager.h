@@ -32,10 +32,12 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnNamedMap.h>
+
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
+
 #include <cisstMultiTask/mtsForwardDeclarations.h>
-#include <cisstMultiTask/mtsMap.h>
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
@@ -56,16 +58,16 @@ class mtsTaskManagerProxyServer;
 class mtsTaskManagerProxyClient;
 
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
-    
-    friend class mtsTaskManagerTest;
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+	friend class mtsTaskManagerTest;
+
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     /*! Typedef for task name and pointer map. */
-    typedef mtsMap<mtsTask> TaskMapType;
+    typedef cmnNamedMap<mtsTask> TaskMapType;
 
     /*! Typedef for device name and pointer map. */
-    typedef mtsMap<mtsDevice> DeviceMapType;
+    typedef cmnNamedMap<mtsDevice> DeviceMapType;
 
     /*! Typedef for user task, composed of task name and "output port"
         name. */

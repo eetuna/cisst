@@ -16,12 +16,12 @@ using namespace std;
 int main(void)
 {
     // log configuration, see previous examples
-    cmnLogger::SetLoD(5);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     cmnLogger::HaltDefaultLog();
-    cmnLogger::ResumeDefaultLog(5);
-    cmnClassRegister::SetLoD("sineTask", 10);
-    cmnClassRegister::SetLoD("displayTask", 10);
+    cmnLogger::ResumeDefaultLog(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("displayTask", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create our two tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
@@ -48,18 +48,14 @@ int main(void)
     taskManager->CreateAll();
     taskManager->StartAll();
 
-    while (1) {
+    while (!displayTaskObject->IsTerminated()) {
         osaSleep(100.0 * cmn_ms); // sleep to save CPU
-        if (displayTaskObject->GetExitFlag()) {
-            break;
-        }
     }
 
     taskManager->KillAll();
 
-    osaSleep(PeriodDisplay * 2);
-    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
-    while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
+    osaSleep(PeriodSine * 2);
+    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodSine);
 
     return 0;
 }

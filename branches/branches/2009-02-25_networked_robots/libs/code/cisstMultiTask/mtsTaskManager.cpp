@@ -37,8 +37,10 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
-mtsTaskManager::mtsTaskManager(void) : 
-    TaskMap("Task"), DeviceMap("Device"),
+
+mtsTaskManager::mtsTaskManager():
+    TaskMap("Tasks", *this),
+    DeviceMap("Devices", *this),
     TaskManagerCommunicatorID("TaskManagerServerSender"),
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
     Proxy(0), ProxyServer(0), ProxyClient(0)
@@ -64,10 +66,10 @@ mtsTaskManager* mtsTaskManager::GetInstance(void) {
 
 
 bool mtsTaskManager::AddTask(mtsTask * task) {
-    bool ret = TaskMap.AddItem(task->GetName(), task, 1);
+    bool ret = TaskMap.AddItem(task->GetName(), task, CMN_LOG_LOD_INIT_ERROR);
     if (ret)
-       CMN_LOG_CLASS(3) << "AddTask: added task named "
-                        << task->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddTask: added task named "
+                                   << task->GetName() << std::endl;
     return ret;
 }
 
@@ -88,14 +90,14 @@ bool mtsTaskManager::RemoveTask(mtsTask * task) {
 bool mtsTaskManager::AddDevice(mtsDevice * device) {
     mtsTask * task = dynamic_cast<mtsTask *>(device);
     if (task) {
-        CMN_LOG_CLASS(1) << "AddDevice: Attempt to add " << task->GetName() << "as a device (use AddTask instead)."
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddDevice: Attempt to add " << task->GetName() << "as a device (use AddTask instead)."
+                                 << std::endl;
         return false;
     }
-    bool ret = DeviceMap.AddItem(device->GetName(), device, 1);
+    bool ret = DeviceMap.AddItem(device->GetName(), device, CMN_LOG_LOD_INIT_ERROR);
     if (ret)
-        CMN_LOG_CLASS(3) << "AddDevice: added device named "
-                         << device->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddDevice: added device named "
+                                   << device->GetName() << std::endl;
     return ret;
 }
 
@@ -120,15 +122,14 @@ void mtsTaskManager::GetNamesOfTasks(std::vector<std::string>& taskNameContainer
 
 
 mtsDevice * mtsTaskManager::GetDevice(const std::string & deviceName) {
-    return DeviceMap.GetItem(deviceName, 1);
+    return DeviceMap.GetItem(deviceName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 
 mtsTask * mtsTaskManager::GetTask(const std::string & taskName) {
-    return TaskMap.GetItem(taskName, 1);
+    return TaskMap.GetItem(taskName, CMN_LOG_LOD_INIT_ERROR);
 }
     
-
 
 void mtsTaskManager::ToStream(std::ostream & outputStream) const {
     TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
@@ -174,9 +175,9 @@ void mtsTaskManager::StartAll(void) {
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         // Check if the task will use the current thread.
         if (taskIterator->second->Thread.GetId() == threadId) {
-            CMN_LOG_CLASS(5) << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
             if (lastTask != TaskMap.GetMap().end())
-                CMN_LOG_CLASS(1) << "WARNING: multiple tasks using current thread (only first will be started)." << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "WARNING: multiple tasks using current thread (only first will be started)." << std::endl;
             else
                 lastTask = taskIterator;
         }
@@ -287,19 +288,19 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     // check if this connection has already been established
     AssociationSetType::const_iterator associationIterator = AssociationSet.find(association);
     if (associationIterator != AssociationSet.end()) {
-        CMN_LOG_CLASS(1) << "Connect: " << userTaskName << "::" << interfaceRequiredName
-                         << " is already connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: " << userTaskName << "::" << interfaceRequiredName
+                                 << " is already connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
         return false;
     }
     // check that names are not the same
     if (userTaskName == resourceTaskName) {
-        CMN_LOG_CLASS(1) << "Connect: can not connect two tasks/devices with the same name" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not connect two tasks/devices with the same name" << std::endl;
         return false;
     }
     // check if the user name corresponds to an existing task
     mtsTask* userTask = TaskMap.GetItem(userTaskName);
     if (!userTask) {
-        CMN_LOG_CLASS(1) << "Connect: can not find a task named " << userTaskName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task named " << userTaskName << std::endl;
         return false;
     }
     // check if the resource name corresponds to an existing task or device
@@ -311,10 +312,10 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     mtsDeviceInterface * resourceInterface;
     if (resourceDevice) {
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
-    } else {
+    else {
         // If we cannot find, the resource interface should be at remote or doesn't exist.
         if (GetTaskManagerType() == TASK_MANAGER_LOCAL) {
-            CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
             return false;
         } else {
             resourceInterface = GetResourceInterface(resourceTaskName, providedInterfaceName, 
@@ -331,13 +332,13 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
 
     // check the interface pointer we got
     if (resourceInterface == 0) {
-        CMN_LOG_CLASS(1) << "Connect: interface pointer for "
-                         << resourceTaskName << "::" << providedInterfaceName << " is null" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: interface pointer for "
+                                 << resourceTaskName << "::" << providedInterfaceName << " is null" << std::endl;
         return false;
     }
     // attempt to connect 
     if (!(userTask->ConnectRequiredInterface(interfaceRequiredName, resourceInterface))) {
-        CMN_LOG_CLASS(1) << "Connect: connection failed, does " << interfaceRequiredName << " exist?" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: connection failed, does " << interfaceRequiredName << " exist?" << std::endl;
         return false;
     }
 
@@ -354,6 +355,25 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
 
     // connected, add to the map of connections
     AssociationSet.insert(association);
+    CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << interfaceRequiredName
+                               << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+
+    // If the connection between the required interface with the provided interface proxy
+    // at client side is established successfully, inform the global task manager of this 
+    // fact.
+    // 'RemoteConnect' is true only if this task manager is at client side and all the 
+    // connection processing above are successful.
+    if (RemoteConnect) {
+        CMN_ASSERT(!ProxyServer);   // This is not a global task manager.
+        CMN_ASSERT(ProxyClient);
+
+        InvokeNotifyInterfaceConnectionResult(
+            false, // this is beig called at client side.
+            true,
+            userTaskName, interfaceRequiredName, resourceTaskName, providedInterfaceName);
+    }
+
+=======
     CMN_LOG_CLASS(3) << "Connect: " << userTaskName << "::" << interfaceRequiredName
                      << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
 
@@ -372,6 +392,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
             userTaskName, interfaceRequiredName, resourceTaskName, providedInterfaceName);
     }
 
+>>>>>>> .merge-right.r452
     return true;
 }
 
@@ -480,7 +501,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
 
 bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::string & requiredInterfaceName,
                                 const std::string & resourceTaskName, const std::string & providedInterfaceName) {
-    CMN_LOG_CLASS(1) << "Disconnect not implemented!!!" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "Disconnect not implemented!!!" << std::endl;
     return true;
 }
 

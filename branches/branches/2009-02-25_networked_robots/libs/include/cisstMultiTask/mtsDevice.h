@@ -26,10 +26,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstCommon/cmnNamedMap.h>
 
 #include <cisstOSAbstraction/osaThread.h>
 
-#include <cisstMultiTask/mtsMap.h>
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
@@ -62,7 +62,7 @@ http://www.cisst.org/cisst/license.txt.
  */
 class CISST_EXPORT mtsDevice: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  protected:
 
@@ -78,8 +78,8 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     /*! Default constructor. Sets the name. */
     mtsDevice(const std::string & deviceName):
         Name(deviceName),
-        ProvidedInterfaces("ProvidedInterface"),
-        LocalObject(true)
+        ProvidedInterfaces("ProvidedInterfaces", *this),
+        RequiredInterfaces("RequiredInterfaces", *this)
     {}
     
     /*! Default destructor. Does nothing. */
@@ -89,9 +89,6 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     virtual std::string GetName(void) const {
         return Name;
     }
-
-    /*! Returns true if this object is local. */
-    inline const bool IsLocalObject() const { return LocalObject; }
     
     /*! The virtual method so that the interface or tasks can
       configure themselves */
@@ -114,6 +111,29 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
       interface. */
     mtsDeviceInterface * GetProvidedInterface(const std::string & interfaceName) const;
 
+    /*! Add a required interface.  This interface will later on be
+      connected to another task and use the provided interface of the
+      other task.  The required interface created also contains a list
+      of event handlers to be used as observers.
+      PK: should move this to base class (mtsDevice). */
+    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
+    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
+
+    /*! Provide a list of existing required interfaces (by names) */ 
+    std::vector<std::string> GetNamesOfRequiredInterfaces(void) const;
+
+    /*! Get a pointer on the provided interface that has been
+      connected to a given required interface (defined by its name).
+      This method will return a null pointer if the required interface
+      has not been connected.  See mtsTaskManager::Connect. */
+    mtsDeviceInterface * GetProvidedInterfaceFor(const std::string & requiredInterfaceName);
+    
+    /*! Get the required interface */
+    mtsRequiredInterface * GetRequiredInterface(const std::string & requiredInterfaceName) {
+        return RequiredInterfaces.GetItem(requiredInterfaceName);
+    }
+
+
  protected:
     /*! Thread Id counter.  Used to count how many "user" tasks are
       connected from a single thread.  In most cases the count
@@ -124,14 +144,23 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     ThreadIdCountersType ThreadIdCounters;
     //@}
     
-    /*! Map of interfaces.  Used to store pointers on all provided interfaces. */
+    /*! Map of provided interfaces.  Used to store pointers on all
+      provided interfaces. */
     //@{
-    typedef mtsMap<mtsDeviceInterface> ProvidedInterfacesMapType;
+    typedef cmnNamedMap<mtsDeviceInterface> ProvidedInterfacesMapType;
     ProvidedInterfacesMapType ProvidedInterfaces;
     //@}
 
-    /*! True if this object is local: used for proxy-related processing. */
-    bool LocalObject;
+    /*! Map of required interfaces.  Used to store pointers on all
+      required interfaces. */
+    //@{
+    typedef cmnNamedMap<mtsRequiredInterface> RequiredInterfacesMapType;
+    RequiredInterfacesMapType RequiredInterfaces;
+    //@}
+
+    /*! Connect a required interface, used by mtsTaskManager */
+    bool ConnectRequiredInterface(const std::string & requiredInterfaceName,
+                                   mtsDeviceInterface * providedInterface);
 
  public:
 
@@ -301,7 +330,7 @@ inline mtsCommandReadBase * mtsDevice::AddCommandRead(void (__classType::*action
     if (interfacePointer) {
         return interfacePointer->AddCommandRead(action, classInstantiation, commandName, argumentPrototype);
     }
-    CMN_LOG_CLASS(1) << "AddCommandRead can not find an interface named " << interfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead can not find an interface named " << interfaceName << std::endl;
     return 0;
 }
 
@@ -317,7 +346,7 @@ inline mtsCommandQualifiedReadBase * mtsDevice::AddCommandQualifiedRead(void (__
     if (interfacePointer) {
         return interfacePointer->AddCommandQualifiedRead(action, classInstantiation, commandName, argument1Prototype, argument2Prototype);
     }
-    CMN_LOG_CLASS(1) << "AddCommandQualifiedRead: can not find an interface named " << interfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandQualifiedRead: can not find an interface named " << interfaceName << std::endl;
     return 0;
 }
 
@@ -335,7 +364,7 @@ mtsCommandWriteBase * mtsDevice::AddEventWrite(const std::string & interfaceName
         }
         return eventMulticastCommand;
     }
-    CMN_LOG_CLASS(1) << "AddEventWrite: can not find an interface named " << interfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddEventWrite: can not find an interface named " << interfaceName << std::endl;
     return 0;
 }
 #endif // SWIG

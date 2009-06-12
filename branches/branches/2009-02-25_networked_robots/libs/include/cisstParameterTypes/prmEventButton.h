@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 /*! Button event payload */
 class CISST_EXPORT prmEventButton: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
     typedef enum {PRESSED, RELEASED, CLICKED, DOUBLE_CLICKED} EventType;
@@ -73,21 +73,6 @@ class CISST_EXPORT prmEventButton: public cmnGenericObject
 
     /*! Overloaded ToStream */
     virtual void ToStream(std::ostream & outputStream) const;
-
-    /*! Serialize the content of the object without any extra
-      information, i.e. no class type nor format version.  The
-      "receiver" is supposed to already know what to expect. */ 
-    virtual void SerializeRaw(std::ostream & outputStream) const {
-        this->StateIndexMember.SerializeRaw(outputStream);
-        cmnSerializeRaw(outputStream, this->TypeMember);
-    }
-
-    /*! De-serialize the content of the object without any extra
-      information, i.e. no class type nor format version. */
-    virtual void DeSerializeRaw(std::istream & inputStream) {
-        this->StateIndexMember.DeSerializeRaw(inputStream);
-        cmnDeSerializeRaw(inputStream, this->TypeMember);
-    }
 };
 
 

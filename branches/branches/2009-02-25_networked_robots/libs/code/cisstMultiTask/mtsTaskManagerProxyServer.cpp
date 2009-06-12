@@ -256,11 +256,12 @@ void mtsTaskManagerProxyServer::NotifyInterfaceConnectionResult(
         }
     }
 
-    // If connection trail failed
+    // If A task fail to connect interfaces,
     if (!isSuccess) {
         Logger->error("[NotifyInterfaceConnectionResult] failed to connect: " + 
             resourceTaskName + " : " + providedInterfaceName + " - " +
             userTaskName + " : " + requiredInterfaceName);
+        return;
     }
         
     if (it->second.NotifyInterfaceConnectionResult(
@@ -271,6 +272,11 @@ void mtsTaskManagerProxyServer::NotifyInterfaceConnectionResult(
         Logger->print("[NotifyInterfaceConnectionResult] succeeded to connect interfaces: " +
             resourceTaskName + " : " + providedInterfaceName + " - " +
             userTaskName + " : " + requiredInterfaceName);
+
+        // Inform the server task of the successful connection of interfaces at the client task.
+        // When the server task is informed, it creates the required interface proxy and tries
+        // to connect it with a local provided interface.
+        //Sender->ConnectAtServerSide(
     } else {
         Logger->error("[NotifyInterfaceConnectionResult] Already connected interface: " +
             resourceTaskName + " : " + providedInterfaceName + " - " +
