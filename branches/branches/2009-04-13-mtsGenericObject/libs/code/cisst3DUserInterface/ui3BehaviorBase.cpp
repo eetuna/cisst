@@ -61,8 +61,13 @@ void ui3BehaviorBase::AddMenuBar(bool isManager)
     if (!isManager) {
         this->MenuBar->AddClickButton("Hide",
                                       0,
-                                      "",
+                                      "iconify-left.png",
                                       &ui3BehaviorBase::SetStateBackground,
+                                      this);
+        this->MenuBar->AddClickButton("Close",
+                                      99,
+                                      "close.png",
+                                      &ui3BehaviorBase::SetStateIdle,
                                       this);
     }
 }
@@ -85,12 +90,12 @@ ui3SceneManager * ui3BehaviorBase::GetSceneManager(void)
 
 void ui3BehaviorBase::Configure(const std::string & CMN_UNUSED(configFile))
 {
-    CMN_LOG_CLASS(2) << "Configure: use default configure from base class, doing nothing" << std::endl;
+    CMN_LOG_CLASS_INIT_WARNING << "Configure: use default configure from base class, doing nothing" << std::endl;
 }
 
 bool ui3BehaviorBase::SaveConfiguration(const std::string & CMN_UNUSED(configFile))
 {
-    CMN_LOG_CLASS(2) << "SaveConfiguration: use default save configuration from base class, doing nothing" << std::endl;
+    CMN_LOG_CLASS_INIT_WARNING << "SaveConfiguration: use default save configuration from base class, doing nothing" << std::endl;
     return true;
 }
 
@@ -134,11 +139,15 @@ void ui3BehaviorBase::SetStateBackground(void)
     this->SetState(Background);
 }
 
+void ui3BehaviorBase::SetStateIdle(void)
+{
+    this->SetState(Idle);
+}
+
 void ui3BehaviorBase::SetState(const StateType & newState)
 {
     if (newState != this->State) {
-        this->State = newState;
-        switch (this->State) {
+        switch (newState) {
             case Foreground:
                 if (this->Manager->ActiveBehavior) {
                     this->Manager->ActiveBehavior->MenuBar->Hide();
@@ -146,6 +155,9 @@ void ui3BehaviorBase::SetState(const StateType & newState)
                 }
                 this->MenuBar->Show();
                 this->Manager->ActiveBehavior = this;
+                if (this->State == Idle) {
+                    this->OnStart();
+                }
                 break;
             case Background:
                 this->MenuBar->Hide();
@@ -155,8 +167,13 @@ void ui3BehaviorBase::SetState(const StateType & newState)
                 break;
             case Idle:
                 this->MenuBar->Hide();
+                this->Manager->ActiveBehavior = this->Manager;
+                this->Manager->State = Foreground;
+                this->Manager->ActiveBehavior->MenuBar->Show();
+                this->OnQuit();
                 break;
         }
+        this->State = newState;
     }
 }
 
@@ -219,15 +236,15 @@ svlFilterBase* ui3BehaviorBase::GetStreamSamplerFilter(const std::string & strea
     return dynamic_cast<svlFilterBase*>(Streams[streamindex]);
 }
 
-void ui3BehaviorBase::RightMasterButtonCallback(const prmEventButton & CMN_UNUSED(event))
+void ui3BehaviorBase::PrimaryMasterButtonCallback(const prmEventButton & CMN_UNUSED(event))
 {
-    CMN_LOG_CLASS(6) << "RightMasterButtonCallback not overloaded for \""
-                     << this->GetName() << "\"" << std::endl;
+    CMN_LOG_RUN_VERBOSE << "PrimaryMasterButtonCallback not overloaded for \""
+                        << this->GetName() << "\"" << std::endl;
 }
 
-void ui3BehaviorBase::LeftMasterButtonCallback(const prmEventButton & CMN_UNUSED(event))
+void ui3BehaviorBase::SecondaryMasterButtonCallback(const prmEventButton & CMN_UNUSED(event))
 {
-    CMN_LOG_CLASS(6) << "LeftMasterButtonCallback not overloaded for \""
-                     << this->GetName() << "\"" << std::endl;
+    CMN_LOG_RUN_VERBOSE << "SecondaryMasterButtonCallback not overloaded for \""
+                        << this->GetName() << "\"" << std::endl;
 }
 

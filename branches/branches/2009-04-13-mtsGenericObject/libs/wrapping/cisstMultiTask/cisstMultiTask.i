@@ -70,20 +70,20 @@ http://www.cisst.org/cisst/license.txt.
 %include "cisstMultiTask/mtsCommandReadOrWriteBase.h"
 %include "cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h"
 
-%template(mtsCommandReadBase) mtsCommandReadOrWriteBase<cmnGenericObject>;
-%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const cmnGenericObject>; 
-%template(mtsCommandQualifiedReadBase) mtsCommandQualifiedReadOrWriteBase<cmnGenericObject>;
-%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject>; 
+%template(mtsCommandReadBase) mtsCommandReadOrWriteBase<mtsGenericObject>;
+%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const mtsGenericObject>; 
+%template(mtsCommandQualifiedReadBase) mtsCommandQualifiedReadOrWriteBase<mtsGenericObject>;
+%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject>; 
 %{
-    typedef mtsCommandReadOrWriteBase<cmnGenericObject> mtsCommandReadBase;
-    typedef mtsCommandReadOrWriteBase<const cmnGenericObject> mtsCommandWriteBase;
-    typedef mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> mtsCommandQualifiedReadBase;
-    typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQualifiedWriteBase;
+    typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
+    typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
+    typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
+    typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 %}
-typedef mtsCommandReadOrWriteBase<cmnGenericObject> mtsCommandReadBase;
-typedef mtsCommandReadOrWriteBase<const cmnGenericObject> mtsCommandWriteBase;
-typedef mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> mtsCommandQualifiedReadBase;
-typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQualifiedWriteBase;
+typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
+typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
+typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
+typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 %types(mtsCommandReadBase *);
 %types(mtsCommandWriteBase *);
 %types(mtsCommandQualifiedReadBase *);
@@ -98,7 +98,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandWrite
-%extend mtsCommandReadOrWriteBase<const cmnGenericObject> {
+%extend mtsCommandReadOrWriteBase<const mtsGenericObject> {
     %pythoncode {
         def UpdateFromC(self):
             tmpObject = self.GetArgumentClassServices().Create()
@@ -114,7 +114,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandRead
-%extend mtsCommandReadOrWriteBase<cmnGenericObject> {
+%extend mtsCommandReadOrWriteBase<mtsGenericObject> {
     %pythoncode {
         def UpdateFromC(self):
             tmpObject = self.GetArgumentClassServices().Create()
@@ -128,7 +128,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandQualifiedRead
-%extend mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> {
+%extend mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> {
     %pythoncode {
         def UpdateFromC(self):
             tmp1Object = self.GetArgument1ClassServices().Create()
@@ -171,13 +171,13 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
             for command in commands:
                 self.__dict__[command] = mtsDeviceInterface.GetCommandWrite(self, command)
                 self.__dict__[command].UpdateFromC()
-            commands = mtsDeviceInterface.GetNamesOfCommandsRead(self)
-            for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandRead(self, command)
-                self.__dict__[command].UpdateFromC()
             commands = mtsDeviceInterface.GetNamesOfCommandsQualifiedRead(self)
             for command in commands:
                 self.__dict__[command] = mtsDeviceInterface.GetCommandQualifiedRead(self, command)
+                self.__dict__[command].UpdateFromC()
+            commands = mtsDeviceInterface.GetNamesOfCommandsRead(self)
+            for command in commands:
+                self.__dict__[command] = mtsDeviceInterface.GetCommandRead(self, command)
                 self.__dict__[command].UpdateFromC()
     }
 }
@@ -220,3 +220,6 @@ MTS_INSTANTIATE_VECTOR(mtsIntVec, int);
 MTS_INSTANTIATE_VECTOR(mtsShortVec, short); 
 MTS_INSTANTIATE_VECTOR(mtsLongVec, long); 
 MTS_INSTANTIATE_VECTOR(mtsBoolVec, bool); 
+
+// Wrap mtsStateIndex
+%include "cisstMultiTask/mtsStateIndex.h"

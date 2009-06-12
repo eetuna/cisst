@@ -20,7 +20,6 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#include <cisst3DUserInterface/ui3MenuBar.h>
 #include <cisst3DUserInterface/ui3Manager.h>
 
 #include <vtkAssembly.h>
@@ -50,7 +49,7 @@ vtkProp3D * ui3VisibleObject::GetVTKProp(void)
 }
 
 
-void ui3VisibleObject::Show()
+void ui3VisibleObject::Show(void)
 {
     this->Lock();
     this->Assembly->VisibilityOn();
@@ -58,7 +57,7 @@ void ui3VisibleObject::Show()
 }
 
 
-void ui3VisibleObject::Hide()
+void ui3VisibleObject::Hide(void)
 {
     this->Lock();
     this->Assembly->VisibilityOff();
@@ -93,11 +92,7 @@ void ui3VisibleObject::SetOrientation(vctMatRot3 & rotationMatrix)
 }
 
 
-void ui3VisibleObject::SetTransformation(vctDoubleFrm3 & frame)
-{
-    this->SetPosition(frame.Translation());
-    this->SetOrientation(frame.Rotation());
-}
+
 
 
 void ui3VisibleObject::Lock(void)
@@ -105,7 +100,7 @@ void ui3VisibleObject::Lock(void)
     if (this->VTKHandle) {
         this->Manager->GetSceneManager()->Lock(this->VTKHandle);
     } else {
-        CMN_LOG_CLASS(5) << "Lock: attempt to lock with an object not yet added to the scene" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "Lock: attempt to lock with an object not yet added to the scene" << std::endl;
     }
 }
 
@@ -115,7 +110,7 @@ void ui3VisibleObject::Unlock(void)
     if (this->VTKHandle) {
         this->Manager->GetSceneManager()->Unlock(this->VTKHandle);
     } else {
-        CMN_LOG_CLASS(5) << "Unlock: attempt to unlock with an object not yet added to the scene" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "Unlock: attempt to unlock with an object not yet added to the scene" << std::endl;
     }
 }
 

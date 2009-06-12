@@ -34,9 +34,14 @@ http://www.cisst.org/cisst/license.txt.
 */
 class ui3MasterArm
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+    friend class ui3Manager;
+
 public:
+
+    enum RoleType {PRIMARY, SECONDARY};
+
     /*!
      Constructor
     */
@@ -49,15 +54,19 @@ public:
 
     virtual bool SetInput(mtsDevice * positionDevice, const std::string & positionInterface,
                           mtsDevice * buttonDevice, const std::string & buttonInterface,
-                          mtsDevice * clutchDevice, const std::string & clutchInterface);
+                          mtsDevice * clutchDevice, const std::string & clutchInterface,
+                          const RoleType & role);
     
-    virtual bool SetGeometry(const vctFrm3 & transformation = vctFrm3::Identity(),
-                             double scale = 1.0);
+    virtual bool SetTransformation(const vctFrm3 & transformation = vctFrm3::Identity(),
+                                   double scale = 1.0);
 
     virtual bool SetCursor(ui3CursorBase * cursor);
 
 protected:
 
+    // arm name
+    std::string Name;
+    
     // event handlers
     void ButtonEventHandler(const prmEventButton & buttonEvent);
     void ClutchEventHandler(const prmEventButton & buttonEvent);
@@ -69,18 +78,37 @@ protected:
     bool ButtonPressed;
     bool ButtonReleased;
 
+    // role
+    RoleType Role;
+
     // transformation between inputs and scene
-    vctFrm3 Transform;
-    vctFrm3 LeftTransform;
+    vctFrm3 Transformation;
+    double Scale;
 
     // positions in the state table, for behaviors to read
-    prmPositionCartesianGet Position;
+    prmPositionCartesianGet CartesianPosition;
+    mtsFunctionRead GetCartesianPosition;
+
+    // cursor position
+    vctFrm3 CursorPosition;
 
     // arm clutch
-    bool Clutch;
+    bool Clutched;
+    vctDouble3 ClutchedOutPosition;
 
-    // scale
-    double Scale;
+    // ui3Manager used
+    ui3Manager * Manager;
+
+    inline bool SetManager(ui3Manager * manager) {
+        this->Manager = manager;
+        return true;
+    }
+
+    // used by the ui3Manager
+    void PreRun(void);
+    void UpdateCursorPosition(void);
+    void Hide(void);
+    void Show(void);
 };
 
 

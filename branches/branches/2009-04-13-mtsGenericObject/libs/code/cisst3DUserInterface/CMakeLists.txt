@@ -53,8 +53,10 @@ SET(SOURCE_FILES
     ui3MenuBar.cpp
     ui3MenuButton.cpp
     ui3SceneManager.cpp
+    ui3SlaveArm.cpp
     ui3VTKRenderer.cpp
     ui3VideoInterfaceFilter.cpp
+    ui3VisibleList.cpp
     ui3VisibleObject.cpp
     )
 
@@ -68,14 +70,31 @@ SET(HEADER_FILES
     ui3InputDeviceBase.h
     ui3Manager.h
     ui3MasterArm.h
+    ui3SlaveArm.h
     ui3MenuBar.h
     ui3MenuButton.h
     ui3SceneManager.h
     ui3VTKRenderer.h
     ui3VTKForwardDeclarations.h
     ui3VideoInterfaceFilter.h
+    ui3VisibleList.h
     ui3VisibleObject.h
     )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
+
+# find icons
+
+set(CISST_UI3_ICONS_DIR "${cisst_SOURCE_DIR}/libs/etc/cisst3DUserInterface/icons")
+file(GLOB CISST_UI3_ICONS RELATIVE ${CISST_UI3_ICONS_DIR} ${CISST_UI3_ICONS_DIR}/*.png)
+
+# post build command to copy icons in build tree
+foreach(icon ${CISST_UI3_ICONS})
+  add_custom_command(TARGET cisst3DUserInterface
+                     POST_BUILD
+                     COMMAND ${CMAKE_COMMAND}
+                     ARGS -E copy_if_different
+                            ${CISST_UI3_ICONS_DIR}/${icon}
+                            ${cisst_BINARY_DIR}/etc/cisst3DUserInterface/icons/${icon})
+endforeach(icon)

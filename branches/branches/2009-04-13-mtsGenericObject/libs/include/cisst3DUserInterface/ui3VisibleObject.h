@@ -39,6 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 class ui3VisibleObject: public cmnGenericObject
 {   
     friend class ui3SceneManager;
+    friend class ui3VisibleList;
 
 public:
 
@@ -47,31 +48,35 @@ public:
     /*!
      Destructor
     */
-    inline virtual ~ui3VisibleObject(void) {};
+    virtual ~ui3VisibleObject(void) {};
 
     virtual bool CreateVTKObjects(void) = 0;
 
     virtual vtkProp3D * GetVTKProp(void);
 
-    void Show(void);
+    virtual void Show(void);
 
-    void Hide(void);
+    virtual void Hide(void);
 
-    void SetPosition(vctDouble3 & position);
+    virtual void SetPosition(vctDouble3 & position);
 
-    void SetOrientation(vctDoubleMatRot3 & rotationMatrix);
+    virtual void SetOrientation(vctDoubleMatRot3 & rotationMatrix);
 
-    void SetTransformation(vctDoubleFrm3 & frame);
+    template <bool _storageOrder>
+    void SetTransformation(vctFrameBase<vctMatrixRotation3<double, _storageOrder> > frame) {
+        this->SetPosition(frame.Translation());
+        this->SetOrientation(frame.Rotation());
+    }
 
-    void Lock(void);
+    virtual void Lock(void);
 
-    void Unlock(void);
+    virtual void Unlock(void);
 
 protected:
     
     typedef ui3SceneManager::VTKHandleType VTKHandleType;
 
-    inline void SetVTKHandle(VTKHandleType handle) {
+    void SetVTKHandle(VTKHandleType handle) {
         this->VTKHandle = handle;
     }
 

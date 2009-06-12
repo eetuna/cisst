@@ -10,22 +10,16 @@
 
 class displayTask: public mtsTaskPeriodic {
     // set log level to 5
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    volatile bool ExitFlag;
-    double StartValue;
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
  protected:
     // local copy of data used in commands
     mtsDouble Data;
     mtsDouble AmplitudeData;
-    mtsStateIndex StateIndex;
-    mtsDoubleHistory DataVec;
 
     struct {
        // functions which will be bound to commands
        mtsFunctionRead GetData;
-       mtsFunctionRead GetStateIndex;
-       mtsFunctionQualifiedRead GetDataHistory;
        mtsFunctionWrite SetAmplitude;
     } Generator;
 
@@ -40,7 +34,6 @@ class displayTask: public mtsTaskPeriodic {
     void Startup(void);
     void Run(void);
     void Cleanup(void) {};
-    bool GetExitFlag (void) { return ExitFlag;}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(displayTask);

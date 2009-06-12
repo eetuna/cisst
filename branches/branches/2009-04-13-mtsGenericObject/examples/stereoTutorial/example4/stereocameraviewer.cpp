@@ -27,16 +27,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <iostream>
 #include <string>
+#include <cisstCommon.h>
+#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
 
-#ifdef __GNUC__
-#include <curses.h>
-#include <iostream>
-#include <stdio.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#endif // __GNUC__
 
 using namespace std;
 
@@ -120,8 +114,10 @@ class CViewerWindowCallback : public svlImageWindowCallbackBase
 public:
     CViewerWindowCallback() : svlImageWindowCallbackBase()
     {
-        FileWriterFilter = 0;
+        VideoWriterFilter = 0;
+        ImageWriterFilter = 0;
         ShowFramerate = true;
+        Recording = false;
     }
 
     void OnNewFrame(unsigned int frameid)
@@ -166,9 +162,26 @@ public:
             switch (eventid) {
                 case ' ':
                 {
-                    if (FileWriterFilter) {
-                        FileWriterFilter->Record(1);
-                        cout << endl << " >>> Image files saved <<<" << endl;
+                    if (VideoWriterFilter) {
+                        if (Recording) {
+                            VideoWriterFilter->Pause();
+                            Recording = false;
+                            cout << endl << " >>> Recording paused <<<" << endl;
+                        }
+                        else {
+                            VideoWriterFilter->Record(-1);
+                            Recording = true;
+                            cout << endl << " >>> Recording started <<<" << endl;
+                        }
+                    }
+                }
+                break;
+
+                case 's':
+                {
+                    if (ImageWriterFilter) {
+                        ImageWriterFilter->Record(1);
+                        cout << endl << " >>> Snapshots saved <<<" << endl;
                     }
                 }
                 break;
@@ -179,7 +192,9 @@ public:
         }
     }
 
-    svlImageFileWriter* FileWriterFilter;
+    svlImageFileWriter* ImageWriterFilter;
+    svlVideoFileWriter* VideoWriterFilter;
+    bool Recording;
 
     bool ShowFramerate;
 #ifdef _WIN32
@@ -196,15 +211,16 @@ public:
 //  CameraViewer  //
 ////////////////////
 
-int CameraViewer(bool interpolation, int width, int height)
+int CameraViewer(bool save, bool interpolation, int width, int height)
 {
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(4);
+    svlStreamManager viewer_stream(8);
     svlVideoCaptureSource viewer_source(true);
     svlImageResizer viewer_resizer;
     svlImageWindow viewer_window;
     CViewerWindowCallback viewer_window_cb;
-    svlImageFileWriter viewer_writer;
+    svlImageFileWriter viewer_imagewriter;
+    svlVideoFileWriter viewer_videowriter;
     CFPSFilter viewer_fps;
 
     // setup source
@@ -215,10 +231,19 @@ int CameraViewer(bool interpolation, int width, int height)
         viewer_source.DialogSetup(SVL_RIGHT);
     }
 
-    // setup writer
-    viewer_writer.SetFilePath("left_", "bmp", SVL_LEFT);
-    viewer_writer.SetFilePath("right_", "bmp", SVL_RIGHT);
-    viewer_writer.Pause();
+    // setup video writer
+    if (save == true) {
+        viewer_videowriter.DialogFilePath(SVL_LEFT);
+        viewer_videowriter.DialogFilePath(SVL_RIGHT);
+        viewer_videowriter.SetCompressionLevel(1); // 0-9
+        viewer_videowriter.Pause();
+    }
+
+    // setup image writer
+    viewer_imagewriter.SetFilePath("left_", "bmp", SVL_LEFT);
+    viewer_imagewriter.SetFilePath("right_", "bmp", SVL_RIGHT);
+    viewer_imagewriter.EnableTimestamps();
+    viewer_imagewriter.Pause();
 
     // setup resizer
     if (width > 0 && height > 0) {
@@ -228,13 +253,20 @@ int CameraViewer(bool interpolation, int width, int height)
     }
 
     // setup image window
-    viewer_window_cb.FileWriterFilter = &viewer_writer;
+    viewer_window_cb.ImageWriterFilter = &viewer_imagewriter;
+    if (save == true) {
+        viewer_window_cb.VideoWriterFilter = &viewer_videowriter;
+    }
     viewer_window.SetCallback(&viewer_window_cb);
     viewer_window.SetTitleText("Camera Viewer");
+    viewer_window.EnableTimestampInTitle();
 
     // chain filters to pipeline
     if (viewer_stream.Trunk().Append(&viewer_source) != SVL_OK) goto labError;
-    if (viewer_stream.Trunk().Append(&viewer_writer) != SVL_OK) goto labError;
+    if (save == true) {
+        if (viewer_stream.Trunk().Append(&viewer_videowriter) != SVL_OK) goto labError;
+    }
+    if (viewer_stream.Trunk().Append(&viewer_imagewriter) != SVL_OK) goto labError;
     if (width > 0 && height > 0) {
         if (viewer_stream.Trunk().Append(&viewer_resizer) != SVL_OK) goto labError;
     }
@@ -248,88 +280,45 @@ int CameraViewer(bool interpolation, int width, int height)
 
     cerr << "Done" << endl;
 
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // modify terminal settings for single key inputs
-    struct  termios ksettings;
-    struct  termios new_ksettings;
-    int     kbrd;
-    kbrd = open("/dev/tty",O_RDWR);
-    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCGETS, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TCSETS, &new_ksettings);
-        ioctl(kbrd, TIOCNOTTY);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCGETA, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TIOCSETA, &new_ksettings);
-        ////////////////////////////////////////////////////
-    #endif // (CISST_OS == CISST_DARWIN)
-#endif
-
     // wait for keyboard input in command window
-#ifdef _WIN32
     int ch;
-#endif
-#ifdef __GNUC__
-    char ch;
-#endif
 
     do {
         cerr << endl << "Keyboard commands:" << endl << endl;
         cerr << "  In image window:" << endl;
-        cerr << "    SPACE - Save image snapshots" << endl;
+        if (save == true) {
+            cerr << "    SPACE - Video recorder control: Record/Pause" << endl;
+        }
+        cerr << "    's'   - Take image snapshots" << endl;
         cerr << "  In command window:" << endl;
-        cerr << "    'i'   - Adjust image properties" << endl;
-        cerr << "    's'   - Save image snapshots" << endl;
+        cerr << "    '1'   - Adjust LEFT image properties" << endl;
+        cerr << "    '2'   - Adjust RIGHT image properties" << endl;
         cerr << "    'q'   - Quit" << endl << endl;
 
-#ifdef _WIN32
-        ch = _getch();
-#endif
-#ifdef __GNUC__
-        ch = getchar();
-#endif
+        ch = cmnGetChar();
+
         switch (ch) {
-            case 'i':
-                // Adjust image properties
+            case '1':
                 viewer_window_cb.ShowFramerate = false;
                 cerr << endl << endl;
-                viewer_source.DialogImageProperties();
+                viewer_source.DialogImageProperties(SVL_LEFT);
                 cerr << endl;
                 viewer_window_cb.ShowFramerate = true;
             break;
 
-            case 's':
-                viewer_writer.Record(1);
-                cout << endl << " >>> Image files saved <<<" << endl;
+            case '2':
+                viewer_window_cb.ShowFramerate = false;
+                cerr << endl << endl;
+                viewer_source.DialogImageProperties(SVL_RIGHT);
+                cerr << endl;
+                viewer_window_cb.ShowFramerate = true;
             break;
 
             default:
             break;
         }
+        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
-
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // reset terminal settings    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCSETS, &ksettings);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCSETA, &ksettings);
-    #endif // (CISST_OS == CISST_DARWIN)
-    
-    close(kbrd);
-    ////////////////////////////////////////////////////
-#endif
 
     cerr << endl;
 
@@ -382,16 +371,17 @@ int ParseNumber(char* string, unsigned int maxlen)
 
 int main(int argc, char** argv)
 {
-    cerr << endl << "svlCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
+    cerr << endl << "stereoTutorialStereoCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl;
-    cerr << "Enter 'svlCameraViewer -?' for help." << endl;
+    cerr << "Enter 'stereoTutorialStereoCameraViewer -?' for help." << endl;
 
     //////////////////////////////
     // parsing arguments
     int i, options, ivalue, width, height;
-    bool interpolation;
+    bool interpolation, save;
 
     options = argc - 1;
+    save = false;
     interpolation = false;
     width = -1;
     height = -1;
@@ -402,20 +392,25 @@ int main(int argc, char** argv)
         switch (argv[i][1]) {
             case '?':
                 cerr << "Command line format:" << endl;
-                cerr << "     svlCameraViewer [options]" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer [options]" << endl;
                 cerr << "Options:" << endl;
+                cerr << "     -v        Save video files" << endl;
                 cerr << "     -i        Interpolation ON [default: OFF]" << endl;
                 cerr << "     -w#       Displayed image width" << endl;
                 cerr << "     -h#       Displayed image height" << endl;
                 cerr << "Examples:" << endl;
-                cerr << "     svlCameraViewer" << endl;
-                cerr << "     svlCameraViewer -w800 -h600" << endl;
-                cerr << "     svlCameraViewer -i -w1024 -h768" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer -w800 -h600" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer -v -i -w1024 -h768" << endl;
                 return 1;
             break;
 
             case 'i':
                 interpolation = true;
+            break;
+
+            case 'v':
+                save = true;
             break;
 
             case 'w':
@@ -437,7 +432,7 @@ int main(int argc, char** argv)
     //////////////////////////////
     // starting viewer
 
-    CameraViewer(interpolation, width, height);
+    CameraViewer(save, interpolation, width, height);
 
     cerr << "Quit" << endl;
     return 1;

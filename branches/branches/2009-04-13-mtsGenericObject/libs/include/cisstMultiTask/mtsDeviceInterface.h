@@ -25,10 +25,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstCommon/cmnNamedMap.h>
 
 #include <cisstOSAbstraction/osaThread.h>
 
-#include <cisstMultiTask/mtsMap.h>
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsMulticastCommandWrite.h>
@@ -77,7 +77,7 @@ class mtsStateTable;
  */
 class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     friend class mtsDevice;
     friend class mtsTask;
     friend class mtsTaskPeriodic;
@@ -85,24 +85,24 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
 
     /*! Typedef for a map of name of zero argument command and name of
       command. */
-    typedef mtsMap<mtsCommandVoidBase> CommandVoidMapType;
+    typedef cmnNamedMap<mtsCommandVoidBase> CommandVoidMapType;
 
     /*! Typedef for a map of name of one argument command and name of
       command. */
-    typedef mtsMap<mtsCommandReadBase> CommandReadMapType;
+    typedef cmnNamedMap<mtsCommandReadBase> CommandReadMapType;
 
     /*! Typedef for a map of name of one argument command and name of
       command. */
-    typedef mtsMap<mtsCommandWriteBase> CommandWriteMapType;
+    typedef cmnNamedMap<mtsCommandWriteBase> CommandWriteMapType;
 
     /*! Typedef for a map of name of two argument command and name of
       command. */
-    typedef mtsMap<mtsCommandQualifiedReadBase> CommandQualifiedReadMapType;
+    typedef cmnNamedMap<mtsCommandQualifiedReadBase> CommandQualifiedReadMapType;
 
     /*! Typedef for a map of event name and event generator
       command. */
-    typedef mtsMap<mtsMulticastCommandVoid> EventVoidMapType;
-    typedef mtsMap<mtsMulticastCommandWriteBase> EventWriteMapType;
+    typedef cmnNamedMap<mtsMulticastCommandVoid> EventVoidMapType;
+    typedef cmnNamedMap<mtsMulticastCommandWriteBase> EventWriteMapType;
 
  protected:
 
@@ -121,12 +121,12 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
                        mtsDevice * device):
         Name(interfaceName),
         Device(device),
-        CommandsVoid("CommandVoid"),
-        CommandsRead("CommandRead"),
-        CommandsWrite("CommandWrite"),
-        CommandsQualifiedRead("CommandQualifiedRead"),
-        EventVoidGenerators("EventVoidGenerator"),
-        EventWriteGenerators("EventWriteGenerator")
+        CommandsVoid("CommandsVoid", *this),
+        CommandsRead("CommandsRead", *this),
+        CommandsWrite("CommandsWrite", *this),
+        CommandsQualifiedRead("CommandsQualifiedRead", *this),
+        EventVoidGenerators("EventVoidGenerators", *this),
+        EventWriteGenerators("EventWriteGenerators", *this)
     {}
 
     /*! Default destructor. Does nothing. */
@@ -201,7 +201,7 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     virtual unsigned int AllocateResourcesForCurrentThread(void);
 
     virtual inline unsigned int ProcessMailBoxes(void) {
-        CMN_LOG_CLASS(5) << "Call to ProcessMailBoxes on base class mtsDeviceInterface should never happen" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "Call to ProcessMailBoxes on base class mtsDeviceInterface should never happen" << std::endl;
         return 0;
     }
 
@@ -263,14 +263,14 @@ public:
 
     /* AddCommandReadState and AddCommandWriteState are only relevant for tasks. */
     template <class _elementType>
-    mtsCommandReadBase * AddCommandReadState(const mtsStateTable &stateTable,
-                         const _elementType &stateData, const std::string &commandName);
+    mtsCommandReadBase * AddCommandReadState(const mtsStateTable & stateTable,
+                                             const _elementType & stateData, const std::string & commandName);
     template <class _elementType>
-    mtsCommandQualifiedReadBase * AddCommandReadHistory(const mtsStateTable &stateTable, const _elementType &stateData,
-                                               const std::string &commandName);
+    mtsCommandQualifiedReadBase * AddCommandReadHistory(const mtsStateTable & stateTable, const _elementType & stateData,
+                                                        const std::string & commandName);
     template <class _elementType>
-    mtsCommandWriteBase * AddCommandWriteState(const mtsStateTable &stateTable,
-                          const _elementType &stateData, const std::string &commandName);
+    mtsCommandWriteBase * AddCommandWriteState(const mtsStateTable & stateTable,
+                                               const _elementType & stateData, const std::string & commandName);
 
     /* The following method is implemented in mtsTaskInterface.h */
     /*! Add a write command to a device interface based on a method
@@ -338,17 +338,17 @@ inline mtsCommandReadBase * mtsDeviceInterface::AddCommandRead(void (__classType
     mtsCommandReadBase * command = new mtsCommandRead<__classType, __argumentType>
                                       (method, classInstantiation, commandName, argumentPrototype);
     if (command) {
-        if (CommandsRead.AddItem(commandName, command, 1)) {
+        if (CommandsRead.AddItem(commandName, command, CMN_LOG_LOD_RUN_ERROR)) {
             return command;
         } else {
             delete command;
-            CMN_LOG_CLASS(1) << "AddCommandRead: unable to add command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead: unable to add command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     } else {
-        CMN_LOG_CLASS(1) << "AddCommandRead: unable to create command \""
-                         << commandName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead: unable to create command \""
+                                 << commandName << "\"" << std::endl;
         return 0;
     }
 }
@@ -363,17 +363,17 @@ inline mtsCommandQualifiedReadBase * mtsDeviceInterface::AddCommandQualifiedRead
     mtsCommandQualifiedReadBase * command = new mtsCommandQualifiedRead<__classType, __argument1Type, __argument2Type>
                                                (method, classInstantiation, commandName, argument1Prototype, argument2Prototype);
     if (command) {
-        if (CommandsQualifiedRead.AddItem(commandName, command, 1)) {
+        if (CommandsQualifiedRead.AddItem(commandName, command, CMN_LOG_LOD_RUN_ERROR)) {
             return command;
         } else {
             delete command;
-            CMN_LOG_CLASS(1) << "AddCommandQualifiedRead: unable to add command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandQualifiedRead: unable to add command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     } else {
-        CMN_LOG_CLASS(1) << "AddCommandQualifiedRead: unable to create command \""
-                         << commandName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandQualifiedRead: unable to create command \""
+                                 << commandName << "\"" << std::endl;
         return 0;
     }
 }
@@ -388,12 +388,12 @@ mtsCommandWriteBase * mtsDeviceInterface::AddEventWrite(const std::string & even
             return eventMulticastCommand;
         }
         delete eventMulticastCommand;
-        CMN_LOG_CLASS(1) << "AddEventWrite: unable to add event \""
-                         << eventName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddEventWrite: unable to add event \""
+                                 << eventName << "\"" << std::endl;
         return 0;
     }
-    CMN_LOG_CLASS(0) << "AddEventWrite: unable to create multi-cast command for event \""
-                     << eventName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddEventWrite: unable to create multi-cast command for event \""
+                             << eventName << "\"" << std::endl;
     return 0;
 }
 

@@ -27,18 +27,27 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3CursorBase.h>
 
+class CursorTip;
+class CursorAnchor;
 
 /*!  Simple cursor using a sphere for rendering.  Color, diameter and
   transparency are used to show the different states.
 */
 class ui3CursorSphere: public ui3CursorBase
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 protected:  
-    vtkSphereSource * Source;
-    vtkPolyDataMapper * Mapper;
-    vtkActor * Actor;
+    /*! VTK objects used for the cursor itself, i.e. a simple
+      sphere */
+    vtkSphereSource * SphereSource;
+    vtkPolyDataMapper * SphereMapper;
+    vtkActor * SphereActor;
+
+    /*! VTK objects used for the "anchor" */
+    vtkLineSource * LineSource;
+    vtkPolyDataMapper * LineMapper;
+    vtkActor * LineActor;
 
 public:
     /*!
@@ -51,13 +60,15 @@ public:
     */
     ~ui3CursorSphere();
 
-    bool CreateVTKObjects(void);
-
     void SetPressed(bool pressed);
 
     void Set2D(bool is2D);
 
     void SetClutched(bool clutched);
+
+    ui3VisibleObject * GetVisibleObject(void);
+
+    void SetTransformation(vctDoubleFrm3 & frame);
 
 protected:
     void UpdateColor(void);
@@ -65,6 +76,10 @@ protected:
     bool IsPressed;
     bool Is2D;
     bool IsClutched;
+
+    CursorTip * VisibleTip;
+    CursorAnchor * VisibleAnchor;
+    ui3VisibleList * VisibleList;
 };
 
 

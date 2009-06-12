@@ -40,7 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 /*! Cartesian position get command argument */
 class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
     /*! default constructor */

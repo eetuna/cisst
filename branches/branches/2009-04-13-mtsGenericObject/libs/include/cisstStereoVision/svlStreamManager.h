@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <map>
 
 #include <cisstOSAbstraction/osaThread.h>
+#include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstStereoVision/svlStreamDefs.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 
@@ -91,7 +92,7 @@ friend class svlStreamControlMultiThread;
     typedef std::map<svlStreamType, svlStreamType> _StreamTypeMap;
     typedef std::vector<svlStreamEntity*> _OutputBranchList;
 
-protected:
+public:
     typedef struct _ProcInfo {
         unsigned int  count;
         unsigned int  id;
@@ -118,7 +119,7 @@ protected:
     virtual void OnStop();
     virtual int Release();
 
-    void SetFilterToSource(svlStreamType output);
+    void SetFilterToSource(svlStreamType output, bool autotimestamp = true);
     int AddSupportedType(svlStreamType input, svlStreamType output);
     void UpdateOutputFormat();
     int IsDataValid(svlStreamType type, svlSample* data);
@@ -129,6 +130,7 @@ private:
     bool Running;
     bool OutputSampleModified;
     bool OutputFormatModified;
+    bool AutoTimestamp;
     double PrevInputTimestamp;
     _StreamTypeMap SupportedTypes;
     _OutputBranchList OutputBranches;
@@ -236,6 +238,8 @@ public:
 
 private:
     svlStreamControlMultiThread();
+
+    double GetAbsoluteTime(osaTimeServer* timeserver);
 
     unsigned int ThreadID;
     unsigned int ThreadCount;

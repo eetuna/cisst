@@ -75,33 +75,41 @@ public:
 
     template <class _elementType>
     class Accessor : public AccessorBase {
-        const mtsStateArray<_elementType> &History;
-        _elementType *Current;
+        typedef _elementType value_type;
+        typedef typename mtsStateTable::Accessor<value_type> ThisType;
+        const mtsStateArray<value_type> &History;
+        value_type * Current;
 
     public:
         Accessor(const mtsStateTable &table, mtsStateDataId id, 
-                  const mtsStateArray<_elementType> *history, _elementType *data) :
-            AccessorBase(table, id), History(*history), Current(data) {}
+                 const mtsStateArray<value_type> *history, value_type *data):
+            AccessorBase(table, id),
+            History(*history),
+            Current(data)
+        {}
 
         void ToStream(std::ostream & outputStream, const mtsStateIndex & when) const
-        { History.Element(when.Index()).ToStream(outputStream); }
+        {
+            History.Element(when.Index()).ToStream(outputStream);
+        }
 
-        bool Get(const mtsStateIndex & when, _elementType & data) const
+
+        bool Get(const mtsStateIndex & when, value_type & data) const
         { 
 		   data = History.Element(when.Index());
            return Table.ValidateReadIndex(when);
         }
 
-        bool GetLatest(_elementType & data) const
+        bool GetLatest(value_type & data) const
         {  return Get(Table.GetIndexReader(), data); }
 
-        void SetCurrent(const _elementType & data)
+        void SetCurrent(const value_type & data)
         { *Current = data; }
 
         // Get a vector of data, starting and ending at the specified time indices (inclusive).
         // For now, set the start index based on the vector size. In the future, we
         // should define a new parameter type that consists of a pair of mtsStateIndex.
-        bool GetHistory(const mtsStateIndex & end, mtsVector<_elementType> & data) const {
+        bool GetHistory(const mtsStateIndex & end, mtsVector<value_type> & data) const {
             bool ret = false;
             if (data.size() > 0) {
                 mtsStateIndex start = end;
@@ -114,7 +122,7 @@ public:
                         ret = Table.ValidateReadIndex(start);
                 }
                 else
-                    CMN_LOG(1) << "ReadVectorFromReader: data not available" << std::endl;
+                    CMN_LOG_INIT_ERROR << "ReadVectorFromReader: data not available" << std::endl;
             }
             return ret;
         }
@@ -231,7 +239,7 @@ protected:
     mtsStateTable::AccessorBase *GetAccessor(const std::string &name) const;
 
 	/*! Get a handle for data to be used by a writer */
-	mtsStateIndex GetIndexWriter(void);
+	mtsStateIndex GetIndexWriter(void) const;
 
     /*! Start the current cycle. This just records the starting timestamp (Tic). */
     void Start(void);
@@ -269,13 +277,6 @@ protected:
 };
 
 
-// overload mtsObjectName to provide the class name
-inline std::string mtsObjectName(const mtsStateTable * CMN_UNUSED(object))
-{
-    return "mtsStateTable";
-}
-
-
 template <class _elementType>
 mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType * element) {
     mtsStateArray<_elementType> * elementHistory =
@@ -289,6 +290,19 @@ mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType 
     StateVectorAccessors.push_back(acc);
     return NumberStateData-1;
 }
+
+
+// overload mtsObjectName for mtsStateTable
+inline std::string mtsObjectName(const mtsStateTable * CMN_UNUSED(object)) {
+    return "mtsStateTable";
+}
+
+// overload mtsObjectName for mtsStateTable::Accessor
+template <class _elementType>
+inline std::string mtsObjectName(const mtsStateTable::Accessor<_elementType> * CMN_UNUSED(accessor)) {
+    return "mtsStateTable::Accessor";
+}
+
 
 #endif // _mtsStateTable_h
 
