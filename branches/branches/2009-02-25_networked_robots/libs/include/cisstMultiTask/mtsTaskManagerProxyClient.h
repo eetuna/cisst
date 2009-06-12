@@ -98,9 +98,14 @@ public:
     bool IsRegisteredProvidedInterface(const std::string & taskName, 
                                        const std::string & providedInterfaceName) const;
 
-    bool GetProvidedInterfaceInfo(const ::std::string & taskName,
+    bool GetProvidedInterfaceInfo(const std::string & taskName,
                                   const std::string & providedInterfaceName,
-                                  ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
+                                  mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
+
+    void NotifyInterfaceConnectionResult(
+        const bool isServerTask, const bool isSuccess,
+        const std::string & userTaskName,     const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice

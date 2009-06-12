@@ -204,15 +204,18 @@ protected:
     //-------------------------------------------------------------------------
 protected:
     /*! Dynamic-casted proxy object. 
-        Both are initialized as null pointer and either one of them must be null and
-        the other be valid pointer. */
+        Both objects are initialized as null at first and will be assigned later.
+        Either one of pointers should be null and the other has to be valid. 
+        ProxyServer is valid only if this is the global task manager.
+        ProxyClient is valid only if this is a general task manager.
+       */
     mtsTaskManagerProxyServer * ProxyServer;
     mtsTaskManagerProxyClient * ProxyClient;
 
     /*! Task manager type (server or client) */
     TaskManagerType TaskManagerTypeMember;
 
-    /*! Task manager communicator ID */
+    /*! Task manager communicator ID. Used for ICE proxy object property. */
     const std::string TaskManagerCommunicatorID;
 
     /*! Proxy instance. This will be dynamically created. */
@@ -270,6 +273,11 @@ public:
     const bool InvokeGetProvidedInterfaceInfo(const ::std::string & taskName,
                                         const std::string & providedInterfaceName,
                                         ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
+
+    void InvokeNotifyInterfaceConnectionResult(
+        const bool isServerTask, const bool isSuccess,
+        const std::string & userTaskName,     const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Task Layer Processing

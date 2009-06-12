@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
@@ -307,21 +307,21 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     if (!resourceDevice) {        
         resourceDevice = TaskMap.GetItem(resourceTaskName);
     }
-    // find the interface pointer from the resource
+    // find the interface pointer from the local resource first
     mtsDeviceInterface * resourceInterface;
-    if (resourceDevice)
+    if (resourceDevice) {
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
-    else {
+    } else {
+        // If we cannot find, the resource interface should be at remote or doesn't exist.
         if (GetTaskManagerType() == TASK_MANAGER_LOCAL) {
             CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
             return false;
-        } else {            
+        } else {
             resourceInterface = GetResourceInterface(resourceTaskName, providedInterfaceName, 
                                     userTaskName, interfaceRequiredName, 
                                     userTask);
-            if (!resourceInterface)
-            {
-                CMN_LOG_CLASS(1) << "Connect through networks: can not find a task or device named " << resourceTaskName << std::endl;
+            if (!resourceInterface) {
+                CMN_LOG_CLASS(1) << "Connect through networks: can not find the task or device named " << resourceTaskName << std::endl;
                 return false;                
             }
 
@@ -343,19 +343,33 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
 
     // After creating a required interface proxy at the server task, try to connect it with 
     // a provided interface at server side.
-    if (RemoteConnect) {
-        if (!ConnectAtServerSide(interfaceRequiredName, providedInterfaceName)) {
-            CMN_LOG_CLASS(1) << "Connect: connection at server side failed: " 
-                << interfaceRequiredName << "(req) - " 
-                << resourceInterface << "(prv)" << std::endl;
-            return false;
-        }
-    }
+    //if (RemoteConnect) {
+    //    if (!ConnectAtServerSide(interfaceRequiredName, providedInterfaceName)) {
+    //        CMN_LOG_CLASS(1) << "Connect: connection at server side failed: " 
+    //            << interfaceRequiredName << "(req) - " 
+    //            << resourceInterface << "(prv)" << std::endl;
+    //        return false;
+    //    }
+    //}
 
     // connected, add to the map of connections
     AssociationSet.insert(association);
     CMN_LOG_CLASS(3) << "Connect: " << userTaskName << "::" << interfaceRequiredName
                      << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+
+    // If the connection between the required interface with the provided interface proxy
+    // at client side is established successfully, inform the global task manager of this 
+    // fact.
+    // 'RemoteConnect' is true only if this task manager is at client side and all the 
+    // connection processing above are successful.
+    if (RemoteConnect) {
+        CMN_ASSERT(!ProxyServer);   // This is not a global task manager.
+        CMN_ASSERT(ProxyClient);
+
+        InvokeNotifyInterfaceConnectionResult(true, true,
+            userTaskName, interfaceRequiredName, resourceTaskName, providedInterfaceName);
+    }
+
     return true;
 }
 
@@ -371,78 +385,93 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
 
     // Ask the global task manager (TMServer) if the specified task providing
     // the specific provided interface has been registered.
-    if (InvokeIsRegisteredProvidedInterface(resourceTaskName, providedInterfaceName))            
-    {
-        // If (task, provided interface) exists,
-        // 1) Retrieve information from the global task manager to connect
-        //    the requested provided interface (mtsDeviceInterfaceProxyServer).                
-        mtsTaskManagerProxy::ProvidedInterfaceInfo info;
-        if (!InvokeGetProvidedInterfaceInfo(resourceTaskName, providedInterfaceName, info)) {
-            CMN_LOG_CLASS(1) << "Connect over networks: failed to retrieve proxy information: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
-            return NULL;
-        }
-
-        // 2) Using the information, start a proxy client (=server proxy, mtsDeviceInterfaceProxyClient object).
-        clientTask->StartProxyClient(info.endpointInfo, info.communicatorID);
-
-        osaSleep(1*cmn_s);
-        // 3) From the interface proxy server, get the complete information on the provided 
-        //    interface as a set of string.
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence providedInterfaces;
-        if (!clientTask->GetProvidedInterfaces(providedInterfaces)) {
-            CMN_LOG_CLASS(1) << "Connect over networks: failed to retrieve provided interface specification: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
-            return NULL;
-        }
-
-        // 4) Extract and present the complete information on this provided interface 
-        // as a set of string.
-        std::string serverProxyName;
-        std::vector<mtsDeviceInterfaceProxy::ProvidedInterface>::const_iterator it
-            = providedInterfaces.begin();
-        for (; it != providedInterfaces.end(); ++it) {
-            //
-            // TODO: handle a case that there are multiple provided interfaces at server task.
-            //
-            CMN_ASSERT(providedInterfaceName == it->interfaceName);
-
-            /* ServerTaskProxy naming rule:
-                
-                TS:PI-Network-TC:RI
-
-               where TS: the name of the server task
-                     PI: the name of the provided interface
-                     TC: the name of the client task
-                     RI: the name of the required interface
-            */
-            serverProxyName = resourceTaskName;
-            //serverProxyName = resourceTaskName + ":"          // TS
-            //                      it->interfaceName + "-Network-" // PI
-            //                      userTaskName + ":"              // TC
-            //                      interfaceRequiredName;          // RI
-
-            mtsDeviceProxy * serverTaskProxy = new mtsDeviceProxy(serverProxyName);
-            CMN_ASSERT(serverTaskProxy);
-
-            if (!CreateProvidedInterfaceProxy(*it, serverTaskProxy, clientTask)) {
-                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy FAILED: " << serverProxyName << std::endl;
-                return NULL;
-            }
-
-            // Add this proxy task to the task manager
-            //if (!AddTask(serverTaskProxy)) {
-            if (!AddDevice(serverTaskProxy)) {
-                CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Adding task failed: " << serverProxyName << std::endl;
-                return NULL;
-            }
-
-            resourceInterface = serverTaskProxy->GetProvidedInterface(providedInterfaceName);
-
-            //
-            // TODO: Currently, it is assumed that there is only one provided interface.
-            //
-            return resourceInterface;
-        }
+    if (!InvokeIsRegisteredProvidedInterface(resourceTaskName, providedInterfaceName)) {
+        CMN_LOG_CLASS(1) << "Connect across networks: '" << providedInterfaceName << "' has not been registered." << resourceTaskName << ", " << std::endl;
+        return NULL;
     }
+
+    // If (task, provided interface) exists,
+    // 1) Retrieve information from the global task manager to connect
+    //    the requested provided interface (mtsDeviceInterfaceProxyServer).                
+    mtsTaskManagerProxy::ProvidedInterfaceInfo info;
+    if (!InvokeGetProvidedInterfaceInfo(resourceTaskName, providedInterfaceName, info)) {
+        CMN_LOG_CLASS(1) << "Connect across networks: failed to retrieve proxy information: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
+        return NULL;
+    }
+
+    // 2) Using the information, start a proxy client (=server proxy, mtsDeviceInterfaceProxyClient object).
+    clientTask->StartProxyClient(info.endpointInfo, info.communicatorID);
+
+    //
+    // TODO: Does ICE allow a user to register a callback function? (e.g. OnConnect())
+    //       If it does, we can remove the following line.
+    osaSleep(1*cmn_s);
+
+    // 3) From the server task, get the complete information on the provided 
+    //    interface as a set of string.
+    mtsDeviceInterfaceProxy::ProvidedInterfaceSequence providedInterfaces;
+    if (!clientTask->GetProvidedInterfaces(providedInterfaces)) {
+        CMN_LOG_CLASS(1) << "Connect across networks: failed to retrieve provided interface specification: " << resourceTaskName << ", " << providedInterfaceName << std::endl;
+        return NULL;
+    }
+
+    // 4) Create a server task proxy that has a provided interface proxy.
+    std::string serverTaskProxyName;
+    std::vector<mtsDeviceInterfaceProxy::ProvidedInterface>::const_iterator it
+        = providedInterfaces.begin();
+    for (; it != providedInterfaces.end(); ++it) {
+        //
+        // TODO: Currently, we assume that there is only one provided interface at server
+        // side. However, if we want to handle a case that there are multiple provided 
+        // interfaces, this loop should be modified. (MJUNG)
+        //
+        CMN_ASSERT(providedInterfaceName == it->interfaceName);
+
+        // ServerTaskProxy naming rule:
+        //    
+        //   TS:PI-TC:RI
+        //
+        //   where TS: server task name
+        //         PI: provided interface name
+        //         TC: client task name
+        //         RI: required interface name
+        serverTaskProxyName = resourceTaskName + ":" +  // TS
+                              it->interfaceName + "-" + // PI
+                              userTaskName + ":" +      // TC
+                              interfaceRequiredName;    // RI
+
+        // Create a server task proxy of which name follows the naming rule above.
+        // (see mtsDeviceProxy.h as to why serverTaskProxy is of mtsDevice type, not
+        // of mtsTask.)
+        mtsDeviceProxy * serverTaskProxy = new mtsDeviceProxy(serverTaskProxyName);
+
+        // Create a provided interface proxy using the information received from the 
+        // server task.
+        if (!CreateProvidedInterfaceProxy(*it, serverTaskProxy, clientTask)) {
+            CMN_LOG_CLASS(1) << "Connect across networks: failed to create a provided interface proxy: "
+                             << serverTaskProxyName << std::endl;
+            return NULL;
+        }
+
+        // Add the proxy task to the local task manager
+        if (!AddDevice(serverTaskProxy)) {
+            CMN_LOG_CLASS(1) << "Connect across networks: failed to add the proxy task: "
+                             << serverTaskProxyName << std::endl;
+            return NULL;
+        }
+
+        // Return a pointer to the provided interface proxy as if the interface was initially
+        // created in client's local memory space.
+        resourceInterface = serverTaskProxy->GetProvidedInterface(providedInterfaceName);
+
+        //
+        // TODO: Currently, it is assumed that there is only one provided interface.
+        //
+        return resourceInterface;
+    }
+
+    // The following line should not be reached.
+    CMN_ASSERT(false);
 
     return NULL;
 }
@@ -457,16 +486,14 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
     mtsDevice * serverTaskProxy, mtsTask * clientTask)
 {
-    // 1) Create a local provided interface (a provided interface proxy)
-    if (!serverTaskProxy->AddProvidedInterface(providedInterface.interfaceName)) {
+    // 1) Create a local provided interface (a provided interface proxy).
+    mtsDeviceInterface * providedInterfaceProxy = serverTaskProxy->AddProvidedInterface(providedInterface.interfaceName);
+    if (!providedInterfaceProxy) {
         CMN_LOG_CLASS(1) << "CreateProvidedInterfaceProxy: Could not add provided interface." << std::endl;
         return false;
     }
 
-    // 2) Restore Commands by creating command proxies specified by the provided interface
-    mtsDeviceInterface * providedInterfaceProxy = serverTaskProxy->GetProvidedInterface(providedInterface.interfaceName);
-    CMN_ASSERT(providedInterfaceProxy);
-
+    // 2) Create command proxies.
     std::string commandName;
     int commandSID;
 
@@ -476,7 +503,10 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
             = providedInterface.commands##_commandType.begin();\
         for (; it != providedInterface.commands##_commandType.end(); ++it) {\
             commandName = it->Name;\
-            commandSID = it->CommandSID;
+            commandSID = 0;
+
+    // commandSID was set as it->CommandSID.
+    // This will be and has to be updated after AllocateResources() is called at server side.
 
 #define ITERATE_INTERFACE_END \
         }\
@@ -492,7 +522,6 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 
     // 2-2) Write
     ITERATE_INTERFACE_BEGIN(Write)
-        //cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
         mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(
             commandSID, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandWrite);
@@ -501,7 +530,6 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 
     // 2-3) Read
     ITERATE_INTERFACE_BEGIN(Read)
-        //cmnGenericObject * prototype = cmnClassRegister::Create(it->ArgumentTypeName);
         mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(
             commandSID, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandRead);
@@ -599,6 +627,17 @@ const bool mtsTaskManager::InvokeGetProvidedInterfaceInfo(
     ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const
 {
     return ProxyClient->GetProvidedInterfaceInfo(taskName, providedInterfaceName, info);
+}
+
+void mtsTaskManager::InvokeNotifyInterfaceConnectionResult(
+    const bool isServerTask, const bool isSuccess,
+    const std::string & userTaskName,     const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    ProxyClient->NotifyInterfaceConnectionResult(
+        isServerTask, isSuccess,
+        userTaskName, requiredInterfaceName,
+        resourceTaskName, providedInterfaceName);
 }
 
 //

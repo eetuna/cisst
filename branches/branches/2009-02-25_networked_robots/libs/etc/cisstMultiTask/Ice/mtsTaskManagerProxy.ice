@@ -79,20 +79,27 @@ module mtsTaskManagerProxy
 	//-----------------------------------------------------------------------------
 	interface TaskManagerServer
 	{
-		// from clients
+		// From both types of task
 		void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
 	    
 		void AddTaskManager(TaskList localTaskInfo);
-		
+
+	    // From server task
 		bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
 		
+		// From client task
 		bool AddRequiredInterface(RequiredInterfaceInfo newRequiredInterfaceInfo);
-		
+
 		["cpp:const"] idempotent bool IsRegisteredProvidedInterface(
 			string taskName, string providedInterfaceName);
-			
+
 		["cpp:const"] idempotent bool GetProvidedInterfaceInfo(
 			string taskName, string providedInterfaceName, out ProvidedInterfaceInfo info);
+			
+		void NotifyInterfaceConnectionResult(
+			bool isServerTask, bool isSuccess,
+			string userTaskName, string interfaceRequiredName,
+			string resourceTaskName, string providedInterfaceName);
 	};
 
 };

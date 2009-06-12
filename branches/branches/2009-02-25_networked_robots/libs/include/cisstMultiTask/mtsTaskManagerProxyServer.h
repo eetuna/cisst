@@ -49,10 +49,10 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
 public:
     typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
 
-    /*! Container: (in: task name, out: task information) */
+    /*! Container: (key: task name, value: task information) */
     typedef std::map<std::string, mtsTaskGlobal> GlobalTaskMapType;
 
-    /*! Container: (in: task manager ID, out: list of task names) */
+    /*! Container: (key: task manager ID, value: list of task names) */
     typedef std::vector<std::string> TaskList;
     typedef std::map<std::string, TaskList> GlobalTaskManagerMapType;
 
@@ -103,6 +103,11 @@ protected:
     bool GetProvidedInterfaceInfo(
         const std::string & taskName, const std::string & providedInterfaceName,
         mtsTaskManagerProxy::ProvidedInterfaceInfo & info);
+
+    void NotifyInterfaceConnectionResult(
+        const bool isServerTask, const bool isSuccess,
+        const std::string & userTaskName,     const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
 
     //-----------------------------------
@@ -173,8 +178,8 @@ protected:
         bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current&);
         bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Current&);
         bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Current&) const;
-        bool GetProvidedInterfaceInfo(const ::std::string&, const std::string&, 
-            ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info, const ::Ice::Current&) const;
+        bool GetProvidedInterfaceInfo(const ::std::string&, const std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info, const ::Ice::Current&) const;
+        void NotifyInterfaceConnectionResult(bool, bool, const ::std::string&, const ::std::string&, const ::std::string&, const ::std::string&, const ::Ice::Current&);
     };
 };
 

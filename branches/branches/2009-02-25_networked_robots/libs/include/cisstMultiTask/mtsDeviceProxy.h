@@ -24,6 +24,14 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a periodic task.
 */
 
+// A server task proxy is of mtsDevice type, not of mtsTask because we are assuming
+// that there is only one required interface at client side, which means there is
+// only one user thread. Thus, we don't need to worry about thread synchronization
+// issues. 
+// However, if there are more than one required interface at client side, we should
+// need to consider the thread synchronization issues. Moreover, if one required
+// interface can connect to more than one provided interface, things get more 
+// complicated. (However, the current design doesn't consider such case.)
 #ifndef _mtsDeviceProxy_h
 #define _mtsDeviceProxy_h
 

@@ -37,10 +37,10 @@ http://www.cisst.org/cisst/license.txt.
 
 /*! Information on an added task. */
 class mtsTaskGlobal {
-    /*! Information on a provided interface. */
+    /*! Base information */
     class GenericInterfaceInfo {
     public:
-        std::string InterfaceName;
+        const std::string InterfaceName;
 
         GenericInterfaceInfo(const std::string & interfaceName)
             : InterfaceName(interfaceName)
@@ -49,9 +49,9 @@ class mtsTaskGlobal {
         const std::string GetInterfaceName() const { return InterfaceName; }
     };
 
+    /*! Information about a provided interface. */
     class ProvidedInterfaceInfo : public GenericInterfaceInfo {
     public:
-        // Provided-interface-proxy-server connection information
         std::string AdapterName;
         std::string EndpointInfo;
         std::string CommunicatorID;
@@ -65,11 +65,6 @@ class mtsTaskGlobal {
             EndpointInfo(endpointInfo), 
             CommunicatorID(communicatorID)
         {}
-
-        /*! Initialize this object. */
-        //void Init() {
-        //    AdapterName = ""; EndpointInfo = ""; CommunicatorID = ""; InterfaceName = "";
-        //}
 
         void GetData(mtsTaskManagerProxy::ProvidedInterfaceInfo & info) {
             info.adapterName = AdapterName;
@@ -86,7 +81,7 @@ class mtsTaskGlobal {
         }
     };
 
-    /*! Information on a required interface. */
+    /*! Information about a required interface. */
     class RequiredInterfaceInfo : public GenericInterfaceInfo {
     public:
         RequiredInterfaceInfo(const std::string & interfaceName)

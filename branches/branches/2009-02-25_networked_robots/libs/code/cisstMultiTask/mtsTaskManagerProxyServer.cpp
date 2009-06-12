@@ -233,6 +233,16 @@ bool mtsTaskManagerProxyServer::GetProvidedInterfaceInfo(
     }
 }
 
+void mtsTaskManagerProxyServer::NotifyInterfaceConnectionResult(
+    const bool isServerTask, const bool isSuccess,
+    const std::string & userTaskName,     const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    //
+    // TODO : server-side processing should come here.
+    //
+}
+
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
 //-------------------------------------------------------------------------
@@ -377,4 +387,20 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceInfo(
 
     return TaskManagerServer->GetProvidedInterfaceInfo(
         taskName, providedInterfaceName, info);
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::NotifyInterfaceConnectionResult(
+    bool isServerTask, bool isSuccess, 
+    const std::string & userTaskName,     const std::string & requiredInterfaceName, 
+    const std::string & resourceTaskName, const std::string & providedInterfaceName, 
+    const ::Ice::Current & current)
+{
+    Logger->trace("TMServer", "<<<<< RECV: NotifyInterfaceConnectionResult: " 
+        + resourceTaskName + " : " + providedInterfaceName + " - "
+        + userTaskName + " : " + requiredInterfaceName);
+
+    TaskManagerServer->NotifyInterfaceConnectionResult(
+        isServerTask, isSuccess, 
+        userTaskName, requiredInterfaceName, 
+        resourceTaskName, providedInterfaceName);
 }
