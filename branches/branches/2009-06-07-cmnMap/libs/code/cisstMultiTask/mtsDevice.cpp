@@ -20,7 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsDevice.h>
-
+#include <cisstMultiTask/mtsRequiredInterface.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDevice)
 
@@ -33,22 +33,41 @@ std::vector<std::string> mtsDevice::GetNamesOfProvidedInterfaces(void) const {
 mtsDeviceInterface * mtsDevice::AddProvidedInterface(const std::string & newInterfaceName) {
     mtsDeviceInterface * newInterface = new mtsDeviceInterface(newInterfaceName, this);
     if (newInterface) {
-        if (ProvidedInterfaces.AddItem(newInterfaceName, newInterface, 1)) {
+        if (ProvidedInterfaces.AddItem(newInterfaceName, newInterface, CMN_LOG_LOD_INIT_ERROR)) {
             return newInterface;
         }
-        CMN_LOG_CLASS(1) << "AddProvidedInterface: unable to add interface \""
-                         << newInterfaceName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: unable to add interface \""
+                                 << newInterfaceName << "\"" << std::endl;
         delete newInterface;
         return 0;
     }
-    CMN_LOG_CLASS(1) << "AddProvidedInterface: unable to create interface \""
-                     << newInterfaceName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: unable to create interface \""
+                             << newInterfaceName << "\"" << std::endl;
     return 0;
 }
 
 
 mtsDeviceInterface * mtsDevice::GetProvidedInterface(const std::string & interfaceName) const {
-    return ProvidedInterfaces.GetItem(interfaceName, 1);
+    return ProvidedInterfaces.GetItem(interfaceName, CMN_LOG_LOD_INIT_ERROR);
+}
+
+
+mtsDeviceInterface * mtsDevice::GetProvidedInterfaceFor(const std::string & requiredInterfaceName) {
+    mtsRequiredInterface * requiredInterface = RequiredInterfaces.GetItem(requiredInterfaceName, CMN_LOG_LOD_INIT_WARNING);
+    return requiredInterface ? requiredInterface->GetConnectedInterface() : 0;
+}
+
+
+bool mtsDevice::ConnectRequiredInterface(const std::string & requiredInterfaceName, mtsDeviceInterface * providedInterface)
+{
+    mtsRequiredInterface * requiredInterface = RequiredInterfaces.GetItem(requiredInterfaceName, CMN_LOG_LOD_INIT_ERROR);
+    if (requiredInterface) {
+        requiredInterface->ConnectTo(providedInterface);
+        CMN_LOG_CLASS_INIT_VERBOSE << "ConnectRequiredInterface: required interface " << requiredInterfaceName
+                                   << " successfuly connected to provided interface " << providedInterface->GetName() << std::endl;
+        return true;
+    }
+    return false;            
 }
 
 
@@ -63,7 +82,7 @@ mtsCommandVoidBase * mtsDevice::AddEventVoid(const std::string & interfaceName,
         }
         return eventMulticastCommand;
     }
-    CMN_LOG_CLASS(1) << "AddEventVoid: can not find an interface named " << interfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddEventVoid: can not find an interface named " << interfaceName << std::endl;
     return 0;
 }
 

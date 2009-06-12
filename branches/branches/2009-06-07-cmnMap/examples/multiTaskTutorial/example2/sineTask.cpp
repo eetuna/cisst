@@ -39,11 +39,10 @@ void sineTask::Startup(void) {
 }
 
 void sineTask::Run(void) {
-    const mtsStateIndex now = StateTable.GetIndexWriter();
     ProcessQueuedCommands();
     SineData = SineAmplitude
-        * sin(2 * cmnPI * static_cast<double>(now.Ticks()) * Period / 10.0);
-    // check if the trigger is enabled and it the conditions are right
+        * sin(2 * cmnPI * static_cast<double>(this->GetTick()) * Period / 10.0);
+    // check if the trigger is enabled and if the conditions are right
     // to send an event
     if (TriggerEnabled) {
         if  (SineData >= TriggerValue) {

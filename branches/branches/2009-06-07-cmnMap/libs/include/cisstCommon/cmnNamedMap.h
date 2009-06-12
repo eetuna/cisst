@@ -98,10 +98,10 @@ public:
     /*! Add an item to the internal map.  The log level of details is used to determine ... */ 
     bool AddItem(const std::string & name,
                  _elementType * item,
-                 cmnLogger::LoDType lod = 5);
+                 cmnLogLoD lod = CMN_LOG_LOD_RUN_ERROR);
 
     /*! Get an item by name */
-    _elementType * GetItem(const std::string & name, cmnLogger::LoDType lod = 5) const;
+    _elementType * GetItem(const std::string & name, cmnLogLoD lod = CMN_LOG_LOD_RUN_ERROR) const;
 
     /*! List of names used, i.e. list of keys in the map */
     std::vector<std::string> GetNames() const;
@@ -135,7 +135,7 @@ public:
 
 
 template <class _elementType>
-bool cmnNamedMap<_elementType>::AddItem(const std::string & name, _elementType *item, cmnLogger::LoDType lod)
+bool cmnNamedMap<_elementType>::AddItem(const std::string & name, _elementType *item, cmnLogLoD lod)
 {
     // check if this name already exists
     const typename MapType::const_iterator iterator = Map.find(name);
@@ -154,7 +154,7 @@ bool cmnNamedMap<_elementType>::AddItem(const std::string & name, _elementType *
 }
 
 template <class _elementType>
-_elementType * cmnNamedMap<_elementType>::GetItem(const std::string & itemName, cmnLogger::LoDType lod) const {
+_elementType * cmnNamedMap<_elementType>::GetItem(const std::string & itemName, cmnLogLoD lod) const {
     const typename MapType::const_iterator iter = Map.find(itemName);
     if (iter != Map.end()) {
         return iter->second;

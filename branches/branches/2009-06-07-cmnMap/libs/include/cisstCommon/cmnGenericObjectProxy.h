@@ -71,7 +71,7 @@ http://www.cisst.org/cisst/license.txt.
 template <class _elementType>
 class cmnGenericObjectProxy: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     typedef cmnGenericObjectProxy<_elementType> ThisType;
@@ -91,6 +91,7 @@ public:
     
     inline ~cmnGenericObjectProxy(void) {}
 
+#ifndef SWIG
     /*! Conversion assignment.  This allows to assign from an object
       of the actual type without explicitly referencing the public
       data member "Data". */
@@ -105,6 +106,7 @@ public:
     inline operator value_type & (void) {
         return Data;
     }
+#endif // SWIG
 
     /*! Serialization.  Relies on the specialization, if any, of
       cmnSerializeRaw. */
