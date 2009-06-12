@@ -32,21 +32,44 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  TODO: add class summary here
+  This class defines a class used by the global task manager to manage connected tasks
+  and interfaces.
 */
 
-/*! Information on an added task. */
 class mtsTaskGlobal {
     /*! Base information */
     class GenericInterfaceInfo {
-    public:
+    protected:
+        /*! List of the names of connected interfaces'. */
+        typedef std::vector<std::string> ConnectedInterfaceNames;
+        ConnectedInterfaceNames ConnectedInterfaces;
+
+        /*! Name of this interface. */
         const std::string InterfaceName;
 
+    public:        
         GenericInterfaceInfo(const std::string & interfaceName)
             : InterfaceName(interfaceName)
         {}
 
-        const std::string GetInterfaceName() const { return InterfaceName; }
+        bool IsConnectedInterface(const std::string & interfaceName) const {
+            ConnectedInterfaceNames::const_iterator it = ConnectedInterfaces.begin();
+            for (; it != ConnectedInterfaces.end(); ++it) {
+                if (*it == interfaceName) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool AddConnectedInterface(const std::string & interfaceName) {
+            if (IsConnectedInterface(interfaceName)) return false;
+
+            ConnectedInterfaces.push_back(interfaceName);
+            return true;
+        }
+
+        const std::string GetInterfaceName() const { return InterfaceName; }        
     };
 
     /*! Information about a provided interface. */
@@ -93,7 +116,7 @@ protected:
     const std::string TaskName;
     const std::string TaskManagerID;
 
-    /*! List of connected peer tasks' names. */
+    /*! List of connected task name. */
     std::vector<std::string> ConnectedTaskList;
 
     /*! map: (provided interface name, its information) */
@@ -106,7 +129,8 @@ protected:
 
 public:
     mtsTaskGlobal(const std::string& taskName, const std::string & taskManagerID) 
-        : TaskName(taskName), TaskManagerID(taskManagerID) {}
+        : TaskName(taskName), TaskManagerID(taskManagerID) 
+    {}
 
     std::string ShowTaskInfo();
 
@@ -125,6 +149,13 @@ public:
     /*! Return the access information of the specified provided interface. */
     const bool GetProvidedInterfaceInfo(const std::string & providedInterfaceName,
                                         mtsTaskManagerProxy::ProvidedInterfaceInfo & info);
+
+    /*! Update the interface connection status. This is called only when the 
+        connection is established successfully. */
+    bool NotifyInterfaceConnectionResult(
+        const bool isServerTask,
+        const std::string & userTaskName,     const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskGlobal)

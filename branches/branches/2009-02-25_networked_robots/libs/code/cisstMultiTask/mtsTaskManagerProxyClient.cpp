@@ -155,6 +155,20 @@ bool mtsTaskManagerProxyClient::GetProvidedInterfaceInfo(
         taskName, providedInterfaceName, info);
 }
 
+void mtsTaskManagerProxyClient::NotifyInterfaceConnectionResult(
+    const bool isServerTask, const bool isSuccess,
+    const std::string & userTaskName,     const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    GetLogger()->trace("TMClient", ">>>>> SEND: NotifyInterfaceConnectionResult: " +
+        resourceTaskName + " : " + providedInterfaceName + " - " +
+        userTaskName + " : " + requiredInterfaceName);
+
+    return TaskManagerServer->NotifyInterfaceConnectionResult(
+        isServerTask, isSuccess, 
+        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
+}
+
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
 //-------------------------------------------------------------------------

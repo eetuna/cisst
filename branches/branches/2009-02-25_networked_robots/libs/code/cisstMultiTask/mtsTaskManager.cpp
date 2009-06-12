@@ -366,7 +366,9 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         CMN_ASSERT(!ProxyServer);   // This is not a global task manager.
         CMN_ASSERT(ProxyClient);
 
-        InvokeNotifyInterfaceConnectionResult(true, true,
+        InvokeNotifyInterfaceConnectionResult(
+            false, // this is called at client side.
+            true,
             userTaskName, interfaceRequiredName, resourceTaskName, providedInterfaceName);
     }
 

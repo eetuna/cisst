@@ -179,7 +179,7 @@ bool mtsTaskManagerProxyServer::AddProvidedInterface(
     const std::string taskName = providedInterfaceInfo.taskName;
     GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
     if (it == GlobalTaskMap.end()) {
-        Logger->error("No task found: " + taskName);
+        Logger->error("[AddProvidedInterface] invalid task name: " + taskName);
         return false;
     }
 
@@ -199,7 +199,7 @@ bool mtsTaskManagerProxyServer::AddRequiredInterface(
     const std::string taskName = requiredInterfaceInfo.taskName;
     GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
     if (it == GlobalTaskMap.end()) {
-        Logger->error("No task found: " + taskName);
+        Logger->error("[AddRequiredInterface] invalid task name: " + taskName);
         return false;
     }
 
@@ -215,6 +215,7 @@ bool mtsTaskManagerProxyServer::IsRegisteredProvidedInterface(
 {
     GlobalTaskMapType::const_iterator it = GlobalTaskMap.find(taskName);
     if (it == GlobalTaskMap.end()) {
+        Logger->error("[IsRegisteredProvidedInterface] invalid task name: " + taskName);
         return false;
     } else {
         return it->second.IsRegisteredProvidedInterface(providedInterfaceName);
@@ -227,6 +228,7 @@ bool mtsTaskManagerProxyServer::GetProvidedInterfaceInfo(
 {
     GlobalTaskMapType::iterator it = GlobalTaskMap.find(taskName);
     if (it == GlobalTaskMap.end()) {
+        Logger->error("[GetProvidedInterfaceInfo] invalid task name: " + taskName);
         return false;
     } else {
         return it->second.GetProvidedInterfaceInfo(providedInterfaceName, info);
@@ -238,9 +240,42 @@ void mtsTaskManagerProxyServer::NotifyInterfaceConnectionResult(
     const std::string & userTaskName,     const std::string & requiredInterfaceName,
     const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
-    //
-    // TODO : server-side processing should come here.
-    //
+    // Find a task with the appropriate task name.
+    GlobalTaskMapType::iterator it;
+    if (isServerTask) {
+        it = GlobalTaskMap.find(resourceTaskName);
+        if (it == GlobalTaskMap.end()) {
+            Logger->error("[NotifyInterfaceConnectionResult] invalid server task name: " + resourceTaskName);        
+            return;
+        }
+    } else {
+        it = GlobalTaskMap.find(userTaskName);
+        if (it == GlobalTaskMap.end()) {
+            Logger->error("[NotifyInterfaceConnectionResult] invalid client task name: " + resourceTaskName);        
+            return;
+        }
+    }
+
+    // If connection trail failed
+    if (!isSuccess) {
+        Logger->error("[NotifyInterfaceConnectionResult] failed to connect: " + 
+            resourceTaskName + " : " + providedInterfaceName + " - " +
+            userTaskName + " : " + requiredInterfaceName);
+    }
+        
+    if (it->second.NotifyInterfaceConnectionResult(
+        isServerTask,
+        userTaskName, requiredInterfaceName,
+        resourceTaskName, providedInterfaceName))
+    {
+        Logger->print("[NotifyInterfaceConnectionResult] succeeded to connect interfaces: " +
+            resourceTaskName + " : " + providedInterfaceName + " - " +
+            userTaskName + " : " + requiredInterfaceName);
+    } else {
+        Logger->error("[NotifyInterfaceConnectionResult] Already connected interface: " +
+            resourceTaskName + " : " + providedInterfaceName + " - " +
+            userTaskName + " : " + requiredInterfaceName);
+    }
 }
 
 //-------------------------------------------------------------------------
