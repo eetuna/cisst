@@ -82,6 +82,15 @@ IF(CISST_HAS_SWIG_PYTHON)
 ENDIF(CISST_HAS_SWIG_PYTHON)
 
 
+# ICE integration
+OPTION(CISST_USE_ICE "Integrate ICE with cisstMultiTask" ON)
+
+IF(CISST_USE_ICE)
+  # Find Ice
+  FIND_PACKAGE(Ice REQUIRED)
+  INCLUDE_DIRECTORIES(${ICE_INCLUDE_DIR})
+ENDIF(CISST_USE_ICE)
+
 # Use XML or not
 SET(CISST_HAS_XML OFF CACHE BOOL "Include cmnXMLPath in the version (requires libxml2)")
 IF(CISST_HAS_XML)

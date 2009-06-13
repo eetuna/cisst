@@ -134,7 +134,11 @@ protected:
         void Run();
         void Destroy();
 
-        virtual void ReceiveData(::Ice::Int num, const ::Ice::Current&);
+        void ReceiveData(::Ice::Int num, const ::Ice::Current&);
+        bool ConnectAtServerSide(
+            const std::string & userTaskName, const std::string & interfaceRequiredName,
+			const std::string & resourceTaskName, const std::string & providedInterfaceName,
+            const ::Ice::Current & current);
     };
 };
 

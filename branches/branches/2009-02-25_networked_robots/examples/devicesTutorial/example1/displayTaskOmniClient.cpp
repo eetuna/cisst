@@ -120,7 +120,7 @@ void displayTaskOmniClient::Run(void)
     //    UI.NewReference = false;
     //}
     // log some extra information
-    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
+    CMN_LOG_CLASS_RUN_WARNING << "Run : " << now.Ticks()
                      << " - Data: " << CartesianPosition << std::endl;
     // update the UI, process UI events 
     if (Fl::check() == 0) {

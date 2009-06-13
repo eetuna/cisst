@@ -105,6 +105,7 @@ public:
 
     /*! List of names used, i.e. list of keys in the map */
     std::vector<std::string> GetNames() const;
+    void GetNames(std::vector<std::string> & names) const;
     
     /*! Type of void method in class _elementType */
     typedef void (_elementType::*VoidMethodPointer)(void);
@@ -121,6 +122,9 @@ public:
         return this->Map;
     }
     //@}
+
+    /*! Get the number of items */
+    const unsigned int GetCount() const;
 
     /*! Print the content of the map as well as its name */
     void ToStream(std::ostream & outputStream) const;
@@ -182,6 +186,17 @@ std::vector<std::string> cmnNamedMap<_elementType>::GetNames(void) const {
 }
 
 template <class _elementType>
+void cmnNamedMap<_elementType>::GetNames(std::vector<std::string> & names) const {
+    typename MapType::const_iterator iter = Map.begin();
+    const typename MapType::const_iterator end = Map.end();
+    for (;
+         iter != end;
+         ++iter) {
+        names.push_back(iter->first);
+    }    
+}
+
+template <class _elementType>
 void cmnNamedMap<_elementType>::ForEachVoid(VoidMethodPointer method)
 {
     typename MapType::iterator iter;
@@ -189,6 +204,12 @@ void cmnNamedMap<_elementType>::ForEachVoid(VoidMethodPointer method)
     for (iter = Map.begin(); iter != Map.end(); iter++) {
         (iter->second->*method)();
     }
+}
+
+template <class _elementType>
+const unsigned int cmnNamedMap<_elementType>::GetCount() const
+{
+    return Map.size();
 }
 
 template <class _elementType>

@@ -152,7 +152,6 @@ mtsTask::mtsTask(const std::string & name, unsigned int sizeStateTable) :
     OverranPeriod(false),
     ThreadStartData(0),
     ReturnValue(0),
-    RequiredInterfaces("RequiredInterfaces"),
     TaskInterfaceCommunicatorID("TaskInterfaceServerSender"),
     Proxy(0), ProxyServer(0), ProxyClient(0)
 {
@@ -312,7 +311,7 @@ void mtsTask::StartInterfaceProxyServer(const std::string & ServerTaskIP)
     }
 
     if (ProvidedInterfaces.GetCount() <= 0) {
-        CMN_LOG_CLASS(5) << "No provided interface added. Proxy server wasn't created." << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "No provided interface exists. Proxy server wasn't created." << std::endl;
         return;
     }
 
@@ -363,7 +362,7 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
     }
 
     if (RequiredInterfaces.GetCount() <= 0) {
-        CMN_LOG_CLASS(5) << "No required interface added. Proxy client wasn't created." << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "No required interface exists. Proxy client wasn't created." << std::endl;
         return;
     }
 

@@ -76,8 +76,7 @@ public:
     }
 
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandVoidProxy: " << Name << ": " <<  CommandID 
-            << ", " << CommandSID << std::endl;
+        outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandSID << std::endl;
     }
 
     /*! Returns number of arguments (parameters) expected by Execute().

@@ -34,9 +34,9 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
     // file and then configure the user interface
     double maxValue = 0.5; double minValue = 5.0;
     StartValue =  1.0;
-    CMN_LOG_CLASS(3) << "Configure: setting bounds to: "
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting bounds to: "
                      << minValue << ", " << maxValue << std::endl;
-    CMN_LOG_CLASS(3) << "Configure: setting start value to: "
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting start value to: "
                      << StartValue << std::endl;
     UI.Amplitude->bounds(minValue, maxValue);
     UI.Amplitude->value(StartValue);
@@ -54,34 +54,24 @@ void displayTask::Startup(void)
 
 void displayTask::Run(void)
 {
-    // get the current time index to display it in the UI
-    const mtsStateIndex now = StateTable.GetIndexWriter();
     // get the data from the sine wave generator task
-    //Generator.CommandVoid();
     Generator.GetData(Data);
-    Generator.GetStateIndex(StateIndex);
-    UI.Data->value(Data.Data);
-#ifdef CISST_GETVECTOR
-    Generator.GetDataVector(StateIndex, DataVec);
-#endif
+    UI.Data->value(Data);
     // check if the user has entered a new amplitude in UI
     if (UI.AmplitudeChanged) {
         // retrieve the new amplitude and send it to the sine task
-        AmplitudeData.Data = UI.Amplitude->value();
+        AmplitudeData = UI.Amplitude->value();
         Generator.SetAmplitude(AmplitudeData);
         UI.AmplitudeChanged = false;
-        CMN_LOG_CLASS(7) << "Run: " << now.Ticks()
-                         << " - Amplitude: " << AmplitudeData.Data << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "Run: " << this->GetTick()
+                                  << " - Amplitude: " << AmplitudeData << std::endl;
     }
     // log some extra information
-    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
-                     << " - Data: " << Data << std::endl;
-#ifdef CISST_GETVECTOR
-    CMN_LOG_CLASS(7) << "Last 10: " << DataVec << std::endl;
-#endif
+    CMN_LOG_CLASS_RUN_VERBOSE << "Run : " << this->GetTick()
+                              << " - Data: " << Data << std::endl;
     // update the UI, process UI events 
     if (Fl::check() == 0) {
-        ExitFlag = true;
+        Kill();
     }
 }
 

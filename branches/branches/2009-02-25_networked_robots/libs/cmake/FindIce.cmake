@@ -53,6 +53,7 @@ FIND_PATH( ICE_HOME_INCLUDE_ICE Ice.h
 # MESSAGE( STATUS "DEBUG: Ice.h is apparently found in : ${ICE_HOME_INCLUDE_ICE}" )
 
 # NOTE: if ICE_HOME_INCLUDE_ICE is set to *-NOTFOUND it will evaluate to FALSE
+
 IF( ICE_HOME_INCLUDE_ICE )
 
     SET( ICE_FOUND 1 CACHE BOOL "Do we have Ice?" FORCE )

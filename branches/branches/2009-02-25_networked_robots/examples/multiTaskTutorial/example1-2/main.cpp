@@ -98,16 +98,16 @@ int main(int argc, char * argv[])
     }
 
     // log configuration
-    cmnLogger::SetLoD(10);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
     osaThreadedLogFile threadedLog("example1-2_");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, 10);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
-    cmnClassRegister::SetLoD("sineTask", 10);
-    cmnClassRegister::SetLoD("displayTask", 10);
-    cmnClassRegister::SetLoD("mtsTaskInterface", 10);
-    cmnClassRegister::SetLoD("mtsTaskManager", 10);
+    cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("displayTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
 
     //-------------------------------------------------------------------------
     // Create default local tasks

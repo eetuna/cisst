@@ -249,8 +249,22 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Destroy()
     callbackSenderThread->getThreadControl().join();
 }
 
+// for test purpose
 void mtsTaskManagerProxyClient::TaskManagerClientI::ReceiveData(
     ::Ice::Int num, const ::Ice::Current&)
 {
     std::cout << "------------ client recv data " << num << std::endl;
+}
+
+
+bool mtsTaskManagerProxyClient::TaskManagerClientI::ConnectAtServerSide(
+    const std::string & userTaskName, const std::string & interfaceRequiredName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName,
+    const ::Ice::Current & current)
+{
+    //
+    // 클라이언트에서 Connect() 성공했으므로
+    // 서버에서도 req. interface proxy 만들어서 로컬 connect() 시도한다.
+    //
+    return true;
 }

@@ -81,6 +81,8 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     friend class mtsDevice;
     friend class mtsTask;
     friend class mtsTaskPeriodic;
+    friend class mtsDeviceInterfaceProxyServer;
+    friend class mtsTaskManager;
  public:
 
     /*! Typedef for a map of name of zero argument command and name of
@@ -311,7 +313,7 @@ protected:
     bool AddEvent(const std::string & commandName, mtsMulticastCommandVoid * generator);
     bool AddEvent(const std::string & commandName, mtsMulticastCommandWriteBase * generator);
 
-    CommandVoidMapType CommandsVoid; // Write (command)
+    CommandVoidMapType CommandsVoid; // Void (command)
     CommandReadMapType CommandsRead; // Read (state read)
     CommandWriteMapType CommandsWrite; // Write (command)
     CommandQualifiedReadMapType CommandsQualifiedRead; // Qualified Read (conversion, read at time index, ...)

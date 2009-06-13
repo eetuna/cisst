@@ -66,8 +66,8 @@ public:
         if (argumentPointPrototype) {
             ArgumentsQueue.SetSize(size, argumentPointPrototype);
         } else {
-            CMN_LOG(1) << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
-                       << std::endl;
+            //CMN_LOG(1) << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
+            //           << std::endl;
         }
     }
 
@@ -89,15 +89,15 @@ public:
         if (ArgumentsQueue.GetSize() != size) {
             if (ArgumentsQueue.GetSize() > 0) {
                 // Probably should never happen
-                CMN_LOG(3) << "Class mtsCommandQueuedWriteProxy: Allocate(): Changing ArgumentsQueue size from " << ArgumentsQueue.GetSize()
-                           << " to " << size << std::endl;
+                //CMN_LOG(3) << "Class mtsCommandQueuedWriteProxy: Allocate(): Changing ArgumentsQueue size from " << ArgumentsQueue.GetSize()
+                //           << " to " << size << std::endl;
             }
             ArgumentPointerType argumentPointerPrototype = dynamic_cast<ArgumentPointerType>(this->GetArgumentPrototype());
             if (argumentPointerPrototype) {
                 ArgumentsQueue.SetSize(size, argumentPointerPrototype);
             } else {
-                CMN_LOG(1) << "Class mtsCommandQueuedWriteProxy: constructor: Can't find argument prototype from actual command."
-                           << std::endl;
+                //CMN_LOG(1) << "Class mtsCommandQueuedWriteProxy: constructor: Can't find argument prototype from actual command."
+                //           << std::endl;
             }
         }
     }
