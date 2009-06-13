@@ -61,7 +61,6 @@ SET(SOURCE_FILES
 SET(HEADER_FILES
     mtsVector.h
     mtsMatrix.h
-    mtsMap.h
 
     mtsGenericObject.h
     mtsGenericObjectProxy.h
