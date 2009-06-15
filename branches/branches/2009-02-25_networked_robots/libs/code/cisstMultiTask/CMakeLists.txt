@@ -153,10 +153,6 @@ find_package(Ice)
 
 include_directories(${ICE_INCLUDE_DIR})
 
-foreach(ice_include_dir ${ICE_INCLUDE_DIR})
-  set(SLICE_OPTIONS ${SLICE_OPTIONS} -I${ice_include_dir})
-endforeach(ice_include_dir)
-
 foreach(slice_file ${SLICE_FILES})
   set(GENERATED_CPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.cpp")
   set(GENERATED_H_FILE "${CMAKE_CURRENT_BINARY_DIR}/${slice_file}.h")
@@ -165,8 +161,8 @@ foreach(slice_file ${SLICE_FILES})
     OUTPUT ${GENERATED_CPP_FILE} ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/libs/include/cisstMultiTask/${slice_file}.h
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     # first run slice2cpp
-    COMMAND ${ICE_HOME}/bin/slice2cpp
-    ARGS    ${SLICE_OPTIONS} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
+    COMMAND ${ICE_HOME}/bin/slice2cpp    
+    ARGS    -I ${ICE_SLICE_DIR} ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice/${slice_file}.ice
     # then create a directory to copy the header file
     COMMAND ${CMAKE_COMMAND}
     ARGS -E make_directory ${cisst_BINARY_DIR}/libs/include/cisstMultiTask
