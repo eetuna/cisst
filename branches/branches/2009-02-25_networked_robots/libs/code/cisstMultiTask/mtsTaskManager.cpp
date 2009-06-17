@@ -39,14 +39,16 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 
 mtsTaskManager::mtsTaskManager():
-    TaskMap("Tasks", *this),
-    DeviceMap("Devices", *this),
+    TaskMap("Tasks"),
+    DeviceMap("Devices"),
     TaskManagerCommunicatorID("TaskManagerServerSender"),
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
     Proxy(0), ProxyServer(0), ProxyClient(0)
 {
     __os_init();
-    TimeServer.SetTimeOrigin();    
+    TaskMap.SetOwner(*this);
+    DeviceMap.SetOwner(*this);
+    TimeServer.SetTimeOrigin();
 }
 
 

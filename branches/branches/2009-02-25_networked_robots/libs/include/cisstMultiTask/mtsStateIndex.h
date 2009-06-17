@@ -27,8 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsStateIndex_h
 #define _mtsStateIndex_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegister.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstCommon/cmnSerializer.h>
 #include <cisstCommon/cmnDeSerializer.h>
 
@@ -49,7 +48,7 @@ http://www.cisst.org/cisst/license.txt.
   overwritten the index entry between the time that the mtsStateIndex
   object was created and the time it was used.
  */
-class CISST_EXPORT mtsStateIndex : public cmnGenericObject {
+class CISST_EXPORT mtsStateIndex : public mtsGenericObject {
 
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

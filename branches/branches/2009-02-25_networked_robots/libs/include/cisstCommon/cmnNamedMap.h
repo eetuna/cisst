@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <vector>
 #include <string>
 
+#include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnLogger.h>
 
 /*!
@@ -33,6 +34,9 @@ http://www.cisst.org/cisst/license.txt.
   \brief Declaration of cmnNamedMap
  */
 
+
+// forward declaration
+class cmnClassServicesBase;
 
 /*!
   \ingroup cisstCommon
@@ -50,16 +54,15 @@ template <class _elementType>
 class cmnNamedMap {
 
 public:
-
     /*! Type of the actual map */
     typedef std::map<std::string, _elementType *> MapType;
 
 protected:
     MapType Map;
     std::string MapName;
-    cmnClassServicesBase * OwnerServices;
+    const cmnClassServicesBase * OwnerServices;
 
-    inline cmnClassServicesBase * Services(void) const {
+    inline const cmnClassServicesBase * Services(void) const {
         return this->OwnerServices;
     }
 
@@ -94,6 +97,12 @@ public:
 
     /*! Destructor.  Relies on std::map destructor. */
     ~cmnNamedMap() {}
+
+    /*! Set the map owner */
+    inline void SetOwner(const cmnGenericObject & owner)
+    {
+        this->OwnerServices = owner.Services();
+    }
 
     /*! Add an item to the internal map.  The log level of details is used to determine ... */ 
     bool AddItem(const std::string & name,
