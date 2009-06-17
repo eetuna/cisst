@@ -23,17 +23,23 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsRequiredInterface)
 
 
-mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mbox) :
-        Name(interfaceName),
-        MailBox(mbox),
-        OtherInterface(0),
-        CommandPointersVoid("CommandPointerVoid"),
-        CommandPointersRead("CommandPointerRead"),
-        CommandPointersWrite("CommandPointerWrite"),
-        CommandPointersQualifiedRead("CommandPointerQualifiedRead"),
-        EventHandlersVoid("EventHandlerVoid"),
-        EventHandlersWrite("EventHandlerWrite")
+mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mailBox) :
+    Name(interfaceName),
+    MailBox(mailBox),
+    OtherInterface(0),
+    CommandPointersVoid("CommandPointersVoid"),
+    CommandPointersRead("CommandPointersRead"),
+    CommandPointersWrite("CommandPointersWrite"),
+    CommandPointersQualifiedRead("CommandPointersQualifiedRead"),
+    EventHandlersVoid("EventHandlersVoid"),
+    EventHandlersWrite("EventHandlersWrite")
 {
+    CommandPointersVoid.SetOwner(*this);
+    CommandPointersRead.SetOwner(*this);
+    CommandPointersWrite.SetOwner(*this);
+    CommandPointersQualifiedRead.SetOwner(*this);
+    EventHandlersVoid.SetOwner(*this);
+    EventHandlersWrite.SetOwner(*this);
 }
 
 mtsRequiredInterface::~mtsRequiredInterface()
@@ -134,11 +140,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterVoid++) {
         result = iterVoid->second->Bind(OtherInterface->GetCommandVoid(iterVoid->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for void command \""
-                             << iterVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for void command \""
+                                       << iterVoid->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for void command \""
-                             << iterVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void command \""
+                                     << iterVoid->first << "\"" << std::endl;
         }
         success &= result;
     }
@@ -148,11 +154,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterRead++) {
         result = iterRead->second->Bind(OtherInterface->GetCommandRead(iterRead->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for read command \""
-                             << iterRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
+                                       << iterRead->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for read command \""
-                             << iterRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
+                                     << iterRead->first << "\"" << std::endl;
         }
         success &= result;
     }
@@ -162,11 +168,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterWrite++) {
         result = iterWrite->second->Bind(OtherInterface->GetCommandWrite(iterWrite->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for write command \""
-                             << iterWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for write command \""
+                                       << iterWrite->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for write command \""
-                             << iterWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write command \""
+                                     << iterWrite->first << "\"" << std::endl;
         }
         success &= result;
     }
@@ -176,17 +182,17 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterQualRead++) {
         result = iterQualRead->second->Bind(OtherInterface->GetCommandQualifiedRead(iterQualRead->first));
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed for qualified read command \""
-                             << iterQualRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for qualified read command \""
+                                       << iterQualRead->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded for qualified read command \""
-                             << iterQualRead->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for qualified read command \""
+                                     << iterQualRead->first << "\"" << std::endl;
         }
         success &= result;
     }
 
     if (!success) {
-        CMN_LOG_CLASS(1) << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
     }
 
     // Now, do the event handlers
@@ -196,11 +202,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterEventVoid++) {
         result = OtherInterface->AddObserver(iterEventVoid->first, iterEventVoid->second);
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed to add observer for void event \""
-                             << iterEventVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed to add observer for void event \""
+                                       << iterEventVoid->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded to add observer for void event \""
-                             << iterEventVoid->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded to add observer for void event \""
+                                     << iterEventVoid->first << "\"" << std::endl;
         }
     }
 
@@ -210,11 +216,11 @@ bool mtsRequiredInterface::BindCommandsAndEvents(void)
          iterEventWrite++) {
         result = OtherInterface->AddObserver(iterEventWrite->first, iterEventWrite->second);
         if (!result) {
-            CMN_LOG_CLASS(2) << "BindCommandsAndEvents: failed to add observer for write event \""
-                             << iterEventWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed to add observer for write event \""
+                                       << iterEventWrite->first << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS(4) << "BindCommandsAndEvents: succeeded to add observer for write event \""
-                             << iterEventWrite->first << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded to add observer for write event \""
+                                     << iterEventWrite->first << "\"" << std::endl;
         }
     }
     return success;

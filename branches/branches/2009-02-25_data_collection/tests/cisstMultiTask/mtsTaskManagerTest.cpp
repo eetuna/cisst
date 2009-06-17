@@ -44,18 +44,18 @@ void mtsTaskManagerTest::TestAddTask(void)
 	mtsTaskManagerTestTask task1("task1"), task2("task2");
 	mtsTaskManager TaskManager;
 	
-	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.size());
 		
 	CPPUNIT_ASSERT(TaskManager.AddTask(&task1));
-	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.size());
 	
 	CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
 	CPPUNIT_ASSERT(TaskManager.AddTask(&task2));
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
 	
 	CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
 	CPPUNIT_ASSERT(!TaskManager.AddTask(&task2));
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
 }
 
 void mtsTaskManagerTest::TestRemoveTask(void)
@@ -70,16 +70,16 @@ void mtsTaskManagerTest::TestRemoveTask(void)
 	TaskManager.AddTask(&task1);
 	TaskManager.AddTask(&task2);
 	
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
 	
 	CPPUNIT_ASSERT(!TaskManager.RemoveTask(&task3));
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
 	
 	CPPUNIT_ASSERT(TaskManager.RemoveTask(&task1));
-	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.size());
 	
 	CPPUNIT_ASSERT(TaskManager.RemoveTask(&task2));
-	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.GetCount());
+	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.size());
 }
 
 //-----------------------------------------------------------------------------

@@ -27,14 +27,18 @@ SET(SOURCE_FILES
     prmEventButton.cpp
     prmTypes.cpp
     prmMotionBase.cpp
+
     prmPositionJointGet.cpp
     prmPositionJointSet.cpp
     prmVelocityJointGet.cpp
     prmVelocityJointSet.cpp
+
     prmPositionCartesianGet.cpp
     prmPositionCartesianSet.cpp
     prmVelocityCartesianGet.cpp
     prmVelocityCartesianSet.cpp
+    prmForceCartesianGet.cpp
+
     prmTransformationBase.cpp
     prmTransformationFixed.cpp
     prmTransformationDynamic.cpp
@@ -47,16 +51,19 @@ SET(HEADER_FILES
     prmExport.h
     prmForwardDeclarations.h
     prmTypes.h
-    prmMacros.h
     prmMotionBase.h
+
     prmPositionJointGet.h
     prmPositionJointSet.h
     prmVelocityJointGet.h
     prmVelocityJointSet.h
+
     prmPositionCartesianGet.h
     prmPositionCartesianSet.h
     prmVelocityCartesianGet.h
     prmVelocityCartesianSet.h
+    prmForceCartesianGet.h
+
     prmTransformationBase.h
     prmTransformationFixed.h
     prmTransformationDynamic.h

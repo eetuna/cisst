@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaMutex.h>
+
 #include <cisstMultiTask/mtsStateTable.h>
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
@@ -38,13 +39,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsDevice.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsHistory.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
-
-#include <set>
-#include <map>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -61,7 +58,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsTask: public mtsDevice
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsTaskManager;
     //friend class mtsCollectorState;
@@ -116,18 +113,7 @@ protected:
     void *ThreadStartData;
 
     /*! The return value for RunInternal. */
-    void *retValue;
-
-    /*! Typedef for a map of connected interfaces (receiving commands). */
-    typedef mtsMap<mtsRequiredInterface> RequiredInterfacesMapType;
-    
-    RequiredInterfacesMapType RequiredInterfaces; // Interfaces we can send commands to
-
-    /********************* Methods to connect interfaces  *****************/
-
-    bool ConnectRequiredInterface(const std::string & requiredInterfaceName,
-                                   mtsDeviceInterface * providedInterface);
-
+    void * ReturnValue;
 
     /********************* Methods that call user methods *****************/
 
@@ -170,12 +156,15 @@ protected:
         Otherwise, use osaSleep. */
     void Sleep(double timeInSeconds);
 
+    /*! Return the current tick count. */
+    mtsStateIndex::TimeTicksType GetTick() const { return StateTable.GetIndexWriter().Ticks(); }
+
     /*********** Methods for thread start data and return values **********/
 
     /*! Save any 'user data' that was passed to the thread start routine. */
     virtual void SaveThreadStartData(void *data) { ThreadStartData = data; }
 
-    virtual void SetThreadReturnValue(void *ret) { retValue = ret; }
+    virtual void SetThreadReturnValue(void *ret) { ReturnValue = ret; }
 
 public:
     /********************* Task constructor and destructor *****************/
@@ -280,17 +269,8 @@ public:
     /* documented in base class */
     mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
 
-    /*! Add a required interface.  This interface will later on be
-      connected to another task and use the provided interface of the
-      other task.  The required interface created also contains a list
-      of event handlers to be used as observers.
-      PK: should move this to base class (mtsDevice). */
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
+    /********************* Methods to manage event handlers *******************/
 
-    /*! Provide a list of existing required interfaces (by names) */ 
-    std::vector<std::string> GetNamesOfRequiredInterfaces(void) const;
-    
     /*! Associate an event (defined by its name) to a command object
       (i.e. handler defined by name) for a given required interface.
       This method can only work if the required interface has been
@@ -299,21 +279,6 @@ public:
                                                          const std::string & eventName,
                                                          const std::string & handlerName);
 
-    /*! Get a pointer on the provided interface that has been
-      connected to a given required interface (defined by its name).
-      This method will return a null pointer if the required interface
-      has not been connected.  See mtsTaskManager::Connect. */
-    mtsDeviceInterface * GetProvidedInterfaceFor(const std::string & requiredInterfaceName) {
-        mtsRequiredInterface *requiredInterface = RequiredInterfaces.GetItem(requiredInterfaceName, 3);
-        return requiredInterface ? requiredInterface->GetConnectedInterface() : 0;
-    }
-
-    /*! Get the required interface */
-    mtsRequiredInterface * GetRequiredInterface(const std::string & requiredInterfaceName) {
-        return RequiredInterfaces.GetItem(requiredInterfaceName);
-    }
-
-    /********************* Methods to manage event handlers *******************/
 	
     /*! Add a write command to an event handler interface associated
       to a required interface. */
@@ -384,8 +349,8 @@ public:
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
 
 #ifdef TASK_TIMING_ANALYSIS
-    void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
-        std::vector<cmnDouble>& vecPeriod);
+    void GetTimingAnalysisData(std::vector<mtsDouble>& vecExecutionTime,
+                               std::vector<mtsDouble>& vecPeriod);
 #endif
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
@@ -413,7 +378,7 @@ inline mtsCommandVoidBase * mtsDevice::AddCommandVoid(void (__classType::*action
             return deviceInterface->AddCommandVoid(action, classInstantiation, commandName);
         }
     }
-    CMN_LOG_CLASS(1) << "AddCommandVoid cannot find an interface named " << providedInterfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid cannot find an interface named " << providedInterfaceName << std::endl;
     return 0;
 }
 
@@ -429,7 +394,7 @@ inline mtsCommandVoidBase * mtsDevice::AddCommandVoid(void (*action)(void),
             return deviceInterface->AddCommandVoid(action, commandName);
         }
     }
-    CMN_LOG_CLASS(1) << "AddCommandVoid cannot find an interface named " << providedInterfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid cannot find an interface named " << providedInterfaceName << std::endl;
     return 0;
 }
 
@@ -448,11 +413,12 @@ inline mtsCommandWriteBase * mtsDevice::AddCommandWrite(void (__classType::*acti
             return deviceInterface->AddCommandWrite(action, classInstantiation, commandName, argumentModel);
         }
     }
-    CMN_LOG_CLASS(1) << "AddCommandWrite cannot find an interface named " << providedInterfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite cannot find an interface named " << providedInterfaceName << std::endl;
     return 0;
 }
 
-// this method is defined in this header file
+#include <cisstMultiTask/mtsRequiredInterface.h>  // to remove when following 2 deprecated methods are removed
+// this method is defined in this header file (deprecated)
 template <class __classType, class __argumentType>
 inline mtsCommandWriteBase * mtsTask::AddEventHandlerWrite(void (__classType::*action)(const __argumentType &),
                                                            __classType * classInstantiation,
@@ -464,11 +430,11 @@ inline mtsCommandWriteBase * mtsTask::AddEventHandlerWrite(void (__classType::*a
     if (requiredInterface) {
         return requiredInterface->AddEventHandlerWrite(action, classInstantiation, commandName, argumentModel, queued);
     }
-    CMN_LOG_CLASS(1) << "AddEventHandlerWrite: cannot find an interface named " << requiredInterfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddEventHandlerWrite: cannot find an interface named " << requiredInterfaceName << std::endl;
     return 0;
 }
 
-// this method is defined in this header file
+// this method is defined in this header file (deprecated)
 template <class __classType>
 inline mtsCommandVoidBase * mtsTask::AddEventHandlerVoid(void (__classType::*action)(void),
                                                          __classType * classInstantiation,
@@ -479,7 +445,7 @@ inline mtsCommandVoidBase * mtsTask::AddEventHandlerVoid(void (__classType::*act
     if (requiredInterface) {
         return requiredInterface->AddEventHandlerVoid(action, classInstantiation, commandName, queued);
     }
-    CMN_LOG_CLASS(1) << "AddEventHandlerVoid: cannot find an interface named " << requiredInterfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddEventHandlerVoid: cannot find an interface named " << requiredInterfaceName << std::endl;
     return 0;
 }
 

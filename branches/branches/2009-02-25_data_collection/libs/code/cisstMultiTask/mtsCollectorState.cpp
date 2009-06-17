@@ -179,17 +179,17 @@ bool mtsCollectorState::AddSignal(const std::string & signalName,
         // Check if the specified signal does exist in the state table.
         int StateVectorID = TargetStateTable->GetStateVectorID(signalName); // 0: Toc, 1: Tic, 2: Period, >=3: user
         if (StateVectorID == -1) {  // 0: Toc, 1: Tic, 2: Period, >3: user
-            CMN_LOG_CLASS(5) << "Cannot find: " << signalName << std::endl;
-
+            CMN_LOG_CLASS_INIT_ERROR << "AddSignal: cannot find: " << signalName << std::endl;
+            
             //throw mtsCollectorState::mtsCollectorBaseException(
             //    "Cannot find: signal name = " + signalName);
             return false;
         }
-
+        
         // Add a signal
         if (!AddSignalElement(signalName, StateVectorID)) {
-            CMN_LOG_CLASS(5) << "Already registered signal: " << signalName << std::endl;
-
+            CMN_LOG_CLASS_INIT_ERROR << "AddSignal: already registered signal: " << signalName << std::endl;
+            
             //throw mtsCollectorState::mtsCollectorBaseException(
             //    "Already collecting signal: " + signalName);
             return false;
@@ -198,11 +198,10 @@ bool mtsCollectorState::AddSignal(const std::string & signalName,
         // Add all signals in the state table
         for (unsigned int i = 0; i < TargetStateTable->StateVectorDataNames.size(); ++i) {
             if (!AddSignalElement(TargetStateTable->StateVectorDataNames[i], i)) {
-                CMN_LOG_CLASS(5) << "Already registered signal: " << TargetStateTable->StateVectorDataNames[i] << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddSignal: already registered signal: " << TargetStateTable->StateVectorDataNames[i] << std::endl;
                 return false;
             }
-        }
-
+        }   
     }
 
     // To reduce reference counter in the mtsCollectorState::Collect() method.
@@ -234,7 +233,7 @@ bool mtsCollectorState::AddSignalElement(const std::string & signalName, const u
 
     RegisteredSignalElements.push_back(element);
 
-    CMN_LOG_CLASS(5) << "Signal added: " << signalName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "AddSignalElement: signal added: " << signalName << std::endl;
 
     return true;
 }
@@ -345,7 +344,6 @@ void mtsCollectorState::MarkHeaderEnd(std::ofstream & logFile)
     for (int i = 0; i < END_OF_HEADER_SIZE; ++i) {
         logFile << EndOfHeader[i];
     }
-
     logFile << std::endl;    
 }
 
@@ -354,7 +352,6 @@ bool mtsCollectorState::IsHeaderEndMark(const char * buf) const
     for (int i = 0; i < END_OF_HEADER_SIZE; ++i) {
         if (buf[i] != EndOfHeader[i]) return false;
     }
-    
     return true;
 }
 
@@ -369,14 +366,14 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
     
     std::ofstream LogFile;
     if (LogFormat == COLLECTOR_LOG_FORMAT_BINARY) {
-        cmnDouble cmnDoubleTick;
+        mtsDouble doubleTick;
         LogFile.open(LogFileName.c_str(), std::ios::binary | std::ios::app);
         {            
             unsigned int i;
             for (i = startIndex; i <= endIndex; i += SamplingInterval) {
                 StringStreamBufferForSerialization.str("");
-                cmnDoubleTick.Data = TargetStateTable->Ticks[i];
-                Serializer->Serialize(cmnDoubleTick);
+                doubleTick.Data = TargetStateTable->Ticks[i];
+                Serializer->Serialize(doubleTick);
                 LogFile << StringStreamBufferForSerialization.str();
 
                 for (unsigned int j = 0; j < RegisteredSignalElements.size(); ++j) {
@@ -418,14 +415,14 @@ bool mtsCollectorState::ConvertBinaryToText(
     // Try to open a binary log file (source).
     std::ifstream inFile(sourceBinaryLogFileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile.is_open()) {
-        CMN_LOG_CLASS(5) << "Unable to open binary log file: " << sourceBinaryLogFileName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: unable to open binary log file: " << sourceBinaryLogFileName << std::endl;
         return false;
     }
 
     // Prepare output log file with plain text format.
     std::ofstream outFile(targetPlainTextLogFileName.c_str(), std::ios::out);
     if (!outFile.is_open()) {
-        CMN_LOG_CLASS(5) << "Unable to create text log file: " << targetPlainTextLogFileName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: unable to create text log file: " << targetPlainTextLogFileName << std::endl;
         inFile.close();
         return false;
     }
@@ -449,7 +446,7 @@ bool mtsCollectorState::ConvertBinaryToText(
 
     // Check the end of header.
     if (!IsHeaderEndMark(line)) {
-        CMN_LOG_CLASS(5) << "Corrupted header." << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: corrupted header." << std::endl;
         inFile.close();
         outFile.close();
         return false;
@@ -461,7 +458,7 @@ bool mtsCollectorState::ConvertBinaryToText(
     cmnGenericObject * element = DeSerializer.DeSerialize();
     cmnULong * totalSignalCountObject = dynamic_cast<cmnULong *>(element);
     if (!totalSignalCountObject) {
-        CMN_LOG_CLASS(5) << "Corrupted header." << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: corrupted header." << std::endl;
         inFile.close();
         outFile.close();
         return false;
@@ -475,11 +472,11 @@ bool mtsCollectorState::ConvertBinaryToText(
     while (currentPos < inFileTotalSize) {
         element = DeSerializer.DeSerialize();
         if (!element) {
-            CMN_LOG_CLASS(5) << "Unexpected termination: " << 
-                currentPos << " / " << inFileTotalSize << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: unexpected termination: "
+                                     << currentPos << " / " << inFileTotalSize << std::endl;
             break;
         }
-
+        
         element->ToStream(outFile);
         if (++columnCount == totalSignalCount + 1) { // +1 due to 'Ticks' field.
             outFile << std::endl;
@@ -491,11 +488,10 @@ bool mtsCollectorState::ConvertBinaryToText(
         currentPos = inFile.tellg();
     }
 
-    CMN_LOG_CLASS(5) << "Conversion completed: " << targetPlainTextLogFileName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "ConvertBinaryToText: conversion completed: " << targetPlainTextLogFileName << std::endl;
 
     outFile.close();
     inFile.close();
     
     return true;
 }
-

@@ -51,11 +51,13 @@ SET(HEADER_FILES
     cmnGenericObject.h
     cmnGenericObjectProxy.h
     cmnGetChar.h
+    cmnLogLoD.h
     cmnLogger.h
     cmnLODMultiplexerStreambuf.h
     cmnLODOutputMultiplexer.h
     cmnMultiplexerStreambuf.h
     cmnMultiplexerStreambufProxy.h
+    cmnNamedMap.h
     cmnObjectRegister.h
     cmnOutputMultiplexer.h
     cmnPortability.h

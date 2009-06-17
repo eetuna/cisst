@@ -50,7 +50,7 @@ mtsCollectorBase::~mtsCollectorBase()
 {
     --CollectorCount;
 
-    CMN_LOG_CLASS(5) << "Collector " << GetName() << " ends." << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Collector " << GetName() << " ends." << std::endl;
 }
 
 void mtsCollectorBase::Init()
@@ -120,7 +120,7 @@ void mtsCollectorBase::Run()
 
     if (Status == COLLECTOR_STOP) {
         DelayedStop = 0.0;
-        CMN_LOG_CLASS(3) << "The collector stopped." << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "The collector stopped." << std::endl;
         return;
     }
 }
@@ -228,15 +228,15 @@ void mtsCollectorBase::Start(const double delayedStartInSecond)
     // Check for state transition
     switch (Status) {
         case COLLECTOR_WAIT_START:
-            CMN_LOG_CLASS(5) << "Waiting for the collector to start." << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "Waiting for the collector to start." << std::endl;
             return;
 
         case COLLECTOR_WAIT_STOP:
-            CMN_LOG_CLASS(5) << "Waiting for the collector to stop." << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "Waiting for the collector to stop." << std::endl;
             return;
 
         case COLLECTOR_COLLECTING:
-            CMN_LOG_CLASS(5) << "The collector is now running." << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "The collector is now running." << std::endl;
             return;
     }
 
@@ -252,15 +252,15 @@ void mtsCollectorBase::Stop(const double delayedStopInSecond)
     // Check for state transition
     switch (Status) {
         case COLLECTOR_WAIT_START:
-            CMN_LOG_CLASS(5) << "Waiting for the collector to start." << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "Waiting for the collector to start." << std::endl;
             return;
 
         case COLLECTOR_WAIT_STOP:
-            CMN_LOG_CLASS(5) << "Waiting for the collector to stop." << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "Waiting for the collector to stop." << std::endl;
             return;
 
         case COLLECTOR_STOP:
-            CMN_LOG_CLASS(5) << "The collector is not running." << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "The collector is not running." << std::endl;
             return;
     }
 

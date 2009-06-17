@@ -14,31 +14,41 @@
 # 
 # --- end cisst license ---
 
+# test library
+add_library(cisstMultiTasksTestsLib
+            mtsMacrosTestClasses.h
+	    mtsMacrosTestClasses.cpp)
+
+CISST_REQUIRES(cisstMultiTasksTestsLib "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask")
 
 # all source files
 SET(SOURCE_FILES
     mtsCollectorBaseTest.cpp
-	mtsStateTableTest.cpp
-	mtsTaskManagerTest.cpp
-	mtsTaskTest.cpp
+    mtsStateTableTest.cpp
+    mtsTaskManagerTest.cpp
+    mtsTaskTest.cpp
+    mtsVectorTest.cpp
+    mtsMacrosTest.cpp
+    mtsMatrixTest.cpp
     )
 
 # all header files
 SET(HEADER_FILES
     mtsCollectorBaseTest.h
-	mtsStateTableTest.h
-	mtsTaskManagerTest.h
-	mtsTaskTest.h
+    mtsStateTableTest.h
+    mtsTaskManagerTest.h
+    mtsTaskTest.h
+    mtsVectorTest.h
+    mtsMacrosTest.h
+    mtsMatrixTest.h
     )
 
 # Add executable for C++ tests
 ADD_EXECUTABLE(cisstMultiTaskTests ${SOURCE_FILES} ${HEADER_FILES})
-TARGET_LINK_LIBRARIES(cisstMultiTaskTests cisstTestsMain )
-CISST_REQUIRES("cisstMultiTaskTests" "cisstCommon;cisstMultiTask")
 
-# Threads
-FIND_PACKAGE(Threads REQUIRED)
-TARGET_LINK_LIBRARIES(cisstMultiTaskTests ${CMAKE_THREAD_LIBS_INIT})
+TARGET_LINK_LIBRARIES(cisstMultiTaskTests cisstTestsMain cisstMultiTasksTestsLib)
+
+CISST_REQUIRES("cisstMultiTaskTests" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask")
 
 # To generate a CTest list of tests
 CISST_ADD_TESTS(cisstMultiTaskTests)

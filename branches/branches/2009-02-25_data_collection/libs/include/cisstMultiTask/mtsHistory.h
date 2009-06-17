@@ -28,9 +28,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsHistory_h
 #define _mtsHistory_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnGenericObjectProxy.h>
-#include <cisstCommon/cmnClassRegister.h>
 #include <cisstVector/vctDynamicVector.h>
 #include <cisstMultiTask/mtsVector.h>
 
@@ -39,13 +36,13 @@ http://www.cisst.org/cisst/license.txt.
 /*!
 \ingroup cisstMultiTask
 */
-class mtsHistoryBase : public cmnGenericObject
+class mtsHistoryBase : public mtsGenericObject
 {
     friend class mtsHistoryBaseTest;
 
 public:
     mtsHistoryBase() {}
-    mtsHistoryBase(const mtsHistoryBase & other) : cmnGenericObject(other) {}
+    mtsHistoryBase(const mtsHistoryBase & other) : mtsGenericObject(other) {}
     virtual ~mtsHistoryBase() {}
 
     /*! In the derived class, vctDynamicVector::SetSize() should be called. */
@@ -80,7 +77,9 @@ public:
     inline mtsHistory(size_type size) : VectorType(size) {}
 
     /*! Set the size of history buffer */
-    inline void SetHistorySize(const int historySize) { SetSize(historySize); }
+    inline void SetHistorySize(const int historySize) {
+        this->SetSize(historySize);
+    }
 
     /*! Assignment from vector base class.  This operator assign the
       data from one vector to another, it doesn't replace the object
@@ -117,7 +116,7 @@ public:
 //     for every parameter type!!
 
 // Following is for a vector of cmnDouble
-typedef mtsHistory<cmnDouble> mtsDoubleHistory;
+typedef mtsHistory<mtsDouble> mtsDoubleHistory;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleHistory);
 
 // Following is for a vector of cmnVector<double>

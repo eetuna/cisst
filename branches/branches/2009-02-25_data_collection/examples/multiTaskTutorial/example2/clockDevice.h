@@ -9,11 +9,11 @@
 #include <cisstMultiTask.h>
 
 class clockDevice: public mtsDevice {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
  protected:
     osaStopwatch Timer;  // this is the actual device (wrapped)
-    void GetTime(cmnDouble & time) const;  // used by the command "GetTime"
+    void GetTime(mtsDouble & time) const;  // used by the command "GetTime"
 	
  public:
     // constructor doesn't need a period!

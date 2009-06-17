@@ -61,6 +61,7 @@ public:
         COLLECTOR_LOG_FORMAT_CSV
     } CollectorLogFormat;
 
+    /*
     class mtsCollectorBaseException : public std::runtime_error {
     private:
         std::string ExceptionDescription;    // exception descriptor
@@ -72,6 +73,7 @@ public:
 
         const std::string GetExceptionDescription(void) const { return ExceptionDescription; }    
     };
+    */
 
     //------------------------- Protected Members ---------------------------//
 protected:

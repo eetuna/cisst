@@ -27,7 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsStateTable_h
 #define _mtsStateTable_h
 
-#include <cisstCommon/cmnGenericObject.h>
+#include <cisstMultiTask/mtsGenericObject.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsStateArrayBase.h>
 #include <cisstMultiTask/mtsStateArray.h>
 #include <cisstMultiTask/mtsStateIndex.h>
@@ -59,7 +60,7 @@ typedef int mtsStateDataId;
   The state data table is the storage for the state of the task that
   the table is associated with. It is a heterogenous circular buffer
   and can contain data of any type so long as it is derived from
-  cmnGenericObject.  The state data table also resolves conflicts
+  mtsGenericObject.  The state data table also resolves conflicts
   between reads and writes to the state, by ensuring that the reader
   head is always one behind the write head. To ensure this we have an
   assumption here that there is only one writer, though there can be
@@ -147,7 +148,7 @@ public:
                         ret = Table.ValidateReadIndex(start);
                 }
                 else
-                    CMN_LOG(1) << "ReadVectorFromReader: data not available" << std::endl;
+                    CMN_LOG_INIT_ERROR << "ReadVectorFromReader: data not available" << std::endl;
             }
             return ret;
         }
@@ -174,7 +175,7 @@ protected:
       of elements that are to be added to the state when we
       advance.
       */
-    std::vector<cmnGenericObject *> StateVectorElements;
+    std::vector<mtsGenericObject *> StateVectorElements;
     
 	/*! The columns entries can be accessed by name. This vector
 	  stores the names corresponding to the columns. */
@@ -189,17 +190,17 @@ protected:
 	std::vector<mtsStateIndex::TimeTicksType> Ticks;
 
     /*! The start/end times for the current row of data. We could use
-        mtsStateData<cmnDouble> instead of (TicId, Tic) and (TocId, Toc). */
+        mtsStateData<mtsDouble> instead of (TicId, Tic) and (TocId, Toc). */
     mtsStateDataId TicId, TocId;
-    cmnDouble Tic, Toc;
+    mtsDouble Tic, Toc;
 
     /*! The measured task period (difference between current Tic and
         previous Tic). */
     mtsStateDataId PeriodId;
-    cmnDouble Period;
+    mtsDouble Period;
 
     /*! The time server used to provide absolute and relative times. */
-    const osaTimeServer *TimeServer;
+    const osaTimeServer * TimeServer;
 
     /*! The sum of all the periods (time differences between
         consecutive Tic values); used to compute average period. */
@@ -217,12 +218,12 @@ protected:
     DataCollectionInfoStruct DataCollectionInfo;
 
 #ifdef TASK_TIMING_ANALYSIS
-    std::vector<cmnDouble> ExecutionTimingHistory;
-    std::vector<cmnDouble> PeriodHistory;
+    std::vector<mtsDouble> ExecutionTimingHistory;
+    std::vector<mtsDouble> PeriodHistory;
 #endif
 
 	/*! Write specified data. */
-	bool Write(mtsStateDataId id, const cmnGenericObject &obj);
+	bool Write(mtsStateDataId id, const mtsGenericObject &obj);
 
 public:
 	/*! Constructor. Constructs a state table with a default
@@ -271,7 +272,7 @@ public:
         \returns Pointer to accessor class (0 if not found)
         \note This method is overloaded to accept the element pointer or string name.
     */
-    mtsStateTable::AccessorBase *GetAccessor(const cmnGenericObject &element) const;
+    mtsStateTable::AccessorBase *GetAccessor(const mtsGenericObject &element) const;
 
     /*! Return pointer to accessor functions for the state data element.
         \param name Name of state data element
@@ -281,7 +282,7 @@ public:
     mtsStateTable::AccessorBase *GetAccessor(const std::string &name) const;
 
 	/*! Get a handle for data to be used by a writer */
-	mtsStateIndex GetIndexWriter(void);
+	mtsStateIndex GetIndexWriter(void) const;
 
     /*! Start the current cycle. This just records the starting timestamp (Tic). */
     void Start(void);
@@ -292,12 +293,12 @@ public:
 	 */
 	void Advance(void);
 
-    double GetTic() const { return Tic.Data; }
-    double GetToc() const { return Toc.Data; }
+    double GetTic(void) const { return Tic.Data; }
+    double GetToc(void) const { return Toc.Data; }
 
     /*! Return the moving average of the measured period (i.e., average of last
         HistoryLength values). */
-    double GetAveragePeriod() const { return AvgPeriod; }
+    double GetAveragePeriod(void) const { return AvgPeriod; }
 
     /*! For debugging, dumps the current data table to output
       stream. */
@@ -315,11 +316,12 @@ public:
      */
     void CSVWrite(std::ostream& out, bool nonZeroOnly = false);
     void CSVWrite(std::ostream& out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
-    void CSVWrite(std::ostream& out, cmnGenericObject ** listColumn, unsigned int number, bool nonZeroOnly);
+
+    void CSVWrite(std::ostream& out, mtsGenericObject ** listColumn, unsigned int number, bool nonZeroOnly);
     
     /*! A base column index of StateTable for a signal registered by user. */
     static int StateVectorBaseIDForUser;
-
+    
     //-------------------------------------------------------------------------
     //  Data Collection
     //-------------------------------------------------------------------------
@@ -327,27 +329,27 @@ public:
     //void GetStateTableHistory(mtsDoubleVecHistory & history,
     //                          const unsigned int signalIndex,
     //                          const unsigned int lastFetchIndex);
-
+    
     /*! Return the name of this state table. */
     const std::string GetStateTableName() const { return StateTableName; }
-
+    
     /*! Enable data collection event trigger. */
     void ResetDataCollectionTrigger() { 
         DataCollectionInfo.TriggerEnabled = true;
     }
-
+    
     /*! Set an event handler to inform the data collector about the event that data
-        in this state table is populated. */
+      in this state table is populated. */
     void SetDataCollectionEventHandler(mtsCollectorState * collector);
-
+    
     /*! Determine a ratio to generate a data collection event. */
     void SetDataCollectionEventTriggeringRatio(const double eventTriggeringRatio);
-
+    
     void GenerateDataCollectionEvent();
 
 #ifdef TASK_TIMING_ANALYSIS
-    void GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
-        std::vector<cmnDouble>& vecPeriod);
+    void GetTimingAnalysisData(std::vector<mtsDouble>& vecExecutionTime,
+                               std::vector<mtsDouble>& vecPeriod);
 #endif
 };
 

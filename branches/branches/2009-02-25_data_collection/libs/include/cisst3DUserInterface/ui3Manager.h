@@ -22,12 +22,14 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _ui3Manager_h
 #define _ui3Manager_h
 
-#include <cisstMultiTask/mtsMap.h>
+#include <cisstCommon/cmnNamedMap.h>
 
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3BehaviorBase.h>
 #include <cisst3DUserInterface/ui3MasterArm.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
 
 // forward declaration, to be moved to cisstStereoVision
 class svlRenderTargetBase;
@@ -35,9 +37,9 @@ class svlRenderTargetBase;
 /*!
  Provides a default implementation for the main user interface manager.
 */
-class ui3Manager: public ui3BehaviorBase
+class CISST_EXPORT ui3Manager: public ui3BehaviorBase
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
     friend class ui3BehaviorBase;
     friend class ui3MasterArm;
@@ -51,7 +53,7 @@ public:
 
     typedef std::list<ui3MasterArm *> MasterArmList;
 
-    typedef mtsMap<ui3SlaveArm> SlaveArmList;
+    typedef cmnNamedMap<ui3SlaveArm> SlaveArmList;
 
     /*!
      Enumerated display modes
@@ -98,7 +100,9 @@ public:
     /*!
      Adds a render window to the UI Manager.
     */
-    virtual bool AddRenderer(unsigned int width, unsigned int height, int x, int y, vctFrm3 & cameraframe, double viewangle, const std::string & renderername);
+    virtual bool AddRenderer(unsigned int width, unsigned int height, int x, int y,
+                             vctFrm3 & cameraframe, double viewangle, vct2 opticalcenteroffset,
+                             const std::string & renderername);
 
     /*!
      Assigns an external render target for the renderer.
@@ -237,6 +241,7 @@ protected:
         int windowposy;
         vctFrm3 cameraframe;
         double viewangle;
+        vct2 opticalcenteroffset;
         std::string name;
         ui3VTKRenderer* renderer;
         svlRenderTargetBase* rendertarget;
@@ -261,12 +266,12 @@ protected:
 private:
 
     inline ui3VisibleObject * GetVisibleObject(void) {
-        CMN_LOG_CLASS(5) << "GetVisibleObject: this method should never be called" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "GetVisibleObject: this method should never be called" << std::endl;
         return 0;
     }
 
     inline void ConfigureMenuBar(void) {
-        CMN_LOG_CLASS(5) << "ConfigureMenuBar: this method should never be called" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConfigureMenuBar: this method should never be called" << std::endl;
     }
 
     void SetActiveBehavior(ui3BehaviorBase * newBehavior);

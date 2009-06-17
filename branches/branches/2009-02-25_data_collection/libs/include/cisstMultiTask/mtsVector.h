@@ -23,8 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsVector_h
 #define _mtsVector_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnGenericObjectProxy.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstVector/vctDynamicVector.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -33,10 +31,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsExport.h>
 
 template <class _elementType>
-class mtsVector: public cmnGenericObject,
+class mtsVector: public mtsGenericObject,
                  public vctDynamicVector<_elementType> {
     // declare services, requires dynamic creation
-    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
     /*! Type of elements. */
     typedef _elementType value_type;
@@ -71,7 +69,7 @@ public:
 
     /*! Copy constructor. */
     inline mtsVector(const ThisType & otherVector):
-        cmnGenericObject(otherVector),
+        mtsGenericObject(otherVector),
         VectorType(otherVector)
     {}
 
@@ -133,8 +131,8 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsBoolVec);
 // PK: the StateTable GetHistory implementation will require an mtsVector
 //     for every parameter type!!
 
-// Following is for a vector of cmnDouble
-typedef mtsVector<cmnDouble> mtsDoubleHistory;
+// Following is for a vector of mtsDouble
+typedef mtsVector<mtsDouble> mtsDoubleHistory;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleHistory);
 
 // Following is for a vector of cmnVector<double>

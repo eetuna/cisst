@@ -74,7 +74,7 @@ mtsStateIndex mtsStateTable::GetIndexReader(void) const {
     return mtsStateIndex(tmp, Ticks[tmp], HistoryLength);
 }
 
-mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const cmnGenericObject &element) const
+mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const mtsGenericObject &element) const
 {
     for (unsigned int i = 0; i < StateVectorElements.size(); i++) {
         if (&element == StateVectorElements[i])
@@ -94,25 +94,25 @@ mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const std::string &name)
 
 /* All the non-const methods that can be called from writer only */
 
-mtsStateIndex mtsStateTable::GetIndexWriter(void) {
+mtsStateIndex mtsStateTable::GetIndexWriter(void) const {
     return mtsStateIndex(IndexWriter, Ticks[IndexWriter], HistoryLength);
 }
 
 
-bool mtsStateTable::Write(mtsStateDataId id, const cmnGenericObject &obj) {
+bool mtsStateTable::Write(mtsStateDataId id, const mtsGenericObject &obj) {
     bool result;
     CMN_ASSERT(id != -1);
     if (id == -1) {
-        CMN_LOG(1) << "Class mtsStateTable: Write: obj must be created using NewElement " << std::endl;
+        CMN_LOG_INIT_ERROR << "Class mtsStateTable: Write: obj must be created using NewElement " << std::endl;
         return false;
     }
     if (!StateVector[id]) {
-        CMN_LOG(1) << "Class mtsStateTable: Write: No state data array corresponding to given id: " << id << std::endl;
+        CMN_LOG_INIT_ERROR << "Class mtsStateTable: Write: No state data array corresponding to given id: " << id << std::endl;
         return false;
     }
     result = StateVector[id]->Set(IndexWriter, obj);
     if (!result) {
-        CMN_LOG(1) << "Class mtsStateTable: Error setting data array value in id: " << id << std::endl;
+        CMN_LOG_INIT_ERROR << "Class mtsStateTable: Error setting data array value in id: " << id << std::endl;
     }
     return result;
 }
@@ -122,7 +122,7 @@ void mtsStateTable::Start(void) {
     	Tic = TimeServer->GetRelativeTime(); // in seconds
         // Since IndexReader and IndexWriter are initialized to 0,
         // the first period will be 0
-        cmnDouble oldTic;
+        mtsDouble oldTic;
         StateVector[TicId]->Get(IndexReader, oldTic);
         Period = Tic - oldTic;  // in seconds
 #ifdef TASK_TIMING_ANALYSIS
@@ -142,7 +142,7 @@ void mtsStateTable::Advance(void) {
     SumOfPeriods += Period;
     // If the table is full (all entries valid), subtract the oldest one
     if (Ticks[IndexWriter] == Ticks[newIndexWriter]+HistoryLength-1) {
-        cmnDouble oldPeriod;
+        mtsDouble oldPeriod;
         StateVector[PeriodId]->Get(newIndexWriter, oldPeriod);
         SumOfPeriods -= oldPeriod;
         AvgPeriod = SumOfPeriods/(HistoryLength-1);
@@ -176,7 +176,7 @@ void mtsStateTable::Advance(void) {
     if (TimeServer) {
     	Toc = TimeServer->GetRelativeTime(); // in seconds
 #ifdef TASK_TIMING_ANALYSIS
-        cmnDouble executionTime = Toc - Tic;
+        mtsDouble executionTime = Toc - Tic;
         ExecutionTimingHistory.push_back(executionTime);
 #endif
     }
@@ -305,7 +305,7 @@ void mtsStateTable::CSVWrite(std::ostream& out, unsigned int *listColumn, unsign
     }
 }
 
-void mtsStateTable::CSVWrite(std::ostream& out, cmnGenericObject ** listColumn, unsigned int number, bool nonZeroOnly)
+void mtsStateTable::CSVWrite(std::ostream& out, mtsGenericObject ** listColumn, unsigned int number, bool nonZeroOnly)
 {
     unsigned int *listColumnId = new unsigned int[number];
     for (unsigned int i = 0; i < number; i++) {
@@ -329,8 +329,8 @@ int mtsStateTable::GetStateVectorID(const std::string & dataName) const
     return -1;
 }
 
-void mtsStateTable::GetTimingAnalysisData(std::vector<cmnDouble>& vecExecutionTime,
-                                          std::vector<cmnDouble>& vecPeriod)
+void mtsStateTable::GetTimingAnalysisData(std::vector<mtsDouble> & vecExecutionTime,
+                                          std::vector<mtsDouble> & vecPeriod)
 {
 #define COPY_VECTOR(_src, _dest)\
     _dest.clear();\

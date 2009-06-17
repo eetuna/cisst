@@ -30,10 +30,10 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
     // file and then configure the user interface
     double maxValue = 0.5; double minValue = 5.0;
     StartValue =  1.0;
-    CMN_LOG_CLASS(3) << "Configure: setting bounds to: "
-                     << minValue << ", " << maxValue << std::endl;
-    CMN_LOG_CLASS(3) << "Configure: setting start value to: "
-                     << StartValue << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting bounds to: "
+                               << minValue << ", " << maxValue << std::endl
+                               << "Configure: setting start value to: "
+                               << StartValue << std::endl;
     UI.Amplitude->bounds(minValue, maxValue);
     UI.Amplitude->value(StartValue);
     AmplitudeData = StartValue;
@@ -41,11 +41,11 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
 
 void displayTask::Startup(void) 
 {
-    const cmnGenericObject *obj = Generator.GetDataHistory.GetCommand()->GetArgument2Prototype();
-    CMN_LOG_CLASS(1) << "GetHistory prototype = " << obj->Services()->GetName() << std::endl;
+    const mtsGenericObject *obj = Generator.GetDataHistory.GetCommand()->GetArgument2Prototype();
+    CMN_LOG_CLASS_INIT_VERBOSE << "GetHistory prototype = " << obj->Services()->GetName() << std::endl;
 #if 0
     // Future plans:  use mtsHistoryBase instead of mtsVector (equivalently, could use mtsVectorBase)
-    cmnGenericObject *newObj = obj->Services()->Create();
+    mtsGenericObject *newObj = obj->Services()->Create();
     mtsHistoryBase *newObjDerived = dynamic_cast<mtsHistoryBase *>(newObj);
     newObjDerived->SetSize(10);
 #endif
@@ -72,8 +72,9 @@ void displayTask::Run(void)
         AmplitudeData.Data = UI.Amplitude->value();
         Generator.SetAmplitude(AmplitudeData);
         UI.AmplitudeChanged = false;
-        CMN_LOG_CLASS(7) << "Run: " << now.Ticks()
-                         << " - Amplitude: " << AmplitudeData.Data << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "Run: " << now.Ticks()
+                                  << " - Amplitude: " << AmplitudeData.Data
+                                  << std::endl;
     }
     // log some extra information
     //CMN_LOG_CLASS(7) << "Run : " << now.Ticks()

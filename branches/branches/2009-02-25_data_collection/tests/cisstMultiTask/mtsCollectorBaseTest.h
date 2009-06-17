@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 class mtsCollectorBaseTestTask : public mtsTaskPeriodic {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
 protected:    
-    mtsStateData<cmnDouble> TestData;
+    mtsStateData<mtsDouble> TestData;
 
 public:
     mtsCollectorBaseTestTask(const std::string & collectorName, 

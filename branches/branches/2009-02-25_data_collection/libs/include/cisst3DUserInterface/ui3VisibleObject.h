@@ -32,11 +32,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3SceneManager.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
 
 /*!
  Provides a base class for all visible objects.
 */
-class ui3VisibleObject: public cmnGenericObject
+class CISST_EXPORT ui3VisibleObject: public cmnGenericObject
 {   
     friend class ui3SceneManager;
     friend class ui3VisibleList;
@@ -62,7 +64,11 @@ public:
 
     virtual void SetOrientation(vctDoubleMatRot3 & rotationMatrix);
 
-    virtual void SetTransformation(vctDoubleFrm3 & frame);
+    template <bool _storageOrder>
+    void SetTransformation(vctFrameBase<vctMatrixRotation3<double, _storageOrder> > frame) {
+        this->SetPosition(frame.Translation());
+        this->SetOrientation(frame.Rotation());
+    }
 
     virtual void Lock(void);
 

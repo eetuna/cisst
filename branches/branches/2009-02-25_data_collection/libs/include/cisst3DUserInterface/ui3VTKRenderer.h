@@ -26,6 +26,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
 #include <cisstVector/vctTransformationTypes.h>
+#include <cisstVector/vctFixedSizeVectorTypes.h>
+
 #include <cisstStereoVision/svlRenderTargets.h>
 
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
@@ -33,15 +35,17 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <vtkUnsignedCharArray.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
 
 /*!
  Class that implements the interface between VTK and the SAW framework.
  It provides methods for creating and manipulating 3D objects and rendering
  scenes on the screen and/or on a frame buffer.
 */
-class ui3VTKRenderer: public cmnGenericObject
+class CISST_EXPORT ui3VTKRenderer: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     /*!
@@ -49,7 +53,7 @@ public:
     */
     ui3VTKRenderer(ui3SceneManager* scene,
                    unsigned int width, unsigned int height,
-                   double viewangle, vctFrm3 & cameraframe,
+                   double viewangle, vctFrm3 & cameraframe, vct2 opticalcenteroffset,
                    svlRenderTargetBase* target = 0);
 
     /*!
@@ -62,8 +66,8 @@ public:
 
     void Render(void);
 
-    void SetViewAngle(double angle);
     double GetViewAngle(void);
+    void GetOpticalCenterOffset(vct2 & offset);
 
     void SetWindowPosition(int x, int y);
 
@@ -82,6 +86,7 @@ private:
     unsigned int Height;
     double ViewAngle;
     vctFrm3 CameraFrame;
+    vct2 OpticalCenterOffset;
     svlRenderTargetBase* Target;
 };
 

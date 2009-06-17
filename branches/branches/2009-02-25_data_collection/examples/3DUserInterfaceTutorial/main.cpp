@@ -60,16 +60,16 @@ http://www.cisst.org/cisst/license.txt.
 int main()
 {
     // log configuration
-    cmnLogger::SetLoD(10);
-	cmnLogger::GetMultiplexer()->AddChannel(std::cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+	cmnLogger::GetMultiplexer()->AddChannel(std::cout, CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
     osaThreadedLogFile threadedLog("example1-");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, 10);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
-    cmnClassRegister::SetLoD("ui3BehaviorBase", 10);
-    cmnClassRegister::SetLoD("ui3Manager", 10);
-    cmnClassRegister::SetLoD("mtsTaskInterface", 10);
-    cmnClassRegister::SetLoD("mtsTaskManager", 10);
+    cmnClassRegister::SetLoD("ui3BehaviorBase", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("ui3Manager", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
 
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 #if (UI3_INPUT == UI3_OMNI1_OMNI2)
@@ -145,6 +145,7 @@ int main()
                            vidSource.GetHeight(SVL_LEFT), // render height
                            0, 0,            // window position
                            camframe, 30.0,  // camera parameters
+                           vct2(0.0),
                            "LeftEyeView");  // name of renderer
     guiManager.AddVideoBackgroundToRenderer("LeftEyeView", "StereoVideo", SVL_LEFT);
 #endif //RENDER_ON_OVERLAY
@@ -164,6 +165,7 @@ int main()
                            vidSource.GetHeight(SVL_RIGHT), // render height
                            20, 20,          // window position
                            camframe, 30.0,  // camera parameters
+                           vct2(0.0),
                            "RightEyeView"); // name of renderer
     guiManager.AddVideoBackgroundToRenderer("RightEyeView", "StereoVideo", SVL_RIGHT);
 #endif //RENDER_ON_OVERLAY
