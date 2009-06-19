@@ -41,9 +41,11 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 mtsTaskManager::mtsTaskManager():
     TaskMap("Tasks"),
     DeviceMap("Devices"),
-    TaskManagerCommunicatorID("TaskManagerServerSender"),
+    ProxyServer(0),
+    ProxyClient(0),
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
-    Proxy(0), ProxyServer(0), ProxyClient(0)
+    TaskManagerCommunicatorID("TaskManagerServerSender"),
+    Proxy(0)
 {
     __os_init();
     TaskMap.SetOwner(*this);

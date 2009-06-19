@@ -48,15 +48,19 @@ protected:
 
 public:
     mtsCommandQualifiedReadProxy(const int commandSID, 
-                                 mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
-        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType()
+                                 mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
+        BaseType(),
+        ProvidedInterfaceProxy(providedInterfaceProxy),
+        CommandSID(commandSID)
     {}
 
     mtsCommandQualifiedReadProxy(const int commandSID,
                                  mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
-                                 const std::string & name)
+                                 const std::string & name):
                          //ArgumentPointerType argumentProtoType) :
-        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), BaseType(name)
+        BaseType(name),
+        ProvidedInterfaceProxy(providedInterfaceProxy),
+        CommandSID(commandSID)
         //, ArgumentPointerPrototype(argumentProtoType)
     {}
 

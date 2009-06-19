@@ -60,7 +60,7 @@ public:
     // virtual void AddCommand(BaseType * command);
     
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
         if (this->Commands[0]) {
             return this->Commands[0]->Execute(argument);
         }
@@ -69,7 +69,7 @@ public:
     /*! Return a pointer on the argument prototype.  Uses the first
       command added to find the argument prototype.  If no command is
       available, return 0 (null pointer) */
-    virtual const cmnGenericObject * GetArgumentPrototype(void) const {
+    virtual const mtsGenericObject * GetArgumentPrototype(void) const {
         if (this->Commands[0]) {
             return this->Commands[0]->GetArgumentPrototype();
         }

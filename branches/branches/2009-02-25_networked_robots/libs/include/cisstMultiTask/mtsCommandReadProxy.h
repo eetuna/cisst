@@ -48,16 +48,18 @@ protected:
 
 public:
     mtsCommandReadProxy(const int commandSID, 
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy) 
-        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), 
-          BaseType()
+                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
+        BaseType(),
+        ProvidedInterfaceProxy(providedInterfaceProxy), 
+        CommandSID(commandSID)
     {}
 
     mtsCommandReadProxy(const int commandSID,
-                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
-                         const std::string & name)
-        : CommandSID(commandSID), ProvidedInterfaceProxy(providedInterfaceProxy), 
-          BaseType(name)
+                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                        const std::string & name):
+        BaseType(name),
+        ProvidedInterfaceProxy(providedInterfaceProxy),
+        CommandSID(commandSID)
     {}
 
     virtual ~mtsCommandReadProxy()
