@@ -11,8 +11,6 @@
 #include "UITask.h"
 #include "displayUI.h"
 
-#include <string>
-
 using namespace std;
 
 /*
@@ -78,7 +76,7 @@ int main(int argc, char * argv[])
 
     // Check arguments
     if (argc == 2) {
-        if (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-cs") == 0 || strcmp(argv[1], "-cc") == 0) {
+        if (strcmp(argv[1], "-s") == 0) {
             ParseOption(argv[1]);
         } else {
             help(argv[0]);
@@ -178,7 +176,7 @@ int main(int argc, char * argv[])
     if (IsGlobalTaskManager) {
         while (1) {
             osaSleep(10 * cmn_ms);
-            if (UITaskObject->GetExitFlag()) {
+            if (UITaskObject->IsTerminated()) {
                 break;
             }
         }
@@ -186,14 +184,14 @@ int main(int argc, char * argv[])
         if (IsServerTask) {
             while (1) {
                 osaSleep(10 * cmn_ms);
-                if (UITaskObject->GetExitFlag()) {
+                if (UITaskObject->IsTerminated()) {
                     break;
                 }
             }
         } else {
             while (1) {
                 osaSleep(10 * cmn_ms);
-                if (displayTaskObject->GetExitFlag()) {
+                if (displayTaskObject->IsTerminated()) {
                     break;
                 }
             }

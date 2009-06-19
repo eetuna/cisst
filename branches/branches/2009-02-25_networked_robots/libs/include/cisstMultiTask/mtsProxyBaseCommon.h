@@ -22,8 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsProxyBaseCommon_h
 #define _mtsProxyBaseCommon_h
 
-//#include <cisstCommon/cmnGenericObject.h>
-//#include <cisstCommon/cmnClassRegister.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstMultiTask/mtsExport.h>
 
@@ -31,6 +29,12 @@ http://www.cisst.org/cisst/license.txt.
 #include <Ice/Ice.h>
 
 #include <string>
+
+//-----------------------------------------------------------------------------
+// Definitions for constant string values
+//-----------------------------------------------------------------------------
+/*! Implicit per-proxy context to set connection id. */
+#define CONNECTION_ID "ConnectionID"
 
 template<class _ArgumentType>
 class CISST_EXPORT mtsProxyBaseCommon {

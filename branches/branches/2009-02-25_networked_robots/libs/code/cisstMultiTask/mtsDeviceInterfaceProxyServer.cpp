@@ -178,58 +178,12 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaces(
     return true;
 }
 
-/*
-void mtsDeviceInterfaceProxyServer::SendCommandProxyInfo(
-    const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info) const
-{
-    ConnectedTask->ReceiveCommandProxyInfo(info);
-}
-*/
-
 void mtsDeviceInterfaceProxyServer::ExecuteCommandVoid(const int commandSID) const
 {    
     mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandSID);
     CMN_ASSERT(commandVoid);
 
     commandVoid->Execute();
-}
-
-void mtsDeviceInterfaceProxyServer::ExecuteCommandWrite(const int commandSID, const double argument) const
-{    
-    mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandSID);
-    CMN_ASSERT(commandWrite);
-
-    static char buf[100];
-    sprintf(buf, "ExecuteCommandWrite: %f", argument);
-    Logger->trace("TIServer", buf);
-
-    mtsDouble argumentWrapper(argument);
-    commandWrite->Execute(argumentWrapper);
-}
-
-void mtsDeviceInterfaceProxyServer::ExecuteCommandRead(const int commandSID, double & argument)
-{
-    mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);
-    CMN_ASSERT(commandRead);
-
-    mtsDouble argumentWrapper;
-    commandRead->Execute(argumentWrapper);
-    argument = argumentWrapper.Data;
-
-    static char buf[100];
-    sprintf(buf, "ExecuteCommandRead returns: %f", argument);
-    Logger->trace("TIServer", buf);
-}
-
-void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedRead(const int commandSID, const double argument1, double & argument2)
-{    
-    mtsCommandQualifiedReadBase * commandQualifiedRead = reinterpret_cast<mtsCommandQualifiedReadBase *>(commandSID);
-    CMN_ASSERT(commandQualifiedRead);
-
-    mtsDouble argument1Wrapper(argument1);
-    mtsDouble argument2Wrapper;
-    commandQualifiedRead->Execute(argument1Wrapper, argument2Wrapper);
-    argument2 = argument2Wrapper.Data;
 }
 
 void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int commandSID, const std::string argument)
@@ -247,7 +201,8 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int comm
     
     mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
     CMN_ASSERT(obj);
-    commandWrite->Execute(*obj);
+    //!!!!!!!!!!! FIX THIS
+    //commandWrite->Execute(*obj);
 
     //std::cout << *obj << std::endl;
 }
@@ -405,30 +360,6 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandVoid(
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandVoid");
 
     TaskInterfaceServer->ExecuteCommandVoid(sid);
-}
-
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandWrite(
-    ::Ice::Int sid, ::Ice::Double argument, const ::Ice::Current&)
-{
-    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandWrite");
-
-    TaskInterfaceServer->ExecuteCommandWrite(sid, argument);
-}
-
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandRead(
-    ::Ice::Int sid, ::Ice::Double& argument, const ::Ice::Current&)
-{
-    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandRead");
-
-    TaskInterfaceServer->ExecuteCommandRead(sid, argument);
-}
-
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandQualifiedRead(
-    ::Ice::Int sid, ::Ice::Double argument1, ::Ice::Double& argument2, const ::Ice::Current&)
-{
-    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandQualifiedRead");
-
-    TaskInterfaceServer->ExecuteCommandQualifiedRead(sid, argument1, argument2);
 }
 
 void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandWriteSerialized(

@@ -9,21 +9,13 @@
 CMN_IMPLEMENT_SERVICES(displayTask);
 
 displayTask::displayTask(const std::string & taskName, double period):
-    mtsTaskPeriodic(taskName, period, false, 5000),
-    ExitFlag(false)
-#ifdef CISST_GETVECTOR
-    ,DataVec(10)
-#endif
+    mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // to communicate with the interface of the resource
     mtsRequiredInterface *req = AddRequiredInterface("DataGenerator");
     if (req) {
-       req->AddFunction("CommandVoid", Generator.CommandVoid);
+       //req->AddFunction("CommandVoid", Generator.CommandVoid);
        req->AddFunction("GetData", Generator.GetData);
-       req->AddFunction("GetStateIndex", Generator.GetStateIndex);
-#ifdef CISST_GETVECTOR
-       req->AddFunction("GetDataVector", Generator.GetDataVector);
-#endif
        req->AddFunction("SetAmplitude", Generator.SetAmplitude);
     }
 }
@@ -33,21 +25,18 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
     // define some values, ideally these come from a configuration
     // file and then configure the user interface
     double maxValue = 0.5; double minValue = 5.0;
-    StartValue =  1.0;
+    double startValue =  1.0;
     CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting bounds to: "
-                     << minValue << ", " << maxValue << std::endl;
+                               << minValue << ", " << maxValue << std::endl;
     CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting start value to: "
-                     << StartValue << std::endl;
+                               << startValue << std::endl;
     UI.Amplitude->bounds(minValue, maxValue);
-    UI.Amplitude->value(StartValue);
-    AmplitudeData.Data = StartValue;
+    UI.Amplitude->value(startValue);
+    AmplitudeData = startValue;
 }
 
 void displayTask::Startup(void) 
 {
-    // set the initial amplitude based on the configuration
-    AmplitudeData.Data = StartValue;
-
     // make the UI visible
     UI.show(0, NULL);
 }
@@ -61,6 +50,9 @@ void displayTask::Run(void)
     if (UI.AmplitudeChanged) {
         // retrieve the new amplitude and send it to the sine task
         AmplitudeData = UI.Amplitude->value();
+        AmplitudeData.SetTimestamp(mtsTaskManager::GetInstance()->GetTimeServer().GetRelativeTime());
+        AmplitudeData.SetValid(true);
+        // send it
         Generator.SetAmplitude(AmplitudeData);
         UI.AmplitudeChanged = false;
         CMN_LOG_CLASS_RUN_VERBOSE << "Run: " << this->GetTick()

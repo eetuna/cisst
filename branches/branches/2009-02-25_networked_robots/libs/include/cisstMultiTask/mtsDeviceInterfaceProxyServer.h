@@ -40,7 +40,7 @@ class mtsTask;
 
 class CISST_EXPORT mtsDeviceInterfaceProxyServer : public mtsProxyBaseServer<mtsTask> {
     
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class TaskInterfaceServerI;
 
@@ -118,10 +118,6 @@ public:
 
     /*! Execute actual command objects. */
     void ExecuteCommandVoid(const int commandSID) const;
-    void ExecuteCommandWrite(const int commandSID, const double argument) const;
-    void ExecuteCommandRead(const int commandSID, double & argument);
-    void ExecuteCommandQualifiedRead(const int commandSID, const double argument1, double & argument2);
-
     void ExecuteCommandWriteSerialized(const int commandSID, const std::string argument);
     void ExecuteCommandReadSerialized(const int commandSID, std::string & argument);
     void ExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string argument1, std::string & argument2);
@@ -157,10 +153,6 @@ protected:
             const ::Ice::Current&) const;
         
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
-        void ExecuteCommandWrite(::Ice::Int, ::Ice::Double, const ::Ice::Current&);
-        void ExecuteCommandRead(::Ice::Int, ::Ice::Double&, const ::Ice::Current&);
-        void ExecuteCommandQualifiedRead(::Ice::Int, ::Ice::Double, ::Ice::Double&, const ::Ice::Current&);
-
         void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
         void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Current&);
         void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current&);

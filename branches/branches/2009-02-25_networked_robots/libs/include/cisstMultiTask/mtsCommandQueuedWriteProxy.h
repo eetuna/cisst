@@ -73,10 +73,11 @@ public:
 
     inline virtual ~mtsCommandQueuedWriteProxy() {}
 
-    mtsCommandQueuedWriteProxy * Clone(mtsMailBox* mailBox, unsigned int size) const    
-    { 
-        return new mtsCommandQueuedWriteProxy(mailBox, ActualCommand, size);
-    }
+    //!!!!!!!!!! FIX THIS
+    //mtsCommandQueuedWriteProxy * Clone(mtsMailBox* mailBox, unsigned int size) const    
+    //{ 
+    //    return new mtsCommandQueuedWriteProxy(mailBox, ActualCommand, size);
+    //}
 
     const mtsGenericObject * GetArgumentPrototype(void) const
     { 

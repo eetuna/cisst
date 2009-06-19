@@ -36,19 +36,24 @@ void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
     
     if (InitSuccessFlag) {
         // Client configuration for bidirectional communication
-        // (see 
-        // http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.7.html
-        // for more information.)
+        // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.7.html)
         Ice::ObjectAdapterPtr adapter = IceCommunicator->createObjectAdapter("");
         Ice::Identity ident;
         ident.name = GetGUID();
-        ident.category = "";
+        ident.category = "";    // not used currently.
 
         mtsTaskManagerProxy::TaskManagerClientPtr client = 
             new TaskManagerClientI(IceCommunicator, Logger, TaskManagerServer, this);
         adapter->add(client, ident);
         adapter->activate();
         TaskManagerServer->ice_getConnection()->setAdapter(adapter);
+
+        // Set an implicit context (per proxy context)
+        // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
+        IceCommunicator->getImplicitContext()->put(CONNECTION_ID, 
+            IceCommunicator->identityToString(ident));
+
+        // Generate an event so that the global task manager register this task manager.
         TaskManagerServer->AddClient(ident);
 
         // Create a worker thread here and returns immediately.
@@ -216,7 +221,7 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
 
             localTaskList.taskManagerID = TaskManagerClient->GetGUID();
 
-            Server->AddTaskManager(localTaskList);
+            Server->UpdateTaskManager(localTaskList);
 
             flag = false;
         }

@@ -95,7 +95,7 @@ module mtsTaskManagerProxy
 	{		
 		void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
 	    
-		void AddTaskManager(TaskList localTaskInfo);
+		void UpdateTaskManager(TaskList localTaskInfo);
 
 	    // from task manager client which manages a server task
 		bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);

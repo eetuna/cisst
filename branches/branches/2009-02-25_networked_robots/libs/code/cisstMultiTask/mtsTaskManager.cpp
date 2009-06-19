@@ -525,30 +525,30 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     ITERATE_INTERFACE_END
 
     // 2-2) Write
-    ITERATE_INTERFACE_BEGIN(Write)
-        mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(
-            commandSID, clientTask->GetProxyClient(), commandName);
-        CMN_ASSERT(newCommandWrite);
-        providedInterfaceProxy->GetCommandWriteMap().AddItem(it->Name, newCommandWrite);
-    ITERATE_INTERFACE_END
-
-    // 2-3) Read
-    ITERATE_INTERFACE_BEGIN(Read)
-        mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(
-            commandSID, clientTask->GetProxyClient(), commandName);
-        CMN_ASSERT(newCommandRead);
-        providedInterfaceProxy->GetCommandReadMap().AddItem(it->Name, newCommandRead);
-    ITERATE_INTERFACE_END
-
-    // 2-4) QualifiedRead
-    //ITERATE_INTERFACE_BEGIN(QualifiedRead)
-    //    cmnGenericObject * prototype1 = cmnClassRegister::Create(it->Argument1TypeName);
-    //    cmnGenericObject * prototype2 = cmnClassRegister::Create(it->Argument2TypeName);
-    //    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = 
-    //        new mtsCommandQualifiedReadProxy(commandName, prototype1, prototype2);
-    //    CMN_ASSERT(newCommandQualifiedRead);
-    //    providedInterfaceProxy->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
+    //ITERATE_INTERFACE_BEGIN(Write)
+    //    mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(
+    //        commandSID, clientTask->GetProxyClient(), commandName);
+    //    CMN_ASSERT(newCommandWrite);
+    //    providedInterfaceProxy->GetCommandWriteMap().AddItem(it->Name, newCommandWrite);
     //ITERATE_INTERFACE_END
+
+    //// 2-3) Read
+    //ITERATE_INTERFACE_BEGIN(Read)
+    //    mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(
+    //        commandSID, clientTask->GetProxyClient(), commandName);
+    //    CMN_ASSERT(newCommandRead);
+    //    providedInterfaceProxy->GetCommandReadMap().AddItem(it->Name, newCommandRead);
+    //ITERATE_INTERFACE_END
+
+    //// 2-4) QualifiedRead
+    ////ITERATE_INTERFACE_BEGIN(QualifiedRead)
+    ////    cmnGenericObject * prototype1 = cmnClassRegister::Create(it->Argument1TypeName);
+    ////    cmnGenericObject * prototype2 = cmnClassRegister::Create(it->Argument2TypeName);
+    ////    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = 
+    ////        new mtsCommandQualifiedReadProxy(commandName, prototype1, prototype2);
+    ////    CMN_ASSERT(newCommandQualifiedRead);
+    ////    providedInterfaceProxy->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
+    ////ITERATE_INTERFACE_END
 
 #undef ITERATE_INTERFACE_BEGIN
 #undef ITERATE_INTERFACE_END
@@ -570,11 +570,13 @@ void mtsTaskManager::StartProxies()
         ProxyServer = dynamic_cast<mtsTaskManagerProxyServer *>(Proxy);
         Proxy->Start(this);
     } else {
+        // For easier debugging purpose
+        CMN_LOG_CLASS_INIT_DEBUG << "GlobalTaskManagerIP: " << GlobalTaskManagerIP << std::endl;
+        CMN_LOG_CLASS_INIT_DEBUG << "ServerTaskIP: " << ServerTaskIP << std::endl;
+
         Proxy = new mtsTaskManagerProxyClient(":default -h " + GlobalTaskManagerIP + " -p 10705", TaskManagerCommunicatorID);
         ProxyClient = dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
         Proxy->Start(this);
-
-        osaSleep(1000 * cmn_ms);
 
         // Start a task interface proxy. Currently it is assumed that there is only
         // one provided interface and one required interface.

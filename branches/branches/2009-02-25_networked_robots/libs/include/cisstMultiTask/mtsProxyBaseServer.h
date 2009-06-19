@@ -32,9 +32,9 @@ http://www.cisst.org/cisst/license.txt.
 */
 template<class _argumentType>
 class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_argumentType> {
- public:
+public:
     typedef mtsProxyBaseCommon<_argumentType> BaseType;
-
+    
 protected:
     Ice::ObjectAdapterPtr IceAdapter;
     Ice::ObjectPtr Servant;
@@ -49,7 +49,11 @@ protected:
         try {
             Ice::InitializationData initData;
             initData.logger = new typename BaseType::ProxyLogger();
-            //initData.properties = Ice::createProperties();
+            initData.properties = Ice::createProperties();
+            // There are two different modes of using implicit context: 
+            // shared vs. PerThread.
+            // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
+            initData.properties->setProperty("Ice.ImplicitContext", "Shared");
             //initData.properties->load(PropertyFileName);           
             //IceCommunicator = Ice::initialize(initData);
             this->IceCommunicator = Ice::initialize(initData);

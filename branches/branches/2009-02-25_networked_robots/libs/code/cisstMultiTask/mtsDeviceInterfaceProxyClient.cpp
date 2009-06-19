@@ -120,16 +120,6 @@ const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaces(
     return TaskInterfaceServer->GetProvidedInterfaces(providedInterfaces);
 }
 
-/*
-void mtsDeviceInterfaceProxyClient::SendCommandProxyInfo(
-    mtsDeviceInterfaceProxy::CommandProxyInfo & info) const
-{
-    GetLogger()->trace("TIClient", ">>>>> SEND: SendCommandProxyInfo");
-
-    TaskInterfaceServer->SendCommandProxyInfo(info);
-}
-*/
-
 void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandVoid(const int commandSID) const
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandVoid");
@@ -137,46 +127,6 @@ void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandVoid(const int commandSI
     TaskInterfaceServer->ExecuteCommandVoid(commandSID);
 }
 
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandWrite(
-    const int commandSID, const cmnDouble & argument) const
-{
-    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandWrite");
-
-    double value = argument.Data;
-
-    TaskInterfaceServer->ExecuteCommandWrite(commandSID, value);
-}
-
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandRead(
-    const int commandSID, cmnDouble & argument)
-{
-    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandRead");
-
-    double outValue = 0.0;
-
-    TaskInterfaceServer->ExecuteCommandRead(commandSID, outValue);
-
-    cmnDouble out(outValue);
-    argument = out;
-}
-
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedRead(
-    const int commandSID, const cmnDouble & argument1, cmnDouble & argument2)
-{
-    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");
-    
-    double value = argument1.Data;
-    double outValue = 0.0;
-
-    TaskInterfaceServer->ExecuteCommandQualifiedRead(commandSID, value, outValue);
-
-    cmnDouble out(outValue);
-    argument2 = out;
-}
-
-//
-//  Command Object with Serialization
-//
 void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandWriteSerialized(const int commandSID, const cmnGenericObject & argument)
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");

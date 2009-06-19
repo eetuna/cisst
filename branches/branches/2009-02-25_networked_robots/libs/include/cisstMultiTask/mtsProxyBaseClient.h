@@ -52,7 +52,8 @@ protected:
         try {
             Ice::InitializationData initData;
             initData.logger = new typename BaseType::ProxyLogger();
-            //initData.properties = Ice::createProperties();
+            initData.properties = Ice::createProperties();
+            initData.properties->setProperty("Ice.ImplicitContext", "Shared");
             //initData.properties->load(PropertyFileName);
 
             this->IceCommunicator = Ice::initialize(initData);

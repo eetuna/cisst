@@ -6,9 +6,10 @@
 #include "UITask.h"
 #include "displayUI.h"
 
+CMN_IMPLEMENT_SERVICES(UITask);
+
 UITask::UITask(const std::string & taskName, double period):
-    mtsTaskPeriodic(taskName, period, false, 5000),
-    ExitFlag(false)
+    mtsTaskPeriodic(taskName, period, false, 5000)
 {
 }
 
@@ -17,17 +18,18 @@ void UITask::Configure(const std::string & CMN_UNUSED(filename))
     // define some values, ideally these come from a configuration
     // file and then configure the user interface
     double maxValue = 0.5; double minValue = 5.0;
-    StartValue =  1.0;
+    double startValue =  1.0;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting bounds to: "
+                               << minValue << ", " << maxValue << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting start value to: "
+                               << startValue << std::endl;
     UI.Amplitude->bounds(minValue, maxValue);
-    UI.Amplitude->value(StartValue);
-    AmplitudeData.Data = StartValue;
+    UI.Amplitude->value(startValue);
+    AmplitudeData = startValue;
 }
 
 void UITask::Startup(void) 
 {
-    // set the initial amplitude based on the configuration
-    AmplitudeData.Data = StartValue;
-
     // make the UI visible
     UI.show(0, NULL);
 }
@@ -36,7 +38,7 @@ void UITask::Run(void)
 {
     // update the UI, process UI events 
     if (Fl::check() == 0) {
-        ExitFlag = true;
+        Kill();
     }
 }
 

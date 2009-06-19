@@ -36,7 +36,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mtsTask> {
     
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
     typedef mtsProxyBaseClient<mtsTask> BaseType;
@@ -110,10 +110,6 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     //void SendCommandProxyInfo(mtsDeviceInterfaceProxy::CommandProxyInfo & info) const;
 
     void InvokeExecuteCommandVoid(const int commandSID) const;
-    void InvokeExecuteCommandWrite(const int commandSID, const cmnDouble & argument) const;
-    void InvokeExecuteCommandRead(const int commandSID, cmnDouble & argument);
-    void InvokeExecuteCommandQualifiedRead(const int commandSID, const cmnDouble & argument1, cmnDouble & argument2);
-
     void InvokeExecuteCommandWriteSerialized(const int commandSID, const cmnGenericObject & argument);
     void InvokeExecuteCommandReadSerialized(const int commandSID, cmnGenericObject & argument);
     void InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2);

@@ -71,18 +71,19 @@ public:
     virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument1,
                                                cmnGenericObject & argument2) 
     {
-        Argument1Type * data1 = dynamic_cast<Argument1Type *>(&argument1);
-        if (data1 == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
-        if (data2 == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        
-        //static int cnt = 0;
-        //std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
+        //!!!!!!! FIX THIS
+        //Argument1Type * data1 = dynamic_cast<Argument1Type *>(&argument1);
+        //if (data1 == NULL)
+        //    return mtsCommandBase::BAD_INPUT;
+        //Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
+        //if (data2 == NULL)
+        //    return mtsCommandBase::BAD_INPUT;
+        //
+        ////static int cnt = 0;
+        ////std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
 
-        ProvidedInterfaceProxy->InvokeExecuteCommandQualifiedRead(
-            CommandSID, *data1, *data2);
+        //ProvidedInterfaceProxy->InvokeExecuteCommandQualifiedRead(
+        //    CommandSID, *data1, *data2);
 
         return mtsCommandBase::DEV_OK;
     }

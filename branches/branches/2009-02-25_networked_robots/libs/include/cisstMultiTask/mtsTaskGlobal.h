@@ -22,9 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsTaskGlobal_h
 #define _mtsTaskGlobal_h
 
-#include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstMultiTask/mtsProxyBaseServer.h>
-#include <cisstMultiTask/mtsTaskManagerProxy.h>
+#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -113,9 +111,9 @@ class mtsTaskGlobal {
 
 protected:
     const std::string TaskName;
-    const std::string TaskManagerID;
+    const mtsTaskManagerProxyServer::TaskManagerIDType TaskManagerID;
 
-    /*! List of connected task name. */
+    /*! List of connected task name. A task name should be unique across networks. */
     std::vector<std::string> ConnectedTaskList;
 
     /*! map: (provided interface name, its information) */
@@ -127,7 +125,8 @@ protected:
     RequiredInterfaceMapType RequiredInterfaces;
 
 public:
-    mtsTaskGlobal(const std::string& taskName, const std::string & taskManagerID) 
+    mtsTaskGlobal(const std::string & taskName, 
+                  const mtsTaskManagerProxyServer::TaskManagerIDType & taskManagerID) 
         : TaskName(taskName), TaskManagerID(taskManagerID) 
     {}
 
@@ -155,6 +154,15 @@ public:
         const bool isServerTask,
         const std::string & userTaskName,     const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
+
+    /*! Getters */
+    const std::string GetTaskName() const {
+        return TaskName; 
+    }
+
+    const mtsTaskManagerProxyServer::TaskManagerIDType GetTaskManagerID() const {
+        return TaskManagerID; 
+    }
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskGlobal)
