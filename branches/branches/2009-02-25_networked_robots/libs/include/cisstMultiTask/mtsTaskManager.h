@@ -53,10 +53,6 @@ http://www.cisst.org/cisst/license.txt.
   The Task Manager is used to manage the connections between tasks
   and devices.  It is a Singleton object.
 */
-class mtsTaskManager;
-class mtsTaskManagerProxyServer;
-class mtsTaskManagerProxyClient;
-
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
 
 	friend class mtsTaskManagerTest;
@@ -84,12 +80,14 @@ public:
     // Default mailbox size -- perhaps this should be specified elsewhere
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
+#ifdef CISST_MTS_HAS_ICE
     // Typedef for task manager type
     typedef enum {
         TASK_MANAGER_LOCAL,
         TASK_MANAGER_SERVER, // global task manager
         TASK_MANAGER_CLIENT  // conventional task manager
     } TaskManagerType;
+#endif
 
 protected:
 

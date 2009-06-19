@@ -34,7 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsCommandQueuedWriteProxy: public mtsCommandQueuedWriteBase {
 public:
     typedef mtsCommandQueuedWriteBase BaseType;
-    typedef const cmnGenericObject * ArgumentPointerType;
+    typedef const mtsGenericObject * ArgumentPointerType;
 
 protected:
     mtsQueue<ArgumentPointerType> ArgumentsQueue;
@@ -78,7 +78,7 @@ public:
         return new mtsCommandQueuedWriteProxy(mailBox, ActualCommand, size);
     }
 
-    const cmnGenericObject * GetArgumentPrototype(void) const
+    const mtsGenericObject * GetArgumentPrototype(void) const
     { 
         return ActualCommand->GetArgumentPrototype();
     }
@@ -102,22 +102,22 @@ public:
         }
     }
 
-    mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
+    mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
         static int cnt = 0;
         std::cout << "mtsCommandQueuedWriteProxy called (" << ++cnt << "): " << Name << std::endl;
         return BaseType::DEV_OK;
     }
     
-    const cmnGenericObject * ArgumentPeek(void) const
+    const mtsGenericObject * ArgumentPeek(void) const
     {
         return *ArgumentsQueue.Peek();
     }
 
-    cmnGenericObject * ArgumentGet(void)
+    mtsGenericObject * ArgumentGet(void)
     {
         // TODO: FIX THIS OR REMOVE THIS!
         //return ArgumentsQueue.Get();
-        return reinterpret_cast<cmnGenericObject*>(0x1234);
+        return reinterpret_cast<mtsGenericObject*>(0x1234);
     }
 };
 

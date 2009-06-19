@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
+#include <cisstMultiTask/mtsConfig.h>
 
 // commands
 class mtsCommandBase;
@@ -93,5 +94,11 @@ const bool mtsRequired = true;
 const bool mtsOptional = false;
 
 
+// classes defined when ICE is used
+#ifdef CISST_MTS_HAS_ICE
+
+#endif // CISST_MTS_HAS_ICE
+class mtsTaskManagerProxyServer;
+class mtsTaskManagerProxyClient;
 #endif  // _mtsForwardDeclarations_h
 

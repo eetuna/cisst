@@ -64,7 +64,7 @@ public:
     {}
 
     /*! The execute method. */
-    virtual mtsCommandBase::ReturnType Execute(cmnGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
         //!!!!!!!!!!
         //ProvidedInterfaceProxy->InvokeExecuteCommandReadSerialized(CommandSID, argument);
         return mtsCommandBase::DEV_OK;
@@ -78,11 +78,11 @@ public:
     }
 
     /*! Return a pointer on the argument prototype */
-    const cmnGenericObject * GetArgumentPrototype(void) const {
+    const mtsGenericObject * GetArgumentPrototype(void) const {
         //
         // TODO: FIX ME
         //
-        return reinterpret_cast<const cmnGenericObject *>(0x5678);
+        return reinterpret_cast<const mtsGenericObject *>(0x5678);
     }
 };
 

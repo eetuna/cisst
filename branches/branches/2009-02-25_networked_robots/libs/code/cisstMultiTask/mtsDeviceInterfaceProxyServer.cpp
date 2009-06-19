@@ -203,7 +203,7 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandWrite(const int commandSID, co
     sprintf(buf, "ExecuteCommandWrite: %f", argument);
     Logger->trace("TIServer", buf);
 
-    cmnDouble argumentWrapper(argument);
+    mtsDouble argumentWrapper(argument);
     commandWrite->Execute(argumentWrapper);
 }
 
@@ -212,7 +212,7 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandRead(const int commandSID, dou
     mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);
     CMN_ASSERT(commandRead);
 
-    cmnDouble argumentWrapper;
+    mtsDouble argumentWrapper;
     commandRead->Execute(argumentWrapper);
     argument = argumentWrapper.Data;
 
@@ -226,8 +226,8 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedRead(const int comman
     mtsCommandQualifiedReadBase * commandQualifiedRead = reinterpret_cast<mtsCommandQualifiedReadBase *>(commandSID);
     CMN_ASSERT(commandQualifiedRead);
 
-    cmnDouble argument1Wrapper(argument1);
-    cmnDouble argument2Wrapper;
+    mtsDouble argument1Wrapper(argument1);
+    mtsDouble argument2Wrapper;
     commandQualifiedRead->Execute(argument1Wrapper, argument2Wrapper);
     argument2 = argument2Wrapper.Data;
 }
@@ -245,7 +245,8 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int comm
     DeSerializationBuffer.str("");
     DeSerializationBuffer << argument;
     
-    cmnGenericObject * obj = DeSerializer->DeSerialize();
+    mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
+    CMN_ASSERT(obj);
     commandWrite->Execute(*obj);
 
     //std::cout << *obj << std::endl;
@@ -257,18 +258,19 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandReadSerialized(const int comma
     CMN_ASSERT(commandRead);
 
     // Create a placeholder
-    cmnGenericObject * obj = commandRead->GetArgumentClassServices()->Create();
+    mtsGenericObject * placeHolder = dynamic_cast<mtsGenericObject *>(commandRead->GetArgumentClassServices()->Create());
+    CMN_ASSERT(placeHolder);
     {
-        commandRead->Execute(*obj);
+        commandRead->Execute(*placeHolder);
 
         // Serialization
         SerializationBuffer.str("");
-        Serializer->Serialize(*obj);
+        Serializer->Serialize(*placeHolder);
         std::string s = SerializationBuffer.str();
 
         argument = s;
     }
-    delete obj;    
+    delete placeHolder;    
 }
 
 void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string argument1, std::string & argument2)
