@@ -106,7 +106,8 @@ class CISST_EXPORT mtsTaskInterface: public mtsDeviceInterface {
         }
     };
 
-    typedef std::pair<osaThreadId, ThreadResources *> ThreadResourcesPairType;
+    // typedef std::pair<osaThreadId, ThreadResources *> ThreadResourcesPairType;
+    typedef std::pair<unsigned int, ThreadResources *> ThreadResourcesPairType;
     typedef std::vector<ThreadResourcesPairType> ThreadResourcesMapType;
     ThreadResourcesMapType ThreadResourcesMap;
 
@@ -138,8 +139,9 @@ private:
     unsigned int ProcessMailBoxes();
 
  public:
-    virtual unsigned int AllocateResourcesForCurrentThread(void);
-
+    // virtual unsigned int AllocateResourcesForCurrentThread(void);
+    unsigned int AllocateResources(const std::string & userName);
+ 
 	mtsTaskInterface(const std::string & name, mtsTask * task);
 
 	/*! Default Destructor. */
@@ -149,9 +151,11 @@ private:
 	  does some cleanup work */
 	void Cleanup(void);
 
-    virtual mtsCommandVoidBase * GetCommandVoid(const std::string & commandName) const;
-
-    virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
+    virtual mtsCommandVoidBase * GetCommandVoid(const std::string & commandName,
+                                                unsigned int userId) const;
+    
+    virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName,
+                                                  unsigned int userId) const;
 
     template <class __classType>
     inline mtsCommandVoidBase * AddCommandVoid(void (__classType::*method)(void),

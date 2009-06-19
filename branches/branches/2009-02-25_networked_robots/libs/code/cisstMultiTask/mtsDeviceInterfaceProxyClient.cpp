@@ -70,7 +70,7 @@ void mtsDeviceInterfaceProxyClient::StartClient()
 
 void mtsDeviceInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
 {
-    mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
+    // mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
 
     mtsDeviceInterfaceProxyClient * ProxyClient = 
         dynamic_cast<mtsDeviceInterfaceProxyClient*>(arguments->proxy);

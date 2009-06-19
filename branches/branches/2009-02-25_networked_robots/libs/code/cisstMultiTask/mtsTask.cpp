@@ -50,6 +50,7 @@ void mtsTask::StartupInternal(void) {
     CMN_LOG_CLASS_INIT_VERBOSE << "Starting StartupInternal for " << Name << std::endl;
 
     bool success = true;
+    unsigned int userId;
     // Loop through the required interfaces and bind all commands and events
     RequiredInterfacesMapType::MapType::const_iterator requiredIterator = RequiredInterfaces.GetMap().begin();
     mtsDeviceInterface * connectedInterface;
@@ -60,9 +61,10 @@ void mtsTask::StartupInternal(void) {
         if (connectedInterface) {
             CMN_LOG_CLASS_INIT_VERBOSE << "StartupInternal: ask " << connectedInterface->GetName() 
                                        << " to allocate resources for " << this->GetName() << std::endl;
-            connectedInterface->AllocateResourcesForCurrentThread();
-            CMN_LOG_CLASS_INIT_VERBOSE << "StartupInternal: binding commands and events" << std::endl;
-            success &= requiredIterator->second->BindCommandsAndEvents();
+            userId = connectedInterface->AllocateResources(this->GetName());
+            CMN_LOG_CLASS_INIT_VERBOSE << "StartupInternal: binding commands and events with user Id "
+                                       << userId << std::endl;
+            success &= requiredIterator->second->BindCommandsAndEvents(userId);
 
             // Populate CommandProxyMap and send this information to the connected server task
             //if (ProxyClient) {

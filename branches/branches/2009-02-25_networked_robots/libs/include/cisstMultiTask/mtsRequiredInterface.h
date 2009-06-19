@@ -136,16 +136,21 @@ protected:
     virtual mtsCommandWriteBase * GetEventHandlerWrite(const std::string & eventName) const;
     //@}
     
-    void ConnectTo(mtsDeviceInterface *other) { OtherInterface = other; }
+    void ConnectTo(mtsDeviceInterface * other) { OtherInterface = other; }
     void Disconnect(void);  // this could work if we use function objects rather than ptrs, or have special NOP command object
-    bool BindCommandsAndEvents(void);
 
-    void DisableAllEvents() {
+    /*! Bind command and events.  This method needs to provide a user
+      Id so that GetCommandVoid and GetCommandWrite (queued
+      commands) know which mailbox to use.  The user Id is provided
+      by the provided interface when calling AllocateResources. */ 
+    bool BindCommandsAndEvents(unsigned int userId);
+
+    inline void DisableAllEvents(void) {
         EventHandlersVoid.ForEachVoid(&mtsCommandBase::Disable);
         EventHandlersWrite.ForEachVoid(&mtsCommandBase::Disable);
     }
 
-    void EnableAllEvents() {
+    inline void EnableAllEvents(void) {
         EventHandlersVoid.ForEachVoid(&mtsCommandBase::Enable);
         EventHandlersWrite.ForEachVoid(&mtsCommandBase::Enable);
     }

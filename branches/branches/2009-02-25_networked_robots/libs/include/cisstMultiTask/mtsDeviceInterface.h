@@ -27,8 +27,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnClassRegisterMacros.h>
 #include <cisstCommon/cmnNamedMap.h>
 
-#include <cisstOSAbstraction/osaThread.h>
-
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsMulticastCommandWrite.h>
@@ -154,9 +152,9 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
 
     /*! Find a command based on its name. */
     //@{
-    virtual mtsCommandVoidBase * GetCommandVoid(const std::string & commandName) const;
+    virtual mtsCommandVoidBase * GetCommandVoid(const std::string & commandName, unsigned int userId = 0) const;
     virtual mtsCommandReadBase * GetCommandRead(const std::string & commandName) const;
-    virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
+    virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName, unsigned int userId = 0) const;
     virtual mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
 
@@ -191,7 +189,8 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
       interface will check if there is already a queue for the
       resource task or not.  This method must be called before any
       GetCommand. */
-    virtual unsigned int AllocateResourcesForCurrentThread(void);
+    //    virtual unsigned int AllocateResourcesForCurrentThread(void);
+    virtual unsigned int AllocateResources(const std::string & userName);
 
     virtual inline unsigned int ProcessMailBoxes(void) {
         CMN_LOG_CLASS_RUN_ERROR << "Call to ProcessMailBoxes on base class mtsDeviceInterface should never happen" << std::endl;
@@ -199,9 +198,9 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     }
 
  protected:
-    typedef std::pair<osaThreadId, unsigned int> ThreadIdCounterPairType;
-    typedef std::vector<ThreadIdCounterPairType> ThreadIdCountersType;
-    ThreadIdCountersType ThreadIdCounters;
+    /*! Counter for number of users, i.e. number or required
+      interfaces connected to this provided interface. */
+    unsigned int UserCounter;
 
 public:
 
