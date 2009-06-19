@@ -16,7 +16,6 @@ class displayTask: public mtsTaskPeriodic {
     // local copy of data used in commands
     mtsDouble Data;
     mtsDouble AmplitudeData;
-    mtsStateIndex StateIndex;
 
     struct {
        // functions which will be bound to commands
