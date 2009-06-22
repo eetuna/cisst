@@ -570,10 +570,63 @@ public:
     }
 
 
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<int __stride1, class __dataPtrType1, int __stride2>
+    inline void
+    ApplyTo(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1> & input,
+            vctFixedSizeVectorRef<value_type, DIMENSION, __stride2> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        vctQuaternionVectorProductByElements(this->X(), this->Y(), this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
+
+    /*! Apply the rotation to a dynamic vector.  The result is stored
+      into another dynamic vector passed by reference by the caller.
+      It is assumed that both are of size 3.
+    */
+    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    inline void
+    ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType1, value_type> & input,
+            vctDynamicVectorBase<__vectorOwnerType2, value_type> & output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT( (input.size() == DIMENSION) && (output.size() == DIMENSION) )
+        vctQuaternionVectorProductByElements(this->X(), this->Y(), this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType1>
+    inline void
+    ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType1, value_type> & input,
+            vctDynamicVectorRef<value_type> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT( (input.size() == DIMENSION) && (output.size() == DIMENSION) )
+        vctQuaternionVectorProductByElements(this->X(), this->Y(), this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
     template<class __vectorOwnerType, int __stride, class __dataPtrType>
     inline void
     ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
             vctFixedSizeVectorBase<DIMENSION, __stride, value_type, __dataPtrType> & output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT(input.size() == DIMENSION);
+        vctQuaternionVectorProductByElements(this->X(), this->Y(), this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType, int __stride>
+    inline void
+    ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
+            vctFixedSizeVectorRef<value_type, DIMENSION, __stride> output) const
     {
         CMN_ASSERT(input.Pointer() != output.Pointer());
         CMN_ASSERT(input.size() == DIMENSION);
@@ -627,11 +680,46 @@ public:
         }
     }
 
+    /*! A specialization of ApplyTo with the output argument vctFixedSizeRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template <unsigned int __cols, int __rowStride1, int __colStride1, class __dataPtrType1,
+              int __rowStride2, int __colStride2>
+    inline void ApplyTo(const vctFixedSizeConstMatrixBase<DIMENSION, __cols, __rowStride1, __colStride1, value_type, __dataPtrType1> & input,
+                        vctFixedSizeMatrixRef<value_type, DIMENSION, __cols, __rowStride2, __colStride2> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        const unsigned int numCols = input.cols();
+        unsigned int col;
+        for (col = 0; col < numCols; ++col) {
+            vctFixedSizeConstVectorRef<value_type, DIMENSION, __rowStride1> inputCol(input.Column(col));
+            vctFixedSizeVectorRef<value_type, DIMENSION, __rowStride2> outputCol(output.Column(col));
+            this->ApplyTo(inputCol, outputCol);
+        }
+    }
+
     /*! Apply this rotation to a dynamic matrix with 3 rows.  The result is
       stored in another dynamic matrix. */
     template<class __matrixOwnerType1, class __matrixOwnerType2>
     inline void ApplyTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
                         vctDynamicMatrixBase<__matrixOwnerType2, value_type> & output) const
+    {
+        CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        const unsigned int numCols = input.cols();
+        unsigned int col;
+        for (col = 0; col < numCols; ++col) {
+            vctDynamicConstVectorRef<value_type> inputCol(input.Column(col));
+            vctDynamicVectorRef<value_type> outputCol(output.Column(col));
+            this->ApplyTo(inputCol, outputCol);
+        }
+    }
+
+
+    /*! A specialization of ApplyTo with the output argument vctDynamicRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template<class __matrixOwnerType1>
+    inline void ApplyTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
+                        vctDynamicMatrixRef<value_type> output) const
     {
         CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
         CMN_ASSERT(input.Pointer() != output.Pointer());
@@ -673,27 +761,6 @@ public:
     }
 
 
-    /*! Apply the rotation to a dynamic vector.  The result is stored
-      into another dynamic vector passed by reference by the caller.
-      It is assumed that both are of size 3.
-    */
-    template<class _vectorOwnerType1, class _vectorOwnerType2>
-    inline void
-    ApplyTo(const vctDynamicConstVectorBase<_vectorOwnerType1, value_type> & input,
-            vctDynamicVectorBase<_vectorOwnerType2, value_type> & output) const
-    {
-        CMN_ASSERT(input.Pointer() != output.Pointer());
-        CMN_ASSERT(input.size() == DIMENSION);
-        CMN_ASSERT(output.size() == DIMENSION);
-        vctFixedSizeVector<value_type, 3> tmpOutput;
-        vctQuaternionVectorProductByElements(this->X(), this->Y(), this->Z(), this->R(),
-            input.X(), input.Y(), input.Z(), tmpOutput);
-        output.X() = tmpOutput.X();
-        output.Y() = tmpOutput.Y();
-        output.Z() = tmpOutput.Z();
-    }
-
-
     /*! Apply the inverse of the rotation to a vector of fixed size
       3. The result is stored into a vector of size 3 provided by the
       caller and passed by reference.
@@ -712,6 +779,18 @@ public:
     }
 
 
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<int __stride1, class __dataPtrType1, int __stride2>
+    inline void
+    ApplyInverseTo(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1> & input,
+                   vctFixedSizeVectorRef<value_type, DIMENSION, __stride2> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        vctQuaternionVectorProductByElements(-this->X(), -this->Y(), -this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
+
     template<class __vectorOwnerType, int __stride, class __dataPtrType>
     inline void
     ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
@@ -723,6 +802,47 @@ public:
             input.X(), input.Y(), input.Z(), output);
     }
 
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType, int __stride>
+    inline void
+    ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
+                   vctFixedSizeVectorRef<value_type, DIMENSION, __stride> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT(input.size() == DIMENSION);
+        vctQuaternionVectorProductByElements(-this->X(), -this->Y(), -this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
+
+    /*! Apply the rotation to a dynamic vector.  The result is stored
+      into another dynamic vector passed by reference by the caller.
+      It is assumed that both are of size 3.
+    */
+    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    inline void
+    ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType1, value_type> & input,
+            vctDynamicVectorBase<__vectorOwnerType2, value_type> & output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT( (input.size() == DIMENSION) && (output.size() == DIMENSION) )
+        vctQuaternionVectorProductByElements(-this->X(), -this->Y(), -this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
+
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType1>
+    inline void
+    ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType1, value_type> & input,
+            vctDynamicVectorRef<value_type> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT( (input.size() == DIMENSION) && (output.size() == DIMENSION) )
+        vctQuaternionVectorProductByElements(-this->X(), -this->Y(), -this->Z(), this->R(),
+            input.X(), input.Y(), input.Z(), output);
+    }
 
     /*! Apply the the inverse of the rotation to a vector of fixed
       size 3. The result is returned by copy.  This interface might be
@@ -769,6 +889,24 @@ public:
         }
     }
 
+    /*! A specialization of ApplyInverseTo with the output argument vctFixedSizeRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template <unsigned int __cols, int __rowStride1, int __colStride1, class __dataPtrType1,
+              int __rowStride2, int __colStride2>
+    inline void ApplyInverseTo(const vctFixedSizeConstMatrixBase<DIMENSION, __cols, __rowStride1, __colStride1, value_type, __dataPtrType1> & input,
+                               vctFixedSizeMatrixRef<value_type, DIMENSION, __cols, __rowStride2, __colStride2> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        const unsigned int numCols = input.cols();
+        unsigned int col;
+        for (col = 0; col < numCols; ++col) {
+            vctFixedSizeConstVectorRef<value_type, DIMENSION, __rowStride1> inputCol(input.Column(col));
+            vctFixedSizeVectorRef<value_type, DIMENSION, __rowStride2> outputCol(output.Column(col));
+            this->ApplyInverseTo(inputCol, outputCol);
+        }
+    }
+
+
     /*! Apply the inverse of the rotation to another rotation.  The
       result is stored into a vctQuaternionRotation3Base (ThisType) provided
       by the caller and passed by reference.
@@ -797,31 +935,28 @@ public:
     }
     
 
-    /*! Apply the the inverse of the rotation to a dynamic vector.
-      The result is stored into another dynamic vector passed by
-      reference by the caller.  It is assumed that both are of size 3.
-    */
-    template<class _vectorOwnerType1, class _vectorOwnerType2>
-    inline void
-    ApplyInverseTo(const vctDynamicConstVectorBase<_vectorOwnerType1, value_type> & input,
-                   vctDynamicVectorBase<_vectorOwnerType2, value_type> & output) const
-    {
-        CMN_ASSERT(input.Pointer() != output.Pointer());
-        CMN_ASSERT(input.size() == DIMENSION);
-        CMN_ASSERT(output.size() == DIMENSION);
-        vctFixedSizeVector<value_type, 3> tmpOutput;
-        vctQuaternionVectorProductByElements(-this->X(), -this->Y(), -this->Z(), this->R(),
-            input.X(), input.Y(), input.Z(), tmpOutput);
-        output.X() = tmpOutput.X();
-        output.Y() = tmpOutput.Y();
-        output.Z() = tmpOutput.Z();
-    }
-
     /*! Apply this rotation inverse to a dynamic matrix with 3 rows.  The result is
       stored in another dynamic matrix. */
     template<class __matrixOwnerType1, class __matrixOwnerType2>
     inline void ApplyInverseTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
                         vctDynamicMatrixBase<__matrixOwnerType2, value_type> & output) const
+    {
+        CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        const unsigned int numCols = input.cols();
+        unsigned int col;
+        for (col = 0; col < numCols; ++col) {
+            vctDynamicConstVectorRef<value_type> inputCol(input.Column(col));
+            vctDynamicVectorRef<value_type> outputCol(output.Column(col));
+            this->ApplyInverseTo(inputCol, outputCol);
+        }
+    }
+
+    /*! A specialization of ApplyInverseTo with the output argument vctDynamicRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template<class __matrixOwnerType1>
+    inline void ApplyInverseTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
+                        vctDynamicMatrixRef<value_type> output) const
     {
         CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
         CMN_ASSERT(input.Pointer() != output.Pointer());
@@ -996,6 +1131,35 @@ inline void vctQuaternionVectorProductByElements(
      vctFixedSizeVectorBase<3, __strideOut, _elementType, __dataPtrTypeOut> & output)
 {
     typedef _elementType value_type;
+
+    // compute the product of quaternions q_input = [in, 0] and q
+    // conjugate.  Since q_input[3] = 0, suppress terms with it.
+    const value_type tR = - vX * qX - vY * qY - vZ * qZ;
+    const value_type tX = - vX * qR + vY * qZ - vZ * qY;
+    const value_type tY = - vY * qR + vZ * qX - vX * qZ;
+    const value_type tZ = - vZ * qR + vX * qY - vY * qX;
+
+    // multiply q by (qX, qY, qY, qR).  For out quaternion,
+    // element 4 (qR) is not interesting since we only want the
+    // vector.
+    output.X() = - qR * tX - qX * tR - qY * tZ + qZ * tY;
+    output.Y() = - qR * tY - qY * tR - qZ * tX + qX * tZ;
+    output.Z() = - qR * tZ - qZ * tR - qX * tY + qY * tX;        
+}
+
+/*!  This is an auxiliary function to multiply q * v * q^ -- where q is
+  a quaternion, v is a vector (a pure imaginary quaternion), and q^ is
+  the conjugate of q.  This is the basic operation in applying a quaternion
+  rotation.
+*/
+template<class _elementType, class __vectorOwnerTypeOut>
+inline void vctQuaternionVectorProductByElements(
+     const _elementType qX, const _elementType qY, const _elementType qZ, const _elementType qR,
+     const _elementType vX, const _elementType vY, const _elementType vZ,
+     vctDynamicVectorBase<__vectorOwnerTypeOut, _elementType> & output)
+{
+    typedef _elementType value_type;
+    CMN_ASSERT(output.size() == 3);
 
     // compute the product of quaternions q_input = [in, 0] and q
     // conjugate.  Since q_input[3] = 0, suppress terms with it.

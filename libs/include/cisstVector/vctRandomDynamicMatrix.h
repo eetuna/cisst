@@ -46,9 +46,8 @@ http://www.cisst.org/cisst/license.txt.
   need to be changed.
 */
 template <class _matrixOwnerType, typename _elementType>
-void vctRandom(vctDynamicMatrixBase<_matrixOwnerType, _elementType> & matrix,
-               const typename vctDynamicMatrixBase<_matrixOwnerType, _elementType>::value_type min,
-               const typename vctDynamicMatrixBase<_matrixOwnerType, _elementType>::value_type max)
+void vctRandom(vctDynamicMatrixBase<_matrixOwnerType,_elementType> & matrix,
+               const _elementType min, const _elementType max)
 {
     cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
     const unsigned int rows = matrix.rows();
@@ -58,6 +57,23 @@ void vctRandom(vctDynamicMatrixBase<_matrixOwnerType, _elementType> & matrix,
         for (colIndex = 0; colIndex < cols; ++colIndex) {
             randomSequence.ExtractRandomValue(min, max,
                                               matrix.Element(rowIndex, colIndex));    
+        }
+    }
+}
+
+// A specialization for a vctDynamicMatrixRef argumant *passed by value* to overcome
+// a limitation of gcc regarding non-const references to unnamed objects
+template <typename _elementType>
+void vctRandom(vctDynamicMatrixRef<_elementType> matrix,
+               const _elementType min, const _elementType max)
+{
+    cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
+    const unsigned int rows = matrix.rows();
+    const unsigned int cols = matrix.cols();
+    unsigned int rowIndex, colIndex;
+    for (rowIndex = 0; rowIndex < rows; ++rowIndex) {
+        for (colIndex = 0; colIndex < cols; ++colIndex) {
+            randomSequence.ExtractRandomValue(min, max, matrix.Element(rowIndex, colIndex));    
         }
     }
 }
