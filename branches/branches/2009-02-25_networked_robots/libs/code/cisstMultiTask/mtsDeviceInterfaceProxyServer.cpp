@@ -21,13 +21,27 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnAssert.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
-#include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
+#include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsDeviceProxy.h>
+#include <cisstMultiTask/mtsTask.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyServer);
 
-#define mtsDeviceInterfaceProxyServerLogger(_log) \
-            Logger->trace("mtsDeviceInterfaceProxyServer", _log);
+#define DeviceInterfaceProxyServerLogger(_log) Logger->trace("mtsDeviceInterfaceProxyServer", _log)
+#define DeviceInterfaceProxyServerLoggerError(_log1, _log2) \
+        std::stringstream s;\
+        s << "mtsDeviceInterfaceProxyServer: " << _log1 << _log2;\
+        Logger->error(s.str());
+
+mtsDeviceInterfaceProxyServer::mtsDeviceInterfaceProxyServer(
+    const std::string& adapterName, const std::string& endpointInfo,
+    const std::string& communicatorID) 
+    : BaseType(adapterName, endpointInfo, communicatorID), ConnectedTask(0)
+{
+    Serializer = new cmnSerializer(SerializationBuffer);
+    DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
+}
 
 mtsDeviceInterfaceProxyServer::~mtsDeviceInterfaceProxyServer()
 {
@@ -38,6 +52,11 @@ void mtsDeviceInterfaceProxyServer::OnClose()
 {
     delete Serializer;
     delete DeSerializer;
+
+    FunctionVoidProxyMap.DeleteAll();
+    FunctionWriteProxyMap.DeleteAll();
+    FunctionReadProxyMap.DeleteAll();
+    FunctionQualifiedReadProxyMap.DeleteAll();
 }
 
 void mtsDeviceInterfaceProxyServer::Start(mtsTask * callingTask)
@@ -91,17 +110,129 @@ void mtsDeviceInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
 
 void mtsDeviceInterfaceProxyServer::OnThreadEnd()
 {
-    mtsDeviceInterfaceProxyServerLogger("Proxy server ends.");
+    DeviceInterfaceProxyServerLogger("Proxy server ends.");
 
     BaseType::OnThreadEnd();
 
     Sender->Destroy();
 }
 
+mtsProvidedInterface * mtsDeviceInterfaceProxyServer::GetProvidedInterface(
+    const std::string resourceDeviceName, const std::string providedInterfaceName) const
+{
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    
+    mtsProvidedInterface * providedInterface = NULL;
+    mtsTask * resourceTask = NULL;
+    mtsDevice * resourceDevice = NULL;
+
+    // Get an original resource device or task
+    resourceDevice = taskManager->GetDevice(resourceDeviceName);
+    if (!resourceDevice) {
+        resourceTask = taskManager->GetTask(resourceDeviceName);
+        if (!resourceTask) {
+            DeviceInterfaceProxyServerLoggerError("GetProvidedInterface: ", 
+                "Cannot find an original resource device or task at server side: " + resourceDeviceName);
+            return 0;
+        }
+        DeviceInterfaceProxyServerLogger("GetProvidedInterface: found an original resource TASK at server side: " + resourceDeviceName);
+    } else {
+        // Look for the task in the task map (i.e., if a resource task is of mtsTask type)
+        DeviceInterfaceProxyServerLogger("GetProvidedInterface: found an original resource DEVICE at server side: " + resourceDeviceName);
+    }
+
+    // Get the provided interface
+    if (resourceDevice) {
+        providedInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);        
+    } else {
+        CMN_ASSERT(resourceTask);
+        providedInterface = resourceTask->GetProvidedInterface(providedInterfaceName);
+    }
+
+    CMN_ASSERT(providedInterface);
+
+    return providedInterface;
+}
+
+bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
+    mtsRequiredInterface * requiredInterfaceProxy, mtsProvidedInterface * providedInterface)
+{
+    /*
+    mtsRequiredInterface Robot("Robot");
+
+    mtsFunctionRead GetPositionJoint;
+    mtsFunctionWrite MovePositionJoint;
+
+    // mts events callbacks, in this example started event is void,
+    // end event is write
+    void CallBackStarted(void);
+    mtsCommandVoidBase * CallBackStartedCommand; 
+    void CallBackFinished(const PositionJointType &);
+    mtsCommandWriteBase * CallBackFinishedCommand; 
+
+
+
+    Robot.AddFunction("GetPositionJoint", GetPositionJoint);
+    Robot.AddFunction("MovePositionJoint", MovePositionJoint);
+    // false --> Event handlers are not queued
+    Robot.AddEventHandlerVoid(&userInterface::CallBackStarted, this,
+                              "MotionStarted", false);
+    Robot.AddEventHandlerWrite(&userInterface::CallBackFinished, this,
+                  "MotionFinished", PositionJointType(NB_JOINTS), false);
+    */
+
+    // Get the list of commands
+    mtsFunctionVoid  * functionVoidProxy = NULL;
+    mtsFunctionWrite * functionWriteProxy = NULL;
+    mtsFunctionRead  * functionReadProxy = NULL;
+    mtsFunctionQualifiedRead * functionQualifiedReadProxy = NULL;
+
+    //std::vector<std::string> namesOfCommandsVoid = providedInterface->GetNamesOfCommandsVoid();
+    //for (unsigned int i = 0; i < namesOfCommandsVoid.size(); ++i) {
+    //    functionVoidProxy = new mtsFunctionVoid(providedInterface, namesOfCommandsVoid[i]);
+    //    CMN_ASSERT(FunctionVoidProxyMap.AddItem(namesOfCommandsVoid[i], functionVoidProxy));
+    //    CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsVoid[i], *functionVoidProxy));
+    //}
+#define ADD_FUNCTION_PROXY_BEGIN(_commandType)\
+    std::vector<std::string> namesOfCommands##_commandType = providedInterface->GetNamesOfCommands##_commandType##();\
+    for (unsigned int i = 0; i < namesOfCommands##_commandType.size(); ++i) {\
+        function##_commandType##Proxy = new mtsFunction##_commandType##(providedInterface, namesOfCommands##_commandType##[i]);\
+        CMN_ASSERT(Function##_commandType##ProxyMap.AddItem(namesOfCommands##_commandType[i], function##_commandType##Proxy));\
+        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommands##_commandType##[i], *function##_commandType##Proxy));
+#define ADD_FUNCTION_PROXY_END\
+    }
+
+    ADD_FUNCTION_PROXY_BEGIN(Void);
+    ADD_FUNCTION_PROXY_END;
+
+    ADD_FUNCTION_PROXY_BEGIN(Write);
+    ADD_FUNCTION_PROXY_END;
+
+    ADD_FUNCTION_PROXY_BEGIN(Read);
+    ADD_FUNCTION_PROXY_END;
+
+    ADD_FUNCTION_PROXY_BEGIN(QualifiedRead);
+    ADD_FUNCTION_PROXY_END;
+
+    // Using AllocateResources(), get pointers allocated for this required interface.
+    unsigned int userId;
+    userId = providedInterface->AllocateResources(requiredInterfaceProxy->GetName() + "Proxy");
+
+    // Connect to the original device or task that provides allocated resources.
+    requiredInterfaceProxy->ConnectTo(providedInterface);
+    if (!requiredInterfaceProxy->BindCommandsAndEvents(userId)) {
+        DeviceInterfaceProxyServerLoggerError(
+            "PopulateRequiredInterfaceProxy", "BindCommandsAndEvents failed.");
+        return false;
+    }
+
+    return true;
+}
+
 //-------------------------------------------------------------------------
 //  Task Processing
 //-------------------------------------------------------------------------
-const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaces(
+const bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaces(
     ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces)
 {
     CMN_ASSERT(ConnectedTask);
@@ -124,8 +255,8 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaces(
 
         // TODO: Maybe I can just assume that only mtsDeviceInterface is used.
         // Determine the type of the provided interface: is it mtsDeviceInterface or 
-        // mtsTaskInterface?
-        //if (dynamic_cast<mtsTaskInterface*>(providedInterface)) {
+        // mtsDeviceInterface?
+        //if (dynamic_cast<mtsDeviceInterface*>(providedInterface)) {
         //    providedInterfaceSpec.providedInterfaceForTask = true;
         //} else {
             providedInterfaceSpec.providedInterfaceForTask = false;
@@ -140,7 +271,7 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaces(
         for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
             mtsDeviceInterfaceProxy::Command##_commandType##Info info;\
             info.Name = iterator##_commandType->second->GetName();\
-            info.CommandSID = reinterpret_cast<int>(iterator##_commandType->second);
+            info.CommandId = reinterpret_cast<int>(iterator##_commandType->second);
 
 #define ITERATE_INTERFACE_END( _commandType ) \
             providedInterfaceSpec.commands##_commandType.push_back(info);\
@@ -178,17 +309,75 @@ const bool mtsDeviceInterfaceProxyServer::GetProvidedInterfaces(
     return true;
 }
 
-void mtsDeviceInterfaceProxyServer::ExecuteCommandVoid(const int commandSID) const
+bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
+    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+
+    const std::string clientDeviceProxyName = mtsDeviceProxy::GetClientTaskProxyName(
+        resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
+
+    // Get an original provided interface.
+    mtsProvidedInterface * providedInterface = GetProvidedInterface(
+        resourceTaskName, providedInterfaceName);
+    if (!providedInterface) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: cannot find a provided interface: ", providedInterface);
+        return false;
+    }
+
+    // Create a client task proxy (mtsDevice) and a required Interface proxy (mtsRequiredInterface)
+    mtsDeviceProxy * clientTaskProxy = new mtsDeviceProxy(clientDeviceProxyName);
+    if (!taskManager->AddDevice(clientTaskProxy)) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: cannot add a device proxy: ", clientDeviceProxyName);
+        return false;
+    }
+
+    mtsRequiredInterface * requiredInterfaceProxy = 
+        clientTaskProxy->AddRequiredInterface(requiredInterfaceName);
+    if (!requiredInterfaceProxy) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: cannot add required interface: ", requiredInterfaceName);
+        return false;
+    }
+
+    // Populate a required Interface proxy
+    if (!PopulateRequiredInterfaceProxy(requiredInterfaceProxy, providedInterface)) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: failed to populate a required interface proxy: ", requiredInterfaceName);
+        return false;
+    }
+
+    // Connect() locally    
+    if (!taskManager->Connect(
+        clientDeviceProxyName, requiredInterfaceName, resourceTaskName, providedInterfaceName)) 
+    {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: failed to connect: ", 
+            userTaskName + " : " + requiredInterfaceName + " - " + 
+            resourceTaskName + " : " +  providedInterfaceName);
+        return false;
+    }
+
+    // After Connect() succeeds at server side, update command id of command proxies 
+    // at client side.
+    //
+
+    DeviceInterfaceProxyServerLogger("Connect() at server side succeeded: " +
+        userTaskName + " : " + requiredInterfaceName + " - " + 
+        resourceTaskName + " : " +  providedInterfaceName);
+
+    return true;
+}
+
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandVoid(const int commandId) const
 {    
-    mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandSID);
+    mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandId);
     CMN_ASSERT(commandVoid);
 
     commandVoid->Execute();
 }
 
-void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int commandSID, const std::string argument)
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandWriteSerialized(const int commandId, const std::string argument)
 {
-    mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandSID);
+    mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandId);
     CMN_ASSERT(commandWrite);
 
     static char buf[100];
@@ -207,9 +396,9 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandWriteSerialized(const int comm
     //std::cout << *obj << std::endl;
 }
 
-void mtsDeviceInterfaceProxyServer::ExecuteCommandReadSerialized(const int commandSID, std::string & argument)
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandReadSerialized(const int commandId, std::string & argument)
 {
-    mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandSID);    
+    mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandId);    
     CMN_ASSERT(commandRead);
 
     // Create a placeholder
@@ -228,37 +417,37 @@ void mtsDeviceInterfaceProxyServer::ExecuteCommandReadSerialized(const int comma
     delete placeHolder;    
 }
 
-void mtsDeviceInterfaceProxyServer::ExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string argument1, std::string & argument2)
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized(const int commandId, const std::string argument1, std::string & argument2)
 {
 }
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
 //-------------------------------------------------------------------------
-mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::TaskInterfaceServerI(
+mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::DeviceInterfaceServerI(
     const Ice::CommunicatorPtr& communicator,
     const Ice::LoggerPtr& logger,
-    mtsDeviceInterfaceProxyServer * taskInterfaceServer) 
+    mtsDeviceInterfaceProxyServer * DeviceInterfaceServer) 
     : Communicator(communicator), Logger(logger),
-      TaskInterfaceServer(taskInterfaceServer),
+      DeviceInterfaceServer(DeviceInterfaceServer),
       Runnable(true),
-      Sender(new SendThread<TaskInterfaceServerIPtr>(this))
+      Sender(new SendThread<DeviceInterfaceServerIPtr>(this))
 {
 }
 
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Start()
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Start()
 {
-    mtsDeviceInterfaceProxyServerLogger("Send thread starts");
+    DeviceInterfaceProxyServerLogger("Send thread starts");
 
     Sender->start();
 }
 
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Run()
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
 {
     int num = 0;
     while(true)
     {
-        std::set<mtsDeviceInterfaceProxy::TaskInterfaceClientPrx> clients;
+        std::set<mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx> clients;
         {
             IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
             timedWait(IceUtil::Time::seconds(2));
@@ -275,7 +464,7 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Run()
         if(!clients.empty())
         {
             ++num;
-            for(std::set<mtsDeviceInterfaceProxy::TaskInterfaceClientPrx>::iterator p 
+            for(std::set<mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx>::iterator p 
                 = clients.begin(); p != clients.end(); ++p)
             {
                 try
@@ -297,16 +486,16 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Run()
     }
 }
 
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Destroy()
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Destroy()
 {
-    mtsDeviceInterfaceProxyServerLogger("Send thread is terminating.");
+    DeviceInterfaceProxyServerLogger("Send thread is terminating.");
 
     IceUtil::ThreadPtr callbackSenderThread;
 
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        mtsDeviceInterfaceProxyServerLogger("Destroying sender.");
+        DeviceInterfaceProxyServerLogger("Destroying sender.");
         Runnable = false;
 
         notify();
@@ -321,64 +510,64 @@ void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::Destroy()
 //-----------------------------------------------------------------------------
 //  Proxy Server Implementation
 //-----------------------------------------------------------------------------
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::AddClient(
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::AddClient(
     const ::Ice::Identity& ident, const ::Ice::Current& current)
 {
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
     Logger->trace("TIServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(ident));
 
-    mtsDeviceInterfaceProxy::TaskInterfaceClientPrx client = 
-        mtsDeviceInterfaceProxy::TaskInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
+    mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx client = 
+        mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
     
     _clients.insert(client);
 }
 
-bool mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::GetProvidedInterfaces(
+bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetProvidedInterfaces(
     ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces, 
     const ::Ice::Current& current) const
 {
     Logger->trace("TIServer", "<<<<< RECV: GetProvidedInterface");
 
-    return TaskInterfaceServer->GetProvidedInterfaces(providedInterfaces);
+    return DeviceInterfaceServer->ReceiveGetProvidedInterfaces(providedInterfaces);
 }
 
-/*
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::SendCommandProxyInfo(
-    const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info,
+bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ConnectServerSide(
+    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName,
     const ::Ice::Current&)
 {
-    Logger->trace("TIServer", "<<<<< RECV: SendCommandProxyInfo");
-
-    TaskInterfaceServer->SendCommandProxyInfo(info);
+    Logger->trace("TIServer", "<<<<< RECV: ConnectServerSide");
+    
+    return DeviceInterfaceServer->ReceiveConnectServerSide(
+        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
-*/
-
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandVoid(
+            
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandVoid(
     ::Ice::Int sid, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandVoid");
 
-    TaskInterfaceServer->ExecuteCommandVoid(sid);
+    DeviceInterfaceServer->ReceiveExecuteCommandVoid(sid);
 }
 
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandWriteSerialized(
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandWriteSerialized(
     ::Ice::Int sid, const ::std::string& argument, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandWriteSerialized");
 
-    TaskInterfaceServer->ExecuteCommandWriteSerialized(sid, argument);
+    DeviceInterfaceServer->ReceiveExecuteCommandWriteSerialized(sid, argument);
 }
 
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandReadSerialized(
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandReadSerialized(
     ::Ice::Int sid, ::std::string& argument, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandReadSerialized");
 
-    TaskInterfaceServer->ExecuteCommandReadSerialized(sid, argument);
+    DeviceInterfaceServer->ReceiveExecuteCommandReadSerialized(sid, argument);
 }
 
-void mtsDeviceInterfaceProxyServer::TaskInterfaceServerI::ExecuteCommandQualifiedReadSerialized(
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandQualifiedReadSerialized(
     ::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current&)
 {
 }

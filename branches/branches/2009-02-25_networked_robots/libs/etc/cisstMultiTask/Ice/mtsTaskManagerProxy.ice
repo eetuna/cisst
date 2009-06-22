@@ -79,9 +79,9 @@ module mtsTaskManagerProxy
 		// Test method
 		void ReceiveData(int num);
 		
-		bool ConnectAtServerSide(
-			string userTaskName, string interfaceRequiredName,
-			string resourceTaskName, string providedInterfaceName);
+		//bool ConnectServerSide(
+		//	string userTaskName, string interfaceRequiredName,
+		//	string resourceTaskName, string providedInterfaceName);
 		
 	};
 

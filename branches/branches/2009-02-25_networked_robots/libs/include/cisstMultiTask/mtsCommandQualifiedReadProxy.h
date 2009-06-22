@@ -44,23 +44,23 @@ protected:
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandSID;
+    const int CommandId;
 
 public:
-    mtsCommandQualifiedReadProxy(const int commandSID, 
+    mtsCommandQualifiedReadProxy(const int commandId, 
                                  mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
         BaseType(),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandSID(commandSID)
+        CommandId(commandId)
     {}
 
-    mtsCommandQualifiedReadProxy(const int commandSID,
+    mtsCommandQualifiedReadProxy(const int commandId,
                                  mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                                  const std::string & name):
                          //ArgumentPointerType argumentProtoType) :
         BaseType(name),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandSID(commandSID)
+        CommandId(commandId)
         //, ArgumentPointerPrototype(argumentProtoType)
     {}
 
@@ -82,8 +82,8 @@ public:
         ////static int cnt = 0;
         ////std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
 
-        //ProvidedInterfaceProxy->InvokeExecuteCommandQualifiedRead(
-        //    CommandSID, *data1, *data2);
+        //ProvidedInterfaceProxy->SendExecuteCommandQualifiedRead(
+        //    CommandId, *data1, *data2);
 
         return mtsCommandBase::DEV_OK;
     }

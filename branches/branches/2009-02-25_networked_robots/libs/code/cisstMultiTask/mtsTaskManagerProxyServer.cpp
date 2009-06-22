@@ -200,8 +200,8 @@ bool mtsTaskManagerProxyServer::RemoveTaskManagerByConnectionID(const Connection
 //-----------------------------------------------------------------------------
 //  Proxy Server Implementation
 //-----------------------------------------------------------------------------
-void mtsTaskManagerProxyServer::AddClient(
-    const ConnectionIDType & connectionID, const ClientProxyType & clientProxy)
+void mtsTaskManagerProxyServer::ReceiveAddClient(
+    const ConnectionIDType & connectionID, const TaskManagerClientProxyType & clientProxy)
 {
     TaskManagerClient * newTaskManagerClient = new TaskManagerClient(connectionID, clientProxy);
     
@@ -210,7 +210,7 @@ void mtsTaskManagerProxyServer::AddClient(
     TaskManagerProxyServerLogger("Added the task manager with connection id: " + connectionID);
 }
 
-bool mtsTaskManagerProxyServer::UpdateTaskManagerClient(
+bool mtsTaskManagerProxyServer::ReceiveUpdateTaskManagerClient(
     const ConnectionIDType & connectionID, const ::mtsTaskManagerProxy::TaskList& localTaskInfo)
 {
     const TaskManagerIDType taskManagerID = localTaskInfo.taskManagerID;
@@ -236,7 +236,12 @@ bool mtsTaskManagerProxyServer::UpdateTaskManagerClient(
             TaskManagerProxyServerLoggerError("[UpdateTaskManagerClient] Add failed: ", taskName);
             success = false;
         } else {
-            TaskManagerProxyServerLogger("Successfully added a task: " + taskName);
+            if (!TaskManagerMapByTaskName.AddItem(taskName, taskManagerClient)) {
+                TaskManagerProxyServerLoggerError("[UpdateTaskManagerClient] Add failed (duplicate task name): ", taskName);
+                success = false;
+            } else {
+                TaskManagerProxyServerLogger("Successfully added a task: " + taskName);
+            }
         }
 
         TaskManagerProxyServerLogger(newTask->ShowTaskInfo());
@@ -251,10 +256,12 @@ void mtsTaskManagerProxyServer::OnClose()
     //  TODO: Add OnClose() event handler.
     //
 
+    // remove from TaskManagerMapByTaskName
+    // remove from TaskManagerClient
     //RemoveTaskManagerByConnectionID();
 }
 
-bool mtsTaskManagerProxyServer::AddProvidedInterface(
+bool mtsTaskManagerProxyServer::ReceiveAddProvidedInterface(
     const ConnectionIDType & connectionID, 
     const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
@@ -287,7 +294,7 @@ bool mtsTaskManagerProxyServer::AddProvidedInterface(
     return success;
 }
 
-bool mtsTaskManagerProxyServer::AddRequiredInterface(
+bool mtsTaskManagerProxyServer::ReceiveAddRequiredInterface(
     const ConnectionIDType & connectionID,
     const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo)
 {
@@ -320,13 +327,13 @@ bool mtsTaskManagerProxyServer::AddRequiredInterface(
     return success;
 }
 
-bool mtsTaskManagerProxyServer::IsRegisteredProvidedInterface(
+bool mtsTaskManagerProxyServer::ReceiveIsRegisteredProvidedInterface(
     const ConnectionIDType & connectionID,
     const std::string & taskName, const std::string & providedInterfaceName)
 {
-    TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
+    TaskManagerClient * taskManagerClient = TaskManagerMapByTaskName.GetItem(taskName);
     if (!taskManagerClient) {
-        TaskManagerProxyServerLoggerError("[IsRegisteredProvidedInterface] Cannot find a task manager: ", connectionID);
+        TaskManagerProxyServerLoggerError("[IsRegisteredProvidedInterface] Cannot find a task manager with the task: ", taskName);
         return false;
     }
 
@@ -339,12 +346,12 @@ bool mtsTaskManagerProxyServer::IsRegisteredProvidedInterface(
     return taskGlobal->IsRegisteredProvidedInterface(providedInterfaceName);
 }
 
-bool mtsTaskManagerProxyServer::GetProvidedInterfaceInfo(
+bool mtsTaskManagerProxyServer::ReceiveGetProvidedInterfaceInfo(
     const ConnectionIDType & connectionID,
     const std::string & taskName, const std::string & providedInterfaceName,
     mtsTaskManagerProxy::ProvidedInterfaceInfo & info)
 {
-    TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
+    TaskManagerClient * taskManagerClient = TaskManagerMapByTaskName.GetItem(taskName);
     if (!taskManagerClient) {
         TaskManagerProxyServerLoggerError("[GetProvidedInterfaceInfo] Cannot find a task manager: ", connectionID);
         return false;
@@ -359,69 +366,52 @@ bool mtsTaskManagerProxyServer::GetProvidedInterfaceInfo(
     return taskGlobal->GetProvidedInterfaceInfo(providedInterfaceName, info);
 }
 
-void mtsTaskManagerProxyServer::NotifyInterfaceConnectionResult(
+void mtsTaskManagerProxyServer::ReceiveNotifyInterfaceConnectionResult(
     const ConnectionIDType & connectionID,
     const bool isServerTask, const bool isSuccess,
     const std::string & userTaskName,     const std::string & requiredInterfaceName,
     const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
-    // Find a task with the appropriate task name.
-    //GlobalTaskMapType::iterator it;
-    //if (isServerTask) {
-    //    it = GlobalTaskMap.find(resourceTaskName);
-    //    if (it == GlobalTaskMap.end()) {
-    //        Logger->error("[NotifyInterfaceConnectionResult] invalid server task name: " + resourceTaskName);        
-    //        return;
-    //    }
-    //} else {
-    //    it = GlobalTaskMap.find(userTaskName);
-    //    if (it == GlobalTaskMap.end()) {
-    //        Logger->error("[NotifyInterfaceConnectionResult] invalid client task name: " + resourceTaskName);        
-    //        return;
-    //    }
-    //}
+    if (!isSuccess) {
+        std::stringstream buf;
+        buf << (isServerTask ? "Server task: " : "Client task: ")
+            << resourceTaskName << " : " << providedInterfaceName << " - "
+            << userTaskName << " : " << requiredInterfaceName;
 
-    //// If the task fail to connect interfaces,
-    //if (!isSuccess) {
-    //    Logger->error("[NotifyInterfaceConnectionResult] failed to connect: " + 
-    //        resourceTaskName + " : " + providedInterfaceName + " - " +
-    //        userTaskName + " : " + requiredInterfaceName);
-    //    return;
-    //}
+        TaskManagerProxyServerLoggerError("[NotifyInterfaceConnectionResult] failed to connect - ", buf.str());
+        return;
+    } else {
+        std::stringstream buf;
+        buf << "[NotifyInterfaceConnectionResult] succeeded to connect - "
+            << (isServerTask ? "Server task: " : "Client task: ")
+            << resourceTaskName << " : " << providedInterfaceName << " - "
+            << userTaskName << " : " << requiredInterfaceName;
 
-    ////!!!!!!!!!!!!
-    //// Now I know the name of a server task. (this->GlobalTaskMap)
-    //// How I can find a task manager client proxy?
-    //// If I know which proxy is representing which task, I easily call the method.
+        TaskManagerProxyServerLogger(buf.str());
+    }
 
-    //// Find a task manager client proxy that manages the provided interface of which name
-    //// is providedInterfaceName.
-
-
-    ////
-    ////
-
-    ///*
-    //if (it->second.NotifyInterfaceConnectionResult(
-    //    isServerTask,
-    //    userTaskName, requiredInterfaceName,
-    //    resourceTaskName, providedInterfaceName))
-    //{
-    //    Logger->print("[NotifyInterfaceConnectionResult] succeeded to connect interfaces: " +
-    //        resourceTaskName + " : " + providedInterfaceName + " - " +
-    //        userTaskName + " : " + requiredInterfaceName);
-
-    //    // Inform the server task of the successful connection of interfaces at the client task.
-    //    // When the server task is informed, it creates the required interface proxy and tries
-    //    // to connect it with a local provided interface.
-    //    //Sender->ConnectAtServerSide(
-    //} else {
-    //    Logger->error("[NotifyInterfaceConnectionResult] Already connected interface: " +
-    //        resourceTaskName + " : " + providedInterfaceName + " - " +
-    //        userTaskName + " : " + requiredInterfaceName);
-    //}
-    //*/
+    //
+    // TODO: IMPLEMENT ME
+    //
 }
+
+//-------------------------------------------------------------------------
+//  Send Methods
+//-------------------------------------------------------------------------l
+/*
+bool mtsTaskManagerProxyServer::SendConnectServerSide(
+    TaskManagerClient * taskManagerWithServerTask,
+    const std::string & userTaskName,     const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    GetLogger()->trace("TMServer", ">>>>> SEND: ConnectServerSide: " 
+            + resourceTaskName + " : " + providedInterfaceName + " - "
+            + userTaskName + " : " + requiredInterfaceName);
+
+    return taskManagerWithServerTask->GetClientProxy()->ConnectServerSide(
+        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
+}
+*/
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
@@ -439,7 +429,7 @@ mtsTaskManagerProxyServer::TaskManagerServerI::TaskManagerServerI(
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Start()
 {
-    CMN_LOG_RUN_VERBOSE << "Send thread starts." << std::endl;
+    CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Send thread starts." << std::endl;
 
     Sender->start();
 }
@@ -495,14 +485,14 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Destroy()
 {
-    CMN_LOG_RUN_VERBOSE << "Send thread is terminating." << std::endl;
+    CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Send thread is terminating." << std::endl;
 
     IceUtil::ThreadPtr callbackSenderThread;
 
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        CMN_LOG_RUN_VERBOSE << "Destroying sender." << std::endl;
+        CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Destroying sender." << std::endl;
         Runnable = false;
 
         notify();
@@ -524,7 +514,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
     mtsTaskManagerProxy::TaskManagerClientPrx clientProxy = 
         mtsTaskManagerProxy::TaskManagerClientPrx::uncheckedCast(current.con->createProxy(identity));
     
-    TaskManagerServer->AddClient(Communicator->identityToString(identity), clientProxy);
+    TaskManagerServer->ReceiveAddClient(Communicator->identityToString(identity), clientProxy);
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(
@@ -539,7 +529,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(
     // The following line does work.
     //std::string ss = current.ctx.find(CONNECTION_ID)->second;
 
-    TaskManagerServer->UpdateTaskManagerClient(
+    TaskManagerServer->ReceiveUpdateTaskManagerClient(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), localTaskInfo);
         current.ctx.find(CONNECTION_ID)->second, localTaskInfo);
 }
@@ -551,7 +541,7 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
     Logger->trace("TMServer", "<<<<< RECV: AddProvidedInterface: " 
         + providedInterfaceInfo.taskName + ", " + providedInterfaceInfo.interfaceName);
 
-    return TaskManagerServer->AddProvidedInterface(
+    return TaskManagerServer->ReceiveAddProvidedInterface(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), providedInterfaceInfo);
         current.ctx.find(CONNECTION_ID)->second, providedInterfaceInfo);
 }
@@ -563,7 +553,7 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddRequiredInterface(
     Logger->trace("TMServer", "<<<<< RECV: AddRequiredInterface: " 
         + requiredInterfaceInfo.taskName + ", " + requiredInterfaceInfo.interfaceName);
 
-    return TaskManagerServer->AddRequiredInterface(
+    return TaskManagerServer->ReceiveAddRequiredInterface(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), requiredInterfaceInfo);
         current.ctx.find(CONNECTION_ID)->second, requiredInterfaceInfo);
 }
@@ -575,7 +565,7 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::IsRegisteredProvidedInterfac
     Logger->trace("TMServer", "<<<<< RECV: IsRegisteredProvidedInterface: " 
         + taskName + ", " + providedInterfaceName);
 
-    return TaskManagerServer->IsRegisteredProvidedInterface(
+    return TaskManagerServer->ReceiveIsRegisteredProvidedInterface(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), taskName, providedInterfaceName);
         current.ctx.find(CONNECTION_ID)->second, taskName, providedInterfaceName);
 }
@@ -587,7 +577,7 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceInfo(
     Logger->trace("TMServer", "<<<<< RECV: GetProvidedInterfaceInfo: " 
         + taskName + ", " + providedInterfaceName);
 
-    return TaskManagerServer->GetProvidedInterfaceInfo(
+    return TaskManagerServer->ReceiveGetProvidedInterfaceInfo(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), taskName, providedInterfaceName, info);
         current.ctx.find(CONNECTION_ID)->second, taskName, providedInterfaceName, info);
 }
@@ -602,8 +592,10 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::NotifyInterfaceConnectionRes
         + resourceTaskName + " : " + providedInterfaceName + " - "
         + userTaskName + " : " + requiredInterfaceName);
 
-    //TaskManagerServer->NotifyInterfaceConnectionResult(
-    //    isServerTask, isSuccess, 
-    //    userTaskName, requiredInterfaceName, 
-    //    resourceTaskName, providedInterfaceName);
+    TaskManagerServer->ReceiveNotifyInterfaceConnectionResult(
+        //Communicator->getImplicitContext()->get(CONNECTION_ID),
+        current.ctx.find(CONNECTION_ID)->second,
+        isServerTask, isSuccess, 
+        userTaskName, requiredInterfaceName, 
+        resourceTaskName, providedInterfaceName);
 }

@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsDeviceInterfaceProxyClient_h
 #define _mtsDeviceInterfaceProxyClient_h
 
-#include <cisstMultiTask/mtsTaskInterface.h>
+#include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
@@ -38,18 +38,25 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
- public:
+public:
+    mtsDeviceInterfaceProxyClient(const std::string & propertyFileName, 
+                                  const std::string & propertyName);
+    ~mtsDeviceInterfaceProxyClient();
+
+protected:
     typedef mtsProxyBaseClient<mtsTask> BaseType;
 
- protected:
+    /*! Typedef for server proxy. */
+    typedef mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx DeviceInterfaceServerProxyType;
+
     /*! Send thread set up. */
-    class TaskInterfaceClientI;
-    typedef IceUtil::Handle<TaskInterfaceClientI> TaskInterfaceClientIPtr;
-    TaskInterfaceClientIPtr Sender;
+    class DeviceInterfaceClientI;
+    typedef IceUtil::Handle<DeviceInterfaceClientI> DeviceInterfaceClientIPtr;
+    DeviceInterfaceClientIPtr Sender;
 
-    /*! TaskInterfaceServer proxy */
-    mtsDeviceInterfaceProxy::TaskInterfaceServerPrx TaskInterfaceServer;
-
+    /*! DeviceInterfaceServer proxy */
+    DeviceInterfaceServerProxyType DeviceInterfaceServerProxy;
+    
     //-------------------------------------------------------------------------
     //  Serialization and Deserialization
     //-------------------------------------------------------------------------
@@ -57,36 +64,21 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     std::stringstream SerializationBuffer;
     std::stringstream DeSerializationBuffer;
 
-    /*! Serializer and DeSerializer. */
+    /*! Per-proxy Serializer and DeSerializer. */
     cmnSerializer * Serializer;
     cmnDeSerializer * DeSerializer;
 
     void Serialize(const cmnGenericObject & argument, std::string & serializedData);
 
- public:
-    mtsDeviceInterfaceProxyClient(const std::string & propertyFileName, 
-                                  const std::string & propertyName) :
-        BaseType(propertyFileName, propertyName)
-    {
-        Serializer = new cmnSerializer(SerializationBuffer);
-        DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
-    }
-
-    ~mtsDeviceInterfaceProxyClient()
-    {
-        delete Serializer;
-        delete DeSerializer;
-    }
-
     /*! Create a proxy object and a send thread. */
     void CreateProxy() {
-        TaskInterfaceServer = 
-            mtsDeviceInterfaceProxy::TaskInterfaceServerPrx::checkedCast(ProxyObject);
-        if (!TaskInterfaceServer) {
+        DeviceInterfaceServerProxy = 
+            mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx::checkedCast(ProxyObject);
+        if (!DeviceInterfaceServerProxy) {
             throw "Invalid proxy";
         }
 
-        Sender = new TaskInterfaceClientI(IceCommunicator, Logger, TaskInterfaceServer, this);
+        Sender = new DeviceInterfaceClientI(IceCommunicator, Logger, DeviceInterfaceServerProxy, this);
     }
 
     /*! Entry point to run a proxy. */
@@ -104,21 +96,24 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
     //-------------------------------------------------------------------------
     //  Send Methods
     //-------------------------------------------------------------------------
-    const bool GetProvidedInterfaces(
+public:
+    const bool SendGetProvidedInterfaces(
         mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const;
 
-    //void SendCommandProxyInfo(mtsDeviceInterfaceProxy::CommandProxyInfo & info) const;
+    bool SendConnectServerSide(
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
-    void InvokeExecuteCommandVoid(const int commandSID) const;
-    void InvokeExecuteCommandWriteSerialized(const int commandSID, const cmnGenericObject & argument);
-    void InvokeExecuteCommandReadSerialized(const int commandSID, cmnGenericObject & argument);
-    void InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2);
+    void SendExecuteCommandVoid(const int commandId) const;
+    void SendExecuteCommandWriteSerialized(const int commandId, const cmnGenericObject & argument);
+    void SendExecuteCommandReadSerialized(const int commandId, cmnGenericObject & argument);
+    void SendExecuteCommandQualifiedReadSerialized(const int commandId, const std::string & argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
     //-------------------------------------------------------------------------
 protected:
-    class TaskInterfaceClientI : public mtsDeviceInterfaceProxy::TaskInterfaceClient,
+    class DeviceInterfaceClientI : public mtsDeviceInterfaceProxy::DeviceInterfaceClient,
                                public IceUtil::Monitor<IceUtil::Mutex>
     {
     private:
@@ -127,14 +122,14 @@ protected:
         
         IceUtil::ThreadPtr Sender;
         Ice::LoggerPtr Logger;
-        mtsDeviceInterfaceProxy::TaskInterfaceServerPrx Server;
-        mtsDeviceInterfaceProxyClient * TaskInterfaceClient;
+        mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx Server;
+        mtsDeviceInterfaceProxyClient * DeviceInterfaceClient;
 
     public:
-        TaskInterfaceClientI(const Ice::CommunicatorPtr& communicator,                           
+        DeviceInterfaceClientI(const Ice::CommunicatorPtr& communicator,                           
                            const Ice::LoggerPtr& logger,
-                           const mtsDeviceInterfaceProxy::TaskInterfaceServerPrx& server,
-                           mtsDeviceInterfaceProxyClient * TaskInterfaceClient);
+                           const mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx& server,
+                           mtsDeviceInterfaceProxyClient * DeviceInterfaceClient);
 
         void Start();
         void Run();
@@ -145,4 +140,3 @@ protected:
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceInterfaceProxyClient)
 
 #endif // _mtsDeviceInterfaceProxyClient_h
-

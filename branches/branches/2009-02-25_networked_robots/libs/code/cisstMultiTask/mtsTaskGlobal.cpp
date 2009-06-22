@@ -122,13 +122,15 @@ bool mtsTaskGlobal::NotifyInterfaceConnectionResult(
     const std::string & userTaskName,     const std::string & requiredInterfaceName,
     const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
-    // Update connection status of the server side
-    if (isServerTask) {
-        ProvidedInterfaceMapType::iterator it = ProvidedInterfaces.find(providedInterfaceName);
-    }
-    // Update connection status of the client side
-    else {
-        RequiredInterfaceMapType::iterator it = RequiredInterfaces.find(requiredInterfaceName);
-        return it->second.AddConnectedInterface(providedInterfaceName);
-    }
+    return true;
+    //// Update connection status of the server side
+    //if (isServerTask) {
+    //    ProvidedInterfaceMapType::iterator it = ProvidedInterfaces.find(providedInterfaceName);
+    //    return it->second.AddConnectedInterface(providedInterfaceName);
+    //}
+    //// Update connection status of the client side
+    //else {
+    //    RequiredInterfaceMapType::iterator it = RequiredInterfaces.find(requiredInterfaceName);
+    //    return it->second.AddConnectedInterface(providedInterfaceName);
+    //}
 }

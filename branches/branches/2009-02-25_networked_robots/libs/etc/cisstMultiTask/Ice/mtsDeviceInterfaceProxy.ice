@@ -38,26 +38,26 @@ module mtsDeviceInterfaceProxy
 	//-----------------------------------------------------------------------------
 	struct CommandVoidInfo { 
 		string Name;
-        int CommandSID;
+        int CommandId;
 	};
 	
 	struct CommandWriteInfo { 
 		string Name;
 		string ArgumentTypeName;
-        int CommandSID;
+        int CommandId;
 	};
 	
 	struct CommandReadInfo { 
 		string Name;
 		string ArgumentTypeName;
-        int CommandSID;
+        int CommandId;
 	};
 	
 	struct CommandQualifiedReadInfo { 
 		string Name;
 		string Argument1TypeName;
 		string Argument2TypeName;
-        int CommandSID;
+        int CommandId;
 	};
 	
 	/*
@@ -76,7 +76,10 @@ module mtsDeviceInterfaceProxy
 	sequence<CommandQualifiedReadInfo> CommandQualifiedReadSequence;
     //sequence<EventVoidInfo> EventVoidSequence;
     //sequence<EventWriteInfo> EventWriteSequence;
-    
+
+    //-----------------------------------------------------------------------------
+	//	Provided Interface Related Definition
+	//-----------------------------------------------------------------------------	
 	// Data structure definition
 	struct ProvidedInterface {
 		// Identity
@@ -99,63 +102,48 @@ module mtsDeviceInterfaceProxy
 		//sequence<EventVoidInfo> eventsVoid;
 		//sequence<EventWriteInfo> eventsWrite;
 	};
-	
-	//-----------------------------------------------------------------------------
-	//	Provided Interface Related Definition
-	//-----------------------------------------------------------------------------
-	sequence<ProvidedInterface> ProvidedInterfaceSequence;
 
-	/*! Typedef for a map of (command name, command object id). 
-        This map is populated at a client task and is sent to a server task.
-        (see mtsCommandBase::CommandUID) */
-    struct CommandProxyElement {
-		string Name;
-		int    ID;
-    };
-    sequence<CommandProxyElement> CommandProxyElementSeq;
-    
-    struct CommandProxyInfo {
-		// MJUNG: Currently it is assumed that one required interface connects to only
-		// one provided interface. If a required interface connects to more than
-		// one provided interface, the following field (ConnectedProvidedInterfaceName)
-		// should be vectorized.
-		string ConnectedProvidedInterfaceName;
-		
-		CommandProxyElementSeq	CommandProxyVoidSeq;
-		CommandProxyElementSeq	CommandProxyWriteSeq;
-		CommandProxyElementSeq	CommandProxyReadSeq;
-		CommandProxyElementSeq	CommandProxyQualifiedReadSeq;
-    };
-    
+    /*! List of provided interfaces */
+    sequence<ProvidedInterface> ProvidedInterfaceSequence;
+
 	//-----------------------------------------------------------------------------
 	// Interface for Required Interface (Proxy Client)
 	//-----------------------------------------------------------------------------
-	interface TaskInterfaceClient
+	interface DeviceInterfaceClient
 	{
-        //bool ConnectAtServerSide(string providedInterfaceName, string requiredInterfaceName);
+        /*! Update CommandId. This updates the CommandId field of command proxies'
+        at client side (this step is critical regarding thread synchronization). */
+        //["cpp:const"] idempotent
+        //void UpdateCommandId()
 	};
 
 	//-----------------------------------------------------------------------------
 	// Interface for Provided Interface (Proxy Server)
 	//-----------------------------------------------------------------------------
-	interface TaskInterfaceServer
+	interface DeviceInterfaceServer
 	{
-		// from clients
+		/*! Replacement for OnConnect event. */
 		void AddClient(Ice::Identity ident);
-		
-		["cpp:const"] idempotent bool GetProvidedInterfaces(
-			out ProvidedInterfaceSequence providedInterfaces);
-			
-		// Execute command objects across networks
+
+        /*! Get provided interface information which will be used to create
+            a provided interface proxy at client side. */
+        ["cpp:const"] idempotent 
+        bool GetProvidedInterfaces(out ProvidedInterfaceSequence providedInterfaces);
+
+        /*! Call mtsTaskManager::Connect() at server side. */
+        bool ConnectServerSide(string userTaskName, string requiredInterfaceName,
+			                   string resourceTaskName, string providedInterfaceName);
+
+		/*! Execute command objects across networks. */
 		// Here 'int' type is used instead of 'unsigned int' because SLICE does not
 		// support unsigned type.
 		// (see http://zeroc.com/doc/Ice-3.3.1/manual/Slice.5.8.html)
 		// (Also see http://www.zeroc.com/doc/Ice-3.3.1/manual/Cpp.7.6.html for
 		// Mapping for simple built-in types)
-		void ExecuteCommandVoid(int CommandSID);
-        void ExecuteCommandWriteSerialized(int CommandSID, string argument);        
-        void ExecuteCommandReadSerialized(int CommandSID, out string argument);
-        void ExecuteCommandQualifiedReadSerialized(int CommandSID, string argument1, out string argument2);
+		void ExecuteCommandVoid(int CommandId);
+        void ExecuteCommandWriteSerialized(int CommandId, string argument);        
+        void ExecuteCommandReadSerialized(int CommandId, out string argument);
+        void ExecuteCommandQualifiedReadSerialized(int CommandId, string argument1, out string argument2);
 	};
 
 };

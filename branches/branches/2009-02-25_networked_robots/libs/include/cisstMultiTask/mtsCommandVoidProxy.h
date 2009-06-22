@@ -43,26 +43,26 @@ protected:
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandSID;
+    const int CommandId;
 
 public:
     typedef mtsCommandVoidBase BaseType;
     
     /*! The constructor. Does nothing */
-    mtsCommandVoidProxy(const int commandSID, 
+    mtsCommandVoidProxy(const int commandId, 
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
         BaseType(),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandSID(commandSID)
+        CommandId(commandId)
     {}
     
     /*! Constructor with a name. */
-    mtsCommandVoidProxy(const int commandSID,
+    mtsCommandVoidProxy(const int commandId,
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                         const std::string & name):
         BaseType(name),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandSID(commandSID)
+        CommandId(commandId)
     {}
     
     /*! The destructor. Does nothing */
@@ -71,12 +71,12 @@ public:
     /*! The execute method. */
     BaseType::ReturnType Execute() {
         //!!!!!!!!!!
-        //ProvidedInterfaceProxy->InvokeExecuteCommandVoid(CommandSID);
+        //ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
         return BaseType::DEV_OK;
     }
 
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandSID << std::endl;
+        outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << std::endl;
     }
 
     /*! Returns number of arguments (parameters) expected by Execute().

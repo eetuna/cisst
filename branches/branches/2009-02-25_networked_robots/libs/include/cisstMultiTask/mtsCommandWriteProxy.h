@@ -43,22 +43,22 @@ protected:
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandSID;
+    const int CommandId;
     
 public:
-    mtsCommandWriteProxy(const int commandSID, 
+    mtsCommandWriteProxy(const int commandId, 
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
         BaseType(),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandSID(commandSID)
+        CommandId(commandId)
     {}
 
-    mtsCommandWriteProxy(const int commandSID,
+    mtsCommandWriteProxy(const int commandId,
                          mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name):
         BaseType(name),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandSID(commandSID)
+        CommandId(commandId)
     {}
 
     /*! The destructor. Does nothing */
@@ -68,7 +68,7 @@ public:
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
         // !!!!!!!!!!
-        //ProvidedInterfaceProxy->InvokeExecuteCommandWriteSerialized(CommandSID, argument);
+        //ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
 
         return mtsCommandBase::DEV_OK;
     }
@@ -77,7 +77,7 @@ public:
       command object */
     void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandWriteProxy: ";
-        outputStream << "commandID is " << CommandSID << std::endl;
+        outputStream << "commandID is " << CommandId << std::endl;
     }
 
     /*! Return a pointer on the argument prototype */

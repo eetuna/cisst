@@ -367,29 +367,15 @@ public:
     /*! Start a proxy client (required interface, mtsDeviceInterfaceProxyClient). */
     void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
 
-    /*! Get the information on the provided interface that includes complete representation 
-        of it as a set of string. */
+    /*! Get the information on the provided interface as a set of string that includes 
+        complete representation of the interface. */
     const bool GetProvidedInterfaces(
         mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
 
-    //
-    //  For a client task
-    //
-    /*! Send a set of pairs of (command name, command proxy id) to the connected server task. */
-    //const bool SendCommandProxyInfo(mtsDeviceInterface * providedInterfaceProxy);
-    //const bool SendCommandProxyInfo(mtsRequiredInterface * requiredInterface);
-
-    /*! Invoke CommandVoid object at the server task. */
-    //void InvokeExecuteCommandVoid(const int commandSID) const;
-
-    //
-    //  For a server task
-    //
-    /*! Prepare a look-up table (command proxy id, actual command object pointer). */
-    //void ReceiveCommandProxyInfo(const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info);
-
-    /*! Execute a void command. */
-    //void ExecuteCommandVoid(const int commandSID);
+    /*! Try to connect at server side. */
+    bool SendConnectServerSide(
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     /*! Getters */
     mtsDeviceInterfaceProxyClient * GetProxyClient() const { return ProxyClient; }

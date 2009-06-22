@@ -39,11 +39,7 @@ class CISST_EXPORT mtsTaskManagerProxyServer : public mtsProxyBaseServer<mtsTask
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-    friend class TaskManagerServerI;
-
 public:
-    typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
-    
     /*! Typedef for proxy connection id and task manager id. */
     // MJUNG: ConnectionIDType is set as Ice::Identity which can be transformed to 
     // std::string by Communicator->identityToString(Ice::Identity)
@@ -51,11 +47,20 @@ public:
     typedef std::string ConnectionIDType;
     typedef std::string TaskManagerIDType;
 
-    typedef mtsTaskManagerProxy::TaskManagerClientPrx ClientProxyType;
-    
+    mtsTaskManagerProxyServer(const std::string & adapterName,
+                              const std::string & endpointInfo,
+                              const std::string & communicatorID);        
+    ~mtsTaskManagerProxyServer();
+
+protected:
+    typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
+
+    /*! Typedef for client proxy. */
+    typedef mtsTaskManagerProxy::TaskManagerClientPrx TaskManagerClientProxyType;
+
     class TaskManagerClient {
         const ConnectionIDType ConnectionID;
-        const ClientProxyType ClientProxy;
+        const TaskManagerClientProxyType ClientProxy;
 
         /*! Map to manage tasks by task name. */
         typedef cmnNamedMap<mtsTaskGlobal> GlobalTaskMapType;
@@ -64,7 +69,8 @@ public:
         TaskManagerIDType TaskManagerID;
 
     public:
-        TaskManagerClient(const ConnectionIDType & connectionID, const ClientProxyType & clientProxy)
+        TaskManagerClient(const ConnectionIDType & connectionID, 
+                          const TaskManagerClientProxyType & clientProxy)
             : ConnectionID(connectionID), ClientProxy(clientProxy)
         {}
 
@@ -80,7 +86,7 @@ public:
             return ConnectionID;
         }
 
-        const ClientProxyType GetClientProxy() const {
+        const TaskManagerClientProxyType GetClientProxy() const {
             return ClientProxy;
         }
 
@@ -93,7 +99,6 @@ public:
         }
     };
 
-protected:
     /*! Typedef for task manager id and proxy connection id (Ice::Identity). */
     typedef std::map<TaskManagerIDType, ConnectionIDType> ConnectionIDMapType;
     ConnectionIDMapType ConnectionIDMap;
@@ -101,6 +106,11 @@ protected:
     /*! Typedef for proxy connection id and task manager client pointer. */
     typedef std::map<ConnectionIDType, TaskManagerClient*> TaskManagerMapType;
     TaskManagerMapType TaskManagerMap;
+
+    /*! Typedef to directly access TaskManagerClient objects with a key of a task name. 
+        This assumes that a task name should be unique across networks. */
+    typedef cmnNamedMap<TaskManagerClient> TaskManagerMapByTaskNameType;
+    TaskManagerMapByTaskNameType TaskManagerMapByTaskName;
     
     /*! Definitions for send thread */
     class TaskManagerServerI;
@@ -119,55 +129,51 @@ protected:
     bool RemoveTaskManagerByConnectionID(const ConnectionIDType & connectionID);
 
     //-------------------------------------------------------------------------
-    //
+    //  Methods to Receive and Process Events
     //-------------------------------------------------------------------------
     /*! When a new client connects, add it to the client management list. */
-    void AddClient(const ConnectionIDType & connectionID, 
-                     const ClientProxyType & clientProxy);
+    void ReceiveAddClient(const ConnectionIDType & connectionID, 
+                     const TaskManagerClientProxyType & clientProxy);
 
     /*! Update the information on the newly connected task manager. */
-    bool UpdateTaskManagerClient(const ConnectionIDType & connectionID,
+    bool ReceiveUpdateTaskManagerClient(const ConnectionIDType & connectionID,
                                  const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
 
-    /*! Resource clean-up */
-    void OnClose();
-
-
-
-
     /*! Add a new provided interface. */
-    bool AddProvidedInterface(
+    bool ReceiveAddProvidedInterface(
         const ConnectionIDType & connectionID,
         const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
     /*! Add a new required interface. */
-    bool AddRequiredInterface(
+    bool ReceiveAddRequiredInterface(
         const ConnectionIDType & connectionID,
         const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo);
 
     /*! Check if the provided interface has been registered before. */
-    bool IsRegisteredProvidedInterface(
+    bool ReceiveIsRegisteredProvidedInterface(
         const ConnectionIDType & connectionID,
         const std::string & taskName, const std::string & providedInterfaceName);
 
     /*! Get the information about the provided interface. */
-    bool GetProvidedInterfaceInfo(
+    bool ReceiveGetProvidedInterfaceInfo(
         const ConnectionIDType & connectionID,
         const std::string & taskName, const std::string & providedInterfaceName,
         mtsTaskManagerProxy::ProvidedInterfaceInfo & info);
 
     /*! Inform the global task manager of the fact that connect() succeeded. */
-    void NotifyInterfaceConnectionResult(
+    void ReceiveNotifyInterfaceConnectionResult(
         const ConnectionIDType & connectionID,
         const bool isServerTask, const bool isSuccess,
         const std::string & userTaskName,     const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
-
-    
-    
-    
-
+    //-------------------------------------------------------------------------
+    //  Send Methods
+    //-------------------------------------------------------------------------
+    // bool SendConnectServerSide(
+        // TaskManagerClient * taskManagerWithServerTask,
+        // const std::string & userTaskName,     const std::string & requiredInterfaceName,
+        // const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     //-----------------------------------
     //  Task Processing
@@ -199,17 +205,15 @@ protected:
 
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
-    
-public:
-    mtsTaskManagerProxyServer(const std::string & adapterName,
-                              const std::string & endpointInfo,
-                              const std::string & communicatorID);        
-    ~mtsTaskManagerProxyServer();
 
+    /*! Resource clean-up when a client disconnects or is disconnected.
+        MJUNG: Right now, this method is not called because we don't detect the 
+        closure of the connection, which should be soon to be fixed. */
+    void OnClose();
+    
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice
     //-------------------------------------------------------------------------
-protected:
     class TaskManagerServerI : public mtsTaskManagerProxy::TaskManagerServer,
                                public IceUtil::Monitor<IceUtil::Mutex> 
     {

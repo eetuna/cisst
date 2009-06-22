@@ -24,14 +24,14 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a periodic task.
 */
 
-// A server task proxy is of mtsDevice type, not of mtsTask because we are assuming
-// that there is only one required interface at client side, which means there is
+// A server task proxy is of mtsDevice type, not mtsTask because we assume that
+// there is only one required interface at client side, which means there is
 // only one user thread. Thus, we don't need to worry about thread synchronization
-// issues. 
-// However, if there are more than one required interface at client side, we should
+// issues at client side.
+// However, if there can be more than one required interface at client side, we should
 // need to consider the thread synchronization issues. Moreover, if one required
 // interface can connect to more than one provided interface, things get more 
-// complicated. (However, the current design doesn't consider such case.)
+// complicated. (However, the current design doesn't support such connection.)
 #ifndef _mtsDeviceProxy_h
 #define _mtsDeviceProxy_h
 
@@ -40,10 +40,53 @@ http://www.cisst.org/cisst/license.txt.
 class mtsDeviceProxy : public mtsDevice {
 
 public:
-    mtsDeviceProxy(const std::string & deviceName) {}
-    ~mtsDeviceProxy() {};
+    mtsDeviceProxy(const std::string & deviceName)
+        : mtsDevice(deviceName)
+    {}
+    ~mtsDeviceProxy() 
+    {}
 
     void Configure(const std::string & deviceName) {};
+
+    /*! Return a name for a server device proxy. */
+    // Server task proxy naming rule:
+    //    
+    //   Server-TS:PI-TC:RI
+    //
+    //   where TS: server task name
+    //         PI: provided interface name
+    //         TC: client task name
+    //         RI: required interface name
+    static std::string GetServerTaskProxyName(
+        const std::string & resourceTaskName, const std::string & providedInterfaceName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName) 
+    {
+        return "Server-" +
+               resourceTaskName + ":" +      // TS
+               providedInterfaceName + "-" + // PI
+               userTaskName + ":" +          // TC
+               requiredInterfaceName;        // RI
+    }
+
+    /*! Return a name for a client task proxy. */
+    // Client task proxy naming rule:
+    //    
+    //   Client-TS:PI-TC:RI
+    //
+    //   where TS: server task name
+    //         PI: provided interface name
+    //         TC: client task name
+    //         RI: required interface name
+    static std::string GetClientTaskProxyName(
+        const std::string & resourceTaskName, const std::string & providedInterfaceName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName)
+    {
+        return "Client-" +
+               resourceTaskName + ":" +      // TS
+               providedInterfaceName + "-" + // PI
+               userTaskName + ":" +          // TC
+               requiredInterfaceName;        // RI
+    }
 };
 
 #endif // _mtsDeviceProxy_h

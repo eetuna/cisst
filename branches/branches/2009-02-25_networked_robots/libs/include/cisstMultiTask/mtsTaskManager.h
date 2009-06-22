@@ -230,17 +230,13 @@ protected:
     /*! Connect across networks. This is called internally from Connect(). */
     mtsDeviceInterface * GetResourceInterface(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
-        const std::string & userTaskName, const std::string & interfaceRequiredName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
         mtsTask * userTask);
 
     /*! Create a provided interface proxy and populate it with the complete specification 
         on the remote provided interface. */
     bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
                                       mtsDevice * serverTaskProxy, mtsTask * clientTask);
-
-    /*! Try to connect at server-side. */
-    const bool ConnectAtServerSide(const std::string requiredInterfaceName,
-                                   const std::string providedInterfaceName);
 
 public:
     /*! Set the type of task manager-global task manager (server) or conventional
@@ -258,31 +254,34 @@ public:
     //  Task Manager Layer Processing
     //-------------------------------------------------------------------------
     /*! Inform the global task manager of the addition of a new provided interface. */
-    const bool InvokeAddProvidedInterface(const std::string & newProvidedInterfaceName,
+    const bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
                                     const std::string & adapterName,
                                     const std::string & endpointInfo,
                                     const std::string & communicatorID,
                                     const std::string & taskName);
 
-    const bool InvokeAddRequiredInterface(const std::string & newRequiredInterfaceName,
+    const bool AddRequiredInterface(const std::string & newRequiredInterfaceName,
                                     const std::string & taskName);
 
-    const bool InvokeIsRegisteredProvidedInterface(const std::string & taskName,
+    const bool IsRegisteredProvidedInterface(const std::string & taskName,
                                              const std::string & providedInterfaceName);
 
-    const bool InvokeGetProvidedInterfaceInfo(const ::std::string & taskName,
+    const bool GetProvidedInterfaceInfo(const ::std::string & taskName,
                                         const std::string & providedInterfaceName,
                                         ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
 
-    void InvokeNotifyInterfaceConnectionResult(
-        const bool isServerTask, const bool isSuccess,
-        const std::string & userTaskName,     const std::string & requiredInterfaceName,
-        const std::string & resourceTaskName, const std::string & providedInterfaceName);
+    //void InvokeNotifyInterfaceConnectionResult(
+    //    const bool isServerTask, const bool isSuccess,
+    //    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Task Layer Processing
     //-------------------------------------------------------------------------
-
+    bool SendConnectServerSide(mtsTask * clientTask,
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
+    
     //
     // TODO: FIX ME
     //

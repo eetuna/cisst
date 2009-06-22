@@ -24,11 +24,25 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyClient);
 
-//
-// TODO: Make a file logger which is compatible with CISST logger or ICE logger
-//
-#define mtsDeviceInterfaceProxyClientLogger(_log) \
-            Logger->trace("mtsDeviceInterfaceProxyClient", _log);
+#define DeviceInterfaceProxyClientLogger(_log) Logger->trace("mtsDeviceInterfaceProxyClient", _log)
+#define DeviceInterfaceProxyClientLoggerError(_log1, _log2) \
+    {   std::stringstream s;\
+        s << "mtsDeviceInterfaceProxyClient: " << _log1 << _log2;\
+        BaseType::Logger->error(s.str());  }
+
+mtsDeviceInterfaceProxyClient::mtsDeviceInterfaceProxyClient(
+    const std::string & propertyFileName, const std::string & propertyName) :
+        BaseType(propertyFileName, propertyName)
+{
+    Serializer = new cmnSerializer(SerializationBuffer);
+    DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
+}
+
+mtsDeviceInterfaceProxyClient::~mtsDeviceInterfaceProxyClient()
+{
+    delete Serializer;
+    delete DeSerializer;
+}
 
 void mtsDeviceInterfaceProxyClient::Start(mtsTask * callingTask)
 {
@@ -43,12 +57,12 @@ void mtsDeviceInterfaceProxyClient::Start(mtsTask * callingTask)
         ident.name = GetGUID();
         ident.category = "";
 
-        mtsDeviceInterfaceProxy::TaskInterfaceClientPtr client = 
-            new TaskInterfaceClientI(IceCommunicator, Logger, TaskInterfaceServer, this);
+        mtsDeviceInterfaceProxy::DeviceInterfaceClientPtr client = 
+            new DeviceInterfaceClientI(IceCommunicator, Logger, DeviceInterfaceServerProxy, this);
         adapter->add(client, ident);
         adapter->activate();
-        TaskInterfaceServer->ice_getConnection()->setAdapter(adapter);
-        TaskInterfaceServer->AddClient(ident);
+        DeviceInterfaceServerProxy->ice_getConnection()->setAdapter(adapter);
+        DeviceInterfaceServerProxy->AddClient(ident);
 
         // Create a worker thread here and returns immediately.
         ThreadArgumentsInfo.argument = callingTask;
@@ -70,8 +84,6 @@ void mtsDeviceInterfaceProxyClient::StartClient()
 
 void mtsDeviceInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
 {
-    // mtsTaskManager * TaskManager = reinterpret_cast<mtsTaskManager*>(arguments->argument);
-
     mtsDeviceInterfaceProxyClient * ProxyClient = 
         dynamic_cast<mtsDeviceInterfaceProxyClient*>(arguments->proxy);
 
@@ -90,7 +102,7 @@ void mtsDeviceInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
 
 void mtsDeviceInterfaceProxyClient::OnThreadEnd()
 {
-    mtsDeviceInterfaceProxyClientLogger("Proxy client ends.");
+    DeviceInterfaceProxyClientLogger("Proxy client ends.");
 
     BaseType::OnThreadEnd();
 
@@ -112,39 +124,49 @@ void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
 //-------------------------------------------------------------------------
 //  Send Methods
 //-------------------------------------------------------------------------
-const bool mtsDeviceInterfaceProxyClient::GetProvidedInterfaces(
+const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaces(
         mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const
 {
-    GetLogger()->trace("TIClient", ">>>>> SEND: GetProvidedInterface");
+    //GetLogger()->trace("TIClient", ">>>>> SEND: SendGetProvidedInterface");
 
-    return TaskInterfaceServer->GetProvidedInterfaces(providedInterfaces);
+    return DeviceInterfaceServerProxy->GetProvidedInterfaces(providedInterfaces);
 }
 
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandVoid(const int commandSID) const
+bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
+    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandVoid");
+    GetLogger()->trace("TIClient", ">>>>> SEND: SendConnectServerSide");
 
-    TaskInterfaceServer->ExecuteCommandVoid(commandSID);
+    return DeviceInterfaceServerProxy->ConnectServerSide(
+        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandWriteSerialized(const int commandSID, const cmnGenericObject & argument)
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) const
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");
+    //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandVoid");
+
+    DeviceInterfaceServerProxy->ExecuteCommandVoid(commandId);
+}
+
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(const int commandId, const cmnGenericObject & argument)
+{
+    //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
 
     // Serialization
     std::string serializedData;
     Serialize(argument, serializedData);
     
-    TaskInterfaceServer->ExecuteCommandWriteSerialized(commandSID, serializedData);
+    DeviceInterfaceServerProxy->ExecuteCommandWriteSerialized(commandId, serializedData);
 }
 
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandReadSerialized(const int commandSID, cmnGenericObject & argument)
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(const int commandId, cmnGenericObject & argument)
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandReadSerialized");
+    //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandReadSerialized");
 
     std::string serializedData;
 
-    TaskInterfaceServer->ExecuteCommandReadSerialized(commandSID, serializedData);
+    DeviceInterfaceServerProxy->ExecuteCommandReadSerialized(commandId, serializedData);
 
     // Deserialization
     DeSerializationBuffer.str("");
@@ -152,14 +174,14 @@ void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandReadSerialized(const int
     DeSerializer->DeSerialize(argument);
 }
 
-void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedReadSerialized(const int commandSID, const std::string & argument1, std::string & argument2)
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(const int commandId, const std::string & argument1, std::string & argument2)
 {
-    ////GetLogger()->trace("TIClient", ">>>>> SEND: InvokeExecuteCommandQualifiedRead");
+    ////GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
     //
     //double value = argument1.Data;
     //double outValue = 0.0;
 
-    //TaskInterfaceServer->ExecuteCommandQualifiedRead(commandSID, value, outValue);
+    //DeviceInterfaceServerProxy->ExecuteCommandQualifiedRead(commandId, value, outValue);
 
     //cmnDouble out(outValue);
     //argument2 = out;
@@ -169,26 +191,26 @@ void mtsDeviceInterfaceProxyClient::InvokeExecuteCommandQualifiedReadSerialized(
 //-------------------------------------------------------------------------
 //  Definition by mtsDeviceInterfaceProxy.ice
 //-------------------------------------------------------------------------
-mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::TaskInterfaceClientI(
+mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::DeviceInterfaceClientI(
     const Ice::CommunicatorPtr& communicator,                           
     const Ice::LoggerPtr& logger,
-    const mtsDeviceInterfaceProxy::TaskInterfaceServerPrx& server,
-    mtsDeviceInterfaceProxyClient * taskInterfaceClient)
+    const mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx& server,
+    mtsDeviceInterfaceProxyClient * DeviceInterfaceClient)
     : Runnable(true), 
       Communicator(communicator), Logger(logger),
-      Server(server), TaskInterfaceClient(taskInterfaceClient),      
-      Sender(new SendThread<TaskInterfaceClientIPtr>(this))      
+      Server(server), DeviceInterfaceClient(DeviceInterfaceClient),      
+      Sender(new SendThread<DeviceInterfaceClientIPtr>(this))      
 {
 }
 
-void mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::Start()
+void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Start()
 {
-    mtsDeviceInterfaceProxyClientLogger("Send thread starts");
+    DeviceInterfaceProxyClientLogger("Send thread starts");
 
     Sender->start();
 }
 
-void mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::Run()
+void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Run()
 {
     bool flag = true;
 
@@ -214,23 +236,20 @@ void mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::Run()
             flag = false;
         }
 
-        {
-            IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-            timedWait(IceUtil::Time::seconds(2));
-        }
+        timedWait(IceUtil::Time::milliSeconds(1));
     }
 }
 
-void mtsDeviceInterfaceProxyClient::TaskInterfaceClientI::Destroy()
+void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Destroy()
 {
-    mtsDeviceInterfaceProxyClientLogger("Send thread is terminating.");
+    DeviceInterfaceProxyClientLogger("Send thread is terminating.");
 
     IceUtil::ThreadPtr callbackSenderThread;
 
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        mtsDeviceInterfaceProxyClientLogger("Destroying sender.");
+        DeviceInterfaceProxyClientLogger("Destroying sender.");
         Runnable = false;
 
         notify();
