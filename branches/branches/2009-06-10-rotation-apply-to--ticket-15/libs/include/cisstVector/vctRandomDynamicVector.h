@@ -47,8 +47,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 template <class _vectorOwnerType, typename _elementType>
 void vctRandom(vctDynamicVectorBase<_vectorOwnerType, _elementType> & vector,
-               const typename vctDynamicVectorBase<_vectorOwnerType, _elementType>::value_type min,
-               const typename vctDynamicVectorBase<_vectorOwnerType, _elementType>::value_type max)
+               const _elementType min, const _elementType max)
 {
     cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
     const unsigned int size = vector.size();
@@ -56,6 +55,20 @@ void vctRandom(vctDynamicVectorBase<_vectorOwnerType, _elementType> & vector,
     for (index = 0; index < size; ++index) {
         randomSequence.ExtractRandomValue(min, max,
                                           vector[index]);    
+    }
+}
+
+// A specialization for a vctDynamicVectorRef argumant *passed by value* to overcome
+// a limitation of gcc regarding non-const references to unnamed objects
+template <typename _elementType>
+void vctRandom(vctDynamicVectorRef<_elementType> vector,
+               const _elementType min, const _elementType max)
+{
+    cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
+    const unsigned int size = vector.size();
+    unsigned int index;
+    for (index = 0; index < size; ++index) {
+        randomSequence.ExtractRandomValue(min, max, vector[index]);    
     }
 }
 

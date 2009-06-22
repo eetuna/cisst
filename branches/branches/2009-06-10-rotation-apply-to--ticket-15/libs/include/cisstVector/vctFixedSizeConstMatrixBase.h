@@ -216,6 +216,10 @@ class vctFixedSizeConstMatrixBase
     /*! A declaration of the matrix-defining member object */
     DataType Data;
 
+    /*! Default constructor declared as protected; initializing default Data to prevent compiler warnings */
+    vctFixedSizeConstMatrixBase()
+        : Data()
+    {}
 
     /*! Check the validity of an index. */
     inline void ThrowUnlessValidIndex(size_type index) const throw(std::out_of_range) {
