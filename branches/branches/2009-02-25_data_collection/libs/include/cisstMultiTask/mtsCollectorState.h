@@ -88,7 +88,7 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 
     /*! Delimiter used in a log file. Set by the constructor according to 
         mtsCollectorBase::CollectorLogFormat. */
-    std::string Delimiter;
+    char Delimiter;
 
     /*! Names of the target task and the target state table. */
     const std::string TargetTaskName;
@@ -149,9 +149,6 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     /*! Fetch bulk data from StateTable. */
     void Collect(void);
 
-    /*! Log file handle. */
-    std::ofstream LogFile;
-
 public:
     mtsCollectorState(const std::string & targetTaskName,
                       const mtsCollectorBase::CollectorLogFormat collectorLogFormat = mtsCollectorBase::COLLECTOR_LOG_FORMAT_PLAIN_TEXT,
@@ -175,7 +172,8 @@ public:
 
     /*! Convert a binary log file into a plain text one. */
     bool ConvertBinaryToText(const std::string sourceBinaryLogFileName,
-                                           const std::string targetPlainTextLogFileName);
+                             const std::string targetPlainTextLogFileName,
+                             const char delimiter = ',');
 
     /*! Get the name of log file currently being written. */
     const std::string & GetLogFileName() { return LogFileName; }

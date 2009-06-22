@@ -947,6 +947,20 @@ public:
             outputStream << std::noshowpoint;
         }
     }
+
+    
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ') const
+    {
+        size_type index;
+        const size_type mySize = size();
+        for (index = 0; index < mySize; ++index) {
+            outputStream << (*this)[index]; 
+            if (index < (mySize-1)) {
+                outputStream << delimiter; 
+            }
+        }
+    }
+
 };
 
 

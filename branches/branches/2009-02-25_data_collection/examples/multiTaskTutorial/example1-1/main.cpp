@@ -13,9 +13,9 @@
 using namespace std;
 
 // Selectively enable one of the following macro according to the log file format.
-#define DATA_COLLECTION_PLAIN_TEXT
-//#define DATA_COLLECTION_PLAIN_TEXT_CSV
-//#define DATA_COLLECTION_BINARY
+// #define DATA_COLLECTION_PLAIN_TEXT
+#define DATA_COLLECTION_PLAIN_TEXT_CSV
+// #define DATA_COLLECTION_BINARY
 
 int main(void)
 {

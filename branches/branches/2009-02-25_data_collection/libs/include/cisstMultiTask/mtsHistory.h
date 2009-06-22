@@ -110,6 +110,11 @@ public:
     virtual void ToStream(std::ostream & outputStream) const {
         VectorType::ToStream(outputStream);
     }
+
+    /*! To stream human readable output raw */
+    virtual void ToStreamRaw(std::ostream & outputStream, const char divider = ' ') const {
+        VectorType::ToStreamRaw(outputStream, divider);
+    }
 };
 
 // PK: the StateTable GetHistory implementation will require an mtsVector

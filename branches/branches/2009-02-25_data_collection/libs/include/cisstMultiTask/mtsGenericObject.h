@@ -97,6 +97,10 @@ public:
         }
     }
 
+    virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ') const {
+        outputStream << this->Timestamp() << delimiter << this->Valid();
+    }
+
 };
 
 
