@@ -33,6 +33,12 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \ingroup cisstMultiTask
+
+  mtsCommandWriteProxy is a proxy for mtsCommandWrite. This proxy contains
+  CommandId set as a function pointer of which type is mtsFunctionWrite.
+  When Execute() method is called, the CommandId is sent to the server task
+  over networks with one payload. The provided interface proxy manages 
+  this process.
 */
 class mtsCommandWriteProxy: public mtsCommandWriteBase {
 public:
@@ -43,7 +49,7 @@ protected:
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandId;
+    CommandProxyIdType CommandId;
     
 public:
     mtsCommandWriteProxy(const int commandId, 
@@ -65,19 +71,21 @@ public:
     virtual ~mtsCommandWriteProxy() 
     {}
 
+    /*! Update CommandId. */
+    void SetCommandId(const CommandProxyIdType & newCommandId) {
+        CommandId = newCommandId;
+    }
+
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
-        // !!!!!!!!!!
-        //ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
-
+        ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
         return mtsCommandBase::DEV_OK;
     }
 
     /*! For debugging. Generate a human readable output for the
       command object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandWriteProxy: ";
-        outputStream << "commandID is " << CommandId << std::endl;
+        outputStream << "mtsCommandWriteProxy: " << Name << ", " << CommandId << std::endl;
     }
 
     /*! Return a pointer on the argument prototype */

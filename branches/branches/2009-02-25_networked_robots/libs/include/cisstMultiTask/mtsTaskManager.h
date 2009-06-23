@@ -238,6 +238,8 @@ protected:
     bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
                                       mtsDevice * serverTaskProxy, mtsTask * clientTask);
 
+    void UpdateCommandId(mtsDeviceInterfaceProxy::FunctionProxySet functionProxies);
+
 public:
     /*! Set the type of task manager-global task manager (server) or conventional
         task manager (client)-and start an appropriate task manager proxy.

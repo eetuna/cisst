@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Defines a command with one argument 
+  \brief Defines a command with two arguments.
 */
 
 #ifndef _mtsCommandQualifiedReadProxy_h
@@ -32,6 +32,12 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \ingroup cisstMultiTask
+
+  mtsCommandQualifiedReadProxy is a proxy for mtsCommandQualifiedRead. 
+  This proxy contains CommandId set as a function pointer of which type is 
+  mtsFunctionQualifiedRead. When Execute() method is called, the CommandId 
+  is sent to the server task over networks with two payloads. 
+  The provided interface proxy manages this process.
 */
 class mtsCommandQualifiedReadProxy: public mtsCommandQualifiedReadBase {
 public:
@@ -44,7 +50,7 @@ protected:
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandId;
+    CommandProxyIdType CommandId;
 
 public:
     mtsCommandQualifiedReadProxy(const int commandId, 
@@ -65,41 +71,42 @@ public:
     {}
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCommandQualifiedReadProxy() {}
+    virtual ~mtsCommandQualifiedReadProxy() 
+    {}
+
+    /*! Update CommandId. */
+    void SetCommandId(const CommandProxyIdType & newCommandId) {
+        CommandId = newCommandId;
+    }
 
     /*! The execute method. */
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument1,
-                                               cmnGenericObject & argument2) 
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1,
+                                               mtsGenericObject & argument2) 
     {
-        //!!!!!!! FIX THIS
-        //Argument1Type * data1 = dynamic_cast<Argument1Type *>(&argument1);
-        //if (data1 == NULL)
-        //    return mtsCommandBase::BAD_INPUT;
-        //Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
-        //if (data2 == NULL)
-        //    return mtsCommandBase::BAD_INPUT;
-        //
-        ////static int cnt = 0;
-        ////std::cout << "mtsCommandQualifiedReadProxy called (" << ++cnt << "): " << *data1 << std::endl;
-
-        //ProvidedInterfaceProxy->SendExecuteCommandQualifiedRead(
-        //    CommandId, *data1, *data2);
-
+        ProvidedInterfaceProxy->SendExecuteCommandQualifiedReadSerialized(
+            CommandId, argument1, argument2);
         return mtsCommandBase::DEV_OK;
     }
 
-    /*! For debugging. Generate a human QualifiedReadable output for the
+    /*! For debugging. Generate a human readable output for the
       command object */
     void ToStream(std::ostream & outputStream) const {
-        // TODO
+        outputStream << "mtsCommandQualifiedReadProxy: " << Name << ", " << CommandId << std::endl;
     }
 
     /*! Return a pointer on the argument prototype */
-    const cmnGenericObject * GetArgumentPrototype(void) const {
+    const mtsGenericObject * GetArgument1Prototype(void) const {
         //
         // TODO: FIX THIS
         //
-        return reinterpret_cast<const cmnGenericObject *>(0x12345678);
+        return reinterpret_cast<const mtsGenericObject *>(0x12345678);
+    }
+
+    const mtsGenericObject * GetArgument2Prototype(void) const {
+        //
+        // TODO: FIX THIS
+        //
+        return reinterpret_cast<const mtsGenericObject *>(0x12345678);
     }
 };
 

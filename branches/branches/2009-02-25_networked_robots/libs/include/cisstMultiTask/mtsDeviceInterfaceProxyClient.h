@@ -96,7 +96,8 @@ protected:
     //-------------------------------------------------------------------------
     //  Methods to Receive and Process Events
     //-------------------------------------------------------------------------
-    void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+    /*! Update local command object id. */
+    //void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
 
     //-------------------------------------------------------------------------
     //  Methods to Send Events
@@ -109,10 +110,13 @@ public:
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
+    void SendGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+
     void SendExecuteCommandVoid(const int commandId) const;
     void SendExecuteCommandWriteSerialized(const int commandId, const cmnGenericObject & argument);
     void SendExecuteCommandReadSerialized(const int commandId, cmnGenericObject & argument);
-    void SendExecuteCommandQualifiedReadSerialized(const int commandId, const std::string & argument1, std::string & argument2);
+    void SendExecuteCommandQualifiedReadSerialized(
+        const int commandId, const cmnGenericObject & argument1, cmnGenericObject & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
@@ -140,7 +144,7 @@ protected:
         void Run();
         void Destroy();
 
-        void UpdateCommandId(const ::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
+        //void UpdateCommandId(const ::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
     };
 };
 

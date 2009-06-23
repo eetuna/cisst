@@ -157,30 +157,6 @@ mtsProvidedInterface * mtsDeviceInterfaceProxyServer::GetProvidedInterface(
 bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     mtsRequiredInterface * requiredInterfaceProxy, mtsProvidedInterface * providedInterface)
 {
-    /*
-    mtsRequiredInterface Robot("Robot");
-
-    mtsFunctionRead GetPositionJoint;
-    mtsFunctionWrite MovePositionJoint;
-
-    // mts events callbacks, in this example started event is void,
-    // end event is write
-    void CallBackStarted(void);
-    mtsCommandVoidBase * CallBackStartedCommand; 
-    void CallBackFinished(const PositionJointType &);
-    mtsCommandWriteBase * CallBackFinishedCommand; 
-
-
-
-    Robot.AddFunction("GetPositionJoint", GetPositionJoint);
-    Robot.AddFunction("MovePositionJoint", MovePositionJoint);
-    // false --> Event handlers are not queued
-    Robot.AddEventHandlerVoid(&userInterface::CallBackStarted, this,
-                              "MotionStarted", false);
-    Robot.AddEventHandlerWrite(&userInterface::CallBackFinished, this,
-                  "MotionFinished", PositionJointType(NB_JOINTS), false);
-    */
-
     // Get the list of commands
     mtsFunctionVoid  * functionVoidProxy = NULL;
     mtsFunctionWrite * functionWriteProxy = NULL;
@@ -229,9 +205,9 @@ bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     return true;
 }
 
-bool mtsDeviceInterfaceProxyServer::GetFunctionPointers(const std::string & serverTaskProxyName)
+void mtsDeviceInterfaceProxyServer::GetFunctionPointers(
+    mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet)
 {
-    mtsDeviceInterfaceProxy::FunctionProxySet functionProxySet;
     mtsDeviceInterfaceProxy::FunctionProxyInfo element;
 
     //FunctionVoidProxyMapType::MapType::const_iterator it;
@@ -262,11 +238,6 @@ bool mtsDeviceInterfaceProxyServer::GetFunctionPointers(const std::string & serv
 
     GET_FUNCTION_PROXY_BEGIN(QualifiedRead);
     GET_FUNCTION_PROXY_END;
-
-    functionProxySet.ServerTaskProxyName = serverTaskProxyName;
-    SendUpdateCommandId(functionProxySet);
-
-    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -401,15 +372,17 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
         return false;
     }
 
+    /*
     // After Connect() is executed successfully at server side, update the command id of 
     // command proxies at client side.
     std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
             resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
-    if (!GetFunctionPointers(serverTaskProxyName)) {
+    if (!GetFunctionPointers(serverTaskProxyName, providedInterfaceName)) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
             "Failed to get function pointers: " + serverTaskProxyName);
         return false;
     }
+    */
 
     DeviceInterfaceProxyServerLogger("Connect() at server side succeeded: " +
         userTaskName + " : " + requiredInterfaceName + " - " + 
@@ -418,18 +391,31 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
     return true;
 }
 
-void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandVoid(const int commandId) const
-{    
-    mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandId);
-    CMN_ASSERT(commandVoid);
-
-    commandVoid->Execute();
+void mtsDeviceInterfaceProxyServer::ReceiveGetCommandId(
+    mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+{
+    GetFunctionPointers(functionProxies);
 }
 
-void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandWriteSerialized(const int commandId, const std::string argument)
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandVoid(const int commandId) const
 {
-    mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandId);
-    CMN_ASSERT(commandWrite);
+    //mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandId);
+    //CMN_ASSERT(commandVoid);
+    //commandVoid->Execute();
+
+    mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandId);
+    CMN_ASSERT(functionVoid);
+
+    (*functionVoid)();
+}
+
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandWriteSerialized(
+    const int commandId, const std::string argument)
+{
+    //mtsCommandWriteBase * commandWrite = reinterpret_cast<mtsCommandWriteBase *>(commandId);
+    //CMN_ASSERT(commandWrite);
+    mtsFunctionWrite * functionWrite = reinterpret_cast<mtsFunctionWrite*>(commandId);
+    CMN_ASSERT(functionWrite);
 
     static char buf[100];
     sprintf(buf, "ExecuteCommandWriteSerialized: %d bytes received", argument.size());
@@ -439,24 +425,28 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandWriteSerialized(const i
     DeSerializationBuffer.str("");
     DeSerializationBuffer << argument;
     
-    mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
+    const mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
     CMN_ASSERT(obj);
-    //!!!!!!!!!!! FIX THIS
     //commandWrite->Execute(*obj);
-
-    //std::cout << *obj << std::endl;
+    (*functionWrite)(*obj);
 }
 
-void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandReadSerialized(const int commandId, std::string & argument)
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandReadSerialized(
+    const int commandId, std::string & argument)
 {
-    mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandId);    
-    CMN_ASSERT(commandRead);
+    //mtsCommandReadBase * commandRead = reinterpret_cast<mtsCommandReadBase *>(commandId);    
+    //CMN_ASSERT(commandRead);
+    mtsFunctionRead * functionRead = reinterpret_cast<mtsFunctionRead*>(commandId);
+    CMN_ASSERT(functionRead);
 
     // Create a placeholder
-    mtsGenericObject * placeHolder = dynamic_cast<mtsGenericObject *>(commandRead->GetArgumentClassServices()->Create());
+    mtsGenericObject * placeHolder = dynamic_cast<mtsGenericObject *>(
+        //commandRead->GetArgumentClassServices()->Create());
+        functionRead->GetCommand()->GetArgumentClassServices()->Create());
     CMN_ASSERT(placeHolder);
     {
-        commandRead->Execute(*placeHolder);
+        //commandRead->Execute(*placeHolder);
+        (*functionRead)(*placeHolder);
 
         // Serialization
         SerializationBuffer.str("");
@@ -468,20 +458,24 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandReadSerialized(const in
     delete placeHolder;    
 }
 
-void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized(const int commandId, const std::string argument1, std::string & argument2)
+void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized(
+    const int commandId, const std::string argument1, std::string & argument2)
 {
+    //
+    // TODO: implement here
+    //
 }
 
 //-------------------------------------------------------------------------
 //  Methods to Send Events
 //-------------------------------------------------------------------------
-void mtsDeviceInterfaceProxyServer::SendUpdateCommandId(
-    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet)
-{
-    GetLogger()->trace("TIServer", ">>>>> SEND: SendUpdateCommandId");
-
-    ConnectedClient->UpdateCommandId(functionProxySet);
-}
+//void mtsDeviceInterfaceProxyServer::SendUpdateCommandId(
+//    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet)
+//{
+//    GetLogger()->trace("TIServer", ">>>>> SEND: SendUpdateCommandId");
+//
+//    ConnectedClient->UpdateCommandId(functionProxySet);
+//}
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
@@ -596,32 +590,43 @@ bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ConnectServerSide(
     return DeviceInterfaceServer->ReceiveConnectServerSide(
         userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
-            
+
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetCommandId(
+    ::mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies, const ::Ice::Current&) const
+{
+    Logger->trace("TIServer", "<<<<< RECV: GetCommandId");
+
+    DeviceInterfaceServer->ReceiveGetCommandId(functionProxies);
+}
+
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandVoid(
-    ::Ice::Int sid, const ::Ice::Current&)
+    ::Ice::Int commandID, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandVoid");
 
-    DeviceInterfaceServer->ReceiveExecuteCommandVoid(sid);
+    DeviceInterfaceServer->ReceiveExecuteCommandVoid(commandID);
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandWriteSerialized(
-    ::Ice::Int sid, const ::std::string& argument, const ::Ice::Current&)
+    ::Ice::Int commandID, const ::std::string& argument, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandWriteSerialized");
 
-    DeviceInterfaceServer->ReceiveExecuteCommandWriteSerialized(sid, argument);
+    DeviceInterfaceServer->ReceiveExecuteCommandWriteSerialized(commandID, argument);
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandReadSerialized(
-    ::Ice::Int sid, ::std::string& argument, const ::Ice::Current&)
+    ::Ice::Int commandID, ::std::string& argument, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandReadSerialized");
 
-    DeviceInterfaceServer->ReceiveExecuteCommandReadSerialized(sid, argument);
+    DeviceInterfaceServer->ReceiveExecuteCommandReadSerialized(commandID, argument);
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandQualifiedReadSerialized(
-    ::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current&)
+    ::Ice::Int commandID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Current&)
 {
+    //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandQualifiedReadSerialized");
+
+    DeviceInterfaceServer->ReceiveExecuteCommandQualifiedReadSerialized(commandID, argument1, argument2);
 }

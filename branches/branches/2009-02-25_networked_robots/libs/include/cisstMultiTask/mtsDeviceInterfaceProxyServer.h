@@ -125,7 +125,9 @@ protected:
 
     /*! Get pointers to the function proxies created at 
         mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(). */        
-    bool GetFunctionPointers(const std::string & serverTaskProxyName);
+    //bool GetFunctionPointers(const std::string & serverTaskProxyName, 
+    //                         const std::string & providedInterfaceProxyName);
+    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 
     //-------------------------------------------------------------------------
     //  Methods to Receive and Process Events
@@ -144,6 +146,9 @@ protected:
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
+    /*! Update command id. */
+    void ReceiveGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+
     /*! Execute actual command objects. */
     void ReceiveExecuteCommandVoid(const int commandId) const;
     void ReceiveExecuteCommandWriteSerialized(const int commandId, const std::string argument);
@@ -153,7 +158,7 @@ protected:
     //-------------------------------------------------------------------------
     //  Methods to Send Events
     //-------------------------------------------------------------------------
-    void SendUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
+    //void SendUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
@@ -184,6 +189,8 @@ protected:
             const std::string & userTaskName, const std::string & requiredInterfaceName,
             const std::string & resourceTaskName, const std::string & providedInterfaceName,
             const ::Ice::Current&);
+        void GetCommandId(::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
+
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
         void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
         void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Current&);

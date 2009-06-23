@@ -377,6 +377,9 @@ public:
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
+    /*! Update command id */
+    void SendGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+
     /*! Getters */
     mtsDeviceInterfaceProxyClient * GetProxyClient() const { return ProxyClient; }
     mtsDeviceInterfaceProxyServer * GetProxyServer() const { return ProxyServer; }

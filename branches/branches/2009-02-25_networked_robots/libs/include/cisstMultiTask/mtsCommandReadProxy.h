@@ -33,6 +33,12 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \ingroup cisstMultiTask
+
+  mtsCommandReadProxy is a proxy for mtsCommandRead. This proxy contains
+  CommandId set as a function pointer of which type is mtsFunctionRead.
+  When Execute() method is called, the CommandId is sent to the server task
+  over networks with one payload. The provided interface proxy manages 
+  this process.
 */
 class mtsCommandReadProxy: public mtsCommandReadBase {
 public:
@@ -44,7 +50,7 @@ protected:
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandId;
+    CommandProxyIdType CommandId;
 
 public:
     mtsCommandReadProxy(const int commandId, 
@@ -65,18 +71,21 @@ public:
     virtual ~mtsCommandReadProxy()
     {}
 
+    /*! Update CommandId. */
+    void SetCommandId(const CommandProxyIdType & newCommandId) {
+        CommandId = newCommandId;
+    }
+
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
-        //!!!!!!!!!!
-        //ProvidedInterfaceProxy->SendExecuteCommandReadSerialized(CommandId, argument);
+        ProvidedInterfaceProxy->SendExecuteCommandReadSerialized(CommandId, argument);
         return mtsCommandBase::DEV_OK;
     }
     
     /*! For debugging. Generate a human readable output for the
         command object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandReadProxy: ";
-        outputStream << "commandID is " << CommandId << std::endl;
+        outputStream << "mtsCommandReadProxy: " << Name << ", " << CommandId << std::endl;
     }
 
     /*! Return a pointer on the argument prototype */

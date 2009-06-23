@@ -406,6 +406,14 @@ bool mtsTask::SendConnectServerSide(
         userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
+void mtsTask::SendGetCommandId(
+    mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+{
+    CMN_ASSERT(ProxyClient);
+
+    ProxyClient->SendGetCommandId(functionProxies);
+}
+
 //
 //  For a server task
 //

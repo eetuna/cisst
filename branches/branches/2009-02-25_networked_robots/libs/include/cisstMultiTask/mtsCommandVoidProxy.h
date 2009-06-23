@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Defines a base class for a command with no argument
+  \brief Definition of a proxy class for a command with no argument
  */
 
 #ifndef _mtsCommandVoidProxy_h
@@ -33,21 +33,25 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \ingroup cisstMultiTask
-  
-  TODO: add class description here
+
+  mtsCommandVoidProxy is a proxy for mtsCommandVoid. This proxy contains
+  CommandId set as a function pointer of which type is mtsFunctionVoid.
+  When Execute() method is called, the CommandId is sent to the server task
+  over networks without payload. The provided interface proxy manages 
+  this process.
 */
-class mtsCommandVoidProxy: public mtsCommandVoidBase
-{
+class mtsCommandVoidProxy: public mtsCommandVoidBase {
+public:
+    typedef mtsCommandVoidBase BaseType;    
+
 protected:
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! ID assigned by the server as a pointer to the actual command in server's
         memory space. */
-    const int CommandId;
+    CommandProxyIdType CommandId;
 
-public:
-    typedef mtsCommandVoidBase BaseType;
-    
+public:    
     /*! The constructor. Does nothing */
     mtsCommandVoidProxy(const int commandId, 
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
@@ -68,10 +72,14 @@ public:
     /*! The destructor. Does nothing */
     ~mtsCommandVoidProxy() {}
 
+    /*! Update CommandId. */
+    void SetCommandId(const CommandProxyIdType & newCommandId) {
+        CommandId = newCommandId;
+    }
+    
     /*! The execute method. */
     BaseType::ReturnType Execute() {
-        //!!!!!!!!!!
-        //ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
+        ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
         return BaseType::DEV_OK;
     }
 

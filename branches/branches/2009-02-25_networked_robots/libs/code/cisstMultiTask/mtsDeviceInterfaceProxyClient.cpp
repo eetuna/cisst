@@ -19,8 +19,13 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
 #include <cisstOSAbstraction/osaSleep.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsCommandVoidProxy.h>
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
+#include <cisstMultiTask/mtsCommandReadProxy.h>
+#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyClient);
 
@@ -124,19 +129,49 @@ void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
 //-------------------------------------------------------------------------
 //  Methods to Receive and Process Events
 //-------------------------------------------------------------------------
+/*
 void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
     const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
 {
-    //
-    // TODO
-    //
-    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 
-    // server task proxy를 찾아서
-    // command object 들을 iteration 하면서
-    // 보내온 command object name이 일치하는 경우
-    // execution ptr을 업데이트 한다.
+    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
+    mtsDevice * serverTaskProxy = taskManager->GetDevice(serverTaskProxyName);
+    CMN_ASSERT(serverTaskProxy);
+
+    mtsProvidedInterface * providedInterfaceProxy = 
+        serverTaskProxy->GetProvidedInterface(functionProxies.ProvidedInterfaceProxyName);
+    CMN_ASSERT(providedInterfaceProxy);
+
+    //mtsCommandVoidProxy * commandVoid = NULL;
+    //mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it = 
+    //    functionProxies.FunctionVoidProxies.begin();
+    //for (; it != functionProxies.FunctionVoidProxies.end(); ++it) {
+    //    commandVoid = dynamic_cast<mtsCommandVoidProxy*>(
+    //        providedInterfaceProxy->GetCommandVoid(it->Name));
+    //    CMN_ASSERT(commandVoid);
+    //    commandVoid->SetCommandId(it->FunctionProxyPointer);
+    //}
+
+    // Replace a command id value with an actual pointer to the function
+    // pointer at server side (this resolves thread synchronization issue).
+#define REPLACE_COMMAND_ID(_commandType)\
+    mtsCommand##_commandType##Proxy * command##_commandType = NULL;\
+    mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it##_commandType = \
+        functionProxies.Function##_commandType##Proxies.begin();\
+    for (; it##_commandType != functionProxies.Function##_commandType##Proxies.end(); ++it##_commandType) {\
+        command##_commandType = dynamic_cast<mtsCommand##_commandType##Proxy*>(\
+            providedInterfaceProxy->GetCommand##_commandType(it##_commandType->Name));\
+        if (command##_commandType)\
+            command##_commandType->SetCommandId(it##_commandType->FunctionProxyPointer);\
+    }
+
+    REPLACE_COMMAND_ID(Void);
+    REPLACE_COMMAND_ID(Write);
+    REPLACE_COMMAND_ID(Read);
+    REPLACE_COMMAND_ID(QualifiedRead);
 }
+*/
 
 //-------------------------------------------------------------------------
 //  Methods to Send Events
@@ -159,6 +194,14 @@ bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
         userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
+void mtsDeviceInterfaceProxyClient::SendGetCommandId(
+    mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+{
+    GetLogger()->trace("TIClient", ">>>>> SEND: SendGetCommandId");
+
+    DeviceInterfaceServerProxy->GetCommandId(functionProxies);
+}
+
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) const
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandVoid");
@@ -166,7 +209,8 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) 
     DeviceInterfaceServerProxy->ExecuteCommandVoid(commandId);
 }
 
-void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(const int commandId, const cmnGenericObject & argument)
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(
+    const int commandId, const cmnGenericObject & argument)
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
 
@@ -177,7 +221,8 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(const int 
     DeviceInterfaceServerProxy->ExecuteCommandWriteSerialized(commandId, serializedData);
 }
 
-void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(const int commandId, cmnGenericObject & argument)
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(
+    const int commandId, cmnGenericObject & argument)
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandReadSerialized");
 
@@ -191,7 +236,8 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(const int c
     DeSerializer->DeSerialize(argument);
 }
 
-void mtsDeviceInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(const int commandId, const std::string & argument1, std::string & argument2)
+void mtsDeviceInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(
+    const int commandId, const cmnGenericObject & argument1, cmnGenericObject & argument2)
 {
     ////GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
     //
@@ -284,11 +330,11 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Destroy()
 //-----------------------------------------------------------------------------
 //  Device Interface Proxy Client Implementation
 //-----------------------------------------------------------------------------
-void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::UpdateCommandId(
-    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies,
-    const Ice::Current & current) const
-{
-    Logger->trace("TIClient", "<<<<< RECV: UpdateCommandId");
-
-    DeviceInterfaceClient->ReceiveUpdateCommandId(functionProxies);
-}
+//void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::UpdateCommandId(
+//    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies,
+//    const Ice::Current & current) const
+//{
+//    Logger->trace("TIClient", "<<<<< RECV: UpdateCommandId");
+//
+//    DeviceInterfaceClient->ReceiveUpdateCommandId(functionProxies);
+//}

@@ -33,7 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandVoidProxy.h>
 #include <cisstMultiTask/mtsCommandWriteProxy.h>
 #include <cisstMultiTask/mtsCommandReadProxy.h>
-#include <cisstMultiTask/mtsCommandQueuedWriteProxy.h>
+#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
@@ -280,7 +280,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                              const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
     // True if the resource task specified is provided by a remote task
-    bool RemoteConnect = false;
+    bool requestServerSideConnect = false;
 
     const UserType fullUserName(userTaskName, requiredInterfaceName);
     const ResourceType fullResourceName(resourceTaskName, providedInterfaceName);
@@ -336,7 +336,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                 return false;                
             }
 
-            RemoteConnect = true;
+            requestServerSideConnect = true;
         }
     }
 
@@ -360,14 +360,34 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     // If the connection between the required interface with the provided interface proxy
     // at client side is established successfully, inform the global task manager of this 
     // fact.
-    // 'RemoteConnect' is true only if this task manager is at client side and all the 
-    // connection processing above are successful.
-    if (RemoteConnect) {
+    // 'requestServerSideConnect' is true only if this task manager is at client side and 
+    // all the connection processing above are successful.
+    if (requestServerSideConnect) {
         CMN_ASSERT(!ProxyServer);   // This is not a global task manager.
         CMN_ASSERT(ProxyClient);
 
-        SendConnectServerSide(userTaskTemp, userTaskName, requiredInterfaceName, 
-                          resourceTaskName, providedInterfaceName);
+        if (!SendConnectServerSide(userTaskTemp, userTaskName, requiredInterfaceName,
+                          resourceTaskName, providedInterfaceName)) 
+        {
+            CMN_LOG_CLASS_INIT_ERROR << "Connect: server side connection failed." << std::endl;
+            return false;
+        }
+
+        CMN_LOG_CLASS_RUN_ERROR << "########################### CONNECT() COMPLETES" << std::endl;
+
+        //
+        //  TODO: FIX!! UGLY!!
+        //
+
+        mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
+        userTaskTemp->SendGetCommandId(functionProxies);
+
+        functionProxies.ServerTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
+            resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
+        functionProxies.ProvidedInterfaceProxyName = providedInterfaceName;
+
+        UpdateCommandId(functionProxies);
+        
         //InvokeNotifyInterfaceConnectionResult(
         //    false, // this is beig called at client side.
         //    true,
@@ -424,8 +444,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
     // 
     // TODO: MJUNG: this loop has to be refactored to remove duplicity.
     // (see mtsDeviceInterfaceProxyClient::ReceiveConnectServerSide())
-    //
-    std::string serverTaskProxyName;
+    //    
     std::vector<mtsDeviceInterfaceProxy::ProvidedInterface>::const_iterator it
         = providedInterfaces.begin();
     for (; it != providedInterfaces.end(); ++it) {
@@ -439,7 +458,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
         // Create a server task proxy of which name follows the naming rule above.
         // (see mtsDeviceProxy.h as to why serverTaskProxy is of mtsDevice type, not
         // of mtsTask.)
-        serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
+        std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
             resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
         mtsDeviceProxy * serverTaskProxy = new mtsDeviceProxy(serverTaskProxyName);
 
@@ -514,38 +533,40 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     }
 
     // 2-1) Void
+    mtsCommandVoidProxy * newCommandVoid = NULL;
     ITERATE_INTERFACE_BEGIN(Void)
-        mtsCommandVoidProxy * newCommandVoid = new mtsCommandVoidProxy(
+        newCommandVoid = new mtsCommandVoidProxy(
             commandId, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandVoid);
         providedInterfaceProxy->GetCommandVoidMap().AddItem(it->Name, newCommandVoid);
     ITERATE_INTERFACE_END
 
     // 2-2) Write
-    //ITERATE_INTERFACE_BEGIN(Write)
-    //    mtsCommandWriteProxy * newCommandWrite = new mtsCommandWriteProxy(
-    //        commandId, clientTask->GetProxyClient(), commandName);
-    //    CMN_ASSERT(newCommandWrite);
-    //    providedInterfaceProxy->GetCommandWriteMap().AddItem(it->Name, newCommandWrite);
-    //ITERATE_INTERFACE_END
+    mtsCommandWriteProxy * newCommandWrite = NULL;
+    ITERATE_INTERFACE_BEGIN(Write)
+        newCommandWrite = new mtsCommandWriteProxy(
+            commandId, clientTask->GetProxyClient(), commandName);
+        CMN_ASSERT(newCommandWrite);
+        providedInterfaceProxy->GetCommandWriteMap().AddItem(it->Name, newCommandWrite);
+    ITERATE_INTERFACE_END
 
-    //// 2-3) Read
-    //ITERATE_INTERFACE_BEGIN(Read)
-    //    mtsCommandReadProxy * newCommandRead = new mtsCommandReadProxy(
-    //        commandId, clientTask->GetProxyClient(), commandName);
-    //    CMN_ASSERT(newCommandRead);
-    //    providedInterfaceProxy->GetCommandReadMap().AddItem(it->Name, newCommandRead);
-    //ITERATE_INTERFACE_END
+    // 2-3) Read
+    mtsCommandReadProxy * newCommandRead = NULL;
+    ITERATE_INTERFACE_BEGIN(Read)
+        newCommandRead = new mtsCommandReadProxy(
+            commandId, clientTask->GetProxyClient(), commandName);
+        CMN_ASSERT(newCommandRead);
+        providedInterfaceProxy->GetCommandReadMap().AddItem(it->Name, newCommandRead);
+    ITERATE_INTERFACE_END
 
-    //// 2-4) QualifiedRead
-    ////ITERATE_INTERFACE_BEGIN(QualifiedRead)
-    ////    cmnGenericObject * prototype1 = cmnClassRegister::Create(it->Argument1TypeName);
-    ////    cmnGenericObject * prototype2 = cmnClassRegister::Create(it->Argument2TypeName);
-    ////    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = 
-    ////        new mtsCommandQualifiedReadProxy(commandName, prototype1, prototype2);
-    ////    CMN_ASSERT(newCommandQualifiedRead);
-    ////    providedInterfaceProxy->CommandsQualifiedRead.AddItem(commandName, newCommandQualifiedRead);
-    ////ITERATE_INTERFACE_END
+    // 2-4) QualifiedRead
+    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = NULL;
+    ITERATE_INTERFACE_BEGIN(QualifiedRead)
+        newCommandQualifiedRead = new mtsCommandQualifiedReadProxy(
+            commandId, clientTask->GetProxyClient(), commandName);
+        CMN_ASSERT(newCommandQualifiedRead);
+        providedInterfaceProxy->GetCommandQualifiedReadMap().AddItem(it->Name, newCommandQualifiedRead);
+    ITERATE_INTERFACE_END
 
 #undef ITERATE_INTERFACE_BEGIN
 #undef ITERATE_INTERFACE_END
@@ -556,6 +577,45 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     //
 
     return true;
+}
+
+void mtsTaskManager::UpdateCommandId(mtsDeviceInterfaceProxy::FunctionProxySet functionProxies)
+{
+    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
+    mtsDevice * serverTaskProxy = GetDevice(serverTaskProxyName);
+    CMN_ASSERT(serverTaskProxy);
+
+    mtsProvidedInterface * providedInterfaceProxy = 
+        serverTaskProxy->GetProvidedInterface(functionProxies.ProvidedInterfaceProxyName);
+    CMN_ASSERT(providedInterfaceProxy);
+
+    //mtsCommandVoidProxy * commandVoid = NULL;
+    //mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it = 
+    //    functionProxies.FunctionVoidProxies.begin();
+    //for (; it != functionProxies.FunctionVoidProxies.end(); ++it) {
+    //    commandVoid = dynamic_cast<mtsCommandVoidProxy*>(
+    //        providedInterfaceProxy->GetCommandVoid(it->Name));
+    //    CMN_ASSERT(commandVoid);
+    //    commandVoid->SetCommandId(it->FunctionProxyPointer);
+    //}
+
+    // Replace a command id value with an actual pointer to the function
+    // pointer at server side (this resolves thread synchronization issue).
+#define REPLACE_COMMAND_ID(_commandType)\
+    mtsCommand##_commandType##Proxy * command##_commandType = NULL;\
+    mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it##_commandType = \
+        functionProxies.Function##_commandType##Proxies.begin();\
+    for (; it##_commandType != functionProxies.Function##_commandType##Proxies.end(); ++it##_commandType) {\
+        command##_commandType = dynamic_cast<mtsCommand##_commandType##Proxy*>(\
+            providedInterfaceProxy->GetCommand##_commandType(it##_commandType->Name));\
+        if (command##_commandType)\
+            command##_commandType->SetCommandId(it##_commandType->FunctionProxyPointer);\
+    }
+
+    REPLACE_COMMAND_ID(Void);
+    REPLACE_COMMAND_ID(Write);
+    REPLACE_COMMAND_ID(Read);
+    REPLACE_COMMAND_ID(QualifiedRead);
 }
 
 void mtsTaskManager::StartProxies()

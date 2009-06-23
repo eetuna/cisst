@@ -115,6 +115,9 @@ module mtsDeviceInterfaceProxy
         // Name of the server task proxy. This is used as a key to find a server 
         // task proxy at client side.
         string ServerTaskProxyName;
+        
+        // Name of the provided interface proxy that has command proxies at client side.
+        string ProvidedInterfaceProxyName;
 
         // Sets of function proxy pointers
         FunctionProxySequence FunctionVoidProxies;
@@ -130,8 +133,8 @@ module mtsDeviceInterfaceProxy
 	{
         /*! Update CommandId. This updates the command id of command proxies
         at client side, which is a critical step regarding thread synchronization. */
-        ["cpp:const"] idempotent
-        void UpdateCommandId(FunctionProxySet functionProxies);
+        //["cpp:const"] idempotent
+        //void UpdateCommandId(FunctionProxySet functionProxies);
 	};
 
 	//-----------------------------------------------------------------------------
@@ -150,6 +153,11 @@ module mtsDeviceInterfaceProxy
         /*! Call mtsTaskManager::Connect() at server side. */
         bool ConnectServerSide(string userTaskName, string requiredInterfaceName,
 			                   string resourceTaskName, string providedInterfaceName);
+
+        /*! Update CommandId. This updates the command id of command proxies
+        at client side, which is a critical step regarding thread synchronization. */
+        ["cpp:const"] idempotent
+        void GetCommandId(out FunctionProxySet functionProxies);
 
 		/*! Execute command objects across networks. */
 		// Here 'int' type is used instead of 'unsigned int' because SLICE does not
