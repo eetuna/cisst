@@ -291,11 +291,3 @@ void mtsTask::ToStream(std::ostream & outputStream) const
     ProvidedInterfaces.ToStream(outputStream);
     RequiredInterfaces.ToStream(outputStream);
 }
-#ifdef TASK_TIMING_ANALYSIS
-void mtsTask::GetTimingAnalysisData(std::vector<mtsDouble> & vecExecutionTime,
-                                    std::vector<mtsDouble> & vecPeriod)
-{
-    StateTable.GetTimingAnalysisData(vecExecutionTime, vecPeriod);
-}
-
-#endif

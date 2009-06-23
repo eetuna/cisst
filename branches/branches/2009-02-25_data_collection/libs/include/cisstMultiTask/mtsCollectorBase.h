@@ -61,20 +61,6 @@ public:
         COLLECTOR_LOG_FORMAT_CSV
     } CollectorLogFormat;
 
-    /*
-    class mtsCollectorBaseException : public std::runtime_error {
-    private:
-        std::string ExceptionDescription;    // exception descriptor
-
-    public:
-        mtsCollectorBaseException(std::string exceptionDescription) 
-            : ExceptionDescription(exceptionDescription),
-            std::runtime_error("mtsCollectorBaseException") {}
-
-        const std::string GetExceptionDescription(void) const { return ExceptionDescription; }    
-    };
-    */
-
     //------------------------- Protected Members ---------------------------//
 protected:
 
@@ -112,10 +98,6 @@ protected:
     /*! A child collector class can run only if this flag is set. */
     bool IsRunnable;
 
-    /*! Current collecting period in seconds */
-    //double SamplingInterval;
-    //unsigned int SamplingStride;
-
     /*! For delayed start(void) end stop(void) */
     double DelayedStart;
     double DelayedStop;
@@ -147,29 +129,6 @@ public:
     mtsCollectorBase(const std::string & collectorName, const CollectorLogFormat logFormat);
 
     virtual ~mtsCollectorBase(void);
-
-    //----------------- Signal registration for collection ------------------//
-    /*! Add a signal to the list. Currently 'format' argument is meaningless. */
-    //virtual bool AddSignal(const std::string & taskName, 
-    //                       const std::string & signalName = "", 
-    //                       const std::string & format = "") = 0;
-
-    /*! Remove a signal from the list */
-    //bool RemoveSignal(const std::string & taskName, const std::string & signalName);
-
-    /*! Find a signal from the list */
-    //bool FindSignal(const std::string & taskName, const std::string & signalName);
-
-    //-------------------------- Data Collection ----------------------------//
-    /*! Specify a sampling period and set a flag to apply time offset for making 
-    time base as zero. That is, if offsetToZero is true, start time is subtracted 
-    from each time measurement before outputting data. 
-    This method is overloaded so as to support data collection based on a stride.
-    For example, if we want to collect just from a single task, deltaT could be 
-    an "int", which would specify a stride. (e.g., 1 means all values, 2 means 
-    every other value, etc.)  */
-    //void SetTimeBase(const double samplingIntervalInSeconds, const bool offsetToZero);
-    //void SetTimeBase(const unsigned int samplingStride, const bool offsetToZero);
 
     /*! Begin collecting data. Data collection will begin after delayedStart 
     second(s). If it is zero (by default), it means 'start now'. */

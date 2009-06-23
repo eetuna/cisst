@@ -34,17 +34,14 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsExport.h>
 
 /*!
-\ingroup cisstMultiTask
+  \ingroup cisstMultiTask
 
-This class provides a way to collect data in the state table without loss and make
-a log file. The type of a log file can be plain text (ascii), csv, or binary.
-A state table of which data is to be collected can be specified in the constructor. 
-This is intended for future usage where a task can have more than two state tables.
+  This class provides a way to collect data in the state table without
+  loss and make a log file. The type of a log file can be plain text
+  (ascii), csv, or binary.  A state table of which data is to be
+  collected can be specified in the constructor.  This is intended for
+  future usage where a task can have more than two state tables.
 */
-
-// Enable this macro to measure the elapsed time for data collection
-//#define COLLECTOR_OVERHEAD_MEASUREMENT
-
 class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 {
     friend class mtsCollectorStateTest;
@@ -104,12 +101,6 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
     /*! Serializer for binary logging. DeSerializer is used only at  
         ConvertBinaryToText() method so we don't define it here. */
     cmnSerializer * Serializer;
-
-    /*! Performance measurement variables */
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    double ElapsedTimeForProcessing;
-    osaStopwatch StopWatch;
-#endif
 
     /*! Thread-related methods */
     void Run(void);
@@ -178,13 +169,6 @@ public:
     /*! Get the name of log file currently being written. */
     const std::string & GetLogFileName() { return LogFileName; }
 
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    inline const double GetElapsedTimeForProcessing() {
-        double ret = ElapsedTimeForProcessing;
-        ElapsedTimeForProcessing = 0.0;
-        return ret;
-    }
-#endif
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsCollectorState)

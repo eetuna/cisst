@@ -348,10 +348,6 @@ public:
 	/*! Reset overran period flag. */
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
 
-#ifdef TASK_TIMING_ANALYSIS
-    void GetTimingAnalysisData(std::vector<mtsDouble>& vecExecutionTime,
-                               std::vector<mtsDouble>& vecPeriod);
-#endif
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
 };

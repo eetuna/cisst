@@ -49,9 +49,6 @@ mtsCollectorState::mtsCollectorState(const std::string & targetTaskName,
     TargetStateTableName(targetStateTableName),
     TargetStateTable(0),
     Serializer(0)
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    , ElapsedTimeForProcessing(0.0)
-#endif
 {
     // Check if there is the specified task and the specified state table.    
     TargetTask = taskManager->GetTask(TargetTaskName);
@@ -62,26 +59,28 @@ mtsCollectorState::mtsCollectorState(const std::string & targetTaskName,
     Initialize();
 }
 
+
 mtsCollectorState::mtsCollectorState(mtsTask * targetTask,
                                      const mtsCollectorBase::CollectorLogFormat collectorLogFormat,
-                                     const std::string & targetStateTableName)
-    : mtsCollectorBase("mtsCollectorState", collectorLogFormat),
-      TargetTaskName(TargetTask->GetName()), TargetTask(targetTask),
-      TargetStateTableName(targetStateTableName), TargetStateTable(NULL)
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-      , ElapsedTimeForProcessing(0.0)
-#endif
+                                     const std::string & targetStateTableName):
+    mtsCollectorBase("mtsCollectorState", collectorLogFormat),
+    TargetTaskName(TargetTask->GetName()), TargetTask(targetTask),
+    TargetStateTableName(targetStateTableName), TargetStateTable(NULL)
 {
     Initialize();
 }
 
+
 mtsCollectorState::~mtsCollectorState()
 {
-#define DELETE_OBJECT(_object) if (_object) delete _object;
-    DELETE_OBJECT(DataCollectionTriggerResetCommand);
-    DELETE_OBJECT(Serializer);
-#undef DELETE_OBJECT
+    if (DataCollectionTriggerResetCommand) {
+        delete DataCollectionTriggerResetCommand;
+    }
+    if (Serializer) {
+        delete Serializer;
+    }
 }
+
 
 void mtsCollectorState::Initialize()
 {
@@ -118,30 +117,34 @@ void mtsCollectorState::Initialize()
     
     // Set an appropriate delimiter according to the log file format.
     switch (LogFormat) {
-        case COLLECTOR_LOG_FORMAT_CSV:
-            Delimiter = ',';
-            break;
-
-        case COLLECTOR_LOG_FORMAT_PLAIN_TEXT:
-        case COLLECTOR_LOG_FORMAT_BINARY:
-        default:
-            Delimiter = ' ';
-            break;
+    case COLLECTOR_LOG_FORMAT_CSV:
+        Delimiter = ',';
+        break;
+        
+    case COLLECTOR_LOG_FORMAT_PLAIN_TEXT:
+    case COLLECTOR_LOG_FORMAT_BINARY:
+    default:
+        Delimiter = ' ';
+        break;
     }
 }
 
+
 void mtsCollectorState::SetDataCollectionTriggerResetCommand()
 {
-    DataCollectionTriggerResetCommand = new mtsCommandVoidMethod<mtsStateTable>(
-        &mtsStateTable::ResetDataCollectionTrigger, TargetStateTable, TargetStateTable->GetStateTableName());
+    DataCollectionTriggerResetCommand =
+        new mtsCommandVoidMethod<mtsStateTable>(&mtsStateTable::ResetDataCollectionTrigger,
+                                                TargetStateTable,
+                                                TargetStateTable->GetStateTableName());
 }
+
 
 void mtsCollectorState::DataCollectionEventHandler()
 {
     WaitingForTrigger = false;
-
     Wakeup();
 }
+
 
 //-------------------------------------------------------
 //	Thread Management
@@ -151,14 +154,15 @@ void mtsCollectorState::Startup(void)
     DataCollectionTriggerResetCommand->Execute();
 }
 
+
 void mtsCollectorState::Run(void)
 {
     mtsCollectorBase::Run();
-
+    
     if (!IsRunnable) return;
-
+    
     DataCollectionTriggerResetCommand->Execute();
-
+    
     WaitingForTrigger = true;
     while (WaitingForTrigger) {
         WaitForWakeup();
@@ -168,6 +172,7 @@ void mtsCollectorState::Run(void)
     Collect();
 }
 
+
 //-------------------------------------------------------
 //	Signal Management
 //-------------------------------------------------------
@@ -176,7 +181,7 @@ bool mtsCollectorState::AddSignal(const std::string & signalName,
 {	
     // Check if a user wants to collect all signals
     bool collectAllSignal = (signalName.length() == 0);
-
+    
     if (!collectAllSignal) {
         // Check if the specified signal does exist in the state table.
         int StateVectorID = TargetStateTable->GetStateVectorID(signalName); // 0: Toc, 1: Tic, 2: Period, >=3: user
@@ -205,12 +210,13 @@ bool mtsCollectorState::AddSignal(const std::string & signalName,
             }
         }   
     }
-
+    
     // To reduce reference counter in the mtsCollectorState::Collect() method.
     TableHistoryLength = TargetStateTable->HistoryLength;
-
+    
     return true;
 }
+
 
 bool mtsCollectorState::IsRegisteredSignal(const std::string & signalName) const
 {
@@ -218,9 +224,9 @@ bool mtsCollectorState::IsRegisteredSignal(const std::string & signalName) const
     for (; it != RegisteredSignalElements.end(); ++it) {
         if (it->Name == signalName) return true;
     }
-
     return false;
 }
+
 
 bool mtsCollectorState::AddSignalElement(const std::string & signalName, const unsigned int signalID)
 {
@@ -228,17 +234,18 @@ bool mtsCollectorState::AddSignalElement(const std::string & signalName, const u
     if (IsRegisteredSignal(signalName)) {
         return false;
     }
-
+    
     SignalElement element;
     element.Name = signalName;
     element.ID = signalID;
 
     RegisteredSignalElements.push_back(element);
-
+    
     CMN_LOG_CLASS_INIT_VERBOSE << "AddSignalElement: signal added: " << signalName << std::endl;
 
     return true;
 }
+
 
 //-------------------------------------------------------
 //	Collecting Data
@@ -257,9 +264,9 @@ void mtsCollectorState::Collect(void)
         // state data validity check
         if (TargetStateTable->Ticks[(StartIndex + 1) % TableHistoryLength] - 
             TargetStateTable->Ticks[StartIndex] != 1) 
-        {
-            return;
-        }
+            {
+                return;
+            }
     }
     const unsigned int EndIndex = TargetStateTable->IndexReader;
    
@@ -283,18 +290,19 @@ void mtsCollectorState::Collect(void)
     }
 }
 
+
 void mtsCollectorState::PrintHeader(void)
 {
     std::string currentDateTime; osaGetDateTimeString(currentDateTime);
     
     LogFileName = "DataCollection_" + TargetTask->GetName() + "_" + 
         TargetStateTable->GetStateTableName() + "_" + currentDateTime + ".txt";
-
+    
     std::ofstream outputStream;
     outputStream.open(LogFileName.c_str(), std::ios::out);
     {
         // Print out some information on the state table.
-
+        
         // All lines in the header should be preceded by '#' which represents 
         // the line contains header information rather than collected data.
         outputStream << "#------------------------------------------------------------------------------" << std::endl;
@@ -312,7 +320,7 @@ void mtsCollectorState::PrintHeader(void)
         outputStream << std::endl;
         outputStream << "#------------------------------------------------------------------------------" << std::endl;
         outputStream << "#" << std::endl;
-
+        
         outputStream << "# Ticks" << this->Delimiter;
 
         RegisteredSignalElementType::const_iterator it = RegisteredSignalElements.begin();
@@ -339,9 +347,10 @@ void mtsCollectorState::PrintHeader(void)
         }
     }
     outputStream.close();
-
+    
     FirstRunningFlag = false;
 }
+
 
 void mtsCollectorState::MarkHeaderEnd(std::ofstream & logFile)
 {
@@ -351,6 +360,7 @@ void mtsCollectorState::MarkHeaderEnd(std::ofstream & logFile)
     logFile << std::endl;    
 }
 
+
 bool mtsCollectorState::IsHeaderEndMark(const char * buf) const
 {
     for (int i = 0; i < END_OF_HEADER_SIZE; ++i) {
@@ -359,15 +369,11 @@ bool mtsCollectorState::IsHeaderEndMark(const char * buf) const
     return true;
 }
 
+
 bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table, 
                                             const unsigned int startIndex, 
                                             const unsigned int endIndex)
 {
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    StopWatch.Reset();
-    StopWatch.Start();
-#endif
-    
     std::ofstream outputStream;
     if (LogFormat == COLLECTOR_LOG_FORMAT_BINARY) {
         mtsDouble doubleTick;
@@ -379,7 +385,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
                 doubleTick.Data = TargetStateTable->Ticks[i];
                 Serializer->Serialize(doubleTick);
                 outputStream << StringStreamBufferForSerialization.str();
-
+                
                 for (unsigned int j = 0; j < RegisteredSignalElements.size(); ++j) {
                     StringStreamBufferForSerialization.str("");
                     Serializer->Serialize((*table->StateVector[RegisteredSignalElements[j].ID])[i]);
@@ -405,14 +411,9 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
         }
         outputStream.close();
     }
-
-#ifdef COLLECTOR_OVERHEAD_MEASUREMENT
-    StopWatch.Stop();
-    ElapsedTimeForProcessing += StopWatch.GetElapsedTime();
-#endif
-
     return true;
 }
+
 
 bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFileName,
                                             const std::string targetPlainTextLogFileName,
@@ -436,10 +437,10 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
     // Get the total size of the log file in bytes.
     std::ifstream::pos_type inFileTotalSize = inFile.tellg();
     inFile.seekg(0, std::ios::beg);
-
+    
     // Read the first character in a line. If it is '#', it is a part of header.
     char line[2048];
-    while(true) {
+    while (true) {
         inFile.getline(line, 2048);
         
         if (line[0] == '#') {
@@ -490,12 +491,12 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
         } else {
             outFile << delimiter;
         }
-
+        
         currentPos = inFile.tellg();
     }
-
+    
     CMN_LOG_CLASS_INIT_VERBOSE << "ConvertBinaryToText: conversion completed: " << targetPlainTextLogFileName << std::endl;
-
+    
     outFile.close();
     inFile.close();
     
