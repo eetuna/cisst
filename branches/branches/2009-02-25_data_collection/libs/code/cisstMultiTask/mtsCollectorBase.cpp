@@ -25,33 +25,34 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsCollectorBase)
 
 unsigned int mtsCollectorBase::CollectorCount;
-mtsTaskManager * mtsCollectorBase::taskManager;
+mtsTaskManager * mtsCollectorBase::TaskManager;
 
 //-------------------------------------------------------
 //	Constructor, Destructor, and Initializer
 //-------------------------------------------------------
 mtsCollectorBase::mtsCollectorBase(const std::string & collectorName, 
                                    const CollectorLogFormat logFormat): 
-    TimeOffsetToZero(false),    
-    IsRunnable(false),
+    mtsTaskContinuous(collectorName),
     LogFormat(logFormat),
-    mtsTaskContinuous(collectorName)
+    TimeOffsetToZero(false),    
+    IsRunnable(false)
 {
     ++CollectorCount;
 
-    if (taskManager == NULL) {
-        taskManager = mtsTaskManager::GetInstance();
+    if (TaskManager == 0) {
+        TaskManager = mtsTaskManager::GetInstance();
     }
 
     Init();
 }
 
+
 mtsCollectorBase::~mtsCollectorBase()
 {
     --CollectorCount;
-
     CMN_LOG_CLASS_INIT_VERBOSE << "Collector " << GetName() << " ends." << std::endl;
 }
+
 
 void mtsCollectorBase::Init()
 {
@@ -61,6 +62,7 @@ void mtsCollectorBase::Init()
     DelayedStop = 0.0;
     ClearTaskMap();
 }
+
 
 //-------------------------------------------------------
 //	Thread management functions (called internally)
@@ -182,14 +184,13 @@ void mtsCollectorBase::Stop(const double delayedStopInSecond)
 //-------------------------------------------------------
 void mtsCollectorBase::ClearTaskMap(void)
 {
-    if (!taskMap.empty()) {        
-        TaskMap::iterator itr = taskMap.begin();
-        SignalMap::iterator _itr;
-        for (; itr != taskMap.end(); ++itr) {
+    if (!TaskMap.empty()) {        
+        TaskMapType::iterator itr = TaskMap.begin();
+        SignalMapType::iterator _itr;
+        for (; itr != TaskMap.end(); ++itr) {
             itr->second->clear();
             delete itr->second;
         }
-
-        taskMap.clear();
+        TaskMap.clear();
     }
 }

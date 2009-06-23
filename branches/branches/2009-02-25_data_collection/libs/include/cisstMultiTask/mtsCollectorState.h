@@ -125,13 +125,13 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
                              const unsigned int endIdx);
 
     /*! Print out the signal names which are being collected. */
-    void PrintHeader(void);
+    void PrintHeader(const CollectorLogFormat & logFormat);
 
     /*! Mark the end of the header. Called in case of binary log file. */
     void MarkHeaderEnd(std::ofstream & logFile);
 
     /*! Check if the given buffer contains the header mark. */
-    bool IsHeaderEndMark(const char * buf) const;
+    static bool IsHeaderEndMark(const char * buffer);
     
     /*! When this function is called (called by the data thread as a form of an event),
         bulk-fetch is performed and data is dumped to a log fie. */
@@ -151,8 +151,7 @@ public:
 
     /*! Add the signal specified to a list of registered signals. 
         Currently, 'format' argument is reserved. */
-    bool AddSignal(const std::string & signalName = "",
-                   const std::string & format = "");
+    bool AddSignal(const std::string & signalName = "");
 
     /*! Set a sampling interval so that data collector can skip several values. 
         This is useful when a frequency of the task is somewhat high and you don't want
@@ -162,9 +161,9 @@ public:
     }
 
     /*! Convert a binary log file into a plain text one. */
-    bool ConvertBinaryToText(const std::string sourceBinaryLogFileName,
-                             const std::string targetPlainTextLogFileName,
-                             const char delimiter = ',');
+    static bool ConvertBinaryToText(const std::string sourceBinaryLogFileName,
+                                    const std::string targetPlainTextLogFileName,
+                                    const char delimiter = ',');
 
     /*! Get the name of log file currently being written. */
     const std::string & GetLogFileName() { return LogFileName; }

@@ -43,15 +43,15 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorState)
 mtsCollectorState::mtsCollectorState(const std::string & targetTaskName,
                                      const mtsCollectorBase::CollectorLogFormat collectorLogFormat,
                                      const std::string & targetStateTableName): 
-    mtsCollectorBase("mtsCollectorState", collectorLogFormat),
+    mtsCollectorBase(targetTaskName + "Collector" + targetStateTableName, collectorLogFormat),
     TargetTaskName(targetTaskName),
-    TargetTask(0),
     TargetStateTableName(targetStateTableName),
+    TargetTask(0),
     TargetStateTable(0),
     Serializer(0)
 {
     // Check if there is the specified task and the specified state table.    
-    TargetTask = taskManager->GetTask(TargetTaskName);
+    TargetTask = TaskManager->GetTask(TargetTaskName);
     if (!TargetTask) {
         cmnThrow(std::runtime_error("mtsCollectorState::Initialize(): No such task exists."));
     }
@@ -63,9 +63,11 @@ mtsCollectorState::mtsCollectorState(const std::string & targetTaskName,
 mtsCollectorState::mtsCollectorState(mtsTask * targetTask,
                                      const mtsCollectorBase::CollectorLogFormat collectorLogFormat,
                                      const std::string & targetStateTableName):
-    mtsCollectorBase("mtsCollectorState", collectorLogFormat),
-    TargetTaskName(TargetTask->GetName()), TargetTask(targetTask),
-    TargetStateTableName(targetStateTableName), TargetStateTable(NULL)
+    mtsCollectorBase(targetTask->GetName() + "Collector" + targetStateTableName, collectorLogFormat),
+    TargetTaskName(TargetTask->GetName()),
+    TargetStateTableName(targetStateTableName),
+    TargetTask(targetTask),
+    TargetStateTable(0)
 {
     Initialize();
 }
@@ -176,8 +178,7 @@ void mtsCollectorState::Run(void)
 //-------------------------------------------------------
 //	Signal Management
 //-------------------------------------------------------
-bool mtsCollectorState::AddSignal(const std::string & signalName, 
-                                  const std::string & format)
+bool mtsCollectorState::AddSignal(const std::string & signalName)
 {	
     // Check if a user wants to collect all signals
     bool collectAllSignal = (signalName.length() == 0);
@@ -256,7 +257,7 @@ void mtsCollectorState::Collect(void)
 
     // If this method is called for the first time, print out some information.
     if (FirstRunningFlag) {
-        PrintHeader();
+        PrintHeader(this->LogFormat);
     }
 
     const unsigned int StartIndex = (LastReadIndex + 1) % TableHistoryLength;
@@ -291,12 +292,26 @@ void mtsCollectorState::Collect(void)
 }
 
 
-void mtsCollectorState::PrintHeader(void)
+void mtsCollectorState::PrintHeader(const CollectorLogFormat & logFormat)
 {
-    std::string currentDateTime; osaGetDateTimeString(currentDateTime);
+    std::string currentDateTime;
+    osaGetDateTimeString(currentDateTime);
+    char delimiter;
+    std::string suffix;
+
+    if (logFormat == COLLECTOR_LOG_FORMAT_PLAIN_TEXT) {
+        suffix = "txt";
+        delimiter = ' ';
+    } else if (logFormat == COLLECTOR_LOG_FORMAT_CSV) {
+        suffix = "csv";
+        delimiter = ',';
+    } else {
+        suffix = "cdat"; // for cisst dat
+        delimiter = ' ';
+    }
     
-    LogFileName = "DataCollection_" + TargetTask->GetName() + "_" + 
-        TargetStateTable->GetStateTableName() + "_" + currentDateTime + ".txt";
+    LogFileName = "StateDataCollection-" + TargetTask->GetName() + "-" + 
+        TargetStateTable->GetStateTableName() + "-" + currentDateTime + "." + suffix;
     
     std::ofstream outputStream;
     outputStream.open(LogFileName.c_str(), std::ios::out);
@@ -310,9 +325,9 @@ void mtsCollectorState::PrintHeader(void)
         outputStream << "# Date & Time        : " << currentDateTime << std::endl;
         outputStream << "# Total signal count : " << RegisteredSignalElements.size() << std::endl;
         outputStream << "# Data format        : ";
-        if (LogFormat == COLLECTOR_LOG_FORMAT_PLAIN_TEXT) {
+        if (logFormat == COLLECTOR_LOG_FORMAT_PLAIN_TEXT) {
             outputStream << "Text";
-        } else if (LogFormat == COLLECTOR_LOG_FORMAT_CSV) {
+        } else if (logFormat == COLLECTOR_LOG_FORMAT_CSV) {
             outputStream << "Text (CSV)";
         } else {
             outputStream << "Binary";
@@ -321,20 +336,19 @@ void mtsCollectorState::PrintHeader(void)
         outputStream << "#------------------------------------------------------------------------------" << std::endl;
         outputStream << "#" << std::endl;
         
-        outputStream << "# Ticks" << this->Delimiter;
-
+        outputStream << "# Ticks";
         RegisteredSignalElementType::const_iterator it = RegisteredSignalElements.begin();
         for (; it != RegisteredSignalElements.end(); ++it) {
-            (*(TargetStateTable->StateVector[it->ID]))[0].ToStreamRaw(outputStream, this->Delimiter, true,
+            outputStream << delimiter;
+            (*(TargetStateTable->StateVector[it->ID]))[0].ToStreamRaw(outputStream, delimiter, true,
                                                                       TargetStateTable->StateVectorDataNames[it->ID]);
-            outputStream << this->Delimiter;
         }
 
         outputStream << std::endl;
         outputStream << "#-------------------------------------------------------------------------------" << std::endl;
 
         // In case of using binary format
-        if (LogFormat == COLLECTOR_LOG_FORMAT_BINARY) {
+        if (logFormat == COLLECTOR_LOG_FORMAT_BINARY) {
             // Mark the end of the header.
             MarkHeaderEnd(outputStream);
             
@@ -361,10 +375,10 @@ void mtsCollectorState::MarkHeaderEnd(std::ofstream & logFile)
 }
 
 
-bool mtsCollectorState::IsHeaderEndMark(const char * buf) const
+bool mtsCollectorState::IsHeaderEndMark(const char * buffer)
 {
     for (int i = 0; i < END_OF_HEADER_SIZE; ++i) {
-        if (buf[i] != EndOfHeader[i]) return false;
+        if (buffer[i] != EndOfHeader[i]) return false;
     }
     return true;
 }
@@ -376,7 +390,7 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
 {
     std::ofstream outputStream;
     if (LogFormat == COLLECTOR_LOG_FORMAT_BINARY) {
-        mtsDouble doubleTick;
+        cmnDouble doubleTick;
         outputStream.open(LogFileName.c_str(), std::ios::binary | std::ios::app);
         {            
             unsigned int i;
@@ -400,10 +414,10 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
         {
             unsigned int i;
             for (i = startIndex; i <= endIndex; i += SamplingInterval) {
-                outputStream << TargetStateTable->Ticks[i] << this->Delimiter;
+                outputStream << TargetStateTable->Ticks[i];
                 for (unsigned int j = 0; j < RegisteredSignalElements.size(); ++j) {
-                    (*table->StateVector[RegisteredSignalElements[j].ID])[i].ToStreamRaw(outputStream, this->Delimiter);
                     outputStream << this->Delimiter;
+                    (*table->StateVector[RegisteredSignalElements[j].ID])[i].ToStreamRaw(outputStream, this->Delimiter);
                 }
                 outputStream << std::endl;
             }
@@ -422,14 +436,14 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
     // Try to open a binary log file (source).
     std::ifstream inFile(sourceBinaryLogFileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile.is_open()) {
-        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: unable to open binary log file: " << sourceBinaryLogFileName << std::endl;
+        CMN_LOG_INIT_ERROR << "ConvertBinaryToText: unable to open binary log file: " << sourceBinaryLogFileName << std::endl;
         return false;
     }
 
     // Prepare output log file with plain text format.
     std::ofstream outFile(targetPlainTextLogFileName.c_str(), std::ios::out);
     if (!outFile.is_open()) {
-        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: unable to create text log file: " << targetPlainTextLogFileName << std::endl;
+        CMN_LOG_INIT_ERROR << "ConvertBinaryToText: unable to create text log file: " << targetPlainTextLogFileName << std::endl;
         inFile.close();
         return false;
     }
@@ -442,10 +456,9 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
     char line[2048];
     while (true) {
         inFile.getline(line, 2048);
-        
         if (line[0] == '#') {
             // Copy header lines.
-            outFile << line;
+            outFile << line << std::endl;
             continue;
         }
         break;
@@ -453,7 +466,7 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
 
     // Check the end of header.
     if (!IsHeaderEndMark(line)) {
-        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: corrupted header." << std::endl;
+        CMN_LOG_INIT_ERROR << "ConvertBinaryToText: corrupted header." << std::endl;
         inFile.close();
         outFile.close();
         return false;
@@ -465,7 +478,7 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
     cmnGenericObject * element = DeSerializer.DeSerialize();
     cmnULong * totalSignalCountObject = dynamic_cast<cmnULong *>(element);
     if (!totalSignalCountObject) {
-        CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: corrupted header." << std::endl;
+        CMN_LOG_INIT_ERROR << "ConvertBinaryToText: corrupted header." << std::endl;
         inFile.close();
         outFile.close();
         return false;
@@ -479,8 +492,8 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
     while (currentPos < inFileTotalSize) {
         element = DeSerializer.DeSerialize();
         if (!element) {
-            CMN_LOG_CLASS_INIT_ERROR << "ConvertBinaryToText: unexpected termination: "
-                                     << currentPos << " / " << inFileTotalSize << std::endl;
+            CMN_LOG_INIT_ERROR << "ConvertBinaryToText: unexpected termination: "
+                               << currentPos << " / " << inFileTotalSize << std::endl;
             break;
         }
         
@@ -495,7 +508,7 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
         currentPos = inFile.tellg();
     }
     
-    CMN_LOG_CLASS_INIT_VERBOSE << "ConvertBinaryToText: conversion completed: " << targetPlainTextLogFileName << std::endl;
+    CMN_LOG_INIT_VERBOSE << "ConvertBinaryToText: conversion completed: " << targetPlainTextLogFileName << std::endl;
     
     outFile.close();
     inFile.close();

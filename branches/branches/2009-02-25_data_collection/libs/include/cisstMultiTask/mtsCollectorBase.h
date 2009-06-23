@@ -88,9 +88,9 @@ protected:
         TaskMap:   (taskName, SignalMap*)
         SignalMap: (SignalName, SignalMapElement)
     */
-    typedef std::map<std::string, SignalMapElement> SignalMap;
-    typedef std::map<std::string, SignalMap*>       TaskMap;
-    TaskMap taskMap;
+    typedef std::map<std::string, SignalMapElement> SignalMapType;
+    typedef std::map<std::string, SignalMapType *> TaskMapType;
+    TaskMapType TaskMap;
 
     /*! If this flag is set, start time is subtracted from each time measurement. */
     bool TimeOffsetToZero;    
@@ -105,7 +105,7 @@ protected:
 
     /*! Static member variables */
     static unsigned int CollectorCount;
-    static mtsTaskManager * taskManager;
+    static mtsTaskManager * TaskManager;
 
     /*! Initialize this collector instance */
     void Init(void);
