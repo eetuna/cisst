@@ -110,7 +110,7 @@ void mtsDeviceInterfaceProxyClient::OnThreadEnd()
 }
 
 //-------------------------------------------------------------------------
-//  Serialization and Deserialization
+//  Processing Methods
 //-------------------------------------------------------------------------
 void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
                                               std::string & serializedData)
@@ -122,7 +122,24 @@ void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
 }
 
 //-------------------------------------------------------------------------
-//  Send Methods
+//  Methods to Receive and Process Events
+//-------------------------------------------------------------------------
+void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
+    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+{
+    //
+    // TODO
+    //
+    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
+
+    // server task proxy를 찾아서
+    // command object 들을 iteration 하면서
+    // 보내온 command object name이 일치하는 경우
+    // execution ptr을 업데이트 한다.
+}
+
+//-------------------------------------------------------------------------
+//  Methods to Send Events
 //-------------------------------------------------------------------------
 const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaces(
         mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const
@@ -187,6 +204,9 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(co
     //argument2 = out;
 }
 
+//-------------------------------------------------------------------------
+//  Send Methods
+//-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
 //  Definition by mtsDeviceInterfaceProxy.ice
@@ -259,4 +279,16 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Destroy()
     }
 
     callbackSenderThread->getThreadControl().join();
+}
+
+//-----------------------------------------------------------------------------
+//  Device Interface Proxy Client Implementation
+//-----------------------------------------------------------------------------
+void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::UpdateCommandId(
+    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies,
+    const Ice::Current & current) const
+{
+    Logger->trace("TIClient", "<<<<< RECV: UpdateCommandId");
+
+    DeviceInterfaceClient->ReceiveUpdateCommandId(functionProxies);
 }

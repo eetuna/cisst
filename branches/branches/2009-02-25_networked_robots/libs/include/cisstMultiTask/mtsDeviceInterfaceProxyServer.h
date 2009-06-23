@@ -53,10 +53,11 @@ public:
     
     void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
 
-    //friend class DeviceInterfaceServerI;
-
 protected:
     typedef mtsProxyBaseServer<mtsTask> BaseType;
+
+    /*! Typedef for client proxy. */
+    typedef mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx DeviceInterfaceClientProxyType;
 
     /*! Definitions for send thread */
     class DeviceInterfaceServerI;
@@ -100,6 +101,9 @@ protected:
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
 
+    /*! Connected client object. */
+    DeviceInterfaceClientProxyType ConnectedClient;
+
     /*! Function proxies */
     typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
     typedef cmnNamedMap<mtsFunctionWrite> FunctionWriteProxyMapType;
@@ -110,7 +114,6 @@ protected:
     FunctionReadProxyMapType FunctionReadProxyMap;
     FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
 
-
     //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
@@ -120,9 +123,16 @@ protected:
     bool PopulateRequiredInterfaceProxy(mtsRequiredInterface * requiredInterfaceProxy, 
                                         mtsProvidedInterface * providedInterface);
 
+    /*! Get pointers to the function proxies created at 
+        mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(). */        
+    bool GetFunctionPointers(const std::string & serverTaskProxyName);
+
     //-------------------------------------------------------------------------
-    //  Proxy Support
+    //  Methods to Receive and Process Events
     //-------------------------------------------------------------------------
+    /*! When a new client connects, add it to the client management list. */
+    void ReceiveAddClient(const DeviceInterfaceClientProxyType & clientProxy);
+
     /*! Update the information of all tasks. */
     const bool ReceiveGetProvidedInterfaces(
         ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
@@ -141,15 +151,19 @@ protected:
     void ReceiveExecuteCommandQualifiedReadSerialized(const int commandId, const std::string argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
+    //  Methods to Send Events
+    //-------------------------------------------------------------------------
+    void SendUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
+
+    //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
     //-------------------------------------------------------------------------
     class DeviceInterfaceServerI : public mtsDeviceInterfaceProxy::DeviceInterfaceServer,
-                                 public IceUtil::Monitor<IceUtil::Mutex> 
+                                   public IceUtil::Monitor<IceUtil::Mutex> 
     {
     private:
         Ice::CommunicatorPtr Communicator;
         bool Runnable;
-        std::set<mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx> _clients;
         IceUtil::ThreadPtr Sender;
         Ice::LoggerPtr Logger;
         mtsDeviceInterfaceProxyServer * DeviceInterfaceServer;
@@ -164,24 +178,18 @@ protected:
         void Destroy();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
-        
-        bool GetProvidedInterfaces(
-            ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence&, 
-            const ::Ice::Current&) const;
-        
+        bool GetProvidedInterfaces(::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence&, 
+                                   const ::Ice::Current&) const;
         bool ConnectServerSide(
             const std::string & userTaskName, const std::string & requiredInterfaceName,
             const std::string & resourceTaskName, const std::string & providedInterfaceName,
             const ::Ice::Current&);
-
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
         void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
         void ExecuteCommandReadSerialized(::Ice::Int, ::std::string&, const ::Ice::Current&);
         void ExecuteCommandQualifiedReadSerialized(::Ice::Int, const ::std::string&, ::std::string&, const ::Ice::Current&);
 
     };
-
-    //------------------ Methods for global task manager --------------------//
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceInterfaceProxyServer)

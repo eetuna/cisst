@@ -58,7 +58,7 @@ protected:
     DeviceInterfaceServerProxyType DeviceInterfaceServerProxy;
     
     //-------------------------------------------------------------------------
-    //  Serialization and Deserialization
+    //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Buffers for serialization and deserialization. */
     std::stringstream SerializationBuffer;
@@ -94,7 +94,12 @@ protected:
     void OnThreadEnd();
 
     //-------------------------------------------------------------------------
-    //  Send Methods
+    //  Methods to Receive and Process Events
+    //-------------------------------------------------------------------------
+    void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+
+    //-------------------------------------------------------------------------
+    //  Methods to Send Events
     //-------------------------------------------------------------------------
 public:
     const bool SendGetProvidedInterfaces(
@@ -127,13 +132,15 @@ protected:
 
     public:
         DeviceInterfaceClientI(const Ice::CommunicatorPtr& communicator,                           
-                           const Ice::LoggerPtr& logger,
-                           const mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx& server,
-                           mtsDeviceInterfaceProxyClient * DeviceInterfaceClient);
+                               const Ice::LoggerPtr& logger,
+                               const mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx& server,
+                               mtsDeviceInterfaceProxyClient * DeviceInterfaceClient);
 
         void Start();
         void Run();
         void Destroy();
+
+        void UpdateCommandId(const ::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
     };
 };
 

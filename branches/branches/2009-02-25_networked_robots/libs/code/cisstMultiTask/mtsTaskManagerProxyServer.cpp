@@ -198,7 +198,7 @@ bool mtsTaskManagerProxyServer::RemoveTaskManagerByConnectionID(const Connection
 //}
 
 //-----------------------------------------------------------------------------
-//  Proxy Server Implementation
+//  Task Manager Proxy Server Processing
 //-----------------------------------------------------------------------------
 void mtsTaskManagerProxyServer::ReceiveAddClient(
     const ConnectionIDType & connectionID, const TaskManagerClientProxyType & clientProxy)
@@ -397,7 +397,7 @@ void mtsTaskManagerProxyServer::ReceiveNotifyInterfaceConnectionResult(
 
 //-------------------------------------------------------------------------
 //  Send Methods
-//-------------------------------------------------------------------------l
+//-------------------------------------------------------------------------
 /*
 bool mtsTaskManagerProxyServer::SendConnectServerSide(
     TaskManagerClient * taskManagerWithServerTask,
@@ -504,6 +504,9 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Destroy()
     callbackSenderThread->getThreadControl().join();
 }
 
+//-----------------------------------------------------------------------------
+//  Task Manager Proxy Server Implementation
+//-----------------------------------------------------------------------------
 void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
     const ::Ice::Identity & identity, const ::Ice::Current& current)
 {

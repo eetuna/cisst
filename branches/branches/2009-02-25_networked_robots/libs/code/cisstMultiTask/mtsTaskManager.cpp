@@ -322,7 +322,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     } else {
         // If we cannot find, the resource interface should be at remote or doesn't exist.
         if (GetTaskManagerType() == TASK_MANAGER_LOCAL) {
-            CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "Connect: Cannot find a task or device named " << resourceTaskName << std::endl;
             return false;
         } else {
             userTaskTemp = dynamic_cast<mtsTask*>(userTask);
@@ -332,7 +332,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                                     userTaskName, requiredInterfaceName, 
                                     userTaskTemp);
             if (!resourceInterface) {
-                CMN_LOG_CLASS_INIT_ERROR << "Connect through networks: can not find the task or device named " << resourceTaskName << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "Connect through networks: Cannot find the task or device named " << resourceTaskName << std::endl;
                 return false;                
             }
 
@@ -387,7 +387,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
     // For the use of consistent notation
     mtsTask * clientTask = userTask;
 
-    // Ask the global task manager (TMServer) if the specified task providing
+    // Ask the global task manager (TMServer) if the specific task specified 
     // the specific provided interface has been registered.
     if (!IsRegisteredProvidedInterface(resourceTaskName, providedInterfaceName)) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect across networks: '" << providedInterfaceName << "' has not been registered." << resourceTaskName << ", " << std::endl;
@@ -434,7 +434,7 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
         // side. However, if we want to handle a case that there are multiple provided 
         // interfaces, this loop should be modified. (MJUNG)
         //
-        CMN_ASSERT(providedInterfaceName == it->interfaceName);
+        CMN_ASSERT(providedInterfaceName == it->InterfaceName);
 
         // Create a server task proxy of which name follows the naming rule above.
         // (see mtsDeviceProxy.h as to why serverTaskProxy is of mtsDevice type, not
@@ -487,10 +487,10 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     mtsDevice * serverTaskProxy, mtsTask * clientTask)
 {
     // 1) Create a local provided interface (a provided interface proxy).
-    mtsDeviceInterface * providedInterfaceProxy = serverTaskProxy->AddProvidedInterface(providedInterface.interfaceName);
+    mtsDeviceInterface * providedInterfaceProxy = serverTaskProxy->AddProvidedInterface(providedInterface.InterfaceName);
     if (!providedInterfaceProxy) {
         CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: Could not add provided interface: " 
-                                << providedInterface.interfaceName << std::endl;
+                                << providedInterface.InterfaceName << std::endl;
         return false;
     }
 
@@ -501,8 +501,8 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
     {\
         mtsDeviceInterfaceProxy::Command##_commandType##Sequence::const_iterator it\
-            = providedInterface.commands##_commandType.begin();\
-        for (; it != providedInterface.commands##_commandType.end(); ++it) {\
+            = providedInterface.Commands##_commandType.begin();\
+        for (; it != providedInterface.Commands##_commandType.end(); ++it) {\
             commandName = it->Name;\
             commandId = 0;
 

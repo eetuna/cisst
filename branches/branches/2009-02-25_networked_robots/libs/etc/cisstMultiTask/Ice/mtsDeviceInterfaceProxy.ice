@@ -36,7 +36,7 @@ module mtsDeviceInterfaceProxy
 	//-----------------------------------------------------------------------------
 	//	Command and Event Object Definition
 	//-----------------------------------------------------------------------------
-	struct CommandVoidInfo { 
+	struct CommandVoidInfo {
 		string Name;
         int CommandId;
 	};
@@ -82,19 +82,14 @@ module mtsDeviceInterfaceProxy
 	//-----------------------------------------------------------------------------	
 	// Data structure definition
 	struct ProvidedInterface {
-		// Identity
-		string interfaceName;
-		
-		// Flag to determine the type of this provided interface.
-		// true, if this interface is of mtsTaskInterface type.
-		// false, if this interface is of mtsDeviceInterface type.
-		bool providedInterfaceForTask;
+		// Interface name
+		string InterfaceName;
 		
 		// Commands
-		CommandVoidSequence          commandsVoid;
-		CommandWriteSequence         commandsWrite;
-		CommandReadSequence          commandsRead;
-		CommandQualifiedReadSequence commandsQualifiedRead;
+		CommandVoidSequence          CommandsVoid;
+		CommandWriteSequence         CommandsWrite;
+		CommandReadSequence          CommandsRead;
+		CommandQualifiedReadSequence CommandsQualifiedRead;
 		//EventVoidSequence eventsVoid;
 		//EventWriteSequence eventsWrite;
 		
@@ -106,15 +101,37 @@ module mtsDeviceInterfaceProxy
     /*! List of provided interfaces */
     sequence<ProvidedInterface> ProvidedInterfaceSequence;
 
+    //-----------------------------------------------------------------------------
+	//	Function Proxy Related Definition
+	//-----------------------------------------------------------------------------	
+    struct FunctionProxyInfo {
+        string Name;
+        int FunctionProxyPointer;
+    };
+
+    sequence<FunctionProxyInfo> FunctionProxySequence;
+
+    struct FunctionProxySet {
+        // Name of the server task proxy. This is used as a key to find a server 
+        // task proxy at client side.
+        string ServerTaskProxyName;
+
+        // Sets of function proxy pointers
+        FunctionProxySequence FunctionVoidProxies;
+        FunctionProxySequence FunctionWriteProxies;
+        FunctionProxySequence FunctionReadProxies;
+        FunctionProxySequence FunctionQualifiedReadProxies;
+    };
+
 	//-----------------------------------------------------------------------------
 	// Interface for Required Interface (Proxy Client)
 	//-----------------------------------------------------------------------------
 	interface DeviceInterfaceClient
 	{
-        /*! Update CommandId. This updates the CommandId field of command proxies'
-        at client side (this step is critical regarding thread synchronization). */
-        //["cpp:const"] idempotent
-        //void UpdateCommandId()
+        /*! Update CommandId. This updates the command id of command proxies
+        at client side, which is a critical step regarding thread synchronization. */
+        ["cpp:const"] idempotent
+        void UpdateCommandId(FunctionProxySet functionProxies);
 	};
 
 	//-----------------------------------------------------------------------------

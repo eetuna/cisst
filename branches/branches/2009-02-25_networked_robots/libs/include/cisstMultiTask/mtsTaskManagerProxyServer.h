@@ -118,7 +118,7 @@ protected:
     TaskManagerServerIPtr Sender;
     
     //-------------------------------------------------------------------------
-    //
+    //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Check if a specific task manager exists. */
     TaskManagerClient * GetTaskManager(const TaskManagerIDType & taskManagerID);
@@ -133,11 +133,11 @@ protected:
     //-------------------------------------------------------------------------
     /*! When a new client connects, add it to the client management list. */
     void ReceiveAddClient(const ConnectionIDType & connectionID, 
-                     const TaskManagerClientProxyType & clientProxy);
+                          const TaskManagerClientProxyType & clientProxy);
 
     /*! Update the information on the newly connected task manager. */
     bool ReceiveUpdateTaskManagerClient(const ConnectionIDType & connectionID,
-                                 const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
+                                        const ::mtsTaskManagerProxy::TaskList& localTaskInfo);
 
     /*! Add a new provided interface. */
     bool ReceiveAddProvidedInterface(
@@ -170,24 +170,11 @@ protected:
     //-------------------------------------------------------------------------
     //  Send Methods
     //-------------------------------------------------------------------------
-    // bool SendConnectServerSide(
-        // TaskManagerClient * taskManagerWithServerTask,
-        // const std::string & userTaskName,     const std::string & requiredInterfaceName,
-        // const std::string & resourceTaskName, const std::string & providedInterfaceName);
+    
 
-    //-----------------------------------
-    //  Task Processing
-    //-----------------------------------
-    /*! Return the information on the specified task. */
-    //mtsTaskGlobal * GetTask(const std::string & taskName);
-
-    /*! Add a task. Return false if the specified task has been already registered. */
-    //const bool AddTask(const std::string taskName);
-
-    /*! Remove a task. Return false if the specified task is not found. */
-    //const bool RemoveTask(const std::string taskName);
-
-    //---------------------------- Proxy Support ----------------------------//
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation
+    //-------------------------------------------------------------------------
     /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
         Sender = new TaskManagerServerI(IceCommunicator, Logger, this);

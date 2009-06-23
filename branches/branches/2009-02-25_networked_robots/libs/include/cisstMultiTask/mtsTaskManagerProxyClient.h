@@ -120,7 +120,6 @@ protected:
     private:
         Ice::CommunicatorPtr Communicator;
         bool Runnable;
-        //std::set<mtsTaskManagerProxy::TaskManagerServerPrx> _servers;
         
         IceUtil::ThreadPtr Sender;
         Ice::LoggerPtr Logger;
@@ -138,10 +137,6 @@ protected:
         void Destroy();
 
         void ReceiveData(::Ice::Int num, const ::Ice::Current&);
-   //     bool ConnectServerSide(
-   //         const std::string & userTaskName, const std::string & requiredInterfaceName,
-			//const std::string & resourceTaskName, const std::string & providedInterfaceName,
-   //         const ::Ice::Current & current);
     };
 };
 

@@ -31,7 +31,7 @@ CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyServer);
 #define DeviceInterfaceProxyServerLogger(_log) Logger->trace("mtsDeviceInterfaceProxyServer", _log)
 #define DeviceInterfaceProxyServerLoggerError(_log1, _log2) \
         std::stringstream s;\
-        s << "mtsDeviceInterfaceProxyServer: " << _log1 << _log2;\
+        s << "mtsDeviceInterfaceProxyServer: " << _log1 << ": " << _log2;\
         Logger->error(s.str());
 
 mtsDeviceInterfaceProxyServer::mtsDeviceInterfaceProxyServer(
@@ -131,7 +131,7 @@ mtsProvidedInterface * mtsDeviceInterfaceProxyServer::GetProvidedInterface(
     if (!resourceDevice) {
         resourceTask = taskManager->GetTask(resourceDeviceName);
         if (!resourceTask) {
-            DeviceInterfaceProxyServerLoggerError("GetProvidedInterface: ", 
+            DeviceInterfaceProxyServerLoggerError("GetProvidedInterface", 
                 "Cannot find an original resource device or task at server side: " + resourceDeviceName);
             return 0;
         }
@@ -221,17 +221,66 @@ bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     // Connect to the original device or task that provides allocated resources.
     requiredInterfaceProxy->ConnectTo(providedInterface);
     if (!requiredInterfaceProxy->BindCommandsAndEvents(userId)) {
-        DeviceInterfaceProxyServerLoggerError(
-            "PopulateRequiredInterfaceProxy", "BindCommandsAndEvents failed.");
+        DeviceInterfaceProxyServerLoggerError("PopulateRequiredInterfaceProxy", 
+            "BindCommandsAndEvents failed.");
         return false;
     }
 
     return true;
 }
 
+bool mtsDeviceInterfaceProxyServer::GetFunctionPointers(const std::string & serverTaskProxyName)
+{
+    mtsDeviceInterfaceProxy::FunctionProxySet functionProxySet;
+    mtsDeviceInterfaceProxy::FunctionProxyInfo element;
+
+    //FunctionVoidProxyMapType::MapType::const_iterator it;
+    //it = FunctionVoidProxyMap.GetMap().begin();
+    //for (; it != FunctionVoidProxyMap.GetMap().end(); ++it) {
+    //    element.Name = it->first;
+    //    element.FunctionProxyPointer = reinterpret_cast<int>(it->second);
+    //    functionProxy.FunctionVoidProxies.push_back(element);
+    //}
+#define GET_FUNCTION_PROXY_BEGIN(_commandType)\
+    Function##_commandType##ProxyMapType::MapType::const_iterator it##_commandType;\
+    it##_commandType = Function##_commandType##ProxyMap.GetMap().begin();\
+    for (; it##_commandType != Function##_commandType##ProxyMap.GetMap().end(); ++it##_commandType) {\
+        element.Name = it##_commandType->first;\
+        element.FunctionProxyPointer = reinterpret_cast<int>(it##_commandType->second);\
+        functionProxySet.Function##_commandType##Proxies.push_back(element)
+#define GET_FUNCTION_PROXY_END\
+    }
+
+    GET_FUNCTION_PROXY_BEGIN(Void);
+    GET_FUNCTION_PROXY_END;
+
+    GET_FUNCTION_PROXY_BEGIN(Write);
+    GET_FUNCTION_PROXY_END;
+
+    GET_FUNCTION_PROXY_BEGIN(Read);
+    GET_FUNCTION_PROXY_END;
+
+    GET_FUNCTION_PROXY_BEGIN(QualifiedRead);
+    GET_FUNCTION_PROXY_END;
+
+    functionProxySet.ServerTaskProxyName = serverTaskProxyName;
+    SendUpdateCommandId(functionProxySet);
+
+    return true;
+}
+
 //-------------------------------------------------------------------------
-//  Task Processing
+//  Methods to Receive and Process Events
 //-------------------------------------------------------------------------
+// MJUNG: Currently, only one server task is connected to only one client task.
+// Thus, we don't need to manage a client object of which type is 
+// DeviceInterfaceClientProxyType while we have to manage them in case of 
+// the global task manager (see mtsTaskmanagerProxyServer::ReceiveAddClient()).
+void mtsDeviceInterfaceProxyServer::ReceiveAddClient(const DeviceInterfaceClientProxyType & clientProxy)
+{
+    ConnectedClient = clientProxy;
+}
+
 const bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaces(
     ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces)
 {
@@ -251,16 +300,7 @@ const bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaces(
         CMN_ASSERT(providedInterface);
 
         // 2) Get a provided interface name.
-        providedInterfaceSpec.interfaceName = providedInterface->GetName();
-
-        // TODO: Maybe I can just assume that only mtsDeviceInterface is used.
-        // Determine the type of the provided interface: is it mtsDeviceInterface or 
-        // mtsDeviceInterface?
-        //if (dynamic_cast<mtsDeviceInterface*>(providedInterface)) {
-        //    providedInterfaceSpec.providedInterfaceForTask = true;
-        //} else {
-            providedInterfaceSpec.providedInterfaceForTask = false;
-        //}
+        providedInterfaceSpec.InterfaceName = providedInterface->GetName();
             
         // 3) Extract all the information on registered command objects, events, and so on.
 #define ITERATE_INTERFACE_BEGIN( _commandType ) \
@@ -274,7 +314,7 @@ const bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaces(
             info.CommandId = reinterpret_cast<int>(iterator##_commandType->second);
 
 #define ITERATE_INTERFACE_END( _commandType ) \
-            providedInterfaceSpec.commands##_commandType.push_back(info);\
+            providedInterfaceSpec.Commands##_commandType.push_back(info);\
         }
 
         // 3-1) Command: Void
@@ -322,27 +362,31 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
     mtsProvidedInterface * providedInterface = GetProvidedInterface(
         resourceTaskName, providedInterfaceName);
     if (!providedInterface) {
-        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: cannot find a provided interface: ", providedInterface);
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Cannot find a provided interface: " + providedInterfaceName);
         return false;
     }
 
     // Create a client task proxy (mtsDevice) and a required Interface proxy (mtsRequiredInterface)
     mtsDeviceProxy * clientTaskProxy = new mtsDeviceProxy(clientDeviceProxyName);
     if (!taskManager->AddDevice(clientTaskProxy)) {
-        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: cannot add a device proxy: ", clientDeviceProxyName);
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Cannot add a device proxy: " + clientDeviceProxyName);
         return false;
     }
 
     mtsRequiredInterface * requiredInterfaceProxy = 
         clientTaskProxy->AddRequiredInterface(requiredInterfaceName);
     if (!requiredInterfaceProxy) {
-        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: cannot add required interface: ", requiredInterfaceName);
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Cannot add required interface: " + requiredInterfaceName);
         return false;
     }
 
     // Populate a required Interface proxy
     if (!PopulateRequiredInterfaceProxy(requiredInterfaceProxy, providedInterface)) {
-        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: failed to populate a required interface proxy: ", requiredInterfaceName);
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Failed to populate a required interface proxy: " + requiredInterfaceName);
         return false;
     }
 
@@ -350,15 +394,22 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
     if (!taskManager->Connect(
         clientDeviceProxyName, requiredInterfaceName, resourceTaskName, providedInterfaceName)) 
     {
-        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide: failed to connect: ", 
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Failed to connect: " + 
             userTaskName + " : " + requiredInterfaceName + " - " + 
             resourceTaskName + " : " +  providedInterfaceName);
         return false;
     }
 
-    // After Connect() succeeds at server side, update command id of command proxies 
-    // at client side.
-    //
+    // After Connect() is executed successfully at server side, update the command id of 
+    // command proxies at client side.
+    std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
+            resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
+    if (!GetFunctionPointers(serverTaskProxyName)) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Failed to get function pointers: " + serverTaskProxyName);
+        return false;
+    }
 
     DeviceInterfaceProxyServerLogger("Connect() at server side succeeded: " +
         userTaskName + " : " + requiredInterfaceName + " - " + 
@@ -422,6 +473,17 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized
 }
 
 //-------------------------------------------------------------------------
+//  Methods to Send Events
+//-------------------------------------------------------------------------
+void mtsDeviceInterfaceProxyServer::SendUpdateCommandId(
+    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet)
+{
+    GetLogger()->trace("TIServer", ">>>>> SEND: SendUpdateCommandId");
+
+    ConnectedClient->UpdateCommandId(functionProxySet);
+}
+
+//-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
 //-------------------------------------------------------------------------
 mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::DeviceInterfaceServerI(
@@ -447,18 +509,10 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
     int num = 0;
     while(true)
     {
-        std::set<mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx> clients;
-        {
-            IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-            timedWait(IceUtil::Time::seconds(2));
+        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        timedWait(IceUtil::Time::milliSeconds(10));
 
-            if(!Runnable)
-            {
-                break;
-            }
-
-            clients = _clients;
-        }
+        if(!Runnable) break;
 
 #ifdef _COMMUNICATION_TEST_
         if(!clients.empty())
@@ -508,7 +562,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Destroy()
 }
 
 //-----------------------------------------------------------------------------
-//  Proxy Server Implementation
+//  Device Interface Proxy Server Implementation
 //-----------------------------------------------------------------------------
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::AddClient(
     const ::Ice::Identity& ident, const ::Ice::Current& current)
@@ -517,10 +571,10 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::AddClient(
 
     Logger->trace("TIServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(ident));
 
-    mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx client = 
+    mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx clientProxy = 
         mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
     
-    _clients.insert(client);
+    DeviceInterfaceServer->ReceiveAddClient(clientProxy);
 }
 
 bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetProvidedInterfaces(

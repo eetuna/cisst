@@ -119,49 +119,6 @@ void mtsTaskManagerProxyClient::OnThreadEnd()
 //-----------------------------------------------------------------------------
 //  Proxy Client Implementation
 //-----------------------------------------------------------------------------
-//
-// TODO: mtsTaskManager::GetResourceInterface() Refactoring!!! 
-// (move to mtsTaskManagerProxyServer, renaming)
-//
-/*
-bool mtsTaskManagerProxyClient::ReceiveConnectServerSide(
-    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-{
-    const std::string clientTaskProxyName = mtsDeviceProxy::GetClientTaskProxyName(
-        resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
-
-    // Get an original provided interface.
-    mtsProvidedInterface * providedInterface = GetProvidedInterface(
-        resourceTaskName, providedInterfaceName);
-    if (!providedInterface) {
-        TaskManagerProxyClientLoggerError("Connect across networks: cannot find a provided interface: ", providedInterface);
-        return false;
-    }
-
-    // Create a client task proxy (mtsDevice) and a required Interface proxy (mtsRequiredInterface)
-    mtsDeviceProxy * clientTaskProxy = new mtsDeviceProxy(clientTaskProxyName);
-    mtsRequiredInterface * requiredInterfaceProxy = 
-        clientTaskProxy->AddRequiredInterface(requiredInterfaceName);
-    if (!requiredInterfaceProxy) {
-        TaskManagerProxyClientLoggerError("ReceiveConnectServerSide: cannot add required interface: ", requiredInterfaceName);
-        return false;
-    }
-
-    // Populate a required Interface proxy 
-    if (!PopulateRequiredInterfaceProxy(requiredInterfaceProxy, providedInterface)) {
-        TaskManagerProxyClientLoggerError("Connect across networks: failed to create a client task proxy: ", clientTaskProxyName);
-        return false;
-    }
-
-    // Connect() locally
-
-
-    // 4. Return the result back to server
-
-    return true;
-}
-*/
 
 //-------------------------------------------------------------------------
 //  Send Methods
@@ -320,18 +277,3 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::ReceiveData(
 {
     std::cout << "------------ client recv data " << num << std::endl;
 }
-
-
-//bool mtsTaskManagerProxyClient::TaskManagerClientI::ConnectServerSide(
-//    const std::string & userTaskName, const std::string & requiredInterfaceName,
-//    const std::string & resourceTaskName, const std::string & providedInterfaceName,
-//    const ::Ice::Current & current)
-//{
-//    Logger->trace("TMClient", "<<<<< RECV: ConnectServerSide: " +
-//        userTaskName + ":" + requiredInterfaceName + "-" + resourceTaskName + ":" + providedInterfaceName);
-//
-//    CMN_ASSERT(TaskManagerClient);
-//
-//    return TaskManagerClient->ReceiveConnectServerSide(
-//        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
-//}
