@@ -257,7 +257,7 @@ const bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaces(
 {
     CMN_ASSERT(ConnectedTask);
 
-    // 1) Iterate all provided interfaces
+    // Iterate all provided interfaces
     mtsDeviceInterface * providedInterface = NULL;    
 
     std::vector<std::string> namesOfProvidedInterfaces = 
@@ -274,48 +274,74 @@ const bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaces(
         providedInterfaceSpec.InterfaceName = providedInterface->GetName();
             
         // 3) Extract all the information on registered command objects, events, and so on.
-#define ITERATE_INTERFACE_BEGIN( _commandType ) \
+#define ITERATE_COMMAND_BEGIN(_commandType) \
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType = \
             providedInterface->Commands##_commandType.GetMap().begin();\
         mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType##End = \
             providedInterface->Commands##_commandType.GetMap().end();\
-        for (; iterator##_commandType != iterator##_commandType##End; ++( iterator##_commandType ) ) {\
+        for (; iterator##_commandType != iterator##_commandType##End; ++iterator##_commandType) {\
             mtsDeviceInterfaceProxy::Command##_commandType##Info info;\
-            info.Name = iterator##_commandType->second->GetName();\
-            info.CommandId = reinterpret_cast<int>(iterator##_commandType->second);
-
-#define ITERATE_INTERFACE_END( _commandType ) \
+            info.Name = iterator##_commandType->second->GetName();
+#define ITERATE_COMMAND_END(_commandType) \
             providedInterfaceSpec.Commands##_commandType.push_back(info);\
         }
 
         // 3-1) Command: Void
-        ITERATE_INTERFACE_BEGIN(Void);            
-        ITERATE_INTERFACE_END(Void);
+        ITERATE_COMMAND_BEGIN(Void);            
+        ITERATE_COMMAND_END(Void);
 
         // 3-2) Command: Write
-        ITERATE_INTERFACE_BEGIN(Write);
+        ITERATE_COMMAND_BEGIN(Write);
             info.ArgumentTypeName = iteratorWrite->second->GetArgumentClassServices()->GetName();
-        ITERATE_INTERFACE_END(Write);
+        ITERATE_COMMAND_END(Write);
 
         // 3-3) Command: Read
-        ITERATE_INTERFACE_BEGIN(Read);
+        ITERATE_COMMAND_BEGIN(Read);
             info.ArgumentTypeName = iteratorRead->second->GetArgumentClassServices()->GetName();
-        ITERATE_INTERFACE_END(Read);
+        ITERATE_COMMAND_END(Read);
 
         // 3-4) Command: QualifiedRead
-        ITERATE_INTERFACE_BEGIN(QualifiedRead);
+        ITERATE_COMMAND_BEGIN(QualifiedRead);
             info.Argument1TypeName = iteratorQualifiedRead->second->GetArgument1Prototype()->Services()->GetName();
             info.Argument2TypeName = iteratorQualifiedRead->second->GetArgument2Prototype()->Services()->GetName();
-        ITERATE_INTERFACE_END(QualifiedRead);
+        ITERATE_COMMAND_END(QualifiedRead);
 
-#undef ITERATE_INTERFACE_BEGIN
-#undef ITERATE_INTERFACE_END
+        //mtsDeviceInterface::EventVoidMapType::MapType::const_iterator iteratorEventVoid = 
+        //    providedInterface->EventVoidGenerators.GetMap().begin();
+        //mtsDeviceInterface::EventVoidMapType::MapType::const_iterator iteratorEventVoidEnd = 
+        //    providedInterface->EventVoidGenerators.GetMap().end();
+        //for (; iteratorEventVoid != iteratorEventVoidEnd; ++iteratorEventVoid) {
+        //    mtsDeviceInterfaceProxy::EventVoidInfo info;
+        //    info.Name = iteratorEventVoid->second->GetName();            
+        //}
+#define ITERATE_EVENT_BEGIN(_eventType)\
+        mtsDeviceInterface::Event##_eventType##MapType::MapType::const_iterator iteratorEvent##_eventType = \
+            providedInterface->Event##_eventType##Generators.GetMap().begin();\
+        mtsDeviceInterface::Event##_eventType##MapType::MapType::const_iterator iteratorEvent##_eventType##End = \
+            providedInterface->Event##_eventType##Generators.GetMap().end();\
+        for (; iteratorEvent##_eventType != iteratorEvent##_eventType##End; ++iteratorEvent##_eventType) {\
+            mtsDeviceInterfaceProxy::Event##_eventType##Info info;\
+            info.Name = iteratorEvent##_eventType->second->GetName();
+#define ITERATE_EVENT_END(_eventType)\
+            providedInterfaceSpec.Events##_eventType.push_back(info);\
+        }
 
-        // TODO: 
-        // 4) Extract events information (void, write)
+        // 3-5) Event: Void
+        ITERATE_EVENT_BEGIN(Void);
+        ITERATE_EVENT_END(Void);
 
+        // 3-6) Event: Write
+        ITERATE_EVENT_BEGIN(Write);
+        ITERATE_EVENT_END(Write);
+
+        // There can be more than one provided interface.
         providedInterfaces.push_back(providedInterfaceSpec);
     }
+
+#undef ITERATE_COMMAND_BEGIN
+#undef ITERATE_COMMAND_END
+#undef ITERATE_EVENT_BEGIN
+#undef ITERATE_EVENT_END
 
     return true;
 }

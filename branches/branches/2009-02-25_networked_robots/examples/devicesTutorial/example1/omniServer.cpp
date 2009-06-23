@@ -11,11 +11,6 @@
 
 using namespace std;
 
-bool IsGlobalTaskManager = false;
-bool IsServerTask = false;
-string GlobalTaskManagerIP;
-string ServerTaskIP;
-
 int main(void)
 {
     // log configuration
@@ -46,7 +41,6 @@ int main(void)
 
     taskManager->GlobalTaskManagerIP = "10.162.34.27";
     taskManager->ServerTaskIP = "10.162.34.27";
-
     // Set the type of task manager either as a server or as a client.
     // mtsTaskManager::SetTaskManagerType() should be called before
     // executing mtsTaskManager::Connect()

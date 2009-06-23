@@ -38,44 +38,39 @@ module mtsDeviceInterfaceProxy
 	//-----------------------------------------------------------------------------
 	struct CommandVoidInfo {
 		string Name;
-        int CommandId;
 	};
 	
 	struct CommandWriteInfo { 
 		string Name;
 		string ArgumentTypeName;
-        int CommandId;
 	};
 	
 	struct CommandReadInfo { 
 		string Name;
 		string ArgumentTypeName;
-        int CommandId;
 	};
 	
 	struct CommandQualifiedReadInfo { 
 		string Name;
 		string Argument1TypeName;
 		string Argument2TypeName;
-        int CommandId;
 	};
 	
-	/*
 	struct EventVoidInfo { 
 		string Name;
 	};
 	
 	struct EventWriteInfo { 
 		string Name;
+        string ArgumentTypeName;
 	};
-	*/
 
 	sequence<CommandVoidInfo>          CommandVoidSequence;
 	sequence<CommandWriteInfo>         CommandWriteSequence;
 	sequence<CommandReadInfo>          CommandReadSequence;
 	sequence<CommandQualifiedReadInfo> CommandQualifiedReadSequence;
-    //sequence<EventVoidInfo> EventVoidSequence;
-    //sequence<EventWriteInfo> EventWriteSequence;
+    sequence<EventVoidInfo>            EventVoidSequence;
+    sequence<EventWriteInfo>           EventWriteSequence;
 
     //-----------------------------------------------------------------------------
 	//	Provided Interface Related Definition
@@ -90,12 +85,10 @@ module mtsDeviceInterfaceProxy
 		CommandWriteSequence         CommandsWrite;
 		CommandReadSequence          CommandsRead;
 		CommandQualifiedReadSequence CommandsQualifiedRead;
-		//EventVoidSequence eventsVoid;
-		//EventWriteSequence eventsWrite;
-		
-		// Events: this isn't supported at this time. Event handling will be implemented.
-		//sequence<EventVoidInfo> eventsVoid;
-		//sequence<EventWriteInfo> eventsWrite;
+        
+        // Events
+		EventVoidSequence            EventsVoid;
+		EventWriteSequence           EventsWrite;
 	};
 
     /*! List of provided interfaces */

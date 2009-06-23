@@ -373,12 +373,9 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
             return false;
         }
 
-        CMN_LOG_CLASS_RUN_ERROR << "########################### CONNECT() COMPLETES" << std::endl;
-
         //
         //  TODO: FIX!! UGLY!!
         //
-
         mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
         userTaskTemp->SendGetCommandId(functionProxies);
 
@@ -387,11 +384,6 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         functionProxies.ProvidedInterfaceProxyName = providedInterfaceName;
 
         UpdateCommandId(functionProxies);
-        
-        //InvokeNotifyInterfaceConnectionResult(
-        //    false, // this is beig called at client side.
-        //    true,
-        //    userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
     }
 
     return true;
@@ -514,20 +506,15 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     }
 
     // 2) Create command proxies.
-    std::string commandName;
-    int commandId;
+    int commandId = 0;
+    std::string commandName, eventName;
 
-#define ITERATE_INTERFACE_BEGIN( _commandType ) \
+#define ITERATE_INTERFACE_BEGIN(_commandType) \
     {\
         mtsDeviceInterfaceProxy::Command##_commandType##Sequence::const_iterator it\
             = providedInterface.Commands##_commandType.begin();\
         for (; it != providedInterface.Commands##_commandType.end(); ++it) {\
-            commandName = it->Name;\
-            commandId = 0;
-
-    // commandId was set as it->CommandSID.
-    // This will be and has to be updated after AllocateResources() is called at server side.
-
+            commandName = it->Name;
 #define ITERATE_INTERFACE_END \
         }\
     }
@@ -571,10 +558,22 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
 #undef ITERATE_INTERFACE_BEGIN
 #undef ITERATE_INTERFACE_END
 
-    // TODO:
-    //
-    // 3) Restore Events
-    //
+    // 3) Create event generator proxies.
+    {
+        mtsDeviceInterfaceProxy::EventVoidSequence::const_iterator it =
+            providedInterface.EventsVoid.begin();
+        for (; it != providedInterface.EventsVoid.end(); ++it) {
+            eventName = it->Name;
+            /*
+            mtsDouble eventData; // data type used for the event payload
+            TriggerEvent.Bind(mainInterface->AddEventWrite("TriggerEvent", eventData));
+            */
+            //providedInterfaceProxy->AddEventWrite(eventName,
+            //
+            // !!!!!!!! Continue HERE !!!!!!!!!!
+            //
+        }
+    }
 
     return true;
 }

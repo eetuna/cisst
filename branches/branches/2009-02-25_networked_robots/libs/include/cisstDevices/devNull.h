@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a null device.
 */
 
+#include <cisstDevices/devConfig.h>
 #include <cisstMultiTask/mtsDevice.h>
 
 // Always include last

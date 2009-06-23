@@ -49,10 +49,10 @@ set(SOURCE_FILES
 if(CISST_DEV_HAS_SENSABLEHD)
   find_package(Sensable REQUIRED)
   include_directories(${SENSABLE_INCLUDE_DIR})
-#   set(SOURCE_FILES ${SOURCE_FILES}
-#       devSensableHD.cpp)
-#   set(HEADER_FILES ${HEADER_FILES}
-#      devSensableHD.h)
+   set(SOURCE_FILES ${SOURCE_FILES}
+       devSensableHD.cpp)
+   set(HEADER_FILES ${HEADER_FILES}
+      devSensableHD.h)
 endif(CISST_DEV_HAS_SENSABLEHD)
 
 if(CISST_DEV_HAS_LOPOMOCO) 
