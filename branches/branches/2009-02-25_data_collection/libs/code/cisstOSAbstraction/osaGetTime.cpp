@@ -71,19 +71,31 @@ void osaGetDateTimeString(std::string & str)
     str = "TODO";
 #endif // CISST_LINUX_RTAI
 #if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
-    str = "TODO";
+    time_t tim = time(0);
+    tm * now = localtime(&tim);
+    char buffer[50];
+    sprintf(buffer, "%d%s%02d%s%02d%s%02d%s%02d%s%02d",
+            now->tm_year + 1900, "-",
+            now->tm_mon + 1, "-",
+            now->tm_mday, "_",
+            now->tm_hour, "-",
+            now->tm_min, "-",
+            now->tm_sec);
+    str = buffer;
 #endif // CISST_LINUX || CISST_DARWIN || CISST_SOLARIS
 #if (CISST_OS == CISST_WINDOWS)
-    time_t _time; time(&_time);
-    tm _tm; localtime_s(&_tm, &_time);
-    char buf[50];
-    sprintf_s(buf, 50, "%d%s%02d%s%02d%s%02d%s%02d%s%02d",
-        _tm.tm_year + 1900, "-",
-        _tm.tm_mon + 1, "-",
-        _tm.tm_mday, "_",
-        _tm.tm_hour, "-",
-        _tm.tm_min, "-",
-        _tm.tm_sec);
-    str = buf;
+    time_t _time;
+    time(&_time);
+    tm now;
+    localtime_s(&now, &_time);
+    char buffer[50];
+    sprintf_s(buffer, 50, "%d%s%02d%s%02d%s%02d%s%02d%s%02d",
+              now.tm_year + 1900, "-",
+              now.tm_mon + 1, "-",
+              now.tm_mday, "_",
+              now.tm_hour, "-",
+              now.tm_min, "-",
+              now.tm_sec);
+    str = buffer;
 #endif // CISST_WINDOWS
 }
