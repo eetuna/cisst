@@ -57,6 +57,11 @@ public:
     /*! Type of the actual map */
     typedef std::map<std::string, _elementType *> MapType;
 
+    typedef typename MapType::iterator iterator;
+    typedef typename MapType::const_iterator const_iterator;
+    typedef typename MapType::reverse_iterator reverse_iterator;
+    typedef typename MapType::const_reverse_iterator const_reverse_iterator;
+
 protected:
     MapType Map;
     std::string MapName;
@@ -152,6 +157,29 @@ public:
         return this->Map.size();
     }
 
+    inline bool empty(void) const {
+        return this->Map.empty();
+    }
+
+    inline void clear(void) {
+        this->Map.clear();
+    }
+
+    inline iterator begin(void) {
+        return this->Map.begin();
+    }
+
+    inline const_iterator begin(void) const {
+        return this->Map.begin();
+    }
+
+    inline iterator end(void) {
+        return this->Map.end();
+    }
+
+    inline const_iterator end(void) const {
+        return this->Map.end();
+    }
 };
 
 

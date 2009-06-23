@@ -82,22 +82,22 @@ class CISST_EXPORT mtsTaskInterface: public mtsDeviceInterface {
 
         inline void CloneCommands(const mtsTaskInterface & taskInterface) {
             // clone void commands
-            mtsTaskInterface::CommandQueuedVoidMapType::MapType::const_iterator iterVoid;
-            iterVoid = taskInterface.CommandsQueuedVoid.GetMap().begin();
+            mtsTaskInterface::CommandQueuedVoidMapType::const_iterator iterVoid;
+            iterVoid = taskInterface.CommandsQueuedVoid.begin();
             mtsCommandVoidBase * commandVoid;
             for (;
-                 iterVoid != taskInterface.CommandsQueuedVoid.GetMap().end();
+                 iterVoid != taskInterface.CommandsQueuedVoid.end();
                  iterVoid++) {
                 commandVoid = iterVoid->second->Clone(this->MailBox);
                 CommandsVoid.AddItem(iterVoid->first, commandVoid, CMN_LOG_LOD_INIT_ERROR);
                 CMN_LOG_CLASS_INIT_VERBOSE << "Cloned command " << iterVoid->first << std::endl;
             }
             // clone write commands
-            mtsTaskInterface::CommandQueuedWriteMapType::MapType::const_iterator iterWrite;
-            iterWrite = taskInterface.CommandsQueuedWrite.GetMap().begin();
+            mtsTaskInterface::CommandQueuedWriteMapType::const_iterator iterWrite;
+            iterWrite = taskInterface.CommandsQueuedWrite.begin();
             mtsCommandWriteBase * commandWrite;
             for (;
-                iterWrite != taskInterface.CommandsQueuedWrite.GetMap().end();
+                iterWrite != taskInterface.CommandsQueuedWrite.end();
                 iterWrite++) {
                 commandWrite = iterWrite->second->Clone(this->MailBox, DEFAULT_ARG_BUFFER_LEN);
                 CommandsWrite.AddItem(iterWrite->first, commandWrite, CMN_LOG_LOD_INIT_ERROR);

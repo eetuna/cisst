@@ -29,13 +29,13 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCollectorBase_h
 
 #include <cisstCommon/cmnUnits.h>
+#include <cisstCommon/cmnNamedMap.h>
 #include <cisstOSAbstraction/osaStopwatch.h>
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsHistory.h>
 
 #include <string>
-#include <map>
 #include <stdexcept>
 
 // If the following line is commented out, C2491 error is generated.
@@ -88,8 +88,8 @@ protected:
         TaskMap:   (taskName, SignalMap*)
         SignalMap: (SignalName, SignalMapElement)
     */
-    typedef std::map<std::string, SignalMapElement> SignalMapType;
-    typedef std::map<std::string, SignalMapType *> TaskMapType;
+    typedef cmnNamedMap<SignalMapElement> SignalMapType;
+    typedef cmnNamedMap<SignalMapType> TaskMapType;
     TaskMapType TaskMap;
 
     /*! If this flag is set, start time is subtracted from each time measurement. */

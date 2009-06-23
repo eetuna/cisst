@@ -47,10 +47,10 @@ void mtsTask::StartupInternal(void) {
 
     bool success = true;
     // Loop through the required interfaces and bind all commands and events
-    RequiredInterfacesMapType::MapType::const_iterator requiredIterator = RequiredInterfaces.GetMap().begin();
+    RequiredInterfacesMapType::const_iterator requiredIterator = RequiredInterfaces.begin();
     mtsDeviceInterface * connectedInterface;
     for (;
-         requiredIterator != RequiredInterfaces.GetMap().end();
+         requiredIterator != RequiredInterfaces.end();
          requiredIterator++) {
         connectedInterface = requiredIterator->second->GetConnectedInterface();
         if (connectedInterface) {
@@ -97,8 +97,8 @@ void mtsTask::CleanupInternal() {
 unsigned int mtsTask::ProcessMailBoxes(ProvidedInterfacesMapType & interfaces)
 {
     unsigned int numberOfCommands = 0;
-    ProvidedInterfacesMapType::MapType::iterator iterator = interfaces.GetMap().begin();
-    const ProvidedInterfacesMapType::MapType::iterator end = interfaces.GetMap().end();
+    ProvidedInterfacesMapType::iterator iterator = interfaces.begin();
+    const ProvidedInterfacesMapType::iterator end = interfaces.end();
     for (;
          iterator != end;
          ++iterator) {
@@ -109,8 +109,8 @@ unsigned int mtsTask::ProcessMailBoxes(ProvidedInterfacesMapType & interfaces)
 
 
 unsigned int mtsTask::ProcessQueuedEvents(void) {
-    RequiredInterfacesMapType::MapType::iterator iterator = RequiredInterfaces.GetMap().begin();
-    const RequiredInterfacesMapType::MapType::iterator end = RequiredInterfaces.GetMap().end();
+    RequiredInterfacesMapType::iterator iterator = RequiredInterfaces.begin();
+    const RequiredInterfacesMapType::iterator end = RequiredInterfaces.end();
     unsigned int numberOfEvents = 0;
     for (;
          iterator != end;

@@ -115,14 +115,14 @@ mtsTask * mtsTaskManager::GetTask(const std::string & taskName) {
     
 
 void mtsTaskManager::ToStream(std::ostream & outputStream) const {
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     outputStream << "List of tasks: name and address" << std::endl;
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         outputStream << "  Task: " << taskIterator->first << ", address: " << taskIterator->second << std::endl;
     }
-    DeviceMapType::MapType::const_iterator deviceIterator = DeviceMap.GetMap().begin();
-    const DeviceMapType::MapType::const_iterator deviceEndIterator = DeviceMap.GetMap().end();
+    DeviceMapType::const_iterator deviceIterator = DeviceMap.begin();
+    const DeviceMapType::const_iterator deviceEndIterator = DeviceMap.end();
     outputStream << "List of devices: name and address" << std::endl;
     for (; deviceIterator != deviceEndIterator; ++deviceIterator) {
         outputStream << "  Device: " << deviceIterator->first << ", adress: " << deviceIterator->second << std::endl;
@@ -138,8 +138,8 @@ void mtsTaskManager::ToStream(std::ostream & outputStream) const {
 
 
 void mtsTaskManager::CreateAll(void) {
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         taskIterator->second->Create();
     }
@@ -150,16 +150,16 @@ void mtsTaskManager::StartAll(void) {
     // Get the current thread id so that we can check if any task will use the current thread.
     // If so, start that task last because its Start method will not return.
     const osaThreadId threadId = osaGetCurrentThreadId();
-    TaskMapType::MapType::const_iterator lastTask = TaskMap.GetMap().end();
+    TaskMapType::const_iterator lastTask = TaskMap.end();
 
     // Loop through all tasks.
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         // Check if the task will use the current thread.
         if (taskIterator->second->Thread.GetId() == threadId) {
             CMN_LOG_CLASS_RUN_ERROR << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
-            if (lastTask != TaskMap.GetMap().end())
+            if (lastTask != TaskMap.end())
                 CMN_LOG_CLASS_INIT_ERROR << "WARNING: multiple tasks using current thread (only first will be started)." << std::endl;
             else
                 lastTask = taskIterator;
@@ -168,15 +168,15 @@ void mtsTaskManager::StartAll(void) {
             taskIterator->second->Start();  // If task will not use current thread, start it.
     }
     // If there is a task that uses the current thread, start it.
-    if (lastTask != TaskMap.GetMap().end())
+    if (lastTask != TaskMap.end())
         lastTask->second->Start();
 }
 
 
 void mtsTaskManager::KillAll(void) {
     // It is not necessary to have any special handling of a task using the current thread.
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         taskIterator->second->Kill();
     }
@@ -193,8 +193,8 @@ void mtsTaskManager::ToStreamDot(std::ostream & outputStream) const {
                  << std::endl;
     outputStream << "digraph mtsTaskManager {" << std::endl;
     // create all nodes for tasks
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         outputStream << "subgraph cluster" << clusterNumber << "{" << std::endl
                      << "node[style=filled,color=white,shape=box];" << std::endl
@@ -224,8 +224,8 @@ void mtsTaskManager::ToStreamDot(std::ostream & outputStream) const {
         outputStream << "}" << std::endl;
     }
     // create all nodes for devices
-    DeviceMapType::MapType::const_iterator deviceIterator = DeviceMap.GetMap().begin();
-    const DeviceMapType::MapType::const_iterator deviceEndIterator = DeviceMap.GetMap().end();
+    DeviceMapType::const_iterator deviceIterator = DeviceMap.begin();
+    const DeviceMapType::const_iterator deviceEndIterator = DeviceMap.end();
     for (; deviceIterator != deviceEndIterator; ++deviceIterator) {
         outputStream << "subgraph cluster" << clusterNumber << "{" << std::endl
                      << "node[style=filled,color=white,shape=box];" << std::endl
