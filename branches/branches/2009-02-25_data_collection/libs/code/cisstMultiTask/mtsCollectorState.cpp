@@ -137,7 +137,7 @@ void mtsCollectorState::SetDataCollectionTriggerResetCommand()
     DataCollectionTriggerResetCommand =
         new mtsCommandVoidMethod<mtsStateTable>(&mtsStateTable::ResetDataCollectionTrigger,
                                                 TargetStateTable,
-                                                TargetStateTable->GetStateTableName());
+                                                TargetStateTable->GetName());
 }
 
 
@@ -311,7 +311,7 @@ void mtsCollectorState::PrintHeader(const CollectorLogFormat & logFormat)
     }
     
     LogFileName = "StateDataCollection-" + TargetTask->GetName() + "-" + 
-        TargetStateTable->GetStateTableName() + "-" + currentDateTime + "." + suffix;
+        TargetStateTable->GetName() + "-" + currentDateTime + "." + suffix;
     
     std::ofstream outputStream;
     outputStream.open(LogFileName.c_str(), std::ios::out);

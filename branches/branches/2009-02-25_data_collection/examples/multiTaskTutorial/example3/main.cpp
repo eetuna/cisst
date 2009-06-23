@@ -49,10 +49,12 @@ int main(void)
     taskManager->Connect("ControlRobot2", "ObservedRobot",
                          "RobotControl", "Robot1Observer");
 
+    // display a graph of connections
     std::ofstream dotFile("example3.dot"); 
     taskManager->ToStreamDot(dotFile);
     dotFile.close();
 
+    // collect all state data in csv file
     mtsCollectorState * collector =
         new mtsCollectorState("RobotControl", mtsCollectorBase::COLLECTOR_LOG_FORMAT_CSV);
     collector->AddSignal(); // all signals

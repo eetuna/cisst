@@ -158,9 +158,9 @@ void mtsTaskManager::StartAll(void) {
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         // Check if the task will use the current thread.
         if (taskIterator->second->Thread.GetId() == threadId) {
-            CMN_LOG_CLASS_RUN_ERROR << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
             if (lastTask != TaskMap.end())
-                CMN_LOG_CLASS_INIT_ERROR << "WARNING: multiple tasks using current thread (only first will be started)." << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "StartAll: multiple tasks using current thread (only first will be started)." << std::endl;
             else
                 lastTask = taskIterator;
         }

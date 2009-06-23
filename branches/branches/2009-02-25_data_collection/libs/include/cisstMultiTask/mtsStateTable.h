@@ -40,7 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
-#define STATE_TABLE_DEFAULT_NAME "mtsStateTable"
+#define MTS_STATE_TABLE_DEFAULT_NAME "StateTable"
 
 // Forward declaration
 class osaTimeServer;
@@ -228,7 +228,7 @@ protected:
 public:
 	/*! Constructor. Constructs a state table with a default
 	  size of 256 rows. */
-    mtsStateTable(int size = 256, const std::string & stateTableName = STATE_TABLE_DEFAULT_NAME);
+    mtsStateTable(int size = 256, const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME);
 
 	/*! Default destructor. */
 	~mtsStateTable();
@@ -331,7 +331,7 @@ public:
     //                          const unsigned int lastFetchIndex);
     
     /*! Return the name of this state table. */
-    const std::string GetStateTableName() const { return StateTableName; }
+    const std::string GetName(void) const { return StateTableName; }
     
     /*! Enable data collection event trigger. */
     void ResetDataCollectionTrigger() { 
@@ -355,9 +355,9 @@ public:
 
 
 // overload mtsObjectName to provide the class name
-inline std::string mtsObjectName(const mtsStateTable * CMN_UNUSED(object))
+inline std::string mtsObjectName(const mtsStateTable * object)
 {
-    return "mtsStateTable";
+    return object->GetName();
 }
 
 

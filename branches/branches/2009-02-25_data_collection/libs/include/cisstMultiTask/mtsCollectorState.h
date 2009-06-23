@@ -143,10 +143,10 @@ class CISST_EXPORT mtsCollectorState : public mtsCollectorBase
 public:
     mtsCollectorState(const std::string & targetTaskName,
                       const mtsCollectorBase::CollectorLogFormat collectorLogFormat = mtsCollectorBase::COLLECTOR_LOG_FORMAT_PLAIN_TEXT,
-                      const std::string & targetStateTableName = STATE_TABLE_DEFAULT_NAME);
+                      const std::string & targetStateTableName = MTS_STATE_TABLE_DEFAULT_NAME);
     mtsCollectorState(mtsTask * targetTask,
                       const mtsCollectorBase::CollectorLogFormat collectorLogFormat = mtsCollectorBase::COLLECTOR_LOG_FORMAT_PLAIN_TEXT,
-                      const std::string & targetStateTableName = STATE_TABLE_DEFAULT_NAME);
+                      const std::string & targetStateTableName = MTS_STATE_TABLE_DEFAULT_NAME);
     ~mtsCollectorState(void);
 
     /*! Add the signal specified to a list of registered signals. 

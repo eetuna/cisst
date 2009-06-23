@@ -104,6 +104,11 @@ protected:
 
 	/*! The state data table object to store the states of the task. */
 	mtsStateTable StateTable;
+    
+    /*! Map of state tables, includes the default StateTable under the
+      name "StateTable" */
+    typedef cmnNamedMap<mtsStateTable> StateTableMapType;
+    StateTableMapType StateTables;
 
 	/*! True if the task took more time to do computation than allocated time.
 	  */
@@ -157,14 +162,14 @@ protected:
     void Sleep(double timeInSeconds);
 
     /*! Return the current tick count. */
-    mtsStateIndex::TimeTicksType GetTick() const { return StateTable.GetIndexWriter().Ticks(); }
+    mtsStateIndex::TimeTicksType GetTick(void) const;
 
     /*********** Methods for thread start data and return values **********/
 
     /*! Save any 'user data' that was passed to the thread start routine. */
-    virtual void SaveThreadStartData(void *data) { ThreadStartData = data; }
+    virtual void SaveThreadStartData(void * data);
 
-    virtual void SetThreadReturnValue(void *ret) { ReturnValue = ret; }
+    virtual void SetThreadReturnValue(void * returnValue);
 
 public:
     /********************* Task constructor and destructor *****************/
@@ -255,13 +260,13 @@ public:
     double GetAveragePeriod(void) const { return StateTable.GetAveragePeriod(); }
 
     /*! Return the name of this state table. */
-    const std::string GetStateTableName() const { return StateTable.GetStateTableName(); }
+    const std::string GetDefaultStateTableName(void) const { return StateTable.GetName(); }
 
     /*! Return the pointer to the state table. 
         TODO: If a task can have more than one state table, this method should be
         changed so that it should iterate a state table container. */
-    mtsStateTable * GetStateTable(const std::string & stateTableName = STATE_TABLE_DEFAULT_NAME) {
-        return (stateTableName == GetStateTableName() ? &StateTable : NULL);
+    mtsStateTable * GetStateTable(const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME) {
+        return this->StateTables.GetItem(stateTableName, CMN_LOG_LOD_INIT_ERROR);
     }
 
     /********************* Methods to manage interfaces *******************/
