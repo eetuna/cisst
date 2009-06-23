@@ -129,9 +129,15 @@ public:
     }
 
     /*! To stream raw data. */
-    inline virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ') const {
-        BaseType::ToStreamRaw(outputStream, delimiter);
-        outputStream << delimiter << this->Data;
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        if (headerOnly) {
+            BaseType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+            outputStream << delimiter << headerPrefix << "-data";
+        } else {
+            BaseType::ToStreamRaw(outputStream, delimiter);
+            outputStream << delimiter << this->Data;
+        }
     }
 };
 

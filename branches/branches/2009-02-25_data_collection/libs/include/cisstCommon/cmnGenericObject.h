@@ -74,7 +74,8 @@ public:
       This method must be overloaded to provide a useful message. */
     virtual void ToStream(std::ostream & outputStream) const;
 
-    virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ') const;
+    virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                             bool headerOnly = false, const std::string & headerPrefix = "") const;
 
 
     /*! Serialize the content of the object without any extra

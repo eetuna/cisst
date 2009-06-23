@@ -38,7 +38,8 @@ void cmnGenericObject::ToStream(std::ostream & outputStream) const {
 }
 
 
-void cmnGenericObject::ToStreamRaw(std::ostream & outputStream, const char CMN_UNUSED(delimiter)) const {
+void cmnGenericObject::ToStreamRaw(std::ostream & outputStream, const char CMN_UNUSED(delimiter),
+                                   bool CMN_UNUSED(headerOnly), const std::string & CMN_UNUSED(headerPrefix)) const {
     outputStream << Services()->GetName();
 }
 

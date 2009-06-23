@@ -313,11 +313,13 @@ void mtsCollectorState::PrintHeader(void)
         outputStream << "#------------------------------------------------------------------------------" << std::endl;
         outputStream << "#" << std::endl;
 
-        outputStream << "# Ticks";
+        outputStream << "# Ticks" << this->Delimiter;
 
         RegisteredSignalElementType::const_iterator it = RegisteredSignalElements.begin();
         for (; it != RegisteredSignalElements.end(); ++it) {
-            outputStream << Delimiter << TargetStateTable->StateVectorDataNames[it->ID];
+            (*(TargetStateTable->StateVector[it->ID]))[0].ToStreamRaw(outputStream, this->Delimiter, true,
+                                                                      TargetStateTable->StateVectorDataNames[it->ID]);
+            outputStream << this->Delimiter;
         }
 
         outputStream << std::endl;
@@ -392,9 +394,10 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
         {
             unsigned int i;
             for (i = startIndex; i <= endIndex; i += SamplingInterval) {
-                outputStream << TargetStateTable->Ticks[i];
+                outputStream << TargetStateTable->Ticks[i] << this->Delimiter;
                 for (unsigned int j = 0; j < RegisteredSignalElements.size(); ++j) {
                     (*table->StateVector[RegisteredSignalElements[j].ID])[i].ToStreamRaw(outputStream, this->Delimiter);
+                    outputStream << this->Delimiter;
                 }
                 outputStream << std::endl;
             }
@@ -435,9 +438,9 @@ bool mtsCollectorState::ConvertBinaryToText(const std::string sourceBinaryLogFil
     inFile.seekg(0, std::ios::beg);
 
     // Read the first character in a line. If it is '#', it is a part of header.
-    char line[256];
+    char line[2048];
     while(true) {
-        inFile.getline(line, 256);
+        inFile.getline(line, 2048);
         
         if (line[0] == '#') {
             // Copy header lines.

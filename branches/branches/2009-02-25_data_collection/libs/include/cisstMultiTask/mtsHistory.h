@@ -112,8 +112,11 @@ public:
     }
 
     /*! To stream human readable output raw */
-    virtual void ToStreamRaw(std::ostream & outputStream, const char divider = ' ') const {
-        VectorType::ToStreamRaw(outputStream, divider);
+    virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                             bool headerOnly = false, const std::string & headerPrefix = "") const {
+        mtsGenericObject::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+        outputStream << delimiter;
+        VectorType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
     }
 };
 

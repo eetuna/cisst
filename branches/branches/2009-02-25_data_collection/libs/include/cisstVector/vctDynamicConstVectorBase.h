@@ -949,14 +949,24 @@ public:
     }
 
     
-    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ') const
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const
     {
         size_type index;
         const size_type mySize = size();
-        for (index = 0; index < mySize; ++index) {
-            outputStream << (*this)[index]; 
-            if (index < (mySize-1)) {
-                outputStream << delimiter; 
+        if (headerOnly) {
+            for (index = 0; index < mySize; ++index) {
+                outputStream << headerPrefix << "-v" << index; 
+                if (index < (mySize-1)) {
+                    outputStream << delimiter; 
+                }
+            }
+        } else {
+            for (index = 0; index < mySize; ++index) {
+                outputStream << (*this)[index]; 
+                if (index < (mySize-1)) {
+                    outputStream << delimiter; 
+                }
             }
         }
     }
