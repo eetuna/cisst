@@ -203,8 +203,8 @@ void mtsStateTable::Advance(void) {
     }
 }
 
-void mtsStateTable::ToStream(std::ostream& out) const {
-    out << "State Table: " << std::endl;
+void mtsStateTable::ToStream(std::ostream & out) const {
+    out << "State Table: " << this->GetName() << std::endl;
     unsigned int i;
     out << "Ticks : ";
     for (i = 0; i < StateVector.size() - 1; i++) {
@@ -214,7 +214,8 @@ void mtsStateTable::ToStream(std::ostream& out) const {
     }
     out << "[" << i << "]"
         << StateVectorDataNames[i].c_str() << std::endl;
-    
+#if 0
+    // the following is a data dump, it should go in ToStreamRaw
     for (i = 0; i < HistoryLength; i++) {
         out << i << ": ";
         out << Ticks[i] << ": ";
@@ -231,6 +232,7 @@ void mtsStateTable::ToStream(std::ostream& out) const {
             out << "<== Index for Writer";
         out << std::endl;
     }
+#endif
 }
 
 

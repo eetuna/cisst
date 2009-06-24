@@ -1022,7 +1022,7 @@ public:
         if (headerOnly) {
             for (indexRow = 0; indexRow < myRows; ++indexRow) {
                 for (indexCol = 0; indexCol < myCols; ++indexCol) {
-                    outputStream << headerPrefix << "-v" << indexRow << "_" << indexCol; 
+                    outputStream << headerPrefix << "-m" << indexRow << "_" << indexCol; 
                     // delimiter between elements
                     if (indexCol < (myCols - 1)) {
                         outputStream << delimiter;
