@@ -28,7 +28,7 @@ displayTaskOmniServer::displayTaskOmniServer(const std::string & taskName, doubl
                                                 "Button", prmEventButton());
     }
     */
-    requiredInterface = AddRequiredInterface("Button2");
+    requiredInterface = AddRequiredInterface("LocalButton2");
 	if (requiredInterface) {
         requiredInterface->AddEventHandlerWrite(&displayTaskOmniServer::Button2EventHandler, this,
                                                 "Button", prmEventButton());

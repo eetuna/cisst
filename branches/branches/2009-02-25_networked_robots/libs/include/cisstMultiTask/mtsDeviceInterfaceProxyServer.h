@@ -29,8 +29,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
-#include <cisstMultiTask/mtsCommandVoidProxy.h>
-#include <cisstMultiTask/mtsCommandWriteProxy.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -42,6 +40,8 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 class mtsTask;
+class mtsCommandVoidProxy;
+class mtsCommandWriteProxy;
 
 class CISST_EXPORT mtsDeviceInterfaceProxyServer : public mtsProxyBaseServer<mtsTask> {
     
@@ -53,7 +53,9 @@ public:
                                   const std::string& communicatorID);
     ~mtsDeviceInterfaceProxyServer();
     
-    void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
+    /*! Set a server task connected to this proxy server. This server task has 
+        to provide at least one provided interface. */
+    void SetConnectedTask(mtsTask * serverTask) { ConnectedTask = serverTask; }
 
 protected:
     /*! Typedef for client proxy. */

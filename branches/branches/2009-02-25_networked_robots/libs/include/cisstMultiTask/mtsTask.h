@@ -41,9 +41,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
-#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
-
 #include <set>
 #include <map>
 
@@ -342,30 +339,57 @@ public:
 
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
-    /***************************  Proxy-related ******************************/
+
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation Using ICE
+    //-------------------------------------------------------------------------
 protected:
     /*! Task interface communicator ID */
     const std::string TaskInterfaceCommunicatorID;
 
-    /*! Proxy instance. This will be dynamically created. */
-    mtsProxyBaseCommon<mtsTask> * Proxy;
+    ///*! Proxy instance. This will be dynamically created. */
+    //mtsProxyBaseCommon<mtsTask> * Proxy;
 
-    /*! Dynamic-casted proxy object. 
-        Both are initialized as null pointer and either one of them must be null and
-        the other be valid pointer. */
-    mtsDeviceInterfaceProxyServer * ProxyServer;
-    mtsDeviceInterfaceProxyClient * ProxyClient;
+    ///*! Dynamic-casted proxy object. 
+    //    Both are initialized as null pointer and either one of them must be null and
+    //    the other be valid pointer. */
+    //mtsDeviceInterfaceProxyServer * ProxyServer;
+    //mtsDeviceInterfaceProxyClient * ProxyClient;
 
-    /*! A map for fast access to provided interfaces */
-    //typedef std::map<unsigned int, mtsDeviceInterface *> CommandLookupTableType;
-    //CommandLookupTableType CommandLookupTable;
+    /*! Typedef to manage provided interface proxies of which type is 
+        mtsDeviceInterfaceProxyServer. This map is valid only if this task acts 
+        as a server task (or if this task has provided interfaces). */
+    typedef cmnNamedMap<mtsDeviceInterfaceProxyServer> ProvidedInterfaceProxyMapType;
+    ProvidedInterfaceProxyMapType ProvidedInterfaceProxies;
+
+    /*! Typedef to manage required interface proxies of which type is 
+        mtsDeviceInterfaceProxyClient. This map is valid only if this task acts 
+        as a client task (or if this task has required interfaces). */
+    typedef cmnNamedMap<mtsDeviceInterfaceProxyClient> RequiredInterfaceProxyMapType;
+    RequiredInterfaceProxyMapType RequiredInterfaceProxies;
+
+    /* Assign a port number to this object. A port number is starting from 10705, 
+       which is not registered yet to IANA (Internet Assigned Numbers Authority) 
+       as of June 25th, 2009.
+       See http://www.iana.org/assignments/port-numbers for more details. */
+    const std::string GetPortNumberString(const unsigned int id);
 
 public:
+    /*! Run proxies for provided interfaces. */
+    void StartProvidedInterfaceProxies(const std::string & serverTaskIP);
+
+    /*! Run proxies for required interfaces. */
+    void StartRequiredInterfaceProxies(const std::string & endpointInfo, 
+                                       const std::string & communicatorID);
+
+
+
+
     /*! Start mtsDeviceInterfaceProxyServer. */
-    void StartInterfaceProxyServer(const std::string & ServerTaskIP);
+    //void StartInterfaceProxyServer(const std::string & ServerTaskIP);
 
     /*! Start a proxy client (required interface, mtsDeviceInterfaceProxyClient). */
-    void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
+    //void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
 
     /*! Get the information on the provided interface as a set of string that includes 
         complete representation of the interface. */

@@ -123,7 +123,7 @@ public:
         outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << " with ";
         if (ProvidedInterfaceProxy) {
             outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
-        } else {
+        } else {            
             outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
         }
     }

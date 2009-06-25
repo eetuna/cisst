@@ -236,14 +236,6 @@ bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     return true;
 }
 
-void mtsDeviceInterfaceProxyServer::EventHandlerVoid()
-{
-}
-
-void mtsDeviceInterfaceProxyServer::EventHandlerWrite(const mtsGenericObject & argument)
-{
-}
-
 void mtsDeviceInterfaceProxyServer::GetFunctionPointers(
     mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet)
 {

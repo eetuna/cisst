@@ -28,14 +28,14 @@ int main(void)
     const long PeriodDisplay = 10; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     displayTaskOmniServer * displayTaskObject =
-        new displayTaskOmniServer("DISP", PeriodDisplay * cmn_ms);
+        new displayTaskOmniServer("DISP-Local", PeriodDisplay * cmn_ms);
     displayTaskObject->Configure();
     taskManager->AddTask(displayTaskObject);
 
 #if (CISST_DEV_HAS_SENSABLEHD == ON)
     // name as defined in Sensable configuration
     std::string omniName("Omni1");
-    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");    
+    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");
 	taskManager->AddTask(robotObject);
 #endif
 
@@ -51,9 +51,9 @@ int main(void)
     // Connect a required interface with a provided interface locally.
 #if (CISST_DEV_HAS_SENSABLEHD == ON)
     // connect the tasks
-    taskManager->Connect("DISP", "LocalRobot", "Omni", omniName);
+    taskManager->Connect("DISP-Local", "LocalRobot", "Omni", omniName);
     //taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
-    taskManager->Connect("DISP", "Button2", "Omni", omniName + "Button2");
+    taskManager->Connect("DISP-Local", "LocalButton2", "Omni", omniName + "Button2");
 #endif
 
     // generate a nice tasks diagram

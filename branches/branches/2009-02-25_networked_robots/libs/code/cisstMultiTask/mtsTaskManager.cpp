@@ -392,7 +392,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
 
 mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
     const std::string & resourceTaskName, const std::string & providedInterfaceName,
-    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & userTaskName, const std::strinAg & requiredInterfaceName,
     mtsTask * userTask)
 {
     mtsDeviceInterface * resourceInterface = NULL;
@@ -442,11 +442,10 @@ mtsDeviceInterface * mtsTaskManager::GetResourceInterface(
         = providedInterfaces.begin();
     for (; it != providedInterfaces.end(); ++it) {
         //
-        // TODO: Currently, we assume that there is only one provided interface at server
-        // side. However, if we want to handle a case that there are multiple provided 
-        // interfaces, this loop should be modified. (MJUNG)
+        //!!!!!!!!!!!!!!!!
         //
-        CMN_ASSERT(providedInterfaceName == it->InterfaceName);
+        //CMN_ASSERT(providedInterfaceName == it->InterfaceName);
+        if (providedInterfaceName != it->InterfaceName) continue;
 
         // Create a server task proxy of which name follows the naming rule above.
         // (see mtsDeviceProxy.h as to why serverTaskProxy is of mtsDevice type, not
@@ -492,7 +491,7 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
 }
 
 //
-// TODO: Move this method to mtsTaskManagerProxyServer class.
+// TODO: Move this method to mtsDeviceInterfaceProxyServer class.
 //
 bool mtsTaskManager::CreateProvidedInterfaceProxy(
     const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
@@ -647,7 +646,6 @@ void mtsTaskManager::StartProxies()
         ProxyServer = dynamic_cast<mtsTaskManagerProxyServer *>(Proxy);
         Proxy->Start(this);
     } else {
-        // For easier debugging purpose
         CMN_LOG_CLASS_INIT_DEBUG << "GlobalTaskManagerIP: " << GlobalTaskManagerIP << std::endl;
         CMN_LOG_CLASS_INIT_DEBUG << "ServerTaskIP: " << ServerTaskIP << std::endl;
 
@@ -655,12 +653,14 @@ void mtsTaskManager::StartProxies()
         ProxyClient = dynamic_cast<mtsTaskManagerProxyClient *>(Proxy);
         Proxy->Start(this);
 
+        //FIX:OPI
         // Start a task interface proxy. Currently it is assumed that there is only
         // one provided interface and one required interface.
         TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
         const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
         for (; taskIterator != taskEndIterator; ++taskIterator) {
-            taskIterator->second->StartInterfaceProxyServer(ServerTaskIP);
+            //taskIterator->second->StartInterfaceProxyServer(ServerTaskIP);
+            taskIterator->second->StartProvidedInterfaceProxies(ServerTaskIP);
         }
     }
 }

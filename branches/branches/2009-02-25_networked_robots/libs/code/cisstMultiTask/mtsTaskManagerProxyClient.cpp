@@ -243,10 +243,7 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
             flag = false;
         }
 
-        {
-            IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-            timedWait(IceUtil::Time::seconds(2));
-        }
+        timedWait(IceUtil::Time::milliSeconds(10));
     }
 }
 

@@ -39,8 +39,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
-#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
-#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
+//#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
+//#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
 #include <set>

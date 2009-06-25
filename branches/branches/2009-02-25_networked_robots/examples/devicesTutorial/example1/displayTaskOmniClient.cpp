@@ -13,7 +13,7 @@ displayTaskOmniClient::displayTaskOmniClient(const std::string & taskName, doubl
     ExitFlag(false)
 {
     // to communicate with the interface of the resource
-    mtsRequiredInterface * requiredInterface = AddRequiredInterface("Robot");
+    mtsRequiredInterface * requiredInterface = AddRequiredInterface("RemoteRobot");
 	if (requiredInterface) {
         // bound the mtsFunction to the command provided by the interface 
         requiredInterface->AddFunction("GetPositionCartesian", GetCartesianPosition, mtsRequired);
@@ -21,16 +21,16 @@ displayTaskOmniClient::displayTaskOmniClient(const std::string & taskName, doubl
         //requiredInterface->AddFunction("GetPositionJoint", GetJointPosition, mtsOptional);
     }
     // to communicate with the interface of the resource
- //   requiredInterface = AddRequiredInterface("Button1");
+ //   requiredInterface = AddRequiredInterface("RemoteButton1");
 	//if (requiredInterface) { */
  //       requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button1EventHandler, this,
  //                                               "Button", prmEventButton());
  //   }
- //   requiredInterface = AddRequiredInterface("Button2");
-	//if (requiredInterface) {
- //       requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button2EventHandler, this,
- //                                               "Button", prmEventButton());
- //   }
+    requiredInterface = AddRequiredInterface("RemoteButton2");
+	if (requiredInterface) {
+        requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button2EventHandler, this,
+                                                "Button", prmEventButton());
+    }
 }
 
 void displayTaskOmniClient::Configure(const std::string & CMN_UNUSED(filename))
@@ -139,11 +139,11 @@ void displayTaskOmniClient::Button1EventHandler(const prmEventButton & buttonEve
 
 void displayTaskOmniClient::Button2EventHandler(const prmEventButton & buttonEvent)
 {
-    //if (buttonEvent.Type() == prmEventButton::PRESSED) {
-    //    UI.Button2->value(true);
-    //} else {
-    //    UI.Button2->value(false);
-    //}
+    if (buttonEvent.Type() == prmEventButton::PRESSED) {
+        UI.Button2->value(true);
+    } else {
+        UI.Button2->value(false);
+    }
 }
 
 /*

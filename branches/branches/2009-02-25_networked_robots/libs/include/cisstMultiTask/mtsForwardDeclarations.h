@@ -98,6 +98,8 @@ const bool mtsOptional = false;
 #ifdef CISST_MTS_HAS_ICE
 class mtsTaskManagerProxyServer;
 class mtsTaskManagerProxyClient;
+class mtsDeviceInterfaceProxyServer;
+class mtsDeviceInterfaceProxyClient;
 #endif // CISST_MTS_HAS_ICE
 
 #endif  // _mtsForwardDeclarations_h

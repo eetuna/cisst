@@ -38,9 +38,10 @@ int main(void)
     osaSleep(1 * cmn_s);
 
     // connect the tasks
-    taskManager->Connect("DISP", "Robot", "Omni", "Omni1");
+    std::string omniName("Omni1");
+    //taskManager->Connect("DISP", "RemoteRobot", "Omni", omniName);
     // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
-    //taskManager->Connect("DISP", "Button2", "Omni", "Omni1" + "Button2");
+    taskManager->Connect("DISP", "RemoteButton2", "Omni", omniName + "Button2");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();

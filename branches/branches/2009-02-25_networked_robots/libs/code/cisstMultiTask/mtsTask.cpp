@@ -161,6 +161,9 @@ mtsTask::~mtsTask()
         //Should we call the user-supplied Cleanup()?
         CleanupInternal();
     }
+
+    ProvidedInterfaceProxies.DeleteAll();
+    RequiredInterfaceProxies.DeleteAll();
 }
 
 
@@ -293,59 +296,185 @@ void mtsTask::ToStream(std::ostream & outputStream) const
     ProvidedInterfaces.ToStream(outputStream);
     RequiredInterfaces.ToStream(outputStream);
 }
-//
-//
-//  MJUNG: TODO: Multiple [provided, required] interface => USE dictionary (SLICE)!!!
-//
-//
-//
-void mtsTask::StartInterfaceProxyServer(const std::string & ServerTaskIP)
+
+//-----------------------------------------------------------------------------
+//  Proxy Implementation Using ICE
+//-----------------------------------------------------------------------------
+void mtsTask::StartProvidedInterfaceProxies(const std::string & serverTaskIP)
 {
     mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
     if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
+        CMN_LOG_CLASS_RUN_ERROR << "StartProvidedInterfaceProxies failed: " 
+            << "This task manager works only locally." << std::endl;
         return;
     }
 
     if (ProvidedInterfaces.GetCount() <= 0) {
-        CMN_LOG_CLASS_RUN_ERROR << "No provided interface exists. Proxy server wasn't created." << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "StartProvidedInterfaceProxies failed: " 
+            << "No provided interface exists." << std::endl;
         return;
     }
 
-    // Start a provided interface proxy (proxy server, mtsDeviceInterfaceProxyServer)    
-    //
-    // TODO: I assume there is only one provided interface and one required interface
-    //
-    ProvidedInterfacesMapType::MapType::iterator iterator = 
+    const std::string adapterNameBase = "TaskInterfaceServerAdapter";
+    const std::string endpointInfoBase = "tcp -p ";
+    const std::string communicatorId = TaskInterfaceCommunicatorID;
+    
+    std::string providedInterfaceName;
+    std::string adapterName, endpointInfo;
+    std::string portNumber;
+    std::string endpointInfoForClient;
+
+    // Run device interface proxy server objects of which type are 
+    // mtsDeviceInterfaceProxyServer. A mtsDeviceInterfaceProxyServer object
+    // is created to serve one provided interface.
+    mtsDeviceInterfaceProxyServer * newProvidedInterfaceProxy = NULL;
+    ProvidedInterfacesMapType::MapType::const_iterator it = 
         ProvidedInterfaces.GetMap().begin();
-    //const ProvidedInterfacesMapType::MapType::iterator end = interfaces.GetMap().end();
-    //for (;
-    //     iterator != end;
-    //     ++iterator) {
-    //    numberOfCommands += iterator->second->ProcessMailBoxes();
+    ProvidedInterfacesMapType::MapType::const_iterator itEnd = 
+        ProvidedInterfaces.GetMap().end();
+    for (; it != itEnd; ++it) {
+        providedInterfaceName = it->first;
+        adapterName = adapterNameBase + "_" + providedInterfaceName;
+        // Assign a new port number for a new proxy object.
+        portNumber = GetPortNumberString(ProvidedInterfaceProxies.GetCount());
+        endpointInfo = endpointInfoBase + portNumber;
+        endpointInfoForClient = ":default " +
+                                "-h " + serverTaskIP + " " +
+                                "-p " + portNumber;
+        //
+        // TODO: Replace hard-coded proxy definition with property files.
+        //
+        newProvidedInterfaceProxy = new mtsDeviceInterfaceProxyServer(
+            adapterName, endpointInfo, communicatorID);
+
+        if (!ProvidedInterfaceProxies.AddItem(providedInterfaceName, newProvidedInterfaceProxy)) {
+            CMN_LOG_CLASS_RUN_ERROR << "StartProvidedInterfaceProxies failed: "
+                << "cannot add a new provided interface proxy object: " << 
+                << providedInterfaceName << std::endl;
+            continue;
+        }
+
+        newProvidedInterfaceProxy->Start(this);
+        newProvidedInterfaceProxy->GetLogger()->trace(
+            "mtsTask", "Provided interface proxy starts: " + providedInterfaceName);
+        
+        // Inform the global task manager of the existence of the newly created 
+        // provided interface proxy with the access information for clients.
+        if (!TaskManager->AddProvidedInterface(
+            providedInterfaceName, adapterName, endpointInfoForClient, communicatorID, Name)) 
+        {
+            newProvidedInterfaceProxy->GetLogger()->error(
+                "failed to register a new provided interface: " + providedInterfaceName);
+            continue;
+        } else {
+            newProvidedInterfaceProxy->GetLogger()->trace(
+                "mtsTask", "registered a new provided interface: " + providedInterfaceName);
+        }
+    }
+}
+
+void mtsTask::StartRequiredInterfaceProxies(
+    const std::string & endpointInfo, const std::string & communicatorID)
+{
+    mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
+    if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
+        CMN_LOG_CLASS_RUN_ERROR << "StartRequiredInterfaceProxies failed: " 
+            << "This task manager works only locally." << std::endl;
+        return;
+    }
+
+    if (RequiredInterfaces.GetCount() <= 0) {
+        CMN_LOG_CLASS_RUN_ERROR << "StartRequiredInterfaceProxies failed: " 
+            << "No required interface exists." << std::endl;
+        return;
+    }
+
+    std::string requiredInterfaceName;
+
+    // Run device interface proxy client objects of which type are 
+    // mtsDeviceInterfaceProxyClient. A mtsDeviceInterfaceProxyClient object
+    // is created to serve one required interface.
+    mtsDeviceInterfaceProxyClient * newRequiredInterfaceProxy = NULL;
+    RequiredInterfacesMapType::MapType::const_iterator it = 
+        RequiredInterfaces.GetMap().begin();
+    RequiredInterfacesMapType::MapType::const_iterator itEnd = 
+        RequiredInterfaces.GetMap().end();
+    for (; it != itEnd; ++it) {
+        requiredInterfaceName = it->first;
+        //
+        // TODO: Replace hard-coded proxy definition with property files.
+        //
+        newRequiredInterfaceProxy = new mtsDeviceInterfaceProxyClient(
+            endpointInfo, communicatorID);
+
+        if (!RequiredInterfaceProxies.AddItem(requiredInterfaceName, newRequiredInterfaceProxy)) {
+            CMN_LOG_CLASS_RUN_ERROR << "StartRequiredInterfaceProxies failed: "
+                << "cannot add a new required interface proxy object: " << 
+                << requiredInterfaceName << std::endl;
+            continue;
+        }
+
+        newRequiredInterfaceProxy->Start(this);
+        newRequiredInterfaceProxy->GetLogger()->trace(
+            "mtsTask", "Required interface proxy starts: " + requiredInterfaceName);
+        
+        // Inform the global task manager of the existence of the newly created 
+        // required interface proxy object.
+        if (!TaskManager->AddRequiredInterface(requiredInterfaceName, Name)) {
+            newRequiredInterfaceProxy->GetLogger()->error(
+                "failed to register a new required interface: " + requiredInterfaceName);
+            continue;
+        } else {
+            newRequiredInterfaceProxy->GetLogger()->trace(
+                "mtsTask", "registered a new required interface: " + requiredInterfaceName);
+        }
+    }
+}
+
+/*
+void mtsTask::StartInterfaceProxyServer(const std::string & ServerTaskIP)
+{
+    //mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
+    //if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
+    //    return;
     //}
 
-    const std::string adapterName = "TaskInterfaceServerAdapter";
-    //
-    // TODO: avoid using hard-coded proxy access information
-    //
-    const std::string endpointInfo = "tcp -p 11705";
-    const std::string endpointInfoForClient = ":default -h " + ServerTaskIP + " -p 11705";
-    const std::string communicatorID = TaskInterfaceCommunicatorID;
+    //if (ProvidedInterfaces.GetCount() <= 0) {
+    //    CMN_LOG_CLASS_RUN_ERROR << "No provided interface exists. Proxy server wasn't created." << std::endl;
+    //    return;
+    //}
 
-    Proxy = new mtsDeviceInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
-    Proxy->Start(this);
-    Proxy->GetLogger()->trace("mtsTask", "Provided interface proxy starts.");
-    ProxyServer = dynamic_cast<mtsDeviceInterfaceProxyServer *>(Proxy);
+    // Run device interface proxy server objects of which type is 
+    // mtsDeviceInterfaceProxyServer. One instance of mtsDeviceInterfaceProxyServer
+    // is created for one provided interface.
+    ProvidedInterfacesMapType::MapType::const_iterator itBegin = 
+        ProvidedInterfaces.GetMap().begin();
+    ProvidedInterfacesMapType::MapType::const_iterator itEnd = 
+        ProvidedInterfaces.GetMap().end();
+    for (; itBegin != itEnd; ++itBegin) {
+        const std::string adapterName = "TaskInterfaceServerAdapter";
+        //
+        // TODO: avoid using hard-coded proxy access information
+        //
+        const std::string endpointInfo = "tcp -p 11705";
+        const std::string endpointInfoForClient = ":default -h " + ServerTaskIP + " -p 11705";
+        const std::string communicatorID = TaskInterfaceCommunicatorID;
 
-    // Inform the global task manager of the existence of a newly created 
-    // provided interface with the access information.
-    if (!TaskManager->AddProvidedInterface(
-        iterator->first, adapterName, endpointInfoForClient, communicatorID, Name)) 
-    {
-        Proxy->GetLogger()->error("Failed to add provided interface: " + iterator->first);
-        return;
-    } else {
-        Proxy->GetLogger()->trace("mtsTask", "Registered provided interface: " + iterator->first);
+        Proxy = new mtsDeviceInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
+        Proxy->Start(this);
+        Proxy->GetLogger()->trace("mtsTask", "Provided interface proxy starts.");
+        ProxyServer = dynamic_cast<mtsDeviceInterfaceProxyServer *>(Proxy);
+
+        // Inform the global task manager of the existence of a newly created 
+        // provided interface with the access information.
+        if (!TaskManager->AddProvidedInterface(
+            iterator->first, adapterName, endpointInfoForClient, communicatorID, Name)) 
+        {
+            Proxy->GetLogger()->error("Failed to add provided interface: " + iterator->first);
+            return;
+        } else {
+            Proxy->GetLogger()->trace("mtsTask", "Registered provided interface: " + iterator->first);
+        }
     }
 }
 
@@ -384,6 +513,7 @@ void mtsTask::StartProxyClient(const std::string & endpointInfo,
         }
     }
 }
+*/
 
 //
 //  For a client task
@@ -414,63 +544,15 @@ void mtsTask::SendGetCommandId(
     ProxyClient->SendGetCommandId(functionProxies);
 }
 
-//
-//  For a server task
-//
 
-// MJUNG: Currently it is assumed that one required interface connects to only
-// one provided interface. If a required interface connects to more than
-// one provided interface, appropriate changes should me made.
-// (see mtsDeviceInterfaceProxy.ice)
-//void mtsTask::ReceiveCommandProxyInfo(const ::mtsDeviceInterfaceProxy::CommandProxyInfo & info)
-//{
-//    CMN_ASSERT(ProxyServer);
-//
-//    mtsDeviceInterface * providedInterface = GetProvidedInterface(info.ConnectedProvidedInterfaceName);
-//    CMN_ASSERT(providedInterface);
-//
-//    std::string commandName;
-//    unsigned int commandID;
-//
-//    mtsDeviceInterfaceProxy::CommandProxyElementSeq::const_iterator it;
-//
-//    // Fetch a pointer to an actual command object
-////#define ADD_COMMAND_PROXY_INFO( _commandType )\
-////    it = info.CommandProxy##_commandType##Seq.begin();\
-////    for (; it != info.CommandProxy##_commandType##Seq.end(); ++it) {\
+const std::string mtsTask::GetPortNumberString(const unsigned int id)
+{
+    static unsigned int defaultTaskPortNumber = 10705;
 
-////        commandID = it->ID;\
-////        commandName = it->Name;\
-////        CMN_ASSERT(providedInterface->AddCommand##_commandType##ProxyMapElement(commandID, commandName));\
-////        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));\
-////    }
-//
-//    it = info.CommandProxyVoidSeq.begin();
-//    for (; it != info.CommandProxyVoidSeq.end(); ++it) {
-//        commandID = it->ID;
-//        commandName = it->Name;
-//        CMN_ASSERT(providedInterface->AddCommandVoidProxyMapElement(commandID, commandName));
-//        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));
-//    }
-//
-//    it = info.CommandProxyWriteSeq.begin();
-//    for (; it != info.CommandProxyWriteSeq.end(); ++it) {
-//        commandID = it->ID;
-//        commandName = it->Name;
-//        CMN_ASSERT(providedInterface->AddCommandWriteProxyMapElement(commandID, commandName));
-//        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));
-//    }
-//
-//    it = info.CommandProxyReadSeq.begin();
-//    for (; it != info.CommandProxyReadSeq.end(); ++it) {
-//        commandID = it->ID;
-//        commandName = it->Name;
-//        CMN_ASSERT(providedInterface->AddCommandReadProxyMapElement(commandID, commandName));
-//        CommandLookupTable.insert(std::make_pair(commandID, providedInterface));
-//    }
-//
-//    //ADD_COMMAND_PROXY_INFO(Void);
-//    //ADD_COMMAND_PROXY_INFO(Read);
-//    //ADD_COMMAND_PROXY_INFO(Write);
-//    //ADD_COMMAND_PROXY_INFO(QualifiedRead);
-//}
+    unsigned int portNumberAllocated = defaultTaskPortNumber + (id * 5);
+
+    std::stringstream portNumberString;
+    portNumberString << portNumberAllocated;
+
+    return portNumberString.str();
+}

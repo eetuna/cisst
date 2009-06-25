@@ -43,23 +43,37 @@ public:
                                   const std::string & propertyName);
     ~mtsDeviceInterfaceProxyClient();
 
+    /*! Set a client task connected to this proxy client. Currently, this client task 
+        can have the same number of the provided interfaces provided by the server task,
+        which means only 1:1 connection between a provided interface and a required
+        interface is allowed, right now. */
+    void SetConnectedTask(mtsTask * clientTask) { ConnectedTask = clientTask; }
+
 protected:
+    /*! Typedef for base type. */
     typedef mtsProxyBaseClient<mtsTask> BaseType;
 
     /*! Typedef for server proxy. */
     typedef mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx DeviceInterfaceServerProxyType;
 
+    /*! Pointer to the task connected. */
+    mtsTask * ConnectedTask;
+
+    /*! Connected server object */
+    DeviceInterfaceServerProxyType DeviceInterfaceServerProxy;
+    
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation
+    //-------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------
+    //  Processing Methods
+    //-------------------------------------------------------------------------
     /*! Send thread set up. */
     class DeviceInterfaceClientI;
     typedef IceUtil::Handle<DeviceInterfaceClientI> DeviceInterfaceClientIPtr;
     DeviceInterfaceClientIPtr Sender;
 
-    /*! DeviceInterfaceServer proxy */
-    DeviceInterfaceServerProxyType DeviceInterfaceServerProxy;
-    
-    //-------------------------------------------------------------------------
-    //  Processing Methods
-    //-------------------------------------------------------------------------
     /*! Buffers for serialization and deserialization. */
     std::stringstream SerializationBuffer;
     std::stringstream DeSerializationBuffer;
