@@ -134,6 +134,8 @@ SET(HEADER_FILES
     mtsCommandWriteProxy.h
     mtsCommandReadProxy.h
     mtsCommandQualifiedReadProxy.h
+    mtsMulticastCommandWriteProxy.h
+    
     mtsEventWriteGeneratorProxy.h
     )
 

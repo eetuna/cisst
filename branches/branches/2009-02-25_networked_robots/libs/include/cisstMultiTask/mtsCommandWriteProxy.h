@@ -37,34 +37,64 @@ http://www.cisst.org/cisst/license.txt.
   mtsCommandWriteProxy is a proxy for mtsCommandWrite. This proxy contains
   CommandId set as a function pointer of which type is mtsFunctionWrite.
   When Execute() method is called, the CommandId is sent to the server task
-  over networks with one payload. The provided interface proxy manages 
-  this process.
+  over networks with one payload.
+
+  Note that there can be two kinds of interface proxy class that manages 
+  this process. The first one is mtsDeviceInterfaceProxyClient which is used
+  to execute a void command at a server, and the other one is 
+  mtsDeviceInterfaceProxyServer which propagates events generated at a server
+  to a client. Only either one of the device interface proxies can be
+  initialized while the other should be NULL.
 */
 class mtsCommandWriteProxy: public mtsCommandWriteBase {
 public:
     typedef mtsCommandWriteBase BaseType;
 
-protected:    
+protected:
+    /*! Device interface proxy object which executes a write command at 
+        peer's memory space across networks. */
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
 
-    /*! ID assigned by the server as a pointer to the actual command in server's
-        memory space. */
+    /*! CommandId is set as a pointer to a mtsFunctionWrite at peer's memory
+        space which binds to an actual write command. */
     CommandProxyIdType CommandId;
     
 public:
+    /*! The constructor. */
     mtsCommandWriteProxy(const int commandId, 
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
+                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy) :
         BaseType(),
+        CommandId(commandId),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandId(commandId)
+        RequiredInterfaceProxy(NULL)
+    {}
+
+    mtsCommandWriteProxy(const int commandId, 
+                         mtsDeviceInterfaceProxyServer * requiredInterfaceProxy) :
+        BaseType(),
+        CommandId(commandId),
+        ProvidedInterfaceProxy(NULL),
+        RequiredInterfaceProxy(requiredInterfaceProxy)
+    {}
+    
+    /*! The constructor with a name. */
+    mtsCommandWriteProxy(const int commandId,
+                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                         const std::string & name) :
+        BaseType(name),
+        CommandId(commandId),
+        ProvidedInterfaceProxy(providedInterfaceProxy),
+        RequiredInterfaceProxy(NULL)
     {}
 
     mtsCommandWriteProxy(const int commandId,
-                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
-                         const std::string & name):
+                         mtsDeviceInterfaceProxyServer * requiredInterfaceProxy,
+                         const std::string & name) :
         BaseType(name),
-        ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandId(commandId)
+        CommandId(commandId),
+        ProvidedInterfaceProxy(NULL),
+        RequiredInterfaceProxy(requiredInterfaceProxy)
     {}
 
     /*! The destructor. Does nothing */
@@ -78,14 +108,26 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
-        ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
+        if (ProvidedInterfaceProxy) {
+            ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
+        } else {
+            //
+            // TODO: implement this
+            //
+            //RequiredInterfaceProxy->
+        }
         return mtsCommandBase::DEV_OK;
     }
 
     /*! For debugging. Generate a human readable output for the
       command object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandWriteProxy: " << Name << ", " << CommandId << std::endl;
+        outputStream << "mtsCommandWriteProxy: " << Name << ", " << CommandId << " with ";
+        if (ProvidedInterfaceProxy) {
+            outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
+        } else {
+            outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
+        }
     }
 
     /*! Return a pointer on the argument prototype */

@@ -77,6 +77,12 @@ class CISST_EXPORT mtsRequiredInterface: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    // MJUNG: if this friend class declaration is inappropriate or we just
+    // don't like friend class declarations, this declaration can be replaced
+    // with the special type of methods to add events such AddEventVoidProxy()
+    // or AddEventVoidProxy ///////////////////////////////////////////////////
+    friend class mtsDeviceInterfaceProxyServer;
+
 protected:
 
     // PK: TEMP (copied from mtsTaskInterface.h)    

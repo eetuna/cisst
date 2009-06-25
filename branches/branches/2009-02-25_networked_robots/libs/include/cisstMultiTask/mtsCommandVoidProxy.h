@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsCommandVoidBase.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -37,36 +38,64 @@ http://www.cisst.org/cisst/license.txt.
   mtsCommandVoidProxy is a proxy for mtsCommandVoid. This proxy contains
   CommandId set as a function pointer of which type is mtsFunctionVoid.
   When Execute() method is called, the CommandId is sent to the server task
-  over networks without payload. The provided interface proxy manages 
-  this process.
+  over networks without payload. 
+
+  Note that there can be two kinds of interface proxy class that manages 
+  this process. The first one is mtsDeviceInterfaceProxyClient which is used
+  to execute a void command at a server, and the other one is 
+  mtsDeviceInterfaceProxyServer which propagates events generated at a server
+  to a client. Only either one of the device interface proxies can be
+  initialized while the other should be NULL.
 */
 class mtsCommandVoidProxy: public mtsCommandVoidBase {
 public:
     typedef mtsCommandVoidBase BaseType;    
 
 protected:
+    /*! Device interface proxy object which executes a void command at 
+        peer's memory space across networks. */
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
 
-    /*! ID assigned by the server as a pointer to the actual command in server's
-        memory space. */
+    /*! CommandId is set as a pointer to a mtsFunctionVoid at peer's memory
+        space which binds to an actual void command. */
     CommandProxyIdType CommandId;
 
 public:    
-    /*! The constructor. Does nothing */
+    /*! The constructor. */
     mtsCommandVoidProxy(const int commandId, 
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
+                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy) :
         BaseType(),
+        CommandId(commandId),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandId(commandId)
+        RequiredInterfaceProxy(NULL)
+    {}
+
+    mtsCommandVoidProxy(const int commandId, 
+                        mtsDeviceInterfaceProxyServer * requiredInterfaceProxy) :
+        BaseType(),
+        CommandId(commandId),
+        ProvidedInterfaceProxy(NULL),
+        RequiredInterfaceProxy(requiredInterfaceProxy)
     {}
     
-    /*! Constructor with a name. */
+    /*! The constructor with a name. */
     mtsCommandVoidProxy(const int commandId,
                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
-                        const std::string & name):
+                        const std::string & name) :
         BaseType(name),
+        CommandId(commandId),
         ProvidedInterfaceProxy(providedInterfaceProxy),
-        CommandId(commandId)
+        RequiredInterfaceProxy(NULL)
+    {}
+
+    mtsCommandVoidProxy(const int commandId,
+                        mtsDeviceInterfaceProxyServer * requiredInterfaceProxy,
+                        const std::string & name) :
+        BaseType(name),
+        CommandId(commandId),
+        ProvidedInterfaceProxy(NULL),
+        RequiredInterfaceProxy(requiredInterfaceProxy)
     {}
     
     /*! The destructor. Does nothing */
@@ -79,12 +108,24 @@ public:
     
     /*! The execute method. */
     BaseType::ReturnType Execute() {
-        ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
+        if (ProvidedInterfaceProxy) {
+            ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
+        } else {
+            //
+            // TODO: implement this
+            //
+            //RequiredInterfaceProxy->
+        }
         return BaseType::DEV_OK;
     }
 
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << std::endl;
+        outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << " with ";
+        if (ProvidedInterfaceProxy) {
+            outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
+        } else {
+            outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
+        }
     }
 
     /*! Returns number of arguments (parameters) expected by Execute().

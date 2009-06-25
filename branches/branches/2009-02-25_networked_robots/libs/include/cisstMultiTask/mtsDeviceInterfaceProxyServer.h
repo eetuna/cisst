@@ -29,6 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
+#include <cisstMultiTask/mtsCommandVoidProxy.h>
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -54,31 +56,17 @@ public:
     void SetConnectedTask(mtsTask * task) { ConnectedTask = task; }
 
 protected:
-    typedef mtsProxyBaseServer<mtsTask> BaseType;
-
     /*! Typedef for client proxy. */
     typedef mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx DeviceInterfaceClientProxyType;
 
-    /*! Definitions for send thread */
-    class DeviceInterfaceServerI;
-    typedef IceUtil::Handle<DeviceInterfaceServerI> DeviceInterfaceServerIPtr;
-    DeviceInterfaceServerIPtr Sender;
+    /*! Typedef for base type. */
+    typedef mtsProxyBaseServer<mtsTask> BaseType;
 
+    /*! Pointer to the task connected. */
     mtsTask * ConnectedTask;
-    
-    /*! Resource clean-up */
-    void OnClose();
 
-    //-------------------------------------------------------------------------
-    //  Serialization and Deserialization
-    //-------------------------------------------------------------------------
-    /*! Buffers for serialization and deserialization. */
-    std::stringstream SerializationBuffer;
-    std::stringstream DeSerializationBuffer;
-
-    /*! Serializer and DeSerializer. */
-    cmnSerializer * Serializer;
-    cmnDeSerializer * DeSerializer;
+    /*! Connected client object. */
+    DeviceInterfaceClientProxyType ConnectedClient;
 
     //-------------------------------------------------------------------------
     //  Proxy Implementation
@@ -100,11 +88,30 @@ protected:
 
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
+    
+    /*! Definitions for send thread */
+    class DeviceInterfaceServerI;
+    typedef IceUtil::Handle<DeviceInterfaceServerI> DeviceInterfaceServerIPtr;
+    DeviceInterfaceServerIPtr Sender;
 
-    /*! Connected client object. */
-    DeviceInterfaceClientProxyType ConnectedClient;
+    /*! Resource clean-up */
+    void OnClose();
 
-    /*! Function proxies */
+    //-------------------------------------------------------------------------
+    //  Serialization and Deserialization
+    //-------------------------------------------------------------------------
+    /*! Buffers for serialization and deserialization. */
+    std::stringstream SerializationBuffer;
+    std::stringstream DeSerializationBuffer;
+
+    /*! Serializer and DeSerializer. */
+    cmnSerializer * Serializer;
+    cmnDeSerializer * DeSerializer;
+
+    //-------------------------------------------------------------------------
+    //  Function Proxy and Event Proxy
+    //-------------------------------------------------------------------------
+    /*! Function proxy */
     typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
     typedef cmnNamedMap<mtsFunctionWrite> FunctionWriteProxyMapType;
     typedef cmnNamedMap<mtsFunctionRead>  FunctionReadProxyMapType;
@@ -113,6 +120,12 @@ protected:
     FunctionWriteProxyMapType FunctionWriteProxyMap;
     FunctionReadProxyMapType FunctionReadProxyMap;
     FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
+
+    /*! Event proxy */
+    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidMapType;
+    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteMapType;
+    EventHandlerVoidMapType  EventHandlerVoidMap;
+    EventHandlerWriteMapType EventHandlerWriteMap;
 
     //-------------------------------------------------------------------------
     //  Processing Methods

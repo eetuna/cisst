@@ -34,6 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandWriteProxy.h>
 #include <cisstMultiTask/mtsCommandReadProxy.h>
 #include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
+#include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
@@ -506,74 +507,94 @@ bool mtsTaskManager::CreateProvidedInterfaceProxy(
     }
 
     // 2) Create command proxies.
-    int commandId = 0;
+    // CommandId is initially set to zero meaning that it needs to be updated.
+    // An actual value will be assigned later when UpdateCommandId() is executed.
+    int commandId = NULL;
     std::string commandName, eventName;
 
-#define ITERATE_INTERFACE_BEGIN(_commandType) \
+#define ADD_COMMANDS_BEGIN(_commandType) \
     {\
+        mtsCommand##_commandType##Proxy * newCommand##_commandType = NULL;\
         mtsDeviceInterfaceProxy::Command##_commandType##Sequence::const_iterator it\
             = providedInterface.Commands##_commandType.begin();\
         for (; it != providedInterface.Commands##_commandType.end(); ++it) {\
             commandName = it->Name;
-#define ITERATE_INTERFACE_END \
+#define ADD_COMMANDS_END \
         }\
     }
 
     // 2-1) Void
-    mtsCommandVoidProxy * newCommandVoid = NULL;
-    ITERATE_INTERFACE_BEGIN(Void)
+    ADD_COMMANDS_BEGIN(Void)
         newCommandVoid = new mtsCommandVoidProxy(
             commandId, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandVoid);
-        providedInterfaceProxy->GetCommandVoidMap().AddItem(it->Name, newCommandVoid);
-    ITERATE_INTERFACE_END
+        providedInterfaceProxy->GetCommandVoidMap().AddItem(commandName, newCommandVoid);
+    ADD_COMMANDS_END
 
     // 2-2) Write
-    mtsCommandWriteProxy * newCommandWrite = NULL;
-    ITERATE_INTERFACE_BEGIN(Write)
+    ADD_COMMANDS_BEGIN(Write)
         newCommandWrite = new mtsCommandWriteProxy(
             commandId, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandWrite);
-        providedInterfaceProxy->GetCommandWriteMap().AddItem(it->Name, newCommandWrite);
-    ITERATE_INTERFACE_END
+        providedInterfaceProxy->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
+    ADD_COMMANDS_END
 
     // 2-3) Read
-    mtsCommandReadProxy * newCommandRead = NULL;
-    ITERATE_INTERFACE_BEGIN(Read)
+    ADD_COMMANDS_BEGIN(Read)
         newCommandRead = new mtsCommandReadProxy(
             commandId, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandRead);
-        providedInterfaceProxy->GetCommandReadMap().AddItem(it->Name, newCommandRead);
-    ITERATE_INTERFACE_END
+        providedInterfaceProxy->GetCommandReadMap().AddItem(commandName, newCommandRead);
+    ADD_COMMANDS_END
 
     // 2-4) QualifiedRead
-    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = NULL;
-    ITERATE_INTERFACE_BEGIN(QualifiedRead)
+    ADD_COMMANDS_BEGIN(QualifiedRead)
         newCommandQualifiedRead = new mtsCommandQualifiedReadProxy(
             commandId, clientTask->GetProxyClient(), commandName);
         CMN_ASSERT(newCommandQualifiedRead);
-        providedInterfaceProxy->GetCommandQualifiedReadMap().AddItem(it->Name, newCommandQualifiedRead);
-    ITERATE_INTERFACE_END
+        providedInterfaceProxy->GetCommandQualifiedReadMap().AddItem(commandName, newCommandQualifiedRead);
+    ADD_COMMANDS_END
 
-#undef ITERATE_INTERFACE_BEGIN
-#undef ITERATE_INTERFACE_END
+    //{
+    //    mtsFunctionVoid * newEventVoidGenerator = NULL;
+    //    mtsDeviceInterfaceProxy::EventVoidSequence::const_iterator it =
+    //        providedInterface.EventsVoid.begin();
+    //    for (; it != providedInterface.EventsVoid.end(); ++it) {
+    //        eventName = it->Name;            
+    //        newEventVoidGenerator = new mtsFunctionVoid();
+    //        newEventVoidGenerator->Bind(providedInterfaceProxy->AddEventVoid(eventName));            
+    //    }
+    //}
+#define ADD_EVENTS_BEGIN(_eventType)\
+    {\
+        mtsFunction##_eventType * newEvent##_eventType##Generator = NULL;\
+        mtsDeviceInterfaceProxy::Event##_eventType##Sequence::const_iterator it =\
+        providedInterface.Events##_eventType.begin();\
+        for (; it != providedInterface.Events##_eventType.end(); ++it) {\
+            eventName = it->Name;
+#define ADD_EVENTS_END \
+        }\
+    }
 
     // 3) Create event generator proxies.
-    {
-        mtsDeviceInterfaceProxy::EventVoidSequence::const_iterator it =
-            providedInterface.EventsVoid.begin();
-        for (; it != providedInterface.EventsVoid.end(); ++it) {
-            eventName = it->Name;
-            /*
-            mtsDouble eventData; // data type used for the event payload
-            TriggerEvent.Bind(mainInterface->AddEventWrite("TriggerEvent", eventData));
-            */
-            //providedInterfaceProxy->AddEventWrite(eventName,
-            //
-            // !!!!!!!! Continue HERE !!!!!!!!!!
-            //
-        }
-    }
+    ADD_EVENTS_BEGIN(Void);
+        newEventVoidGenerator = new mtsFunctionVoid();
+        newEventVoidGenerator->Bind(providedInterfaceProxy->AddEventVoid(eventName));
+    ADD_EVENTS_END;
+    
+    mtsMulticastCommandWriteProxy * newMulticastCommandWriteProxy = NULL;
+    ADD_EVENTS_BEGIN(Write);
+        newEventWriteGenerator = new mtsFunctionWrite();
+        newMulticastCommandWriteProxy = new mtsMulticastCommandWriteProxy(
+            it->Name, it->ArgumentTypeName);
+        CMN_ASSERT(providedInterfaceProxy->AddEvent(it->Name, newMulticastCommandWriteProxy));
+        CMN_ASSERT(newEventWriteGenerator->Bind(newMulticastCommandWriteProxy));
+    ADD_EVENTS_END;
+
+#undef ADD_COMMANDS_BEGIN
+#undef ADD_COMMANDS_END
+#undef ADD_EVENTS_BEGIN
+#undef ADD_EVENTS_END
 
     return true;
 }

@@ -25,6 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsDeviceProxy.h>
 #include <cisstMultiTask/mtsTask.h>
+#include <cisstMultiTask/mtsCommandVoidProxy.h>
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyServer);
 
@@ -157,7 +159,7 @@ mtsProvidedInterface * mtsDeviceInterfaceProxyServer::GetProvidedInterface(
 bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     mtsRequiredInterface * requiredInterfaceProxy, mtsProvidedInterface * providedInterface)
 {
-    // Get the list of commands
+    // Get the lists of commands
     mtsFunctionVoid  * functionVoidProxy = NULL;
     mtsFunctionWrite * functionWriteProxy = NULL;
     mtsFunctionRead  * functionReadProxy = NULL;
@@ -190,7 +192,36 @@ bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     ADD_FUNCTION_PROXY_BEGIN(QualifiedRead);
     ADD_FUNCTION_PROXY_END;
 
-    // Using AllocateResources(), get pointers allocated for this required interface.
+    // Get the lists of events
+    mtsCommandVoidProxy  * actualCommandVoidProxy = NULL;
+    mtsCommandWriteProxy * actualCommandWriteProxy = NULL;
+
+    //std::vector<std::string> namesOfEventsVoid = providedInterface->GetNamesOfEventsVoid();
+    //for (unsigned int i = 0; i < namesOfEventsVoid.size(); ++i) {
+    //    // The fourth argument 'queued' should have to be false in order not to queue events.
+    //    requiredInterfaceProxy->AddEventHandlerVoid(
+    //        &mtsDeviceInterfaceProxyServer::EventHandlerVoid, this, namesOfEventsVoid[i], false);
+    //}
+
+    // CommandId is initially set to zero meaning that it needs to be updated.
+    // An actual value will be assigned later when UpdateEventCommandId() is executed.
+#define ADD_EVENT_PROXY_BEGIN(_eventType) \
+    std::vector<std::string> namesOfEvents##_eventType = providedInterface->GetNamesOfEvents##_eventType();\
+    for (unsigned int i = 0; i < namesOfEvents##_eventType.size(); ++i) {\
+        actualCommand##_eventType##Proxy = new mtsCommand##_eventType##Proxy(NULL, this);\
+        CMN_ASSERT(EventHandler##_eventType##Map.AddItem(namesOfEvents##_eventType[i], actualCommand##_eventType##Proxy));\
+        CMN_ASSERT(requiredInterfaceProxy->EventHandlers##_eventType.AddItem(namesOfEvents##_eventType[i], actualCommand##_eventType##Proxy));
+#define ADD_EVENT_PROXY_END \
+    }
+        
+    ADD_EVENT_PROXY_BEGIN(Void);
+    ADD_EVENT_PROXY_END;
+    
+    ADD_EVENT_PROXY_BEGIN(Write);
+    ADD_EVENT_PROXY_END;
+
+    // Using AllocateResources(), get pointers which has been allocated for this 
+    // required interface and is thread-safe to use.
     unsigned int userId;
     userId = providedInterface->AllocateResources(requiredInterfaceProxy->GetName() + "Proxy");
 
@@ -203,6 +234,14 @@ bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
     }
 
     return true;
+}
+
+void mtsDeviceInterfaceProxyServer::EventHandlerVoid()
+{
+}
+
+void mtsDeviceInterfaceProxyServer::EventHandlerWrite(const mtsGenericObject & argument)
+{
 }
 
 void mtsDeviceInterfaceProxyServer::GetFunctionPointers(
