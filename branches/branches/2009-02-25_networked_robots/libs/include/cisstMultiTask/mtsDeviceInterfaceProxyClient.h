@@ -49,6 +49,12 @@ public:
         interface is allowed, right now. */
     void SetConnectedTask(mtsTask * clientTask) { ConnectedTask = clientTask; }
 
+    /*! Entry point to run a proxy. */
+    void Start(mtsTask * callingTask);
+
+    /*! Stop the proxy. */
+    void Stop();
+
 protected:
     /*! Typedef for base type. */
     typedef mtsProxyBaseClient<mtsTask> BaseType;
@@ -94,9 +100,6 @@ protected:
 
         Sender = new DeviceInterfaceClientI(IceCommunicator, Logger, DeviceInterfaceServerProxy, this);
     }
-
-    /*! Entry point to run a proxy. */
-    void Start(mtsTask * callingTask);
 
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();
@@ -156,7 +159,7 @@ protected:
 
         void Start();
         void Run();
-        void Destroy();
+        void Stop();
 
         //void UpdateCommandId(const ::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
     };

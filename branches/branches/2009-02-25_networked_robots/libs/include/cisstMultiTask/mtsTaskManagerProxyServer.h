@@ -52,6 +52,12 @@ public:
                               const std::string & communicatorID);        
     ~mtsTaskManagerProxyServer();
 
+    /*! Entry point to run a proxy. */
+    void Start(mtsTaskManager * callingTaskManager);
+
+    /*! End the proxy. */
+    void Stop();
+
 protected:
     typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
 
@@ -181,9 +187,6 @@ protected:
         return Sender;
     }
     
-    /*! Entry point to run a proxy. */
-    void Start(mtsTaskManager * callingTaskManager);
-
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartServer();
 
@@ -218,7 +221,7 @@ protected:
 
         void Start();
         void Run();
-        void Destroy();
+        void Stop();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
         void UpdateTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&);

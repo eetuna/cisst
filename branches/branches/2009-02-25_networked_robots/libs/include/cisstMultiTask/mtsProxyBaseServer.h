@@ -78,6 +78,7 @@ protected:
             IceAdapter->activate();
 
             this->InitSuccessFlag = true;
+            Runnable = true;
             
             this->Logger->trace("mtsProxyBaseServer", "mtsProxyBaseServer initialization: success");
         } catch (const Ice::Exception& e) {
@@ -118,14 +119,12 @@ public:
         //
         if (this->IceCommunicator) {
             try {                
-                this->IceCommunicator->destroy();
+                IceCommunicator->destroy();
 
-                this->Logger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
-                //CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
+                Logger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
             } catch (const Ice::Exception & e) {
-                this->Logger->trace("mtsProxyBaseServer", "Server proxy clean-up failed.");
-                this->Logger->trace("mtsProxyBaseServer", e.what());
-                //CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
+                Logger->trace("mtsProxyBaseServer", "Server proxy clean-up failed.");
+                Logger->trace("mtsProxyBaseServer", e.what());
             }
         } 
     }

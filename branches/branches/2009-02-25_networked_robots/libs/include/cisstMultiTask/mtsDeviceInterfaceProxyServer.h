@@ -53,6 +53,12 @@ public:
                                   const std::string& communicatorID);
     ~mtsDeviceInterfaceProxyServer();
     
+    /*! Entry point to run a proxy. */
+    void Start(mtsTask * callingTask);
+
+    /*! Stop the proxy. */
+    void Stop();
+
     /*! Set a server task connected to this proxy server. This server task has 
         to provide at least one provided interface. */
     void SetConnectedTask(mtsTask * serverTask) { ConnectedTask = serverTask; }
@@ -79,9 +85,6 @@ protected:
         return Sender;
     }
     
-    /*! Entry point to run a proxy. */
-    void Start(mtsTask * callingTask);
-
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartServer();
 
@@ -195,7 +198,7 @@ protected:
 
         void Start();
         void Run();
-        void Destroy();
+        void Stop();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
         bool GetProvidedInterfaces(::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence&, 

@@ -40,7 +40,6 @@ class CISST_EXPORT mtsProxyBaseClient : public mtsProxyBaseCommon<_argumentType>
     typedef mtsProxyBaseCommon<_argumentType> BaseType;
 
 protected:
-    bool Runnable;
     const std::string EndpointInfo;
     const std::string CommunicatorID;
     Ice::ObjectPrx ProxyObject;
@@ -56,48 +55,48 @@ protected:
             initData.properties->setProperty("Ice.ImplicitContext", "Shared");
             //initData.properties->load(PropertyFileName);
 
-            this->IceCommunicator = Ice::initialize(initData);
+            IceCommunicator = Ice::initialize(initData);
             
             // Create Logger
-            this->Logger = this->IceCommunicator->getLogger();
+            Logger = IceCommunicator->getLogger();
             
             //ProxyObject = IceCommunicator->propertyToProxy(PropertyName);
             //std::string stringfiedProxy = PropertyName + ":default -p 10705";
             std::string stringfiedProxy = CommunicatorID + EndpointInfo;
-            ProxyObject = this->IceCommunicator->stringToProxy(stringfiedProxy);
+            ProxyObject = IceCommunicator->stringToProxy(stringfiedProxy);
 
             // If a proxy fails to be created, an exception is thrown.
             CreateProxy();
 
-            this->InitSuccessFlag = true;
+            InitSuccessFlag = true;
             Runnable = true;
             
-            this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization success");
+            Logger->trace("mtsProxyBaseClient", "Client proxy initialization success");
             return;
         } catch (const Ice::Exception& e) {
-            if (this->Logger) {
-                this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
-                this->Logger->trace("mtsProxyBaseClient", e.what());
+            if (Logger) {
+                Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
+                Logger->trace("mtsProxyBaseClient", e.what());
             } else {
                 std::cout << "mtsProxyBaseClient: Client proxy initialization error." << std::endl;
                 std::cout << "mtsProxyBaseClient: " << e.what() << std::endl;
             }
         } catch (const char * msg) {
-            if (this->Logger) {
-                this->Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
-                this->Logger->trace("mtsProxyBaseClient", msg);
+            if (Logger) {
+                Logger->trace("mtsProxyBaseClient", "Client proxy initialization error");
+                Logger->trace("mtsProxyBaseClient", msg);
             } else {
                 std::cout << "mtsProxyBaseClient: Client proxy initialization error." << std::endl;
                 std::cout << "mtsProxyBaseClient: " << msg << std::endl;
             }
         }
 
-        if (!this->InitSuccessFlag) {
+        if (!InitSuccessFlag) {
             try {
-                this->IceCommunicator->destroy();
+                IceCommunicator->destroy();
             } catch (const Ice::Exception& e) {
-                this->Logger->trace("mtsProxyBaseClient", "Client proxy clean-up error");
-                this->Logger->trace("mtsProxyBaseClient", e.what());
+                Logger->trace("mtsProxyBaseClient", "Client proxy clean-up error");
+                Logger->trace("mtsProxyBaseClient", e.what());
             }
         }
     }
@@ -106,7 +105,6 @@ public:
     mtsProxyBaseClient(const std::string & endpointInfo, 
                        const std::string & communicatorID):
         BaseType("", "", BaseType::PROXY_CLIENT),
-        Runnable(false), 
         EndpointInfo(endpointInfo),
         CommunicatorID(communicatorID)
     {}
@@ -118,17 +116,15 @@ public:
 
     virtual void OnThreadEnd(void)
     {
-        if (this->IceCommunicator) {
+        if (IceCommunicator) {
             try {
-                this->IceCommunicator->destroy();
+                IceCommunicator->destroy();
                 Runnable = false;
 
-                this->Logger->trace("mtsProxyBaseClient", "Client proxy clean-up success.");
-                //CMN_LOG_CLASS(3) << "Proxy cleanup succeeded." << std::endl;
+                Logger->trace("mtsProxyBaseClient", "Client proxy clean-up success.");
             } catch (const Ice::Exception& e) {
-                this->Logger->trace("mtsProxyBaseClient", "Client proxy clean-up failed.");
-                this->Logger->trace("mtsProxyBaseClient", e.what());
-                //CMN_LOG_CLASS(3) << "Proxy cleanup failed: " << e << std::endl;
+                Logger->trace("mtsProxyBaseClient", "Client proxy clean-up failed.");
+                Logger->trace("mtsProxyBaseClient", e.what());
             }
         }    
     }

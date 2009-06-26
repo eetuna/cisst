@@ -128,6 +128,9 @@ protected:
     /*! Was the initiliazation successful? */
     bool InitSuccessFlag;
 
+    /*! Is this proxy running? */
+    bool Runnable;
+
     /*! Worker thread for network communication */
     osaThread WorkerThread;
 
@@ -171,6 +174,7 @@ public:
                        const ProxyType proxyType):
         ProxyTypeMember(proxyType),
         InitSuccessFlag(false),
+        Runnable(false),
         PropertyFileName(propertyFileName),
         PropertyName(propertyName),
         IceCommunicator(NULL),
@@ -183,6 +187,9 @@ public:
     /*! Initialize and start a proxy. Returns immediately. */
     virtual void Start(_ArgumentType * callingClass) = 0;
     
+    /*! End the proxy. */
+    virtual void Stop() = 0;
+
     /*! Called when the worker thread ends. */
     virtual void OnThreadEnd(void) = 0;
 

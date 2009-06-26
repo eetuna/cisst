@@ -126,11 +126,16 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
     ProxyServer->OnThreadEnd();
 }
 
+void mtsTaskManagerProxyServer::Stop()
+{
+    OnThreadEnd();
+}
+
 void mtsTaskManagerProxyServer::OnThreadEnd()
 {
     BaseType::OnThreadEnd();
 
-    Sender->Destroy();
+    Sender->Stop();
 }
 
 //-----------------------------------------------------------------------------
@@ -483,14 +488,13 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
     }
 }
 
-void mtsTaskManagerProxyServer::TaskManagerServerI::Destroy()
+void mtsTaskManagerProxyServer::TaskManagerServerI::Stop()
 {
     CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Send thread is terminating." << std::endl;
 
     IceUtil::ThreadPtr callbackSenderThread;
-
     {
-        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
         CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Destroying sender." << std::endl;
         Runnable = false;
@@ -500,7 +504,6 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Destroy()
         callbackSenderThread = Sender;
         Sender = 0; // Resolve cyclic dependency.
     }
-
     callbackSenderThread->getThreadControl().join();
 }
 

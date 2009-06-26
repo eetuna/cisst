@@ -81,11 +81,11 @@ public:
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
 #ifdef CISST_MTS_HAS_ICE
-    // Typedef for task manager type
+    /*! Typedef for task manager type. */
     typedef enum {
         TASK_MANAGER_LOCAL,
         TASK_MANAGER_SERVER, // global task manager
-        TASK_MANAGER_CLIENT  // conventional task manager
+        TASK_MANAGER_CLIENT  // general task manager
     } TaskManagerType;
 #endif
 
@@ -203,42 +203,29 @@ protected:
     //  Proxy-related
     //-------------------------------------------------------------------------
 protected:
-    /*! Dynamic-casted proxy object. 
-        Both objects are initialized as null at first and will be assigned later.
-        Either one of pointers should be null and the other has to be valid. 
-        ProxyServer is valid only if this is the global task manager.
-        ProxyClient is valid only if this is a general task manager.
+    /*! Task manager proxy objects. Both are initialized as null at first and 
+        will be assigned later. Either one of the objects should be null and the 
+        other has to be valid.
+        ProxyServer is valid if this is the global task manager.
+        ProxyClient is valid if this is a general task manager.
        */
-    mtsTaskManagerProxyServer * ProxyServer;
-    mtsTaskManagerProxyClient * ProxyClient;
+    mtsTaskManagerProxyServer * GlobalTaskManagerProxy;
+    mtsTaskManagerProxyClient * TaskManagerClientProxy;
 
-    /*! Task manager type (server or client) */
+    /*! Task manager type. */
     TaskManagerType TaskManagerTypeMember;
 
-    /*! Task manager communicator ID. Used for ICE proxy object property. */
+    /*! Task manager communicator ID. Used as one of ICE proxy object properties. */
     const std::string TaskManagerCommunicatorID;
 
     /*! Proxy instance. This will be dynamically created. */
-    mtsProxyBaseCommon<mtsTaskManager> * Proxy;
+    //mtsProxyBaseCommon<mtsTaskManager> * Proxy;
 
-    /*! Start two kinds of proxies
-        1) [Task Manager Layer] Start mtsTaskManagerProxyServer or mtsTaskManagerProxyClient.
-        2) [Task Layer] Iterating all tasks registered, start mtsDeviceInterfaceProxyServer.
+    /*! Start two kinds of proxies.
+        [Task Manager Layer] Start either GlobalTaskManagerProxy of TaskManagerClientProxy.
+        [Task Layer] While iterating all tasks, start all provided interface proxies.
     */
     void StartProxies();
-
-    /*! Connect across networks. This is called internally from Connect(). */
-    mtsDeviceInterface * GetResourceInterface(
-        const std::string & resourceTaskName, const std::string & providedInterfaceName,
-        const std::string & userTaskName, const std::string & requiredInterfaceName,
-        mtsTask * userTask);
-
-    /*! Create a provided interface proxy and populate it with the complete specification 
-        on the remote provided interface. */
-    bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
-                                      mtsDevice * serverTaskProxy, mtsTask * clientTask);
-
-    void UpdateCommandId(mtsDeviceInterfaceProxy::FunctionProxySet functionProxies);
 
 public:
     /*! Set the type of task manager-global task manager (server) or conventional
@@ -252,25 +239,33 @@ public:
     /*! Getter */
     inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
 
+    inline mtsTaskManagerProxyServer * GetGlobalTaskManagerProxy() const {
+        return GlobalTaskManagerProxy;
+    }
+
+    inline mtsTaskManagerProxyClient * GetTaskManagerClientProxy() const {
+        return TaskManagerClientProxy;
+    }
+
     //-------------------------------------------------------------------------
     //  Task Manager Layer Processing
     //-------------------------------------------------------------------------
     /*! Inform the global task manager of the addition of a new provided interface. */
-    const bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
-                                    const std::string & adapterName,
-                                    const std::string & endpointInfo,
-                                    const std::string & communicatorID,
-                                    const std::string & taskName);
+    //const bool AddProvidedInterface(const std::string & newProvidedInterfaceName,
+    //                                const std::string & adapterName,
+    //                                const std::string & endpointInfo,
+    //                                const std::string & communicatorID,
+    //                                const std::string & taskName);
 
-    const bool AddRequiredInterface(const std::string & newRequiredInterfaceName,
-                                    const std::string & taskName);
+    //const bool AddRequiredInterface(const std::string & newRequiredInterfaceName,
+    //                                const std::string & taskName);
 
-    const bool IsRegisteredProvidedInterface(const std::string & taskName,
-                                             const std::string & providedInterfaceName);
+    //const bool IsRegisteredProvidedInterface(const std::string & taskName,
+    //                                         const std::string & providedInterfaceName);
 
-    const bool GetProvidedInterfaceInfo(const ::std::string & taskName,
-                                        const std::string & providedInterfaceName,
-                                        ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
+    //const bool GetProvidedInterfaceInfo(const ::std::string & taskName,
+    //                                    const std::string & providedInterfaceName,
+    //                                    ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
 
     //void InvokeNotifyInterfaceConnectionResult(
     //    const bool isServerTask, const bool isSuccess,
@@ -280,10 +275,10 @@ public:
     //-------------------------------------------------------------------------
     //  Task Layer Processing
     //-------------------------------------------------------------------------
-    bool SendConnectServerSide(mtsTask * clientTask,
-        const std::string & userTaskName, const std::string & requiredInterfaceName,
-        const std::string & resourceTaskName, const std::string & providedInterfaceName);
-    
+    //bool SendConnectServerSide(mtsTask * clientTask,
+    //    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
+    //
     //
     // TODO: FIX ME
     //

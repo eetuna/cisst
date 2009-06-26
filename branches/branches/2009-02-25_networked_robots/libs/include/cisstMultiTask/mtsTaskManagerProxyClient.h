@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsProxyBaseClient.h>
 #include <cisstMultiTask/mtsTaskManagerProxy.h>
+#include <cisstMultiTask/mtsDeviceInterface.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -33,6 +34,7 @@ http://www.cisst.org/cisst/license.txt.
   TODO: add class summary here
 */
 
+class mtsTask;
 class mtsTaskManager;
 
 class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTaskManager> {
@@ -43,6 +45,12 @@ public:
     mtsTaskManagerProxyClient(const std::string & propertyFileName, 
                               const std::string & propertyName);
     ~mtsTaskManagerProxyClient();
+
+    /*! Entry point to run a proxy. */
+    void Start(mtsTaskManager * callingTaskManager);
+
+    /*! End the proxy. */
+    void Stop();
 
 protected:
     typedef mtsProxyBaseClient<mtsTaskManager> BaseType;
@@ -55,22 +63,19 @@ protected:
     typedef IceUtil::Handle<TaskManagerClientI> TaskManagerClientIPtr;
     TaskManagerClientIPtr Sender;
 
-    /*! TaskManagerServer proxy */
-    mtsTaskManagerProxy::TaskManagerServerPrx TaskManagerServer;
+    /*! Global task manager proxy */
+    mtsTaskManagerProxy::TaskManagerServerPrx GlobalTaskManagerProxy;
 
     /*! Create a proxy object and a send thread. */
     void CreateProxy() {
-        TaskManagerServer = 
+        GlobalTaskManagerProxy = 
             mtsTaskManagerProxy::TaskManagerServerPrx::checkedCast(ProxyObject);
-        if (!TaskManagerServer) {
+        if (!GlobalTaskManagerProxy) {
             throw "Invalid proxy";
         }
 
-        Sender = new TaskManagerClientI(IceCommunicator, Logger, TaskManagerServer, this);
+        Sender = new TaskManagerClientI(IceCommunicator, Logger, GlobalTaskManagerProxy, this);
     }
-
-    /*! Entry point to run a proxy. */
-    void Start(mtsTaskManager * callingTaskManager);
 
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();
@@ -80,6 +85,24 @@ protected:
 
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
+
+    //-------------------------------------------------------------------------
+    //  Processing Methods
+    //-------------------------------------------------------------------------
+public:
+    /*! Connect across networks. This is called internally from Connect(). */
+    mtsDeviceInterface * GetResourceInterface(
+        const std::string & resourceTaskName, const std::string & providedInterfaceName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        mtsTask * userTask);
+
+protected:
+    /*! Create a provided interface proxy and populate it with the complete specification 
+        on the remote provided interface. */
+    bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
+                                      mtsDevice * serverTaskProxy, mtsTask * clientTask);
+
+    void UpdateCommandId(mtsDeviceInterfaceProxy::FunctionProxySet functionProxies);
 
     //-------------------------------------------------------------------------
     //  Send Methods
@@ -100,11 +123,6 @@ public:
     bool SendGetProvidedInterfaceInfo(const std::string & taskName,
                                       const std::string & providedInterfaceName,
                                       mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
-
-    //void SendNotifyInterfaceConnectionResult(
-    //    const bool isServerTask, const bool isSuccess,
-    //    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-    //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Methods to Receive and Process Events
@@ -134,7 +152,7 @@ protected:
 
         void Start();
         void Run();
-        void Destroy();
+        void Stop();
 
         void ReceiveData(::Ice::Int num, const ::Ice::Current&);
     };

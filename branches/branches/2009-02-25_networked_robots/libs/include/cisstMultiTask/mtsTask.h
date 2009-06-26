@@ -375,38 +375,31 @@ protected:
     const std::string GetPortNumberString(const unsigned int id);
 
 public:
-    /*! Run proxies for provided interfaces. */
+    /*! Run proxies for provided interfaces. Only a server task calls this method. */
     void StartProvidedInterfaceProxies(const std::string & serverTaskIP);
 
-    /*! Run proxies for required interfaces. */
+    /*! Run proxies for required interfaces. Only a client task calls this method. */
     void StartRequiredInterfaceProxies(const std::string & endpointInfo, 
                                        const std::string & communicatorID);
 
 
 
-
-    /*! Start mtsDeviceInterfaceProxyServer. */
-    //void StartInterfaceProxyServer(const std::string & ServerTaskIP);
-
-    /*! Start a proxy client (required interface, mtsDeviceInterfaceProxyClient). */
-    //void StartProxyClient(const std::string & endpointInfo, const std::string & communicatorID);
-
     /*! Get the information on the provided interface as a set of string that includes 
         complete representation of the interface. */
-    const bool GetProvidedInterfaces(
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
+    //const bool GetProvidedInterfaces(
+    //    mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
 
-    /*! Try to connect at server side. */
-    bool SendConnectServerSide(
-        const std::string & userTaskName, const std::string & requiredInterfaceName,
-        const std::string & resourceTaskName, const std::string & providedInterfaceName);
+    ///*! Try to connect at server side. */
+    //bool SendConnectServerSide(
+    //    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
-    /*! Update command id */
-    void SendGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+    ///*! Update command id */
+    //void SendGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
 
     /*! Getters */
-    mtsDeviceInterfaceProxyClient * GetProxyClient() const { return ProxyClient; }
-    mtsDeviceInterfaceProxyServer * GetProxyServer() const { return ProxyServer; }
+    mtsDeviceInterfaceProxyServer * GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const;
+    mtsDeviceInterfaceProxyClient * GetRequiredInterfaceProxy(const std::string & requiredInterfaceName) const;    
 
 };
 

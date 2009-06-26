@@ -110,13 +110,18 @@ void mtsDeviceInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     ProxyServer->OnThreadEnd();
 }
 
+void mtsDeviceInterfaceProxyServer::Stop()
+{
+    OnThreadEnd();
+}
+
 void mtsDeviceInterfaceProxyServer::OnThreadEnd()
 {
     DeviceInterfaceProxyServerLogger("Proxy server ends.");
 
     BaseType::OnThreadEnd();
 
-    Sender->Destroy();
+    Sender->Stop();
 }
 
 mtsProvidedInterface * mtsDeviceInterfaceProxyServer::GetProvidedInterface(
@@ -591,14 +596,13 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
     }
 }
 
-void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Destroy()
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Stop()
 {
     DeviceInterfaceProxyServerLogger("Send thread is terminating.");
 
     IceUtil::ThreadPtr callbackSenderThread;
-
     {
-        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
         DeviceInterfaceProxyServerLogger("Destroying sender.");
         Runnable = false;
@@ -608,7 +612,6 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Destroy()
         callbackSenderThread = Sender;
         Sender = 0; // Resolve cyclic dependency.
     }
-
     callbackSenderThread->getThreadControl().join();
 }
 
