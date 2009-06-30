@@ -28,10 +28,10 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
 #define TaskManagerProxyServerLogger(_log) BaseType::Logger->trace("mtsTaskManagerProxyServer", _log)
-#define TaskManagerProxyServerLoggerError(_log1, _log2) \
-    {   std::stringstream s;\
-        s << "mtsTaskManagerProxyServer: " << _log1 << _log2;\
-        BaseType::Logger->error(s.str());  }
+#define TaskManagerProxyServerLoggerError(_log1, _log2) {\
+        std::string s("mtsTaskManagerProxyServer: ");\
+        s += _log1; s+= _log2;\
+        BaseType::Logger->error(s); }
 
 //-----------------------------------------------------------------------------
 //  Inner Class Definition
@@ -174,7 +174,7 @@ bool mtsTaskManagerProxyServer::RemoveTaskManager(const TaskManagerIDType & task
         delete it->second;
         TaskManagerMap.erase(it);
 
-        TaskManagerProxyServerLoggerError("[RemoveTaskManager] Removed the task manager: ", taskManagerID);
+        TaskManagerProxyServerLogger("[RemoveTaskManager] Removed the task manager: " + taskManagerID);
     }
 
     return true;
@@ -216,7 +216,7 @@ void mtsTaskManagerProxyServer::ReceiveAddClient(
 }
 
 bool mtsTaskManagerProxyServer::ReceiveUpdateTaskManagerClient(
-    const ConnectionIDType & connectionID, const ::mtsTaskManagerProxy::TaskList& localTaskInfo)
+    const ConnectionIDType & connectionID, const mtsTaskManagerProxy::TaskList& localTaskInfo)
 {
     const TaskManagerIDType taskManagerID = localTaskInfo.taskManagerID;
 
@@ -268,7 +268,7 @@ void mtsTaskManagerProxyServer::OnClose()
 
 bool mtsTaskManagerProxyServer::ReceiveAddProvidedInterface(
     const ConnectionIDType & connectionID, 
-    const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
+    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceInfo)
 {
     TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
     if (!taskManagerClient) {
@@ -301,7 +301,7 @@ bool mtsTaskManagerProxyServer::ReceiveAddProvidedInterface(
 
 bool mtsTaskManagerProxyServer::ReceiveAddRequiredInterface(
     const ConnectionIDType & connectionID,
-    const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo)
+    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo)
 {
     TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
     if (!taskManagerClient) {
@@ -351,10 +351,10 @@ bool mtsTaskManagerProxyServer::ReceiveIsRegisteredProvidedInterface(
     return taskGlobal->IsRegisteredProvidedInterface(providedInterfaceName);
 }
 
-bool mtsTaskManagerProxyServer::ReceiveGetProvidedInterfaceInfo(
+bool mtsTaskManagerProxyServer::ReceiveGetProvidedInterfaceAccessInfo(
     const ConnectionIDType & connectionID,
     const std::string & taskName, const std::string & providedInterfaceName,
-    mtsTaskManagerProxy::ProvidedInterfaceInfo & info)
+    mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info)
 {
     TaskManagerClient * taskManagerClient = TaskManagerMapByTaskName.GetItem(taskName);
     if (!taskManagerClient) {
@@ -368,7 +368,7 @@ bool mtsTaskManagerProxyServer::ReceiveGetProvidedInterfaceInfo(
         return false;
     }
 
-    return taskGlobal->GetProvidedInterfaceInfo(providedInterfaceName, info);
+    return taskGlobal->GetProvidedInterfaceAccessInfo(providedInterfaceName, info);
 }
 
 void mtsTaskManagerProxyServer::ReceiveNotifyInterfaceConnectionResult(
@@ -524,7 +524,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(
-    const ::mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current)
+    const mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current)
 {
     Logger->trace("TMServer", "<<<<< RECV: UpdateTaskManager: " + localTaskInfo.taskManagerID);
 
@@ -541,7 +541,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
-    const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo,
+    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceInfo,
     const ::Ice::Current & current)
 {
     Logger->trace("TMServer", "<<<<< RECV: AddProvidedInterface: " 
@@ -553,7 +553,7 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::AddRequiredInterface(
-    const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo,
+    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo,
     const ::Ice::Current & current)
 {
     Logger->trace("TMServer", "<<<<< RECV: AddRequiredInterface: " 
@@ -576,14 +576,14 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::IsRegisteredProvidedInterfac
         current.ctx.find(CONNECTION_ID)->second, taskName, providedInterfaceName);
 }
 
-bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceInfo(
+bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceAccessInfo(
     const ::std::string & taskName, const ::std::string & providedInterfaceName,
-    ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info, const ::Ice::Current & current) const
+    mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info, const ::Ice::Current & current) const
 {
-    Logger->trace("TMServer", "<<<<< RECV: GetProvidedInterfaceInfo: " 
+    Logger->trace("TMServer", "<<<<< RECV: GetProvidedInterfaceAccessInfo: " 
         + taskName + ", " + providedInterfaceName);
 
-    return TaskManagerServer->ReceiveGetProvidedInterfaceInfo(
+    return TaskManagerServer->ReceiveGetProvidedInterfaceAccessInfo(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), taskName, providedInterfaceName, info);
         current.ctx.find(CONNECTION_ID)->second, taskName, providedInterfaceName, info);
 }

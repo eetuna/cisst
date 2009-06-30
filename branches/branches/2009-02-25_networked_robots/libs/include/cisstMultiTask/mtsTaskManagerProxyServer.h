@@ -148,12 +148,12 @@ protected:
     /*! Add a new provided interface. */
     bool ReceiveAddProvidedInterface(
         const ConnectionIDType & connectionID,
-        const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
+        const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceInfo);
 
     /*! Add a new required interface. */
     bool ReceiveAddRequiredInterface(
         const ConnectionIDType & connectionID,
-        const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo);
+        const ::mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo);
 
     /*! Check if the provided interface has been registered before. */
     bool ReceiveIsRegisteredProvidedInterface(
@@ -161,10 +161,10 @@ protected:
         const std::string & taskName, const std::string & providedInterfaceName);
 
     /*! Get the information about the provided interface. */
-    bool ReceiveGetProvidedInterfaceInfo(
+    bool ReceiveGetProvidedInterfaceAccessInfo(
         const ConnectionIDType & connectionID,
         const std::string & taskName, const std::string & providedInterfaceName,
-        mtsTaskManagerProxy::ProvidedInterfaceInfo & info);
+        mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info);
 
     /*! Inform the global task manager of the fact that connect() succeeded. */
     void ReceiveNotifyInterfaceConnectionResult(
@@ -223,13 +223,13 @@ protected:
         void Run();
         void Stop();
 
-        void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
-        void UpdateTaskManager(const ::mtsTaskManagerProxy::TaskList&, const ::Ice::Current&);
-        bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo&, const ::Ice::Current&);
-        bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo&, const ::Ice::Current&);
-        bool IsRegisteredProvidedInterface(const ::std::string&, const ::std::string&, const ::Ice::Current&) const;
-        bool GetProvidedInterfaceInfo(const ::std::string&, const std::string&, ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info, const ::Ice::Current&) const;
-        void NotifyInterfaceConnectionResult(bool, bool, const ::std::string&, const ::std::string&, const ::std::string&, const ::std::string&, const ::Ice::Current&);
+        void AddClient(const Ice::Identity&, const Ice::Current&);
+        void UpdateTaskManager(const mtsTaskManagerProxy::TaskList&, const Ice::Current&);
+        bool AddProvidedInterface(const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo&, const Ice::Current&);
+        bool AddRequiredInterface(const mtsTaskManagerProxy::RequiredInterfaceAccessInfo&, const Ice::Current&);
+        bool IsRegisteredProvidedInterface(const std::string&, const ::std::string&, const Ice::Current&) const;
+        bool GetProvidedInterfaceAccessInfo(const std::string&, const std::string&, mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info, const Ice::Current&) const;
+        void NotifyInterfaceConnectionResult(bool, bool, const ::std::string&, const ::std::string&, const ::std::string&, const ::std::string&, const Ice::Current&);
     };
 };
 

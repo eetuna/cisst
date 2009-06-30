@@ -44,7 +44,7 @@ module mtsTaskManagerProxy
 		TaskNameSeq taskNames;	// task name (Unicode supported)
 	};
 
-	struct ProvidedInterfaceInfo {
+	struct ProvidedInterfaceAccessInfo {
 		string taskName;
 		string interfaceName;
 		string adapterName;
@@ -52,7 +52,7 @@ module mtsTaskManagerProxy
 		string communicatorID;
 	};
 
-	struct RequiredInterfaceInfo {
+	struct RequiredInterfaceAccessInfo {
 		string taskName;
 		string interfaceName;
 	};
@@ -97,17 +97,15 @@ module mtsTaskManagerProxy
 	    
 		void UpdateTaskManager(TaskList localTaskInfo);
 
-	    // from task manager client which manages a server task
-		bool AddProvidedInterface(ProvidedInterfaceInfo newProvidedInterfaceInfo);
+		bool AddProvidedInterface(ProvidedInterfaceAccessInfo newProvidedInterfaceAccessInfo);
 		
-		// from task manager client which manages a client task
-		bool AddRequiredInterface(RequiredInterfaceInfo newRequiredInterfaceInfo);
+		bool AddRequiredInterface(RequiredInterfaceAccessInfo newRequiredInterfaceAccessInfo);
 
 		["cpp:const"] idempotent bool IsRegisteredProvidedInterface(
 			string taskName, string providedInterfaceName);
 
-		["cpp:const"] idempotent bool GetProvidedInterfaceInfo(
-			string taskName, string providedInterfaceName, out ProvidedInterfaceInfo info);
+		["cpp:const"] idempotent bool GetProvidedInterfaceAccessInfo(
+			string taskName, string providedInterfaceName, out ProvidedInterfaceAccessInfo info);
 			
 		void NotifyInterfaceConnectionResult(
 			bool isServerTask, bool isSuccess,

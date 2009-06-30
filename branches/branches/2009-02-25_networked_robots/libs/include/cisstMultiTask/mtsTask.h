@@ -347,15 +347,6 @@ protected:
     /*! Task interface communicator ID */
     const std::string TaskInterfaceCommunicatorID;
 
-    ///*! Proxy instance. This will be dynamically created. */
-    //mtsProxyBaseCommon<mtsTask> * Proxy;
-
-    ///*! Dynamic-casted proxy object. 
-    //    Both are initialized as null pointer and either one of them must be null and
-    //    the other be valid pointer. */
-    //mtsDeviceInterfaceProxyServer * ProxyServer;
-    //mtsDeviceInterfaceProxyClient * ProxyClient;
-
     /*! Typedef to manage provided interface proxies of which type is 
         mtsDeviceInterfaceProxyServer. This map is valid only if this task acts 
         as a server task (or if this task has provided interfaces). */
@@ -375,12 +366,16 @@ protected:
     const std::string GetPortNumberString(const unsigned int id);
 
 public:
-    /*! Run proxies for provided interfaces. Only a server task calls this method. */
-    void StartProvidedInterfaceProxies(const std::string & serverTaskIP);
+    /*! Run proxies for required interfaces. Since a client task has actual required 
+        interfaces while a server task has actual provided interfaces, only a server 
+        task can call this method. */
+    void RunProvidedInterfaceProxy(const std::string & serverTaskIP);
 
-    /*! Run proxies for required interfaces. Only a client task calls this method. */
-    void StartRequiredInterfaceProxies(const std::string & endpointInfo, 
-                                       const std::string & communicatorID);
+    /*! Run proxies for required interfaces. Since a client task has actual required 
+        interfaces while a server task has actual provided interfaces, only a server 
+        task can call this method. */
+    void RunRequiredInterfaceProxy(const std::string & endpointInfo, 
+                                   const std::string & communicatorID);
 
 
 

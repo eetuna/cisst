@@ -91,7 +91,7 @@ protected:
     //-------------------------------------------------------------------------
 public:
     /*! Connect across networks. This is called internally from Connect(). */
-    mtsDeviceInterface * GetResourceInterface(
+    mtsDeviceInterface * GetProvidedInterfaceProxy(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         mtsTask * userTask);
@@ -117,12 +117,12 @@ public:
     bool SendAddRequiredInterface(const std::string & newRequiredInterfaceName,
                                   const std::string & taskName);
 
-    bool SendIsRegisteredProvidedInterface(const std::string & taskName, 
+    bool SendIsRegisteredProvidedInterface(const std::string & serverTaskName,
                                            const std::string & providedInterfaceName) const;
 
-    bool SendGetProvidedInterfaceInfo(const std::string & taskName,
-                                      const std::string & providedInterfaceName,
-                                      mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const;
+    bool SendGetProvidedInterfaceAccessInfo(const std::string & serverTaskName,
+                                            const std::string & providedInterfaceName,
+                                            mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) const;
 
     //-------------------------------------------------------------------------
     //  Methods to Receive and Process Events

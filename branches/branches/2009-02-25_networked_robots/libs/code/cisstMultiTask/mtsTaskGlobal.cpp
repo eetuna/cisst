@@ -64,21 +64,22 @@ std::string mtsTaskGlobal::ShowTaskInfo()
 #undef HEADING
 }
 
-bool mtsTaskGlobal::AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
+bool mtsTaskGlobal::AddProvidedInterface(
+    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceAccessInfo)
 {
-    const std::string interfaceName = providedInterfaceInfo.interfaceName;
+    const std::string interfaceName = providedInterfaceAccessInfo.interfaceName;
 
-    const ProvidedInterfaceInfo info(providedInterfaceInfo.adapterName,
-                                     providedInterfaceInfo.endpointInfo, 
-                                     providedInterfaceInfo.communicatorID, 
-                                     providedInterfaceInfo.interfaceName);
+    const ProvidedInterfaceInfo info(providedInterfaceAccessInfo.adapterName,
+                                     providedInterfaceAccessInfo.endpointInfo, 
+                                     providedInterfaceAccessInfo.communicatorID, 
+                                     providedInterfaceAccessInfo.interfaceName);
 
     ProvidedInterfaces.insert(make_pair(interfaceName, info));    
 
     return true;
 }
 
-bool mtsTaskGlobal::AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo & requiredInterfaceInfo)
+bool mtsTaskGlobal::AddRequiredInterface(const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo)
 {
     const std::string interfaceName = requiredInterfaceInfo.interfaceName;
 
@@ -103,8 +104,8 @@ const bool mtsTaskGlobal::IsRegisteredRequiredInterface(const std::string requir
     return (it != RequiredInterfaces.end());
 }
 
-const bool mtsTaskGlobal::GetProvidedInterfaceInfo(
-    const std::string & providedInterfaceName, mtsTaskManagerProxy::ProvidedInterfaceInfo & info)
+const bool mtsTaskGlobal::GetProvidedInterfaceAccessInfo(
+    const std::string & providedInterfaceName, mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info)
 {
     ProvidedInterfaceMapType::iterator it = ProvidedInterfaces.find(providedInterfaceName);
 

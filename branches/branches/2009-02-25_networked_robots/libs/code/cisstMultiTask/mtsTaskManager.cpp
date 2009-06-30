@@ -330,7 +330,10 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                 userTaskTemp = dynamic_cast<mtsTask*>(userTask);
                 CMN_ASSERT(userTaskTemp);
 
-                resourceInterface = TaskManagerClientProxy->GetResourceInterface(
+                // Try to get the information about the provided interface at server side
+                // from the global task manager. If successful, the provided interface proxy
+                // is created and connection across networks is established.
+                resourceInterface = ProxyTaskManagerClient->GetProvidedInterfaceProxy(
                     resourceTaskName, providedInterfaceName, 
                     userTaskName, requiredInterfaceName, 
                     userTaskTemp);
@@ -405,83 +408,22 @@ void mtsTaskManager::StartProxies()
 {
     // Start the task manager proxy
     if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {
-        GlobalTaskManagerProxy = new mtsTaskManagerProxyServer(
+        ProxyGlobalTaskManager = new mtsTaskManagerProxyServer(
             "TaskManagerServerAdapter", "tcp -p 10705", TaskManagerCommunicatorID);
-        GlobalTaskManagerProxy->Start(this);
+        ProxyGlobalTaskManager->Start(this);
     } else {
         CMN_LOG_CLASS_INIT_DEBUG << "GlobalTaskManagerIP: " << GlobalTaskManagerIP << std::endl;
         CMN_LOG_CLASS_INIT_DEBUG << "ServerTaskIP: " << ServerTaskIP << std::endl;
 
-        TaskManagerClientProxy = new mtsTaskManagerProxyClient(
+        ProxyTaskManagerClient = new mtsTaskManagerProxyClient(
             ":default -h " + GlobalTaskManagerIP + " -p 10705", TaskManagerCommunicatorID);
-        TaskManagerClientProxy->Start(this);
+        ProxyTaskManagerClient->Start(this);
 
-        //FIX:OPI
-        // Start a task interface proxy. Currently it is assumed that there is only
-        // one provided interface and one required interface.
-        TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-        const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
-        for (; taskIterator != taskEndIterator; ++taskIterator) {
-            //taskIterator->second->StartInterfaceProxyServer(ServerTaskIP);
-            taskIterator->second->StartProvidedInterfaceProxies(ServerTaskIP);
+        // Start a task interface proxy.
+        TaskMapType::MapType::const_iterator it = TaskMap.GetMap().begin();
+        const TaskMapType::MapType::const_iterator itEnd = TaskMap.GetMap().end();
+        for (; it != itEnd; ++it) {
+            it->second->RunProvidedInterfaceProxy(ServerTaskIP);
         }
     }
 }
-
-//-----------------------------------------------------------------------------
-//  Task Manager Layer Processing
-//-----------------------------------------------------------------------------
-/*
-const bool mtsTaskManager::AddProvidedInterface(
-    const std::string & newProvidedInterfaceName,
-    const std::string & adapterName,
-    const std::string & endpointInfo,
-    const std::string & communicatorID,
-    const std::string & taskName)
-{
-    return ProxyClient->SendAddProvidedInterface(
-        newProvidedInterfaceName, adapterName, endpointInfo, communicatorID, taskName);
-}
-
-const bool mtsTaskManager::AddRequiredInterface(
-    const std::string & newRequiredInterfaceName,const std::string & taskName)
-{
-    return ProxyClient->SendAddRequiredInterface(newRequiredInterfaceName, taskName);
-}
-
-const bool mtsTaskManager::IsRegisteredProvidedInterface(
-    const std::string & taskName, const std::string & providedInterfaceName)
-{
-    return ProxyClient->SendIsRegisteredProvidedInterface(taskName, providedInterfaceName);
-}
-
-const bool mtsTaskManager::GetProvidedInterfaceInfo(
-    const ::std::string & taskName,
-    const std::string & providedInterfaceName,
-    ::mtsTaskManagerProxy::ProvidedInterfaceInfo & info) const
-{
-    return ProxyClient->SendGetProvidedInterfaceInfo(taskName, providedInterfaceName, info);
-}
-
-//void mtsTaskManager::InvokeNotifyInterfaceConnectionResult(
-//    const bool isServerTask, const bool isSuccess,
-//    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-//    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-//{
-//    ProxyClient->SendNotifyInterfaceConnectionResult(
-//        isServerTask, isSuccess,
-//        userTaskName, requiredInterfaceName,
-//        resourceTaskName, providedInterfaceName);
-//}
-
-//-----------------------------------------------------------------------------
-//  Task Layer Processing
-//-----------------------------------------------------------------------------
-bool mtsTaskManager::SendConnectServerSide(mtsTask * clientTask,
-    const std::string & userTaskName, const std::string & requiredInterfaceName,
-    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-{
-    return clientTask->SendConnectServerSide(
-        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
-}
-*/

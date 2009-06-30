@@ -33,13 +33,20 @@ http://www.cisst.org/cisst/license.txt.
   and interfaces.
 */
 
-class mtsTaskGlobal {
-    /*! Base information */
+class mtsTaskGlobal 
+{
+    /*! Typedef for structure to contain the information of connected interface. */
+    typedef struct {
+        std::string Name;
+        // add other fields, if needed.
+    } ConnectedInterface;
+
+    /*! Base class to contain the information about connected interfaces. */
     class GenericInterfaceInfo {
     protected:
-        /*! List of the names of connected interfaces'. */
-        typedef std::vector<std::string> ConnectedInterfaceNames;
-        ConnectedInterfaceNames ConnectedInterfaces;
+        /*! Typedef for map to manage connected interfaces with its name. */
+        typedef cmnNamedMap<ConnectedInterface> ConnectedInterfaceMapType;
+        ConnectedInterfaceMapType ConnectedInterfaceMap;
 
         /*! Name of this interface. */
         const std::string InterfaceName;
@@ -49,27 +56,30 @@ class mtsTaskGlobal {
             : InterfaceName(interfaceName)
         {}
 
+        ~GenericInterfaceInfo() {
+            ConnectedInterfaceMap.DeleteAll();
+        }
+
         bool IsConnectedInterface(const std::string & interfaceName) const {
-            ConnectedInterfaceNames::const_iterator it = ConnectedInterfaces.begin();
-            for (; it != ConnectedInterfaces.end(); ++it) {
-                if (*it == interfaceName) {
-                    return true;
-                }
-            }
-            return false;
+            ConnectedInterfaceMapType::MapType::const_iterator it = 
+                ConnectedInterfaceMap.GetMap().find(interfaceName);
+
+            return (it != ConnectedInterfaceMap.GetMap().end());
         }
 
         bool AddConnectedInterface(const std::string & interfaceName) {
             if (IsConnectedInterface(interfaceName)) return false;
 
-            ConnectedInterfaces.push_back(interfaceName);
-            return true;
+            ConnectedInterface * newInterface = new ConnectedInterface;
+            newInterface->Name = interfaceName;            
+
+            return ConnectedInterfaceMap.AddItem(interfaceName, NULL);
         }
 
         const std::string GetInterfaceName() const { return InterfaceName; }        
     };
 
-    /*! Information about a provided interface. */
+    /*! Information about a provided interface connected. */
     class ProvidedInterfaceInfo : public GenericInterfaceInfo {
     public:
         std::string AdapterName;
@@ -86,14 +96,14 @@ class mtsTaskGlobal {
             CommunicatorID(communicatorID)
         {}
 
-        void GetData(mtsTaskManagerProxy::ProvidedInterfaceInfo & info) {
+        void GetData(mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) {
             info.adapterName = AdapterName;
             info.endpointInfo = EndpointInfo;
             info.communicatorID = CommunicatorID;
             info.interfaceName = InterfaceName;
         }
 
-        void InitData(mtsTaskManagerProxy::ProvidedInterfaceInfo & info) {
+        void InitData(mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) {
             info.adapterName = "";
             info.endpointInfo = "";
             info.communicatorID = "";
@@ -101,7 +111,7 @@ class mtsTaskGlobal {
         }
     };
 
-    /*! Information about a required interface. */
+    /*! Information about a required interface connected. */
     class RequiredInterfaceInfo : public GenericInterfaceInfo {
     public:
         RequiredInterfaceInfo(const std::string & interfaceName)
@@ -133,10 +143,10 @@ public:
     std::string ShowTaskInfo();
 
     /*! Register a new provided interface. */
-    bool AddProvidedInterface(const ::mtsTaskManagerProxy::ProvidedInterfaceInfo &);
+    bool AddProvidedInterface(const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo &);
 
     /*! Register a new required interface. */
-    bool AddRequiredInterface(const ::mtsTaskManagerProxy::RequiredInterfaceInfo &);
+    bool AddRequiredInterface(const mtsTaskManagerProxy::RequiredInterfaceAccessInfo &);
 
     /*! Return true if the provided interface has been registered. */
     const bool IsRegisteredProvidedInterface(const std::string providedInterfaceName) const;
@@ -145,8 +155,8 @@ public:
     const bool IsRegisteredRequiredInterface(const std::string requiredInterfaceName) const;
 
     /*! Return the access information of the specified provided interface. */
-    const bool GetProvidedInterfaceInfo(const std::string & providedInterfaceName,
-                                        mtsTaskManagerProxy::ProvidedInterfaceInfo & info);
+    const bool GetProvidedInterfaceAccessInfo(const std::string & providedInterfaceName,
+                                              mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info);
 
     /*! Update the interface connection status. This is called only when the 
         connection is established successfully. */
