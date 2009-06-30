@@ -40,6 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
 #include <set>
 #include <map>
@@ -368,29 +369,47 @@ protected:
 public:
     /*! Run proxies for required interfaces. Since a client task has actual required 
         interfaces while a server task has actual provided interfaces, only a server 
-        task can call this method. */
+        task can call this method. 
+        Note that all possible provided interface proxy objects are created all at 
+        once because they should act as a server; they have to listen the client's
+        connection. */
     void RunProvidedInterfaceProxy(const std::string & serverTaskIP);
 
     /*! Run proxies for required interfaces. Since a client task has actual required 
         interfaces while a server task has actual provided interfaces, only a server 
-        task can call this method. */
-    void RunRequiredInterfaceProxy(const std::string & endpointInfo, 
+        task can call this method.
+        In contrast to RunProvidedInterfaceProxy() method, when this method is called, 
+        only one required interface proxy object is created. Then it connects to the
+        provided interface proxy specified by the two arguments. */
+    void RunRequiredInterfaceProxy(const std::string & requiredInterfaceName,
+                                   const std::string & endpointInfo, 
                                    const std::string & communicatorID);
 
+    /*! Update the command id. This step is critical for thread-safe command execution 
+        at server side. */
+    void UpdateCommandId(const std::string & requiredInterfaceName);
 
+    //-------------------------------------------
+    //  Send Methods
+    //-------------------------------------------
+    /*! Get the information on the provided interface as a set of string through
+        required interface proxy. */
+    bool SendGetProvidedInterfaceInfo(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & providedInterfaceName,
+        mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
-    /*! Get the information on the provided interface as a set of string that includes 
-        complete representation of the interface. */
-    //const bool GetProvidedInterfaces(
-    //    mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
+    /*! Connect the actual provided interface with the required interface proxy 
+        at server side. */
+    bool SendConnectServerSide(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
-    ///*! Try to connect at server side. */
-    //bool SendConnectServerSide(
-    //    const std::string & userTaskName, const std::string & requiredInterfaceName,
-    //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
-
-    ///*! Update command id */
-    //void SendGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+    /*! Update command id */
+    void SendGetCommandId(
+        const std::string & requiredInterfaceProxyName,
+        mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
 
     /*! Getters */
     mtsDeviceInterfaceProxyServer * GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const;

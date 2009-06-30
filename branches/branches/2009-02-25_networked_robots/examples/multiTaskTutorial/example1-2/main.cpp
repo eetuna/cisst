@@ -149,8 +149,8 @@ int main(int argc, char * argv[])
         //
         // TODO: FIX ME
         //
-        taskManager->GlobalTaskManagerIP = GlobalTaskManagerIP;
-        taskManager->ServerTaskIP = ServerTaskIP;
+        taskManager->SetGlobalTaskManagerIP(GlobalTaskManagerIP);
+        taskManager->SetServerTaskIP(ServerTaskIP);
 
         // Set the type of task manager either as a server or as a client.
         // mtsTaskManager::SetTaskManagerType() should be called before

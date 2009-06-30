@@ -120,8 +120,9 @@ protected:
     //  Methods to Send Events
     //-------------------------------------------------------------------------
 public:
-    const bool SendGetProvidedInterfaces(
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const;
+    const bool SendGetProvidedInterfaceInfo(
+        const std::string & providedInterfaceName,
+        mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
     bool SendConnectServerSide(
         const std::string & userTaskName, const std::string & requiredInterfaceName,

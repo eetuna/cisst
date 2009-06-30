@@ -76,11 +76,14 @@ class mtsStateTable;
 class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+    
     friend class mtsDevice;
     friend class mtsTask;
     friend class mtsTaskPeriodic;
+    // For ICE proxy objects
+    friend class mtsDeviceProxy;
     friend class mtsDeviceInterfaceProxyServer;
-    friend class mtsTaskManager;
+    
  public:
 
     /*! Typedef for a map of name of zero argument command and name of

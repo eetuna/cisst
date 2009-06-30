@@ -62,6 +62,7 @@ SET(SOURCE_FILES
     mtsDeviceInterfaceProxyServer.cpp
 
     mtsTaskGlobal.cpp
+    mtsDeviceProxy.cpp
     )
 
 # all header files

@@ -268,7 +268,7 @@ void mtsTaskManagerProxyServer::OnClose()
 
 bool mtsTaskManagerProxyServer::ReceiveAddProvidedInterface(
     const ConnectionIDType & connectionID, 
-    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceInfo)
+    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceAccessInfo)
 {
     TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
     if (!taskManagerClient) {
@@ -276,24 +276,25 @@ bool mtsTaskManagerProxyServer::ReceiveAddProvidedInterface(
         return false;
     }
 
-    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(providedInterfaceInfo.taskName);
+    const std::string taskName = providedInterfaceAccessInfo.taskName;
+    const std::string interfaceName = providedInterfaceAccessInfo.interfaceName;
+
+    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(taskName);
     if (!taskGlobal) {
-        TaskManagerProxyServerLoggerError("[AddProvidedInterface] Cannot find a global task: ", providedInterfaceInfo.taskName);
+        TaskManagerProxyServerLoggerError("[AddProvidedInterface] Cannot find a global task: ", taskName);
         return false;
     }
 
-    bool success = taskGlobal->AddProvidedInterface(providedInterfaceInfo);
+    bool success = taskGlobal->AddProvidedInterface(providedInterfaceAccessInfo);
     if (success) {
         TaskManagerProxyServerLogger(
             "Successfully added a provided interface: " + 
-            providedInterfaceInfo.interfaceName + " @ " +
-            providedInterfaceInfo.taskName);
+            interfaceName + " @ " + taskName);
         TaskManagerProxyServerLogger(taskGlobal->ShowTaskInfo());        
     } else {
         TaskManagerProxyServerLoggerError(
-            "[AddProvidedInterface] Failed to add a provided interface: ",
-            providedInterfaceInfo.interfaceName + " @ " +
-            providedInterfaceInfo.taskName);
+            "[AddProvidedInterface] Failed to add a provided interface: ", 
+            interfaceName + " @ " + taskName);
     }
 
     return success;
@@ -301,7 +302,7 @@ bool mtsTaskManagerProxyServer::ReceiveAddProvidedInterface(
 
 bool mtsTaskManagerProxyServer::ReceiveAddRequiredInterface(
     const ConnectionIDType & connectionID,
-    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo)
+    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceAccessInfo)
 {
     TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
     if (!taskManagerClient) {
@@ -309,24 +310,24 @@ bool mtsTaskManagerProxyServer::ReceiveAddRequiredInterface(
         return false;
     }
 
-    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(requiredInterfaceInfo.taskName);
+    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(requiredInterfaceAccessInfo.taskName);
     if (!taskGlobal) {
-        TaskManagerProxyServerLoggerError("[AddRequiredInterface] Cannot find a global task: ", requiredInterfaceInfo.taskName);
+        TaskManagerProxyServerLoggerError("[AddRequiredInterface] Cannot find a global task: ", requiredInterfaceAccessInfo.taskName);
         return false;
     }
 
-    bool success = taskGlobal->AddRequiredInterface(requiredInterfaceInfo);
+    bool success = taskGlobal->AddRequiredInterface(requiredInterfaceAccessInfo);
     if (success) {
         TaskManagerProxyServerLogger(
             "Successfully added a required interface: " + 
-            requiredInterfaceInfo.interfaceName + " @ " +
-            requiredInterfaceInfo.taskName);
+            requiredInterfaceAccessInfo.interfaceName + " @ " +
+            requiredInterfaceAccessInfo.taskName);
         TaskManagerProxyServerLogger(taskGlobal->ShowTaskInfo());        
     } else {
         TaskManagerProxyServerLoggerError(
             "[AddRequiredInterface] Failed to add a required interface: ",
-            requiredInterfaceInfo.interfaceName + " @ " +
-            requiredInterfaceInfo.taskName);
+            requiredInterfaceAccessInfo.interfaceName + " @ " +
+            requiredInterfaceAccessInfo.taskName);
     }
 
     return success;
@@ -358,13 +359,13 @@ bool mtsTaskManagerProxyServer::ReceiveGetProvidedInterfaceAccessInfo(
 {
     TaskManagerClient * taskManagerClient = TaskManagerMapByTaskName.GetItem(taskName);
     if (!taskManagerClient) {
-        TaskManagerProxyServerLoggerError("[GetProvidedInterfaceInfo] Cannot find a task manager: ", connectionID);
+        TaskManagerProxyServerLoggerError("[GetProvidedInterfaceAccessInfo] Cannot find a task manager: ", connectionID);
         return false;
     }
 
     mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(taskName);
     if (!taskGlobal) {
-        TaskManagerProxyServerLoggerError("[GetProvidedInterfaceInfo] Cannot find a global task: ", taskName);
+        TaskManagerProxyServerLoggerError("[GetProvidedInterfaceAccessInfo] Cannot find a global task: ", taskName);
         return false;
     }
 
@@ -541,27 +542,27 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
-    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceInfo,
+    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceAccessInfo,
     const ::Ice::Current & current)
 {
     Logger->trace("TMServer", "<<<<< RECV: AddProvidedInterface: " 
-        + providedInterfaceInfo.taskName + ", " + providedInterfaceInfo.interfaceName);
+        + providedInterfaceAccessInfo.taskName + ", " + providedInterfaceAccessInfo.interfaceName);
 
     return TaskManagerServer->ReceiveAddProvidedInterface(
         //Communicator->getImplicitContext()->get(CONNECTION_ID), providedInterfaceInfo);
-        current.ctx.find(CONNECTION_ID)->second, providedInterfaceInfo);
+        current.ctx.find(CONNECTION_ID)->second, providedInterfaceAccessInfo);
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::AddRequiredInterface(
-    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo,
+    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceAccessInfo,
     const ::Ice::Current & current)
 {
     Logger->trace("TMServer", "<<<<< RECV: AddRequiredInterface: " 
-        + requiredInterfaceInfo.taskName + ", " + requiredInterfaceInfo.interfaceName);
+        + requiredInterfaceAccessInfo.taskName + ", " + requiredInterfaceAccessInfo.interfaceName);
 
     return TaskManagerServer->ReceiveAddRequiredInterface(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID), requiredInterfaceInfo);
-        current.ctx.find(CONNECTION_ID)->second, requiredInterfaceInfo);
+        //Communicator->getImplicitContext()->get(CONNECTION_ID), requiredInterfaceAccessInfo);
+        current.ctx.find(CONNECTION_ID)->second, requiredInterfaceAccessInfo);
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::IsRegisteredProvidedInterface(

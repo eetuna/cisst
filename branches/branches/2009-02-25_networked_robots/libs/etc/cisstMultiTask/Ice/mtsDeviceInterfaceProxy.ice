@@ -76,7 +76,7 @@ module mtsDeviceInterfaceProxy
 	//	Provided Interface Related Definition
 	//-----------------------------------------------------------------------------	
 	// Data structure definition
-	struct ProvidedInterface {
+	struct ProvidedInterfaceInfo {
 		// Interface name
 		string InterfaceName;
 		
@@ -92,7 +92,7 @@ module mtsDeviceInterfaceProxy
 	};
 
     /*! List of provided interfaces */
-    sequence<ProvidedInterface> ProvidedInterfaceSequence;
+    //sequence<ProvidedInterfaceInfo> ProvidedInterfaceSequence;
 
     //-----------------------------------------------------------------------------
 	//	Function Proxy Related Definition
@@ -138,10 +138,11 @@ module mtsDeviceInterfaceProxy
 		/*! Replacement for OnConnect event. */
 		void AddClient(Ice::Identity ident);
 
-        /*! Get provided interface information which will be used to create
-            a provided interface proxy at client side. */
+        /*! Get the information about the provided interface which will be used to 
+            create a provided interface proxy at client side. */
         ["cpp:const"] idempotent 
-        bool GetProvidedInterfaces(out ProvidedInterfaceSequence providedInterfaces);
+        bool GetProvidedInterfaceInfo(string providedInterfaceName,
+                                      out ProvidedInterfaceInfo info);
 
         /*! Call mtsTaskManager::Connect() at server side. */
         bool ConnectServerSide(string userTaskName, string requiredInterfaceName,

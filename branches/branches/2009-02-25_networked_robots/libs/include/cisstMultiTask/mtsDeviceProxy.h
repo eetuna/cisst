@@ -24,29 +24,45 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a periodic task.
 */
 
+// MJUNG:
 // A server task proxy is of mtsDevice type, not mtsTask because we assume that
 // there is only one required interface at client side, which means there is
-// only one user thread. Thus, we don't need to worry about thread synchronization
+// only one user thread. Thus, we don't need to consider thread synchronization
 // issues at client side.
-// However, if there can be more than one required interface at client side, we should
-// need to consider the thread synchronization issues. Moreover, if one required
-// interface can connect to more than one provided interface, things get more 
-// complicated. (However, the current design doesn't support such connection.)
+// However, if there can be more than one required interface at client side, we
+// need to consider them. Moreover, if one required interface can connect to 
+// more than one provided interface, things get more complicated. (However, the 
+// current design doesn't support such connection.)
 #ifndef _mtsDeviceProxy_h
 #define _mtsDeviceProxy_h
 
 #include <cisstMultiTask/mtsDevice.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
-class mtsDeviceProxy : public mtsDevice {
+#include <cisstMultiTask/mtsExport.h>
+
+class mtsDeviceInterfaceProxyClient;
+
+class mtsDeviceProxy : public mtsDevice 
+{
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+protected:
+    //mtsDeviceInterfaceProxyClient * RequiredInterfaceProxy;
 
 public:
-    mtsDeviceProxy(const std::string & deviceName)
-        : mtsDevice(deviceName)
+    mtsDeviceProxy(const std::string & deviceName) : 
+        mtsDevice(deviceName)//, RequiredInterfaceProxy(requiredInterfaceProxy)
     {}
     ~mtsDeviceProxy() 
     {}
 
     void Configure(const std::string & deviceName) {};
+
+    /*! Create a local provided interface and returns the pointer to it. */
+    mtsDeviceInterface * CreateProvidedInterfaceProxy(
+        mtsDeviceInterfaceProxyClient * requiredInterfaceProxy,
+        const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
     /*! Return a name for a server device proxy. */
     // Server task proxy naming rule:
@@ -59,14 +75,7 @@ public:
     //         RI: required interface name
     static std::string GetServerTaskProxyName(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
-        const std::string & userTaskName, const std::string & requiredInterfaceName) 
-    {
-        return "Server-" +
-               resourceTaskName + ":" +      // TS
-               providedInterfaceName + "-" + // PI
-               userTaskName + ":" +          // TC
-               requiredInterfaceName;        // RI
-    }
+        const std::string & userTaskName, const std::string & requiredInterfaceName);
 
     /*! Return a name for a client task proxy. */
     // Client task proxy naming rule:
@@ -79,15 +88,10 @@ public:
     //         RI: required interface name
     static std::string GetClientTaskProxyName(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
-        const std::string & userTaskName, const std::string & requiredInterfaceName)
-    {
-        return "Client-" +
-               resourceTaskName + ":" +      // TS
-               providedInterfaceName + "-" + // PI
-               userTaskName + ":" +          // TC
-               requiredInterfaceName;        // RI
-    }
+        const std::string & userTaskName, const std::string & requiredInterfaceName);
 };
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDeviceProxy)
 
 #endif // _mtsDeviceProxy_h
 

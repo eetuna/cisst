@@ -148,12 +148,12 @@ protected:
     /*! Add a new provided interface. */
     bool ReceiveAddProvidedInterface(
         const ConnectionIDType & connectionID,
-        const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceInfo);
+        const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceAccessInfo);
 
     /*! Add a new required interface. */
     bool ReceiveAddRequiredInterface(
         const ConnectionIDType & connectionID,
-        const ::mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo);
+        const ::mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceAccessInfo);
 
     /*! Check if the provided interface has been registered before. */
     bool ReceiveIsRegisteredProvidedInterface(

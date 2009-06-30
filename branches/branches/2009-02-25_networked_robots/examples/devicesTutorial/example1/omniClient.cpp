@@ -31,8 +31,8 @@ int main(void)
         new displayTaskOmniClient("DISP", PeriodDisplay * cmn_ms);
     taskManager->AddTask(displayTaskObject);
 
-    taskManager->GlobalTaskManagerIP = "10.162.34.27";
-    taskManager->ServerTaskIP = "10.162.34.27";
+    taskManager->SetGlobalTaskManagerIP("10.162.34.27");
+    taskManager->SetServerTaskIP("10.162.34.27");
 
     taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
     osaSleep(1 * cmn_s);

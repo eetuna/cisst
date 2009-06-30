@@ -181,12 +181,14 @@ void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
 //-------------------------------------------------------------------------
 //  Methods to Send Events
 //-------------------------------------------------------------------------
-const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaces(
-        mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces) const
+const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaceInfo(
+    const std::string & providedInterfaceName,
+    mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
     //GetLogger()->trace("TIClient", ">>>>> SEND: SendGetProvidedInterface");
 
-    return DeviceInterfaceServerProxy->GetProvidedInterfaces(providedInterfaces);
+    return DeviceInterfaceServerProxy->GetProvidedInterfaceInfo(
+        providedInterfaceName, providedInterfaceInfo);
 }
 
 bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(

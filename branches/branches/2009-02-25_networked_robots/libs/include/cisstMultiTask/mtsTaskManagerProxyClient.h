@@ -94,13 +94,14 @@ public:
     mtsDeviceInterface * GetProvidedInterfaceProxy(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
         const std::string & userTaskName, const std::string & requiredInterfaceName,
-        mtsTask * userTask);
+        mtsTask * clientTask);
 
 protected:
     /*! Create a provided interface proxy and populate it with the complete specification 
         on the remote provided interface. */
-    bool CreateProvidedInterfaceProxy(const mtsDeviceInterfaceProxy::ProvidedInterface & providedInterface,
-                                      mtsDevice * serverTaskProxy, mtsTask * clientTask);
+    //bool CreateProvidedInterfaceProxy(
+    //    const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo,
+    //    mtsDevice * serverTaskProxy, mtsTask * clientTask);
 
     void UpdateCommandId(mtsDeviceInterfaceProxy::FunctionProxySet functionProxies);
 

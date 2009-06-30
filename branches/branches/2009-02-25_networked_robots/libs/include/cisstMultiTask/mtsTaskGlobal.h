@@ -42,7 +42,7 @@ class mtsTaskGlobal
     } ConnectedInterface;
 
     /*! Base class to contain the information about connected interfaces. */
-    class GenericInterfaceInfo {
+    class GenericInterface {
     protected:
         /*! Typedef for map to manage connected interfaces with its name. */
         typedef cmnNamedMap<ConnectedInterface> ConnectedInterfaceMapType;
@@ -52,11 +52,11 @@ class mtsTaskGlobal
         const std::string InterfaceName;
 
     public:        
-        GenericInterfaceInfo(const std::string & interfaceName)
+        GenericInterface(const std::string & interfaceName)
             : InterfaceName(interfaceName)
         {}
 
-        ~GenericInterfaceInfo() {
+        ~GenericInterface() {
             ConnectedInterfaceMap.DeleteAll();
         }
 
@@ -80,17 +80,17 @@ class mtsTaskGlobal
     };
 
     /*! Information about a provided interface connected. */
-    class ProvidedInterfaceInfo : public GenericInterfaceInfo {
+    class ProvidedInterface : public GenericInterface {
     public:
         std::string AdapterName;
         std::string EndpointInfo;
         std::string CommunicatorID;
     
-        ProvidedInterfaceInfo(const std::string & adapterName,
+        ProvidedInterface(const std::string & adapterName,
                               const std::string & endpointInfo,
                               const std::string & communicatorID,
                               const std::string & interfaceName):
-            GenericInterfaceInfo(interfaceName),
+            GenericInterface(interfaceName),
             AdapterName(adapterName),
             EndpointInfo(endpointInfo), 
             CommunicatorID(communicatorID)
@@ -112,10 +112,10 @@ class mtsTaskGlobal
     };
 
     /*! Information about a required interface connected. */
-    class RequiredInterfaceInfo : public GenericInterfaceInfo {
+    class RequiredInterface : public GenericInterface {
     public:
-        RequiredInterfaceInfo(const std::string & interfaceName)
-            : GenericInterfaceInfo(interfaceName)
+        RequiredInterface(const std::string & interfaceName)
+            : GenericInterface(interfaceName)
         {}
     };
 
@@ -127,11 +127,11 @@ protected:
     std::vector<std::string> ConnectedTaskList;
 
     /*! map: (provided interface name, its information) */
-    typedef std::map<std::string, ProvidedInterfaceInfo> ProvidedInterfaceMapType;
+    typedef std::map<std::string, ProvidedInterface> ProvidedInterfaceMapType;
     ProvidedInterfaceMapType ProvidedInterfaces;
 
     /*! map: (required interface name, its information) */
-    typedef std::map<std::string, RequiredInterfaceInfo> RequiredInterfaceMapType;
+    typedef std::map<std::string, RequiredInterface> RequiredInterfaceMapType;
     RequiredInterfaceMapType RequiredInterfaces;
 
 public:

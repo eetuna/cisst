@@ -57,8 +57,8 @@ std::string mtsTaskGlobal::ShowTaskInfo()
         buf << std::endl;\
     }
 
-    PRINT_INTERFACE_INFO("Provided", ProvidedInterfaceInfo, ProvidedInterfaces);
-    PRINT_INTERFACE_INFO("Required", RequiredInterfaceInfo, RequiredInterfaces);
+    PRINT_INTERFACE_INFO("Provided", ProvidedInterface, ProvidedInterfaces);
+    PRINT_INTERFACE_INFO("Required", RequiredInterface, RequiredInterfaces);
 
     return buf.str();
 #undef HEADING
@@ -69,21 +69,22 @@ bool mtsTaskGlobal::AddProvidedInterface(
 {
     const std::string interfaceName = providedInterfaceAccessInfo.interfaceName;
 
-    const ProvidedInterfaceInfo info(providedInterfaceAccessInfo.adapterName,
-                                     providedInterfaceAccessInfo.endpointInfo, 
-                                     providedInterfaceAccessInfo.communicatorID, 
-                                     providedInterfaceAccessInfo.interfaceName);
+    ProvidedInterface info(providedInterfaceAccessInfo.adapterName,
+                           providedInterfaceAccessInfo.endpointInfo, 
+                           providedInterfaceAccessInfo.communicatorID, 
+                           providedInterfaceAccessInfo.interfaceName);
 
     ProvidedInterfaces.insert(make_pair(interfaceName, info));    
 
     return true;
 }
 
-bool mtsTaskGlobal::AddRequiredInterface(const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceInfo)
+bool mtsTaskGlobal::AddRequiredInterface(
+    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceAccessInfo)
 {
-    const std::string interfaceName = requiredInterfaceInfo.interfaceName;
+    const std::string interfaceName = requiredInterfaceAccessInfo.interfaceName;
 
-    const RequiredInterfaceInfo info(requiredInterfaceInfo.interfaceName);
+    RequiredInterface info(interfaceName);
 
     RequiredInterfaces.insert(make_pair(interfaceName, info));    
 

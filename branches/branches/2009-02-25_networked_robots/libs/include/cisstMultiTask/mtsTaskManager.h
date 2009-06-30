@@ -206,8 +206,8 @@ protected:
     /*! Task manager proxy objects. Both are initialized as null at first and 
         will be assigned later. Either one of the objects should be null and the 
         other has to be valid.
-        ProxyServer is valid if this is the global task manager.
-        ProxyClient is valid if this is a general task manager.
+        ProxyServer is valid iff this is the global task manager.
+        ProxyClient is valid iff this is a general task manager.
        */
     mtsTaskManagerProxyServer * ProxyGlobalTaskManager;
     mtsTaskManagerProxyClient * ProxyTaskManagerClient;
@@ -218,12 +218,15 @@ protected:
     /*! Task manager communicator ID. Used as one of ICE proxy object properties. */
     const std::string TaskManagerCommunicatorID;
 
-    /*! Proxy instance. This will be dynamically created. */
-    //mtsProxyBaseCommon<mtsTaskManager> * Proxy;
+    /*! IP address information. */
+    std::string GlobalTaskManagerIP;
+    std::string ServerTaskIP;
 
     /*! Start two kinds of proxies.
-        [Task Manager Layer] Start either GlobalTaskManagerProxy of TaskManagerClientProxy.
-        [Task Layer] While iterating all tasks, start all provided interface proxies.
+        Task Manager Layer: Start either GlobalTaskManagerProxy of TaskManagerClientProxy
+            according to the type of this task manager.
+        Task Layer: While iterating all tasks, create and start all provided interface 
+            proxies (see mtsTask::RunProvidedInterfaceProxy()).
     */
     void StartProxies();
 
@@ -247,11 +250,14 @@ public:
         return ProxyTaskManagerClient;
     }
 
-    //
-    // TODO: FIX ME
-    //
-    std::string GlobalTaskManagerIP;
-    std::string ServerTaskIP;
+    /*! Setter */
+    inline void SetGlobalTaskManagerIP(const std::string & globalTaskManagerIP) {
+        GlobalTaskManagerIP = globalTaskManagerIP;
+    }
+
+    inline void SetServerTaskIP(const std::string & serverTaskIP) {
+        ServerTaskIP = serverTaskIP;
+    }
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)

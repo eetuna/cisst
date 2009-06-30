@@ -135,6 +135,7 @@ protected:
     //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
+    /*! Get the local provided interface from the task manager by name. */
     mtsProvidedInterface * GetProvidedInterface(
         const std::string resourceDeviceName, const std::string providedInterfaceName) const;
 
@@ -154,8 +155,9 @@ protected:
     void ReceiveAddClient(const DeviceInterfaceClientProxyType & clientProxy);
 
     /*! Update the information of all tasks. */
-    const bool ReceiveGetProvidedInterfaces(
-        ::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence & providedInterfaces);
+    const bool ReceiveGetProvidedInterfaceInfo(
+        const std::string & providedInterfaceName,
+        ::mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
     /*! Connect at server side. 
         This method creates a client task proxy (mtsDeviceProxy) and a required
@@ -201,8 +203,9 @@ protected:
         void Stop();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
-        bool GetProvidedInterfaces(::mtsDeviceInterfaceProxy::ProvidedInterfaceSequence&, 
-                                   const ::Ice::Current&) const;
+        bool GetProvidedInterfaceInfo(const std::string &,
+                                      ::mtsDeviceInterfaceProxy::ProvidedInterfaceInfo&,
+                                      const ::Ice::Current&) const;
         bool ConnectServerSide(
             const std::string & userTaskName, const std::string & requiredInterfaceName,
             const std::string & resourceTaskName, const std::string & providedInterfaceName,

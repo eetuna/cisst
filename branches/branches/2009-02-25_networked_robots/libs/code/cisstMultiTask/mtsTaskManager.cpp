@@ -30,12 +30,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 
-#include <cisstMultiTask/mtsCommandVoidProxy.h>
-#include <cisstMultiTask/mtsCommandWriteProxy.h>
-#include <cisstMultiTask/mtsCommandReadProxy.h>
-#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
-#include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
-
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 
@@ -43,7 +37,8 @@ mtsTaskManager::mtsTaskManager():
     TaskMap("Tasks"),
     DeviceMap("Devices"),
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
-    TaskManagerCommunicatorID("TaskManagerServerSender")
+    TaskManagerCommunicatorID("TaskManagerServerSender"),
+    ProxyGlobalTaskManager(0), ProxyTaskManagerClient(0)
 {
     __os_init();
     TaskMap.SetOwner(*this);
@@ -307,13 +302,15 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         resourceDevice = TaskMap.GetItem(resourceTaskName);
     }
     // find the interface pointer from the local resource first
-    mtsTask * userTaskTemp = NULL;
+    mtsTask * clientTask = NULL;
     mtsDeviceInterface * resourceInterface;
     if (resourceDevice) {
+        // Note that a SERVER task has to be able to get resource interface pointer here
+        // (a SERVER task should not reach here).
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
     } else {
         // If we cannot find, the resource interface should be at remote or doesn't exist.
-        switch(GetTaskManagerType()) {
+        switch (GetTaskManagerType()) {
             case TASK_MANAGER_LOCAL:
                 CMN_LOG_CLASS_INIT_ERROR << "Connect: Cannot find a task or device named " << resourceTaskName << std::endl;
                 return false;
@@ -323,20 +320,22 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                 return false;
 
             case TASK_MANAGER_CLIENT:
-                //
-                // TODO: remove the following variable after the creation of a server task proxy 
-                // at client side.
-                //
-                userTaskTemp = dynamic_cast<mtsTask*>(userTask);
-                CMN_ASSERT(userTaskTemp);
+                // Assume that a user task has to be of mtsTask type.
+                clientTask = dynamic_cast<mtsTask*>(userTask);
+                if (!clientTask) {
+                    CMN_LOG_CLASS_INIT_ERROR << "Connect: ." << std::endl;
+                    return false;
+                }
 
                 // Try to get the information about the provided interface at server side
                 // from the global task manager. If successful, the provided interface proxy
                 // is created and connection across networks is established.
+                // Note that a CLIENT task has to be able to get resource interface pointer 
+                // here (a SERVER task should not reach here).
                 resourceInterface = ProxyTaskManagerClient->GetProvidedInterfaceProxy(
                     resourceTaskName, providedInterfaceName, 
                     userTaskName, requiredInterfaceName, 
-                    userTaskTemp);
+                    clientTask);
                 if (!resourceInterface) {
                     CMN_LOG_CLASS_INIT_ERROR << "Connect through networks: Cannot find the task or device named " << resourceTaskName << std::endl;
                     return false;
@@ -362,36 +361,21 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     AssociationSet.insert(association);
     CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << requiredInterfaceName
                                << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
-
-    // If the connection between the required interface with the provided interface proxy
-    // at client side is established successfully, inform the global task manager of this 
-    // fact.
-    // 'requestServerSideConnect' is true only if this task manager is at client side and 
-    // all the connection processing above are successful.
+    
     if (requestServerSideConnect) {
-        /*
-        CMN_ASSERT(!ProxyServer);   // This is not a global task manager.
-        CMN_ASSERT(ProxyClient);
-
-        if (!SendConnectServerSide(userTaskTemp, userTaskName, requiredInterfaceName,
-                          resourceTaskName, providedInterfaceName)) 
+        // At client side, if the connection between the actual required interface and 
+        // the provided interface proxy is established successfully, connect the actual 
+        // provided interface with the required interface proxy at server side.
+        if (!clientTask->SendConnectServerSide(requiredInterfaceName,
+                                                 userTaskName, requiredInterfaceName,
+                                                 resourceTaskName, providedInterfaceName))
         {
             CMN_LOG_CLASS_INIT_ERROR << "Connect: server side connection failed." << std::endl;
             return false;
         }
 
-        //
-        //  TODO: FIX!! UGLY!!
-        //
-        mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
-        userTaskTemp->SendGetCommandId(functionProxies);
-
-        functionProxies.ServerTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
-            resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
-        functionProxies.ProvidedInterfaceProxyName = providedInterfaceName;
-
-        UpdateCommandId(functionProxies);
-        */
+        // If the server-side connection is successful, update the command id.
+        clientTask->UpdateCommandId(requiredInterfaceName);
     }
 
     return true;
