@@ -36,11 +36,23 @@ http://www.cisst.org/cisst/license.txt.
 /*! Implicit per-proxy context to set connection id. */
 #define CONNECTION_ID "ConnectionID"
 
+/*! The base port number is assigned as follows, which is not registered yet to 
+IANA (Internet Assigned Numbers Authority) as of June 25th, 2009. 
+See http://www.iana.org/assignments/port-numbers for more details.
+
+Port number assignment for proxies
+----------------------------------
+Task manager layer  : 10705 (e.g. the global task manager)
+Task layer          : 11705 (e.g. the server task)
+*/
+#define BASE_PORT_NUMBER_TASK_MANAGER_LAYER 10705
+#define BASE_PORT_NUMBER_TASK_LAYER         11705
+
 template<class _ArgumentType>
 class CISST_EXPORT mtsProxyBaseCommon {
     
 public:
-    /*! Proxy type definition. 
+    /*! Typedef for proxy type definition.
 
         Proxy server: a proxy that WORKS AS a server
         Proxy client: a proxy that WORKS AS a client

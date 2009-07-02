@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-#include <string>
+//#include <string>
 
 /*!
   \ingroup cisstMultiTask
@@ -58,6 +58,18 @@ public:
 
     /*! Stop the proxy. */
     void Stop();
+
+    ///*! Return the base port number for task (interface) servers. */
+    //inline const unsigned int GetBasePortNumber() {
+    //    return BASE_PORT_NUMBER_TASK_LAYER;
+    //}
+
+    ///*! Return the base port number for task (interface) servers as string. */
+    //inline std::string GetBasePortNumberAsString() {
+    //    std::stringstream buffer;
+    //    buffer << BASE_PORT_NUMBER_TASK_LAYER;
+    //    return buffer.str();
+    //}
 
     /*! Set a server task connected to this proxy server. This server task has 
         to provide at least one provided interface. */
@@ -149,7 +161,7 @@ protected:
     void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 
     //-------------------------------------------------------------------------
-    //  Methods to Receive and Process Events
+    //  Methods to Receive and Process Events (Client -> Server)
     //-------------------------------------------------------------------------
     /*! When a new client connects, add it to the client management list. */
     void ReceiveAddClient(const DeviceInterfaceClientProxyType & clientProxy);
@@ -176,7 +188,7 @@ protected:
     void ReceiveExecuteCommandQualifiedReadSerialized(const int commandId, const std::string argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
-    //  Methods to Send Events
+    //  Methods to Send Events (Server -> Client)
     //-------------------------------------------------------------------------
     //void SendUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 

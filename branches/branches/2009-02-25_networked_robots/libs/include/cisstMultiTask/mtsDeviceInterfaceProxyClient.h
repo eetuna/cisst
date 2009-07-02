@@ -110,16 +110,19 @@ protected:
     /*! Clean up thread-related resources. */
     void OnThreadEnd();
 
-    //-------------------------------------------------------------------------
-    //  Methods to Receive and Process Events
-    //-------------------------------------------------------------------------
-    /*! Update local command object id. */
-    //void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+public:
+    /*! Update the command id. This step is critical for thread-safe command execution 
+        at server side. */
+    void UpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
 
     //-------------------------------------------------------------------------
-    //  Methods to Send Events
+    //  Methods to Receive and Process Events (Server -> Client)
     //-------------------------------------------------------------------------
-public:
+     //void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+
+    //-------------------------------------------------------------------------
+    //  Methods to Send Events (Client -> Server)
+    //-------------------------------------------------------------------------
     const bool SendGetProvidedInterfaceInfo(
         const std::string & providedInterfaceName,
         mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
@@ -162,7 +165,7 @@ protected:
         void Run();
         void Stop();
 
-        //void UpdateCommandId(const ::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
+        // Server -> Client
     };
 };
 

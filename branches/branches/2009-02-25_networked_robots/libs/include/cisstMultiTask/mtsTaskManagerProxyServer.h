@@ -28,6 +28,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
+#include <sstream>
+
 /*!
   \ingroup cisstMultiTask
 
@@ -57,6 +59,18 @@ public:
 
     /*! End the proxy. */
     void Stop();
+
+    ///*! Return the base port number for task manager servers. */
+    //static const unsigned int GetBasePortNumber() {
+    //    return BASE_PORT_NUMBER_TASK_MANAGER_LAYER;
+    //}
+
+    ///*! Return the base port number for task manager servers as string. */
+    //static std::string GetBasePortNumberAsString() {
+    //    std::stringstream buffer;
+    //    buffer << BASE_PORT_NUMBER_TASK_MANAGER_LAYER;
+    //    return buffer.str();
+    //}
 
 protected:
     typedef mtsProxyBaseServer<mtsTaskManager> BaseType;

@@ -134,8 +134,7 @@ void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
 //-------------------------------------------------------------------------
 //  Methods to Receive and Process Events
 //-------------------------------------------------------------------------
-/*
-void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
+void mtsDeviceInterfaceProxyClient::UpdateCommandId(
     const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
 {
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
@@ -155,7 +154,7 @@ void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
     //    commandVoid = dynamic_cast<mtsCommandVoidProxy*>(
     //        providedInterfaceProxy->GetCommandVoid(it->Name));
     //    CMN_ASSERT(commandVoid);
-    //    commandVoid->SetCommandId(it->FunctionProxyPointer);
+    //    commandVoid->SetCommandId(it->FunctionProxyId);
     //}
 
     // Replace a command id value with an actual pointer to the function
@@ -168,7 +167,7 @@ void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
         command##_commandType = dynamic_cast<mtsCommand##_commandType##Proxy*>(\
             providedInterfaceProxy->GetCommand##_commandType(it##_commandType->Name));\
         if (command##_commandType)\
-            command##_commandType->SetCommandId(it##_commandType->FunctionProxyPointer);\
+            command##_commandType->SetCommandId(it##_commandType->FunctionProxyId);\
     }
 
     REPLACE_COMMAND_ID(Void);
@@ -176,7 +175,6 @@ void mtsDeviceInterfaceProxyClient::ReceiveUpdateCommandId(
     REPLACE_COMMAND_ID(Read);
     REPLACE_COMMAND_ID(QualifiedRead);
 }
-*/
 
 //-------------------------------------------------------------------------
 //  Methods to Send Events
@@ -185,7 +183,7 @@ const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaceInfo(
     const std::string & providedInterfaceName,
     mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: SendGetProvidedInterface");
+    Logger->trace("TIClient", ">>>>> SEND: SendGetProvidedInterface");
 
     return DeviceInterfaceServerProxy->GetProvidedInterfaceInfo(
         providedInterfaceName, providedInterfaceInfo);
@@ -195,7 +193,7 @@ bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
     const std::string & userTaskName, const std::string & requiredInterfaceName,
     const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
-    GetLogger()->trace("TIClient", ">>>>> SEND: SendConnectServerSide");
+    Logger->trace("TIClient", ">>>>> SEND: SendConnectServerSide");
 
     return DeviceInterfaceServerProxy->ConnectServerSide(
         userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
@@ -204,14 +202,14 @@ bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
 void mtsDeviceInterfaceProxyClient::SendGetCommandId(
     mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
 {
-    GetLogger()->trace("TIClient", ">>>>> SEND: SendGetCommandId");
+    Logger->trace("TIClient", ">>>>> SEND: SendGetCommandId");
 
     DeviceInterfaceServerProxy->GetCommandId(functionProxies);
 }
 
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) const
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandVoid");
+    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandVoid");
 
     DeviceInterfaceServerProxy->ExecuteCommandVoid(commandId);
 }
@@ -219,7 +217,7 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) 
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(
     const int commandId, const cmnGenericObject & argument)
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
+    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
 
     // Serialization
     std::string serializedData;
@@ -231,7 +229,7 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(
     const int commandId, cmnGenericObject & argument)
 {
-    //GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandReadSerialized");
+    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandReadSerialized");
 
     std::string serializedData;
 
@@ -246,7 +244,7 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(
     const int commandId, const cmnGenericObject & argument1, cmnGenericObject & argument2)
 {
-    ////GetLogger()->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
+    ////Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
     //
     //double value = argument1.Data;
     //double outValue = 0.0;

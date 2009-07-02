@@ -28,12 +28,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstMultiTask/mtsTaskManager.h>
 
+#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
 
 #include <iostream>
-#include <string>
-
 
 CMN_IMPLEMENT_SERVICES(mtsTask)
 
@@ -316,7 +315,8 @@ void mtsTask::ToStream(std::ostream & outputStream) const
 //-----------------------------------------------------------------------------
 //  Processing Methods
 //-----------------------------------------------------------------------------
-void mtsTask::RunProvidedInterfaceProxy(const std::string & serverTaskIP)
+void mtsTask::RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
+                                        const std::string & serverTaskIP)
 {
     mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
     if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
@@ -351,8 +351,9 @@ void mtsTask::RunProvidedInterfaceProxy(const std::string & serverTaskIP)
     for (; it != itEnd; ++it) {
         providedInterfaceName = it->first;
         adapterName = adapterNameBase + "_" + providedInterfaceName;
-        // Assign a new port number for a new proxy object.
-        portNumber = GetPortNumberString(ProvidedInterfaceProxies.GetCount());
+        
+        // Assign a new port number for to-be-newly-created proxy object.
+        portNumber = GetNewPortNumberAsString(ProvidedInterfaceProxies.GetCount());
         endpointInfo = endpointInfoBase + portNumber;
         endpointInfoForClient = ":default -h " +
                                 serverTaskIP + " " +
@@ -373,11 +374,27 @@ void mtsTask::RunProvidedInterfaceProxy(const std::string & serverTaskIP)
         providedInterfaceProxy->Start(this);
         providedInterfaceProxy->GetLogger()->trace(
             "mtsTask", "Provided interface proxy starts: " + providedInterfaceName);
+        
+        // Register this provided interface to the global task manager.
+        if (!globalTaskManagerProxy->SendAddProvidedInterface(
+                providedInterfaceName, adapterName, endpointInfoForClient, communicatorId,
+                this->Name)) 
+        {
+            CMN_LOG_CLASS_RUN_ERROR << "RunProvidedInterfaceProxy failed: "
+                << "SendAddProvidedInterface() failed: "
+                << providedInterfaceName << " @ " << this->Name << std::endl;
+            continue;
+        } else {
+            providedInterfaceProxy->GetLogger()->trace("mtsTask", 
+                "Registered provided interface: " + providedInterfaceName + " @ " + this->Name);
+        }
     }
 }
 
-void mtsTask::RunRequiredInterfaceProxy(const std::string & requiredInterfaceName,
-    const std::string & endpointInfo, const std::string & communicatorID)
+void mtsTask::RunRequiredInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
+                                        const std::string & requiredInterfaceName,
+                                        const std::string & endpointInfo, 
+                                        const std::string & communicatorID)
 {
     mtsTaskManager * TaskManager = mtsTaskManager::GetInstance();
     if (TaskManager->GetTaskManagerType() == mtsTaskManager::TASK_MANAGER_LOCAL) {
@@ -394,26 +411,37 @@ void mtsTask::RunRequiredInterfaceProxy(const std::string & requiredInterfaceNam
     }
 
     // Create a required interface proxy object of which type is mtsDeviceInterfaceProxyClient.
-    mtsDeviceInterfaceProxyClient * deviceInterfaceProxyClient = 
+    mtsDeviceInterfaceProxyClient * requiredInterfaceProxy = 
         //
         // TODO: Replace hard-coded proxy definition with property files.
         //
         new mtsDeviceInterfaceProxyClient(endpointInfo, communicatorID);
 
-    if (!RequiredInterfaceProxies.AddItem(requiredInterfaceName, deviceInterfaceProxyClient)) {
+    if (!RequiredInterfaceProxies.AddItem(requiredInterfaceName, requiredInterfaceProxy)) {
         CMN_LOG_CLASS_RUN_ERROR << "RunRequiredInterfaceProxy failed: "
             << "cannot add a required interface proxy: "
             << requiredInterfaceName << std::endl;
         return;
     }
 
-    deviceInterfaceProxyClient->Start(this);
-    deviceInterfaceProxyClient->GetLogger()->trace(
+    requiredInterfaceProxy->Start(this);
+    requiredInterfaceProxy->GetLogger()->trace(
         "mtsTask", "Required interface proxy starts: " + requiredInterfaceName);
+
+    // Register this required interface to the global task manager.
+    if (!globalTaskManagerProxy->SendAddRequiredInterface(requiredInterfaceName, this->Name))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "RunRequiredInterfaceProxy failed: "
+            << "SendAddRequiredInterface() failed: "
+            << requiredInterfaceName << " @ " << this->Name << std::endl;
+        return;
+    } else {
+        requiredInterfaceProxy->GetLogger()->trace("mtsTask", 
+            "Registered provided interface: " + requiredInterfaceName + " @ " + this->Name);
+    }
 }
 
-mtsDeviceInterfaceProxyServer * mtsTask::GetProvidedInterfaceProxy(
-    const std::string & providedInterfaceName) const
+mtsDeviceInterfaceProxyServer * mtsTask::GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const
 {
     mtsDeviceInterfaceProxyServer * providedIntertfaceProxy = 
         ProvidedInterfaceProxies.GetItem(providedInterfaceName);
@@ -426,8 +454,7 @@ mtsDeviceInterfaceProxyServer * mtsTask::GetProvidedInterfaceProxy(
     return providedIntertfaceProxy;
 }
 
-mtsDeviceInterfaceProxyClient * mtsTask::GetRequiredInterfaceProxy(
-    const std::string & requiredInterfaceName) const
+mtsDeviceInterfaceProxyClient * mtsTask::GetRequiredInterfaceProxy(const std::string & requiredInterfaceName) const
 {
     mtsDeviceInterfaceProxyClient * requiredIntertfaceProxy = 
         RequiredInterfaceProxies.GetItem(requiredInterfaceName);
@@ -438,20 +465,6 @@ mtsDeviceInterfaceProxyClient * mtsTask::GetRequiredInterfaceProxy(
     }
 
     return requiredIntertfaceProxy;
-}
-
-void mtsTask::UpdateCommandId(const std::string &requiredInterfaceName)
-{
-    /*
-    mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
-    clientTask->SendGetCommandId(functionProxies);
-
-    functionProxies.ServerTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
-    resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
-    functionProxies.ProvidedInterfaceProxyName = providedInterfaceName;
-
-    UpdateCommandId(functionProxies);
-    */
 }
 
 //-------------------------------------------
@@ -493,25 +506,37 @@ bool mtsTask::SendConnectServerSide(
         userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
-/*
-void mtsTask::SendGetCommandId(
-    const std::string & requiredInterfaceProxyName,
-    mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName, 
+                               const std::string & serverTaskProxyName,
+                               const std::string & providedInterfaceName)
 {
-    CMN_ASSERT(ProxyClient);
+    mtsDeviceInterfaceProxyClient * requiredInterfaceProxy = 
+        GetRequiredInterfaceProxy(requiredInterfaceName);
+    if (!requiredInterfaceProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "SendGetCommandId: " 
+            << "Cannot find a required interface proxy: " << requiredInterfaceName << std::endl;
+        return;
+    }
 
-    ProxyClient->SendGetCommandId(functionProxies);
+    // Get the new id of function proxies from the server task.
+    mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
+    requiredInterfaceProxy->SendGetCommandId(functionProxies);
+
+    // Update function proxy IDs
+    functionProxies.ServerTaskProxyName = serverTaskProxyName;
+    functionProxies.ProvidedInterfaceProxyName = providedInterfaceName;
+
+    CMN_LOG_RUN_VERBOSE << "UpdateCommandId: Updated function proxy id." << std::endl;
+
+    requiredInterfaceProxy->UpdateCommandId(functionProxies);
 }
-*/
 
-const std::string mtsTask::GetPortNumberString(const unsigned int id)
+const std::string mtsTask::GetNewPortNumberAsString(const unsigned int id)
 {
-    static unsigned int defaultPortNumber = 10705;
+    unsigned int newPortNumber = BASE_PORT_NUMBER_TASK_LAYER + (id * 5);
 
-    unsigned int newPortNumberAssigned = defaultPortNumber + (id * 5);
+    std::stringstream newPortNumberAsString;
+    newPortNumberAsString << newPortNumber;
 
-    std::stringstream portNumberString;
-    portNumberString << newPortNumberAssigned;
-
-    return portNumberString.str();
+    return newPortNumberAsString.str();
 }

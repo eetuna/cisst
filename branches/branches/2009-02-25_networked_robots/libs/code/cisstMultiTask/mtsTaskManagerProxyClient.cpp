@@ -154,7 +154,8 @@ mtsDeviceInterface * mtsTaskManagerProxyClient::GetProvidedInterfaceProxy(
     }
 
     // 2. Using the information, start device interface proxy client(s).
-    clientTask->RunRequiredInterfaceProxy(requiredInterfaceName, 
+    clientTask->RunRequiredInterfaceProxy(this,
+                                          requiredInterfaceName, 
                                           info.endpointInfo, 
                                           info.communicatorID);
 
@@ -214,48 +215,6 @@ mtsDeviceInterface * mtsTaskManagerProxyClient::GetProvidedInterfaceProxy(
     return providedInterfaceProxy;
 }
 
-void mtsTaskManagerProxyClient::UpdateCommandId(
-    mtsDeviceInterfaceProxy::FunctionProxySet functionProxies)
-{
-    /*
-    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
-    mtsDevice * serverTaskProxy = GetDevice(serverTaskProxyName);
-    CMN_ASSERT(serverTaskProxy);
-
-    mtsProvidedInterface * providedInterfaceProxy = 
-        serverTaskProxy->GetProvidedInterface(functionProxies.ProvidedInterfaceProxyName);
-    CMN_ASSERT(providedInterfaceProxy);
-
-    //mtsCommandVoidProxy * commandVoid = NULL;
-    //mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it = 
-    //    functionProxies.FunctionVoidProxies.begin();
-    //for (; it != functionProxies.FunctionVoidProxies.end(); ++it) {
-    //    commandVoid = dynamic_cast<mtsCommandVoidProxy*>(
-    //        providedInterfaceProxy->GetCommandVoid(it->Name));
-    //    CMN_ASSERT(commandVoid);
-    //    commandVoid->SetCommandId(it->FunctionProxyPointer);
-    //}
-
-    // Replace a command id value with an actual pointer to the function
-    // pointer at server side (this resolves thread synchronization issue).
-#define REPLACE_COMMAND_ID(_commandType)\
-    mtsCommand##_commandType##Proxy * command##_commandType = NULL;\
-    mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it##_commandType = \
-        functionProxies.Function##_commandType##Proxies.begin();\
-    for (; it##_commandType != functionProxies.Function##_commandType##Proxies.end(); ++it##_commandType) {\
-        command##_commandType = dynamic_cast<mtsCommand##_commandType##Proxy*>(\
-            providedInterfaceProxy->GetCommand##_commandType(it##_commandType->Name));\
-        if (command##_commandType)\
-            command##_commandType->SetCommandId(it##_commandType->FunctionProxyPointer);\
-    }
-
-    REPLACE_COMMAND_ID(Void);
-    REPLACE_COMMAND_ID(Write);
-    REPLACE_COMMAND_ID(Read);
-    REPLACE_COMMAND_ID(QualifiedRead);
-    */
-}
-
 //-------------------------------------------------------------------------
 //  Send Methods
 //-------------------------------------------------------------------------
@@ -273,7 +232,7 @@ bool mtsTaskManagerProxyClient::SendAddProvidedInterface(
     info.taskName = taskName;
     info.interfaceName = newProvidedInterfaceName;
 
-    GetLogger()->trace("TMClient", ">>>>> SEND: AddProvidedInterface: " 
+    Logger->trace("TMClient", ">>>>> SEND: AddProvidedInterface: " 
         + info.taskName + ", " + info.interfaceName);
 
     return GlobalTaskManagerProxy->AddProvidedInterface(info);
@@ -286,7 +245,7 @@ bool mtsTaskManagerProxyClient::SendAddRequiredInterface(
     info.taskName = taskName;
     info.interfaceName = newRequiredInterfaceName;
 
-    GetLogger()->trace("TMClient", ">>>>> SEND: AddRequiredInterface: " 
+    Logger->trace("TMClient", ">>>>> SEND: AddRequiredInterface: " 
         + info.taskName + ", " + info.interfaceName);
 
     return GlobalTaskManagerProxy->AddRequiredInterface(info);
@@ -295,7 +254,7 @@ bool mtsTaskManagerProxyClient::SendAddRequiredInterface(
 bool mtsTaskManagerProxyClient::SendIsRegisteredProvidedInterface(
     const std::string & taskName, const std::string & providedInterfaceName) const
 {
-    GetLogger()->trace("TMClient", ">>>>> SEND: IsRegisteredProvidedInterface: " 
+    Logger->trace("TMClient", ">>>>> SEND: IsRegisteredProvidedInterface: " 
         + taskName + ", " + providedInterfaceName);
 
     return GlobalTaskManagerProxy->IsRegisteredProvidedInterface(
@@ -306,7 +265,7 @@ bool mtsTaskManagerProxyClient::SendGetProvidedInterfaceAccessInfo(
     const ::std::string & taskName, const std::string & providedInterfaceName,
     mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) const
 {
-    GetLogger()->trace("TMClient", ">>>>> SEND: GetProvidedInterfaceAccessInfo: " 
+    Logger->trace("TMClient", ">>>>> SEND: GetProvidedInterfaceAccessInfo: " 
         + taskName + ", " + providedInterfaceName);
 
     return GlobalTaskManagerProxy->GetProvidedInterfaceAccessInfo(
@@ -318,7 +277,7 @@ bool mtsTaskManagerProxyClient::SendGetProvidedInterfaceAccessInfo(
 //    const std::string & userTaskName,     const std::string & requiredInterfaceName,
 //    const std::string & resourceTaskName, const std::string & providedInterfaceName)
 //{
-//    GetLogger()->trace("TMClient", ">>>>> SEND: NotifyInterfaceConnectionResult: " +
+//    Logger->trace("TMClient", ">>>>> SEND: NotifyInterfaceConnectionResult: " +
 //        resourceTaskName + " : " + providedInterfaceName + " - " +
 //        userTaskName + " : " + requiredInterfaceName);
 //

@@ -128,6 +128,13 @@ public:
             }
         } 
     }
+
+    ///*! Returns the base port number for this object. This method only applies to the
+    //    server type object such as the global task manager or the task server. */
+    //virtual const unsigned int GetBasePortNumber() = 0;
+
+    ///*! Returns the base port number for this object as string. */
+    //virtual std::string GetBasePortNumberAsString() = 0;
 };
 
 #endif // _mtsProxyBaseServer_h

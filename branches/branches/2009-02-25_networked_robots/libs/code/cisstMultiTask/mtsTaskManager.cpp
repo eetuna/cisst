@@ -374,8 +374,11 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
             return false;
         }
 
-        // If the server-side connection is successful, update the command id.
-        clientTask->UpdateCommandId(requiredInterfaceName);
+        // If the server side connection is successful, update the command id.
+        const std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
+            resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
+
+        clientTask->SendGetCommandId(requiredInterfaceName, serverTaskProxyName, providedInterfaceName);
     }
 
     return true;
@@ -391,23 +394,32 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
 void mtsTaskManager::StartProxies()
 {
     // Start the task manager proxy
-    if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {
+    if (TaskManagerTypeMember == TASK_MANAGER_SERVER) {        
+        // Convert a number into a string.
+        std::stringstream endpointInfo;
+        endpointInfo << "tcp -p " << BASE_PORT_NUMBER_TASK_MANAGER_LAYER;
+
         ProxyGlobalTaskManager = new mtsTaskManagerProxyServer(
-            "TaskManagerServerAdapter", "tcp -p 10705", TaskManagerCommunicatorID);
+            "TaskManagerServerAdapter", endpointInfo.str(), TaskManagerCommunicatorID);
         ProxyGlobalTaskManager->Start(this);
     } else {
         CMN_LOG_CLASS_INIT_DEBUG << "GlobalTaskManagerIP: " << GlobalTaskManagerIP << std::endl;
         CMN_LOG_CLASS_INIT_DEBUG << "ServerTaskIP: " << ServerTaskIP << std::endl;
 
+        // Convert a number into a string.
+        std::stringstream buffer;
+        buffer << ":default -h " << GlobalTaskManagerIP
+               << " -p " << BASE_PORT_NUMBER_TASK_MANAGER_LAYER;
+
         ProxyTaskManagerClient = new mtsTaskManagerProxyClient(
-            ":default -h " + GlobalTaskManagerIP + " -p 10705", TaskManagerCommunicatorID);
+            buffer.str(), TaskManagerCommunicatorID);
         ProxyTaskManagerClient->Start(this);
 
-        // Start a task interface proxy.
+        // For all tasks, create and run provided interface proxies.
         TaskMapType::MapType::const_iterator it = TaskMap.GetMap().begin();
         const TaskMapType::MapType::const_iterator itEnd = TaskMap.GetMap().end();
         for (; it != itEnd; ++it) {
-            it->second->RunProvidedInterfaceProxy(ServerTaskIP);
+            it->second->RunProvidedInterfaceProxy(ProxyTaskManagerClient, ServerTaskIP);
         }
     }
 }

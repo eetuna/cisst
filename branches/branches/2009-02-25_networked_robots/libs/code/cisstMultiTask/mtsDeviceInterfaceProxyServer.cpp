@@ -250,7 +250,7 @@ void mtsDeviceInterfaceProxyServer::GetFunctionPointers(
     //it = FunctionVoidProxyMap.GetMap().begin();
     //for (; it != FunctionVoidProxyMap.GetMap().end(); ++it) {
     //    element.Name = it->first;
-    //    element.FunctionProxyPointer = reinterpret_cast<int>(it->second);
+    //    element.FunctionProxyId = reinterpret_cast<int>(it->second);
     //    functionProxy.FunctionVoidProxies.push_back(element);
     //}
 #define GET_FUNCTION_PROXY_BEGIN(_commandType)\
@@ -258,7 +258,7 @@ void mtsDeviceInterfaceProxyServer::GetFunctionPointers(
     it##_commandType = Function##_commandType##ProxyMap.GetMap().begin();\
     for (; it##_commandType != Function##_commandType##ProxyMap.GetMap().end(); ++it##_commandType) {\
         element.Name = it##_commandType->first;\
-        element.FunctionProxyPointer = reinterpret_cast<int>(it##_commandType->second);\
+        element.FunctionProxyId = reinterpret_cast<int>(it##_commandType->second);\
         functionProxySet.Function##_commandType##Proxies.push_back(element)
 #define GET_FUNCTION_PROXY_END\
     }
@@ -390,7 +390,7 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
         return false;
     }
 
-    // Create a client task proxy (mtsDevice) and a required Interface proxy (mtsRequiredInterface)
+    // Create a client task proxy (mtsDeviceProxy).
     mtsDeviceProxy * clientTaskProxy = new mtsDeviceProxy(clientDeviceProxyName);
     if (!taskManager->AddDevice(clientTaskProxy)) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
@@ -398,6 +398,7 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
         return false;
     }
 
+    // Create a required Interface proxy (mtsRequiredInterface).
     mtsRequiredInterface * requiredInterfaceProxy = 
         clientTaskProxy->AddRequiredInterface(requiredInterfaceName);
     if (!requiredInterfaceProxy) {
@@ -555,7 +556,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
     int num = 0;
     while(true)
     {
-        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
         timedWait(IceUtil::Time::milliSeconds(10));
 
         if(!Runnable) break;
@@ -626,7 +627,7 @@ bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetProvidedInterface
     ::mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo,
     const ::Ice::Current& current) const
 {
-    Logger->trace("TIServer", "<<<<< RECV: GetProvidedInterface");
+    Logger->trace("TIServer", "<<<<< RECV: GetProvidedInterfaceInfo");
 
     return DeviceInterfaceServer->ReceiveGetProvidedInterfaceInfo(
         providedInterfaceName, providedInterfaceInfo);

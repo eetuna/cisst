@@ -158,5 +158,5 @@ mtsDeviceInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
 #undef ADD_EVENTS_BEGIN
 #undef ADD_EVENTS_END
 
-    return NULL;
+    return providedInterfaceProxy;
 }

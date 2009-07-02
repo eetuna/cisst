@@ -90,20 +90,11 @@ protected:
     //  Processing Methods
     //-------------------------------------------------------------------------
 public:
-    /*! Connect across networks. This is called internally from Connect(). */
+    /*! Connect across networks. mtsTaskManager::Connect() calls this method internally. */
     mtsDeviceInterface * GetProvidedInterfaceProxy(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         mtsTask * clientTask);
-
-protected:
-    /*! Create a provided interface proxy and populate it with the complete specification 
-        on the remote provided interface. */
-    //bool CreateProvidedInterfaceProxy(
-    //    const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo,
-    //    mtsDevice * serverTaskProxy, mtsTask * clientTask);
-
-    void UpdateCommandId(mtsDeviceInterfaceProxy::FunctionProxySet functionProxies);
 
     //-------------------------------------------------------------------------
     //  Send Methods

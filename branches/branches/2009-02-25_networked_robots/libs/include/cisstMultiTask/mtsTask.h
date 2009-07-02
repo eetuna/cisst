@@ -360,34 +360,33 @@ protected:
     typedef cmnNamedMap<mtsDeviceInterfaceProxyClient> RequiredInterfaceProxyMapType;
     RequiredInterfaceProxyMapType RequiredInterfaceProxies;
 
-    /* Assign a port number to this object. A port number is starting from 10705, 
-       which is not registered yet to IANA (Internet Assigned Numbers Authority) 
-       as of June 25th, 2009.
-       See http://www.iana.org/assignments/port-numbers for more details. */
-    const std::string GetPortNumberString(const unsigned int id);
+    /*! Assign a new port number for a new device interface proxy (see mtsProxyBaseCommon.h) */
+    const std::string GetNewPortNumberAsString(const unsigned int id);
 
 public:
-    /*! Run proxies for required interfaces. Since a client task has actual required 
-        interfaces while a server task has actual provided interfaces, only a server 
-        task can call this method. 
-        Note that all possible provided interface proxy objects are created all at 
+    /*! Run proxies for required interfaces. Only a server task can call this method 
+        because a client task has actual required interfaces while a server task has 
+        actual provided interfaces.
+        Note that all provided interface proxy objects in all tasks are created all at 
         once because they should act as a server; they have to listen the client's
         connection. */
-    void RunProvidedInterfaceProxy(const std::string & serverTaskIP);
+    void RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
+                                   const std::string & serverTaskIP);
 
-    /*! Run proxies for required interfaces. Since a client task has actual required 
-        interfaces while a server task has actual provided interfaces, only a server 
-        task can call this method.
+    /*! Run proxies for required interfaces. only a server task can call this method 
+        because a client task has actual required interfaces while a server task has 
+        actual provided interfaces.
         In contrast to RunProvidedInterfaceProxy() method, when this method is called, 
         only one required interface proxy object is created. Then it connects to the
         provided interface proxy specified by the two arguments. */
-    void RunRequiredInterfaceProxy(const std::string & requiredInterfaceName,
+    void RunRequiredInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
+                                   const std::string & requiredInterfaceName,
                                    const std::string & endpointInfo, 
                                    const std::string & communicatorID);
 
-    /*! Update the command id. This step is critical for thread-safe command execution 
-        at server side. */
-    void UpdateCommandId(const std::string & requiredInterfaceName);
+    /*! Getters */
+    mtsDeviceInterfaceProxyServer * GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const;
+    mtsDeviceInterfaceProxyClient * GetRequiredInterfaceProxy(const std::string & requiredInterfaceName) const;
 
     //-------------------------------------------
     //  Send Methods
@@ -407,14 +406,9 @@ public:
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     /*! Update command id */
-    void SendGetCommandId(
-        const std::string & requiredInterfaceProxyName,
-        mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
-
-    /*! Getters */
-    mtsDeviceInterfaceProxyServer * GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const;
-    mtsDeviceInterfaceProxyClient * GetRequiredInterfaceProxy(const std::string & requiredInterfaceName) const;    
-
+    void SendGetCommandId(const std::string & requiredInterfaceName, 
+                          const std::string & serverTaskProxyName,
+                          const std::string & providedInterfaceName);
 };
 
 

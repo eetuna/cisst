@@ -91,28 +91,33 @@ module mtsDeviceInterfaceProxy
 		EventWriteSequence           EventsWrite;
 	};
 
-    /*! List of provided interfaces */
+    // List of provided interfaces
     //sequence<ProvidedInterfaceInfo> ProvidedInterfaceSequence;
 
     //-----------------------------------------------------------------------------
 	//	Function Proxy Related Definition
 	//-----------------------------------------------------------------------------	
+    
+    // The information about the function proxies.
     struct FunctionProxyInfo {
         string Name;
-        int FunctionProxyPointer;
+        // This id is set as the pointer to the function proxy at server side.
+        // Note that this is valid only for 32-bit OS. Under 64-bit machine, this
+        // should be changed so as to be able to handle 64-bit address space.
+        int FunctionProxyId;
     };
 
     sequence<FunctionProxyInfo> FunctionProxySequence;
 
     struct FunctionProxySet {
-        // Name of the server task proxy. This is used as a key to find a server 
+        // A name of the server task proxy. This is used as a key to find a server 
         // task proxy at client side.
         string ServerTaskProxyName;
         
-        // Name of the provided interface proxy that has command proxies at client side.
+        // A name of the provided interface proxy that has command proxies at client side.
         string ProvidedInterfaceProxyName;
 
-        // Sets of function proxy pointers
+        // Set of pointers to the function proxies.
         FunctionProxySequence FunctionVoidProxies;
         FunctionProxySequence FunctionWriteProxies;
         FunctionProxySequence FunctionReadProxies;

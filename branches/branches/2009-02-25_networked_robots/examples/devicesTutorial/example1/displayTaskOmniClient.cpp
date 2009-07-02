@@ -13,7 +13,8 @@ displayTaskOmniClient::displayTaskOmniClient(const std::string & taskName, doubl
     ExitFlag(false)
 {
     // to communicate with the interface of the resource
-    mtsRequiredInterface * requiredInterface = AddRequiredInterface("RemoteRobot");
+    mtsRequiredInterface * requiredInterface;
+    requiredInterface = AddRequiredInterface("RemoteRobot");
 	if (requiredInterface) {
         // bound the mtsFunction to the command provided by the interface 
         requiredInterface->AddFunction("GetPositionCartesian", GetCartesianPosition, mtsRequired);
@@ -26,11 +27,11 @@ displayTaskOmniClient::displayTaskOmniClient(const std::string & taskName, doubl
  //       requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button1EventHandler, this,
  //                                               "Button", prmEventButton());
  //   }
-    requiredInterface = AddRequiredInterface("RemoteButton2");
-	if (requiredInterface) {
-        requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button2EventHandler, this,
-                                                "Button", prmEventButton());
-    }
+ //   requiredInterface = AddRequiredInterface("RemoteButton2");
+	//if (requiredInterface) {
+ //       requiredInterface->AddEventHandlerWrite(&displayTaskOmniClient::Button2EventHandler, this,
+ //                                               "Button", prmEventButton());
+ //   }
 }
 
 void displayTaskOmniClient::Configure(const std::string & CMN_UNUSED(filename))
