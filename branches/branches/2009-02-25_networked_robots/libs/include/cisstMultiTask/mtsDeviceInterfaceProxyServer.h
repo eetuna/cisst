@@ -26,9 +26,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
-#include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
-#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -126,39 +123,11 @@ protected:
     cmnDeSerializer * DeSerializer;
 
     //-------------------------------------------------------------------------
-    //  Function Proxy and Event Proxy
-    //-------------------------------------------------------------------------
-    /*! Function proxy */
-    typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
-    typedef cmnNamedMap<mtsFunctionWrite> FunctionWriteProxyMapType;
-    typedef cmnNamedMap<mtsFunctionRead>  FunctionReadProxyMapType;
-    typedef cmnNamedMap<mtsFunctionQualifiedRead> FunctionQualifiedReadProxyMapType;
-    FunctionVoidProxyMapType FunctionVoidProxyMap;
-    FunctionWriteProxyMapType FunctionWriteProxyMap;
-    FunctionReadProxyMapType FunctionReadProxyMap;
-    FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
-
-    /*! Event proxy */
-    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidMapType;
-    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteMapType;
-    EventHandlerVoidMapType  EventHandlerVoidMap;
-    EventHandlerWriteMapType EventHandlerWriteMap;
-
-    //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Get the local provided interface from the task manager by name. */
     mtsProvidedInterface * GetProvidedInterface(
         const std::string resourceDeviceName, const std::string providedInterfaceName) const;
-
-    bool PopulateRequiredInterfaceProxy(mtsRequiredInterface * requiredInterfaceProxy, 
-                                        mtsProvidedInterface * providedInterface);
-
-    /*! Get pointers to the function proxies created at 
-        mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(). */        
-    //bool GetFunctionPointers(const std::string & serverTaskProxyName, 
-    //                         const std::string & providedInterfaceProxyName);
-    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 
     //-------------------------------------------------------------------------
     //  Methods to Receive and Process Events (Client -> Server)

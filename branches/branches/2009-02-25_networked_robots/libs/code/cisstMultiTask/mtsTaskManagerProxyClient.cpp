@@ -202,7 +202,7 @@ mtsDeviceInterface * mtsTaskManagerProxyClient::GetProvidedInterfaceProxy(
     // server task.
     mtsDeviceInterface * providedInterfaceProxy = 
         serverTaskProxy->CreateProvidedInterfaceProxy(
-        clientTask->GetRequiredInterfaceProxy(requiredInterfaceName), providedInterfaceInfo);
+        *(clientTask->GetRequiredInterfaceProxy(requiredInterfaceName)), providedInterfaceInfo);
     if (!providedInterfaceProxy) {
         TaskManagerProxyClientLoggerError(
             "[GetProvidedInterfaceProxy] Failed to create provided interface proxy: ",

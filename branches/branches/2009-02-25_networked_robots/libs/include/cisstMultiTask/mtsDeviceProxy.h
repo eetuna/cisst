@@ -32,12 +32,25 @@ http://www.cisst.org/cisst/license.txt.
 // However, if there can be more than one required interface at client side, we
 // need to consider them. Moreover, if one required interface can connect to 
 // more than one provided interface, things get more complicated. (However, the 
-// current design doesn't support such connection.)
+// current design doesn't allow such connection.)
 #ifndef _mtsDeviceProxy_h
 #define _mtsDeviceProxy_h
 
+#include <cisstCommon/cmnNamedMap.h>
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+
+#include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
+
+#include <cisstMultiTask/mtsCommandVoidProxy.h>
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
+#include <cisstMultiTask/mtsCommandReadProxy.h>
+#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
+#include <cisstMultiTask/mtsMulticastCommandVoid.h>
+#include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
+
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -47,45 +60,64 @@ class mtsDeviceProxy : public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    //-------------------------------------------------------------------------
+    //  Definition for Server Task
+    //-------------------------------------------------------------------------
 protected:
-    //mtsDeviceInterfaceProxyClient * RequiredInterfaceProxy;
+    /*! Function proxy */
+    typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
+    typedef cmnNamedMap<mtsFunctionWrite> FunctionWriteProxyMapType;
+    typedef cmnNamedMap<mtsFunctionRead>  FunctionReadProxyMapType;
+    typedef cmnNamedMap<mtsFunctionQualifiedRead> FunctionQualifiedReadProxyMapType;
+    FunctionVoidProxyMapType FunctionVoidProxyMap;
+    FunctionWriteProxyMapType FunctionWriteProxyMap;
+    FunctionReadProxyMapType FunctionReadProxyMap;
+    FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
+
+    /*! Event proxy */
+    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidMapType;
+    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteMapType;
+    EventHandlerVoidMapType  EventHandlerVoidMap;
+    EventHandlerWriteMapType EventHandlerWriteMap;
+
+    /*! Get pointers to the function proxies created at CreateRequiredInterfaceProxy(). */
+    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 
 public:
+    /*! Create a required interface proxy, populate it with commands and events, and 
+        returns the pointer to it. */
+    mtsRequiredInterface * CreateRequiredInterfaceProxy(
+        mtsProvidedInterface & providedInterface, const std::string & requiredInterfaceName);
+
+    //-------------------------------------------------------------------------
+    //  Definition for Client Task
+    //-------------------------------------------------------------------------
+protected:
+
+public:
+    /*! Create a provided interface proxy and returns the pointer to it. */
+    mtsProvidedInterface * CreateProvidedInterfaceProxy(
+        mtsDeviceInterfaceProxyClient & requiredInterfaceProxy,
+        const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
+
+
+    //-------------------------------------------------------------------------
+    //  Common Definition
+    //-------------------------------------------------------------------------
+public:
     mtsDeviceProxy(const std::string & deviceName) : 
-        mtsDevice(deviceName)//, RequiredInterfaceProxy(requiredInterfaceProxy)
+        mtsDevice(deviceName)
     {}
-    ~mtsDeviceProxy() 
-    {}
+    virtual ~mtsDeviceProxy();
 
     void Configure(const std::string & deviceName) {};
 
-    /*! Create a local provided interface and returns the pointer to it. */
-    mtsDeviceInterface * CreateProvidedInterfaceProxy(
-        mtsDeviceInterfaceProxyClient * requiredInterfaceProxy,
-        const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
-
     /*! Return a name for a server device proxy. */
-    // Server task proxy naming rule:
-    //    
-    //   Server-TS:PI-TC:RI
-    //
-    //   where TS: server task name
-    //         PI: provided interface name
-    //         TC: client task name
-    //         RI: required interface name
     static std::string GetServerTaskProxyName(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
         const std::string & userTaskName, const std::string & requiredInterfaceName);
 
     /*! Return a name for a client task proxy. */
-    // Client task proxy naming rule:
-    //    
-    //   Client-TS:PI-TC:RI
-    //
-    //   where TS: server task name
-    //         PI: provided interface name
-    //         TC: client task name
-    //         RI: required interface name
     static std::string GetClientTaskProxyName(
         const std::string & resourceTaskName, const std::string & providedInterfaceName,
         const std::string & userTaskName, const std::string & requiredInterfaceName);

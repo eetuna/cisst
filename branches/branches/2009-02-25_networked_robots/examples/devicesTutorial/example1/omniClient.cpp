@@ -39,9 +39,9 @@ int main(void)
 
     // connect the tasks
     std::string omniName("Omni1");
-    taskManager->Connect("DISP", "RemoteRobot", "Omni", omniName);
+    //taskManager->Connect("DISP", "RemoteRobot", "Omni", omniName);
     // taskManager->Connect("DISP", "Button1", "Omni", omniName + "Button1");
-    //taskManager->Connect("DISP", "RemoteButton2", "Omni", omniName + "Button2");
+    taskManager->Connect("DISP", "RemoteButton2", "Omni", omniName + "Button2");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();

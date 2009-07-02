@@ -25,8 +25,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsDeviceProxy.h>
 #include <cisstMultiTask/mtsTask.h>
-#include <cisstMultiTask/mtsCommandVoidProxy.h>
-#include <cisstMultiTask/mtsCommandWriteProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyServer);
 
@@ -54,11 +52,6 @@ void mtsDeviceInterfaceProxyServer::OnClose()
 {
     delete Serializer;
     delete DeSerializer;
-
-    FunctionVoidProxyMap.DeleteAll();
-    FunctionWriteProxyMap.DeleteAll();
-    FunctionReadProxyMap.DeleteAll();
-    FunctionQualifiedReadProxyMap.DeleteAll();
 }
 
 void mtsDeviceInterfaceProxyServer::Start(mtsTask * callingTask)
@@ -159,121 +152,6 @@ mtsProvidedInterface * mtsDeviceInterfaceProxyServer::GetProvidedInterface(
     CMN_ASSERT(providedInterface);
 
     return providedInterface;
-}
-
-bool mtsDeviceInterfaceProxyServer::PopulateRequiredInterfaceProxy(
-    mtsRequiredInterface * requiredInterfaceProxy, mtsProvidedInterface * providedInterface)
-{
-    // Get the lists of commands
-    mtsFunctionVoid  * functionVoidProxy = NULL;
-    mtsFunctionWrite * functionWriteProxy = NULL;
-    mtsFunctionRead  * functionReadProxy = NULL;
-    mtsFunctionQualifiedRead * functionQualifiedReadProxy = NULL;
-
-    //std::vector<std::string> namesOfCommandsVoid = providedInterface->GetNamesOfCommandsVoid();
-    //for (unsigned int i = 0; i < namesOfCommandsVoid.size(); ++i) {
-    //    functionVoidProxy = new mtsFunctionVoid(providedInterface, namesOfCommandsVoid[i]);
-    //    CMN_ASSERT(FunctionVoidProxyMap.AddItem(namesOfCommandsVoid[i], functionVoidProxy));
-    //    CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsVoid[i], *functionVoidProxy));
-    //}
-#define ADD_FUNCTION_PROXY_BEGIN(_commandType)\
-    std::vector<std::string> namesOfCommands##_commandType = providedInterface->GetNamesOfCommands##_commandType##();\
-    for (unsigned int i = 0; i < namesOfCommands##_commandType.size(); ++i) {\
-        function##_commandType##Proxy = new mtsFunction##_commandType##(providedInterface, namesOfCommands##_commandType##[i]);\
-        CMN_ASSERT(Function##_commandType##ProxyMap.AddItem(namesOfCommands##_commandType[i], function##_commandType##Proxy));\
-        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommands##_commandType##[i], *function##_commandType##Proxy));
-#define ADD_FUNCTION_PROXY_END\
-    }
-
-    ADD_FUNCTION_PROXY_BEGIN(Void);
-    ADD_FUNCTION_PROXY_END;
-
-    ADD_FUNCTION_PROXY_BEGIN(Write);
-    ADD_FUNCTION_PROXY_END;
-
-    ADD_FUNCTION_PROXY_BEGIN(Read);
-    ADD_FUNCTION_PROXY_END;
-
-    ADD_FUNCTION_PROXY_BEGIN(QualifiedRead);
-    ADD_FUNCTION_PROXY_END;
-
-    // Get the lists of events
-    mtsCommandVoidProxy  * actualCommandVoidProxy = NULL;
-    mtsCommandWriteProxy * actualCommandWriteProxy = NULL;
-
-    //std::vector<std::string> namesOfEventsVoid = providedInterface->GetNamesOfEventsVoid();
-    //for (unsigned int i = 0; i < namesOfEventsVoid.size(); ++i) {
-    //    // The fourth argument 'queued' should have to be false in order not to queue events.
-    //    requiredInterfaceProxy->AddEventHandlerVoid(
-    //        &mtsDeviceInterfaceProxyServer::EventHandlerVoid, this, namesOfEventsVoid[i], false);
-    //}
-
-    // CommandId is initially set to zero meaning that it needs to be updated.
-    // An actual value will be assigned later when UpdateEventCommandId() is executed.
-#define ADD_EVENT_PROXY_BEGIN(_eventType) \
-    std::vector<std::string> namesOfEvents##_eventType = providedInterface->GetNamesOfEvents##_eventType();\
-    for (unsigned int i = 0; i < namesOfEvents##_eventType.size(); ++i) {\
-        actualCommand##_eventType##Proxy = new mtsCommand##_eventType##Proxy(NULL, this);\
-        CMN_ASSERT(EventHandler##_eventType##Map.AddItem(namesOfEvents##_eventType[i], actualCommand##_eventType##Proxy));\
-        CMN_ASSERT(requiredInterfaceProxy->EventHandlers##_eventType.AddItem(namesOfEvents##_eventType[i], actualCommand##_eventType##Proxy));
-#define ADD_EVENT_PROXY_END \
-    }
-        
-    ADD_EVENT_PROXY_BEGIN(Void);
-    ADD_EVENT_PROXY_END;
-    
-    ADD_EVENT_PROXY_BEGIN(Write);
-    ADD_EVENT_PROXY_END;
-
-    // Using AllocateResources(), get pointers which has been allocated for this 
-    // required interface and is thread-safe to use.
-    unsigned int userId;
-    userId = providedInterface->AllocateResources(requiredInterfaceProxy->GetName() + "Proxy");
-
-    // Connect to the original device or task that provides allocated resources.
-    requiredInterfaceProxy->ConnectTo(providedInterface);
-    if (!requiredInterfaceProxy->BindCommandsAndEvents(userId)) {
-        DeviceInterfaceProxyServerLoggerError("PopulateRequiredInterfaceProxy", 
-            "BindCommandsAndEvents failed.");
-        return false;
-    }
-
-    return true;
-}
-
-void mtsDeviceInterfaceProxyServer::GetFunctionPointers(
-    mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet)
-{
-    mtsDeviceInterfaceProxy::FunctionProxyInfo element;
-
-    //FunctionVoidProxyMapType::MapType::const_iterator it;
-    //it = FunctionVoidProxyMap.GetMap().begin();
-    //for (; it != FunctionVoidProxyMap.GetMap().end(); ++it) {
-    //    element.Name = it->first;
-    //    element.FunctionProxyId = reinterpret_cast<int>(it->second);
-    //    functionProxy.FunctionVoidProxies.push_back(element);
-    //}
-#define GET_FUNCTION_PROXY_BEGIN(_commandType)\
-    Function##_commandType##ProxyMapType::MapType::const_iterator it##_commandType;\
-    it##_commandType = Function##_commandType##ProxyMap.GetMap().begin();\
-    for (; it##_commandType != Function##_commandType##ProxyMap.GetMap().end(); ++it##_commandType) {\
-        element.Name = it##_commandType->first;\
-        element.FunctionProxyId = reinterpret_cast<int>(it##_commandType->second);\
-        functionProxySet.Function##_commandType##Proxies.push_back(element)
-#define GET_FUNCTION_PROXY_END\
-    }
-
-    GET_FUNCTION_PROXY_BEGIN(Void);
-    GET_FUNCTION_PROXY_END;
-
-    GET_FUNCTION_PROXY_BEGIN(Write);
-    GET_FUNCTION_PROXY_END;
-
-    GET_FUNCTION_PROXY_BEGIN(Read);
-    GET_FUNCTION_PROXY_END;
-
-    GET_FUNCTION_PROXY_BEGIN(QualifiedRead);
-    GET_FUNCTION_PROXY_END;
 }
 
 //-------------------------------------------------------------------------
@@ -398,19 +276,11 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
         return false;
     }
 
-    // Create a required Interface proxy (mtsRequiredInterface).
-    mtsRequiredInterface * requiredInterfaceProxy = 
-        clientTaskProxy->AddRequiredInterface(requiredInterfaceName);
-    if (!requiredInterfaceProxy) {
+    // Create and populate a required interface proxy (mtsRequiredInterface)
+    if (!clientTaskProxy->CreateRequiredInterfaceProxy(*providedInterface, requiredInterfaceName)) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
-            "Cannot add required interface: " + requiredInterfaceName);
-        return false;
-    }
-
-    // Populate a required Interface proxy
-    if (!PopulateRequiredInterfaceProxy(requiredInterfaceProxy, providedInterface)) {
-        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
-            "Failed to populate a required interface proxy: " + requiredInterfaceName);
+            "Cannot create a required interface proxy: " + 
+            requiredInterfaceName + " @ " + clientTaskProxy->GetName());
         return false;
     }
 
