@@ -53,7 +53,7 @@ public:
     typedef mtsCommandWriteBase BaseType;
 
 protected:
-    /*! Device interface proxy object which executes a write command at 
+    /*! Device interface proxy objects which execute a write command at 
         peer's memory space across networks. */
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
     mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
@@ -63,8 +63,8 @@ protected:
     CommandProxyIdType CommandId;
     
 public:
-    /*! The constructor. */
-    mtsCommandWriteProxy(const int commandId, 
+    /*! The constructors. */
+    mtsCommandWriteProxy(const CommandProxyIdType commandId, 
                          mtsDeviceInterfaceProxyClient * providedInterfaceProxy) :
         BaseType(),
         CommandId(commandId),
@@ -72,7 +72,7 @@ public:
         RequiredInterfaceProxy(NULL)
     {}
 
-    mtsCommandWriteProxy(const int commandId, 
+    mtsCommandWriteProxy(const CommandProxyIdType commandId, 
                          mtsDeviceInterfaceProxyServer * requiredInterfaceProxy) :
         BaseType(),
         CommandId(commandId),
@@ -81,7 +81,7 @@ public:
     {}
     
     /*! The constructor with a name. */
-    mtsCommandWriteProxy(const int commandId,
+    mtsCommandWriteProxy(const CommandProxyIdType commandId,
                          mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name) :
         BaseType(name),
@@ -90,7 +90,7 @@ public:
         RequiredInterfaceProxy(NULL)
     {}
 
-    mtsCommandWriteProxy(const int commandId,
+    mtsCommandWriteProxy(const CommandProxyIdType commandId,
                          mtsDeviceInterfaceProxyServer * requiredInterfaceProxy,
                          const std::string & name) :
         BaseType(name),
@@ -113,10 +113,16 @@ public:
         if (ProvidedInterfaceProxy) {
             ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
         } else {
+            CMN_ASSERT(RequiredInterfaceProxy);
+
+            RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
             //
             // TODO: implement this
+            // GOHOME
             //
             //RequiredInterfaceProxy->
+            std::cout << "#########################" << std::endl;
+            ToStream(std::cout);
         }
         return mtsCommandBase::DEV_OK;
     }

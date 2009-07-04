@@ -408,6 +408,7 @@ public:
     /*! Update command id */
     void SendGetCommandId(const std::string & requiredInterfaceName, 
                           const std::string & serverTaskProxyName,
+                          const std::string & clientTaskProxyName,
                           const std::string & providedInterfaceName);
 };
 

@@ -74,30 +74,38 @@ protected:
     FunctionReadProxyMapType FunctionReadProxyMap;
     FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
 
-    /*! Event proxy */
-    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidMapType;
-    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteMapType;
-    EventHandlerVoidMapType  EventHandlerVoidMap;
-    EventHandlerWriteMapType EventHandlerWriteMap;
+    /*! Event handler proxy */
+    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidProxyMapType;
+    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteProxyMapType;
+    EventHandlerVoidProxyMapType  EventHandlerVoidProxyMap;
+    EventHandlerWriteProxyMapType EventHandlerWriteProxyMap;
 
-    /*! Get pointers to the function proxies created at CreateRequiredInterfaceProxy(). */
-    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
+    void EventVoidHandlerProxyFunction();
+    void EventWriteHandlerProxyFunction(const mtsGenericObject & argument);
 
 public:
+    /*! Get pointers to the function proxies created by CreateRequiredInterfaceProxy(). */
+    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
+
     /*! Create a required interface proxy, populate it with commands and events, and 
         returns the pointer to it. */
     mtsRequiredInterface * CreateRequiredInterfaceProxy(
-        mtsProvidedInterface & providedInterface, const std::string & requiredInterfaceName);
+        mtsProvidedInterface * providedInterface, const std::string & requiredInterfaceName,
+        mtsDeviceInterfaceProxyServer * proxyServer);
 
     //-------------------------------------------------------------------------
     //  Definition for Client Task
     //-------------------------------------------------------------------------
 protected:
+    typedef cmnNamedMap<mtsFunctionVoid> EventVoidGeneratorProxyMapType;
+    typedef cmnNamedMap<mtsFunctionWrite> EventWriteGeneratorProxyMapType;
+    EventVoidGeneratorProxyMapType EventVoidGeneratorProxyMap;
+    EventWriteGeneratorProxyMapType EventWriteGeneratorProxyMap;
 
 public:
     /*! Create a provided interface proxy and returns the pointer to it. */
     mtsProvidedInterface * CreateProvidedInterfaceProxy(
-        mtsDeviceInterfaceProxyClient & requiredInterfaceProxy,
+        mtsDeviceInterfaceProxyClient * proxyClient,
         const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
 

@@ -20,16 +20,21 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
-
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
 
 void mtsMulticastCommandWriteBase::AddCommand(BaseType * command) {
     if (command) {
-        if (typeid(*(command->GetArgumentPrototype())) != typeid(*(this->GetArgumentPrototype()))) {
-            CMN_LOG_INIT_ERROR << "Class mtsMulticastCommandWriteBase: AddCommand: command argument type don't match" << std::endl;
-            exit(0);
-        } else {
+        // TODO: UGLY GOHOME
+        //if (!dynamic_cast<mtsCommandWriteProxy*>(command)) {
+        //    if (typeid(*(command->GetArgumentPrototype())) != typeid(*(this->GetArgumentPrototype()))) {
+        //        CMN_LOG_INIT_ERROR << "Class mtsMulticastCommandWriteBase: AddCommand: command argument type don't match" << std::endl;
+        //        exit(0);
+        //    } else {
+        //        this->Commands.push_back(command);
+        //    }
+        //} else {
             this->Commands.push_back(command);
-        }
+        //}
     }
 }
 

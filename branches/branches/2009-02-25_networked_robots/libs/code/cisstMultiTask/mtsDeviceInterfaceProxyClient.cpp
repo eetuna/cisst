@@ -177,6 +177,37 @@ void mtsDeviceInterfaceProxyClient::UpdateCommandId(
 }
 
 //-------------------------------------------------------------------------
+//  Methods to Receive and Process Events (Server -> Client)
+//-------------------------------------------------------------------------
+void mtsDeviceInterfaceProxyClient::ReceiveExecuteEventVoid(const int commandId)
+{
+    //mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandId);
+    //CMN_ASSERT(functionVoid);
+
+    //(*functionVoid)();
+}
+
+void mtsDeviceInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
+    const int commandId, const std::string argument)
+{
+    //mtsFunctionWrite * functionWrite = reinterpret_cast<mtsFunctionWrite*>(commandId);
+    //CMN_ASSERT(functionWrite);
+
+    //static char buf[100];
+    //sprintf(buf, "ExecuteCommandWriteSerialized: %d bytes received", argument.size());
+    //Logger->trace("TIServer", buf);
+
+    //// Deserialization
+    //DeSerializationBuffer.str("");
+    //DeSerializationBuffer << argument;
+    //
+    //const mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
+    //CMN_ASSERT(obj);
+    ////commandWrite->Execute(*obj);
+    //(*functionWrite)(*obj);
+}
+
+//-------------------------------------------------------------------------
 //  Methods to Send Events
 //-------------------------------------------------------------------------
 const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaceInfo(
@@ -200,11 +231,12 @@ bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
 }
 
 void mtsDeviceInterfaceProxyClient::SendGetCommandId(
+    const std::string & clientTaskProxyName,
     mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
 {
     Logger->trace("TIClient", ">>>>> SEND: SendGetCommandId");
 
-    DeviceInterfaceServerProxy->GetCommandId(functionProxies);
+    DeviceInterfaceServerProxy->GetCommandId(clientTaskProxyName, functionProxies);
 }
 
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) const
@@ -341,3 +373,19 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Stop()
 //
 //    DeviceInterfaceClient->ReceiveUpdateCommandId(functionProxies);
 //}
+
+void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::ExecuteEventVoid(
+    ::Ice::Int commandId, const ::Ice::Current&)
+{
+    Logger->trace("TIClient", "<<<<< RECV: ExecuteEventVoid");
+
+    DeviceInterfaceClient->ReceiveExecuteEventVoid(commandId);
+}
+
+void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::ExecuteEventWriteSerialized(
+    ::Ice::Int commandId, const ::std::string& argument, const ::Ice::Current&)
+{
+    Logger->trace("TIClient", "<<<<< RECV: ExecuteEventWriteSerialized");
+
+    DeviceInterfaceClient->ReceiveExecuteEventWriteSerialized(commandId, argument);
+}

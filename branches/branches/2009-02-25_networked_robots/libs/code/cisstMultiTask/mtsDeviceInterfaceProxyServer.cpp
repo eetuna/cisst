@@ -264,7 +264,7 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
         resourceTaskName, providedInterfaceName);
     if (!providedInterface) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
-            "Cannot find a provided interface: " + providedInterfaceName);
+            "Failed looking up a provided interface: " + providedInterfaceName);
         return false;
     }
 
@@ -272,14 +272,15 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
     mtsDeviceProxy * clientTaskProxy = new mtsDeviceProxy(clientDeviceProxyName);
     if (!taskManager->AddDevice(clientTaskProxy)) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
-            "Cannot add a device proxy: " + clientDeviceProxyName);
+            "Failed adding a device proxy: " + clientDeviceProxyName);
         return false;
     }
 
     // Create and populate a required interface proxy (mtsRequiredInterface)
-    if (!clientTaskProxy->CreateRequiredInterfaceProxy(*providedInterface, requiredInterfaceName)) {
+    if (!clientTaskProxy->CreateRequiredInterfaceProxy(
+            providedInterface, requiredInterfaceName, this)) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
-            "Cannot create a required interface proxy: " + 
+            "Failed creating a required interface proxy: " + 
             requiredInterfaceName + " @ " + clientTaskProxy->GetName());
         return false;
     }
@@ -315,17 +316,20 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
 }
 
 void mtsDeviceInterfaceProxyServer::ReceiveGetCommandId(
+    const std::string & clientTaskProxyName,
     mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
 {
-    GetFunctionPointers(functionProxies);
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+
+    mtsDeviceProxy * serverTaskProxy = dynamic_cast<mtsDeviceProxy*>(
+        taskManager->GetDevice(clientTaskProxyName));
+    CMN_ASSERT(serverTaskProxy);
+
+    serverTaskProxy->GetFunctionPointers(functionProxies);
 }
 
 void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandVoid(const int commandId) const
 {
-    //mtsCommandVoidBase * commandVoid = reinterpret_cast<mtsCommandVoidBase *>(commandId);
-    //CMN_ASSERT(commandVoid);
-    //commandVoid->Execute();
-
     mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandId);
     CMN_ASSERT(functionVoid);
 
@@ -399,6 +403,26 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized
 //
 //    ConnectedClient->UpdateCommandId(functionProxySet);
 //}
+
+void mtsDeviceInterfaceProxyServer::SendExecuteEventVoid(const int commandId) const
+{
+    Logger->trace("TIServer", ">>>>> SEND: SendExecuteEventVoid");
+
+    ConnectedClient->ExecuteEventVoid(commandId);
+}
+
+void mtsDeviceInterfaceProxyServer::SendExecuteEventWriteSerialized(
+    const int commandId, const cmnGenericObject & argument)
+{
+    Logger->trace("TIServer", ">>>>> SEND: SendExecuteEventWriteSerialized");
+
+    // Serialization
+    std::string serializedData;
+    //Serialize(argument, serializedData);
+    //
+    //DeviceInterfaceServerProxy->ExecuteCommandWriteSerialized(commandId, serializedData);
+    ConnectedClient->ExecuteEventWriteSerialized(commandId, serializedData);
+}
 
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
@@ -515,11 +539,12 @@ bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ConnectServerSide(
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetCommandId(
+    const std::string & clientTaskProxyName,
     ::mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies, const ::Ice::Current&) const
 {
     Logger->trace("TIServer", "<<<<< RECV: GetCommandId");
 
-    DeviceInterfaceServer->ReceiveGetCommandId(functionProxies);
+    DeviceInterfaceServer->ReceiveGetCommandId(clientTaskProxyName, functionProxies);
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandVoid(

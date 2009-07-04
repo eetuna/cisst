@@ -377,8 +377,11 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         // If the server side connection is successful, update the command id.
         const std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
             resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
+        const std::string clientTaskProxyName = mtsDeviceProxy::GetClientTaskProxyName(
+            resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
 
-        clientTask->SendGetCommandId(requiredInterfaceName, serverTaskProxyName, providedInterfaceName);
+        clientTask->SendGetCommandId(requiredInterfaceName, serverTaskProxyName, 
+                                     clientTaskProxyName, providedInterfaceName);
     }
 
     return true;

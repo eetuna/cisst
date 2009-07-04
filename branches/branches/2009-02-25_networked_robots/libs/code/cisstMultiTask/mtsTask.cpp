@@ -508,6 +508,7 @@ bool mtsTask::SendConnectServerSide(
 
 void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName, 
                                const std::string & serverTaskProxyName,
+                               const std::string & clientTaskProxyName,
                                const std::string & providedInterfaceName)
 {
     mtsDeviceInterfaceProxyClient * requiredInterfaceProxy = 
@@ -520,7 +521,7 @@ void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName,
 
     // Get the new id of function proxies from the server task.
     mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
-    requiredInterfaceProxy->SendGetCommandId(functionProxies);
+    requiredInterfaceProxy->SendGetCommandId(clientTaskProxyName, functionProxies);
 
     // Update function proxy IDs
     functionProxies.ServerTaskProxyName = serverTaskProxyName;

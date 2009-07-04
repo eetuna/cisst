@@ -31,6 +31,8 @@ mtsDeviceProxy::~mtsDeviceProxy()
     FunctionWriteProxyMap.DeleteAll();
     FunctionReadProxyMap.DeleteAll();
     FunctionQualifiedReadProxyMap.DeleteAll();
+    EventVoidGeneratorProxyMap.DeleteAll();
+    EventWriteGeneratorProxyMap.DeleteAll();
 }
 
 /* Server task proxy naming rule:
@@ -74,16 +76,17 @@ std::string mtsDeviceProxy::GetClientTaskProxyName(
 }
 
 mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
-    mtsDeviceInterfaceProxyClient & requiredInterfaceProxy,
+    mtsDeviceInterfaceProxyClient * proxyClient,
     const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
-    //if (!requiredInterfaceProxy) {
-    //    CMN_LOG_RUN_ERROR << "CreateProvidedInterfaceProxy: NULL required interface proxy." << std::endl;
-    //    return NULL;
-    //}
+    if (!proxyClient) {
+        CMN_LOG_RUN_ERROR << "CreateProvidedInterfaceProxy: NULL required interface proxy." << std::endl;
+        return NULL;
+    }
 
     // Create a local provided interface (a provided interface proxy).
-    mtsDeviceInterface * providedInterfaceProxy = AddProvidedInterface(providedInterfaceInfo.InterfaceName);
+    mtsDeviceInterface * providedInterfaceProxy = 
+        AddProvidedInterface(providedInterfaceInfo.InterfaceName);
     if (!providedInterfaceProxy) {
         CMN_LOG_RUN_ERROR << "CreateProvidedInterfaceProxy: AddProvidedInterface failed." << std::endl;
         return NULL;
@@ -92,8 +95,8 @@ mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
     // Create command proxies.
     // CommandId is initially set to zero meaning that it needs to be updated later.
     // An actual value will be assigned later when UpdateCommandId() is executed.
-    int commandId = NULL;
-    std::string commandName, eventName;
+    int commandId = 0;
+    std::string commandName;
 
 #define ADD_COMMANDS_BEGIN(_commandType) \
     {\
@@ -108,82 +111,67 @@ mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
 
     // 2-1) Void
     ADD_COMMANDS_BEGIN(Void)
-        newCommandVoid = new mtsCommandVoidProxy(
-            commandId, &requiredInterfaceProxy, commandName);
-        CMN_ASSERT(newCommandVoid);
+        newCommandVoid = new mtsCommandVoidProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandVoidMap().AddItem(commandName, newCommandVoid);
     ADD_COMMANDS_END
 
     // 2-2) Write
     ADD_COMMANDS_BEGIN(Write)
-        newCommandWrite = new mtsCommandWriteProxy(
-            commandId, &requiredInterfaceProxy, commandName);
-        CMN_ASSERT(newCommandWrite);
+        newCommandWrite = new mtsCommandWriteProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
     ADD_COMMANDS_END
 
     // 2-3) Read
     ADD_COMMANDS_BEGIN(Read)
-        newCommandRead = new mtsCommandReadProxy(
-            commandId, &requiredInterfaceProxy, commandName);
-        CMN_ASSERT(newCommandRead);
+        newCommandRead = new mtsCommandReadProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandReadMap().AddItem(commandName, newCommandRead);
     ADD_COMMANDS_END
 
     // 2-4) QualifiedRead
     ADD_COMMANDS_BEGIN(QualifiedRead)
-        newCommandQualifiedRead = new mtsCommandQualifiedReadProxy(
-            commandId, &requiredInterfaceProxy, commandName);
-        CMN_ASSERT(newCommandQualifiedRead);
+        newCommandQualifiedRead = new mtsCommandQualifiedReadProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandQualifiedReadMap().AddItem(commandName, newCommandQualifiedRead);
     ADD_COMMANDS_END
 
-    //{
-    //    mtsFunctionVoid * newEventVoidGenerator = NULL;
-    //    mtsDeviceInterfaceProxy::EventVoidSequence::const_iterator it =
-    //        providedInterface.EventsVoid.begin();
-    //    for (; it != providedInterface.EventsVoid.end(); ++it) {
-    //        eventName = it->Name;            
-    //        newEventVoidGenerator = new mtsFunctionVoid();
-    //        newEventVoidGenerator->Bind(providedInterfaceProxy->AddEventVoid(eventName));            
-    //    }
-    //}
-#define ADD_EVENTS_BEGIN(_eventType)\
-    {\
-        mtsFunction##_eventType * newEvent##_eventType##Generator = NULL;\
-        mtsDeviceInterfaceProxy::Event##_eventType##Sequence::const_iterator it =\
-        providedInterfaceInfo.Events##_eventType.begin();\
-        for (; it != providedInterfaceInfo.Events##_eventType.end(); ++it) {\
-            eventName = it->Name;
-#define ADD_EVENTS_END \
-        }\
-    }
-
-    // 3) Create event generator proxies.
-    ADD_EVENTS_BEGIN(Void);
-        newEventVoidGenerator = new mtsFunctionVoid();
-        newEventVoidGenerator->Bind(providedInterfaceProxy->AddEventVoid(eventName));
-    ADD_EVENTS_END;
-    
-    mtsMulticastCommandWriteProxy * newMulticastCommandWriteProxy = NULL;
-    ADD_EVENTS_BEGIN(Write);
-        newEventWriteGenerator = new mtsFunctionWrite();
-        newMulticastCommandWriteProxy = new mtsMulticastCommandWriteProxy(
-            it->Name, it->ArgumentTypeName);
-        CMN_ASSERT(providedInterfaceProxy->AddEvent(it->Name, newMulticastCommandWriteProxy));
-        CMN_ASSERT(newEventWriteGenerator->Bind(newMulticastCommandWriteProxy));
-    ADD_EVENTS_END;
-
 #undef ADD_COMMANDS_BEGIN
 #undef ADD_COMMANDS_END
-#undef ADD_EVENTS_BEGIN
-#undef ADD_EVENTS_END
 
+    // 3) Create event generator proxies.
+    std::string eventName;
+
+    mtsFunctionVoid * eventVoidGeneratorProxy = NULL;
+    mtsDeviceInterfaceProxy::EventVoidSequence::const_iterator itEventVoid =
+        providedInterfaceInfo.EventsVoid.begin();
+    for (; itEventVoid != providedInterfaceInfo.EventsVoid.end(); ++itEventVoid) {
+        eventName = itEventVoid->Name;
+        eventVoidGeneratorProxy = new mtsFunctionVoid();        
+        CMN_ASSERT(EventVoidGeneratorProxyMap.AddItem(eventName, eventVoidGeneratorProxy));
+        
+        CMN_ASSERT(eventVoidGeneratorProxy->Bind(providedInterfaceProxy->AddEventVoid(eventName)));
+    }
+
+    mtsFunctionWrite * eventWriteGeneratorProxy = NULL;
+    mtsMulticastCommandWriteProxy * eventMulticastCommandProxy = NULL;
+
+    mtsDeviceInterfaceProxy::EventWriteSequence::const_iterator itEventWrite =
+        providedInterfaceInfo.EventsWrite.begin();
+    for (; itEventWrite != providedInterfaceInfo.EventsWrite.end(); ++itEventWrite) {
+        eventName = itEventWrite->Name;
+        eventWriteGeneratorProxy = new mtsFunctionWrite();
+        CMN_ASSERT(EventWriteGeneratorProxyMap.AddItem(eventName, eventWriteGeneratorProxy));
+
+        // GOHOME: I should take care of the command id which is initially set as '0'.
+        eventMulticastCommandProxy = new mtsMulticastCommandWriteProxy(0, proxyClient, eventName);
+        CMN_ASSERT(providedInterfaceProxy->AddEvent(eventName, eventMulticastCommandProxy));
+        CMN_ASSERT(eventWriteGeneratorProxy->Bind(eventMulticastCommandProxy));
+    }
+    
     return providedInterfaceProxy;
 }
 
 mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
-    mtsProvidedInterface & providedInterface, const std::string & requiredInterfaceName)
+    mtsProvidedInterface * providedInterface, const std::string & requiredInterfaceName,
+    mtsDeviceInterfaceProxyServer * proxyServer)
 {
     // Create a required Interface proxy (mtsRequiredInterface).
     mtsRequiredInterface * requiredInterfaceProxy = AddRequiredInterface(requiredInterfaceName);
@@ -194,7 +182,8 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     }
 
     // Now, populate a required Interface proxy.
-    // Get the lists of commands
+    
+    // 1. Function proxies
     mtsFunctionVoid  * functionVoidProxy = NULL;
     mtsFunctionWrite * functionWriteProxy = NULL;
     mtsFunctionRead  * functionReadProxy = NULL;
@@ -207,9 +196,9 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     //    CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsVoid[i], *functionVoidProxy));
     //}
 #define ADD_FUNCTION_PROXY_BEGIN(_commandType)\
-    std::vector<std::string> namesOfCommands##_commandType = providedInterface.GetNamesOfCommands##_commandType##();\
+    std::vector<std::string> namesOfCommands##_commandType = providedInterface->GetNamesOfCommands##_commandType##();\
     for (unsigned int i = 0; i < namesOfCommands##_commandType.size(); ++i) {\
-        function##_commandType##Proxy = new mtsFunction##_commandType##(&providedInterface, namesOfCommands##_commandType##[i]);\
+        function##_commandType##Proxy = new mtsFunction##_commandType##(providedInterface, namesOfCommands##_commandType##[i]);\
         CMN_ASSERT(Function##_commandType##ProxyMap.AddItem(namesOfCommands##_commandType[i], function##_commandType##Proxy));\
         CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommands##_commandType##[i], *function##_commandType##Proxy));
 #define ADD_FUNCTION_PROXY_END\
@@ -227,44 +216,44 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     ADD_FUNCTION_PROXY_BEGIN(QualifiedRead);
     ADD_FUNCTION_PROXY_END;
 
-    // Get the lists of events
-    mtsCommandVoidProxy  * actualCommandVoidProxy = NULL;
-    mtsCommandWriteProxy * actualCommandWriteProxy = NULL;
+    // 2. Event handler proxies
+    std::string eventName;
 
-    //std::vector<std::string> namesOfEventsVoid = providedInterface.GetNamesOfEventsVoid();
-    //for (unsigned int i = 0; i < namesOfEventsVoid.size(); ++i) {
-    //    // The fourth argument 'queued' should have to be false in order not to queue events.
-    //    requiredInterfaceProxy->AddEventHandlerVoid(
-    //        &mtsDeviceInterfaceProxyServer::EventHandlerVoid, this, namesOfEventsVoid[i], false);
-    //}
-
-    // CommandId is initially set to zero meaning that it needs to be updated.
-    // An actual value will be assigned later when UpdateEventCommandId() is executed.
-#define ADD_EVENT_PROXY_BEGIN(_eventType) \
-    std::vector<std::string> namesOfEvents##_eventType = providedInterface.GetNamesOfEvents##_eventType();\
-    for (unsigned int i = 0; i < namesOfEvents##_eventType.size(); ++i) {\
-        actualCommand##_eventType##Proxy = new mtsCommand##_eventType##Proxy(NULL, this);\
-        CMN_ASSERT(EventHandler##_eventType##Map.AddItem(namesOfEvents##_eventType[i], actualCommand##_eventType##Proxy));\
-        CMN_ASSERT(requiredInterfaceProxy->EventHandlers##_eventType.AddItem(namesOfEvents##_eventType[i], actualCommand##_eventType##Proxy));
-#define ADD_EVENT_PROXY_END \
+    mtsCommandVoidProxy * actualEventVoidCommandProxy = NULL;
+    std::vector<std::string> namesOfEventsVoid = providedInterface->GetNamesOfEventsVoid();
+    for (unsigned int i = 0; i < namesOfEventsVoid.size(); ++i) {
+        // CommandId is initially set to zero meaning that it needs to be updated.
+        // An actual value will be assigned later when UpdateEventCommandId() is executed.
+        eventName = namesOfEventsVoid[i];
+        actualEventVoidCommandProxy = new mtsCommandVoidProxy(NULL, proxyServer, eventName);
+        CMN_ASSERT(requiredInterfaceProxy->EventHandlersVoid.AddItem(
+            eventName, actualEventVoidCommandProxy));
+        CMN_ASSERT(EventHandlerVoidProxyMap.AddItem(eventName, actualEventVoidCommandProxy));
     }
-        
-    //ADD_EVENT_PROXY_BEGIN(Void);
-    //ADD_EVENT_PROXY_END;
-    
-    //ADD_EVENT_PROXY_BEGIN(Write);
-    //ADD_EVENT_PROXY_END;
+
+    mtsCommandWriteProxy * actualEventWriteCommandProxy = NULL;    
+    std::vector<std::string> namesOfEventsWrite = providedInterface->GetNamesOfEventsWrite();
+    for (unsigned int i = 0; i < namesOfEventsWrite.size(); ++i) {
+        eventName = namesOfEventsWrite[i];
+        // CommandId is initially set to zero meaning that it needs to be updated.
+        // An actual value will be assigned later when UpdateEventCommandId() is executed.
+        actualEventWriteCommandProxy = new mtsCommandWriteProxy(NULL, proxyServer, eventName);
+        CMN_ASSERT(EventHandlerWriteProxyMap.AddItem(eventName, actualEventWriteCommandProxy));
+        CMN_ASSERT(requiredInterfaceProxy->EventHandlersWrite.AddItem(
+            eventName, actualEventWriteCommandProxy));        
+    }    
 
     // Using AllocateResources(), get pointers which has been allocated for this 
     // required interface and is thread-safe to use.
     unsigned int userId;
-    userId = providedInterface.AllocateResources(requiredInterfaceProxy->GetName() + "Proxy");
+    std::string userName = requiredInterfaceProxy->GetName() + "Proxy";
+    userId = providedInterface->AllocateResources(userName);
 
     // Connect to the original device or task that provides allocated resources.
-    requiredInterfaceProxy->ConnectTo(&providedInterface);
+    requiredInterfaceProxy->ConnectTo(providedInterface);
     if (!requiredInterfaceProxy->BindCommandsAndEvents(userId)) {
         CMN_LOG_RUN_ERROR << "CreateRequiredInterfaceProxy: BindCommandsAndEvents failed: "
-            << userId << std::endl;
+            << userName << " with userId = " << userId << std::endl;
         return NULL;
     }
 
@@ -304,4 +293,12 @@ void mtsDeviceProxy::GetFunctionPointers(
 
     GET_FUNCTION_PROXY_BEGIN(QualifiedRead);
     GET_FUNCTION_PROXY_END;
+}
+
+void mtsDeviceProxy::EventVoidHandlerProxyFunction()
+{
+}
+
+void mtsDeviceProxy::EventWriteHandlerProxyFunction(const mtsGenericObject & argument)
+{
 }

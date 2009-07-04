@@ -148,7 +148,9 @@ protected:
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     /*! Update command id. */
-    void ReceiveGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+    void ReceiveGetCommandId(
+        const std::string & clientTaskProxyName,
+        mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
 
     /*! Execute actual command objects. */
     void ReceiveExecuteCommandVoid(const int commandId) const;
@@ -159,11 +161,16 @@ protected:
     //-------------------------------------------------------------------------
     //  Methods to Send Events (Server -> Client)
     //-------------------------------------------------------------------------
+public:
     //void SendUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
+
+    void SendExecuteEventVoid(const int commandId) const;
+    void SendExecuteEventWriteSerialized(const int commandId, const cmnGenericObject & argument);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
     //-------------------------------------------------------------------------
+protected:
     class DeviceInterfaceServerI : public mtsDeviceInterfaceProxy::DeviceInterfaceServer,
                                    public IceUtil::Monitor<IceUtil::Mutex> 
     {
@@ -191,7 +198,9 @@ protected:
             const std::string & userTaskName, const std::string & requiredInterfaceName,
             const std::string & resourceTaskName, const std::string & providedInterfaceName,
             const ::Ice::Current&);
-        void GetCommandId(::mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
+        void GetCommandId(
+            const std::string & clientTaskProxyName,
+            mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
 
         void ExecuteCommandVoid(::Ice::Int, const ::Ice::Current&);
         void ExecuteCommandWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);

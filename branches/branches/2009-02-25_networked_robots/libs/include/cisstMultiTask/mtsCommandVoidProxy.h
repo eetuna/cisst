@@ -47,7 +47,8 @@ http://www.cisst.org/cisst/license.txt.
   to a client. Only either one of the device interface proxies can be
   initialized while the other should be NULL.
 */
-class mtsCommandVoidProxy: public mtsCommandVoidBase {
+class mtsCommandVoidProxy: public mtsCommandVoidBase 
+{
 public:
     typedef mtsCommandVoidBase BaseType;    
 
@@ -135,5 +136,65 @@ public:
     }
 };
 
+//class mtsCommandVoidFunctionProxy : public mtsCommandVoidBase 
+//{
+//public:
+//    typedef mtsCommandVoidBase BaseType;
+//    
+//    /*! This type. */
+//    typedef mtsCommandVoidFunctionProxy ThisType;
+//
+//    /*! Typedef for pointer to member function */
+//    typedef void(*ActionType)(void);
+//
+//private:
+//    /*! Private copy constructor to prevent copies */
+//    inline mtsCommandVoidFunctionProxy(const ThisType & CMN_UNUSED(other));
+//
+//protected:
+//    /*! The pointer to function used when the command is executed. */
+//    ActionType Action;
+//
+//public:
+//    /*! The constructor. Does nothing */
+//    mtsCommandVoidFunctionProxy(): BaseType(), Action(0) {}
+//
+//    /*! The constructor.
+//      \param action Pointer to the function that is to be called
+//      by the invoker of the command
+//      \param name A string to identify the command. */
+//    mtsCommandVoidFunctionProxy(ActionType action, const std::string & name):
+//        BaseType(name),
+//        Action(action)
+//    {}
+//
+//    /*! The destructor. Does nothing */
+//    virtual ~mtsCommandVoidFunctionProxy() {}
+//    
+//    /*! The execute method. Calling the execute method from the invoker
+//      applies the operation on the receiver. 
+//      \param from The data passed to the conversion operation
+//      \param to The result obtained from the conversion operation
+//    */
+//    virtual mtsCommandBase::ReturnType Execute(void) {
+//        if (this->IsEnabled()) {
+//            (*Action)();
+//            return mtsCommandBase::DEV_OK;
+//        } else {
+//            return mtsCommandBase::DISABLED;
+//        }
+//    }
+//
+//    /* commented in base class */
+//    virtual void ToStream(std::ostream & outputStream) const {
+//        outputStream << "mtsCommandVoidFunctionProxy: ";
+//        if (this->Action) {
+//            outputStream << this->Name << "(void)";
+//        } else {
+//            outputStream << "Not initialized properly";
+//        }
+//    }
+//
+//};
 #endif // _mtsCommandVoidProxy_h
 

@@ -119,6 +119,8 @@ public:
     //  Methods to Receive and Process Events (Server -> Client)
     //-------------------------------------------------------------------------
      //void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+    void ReceiveExecuteEventVoid(const int commandId);
+    void ReceiveExecuteEventWriteSerialized(const int commandId, const std::string argument);
 
     //-------------------------------------------------------------------------
     //  Methods to Send Events (Client -> Server)
@@ -131,7 +133,9 @@ public:
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
-    void SendGetCommandId(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+    void SendGetCommandId(
+        const std::string & clientTaskProxyName,
+        mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
 
     void SendExecuteCommandVoid(const int commandId) const;
     void SendExecuteCommandWriteSerialized(const int commandId, const cmnGenericObject & argument);
@@ -166,6 +170,8 @@ protected:
         void Stop();
 
         // Server -> Client
+        void ExecuteEventVoid(::Ice::Int, const ::Ice::Current&);
+        void ExecuteEventWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
     };
 };
 

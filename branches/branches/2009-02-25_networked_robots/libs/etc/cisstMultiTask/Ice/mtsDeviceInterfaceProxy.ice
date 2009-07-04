@@ -122,6 +122,8 @@ module mtsDeviceInterfaceProxy
         FunctionProxySequence FunctionWriteProxies;
         FunctionProxySequence FunctionReadProxies;
         FunctionProxySequence FunctionQualifiedReadProxies;
+        FunctionProxySequence EventHandlerVoidProxies;
+        FunctionProxySequence EventHandlerWriteProxies;
     };
 
 	//-----------------------------------------------------------------------------
@@ -133,6 +135,23 @@ module mtsDeviceInterfaceProxy
         at client side, which is a critical step regarding thread synchronization. */
         //["cpp:const"] idempotent
         //void UpdateCommandId(FunctionProxySet functionProxies);
+
+        /*! Update event handler proxy objects' commandId field. This replaces default 
+            value (zero) with the pointers to actual event handler object 
+            (instance of either mtsFunctionVoid or mtsFunctionWrite type).
+            When the server task receives the return value with updated 'functionProxies'
+            object, it has to do the following two things.
+            1) Iterating the list of actual event handler objects registered (used) by
+               the client, the server task has to enable corresponding events.
+               (GOHOME: check if all the events are disabled by default at server side.)
+            2) Update event handler proxy objects' commandId field (required interface
+               proxy contains all the information about event handler proxy objects). 
+        */
+        ["cpp:const"] idempotent
+        void GetEventHandlerId(string clientTaskProxyName, out FunctionProxySet functionProxies);
+
+        void ExecuteEventVoid(int CommandId);
+        void ExecuteEventWriteSerialized(int CommandId, string argument);
 	};
 
 	//-----------------------------------------------------------------------------
@@ -156,7 +175,7 @@ module mtsDeviceInterfaceProxy
         /*! Update CommandId. This updates the command id of command proxies
         at client side, which is a critical step regarding thread synchronization. */
         ["cpp:const"] idempotent
-        void GetCommandId(out FunctionProxySet functionProxies);
+        void GetCommandId(string clientTaskProxyName, out FunctionProxySet functionProxies);
 
 		/*! Execute command objects across networks. */
 		// Here 'int' type is used instead of 'unsigned int' because SLICE does not
@@ -165,7 +184,7 @@ module mtsDeviceInterfaceProxy
 		// (Also see http://www.zeroc.com/doc/Ice-3.3.1/manual/Cpp.7.6.html for
 		// Mapping for simple built-in types)
 		void ExecuteCommandVoid(int CommandId);
-        void ExecuteCommandWriteSerialized(int CommandId, string argument);        
+        void ExecuteCommandWriteSerialized(int CommandId, string argument);
         void ExecuteCommandReadSerialized(int CommandId, out string argument);
         void ExecuteCommandQualifiedReadSerialized(int CommandId, string argument1, out string argument2);
 	};

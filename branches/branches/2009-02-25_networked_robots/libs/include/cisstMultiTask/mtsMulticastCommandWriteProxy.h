@@ -41,35 +41,66 @@ http://www.cisst.org/cisst/license.txt.
  */
 class mtsMulticastCommandWriteProxy : public mtsMulticastCommandWriteBase
 {
-protected:
-    const std::string ArgumentTypeName;
-
 public:
     typedef mtsMulticastCommandWriteBase BaseType;
 
-    /*! Default constructor. Does nothing. */
-    mtsMulticastCommandWriteProxy(const std::string & name, 
-                                  const std::string & argumentTypeName)
-        : BaseType(name), ArgumentTypeName(argumentTypeName)
+protected:
+    /*! Device interface proxy objects which execute a write command at 
+        peer's memory space across networks. */
+    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
+
+    /*! CommandId is set as a pointer to a mtsFunctionWrite at peer's memory
+        space which binds to an actual write command. */
+    CommandProxyIdType CommandId;
+
+public:
+    /*! The constructor with a name. */
+    mtsMulticastCommandWriteProxy(const CommandProxyIdType commandId,
+                                  mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                                  const std::string & name) :
+        BaseType(name),
+        CommandId(commandId),
+        ProvidedInterfaceProxy(providedInterfaceProxy),
+        RequiredInterfaceProxy(NULL)
+    {}
+
+    mtsMulticastCommandWriteProxy(const CommandProxyIdType commandId,
+                                  mtsDeviceInterfaceProxyServer * requiredInterfaceProxy,
+                                  const std::string & name) :
+        BaseType(name),
+        CommandId(commandId),
+        ProvidedInterfaceProxy(NULL),
+        RequiredInterfaceProxy(requiredInterfaceProxy)
     {}
     
     /*! Default destructor. Does nothing. */
-    ~mtsMulticastCommandWriteProxy() {}
+    ~mtsMulticastCommandWriteProxy() 
+    {}
     
     /*! Execute all the commands in the composite. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
-        /*
-        mtsGenericObject * argumentPrototype = dynamic_cast<mtsGenericObject*>(
-            cmnClassRegister::Create(it->ArgumentTypeName));
-
-        // cast argument first
-        const ArgumentType * data = dynamic_cast< const ArgumentType * >(&argument);
-        // if cast succeeded call using actual type
-        unsigned int index;
-        for (index = 0; index < Commands.size(); index++) {
-            Commands[index]->Execute(*data);
+        //
+        // GOHOME
+        //
+        unsigned int index;        
+        if (ProvidedInterfaceProxy) {
+            for (index = 0; index < Commands.size(); ++index) {
+                // TODO: implement this
+                //
+                //Commands[index]->Execute(*data);
+                //ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
+            }
+        } else {
+            for (index = 0; index < Commands.size(); ++index) {
+                //
+                // TODO: implement this
+                //
+                //Commands[index]->Execute(*data);
+                //RequiredInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
+            }
         }
-        */
+
         return mtsCommandBase::DEV_OK;
     }
 
@@ -78,42 +109,17 @@ public:
       available, return 0 (null pointer) */
     const mtsGenericObject * GetArgumentPrototype(void) const {
         //
-        // TODO: FIX THIS
+        // TODO: FIX THIS!!! UGLY
         //
-        return reinterpret_cast<const mtsGenericObject *>(0x0705);
+        static mtsDouble TEMP_VAR_FIX_ME;
+        //return reinterpret_cast<const mtsGenericObject *>(0x1122);
+        return &TEMP_VAR_FIX_ME;
     }
 };
 
-
 #endif // _mtsMulticastCommandWriteProxy_h
 
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
-/* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-
-/*
-  $Id: mtsMulticastCommandWriteProxy.h 75 2009-02-24 16:47:20Z adeguet1 $
-
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
-  Created on: 2004-04-30
-
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
-  Reserved.
-
---- begin cisst license - do not edit ---
-
-This software is provided "as is" under an open source license, with
-no warranty.  The complete license can be found in license.txt and
-http://www.cisst.org/cisst/license.txt.
-
---- end cisst license ---
-*/
-
-
-/*!
-  \file
-  \brief Defines a command with one argument sent to multiple interfaces
-*/
-
+///////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef _mtsMulticastCommandWriteProxy_h
 #define _mtsMulticastCommandWriteProxy_h
