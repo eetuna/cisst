@@ -110,21 +110,19 @@ public:
 
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
-        if (ProvidedInterfaceProxy) {
-            ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
-        } else {
-            CMN_ASSERT(RequiredInterfaceProxy);
+        if (this->IsEnabled()) {
+            if (ProvidedInterfaceProxy) {
+                ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
+            } else {
+                CMN_ASSERT(RequiredInterfaceProxy);
 
-            RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
-            //
-            // TODO: implement this
-            // GOHOME
-            //
-            //RequiredInterfaceProxy->
-            std::cout << "#########################" << std::endl;
-            ToStream(std::cout);
+                RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
+                //std::cout << "#########################" << std::endl;
+                //ToStream(std::cout);
+            }
+            return mtsCommandBase::DEV_OK;
         }
-        return mtsCommandBase::DEV_OK;
+        return mtsCommandBase::DISABLED;
     }
 
     /*! For debugging. Generate a human readable output for the
@@ -136,6 +134,7 @@ public:
         } else {
             outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
         }
+        outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 
     /*! Return a pointer on the argument prototype */

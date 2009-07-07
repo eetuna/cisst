@@ -80,16 +80,6 @@ protected:
     typedef IceUtil::Handle<DeviceInterfaceClientI> DeviceInterfaceClientIPtr;
     DeviceInterfaceClientIPtr Sender;
 
-    /*! Buffers for serialization and deserialization. */
-    std::stringstream SerializationBuffer;
-    std::stringstream DeSerializationBuffer;
-
-    /*! Per-proxy Serializer and DeSerializer. */
-    cmnSerializer * Serializer;
-    cmnDeSerializer * DeSerializer;
-
-    void Serialize(const cmnGenericObject & argument, std::string & serializedData);
-
     /*! Create a proxy object and a send thread. */
     void CreateProxy() {
         DeviceInterfaceServerProxy = 
@@ -111,16 +101,15 @@ protected:
     void OnThreadEnd();
 
 public:
-    /*! Update the command id. This step is critical for thread-safe command execution 
-        at server side. */
-    void UpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
-
     //-------------------------------------------------------------------------
     //  Methods to Receive and Process Events (Server -> Client)
     //-------------------------------------------------------------------------
-     //void ReceiveUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
     void ReceiveExecuteEventVoid(const int commandId);
     void ReceiveExecuteEventWriteSerialized(const int commandId, const std::string argument);
+    bool ReceiveGetListsOfEventGeneratorsRegistered(
+        const std::string & serverTaskProxyName, 
+        const std::string & requiredInterfaceName,
+        mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies) const;
 
     //-------------------------------------------------------------------------
     //  Methods to Send Events (Client -> Server)
@@ -148,7 +137,7 @@ public:
     //-------------------------------------------------------------------------
 protected:
     class DeviceInterfaceClientI : public mtsDeviceInterfaceProxy::DeviceInterfaceClient,
-                               public IceUtil::Monitor<IceUtil::Mutex>
+                                   public IceUtil::Monitor<IceUtil::Mutex>
     {
     private:
         Ice::CommunicatorPtr Communicator;
@@ -172,6 +161,10 @@ protected:
         // Server -> Client
         void ExecuteEventVoid(::Ice::Int, const ::Ice::Current&);
         void ExecuteEventWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
+        bool GetListsOfEventGeneratorsRegistered(
+            const std::string & serverTaskProxyName,
+            const std::string & requiredInterfaceName,
+            mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered &, const ::Ice::Current&) const;
     };
 };
 

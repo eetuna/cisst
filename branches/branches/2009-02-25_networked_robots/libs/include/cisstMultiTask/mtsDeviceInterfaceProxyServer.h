@@ -56,18 +56,6 @@ public:
     /*! Stop the proxy. */
     void Stop();
 
-    ///*! Return the base port number for task (interface) servers. */
-    //inline const unsigned int GetBasePortNumber() {
-    //    return BASE_PORT_NUMBER_TASK_LAYER;
-    //}
-
-    ///*! Return the base port number for task (interface) servers as string. */
-    //inline std::string GetBasePortNumberAsString() {
-    //    std::stringstream buffer;
-    //    buffer << BASE_PORT_NUMBER_TASK_LAYER;
-    //    return buffer.str();
-    //}
-
     /*! Set a server task connected to this proxy server. This server task has 
         to provide at least one provided interface. */
     void SetConnectedTask(mtsTask * serverTask) { ConnectedTask = serverTask; }
@@ -162,8 +150,6 @@ protected:
     //  Methods to Send Events (Server -> Client)
     //-------------------------------------------------------------------------
 public:
-    //void SendUpdateCommandId(const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
-
     void SendExecuteEventVoid(const int commandId) const;
     void SendExecuteEventWriteSerialized(const int commandId, const cmnGenericObject & argument);
 

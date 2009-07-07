@@ -37,6 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsDeviceProxy_h
 
 #include <cisstCommon/cmnNamedMap.h>
+#include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 
@@ -80,18 +81,20 @@ protected:
     EventHandlerVoidProxyMapType  EventHandlerVoidProxyMap;
     EventHandlerWriteProxyMapType EventHandlerWriteProxyMap;
 
-    void EventVoidHandlerProxyFunction();
-    void EventWriteHandlerProxyFunction(const mtsGenericObject & argument);
-
 public:
-    /*! Get pointers to the function proxies created by CreateRequiredInterfaceProxy(). */
-    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
-
     /*! Create a required interface proxy, populate it with commands and events, and 
         returns the pointer to it. */
     mtsRequiredInterface * CreateRequiredInterfaceProxy(
         mtsProvidedInterface * providedInterface, const std::string & requiredInterfaceName,
         mtsDeviceInterfaceProxyServer * proxyServer);
+
+    /*! Update the event handler id and enable the events. */
+    void UpdateEventHandlerId(
+        const mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered eventHandlers);
+
+    /*! Get pointers to the function proxies at server side. The proxies are 
+        created by CreateRequiredInterfaceProxy(). */
+    void GetFunctionPointers(mtsDeviceInterfaceProxy::FunctionProxySet & functionProxySet);
 
     //-------------------------------------------------------------------------
     //  Definition for Client Task
@@ -108,6 +111,17 @@ public:
         mtsDeviceInterfaceProxyClient * proxyClient,
         const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
+    /*! Update the command id. This step is critical for thread-safe command 
+        execution at server side. */
+    static void UpdateCommandId(
+        const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies);
+
+    /*! Get pointers to the event generator proxies at client side. When events
+        are generated at server side, these proxies are called and execute 
+        actual event handlers at client side. */
+    bool GetEventGeneratorProxyPointers(
+        const std::string & requiredInterfaceName,
+        mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies);
 
     //-------------------------------------------------------------------------
     //  Common Definition

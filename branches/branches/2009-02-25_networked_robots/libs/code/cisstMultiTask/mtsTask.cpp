@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsDeviceProxy.h>
 
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
@@ -523,13 +524,14 @@ void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName,
     mtsDeviceInterfaceProxy::FunctionProxySet functionProxies;
     requiredInterfaceProxy->SendGetCommandId(clientTaskProxyName, functionProxies);
 
-    // Update function proxy IDs
+    // Update command id so that it contains a pointer to the actual function 
+    // proxy object at server side.
     functionProxies.ServerTaskProxyName = serverTaskProxyName;
     functionProxies.ProvidedInterfaceProxyName = providedInterfaceName;
 
-    CMN_LOG_RUN_VERBOSE << "UpdateCommandId: Updated function proxy id." << std::endl;
+    mtsDeviceProxy::UpdateCommandId(functionProxies);
 
-    requiredInterfaceProxy->UpdateCommandId(functionProxies);
+    CMN_LOG_RUN_VERBOSE << "UpdateCommandId: Updated function proxy id." << std::endl;
 }
 
 const std::string mtsTask::GetNewPortNumberAsString(const unsigned int id)

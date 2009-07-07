@@ -367,8 +367,8 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         // the provided interface proxy is established successfully, connect the actual 
         // provided interface with the required interface proxy at server side.
         if (!clientTask->SendConnectServerSide(requiredInterfaceName,
-                                                 userTaskName, requiredInterfaceName,
-                                                 resourceTaskName, providedInterfaceName))
+                                               userTaskName, requiredInterfaceName,
+                                               resourceTaskName, providedInterfaceName))
         {
             CMN_LOG_CLASS_INIT_ERROR << "Connect: server side connection failed." << std::endl;
             return false;

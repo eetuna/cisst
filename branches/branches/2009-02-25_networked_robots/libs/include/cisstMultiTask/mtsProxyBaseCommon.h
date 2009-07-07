@@ -23,6 +23,9 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsProxyBaseCommon_h
 
 #include <cisstOSAbstraction/osaThread.h>
+#include <cisstCommon/cmnSerializer.h>
+#include <cisstCommon/cmnDeSerializer.h>
+
 #include <cisstMultiTask/mtsExport.h>
 
 #include <IceUtil/IceUtil.h>
@@ -48,9 +51,11 @@ Task layer          : 11705 (e.g. the server task)
 #define BASE_PORT_NUMBER_TASK_MANAGER_LAYER 10705
 #define BASE_PORT_NUMBER_TASK_LAYER         11705
 
+//-----------------------------------------------------------------------------
+// Common Base Class Definitions
+//-----------------------------------------------------------------------------
 template<class _ArgumentType>
 class CISST_EXPORT mtsProxyBaseCommon {
-    
 public:
     /*! Typedef for proxy type definition.
 
@@ -104,7 +109,9 @@ public:
 protected:
     ProxyType ProxyTypeMember;
 
-    //--------------------- Auxiliary Class Definition ----------------------//
+    //-----------------------------------------------------
+    // Auxiliary Class Definition
+    //-----------------------------------------------------
     template<class __ArgumentType>
     class ThreadArguments {
     public:
@@ -136,7 +143,9 @@ protected:
         virtual void run() { Sender->Run(); }
     };
 
-    //-------------------------- Thread Management --------------------------//
+    //-----------------------------------------------------
+    // Thread Management
+    //-----------------------------------------------------
     /*! Was the initiliazation successful? */
     bool InitSuccessFlag;
 
@@ -150,7 +159,9 @@ protected:
     ProxyWorker<_ArgumentType> ProxyWorkerInfo;
     ThreadArguments<_ArgumentType> ThreadArgumentsInfo;
 
-    //---------------------------- ICE Related ------------------------------//
+    //-----------------------------------------------------
+    // ICE Related
+    //-----------------------------------------------------
     /*! Property file name which contains settings for proxy configuration. */
     std::string PropertyFileName;
 
@@ -180,6 +191,26 @@ protected:
         return GUID;
     }
 
+    //-----------------------------------------------------
+    // Serialization and Deserialization
+    //-----------------------------------------------------
+    /*! Buffers for serialization and deserialization. */
+    std::stringstream SerializationBuffer;
+    std::stringstream DeSerializationBuffer;
+
+    /*! Per-proxy Serializer and DeSerializer. */
+    cmnSerializer * Serializer;
+    cmnDeSerializer * DeSerializer;
+
+    void Serialize(const cmnGenericObject & argument, std::string & serializedData)
+    {
+        SerializationBuffer.str("");    
+        Serializer->Serialize(argument);
+
+        serializedData = SerializationBuffer.str();
+    }
+
+
 public:
     mtsProxyBaseCommon(const std::string& propertyFileName, 
                        const std::string& propertyName,
@@ -193,8 +224,16 @@ public:
         GUID("")
     {
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
+
+        Serializer = new cmnSerializer(SerializationBuffer);
+        DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
     }
-    virtual ~mtsProxyBaseCommon() {}
+
+    virtual ~mtsProxyBaseCommon() 
+    {
+        delete Serializer;
+        delete DeSerializer;
+    }
 
     /*! Initialize and start a proxy. Returns immediately. */
     virtual void Start(_ArgumentType * callingClass) = 0;

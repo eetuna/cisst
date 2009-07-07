@@ -25,6 +25,9 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceProxy)
 
+//-----------------------------------------------------------------------------
+//  Common Methods
+//-----------------------------------------------------------------------------
 mtsDeviceProxy::~mtsDeviceProxy()
 {
     FunctionVoidProxyMap.DeleteAll();
@@ -75,6 +78,51 @@ std::string mtsDeviceProxy::GetClientTaskProxyName(
            requiredInterfaceName;        // RI
 }
 
+//-----------------------------------------------------------------------------
+//  Methods that run at client side
+//-----------------------------------------------------------------------------
+void mtsDeviceProxy::UpdateCommandId(
+    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+{
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+
+    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
+    mtsDevice * serverTaskProxy = taskManager->GetDevice(serverTaskProxyName);
+    CMN_ASSERT(serverTaskProxy);
+
+    mtsProvidedInterface * providedInterfaceProxy = 
+        serverTaskProxy->GetProvidedInterface(functionProxies.ProvidedInterfaceProxyName);
+    CMN_ASSERT(providedInterfaceProxy);
+
+    //mtsCommandVoidProxy * commandVoid = NULL;
+    //mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it = 
+    //    functionProxies.FunctionVoidProxies.begin();
+    //for (; it != functionProxies.FunctionVoidProxies.end(); ++it) {
+    //    commandVoid = dynamic_cast<mtsCommandVoidProxy*>(
+    //        providedInterfaceProxy->GetCommandVoid(it->Name));
+    //    CMN_ASSERT(commandVoid);
+    //    commandVoid->SetCommandId(it->FunctionProxyId);
+    //}
+
+    // Replace a command id value with an actual pointer to the function
+    // pointer at server side (this resolves thread synchronization issue).
+#define UPDATE_COMMAND_ID(_commandType)\
+    mtsCommand##_commandType##Proxy * command##_commandType = NULL;\
+    mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it##_commandType = \
+        functionProxies.Function##_commandType##Proxies.begin();\
+    for (; it##_commandType != functionProxies.Function##_commandType##Proxies.end(); ++it##_commandType) {\
+        command##_commandType = dynamic_cast<mtsCommand##_commandType##Proxy*>(\
+            providedInterfaceProxy->GetCommand##_commandType(it##_commandType->Name));\
+        if (command##_commandType)\
+            command##_commandType->SetCommandId(it##_commandType->FunctionProxyId);\
+    }
+
+    UPDATE_COMMAND_ID(Void);
+    UPDATE_COMMAND_ID(Write);
+    UPDATE_COMMAND_ID(Read);
+    UPDATE_COMMAND_ID(QualifiedRead);
+}
+
 mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
     mtsDeviceInterfaceProxyClient * proxyClient,
     const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
@@ -98,43 +146,43 @@ mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
     int commandId = 0;
     std::string commandName;
 
-#define ADD_COMMANDS_BEGIN(_commandType) \
+#define ADD_COMMAND_PROXY_BEGIN(_commandType) \
     {\
         mtsCommand##_commandType##Proxy * newCommand##_commandType = NULL;\
         mtsDeviceInterfaceProxy::Command##_commandType##Sequence::const_iterator it\
             = providedInterfaceInfo.Commands##_commandType.begin();\
         for (; it != providedInterfaceInfo.Commands##_commandType.end(); ++it) {\
             commandName = it->Name;
-#define ADD_COMMANDS_END \
+#define ADD_COMMAND_PROXY_END \
         }\
     }
 
     // 2-1) Void
-    ADD_COMMANDS_BEGIN(Void)
+    ADD_COMMAND_PROXY_BEGIN(Void)
         newCommandVoid = new mtsCommandVoidProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandVoidMap().AddItem(commandName, newCommandVoid);
-    ADD_COMMANDS_END
+    ADD_COMMAND_PROXY_END
 
     // 2-2) Write
-    ADD_COMMANDS_BEGIN(Write)
+    ADD_COMMAND_PROXY_BEGIN(Write)
         newCommandWrite = new mtsCommandWriteProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandWriteMap().AddItem(commandName, newCommandWrite);
-    ADD_COMMANDS_END
+    ADD_COMMAND_PROXY_END
 
     // 2-3) Read
-    ADD_COMMANDS_BEGIN(Read)
+    ADD_COMMAND_PROXY_BEGIN(Read)
         newCommandRead = new mtsCommandReadProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandReadMap().AddItem(commandName, newCommandRead);
-    ADD_COMMANDS_END
+    ADD_COMMAND_PROXY_END
 
     // 2-4) QualifiedRead
-    ADD_COMMANDS_BEGIN(QualifiedRead)
+    ADD_COMMAND_PROXY_BEGIN(QualifiedRead)
         newCommandQualifiedRead = new mtsCommandQualifiedReadProxy(commandId, proxyClient, commandName);
         providedInterfaceProxy->GetCommandQualifiedReadMap().AddItem(commandName, newCommandQualifiedRead);
-    ADD_COMMANDS_END
+    ADD_COMMAND_PROXY_END
 
-#undef ADD_COMMANDS_BEGIN
-#undef ADD_COMMANDS_END
+#undef ADD_COMMAND_PROXY_BEGIN
+#undef ADD_COMMAND_PROXY_END
 
     // 3) Create event generator proxies.
     std::string eventName;
@@ -169,6 +217,55 @@ mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
     return providedInterfaceProxy;
 }
 
+bool mtsDeviceProxy::GetEventGeneratorProxyPointers(
+    const std::string & requiredInterfaceName,
+    mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies)
+{
+    // Get the provided interface proxy and the required interface which has 
+    // been connected to it.
+    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceName);
+    CMN_ASSERT(requiredInterface);
+
+    mtsProvidedInterface * providedInterfaceProxy = requiredInterface->GetConnectedInterface();
+    CMN_ASSERT(providedInterfaceProxy);
+
+    // Get the lists of event handlers registered.
+    mtsDeviceInterfaceProxy::EventGeneratorProxyElement element;
+    mtsCommandBase * eventGenerator = NULL;
+
+    //std::vector<std::string> namesOfEventHandlersVoid = 
+    //    requiredInterface->GetNamesOfEventHandlersVoid();
+    //for (unsigned int i = 0; i < namesOfEventHandlersVoid.size(); ++i) {
+    //    element.Name = namesOfEventHandlersVoid[i];
+    //    eventGenerator = providedInterfaceProxy->EventVoidGenerators.GetItem(element.Name);
+    //    CMN_ASSERT(eventGenerator);
+    //    element.ProxyId = reinterpret_cast<int>(eventGenerator);
+    //    eventGeneratorProxies.EventGeneratorVoidProxies.push_back(element);
+    //}
+#define GET_EVENT_GENERATOR_PROXY_BEGIN(_type)\
+    std::vector<std::string> namesOfEventHandlers##_type = \
+        requiredInterface->GetNamesOfEventHandlers##_type();\
+    for (unsigned int i = 0; i < namesOfEventHandlers##_type.size(); ++i) {\
+        element.Name = namesOfEventHandlers##_type[i];\
+        eventGenerator = providedInterfaceProxy->Event##_type##Generators.GetItem(element.Name);\
+        CMN_ASSERT(eventGenerator);\
+        element.ProxyId = reinterpret_cast<int>(eventGenerator);\
+        eventGeneratorProxies.EventGenerator##_type##Proxies.push_back(element);
+#define GET_EVENT_GENERATOR_PROXY_END\
+    }
+
+    GET_EVENT_GENERATOR_PROXY_BEGIN(Void);
+    GET_EVENT_GENERATOR_PROXY_END;
+
+    GET_EVENT_GENERATOR_PROXY_BEGIN(Write);
+    GET_EVENT_GENERATOR_PROXY_END;
+    
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//  Methods that run at server side
+//-----------------------------------------------------------------------------
 mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     mtsProvidedInterface * providedInterface, const std::string & requiredInterfaceName,
     mtsDeviceInterfaceProxyServer * proxyServer)
@@ -216,16 +313,22 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     ADD_FUNCTION_PROXY_BEGIN(QualifiedRead);
     ADD_FUNCTION_PROXY_END;
 
-    // 2. Event handler proxies
+    // 2. Event handler proxies.
     std::string eventName;
 
+    // All CommandId values are initially set to zero meaning that they need 
+    // to be updated later. An actual value will be assigned by the client when 
+    // the server execute GetListsOfEventGeneratorsRegistered() method.
+    // Also note that all events are disabled by default. Commands that are
+    // actually bounded and used at the client will only be enabled by the
+    // execution of the GetListsOfEventGeneratorsRegistered() method.
     mtsCommandVoidProxy * actualEventVoidCommandProxy = NULL;
     std::vector<std::string> namesOfEventsVoid = providedInterface->GetNamesOfEventsVoid();
     for (unsigned int i = 0; i < namesOfEventsVoid.size(); ++i) {
-        // CommandId is initially set to zero meaning that it needs to be updated.
-        // An actual value will be assigned later when UpdateEventCommandId() is executed.
         eventName = namesOfEventsVoid[i];
         actualEventVoidCommandProxy = new mtsCommandVoidProxy(NULL, proxyServer, eventName);
+        actualEventVoidCommandProxy->Disable();
+
         CMN_ASSERT(requiredInterfaceProxy->EventHandlersVoid.AddItem(
             eventName, actualEventVoidCommandProxy));
         CMN_ASSERT(EventHandlerVoidProxyMap.AddItem(eventName, actualEventVoidCommandProxy));
@@ -235,16 +338,16 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     std::vector<std::string> namesOfEventsWrite = providedInterface->GetNamesOfEventsWrite();
     for (unsigned int i = 0; i < namesOfEventsWrite.size(); ++i) {
         eventName = namesOfEventsWrite[i];
-        // CommandId is initially set to zero meaning that it needs to be updated.
-        // An actual value will be assigned later when UpdateEventCommandId() is executed.
         actualEventWriteCommandProxy = new mtsCommandWriteProxy(NULL, proxyServer, eventName);
+        actualEventWriteCommandProxy->Disable();
+
         CMN_ASSERT(EventHandlerWriteProxyMap.AddItem(eventName, actualEventWriteCommandProxy));
         CMN_ASSERT(requiredInterfaceProxy->EventHandlersWrite.AddItem(
             eventName, actualEventWriteCommandProxy));        
-    }    
+    }
 
-    // Using AllocateResources(), get pointers which has been allocated for this 
-    // required interface and is thread-safe to use.
+    // Using AllocateResources(), get pointers which have been allocated for this 
+    // required interface and are thread-safe to use.
     unsigned int userId;
     std::string userName = requiredInterfaceProxy->GetName() + "Proxy";
     userId = providedInterface->AllocateResources(userName);
@@ -265,8 +368,8 @@ void mtsDeviceProxy::GetFunctionPointers(
 {
     mtsDeviceInterfaceProxy::FunctionProxyInfo element;
 
-    //FunctionVoidProxyMapType::MapType::const_iterator it;
-    //it = FunctionVoidProxyMap.GetMap().begin();
+    FunctionVoidProxyMapType::MapType::const_iterator it;
+    it = FunctionVoidProxyMap.GetMap().begin();
     //for (; it != FunctionVoidProxyMap.GetMap().end(); ++it) {
     //    element.Name = it->first;
     //    element.FunctionProxyId = reinterpret_cast<int>(it->second);
@@ -295,10 +398,31 @@ void mtsDeviceProxy::GetFunctionPointers(
     GET_FUNCTION_PROXY_END;
 }
 
-void mtsDeviceProxy::EventVoidHandlerProxyFunction()
+void mtsDeviceProxy::UpdateEventHandlerId(
+    const mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered eventHandlers)
 {
-}
+    mtsDeviceInterfaceProxy::EventGeneratorProxySequence::const_iterator it;
 
-void mtsDeviceProxy::EventWriteHandlerProxyFunction(const mtsGenericObject & argument)
-{
+    //mtsCommandVoidProxy * eventHandlerVoid = NULL;
+    //it = eventHandlers.EventGeneratorVoidProxies.begin();
+    //for (; it != eventHandlers.EventGeneratorVoidProxies.end(); ++it) {
+    //    eventHandlerVoid = EventHandlerVoidProxyMap.GetItem(it->Name);
+    //}
+    //    CMN_ASSERT(eventHandlerVoid);
+
+    //    eventHandlerVoid->Enable();
+    //    eventHandlerVoid->SetCommandId(it->ProxyId);
+    //}
+#define UPDATE_EVENT_HANDLER_ID(_type)\
+    mtsCommand##_type##Proxy * eventHandler##_type = NULL;\
+    it = eventHandlers.EventGenerator##_type##Proxies.begin();\
+    for (; it != eventHandlers.EventGenerator##_type##Proxies.end(); ++it) {\
+        eventHandler##_type = EventHandler##_type##ProxyMap.GetItem(it->Name);\
+        CMN_ASSERT(eventHandler##_type);\
+        eventHandler##_type->Enable();\
+        eventHandler##_type->SetCommandId(it->ProxyId);\
+    }
+
+    UPDATE_EVENT_HANDLER_ID(Void);
+    UPDATE_EVENT_HANDLER_ID(Write);
 }

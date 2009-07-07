@@ -35,7 +35,7 @@ std::string mtsTaskGlobal::ShowTaskInfo()
     // List of connected tasks' name
     buf << HEADING"Connected task name: ";
     if (ConnectedTaskList.size() == 0) {
-        buf << "NONE" << std::endl;
+        buf << "-" << std::endl;
     } else {
         std::vector<std::string>::const_iterator it = ConnectedTaskList.begin();
         for (; it != ConnectedTaskList.end(); ++it) {
@@ -48,7 +48,7 @@ std::string mtsTaskGlobal::ShowTaskInfo()
 #define PRINT_INTERFACE_INFO( _str, _type, _instance)\
     buf << HEADING""_str" interface list: ";\
     if (_instance.size() == 0) {\
-        buf << "NONE" << std::endl;\
+        buf << "-" << std::endl;\
     } else {\
         std::map<std::string, _type>::const_iterator it = _instance.begin();\
         for (; it != _instance.end(); ++it) {\

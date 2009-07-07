@@ -83,15 +83,19 @@ public:
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1,
                                                mtsGenericObject & argument2) 
     {
-        ProvidedInterfaceProxy->SendExecuteCommandQualifiedReadSerialized(
-            CommandId, argument1, argument2);
-        return mtsCommandBase::DEV_OK;
+        if (this->IsEnabled()) {
+            ProvidedInterfaceProxy->SendExecuteCommandQualifiedReadSerialized(
+                CommandId, argument1, argument2);
+            return mtsCommandBase::DEV_OK;
+        }
+        return mtsCommandBase::DISABLED;
     }
 
     /*! For debugging. Generate a human readable output for the
       command object */
     void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandQualifiedReadProxy: " << Name << ", " << CommandId << std::endl;
+        outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 
     /*! Return a pointer on the argument prototype */

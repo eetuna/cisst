@@ -108,16 +108,16 @@ public:
     }
     
     /*! The execute method. */
-    BaseType::ReturnType Execute() {
-        if (ProvidedInterfaceProxy) {
-            ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
-        } else {
-            //
-            // TODO: implement this
-            //
-            //RequiredInterfaceProxy->
+    mtsCommandBase::ReturnType Execute() {
+        if (this->IsEnabled()) {
+            if (ProvidedInterfaceProxy) {
+                ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
+            } else {
+                RequiredInterfaceProxy->SendExecuteEventVoid(CommandId);
+            }
+            return mtsCommandBase::DEV_OK;
         }
-        return BaseType::DEV_OK;
+        return mtsCommandBase::DISABLED;
     }
 
     void ToStream(std::ostream & outputStream) const {
@@ -127,6 +127,7 @@ public:
         } else {            
             outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
         }
+        outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 
     /*! Returns number of arguments (parameters) expected by Execute().

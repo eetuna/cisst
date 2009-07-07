@@ -26,6 +26,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandWriteProxy.h>
 #include <cisstMultiTask/mtsCommandReadProxy.h>
 #include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
+#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsDeviceProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyClient);
 
@@ -39,14 +41,10 @@ mtsDeviceInterfaceProxyClient::mtsDeviceInterfaceProxyClient(
     const std::string & propertyFileName, const std::string & propertyName) :
         BaseType(propertyFileName, propertyName)
 {
-    Serializer = new cmnSerializer(SerializationBuffer);
-    DeSerializer = new cmnDeSerializer(DeSerializationBuffer);
 }
 
 mtsDeviceInterfaceProxyClient::~mtsDeviceInterfaceProxyClient()
 {
-    delete Serializer;
-    delete DeSerializer;
 }
 
 void mtsDeviceInterfaceProxyClient::Start(mtsTask * callingTask)
@@ -120,91 +118,48 @@ void mtsDeviceInterfaceProxyClient::OnThreadEnd()
 }
 
 //-------------------------------------------------------------------------
-//  Processing Methods
+//  Methods to Receive and Process Events (Server -> Client)
 //-------------------------------------------------------------------------
-void mtsDeviceInterfaceProxyClient::Serialize(const cmnGenericObject & argument,
-                                              std::string & serializedData)
-{
-    SerializationBuffer.str("");    
-    Serializer->Serialize(argument);
-
-    serializedData = SerializationBuffer.str();
-}
-
-//-------------------------------------------------------------------------
-//  Methods to Receive and Process Events
-//-------------------------------------------------------------------------
-void mtsDeviceInterfaceProxyClient::UpdateCommandId(
-    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
+bool mtsDeviceInterfaceProxyClient::ReceiveGetListsOfEventGeneratorsRegistered(
+    const std::string & serverTaskProxyName, 
+    const std::string & requiredInterfaceName,
+    mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies) const
 {
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 
-    const std::string serverTaskProxyName = functionProxies.ServerTaskProxyName;
-    mtsDevice * serverTaskProxy = taskManager->GetDevice(serverTaskProxyName);
+    mtsDeviceProxy * serverTaskProxy = dynamic_cast<mtsDeviceProxy*>(
+        taskManager->GetDevice(serverTaskProxyName));
     CMN_ASSERT(serverTaskProxy);
 
-    mtsProvidedInterface * providedInterfaceProxy = 
-        serverTaskProxy->GetProvidedInterface(functionProxies.ProvidedInterfaceProxyName);
-    CMN_ASSERT(providedInterfaceProxy);
-
-    //mtsCommandVoidProxy * commandVoid = NULL;
-    //mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it = 
-    //    functionProxies.FunctionVoidProxies.begin();
-    //for (; it != functionProxies.FunctionVoidProxies.end(); ++it) {
-    //    commandVoid = dynamic_cast<mtsCommandVoidProxy*>(
-    //        providedInterfaceProxy->GetCommandVoid(it->Name));
-    //    CMN_ASSERT(commandVoid);
-    //    commandVoid->SetCommandId(it->FunctionProxyId);
-    //}
-
-    // Replace a command id value with an actual pointer to the function
-    // pointer at server side (this resolves thread synchronization issue).
-#define REPLACE_COMMAND_ID(_commandType)\
-    mtsCommand##_commandType##Proxy * command##_commandType = NULL;\
-    mtsDeviceInterfaceProxy::FunctionProxySequence::const_iterator it##_commandType = \
-        functionProxies.Function##_commandType##Proxies.begin();\
-    for (; it##_commandType != functionProxies.Function##_commandType##Proxies.end(); ++it##_commandType) {\
-        command##_commandType = dynamic_cast<mtsCommand##_commandType##Proxy*>(\
-            providedInterfaceProxy->GetCommand##_commandType(it##_commandType->Name));\
-        if (command##_commandType)\
-            command##_commandType->SetCommandId(it##_commandType->FunctionProxyId);\
-    }
-
-    REPLACE_COMMAND_ID(Void);
-    REPLACE_COMMAND_ID(Write);
-    REPLACE_COMMAND_ID(Read);
-    REPLACE_COMMAND_ID(QualifiedRead);
+    return serverTaskProxy->GetEventGeneratorProxyPointers(
+        requiredInterfaceName, eventGeneratorProxies);
 }
 
-//-------------------------------------------------------------------------
-//  Methods to Receive and Process Events (Server -> Client)
-//-------------------------------------------------------------------------
 void mtsDeviceInterfaceProxyClient::ReceiveExecuteEventVoid(const int commandId)
 {
-    //mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandId);
-    //CMN_ASSERT(functionVoid);
+    mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandId);
+    CMN_ASSERT(functionVoid);
 
-    //(*functionVoid)();
+    (*functionVoid)();
 }
 
 void mtsDeviceInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
     const int commandId, const std::string argument)
 {
-    //mtsFunctionWrite * functionWrite = reinterpret_cast<mtsFunctionWrite*>(commandId);
-    //CMN_ASSERT(functionWrite);
+    mtsFunctionWrite * functionWrite = reinterpret_cast<mtsFunctionWrite*>(commandId);
+    CMN_ASSERT(functionWrite);
 
-    //static char buf[100];
-    //sprintf(buf, "ExecuteCommandWriteSerialized: %d bytes received", argument.size());
-    //Logger->trace("TIServer", buf);
+    static char buf[1024];
+    sprintf(buf, "ReceiveExecuteEventWriteSerialized: %d bytes received", argument.size());
+    Logger->trace("TIClient", buf);
 
-    //// Deserialization
-    //DeSerializationBuffer.str("");
-    //DeSerializationBuffer << argument;
-    //
-    //const mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
-    //CMN_ASSERT(obj);
-    ////commandWrite->Execute(*obj);
-    //(*functionWrite)(*obj);
+    // Deserialization
+    DeSerializationBuffer.str("");
+    DeSerializationBuffer << argument;
+    
+    const mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
+    CMN_ASSERT(obj);
+    (*functionWrite)(*obj);
 }
 
 //-------------------------------------------------------------------------
@@ -365,14 +320,17 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Stop()
 //-----------------------------------------------------------------------------
 //  Device Interface Proxy Client Implementation
 //-----------------------------------------------------------------------------
-//void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::UpdateCommandId(
-//    const mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies,
-//    const Ice::Current & current) const
-//{
-//    Logger->trace("TIClient", "<<<<< RECV: UpdateCommandId");
-//
-//    DeviceInterfaceClient->ReceiveUpdateCommandId(functionProxies);
-//}
+bool mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::GetListsOfEventGeneratorsRegistered(
+    const std::string & serverTaskProxyName, 
+    const std::string & requiredInterfaceName,
+    mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies, 
+    const ::Ice::Current&) const
+{
+    Logger->trace("TIClient", "<<<<< RECV: GetListsOfEventGeneratorsRegistered");
+
+    return DeviceInterfaceClient->ReceiveGetListsOfEventGeneratorsRegistered(
+        serverTaskProxyName, requiredInterfaceName, eventGeneratorProxies);
+}
 
 void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::ExecuteEventVoid(
     ::Ice::Int commandId, const ::Ice::Current&)

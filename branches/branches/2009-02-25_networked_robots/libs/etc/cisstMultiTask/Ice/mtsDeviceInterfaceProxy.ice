@@ -98,6 +98,9 @@ module mtsDeviceInterfaceProxy
 	//	Function Proxy Related Definition
 	//-----------------------------------------------------------------------------	
     
+    //
+    // TODO: Change the name of FunctionProxyInfo => ProxyElementInfo (?)
+    //
     // The information about the function proxies.
     struct FunctionProxyInfo {
         string Name;
@@ -122,8 +125,21 @@ module mtsDeviceInterfaceProxy
         FunctionProxySequence FunctionWriteProxies;
         FunctionProxySequence FunctionReadProxies;
         FunctionProxySequence FunctionQualifiedReadProxies;
-        FunctionProxySequence EventHandlerVoidProxies;
-        FunctionProxySequence EventHandlerWriteProxies;
+    };
+
+    struct EventGeneratorProxyElement {
+        string Name;
+        // This id is set as the pointer to the function proxy at client side.
+        // Note that this is valid only for 32-bit OS. Under 64-bit machine, this
+        // should be changed so as to be able to handle 64-bit address space.
+        int ProxyId;
+    };
+    sequence<EventGeneratorProxyElement> EventGeneratorProxySequence;
+
+    // Used by GetListOfEventHandlerRegistered()
+    struct ListsOfEventGeneratorsRegistered {
+        EventGeneratorProxySequence EventGeneratorVoidProxies;
+        EventGeneratorProxySequence EventGeneratorWriteProxies;
     };
 
 	//-----------------------------------------------------------------------------
@@ -148,7 +164,10 @@ module mtsDeviceInterfaceProxy
                proxy contains all the information about event handler proxy objects). 
         */
         ["cpp:const"] idempotent
-        void GetEventHandlerId(string clientTaskProxyName, out FunctionProxySet functionProxies);
+        bool GetListsOfEventGeneratorsRegistered(
+            string serverTaskProxyName, 
+            string requiredInterfaceName,
+            out ListsOfEventGeneratorsRegistered eventGeneratorProxies);
 
         void ExecuteEventVoid(int CommandId);
         void ExecuteEventWriteSerialized(int CommandId, string argument);
