@@ -219,6 +219,24 @@ mtsDeviceInterface * mtsTaskManagerProxyClient::GetProvidedInterfaceProxy(
 //-------------------------------------------------------------------------
 //  Send Methods
 //-------------------------------------------------------------------------
+void mtsTaskManagerProxyClient::SendUpdateTaskManager()
+{    
+    mtsTaskManagerProxy::TaskList localTaskList;
+    std::vector<std::string> namesOfTasks;
+    mtsTaskManager::GetInstance()->GetNamesOfTasks(namesOfTasks);
+
+    localTaskList.taskNames.insert(
+        localTaskList.taskNames.end(),
+        namesOfTasks.begin(),
+        namesOfTasks.end());
+    localTaskList.taskManagerID = this->GetGUID();
+
+    Logger->trace("TMClient", 
+        ">>>>> SEND: SendUpdateTaskManager: " + localTaskList.taskManagerID );
+
+    return GlobalTaskManagerProxy->UpdateTaskManager(localTaskList);
+}
+
 bool mtsTaskManagerProxyClient::SendAddProvidedInterface(
     const std::string & newProvidedInterfaceName,
     const std::string & adapterName,
@@ -273,20 +291,6 @@ bool mtsTaskManagerProxyClient::SendGetProvidedInterfaceAccessInfo(
         taskName, providedInterfaceName, info);
 }
 
-//void mtsTaskManagerProxyClient::SendNotifyInterfaceConnectionResult(
-//    const bool isServerTask, const bool isSuccess,
-//    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-//    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-//{
-//    Logger->trace("TMClient", ">>>>> SEND: NotifyInterfaceConnectionResult: " +
-//        resourceTaskName + " : " + providedInterfaceName + " - " +
-//        userTaskName + " : " + requiredInterfaceName);
-//
-//    return GlobalTaskManagerProxy->NotifyInterfaceConnectionResult(
-//        isServerTask, isSuccess, 
-//        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
-//}
-
 //-------------------------------------------------------------------------
 //  Definition by mtsTaskManagerProxy.ice
 //-------------------------------------------------------------------------
@@ -311,34 +315,12 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Start()
 
 void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
 {
-    bool flag = true;
-
-    while(Runnable)
+    while (Runnable)
     {
 #ifdef _COMMUNICATION_TEST_
         static int num = 0;
         std::cout << "client send: " << ++num << std::endl;
-        Server->ReceiveDataFromClient(num);
 #endif
-
-        if (flag) {
-            // Send a set of task names
-            mtsTaskManagerProxy::TaskList localTaskList;
-            std::vector<std::string> myTaskNames;
-            mtsTaskManager::GetInstance()->GetNamesOfTasks(myTaskNames);
-
-            localTaskList.taskNames.insert(
-                localTaskList.taskNames.end(),
-                myTaskNames.begin(),
-                myTaskNames.end());
-
-            localTaskList.taskManagerID = TaskManagerClient->GetGUID();
-
-            Server->UpdateTaskManager(localTaskList);
-
-            flag = false;
-        }
-
         timedWait(IceUtil::Time::milliSeconds(10));
     }
 }
@@ -362,11 +344,4 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Stop()
     }
 
     callbackSenderThread->getThreadControl().join();
-}
-
-// for test purpose
-void mtsTaskManagerProxyClient::TaskManagerClientI::ReceiveData(
-    ::Ice::Int num, const ::Ice::Current&)
-{
-    std::cout << "------------ client recv data " << num << std::endl;
 }

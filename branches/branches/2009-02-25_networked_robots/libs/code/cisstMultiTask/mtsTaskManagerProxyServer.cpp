@@ -473,7 +473,6 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
                 try
                 {
                     std::cout << "server sends: " << num << std::endl;
-                    (*p)->ReceiveData(num);
                 }
                 catch(const IceUtil::Exception& ex)
                 {

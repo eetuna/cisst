@@ -76,20 +76,13 @@ module mtsTaskManagerProxy
 	//-----------------------------------------------------------------------------
 	interface TaskManagerClient
 	{
-		// Test method
-		void ReceiveData(int num);
-		
-		//bool ConnectServerSide(
-		//	string userTaskName, string interfaceRequiredName,
-		//	string resourceTaskName, string providedInterfaceName);
-		
 	};
 
 	//-----------------------------------------------------------------------------
 	// Interface for TaskManager server
 	//
 	// - This interface defines the interface of the global task server to receive
-	//	 events from the task manager clients.
+	//	 events from task manager clients.
 	//-----------------------------------------------------------------------------
 	interface TaskManagerServer
 	{		

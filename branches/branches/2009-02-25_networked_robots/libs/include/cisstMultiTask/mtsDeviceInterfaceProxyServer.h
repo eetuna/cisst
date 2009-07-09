@@ -100,17 +100,6 @@ protected:
     void OnClose();
 
     //-------------------------------------------------------------------------
-    //  Serialization and Deserialization
-    //-------------------------------------------------------------------------
-    /*! Buffers for serialization and deserialization. */
-    std::stringstream SerializationBuffer;
-    std::stringstream DeSerializationBuffer;
-
-    /*! Serializer and DeSerializer. */
-    cmnSerializer * Serializer;
-    cmnDeSerializer * DeSerializer;
-
-    //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Get the local provided interface from the task manager by name. */
@@ -126,7 +115,7 @@ protected:
     /*! Update the information of all tasks. */
     const bool ReceiveGetProvidedInterfaceInfo(
         const std::string & providedInterfaceName,
-        ::mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
+        mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
     /*! Connect at server side. 
         This method creates a client task proxy (mtsDeviceProxy) and a required
@@ -135,6 +124,13 @@ protected:
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
+    /*! Update event handler proxy id at server side and enable them if used. 
+        Proxy id is replaced with a pointer to an actual event generator command 
+        object at client side. */
+    bool ReceiveUpdateEventHandlerId(
+        const std::string & clientTaskProxyName, 
+        const mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventHandlers) const;
+
     /*! Update command id. */
     void ReceiveGetCommandId(
         const std::string & clientTaskProxyName,
@@ -142,16 +138,16 @@ protected:
 
     /*! Execute actual command objects. */
     void ReceiveExecuteCommandVoid(const int commandId) const;
-    void ReceiveExecuteCommandWriteSerialized(const int commandId, const std::string argument);
+    void ReceiveExecuteCommandWriteSerialized(const int commandId, const std::string & argument);
     void ReceiveExecuteCommandReadSerialized(const int commandId, std::string & argument);
-    void ReceiveExecuteCommandQualifiedReadSerialized(const int commandId, const std::string argument1, std::string & argument2);
+    void ReceiveExecuteCommandQualifiedReadSerialized(const int commandId, const std::string & argument1, std::string & argument2);
 
     //-------------------------------------------------------------------------
     //  Methods to Send Events (Server -> Client)
     //-------------------------------------------------------------------------
 public:
     void SendExecuteEventVoid(const int commandId) const;
-    void SendExecuteEventWriteSerialized(const int commandId, const cmnGenericObject & argument);
+    void SendExecuteEventWriteSerialized(const int commandId, const mtsGenericObject & argument);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
@@ -184,6 +180,12 @@ protected:
             const std::string & userTaskName, const std::string & requiredInterfaceName,
             const std::string & resourceTaskName, const std::string & providedInterfaceName,
             const ::Ice::Current&);
+
+        bool UpdateEventHandlerId(
+            const std::string & clientTaskProxyName,
+            const mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies, 
+            const ::Ice::Current&) const;
+
         void GetCommandId(
             const std::string & clientTaskProxyName,
             mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;

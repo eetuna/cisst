@@ -24,7 +24,10 @@ http://www.cisst.org/cisst/license.txt.
 
 void mtsMulticastCommandWriteBase::AddCommand(BaseType * command) {
     if (command) {
-        // TODO: UGLY GOHOME
+        //
+        // TODO: The following type check routine should be enabled but
+        //       commented out temporarily.
+        //
         //if (!dynamic_cast<mtsCommandWriteProxy*>(command)) {
         //    if (typeid(*(command->GetArgumentPrototype())) != typeid(*(this->GetArgumentPrototype()))) {
         //        CMN_LOG_INIT_ERROR << "Class mtsMulticastCommandWriteBase: AddCommand: command argument type don't match" << std::endl;

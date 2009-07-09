@@ -208,8 +208,7 @@ mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
         eventWriteGeneratorProxy = new mtsFunctionWrite();
         CMN_ASSERT(EventWriteGeneratorProxyMap.AddItem(eventName, eventWriteGeneratorProxy));
 
-        // GOHOME: I should take care of the command id which is initially set as '0'.
-        eventMulticastCommandProxy = new mtsMulticastCommandWriteProxy(0, proxyClient, eventName);
+        eventMulticastCommandProxy = new mtsMulticastCommandWriteProxy(eventName);
         CMN_ASSERT(providedInterfaceProxy->AddEvent(eventName, eventMulticastCommandProxy));
         CMN_ASSERT(eventWriteGeneratorProxy->Bind(eventMulticastCommandProxy));
     }
@@ -217,18 +216,11 @@ mtsProvidedInterface * mtsDeviceProxy::CreateProvidedInterfaceProxy(
     return providedInterfaceProxy;
 }
 
-bool mtsDeviceProxy::GetEventGeneratorProxyPointers(
-    const std::string & requiredInterfaceName,
+void mtsDeviceProxy::GetEventGeneratorProxyPointers(
+    mtsProvidedInterface * providedInterfaceProxy,
+    mtsRequiredInterface * requiredInterface,
     mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies)
 {
-    // Get the provided interface proxy and the required interface which has 
-    // been connected to it.
-    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceName);
-    CMN_ASSERT(requiredInterface);
-
-    mtsProvidedInterface * providedInterfaceProxy = requiredInterface->GetConnectedInterface();
-    CMN_ASSERT(providedInterfaceProxy);
-
     // Get the lists of event handlers registered.
     mtsDeviceInterfaceProxy::EventGeneratorProxyElement element;
     mtsCommandBase * eventGenerator = NULL;
@@ -259,8 +251,6 @@ bool mtsDeviceProxy::GetEventGeneratorProxyPointers(
 
     GET_EVENT_GENERATOR_PROXY_BEGIN(Write);
     GET_EVENT_GENERATOR_PROXY_END;
-    
-    return true;
 }
 
 //-----------------------------------------------------------------------------

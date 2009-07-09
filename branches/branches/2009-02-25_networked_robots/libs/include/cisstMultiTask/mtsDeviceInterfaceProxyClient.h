@@ -69,10 +69,6 @@ protected:
     DeviceInterfaceServerProxyType DeviceInterfaceServerProxy;
     
     //-------------------------------------------------------------------------
-    //  Proxy Implementation
-    //-------------------------------------------------------------------------
-
-    //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Send thread set up. */
@@ -106,10 +102,6 @@ public:
     //-------------------------------------------------------------------------
     void ReceiveExecuteEventVoid(const int commandId);
     void ReceiveExecuteEventWriteSerialized(const int commandId, const std::string argument);
-    bool ReceiveGetListsOfEventGeneratorsRegistered(
-        const std::string & serverTaskProxyName, 
-        const std::string & requiredInterfaceName,
-        mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies) const;
 
     //-------------------------------------------------------------------------
     //  Methods to Send Events (Client -> Server)
@@ -121,6 +113,10 @@ public:
     bool SendConnectServerSide(
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
+
+    bool SendUpdateEventHandlerId(
+        const std::string & clientTaskProxyName,
+        const mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies);
 
     void SendGetCommandId(
         const std::string & clientTaskProxyName,
@@ -161,10 +157,6 @@ protected:
         // Server -> Client
         void ExecuteEventVoid(::Ice::Int, const ::Ice::Current&);
         void ExecuteEventWriteSerialized(::Ice::Int, const ::std::string&, const ::Ice::Current&);
-        bool GetListsOfEventGeneratorsRegistered(
-            const std::string & serverTaskProxyName,
-            const std::string & requiredInterfaceName,
-            mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered &, const ::Ice::Current&) const;
     };
 };
 

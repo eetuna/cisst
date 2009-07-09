@@ -100,6 +100,8 @@ public:
     //  Send Methods
     //-------------------------------------------------------------------------
 public:
+    void SendUpdateTaskManager();
+
     bool SendAddProvidedInterface(const std::string & newProvidedInterfaceName,
                                   const std::string & adapterName,
                                   const std::string & endpointInfo,
@@ -115,10 +117,6 @@ public:
     bool SendGetProvidedInterfaceAccessInfo(const std::string & serverTaskName,
                                             const std::string & providedInterfaceName,
                                             mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) const;
-
-    //-------------------------------------------------------------------------
-    //  Methods to Receive and Process Events
-    //-------------------------------------------------------------------------
 
     //-------------------------------------------------------------------------
     //  Definition by mtsTaskManagerProxy.ice
@@ -145,8 +143,6 @@ protected:
         void Start();
         void Run();
         void Stop();
-
-        void ReceiveData(::Ice::Int num, const ::Ice::Current&);
     };
 };
 

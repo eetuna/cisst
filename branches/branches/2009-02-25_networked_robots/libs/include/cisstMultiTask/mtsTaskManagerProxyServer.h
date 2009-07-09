@@ -60,18 +60,6 @@ public:
     /*! End the proxy. */
     void Stop();
 
-    ///*! Return the base port number for task manager servers. */
-    //static const unsigned int GetBasePortNumber() {
-    //    return BASE_PORT_NUMBER_TASK_MANAGER_LAYER;
-    //}
-
-    ///*! Return the base port number for task manager servers as string. */
-    //static std::string GetBasePortNumberAsString() {
-    //    std::stringstream buffer;
-    //    buffer << BASE_PORT_NUMBER_TASK_MANAGER_LAYER;
-    //    return buffer.str();
-    //}
-
 protected:
     typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
 
@@ -186,11 +174,6 @@ protected:
         const bool isServerTask, const bool isSuccess,
         const std::string & userTaskName,     const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
-
-    //-------------------------------------------------------------------------
-    //  Send Methods
-    //-------------------------------------------------------------------------
-    
 
     //-------------------------------------------------------------------------
     //  Proxy Implementation

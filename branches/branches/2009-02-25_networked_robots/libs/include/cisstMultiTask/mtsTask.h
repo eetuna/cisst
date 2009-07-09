@@ -405,7 +405,16 @@ public:
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
-    /*! Update command id */
+    /*! Update event handler proxy id at server side and enable them if used. 
+        Proxy id is replaced with a pointer to an actual event generator command 
+        object at client side. */
+    bool mtsTask::SendUpdateEventHandlerId(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & serverTaskProxyName,
+        const std::string & clientTaskProxyName);
+
+    /*! Update command id at client side. Command id is replaced with a pointer
+        to a function proxy at server side. */
     void SendGetCommandId(const std::string & requiredInterfaceName, 
                           const std::string & serverTaskProxyName,
                           const std::string & clientTaskProxyName,

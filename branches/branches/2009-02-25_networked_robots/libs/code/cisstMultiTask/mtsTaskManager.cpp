@@ -374,14 +374,24 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
             return false;
         }
 
-        // If the server side connection is successful, update the command id.
         const std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
             resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
         const std::string clientTaskProxyName = mtsDeviceProxy::GetClientTaskProxyName(
             resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
 
+        // update the command id.
         clientTask->SendGetCommandId(requiredInterfaceName, serverTaskProxyName, 
                                      clientTaskProxyName, providedInterfaceName);
+
+        // If the server side connection is successful, we should update the server-side
+        // event handler proxy id and enable event handler proxies.
+        if (!clientTask->SendUpdateEventHandlerId(requiredInterfaceName,
+                                                  serverTaskProxyName,
+                                                  clientTaskProxyName))
+        {
+            CMN_LOG_CLASS_INIT_ERROR << "Connect: event handler proxy update failed." << std::endl;
+            return false;
+        }
     }
 
     return true;

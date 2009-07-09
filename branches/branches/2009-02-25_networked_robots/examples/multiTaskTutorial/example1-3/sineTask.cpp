@@ -5,6 +5,8 @@
 #include <cisstCommon/cmnConstants.h>
 #include "sineTask.h"
 
+double sineTask::SineAmplitude;
+
 // required to implement the class services, see cisstCommon
 CMN_IMPLEMENT_SERVICES(sineTask);
 
@@ -22,21 +24,44 @@ sineTask::sineTask(const std::string & taskName, double period):
         prov->AddCommandReadState(StateTable, SineData, "GetData");
         // add command to modify the sine amplitude 
         prov->AddCommandWrite(&sineTask::SetAmplitude, this, "SetAmplitude");
+        // add command to read data from state table while modifying the sine amplitude
+        prov->AddCommandQualifiedRead(&sineTask::SetAndGetAmplitude, this,
+            "SetAndGetAmplitude");
+        // add command to generate a void event
+        prov->AddCommandVoid(&sineTask::SendButtonClickEvent, this, "ButtonClicked");
+        // define a void event
+        EventVoid.Bind(prov->AddEventVoid("ButtonEventHandler"));
+        // define a write event
+        mtsDouble eventWriteData;
+        EventWrite.Bind(prov->AddEventWrite("WriteEvent", eventWriteData));
     }
 }
 
 void sineTask::Startup(void) {
-    SineAmplitude = 1.0; // set the initial amplitude
+    sineTask::SineAmplitude = 1.0; // set the initial amplitude
 }
 
 void sineTask::Run(void) {
     // process the commands received, i.e. possible SetSineAmplitude
     ProcessQueuedCommands();
     // compute the new values based on the current time and amplitude
-    SineData = SineAmplitude
+    SineData = sineTask::SineAmplitude
         * sin(2 * cmnPI * static_cast<double>(this->GetTick()) * Period / 10.0);
     SineData.SetTimestamp(StateTable.GetTic());
     SineData.SetValid(true);
+    // send a write event
+    static unsigned int count = 0;
+    if (++count > 500) {
+        EventWrite(SineData);
+        count = 0;
+    }
+}
+
+void sineTask::SetAndGetAmplitude(const mtsDouble &amplitude, mtsDouble & previousAmplitude) const
+{
+    previousAmplitude = SineAmplitude;
+
+    sineTask::SineAmplitude = amplitude.Data;
 }
 
 /*

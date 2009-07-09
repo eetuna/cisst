@@ -14,7 +14,7 @@ displayTaskOmniClient::displayTaskOmniClient(const std::string & taskName, doubl
 {
     // to communicate with the interface of the resource
     mtsRequiredInterface * requiredInterface;
-#if 0
+#if 1
     requiredInterface = AddRequiredInterface("RemoteRobot");
 	if (requiredInterface) {
         // bound the mtsFunction to the command provided by the interface 

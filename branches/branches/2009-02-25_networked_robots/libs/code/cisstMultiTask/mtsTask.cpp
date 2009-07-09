@@ -375,6 +375,9 @@ void mtsTask::RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskMa
         providedInterfaceProxy->Start(this);
         providedInterfaceProxy->GetLogger()->trace(
             "mtsTask", "Provided interface proxy starts: " + providedInterfaceName);
+
+        // Update the information of this task manager.
+        globalTaskManagerProxy->SendUpdateTaskManager();
         
         // Register this provided interface to the global task manager.
         if (!globalTaskManagerProxy->SendAddProvidedInterface(
@@ -429,6 +432,9 @@ void mtsTask::RunRequiredInterfaceProxy(mtsTaskManagerProxyClient * globalTaskMa
     requiredInterfaceProxy->GetLogger()->trace(
         "mtsTask", "Required interface proxy starts: " + requiredInterfaceName);
 
+    // Update the information of this task manager.
+    globalTaskManagerProxy->SendUpdateTaskManager();
+
     // Register this required interface to the global task manager.
     if (!globalTaskManagerProxy->SendAddRequiredInterface(requiredInterfaceName, this->Name))
     {
@@ -466,6 +472,16 @@ mtsDeviceInterfaceProxyClient * mtsTask::GetRequiredInterfaceProxy(const std::st
     }
 
     return requiredIntertfaceProxy;
+}
+
+const std::string mtsTask::GetNewPortNumberAsString(const unsigned int id)
+{
+    unsigned int newPortNumber = BASE_PORT_NUMBER_TASK_LAYER + (id * 5);
+
+    std::stringstream newPortNumberAsString;
+    newPortNumberAsString << newPortNumber;
+
+    return newPortNumberAsString.str();
 }
 
 //-------------------------------------------
@@ -507,6 +523,43 @@ bool mtsTask::SendConnectServerSide(
         userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
+bool mtsTask::SendUpdateEventHandlerId(
+    const std::string & requiredInterfaceProxyName,
+    const std::string & serverTaskProxyName,
+    const std::string & clientTaskProxyName)
+{
+    // Get a required interface proxy.
+    mtsDeviceInterfaceProxyClient * requiredInterfaceProxy = 
+        GetRequiredInterfaceProxy(requiredInterfaceProxyName);
+    if (!requiredInterfaceProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "SendUpdateEventHandlerId: "
+            << "Cannot find required interface proxy: " << requiredInterfaceProxyName << std::endl;
+        return false;
+    }
+
+    // Get the required interface.
+    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceProxyName);
+    CMN_ASSERT(requiredInterface);
+    
+    // Get the provided interface proxy.
+    mtsProvidedInterface * providedInterfaceProxy = requiredInterface->GetConnectedInterface();
+    CMN_ASSERT(providedInterfaceProxy);
+
+    // Get the server task proxy.
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    mtsDeviceProxy * serverTaskProxy = dynamic_cast<mtsDeviceProxy*>(
+        taskManager->GetDevice(serverTaskProxyName));
+    CMN_ASSERT(serverTaskProxy);
+
+    // Get the information about the event generator proxies.
+    mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered eventGeneratorProxies;
+    serverTaskProxy->GetEventGeneratorProxyPointers(
+        providedInterfaceProxy, requiredInterface, eventGeneratorProxies);
+
+    return requiredInterfaceProxy->SendUpdateEventHandlerId(
+        clientTaskProxyName, eventGeneratorProxies);
+}
+
 void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName, 
                                const std::string & serverTaskProxyName,
                                const std::string & clientTaskProxyName,
@@ -532,14 +585,4 @@ void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName,
     mtsDeviceProxy::UpdateCommandId(functionProxies);
 
     CMN_LOG_RUN_VERBOSE << "UpdateCommandId: Updated function proxy id." << std::endl;
-}
-
-const std::string mtsTask::GetNewPortNumberAsString(const unsigned int id)
-{
-    unsigned int newPortNumber = BASE_PORT_NUMBER_TASK_LAYER + (id * 5);
-
-    std::stringstream newPortNumberAsString;
-    newPortNumberAsString << newPortNumber;
-
-    return newPortNumberAsString.str();
 }

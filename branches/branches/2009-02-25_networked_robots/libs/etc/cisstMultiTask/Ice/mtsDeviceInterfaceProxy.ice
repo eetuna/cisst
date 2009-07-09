@@ -91,9 +91,6 @@ module mtsDeviceInterfaceProxy
 		EventWriteSequence           EventsWrite;
 	};
 
-    // List of provided interfaces
-    //sequence<ProvidedInterfaceInfo> ProvidedInterfaceSequence;
-
     //-----------------------------------------------------------------------------
 	//	Function Proxy Related Definition
 	//-----------------------------------------------------------------------------	
@@ -147,28 +144,6 @@ module mtsDeviceInterfaceProxy
 	//-----------------------------------------------------------------------------
 	interface DeviceInterfaceClient
 	{
-        /*! Update CommandId. This updates the command id of command proxies
-        at client side, which is a critical step regarding thread synchronization. */
-        //["cpp:const"] idempotent
-        //void UpdateCommandId(FunctionProxySet functionProxies);
-
-        /*! Update event handler proxy objects' commandId field. This replaces default 
-            value (zero) with the pointers to actual event handler object 
-            (instance of either mtsFunctionVoid or mtsFunctionWrite type).
-            When the server task receives the return value with updated 'functionProxies'
-            object, it has to do the following two things.
-            1) Iterating the list of actual event handler objects registered (used) by
-               the client, the server task has to enable corresponding events.
-               (GOHOME: check if all the events are disabled by default at server side.)
-            2) Update event handler proxy objects' commandId field (required interface
-               proxy contains all the information about event handler proxy objects). 
-        */
-        ["cpp:const"] idempotent
-        bool GetListsOfEventGeneratorsRegistered(
-            string serverTaskProxyName, 
-            string requiredInterfaceName,
-            out ListsOfEventGeneratorsRegistered eventGeneratorProxies);
-
         void ExecuteEventVoid(int CommandId);
         void ExecuteEventWriteSerialized(int CommandId, string argument);
 	};
@@ -192,9 +167,26 @@ module mtsDeviceInterfaceProxy
 			                   string resourceTaskName, string providedInterfaceName);
 
         /*! Update CommandId. This updates the command id of command proxies
-        at client side, which is a critical step regarding thread synchronization. */
+            at client side, which is a critical step regarding thread 
+            synchronization. */
         ["cpp:const"] idempotent
         void GetCommandId(string clientTaskProxyName, out FunctionProxySet functionProxies);
+
+        /*! Update event handler proxy objects' commandId field. This replaces default 
+            value (zero) with the pointers to actual event handler object 
+            (instance of either mtsFunctionVoid or mtsFunctionWrite type).
+            When the server task receives the return value with updated 'functionProxies'
+            object, it has to do the following two things.
+            1) Iterating the list of actual event handler objects registered (used) by
+            the client, the server task has to enable corresponding events.
+            (GOHOME: check if all the events are disabled by default at server side.)
+            2) Update event handler proxy objects' commandId field (required interface
+            proxy contains all the information about event handler proxy objects). 
+        */
+        ["cpp:const"] idempotent
+        bool UpdateEventHandlerId(string clientTaskProxyName, 
+            ListsOfEventGeneratorsRegistered eventGeneratorProxies);
+
 
 		/*! Execute command objects across networks. */
 		// Here 'int' type is used instead of 'unsigned int' because SLICE does not

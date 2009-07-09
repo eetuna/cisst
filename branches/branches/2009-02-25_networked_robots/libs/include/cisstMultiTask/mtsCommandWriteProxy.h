@@ -115,10 +115,7 @@ public:
                 ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
             } else {
                 CMN_ASSERT(RequiredInterfaceProxy);
-
                 RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
-                //std::cout << "#########################" << std::endl;
-                //ToStream(std::cout);
             }
             return mtsCommandBase::DEV_OK;
         }
@@ -140,7 +137,7 @@ public:
     /*! Return a pointer on the argument prototype */
     const mtsGenericObject * GetArgumentPrototype(void) const {
         //
-        // TODO: FIX THIS
+        // TODO: FIX ME
         //
         return reinterpret_cast<const mtsGenericObject *>(0x1234);
     }

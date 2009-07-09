@@ -119,8 +119,9 @@ public:
     /*! Get pointers to the event generator proxies at client side. When events
         are generated at server side, these proxies are called and execute 
         actual event handlers at client side. */
-    bool GetEventGeneratorProxyPointers(
-        const std::string & requiredInterfaceName,
+    void GetEventGeneratorProxyPointers(
+        mtsProvidedInterface * providedInterfaceProxy,
+        mtsRequiredInterface * requiredInterface,
         mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies);
 
     //-------------------------------------------------------------------------

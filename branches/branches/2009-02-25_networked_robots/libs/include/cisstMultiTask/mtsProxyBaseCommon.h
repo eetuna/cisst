@@ -203,6 +203,7 @@ protected:
     cmnDeSerializer * DeSerializer;
 
     void Serialize(const cmnGenericObject & argument, std::string & serializedData)
+    //void Serialize(const mtsGenericObject & argument, std::string & serializedData)
     {
         SerializationBuffer.str("");    
         Serializer->Serialize(argument);

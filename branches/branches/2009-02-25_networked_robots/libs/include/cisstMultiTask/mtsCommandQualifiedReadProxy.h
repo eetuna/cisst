@@ -101,14 +101,14 @@ public:
     /*! Return a pointer on the argument prototype */
     const mtsGenericObject * GetArgument1Prototype(void) const {
         //
-        // TODO: FIX THIS
+        // TODO: FIX ME
         //
         return reinterpret_cast<const mtsGenericObject *>(0x12345678);
     }
 
     const mtsGenericObject * GetArgument2Prototype(void) const {
         //
-        // TODO: FIX THIS
+        // TODO: FIX ME
         //
         return reinterpret_cast<const mtsGenericObject *>(0x12345678);
     }

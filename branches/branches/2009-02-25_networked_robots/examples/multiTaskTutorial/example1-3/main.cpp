@@ -13,11 +13,8 @@
 
 using namespace std;
 
-/*
-    Server task : SIN - provided interface
-
-    Client task : DISP - required interface
-*/
+// If the following macro is enabled, network-related feature is disabled.
+//#define LOCAL_VERSION
 
 bool IsGlobalTaskManager = false;
 bool IsServerTask = false;
@@ -27,7 +24,7 @@ string ServerTaskIP;
 void help(const char * programName)
 {
     cerr << endl 
-         << "Usage: multiTaskTutorialExample1-2 [OPTIONS] [ServerIP_1] [ServerIP_2]" << endl 
+         << "Usage: multiTaskTutorialExample1-3 [OPTIONS] [ServerIP_1] [ServerIP_2]" << endl 
          << endl
          << "[OPTIONS]" << endl
          << "  -s,    run a server task manager (global task manager)" << endl
@@ -67,6 +64,7 @@ int main(int argc, char * argv[])
 {
     string serverTaskName = "SIN", clientTaskName = "DISP";
 
+#ifndef LOCAL_VERSION
     // Check arguments
     if (argc == 2) {
         if (strcmp(argv[1], "-s") == 0) {
@@ -87,12 +85,13 @@ int main(int argc, char * argv[])
         help(argv[0]);
         return 1;
     }
+#endif
 
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
     cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
-    osaThreadedLogFile threadedLog("example1-2_");
+    osaThreadedLogFile threadedLog("example1-3_");
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
     cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
@@ -100,6 +99,7 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
 
+#ifndef LOCAL_VERSION
     //-------------------------------------------------------------------------
     // Create default local tasks
     //-------------------------------------------------------------------------
@@ -203,6 +203,43 @@ int main(int argc, char * argv[])
             while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
         }
     }
+#else
+    // create our two tasks
+    const double PeriodSine = 1 * cmn_ms; // in milliseconds
+    const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
+    
+    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
+    displayTaskObject->Configure();
+
+    // add the tasks to the task manager
+    taskManager->AddTask(sineTaskObject);
+    taskManager->AddTask(displayTaskObject);
+
+    // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
+    taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
+
+    // generate a nice tasks diagram
+    std::ofstream dotFile("example1-3.dot"); 
+    taskManager->ToStreamDot(dotFile);
+    dotFile.close();
+
+    // create the tasks, i.e. find the commands
+    taskManager->CreateAll();
+    // start the periodic Run
+    taskManager->StartAll();
+
+    // wait until the close button of the UI is pressed
+    while (!displayTaskObject->IsTerminated()) {
+        osaSleep(10.0 * cmn_ms); // sleep to save CPU
+    }
+    // cleanup
+    taskManager->KillAll();
+
+    osaSleep(PeriodSine * 2);
+    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodSine);
+#endif
 
     return 0;
 }
