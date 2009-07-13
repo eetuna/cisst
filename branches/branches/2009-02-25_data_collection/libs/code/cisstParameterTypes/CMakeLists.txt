@@ -43,6 +43,12 @@ SET(SOURCE_FILES
     prmTransformationFixed.cpp
     prmTransformationDynamic.cpp
     prmTransformationManager.cpp
+	
+	prmString.cpp
+	prmMaskedVector.cpp
+    prmActuatorState.cpp
+    prmRobotState.cpp
+    prmActuatorParameters.cpp
     )
 
 # all header files
@@ -68,6 +74,12 @@ SET(HEADER_FILES
     prmTransformationFixed.h
     prmTransformationDynamic.h
     prmTransformationManager.h
+	
+	prmString.h
+	prmMaskedVector.h
+    prmActuatorState.h
+    prmRobotState.h
+    prmActuatorParameters.h
     )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
