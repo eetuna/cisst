@@ -31,7 +31,7 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManagerTestTask);
 
 //-----------------------------------------------------------------------------
 mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName, 
-										   double period) :
+                                               double period) :
 	mtsTaskPeriodic(collectorName, period, false, 5000)
 {
 }
@@ -39,34 +39,51 @@ mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName
 //-----------------------------------------------------------------------------
 //	Tests for public variables and methods
 //-----------------------------------------------------------------------------
-void mtsTaskManagerTest::TestConstructor(void)
-{
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    CPPUNIT_ASSERT(taskManager);
-
-    //CPPUNIT_ASSERT(taskManager->IceCommunicatorPtr == NULL);
-    //CPPUNIT_ASSERT(taskManager->TaskManagerTypeMember == mtsTaskManager::TASK_MANAGER_LOCAL);
-
-    //taskManager->SetTaskManagerMode(mtsTaskManager::TASK_MANAGER_SERVER);
-}
-
 void mtsTaskManagerTest::TestAddTask(void)
 {
-	mtsTaskManagerTestTask task1("task1", 10 * cmn_ms), task2("task2", 10 * cmn_ms);
-	//mtsTaskManager TaskManager;
-	//
-	//CPPUNIT_ASSERT(0 == TaskManager.TaskMap.GetCount());
-	//	
-	//CPPUNIT_ASSERT(TaskManager.AddTask(&task1));
-	//CPPUNIT_ASSERT(1 == TaskManager.TaskMap.GetCount());
-	//
-	//CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
-	//CPPUNIT_ASSERT(TaskManager.AddTask(&task2));
-	//CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
-	//
-	//CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
-	//CPPUNIT_ASSERT(!TaskManager.AddTask(&task2));
-	//CPPUNIT_ASSERT(2 == TaskManager.TaskMap.GetCount());
+	mtsTaskManagerTestTask task1("task1"), task2("task2");
+	mtsTaskManager TaskManager;
+	
+	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.size());
+		
+	CPPUNIT_ASSERT(TaskManager.AddTask(&task1));
+	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.size());
+	
+	CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
+	CPPUNIT_ASSERT(TaskManager.AddTask(&task2));
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	
+	CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
+	CPPUNIT_ASSERT(!TaskManager.AddTask(&task2));
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
 }
+
+void mtsTaskManagerTest::TestRemoveTask(void)
+{
+	const std::string name1 = "task1", name2 = "task2";
+	
+	mtsTaskManagerTestTask task1(name1),
+                           task2(name2),
+                           task3("dummy");
+	mtsTaskManager TaskManager;
+	
+	TaskManager.AddTask(&task1);
+	TaskManager.AddTask(&task2);
+	
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	
+	CPPUNIT_ASSERT(!TaskManager.RemoveTask(&task3));
+	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	
+	CPPUNIT_ASSERT(TaskManager.RemoveTask(&task1));
+	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.size());
+	
+	CPPUNIT_ASSERT(TaskManager.RemoveTask(&task2));
+	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.size());
+}
+
+//-----------------------------------------------------------------------------
+//	Tests for private variables and methods
+//-----------------------------------------------------------------------------
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsTaskManagerTest);

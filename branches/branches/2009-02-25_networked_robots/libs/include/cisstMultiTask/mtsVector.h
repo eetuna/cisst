@@ -54,10 +54,13 @@ public:
         VectorType(0)
     {}
 
-    /*! Constructor with memory allocation for a given size. */
+    /*! Constructor with memory allocation for a given size.  Assign
+        zero to all elements. */
     inline mtsVector(size_type size):
         VectorType(size)
-    {}
+    {
+        VectorType::Zeros();
+    }
 
     /*! Assignment from vector base class.  This operator assign the
       data from one vector to another, it doesn't replace the object
@@ -70,6 +73,12 @@ public:
     /*! Copy constructor. */
     inline mtsVector(const ThisType & otherVector):
         mtsGenericObject(otherVector),
+        VectorType(otherVector)
+    {}
+
+    /*! Pseudo copy constructor from vector type. */
+    inline mtsVector(const VectorType & otherVector):
+        mtsGenericObject(),
         VectorType(otherVector)
     {}
 
@@ -88,6 +97,15 @@ public:
     virtual void ToStream(std::ostream & outputStream) const {
         VectorType::ToStream(outputStream);
     }
+
+    /*! To stream raw data. */
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        mtsGenericObject::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+        outputStream << delimiter;
+        VectorType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    }
+
 };
 
 
@@ -124,17 +142,6 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsUCharVec);
 
 typedef mtsVector<bool> mtsBoolVec;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsBoolVec);
-
-// PK: the StateTable GetHistory implementation will require an mtsVector
-//     for every parameter type!!
-
-// Following is for a vector of mtsDouble
-typedef mtsVector<mtsDouble> mtsDoubleHistory;
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleHistory);
-
-// Following is for a vector of cmnVector<double>
-typedef mtsVector<mtsDoubleVec> mtsDoubleVecHistory;
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleVecHistory);
 
 
 #endif // _mtsVector_h

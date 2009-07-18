@@ -28,11 +28,8 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmPositionCartesianGet_h
 #define _prmPositionCartesianGet_h
 
-
-#include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTransformationBase.h>
 #include <cisstParameterTypes/prmTransformationManager.h>
-#include <cisstParameterTypes/prmTypes.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
@@ -43,21 +40,24 @@ class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
+    /*! Base type */
+    typedef mtsGenericObject BaseType;
+
     /*! default constructor */
     inline prmPositionCartesianGet(void):
+        BaseType(),
         MovingFrameMember(0),
-        ReferenceFrameMember(0)
+        ReferenceFrameMember(0),
+        PositionMember()
     {}
     
     /*! constructor with all parameters */
     inline prmPositionCartesianGet(const prmTransformationBasePtr & movingFrame, 
                                    const prmTransformationBasePtr & referenceFrame, 
-                                   const prmCartesianPosition & position,
-                                   const mtsStateIndex & stateIndex):
+                                   const vctFrm3 & position):
         MovingFrameMember(movingFrame),
         ReferenceFrameMember(referenceFrame),
-        PositionMember(position),
-        StateIndexMember(stateIndex)
+        PositionMember(position)
     {}
     
     /*!destructor
@@ -69,7 +69,7 @@ class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
     //@}
 
 
@@ -77,15 +77,16 @@ class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
     //@}
 
 
     /*! Set and Get methods for position */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianPosition, Position);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctFrm3, Position);
     //@}
 
+ public:
 
     /*! Set moving to a node in the transformation tree.  The actual
       position is computed with respect to the reference frame carried
@@ -98,30 +99,26 @@ class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
     } 
 
     
-    /*! Set and Get methods for state index.  Current state index, as
-      provided for writer of the task providing the position
-      data. */
-    //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
-
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
-   /*! Serialize the content of the object without any extra
-      information, i.e. no class type nor format version.  The
-      "receiver" is supposed to already know what to expect. */ 
-    virtual void SerializeRaw(std::ostream & outputStream) const {
-        cmnSerializeRaw(outputStream, this->PositionMember);
-        this->StateIndexMember.SerializeRaw(outputStream);
+
+    /*! To stream raw data. */
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        BaseType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+        outputStream << delimiter;
+        this->PositionMember.ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
     }
+
 
     /*! De-serialize the content of the object without any extra
       information, i.e. no class type nor format version. */
     virtual void DeSerializeRaw(std::istream & inputStream) {
+        BaseType::DeSerializeRaw(inputStream);
         cmnDeSerializeRaw(inputStream, this->PositionMember);
-        this->StateIndexMember.DeSerializeRaw(inputStream);
     }
+
 }; // _prmPositionCartesianGet_h
 
 

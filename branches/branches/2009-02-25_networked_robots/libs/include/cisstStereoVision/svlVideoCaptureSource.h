@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlVideoCaptureSource_h
 
 #include <cisstStereoVision/svlStreamManager.h>
+#include <string.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
@@ -67,7 +68,7 @@ public:
 	    bool testok;
     } DeviceInfo;
 
-    typedef enum PixelType {
+    typedef enum _PixelType {
         PixelRGB8    = 0,
         PixelYUV444  = 1,
         PixelYUV422  = 2,
@@ -75,7 +76,7 @@ public:
         PixelMONO8   = 4,
         PixelMONO16  = 5,
         PixelUnknown = 6
-    };
+    } PixelType;
 
     typedef struct _ImageFormat {
         unsigned int    width;
@@ -86,14 +87,21 @@ public:
         double          framerate;
     } ImageFormat;
 
-    typedef enum ImagePropertiesMask {
+    typedef struct _ExternalTrigger {
+        bool            enable;
+        unsigned int    mode;
+        unsigned int    source;
+        unsigned int    polarity;
+    } ExternalTrigger;
+
+    typedef enum _ImagePropertiesMask {
         propShutter      = 1,
         propGain         = 1 << 1,
         propWhiteBalance = 1 << 2,
         propBrightness   = 1 << 3,
         propGamma        = 1 << 4,
         propSaturation   = 1 << 5,
-    };
+    } ImagePropertiesMask;
 
     typedef struct _ImageProperties {
         unsigned int mask;
@@ -117,6 +125,7 @@ public:
     int DialogDevice();
     int DialogInput(unsigned int deviceid);
     int DialogFormat(unsigned int videoch = SVL_LEFT);
+    int DialogTrigger(unsigned int videoch = SVL_LEFT);
     int DialogImageProperties(unsigned int videoch = SVL_LEFT);
 
     int GetDeviceList(DeviceInfo **deviceinfolist, bool update = false);
@@ -131,6 +140,8 @@ public:
     int SelectFormat(unsigned int formatid, unsigned int videoch = SVL_LEFT);
     int SetFormat(ImageFormat& format, unsigned int videoch = SVL_LEFT);
     int GetFormat(ImageFormat& format, unsigned int videoch = SVL_LEFT);
+    int SetTrigger(ExternalTrigger& trigger, unsigned int videoch = SVL_LEFT);
+    int GetTrigger(ExternalTrigger& trigger, unsigned int videoch = SVL_LEFT);
     int SetImageProperties(ImageProperties& properties, unsigned int videoch = SVL_LEFT);
     int GetImageProperties(ImageProperties& properties, unsigned int videoch = SVL_LEFT);
 
@@ -157,6 +168,7 @@ private:
     int *InputID;
     ImageFormat **Format;
     ImageProperties **Properties;
+    ExternalTrigger *Trigger;
     unsigned char **DevSpecConfigBuffer;
     unsigned int *DevSpecConfigBufferSize;
 
@@ -203,6 +215,14 @@ public:
     }
     virtual int GetImageProperties(svlVideoCaptureSource::ImageProperties & CMN_UNUSED(properties),
                                    unsigned int CMN_UNUSED(videoch) = 0) {
+        return SVL_FAIL;
+    }
+    virtual int SetTrigger(svlVideoCaptureSource::ExternalTrigger & CMN_UNUSED(trigger),
+                           unsigned int CMN_UNUSED(videoch) = 0) {
+        return SVL_FAIL;
+    }
+    virtual int GetTrigger(svlVideoCaptureSource::ExternalTrigger & CMN_UNUSED(trigger),
+                           unsigned int CMN_UNUSED(videoch) = 0) {
         return SVL_FAIL;
     }
 };

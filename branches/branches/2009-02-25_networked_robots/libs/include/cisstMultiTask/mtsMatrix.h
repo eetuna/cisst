@@ -57,11 +57,15 @@ public:
     /*! Constructor with memory allocation for a given size. */
     inline mtsMatrix(size_type rows, size_type cols):
         MatrixType(rows, cols)
-    {}
+    {
+        MatrixType::Zeros();
+    }
 
     inline mtsMatrix(const nsize_type & size):
         MatrixType(size)
-    {}
+    {
+        MatrixType::Zeros();
+    }
 
     /*! Assignment from vector base class.  This operator assign the
       data from one vector to another, it doesn't replace the object
@@ -74,6 +78,12 @@ public:
     /*! Copy constructor. */
     inline mtsMatrix(const ThisType & otherMatrix):
         mtsGenericObject(otherMatrix),
+        MatrixType(otherMatrix)
+    {}
+
+    /*! Pseudo copy constructor from matrix type. */
+    inline mtsMatrix(const MatrixType & otherMatrix):
+        mtsGenericObject(),
         MatrixType(otherMatrix)
     {}
 
@@ -92,6 +102,15 @@ public:
     virtual void ToStream(std::ostream & outputStream) const {
         MatrixType::ToStream(outputStream);
     }
+
+    /*! To stream raw data. */
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        mtsGenericObject::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+        outputStream << delimiter;
+        MatrixType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    }
+
 };
 
 

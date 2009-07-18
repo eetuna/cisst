@@ -163,12 +163,12 @@ int main(int argc, const char *argv[])
         return 0;
     }
 
-	if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
+    if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
         int testCount = ListAllTestsInTestSuite(allTests);
-		std::cout << "-------------------------------- Total " << testCount <<
-			" test(s)" << std::endl;
+        std::cout << "-------------------------------- Total " << testCount
+                  << " test(s)" << std::endl;
     }
-
+    
     if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS ||
 		testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
         CppUnit::RepeatedTest * repeatedTest =

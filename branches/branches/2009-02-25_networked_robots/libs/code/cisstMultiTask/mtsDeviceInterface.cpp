@@ -21,7 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObjectProxy.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
-
+#include <cisstMultiTask/mtsFunctionVoid.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterface)
 
@@ -134,9 +134,21 @@ mtsCommandVoidBase * mtsDeviceInterface::AddEventVoid(const std::string & eventN
 }
 
 
+bool mtsDeviceInterface::AddEventVoid(mtsFunctionVoid & eventTrigger,
+                                      const std::string eventName) {
+    mtsCommandVoidBase * command;
+    command = this->AddEventVoid(eventName);
+    if (command) {
+        eventTrigger.Bind(command);
+        return true;
+    }
+    return false;
+}
+
+
 bool mtsDeviceInterface::AddEvent(const std::string & name, mtsMulticastCommandVoid * generator)
 {
-    if (EventWriteGenerators.GetItem(name)) {
+    if (EventWriteGenerators.GetItem(name, CMN_LOG_LOD_NOT_USED)) {
         // Is this check really needed?
         CMN_LOG_CLASS_INIT_VERBOSE << "AddEvent (void): event " << name << " already exists as write event, ignored." << std::endl;
         return false;
@@ -147,7 +159,7 @@ bool mtsDeviceInterface::AddEvent(const std::string & name, mtsMulticastCommandV
 
 bool mtsDeviceInterface::AddEvent(const std::string & name, mtsMulticastCommandWriteBase * generator)
 {
-    if (EventVoidGenerators.GetItem(name)) {
+    if (EventVoidGenerators.GetItem(name, CMN_LOG_LOD_NOT_USED)) {
         // Is this check really needed?
         CMN_LOG_CLASS_INIT_VERBOSE << "AddEvent (write): event " << name << " already exists as void event, ignored." << std::endl;
         return false;

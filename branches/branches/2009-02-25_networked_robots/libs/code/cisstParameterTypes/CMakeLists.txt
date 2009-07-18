@@ -25,7 +25,6 @@ SET(DEPENDENCIES
 # all source files
 SET(SOURCE_FILES
     prmEventButton.cpp
-    prmTypes.cpp
     prmMotionBase.cpp
 
     prmPositionJointGet.cpp
@@ -38,11 +37,18 @@ SET(SOURCE_FILES
     prmVelocityCartesianGet.cpp
     prmVelocityCartesianSet.cpp
     prmForceCartesianGet.cpp
+    prmForceCartesianSet.cpp
 
     prmTransformationBase.cpp
     prmTransformationFixed.cpp
     prmTransformationDynamic.cpp
     prmTransformationManager.cpp
+	
+	prmString.cpp
+	prmMaskedVector.cpp
+    prmActuatorState.cpp
+    prmRobotState.cpp
+    prmActuatorParameters.cpp
     )
 
 # all header files
@@ -50,7 +56,6 @@ SET(HEADER_FILES
     prmEventButton.h
     prmExport.h
     prmForwardDeclarations.h
-    prmTypes.h
     prmMotionBase.h
 
     prmPositionJointGet.h
@@ -63,11 +68,18 @@ SET(HEADER_FILES
     prmVelocityCartesianGet.h
     prmVelocityCartesianSet.h
     prmForceCartesianGet.h
+    prmForceCartesianSet.h
 
     prmTransformationBase.h
     prmTransformationFixed.h
     prmTransformationDynamic.h
     prmTransformationManager.h
+	
+	prmString.h
+	prmMaskedVector.h
+    prmActuatorState.h
+    prmRobotState.h
+    prmActuatorParameters.h
     )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)

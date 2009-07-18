@@ -29,7 +29,6 @@ http://www.cisst.org/cisst/license.txt.
 #define _prmForceCartesianGet_h
 
 #include <cisstVector/vctFixedSizeVectorTypes.h>
-#include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstParameterTypes/prmTransformationBase.h>
 #include <cisstParameterTypes/prmTransformationManager.h>
@@ -54,12 +53,10 @@ class CISST_EXPORT prmForceCartesianGet: public mtsGenericObject
     /*! constructor with all parameters */
     inline prmForceCartesianGet(const prmTransformationBasePtr & movingFrame, 
                                 const prmTransformationBasePtr & referenceFrame, 
-                                const vctDouble6 & force,
-                                const mtsStateIndex & stateIndex):
+                                const vctDouble6 & force):
         MovingFrameMember(movingFrame),
         ReferenceFrameMember(referenceFrame),
-        ForceMember(force),
-        StateIndexMember(stateIndex)
+        ForceMember(force)
     {
         this->MaskMember.SetAll(true);
     }
@@ -73,7 +70,7 @@ class CISST_EXPORT prmForceCartesianGet: public mtsGenericObject
         force.  This is defined by a node in the transformation
         tree. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
     //@}
 
 
@@ -81,28 +78,22 @@ class CISST_EXPORT prmForceCartesianGet: public mtsGenericObject
         force.  This is defined by a node in the transformation
         tree. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
     //@}
 
 
     /*! Set and Get methods for force */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(vctDouble6, Force);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDouble6, Force);
     //@}
 
 
     /*! Set and Get methods for mask */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(vctBool6, Mask);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBool6, Mask);
     //@}
 
-
-    /*! Set and Get methods for state index.  Current state index, as
-      provided for writer of the task providing the force
-      data. */
-    //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
+public:
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;

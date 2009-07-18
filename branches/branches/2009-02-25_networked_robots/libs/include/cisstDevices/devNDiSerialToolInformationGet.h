@@ -25,7 +25,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstParameterTypes/prmTypes.h>
 
 #include <string>
 
@@ -43,10 +42,10 @@ class CISST_EXPORT devNDiSerialToolInformationGet: public mtsGenericObject
        character array of fixed size 256. Anything larger is
        truncated. This allows for easy usage for this parameter by the
        users of cisstTracker. */
-    typedef struct CHAR_256
+    typedef struct
     { 
         char Value[256];
-    };
+    } CHAR_256;
 
     CHAR_256 StringToChar256(std::string in) // Should be a reference ADV
     {
@@ -81,6 +80,7 @@ class CISST_EXPORT devNDiSerialToolInformationGet: public mtsGenericObject
     /*! Declares Set and Get methods for Name of the Tool */
     MTS_DECLARE_MEMBER_AND_ACCESSORS(CHAR_256, Name);
     
+ public:
     /*! Overloads the SetName function for string arguments */
     inline void SetName(const std::string & name) { 
         this->SetName(StringToChar256(name)); 
@@ -97,6 +97,8 @@ class CISST_EXPORT devNDiSerialToolInformationGet: public mtsGenericObject
     /*! Declares Set and Get methods for Serial Number of the Tool */
     MTS_DECLARE_MEMBER_AND_ACCESSORS(CHAR_256, SerialNumber);
     
+ public:
+
     /*! Overloads the SetSerialNumber function for string arguments */
     inline void SetSerialNumber(const std::string & serial)
     { 

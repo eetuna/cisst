@@ -53,15 +53,15 @@ public:
     typedef mtsCommandWriteBase BaseType;
 
 protected:
+    /*! CommandId is set as a pointer to a mtsFunctionWrite at peer's
+      memory space which binds to an actual write command. */
+    CommandProxyIdType CommandId;
+    
     /*! Device interface proxy objects which execute a write command at 
         peer's memory space across networks. */
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
     mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
 
-    /*! CommandId is set as a pointer to a mtsFunctionWrite at peer's memory
-        space which binds to an actual write command. */
-    CommandProxyIdType CommandId;
-    
 public:
     /*! The constructors. */
     mtsCommandWriteProxy(const CommandProxyIdType commandId, 

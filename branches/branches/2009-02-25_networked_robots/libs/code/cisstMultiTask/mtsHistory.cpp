@@ -2,10 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  Author(s):	Rajesh Kumar, Anton Deguet
-  Created on:   2008-03-12
+  $Id: mtsHistory.cpp 188 2009-03-20 17:07:32Z mjung5 $
 
-  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Author(s):	Min Yang Jung
+  Created on:   2009-03-25
+
+  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -18,5 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#include <cisstParameterTypes/prmTypes.h>
+#include <cisstMultiTask/mtsHistory.h>
 
+CMN_IMPLEMENT_SERVICES_TEMPLATED(mtsDoubleHistory);
+CMN_IMPLEMENT_SERVICES_TEMPLATED(mtsDoubleVecHistory);

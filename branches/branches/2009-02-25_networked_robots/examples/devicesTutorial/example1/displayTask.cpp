@@ -42,7 +42,7 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
 void displayTask::Startup(void) 
 {
     // find the interface which has been connected to our resource port
-    mtsDeviceInterface * providedInterface = GetProvidedInterfaceFor("Robot");
+    mtsProvidedInterface * providedInterface = GetProvidedInterfaceFor("Robot");
     // make sure an interface has been connected
     if (providedInterface) {
         // get a pointer on tip node --- name is hardcoded, bad, need a way to query all possible names

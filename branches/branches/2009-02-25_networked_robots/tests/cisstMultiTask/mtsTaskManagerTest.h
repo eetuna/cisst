@@ -36,7 +36,8 @@ protected:
 	mtsStateData<cmnDouble> TestData;
 
 public:
-	mtsTaskManagerTestTask(const std::string & collectorName, double period);
+	mtsTaskManagerTestTask(const std::string & collectorName, 
+                           double period = 10 * cmn_ms);
 	virtual ~mtsTaskManagerTestTask() {}
 
 	// implementation of four methods that are pure virtual in mtsTask
@@ -53,9 +54,9 @@ class mtsTaskManagerTest: public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(mtsTaskManagerTest);
 	{		
-		// public variables and methods
+		// public variables and methods		
 		CPPUNIT_TEST(TestAddTask);
-        CPPUNIT_TEST(TestConstructor);
+		CPPUNIT_TEST(TestRemoveTask);
 		
 		// private variables and methods		
 
@@ -67,14 +68,16 @@ private:
     
 public:
     void setUp(void) {
+		//Collector = new mtsCollector("collector", 10 * cmn_ms);
     }
     
     void tearDown(void) {
+		//delete Collector;
     }
     
 	// public variables and methods
 	void TestAddTask(void);
-    void TestConstructor(void);
+	void TestRemoveTask(void);
 	
 	// private variables and methods	
 };

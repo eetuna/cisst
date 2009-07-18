@@ -29,6 +29,7 @@ SET(SOURCE_FILES
     mtsVector.cpp
     mtsMatrix.cpp
     mtsGenericObjectProxy.cpp
+    mtsTransformationTypes.cpp
 
     mtsMulticastCommandVoid.cpp
     mtsMulticastCommandWriteBase.cpp
@@ -54,6 +55,7 @@ SET(SOURCE_FILES
     mtsTaskFromCallback.cpp
 
     mtsTaskManager.cpp
+
     mtsTaskManagerProxyClient.cpp
     mtsTaskManagerProxyServer.cpp
     
@@ -63,15 +65,20 @@ SET(SOURCE_FILES
 
     mtsTaskGlobal.cpp
     mtsDeviceProxy.cpp
+
+    mtsCollectorBase.cpp
+    mtsCollectorState.cpp    
+
+    mtsHistory.cpp
     )
 
 # all header files
 SET(HEADER_FILES
     mtsVector.h
     mtsMatrix.h
-
     mtsGenericObject.h
     mtsGenericObjectProxy.h
+    mtsTransformationTypes.h
 
     mtsCommandBase.h
     mtsFunctionBase.h
@@ -138,6 +145,11 @@ SET(HEADER_FILES
     mtsMulticastCommandWriteProxy.h
     
     mtsEventWriteGeneratorProxy.h
+
+    mtsCollectorBase.h    
+    mtsCollectorState.h
+    
+    mtsHistory.h
     )
 
 # make sure all options are set for all devices to OFF

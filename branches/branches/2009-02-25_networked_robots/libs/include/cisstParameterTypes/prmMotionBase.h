@@ -24,7 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 // basic includes
 #include <cisstMultiTask/mtsGenericObject.h>
 
-#include <cisstParameterTypes/prmTypes.h>
+#include <cisstParameterTypes/prmForwardDeclarations.h>
 
 
 // Always include last
@@ -39,7 +39,7 @@ class CISST_EXPORT prmMotionBase: public mtsGenericObject
     /* default constructor*/
     inline prmMotionBase():
         BlockingFlagMember(NO_WAIT),
-        BlendingFactorMember(0),
+        BlendingFactorMember(false),
         IsPreemptableMember(true),
         IsCoordinatedMember(true),
         IsGoalOnlyMember(false)
@@ -49,8 +49,8 @@ class CISST_EXPORT prmMotionBase: public mtsGenericObject
       \param 
     */
     inline prmMotionBase(const prmBlocking & blockingFlag, 
-                         const prmBlending & blendingFactor,
-                         const prmTime & timeLimit,
+                         const bool & blendingFactor,
+                         const double & timeLimit,
                          const bool & isPreemptable,
                          const bool & isCoordinated,
                          const bool & isGoalOnly
@@ -71,8 +71,8 @@ class CISST_EXPORT prmMotionBase: public mtsGenericObject
       \param 
     */
     inline void SetBaseParameter(const prmBlocking & blockingFlag, 
-                                 const prmBlending & blendingFactor, 
-                                 const prmTime & timeLimit,
+                                 const bool & blendingFactor, 
+                                 const double & timeLimit,
                                  const bool & isPreemptable,
                                  const bool & isCoordinated,
                                  const bool & isGoalOnly)
@@ -87,34 +87,34 @@ class CISST_EXPORT prmMotionBase: public mtsGenericObject
    
     /*! Set and get methods for blocking flag. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBlocking, BlockingFlag);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmBlocking, BlockingFlag);
     //@}
 
     /*! Set and Get method for the blending parameter.  Whether or not
       to blend motions, and the tolerance (to be implemented later)
     */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBlending, BlendingFactor);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, BlendingFactor);
     //@}
 
     /*! Set and Get methods for TimeLimit.  Describes time allowed or
       requested for a motion.
     */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTime, TimeLimit);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(double, TimeLimit);
     //@}
 
     /*! Set and Get methods for Preemptable parameter.  Default is
       true.*/
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(bool, IsPreemptable);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, IsPreemptable);
     //@}
 
     /*! Set and Get methods for Coordinated parameter.  Force to sync
       motions between joints or rotation/translation to start and end
       at the same time by lowering speed on some joints. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(bool, IsCoordinated);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, IsCoordinated);
     //@}
 
     /*! Set and Get methods for IsGoalOnly.
@@ -124,7 +124,7 @@ class CISST_EXPORT prmMotionBase: public mtsGenericObject
         False by default.
     */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(bool, IsGoalOnly);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, IsGoalOnly);
     //@}
 
 };

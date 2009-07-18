@@ -53,14 +53,14 @@ public:
     typedef mtsCommandVoidBase BaseType;    
 
 protected:
+    /*! CommandId is set as a pointer to a mtsFunctionVoid at peer's
+      memory space which binds to an actual void command. */
+    CommandProxyIdType CommandId;
+
     /*! Device interface proxy object which executes a void command at 
         peer's memory space across networks. */
     mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
     mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
-
-    /*! CommandId is set as a pointer to a mtsFunctionVoid at peer's memory
-        space which binds to an actual void command. */
-    CommandProxyIdType CommandId;
 
 public:    
     /*! The constructor. */
