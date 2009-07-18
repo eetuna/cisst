@@ -27,13 +27,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmActuatorState_h
 #define _prmActuatorState_h
 
-//basic includes
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstOSAbstraction.h>
-#include <cisstCommon/cmnClassRegisterMacros.h>
-#include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstParameterTypes/prmTypes.h>
-#include <cisstMultiTask/mtsMacros.h>
+// basic includes
+#include <cisstVector/vctDynamicVectorTypes.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsVector.h>
 
 // Always include last
@@ -91,74 +87,67 @@ public:
 
     /*! Set and Get methods for the the position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsDoubleVec, Position);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(mtsDoubleVec, Position);
     //@}
 
     /*! Set and Get methods for the the Velocity. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsDoubleVec, Velocity);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(mtsDoubleVec, Velocity);
     //@}
 
 
     /*! Set and Get methods for the the position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, InMotion);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, InMotion);
     //@}
 
     /*! Set and Get methods for the the position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, MotorOff);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, MotorOff);
     //@}
 
 
     /*! Set and Get methods for the forward SOFTWARE limits hit. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, SoftFwdLimitHit);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, SoftFwdLimitHit);
     //@}
 
 
     /*! Set and Get methods for the reverse SOFTWARE Limit. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, SoftRevLimitHit);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, SoftRevLimitHit);
     //@}
 
         /*! Set and Get methods for the forward HARDWARE limits hit. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, HardFwdLimitHit);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, HardFwdLimitHit);
     //@}
 
     /*! Set and Get methods for the reverse HARDWARE Limit. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, HardRevLimitHit);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, HardRevLimitHit);
     //@}
 
 
     /*! Set and Get methods for the  HomeSwitch . */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, HomeSwitchOn);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, HomeSwitchOn);
     //@}
 
     /*! Set and Get methods for state of homing variable on the controller. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, IsHomed);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, IsHomed);
     //@}
 
     /*! Set and Get methods for the state of the estop button. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(bool, EStopON);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, EStopON);
     //@}
 
-
-    /*! Set and Get methods for time index.  Current time index, as
-    provided for writer of the task providing the position
-    data. */
-    //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
+public:
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
-
 
 }; 
 

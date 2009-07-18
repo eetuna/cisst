@@ -190,11 +190,11 @@ public:
 
         \sa mtsDevice, mtsTaskContinuous, mtsTaskPeriodic, mtsTaskFromCallback
 	 */
-	mtsTask(const std::string & name, 
+    mtsTask(const std::string & name, 
             unsigned int sizeStateTable = 256);
 
-	/*! Default Destructor. */
-	virtual ~mtsTask();
+    /*! Default Destructor. */
+    virtual ~mtsTask();
 
     /********************* Methods to be defined by user *****************/
     /* The Run, Startup, and Cleanup methods could be made protected.    */
@@ -262,9 +262,7 @@ public:
     /*! Return the name of this state table. */
     const std::string GetDefaultStateTableName(void) const { return StateTable.GetName(); }
 
-    /*! Return the pointer to the state table. 
-        TODO: If a task can have more than one state table, this method should be
-        changed so that it should iterate a state table container. */
+    /*! Return the pointer to the default state table or a specific one if a name is provided. */
     mtsStateTable * GetStateTable(const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME) {
         return this->StateTables.GetItem(stateTableName, CMN_LOG_LOD_INIT_ERROR);
     }

@@ -105,13 +105,13 @@ public:
         \param name The name of the task
         \param sizeStateTable The history size of the state table
 
-        \note See note in mtsTask regarding length of string name.yyyy
+        \note See note in mtsTask regarding length of string name.
 
         \sa mtsTask, mtsTaskContinuous, mtsTaskPeriodic
 
      */
     mtsTaskFromCallback(const std::string & name, 
-                        unsigned int sizeStateTable = 256) :
+                        unsigned int sizeStateTable = 256):
         mtsTask(name, sizeStateTable), inRunInternal(false) {}
 
     /*! Default Destructor. */

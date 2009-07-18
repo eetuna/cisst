@@ -25,7 +25,6 @@ SET(DEPENDENCIES
 # all source files
 SET(SOURCE_FILES
     prmEventButton.cpp
-    prmTypes.cpp
     prmMotionBase.cpp
 
     prmPositionJointGet.cpp
@@ -38,6 +37,7 @@ SET(SOURCE_FILES
     prmVelocityCartesianGet.cpp
     prmVelocityCartesianSet.cpp
     prmForceCartesianGet.cpp
+    prmForceCartesianSet.cpp
 
     prmTransformationBase.cpp
     prmTransformationFixed.cpp
@@ -56,7 +56,6 @@ SET(HEADER_FILES
     prmEventButton.h
     prmExport.h
     prmForwardDeclarations.h
-    prmTypes.h
     prmMotionBase.h
 
     prmPositionJointGet.h
@@ -69,6 +68,7 @@ SET(HEADER_FILES
     prmVelocityCartesianGet.h
     prmVelocityCartesianSet.h
     prmForceCartesianGet.h
+    prmForceCartesianSet.h
 
     prmTransformationBase.h
     prmTransformationFixed.h

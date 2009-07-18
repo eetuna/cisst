@@ -34,7 +34,7 @@ void * mtsTaskContinuous::RunInternal(void *data)
             return 0;
     }
 
-	while ((TaskState == ACTIVE) || (TaskState == READY)) {
+    while ((TaskState == ACTIVE) || (TaskState == READY)) {
         while (TaskState == READY) {
             // Suspend the task until there is a call to Start().
             CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: " << this->GetName() << " Wait to start." << std::endl;
@@ -42,11 +42,11 @@ void * mtsTaskContinuous::RunInternal(void *data)
         }
         if (TaskState == ACTIVE)
             DoRunInternal();
-	}
+    }
 
-	CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: ending task " << this->GetName() << std::endl;
-	CleanupInternal();
-	return this->ReturnValue;
+    CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: ending task " << this->GetName() << std::endl;
+    CleanupInternal();
+    return this->ReturnValue;
 }
 
 void mtsTaskContinuous::StartInternal(void)

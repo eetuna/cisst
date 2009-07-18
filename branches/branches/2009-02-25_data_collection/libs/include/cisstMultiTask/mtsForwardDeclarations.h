@@ -54,6 +54,8 @@ typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualified
 typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 
 template <class _argumentType> class mtsFunctionQualifiedReadOrWrite;
+typedef mtsFunctionReadOrWrite<mtsGenericObject> mtsFunctionRead;
+typedef mtsFunctionReadOrWrite<const mtsGenericObject> mtsFunctionWrite;
 
 // multicast commands
 class mtsMulticastCommandWriteBase;
@@ -69,12 +71,13 @@ class mtsTask;
 class mtsTaskPeriodic;
 class mtsTaskManager;
 
+// containers
 class mtsMailBox;
 class mtsStateTable;
 
-// mts vectors
-template <class _elementType> class mtsVector;
-typedef mtsVector<double> mtsDoubleVec;
+// data collection class
+class tsCollectorBase;
+class mtsCollectorState;
 
 
 // global function to retrieve object name if available

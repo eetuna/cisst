@@ -40,7 +40,7 @@ const std::string * cmnClassRegister::RegisterInstance(cmnClassServicesBase* cla
     cmnClassServicesBase * existingServicesPointer = FindClassServicesInstance(className);
     
     // check if this class is already registered
-    if (existingServicesPointer != NULL) {
+    if (existingServicesPointer != 0) {
         CMN_LOG_INIT_ERROR << "Class cmnClassRegister: The class " << className
                            << " is already registered.  You should not have this problem, this is a bug!" << std::endl;
     } else {
@@ -73,7 +73,8 @@ bool cmnClassRegister::SetLoD(const std::string & name, LogLoDType lod) {
     if (classServicesPointer != NULL) {
         classServicesPointer->SetLoD(lod);
         CMN_LOG_INIT_VERBOSE << "Class cmnClassRegister::SetLoD(): The class " << classServicesPointer->GetName()
-                             << " log LoD has been set to " << classServicesPointer->GetLoD() << std::endl;
+                             << " log LoD has been set to \""
+                             << cmnLogLoDString[classServicesPointer->GetLoD()] << "\"" << std::endl;
     } else {
         // we need to warn the programmer
 		CMN_LOG_INIT_WARNING << "Class cmnClassRegister::SetLoD(): The class " << name

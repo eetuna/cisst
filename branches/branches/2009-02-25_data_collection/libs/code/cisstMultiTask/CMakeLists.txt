@@ -29,6 +29,7 @@ SET(SOURCE_FILES
     mtsVector.cpp
     mtsMatrix.cpp
     mtsGenericObjectProxy.cpp
+    mtsTransformationTypes.cpp
 
     mtsMulticastCommandVoid.cpp
     mtsMulticastCommandWriteBase.cpp
@@ -55,10 +56,10 @@ SET(SOURCE_FILES
     mtsTaskFromCallback.cpp
 
     mtsTaskManager.cpp
-	
-	mtsCollectorBase.cpp
+
+    mtsCollectorBase.cpp
     mtsCollectorState.cpp    
-    
+
     mtsHistory.cpp
     )
 
@@ -66,9 +67,9 @@ SET(SOURCE_FILES
 SET(HEADER_FILES
     mtsVector.h
     mtsMatrix.h
-
     mtsGenericObject.h
     mtsGenericObjectProxy.h
+    mtsTransformationTypes.h
 
     mtsCommandBase.h
     mtsFunctionBase.h
@@ -116,8 +117,8 @@ SET(HEADER_FILES
     mtsTaskFromCallback.h
     
     mtsTaskManager.h
-	
-	mtsCollectorBase.h    
+
+    mtsCollectorBase.h    
     mtsCollectorState.h
     
     mtsHistory.h

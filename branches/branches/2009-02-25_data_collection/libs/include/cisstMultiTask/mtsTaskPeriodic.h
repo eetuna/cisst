@@ -100,7 +100,7 @@ public:
               in mtsTaskContinuous regarding newThread parameter.
 
 	 */
-	mtsTaskPeriodic(const std::string & name, 
+    mtsTaskPeriodic(const std::string & name, 
                     double periodicityInSeconds, 
                     bool isHardRealTime = false,
                     unsigned int sizeStateTable = 256, 

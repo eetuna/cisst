@@ -28,11 +28,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _prmRobotState_h
 
 //basic includes
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstOSAbstraction.h>
-#include <cisstCommon/cmnClassRegisterMacros.h>
-#include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstParameterTypes/prmTypes.h>
+#include <cisstVector/vctDynamicVectorTypes.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsMacros.h>
 #include <cisstMultiTask/mtsVector.h>
 
@@ -96,74 +93,68 @@ public:
 
     /*! Set and Get methods for the Joint position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, JointPosition);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, JointPosition);
     //@}
 
     /*! Set and Get methods for the Joint Velocity. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, JointVelocity);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, JointVelocity);
     //@}
 
     /*! Set and Get methods for goal joint position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, JointPositionGoal);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, JointPositionGoal);
     //@}
 
     /*! Set and Get methods for goal joint velocity. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, JointVelocityGoal);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, JointVelocityGoal);
     //@}
 
     /*! Set and Get methods for error for joint position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, JointPositionError);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, JointPositionError);
     //@}
 
     /*! Set and Get methods for error for joint velocity. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, JointVelocityError);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, JointVelocityError);
     //@}
 
     /*! Set and Get methods for cartesian position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, CartesianPosition);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, CartesianPosition);
     //@}
 
     /*! Set and Get methods for cartesian velocity. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, CartesianVelocity);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, CartesianVelocity);
     //@}
 
     /*! Set and Get methods for gaol cartesian position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, CartesianPositionGoal);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, CartesianPositionGoal);
     //@}
 
     /*! Set and Get methods for goal cartesian velocity. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, CartesianVelocityGoal);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, CartesianVelocityGoal);
     //@}
 
     /*! Set and Get methods for cartesian position error. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, CartesianPositionError);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, CartesianPositionError);
     //@}
 
     /*! Set and Get methods for cartesian velocity error. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmDoubleVec, CartesianVelocityError);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, CartesianVelocityError);
     //@}
 
-    /*! Set and Get methods for time index.  Current time index, as
-    provided for writer of the task providing the position
-    data. */
-    //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
+public:
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
-
 
 }; // _prmRobotState_h
 
@@ -172,9 +163,3 @@ CMN_DECLARE_SERVICES_INSTANTIATION(prmRobotState);
 
 
 #endif
-
-
-// ****************************************************************************
-//                              Change History
-// ****************************************************************************
-//  $Log

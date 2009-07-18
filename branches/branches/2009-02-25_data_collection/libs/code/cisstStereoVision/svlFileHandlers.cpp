@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFileHandlers.h>
+#include <string.h> // for memcpy and strlen
 
 #include "ftImageBMP.h"
 #include "ftImagePPM.h"
@@ -112,7 +113,8 @@ void svlImageFileTypeList::AddType(const char* extension, svlImageFile* prototyp
     }
 
     if (idx < SVL_FH_MAX_EXTENSIONS) {
-        strcpy(Extensions[idx], extension);
+		strcpy(Extensions[idx], extension);
+        //strcpy(static_cast<char *>(&Extensions[idx][0]), extension);
         Prototypes[idx] = prototype;
         idx ++;
         if (idx < SVL_FH_MAX_EXTENSIONS) {
@@ -131,6 +133,8 @@ svlImageFile* svlImageFileTypeList::GetHandlerInstance(const char* extension)
     while (idx < SVL_FH_MAX_EXTENSIONS &&
            Extensions[idx][0] != 0 &&
            strcmp(Extensions[idx], extension) != 0) {
+           //strcmp(static_cast<char *>(&Extensions[idx][0]), extension) != 0) {
+
         idx ++;
     }
 

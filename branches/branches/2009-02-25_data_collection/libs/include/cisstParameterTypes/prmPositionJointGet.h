@@ -80,9 +80,10 @@ public:
 
     /*! Set and Get methods for the the position. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Position);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Position);
     //@}
 
+public:
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;

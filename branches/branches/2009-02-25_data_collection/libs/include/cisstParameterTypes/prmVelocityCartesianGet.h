@@ -27,10 +27,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmVelocityCartesianGet_h
 #define _prmVelocityCartesianGet_h
 
+#include <cisstVector/vctFixedSizeVectorTypes.h>
 #include <cisstMultiTask/mtsGenericObject.h>
-#include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTransformationManager.h>
-#include <cisstParameterTypes/prmTypes.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
@@ -51,14 +50,12 @@ class CISST_EXPORT prmVelocityCartesianGet: public mtsGenericObject
     /*! constructor with all parameters */
     inline prmVelocityCartesianGet(const prmTransformationBasePtr & movingFrame, 
                                    const prmTransformationBasePtr & referenceFrame,
-                                   const prmCartesianVelocity & velocityLinear,
-                                   const prmCartesianVelocity & velocityAngular,
-                                   const mtsStateIndex & stateIndex):
+                                   const vctDouble3 & velocityLinear,
+                                   const vctDouble3 & velocityAngular):
         MovingFrameMember(movingFrame),
         ReferenceFrameMember(referenceFrame),  
         VelocityLinearMember(velocityLinear),
-        VelocityAngularMember(velocityAngular),
-        StateIndexMember(stateIndex)
+        VelocityAngularMember(velocityAngular)
     {}
 
     /*! destructor */
@@ -69,26 +66,27 @@ class CISST_EXPORT prmVelocityCartesianGet: public mtsGenericObject
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
     //@}
 
     /*! Set and Get methods for the moving frame for current
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
     //@}
 
     /*! Set and Get method the linear velocity parameter. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianVelocity, VelocityLinear);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDouble3, VelocityLinear);
     //@}
 
     /*! Set and Get method the angular velocity parameter. */
     //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianVelocity, VelocityAngular);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDouble3, VelocityAngular);
     //@}
 
+public:
 
 	/*! Set and Get methods for both linear and angular velocities.
       These methods assumes that the vector 6 elements stores the
@@ -115,14 +113,6 @@ class CISST_EXPORT prmVelocityCartesianGet: public mtsGenericObject
         placeHolder[5] = this->VelocityAngularMember[2];
     }
 	//@}
-
-    /*! Set and Get methods for state index.  Current state index, as
-      provided for writer of the task providing the position
-      data. */
-    //@{
-    MTS_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
-
     
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
