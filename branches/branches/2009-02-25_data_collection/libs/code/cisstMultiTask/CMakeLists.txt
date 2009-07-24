@@ -58,7 +58,7 @@ SET(SOURCE_FILES
     mtsTaskManager.cpp
 
     mtsCollectorBase.cpp
-    mtsCollectorState.cpp    
+    mtsCollectorState.cpp
 
     mtsHistory.cpp
     )
@@ -123,6 +123,28 @@ SET(HEADER_FILES
     
     mtsHistory.h
     )
+
+    # make sure all options are set for all devices to OFF
+option(CISST_COLLECTOR_GUI "Build state data visualizer" ON)
+
+if(CISST_COLLECTOR_GUI)
+
+    SET(SOURCE_FILES
+        ${SOURCE_FILES}
+        mtsCollectorGUI.cpp
+        )
+        
+    SET(HEADER_FILES
+        ${HEADER_FILES}
+        mtsCollectorGUI.h
+        )
+
+    include_directories(${cisst_SOURCE_DIR}/libs/etc
+                           ${FLTK_INCLUDE_DIR})
+
+    TARGET_LINK_LIBRARIES(LIBRARY ${FLTK_LIBRARIES})                            
+    
+endif(CISST_COLLECTOR_GUI)
 
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
