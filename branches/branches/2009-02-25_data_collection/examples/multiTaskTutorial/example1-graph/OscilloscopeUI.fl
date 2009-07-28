@@ -7,14 +7,14 @@ class OscilloscopeUI {open
   Function {OscilloscopeUI()} {open
   } {
     Fl_Window OscilloscopeWindow {open
-      xywh {613 82 574 750} type Double box BORDER_BOX labelsize 12 visible
+      xywh {-749 405 574 750} type Double box BORDER_BOX labelsize 12 visible
     } {
       Fl_Group {} {
         label Graph open
         xywh {10 10 555 350} labelsize 12 align 0
       } {
         Fl_Box GraphPane {
-          label {Graph Region} selected
+          label {Graph Region}
           xywh {10 10 555 350} box BORDER_BOX labelfont 1 labelsize 12
           code0 {\#include <cisstMultiTask/MULTIPLOT.h>}
           class MULTIPLOT
@@ -87,6 +87,11 @@ class OscilloscopeUI {open
           label {Selected Signal}
           xywh {20 710 250 20} labelfont 1 labelsize 12 align 5 textsize 12
         }
+      }
+      Fl_Return_Button Close {
+        label CLOSE
+        callback {OscilloscopeWindow->hide();} selected
+        xywh {290 715 275 25} labelsize 12
       }
     }
   }

@@ -8,7 +8,7 @@
 
 #include "sineTask.h"
 #include "displayTask.h"
-#include "displayUI.h"
+#include "oscilloscopeTask.h"
 
 using namespace std;
 
@@ -29,14 +29,18 @@ int main(void)
     // create sample sine task
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
     const double PeriodDisplay = 10 * cmn_ms; // in milliseconds
+    const double PeriodOscilloscope = 20 * cmn_ms; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
     displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
     displayTaskObject->Configure();
+    oscilloscopeTask * oscilloscopeTaskObject = new oscilloscopeTask("OSCILLOSCOPE", PeriodOscilloscope);
+    oscilloscopeTaskObject->Configure();
 
     // add the tasks to the task manager
     taskManager->AddTask(sineTaskObject);
     taskManager->AddTask(displayTaskObject);
+    taskManager->AddTask(oscilloscopeTaskObject);
 
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");

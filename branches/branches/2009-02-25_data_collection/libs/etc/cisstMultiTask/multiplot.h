@@ -24,7 +24,7 @@
 #ifndef __MULTIPLOT__
 #define __MULTIPLOT__
 
-//#define DISABLE_AUTOSCALE
+#define DISABLE_AUTOSCALE
 
 #include <sstream>
 #include <float.h>
@@ -210,8 +210,8 @@ inline MULTIPLOT_BASE::MULTIPLOT_BASE(const int x, const int y, const int w, con
 	maximum.x=maximum.y=-FLT_MAX;
 	minimum.x=minimum.y=FLT_MAX;
 #else
-    maximum.x=maximum.y=10;
-	minimum.x=minimum.y=-10;
+    maximum.x=maximum.y=2;
+	minimum.x=minimum.y=-2;
 #endif
 	max_points=max(w,h);
 	traces.push_back( std::vector<PLOT_POINT>() ); // create one trace
@@ -407,7 +407,7 @@ inline PLOT_POINT MULTIPLOT_BASE::draw_grid()
 		glLineWidth(grid_linewidth);
 		glColor3f(grid_color.r, grid_color.g, grid_color.b);
 		glBegin(GL_LINES);
-		int bailout=0; // bailout is a safety to avoid endless recursions caused maybe through numerical errors..
+		unsigned int bailout=0; // bailout is a safety to avoid endless recursions caused maybe through numerical errors..
         if (!fixedGrid) {
             while(x<maximum.x && bailout<100)
             {
@@ -417,7 +417,7 @@ inline PLOT_POINT MULTIPLOT_BASE::draw_grid()
                 glVertex2f((GLfloat)(x-offset.x)*scale.x	,(float)height);
             }
         } else {
-            int xpos = 0;
+            unsigned int xpos = 0;
             while(xpos <= width && ++bailout<100)
             {
                 x+=xstep;
@@ -459,7 +459,7 @@ inline PLOT_POINT MULTIPLOT_BASE::draw_grid()
 		glLineWidth(1.0);
 		glColor3f(grid_color.r, grid_color.g, grid_color.b);
 		glBegin(GL_LINES);
-		int bailout=0; // bailout is a safety to avoid endless recursions caused maybe through numerical errors..
+		unsigned int bailout=0; // bailout is a safety to avoid endless recursions caused maybe through numerical errors..
         if (!fixedGrid) {
 		while(y<maximum.y && bailout<100)
         {
@@ -469,7 +469,7 @@ inline PLOT_POINT MULTIPLOT_BASE::draw_grid()
             glVertex2f((float)width			,(GLfloat)(y-offset.y)*scale.y);
         }
         } else {
-            int ypos = 0;
+            unsigned int ypos = 0;
             while(ypos <= height && ++bailout<100)
             {
                 y+=ystep;
@@ -511,8 +511,11 @@ inline void MULTIPLOT_BASE::draw()
 	maximum.x=maximum.y=-FLT_MAX;
 	minimum.x=minimum.y=FLT_MAX;
 #else
-    maximum.x=maximum.y=10;
-	minimum.x=minimum.y=-10;
+    minimum.y=-2;
+    maximum.y=2;
+
+    maximum.x=-FLT_MAX;
+	minimum.x=FLT_MAX;
 #endif
 
 
@@ -541,6 +544,9 @@ inline void MULTIPLOT_BASE::draw()
 				if(p.x<minimum.x)minimum.x=p.x;
 				if(p.y>maximum.y)maximum.y=p.y;
 				if(p.y<minimum.y)minimum.y=p.y;
+#else
+				if(p.x>maximum.x)maximum.x=p.x;
+				if(p.x<minimum.x)minimum.x=p.x;
 #endif
 	
 				ps++;
@@ -594,7 +600,10 @@ inline void MULTIPLOT_BASE::draw()
 				if(p.x>maximum.x)maximum.x=p.x;
 				if(p.x<minimum.x)minimum.x=p.x;
 				if(p.y>maximum.y)maximum.y=p.y;
-				if(p.y<minimum.y)minimum.y=p.y;		
+				if(p.y<minimum.y)minimum.y=p.y;
+#else
+				if(p.x>maximum.x)maximum.x=p.x;
+				if(p.x<minimum.x)minimum.x=p.x;
 #endif
 			}
 			glEnd();
