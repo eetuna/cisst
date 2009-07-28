@@ -26,22 +26,22 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsCollectorGUI)
 
-#define AQUA  0, 1, 1
-#define BLACK 0, 0, 0
-#define BLUE 0, 0, 1
+#define AQUA    0, 1, 1
+#define BLACK   0, 0, 0
+#define BLUE    0, 0, 1
 #define FUCHSIA 1, 0, 1
-#define GRAY 0.5, 0.5, 0.5
-#define GREEN 0, 0.5, 0
-#define LIME 0, 1, 0
-#define MAROON 0.5, 0, 0
-#define NAVY 0, 0, 0.5
-#define OLIVE 0.5, 0.5, 0
-#define PURPLE 0.5, 0, 0.5
-#define RED 1, 0, 0
-#define SILVER 0.75, 0.75, 0.75
-#define TEAL 0, 0.5, 0.5
-#define WHITE 1, 1, 1
-#define YELLOW 1, 1, 0
+#define GRAY    0.5, 0.5, 0.5
+#define GREEN   0, 0.5, 0
+#define LIME    0, 1, 0
+#define MAROON  0.5, 0, 0
+#define NAVY    0, 0, 0.5
+#define OLIVE   0.5, 0.5, 0
+#define PURPLE  0.5, 0, 0.5
+#define RED 1,  0, 0
+#define SILVER  0.75, 0.75, 0.75
+#define TEAL    0, 0.5, 0.5
+#define WHITE   1, 1, 1
+#define YELLOW  1, 1, 0
 
 //-------------------------------------------------------
 //	Constructor, Destructor, and Initializer
@@ -54,7 +54,7 @@ mtsCollectorGUI::mtsCollectorGUI(MULTIPLOT * graphPane)
 
 void mtsCollectorGUI::Initialize()
 {
-    GraphPane->set_scrolling(50);
+    GraphPane->set_scrolling(100);    
     GraphPane->set_grid(MP_LINEAR_GRID, MP_LINEAR_GRID, true);
 }
 
@@ -63,6 +63,16 @@ void mtsCollectorGUI::UpdateUI(const double newValue)
 #ifdef _UI_TEST_CODE_
     static unsigned int x = 0;
     
+    for (int i=0; i<=12; ++i) {
+        if (i <= 7) {
+            GraphPane->set_pointsize(i, 4.0);
+            GraphPane->set_linewidth(i, 0.0);
+        } else {
+            GraphPane->set_pointsize(i, 4.0);
+            GraphPane->set_linewidth(i, 1.0);
+        }
+    }
+
     GraphPane->add(0, PLOT_POINT(x, newValue * 1.0, AQUA));
     GraphPane->add(1, PLOT_POINT(x, newValue * 1.1, BLUE));
     GraphPane->add(2, PLOT_POINT(x, newValue * 1.2, FUCHSIA));
@@ -82,7 +92,7 @@ void mtsCollectorGUI::UpdateUI(const double newValue)
 
     //if((x % 200)==0)mygl->clear();	// clear the traces of plot-window 3
 
-    x += 2;
+    ++x;
     // force the redrawing of the windows. 
     // this could be done less often, for example every tenth timestep,  to speed up calculations.
     //m1.redraw();

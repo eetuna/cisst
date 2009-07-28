@@ -7,7 +7,6 @@
 #include <cisstMultiTask.h>
 
 #include "sineTask.h"
-#include "displayTask.h"
 #include "oscilloscopeTask.h"
 
 using namespace std;
@@ -22,28 +21,25 @@ int main(void)
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
     cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
-    cmnClassRegister::SetLoD("displayTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("oscilloscopeTask", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create sample sine task
-    const double PeriodSine = 1 * cmn_ms; // in milliseconds
-    const double PeriodDisplay = 10 * cmn_ms; // in milliseconds
-    const double PeriodOscilloscope = 20 * cmn_ms; // in milliseconds
+    const double PeriodSine = 1 * cmn_ms; // in milliseconds    
+    const double PeriodOscilloscope = 20 * cmn_ms;
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
-    displayTask * displayTaskObject = new displayTask("DISP", PeriodDisplay);
-    displayTaskObject->Configure();
-    oscilloscopeTask * oscilloscopeTaskObject = new oscilloscopeTask("OSCILLOSCOPE", PeriodOscilloscope);
+    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);    
+    oscilloscopeTask * oscilloscopeTaskObject = 
+        new oscilloscopeTask("GUI", PeriodOscilloscope);    
     oscilloscopeTaskObject->Configure();
 
     // add the tasks to the task manager
-    taskManager->AddTask(sineTaskObject);
-    taskManager->AddTask(displayTaskObject);
+    taskManager->AddTask(sineTaskObject);    
     taskManager->AddTask(oscilloscopeTaskObject);
 
-    // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
-    taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
+    // connect the tasks, task.RequiresInterface -> task.ProvidesInterface    
+    taskManager->Connect("GUI", "DataVisualizer", "SIN", "MainInterface");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
@@ -51,7 +47,8 @@ int main(void)
     taskManager->StartAll();
 
     // wait until the close button of the UI is pressed
-    while (!displayTaskObject->IsTerminated()) {
+    while (!oscilloscopeTaskObject->IsTerminated())
+    {
         osaSleep(10.0 * cmn_ms); // sleep to save CPU
     }
     // cleanup

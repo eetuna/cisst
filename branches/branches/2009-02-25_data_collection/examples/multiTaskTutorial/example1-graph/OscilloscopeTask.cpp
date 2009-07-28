@@ -11,7 +11,7 @@ oscilloscopeTask::oscilloscopeTask(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // to communicate with the interface of the resource
-    mtsRequiredInterface * required = AddRequiredInterface("DataGenerator");
+    mtsRequiredInterface * required = AddRequiredInterface("DataVisualizer");
     if (required) {
        required->AddFunction("GetData", Generator.GetData);
        required->AddFunction("SetAmplitude", Generator.SetAmplitude);
@@ -28,18 +28,8 @@ oscilloscopeTask::~oscilloscopeTask()
 void oscilloscopeTask::Configure(const std::string & CMN_UNUSED(filename))
 {
     LastUpdateTime = clock();
-
-    //// define some values, ideally these come from a configuration
-    //// file and then configure the user interface
-    //double maxValue = 0.5; double minValue = 5.0;
-    //double startValue =  1.0;
-    //CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting bounds to: "
-    //                           << minValue << ", " << maxValue << std::endl;
-    //CMN_LOG_CLASS_INIT_VERBOSE << "Configure: setting start value to: "
-    //                           << startValue << std::endl;
-    //UI.Amplitude->bounds(minValue, maxValue);
-    //UI.Amplitude->value(startValue);
-    //AmplitudeData = startValue;
+    
+    AmplitudeData = 1.0;
 }
 
 void oscilloscopeTask::Startup(void) 
@@ -50,12 +40,6 @@ void oscilloscopeTask::Startup(void)
 
 void oscilloscopeTask::Run(void)
 {
-    AmplitudeData = 0.5;
-    AmplitudeData.SetTimestamp(mtsTaskManager::GetInstance()
-                                   ->GetTimeServer().GetRelativeTime());
-    AmplitudeData.SetValid(true);
-    Generator.SetAmplitude(AmplitudeData);
-
     // get the data from the sine wave generator task
     Generator.GetData(Data);
 

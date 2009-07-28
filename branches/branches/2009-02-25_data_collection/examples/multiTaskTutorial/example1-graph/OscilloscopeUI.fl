@@ -6,8 +6,8 @@ class OscilloscopeUI {open
 } {
   Function {OscilloscopeUI()} {open
   } {
-    Fl_Window OscilloscopeWindow {open
-      xywh {-749 405 574 750} type Double box BORDER_BOX labelsize 12 visible
+    Fl_Window OscilloscopeWindow {open selected
+      xywh {480 148 574 750} type Double box BORDER_BOX labelsize 12 visible
     } {
       Fl_Group {} {
         label Graph open
@@ -90,7 +90,7 @@ class OscilloscopeUI {open
       }
       Fl_Return_Button Close {
         label CLOSE
-        callback {OscilloscopeWindow->hide();} selected
+        callback {OscilloscopeWindow->hide();}
         xywh {290 715 275 25} labelsize 12
       }
     }
