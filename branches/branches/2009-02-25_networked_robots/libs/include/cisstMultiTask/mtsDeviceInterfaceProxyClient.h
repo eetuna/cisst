@@ -40,7 +40,7 @@ class CISST_EXPORT mtsDeviceInterfaceProxyClient : public mtsProxyBaseClient<mts
 
 public:
     mtsDeviceInterfaceProxyClient(const std::string & propertyFileName, 
-                                  const std::string & propertyName);
+                                  const std::string & identityName);
     ~mtsDeviceInterfaceProxyClient();
 
     /*! Set a client task connected to this proxy client. Currently, this client task 
@@ -51,6 +51,16 @@ public:
 
     /*! Entry point to run a proxy. */
     void Start(mtsTask * callingTask);
+
+    /*! Change the proxy state as active. */
+    void SetAsActiveProxy() {
+        ChangeProxyState(mtsProxyBaseClient<mtsTask>::PROXY_ACTIVE);
+    }
+
+    /*! Return true if the current proxy state is active. */
+    const bool IsActiveProxy() const {
+        return (ProxyState == mtsProxyBaseClient<mtsTask>::PROXY_ACTIVE);
+    }
 
     /*! Stop the proxy. */
     void Stop();
@@ -84,7 +94,7 @@ protected:
             throw "Invalid proxy";
         }
 
-        Sender = new DeviceInterfaceClientI(IceCommunicator, Logger, DeviceInterfaceServerProxy, this);
+        Sender = new DeviceInterfaceClientI(IceCommunicator, IceLogger, DeviceInterfaceServerProxy, this);
     }
 
     /*! Start a send thread and wait for shutdown (blocking call). */
@@ -94,7 +104,7 @@ protected:
     static void Runner(ThreadArguments<mtsTask> * arguments);
 
     /*! Clean up thread-related resources. */
-    void OnThreadEnd();
+    void OnEnd();
 
 public:
     //-------------------------------------------------------------------------
@@ -148,7 +158,7 @@ protected:
         DeviceInterfaceClientI(const Ice::CommunicatorPtr& communicator,                           
                                const Ice::LoggerPtr& logger,
                                const mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx& server,
-                               mtsDeviceInterfaceProxyClient * DeviceInterfaceClient);
+                               mtsDeviceInterfaceProxyClient * deviceInterfaceClient);
 
         void Start();
         void Run();

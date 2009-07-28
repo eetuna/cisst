@@ -28,7 +28,13 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  TODO: add class summary here
+  This class inherits from mtsProxyBaseCommon and implements the basic structure of
+  the ICE server which includes an independent logger, an adapter, and a servant.
+  The actual processing routines are implemented by a class inherited from this
+  class.
+
+  TODO: Read an ICE property configuration file and set the properties of proxy
+  connection based on it.
 */
 template<class _argumentType>
 class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_argumentType> {
@@ -44,9 +50,11 @@ protected:
 
     virtual Ice::ObjectPtr CreateServant() = 0;
 
-    void Init(void)
+    void IceInitialize(void)
     {
         try {
+            ChangeProxyState(PROXY_INITIALIZING);
+
             Ice::InitializationData initData;
             initData.logger = new typename BaseType::ProxyLogger();
             initData.properties = Ice::createProperties();
@@ -54,47 +62,62 @@ protected:
             // shared vs. PerThread.
             // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
             initData.properties->setProperty("Ice.ImplicitContext", "Shared");
-            //initData.properties->load(PropertyFileName);           
-            //IceCommunicator = Ice::initialize(initData);
-            this->IceCommunicator = Ice::initialize(initData);
+            //initData.properties->load(IcePropertyFileName);           
+            IceCommunicator = Ice::initialize(initData);
             
             // Create Logger
-            this->Logger = this->IceCommunicator->getLogger();
+            IceLogger = IceCommunicator->getLogger();
 
             // Create an adapter (server-side only)
-            //IceAdapter = IceCommunicator->createObjectAdapter(PropertyName);
-            IceAdapter = this->IceCommunicator
-                ->createObjectAdapterWithEndpoints(AdapterName, EndpointInfo);
+            IceAdapter = IceCommunicator->
+                createObjectAdapterWithEndpoints(AdapterName, EndpointInfo);
 
             // Create a servant
             Servant = CreateServant();
 
             // Inform the object adapter of the presence of a new servant
-            IceAdapter->add(Servant, this->IceCommunicator->stringToIdentity(CommunicatorID));
+            IceAdapter->add(Servant, IceCommunicator->stringToIdentity(CommunicatorID));
 
             // Activate the adapter. The adapter is initially created in a 
             // holding state. The server starts to process incoming requests
             // from clients as soon as the adapter is activated.
             IceAdapter->activate();
 
-            this->InitSuccessFlag = true;
-            this->Runnable = true;
+            InitSuccessFlag = true;
+            Runnable = true;
             
-            this->Logger->trace("mtsProxyBaseServer", "mtsProxyBaseServer initialization: success");
+            ChangeProxyState(PROXY_READY);
+
+            IceLogger->trace("mtsProxyBaseServer", "mtsProxyBaseServer initialization: success");
         } catch (const Ice::Exception& e) {
-            this->Logger->trace("mtsProxyBaseServer", "Server proxy initialization error");
-            this->Logger->trace("mtsProxyBaseServer", e.what());
+            if (IceLogger) {
+                IceLogger->trace("mtsProxyBaseServer", "Server proxy initialization error");
+                IceLogger->trace("mtsProxyBaseServer", e.what());
+            } else {
+                std::cerr << "mtsProxyBaseServer: Server proxy initialization error." << std::endl;
+                std::cerr << "mtsProxyBaseServer: " << e.what() << std::endl;
+            }
         } catch (const char * msg) {
-            this->Logger->trace("mtsProxyBaseServer", "Server proxy initialization error");
-            this->Logger->trace("mtsProxyBaseServer", msg);
+            if (IceLogger) {
+                IceLogger->trace("mtsProxyBaseServer", "Server proxy initialization error");
+                IceLogger->trace("mtsProxyBaseServer", msg);
+            } else {
+                std::cerr << "mtsProxyBaseServer: Server proxy initialization error." << std::endl;
+                std::cerr << "mtsProxyBaseServer: " << msg << std::endl;
+            }
         }
 
-        if (!this->InitSuccessFlag) {
+        if (!InitSuccessFlag) {
             try {
-                this->IceCommunicator->destroy();
+                IceCommunicator->destroy();
             } catch (const Ice::Exception & e) {
-                this->Logger->trace("mtsProxyBaseServer", "Server proxy clean-up error");
-                this->Logger->trace("mtsProxyBaseServer", e.what());
+                if (IceLogger) {
+                    IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up error");
+                    IceLogger->trace("mtsProxyBaseServer", e.what());
+                } else {
+                    std::cerr << "mtsProxyBaseServer: Server proxy clean-up error." << std::endl;
+                    std::cerr << e.what() << std::endl;
+                }
             }
         }
     }
@@ -112,29 +135,31 @@ public:
     
     virtual void Start(_argumentType * callingClass) = 0;
 
-    virtual void OnThreadEnd(void)
+    virtual void SetAsActiveProxy() = 0;
+
+    /* Return true if the current proxy state is active. */
+    virtual void OnEnd()
     {
-        //
-        // TODO: EndServant() should be placed somewhere in this method.
-        //
-        if (this->IceCommunicator) {
-            try {                
-                this->IceCommunicator->destroy();
+        if (ProxyState != PROXY_ACTIVE) {
+            return;
+        }
 
-                this->Logger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
-            } catch (const Ice::Exception & e) {
-                this->Logger->trace("mtsProxyBaseServer", "Server proxy clean-up failed.");
-                this->Logger->trace("mtsProxyBaseServer", e.what());
+        if (ProxyState == PROXY_ACTIVE) {
+            ChangeProxyState(PROXY_FINISHING);
+
+            if (IceCommunicator) {
+                try {
+                    IceCommunicator->destroy();
+
+                    ChangeProxyState(PROXY_FINISHED);
+                    IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
+                } catch (const Ice::Exception & e) {
+                    IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up failed.");
+                    IceLogger->trace("mtsProxyBaseServer", e.what());
+                }
             }
-        } 
+        }
     }
-
-    ///*! Returns the base port number for this object. This method only applies to the
-    //    server type object such as the global task manager or the task server. */
-    //virtual const unsigned int GetBasePortNumber() = 0;
-
-    ///*! Returns the base port number for this object as string. */
-    //virtual std::string GetBasePortNumberAsString() = 0;
 };
 
 #endif // _mtsProxyBaseServer_h

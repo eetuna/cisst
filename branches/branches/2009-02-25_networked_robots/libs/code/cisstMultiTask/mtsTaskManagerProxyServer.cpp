@@ -27,11 +27,11 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyServer);
 
-#define TaskManagerProxyServerLogger(_log) BaseType::Logger->trace("mtsTaskManagerProxyServer", _log)
+#define TaskManagerProxyServerLogger(_log) IceLogger->trace("mtsTaskManagerProxyServer", _log)
 #define TaskManagerProxyServerLoggerError(_log1, _log2) {\
         std::string s("mtsTaskManagerProxyServer: ");\
         s += _log1; s+= _log2;\
-        BaseType::Logger->error(s); }
+        IceLogger->error(s); }
 
 //-----------------------------------------------------------------------------
 //  Inner Class Definition
@@ -76,7 +76,7 @@ mtsTaskManagerProxyServer::~mtsTaskManagerProxyServer()
 void mtsTaskManagerProxyServer::Start(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
-    Init();
+    IceInitialize();
     
     if (InitSuccessFlag) {
         // Create a worker thread here and returns immediately.
@@ -111,6 +111,7 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
 
     try {
         ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server starts...");
+        ProxyServer->SetAsActiveProxy();
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
         std::string error("mtsTaskManagerProxyServer: ");
@@ -123,17 +124,18 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
     }
 
     ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server terminates...");
-    ProxyServer->OnThreadEnd();
+
+    ProxyServer->OnEnd();
 }
 
 void mtsTaskManagerProxyServer::Stop()
 {
-    OnThreadEnd();
+    OnEnd();
 }
 
-void mtsTaskManagerProxyServer::OnThreadEnd()
+void mtsTaskManagerProxyServer::OnEnd()
 {
-    BaseType::OnThreadEnd();
+    BaseType::OnEnd();
 
     Sender->Stop();
 }
@@ -447,7 +449,9 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
 #endif
 
     while(Runnable) {
-        timedWait(IceUtil::Time::milliSeconds(1));
+        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        timedWait(IceUtil::Time::milliSeconds(100));
+
         /*
         std::set<mtsTaskManagerProxy::TaskManagerClientPrx> clients;
         {
@@ -490,13 +494,12 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Stop()
 {
-    CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Send thread is terminating." << std::endl;
+    if (!TaskManagerServer->IsActiveProxy()) return;
 
     IceUtil::ThreadPtr callbackSenderThread;
     {
-        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Destroying sender." << std::endl;
         Runnable = false;
 
         notify();

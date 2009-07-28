@@ -27,15 +27,15 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerProxyClient);
 
-#define TaskManagerProxyClientLogger(_log) BaseType::Logger->trace("mtsTaskManagerProxyClient", _log)
+#define TaskManagerProxyClientLogger(_log) BaseType::IceLogger->trace("mtsTaskManagerProxyClient", _log)
 #define TaskManagerProxyClientLoggerError(_log1, _log2) {\
         std::string s("mtsTaskManagerProxyClient: ");\
         s += _log1; s+= _log2;\
-        BaseType::Logger->error(s); }
+        BaseType::IceLogger->error(s); }
 
 mtsTaskManagerProxyClient::mtsTaskManagerProxyClient(
-    const std::string & propertyFileName, const std::string & propertyName) :
-        BaseType(propertyFileName, propertyName)
+    const std::string & propertyFileName, const std::string & objectIdentity) :
+        BaseType(propertyFileName, objectIdentity)
 {
 }
 
@@ -47,7 +47,7 @@ void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
 {
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
-    Init();
+    IceInitialize();
     
     if (InitSuccessFlag) {
         // Client configuration for bidirectional communication
@@ -58,7 +58,7 @@ void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
         ident.category = "";    // not used currently.
 
         mtsTaskManagerProxy::TaskManagerClientPtr client = 
-            new TaskManagerClientI(IceCommunicator, Logger, GlobalTaskManagerProxy, this);
+            new TaskManagerClientI(IceCommunicator, IceLogger, GlobalTaskManagerProxy, this);
         adapter->add(client, ident);
         adapter->activate();
         GlobalTaskManagerProxy->ice_getConnection()->setAdapter(adapter);
@@ -106,19 +106,19 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
         ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient exception: ", msg);
     }
 
-    ProxyClient->OnThreadEnd();
+    ProxyClient->OnEnd();
 }
 
 void mtsTaskManagerProxyClient::Stop()
 {
-    OnThreadEnd();
+    OnEnd();
 }
 
-void mtsTaskManagerProxyClient::OnThreadEnd()
+void mtsTaskManagerProxyClient::OnEnd()
 {
     TaskManagerProxyClientLogger("Proxy client ends.");
 
-    BaseType::OnThreadEnd();
+    BaseType::OnEnd();
 
     Sender->Stop();
 }
@@ -231,7 +231,7 @@ void mtsTaskManagerProxyClient::SendUpdateTaskManager()
         namesOfTasks.end());
     localTaskList.taskManagerID = this->GetGUID();
 
-    Logger->trace("TMClient", 
+    IceLogger->trace("TMClient", 
         ">>>>> SEND: SendUpdateTaskManager: " + localTaskList.taskManagerID );
 
     return GlobalTaskManagerProxy->UpdateTaskManager(localTaskList);
@@ -251,7 +251,7 @@ bool mtsTaskManagerProxyClient::SendAddProvidedInterface(
     info.taskName = taskName;
     info.interfaceName = newProvidedInterfaceName;
 
-    Logger->trace("TMClient", ">>>>> SEND: AddProvidedInterface: " 
+    IceLogger->trace("TMClient", ">>>>> SEND: AddProvidedInterface: " 
         + info.taskName + ", " + info.interfaceName);
 
     return GlobalTaskManagerProxy->AddProvidedInterface(info);
@@ -264,7 +264,7 @@ bool mtsTaskManagerProxyClient::SendAddRequiredInterface(
     info.taskName = taskName;
     info.interfaceName = newRequiredInterfaceName;
 
-    Logger->trace("TMClient", ">>>>> SEND: AddRequiredInterface: " 
+    IceLogger->trace("TMClient", ">>>>> SEND: AddRequiredInterface: " 
         + info.taskName + ", " + info.interfaceName);
 
     return GlobalTaskManagerProxy->AddRequiredInterface(info);
@@ -273,7 +273,7 @@ bool mtsTaskManagerProxyClient::SendAddRequiredInterface(
 bool mtsTaskManagerProxyClient::SendIsRegisteredProvidedInterface(
     const std::string & taskName, const std::string & providedInterfaceName) const
 {
-    Logger->trace("TMClient", ">>>>> SEND: IsRegisteredProvidedInterface: " 
+    IceLogger->trace("TMClient", ">>>>> SEND: IsRegisteredProvidedInterface: " 
         + taskName + ", " + providedInterfaceName);
 
     return GlobalTaskManagerProxy->IsRegisteredProvidedInterface(
@@ -284,7 +284,7 @@ bool mtsTaskManagerProxyClient::SendGetProvidedInterfaceAccessInfo(
     const ::std::string & taskName, const std::string & providedInterfaceName,
     mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) const
 {
-    Logger->trace("TMClient", ">>>>> SEND: GetProvidedInterfaceAccessInfo: " 
+    IceLogger->trace("TMClient", ">>>>> SEND: GetProvidedInterfaceAccessInfo: " 
         + taskName + ", " + providedInterfaceName);
 
     return GlobalTaskManagerProxy->GetProvidedInterfaceAccessInfo(
@@ -327,21 +327,17 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
 
 void mtsTaskManagerProxyClient::TaskManagerClientI::Stop()
 {
-    CMN_LOG_RUN_VERBOSE << "TaskManagerProxyClient: Send thread is terminating." << std::endl;
+    if (!TaskManagerClient->IsActiveProxy()) return;
 
     IceUtil::ThreadPtr callbackSenderThread;
-
     {
-        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        CMN_LOG_RUN_VERBOSE << "TaskManagerProxyClient: Destroying sender." << std::endl;
         Runnable = false;
-
         notify();
 
         callbackSenderThread = Sender;
         Sender = 0; // Resolve cyclic dependency.
     }
-
     callbackSenderThread->getThreadControl().join();
 }

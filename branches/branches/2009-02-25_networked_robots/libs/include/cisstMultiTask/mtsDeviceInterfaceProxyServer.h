@@ -53,6 +53,16 @@ public:
     /*! Entry point to run a proxy. */
     void Start(mtsTask * callingTask);
 
+    /*! Change the proxy state as active. */
+    void SetAsActiveProxy() {
+        ChangeProxyState(mtsProxyBaseServer<mtsTask>::PROXY_ACTIVE);
+    }
+
+    /*! Return true if the current proxy state is active. */
+    const bool IsActiveProxy() const {
+        return (ProxyState == mtsProxyBaseServer<mtsTask>::PROXY_ACTIVE);
+    }
+
     /*! Stop the proxy. */
     void Stop();
 
@@ -78,7 +88,7 @@ protected:
     //-------------------------------------------------------------------------
     /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
-        Sender = new DeviceInterfaceServerI(IceCommunicator, Logger, this);
+        Sender = new DeviceInterfaceServerI(IceCommunicator, IceLogger, this);
         return Sender;
     }
     
@@ -89,7 +99,7 @@ protected:
     static void Runner(ThreadArguments<mtsTask> * arguments);
 
     /*! Clean up thread-related resources. */
-    void OnThreadEnd();
+    void OnEnd();
     
     /*! Definitions for send thread */
     class DeviceInterfaceServerI;

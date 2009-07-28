@@ -43,11 +43,21 @@ class CISST_EXPORT mtsTaskManagerProxyClient : public mtsProxyBaseClient<mtsTask
 
 public:
     mtsTaskManagerProxyClient(const std::string & propertyFileName, 
-                              const std::string & propertyName);
+                              const std::string & objectIdentity);
     ~mtsTaskManagerProxyClient();
 
     /*! Entry point to run a proxy. */
     void Start(mtsTaskManager * callingTaskManager);
+
+    /*! Change the proxy state as active. */
+    void SetAsActiveProxy() {
+        ChangeProxyState(mtsProxyBaseClient<mtsTaskManager>::PROXY_ACTIVE);
+    }
+
+    /*! Return true if the current proxy state is active. */
+    const bool IsActiveProxy() const {
+        return (ProxyState == mtsProxyBaseClient<mtsTaskManager>::PROXY_ACTIVE);
+    }
 
     /*! End the proxy. */
     void Stop();
@@ -74,7 +84,7 @@ protected:
             throw "Invalid proxy";
         }
 
-        Sender = new TaskManagerClientI(IceCommunicator, Logger, GlobalTaskManagerProxy, this);
+        Sender = new TaskManagerClientI(IceCommunicator, IceLogger, GlobalTaskManagerProxy, this);
     }
 
     /*! Start a send thread and wait for shutdown (blocking call). */
@@ -84,7 +94,7 @@ protected:
     static void Runner(ThreadArguments<mtsTaskManager> * arguments);
 
     /*! Clean up thread-related resources. */
-    void OnThreadEnd();
+    void OnEnd();
 
     //-------------------------------------------------------------------------
     //  Processing Methods

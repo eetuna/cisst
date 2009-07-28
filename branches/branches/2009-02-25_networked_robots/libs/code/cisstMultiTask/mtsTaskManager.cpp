@@ -38,7 +38,7 @@ mtsTaskManager::mtsTaskManager():
     DeviceMap("Devices"),
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
     TaskManagerCommunicatorID("TaskManagerServerSender"),
-    ProxyGlobalTaskManager(0), ProxyTaskManagerClient(0)
+    ProxyGlobalTaskManager(NULL), ProxyTaskManagerClient(NULL)
 {
     __os_init();
     TaskMap.SetOwner(*this);
@@ -50,6 +50,19 @@ mtsTaskManager::mtsTaskManager():
 mtsTaskManager::~mtsTaskManager()
 {
     this->Kill();
+
+    // Clean up resources allocated for proxy objects.
+    if (ProxyGlobalTaskManager) {
+        ProxyGlobalTaskManager->Stop();
+        osaSleep(200 * cmn_ms);
+        delete ProxyGlobalTaskManager;
+    }
+
+    if (ProxyTaskManagerClient) {
+        ProxyTaskManagerClient->Stop();
+        osaSleep(200 * cmn_ms);
+        delete ProxyTaskManagerClient;
+    }
 }
 
 
@@ -63,9 +76,9 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
     bool result = TaskMap.AddItem(task->GetName(), task, CMN_LOG_LOD_INIT_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddTask: added task named "
-                                   << task->GetName() << std::endl;
-    return result;
+                                   << task->GetName() << std::endl;    
     }
+    return result;
 }
 
 

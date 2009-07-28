@@ -57,6 +57,16 @@ public:
     /*! Entry point to run a proxy. */
     void Start(mtsTaskManager * callingTaskManager);
 
+    /*! Change the proxy state as active. */
+    void SetAsActiveProxy() {
+        ChangeProxyState(mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
+    }
+
+    /*! Return true if the current proxy state is active. */
+    const bool IsActiveProxy() const {
+        return (ProxyState == mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
+    }
+
     /*! End the proxy. */
     void Stop();
 
@@ -180,7 +190,7 @@ protected:
     //-------------------------------------------------------------------------
     /*! Create a servant which serves TaskManager clients. */
     Ice::ObjectPtr CreateServant() {
-        Sender = new TaskManagerServerI(IceCommunicator, Logger, this);
+        Sender = new TaskManagerServerI(IceCommunicator, IceLogger, this);
         return Sender;
     }
     
@@ -191,7 +201,7 @@ protected:
     static void Runner(ThreadArguments<mtsTaskManager> * arguments);
 
     /*! Clean up thread-related resources. */
-    void OnThreadEnd();
+    void OnEnd();
 
     /*! Resource clean-up when a client disconnects or is disconnected.
         MJUNG: Right now, this method is not called because we don't detect the 

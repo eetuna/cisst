@@ -28,11 +28,11 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterfaceProxyServer);
 
-#define DeviceInterfaceProxyServerLogger(_log) Logger->trace("mtsDeviceInterfaceProxyServer", _log)
+#define DeviceInterfaceProxyServerLogger(_log) BaseType::IceLogger->trace("mtsDeviceInterfaceProxyServer", _log)
 #define DeviceInterfaceProxyServerLoggerError(_log1, _log2) \
         std::stringstream s;\
         s << "mtsDeviceInterfaceProxyServer: " << _log1 << ": " << _log2;\
-        Logger->error(s.str());
+        BaseType::IceLogger->error(s.str());
 
 mtsDeviceInterfaceProxyServer::mtsDeviceInterfaceProxyServer(
     const std::string& adapterName, const std::string& endpointInfo,
@@ -54,7 +54,7 @@ void mtsDeviceInterfaceProxyServer::Start(mtsTask * callingTask)
 {
     // Initialize Ice object.
     // Notice that a worker thread is not created right now.
-    Init();
+    IceInitialize();
     
     if (InitSuccessFlag) {
         // Create a worker thread here and returns immediately.
@@ -96,19 +96,19 @@ void mtsDeviceInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
         ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer error: ", msg);
     }
 
-    ProxyServer->OnThreadEnd();
+    ProxyServer->OnEnd();
 }
 
 void mtsDeviceInterfaceProxyServer::Stop()
 {
-    OnThreadEnd();
+    OnEnd();
 }
 
-void mtsDeviceInterfaceProxyServer::OnThreadEnd()
+void mtsDeviceInterfaceProxyServer::OnEnd()
 {
     DeviceInterfaceProxyServerLogger("Proxy server ends.");
 
-    BaseType::OnThreadEnd();
+    BaseType::OnEnd();
 
     Sender->Stop();
 }
@@ -364,7 +364,7 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandWriteSerialized(
 
     static char buf[1024];
     sprintf(buf, "ExecuteCommandWriteSerialized: %d bytes received", argument.size());
-    Logger->trace("TIServer", buf);
+    IceLogger->trace("TIServer", buf);
 
     // Deserialization
     DeSerializationBuffer.str("");
@@ -408,7 +408,7 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized
 
     static char buf[1024];
     sprintf(buf, "ExecuteCommandQualifiedReadSerialized: %d bytes received", argument1.size());
-    Logger->trace("TIServer", buf);
+    IceLogger->trace("TIServer", buf);
 
     // Deserialization for argument1
     DeSerializationBuffer.str("");
@@ -439,7 +439,7 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized
 //-------------------------------------------------------------------------
 void mtsDeviceInterfaceProxyServer::SendExecuteEventVoid(const int commandId) const
 {
-    Logger->trace("TIServer", ">>>>> SEND: SendExecuteEventVoid");
+    IceLogger->trace("TIServer", ">>>>> SEND: SendExecuteEventVoid");
 
     ConnectedClient->ExecuteEventVoid(commandId);
 }
@@ -448,7 +448,7 @@ void mtsDeviceInterfaceProxyServer::SendExecuteEventWriteSerialized(
     //const int commandId, const cmnGenericObject & argument)
     const int commandId, const mtsGenericObject & argument)
 {
-    Logger->trace("TIServer", ">>>>> SEND: SendExecuteEventWriteSerialized");
+    IceLogger->trace("TIServer", ">>>>> SEND: SendExecuteEventWriteSerialized");
 
     // Serialization
     std::string serializedData;
@@ -463,9 +463,9 @@ void mtsDeviceInterfaceProxyServer::SendExecuteEventWriteSerialized(
 mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::DeviceInterfaceServerI(
     const Ice::CommunicatorPtr& communicator,
     const Ice::LoggerPtr& logger,
-    mtsDeviceInterfaceProxyServer * DeviceInterfaceServer) 
+    mtsDeviceInterfaceProxyServer * deviceInterfaceServer) 
     : Communicator(communicator), Logger(logger),
-      DeviceInterfaceServer(DeviceInterfaceServer),
+      DeviceInterfaceServer(deviceInterfaceServer),
       Runnable(true),
       Sender(new SendThread<DeviceInterfaceServerIPtr>(this))
 {
@@ -473,7 +473,8 @@ mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::DeviceInterfaceServerI(
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Start()
 {
-    DeviceInterfaceProxyServerLogger("Send thread starts");
+    DeviceInterfaceServer->GetLogger()->trace(
+        "mtsDeviceInterfaceProxyServer", "Send thread starts");
 
     Sender->start();
 }
@@ -515,15 +516,13 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Stop()
 {
-    DeviceInterfaceProxyServerLogger("Send thread is terminating.");
+    if (!DeviceInterfaceServer->IsActiveProxy()) return;
 
     IceUtil::ThreadPtr callbackSenderThread;
     {
-        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        DeviceInterfaceProxyServerLogger("Destroying sender.");
         Runnable = false;
-
         notify();
 
         callbackSenderThread = Sender;
