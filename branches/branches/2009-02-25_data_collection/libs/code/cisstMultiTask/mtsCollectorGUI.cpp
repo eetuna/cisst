@@ -37,7 +37,7 @@ CMN_IMPLEMENT_SERVICES(mtsCollectorGUI)
 #define NAVY    0, 0, 0.5
 #define OLIVE   0.5, 0.5, 0
 #define PURPLE  0.5, 0, 0.5
-#define RED 1,  0, 0
+#define RED     1,  0, 0
 #define SILVER  0.75, 0.75, 0.75
 #define TEAL    0, 0.5, 0.5
 #define WHITE   1, 1, 1
@@ -54,7 +54,7 @@ mtsCollectorGUI::mtsCollectorGUI(MULTIPLOT * graphPane)
 
 void mtsCollectorGUI::Initialize()
 {
-    GraphPane->set_scrolling(100);    
+    GraphPane->set_scrolling(75);    
     GraphPane->set_grid(MP_LINEAR_GRID, MP_LINEAR_GRID, true);
 }
 
@@ -65,10 +65,10 @@ void mtsCollectorGUI::UpdateUI(const double newValue)
     
     for (int i=0; i<=12; ++i) {
         if (i <= 7) {
-            GraphPane->set_pointsize(i, 4.0);
+            GraphPane->set_pointsize(i, 3.0);
             GraphPane->set_linewidth(i, 0.0);
         } else {
-            GraphPane->set_pointsize(i, 4.0);
+            GraphPane->set_pointsize(i, 3.0);
             GraphPane->set_linewidth(i, 1.0);
         }
     }

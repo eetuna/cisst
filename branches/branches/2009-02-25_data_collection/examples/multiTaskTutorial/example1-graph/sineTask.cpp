@@ -34,7 +34,7 @@ void sineTask::Run(void) {
     ProcessQueuedCommands();
     // compute the new values based on the current time and amplitude
     SineData = SineAmplitude
-        * sin(2 * cmnPI * static_cast<double>(this->GetTick()) * Period/2.0);
+        * sin(2 * cmnPI * static_cast<double>(this->GetTick()) * Period / 2.0);
     SineData.SetTimestamp(StateTable.GetTic());
     SineData.SetValid(true);
 }
