@@ -55,16 +55,7 @@ SET(SOURCE_FILES
     mtsTaskFromCallback.cpp
 
     mtsTaskManager.cpp
-
-    mtsTaskManagerProxyClient.cpp
-    mtsTaskManagerProxyServer.cpp
-    
     mtsDeviceInterface.cpp
-    mtsDeviceInterfaceProxyClient.cpp
-    mtsDeviceInterfaceProxyServer.cpp
-
-    mtsTaskGlobal.cpp
-    mtsDeviceProxy.cpp
 
     mtsCollectorBase.cpp
     mtsCollectorState.cpp    
@@ -125,27 +116,9 @@ SET(HEADER_FILES
     mtsTaskPeriodic.h
     mtsTaskFromCallback.h
     
-    mtsProxyBaseCommon.h
-    mtsProxyBaseClient.h
-    mtsProxyBaseServer.h
-    
     mtsTaskManager.h
-    mtsTaskManagerProxyClient.h
-    mtsTaskManagerProxyServer.h
         
     mtsDeviceInterface.h
-    mtsDeviceInterfaceProxyClient.h
-    mtsDeviceInterfaceProxyServer.h
-    
-    mtsTaskGlobal.h
-    mtsDeviceProxy.h
-    mtsCommandVoidProxy.h
-    mtsCommandWriteProxy.h
-    mtsCommandReadProxy.h
-    mtsCommandQualifiedReadProxy.h
-    mtsMulticastCommandWriteProxy.h
-    
-    mtsEventWriteGeneratorProxy.h
 
     mtsCollectorBase.h    
     mtsCollectorState.h
@@ -157,6 +130,33 @@ SET(HEADER_FILES
 option(CISST_MTS_HAS_ICE "Build network proxies for task and devices, requires ICE from ZeroC" OFF)
 
 if(CISST_MTS_HAS_ICE)
+
+  SET(SOURCE_FILES ${SOURCE_FILES}
+      mtsTaskManagerProxyClient.cpp
+      mtsTaskManagerProxyServer.cpp
+      mtsDeviceInterfaceProxyClient.cpp
+      mtsDeviceInterfaceProxyServer.cpp
+      mtsTaskGlobal.cpp
+      mtsDeviceProxy.cpp
+      )
+
+  SET(HEADER_FILES ${HEADER_FILES}
+      mtsProxyBaseCommon.h
+      mtsProxyBaseClient.h
+      mtsProxyBaseServer.h
+      mtsTaskManagerProxyClient.h
+      mtsTaskManagerProxyServer.h
+      mtsDeviceInterfaceProxyClient.h
+      mtsDeviceInterfaceProxyServer.h
+      mtsTaskGlobal.h
+      mtsDeviceProxy.h
+      mtsCommandVoidProxy.h
+      mtsCommandWriteProxy.h
+      mtsCommandReadProxy.h
+      mtsCommandQualifiedReadProxy.h
+      mtsMulticastCommandWriteProxy.h
+      mtsEventWriteGeneratorProxy.h
+      )
 
   SET(ICE_RESOURCE_FILES
       ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client

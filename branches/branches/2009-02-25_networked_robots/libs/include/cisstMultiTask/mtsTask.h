@@ -40,10 +40,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsDevice.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 #include <cisstMultiTask/mtsHistory.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
+
+#if CISST_MTS_HAS_ICE
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+#endif 
 
 #include <set>
 #include <map>
@@ -315,6 +318,7 @@ public:
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
 
+#if CISST_MTS_HAS_ICE
     //-------------------------------------------------------------------------
     //  Proxy Implementation Using ICE
     //-------------------------------------------------------------------------
@@ -393,6 +397,7 @@ public:
                           const std::string & serverTaskProxyName,
                           const std::string & clientTaskProxyName,
                           const std::string & providedInterfaceName);
+#endif // CISST_MTS_HAS_ICE
 };
 
 

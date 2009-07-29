@@ -26,19 +26,25 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 
+#if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsDeviceProxy.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
+#endif // CISST_MTS_HAS_ICE
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 
 mtsTaskManager::mtsTaskManager():
     TaskMap("Tasks"),
-    DeviceMap("Devices"),
+    DeviceMap("Devices")
+#if CISST_MTS_HAS_ICE
+    ,
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
     TaskManagerCommunicatorID("TaskManagerServerSender"),
-    ProxyGlobalTaskManager(NULL), ProxyTaskManagerClient(NULL)
+    ProxyGlobalTaskManager(NULL),
+    ProxyTaskManagerClient(NULL)
+#endif
 {
     __os_init();
     TaskMap.SetOwner(*this);
@@ -51,6 +57,7 @@ mtsTaskManager::~mtsTaskManager()
 {
     this->Kill();
 
+#if CISST_MTS_HAS_ICE
     // Clean up resources allocated for proxy objects.
     if (ProxyGlobalTaskManager) {
         ProxyGlobalTaskManager->Stop();
@@ -63,6 +70,7 @@ mtsTaskManager::~mtsTaskManager()
         osaSleep(200 * cmn_ms);
         delete ProxyTaskManagerClient;
     }
+#endif
 }
 
 
@@ -326,7 +334,9 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         // Note that a SERVER task has to be able to get resource interface pointer here
         // (a SERVER task should not reach here).
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
-    } else {
+    }
+#if CISST_MTS_HAS_ICE
+    else {
         // If we cannot find, the resource interface should be at remote or doesn't exist.
         switch (GetTaskManagerType()) {
             case TASK_MANAGER_LOCAL:
@@ -362,6 +372,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
                 requestServerSideConnect = true;
         }
     }
+#endif // CISST_MTS_HAS_ICE
 
     // check the interface pointer we got
     if (resourceInterface == 0) {
@@ -379,7 +390,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     AssociationSet.insert(association);
     CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << requiredInterfaceName
                                << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
-    
+#if CISST_MTS_HAS_ICE
     if (requestServerSideConnect) {
         // At client side, if the connection between the actual required interface and 
         // the provided interface proxy is established successfully, connect the actual 
@@ -411,6 +422,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
             return false;
         }
     }
+#endif // CISST_MTS_HAS_ICE
 
     return true;
 }
@@ -421,6 +433,8 @@ bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::str
     CMN_LOG_CLASS_RUN_ERROR << "Disconnect not implemented!!!" << std::endl;
     return true;
 }
+
+#if CISST_MTS_HAS_ICE
 
 void mtsTaskManager::StartProxies()
 {
@@ -454,3 +468,4 @@ void mtsTaskManager::StartProxies()
         }
     }
 }
+#endif // CISST_MTS_HAS_ICE

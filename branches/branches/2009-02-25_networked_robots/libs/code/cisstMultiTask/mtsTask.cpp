@@ -27,12 +27,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 
+#if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsDeviceProxy.h>
-
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+#endif // CISST_MTS_HAS_ICE
 
 #include <iostream>
 
@@ -166,8 +167,11 @@ mtsTask::mtsTask(const std::string & name,
     StateTables("StateTables"),
     OverranPeriod(false),
     ThreadStartData(0),
-    ReturnValue(0),
+    ReturnValue(0)
+#if CISST_MTS_HAS_ICE
+    ,
     TaskInterfaceCommunicatorID("TaskInterfaceServerSender")
+#endif
 {
     this->StateTables.SetOwner(*this);
     this->StateTables.AddItem(this->StateTable.GetName(),
@@ -185,6 +189,7 @@ mtsTask::~mtsTask()
         CleanupInternal();
     }
 
+#if CISST_MTS_HAS_ICE
     // Stop all provided interface proxies running.
     ProvidedInterfaceProxyMapType::MapType::iterator it1 =
         ProvidedInterfaceProxies.GetMap().begin();
@@ -204,6 +209,7 @@ mtsTask::~mtsTask()
     // Deallocation
     ProvidedInterfaceProxies.DeleteAll();
     RequiredInterfaceProxies.DeleteAll();
+#endif // CISST_MTS_HAS_ICE
 }
 
 
@@ -318,6 +324,7 @@ void mtsTask::ToStream(std::ostream & outputStream) const
 //-----------------------------------------------------------------------------
 //  Processing Methods
 //-----------------------------------------------------------------------------
+#if CISST_MTS_HAS_ICE
 void mtsTask::RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
                                         const std::string & serverTaskIP)
 {
@@ -588,3 +595,5 @@ void mtsTask::SendGetCommandId(const std::string & requiredInterfaceName,
 
     CMN_LOG_RUN_VERBOSE << "UpdateCommandId: Updated function proxy id." << std::endl;
 }
+
+#endif // CISST_MTS_HAS_ICE

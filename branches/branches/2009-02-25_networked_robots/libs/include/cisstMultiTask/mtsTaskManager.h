@@ -38,10 +38,12 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaTimeServer.h>
 
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsConfig.h>
+
+#if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
-//#include <cisstMultiTask/mtsTaskManagerProxyClient.h>
-//#include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+#endif // CISST_MTS_HAS_ICE
 
 #include <set>
 
@@ -199,6 +201,7 @@ protected:
         __os_exit();
     }
 
+#if CISST_MTS_HAS_ICE
     //-------------------------------------------------------------------------
     //  Proxy-related
     //-------------------------------------------------------------------------
@@ -258,6 +261,7 @@ public:
     inline void SetServerTaskIP(const std::string & serverTaskIP) {
         ServerTaskIP = serverTaskIP;
     }
+#endif // CISST_MTS_HAS_ICE
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)
