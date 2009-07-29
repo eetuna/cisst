@@ -178,8 +178,7 @@ module mtsDeviceInterfaceProxy
             When the server task receives the return value with updated 'functionProxies'
             object, it has to do the following two things.
             1) Iterating the list of actual event handler objects registered (used) by
-            the client, the server task has to enable corresponding events.
-            (GOHOME: check if all the events are disabled by default at server side.)
+            the client, the server task has to enable corresponding events.            
             2) Update event handler proxy objects' commandId field (required interface
             proxy contains all the information about event handler proxy objects). 
         */

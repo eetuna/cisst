@@ -93,12 +93,12 @@ public:
                               yet successfully initialized.
         PROXY_READY        -- Set by either mtsProxyBaseServer::IceInitialize() or
                               mtsProxyBaseClient::IceInitialize().
-                              This state means a proxy object is successfully 
-                              initialized.
+                              This state represents that a proxy object is 
+                              successfully initialized and is ready to run.
         PROXY_ACTIVE       -- Set by either mtsProxyBaseServer::SetAsActiveProxy() 
                               or mtsProxyBaseClient::SetAsActiveProxy().
-                              If a proxy is in this state, it can run and process 
-                              events.
+                              If a proxy is in this state, it is running and can 
+                              process events.
         PROXY_FINISHING    -- Set by either mtsProxyBaseServer::OnEnd() or
                               mtsProxyBaseClient::OnEnd() before trying to stop ICE 
                               proxy processing.
