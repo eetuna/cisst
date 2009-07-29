@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnThrow.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctContainerTraits.h>
 #include <cisstVector/vctFixedSizeVector.h>
@@ -646,13 +647,13 @@ public:
       See FastCopyOf for more details. */
     //@{
     template<class __matrixOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
     
     template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source)
+    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -1074,6 +1075,23 @@ public:
         typedef vctDynamicConstMatrixRef<value_type> Type;
     };
 #endif // SWIG
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        cmnSerializeRaw(outputStream, myRows);
+        cmnSerializeRaw(outputStream, myCols);
+        for (indexRow = 0; indexRow < myRows; ++indexRow) {
+            for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                cmnSerializeRaw(outputStream, this->Element(indexRow, indexCol));
+            }
+        }
+    }
+
 };
 
 #ifndef DOXYGEN

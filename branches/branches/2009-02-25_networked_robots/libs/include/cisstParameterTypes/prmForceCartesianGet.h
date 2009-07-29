@@ -43,6 +43,8 @@ class CISST_EXPORT prmForceCartesianGet: public mtsGenericObject
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
+    typedef mtsGenericObject BaseType;
+
     /*! default constructor */
     inline prmForceCartesianGet(void):
         mtsGenericObject(),
@@ -98,6 +100,15 @@ public:
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
+    /*! To stream raw data. */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const;
+    
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const;
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream);
 
 }; // _prmForceCartesianGet_h
 

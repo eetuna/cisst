@@ -33,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnThrow.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctContainerTraits.h>
 #include <cisstVector/vctDynamicVectorLoopEngines.h>
@@ -568,7 +569,7 @@ public:
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<class __vectorOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & source) const
     {
         return vctFastCopy::VectorCopyCompatible(*this, source);
     }
@@ -576,7 +577,7 @@ public:
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<unsigned int __size, int __stride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstVectorBase<__size, __stride, value_type, __dataPtrType> & source)
+    inline bool FastCopyCompatible(const vctFixedSizeConstVectorBase<__size, __stride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::VectorCopyCompatible(*this, source);
     }
@@ -968,6 +969,18 @@ public:
                     outputStream << delimiter; 
                 }
             }
+        }
+    }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type mySize = size();
+        size_type index;
+        
+        cmnSerializeRaw(outputStream, mySize);
+        for (index = 0; index < mySize; ++index) {
+            cmnSerializeRaw(outputStream, this->Element(index));
         }
     }
 

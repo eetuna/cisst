@@ -28,6 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _vctFixedSizeConstMatrixBase_h
 #define _vctFixedSizeConstMatrixBase_h
 
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctFixedSizeVectorRef.h>
 #include <cisstVector/vctFixedSizeVector.h>
@@ -646,7 +647,7 @@ class vctFixedSizeConstMatrixBase
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source)
+    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -654,7 +655,7 @@ class vctFixedSizeConstMatrixBase
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<class __matrixOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -1079,7 +1080,7 @@ class vctFixedSizeConstMatrixBase
         return outputStream.str();
     }
 
-    /*!  Print the matrix to a text stream */
+    /*!  Print the matrix in a human readable format */
     void ToStream(std::ostream & outputStream) const {
         const size_type myRows = rows();
         const size_type myCols = cols();
@@ -1108,7 +1109,7 @@ class vctFixedSizeConstMatrixBase
         }
     }
 
-
+    /*! Print data only with optional separator */
     void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
                      bool headerOnly = false, const std::string & headerPrefix = "") const
     {
@@ -1143,6 +1144,20 @@ class vctFixedSizeConstMatrixBase
                 if (indexRow < (myRows - 1)) {
                     outputStream << delimiter;
                 }
+            }
+        }
+    }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        for (indexRow = 0; indexRow < myRows; ++indexRow) {
+            for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                cmnSerializeRaw(outputStream, this->Element(indexRow, indexCol));
             }
         }
     }

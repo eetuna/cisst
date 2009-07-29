@@ -119,22 +119,15 @@ public:
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
-   /*! Serialize the content of the object without any extra
-      information, i.e. no class type nor format version.  The
-      "receiver" is supposed to already know what to expect. */ 
-    virtual void SerializeRaw(std::ostream & outputStream) const {
-        BaseType::SerializeRaw(outputStream);
-        cmnSerializeRaw(outputStream, this->VelocityLinearMember);
-        cmnSerializeRaw(outputStream, this->VelocityAngularMember);
-    }
+    /*! To stream raw data. */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const;
+    
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const;
 
-    /*! De-serialize the content of the object without any extra
-      information, i.e. no class type nor format version. */
-    virtual void DeSerializeRaw(std::istream & inputStream) {
-        BaseType::DeSerializeRaw(inputStream);
-        cmnDeSerializeRaw(inputStream, this->VelocityLinearMember);
-        cmnDeSerializeRaw(inputStream, this->VelocityAngularMember);
-    }
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream);
 
 }; // _prmVelocityCartesianGet_h
 

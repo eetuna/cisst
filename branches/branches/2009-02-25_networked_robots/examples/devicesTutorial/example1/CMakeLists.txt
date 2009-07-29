@@ -118,4 +118,3 @@ TARGET_LINK_LIBRARIES(devicesTutorialExample1OmniClient ${FLTK_LIBRARIES})
 
 # link with the cisst libraries
 CISST_REQUIRES("devicesTutorialExample1OmniClient" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstParameterTypes;cisstDevices")
-
