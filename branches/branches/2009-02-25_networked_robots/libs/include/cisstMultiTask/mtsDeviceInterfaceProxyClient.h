@@ -62,6 +62,10 @@ public:
         return (ProxyState == mtsProxyBaseClient<mtsTask>::PROXY_ACTIVE);
     }
 
+    void ShutdownSession() {
+        mtsProxyBaseClient::ShutdownSession();
+    }
+
     /*! Stop the proxy. */
     void Stop();
 

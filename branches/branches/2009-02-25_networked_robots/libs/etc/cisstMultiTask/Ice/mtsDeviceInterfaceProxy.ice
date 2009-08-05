@@ -156,6 +156,10 @@ module mtsDeviceInterfaceProxy
 		/*! Replacement for OnConnect event. */
 		void AddClient(Ice::Identity ident);
 
+        /*! This is called by a client when it terminates. This allows a server to
+            shutdown (or close) safely and cleanly. */
+        void Shutdown();
+
         /*! Get the information about the provided interface which will be used to 
             create a provided interface proxy at client side. */
         ["cpp:const"] idempotent 

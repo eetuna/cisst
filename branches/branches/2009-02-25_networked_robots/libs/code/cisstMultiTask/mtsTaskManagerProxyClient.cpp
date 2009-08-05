@@ -116,7 +116,11 @@ void mtsTaskManagerProxyClient::Stop()
 
 void mtsTaskManagerProxyClient::OnEnd()
 {
-    TaskManagerProxyClientLogger("Proxy client ends.");
+    TaskManagerProxyClientLogger("TaskManagerProxy client ends.");
+
+    // Let a server disconnect this client safely.
+    GlobalTaskManagerProxy->Shutdown();
+    ShutdownSession();
 
     BaseType::OnEnd();
 
@@ -220,7 +224,9 @@ mtsDeviceInterface * mtsTaskManagerProxyClient::GetProvidedInterfaceProxy(
 //  Send Methods
 //-------------------------------------------------------------------------
 void mtsTaskManagerProxyClient::SendUpdateTaskManager()
-{    
+{
+    if (!IsValidSession) return;
+
     mtsTaskManagerProxy::TaskList localTaskList;
     std::vector<std::string> namesOfTasks;
     mtsTaskManager::GetInstance()->GetNamesOfTasks(namesOfTasks);
@@ -244,6 +250,8 @@ bool mtsTaskManagerProxyClient::SendAddProvidedInterface(
     const std::string & communicatorID,
     const std::string & taskName)
 {
+    if (!IsValidSession) return false;
+
     mtsTaskManagerProxy::ProvidedInterfaceAccessInfo info;
     info.adapterName = adapterName;
     info.endpointInfo = endpointInfo;
@@ -260,6 +268,8 @@ bool mtsTaskManagerProxyClient::SendAddProvidedInterface(
 bool mtsTaskManagerProxyClient::SendAddRequiredInterface(
     const std::string & newRequiredInterfaceName, const std::string & taskName)
 {
+    if (!IsValidSession) return false;
+
     mtsTaskManagerProxy::RequiredInterfaceAccessInfo info;
     info.taskName = taskName;
     info.interfaceName = newRequiredInterfaceName;
@@ -273,6 +283,8 @@ bool mtsTaskManagerProxyClient::SendAddRequiredInterface(
 bool mtsTaskManagerProxyClient::SendIsRegisteredProvidedInterface(
     const std::string & taskName, const std::string & providedInterfaceName) const
 {
+    if (!IsValidSession) return false;
+
     IceLogger->trace("TMClient", ">>>>> SEND: IsRegisteredProvidedInterface: " 
         + taskName + ", " + providedInterfaceName);
 
@@ -284,6 +296,8 @@ bool mtsTaskManagerProxyClient::SendGetProvidedInterfaceAccessInfo(
     const ::std::string & taskName, const std::string & providedInterfaceName,
     mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info) const
 {
+    if (!IsValidSession) return false;
+
     IceLogger->trace("TMClient", ">>>>> SEND: GetProvidedInterfaceAccessInfo: " 
         + taskName + ", " + providedInterfaceName);
 

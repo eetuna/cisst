@@ -111,8 +111,15 @@ void mtsDeviceInterfaceProxyClient::Stop()
 
 void mtsDeviceInterfaceProxyClient::OnEnd()
 {
-    DeviceInterfaceProxyClientLogger("Proxy client ends.");
+    DeviceInterfaceProxyClientLogger("DeviceInterfaceProxy client ends.");
 
+    OutputDebugString("###############################################");
+
+    // Let a server disconnect this client safely.
+    DeviceInterfaceServerProxy->Shutdown();
+
+    ShutdownSession();
+    
     BaseType::OnEnd();
     
     Sender->Stop();
@@ -196,6 +203,8 @@ const bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaceInfo(
     const std::string & providedInterfaceName,
     mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
 {
+    if (!IsValidSession) return false;
+
     IceLogger->trace("TIClient", ">>>>> SEND: SendGetProvidedInterface");
 
     return DeviceInterfaceServerProxy->GetProvidedInterfaceInfo(
@@ -206,6 +215,8 @@ bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
     const std::string & userTaskName, const std::string & requiredInterfaceName,
     const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
+    if (!IsValidSession) return false;
+
     IceLogger->trace("TIClient", ">>>>> SEND: SendConnectServerSide");
 
     return DeviceInterfaceServerProxy->ConnectServerSide(
@@ -216,6 +227,8 @@ bool mtsDeviceInterfaceProxyClient::SendUpdateEventHandlerId(
     const std::string & clientTaskProxyName,
     const mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies)
 {
+    if (!IsValidSession) return false;
+
     IceLogger->trace("TIClient", ">>>>> SEND: SendUpdateEventHandlerId");
 
     return DeviceInterfaceServerProxy->UpdateEventHandlerId(
@@ -226,6 +239,8 @@ void mtsDeviceInterfaceProxyClient::SendGetCommandId(
     const std::string & clientTaskProxyName,
     mtsDeviceInterfaceProxy::FunctionProxySet & functionProxies)
 {
+    if (!IsValidSession) return;
+
     IceLogger->trace("TIClient", ">>>>> SEND: SendGetCommandId");
 
     DeviceInterfaceServerProxy->GetCommandId(clientTaskProxyName, functionProxies);
@@ -233,6 +248,8 @@ void mtsDeviceInterfaceProxyClient::SendGetCommandId(
 
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) const
 {
+    if (!IsValidSession) return;
+
     //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandVoid");
 
     DeviceInterfaceServerProxy->ExecuteCommandVoid(commandId);
@@ -241,6 +258,8 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandVoid(const int commandId) 
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(
     const int commandId, const cmnGenericObject & argument)
 {
+    if (!IsValidSession) return;
+
     //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandWriteSerialized");
 
     // Serialization
@@ -253,6 +272,8 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandWriteSerialized(
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(
     const int commandId, cmnGenericObject & argument)
 {
+    if (!IsValidSession) return;
+
     //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandReadSerialized");
 
     std::string serializedData;
@@ -268,6 +289,8 @@ void mtsDeviceInterfaceProxyClient::SendExecuteCommandReadSerialized(
 void mtsDeviceInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(
     const int commandId, const cmnGenericObject & argument1, cmnGenericObject & argument2)
 {
+    if (!IsValidSession) return;
+
     //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
     
     // Serialization for argument1 (write)
@@ -316,7 +339,10 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Start()
 
 void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Run()
 {
-    // NOP
+    while (Runnable)
+    {
+        timedWait(IceUtil::Time::milliSeconds(10));
+    }
 }
 
 void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Stop()

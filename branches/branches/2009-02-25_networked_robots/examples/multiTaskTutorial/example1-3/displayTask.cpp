@@ -96,11 +96,11 @@ void displayTask::Run(void)
 
 void displayTask::HandleEventWrite(const mtsDouble & value)
 {
-    CMN_LOG_RUN_VERBOSE << "HandleTrigger: Trigger event (" << this->GetName() << "): "
-                        << value << std::endl;
+    //CMN_LOG_RUN_VERBOSE << "HandleTrigger: Trigger event (" << this->GetName() << "): "
+    //                    << value << std::endl;
 
     UI.Data3->value(value.Data);
-    Fl::check();
+    //Fl::check();
 }
 
 void displayTask::ButtonEventHandler()
@@ -110,11 +110,11 @@ void displayTask::ButtonEventHandler()
     } else {
         UI.Button2->value(true);
     }
-    Fl::check();
+    //Fl::check();
 }
 
 /*
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights Reserved.

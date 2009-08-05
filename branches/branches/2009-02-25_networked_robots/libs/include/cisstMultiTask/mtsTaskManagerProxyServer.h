@@ -67,10 +67,16 @@ public:
         return (ProxyState == mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
     }
 
+    void ShutdownSession(const Ice::Current & current) {
+        current.adapter->getCommunicator()->shutdown();
+        mtsProxyBaseServer::ShutdownSession();
+    }
+
     /*! End the proxy. */
     void Stop();
 
 protected:
+    /*! Typedef for base type. */
     typedef mtsProxyBaseServer<mtsTaskManager> BaseType;
 
     /*! Typedef for client proxy. */
@@ -231,6 +237,8 @@ protected:
         void Stop();
 
         void AddClient(const Ice::Identity&, const Ice::Current&);
+        void Shutdown(const ::Ice::Current&);
+
         void UpdateTaskManager(const mtsTaskManagerProxy::TaskList&, const Ice::Current&);
         bool AddProvidedInterface(const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo&, const Ice::Current&);
         bool AddRequiredInterface(const mtsTaskManagerProxy::RequiredInterfaceAccessInfo&, const Ice::Current&);

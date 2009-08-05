@@ -102,15 +102,14 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
 {
     mtsTaskManagerProxyServer * ProxyServer = 
         dynamic_cast<mtsTaskManagerProxyServer*>(arguments->proxy);
-    if (!ProxyServer) {        
-        CMN_LOG_RUN_ERROR << "mtsTaskManagerProxyServer: Failed to create proxy server." << std::endl;
+    if (!ProxyServer) {
+        CMN_LOG_RUN_ERROR << "mtsTaskManagerProxyServer: Failed to create a proxy server." << std::endl;
         return;
     }
     
-    ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Successfully created proxy server.");    
+    ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server starts.....");    
 
     try {
-        ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server starts...");
         ProxyServer->SetAsActiveProxy();
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
@@ -123,7 +122,7 @@ void mtsTaskManagerProxyServer::Runner(ThreadArguments<mtsTaskManager> * argumen
         ProxyServer->GetLogger()->error(error);
     }
 
-    ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server terminates...");
+    ProxyServer->GetLogger()->trace("mtsTaskManagerProxyServer", "Proxy server terminates.....");
 
     ProxyServer->OnEnd();
 }
@@ -437,7 +436,9 @@ mtsTaskManagerProxyServer::TaskManagerServerI::TaskManagerServerI(
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Start()
 {
-    CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Send thread starts." << std::endl;
+    //CMN_LOG_RUN_VERBOSE << "TaskManagerProxyServer: Send thread starts." << std::endl;
+    TaskManagerServer->GetLogger()->trace(
+        "mtsTaskManagerProxyServer", "Send thread starts");
 
     Sender->start();
 }
@@ -449,23 +450,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
 #endif
 
     while(Runnable) {
-        IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-        timedWait(IceUtil::Time::milliSeconds(100));
-
-        /*
-        std::set<mtsTaskManagerProxy::TaskManagerClientPrx> clients;
-        {
-            IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-            timedWait(IceUtil::Time::seconds(2));
-
-            if(!Runnable)
-            {
-                break;
-            }
-
-            clients = _clients;
-        }
-        */
+        timedWait(IceUtil::Time::milliSeconds(10));
 
 #ifdef _COMMUNICATION_TEST_
         if(!clients.empty())
@@ -524,6 +509,15 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::AddClient(
         mtsTaskManagerProxy::TaskManagerClientPrx::uncheckedCast(current.con->createProxy(identity));
     
     TaskManagerServer->ReceiveAddClient(Communicator->identityToString(identity), clientProxy);
+}
+
+void mtsTaskManagerProxyServer::TaskManagerServerI::Shutdown(const ::Ice::Current& current)
+{
+    Logger->trace("TMServer", "<<<<< RECV: Shutdown");
+
+    // Set as true to represent that this connection (session) is going to be closed.
+    // After this flag is set, no message is allowed to be sent to a server.
+    TaskManagerServer->ShutdownSession(current);
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(

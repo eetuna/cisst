@@ -248,6 +248,12 @@ protected:
         return IceGUID;
     }
 
+    /*! Set as true when a session is to be closed.
+        For a client, this is set when a client notifies a server of disconnection.
+        For a server, this is set when a client calls Shutdown() which allows safe
+        and clean termination. */
+    bool IsValidSession;
+
     //-----------------------------------------------------
     //  Serialization and Deserialization
     //-----------------------------------------------------
@@ -271,7 +277,6 @@ protected:
         serializedData = SerializationBuffer.str();
     }
 
-
 public:
     mtsProxyBaseCommon(const std::string& propertyFileName,
                        const std::string& objectIdentity,
@@ -280,6 +285,7 @@ public:
         ProxyState(PROXY_CONSTRUCTED),
         InitSuccessFlag(false),
         Runnable(false),
+        IsValidSession(true),
         IcePropertyFileName(propertyFileName),
         IceObjectIdentity(objectIdentity),
         IceCommunicator(NULL),
@@ -302,6 +308,12 @@ public:
     
     /*! Terminate the proxy. */
     virtual void Stop() = 0;
+
+    /*! Close a session. */
+    virtual void ShutdownSession() 
+    {
+        IsValidSession = false;
+    }
 
     /*! Called when the worker thread terminates. */
     virtual void OnEnd(void) = 0;

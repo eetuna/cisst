@@ -48,6 +48,7 @@ mtsDeviceInterfaceProxyServer::~mtsDeviceInterfaceProxyServer()
 
 void mtsDeviceInterfaceProxyServer::OnClose()
 {
+    //
 }
 
 void mtsDeviceInterfaceProxyServer::Start(mtsTask * callingTask)
@@ -79,6 +80,10 @@ void mtsDeviceInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
 {
     mtsDeviceInterfaceProxyServer * ProxyServer = 
         dynamic_cast<mtsDeviceInterfaceProxyServer*>(arguments->proxy);
+    if (!ProxyServer) {
+        CMN_LOG_RUN_ERROR << "mtsDeviceInterfaceProxyServer: Failed to create a proxy server." << std::endl;
+        return;
+    }
     
     ProxyServer->SetConnectedTask(arguments->argument);
     
@@ -86,15 +91,21 @@ void mtsDeviceInterfaceProxyServer::Runner(ThreadArguments<mtsTask> * arguments)
     //mtsDeviceInterfaceProxy::ProvidedInterfaceSequence providedInterfaces;
     //ProxyServer->GetProvidedInterface(providedInterfaces);
 
-    ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer", "Proxy server starts.");
+    ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer", "Proxy server starts.....");
 
     try {
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
-        ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer error: ", e.what());
+        std::string error("mtsDeviceInterfaceProxyServer: ");
+        error += e.what();
+        ProxyServer->GetLogger()->error(error);
     } catch (const char * msg) {
-        ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer error: ", msg);
+        std::string error("mtsDeviceInterfaceProxyServer: ");
+        error += msg;
+        ProxyServer->GetLogger()->error(error);
     }
+
+    ProxyServer->GetLogger()->trace("mtsDeviceInterfaceProxyServer", "Proxy server terminates.....");
 
     ProxyServer->OnEnd();
 }
@@ -106,8 +117,6 @@ void mtsDeviceInterfaceProxyServer::Stop()
 
 void mtsDeviceInterfaceProxyServer::OnEnd()
 {
-    DeviceInterfaceProxyServerLogger("Proxy server ends.");
-
     BaseType::OnEnd();
 
     Sender->Stop();
@@ -439,6 +448,8 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized
 //-------------------------------------------------------------------------
 void mtsDeviceInterfaceProxyServer::SendExecuteEventVoid(const int commandId) const
 {
+    if (!IsValidSession) return;
+
     IceLogger->trace("TIServer", ">>>>> SEND: SendExecuteEventVoid");
 
     ConnectedClient->ExecuteEventVoid(commandId);
@@ -448,13 +459,15 @@ void mtsDeviceInterfaceProxyServer::SendExecuteEventWriteSerialized(
     //const int commandId, const cmnGenericObject & argument)
     const int commandId, const mtsGenericObject & argument)
 {
+    if (!IsValidSession) return;
+
     IceLogger->trace("TIServer", ">>>>> SEND: SendExecuteEventWriteSerialized");
 
     // Serialization
     std::string serializedData;
     Serialize(argument, serializedData);
     
-     ConnectedClient->ExecuteEventWriteSerialized(commandId, serializedData);
+    ConnectedClient->ExecuteEventWriteSerialized(commandId, serializedData);
 }
 
 //-------------------------------------------------------------------------
@@ -481,13 +494,13 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Start()
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
 {
+#ifdef _COMMUNICATION_TEST_
     int num = 0;
-    while(true)
-    {
-        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-        timedWait(IceUtil::Time::milliSeconds(10));
+#endif
 
-        if(!Runnable) break;
+    while(Runnable)
+    {
+        timedWait(IceUtil::Time::milliSeconds(10));
 
 #ifdef _COMMUNICATION_TEST_
         if(!clients.empty())
@@ -523,6 +536,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Stop()
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
         Runnable = false;
+
         notify();
 
         callbackSenderThread = Sender;
@@ -545,6 +559,16 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::AddClient(
         mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx::uncheckedCast(current.con->createProxy(ident));
     
     DeviceInterfaceServer->ReceiveAddClient(clientProxy);
+}
+
+void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Shutdown(
+    const ::Ice::Current& current)
+{
+    Logger->trace("TIServer", "<<<<< RECV: Shutdown");
+
+    // Set as true to represent that this connection (session) is going to be closed.
+    // After this flag is set, no message is allowed to be sent to a server.
+    DeviceInterfaceServer->ShutdownSession(current);
 }
 
 bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetProvidedInterfaceInfo(

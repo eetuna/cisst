@@ -87,6 +87,10 @@ module mtsTaskManagerProxy
 	interface TaskManagerServer
 	{		
 		void AddClient(Ice::Identity ident); // throws InvalidTaskNameError;
+
+        /*! This is called by a client when it terminates. This allows a server to
+            shutdown (or close) safely and cleanly. */
+        void Shutdown();
 	    
 		void UpdateTaskManager(TaskList localTaskInfo);
 
@@ -106,6 +110,26 @@ module mtsTaskManagerProxy
 			string resourceTaskName, string providedInterfaceName);
 	};
 
+    /*
+    // An extra level of indirection to introduce a session.
+    interface TaskManagerServerSession
+    {
+        TaskManagerServer * CreateTaskManagerServer();
+
+        ["cpp:const"] idempotent string GetSessionName();
+
+        idempotent void Refresh();
+
+        void Destroy();
+    };
+
+    interface TaskManagerServerSessionFactory
+    {
+        TaskManagerServerSession * CreateSession(string sessionName);
+
+        void Shutdown();
+    };
+    */
 };
 
 #endif // _mtsTaskManagerProxy_ICE_h

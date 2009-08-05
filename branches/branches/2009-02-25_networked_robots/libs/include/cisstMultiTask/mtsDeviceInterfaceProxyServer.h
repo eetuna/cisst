@@ -63,6 +63,11 @@ public:
         return (ProxyState == mtsProxyBaseServer<mtsTask>::PROXY_ACTIVE);
     }
 
+    void ShutdownSession(const Ice::Current & current) {
+        current.adapter->getCommunicator()->shutdown();
+        mtsProxyBaseServer::ShutdownSession();
+    }
+
     /*! Stop the proxy. */
     void Stop();
 
@@ -71,11 +76,11 @@ public:
     void SetConnectedTask(mtsTask * serverTask) { ConnectedTask = serverTask; }
 
 protected:
-    /*! Typedef for client proxy. */
-    typedef mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx DeviceInterfaceClientProxyType;
-
     /*! Typedef for base type. */
     typedef mtsProxyBaseServer<mtsTask> BaseType;
+
+    /*! Typedef for client proxy. */
+    typedef mtsDeviceInterfaceProxy::DeviceInterfaceClientPrx DeviceInterfaceClientProxyType;
 
     /*! Pointer to the task connected. */
     mtsTask * ConnectedTask;
@@ -98,13 +103,13 @@ protected:
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsTask> * arguments);
 
-    /*! Clean up thread-related resources. */
-    void OnEnd();
-    
     /*! Definitions for send thread */
     class DeviceInterfaceServerI;
     typedef IceUtil::Handle<DeviceInterfaceServerI> DeviceInterfaceServerIPtr;
     DeviceInterfaceServerIPtr Sender;
+
+    /*! Clean up thread-related resources. */
+    void OnEnd();
 
     /*! Resource clean-up */
     void OnClose();
@@ -183,6 +188,8 @@ protected:
         void Stop();
 
         void AddClient(const ::Ice::Identity&, const ::Ice::Current&);
+        void Shutdown(const ::Ice::Current&);
+
         bool GetProvidedInterfaceInfo(const std::string &,
                                       ::mtsDeviceInterfaceProxy::ProvidedInterfaceInfo&,
                                       const ::Ice::Current&) const;
