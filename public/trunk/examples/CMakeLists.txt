@@ -32,7 +32,7 @@ SET(CISST_EXAMPLES
     multiTaskTutorial
     nArrayBenchmark
     numericalTutorial
-#    osAbstractionTutorial
+    osAbstractionTutorial
 #    stereoTutorial
     vectorTutorial
     )    
