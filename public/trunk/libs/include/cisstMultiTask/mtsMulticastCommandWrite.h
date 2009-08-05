@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsMulticastCommandWrite.h,v 1.5 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
@@ -65,7 +65,7 @@ public:
     ~mtsMulticastCommandWrite() {}
     
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
         // cast argument first
         const ArgumentType * data = dynamic_cast< const ArgumentType * >(&argument);
         if (data == NULL)
@@ -81,7 +81,7 @@ public:
     /*! Return a pointer on the argument prototype.  Uses the first
       command added to find the argument prototype.  If no command is
       available, return 0 (null pointer) */
-    const cmnGenericObject * GetArgumentPrototype(void) const {
+    const mtsGenericObject * GetArgumentPrototype(void) const {
         return &ArgumentPrototype;
     }
 };

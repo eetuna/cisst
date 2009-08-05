@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cisstTestMain.cpp,v 1.12 2007/04/26 20:12:05 anton Exp $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2003-07-28
@@ -163,7 +163,14 @@ int main(int argc, const char *argv[])
         return 0;
     }
 
-    if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS) {
+    if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
+        int testCount = ListAllTestsInTestSuite(allTests);
+        std::cout << "-------------------------------- Total " << testCount
+                  << " test(s)" << std::endl;
+    }
+    
+    if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS ||
+		testParameters.GetTestRunMode() == cisstTestParameters::RUN_AND_LIST_TESTS) {
         CppUnit::RepeatedTest * repeatedTest =
             new CppUnit::RepeatedTest(allTests, testParameters.GetNumIterations());
         CppUnit::TextUi::TestRunner runner;

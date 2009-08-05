@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt 8 2009-01-04 21:13:48Z adeguet1 $
+# $Id$
 #
 # CMakeLists for cisstCommon wrapping
 #
@@ -28,6 +28,7 @@ IF(EXISTS ${cisstCommon_PYTHON_INTERFACE})
   SWIG_ADD_MODULE(cisstCommonPython python ${cisstCommon_PYTHON_INTERFACE})
   IF(WIN32)
     SET_TARGET_PROPERTIES(_cisstCommonPython PROPERTIES SUFFIX .pyd)
+    SET_TARGET_PROPERTIES(_cisstCommonPython PROPERTIES DEBUG_POSTFIX "_d")
   ENDIF(WIN32)
   SWIG_LINK_LIBRARIES(cisstCommonPython cisstCommon
                       debug ${PYTHON_DEBUG_LIBRARIES}

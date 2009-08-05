@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: appTask.cpp,v 1.14 2008/12/14 06:43:16 pkaz Exp $ */
+/* $Id$ */
 
 #include <math.h>
 #include "appTask.h"
@@ -87,7 +87,7 @@ void appTask::Run(void)
 void appTask::Close(mtsTask * task)
 {
     appTask* myTask = dynamic_cast<appTask*>(task);
-    CMN_LOG(5) << "Closing task " << myTask->GetName() << std::endl;
+    CMN_LOG_INIT_VERBOSE << "Closing task " << myTask->GetName() << std::endl;
     myTask->ui.Hide();
     myTask->ExitFlag = true;
 }

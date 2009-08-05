@@ -2,13 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsStateTable.cpp,v 1.8 2009/01/09 05:39:41 pkaz Exp $
+  $Id$
 
-  Author(s):  Ankur Kapoor
+  Author(s):  Ankur Kapoor, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
-  Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -19,26 +18,32 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstCommon/cmnAssert.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstMultiTask/mtsStateTable.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstCommon/cmnAssert.h>
+#include <cisstMultiTask/mtsCollectorState.h>
 
 #include <iostream>
 #include <string>
 
-mtsStateTable::mtsStateTable(int size) :
-		HistoryLength(size), NumberStateData(0), IndexWriter(0),IndexReader(0),
-		StateVector(NumberStateData), StateVectorDataNames(NumberStateData),
-#if 0
-		DataValid(NumberStateData, false), Copy(NumberStateData, true),
-#endif
-        Ticks(size, mtsStateIndex::TimeTicksType(0)),
-        Tic(0.0),
-        Toc(0.0),
-        Period(0.0),
-        SumOfPeriods(0.0),
-        AvgPeriod(0.0)
+int mtsStateTable::StateVectorBaseIDForUser;
+
+mtsStateTable::mtsStateTable(int size, const std::string & stateTableName):
+    HistoryLength(size),
+    NumberStateData(0),
+    IndexWriter(0),
+    IndexReader(0),
+    StateVector(NumberStateData),
+    StateVectorDataNames(NumberStateData),
+    Ticks(size, mtsStateIndex::TimeTicksType(0)),
+    Tic(0.0),
+    Toc(0.0),
+    Period(0.0),
+    SumOfPeriods(0.0),
+    AvgPeriod(0.0),
+    StateTableName(stateTableName), 
+    DataCollectionEventHandler(NULL)
 {
 
     // Get a pointer to the time server
@@ -50,8 +55,19 @@ mtsStateTable::mtsStateTable(int size) :
     TicId = NewElement("Tic", &Tic);
     // Add Period to the StateTable.
     PeriodId = NewElement("Period", &Period);
+
+    // Currently there are three signals maintained internally at StateTable.
+    // : "Toc", "Tic", "Period". So the value of StateVectorBaseIDForUser is 
+    // set to 3.
+    StateVectorBaseIDForUser = StateVector.size();
 }
 
+mtsStateTable::~mtsStateTable()
+{
+    if (DataCollectionEventHandler) {
+        delete DataCollectionEventHandler;
+    }
+}
 /* All the const methods that can be called from reader or writer */
 
 mtsStateIndex mtsStateTable::GetIndexReader(void) const {
@@ -59,100 +75,45 @@ mtsStateIndex mtsStateTable::GetIndexReader(void) const {
     return mtsStateIndex(tmp, Ticks[tmp], HistoryLength);
 }
 
-
-bool mtsStateTable::ReadFromReader(mtsStateDataId id, const mtsStateIndex & timeIndex, cmnGenericObject & obj) const {
-    CMN_ASSERT(id != -1);
-    if (id == -1) {
-        CMN_LOG(1) << "Class mtsStateTable: ReadFromReader: obj must be created using NewElement " << std::endl;
-        return false;
+mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const mtsGenericObject &element) const
+{
+    for (unsigned int i = 0; i < StateVectorElements.size(); i++) {
+        if (&element == StateVectorElements[i])
+            return StateVectorAccessors[i];
     }
-    // timeIndex refers to some time and index  tuple of the past.
-    if (!StateVector[id]) {
-        CMN_LOG(1) << "Class mtsStateTable: ReadFromReader: No state data array corresponding to given id: " << id << std::endl;
-        return false;
-    }
-    StateVector[id]->Get(timeIndex.Index(), obj);
-    return (Ticks[timeIndex.Index()] == timeIndex.Ticks());
+    return 0;
 }
 
-bool mtsStateTable::ReadVectorFromReader(mtsStateDataId id, const mtsStateIndex & timeIndexStart, 
-                                         const mtsStateIndex & timeIndexEnd, cmnGenericObject &obj) const {
-    CMN_ASSERT(id != -1);
-    if (id == -1) {
-        CMN_LOG(1) << "Class mtsStateTable: ReadVectorFromReader: obj must be created using NewElement " << std::endl;
-        return false;
-    }
-    if (!StateVector[id]) {
-        CMN_LOG(1) << "Class mtsStateTable: ReadVectorFromReader: No state data array corresponding to given id: " << id << std::endl;
-        return false;
-    }
-    // timeIndex refers to some time and index  tuple of the past.
-    // First, we check if the (time,index) tuples are valid, then we check that
-    // the Start is older (lesser Ticks) than the End.
-    // (not yet implemented -- what about wraparound?)
-    if ((Ticks[timeIndexStart.Index()] != timeIndexStart.Ticks()) ||
-        (Ticks[timeIndexEnd.Index()] != timeIndexEnd.Ticks())) {
-        CMN_LOG(1) << "ReadVectorFromReader: data not available" << std::endl;
-        return false;
-    }
-    bool ret = StateVector[id]->GetVector(timeIndexStart.Index(), timeIndexEnd.Index(), obj);
-    // If GetVector succeeded, then check if the data is still valid (has not been overwritten).
-    // Here it is sufficient to just check the oldest index (Start).
-    if (ret)
-       ret = Ticks[timeIndexStart.Index()] == timeIndexStart.Ticks();
-    return ret;
-}
-
-
-bool mtsStateTable::ReadFromReader(const std::string & name, const mtsStateIndex & timeIndex, cmnGenericObject & obj) {
+mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const std::string &name) const
+{
     for (unsigned int i = 0; i < StateVectorDataNames.size(); i++) {
-        if (StateVectorDataNames[i] == name) {
-            return ReadFromReader(i, timeIndex, obj);
-        }
+        if (name == StateVectorDataNames[i])
+            return StateVectorAccessors[i];
     }
-    return false;
+    return 0;
 }
 
 /* All the non-const methods that can be called from writer only */
 
-mtsStateIndex mtsStateTable::GetIndexWriter(void) {
+mtsStateIndex mtsStateTable::GetIndexWriter(void) const {
     return mtsStateIndex(IndexWriter, Ticks[IndexWriter], HistoryLength);
 }
 
 
-bool mtsStateTable::ReadFromWriter(mtsStateDataId id, const mtsStateIndex & timeIndex, cmnGenericObject &obj) {
-    CMN_ASSERT(id != -1);
-    if (id == -1) {
-        CMN_LOG(1) << "Class mtsStateTable: ReadFromWriter: obj must be created using NewElement " << std::endl;
-        return false;
-    }
-    if (timeIndex.Index() == (int)IndexWriter)
-        return false;
-    bool result = (Ticks[timeIndex.Index()] == timeIndex.Ticks());
-    if (result) {
-        if (!StateVector[id]) {
-            CMN_LOG(1) << "Class mtsStateTable: ReadFromWriter: No state data array corresponding to given id: " << id << std::endl;
-            return false;
-        }
-    }
-    StateVector[id]->Get(timeIndex.Index(), obj);
-    return result;
-}
-
-bool mtsStateTable::Write(mtsStateDataId id, const cmnGenericObject &obj) {
+bool mtsStateTable::Write(mtsStateDataId id, const mtsGenericObject &obj) {
     bool result;
     CMN_ASSERT(id != -1);
     if (id == -1) {
-        CMN_LOG(1) << "Class mtsStateTable: Write: obj must be created using NewElement " << std::endl;
+        CMN_LOG_INIT_ERROR << "Class mtsStateTable: Write: obj must be created using NewElement " << std::endl;
         return false;
     }
     if (!StateVector[id]) {
-        CMN_LOG(1) << "Class mtsStateTable: Write: No state data array corresponding to given id: " << id << std::endl;
+        CMN_LOG_INIT_ERROR << "Class mtsStateTable: Write: No state data array corresponding to given id: " << id << std::endl;
         return false;
     }
     result = StateVector[id]->Set(IndexWriter, obj);
     if (!result) {
-        CMN_LOG(1) << "Class mtsStateTable: Error setting data array value in id: " << id << std::endl;
+        CMN_LOG_INIT_ERROR << "Class mtsStateTable: Error setting data array value in id: " << id << std::endl;
     }
     return result;
 }
@@ -162,7 +123,7 @@ void mtsStateTable::Start(void) {
     	Tic = TimeServer->GetRelativeTime(); // in seconds
         // Since IndexReader and IndexWriter are initialized to 0,
         // the first period will be 0
-        cmnDouble oldTic;
+        mtsDouble oldTic;
         StateVector[TicId]->Get(IndexReader, oldTic);
         Period = Tic - oldTic;  // in seconds
     }
@@ -179,7 +140,7 @@ void mtsStateTable::Advance(void) {
     SumOfPeriods += Period;
     // If the table is full (all entries valid), subtract the oldest one
     if (Ticks[IndexWriter] == Ticks[newIndexWriter]+HistoryLength-1) {
-        cmnDouble oldPeriod;
+        mtsDouble oldPeriod;
         StateVector[PeriodId]->Get(newIndexWriter, oldPeriod);
         SumOfPeriods -= oldPeriod;
         AvgPeriod = SumOfPeriods/(HistoryLength-1);
@@ -205,33 +166,54 @@ void mtsStateTable::Advance(void) {
     // element in the array (after Toc).
     for(i = TicId; i < StateVector.size(); i++) {
         if (StateVectorElements[i]) {
-            StateVectorElements[i]->SetTimestampIfNotValid(Tic.Data);
+            StateVectorElements[i]->SetTimestampIfAutomatic(Tic.Data);
             Write(i, *(StateVectorElements[i]));
         }
     }
     // Get the Toc value and write it to the state table.
-    if (TimeServer)
+    if (TimeServer) {
     	Toc = TimeServer->GetRelativeTime(); // in seconds
+#ifdef TASK_TIMING_ANALYSIS
+        mtsDouble executionTime = Toc - Tic;
+        ExecutionTimingHistory.push_back(executionTime);
+#endif
+    }
     Write(TocId, Toc);
     // now increment the IndexWriter and set its Tick value
     IndexWriter = newIndexWriter;
     Ticks[IndexWriter] = Ticks[tmpIndex] + 1;
     // move index reader to recently written data
     IndexReader = tmpIndex;
+
+    // Check if data collection event should be generated.
+    if (DataCollectionEventHandler) {
+        ++DataCollectionInfo.NewDataCount;
+
+        if (DataCollectionInfo.TriggerEnabled) {
+            // Check if the event for data collection should be triggered.
+            if (DataCollectionInfo.NewDataCount > DataCollectionInfo.EventTriggeringLimit) {
+                DataCollectionEventHandler->Execute();
+
+                DataCollectionInfo.NewDataCount = 0;
+                DataCollectionInfo.TriggerEnabled = false;
+            }
+        }
+    }
 }
 
-void mtsStateTable::ToStream(std::ostream& out) const {
-    out << "State Table: " << std::endl;
+void mtsStateTable::ToStream(std::ostream & outputStream) const {
+    outputStream << "State Table: " << this->GetName() << std::endl;
     unsigned int i;
-    out << "Ticks : ";
+    outputStream << "Ticks : ";
     for (i = 0; i < StateVector.size() - 1; i++) {
         if (!StateVectorDataNames[i].empty())
-            out << "[" << i << "]"
-                << StateVectorDataNames[i].c_str() << " : ";
+            outputStream << "[" << i << "]"
+                         << StateVectorDataNames[i].c_str() << " : ";
     }
-    out << "[" << i << "]"
-        << StateVectorDataNames[i].c_str() << std::endl;
-    
+    outputStream << "[" << i << "]"
+                 << StateVectorDataNames[i].c_str() << std::endl;
+#if 0
+    // the following is a data dump, it should go in ToStreamRaw
     for (i = 0; i < HistoryLength; i++) {
         out << i << ": ";
         out << Ticks[i] << ": ";
@@ -248,6 +230,7 @@ void mtsStateTable::ToStream(std::ostream& out) const {
             out << "<== Index for Writer";
         out << std::endl;
     }
+#endif
 }
 
 
@@ -322,3 +305,50 @@ void mtsStateTable::CSVWrite(std::ostream& out, unsigned int *listColumn, unsign
     }
 }
 
+void mtsStateTable::CSVWrite(std::ostream& out, mtsGenericObject ** listColumn, unsigned int number, bool nonZeroOnly)
+{
+    unsigned int *listColumnId = new unsigned int[number];
+    for (unsigned int i = 0; i < number; i++) {
+        listColumnId[i] = StateVectorElements.size();  // init to invalid value
+        for (unsigned int j = 0; j < StateVectorElements.size(); j++) {
+            if (StateVectorElements[j] == listColumn[i])
+                listColumnId[i] = j;
+        }
+    }
+    CSVWrite(out, listColumnId, number, nonZeroOnly);
+    delete [] listColumnId;
+}
+
+int mtsStateTable::GetStateVectorID(const std::string & dataName) const
+{
+	for (unsigned int i = 0; i < StateVectorDataNames.size(); i++) {
+        if (StateVectorDataNames[i] == dataName) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void mtsStateTable::SetDataCollectionEventHandler(mtsCollectorState * collector)
+{
+    DataCollectionEventHandler = new mtsCommandVoidMethod<mtsCollectorState>(
+        &mtsCollectorState::DataCollectionEventHandler, collector, collector->GetName());
+    
+    CMN_ASSERT(DataCollectionEventHandler);
+}
+
+void mtsStateTable::SetDataCollectionEventTriggeringRatio(const double eventTriggeringRatio)
+{
+    DataCollectionInfo.EventTriggeringLimit = 
+        (unsigned int) (HistoryLength * eventTriggeringRatio);
+}
+
+void mtsStateTable::GenerateDataCollectionEvent() 
+{
+    if (DataCollectionEventHandler) {
+        //
+        //  TODO: REPLACE THE FOLLOWING LINE WITH mtsVoidFunction.
+        //
+        DataCollectionEventHandler->Execute();
+    }
+}

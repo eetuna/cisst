@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.2 2008/08/21 21:27:46 anton Exp $
+# $Id$
 #
 # (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -12,9 +12,7 @@
 # 
 # --- end cisst license ---
 
-ADD_EXECUTABLE(commonTutorial
-               main.cpp
-               portability.cpp
-               units.cpp)
-
-CISST_REQUIRES("commonTutorial" "cisstCommon")
+add_subdirectory(getChar)
+add_subdirectory(portability)
+add_subdirectory(serialization)
+add_subdirectory(units)

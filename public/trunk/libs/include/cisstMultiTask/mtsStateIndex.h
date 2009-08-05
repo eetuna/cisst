@@ -2,13 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsStateIndex.h,v 1.6 2008/12/03 21:08:30 mbalicki Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
-  Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -28,8 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsStateIndex_h
 #define _mtsStateIndex_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegister.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -48,9 +46,9 @@ http://www.cisst.org/cisst/license.txt.
   overwritten the index entry between the time that the mtsStateIndex
   object was created and the time it was used.
  */
-class CISST_EXPORT mtsStateIndex : public cmnGenericObject {
+class CISST_EXPORT mtsStateIndex : public mtsGenericObject {
 
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
     /*! TimeTicks are typedef'ed as unsigned long */
@@ -61,19 +59,11 @@ class CISST_EXPORT mtsStateIndex : public cmnGenericObject {
       the time */
 	int TimeIndex;
 
-    //*! Return the index into the circular buffer.*/
-	int Index(void) const {
-       return TimeIndex;
-    }
-
 	/*! The tick value corresponding to the time. */
 	TimeTicksType TimeTicks;
 
 	/*! The size of the circular buffer. */
 	int BufferLength;
-
-    /*! State table needs to have access to the internals of this class (index specifically) */
-    friend class mtsStateTable;
 
 public:
 	/*! Default constructor. Does nothing. */
@@ -94,6 +84,11 @@ public:
     /*! The length of the circular buffer. */
     int Length(void) const {
         return BufferLength;
+    }
+
+    //*! Return the index into the circular buffer.*/
+	int Index(void) const {
+       return TimeIndex;
     }
 
 	/*! Return the ticks corresponding to the time. */

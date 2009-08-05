@@ -1,10 +1,10 @@
 #
-# $Id: cisstMacros.cmake 8 2009-01-04 21:13:48Z adeguet1 $
+# $Id$
 #
 # Author(s):  Anton Deguet
 # Created on: 2004-01-22
 #
-# (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -22,7 +22,7 @@
 # - DEPENDENCIES is a list of dependencies, for cisstVector, set it to cisstCommon
 # - SOURCE_FILES is a list of files, without any path (absolute or relative)
 # - HEADER_FILES is a list of files, without any path (absolute or relative)
-#
+# - HEADERS is a list of header files with a full path (e.g. configured header)
 #
 # Invoke this macro from within a library's CMakeLists.txt to add that library
 # to a larger project.  The name of the project is given as a macro argument.
@@ -51,10 +51,10 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   SET(LIBRARY_MAIN_HEADER ${${PROJECT_NAME}_BINARY_DIR}/include/${LIBRARY}.h)
   SET(LIBRARY_MAIN_HEADER_TMP ${${PROJECT_NAME}_BINARY_DIR}/include/${LIBRARY}.h.tmp)
 
-  SET(FILE_CONTENT "// This file is generated automatically by CMake, DO NOT EDIT\n")
-  SET(FILE_CONTENT ${FILE_CONTENT} "// CMake: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}\n")
-  SET(FILE_CONTENT ${FILE_CONTENT} "// System: ${CMAKE_SYSTEM}\n")
-  SET(FILE_CONTENT ${FILE_CONTENT} "// Source: ${CMAKE_SOURCE_DIR}\n\n")
+  SET(FILE_CONTENT "/* This file is generated automatically by CMake, DO NOT EDIT\n")
+  SET(FILE_CONTENT ${FILE_CONTENT} "   CMake: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}\n")
+  SET(FILE_CONTENT ${FILE_CONTENT} "   System: ${CMAKE_SYSTEM}\n")
+  SET(FILE_CONTENT ${FILE_CONTENT} "   Source: ${CMAKE_SOURCE_DIR} */\n\n")
   SET(FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}ifndef _${LIBRARY}_h\n")
   SET(FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}define _${LIBRARY}_h\n\n")
   FOREACH(file ${HEADER_FILES})
@@ -72,6 +72,9 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   EXEC_PROGRAM(${CMAKE_COMMAND}
                ARGS -E remove
                \"${LIBRARY_MAIN_HEADER_TMP}\")
+
+  # Add the main header to the library, for IDEs
+  SET(HEADERS ${HEADERS} ${LIBRARY_MAIN_HEADER})
 
   # Add the library
   ADD_LIBRARY(${LIBRARY}
@@ -96,6 +99,8 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
     MARK_AS_ADVANCED(${LIBRARY}_DEPENDENCIES)
   ENDIF(DEPENDENCIES)
 
+  # Link to cisst additional libraries
+  TARGET_LINK_LIBRARIES(${LIBRARY} ${CISST_ADDITIONAL_LIBRARIES})
 
   # Install all header files
   INSTALL_FILES(/include/${LIBRARY}
@@ -116,6 +121,11 @@ ENDMACRO(CISST_ADD_LIBRARY_TO_PROJECT)
 # libraries actually compiled.  This macro adds the required link
 # options.
 MACRO(CISST_REQUIRES WHO_REQUIRES REQUIRED_CISST_LIBRARIES)
+
+   IF(CISST_BUILD_SHARED_LIBS)
+     ADD_DEFINITIONS(-DCISST_DLL)
+   ENDIF(CISST_BUILD_SHARED_LIBS)
+
    # First test that all libraries should have been compiled
    FOREACH(required ${REQUIRED_CISST_LIBRARIES})
      IF("${CISST_LIBRARIES}"  MATCHES ${required})
@@ -130,7 +140,7 @@ MACRO(CISST_REQUIRES WHO_REQUIRES REQUIRED_CISST_LIBRARIES)
      ENDIF("${REQUIRED_CISST_LIBRARIES}" MATCHES ${existing})
    ENDFOREACH(existing)
    # Link with the required libraries
-   TARGET_LINK_LIBRARIES(${WHO_REQUIRES} ${CISST_LIBRARIES_TO_USE})
+   TARGET_LINK_LIBRARIES(${WHO_REQUIRES} ${CISST_LIBRARIES_TO_USE} ${CISST_ADDITIONAL_LIBRARIES})
 ENDMACRO(CISST_REQUIRES)
 
 

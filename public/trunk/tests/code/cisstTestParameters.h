@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cisstTestParameters.h,v 1.6 2007/04/26 20:12:05 anton Exp $
+  $Id$
   
   Author(s):  Anton Deguet, Ofri Sadowsky
   Created on: 2003-11-10
@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 class cisstTestParameters
 {
 public:
-    typedef enum { PRINT_HELP, RUN_TESTS, LIST_TESTS, GENERATE_CTEST_FILE } TestRunModeType;
+    typedef enum { PRINT_HELP, RUN_TESTS, LIST_TESTS, GENERATE_CTEST_FILE, RUN_AND_LIST_TESTS } TestRunModeType; 
     typedef std::list<std::string> TestNameContainerType;
 private:
     TestNameContainerType TestNames;

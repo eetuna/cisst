@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.12 2007/11/09 20:38:50 anton Exp $
+# $Id$
 #
 # (C) Copyright 2003-2007 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -27,11 +27,3 @@ ADD_EXECUTABLE(vectorTutorial
 )
 
 CISST_REQUIRES("vectorTutorial" "cisstCommon;cisstVector;cisstNumerical")
-
-IF(CISST_HAS_CISSTNETLIB)
-  TARGET_LINK_LIBRARIES(vectorTutorial
-                        ${CISSTNETLIB_LIBRARIES}
-                        ${CISSTNETLIB_F95_LIBRARIES}
-                        ${CISSTNETLIB_GCC_LIBRARIES}
-                        ${CMAKE_THREAD_LIBS_INIT})
-ENDIF(CISST_HAS_CISSTNETLIB)

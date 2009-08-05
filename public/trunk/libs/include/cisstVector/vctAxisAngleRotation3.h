@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctAxisAngleRotation3.h,v 1.22 2008/03/13 20:34:51 anton Exp $
+  $Id$
   
   Author(s):	Anton Deguet
   Created on:	2005-01-13
@@ -644,7 +644,7 @@ public:
         return outputStream.str();
     }
     
-
+    /*!  Print the matrix in a human readable format */    
     void ToStream(std::ostream & outputStream) const {
         outputStream << "axis: "
                      << std::endl
@@ -654,6 +654,21 @@ public:
                      << std::endl
                      << this->Angle();
     }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        this->Axis().SerializeRaw(outputStream);
+        cmnSerializeRaw(outputStream, this->Angle());
+    }
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream) 
+    {
+        this->Axis().DeSerializeRaw(inputStream);
+        cmnDeSerializeRaw(inputStream, this->Angle());
+    }
+
 };
 
 

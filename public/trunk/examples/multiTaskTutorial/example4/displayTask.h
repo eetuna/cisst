@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-// $Id: displayTask.h,v 1.7 2009/01/09 23:05:28 pkaz Exp $
+// $Id$
 
 #ifndef _displayTask_h
 #define _displayTask_h
@@ -10,15 +10,13 @@
 
 class displayTask: public mtsTaskPeriodic {
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    volatile bool ExitFlag;
-    double StartValue;
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
  protected:
-    cmnDouble Data;
-    cmnDouble Amplitude;
-    cmnDouble TriggerValue;
-    cmnDouble Time;
+    mtsDouble Data;
+    mtsDouble Amplitude;
+    mtsDouble TriggerValue;
+    mtsDouble Time;
 
     volatile bool WaitingForTrigger;
 
@@ -36,7 +34,7 @@ class displayTask: public mtsTaskPeriodic {
     } Clock;
 
     // event handler
-    void HandleTrigger(const cmnDouble & value);
+    void HandleTrigger(const mtsDouble & value);
 
     displayUI UI;
     
@@ -47,8 +45,6 @@ class displayTask: public mtsTaskPeriodic {
     void Startup(void);
     void Run(void);
     void Cleanup(void) {};
-
-    bool GetExitFlag (void) { return ExitFlag;}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(displayTask);

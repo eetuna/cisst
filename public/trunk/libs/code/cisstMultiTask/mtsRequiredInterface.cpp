@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsRequiredInterface.cpp,v 1.3 2009/01/10 03:25:59 pkaz Exp $
+  $Id$
 
   Author(s):  Peter Kazanzides
   Created on: 2008-11-13
@@ -23,17 +23,23 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsRequiredInterface)
 
 
-mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mbox) :
-        Name(interfaceName),
-        MailBox(mbox),
-        OtherInterface(0),
-        CommandPointersVoid("CommandPointerVoid"),
-        CommandPointersRead("CommandPointerRead"),
-        CommandPointersWrite("CommandPointerWrite"),
-        CommandPointersQualifiedRead("CommandPointerQualifiedRead"),
-        EventHandlersVoid("EventHandlerVoid"),
-        EventHandlersWrite("EventHandlerWrite")
+mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mailBox) :
+    Name(interfaceName),
+    MailBox(mailBox),
+    OtherInterface(0),
+    CommandPointersVoid("CommandPointersVoid"),
+    CommandPointersRead("CommandPointersRead"),
+    CommandPointersWrite("CommandPointersWrite"),
+    CommandPointersQualifiedRead("CommandPointersQualifiedRead"),
+    EventHandlersVoid("EventHandlersVoid"),
+    EventHandlersWrite("EventHandlersWrite")
 {
+    CommandPointersVoid.SetOwner(*this);
+    CommandPointersRead.SetOwner(*this);
+    CommandPointersWrite.SetOwner(*this);
+    CommandPointersQualifiedRead.SetOwner(*this);
+    EventHandlersVoid.SetOwner(*this);
+    EventHandlersWrite.SetOwner(*this);
 }
 
 mtsRequiredInterface::~mtsRequiredInterface()
@@ -99,26 +105,26 @@ void mtsRequiredInterface::Disconnect(void)
 {
     // First, do the command pointers.  In the future, it may be better to set the pointers to NOPVoid, NOPRead, etc.,
     // which can be static members of the corresponding command classes.
-    CommandPointerVoidMapType::MapType::iterator iterVoid;
-    for (iterVoid = CommandPointersVoid.GetMap().begin(); iterVoid != CommandPointersVoid.GetMap().end(); iterVoid++)
+    CommandPointerVoidMapType::iterator iterVoid;
+    for (iterVoid = CommandPointersVoid.begin(); iterVoid != CommandPointersVoid.end(); iterVoid++)
         iterVoid->second->Clear();
-    CommandPointerReadMapType::MapType::iterator iterRead;
-    for (iterRead = CommandPointersRead.GetMap().begin(); iterRead != CommandPointersRead.GetMap().end(); iterRead++)
+    CommandPointerReadMapType::iterator iterRead;
+    for (iterRead = CommandPointersRead.begin(); iterRead != CommandPointersRead.end(); iterRead++)
         iterRead->second->Clear();
-    CommandPointerWriteMapType::MapType::iterator iterWrite;
-    for (iterWrite = CommandPointersWrite.GetMap().begin(); iterWrite != CommandPointersWrite.GetMap().end(); iterWrite++)
+    CommandPointerWriteMapType::iterator iterWrite;
+    for (iterWrite = CommandPointersWrite.begin(); iterWrite != CommandPointersWrite.end(); iterWrite++)
         iterWrite->second->Clear();
-    CommandPointerQualifiedReadMapType::MapType::iterator iterQualRead;
-    for (iterQualRead = CommandPointersQualifiedRead.GetMap().begin();
-         iterQualRead != CommandPointersQualifiedRead.GetMap().end(); iterQualRead++)
+    CommandPointerQualifiedReadMapType::iterator iterQualRead;
+    for (iterQualRead = CommandPointersQualifiedRead.begin();
+         iterQualRead != CommandPointersQualifiedRead.end(); iterQualRead++)
         iterQualRead->second->Clear();
 #if 0
     // Now, do the event handlers.  Still need to implement RemoveObserver
-    EventHandlerVoidMapType::MapType::iterator iterEventVoid;
-    for (iterEventVoid = EventHandlersVoid.GetMap().begin(); iterEventVoid != EventHandlersVoid.GetMap().end(); iterEventVoid++)
+    EventHandlerVoidMapType::iterator iterEventVoid;
+    for (iterEventVoid = EventHandlersVoid.begin(); iterEventVoid != EventHandlersVoid.end(); iterEventVoid++)
         OtherInterface->RemoveObserver(iterEventVoid->first, iterEventVoid->second);
-    EventHandlerWriteMapType::MapType::iterator iterEventWrite;
-    for (iterEventWrite = EventHandlersWrite.GetMap().begin(); iterEventWrite != EventHandlersWrite.GetMap().end(); iterEventWrite++)
+    EventHandlerWriteMapType::iterator iterEventWrite;
+    for (iterEventWrite = EventHandlersWrite.begin(); iterEventWrite != EventHandlersWrite.end(); iterEventWrite++)
         OtherInterface->RemoveObserver(iterEventWrite->first, iterEventWrite->second);
 #endif
 }
@@ -126,32 +132,97 @@ void mtsRequiredInterface::Disconnect(void)
 bool mtsRequiredInterface::BindCommandsAndEvents(void)
 {
     bool success = true;
+    bool result;
     // First, do the command pointers
-    CommandPointerVoidMapType::MapType::iterator iterVoid;
-    for (iterVoid = CommandPointersVoid.GetMap().begin(); iterVoid != CommandPointersVoid.GetMap().end(); iterVoid++)
-        success &= iterVoid->second->Bind(OtherInterface->GetCommandVoid(iterVoid->first));
-    CommandPointerReadMapType::MapType::iterator iterRead;
-    for (iterRead = CommandPointersRead.GetMap().begin(); iterRead != CommandPointersRead.GetMap().end(); iterRead++)
-        success &= iterRead->second->Bind(OtherInterface->GetCommandRead(iterRead->first));
-    CommandPointerWriteMapType::MapType::iterator iterWrite;
-    for (iterWrite = CommandPointersWrite.GetMap().begin(); iterWrite != CommandPointersWrite.GetMap().end(); iterWrite++)
-        success &= iterWrite->second->Bind(OtherInterface->GetCommandWrite(iterWrite->first));
-    CommandPointerQualifiedReadMapType::MapType::iterator iterQualRead;
-    for (iterQualRead = CommandPointersQualifiedRead.GetMap().begin();
-         iterQualRead != CommandPointersQualifiedRead.GetMap().end(); iterQualRead++)
-        success &= iterQualRead->second->Bind(OtherInterface->GetCommandQualifiedRead(iterQualRead->first));
+    CommandPointerVoidMapType::iterator iterVoid;
+    for (iterVoid = CommandPointersVoid.begin();
+         iterVoid != CommandPointersVoid.end();
+         iterVoid++) {
+        result = iterVoid->second->Bind(OtherInterface->GetCommandVoid(iterVoid->first));
+        if (!result) {
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for void command \""
+                                       << iterVoid->first << "\"" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void command \""
+                                     << iterVoid->first << "\"" << std::endl;
+        }
+        success &= result;
+    }
+    CommandPointerReadMapType::iterator iterRead;
+    for (iterRead = CommandPointersRead.begin();
+         iterRead != CommandPointersRead.end();
+         iterRead++) {
+        result = iterRead->second->Bind(OtherInterface->GetCommandRead(iterRead->first));
+        if (!result) {
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
+                                       << iterRead->first << "\"" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
+                                     << iterRead->first << "\"" << std::endl;
+        }
+        success &= result;
+    }
+    CommandPointerWriteMapType::iterator iterWrite;
+    for (iterWrite = CommandPointersWrite.begin();
+         iterWrite != CommandPointersWrite.end();
+         iterWrite++) {
+        result = iterWrite->second->Bind(OtherInterface->GetCommandWrite(iterWrite->first));
+        if (!result) {
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for write command \""
+                                       << iterWrite->first << "\"" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write command \""
+                                     << iterWrite->first << "\"" << std::endl;
+        }
+        success &= result;
+    }
+    CommandPointerQualifiedReadMapType::iterator iterQualRead;
+    for (iterQualRead = CommandPointersQualifiedRead.begin();
+         iterQualRead != CommandPointersQualifiedRead.end();
+         iterQualRead++) {
+        result = iterQualRead->second->Bind(OtherInterface->GetCommandQualifiedRead(iterQualRead->first));
+        if (!result) {
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for qualified read command \""
+                                       << iterQualRead->first << "\"" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for qualified read command \""
+                                     << iterQualRead->first << "\"" << std::endl;
+        }
+        success &= result;
+    }
 
-    if (!success)
-        CMN_LOG_CLASS(1) << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
+    if (!success) {
+        CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: required commands missing (ERROR)" << std::endl;
+    }
 
     // Now, do the event handlers
-    EventHandlerVoidMapType::MapType::iterator iterEventVoid;
-    for (iterEventVoid = EventHandlersVoid.GetMap().begin(); iterEventVoid != EventHandlersVoid.GetMap().end(); iterEventVoid++)
-        OtherInterface->AddObserver(iterEventVoid->first, iterEventVoid->second);
-    EventHandlerWriteMapType::MapType::iterator iterEventWrite;
-    for (iterEventWrite = EventHandlersWrite.GetMap().begin(); iterEventWrite != EventHandlersWrite.GetMap().end(); iterEventWrite++)
-        OtherInterface->AddObserver(iterEventWrite->first, iterEventWrite->second);
+    EventHandlerVoidMapType::iterator iterEventVoid;
+    for (iterEventVoid = EventHandlersVoid.begin();
+         iterEventVoid != EventHandlersVoid.end();
+         iterEventVoid++) {
+        result = OtherInterface->AddObserver(iterEventVoid->first, iterEventVoid->second);
+        if (!result) {
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed to add observer for void event \""
+                                       << iterEventVoid->first << "\"" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded to add observer for void event \""
+                                     << iterEventVoid->first << "\"" << std::endl;
+        }
+    }
 
+    EventHandlerWriteMapType::iterator iterEventWrite;
+    for (iterEventWrite = EventHandlersWrite.begin();
+         iterEventWrite != EventHandlersWrite.end();
+         iterEventWrite++) {
+        result = OtherInterface->AddObserver(iterEventWrite->first, iterEventWrite->second);
+        if (!result) {
+            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed to add observer for write event \""
+                                       << iterEventWrite->first << "\"" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded to add observer for write event \""
+                                     << iterEventWrite->first << "\"" << std::endl;
+        }
+    }
     return success;
 }
 

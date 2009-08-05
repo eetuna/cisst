@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskManager.cpp,v 1.17 2009/01/07 05:09:26 pkaz Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides
   Created on: 2004-04-30
@@ -30,8 +30,13 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 
-mtsTaskManager::mtsTaskManager() : TaskMap("Task"), DeviceMap("Device") {
+mtsTaskManager::mtsTaskManager():
+    TaskMap("Tasks"),
+    DeviceMap("Devices")
+{
     __os_init();
+    TaskMap.SetOwner(*this);
+    DeviceMap.SetOwner(*this);
     TimeServer.SetTimeOrigin();
 }
 
@@ -48,32 +53,46 @@ mtsTaskManager* mtsTaskManager::GetInstance(void) {
 
 
 bool mtsTaskManager::AddTask(mtsTask * task) {
-    bool ret = TaskMap.AddItem(task->GetName(), task, 1);
-    if (ret)
-       CMN_LOG_CLASS(3) << "AddTask: added task named "
-                        << task->GetName() << std::endl;
-    return true;
+    bool result = TaskMap.AddItem(task->GetName(), task, CMN_LOG_LOD_INIT_ERROR);
+    if (result) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddTask: added task named "
+                                   << task->GetName() << std::endl;
+    }
+    return result;
+}
+
+
+bool mtsTaskManager::RemoveTask(mtsTask * task) {
+    bool result = TaskMap.RemoveItem(task->GetName(), CMN_LOG_LOD_INIT_ERROR);
+    if (result) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "RemoveTask: removed task named "
+                                   << task->GetName() << std::endl;
+    }
+    return result;
 }
 
 
 bool mtsTaskManager::AddDevice(mtsDevice * device) {
     mtsTask * task = dynamic_cast<mtsTask *>(device);
     if (task) {
-        CMN_LOG_CLASS(1) << "AddDevice: Attempt to add " << task->GetName() << "as a device (use AddTask instead)."
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddDevice: Attempt to add " << task->GetName() << "as a device (use AddTask instead)."
+                                 << std::endl;
         return false;
     }
-    bool ret = DeviceMap.AddItem(device->GetName(), device, 1);
-    if (ret)
-        CMN_LOG_CLASS(3) << "AddDevice: added device named "
-                         << device->GetName() << std::endl;
-    return ret;
+    bool result = DeviceMap.AddItem(device->GetName(), device, CMN_LOG_LOD_INIT_ERROR);
+    if (result) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddDevice: added device named "
+                                   << device->GetName() << std::endl;
+    }
+    return result;
 }
+
 
 bool mtsTaskManager::Add(mtsDevice * device) {
     mtsTask * task = dynamic_cast<mtsTask *>(device);
-    return task?AddTask(task):AddDevice(device);
+    return task ? AddTask(task) : AddDevice(device);
 }
+
 
 std::vector<std::string> mtsTaskManager::GetNamesOfDevices(void) const {
     return DeviceMap.GetNames();
@@ -86,25 +105,24 @@ std::vector<std::string> mtsTaskManager::GetNamesOfTasks(void) const {
 
 
 mtsDevice * mtsTaskManager::GetDevice(const std::string & deviceName) {
-    return DeviceMap.GetItem(deviceName, 1);
+    return DeviceMap.GetItem(deviceName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 
 mtsTask * mtsTaskManager::GetTask(const std::string & taskName) {
-    return TaskMap.GetItem(taskName, 1);
+    return TaskMap.GetItem(taskName, CMN_LOG_LOD_INIT_ERROR);
 }
     
 
-
 void mtsTaskManager::ToStream(std::ostream & outputStream) const {
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     outputStream << "List of tasks: name and address" << std::endl;
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         outputStream << "  Task: " << taskIterator->first << ", address: " << taskIterator->second << std::endl;
     }
-    DeviceMapType::MapType::const_iterator deviceIterator = DeviceMap.GetMap().begin();
-    const DeviceMapType::MapType::const_iterator deviceEndIterator = DeviceMap.GetMap().end();
+    DeviceMapType::const_iterator deviceIterator = DeviceMap.begin();
+    const DeviceMapType::const_iterator deviceEndIterator = DeviceMap.end();
     outputStream << "List of devices: name and address" << std::endl;
     for (; deviceIterator != deviceEndIterator; ++deviceIterator) {
         outputStream << "  Device: " << deviceIterator->first << ", adress: " << deviceIterator->second << std::endl;
@@ -120,8 +138,8 @@ void mtsTaskManager::ToStream(std::ostream & outputStream) const {
 
 
 void mtsTaskManager::CreateAll(void) {
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         taskIterator->second->Create();
     }
@@ -132,17 +150,17 @@ void mtsTaskManager::StartAll(void) {
     // Get the current thread id so that we can check if any task will use the current thread.
     // If so, start that task last because its Start method will not return.
     const osaThreadId threadId = osaGetCurrentThreadId();
-    TaskMapType::MapType::const_iterator lastTask = TaskMap.GetMap().end();
+    TaskMapType::const_iterator lastTask = TaskMap.end();
 
     // Loop through all tasks.
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         // Check if the task will use the current thread.
         if (taskIterator->second->Thread.GetId() == threadId) {
-            CMN_LOG_CLASS(5) << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
-            if (lastTask != TaskMap.GetMap().end())
-                CMN_LOG_CLASS(1) << "WARNING: multiple tasks using current thread (only first will be started)." << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
+            if (lastTask != TaskMap.end())
+                CMN_LOG_CLASS_INIT_ERROR << "StartAll: multiple tasks using current thread (only first will be started)." << std::endl;
             else
                 lastTask = taskIterator;
         }
@@ -150,15 +168,15 @@ void mtsTaskManager::StartAll(void) {
             taskIterator->second->Start();  // If task will not use current thread, start it.
     }
     // If there is a task that uses the current thread, start it.
-    if (lastTask != TaskMap.GetMap().end())
+    if (lastTask != TaskMap.end())
         lastTask->second->Start();
 }
 
 
 void mtsTaskManager::KillAll(void) {
     // It is not necessary to have any special handling of a task using the current thread.
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         taskIterator->second->Kill();
     }
@@ -175,8 +193,8 @@ void mtsTaskManager::ToStreamDot(std::ostream & outputStream) const {
                  << std::endl;
     outputStream << "digraph mtsTaskManager {" << std::endl;
     // create all nodes for tasks
-    TaskMapType::MapType::const_iterator taskIterator = TaskMap.GetMap().begin();
-    const TaskMapType::MapType::const_iterator taskEndIterator = TaskMap.GetMap().end();
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         outputStream << "subgraph cluster" << clusterNumber << "{" << std::endl
                      << "node[style=filled,color=white,shape=box];" << std::endl
@@ -206,8 +224,8 @@ void mtsTaskManager::ToStreamDot(std::ostream & outputStream) const {
         outputStream << "}" << std::endl;
     }
     // create all nodes for devices
-    DeviceMapType::MapType::const_iterator deviceIterator = DeviceMap.GetMap().begin();
-    const DeviceMapType::MapType::const_iterator deviceEndIterator = DeviceMap.GetMap().end();
+    DeviceMapType::const_iterator deviceIterator = DeviceMap.begin();
+    const DeviceMapType::const_iterator deviceEndIterator = DeviceMap.end();
     for (; deviceIterator != deviceEndIterator; ++deviceIterator) {
         outputStream << "subgraph cluster" << clusterNumber << "{" << std::endl
                      << "node[style=filled,color=white,shape=box];" << std::endl
@@ -250,57 +268,57 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     // check if this connection has already been established
     AssociationSetType::const_iterator associationIterator = AssociationSet.find(association);
     if (associationIterator != AssociationSet.end()) {
-        CMN_LOG_CLASS(1) << "Connect: " << userTaskName << "::" << interfaceRequiredName
-                         << " is already connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: " << userTaskName << "::" << interfaceRequiredName
+                                 << " is already connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
         return false;
     }
     // check that names are not the same
     if (userTaskName == resourceTaskName) {
-        CMN_LOG_CLASS(1) << "Connect: can not connect two tasks/devices with the same name" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not connect two tasks/devices with the same name" << std::endl;
         return false;
     }
     // check if the user name corresponds to an existing task
-    mtsTask* userTask = TaskMap.GetItem(userTaskName);
+    mtsTask* userTask = TaskMap.GetItem(userTaskName, CMN_LOG_LOD_INIT_ERROR);
     if (!userTask) {
-        CMN_LOG_CLASS(1) << "Connect: can not find a task named " << userTaskName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task named " << userTaskName << std::endl;
         return false;
     }
     // check if the resource name corresponds to an existing task or device
-    mtsDevice* resourceDevice = DeviceMap.GetItem(resourceTaskName);
+    mtsDevice* resourceDevice = DeviceMap.GetItem(resourceTaskName, CMN_LOG_LOD_INIT_DEBUG);
     if (!resourceDevice)
-       resourceDevice = TaskMap.GetItem(resourceTaskName);
+        resourceDevice = TaskMap.GetItem(resourceTaskName, CMN_LOG_LOD_INIT_ERROR);
     // find the interface pointer from the resource
     mtsDeviceInterface * resourceInterface;
     if (resourceDevice)
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
     else {
-        CMN_LOG_CLASS(1) << "Connect: can not find a task or device named " << userTaskName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
         return false;
     }
 
     // check the interface pointer we got
     if (resourceInterface == 0) {
-        CMN_LOG_CLASS(1) << "Connect: interface pointer for "
-                         << resourceTaskName << "::" << providedInterfaceName << " is null" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: interface pointer for "
+                                 << resourceTaskName << "::" << providedInterfaceName << " is null" << std::endl;
         return false;
     }
     // attempt to connect 
     if (!(userTask->ConnectRequiredInterface(interfaceRequiredName, resourceInterface))) {
-        CMN_LOG_CLASS(1) << "Connect: connection failed, does " << interfaceRequiredName << " exist?" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: connection failed, does " << interfaceRequiredName << " exist?" << std::endl;
         return false;
     }
 
     // connected, add to the map of connections
     AssociationSet.insert(association);
-    CMN_LOG_CLASS(3) << "Connect: " << userTaskName << "::" << interfaceRequiredName
-                     << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << interfaceRequiredName
+                               << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
     return true;
 }
 
 
 bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::string & requiredInterfaceName,
                                 const std::string & resourceTaskName, const std::string & providedInterfaceName) {
-    CMN_LOG_CLASS(1) << "Disconnect not implemented!!!" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "Disconnect not implemented!!!" << std::endl;
     return true;
 }
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskManager.h,v 1.15 2009/01/07 05:09:26 pkaz Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
@@ -31,10 +31,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnNamedMap.h>
+
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
+
 #include <cisstMultiTask/mtsForwardDeclarations.h>
-#include <cisstMultiTask/mtsMap.h>
 
 #include <set>
 
@@ -48,14 +50,15 @@ http://www.cisst.org/cisst/license.txt.
 */
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
     
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    friend class mtsTaskManagerTest;
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
     /*! Typedef for task name and pointer map. */
 
-    typedef mtsMap<mtsTask> TaskMapType;
+    typedef cmnNamedMap<mtsTask> TaskMapType;
 
     /*! Typedef for device name and pointer map. */
-    typedef mtsMap<mtsDevice> DeviceMapType;
+    typedef cmnNamedMap<mtsDevice> DeviceMapType;
 
     /*! Typedef for user task, composed of task name and "output port"
         name. */
@@ -103,6 +106,9 @@ protected:
 
     /*! Put a task under the control of the Manager. */
     bool AddTask(mtsTask * task);
+
+    /*! Pull out a task from the Manager. */
+    bool RemoveTask(mtsTask * task);
 
     /*! Put a device under the control of the Manager. */
     bool AddDevice(mtsDevice * device);

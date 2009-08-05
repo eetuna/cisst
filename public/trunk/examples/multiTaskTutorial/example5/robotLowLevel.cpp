@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: robotLowLevel.cpp,v 1.5 2008/09/29 22:34:20 tian Exp $ */
+/* $Id$ */
 
 #include <cisstCommon/cmnConstants.h>
 #include <cisstCommon/cmnRandomSequence.h>
@@ -79,11 +79,11 @@ void robotLowLevel::Run(void)
     // simulate motion of robot
     if ((GoalJoint - PositionJoint).MaxAbsElement() > MotionDelta) {
         PositionJoint += (DeltaJoint + SomeNoise());
-        CMN_LOG_CLASS(5) << "Robot: " << PositionJoint << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "Robot: " << PositionJoint << std::endl;
     }
     else if (IsMoving) {
         PositionJoint = GoalJoint + SomeNoise();
-        CMN_LOG_CLASS(5) << "Robot: " << PositionJoint << " (end)"
+        CMN_LOG_CLASS_RUN_ERROR << "Robot: " << PositionJoint << " (end)"
                          << std::endl;
         IsMoving = false;
     }

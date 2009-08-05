@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnPortability.h 9 2009-01-04 21:17:07Z adeguet1 $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2003-09-08
@@ -402,18 +402,12 @@ extern CISST_EXPORT const std::string cmnCompilersStrings[];
   (e.g. header file and code file), it is not technically required to
   use the macro in the header file.  Nervertheless, we recommend to
   use it in both places.
- */
-#if 0 
+ */ 
 #if (CISST_COMPILER == CISST_GCC)
 #define CMN_UNUSED(argument) MARKED_AS_UNUSED ## argument __attribute__((unused))
 #else
 #define CMN_UNUSED(argument) MARKED_AS_UNUSED ## argument
-#endif
 #endif 
-
-#define CMN_UNUSED(argument)
- 
-
 
 
 

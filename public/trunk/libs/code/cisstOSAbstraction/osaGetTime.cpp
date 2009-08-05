@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: osaGetTime.cpp,v 1.2 2009/01/05 08:24:44 pkaz Exp $
+  $Id$
 
   Author(s): Ankur Kapoor, Anton Deguet
   Created on: 2004
@@ -37,6 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #if (CISST_OS == CISST_WINDOWS)
 #include <windows.h>
+#include <time.h>
 #endif // CISST_WINDOWS
 
 
@@ -53,13 +54,28 @@ double osaGetTime(void) {
     LARGE_INTEGER liTimerFrequency, liTimeNow;
     double timerFrequency, time;
     if (QueryPerformanceCounter(&liTimeNow) ==0 )    {
-        CMN_LOG(1) << "No performance counter available" << std::endl;
+        CMN_LOG_INIT_ERROR << "No performance counter available" << std::endl;
     }
     if (QueryPerformanceFrequency(&liTimerFrequency) ==    0) {
-        CMN_LOG(1) << "No performance counter available" << std::endl;
+        CMN_LOG_INIT_ERROR << "No performance counter available" << std::endl;
     }
     timerFrequency = (double)liTimerFrequency.QuadPart;
     time = (double)liTimeNow.QuadPart/timerFrequency;
     return time;
 #endif // CISST_WINDOWS
+}
+
+void osaGetDateTimeString(std::string & str)
+{
+    time_t tim = time(0);
+    tm * now = localtime(&tim);
+    char buffer[50];
+    sprintf(buffer, "%d%s%02d%s%02d%s%02d%s%02d%s%02d",
+            now->tm_year + 1900, "-",
+            now->tm_mon + 1, "-",
+            now->tm_mday, "_",
+            now->tm_hour, "-",
+            now->tm_min, "-",
+            now->tm_sec);
+    str = buffer;
 }

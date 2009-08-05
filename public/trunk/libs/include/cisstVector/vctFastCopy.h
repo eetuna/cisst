@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctFastCopy.h,v 1.8 2007/09/12 16:23:13 anton Exp $
+  $Id$
 
   Author(s):	Anton Deguet
   Created on:	2006-11-10
@@ -27,7 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnThrow.h>
-
+#include <string.h> // for memcpy
 
 /*! \brief Container class for fast copy related methods.
 

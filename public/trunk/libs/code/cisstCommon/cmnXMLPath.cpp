@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnXMLPath.cpp 10 2009-01-04 21:38:53Z adeguet1 $
+  $Id$
   
   Author(s):  Ankur Kapoor
   Created on: 2004-04-30
@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnXMLPath.h>
 #include <cisstCommon/cmnPrintf.h>
 #include <limits>
+#include <string.h> // for strncmp
 
 // required to register the class.  default level of detail is 1 as
 // mentioned in header file
@@ -45,13 +46,13 @@ void cmnXMLPath::SetInputSource(const char *filename)
 	/* Load XML document */
     Document = xmlParseFile(filename);
     if (Document == 0) {
-        CMN_LOG_CLASS(1) << "An error occured while parsing \"" << filename << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "SetInputSource: an error occured while parsing \"" << filename << "\"" << std::endl;
     }
     CMN_ASSERT(Document != 0);
 
 	XPathContext = xmlXPathNewContext(Document);
 	if(XPathContext == NULL) {
-		CMN_LOG_CLASS(1) << "An error occured while parsing \"" << filename << "\"" << std::endl;
+		CMN_LOG_CLASS_INIT_ERROR << "SetInputSource: an error occured while parsing \"" << filename << "\"" << std::endl;
 		xmlFreeDoc(Document); 
 	}
 	CMN_ASSERT(XPathContext != 0);
@@ -62,8 +63,8 @@ void cmnXMLPath::PrintValue(std::ostream &out, const char *context, const char *
 {
 	std::string str;
     if (GetXMLValue(context, XPath, str) == false) {
-        CMN_LOG_CLASS(2) << "Warning -- No nodes matched the location path \"" << XPath
-                         << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_WARNING << "PrintValue: no nodes matched the location path \"" << XPath
+                                   << "\"" << std::endl;
     } else {
         out << str << std::endl;
     }
@@ -91,18 +92,18 @@ bool cmnXMLPath::GetXMLValue(const char * context, const char * XPath, xmlChar *
 			if (nodes->nodeTab[i]->type == XML_ATTRIBUTE_NODE) {
 				cur = nodes->nodeTab[i];
 				*storage = xmlNodeGetContent(cur);
-				CMN_LOG(5) << "Read Xpath: " << XPath << " Node name: " 
-					<< cur->name << " Content: " << *storage << std::endl;
+				CMN_LOG_INIT_VERBOSE << "GetXMLValue: read Xpath: " << XPath << " Node name: " 
+                                     << cur->name << " Content: " << *storage << std::endl;
 			} else {
 				cur = nodes->nodeTab[i];    
-				CMN_LOG_CLASS(2) << "Warning -- Node is not attribute node \"" << XPath
-					<< "\" Node name: " << cur->name << std::endl;
+				CMN_LOG_CLASS_INIT_WARNING << "GetXMLValue: node is not attribute node \"" << XPath
+                                           << "\" Node name: " << cur->name << std::endl;
 			}
 		}
 		return true;
 	}
-	CMN_LOG_CLASS(2) << "Warning -- Unable to match the location path \"" << XPath
-                         << "\"" << std::endl;
+	CMN_LOG_CLASS_INIT_WARNING << "GetXMLValue: unable to match the location path \"" << XPath
+                               << "\"" << std::endl;
 	return false;
 }
 
@@ -135,8 +136,8 @@ bool cmnXMLPath::SetXMLValue(const char * context, const char * XPath, const xml
 			CMN_ASSERT(nodes->nodeTab[i] != 0);
 			if (nodes->nodeTab[i]->type == XML_ATTRIBUTE_NODE) {
 				xmlNodeSetContent(nodes->nodeTab[i], storage);
-				CMN_LOG(5) << "Write Xpath: " << XPath << " Node name: " 
-					<< nodes->nodeTab[i]->name << " Content: " << storage << std::endl;
+				CMN_LOG_INIT_VERBOSE << "SetXMLValue: write Xpath: " << XPath << " Node name: " 
+                                     << nodes->nodeTab[i]->name << " Content: " << storage << std::endl;
 			}
 			/*
 			* All the elements returned by an XPath query are pointers to
@@ -162,14 +163,14 @@ bool cmnXMLPath::SetXMLValue(const char * context, const char * XPath, const xml
 			else
 			{
 				cur = nodes->nodeTab[i];    
-				CMN_LOG_CLASS(2) << "Warning -- Node is not attribute node \"" << XPath
-					<< "\" Node name: " << cur->name << std::endl;
+				CMN_LOG_CLASS_INIT_WARNING << "SetXMLValue: node is not attribute node \"" << XPath
+                                           << "\" Node name: " << cur->name << std::endl;
 			}
 		}
 		return true;
 	}
-	CMN_LOG_CLASS(2) << "Warning -- Unable to match the location path \"" << XPath
-		<< "\"" << std::endl;
+	CMN_LOG_CLASS_INIT_WARNING << "SetXMLValue: enable to match the location path \"" << XPath
+                               << "\"" << std::endl;
 	return false;
 }
 
@@ -201,7 +202,10 @@ bool cmnXMLPath::GetXMLValue(const char *context, const char *XPath, double &val
 	xmlChar* tmpStorage = 0;
 	if (GetXMLValue(context, XPath, &tmpStorage) && tmpStorage != 0) {
 		// special treatment for select floating points eps, -Inf & Inf
-		for (int i = 0; tmpStorage[i] != '\0'; tmpStorage[i]=toupper(tmpStorage[i]), i++);
+		for (int i = 0;
+             tmpStorage[i] != '\0';
+             tmpStorage[i]=toupper(tmpStorage[i]), i++)
+        {}
 		if ((strncmp((char*)tmpStorage, "INF", 3) == 0) || (strncmp((char*)tmpStorage, "1.#INF", 6) == 0)) {
 			value = std::numeric_limits<double>::infinity();
 		} else if ((strncmp((char*)tmpStorage, "-INF", 4) == 0) || (strncmp((char*)tmpStorage, "-1.#INF", 7) == 0)) {
@@ -263,7 +267,10 @@ bool cmnXMLPath::GetXMLValue(const char *context, const char *XPath, bool &value
     bool result = false;
 	xmlChar* tmpStorage = 0;
 	if (GetXMLValue(context, XPath, &tmpStorage) && tmpStorage != 0) {
-		for (int i = 0; tmpStorage[i] != '\0'; tmpStorage[i]=toupper(tmpStorage[i]), i++);
+		for (int i = 0;
+             tmpStorage[i] != '\0';
+             tmpStorage[i]=toupper(tmpStorage[i]), i++)
+        {}
 		if (strncmp((char*)tmpStorage, "FALSE", 5) == 0) {
 			value = false;
 			return true;

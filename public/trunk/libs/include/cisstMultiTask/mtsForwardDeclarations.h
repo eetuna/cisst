@@ -2,12 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsForwardDeclarations.h,v 1.16 2008/12/01 05:14:42 pkaz Exp $
+  $Id$
 
   Author(s):	Anton Deguet
   Created on:	2007-10-07
 
-  (C) Copyright 2007-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2007-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -28,8 +28,9 @@ http://www.cisst.org/cisst/license.txt.
   \brief Forward declarations and \#define for cisstMultiTask
 */
 
-#include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
+#include <cisstMultiTask/mtsGenericObject.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 
 // commands
 class mtsCommandBase;
@@ -41,15 +42,15 @@ class mtsFunctionVoid;
 
 // one argument commands
 template <class _argumentBaseType> class mtsCommandReadOrWriteBase;
-typedef mtsCommandReadOrWriteBase<cmnGenericObject> mtsCommandReadBase;
-typedef mtsCommandReadOrWriteBase<const cmnGenericObject> mtsCommandWriteBase;
+typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
+typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
 
 template <class _argumentType> class mtsFunctionReadOrWrite;
 
 // two arguments commands
 template <class _argument2BaseType> class mtsCommandQualifiedReadOrWriteBase;
-typedef mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> mtsCommandQualifiedReadBase;
-typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQualifiedWriteBase;
+typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
+typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 
 template <class _argumentType> class mtsFunctionQualifiedReadOrWrite;
 
@@ -59,6 +60,7 @@ template <class _argumentType> class mtsMulticastCommandWrite;
 
 // interfaces and tasks
 class mtsDeviceInterface;
+typedef mtsDeviceInterface mtsProvidedInterface;
 class mtsDevice;
 class mtsTaskInterface;
 class mtsRequiredInterface;
@@ -66,11 +68,13 @@ class mtsTask;
 class mtsTaskPeriodic;
 class mtsTaskManager;
 
+// containers
 class mtsMailBox;
+class mtsStateTable;
 
-// mts vectors
-template <class _elementType> class mtsVector;
-typedef mtsVector<double> mtsDoubleVec;
+// data collection class
+class tsCollectorBase;
+class mtsCollectorState;
 
 
 // global function to retrieve object name if available
@@ -78,11 +82,15 @@ inline std::string mtsObjectName(const void * CMN_UNUSED(object)) {
     return "UnnamedObject";
 }
 
-// overload for cmnGenericObject to give at least the class name
-inline std::string mtsObjectName(const cmnGenericObject * object) {
+// overload for mtsGenericObject to give at least the class name
+inline std::string mtsObjectName(const mtsGenericObject * object) {
     return object->Services()->GetName();
 }
 
+
+// flag for required interfaces lists of commands
+const bool mtsRequired = true;
+const bool mtsOptional = false;
 
 
 #endif  // _mtsForwardDeclarations_h

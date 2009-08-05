@@ -2,12 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: main.cpp,v 1.3 2008/09/29 21:44:42 tian Exp $
+  $Id: mtsHistory.cpp 188 2009-03-20 17:07:32Z mjung5 $
 
-  Author(s):  Anton Deguet
-  Created on: 2008-02-10
+  Author(s):	Min Yang Jung
+  Created on:   2009-03-25
 
-  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -18,16 +18,9 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 */
-#include <vector>
-void portability(void);
-void units(void);
 
-int main(void) {
-    portability();
-    units();
-    std::vector<int> hi;
-    hi.at(0);
 
-    return 0;
-}
+#include <cisstMultiTask/mtsHistory.h>
 
+CMN_IMPLEMENT_SERVICES_TEMPLATED(mtsDoubleHistory);
+CMN_IMPLEMENT_SERVICES_TEMPLATED(mtsDoubleVecHistory);

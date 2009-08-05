@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.9 2008/04/24 21:26:28 pkaz Exp $
+# $Id$
 #
 # CMakeLists for cisstVector wrapping
 #
@@ -27,13 +27,14 @@ IF(EXISTS ${cisstVector_INTERFACE})
   SET_SOURCE_FILES_PROPERTIES(${cisstVector_INTERFACE}
                               PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
   SWIG_ADD_MODULE(cisstVectorPython python ${cisstVector_INTERFACE})
-  IF(WIN32)
-    SET_TARGET_PROPERTIES(_cisstVectorPython PROPERTIES SUFFIX .pyd)
-  ENDIF(WIN32)
   SWIG_LINK_LIBRARIES(cisstVectorPython cisstVector cisstCommon
                       debug ${PYTHON_DEBUG_LIBRARIES}
                       optimized ${PYTHON_LIBRARIES})
-
+  # uses .pyd instead of dll on Windows
+  IF(WIN32)
+    SET_TARGET_PROPERTIES(_cisstVectorPython PROPERTIES SUFFIX .pyd)
+    SET_TARGET_PROPERTIES(_cisstVectorPython PROPERTIES DEBUG_POSTFIX "_d")
+  ENDIF(WIN32)
   # Copy the .py file generated to wherever the libraries are
   ADD_CUSTOM_COMMAND(TARGET _cisstVectorPython
                      POST_BUILD

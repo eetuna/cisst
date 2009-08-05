@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cisstTestParameters.cpp,v 1.9 2007/04/26 20:12:05 anton Exp $
+  $Id$
   
   Author(s):  Anton Deguet, Ofri Sadowsky
   Created on: 2003-11-10
@@ -21,7 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include "cisstTestParameters.h"
-
+#include <string.h> // for strcmp
+#include <stdlib.h> // for atoi
 
 void cisstTestParameters::ParseCmdLine(int argc, const char * argv[])
 {
@@ -47,6 +48,13 @@ void cisstTestParameters::ParseCmdLine(int argc, const char * argv[])
 
         if (strcmp(argv[1], "--run") == 0 || strcmp(argv[1], "-r") == 0) {
             TestRunMode = RUN_TESTS;
+            ++argv;
+            --argc;
+            continue;
+        }
+
+        if (strcmp(argv[1], "--listandrun") == 0 || strcmp(argv[1], "-R") == 0) {
+            TestRunMode = RUN_AND_LIST_TESTS;
             ++argv;
             --argc;
             continue;
@@ -101,6 +109,7 @@ int cisstTestParameters::PrintHelp(const char* programName) {
         << "-l, --list               print the available test instances" << std::endl
         << "-d, --dart               print CMake/ctest commands in DartTestfile.txt format" << std::endl 
         << "-r, --run                run the available test instances" << std::endl
+        << "-R, --listandrun         print and run the available test instances" << std::endl
         << "-t, --testname [name]    add the specified test case or suite to the list" << std::endl
         << "-o, --numinstances [n]   specify the number of instances to create of each test" << std::endl
         << "-i, --numiterations [n]  specify the number of iterations for each test instance" << std::endl;

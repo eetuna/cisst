@@ -2,12 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandQualifiedRead.h,v 1.4 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -48,14 +48,24 @@ public:
     /*! Typedef for the specific interface. */
     typedef _classType ClassType;
     
+    /*! This type. */
+    typedef mtsCommandQualifiedRead<ClassType, Argument1Type, Argument2Type> ThisType;
+
     /*! Typedef for pointer to member function of the specific
       interface class. */
-    typedef void(_classType::*ActionType)(const Argument1Type &, Argument2Type &) const;
+    typedef void(_classType::*ActionTypeOld)(const Argument1Type &, Argument2Type &) const;
+    typedef bool(_classType::*ActionType)(const Argument1Type &, Argument2Type &) const;
+
+private:
+    /*! Private copy constructor to prevent copies */
+    inline mtsCommandQualifiedRead(const ThisType & CMN_UNUSED(other));
 
 protected:
     /*! The pointer to member function of the receiver class that
       is to be invoked for a particular instance of the command*/
+    // PKAZ 3/17/09: for now, support void return (ActionTypeOld) for backward compatibility
     ActionType Action;
+    ActionTypeOld ActionOld;
 
     /*! Stores the receiver object of the command */
     ClassType * ClassInstantiation;
@@ -81,6 +91,17 @@ public:
                             const Argument2Type & argument2Prototype):
         BaseType(name),
         Action(action),
+        ActionOld(0),
+        ClassInstantiation(classInstantiation),
+        Argument1Prototype(argument1Prototype),
+        Argument2Prototype(argument2Prototype)
+    {}
+    mtsCommandQualifiedRead(ActionTypeOld action, ClassType * classInstantiation, const std::string & name,
+                            const Argument1Type & argument1Prototype,
+                            const Argument2Type & argument2Prototype):
+        BaseType(name),
+        Action(0),
+        ActionOld(action),
         ClassInstantiation(classInstantiation),
         Argument1Prototype(argument1Prototype),
         Argument2Prototype(argument2Prototype)
@@ -95,25 +116,36 @@ public:
       applies the operation on the receiver. 
       \param obj The data passed to the operation method
     */
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument1,
-                                               cmnGenericObject & argument2) {
-        Argument1Type * data1 = dynamic_cast<Argument1Type *>(&argument1);
-        if (data1 == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
-        if (data2 == NULL)
-            return mtsCommandBase::BAD_INPUT;
-        (ClassInstantiation->*Action)(*data1, *data2);
-        return mtsCommandBase::DEV_OK;
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1,
+                                               mtsGenericObject & argument2) {
+        if (this->IsEnabled()) {
+            Argument1Type * data1 = dynamic_cast<Argument1Type *>(&argument1);
+            if (data1 == 0) {
+                return mtsCommandBase::BAD_INPUT;
+            }
+            Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
+            if (data2 == 0) {
+                return mtsCommandBase::BAD_INPUT;
+            }
+            mtsCommandBase::ReturnType ret = mtsCommandBase::DEV_OK;
+            if (Action) {
+                if (!(ClassInstantiation->*Action)(*data1, *data2))
+                    ret = mtsCommandBase::COMMAND_FAILED;
+            }
+            else if (ActionOld)
+                (ClassInstantiation->*ActionOld)(*data1, *data2);
+            return ret;
+        }
+        return mtsCommandBase::DISABLED;
     }
 
     /* commented in base class */
-    const cmnGenericObject * GetArgument1Prototype(void) const {
+    const mtsGenericObject * GetArgument1Prototype(void) const {
         return &Argument1Prototype;
     }
 
     /* commented in base class */
-    const cmnGenericObject * GetArgument2Prototype(void) const {
+    const mtsGenericObject * GetArgument2Prototype(void) const {
         return &Argument2Prototype;
     }
         
@@ -124,7 +156,8 @@ public:
             outputStream << this->Name << "(const "
                          << this->Argument1Prototype.ClassServices()->GetName() << "&, "
                          << this->Argument2Prototype.ClassServices()->GetName() << "&) using class/object \""
-                         << mtsObjectName(this->ClassInstantiation) << "\"";
+                         << mtsObjectName(this->ClassInstantiation) << "\" currently "
+                         << (this->IsEnabled() ? "enabled" : "disabled");
         } else {
             outputStream << "Not initialized properly";
         }

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctDynamicConstVectorBase.h,v 1.49 2008/08/01 15:08:45 anton Exp $
+  $Id$
   
   Author(s):	Ofri Sadowsky, Anton Deguet
   Created on: 2004-07-01
@@ -33,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnThrow.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctContainerTraits.h>
 #include <cisstVector/vctDynamicVectorLoopEngines.h>
@@ -568,7 +569,7 @@ public:
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<class __vectorOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & source) const
     {
         return vctFastCopy::VectorCopyCompatible(*this, source);
     }
@@ -576,7 +577,7 @@ public:
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<unsigned int __size, int __stride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstVectorBase<__size, __stride, value_type, __dataPtrType> & source)
+    inline bool FastCopyCompatible(const vctFixedSizeConstVectorBase<__size, __stride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::VectorCopyCompatible(*this, source);
     }
@@ -947,6 +948,42 @@ public:
             outputStream << std::noshowpoint;
         }
     }
+
+    
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const
+    {
+        size_type index;
+        const size_type mySize = size();
+        if (headerOnly) {
+            for (index = 0; index < mySize; ++index) {
+                outputStream << headerPrefix << "-v" << index; 
+                if (index < (mySize-1)) {
+                    outputStream << delimiter; 
+                }
+            }
+        } else {
+            for (index = 0; index < mySize; ++index) {
+                outputStream << (*this)[index]; 
+                if (index < (mySize-1)) {
+                    outputStream << delimiter; 
+                }
+            }
+        }
+    }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type mySize = size();
+        size_type index;
+        
+        cmnSerializeRaw(outputStream, mySize);
+        for (index = 0; index < mySize; ++index) {
+            cmnSerializeRaw(outputStream, this->Element(index));
+        }
+    }
+
 };
 
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: osaThreadedLogFile.h,v 1.4 2008/09/09 15:22:32 anton Exp $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2008-01-04
@@ -35,6 +35,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <list>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 
 /*! \brief
@@ -182,7 +184,7 @@ typename osaThreadedLogFileStreambuf<_element, _trait>::ChannelType *
 osaThreadedLogFileStreambuf<_element, _trait>::AddChannelForThread(const osaThreadId & threadId)
 {
     std::stringstream fileName;
-    fileName << FilePrefix << ChannelContainer.size() << ".txt";
+    fileName << this->FilePrefix << this->ChannelContainer.size() << ".txt";
     std::ofstream * newFile = new std::ofstream(fileName.str().c_str()); 
     ChannelContainer.push_back(ElementType(threadId, newFile->rdbuf()));
     return newFile->rdbuf();

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnMultiplexerStreambufProxy.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
 
   Author(s):  Ofri Sadowsky
   Created on: 2002-05-20
@@ -94,21 +94,21 @@ private:
  public:
 
     typedef cmnLODMultiplexerStreambuf<_element, _trait> ChannelType;
-    typedef typename ChannelType::LodType LodType;
+    typedef typename ChannelType::LogLoDType LogLoDType;
     typedef typename std::basic_streambuf<_element, _trait>::int_type int_type;
   
     /*! Constructor: initialize the true output multiplexer and the current LOD. */
-    cmnMultiplexerStreambufProxy(ChannelType *output, LodType lod)
+    cmnMultiplexerStreambufProxy(ChannelType *output, LogLoDType lod)
         : m_OutputChannel(output), m_LOD(lod)
         {}
 
     /*! Returns the Level of Detail. */ 
-    LodType GetLOD(void) const {
+    LogLoDType GetLOD(void) const {
         return m_LOD;
     }
   
     /*! Sets the Level of Detail. */ 
-    void SetLOD(LodType lod) {
+    void SetLOD(LogLoDType lod) {
         m_LOD = lod;
     }
   
@@ -138,7 +138,7 @@ private:
 
  private:
     ChannelType * m_OutputChannel;
-    LodType m_LOD;
+    LogLoDType m_LOD;
 
 };
 

@@ -2,13 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsStateArray.h,v 1.5 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
-  Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -31,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnLogger.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstMultiTask/mtsStateArrayBase.h>
-#include <cisstMultiTask/mtsVector.h>
+#include <cisstMultiTask/mtsHistory.h>
 
 #include <vector>
 #include <typeinfo>
@@ -42,7 +41,7 @@ http://www.cisst.org/cisst/license.txt.
   Individual state array classes can be created from an instance of
   the following template, where _elementType represents the type of
   data used by the particular state element. It is assumed that
-  _elementType is derived from cmnGenericObject.
+  _elementType is derived from mtsGenericObject.
  */
 template <class _elementType>
 class mtsStateArray :public mtsStateArrayBase
@@ -70,30 +69,30 @@ public:
 	/*! Default destructor. */
 	virtual ~mtsStateArray() {}
 
-    
-	/*! Overloaded [] operator. Returns data at index */
-	inline virtual cmnGenericObject & operator[](index_type index){
-        return Data[index];
-    }
-    
-    
-	inline virtual const cmnGenericObject & operator[](index_type index) const {
-        return Data[index];
-    }
+    /*! Access element at index. This returns the data of the derived type
+      (value_type) rather than the base type (mtsGenericObject), which is
+      returned by the overloaded operator []. */
+    const value_type & Element(index_type index) const { return Data[index]; }
+    value_type & Element(index_type index) { return Data[index]; }
 
+	/*! Overloaded [] operator. Returns data at index (of type mtsGenericObject). */
+	inline mtsGenericObject & operator[](index_type index){ return Data[index]; }
+	inline const mtsGenericObject & operator[](index_type index) const { return Data[index]; }
     
 	/* Create the array of data. */
-	inline virtual mtsStateArrayBase * Create(const cmnGenericObject * objectExample,
-                                              size_type size) {
+    inline mtsStateArrayBase * Create(const mtsGenericObject * objectExample,
+                                      size_type size) {
         const value_type * typedObjectExample = dynamic_cast<const value_type *>(objectExample);
         if (typedObjectExample) {
             this->Data.resize(size, *typedObjectExample);
+            this->DataClassServices = objectExample->Services();
+            CMN_ASSERT(this->DataClassServices);
         } else {
-            CMN_LOG(1) << "mtsStateArray: Create used with an object example of the wrong type, received: "
-                       << objectExample->Services()->GetName()
-                       << " while expecting "
-                       << value_type::ClassServices()->GetName()
-                       << std::endl;
+            CMN_LOG_INIT_ERROR << "mtsStateArray: Create used with an object example of the wrong type, received: "
+                               << objectExample->Services()->GetName()
+                               << " while expecting "
+                               << value_type::ClassServices()->GetName()
+                               << std::endl;
             return 0;
         }
         return this;
@@ -101,7 +100,7 @@ public:
 
     
 	/*! Copy data from one index to another within the same array.  */
-	inline virtual void Copy(index_type indexTo, index_type indexFrom) {
+	inline void Copy(index_type indexTo, index_type indexFrom) {
         this->Data[indexTo] = this->Data[indexFrom];
     }
     
@@ -111,31 +110,30 @@ public:
 	  of C++ -- namely, that it does not fully support containers of
 	  heterogeneous objects. In particular, we expect the 'object'
 	  parameter to be of type _elementType& (the derived class) rather
-	  than cmnGenericObject& (the base class). This can be handled
+	  than mtsGenericObject& (the base class). This can be handled
 	  using C++ Run Time Type Information (RTTI) features such as
 	  dynamic cast.
 	 */
     //@{
-	virtual bool Get(index_type index, cmnGenericObject & object) const;
-	virtual bool Set(index_type index, const cmnGenericObject & object);
-
-    /*! GetVector gets a vector of data. Here, we use RTTI to make sure that object
-        is of type mtsVector<_elementType> and is large enough. */
-	virtual bool GetVector(index_type indexStart, index_type indexEnd, cmnGenericObject & object) const;
+	bool Get(index_type index, mtsGenericObject & object) const;
+	bool Set(index_type index, const mtsGenericObject & object);
     //@}
+
+	/*! Get data vector from array. */
+    virtual bool GetHistory(index_type indexStart, index_type indexEnd, mtsHistory<_elementType> & data) const;
 };
 
 
 #include <iostream>
 
 template <class _elementType>
-bool mtsStateArray<_elementType>::Set(index_type index,  const cmnGenericObject & object) {
+bool mtsStateArray<_elementType>::Set(index_type index,  const mtsGenericObject & object) {
 	//do some typechecking?? should this be an ASSERT?
 	//TODO: check if throw works
 	if (typeid(object) != typeid(_elementType)) {
-		CMN_LOG(5) << "Class mtsStateArray: Set(): The passed object is not of the same kind as array. Expected: "
-                   << typeid(_elementType).name()
-                   << " Got: " << typeid(object).name() << std::endl;
+		CMN_LOG_RUN_ERROR << "Class mtsStateArray: Set(): The passed object is not of the same kind as array. Expected: "
+                          << typeid(_elementType).name()
+                          << " Got: " << typeid(object).name() << std::endl;
 		return false;
 	}
 	const _elementType* pdata = dynamic_cast<const _elementType*>(&object);
@@ -144,18 +142,18 @@ bool mtsStateArray<_elementType>::Set(index_type index,  const cmnGenericObject 
 		Data[index] = *pdata;
 		return true;
 	} else {
-		CMN_LOG(5) << "Class mtsStateArray: Set(): Found NULL element in state data array" << std::endl;
+		CMN_LOG_RUN_ERROR << "Class mtsStateArray: Set(): Found NULL element in state data array" << std::endl;
 	}
 	return false;
 }
 
 template <class _elementType>
-bool mtsStateArray<_elementType>::Get(index_type index, cmnGenericObject & object) const {
+bool mtsStateArray<_elementType>::Get(index_type index, mtsGenericObject & object) const {
 	//do some typechecking?? should this be an ASSERT?
 	if (typeid(object) != typeid(_elementType)) {
-		CMN_LOG(5) << "Class mtsStateArray: Get(): The passed object is not of the same kind as array. Expected: "
-                   << typeid(_elementType).name() 
-                   << "Got: " << typeid(object).name() << std::endl;
+		CMN_LOG_RUN_ERROR << "Class mtsStateArray: Get(): The passed object is not of the same kind as array. Expected: "
+                          << typeid(_elementType).name() 
+                          << " Got: " << typeid(object).name() << std::endl;
 		return false;
 	}
 	_elementType* pdata = dynamic_cast<_elementType*>(&object);
@@ -164,43 +162,33 @@ bool mtsStateArray<_elementType>::Get(index_type index, cmnGenericObject & objec
 		*pdata = Data[index];
 		return true;
 	} else {
-		CMN_LOG(5) << "Class mtsStateArray: Get(): Found NULL element in state data array" << std::endl;
+		CMN_LOG_RUN_ERROR << "Class mtsStateArray: Get(): Found NULL element in state data array" << std::endl;
 	}
 	return false;
 }
 
 template <class _elementType>
-bool mtsStateArray<_elementType>::GetVector(index_type indexStart, index_type indexEnd, cmnGenericObject &object) const {
-    // PK: why is this typeid check necessary?  The dynamic_cast should fail.
-    if (typeid(object) != typeid(mtsVector<_elementType>)) {
-		CMN_LOG(5) << "Class mtsStateArray: GetVector(): The passed object is not an mtsVector of the appropriate type. Expected: "
-                   << typeid(mtsVector<_elementType>).name() 
-                   << "Got: " << typeid(object).name() << std::endl;
-		return false;
-	}
-	mtsVector<_elementType>* pdata = dynamic_cast<mtsVector<_elementType>*>(&object);
-    if (!pdata) {
-		CMN_LOG(5) << "Class mtsStateArray: GetVector(): dynamic_cast failure" << std::endl;
-        return false;
-    }
+bool mtsStateArray<_elementType>::GetHistory(index_type indexStart, index_type indexEnd,
+                                             mtsHistory<_elementType> & data) const
+{
     // Make sure vector is big enough
     unsigned int numToCopy = (Data.size() + indexEnd - indexStart + 1)%Data.size();
-    if (pdata->size() < numToCopy) {
-		CMN_LOG(1) << "Class mtsStateArray: GetVector(): provided array too small, size = "
-                   << pdata->size() << ", requested copy = " << numToCopy << std::endl;
+    if (data.size() < numToCopy) {
+		CMN_LOG_INIT_ERROR << "Class mtsStateArray: GetHistory(): provided array too small, size = "
+                           << data.size() << ", requested copy = " << numToCopy << std::endl;
         return false;
     }
-    // PK: probably should use iterators instead
+    // PK: probably should use iterators instead (or perhaps a cisstVector fastcopy?)
     unsigned int i, j;
     if (indexEnd < indexStart) {  // wrap-around case
         for (i=0, j=indexStart; j < Data.size(); i++, j++)
-            (*pdata)[i] = Data[j];
+            data[i] = Data[j];
         for (j=0; j <= indexEnd; i++, j++)
-            (*pdata)[i] = Data[j];
+            data[i] = Data[j];
     }
     else {
         for (i=0; i < numToCopy; i++)
-            (*pdata)[i] = Data[indexStart+i];
+            data[i] = Data[indexStart+i];
     }
 	return true;
 }

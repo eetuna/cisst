@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt 8 2009-01-04 21:13:48Z adeguet1 $
+# $Id$
 #
 # CMakeLists for wrapping tests
 #
@@ -24,7 +24,7 @@ FOREACH(lib ${CISST_LIBRARIES})
 
   # Make sure there is actually a directory of test case
   IF(EXISTS ${cisstWrappingTests_SOURCE_DIR}/${lib})
-    SUBDIRS(${lib})
+    ADD_SUBDIRECTORY(${lib})
   ENDIF(EXISTS ${cisstWrappingTests_SOURCE_DIR}/${lib})
 
 ENDFOREACH(lib)

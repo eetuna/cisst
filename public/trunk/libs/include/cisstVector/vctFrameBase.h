@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctFrameBase.h,v 1.19 2008/12/23 18:15:52 ofri Exp $
+  $Id$
 
   Author(s):	Anton Deguet
   Created on:	2004-02-11
@@ -543,6 +543,7 @@ public:
         return outputStream.str();
     }
     
+    /*!  Print the matrix in a human readable format */    
     void ToStream(std::ostream & outputStream) const {
         outputStream << "translation: "
                      << std::endl
@@ -551,6 +552,27 @@ public:
                      << "rotation: "
                      << std::endl
                      << this->Rotation();
+    }
+
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const {
+        this->Translation().ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+        outputStream << delimiter;
+        this->Rotation().ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        this->Translation().SerializeRaw(outputStream);
+        this->Rotation().SerializeRaw(outputStream);
+    }
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream)
+    {
+        this->Translation().DeSerializeRaw(inputStream);
+        this->Rotation().DeSerializeRaw(inputStream);
     }
 
 };

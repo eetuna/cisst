@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandReadOrWriteBase.h,v 1.7 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
@@ -79,7 +79,7 @@ public:
     }
 
     /*! Return a pointer on the argument prototype */
-    virtual const cmnGenericObject * GetArgumentPrototype(void) const = 0;
+    virtual const mtsGenericObject * GetArgumentPrototype(void) const = 0;
 
     /*! Return const pointer of class services associated to the
         argument type. */

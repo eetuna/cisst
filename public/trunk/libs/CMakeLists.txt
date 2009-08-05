@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt 8 2009-01-04 21:13:48Z adeguet1 $
+# $Id$
 #
 # (C) Copyright 2003-2007 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -30,12 +30,12 @@ VARIABLE_REQUIRES(BUILD_LIBS_cisstInteractive REQUIREMENT_MET CISST_HAS_SWIG_PYT
 # Build everything
 FOREACH(lib ${CISST_LIBS})
   IF(BUILD_LIBS_${lib})
-    SUBDIRS(code/${lib})
+    ADD_SUBDIRECTORY(code/${lib})
   ENDIF(BUILD_LIBS_${lib})
 ENDFOREACH(lib)
 
 # Build wrappers
 IF(CISST_HAS_SWIG_PYTHON)
-  SUBDIRS(wrapping)
+  ADD_SUBDIRECTORY(wrapping)
 ENDIF(CISST_HAS_SWIG_PYTHON)
 

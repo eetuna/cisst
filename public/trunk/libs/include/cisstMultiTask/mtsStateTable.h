@@ -2,13 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsStateTable.h,v 1.12 2009/01/09 05:39:41 pkaz Exp $
+  $Id$
 
-  Author(s):  Ankur Kapoor
+  Author(s):  Ankur Kapoor, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
-  Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -28,11 +27,13 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsStateTable_h
 #define _mtsStateTable_h
 
-#include <cisstCommon/cmnGenericObject.h>
+#include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsGenericObject.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsStateArrayBase.h>
 #include <cisstMultiTask/mtsStateArray.h>
 #include <cisstMultiTask/mtsStateIndex.h>
-
+#include <cisstMultiTask/mtsHistory.h>
 
 #include <vector>
 #include <iostream>
@@ -40,13 +41,15 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
+#define MTS_STATE_TABLE_DEFAULT_NAME "StateTable"
+
 // Forward declaration
 class osaTimeServer;
+
 
 /*! mtsStateDataId.  Unique identifier for the columns of the State
   Data Table.  Typedef'ed to an int */
 typedef int mtsStateDataId;
-
 
 /*!
   \ingroup cisstMultiTask
@@ -54,7 +57,7 @@ typedef int mtsStateDataId;
   The state data table is the storage for the state of the task that
   the table is associated with. It is a heterogenous circular buffer
   and can contain data of any type so long as it is derived from
-  cmnGenericObject.  The state data table also resolves conflicts
+  mtsGenericObject.  The state data table also resolves conflicts
   between reads and writes to the state, by ensuring that the reader
   head is always one behind the write head. To ensure this we have an
   assumption here that there is only one writer, though there can be
@@ -62,7 +65,97 @@ typedef int mtsStateDataId;
   State Table elsewhere in the documentation.
  */
 class CISST_EXPORT mtsStateTable {
+
+    friend class mtsCollectorState;
+    friend class mtsTaskTest;
+    friend class mtsStateTableTest;
+    friend class mtsCollectorBaseTest;
+
+    class DataCollectionInfoStruct {
+    public:
+        /* True if data collection event can be triggered (false by default). */
+        bool TriggerEnabled;
+
+        /*! Number of data that are newly generated and are to be fetched by the 
+        data collection tool. */
+        unsigned int NewDataCount;
+
+        /*! If NewDataCount becomes greater than this vaule, an event for data collection
+            is generated. Though this value is redundant in some respect (because
+            EventTriggeringRatio is already defined), this value is kept for the purpose 
+            of efficiency. */
+        unsigned int EventTriggeringLimit;
+
+        DataCollectionInfoStruct() : TriggerEnabled(false), NewDataCount(0), EventTriggeringLimit(0)
+        {}
+
+        ~DataCollectionInfoStruct() {}
+    };
+
+public:
+    class AccessorBase {
+    protected:
+        const mtsStateTable &Table;
+        mtsStateDataId Id;   // Not currently used
+    public:
+        AccessorBase(const mtsStateTable &table, mtsStateDataId id): Table(table), Id(id) {}
+        virtual ~AccessorBase() {}
+        virtual void ToStream(std::ostream & outputStream, const mtsStateIndex & when) const = 0;
+    };
+    
+    template <class _elementType>
+    class Accessor : public AccessorBase {
+        typedef _elementType value_type;
+        typedef typename mtsStateTable::Accessor<value_type> ThisType;
+        const mtsStateArray<value_type> &History;
+        value_type * Current;
+
+    public:
+        Accessor(const mtsStateTable & table, mtsStateDataId id, 
+                 const mtsStateArray<value_type> * history, value_type * data):
+            AccessorBase(table, id), History(*history), Current(data) {}
+
+        void ToStream(std::ostream & outputStream, const mtsStateIndex & when) const {
+            History.Element(when.Index()).ToStream(outputStream);
+        }
+        
+        bool Get(const mtsStateIndex & when, value_type & data) const { 
+            data = History.Element(when.Index());
+            return Table.ValidateReadIndex(when);
+        }
+
+        bool GetLatest(value_type & data) const {
+            return Get(Table.GetIndexReader(), data);
+        }
+        
+        void SetCurrent(const value_type & data) {
+            *Current = data;
+        }
+        
+        // Get a vector of data, starting and ending at the specified time indices (inclusive).
+        // For now, set the start index based on the vector size. In the future, we
+        // should define a new parameter type that consists of a pair of mtsStateIndex.
+        bool GetHistory(const mtsStateIndex & end, mtsHistory<value_type> & data) const {
+            bool ret = false;
+            if (data.size() > 0) {
+                mtsStateIndex start = end;
+                start -= (data.size()-1);
+                if (Table.ValidateReadIndex(start) && Table.ValidateReadIndex(end)) {
+                    ret = History.GetHistory(start.Index(), end.Index(), data);
+                    // If GetHistory succeeded, then check if the data is still valid (has not been overwritten).
+                    // Here it is sufficient to just check the oldest index (start).
+                    if (ret)
+                        ret = Table.ValidateReadIndex(start);
+                }
+                else
+                    CMN_LOG_INIT_ERROR << "ReadVectorFromReader: data not available" << std::endl;
+            }
+            return ret;
+        }
+    };
+
  protected:
+
 	/*! The number of rows of the state data table. */
 	unsigned int HistoryLength;
 	
@@ -82,40 +175,37 @@ class CISST_EXPORT mtsStateTable {
       of elements that are to be added to the state when we
       advance.
       */
-    std::vector<cmnGenericObject *> StateVectorElements;
+    std::vector<mtsGenericObject *> StateVectorElements;
     
 	/*! The columns entries can be accessed by name. This vector
 	  stores the names corresponding to the columns. */
 	std::vector<std::string> StateVectorDataNames;
 
-#if 0  // PK: I believe the following is obsolete
-	/*! This vector of boolean indicates if the data in the
-	   corresponding column under the write head is valid. */
-	std::vector<bool> DataValid;
-
-	/*! This sets the default policy on copying the previous data on
-	  the advance of the write head, if no valid data was written. If
-	  true data gets copied */
-	std::vector<bool> Copy;
-#endif
+    /*! The vector contains pointers to the accessor methods
+      (e.g., Get, GetLatest) from which command objects are created. */
+    std::vector<AccessorBase *> StateVectorAccessors;
 
 	/*! The vector contains the time stamp in counts or ticks per
 	  period of the task that the state table is associated with. */
 	std::vector<mtsStateIndex::TimeTicksType> Ticks;
 
-    /*! The start/end times for the current row of data. We could use
-        mtsStateData<cmnDouble> instead of (TicId, Tic) and (TocId, Toc). */
+    /*! The state table indices for Tic, Toc, and Period. */
     mtsStateDataId TicId, TocId;
-    cmnDouble Tic, Toc;
+    mtsStateDataId PeriodId;
+
+    /*! The time server used to provide absolute and relative times. */
+    const osaTimeServer * TimeServer;
+
+public:
+
+    /* The start/end times for the current row of data. */
+    mtsDouble Tic, Toc;
 
     /*! The measured task period (difference between current Tic and
         previous Tic). */
-    mtsStateDataId PeriodId;
-    cmnDouble Period;
+    mtsDouble Period;
 
-    /*! The time server used to provide absolute and relative times. */
-    const osaTimeServer *TimeServer;
-
+ protected:
     /*! The sum of all the periods (time differences between
         consecutive Tic values); used to compute average period. */
     double SumOfPeriods;
@@ -123,78 +213,94 @@ class CISST_EXPORT mtsStateTable {
     /*! The average period over the last HistoryLength samples. */
     double AvgPeriod;
 
+    /*! The name of this state table. */
+    std::string StateTableName;
+
+    /*! Data collection event handler. */
+    mtsCommandVoidBase * DataCollectionEventHandler;
+
+    DataCollectionInfoStruct DataCollectionInfo;
+
+	/*! Write specified data. */
+	bool Write(mtsStateDataId id, const mtsGenericObject &obj);
+
  public:
-	/*! Constructor. Constructs a state table with a default
-	  size of 256 rows. */
-	mtsStateTable(int size = 256);
+    /*! Constructor. Constructs a state table with a default
+      size of 256 rows. */
+    mtsStateTable(int size = 256, const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME);
+    
+    /*! Default destructor. */
+    ~mtsStateTable();
 
-	/*! Default destructor. Does nothing */
-	~mtsStateTable() {}
-
-	/*! Get a handle for data to be used by a reader.  All the const
+    /*! Get a handle for data to be used by a reader.  All the const
       methods, that can be called from a reader and writer. */
-	mtsStateIndex GetIndexReader(void) const;
+    mtsStateIndex GetIndexReader(void) const;
 
     inline void GetIndexReader(mtsStateIndex & timeIndex) const {
         timeIndex = GetIndexReader();
     }
 
-	/*! Verifies if the data is valid. */
-	inline bool ValidateReadIndex(const mtsStateIndex &timeIndex) const {
+    /*! Verifies if the data is valid. */
+    inline bool ValidateReadIndex(const mtsStateIndex &timeIndex) const {
         return (Ticks[timeIndex.Index()] == timeIndex.Ticks());
     }
     
-	/*! Read specified data to be used by a reader */
-	bool ReadFromReader(mtsStateDataId id, const mtsStateIndex &timeIndex,
-                        cmnGenericObject &obj) const;
-    
-	/*! Read specified data to be used by a reader (PK: do we need this?) */
-	bool ReadFromReader(const std::string & name, const mtsStateIndex & timeIndex,
-                        cmnGenericObject & obj);
+    /*! Check if the signal has been registered. */
+    int GetStateVectorID(const std::string & dataName) const;
 
-	/*! Read specified data vector to be used by a reader */
-    bool ReadVectorFromReader(mtsStateDataId id, const mtsStateIndex & timeIndexStart, 
-                              const mtsStateIndex & timeIndexEnd, cmnGenericObject & obj) const;
+    /*! Add an element to the table. Should be called during startup
+      of a real time loop.  All the non-const methods, that can be
+      called from a writer only. Returns index of data within state
+      data table. */
+    template <class _elementType>
+    mtsStateDataId NewElement(const std::string & name = "", _elementType * element = 0);
 
-	/*! Add an element to the table. Should be called during startup
-	    of a real time loop.  All the non-const methods, that can be
-	    called from a writer only. Returns index of data within state data table.
-        Note: the copy parameter is obsolete. */
-	template <class _elementType>
-    mtsStateDataId NewElement(const std::string & name = "", _elementType * element = 0 /* ADV: ask PKAZ if still needed, bool copy = true*/);
+    /*! Add an element to the table (alternative to NewElement). */
+    template <class _elementType>
+    void AddData(_elementType &element, const std::string & name = "") {
+        NewElement(name, &element);
+    }
 
     /*! Return pointer to the state data element specified by the id.
       This element is the same type as the state data table entry. */
     template<class _elementType>
     _elementType * GetStateDataElement(mtsStateDataId id) const {
-        return StateVectorElements[index];
+        return StateVectorElements[id]; // WEIRD???
     }
 
-	/*! Get a handle for data to be used by a writer */
-	mtsStateIndex GetIndexWriter(void);
+    /*! Return pointer to accessor functions for the state data element.
+        \param element Pointer to state data element (i.e., working copy)
+        \returns Pointer to accessor class (0 if not found)
+        \note This method is overloaded to accept the element pointer or string name.
+    */
+    mtsStateTable::AccessorBase *GetAccessor(const mtsGenericObject &element) const;
 
-	/*! Read specified data to be used by a writer */
-	bool ReadFromWriter(mtsStateDataId id, const mtsStateIndex & timeIndex, cmnGenericObject & obj);
+    /*! Return pointer to accessor functions for the state data element.
+        \param name Name of state data element
+        \returns Pointer to accessor class (0 if not found)
+        \note This method is overloaded to accept the element pointer or string name.
+    */
+    mtsStateTable::AccessorBase *GetAccessor(const std::string &name) const;
 
-	/*! Write specified data. Please note our assumption that there is
-      only one writer for the table. PK: this is now obsolete (write done by Advance). */
-	bool Write(mtsStateDataId id, const cmnGenericObject &obj);
+    /*! Get a handle for data to be used by a writer */
+    mtsStateIndex GetIndexWriter(void) const;
 
     /*! Start the current cycle. This just records the starting timestamp (Tic). */
     void Start(void);
 
-	/*! Advance the pointers of the circular buffer. Note that since there is only a single
-        writer, it is not necessary to use mutual exclusion primitives; the critical section
-        can be handled by updating (incrementing) the write index before the read index.
-	 */
-	void Advance(void);
+    /*! Advance the pointers of the circular buffer. Note that since
+      there is only a single writer, it is not necessary to use mutual
+      exclusion primitives; the critical section can be handled by
+      updating (incrementing) the write index before the read index.
+    */
+    void Advance(void);
 
-    double GetTic() const { return Tic.Data; }
-    double GetToc() const { return Toc.Data; }
+    double GetTic(void) const { return Tic.Data; }
+    double GetToc(void) const { return Toc.Data; }
 
     /*! Return the moving average of the measured period (i.e., average of last
-        HistoryLength values). */
-    double GetAveragePeriod() const { return AvgPeriod; }
+      HistoryLength values). */
+    double GetAveragePeriod(void) const { return AvgPeriod; }
 
     /*! For debugging, dumps the current data table to output
       stream. */
@@ -213,29 +319,62 @@ class CISST_EXPORT mtsStateTable {
     void CSVWrite(std::ostream& out, bool nonZeroOnly = false);
     void CSVWrite(std::ostream& out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
 
+    void CSVWrite(std::ostream& out, mtsGenericObject ** listColumn, unsigned int number, bool nonZeroOnly);
+    
+    /*! A base column index of StateTable for a signal registered by user. */
+    static int StateVectorBaseIDForUser;
+    
+    //-------------------------------------------------------------------------
+    //  Data Collection
+    //-------------------------------------------------------------------------
+    /*! Fetch state table data. */
+    //void GetStateTableHistory(mtsDoubleVecHistory & history,
+    //                          const unsigned int signalIndex,
+    //                          const unsigned int lastFetchIndex);
+    
+    /*! Return the name of this state table. */
+    const std::string GetName(void) const { return StateTableName; }
+    
+    /*! Enable data collection event trigger. */
+    void ResetDataCollectionTrigger(void) { 
+        DataCollectionInfo.TriggerEnabled = true;
+    }
+    
+    /*! Set an event handler to inform the data collector about the
+      event that data in this state table is populated. */
+    void SetDataCollectionEventHandler(mtsCollectorState * collector);
+    
+    /*! Determine a ratio to generate a data collection event. */
+    void SetDataCollectionEventTriggeringRatio(const double eventTriggeringRatio);
+    
+    void GenerateDataCollectionEvent(void);
 };
 
 
 // overload mtsObjectName to provide the class name
-inline std::string mtsObjectName(const mtsStateTable * CMN_UNUSED(object))
+inline std::string mtsObjectName(const mtsStateTable * object)
 {
-    return "mtsStateTable";
+    return object->GetName();
+}
+
+// overload mtsObjectName for mtsStateTable::Accessor
+template <class _elementType>
+inline std::string mtsObjectName(const mtsStateTable::Accessor<_elementType> * CMN_UNUSED(accessor)) {
+    return "mtsStateTable::Accessor";
 }
 
 
 template <class _elementType>
-mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType * element /* ADV: ask PKAZ if still needed, bool copy*/) {
+mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType * element) {
     mtsStateArray<_elementType> * elementHistory =
         new mtsStateArray<_elementType>(*element,
                                         HistoryLength);
     StateVector.push_back(elementHistory);
     NumberStateData = StateVector.size();
     StateVectorElements.push_back(element); 
-#if 0
-    DataValid.push_back(false);
-    Copy.push_back(copy);
-#endif
     StateVectorDataNames.push_back(name);
+    AccessorBase * accessor = new Accessor<_elementType>(*this, NumberStateData-1, elementHistory, element);
+    StateVectorAccessors.push_back(accessor);
     return NumberStateData-1;
 }
 

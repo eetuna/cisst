@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.9 2008/09/04 02:07:23 pkaz Exp $
+# $Id$
 #
 # (C) Copyright 2005-2007 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -58,6 +58,7 @@ FOREACH(module ${MODULES})
   # uses .pyd instead of dll on Windows
   IF(WIN32)
     SET_TARGET_PROPERTIES(_${module}Python PROPERTIES SUFFIX .pyd)
+    SET_TARGET_PROPERTIES(_${module}Python PROPERTIES DEBUG_POSTFIX "_d")
   ENDIF(WIN32)
   # Copy the .py file generated to wherever the libraries are
   ADD_CUSTOM_COMMAND(TARGET _${module}Python

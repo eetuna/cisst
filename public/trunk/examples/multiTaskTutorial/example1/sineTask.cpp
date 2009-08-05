@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: sineTask.cpp,v 1.15 2008/12/01 05:17:51 pkaz Exp $ */
+/* $Id$ */
 
 #include <cisstCommon/cmnConstants.h>
 #include "sineTask.h"
@@ -14,17 +14,15 @@ sineTask::sineTask(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // add SineData to the StateTable defined in mtsTask
-    SineData.AddToStateTable(StateTable, "SineData");
+    StateTable.AddData(SineData, "SineData");
     // add one interface, this will create an mtsTaskInterface
-    AddProvidedInterface("MainInterface"); 
-    // add command to access state table values to the interface
-    SineData.AddReadCommandToTask(this, "MainInterface", "GetData");
-    // following should be done automatically
-    AddCommandRead(&mtsStateTable::GetIndexReader, &StateTable,
-                   "MainInterface", "GetStateIndex");
-    // add command to modify the sine amplitude 
-    SineAmplitude.AddWriteCommandToTask(this, "MainInterface",
-                                        "SetAmplitude");
+    mtsProvidedInterface * provided = AddProvidedInterface("MainInterface");
+    if (provided) {
+        // add command to access state table values to the interface
+        provided->AddCommandReadState(StateTable, SineData, "GetData");
+        // add command to modify the sine amplitude 
+        provided->AddCommandWrite(&sineTask::SetAmplitude, this, "SetAmplitude");
+    }
 }
 
 void sineTask::Startup(void) {
@@ -32,13 +30,13 @@ void sineTask::Startup(void) {
 }
 
 void sineTask::Run(void) {
-    // the state table provides an index
-    const mtsStateIndex now = StateTable.GetIndexWriter();
     // process the commands received, i.e. possible SetSineAmplitude
     ProcessQueuedCommands();
     // compute the new values based on the current time and amplitude
-    SineData = SineAmplitude.Data
-        * sin(2 * cmnPI * static_cast<double>(now.Ticks()) * Period / 10.0);
+    SineData = SineAmplitude
+        * sin(2 * cmnPI * static_cast<double>(this->GetTick()) * Period / 10.0);
+    SineData.SetTimestamp(StateTable.GetTic());
+    SineData.SetValid(true);
 }
 
 /*

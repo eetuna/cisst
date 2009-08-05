@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsFunctionQualifiedReadOrWrite.h,v 1.12 2008/12/14 06:39:19 pkaz Exp $
+  $Id$
 
   Author(s):  Peter Kazanzides, Anton Deguet
 
@@ -91,7 +91,7 @@ class CISST_EXPORT mtsFunctionQualifiedReadOrWrite: public mtsFunctionBase {
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
-    mtsCommandBase::ReturnType operator()(const cmnGenericObject & qualifier,
+    mtsCommandBase::ReturnType operator()(const mtsGenericObject & qualifier,
                                           ArgumentType& argument) const;
 
     /*! Access to underlying command object. */
@@ -102,7 +102,7 @@ class CISST_EXPORT mtsFunctionQualifiedReadOrWrite: public mtsFunctionBase {
 };
 
 
-typedef mtsFunctionQualifiedReadOrWrite<cmnGenericObject> mtsFunctionQualifiedRead;
+typedef mtsFunctionQualifiedReadOrWrite<mtsGenericObject> mtsFunctionQualifiedRead;
 
 
 #endif // _mtsFunctionQualifiedReadOrWrite_h

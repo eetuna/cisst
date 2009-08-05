@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnLogger.cpp 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
 
   Author(s):  Anton Deguet
   Created on: 2004-08-31
@@ -26,21 +26,21 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnLogger.h>
 
 
-cmnLogger::cmnLogger(const char * defaultLogFileName):
-    LoD(10),
+cmnLogger::cmnLogger(const std::string & defaultLogFileName):
+    LoD(CMN_LOG_LOD_VERY_VERBOSE),
     LoDMultiplexerStreambuf()
 {
-    LoDMultiplexerStreambuf.AddChannel(*(DefaultLogFile(defaultLogFileName)), 5);
+    LoDMultiplexerStreambuf.AddChannel(*(DefaultLogFile(defaultLogFileName)), CMN_LOG_LOD_RUN_ERROR);
 }
 
 
-std::ofstream* cmnLogger::DefaultLogFile(const char * defaultLogFileName) {
-    static std::ofstream defaultLogFile(defaultLogFileName);
+std::ofstream * cmnLogger::DefaultLogFile(const std::string & defaultLogFileName) {
+    static std::ofstream defaultLogFile(defaultLogFileName.c_str());
     return &defaultLogFile;
 }
 
 
-cmnLogger* cmnLogger::Instance(void) {
+cmnLogger * cmnLogger::Instance(void) {
     // create a static variable
     static cmnLogger instance;
     return &instance;

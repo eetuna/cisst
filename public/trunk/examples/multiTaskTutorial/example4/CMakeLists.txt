@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.3 2008/05/30 19:45:18 anton Exp $
+# $Id$
 #
 # (C) Copyright 2005-2008 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -48,10 +48,6 @@ TARGET_LINK_LIBRARIES(multiTaskTutorialExample4 ${FLTK_LIBRARIES})
 # link with the cisst libraries
 CISST_REQUIRES("multiTaskTutorialExample4" "cisstCommon;cisstOSAbstraction;cisstMultiTask;cisstInteractive")
 
-IF(CISST_HAS_LINUX_RTAI)
-  TARGET_LINK_LIBRARIES(multiTaskTutorialExample4 ${RTAI_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-ENDIF(CISST_HAS_LINUX_RTAI)
-
 IF(UNIX)
   IF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     TARGET_LINK_LIBRARIES(multiTaskTutorialExample4 util)
@@ -65,13 +61,3 @@ ADD_CUSTOM_COMMAND(TARGET multiTaskTutorialExample4
                    ARGS -E copy
                            ${multiTaskTutorialExample4_SOURCE_DIR}/example4.py
                            ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/example4.py)
-
-
-# For apple applications with GUI
-IF(APPLE)
-  FIND_PROGRAM(APPLE_REZ Rez /Developer/Tools)
-  ADD_CUSTOM_COMMAND(TARGET multiTaskTutorialExample4
-                     POST_BUILD
-                     COMMAND ${APPLE_REZ}
-                     ARGS ${FLTK_INCLUDE_DIR}/FL/mac.r Carbon.r -o ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/multiTaskTutorialExample4)
-ENDIF(APPLE)

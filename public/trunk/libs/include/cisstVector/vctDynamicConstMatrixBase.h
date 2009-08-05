@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctDynamicConstMatrixBase.h,v 1.70 2008/08/01 15:08:45 anton Exp $
+  $Id$
   
   Author(s):	Ofri Sadowsky, Anton Deguet
   Created on: 2004-07-01
@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnThrow.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctContainerTraits.h>
 #include <cisstVector/vctFixedSizeVector.h>
@@ -646,13 +647,13 @@ public:
       See FastCopyOf for more details. */
     //@{
     template<class __matrixOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
     
     template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source)
+    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -1011,6 +1012,45 @@ public:
         }
     }
 
+
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        if (headerOnly) {
+            for (indexRow = 0; indexRow < myRows; ++indexRow) {
+                for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                    outputStream << headerPrefix << "-m" << indexRow << "_" << indexCol; 
+                    // delimiter between elements
+                    if (indexCol < (myCols - 1)) {
+                        outputStream << delimiter;
+                    }
+                }
+                // delimiter between rows, not at the end
+                if (indexRow < (myRows - 1)) {
+                    outputStream << delimiter;
+                }
+            }
+        } else {
+            for (indexRow = 0; indexRow < myRows; ++indexRow) {
+                for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                    outputStream << this->Element(indexRow, indexCol);
+                    // delimiter between elements
+                    if (indexCol < (myCols - 1)) {
+                        outputStream << delimiter;
+                    }
+                }
+                // delimiter between rows, not at the end
+                if (indexRow < (myRows - 1)) {
+                    outputStream << delimiter;
+                }
+            }
+        }
+    }
+
     /*! Define a ConstSubmatrix class for compatibility with the fixed size matrices.
       A const submatrix has the same stride as the parent container.
 
@@ -1035,6 +1075,23 @@ public:
         typedef vctDynamicConstMatrixRef<value_type> Type;
     };
 #endif // SWIG
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        cmnSerializeRaw(outputStream, myRows);
+        cmnSerializeRaw(outputStream, myCols);
+        for (indexRow = 0; indexRow < myRows; ++indexRow) {
+            for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                cmnSerializeRaw(outputStream, this->Element(indexRow, indexCol));
+            }
+        }
+    }
+
 };
 
 #ifndef DOXYGEN

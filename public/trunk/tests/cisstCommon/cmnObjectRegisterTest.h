@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnObjectRegisterTest.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
 
   Author(s):  Anton Deguet
   Created on: 2004-10-05
@@ -27,7 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 class myObjectRegisterObject: public cmnGenericObject {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
  public:
     int flag;
 };

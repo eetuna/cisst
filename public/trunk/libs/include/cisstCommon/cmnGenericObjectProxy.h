@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnGenericObjectProxy.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):	Ankur Kapoor, Anton Deguet
   Created on:	2006-05-05
@@ -71,7 +71,7 @@ http://www.cisst.org/cisst/license.txt.
 template <class _elementType>
 class cmnGenericObjectProxy: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     typedef cmnGenericObjectProxy<_elementType> ThisType;
@@ -91,6 +91,7 @@ public:
     
     inline ~cmnGenericObjectProxy(void) {}
 
+#ifndef SWIG
     /*! Conversion assignment.  This allows to assign from an object
       of the actual type without explicitly referencing the public
       data member "Data". */
@@ -105,6 +106,7 @@ public:
     inline operator value_type & (void) {
         return Data;
     }
+#endif // SWIG
 
     /*! Serialization.  Relies on the specialization, if any, of
       cmnSerializeRaw. */
@@ -120,9 +122,20 @@ public:
 
     /*! To stream method.  Uses the default << operator as defined for
         the actual type. */
-    inline virtual void ToStream(std::ostream & out) const {
-        out << Data;
+    inline virtual void ToStream(std::ostream & outputStream) const {
+        outputStream << Data;
     }
+
+    /*! To stream raw data. */
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char CMN_UNUSED(delimiter) = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        if (headerOnly) {
+            outputStream << headerPrefix << "-data";
+        } else {
+            outputStream << this->Data;
+        }
+    }
+
 };
 
 /* Some basic types defined here for now, could move somewhere

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctFixedSizeVectorTest.cpp,v 1.40 2007/08/08 17:41:47 anton Exp $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2003-08-20
@@ -794,6 +794,34 @@ void vctFixedSizeVectorTest::TestFastCopyOfFloat(void) {
 }
 void vctFixedSizeVectorTest::TestFastCopyOfInt(void) {
     TestFastCopyOf<int>();
+}
+
+
+
+template <class _elementType>
+void vctFixedSizeVectorTest::TestZeros(void) {
+    enum {SIZE = 7};
+    typedef _elementType value_type;
+    
+    // dynamic vector
+    vctFixedSizeVector<value_type, 2 * SIZE> destination;
+    CPPUNIT_ASSERT(destination.Zeros());
+    CPPUNIT_ASSERT(destination.Equal(static_cast<value_type>(0)));
+
+    // test for not compact (every other element)
+    vctFixedSizeVectorRef<value_type, SIZE, 2> nonCompact(destination.Pointer());
+    CPPUNIT_ASSERT(!nonCompact.Zeros());
+    CPPUNIT_ASSERT(nonCompact.Equal(static_cast<value_type>(0)));
+}
+
+void vctFixedSizeVectorTest::TestZerosDouble(void) {
+    TestZeros<double>();
+}
+void vctFixedSizeVectorTest::TestZerosFloat(void) {
+    TestZeros<float>();
+}
+void vctFixedSizeVectorTest::TestZerosInt(void) {
+    TestZeros<int>();
 }
 
 

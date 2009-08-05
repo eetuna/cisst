@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnTokenizer.cpp 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):	Ofri Sadowsky
   Created on:	2003-06-09
@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstCommon/cmnTokenizer.h>
+#include <string.h>
 
 cmnTokenizer::cmnTokenizer()
     : Delimiters(DefaultDelimiters)

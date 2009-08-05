@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnXMLPath.h 10 2009-01-04 21:38:53Z adeguet1 $
+  $Id$
   
   Author(s):	Ankur Kapoor
   Created on: 2004-04-30
@@ -28,6 +28,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #ifndef _cmnXMLPath_h
 #define _cmnXMLPath_h
+
+#include <cisstConfig.h>
+
+#if CISST_HAS_XML
 
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnTokenizer.h>
@@ -109,7 +113,7 @@ class CISST_EXPORT cmnXMLPath: public cmnGenericObject {
     /*! Register this class with a default level of detail 1.  Levels
       of details are 1 for errors, 2 for warnings and 3 for very
       verbose.  */
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 	/*! Libxml2 document source */
 	xmlDocPtr Document;
@@ -170,5 +174,6 @@ public:
 
 CMN_DECLARE_SERVICES_INSTANTIATION(cmnXMLPath);
 
+#endif // CISST_HAS_XML
 
 #endif // _cmnXMLPath_h

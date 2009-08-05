@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.15 2008/12/01 05:14:42 pkaz Exp $
+# $Id$
 #
 # CMakeLists for cisstMultiTask
 #
@@ -27,6 +27,9 @@ SET(DEPENDENCIES
 # all source files
 SET(SOURCE_FILES
     mtsVector.cpp
+    mtsMatrix.cpp
+    mtsGenericObjectProxy.cpp
+    mtsTransformationTypes.cpp
 
     mtsMulticastCommandVoid.cpp
     mtsMulticastCommandWriteBase.cpp
@@ -53,12 +56,21 @@ SET(SOURCE_FILES
     mtsTaskFromCallback.cpp
 
     mtsTaskManager.cpp
+
+    mtsCollectorBase.cpp
+    mtsCollectorState.cpp    
+
+    mtsHistory.cpp
     )
 
 # all header files
 SET(HEADER_FILES
+    mtsMacros.h
     mtsVector.h
-    mtsMap.h
+    mtsMatrix.h
+    mtsGenericObject.h
+    mtsGenericObjectProxy.h
+    mtsTransformationTypes.h
 
     mtsCommandBase.h
     mtsFunctionBase.h
@@ -106,6 +118,11 @@ SET(HEADER_FILES
     mtsTaskFromCallback.h
     
     mtsTaskManager.h
+
+    mtsCollectorBase.h    
+    mtsCollectorState.h
+    
+    mtsHistory.h
     )
 
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnClassRegisterTestDynamic.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2006-10-27
@@ -41,7 +41,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 class dynamicAllInline: public cmnGenericObject {
-    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     inline dynamicAllInline(void) {}
@@ -54,7 +54,7 @@ public:
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(dynamicAllInline);
 
 class CISST_EXPORT dynamicNoInline: public cmnGenericObject {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     dynamicNoInline(void);

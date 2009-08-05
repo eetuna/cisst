@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: main.cpp,v 1.4 2009/01/10 02:11:42 pkaz Exp $ */
+/* $Id$ */
 
 #include <cisstCommon.h>
 #include <cisstOSAbstraction.h>
@@ -16,13 +16,11 @@ using namespace std;
 int main(void)
 {
     // Log configuration
-    cmnLogger::SetLoD(5);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 5);
-    cmnLogger::HaltDefaultLog();
-    cmnLogger::ResumeDefaultLog(5);
+    cmnLogger::SetLoD(CMN_LOG_LOD_RUN_ERROR);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_RUN_ERROR);
     // add a log per thread
     osaThreadedLogFile threadedLog("example5-");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, 10);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_RUN_ERROR);
 
     // create our tasks
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
@@ -42,7 +40,7 @@ int main(void)
 
     // Loop until both tasks are closed
     while (!(appTaskControl1->GetExitFlag() && appTaskControl2->GetExitFlag())) {
-        osaSleep(0.5); // 0.5 seconds
+        osaSleep(0.5 * cmn_s); // 0.5 seconds
     }
 
     taskManager->KillAll();

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnThrow.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):	Anton Deguet
   Created on:	2005-09-22
@@ -77,17 +77,17 @@ inline void cmnThrow(const _exceptionType & except) throw(_exceptionType) {
     // try to create an std::exception pointer
     const std::exception * stdExcept = dynamic_cast<const std::exception *>(&except);
     if (stdExcept) {
-        CMN_LOG(1) << "cmnThrow with std::exception ("
-                   << stdExcept->what()
-                   << ")"
-                   << std::endl;
+        CMN_LOG_INIT_ERROR << "cmnThrow with std::exception ("
+                           << stdExcept->what()
+                           << ")"
+                           << std::endl;
     } else {
-        CMN_LOG(1) << "cmnThrow with non std::exception"
-                   << std::endl;
+        CMN_LOG_INIT_ERROR << "cmnThrow with non std::exception"
+                           << std::endl;
     }
 #ifdef CMN_THROW_DOES_ABORT
-    CMN_LOG(1) << "cmnThrow is configured to abort() (CMN_THROW_DOES_ABORT defined)"
-               << std::endl;
+    CMN_LOG_INIT_ERROR << "cmnThrow is configured to abort() (CMN_THROW_DOES_ABORT defined)"
+                       << std::endl;
     std::abort();
 #else
     throw except;

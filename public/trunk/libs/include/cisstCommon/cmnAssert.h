@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnAssert.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
 
   Author(s):  Ankur Kapoor
   Created on: 2003-06-25
@@ -134,7 +134,7 @@ http://www.cisst.org/cisst/license.txt.
 			          << "' failed in: " << CMN_PRETTY_FUNCTION \
 			          << ", line #" << __LINE__; \
         std::cerr << messageBuffer.str() << std::endl; \
-		CMN_LOG(1) << messageBuffer.str() << std::endl; \
+		CMN_LOG_INIT_ERROR << messageBuffer.str() << std::endl; \
 		abort(); \
 	}
 

@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-// $Id: clockDevice.h,v 1.6 2008/09/04 05:29:17 anton Exp $
+// $Id$
 
 #ifndef _clockDevice_h
 #define _clockDevice_h
@@ -9,11 +9,11 @@
 #include <cisstMultiTask.h>
 
 class clockDevice: public mtsDevice {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
  protected:
     osaStopwatch Timer;  // this is the actual device (wrapped)
-    void GetTime(cmnDouble & time) const;  // used by the command "GetTime"
+    void GetTime(mtsDouble & time) const;  // used by the command "GetTime"
 	
  public:
     // constructor doesn't need a period!

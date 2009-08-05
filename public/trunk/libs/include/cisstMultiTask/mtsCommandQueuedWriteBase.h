@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandQueuedWriteBase.h,v 1.7 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2005-05-02
@@ -48,7 +48,7 @@ protected:
 
 
     inline mtsCommandQueuedWriteBase(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand):
-        BaseType(actualCommand->Name),
+        BaseType(actualCommand->GetName()),
         MailBox(mailBox),
         ActualCommand(actualCommand)
     { }
@@ -72,13 +72,13 @@ protected:
     virtual void Allocate(unsigned int size) = 0;
 
 
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) = 0;
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) = 0;
 
     
-    virtual const cmnGenericObject * ArgumentPeek(void) const = 0;
+    virtual const mtsGenericObject * ArgumentPeek(void) const = 0;
 
 
-    virtual cmnGenericObject * ArgumentGet(void) = 0;
+    virtual mtsGenericObject * ArgumentGet(void) = 0;
 
 
     inline virtual const std::string & GetMailBoxName(void) const {

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: ireFramework.cpp,v 1.18 2007/04/26 19:33:56 anton Exp $
+  $Id$
 
   Author(s):  Andrew LaMora, Peter Kazanzides
   Created on: 2005-02-28
@@ -40,7 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 //
 //    1. The C++ code (LaunchIREShellInstance) initializes the ireLogger module,
 //       starts the Python interpreter, and launches the IRE.
-//    
+//
 //    2. During initialization (in ireMain.py), the IRE calls the
 //       PyTextCtrlHook::SetTextOutput C++ function to store the address of a Python
 //       callback function (such as wx.PostEvent) as well as the information needed
@@ -78,7 +78,7 @@ http://www.cisst.org/cisst/license.txt.
 //       object by calling the PyObject_CallObject, rather than by using the wxWidgets mechanism for
 //       creating a new event.
 //
- 
+
 
 class PyTextCtrlHook {
     static PyObject* PythonFunc;         // the Python callback function (i.e., PostEvent)
@@ -86,7 +86,7 @@ class PyTextCtrlHook {
     static PyObject* PythonWindow;       // the window that will handle the event
     static PyMethodDef Methods[];
     static cmnCallbackStreambuf<char> *Streambuf;
-    static cmnLODMultiplexerStreambuf<char>::LodType LoD;
+    static cmnLogLoD LoD;
 
 public:
     // Specify the Python callback function
@@ -101,7 +101,7 @@ public:
 
     // The C++ callback function that is passed to cmnCallbackStreambuf
     static void PrintLog(char *str, int len);
-    
+
     // Initialize the Python module
     static void InitModule(char* name);
 
@@ -113,7 +113,7 @@ PyObject* PyTextCtrlHook::PythonFunc = 0;
 PyObject* PyTextCtrlHook::PythonEventClass = 0;
 PyObject* PyTextCtrlHook::PythonWindow = 0;
 cmnCallbackStreambuf<char> *PyTextCtrlHook::Streambuf = 0;
-cmnLODMultiplexerStreambuf<char>::LodType PyTextCtrlHook::LoD = CMN_LOG_DEFAULT_LOD;
+cmnLogLoD PyTextCtrlHook::LoD = CMN_LOG_DEFAULT_LOD;
 
 // Specify the Python callback function.
 PyObject* PyTextCtrlHook::SetTextOutput(PyObject* CMN_UNUSED(self), PyObject* args)
@@ -140,7 +140,7 @@ PyObject* PyTextCtrlHook::SetTextOutput(PyObject* CMN_UNUSED(self), PyObject* ar
         Py_XINCREF(handler);           // Save reference to handler
         Py_XDECREF(PythonWindow);      // Release any previous handler
         PythonWindow = handler;
-        LoD = (cmnLODMultiplexerStreambuf<char>::LodType) iLoD;
+        LoD = static_cast<cmnLogLoD>(iLoD);
         if (!Streambuf)
             Streambuf = new cmnCallbackStreambuf<char>(PrintLog);
         cmnLogger::GetMultiplexer()->AddChannel(Streambuf, LoD);
@@ -176,7 +176,7 @@ PyObject* PyTextCtrlHook::SetLoD(PyObject* CMN_UNUSED(self), PyObject* args)
         PyErr_SetString(PyExc_TypeError, "integer type expected");
         return NULL;
     }
-    LoD = (cmnLODMultiplexerStreambuf<char>::LodType) iLoD;
+    LoD = static_cast<cmnLogLoD>(iLoD);
     if (Streambuf)
         cmnLogger::GetMultiplexer()->SetChannelLOD(Streambuf, LoD);
     Py_INCREF(Py_None);
@@ -350,26 +350,35 @@ void ireFramework::FinalizeShellInstance(void)
 // Developers should take care to DECREF (decrease the reference counts)
 // of any PyObject s that use hard references.
 //
-void ireFramework::LaunchIREShellInstance(char *startup, bool newPythonThread) {
+void ireFramework::LaunchIREShellInstance(char *startup, bool newPythonThread, bool useIPython) {
     //start python
     char* python_args[] = { "IRE", startup };
 
     if (IRE_State != IRE_INITIALIZED) {
-        CMN_LOG(1) << "LaunchIREShellInstance:  IRE state is " << IRE_State << "." << std::endl;
+        CMN_LOG_INIT_ERROR << "LaunchIREShellInstance:  IRE state is " << IRE_State << "." << std::endl;
         cmnThrow(std::runtime_error("LaunchIREShellInstance: invalid IRE state."));
     }
     IRE_State = IRE_LAUNCHED;
 
     // Initialize ireLogger module, which is used for the cmnLogger output window
     PyTextCtrlHook::InitModule("ireLogger");
-
     PySys_SetArgv(2, python_args);
-    
+
+    if (useIPython) {
+        PyRun_SimpleString(startup);
+        PyRun_SimpleString("from IPython.Shell import IPShellEmbed\n");
+        PyRun_SimpleString("ipshell = IPShellEmbed()\n");
+        PyRun_SimpleString("ipshell()\n");
+        IRE_State = IRE_ACTIVE;  // for now, instead of using SetActiveState callback
+        return;
+    }
+
+
     PyObject *pName, *pModule, *pDict, *pFunc;
     PyObject *pArgs, *pValue;
 
     pName = PyString_FromString("irepy");
-    
+
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
 
@@ -388,7 +397,7 @@ void ireFramework::LaunchIREShellInstance(char *startup, bool newPythonThread) {
             // Create an instance of the class
             if (PyCallable_Check(pClass))
             {
-                pInstance = PyObject_CallObject(pClass, NULL); 
+                pInstance = PyObject_CallObject(pClass, NULL);
             }
             if (pInstance)
                 PyObject_CallMethod(pInstance, "start", NULL);
@@ -398,7 +407,7 @@ void ireFramework::LaunchIREShellInstance(char *startup, bool newPythonThread) {
                 cmnThrow(std::runtime_error("LaunchIREShellInstance: Could not create IRE thread."));
             }
         }
-        else {  
+        else {
             // pFunc is borrowed
             pFunc = PyDict_GetItemString(pDict, "launch");
 

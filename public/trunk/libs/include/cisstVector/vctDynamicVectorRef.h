@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctDynamicVectorRef.h,v 1.30 2008/04/10 20:22:37 anton Exp $
+  $Id$
   
   Author(s):	Ofri Sadowsky, Anton Deguet
   Created on: 2004-07-01
@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
   \brief Declaration of vctDynamicVectorRef
 */
 
+#include <cisstCommon/cmnDeSerializer.h>
 
 #include<cisstVector/vctDynamicVectorBase.h>
 #include<cisstVector/vctDynamicVectorRefOwner.h>
@@ -255,6 +256,26 @@ public:
     inline ThisType & operator = (const value_type & value) {
         this->SetAll(value);
         return *this;
+    }
+
+    /*! Binary deserialization.  This method can not resize the
+      existing block of memory and will throw an exception is the
+      sizes don't match. */
+    void DeSerializeRaw(std::istream & inputStream) throw(std::runtime_error)
+    {
+        // get and set size
+        size_type mySize;
+        cmnDeSerializeRaw(inputStream, mySize);
+
+        if (mySize != this->size()) {
+            cmnThrow(std::runtime_error("vctDynamicVectorRef::DeSerializeRaw: Sizes of vectors don't match"));
+        }
+        
+        // get data
+        size_type index;
+        for (index = 0; index < mySize; ++index) {
+            cmnDeSerializeRaw(inputStream, this->Element(index));
+        }
     }
 
 };

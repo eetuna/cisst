@@ -2,12 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandQueuedWrite.h,v 1.9 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2005-05-02
 
-  (C) Copyright 2005-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2005-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -37,15 +37,23 @@ http://www.cisst.org/cisst/license.txt.
 
  */
 template <class _argumentType>
-class mtsCommandQueuedWrite: public mtsCommandQueuedWriteBase {
+class mtsCommandQueuedWrite: public mtsCommandQueuedWriteBase
+{
 public:
     typedef mtsCommandQueuedWriteBase BaseType;
     typedef _argumentType ArgumentType;
 
+    /*! This type. */
+    typedef mtsCommandQueuedWrite<ArgumentType> ThisType;
+
 protected:
     mtsQueue<ArgumentType> ArgumentsQueue;
 
- public:
+private:
+    /*! Private copy constructor to prevent copies */
+    inline mtsCommandQueuedWrite(const ThisType & CMN_UNUSED(other));
+
+public:
 
     inline mtsCommandQueuedWrite(void):
         BaseType(),
@@ -67,8 +75,8 @@ protected:
         if (argumentPrototype) {
             ArgumentsQueue.SetSize(size, *argumentPrototype);
         } else {
-            CMN_LOG(1) << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
-                       << std::endl;
+            CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
+                               << std::endl;
         }
     }
 
@@ -87,57 +95,55 @@ protected:
         if (ArgumentsQueue.GetSize() != size) {
             if (ArgumentsQueue.GetSize() > 0) {
                 // Probably should never happen
-                CMN_LOG(3) << "Class mtsCommandQueuedWrite: Allocate(): Changing ArgumentsQueue size from " << ArgumentsQueue.GetSize()
-                           << " to " << size << std::endl;
+                CMN_LOG_INIT_WARNING << "Class mtsCommandQueuedWrite: Allocate(): Changing ArgumentsQueue size from " << ArgumentsQueue.GetSize()
+                                     << " to " << size << std::endl;
             }
             const ArgumentType * argumentPrototype = dynamic_cast<const ArgumentType *>(this->GetArgumentPrototype());
             if (argumentPrototype) {
                 ArgumentsQueue.SetSize(size, *argumentPrototype);
             } else {
-                CMN_LOG(1) << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
-                           << std::endl;
+                CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWrite: constructor: Can't find argument prototype from actual command."
+                                   << std::endl;
             }
         }
     }
     
     
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) {
-#if 0
-        // Following code not needed since dynamic_cast is used.
-        if (TypeInfo == 0) return mtsCommandBase::BAD_COMMAND;
-        if (&typeid(obj) != TypeInfo) return mtsCommandBase::BAD_INPUT;
-#endif
-        const ArgumentType * argumentTyped = dynamic_cast<const ArgumentType*>(&argument);
-        if (!argumentTyped) {
-            return mtsCommandBase::BAD_INPUT;
-        }
-        // Now, copy the argument to the local storage.
-        if (ArgumentsQueue.Put(*argumentTyped)) {
-            if (MailBox->Write(this)) {
-                return mtsCommandBase::DEV_OK;
-            } else {
-                CMN_LOG(5) << "Class mtsCommandQueuedWrite: Execute(): Mailbox full for " 
-                           << this->Name << std::endl;
-                ArgumentsQueue.Get();  // Pop argument from local storage
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
+        if (this->IsEnabled()) {
+            const ArgumentType * argumentTyped = dynamic_cast<const ArgumentType*>(&argument);
+            if (!argumentTyped) {
+                return mtsCommandBase::BAD_INPUT;
             }
-        } else {
-            CMN_LOG(5) << "Class mtsCommandQueuedWrite: Execute(): ArgumentsQueue full for "
-                       << this->Name << std::endl;
+            // Now, copy the argument to the local storage.
+            if (ArgumentsQueue.Put(*argumentTyped)) {
+                if (MailBox->Write(this)) {
+                    return mtsCommandBase::DEV_OK;
+                } else {
+                    CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): Mailbox full for \"" 
+                                      << this->Name << "\"" << std::endl;
+                    ArgumentsQueue.Get();  // Pop argument from local storage
+                }
+            } else {
+                CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): ArgumentsQueue full for \""
+                                  << this->Name << "\"" << std::endl;
+            }
+            return mtsCommandBase::MAILBOX_FULL;
         }
-        return mtsCommandBase::MAILBOX_FULL;
+        return mtsCommandBase::DISABLED;
     }
 
     /* commented in base class */
-    const cmnGenericObject * GetArgumentPrototype(void) const {
+    const mtsGenericObject * GetArgumentPrototype(void) const {
         return this->ActualCommand->GetArgumentPrototype();
     }    
 
-    inline virtual const cmnGenericObject * ArgumentPeek(void) const {
+    inline virtual const mtsGenericObject * ArgumentPeek(void) const {
         return ArgumentsQueue.Peek();
     }
     
 
-    inline virtual cmnGenericObject * ArgumentGet(void) {
+    inline virtual mtsGenericObject * ArgumentGet(void) {
         return ArgumentsQueue.Get();
     }
 };

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: pythonEmbeddedIRE.cpp,v 1.13 2007/05/31 20:52:46 anton Exp $
+  $Id$
 
   Author(s): Peter Kazanzides
   Created on: 2005-12-21
@@ -26,7 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #ifdef CISST_OSATHREAD
 #include <cisstOSAbstraction/osaThread.h>
-#include <cisstOSAbstraction/osaTime.h>
+#include <cisstOSAbstraction/osaSleep.h>
 #endif
 
 #if (CISST_OS == CISST_DARWIN)
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     cmnObjectRegister::Register("SineGenerator", &wave);
 
     IreLaunch IRE;
-#ifdef CISST_OSATHREAD  
+#ifdef CISST_OSATHREAD
     cout << "*** Launching IRE shell (C++ Thread) ***" << endl;
 
     osaThread IreThread;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     // Wait for IRE to initialize itself
     while (ireFramework::IsStarting()) {
 #ifdef CISST_OSATHREAD
-        osaTime::Sleep(500);  // Wait 0.5 seconds
+        osaSleep(0.5);  // Wait 0.5 seconds
 #else
         // Need following call to give the IRE thread some time to execute.
         ireFramework::JoinIREShell(0.001);

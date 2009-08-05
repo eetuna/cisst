@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsTaskContinuous.h,v 1.2 2008/09/24 19:20:46 pkaz Exp $
+  $Id$
 
   Author(s):  Peter Kazanzides
   Created on: 2008-09-23
@@ -43,7 +43,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 class CISST_EXPORT mtsTaskContinuous: public mtsTask
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsTaskManager;
 
@@ -103,24 +103,26 @@ public:
         \sa mtsTask, mtsTaskPeriodic, mtsTaskFromCallback
        
 	 */
-	mtsTaskContinuous(const std::string & name, unsigned int sizeStateTable = 256, bool newThread = true);
+    mtsTaskContinuous(const std::string & name, 
+                      unsigned int sizeStateTable = 256, 
+                      bool newThread = true);
 
-	/*! Default Destructor. */
-	virtual ~mtsTaskContinuous();
+    /*! Default Destructor. */
+    virtual ~mtsTaskContinuous();
 
     /********************* Methods to change task status *****************/
 
     /* Create a new thread (if needed). */
     void Create(void *data = 0);
 
-	/*! Start/resume execution of the task */
-	void Start(void);
+    /*! Start/resume execution of the task */
+    void Start(void);
 
-	/*! Suspend the execution of the task */
-	void Suspend(void);
+    /*! Suspend the execution of the task */
+    void Suspend(void);
 
-	/*! End the task */
-	void Kill(void);
+    /*! End the task */
+    void Kill(void);
 };
 
 

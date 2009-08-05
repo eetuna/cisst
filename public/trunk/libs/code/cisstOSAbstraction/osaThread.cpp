@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: osaThread.cpp,v 1.30 2008/12/14 06:36:06 pkaz Exp $
+  $Id$
 
   Author(s): Ankur Kapoor
   Created on: 2004-04-30
@@ -123,7 +123,7 @@ struct osaThreadInternals {
 #define INTERNALS(A) (reinterpret_cast<osaThreadInternals*>(Internals)->A)
 
 // Constructor. Does nothing.
-osaThread::osaThread() : Valid(false), Signal()
+osaThread::osaThread() : Signal(), Valid(false)
 {
     CMN_ASSERT(sizeof(Internals) >= SizeOfInternals());
 }
@@ -143,9 +143,9 @@ unsigned int osaThread::SizeOfInternals(void) {
 // which should be fine for all OS variations.
 void osaThread::CreateInternal(const char *name, void* cb, void* userdata, bool newThread)
 {
-    CMN_LOG(5) << "osaThread: Create thread named: " << (name?name:"Unnamed") 
-               << (newThread?" (new)":"") << std::endl;
-
+    CMN_LOG_INIT_VERBOSE << "osaThread::CreateInternal: create thread named: " << (name?name:"Unnamed") 
+                         << (newThread?" (new)":"") << std::endl;
+    
     if (newThread) {
 #if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
         pthread_attr_t new_attr;
@@ -260,7 +260,7 @@ void osaThread::Sleep(double timeInSeconds)
 {
     if (osaGetCurrentThreadId() != GetId()) {
         // If the current thread is not the same as this thread, call osaSleep.
-        CMN_LOG(3) << "osaThread:Sleep: Calling osaSleep for external thread" << std::endl;
+        CMN_LOG_RUN_VERBOSE << "osaThread::Sleep: Calling osaSleep for external thread" << std::endl;
         osaSleep(timeInSeconds);
     }
     else

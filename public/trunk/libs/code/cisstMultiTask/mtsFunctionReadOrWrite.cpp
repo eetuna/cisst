@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsFunctionReadOrWrite.cpp,v 1.9 2008/09/04 05:15:38 anton Exp $
+  $Id$
 
   Author(s):  Peter Kazanzides, Anton Deguet
 
@@ -20,11 +20,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsDeviceInterface.h>
+#include <cisstMultiTask/mtsRequiredInterface.h>
 
-
-// specialize for Read using "cmnGenericObject &"
+// specialize for Read using "mtsGenericObject &"
 template <>
-bool mtsFunctionReadOrWrite<cmnGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
+bool mtsFunctionReadOrWrite<mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
 {
     if (interface) {
         Command = interface->GetCommandRead(commandName);
@@ -33,14 +34,23 @@ bool mtsFunctionReadOrWrite<cmnGenericObject>::Bind(const mtsDeviceInterface * i
 }
 
 
-// specialize for Write using "const cmnGenericObject &"
+// specialize for Write using "const mtsGenericObject &"
 template <>
-bool mtsFunctionReadOrWrite<const cmnGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
+bool mtsFunctionReadOrWrite<const mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
 {
     if (interface) {
         Command = interface->GetCommandWrite(commandName);
     }
     return interface && (Command != 0);
+}
+
+
+template <class _argumentType>
+bool mtsFunctionReadOrWrite<_argumentType>::AddToRequiredInterface(mtsRequiredInterface & requiredInterface,
+                                                                   const std::string & commandName,
+                                                                   bool isRequired)
+{
+    return requiredInterface.AddCommandPointer(commandName, Command, isRequired);
 }
 
 
@@ -62,6 +72,6 @@ void mtsFunctionReadOrWrite<_argumentType>::ToStream(std::ostream & outputStream
 
 
 // force instantiation
-template class mtsFunctionReadOrWrite<cmnGenericObject>;
-template class mtsFunctionReadOrWrite<const cmnGenericObject>;
+template class mtsFunctionReadOrWrite<mtsGenericObject>;
+template class mtsFunctionReadOrWrite<const mtsGenericObject>;
 

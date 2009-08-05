@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnConstants.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2005-10-17
@@ -45,6 +45,9 @@ const double cmnPI_4 = 0.7853981633974483096156608458198757;
 
 /*! PI / 180 : convert degrees to radians */
 const double cmnPI_180 = cmnPI / 180.0;
+
+/*! 180 / PI : convert radians to degrees */
+const double cmn180_PI = 180.0 / cmnPI;
 
 
 #endif // _cmnConstants_h

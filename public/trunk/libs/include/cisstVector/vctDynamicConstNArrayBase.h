@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctDynamicConstNArrayBase.h,v 1.12 2008/02/01 19:34:54 anton Exp $
+  $Id$
   
   Author(s):	Daniel Li
   Created on:	2006-06-23
@@ -715,7 +715,7 @@ public:
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<class __nArrayOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstNArrayBase<__nArrayOwnerType, value_type, DIMENSION> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstNArrayBase<__nArrayOwnerType, value_type, DIMENSION> & source) const
     {
         return vctFastCopy::NArrayCopyCompatible(*this, source);
     }

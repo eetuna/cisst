@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: nmrLSqLinTest.h,v 1.10 2008/09/09 15:10:58 anton Exp $
+  $Id$
   
   Author(s):  Ankur Kapoor
   Created on: 2005-11-04
@@ -128,7 +128,7 @@ public:
     
     void *RunThreadLS(argument arg)
     {
-        CMN_LOG(1) << "nmrLSqLinTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
+        CMN_LOG_INIT_ERROR << "nmrLSqLinTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
         for (int i = 0; i < arg.times; i++) {
             SetUp(i);
             nmrLSqLinSolutionDynamic solution(InputA);
@@ -141,7 +141,7 @@ public:
     
     void *RunThreadLSI(argument arg)
     {
-        CMN_LOG(1) << "nmrLSqLinTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
+        CMN_LOG_INIT_ERROR << "nmrLSqLinTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
         for (int i = 0; i < arg.times; i++) {
             SetUp(i);
             nmrLSqLinSolutionDynamic solution(InputA, InputG);
@@ -154,7 +154,7 @@ public:
     
     void *RunThreadLSEI(argument arg)
     {
-        CMN_LOG(1) << "nmrLSqLinTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
+        CMN_LOG_INIT_ERROR << "nmrLSqLinTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
         for (int i = 0; i < arg.times; i++) {
             SetUp(i);
             nmrLSqLinSolutionDynamic solution(InputA, InputE, InputG);

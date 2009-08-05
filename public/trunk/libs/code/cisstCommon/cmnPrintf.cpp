@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnPrintf.cpp 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
 
   Author(s):  Ofri Sadowsky
   Created on: 2006-02-15
@@ -37,7 +37,7 @@ cmnPrintfParser::cmnPrintfParser(std::ostream & output, const cmnPrintf & output
     OutputStream(output),
     OutputFormatter(outputFormatter)
 {
-    NextFormatTextPosition = OutputFormatter.GetFormat();
+    NextFormatTextPosition = const_cast<char *>(OutputFormatter.GetFormat().c_str());
     NextFormatTextCharacter = *NextFormatTextPosition;
     FormatSequence = 0;
     NextTypeIdCharacter = 0;

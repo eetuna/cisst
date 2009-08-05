@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: myDerivedClass.h,v 1.10 2007/05/31 20:47:29 anton Exp $
+  $Id$
 
   Author(s): Anton Deguet
   Created on: 2004-10-05
@@ -41,7 +41,7 @@ http://www.cisst.org/cisst/license.txt.
 // end of code for the DLL generation
 
 class CISST_EXPORT myDerivedClass: public cmnGenericObject {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
 protected:
     vctDouble3 fixedVector;

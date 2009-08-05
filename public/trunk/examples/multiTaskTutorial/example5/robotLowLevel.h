@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: robotLowLevel.h,v 1.4 2009/01/10 02:11:42 pkaz Exp $ */
+/* $Id$ */
 
 #ifndef _robotLowLevel_h
 #define _robotLowLevel_h
@@ -20,7 +20,7 @@ const double MotionDelta = 0.1;
 // low-level robot interface: assumes a controller that
 // interfaces with 1 robot.
 class robotLowLevel: public mtsTaskPeriodic {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
     typedef vct6 PositionJointType;
 protected:

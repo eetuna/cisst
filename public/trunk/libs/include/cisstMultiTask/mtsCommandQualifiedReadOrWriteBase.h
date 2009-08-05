@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandQualifiedReadOrWriteBase.h,v 1.6 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
@@ -47,7 +47,7 @@ template <class _argument2Type>
 class mtsCommandQualifiedReadOrWriteBase: public mtsCommandBase {
 public:
     typedef mtsCommandBase BaseType;
-    typedef const cmnGenericObject Argument1Type;
+    typedef const mtsGenericObject Argument1Type;
     typedef _argument2Type Argument2Type;
     
     /*! The constructor. Does nothing */
@@ -80,7 +80,7 @@ public:
     }
 
     /*! Return a pointer on the argument 1 prototype */
-    virtual const cmnGenericObject * GetArgument1Prototype(void) const = 0;
+    virtual const mtsGenericObject * GetArgument1Prototype(void) const = 0;
 
     /*! Return const pointer of class services associated to the
         argument type. */
@@ -89,7 +89,7 @@ public:
     }
 
     /*! Return a pointer on the argument 2 prototype */
-    virtual const cmnGenericObject * GetArgument2Prototype(void) const = 0;
+    virtual const mtsGenericObject * GetArgument2Prototype(void) const = 0;
 
     /*! Return const pointer of class services associated to the
         argument type. */

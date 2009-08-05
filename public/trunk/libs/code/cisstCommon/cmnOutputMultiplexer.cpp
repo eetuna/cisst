@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnOutputMultiplexer.cpp 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):  Ofri Sadowsky
   Created on: 2002-04-18
@@ -39,7 +39,7 @@ std::ostream & cmnOutputMultiplexer::AddChannel(ChannelType * channel)
 
     if (it == m_ChannelContainer.end()) {
         m_ChannelContainer.insert(it, channel);
-        m_Streambuf.AddChannel( channel->rdbuf(), 0 );
+        m_Streambuf.AddChannel( channel->rdbuf(), CMN_LOG_LOD_NONE );
     }
 
     return (*this);
@@ -58,5 +58,3 @@ std::ostream & cmnOutputMultiplexer::RemoveChannel(ChannelType * channel)
     m_Streambuf.RemoveChannel( channel->rdbuf() );
     return (*this);
 }
-
-

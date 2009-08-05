@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: nmrLSEISolver.h,v 1.7 2007/04/26 19:33:57 anton Exp $
+  $Id$
   
   Author(s):	Ankur Kapoor
   Created on:	2004-10-30
@@ -198,7 +198,7 @@ public:
 	bRef.Assign(b);
 	hRef.Assign(h);
 
-	CMN_LOG(1) << W << std::endl;
+	CMN_LOG_INIT_ERROR << W << std::endl;
     
     lsei_(W.Pointer(), &MDW, &ME, &MA, &MG, &N, Options.Pointer(), X.Pointer(), &RNormE,
           &RNormL, &Mode, Work.Pointer(), Index.Pointer());

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: vctFixedSizeMatrixBase.h,v 1.68 2008/08/25 17:51:01 anton Exp $
+  $Id$
 
   Author(s):	Ofri Sadowsky
   Created on:	2003-11-04
@@ -1264,6 +1264,20 @@ class vctFixedSizeMatrixBase : public vctFixedSizeConstMatrixBase
         typedef vctFixedSizeMatrixRef<value_type, _subRows, _subCols, ROWSTRIDE, COLSTRIDE>
             Type;
     };
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream) 
+    {
+        const size_type myRows = this->rows();
+        const size_type myCols = this->cols();
+        size_type indexRow, indexCol;
+        
+        for (indexRow = 0; indexRow < myRows; ++indexRow) {
+            for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                cmnDeSerializeRaw(inputStream, this->Element(indexRow, indexCol));
+            }
+        }
+    }
         
 };
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: osaMutex.cpp,v 1.5 2008/10/31 16:34:14 tian Exp $
+  $Id$
 
   Author(s): Anton Deguet
   Created on: 2008-01-30
@@ -34,6 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 #if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
 #include <pthread.h>
 #include <errno.h>
+#include <string.h>
 #endif // CISST_LINUX_RTAI || CISST_LINUX || CISST_DARWIN || CISST_SOLARIS
 
 #if (CISST_OS == CISST_WINDOWS)
@@ -72,7 +73,7 @@ osaMutex::osaMutex(void)
 {
     CMN_ASSERT(sizeof(Internals) >= SizeOfInternals());
     if (pthread_mutex_init(&INTERNALS(Mutex), 0) != 0) {
-        CMN_LOG(1) << "Class osaMutex: error in constructor \"" << strerror(errno) << "\"" << std::endl;
+        CMN_LOG_INIT_ERROR << "Class osaMutex: error in constructor \"" << strerror(errno) << "\"" << std::endl;
     }
 }
 #endif // CISST_LINUX || CISST_DARWIN || CISST_SOLARIS || CISST_RTAI

@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.27 2007/04/26 20:12:05 anton Exp $
+# $Id$
 #
 
 # (C) Copyright 2003-2007 Johns Hopkins University (JHU), All Rights
@@ -68,7 +68,7 @@ INCLUDE_DIRECTORIES(${cisstTests_BINARY_DIR}/include)
 FOREACH(lib ${CISST_LIBS})
   IF(BUILD_LIBS_${lib})
     IF(BUILD_TESTS_${lib})
-      SUBDIRS(${lib})
+      ADD_SUBDIRECTORY(${lib})
     ENDIF(BUILD_TESTS_${lib})
   ELSE(BUILD_LIBS_${lib})
     IF(BUILD_TESTS_${lib})
@@ -81,7 +81,7 @@ ENDFOREACH(lib)
 # Generate tests for wrapped libraries
 IF(BUILD_TESTS_wrapping)
   IF(CISST_HAS_SWIG_PYTHON)
-    SUBDIRS(wrapping)
+    ADD_SUBDIRECTORY(wrapping)
   ELSE(CISST_HAS_SWIG_PYTHON)
     MESSAGE("Info: BUILD_TESTS_wrapping turned off since it requires CISST_HAS_SWIG_PYTHON")
     SET(BUILD_TESTS_wrapping OFF CACHE BOOL "Build wrapping tests." FORCE)

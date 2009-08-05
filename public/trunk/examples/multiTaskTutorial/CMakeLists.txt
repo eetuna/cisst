@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.7 2008/09/04 05:19:09 anton Exp $
+# $Id$
 #
 # (C) Copyright 2005-2007 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -14,10 +14,12 @@
 
 PROJECT(multiTaskTutorial)
 
-# Threads for cisstOSAbstraction
-FIND_PACKAGE(Threads REQUIRED)
+ADD_SUBDIRECTORY(example1)
+ADD_SUBDIRECTORY(example2)
+ADD_SUBDIRECTORY(example3)
+ADD_SUBDIRECTORY(example6)
 
-SUBDIRS(example1 example2 example3 example6)
 IF(CISST_HAS_SWIG_PYTHON)
-  SUBDIRS(example4 example5)
+  ADD_SUBDIRECTORY(example4)
+  ADD_SUBDIRECTORY(example5)
 ENDIF(CISST_HAS_SWIG_PYTHON)

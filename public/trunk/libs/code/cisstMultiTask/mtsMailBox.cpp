@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsMailBox.cpp,v 1.1 2007/10/19 21:39:55 anton Exp $
+  $Id$
 
   Author(s):  Peter Kazanzides
   Created on: 2007-09-05
@@ -51,7 +51,7 @@ bool mtsMailBox::ExecuteNext(void)
        commandWrite->ArgumentGet();  // Remove from parameter queue
        break;
    default:
-       CMN_LOG(5) << "Class mtsMailBox: Invalid parameter in ExecuteNext" << std::endl;
+       CMN_LOG_RUN_ERROR << "Class mtsMailBox: Invalid parameter in ExecuteNext" << std::endl;
        return false;
    }
    CommandQueue.Get();  // Remove command from mailbox queue

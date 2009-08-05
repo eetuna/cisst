@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandQueuedWriteBase.cpp,v 1.4 2008/06/03 19:00:01 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2005-05-02
@@ -30,6 +30,7 @@ void mtsCommandQueuedWriteBase::ToStream(std::ostream & outputStream) const {
     } else {
         outputStream << "Undefined";
     }
-    outputStream << "\" for command " << *(this->ActualCommand);
+    outputStream << "\" for command " << *(this->ActualCommand)
+                 << " currently " << (this->IsEnabled() ? "enabled" : "disabled");
 }
 

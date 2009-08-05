@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: SineGenerator.h,v 1.6 2007/05/31 20:52:46 anton Exp $
+  $Id$
 
   Author(s): Peter Kazanzides
   Created on: 2005-12-21
@@ -34,7 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 // end of code for the DLL generation
 
 class CISST_EXPORT SineGenerator: public cmnGenericObject {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     
 protected:
     double Amplitude;
@@ -47,13 +47,13 @@ public:
 
     double GetAmplitude() const { return Amplitude; }
     void SetAmplitude(double amp) {
-		CMN_LOG_CLASS(5) << "Setting amplitude to " << amp << std::endl;
+		CMN_LOG_CLASS_RUN_ERROR << "Setting amplitude to " << amp << std::endl;
 		Amplitude = amp;
 	}
 
     double GetFrequency() const { return Frequency; }
     void SetFrequency(double freq) {
-		CMN_LOG_CLASS(5) << "Setting frequency to " << freq << std::endl;
+		CMN_LOG_CLASS_RUN_ERROR << "Setting frequency to " << freq << std::endl;
 		Frequency = freq; }
 
     double ComputeOutput(double time)

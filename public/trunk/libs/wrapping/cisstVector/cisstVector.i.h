@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cisstVector.i.h,v 1.12 2009/01/04 20:13:43 anton Exp $
+  $Id$
 
   Author(s):  Anton Deguet
   Created on: 2005-08-21
@@ -54,7 +54,7 @@ http://www.cisst.org/cisst/license.txt.
 #include "cisstVector/vctFixedSizeMatrixTypes.h"
 
 // Hack for Swig 1.3.35, 1.3.16 (and probably 1.3.34)
-#if (SWIG_VERSION == 0x010334) || (SWIG_VERSION == 0x010335) || (SWIG_VERSION == 0x010336)
+#if (SWIG_VERSION == 0x010334) || (SWIG_VERSION == 0x010335) || (SWIG_VERSION == 0x010336) || (SWIG_VERSION == 0x010337) || (SWIG_VERSION == 0x010338) || (SWIG_VERSION == 0x010339)
 #define SWIGTYPE_p_vctDynamicMatrixTdouble_t  SWIGTYPE_p_vctDynamicMatrixT_double_t
 #define SWIGTYPE_p_vctDynamicMatrixTint_t  SWIGTYPE_p_vctDynamicMatrixT_int_t
 #define SWIGTYPE_p_vctDynamicMatrixTlong_t  SWIGTYPE_p_vctDynamicMatrixT_long_t

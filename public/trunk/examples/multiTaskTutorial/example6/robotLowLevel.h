@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: robotLowLevel.h,v 1.2 2008/09/04 06:58:00 anton Exp $ */
+/* $Id$ */
 
 #ifndef _robotLowLevel_h
 #define _robotLowLevel_h
@@ -17,15 +17,15 @@ const double MotionDelta = 0.1;
 // low-level robot interface: assumes a controller that
 // interfaces with 2 robots.
 class robotLowLevel: public mtsTaskPeriodic {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 10);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_VERY_VERBOSE);
 public:
     enum {NB_JOINTS = 2};
     typedef mtsDoubleVec PositionJointType;
 protected:
-    mtsStateData<PositionJointType> GoalJointRobot1;
-    mtsStateData<PositionJointType> GoalJointRobot2;
-    mtsStateData<PositionJointType> PositionJointRobot1;
-    mtsStateData<PositionJointType> PositionJointRobot2;
+    PositionJointType GoalJointRobot1;
+    PositionJointType GoalJointRobot2;
+    PositionJointType PositionJointRobot1;
+    PositionJointType PositionJointRobot2;
 
     // internal methods defined to move each robot
     void MovePositionJointRobot1(const PositionJointType & jointGoal);

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: osaThread.h,v 1.29 2008/12/14 06:36:06 pkaz Exp $
+  $Id$
 
   Author(s): Ankur Kapoor
   Created on: 2004-04-30
@@ -155,6 +155,9 @@ CISST_EXPORT osaThreadId osaGetCurrentThreadId(void);
  */
 class CISST_EXPORT osaThread {
 
+    /*! For synchronization */
+    osaThreadSignal Signal;
+
     /*! Internals that are OS-dependent in some way */
     enum { INTERNALS_SIZE = 96 };   // PKAZ: this can be reduced
     char Internals[INTERNALS_SIZE];
@@ -180,9 +183,6 @@ class CISST_EXPORT osaThread {
 
     /*! Whether the thread exists. */
     bool Valid;
-
-    /*! For synchronization */
-    osaThreadSignal Signal;
 
 protected:
 

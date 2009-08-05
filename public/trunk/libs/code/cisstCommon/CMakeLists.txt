@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt 9 2009-01-04 21:17:07Z adeguet1 $
+# $Id$
 #
 # CMakeLists for cisstCommon
 #
@@ -23,6 +23,7 @@ SET(SOURCE_FILES
     cmnDeSerializer.cpp
     cmnGenericObject.cpp
     cmnGenericObjectProxy.cpp
+    cmnGetChar.cpp
     cmnLogger.cpp
     cmnObjectRegister.cpp
     cmnOutputMultiplexer.cpp
@@ -37,6 +38,7 @@ SET(SOURCE_FILES
 
 # all header files
 SET(HEADER_FILES
+    cmnAccessorMacros.h
     cmnAssert.h
     cmnCallbackStreambuf.h
     cmnClassRegister.h
@@ -49,11 +51,14 @@ SET(HEADER_FILES
     cmnExportMacros.h
     cmnGenericObject.h
     cmnGenericObjectProxy.h
+    cmnGetChar.h
+    cmnLogLoD.h
     cmnLogger.h
     cmnLODMultiplexerStreambuf.h
     cmnLODOutputMultiplexer.h
     cmnMultiplexerStreambuf.h
     cmnMultiplexerStreambufProxy.h
+    cmnNamedMap.h
     cmnObjectRegister.h
     cmnOutputMultiplexer.h
     cmnPortability.h
@@ -68,10 +73,10 @@ SET(HEADER_FILES
     )
 
 # Conditional inclusion of cmnXMLPath in the cisstCommon project.
-IF(USE_cmnXMLPath)
+IF(CISST_HAS_XML)
   SET(SOURCE_FILES ${SOURCE_FILES} cmnXMLPath.cpp)
   SET(HEADER_FILES ${HEADER_FILES} cmnXMLPath.h)
-ENDIF(USE_cmnXMLPath)
+ENDIF(CISST_HAS_XML)
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 

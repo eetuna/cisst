@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-// $Id: main.cpp,v 1.7 2008/09/09 15:51:54 anton Exp $
+// $Id$
 
 #include <cisstCommon.h>
 #include <cisstOSAbstraction.h>
@@ -23,15 +23,17 @@ using namespace std;
 // when LaunchIREShell is called) and FinalizeShell, because otherwise
 // the IRE (Python interpreter) would be called from multiple threads.
 class IreLaunch {
+    bool useIPython;
 public:
-    IreLaunch() {}
+    IreLaunch(bool useIPy = false) : useIPython(useIPy) {}
     ~IreLaunch() {}
     void *Run(char *startup) {
         try {
-            ireFramework::LaunchIREShell(startup, false);
+            CMN_LOG_INIT_DEBUG << "using " << (useIPython?"IPython":"wxPython") << std::endl;
+            ireFramework::LaunchIREShell(startup, false, useIPython);
         }
         catch (...) {
-            cout << "*** ERROR:  could not launch IRE shell ***" << endl;
+            CMN_LOG_INIT_ERROR << "could not launch IRE shell ***" << endl;
         }
         ireFramework::FinalizeShell();
         return this;
@@ -39,15 +41,15 @@ public:
 };
 #endif
 
-int main(void)
+int main(int argc, char **argv)
 {
     // log configuration, see previous examples
-    cmnLogger::SetLoD(10);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     cmnLogger::HaltDefaultLog();
-    cmnLogger::ResumeDefaultLog(10);
-    cmnClassRegister::SetLoD("sineTask", 10);
-    cmnClassRegister::SetLoD("displayTask", 10);
+    cmnLogger::ResumeDefaultLog(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("displayTask", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create our two tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds
@@ -78,16 +80,16 @@ int main(void)
     cmnObjectRegister::Register("TaskManager", taskManager);
 
 #if 1  // PKAZ
-    IreLaunch IRE;
+    IreLaunch IRE(argc != 1);  // if any parameters, use IPython
     cout << "*** Launching IRE shell (C++ Thread) ***" << endl;
     osaThread IreThread;
     IreThread.Create<IreLaunch,  char *> (&IRE, &IreLaunch::Run, "from example4 import *");
     // Wait for IRE to initialize itself
     while (ireFramework::IsStarting())
-        osaSleep(0.5);  // Wait 0.5 seconds
+        osaSleep(0.5 * cmn_s);  // Wait 0.5 seconds
     // Loop until IRE and display task are both exited
-    while (ireFramework::IsActive() || !displayTaskObject->GetExitFlag()) 
-        osaSleep(0.5);  // Wait 0.5 seconds
+    while (ireFramework::IsActive() || !displayTaskObject->IsTerminated())
+        osaSleep(0.5 * cmn_s);  // Wait 0.5 seconds
     // Cleanup and exit
     IreThread.Wait();
 #else
@@ -109,10 +111,8 @@ int main(void)
         fclose(fileDescriptor);
         Py_Finalize();
     }
-    while (1) {
-        if (displayTaskObject->GetExitFlag()) {
-            break;
-        }
+    while (!displayTaskObject->IsTerminated()) {
+        osaSleep(100.0 * cmn_ms); // sleep to save CPU
     }
 #endif
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: nmrInverseTest.h,v 1.6 2008/09/09 15:10:58 anton Exp $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2006-01-27
@@ -67,7 +67,7 @@ public:
     ~nmrInverseFixedSizeTestObject() {}
     void *RunThread(argument arg)
     {
-        CMN_LOG(1) << "nmrInverseTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
+        CMN_LOG_INIT_ERROR << "nmrInverseTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
         for (int i = 0; i < arg.times; i++) {
             vctRandom(A, 0.0, 10.0);
             AInv.Assign(A);
@@ -103,7 +103,7 @@ public:
     ~nmrInverseDynamicTestObject() {}
     void *RunThread(argument arg)
     {
-        CMN_LOG(1) << "nmrInverseTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
+        CMN_LOG_INIT_ERROR << "nmrInverseTest: Running thread #" << arg.number << ", " << arg.times << " iterations" << std::endl;
         for (int i = 0; i < arg.times; i++) {
             cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
             randomSequence.ExtractRandomValue(10, 20, size);

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnPrintf.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
 
   Author(s):	Ofri Sadowsky
   Created on: 2006-02-15
@@ -164,35 +164,32 @@ public:
     /*! Create a cmnPrintf object and provide a format string
       following the printf specification.  The cmnPrintf object stores
       a copy of the format string. */
-    cmnPrintf(const char * formatStr)
-        : FormatStr(strdup(formatStr))
+    cmnPrintf(const std::string & formatStr)
+        : FormatString(formatStr)
     {}
 
     /*! Destructor.  Delete any internally allocated memory */
     ~cmnPrintf()
-    {
-        delete[] FormatStr;
-        FormatStr = 0;
-    }
+    {}
 
     /*! Copy constructor. We would like to have this constructor
       private but gcc-4.0.2 complains if it is private even thought is
       doesn't use it. */
     cmnPrintf(const cmnPrintf & other):
-        FormatStr(strdup(other.FormatStr))
+        FormatString(other.FormatString)
     {}
 
 private:
     /*! A copy of the format string */
-    char * FormatStr;
+    std::string FormatString;
 
     friend class cmnPrintfParser;
 
     /*! Return a pointer to the internal copy of the format string, so
       that the parser can process it */
-    char * GetFormat() const
+    const std::string & GetFormat(void) const
     {
-        return FormatStr;
+        return FormatString;
     }
 };
 

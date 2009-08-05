@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: monitorTask.h,v 1.9 2008/12/14 06:43:16 pkaz Exp $ */
+/* $Id$ */
 
 #ifndef _monitorTask_h
 #define _monitorTask_h
@@ -12,7 +12,7 @@ const double lowerBound = -4.0;
 const double upperBound = 4.0;
 
 class monitorTask: public mtsTaskPeriodic {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
     enum {NB_JOINTS = 2};
     typedef mtsDoubleVec PositionJointType;

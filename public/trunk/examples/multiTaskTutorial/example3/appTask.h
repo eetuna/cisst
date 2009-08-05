@@ -1,6 +1,6 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
-/* $Id: appTask.h,v 1.11 2008/09/04 06:58:00 anton Exp $ */
+/* $Id$ */
 
 #ifndef _appTask_h
 #define _appTask_h
@@ -9,7 +9,7 @@
 #include "appTaskUI.h"
 
 class appTask: public mtsTaskPeriodic {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     volatile bool ExitFlag;
  public:
     enum {NB_JOINTS = 2};

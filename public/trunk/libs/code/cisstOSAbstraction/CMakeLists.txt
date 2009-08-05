@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt,v 1.21 2009/01/05 08:24:44 pkaz Exp $
+# $Id$
 #
 # CMakeLists for cisstOSAbstraction
 #
@@ -23,12 +23,14 @@ SET(DEPENDENCIES
 
 # all source files
 SET(SOURCE_FILES
+    osaCriticalSection.cpp
     osaDynamicLoader.cpp
     osaDynamicLoaderAndFactory.cpp
     osaGetTime.cpp
     osaMutex.cpp
     osaSerialPort.cpp
     osaSleep.cpp
+    osaSocket.cpp
     osaStopwatch.cpp
     osaThread.cpp
     osaThreadBuddy.cpp
@@ -38,6 +40,7 @@ SET(SOURCE_FILES
 
 # all header files
 SET(HEADER_FILES
+    osaCriticalSection.h
     osaDynamicLoader.h
     osaDynamicLoaderAndFactory.h
     osaExport.h
@@ -45,6 +48,7 @@ SET(HEADER_FILES
     osaMutex.h
     osaSerialPort.h
     osaSleep.h
+    osaSocket.h
     osaStopwatch.h
     osaThread.h
     osaThreadAdapter.h
@@ -54,6 +58,10 @@ SET(HEADER_FILES
     osaTimeServer.h
     )
 
+IF(WIN32)
+    LINK_LIBRARIES(WSOCK32)
+ENDIF(WIN32)
+    
 IF(UNIX AND NOT APPLE)
    # clock_gettime requires linking with librt
    LINK_LIBRARIES(rt)

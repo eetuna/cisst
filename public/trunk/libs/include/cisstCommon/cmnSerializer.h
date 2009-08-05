@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: cmnSerializer.h 20 2009-01-08 16:09:57Z adeguet1 $
+  $Id$
   
   Author(s):  Anton Deguet
   Created on: 2007-04-08
@@ -103,7 +103,7 @@ inline void cmnSerializeRaw(std::ostream & outputStream, const std::string & dat
   \sa cmnDeSerializer cmnGenericObject
 */
 class CISST_EXPORT cmnSerializer: public cmnGenericObject {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
     /*! Constructor.
@@ -116,7 +116,7 @@ class CISST_EXPORT cmnSerializer: public cmnGenericObject {
         OutputStream(outputStream)
     {
         if (!OutputStream) {
-            CMN_LOG_CLASS(1) << "Output stream provided is not valid" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "Output stream provided is not valid" << std::endl;
         } 
     }
     
@@ -177,7 +177,7 @@ class CISST_EXPORT cmnSerializer: public cmnGenericObject {
         const_iterator found = std::find(begin, end, servicesPointer);
         // this "services" has not been sent 
         if (found == end) {
-            CMN_LOG_CLASS(7) << "Sending information related to class " << servicesPointer->GetName() << std::endl; 
+            CMN_LOG_CLASS_RUN_VERBOSE << "Sending information related to class " << servicesPointer->GetName() << std::endl; 
             // sent the info with null pointer so that reader can
             // differentiate from other services pointers
             const cmnClassServicesBase * invalidClassServices = 0;

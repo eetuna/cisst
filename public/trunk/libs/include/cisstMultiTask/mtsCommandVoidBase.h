@@ -2,12 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCommandVoidBase.h,v 1.3 2008/09/05 04:31:10 anton Exp $
+  $Id$
 
   Author(s):  Ankur Kapoor, Anton Deguet
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -55,7 +55,7 @@ public:
     /*! The execute method. Abstract method to be implemented by derived
       classes to run the actual operation on the receiver
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute() = 0;
+    virtual BaseType::ReturnType Execute(void) = 0;
 
     /* documented in base class */
     virtual void ToStream(std::ostream &out) const = 0;

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: osaDynamicLoader.cpp,v 1.3 2007/04/26 19:33:57 anton Exp $
+  $Id$
 
   Author(s): Peter Kazanzides
   Created on: 2007-01-16 
@@ -81,7 +81,7 @@ bool osaDynamicLoader::Load(const char *file, const char *path)
     fullpath.append(file_ext);
     handle = OpenLibrary(fullpath.c_str());
     if (!handle) {
-        CMN_LOG(1) << "Cannot open library " << fullpath << ", error = " << GetTheError() << std::endl;
+        CMN_LOG_INIT_ERROR << "Cannot open library " << fullpath << ", error = " << GetTheError() << std::endl;
         return false;
     }
 
@@ -89,9 +89,9 @@ bool osaDynamicLoader::Load(const char *file, const char *path)
     char fullname[120];
     GetModuleFileName((HMODULE)handle, (LPTSTR)fullname, sizeof(fullname)-1);
     fullname[sizeof(fullname)-1] = 0;  // Make sure null-terminated
-    CMN_LOG(3) << "osaDynamicLoader: loading " << fullname << std::endl;
+    CMN_LOG_INIT_VERBOSE << "osaDynamicLoader: loading " << fullname << std::endl;
 #else
-    CMN_LOG(3) << "osaDynamicLoader: loading " << fullpath << std::endl;
+    CMN_LOG_INIT_VERBOSE << "osaDynamicLoader: loading " << fullpath << std::endl;
 #endif
     return true;
 }

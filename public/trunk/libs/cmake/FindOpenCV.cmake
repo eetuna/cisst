@@ -25,7 +25,7 @@
 #
 # ---------------------
 #
-# $Id: FindOpenCV.cmake 8 2009-01-04 21:13:48Z adeguet1 $
+# $Id$
 # ERC-CISST version:
 #  
 # - Removed deprecated code starting with cap. OPENCV
@@ -145,15 +145,27 @@ FIND_LIBRARY(OpenCV_TRS_LIBRARY
 
 # Logic selecting required libs and headers
 SET(OpenCV_FOUND ON)
-FOREACH(NAME ${OpenCV_FIND_REQUIRED_COMPONENTS})
-  # only good if header and library both found   
-  IF(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
-    LIST(APPEND OpenCV_INCLUDE_DIRS ${OpenCV_${NAME}_INCLUDE_DIR})
-    LIST(APPEND OpenCV_LIBRARIES    ${OpenCV_${NAME}_LIBRARY})
-  ELSE(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
-    SET(OpenCV_FOUND OFF)
-  ENDIF(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
-ENDFOREACH(NAME)
+IF(NOT OpenCV_FIND_COMPONENTS)
+  FOREACH(NAME ${OpenCV_FIND_REQUIRED_COMPONENTS})
+    # only good if header and library both found   
+    IF(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
+      LIST(APPEND OpenCV_INCLUDE_DIRS ${OpenCV_${NAME}_INCLUDE_DIR})
+      LIST(APPEND OpenCV_LIBRARIES    ${OpenCV_${NAME}_LIBRARY})
+    ELSE(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
+      SET(OpenCV_FOUND OFF)
+    ENDIF(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
+  ENDFOREACH(NAME)
+ELSE(NOT OpenCV_FIND_COMPONENTS)
+  FOREACH(NAME ${OpenCV_FIND_COMPONENTS})
+    # only good if header and library both found   
+    IF(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
+      LIST(APPEND OpenCV_INCLUDE_DIRS ${OpenCV_${NAME}_INCLUDE_DIR})
+      LIST(APPEND OpenCV_LIBRARIES    ${OpenCV_${NAME}_LIBRARY})
+    ELSE(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
+      SET(OpenCV_FOUND OFF)
+    ENDIF(OpenCV_${NAME}_INCLUDE_DIR AND OpenCV_${NAME}_LIBRARY)
+  ENDFOREACH(NAME)
+ENDIF(NOT OpenCV_FIND_COMPONENTS)
 
 # get the link directory for rpath to be used with LINK_DIRECTORIES: 
 IF(OpenCV_CV_LIBRARY)
