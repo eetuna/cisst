@@ -69,7 +69,7 @@ public:
 
     void ShutdownSession(const Ice::Current & current) {
         current.adapter->getCommunicator()->shutdown();
-        mtsProxyBaseServer::ShutdownSession();
+        mtsProxyBaseServer<mtsTaskManager>::ShutdownSession();
     }
 
     /*! End the proxy. */

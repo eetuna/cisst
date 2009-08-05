@@ -91,7 +91,7 @@ void mtsDeviceInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
     mtsDeviceInterfaceProxyClient * ProxyClient = 
         dynamic_cast<mtsDeviceInterfaceProxyClient*>(arguments->proxy);
 
-    ProxyClient->GetLogger()->trace("mtsDeviceInterfaceProxyClient", "Proxy client starts.");
+    ProxyClient->GetLogger()->trace("mtsDeviceInterfaceProxyClient", "Proxy client thread starts.");
 
     try {
         ProxyClient->StartClient();        
@@ -101,7 +101,7 @@ void mtsDeviceInterfaceProxyClient::Runner(ThreadArguments<mtsTask> * arguments)
         ProxyClient->GetLogger()->trace("mtsDeviceInterfaceProxyClient exception: ", msg);
     }
 
-    ProxyClient->OnEnd();
+    ProxyClient->GetLogger()->trace("mtsDeviceInterfaceProxyClient", "Proxy client thread ends.");
 }
 
 void mtsDeviceInterfaceProxyClient::Stop()
@@ -112,8 +112,6 @@ void mtsDeviceInterfaceProxyClient::Stop()
 void mtsDeviceInterfaceProxyClient::OnEnd()
 {
     DeviceInterfaceProxyClientLogger("DeviceInterfaceProxy client ends.");
-
-    OutputDebugString("###############################################");
 
     // Let a server disconnect this client safely.
     DeviceInterfaceServerProxy->Shutdown();

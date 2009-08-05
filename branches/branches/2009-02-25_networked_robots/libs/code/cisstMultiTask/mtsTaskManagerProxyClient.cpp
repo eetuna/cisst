@@ -96,17 +96,17 @@ void mtsTaskManagerProxyClient::Runner(ThreadArguments<mtsTaskManager> * argumen
     mtsTaskManagerProxyClient * ProxyClient = 
         dynamic_cast<mtsTaskManagerProxyClient*>(arguments->proxy);
 
-    ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "Proxy client starts.");
+    ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "Proxy client thread starts.");
 
     try {
-        ProxyClient->StartClient();        
+        ProxyClient->StartClient();
     } catch (const Ice::Exception& e) {
         ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient exception: ", e.what());
     } catch (const char * msg) {
         ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient exception: ", msg);
     }
 
-    ProxyClient->OnEnd();
+    ProxyClient->GetLogger()->trace("mtsTaskManagerProxyClient", "Proxy client thread ends.");
 }
 
 void mtsTaskManagerProxyClient::Stop()
@@ -115,16 +115,16 @@ void mtsTaskManagerProxyClient::Stop()
 }
 
 void mtsTaskManagerProxyClient::OnEnd()
-{
+{    
     TaskManagerProxyClientLogger("TaskManagerProxy client ends.");
+
+    Sender->Stop();
 
     // Let a server disconnect this client safely.
     GlobalTaskManagerProxy->Shutdown();
     ShutdownSession();
 
-    BaseType::OnEnd();
-
-    Sender->Stop();
+    BaseType::OnEnd();    
 }
 
 //-----------------------------------------------------------------------------

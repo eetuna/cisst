@@ -147,7 +147,7 @@ public:
         if (ProxyState == BaseType::PROXY_ACTIVE) {
             ChangeProxyState(BaseType::PROXY_FINISHING);
 
-            if (IceCommunicator) {
+            if (IceCommunicator) {                
                 try {
                     IceCommunicator->destroy();
 

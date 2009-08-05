@@ -310,7 +310,7 @@ public:
     virtual void Stop() = 0;
 
     /*! Close a session. */
-    virtual void ShutdownSession() 
+    virtual void ShutdownSession()
     {
         IsValidSession = false;
     }

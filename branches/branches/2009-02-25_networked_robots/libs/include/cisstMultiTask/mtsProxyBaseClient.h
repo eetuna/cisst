@@ -140,6 +140,7 @@ public:
 
             if (IceCommunicator) {
                 try {
+                    OutputDebugString(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 6");
                     IceCommunicator->destroy();
                     
                     ChangeProxyState(BaseType::PROXY_FINISHED);

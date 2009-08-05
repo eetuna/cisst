@@ -84,7 +84,7 @@ void mtsTaskManagerProxyServer::Start(mtsTaskManager * callingTaskManager)
         ThreadArgumentsInfo.proxy = this;
         ThreadArgumentsInfo.Runner = mtsTaskManagerProxyServer::Runner;
 
-        // Note that a worker thread is created but is not run here.
+        // Note that a worker thread is created but is not yet running.
         WorkerThread.Create<ProxyWorker<mtsTaskManager>, ThreadArguments<mtsTaskManager>*>(
             &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, "C-PRX");
     }
