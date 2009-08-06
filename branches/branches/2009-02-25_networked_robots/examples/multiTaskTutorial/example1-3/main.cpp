@@ -203,6 +203,20 @@ int main(int argc, char * argv[])
             while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
         }
     }
+
+    // Deallocate user-created objects.
+    // MJUNG: Currently, there is no mechanism to deallocate resources created and
+    // managed by the task manager--e.g., interfaces, command objects, function
+    // pointers, and so on.
+    
+    // As a temporary solution, I added task deletion commands here to close 
+    // the ICE application safely and cleanly. However, this is definitely not a proper
+    // way to delete a task registered to the task manager; it's brutal. So it can
+    // cause another errors or problems related to cisstMultiTask library itself.
+    if (sineTaskObject) delete sineTaskObject;
+    if (displayTaskObject) delete displayTaskObject;
+    if (UITaskObject) delete UITaskObject;
+
 #else
     // create our two tasks
     const double PeriodSine = 1 * cmn_ms; // in milliseconds

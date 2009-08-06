@@ -37,16 +37,16 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
 
   mtsCommandWriteProxy is a proxy for mtsCommandWrite. This proxy contains
-  CommandId set as a function pointer of which type is mtsFunctionWrite.
-  When Execute() method is called, the CommandId is sent to the server task
-  over networks with one payload.
+  CommandId assigned as a function pointer of mtsFunctionWrite type.
+  When Execute() method is called, the CommandId with payload is sent to the 
+  server task across networks.
 
   Note that there can be two kinds of interface proxy class that manages 
   this process. The first one is mtsDeviceInterfaceProxyClient which is used
-  to execute a void command at a server, and the other one is 
+  to execute write commands at a server side, and the other one is 
   mtsDeviceInterfaceProxyServer which propagates events generated at a server
-  to a client. Only either one of the device interface proxies can be
-  initialized while the other should be NULL.
+  to a client. Only one of them can be initialized while the other has to
+  be NULL.
 */
 class mtsCommandWriteProxy: public mtsCommandWriteBase {
 public:
