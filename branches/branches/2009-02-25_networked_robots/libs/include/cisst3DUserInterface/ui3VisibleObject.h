@@ -25,6 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstCommon/cmnAccessorMacros.h>
+
 #include <cisstVector/vctFixedSizeVectorTypes.h>
 #include <cisstVector/vctTransformationTypes.h>
 
@@ -45,13 +47,15 @@ class CISST_EXPORT ui3VisibleObject: public cmnGenericObject
 
 public:
 
-    ui3VisibleObject(ui3Manager * manager);
+    ui3VisibleObject(const std::string & name = "Unnamed");
 
     /*!
      Destructor
     */
     virtual ~ui3VisibleObject(void) {};
 
+    /*! This method needs to be overload by the user to create the
+      actual VTK objects */
     virtual bool CreateVTKObjects(void) = 0;
 
     virtual vtkProp3D * GetVTKProp(void);
@@ -63,6 +67,8 @@ public:
     void SetPosition(const vctDouble3 & position);
 
     void SetOrientation(const vctDoubleMatRot3 & rotationMatrix);
+
+    void SetScale(const double & scale);
 
     template <bool _storageOrder>
     void SetTransformation(const vctFrameBase<vctMatrixRotation3<double, _storageOrder> > & frame) {
@@ -78,18 +84,33 @@ public:
 
     void Unlock(void);
 
-protected:
- 
+    void AddPart(vtkProp3D * part);
+
+ protected:
     typedef ui3SceneManager::VTKHandleType VTKHandleType;
 
     void SetVTKHandle(VTKHandleType handle) {
         this->VTKHandle = handle;
     }
 
+ private:
+    // make assembly private to control access
     vtkAssembly * Assembly;
+    std::vector<vtkProp3D *> Parts;
+
+ protected:
     vtkMatrix4x4 * Matrix;
-    ui3Manager * Manager;
+    ui3SceneManager * SceneManager;
     VTKHandleType VTKHandle;
+
+    virtual void PropagateVisibility(bool visible);
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, Created);
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, Visible);
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(std::string, Name);
+    
 };
 
 

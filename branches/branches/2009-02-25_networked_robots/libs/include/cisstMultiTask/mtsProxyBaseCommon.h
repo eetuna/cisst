@@ -30,11 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsConfig.h>
 #include <cisstMultiTask/mtsExport.h>
 
-
-#if CISST_MTS_HAS_ICE
 #include <IceUtil/IceUtil.h>
 #include <Ice/Ice.h>
-#endif // CISST_MTS_HAS_ICE
 
 
 /*!

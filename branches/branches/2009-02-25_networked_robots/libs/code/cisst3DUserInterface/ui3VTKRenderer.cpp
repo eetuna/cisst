@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisst3DUserInterface/ui3SceneManager.h>
 #include <cisst3DUserInterface/ui3VisibleObject.h>
+#include <cisst3DUserInterface/ui3VisibleList.h>
 
 #include <vtkAssembly.h>
 #include <vtkPropAssembly.h>
@@ -111,7 +112,10 @@ void ui3VTKRenderer::Render(void)
     if (this->RenderWindow) {
 
         this->SceneManager->Lock();
+        {
+            this->Renderer->Modified();
             this->RenderWindow->Render();
+        }
         this->SceneManager->Unlock();
 
         if (this->Target) {
@@ -148,6 +152,7 @@ void ui3VTKRenderer::SetWindowPosition(int x, int y)
 
 void ui3VTKRenderer::Add(ui3VisibleObject * object)
 {
+    CMN_ASSERT(object->GetVTKProp());
     this->Renderer->AddViewProp(object->GetVTKProp());
 }
 

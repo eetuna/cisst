@@ -48,18 +48,20 @@ class CISST_EXPORT ui3VisibleList: public ui3VisibleObject
 
 public:
 
-    ui3VisibleList(ui3Manager * manager);
+    ui3VisibleList(const std::string & name);
 
     /*!
      Destructor
     */
     ~ui3VisibleList(void) {};
 
+    bool Update(ui3SceneManager * sceneManager);
+
     bool CreateVTKObjects(void);
 
-    void Add(ui3VisibleObject * object) {
-        this->Objects.push_back(object);
-    }
+    void Add(ui3VisibleObject * object);
+
+    void Add(ui3VisibleList * list);
 
     void RemoveLast(void) {
         this->Objects.pop_back();
@@ -72,12 +74,22 @@ public:
     unsigned int size(void) const  {
         return this->Objects.size();
     }
+
+    void RecursiveUpdateNeeded(void);
     
 
 protected:
-    
+
+    void PropagateVisibility(bool visible);
+
     typedef std::list<ui3VisibleObject *> ListType;
     ListType Objects;
+
+    ui3VisibleList * ParentList;
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, UpdateNeeded);
+
+
 };
 
 

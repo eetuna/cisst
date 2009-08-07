@@ -114,6 +114,7 @@ void mtsDeviceInterfaceProxyClient::OnEnd()
     DeviceInterfaceProxyClientLogger("DeviceInterfaceProxy client ends.");
 
     // Let a server disconnect this client safely.
+    // gcc says this doesn't exist
     DeviceInterfaceServerProxy->Shutdown();
 
     ShutdownSession();

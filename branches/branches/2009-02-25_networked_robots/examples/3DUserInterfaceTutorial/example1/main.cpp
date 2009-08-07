@@ -88,8 +88,8 @@ int main()
 
     ui3Manager guiManager;
 
-    SimpleBehavior behavior("Example1", &guiManager);
-    BehaviorWithSlave behavior2("Example2", &guiManager);
+    SimpleBehavior behavior("Example1");
+    BehaviorWithSlave behavior2("Example2");
 
     guiManager.AddBehavior(&behavior,       // behavior reference
                            0,               // position in the menu bar: default
@@ -107,15 +107,15 @@ int main()
 #ifndef RENDER_ON_OVERLAY
     svlStreamManager vidStream(2);  // running on multiple threads
 
-    svlVideoCaptureSource vidSource(true); // stereo source
+    svlFilterSourceVideoCapture vidBackgroundSource(true); // stereo source
     cout << "Setup LEFT camera:" << endl;
-    vidSource.DialogSetup(SVL_LEFT);
+    vidBackgroundSource.DialogSetup(SVL_LEFT);
     cout << "Setup RIGHT camera:" << endl;
-    vidSource.DialogSetup(SVL_RIGHT);
-    vidStream.Trunk().Append(&vidSource);
+    vidBackgroundSource.DialogSetup(SVL_RIGHT);
+    vidStream.Trunk().Append(&vidBackgroundSource);
 
 #ifdef CAPTURE_SWAP_RGB
-    svlRGBSwapper vidRGBSwapper;
+    svlFilterRGBSwapper vidRGBSwapper;
     vidStream.Trunk().Append(&vidRGBSwapper);
 #endif //CAPTURE_SWAP_RGB
 
@@ -148,7 +148,6 @@ int main()
                            vidBackgroundSource.GetHeight(SVL_LEFT), // render height
                            0, 0,            // window position
                            camframe, vertviewangle, leftopticalcenteroffset,  // camera parameters
-                           vct2(0.0),
                            "LeftEyeView");  // name of renderer
     guiManager.AddVideoBackgroundToRenderer("LeftEyeView", "StereoVideo", SVL_LEFT);
 #endif //RENDER_ON_OVERLAY
@@ -168,7 +167,6 @@ int main()
                            vidBackgroundSource.GetHeight(SVL_RIGHT), // render height
                            20, 20,          // window position
                            camframe, vertviewangle, rightopticalcenteroffset,  // camera parameters
-                           vct2(0.0),
                            "RightEyeView"); // name of renderer
     guiManager.AddVideoBackgroundToRenderer("RightEyeView", "StereoVideo", SVL_RIGHT);
 #endif //RENDER_ON_OVERLAY
@@ -177,17 +175,17 @@ int main()
 #ifdef DEBUG_WINDOW_HAS_VIDEO_BACKGROUND
     svlStreamManager vidStream(1);
 
-    svlVideoCaptureSource vidSource(false); // mono source
+    svlFilterSourceVideoCapture vidSource(false); // mono source
     cout << "Setup camera:" << endl;
     vidSource.DialogSetup();
     vidStream.Trunk().Append(&vidSource);
 
-    svlImageResizer vidResizer;
+    svlFilterImageResizer vidResizer;
     vidResizer.SetOutputSize(384, 216);
     vidStream.Trunk().Append(&vidResizer);
 
 #ifdef CAPTURE_SWAP_RGB
-    svlRGBSwapper vidRGBSwapper;
+    svlFilterRGBSwapper vidRGBSwapper;
     vidStream.Trunk().Append(&vidRGBSwapper);
 #endif //CAPTURE_SWAP_RGB
 
@@ -256,7 +254,7 @@ int main()
                           daVinci, "MTMRClutch",
                           ui3MasterArm::PRIMARY);
     rightMaster->SetTransformation(transform, 0.5 /* scale factor */);
-    ui3CursorBase * rightCursor = new ui3CursorSphere(&guiManager);
+    ui3CursorBase * rightCursor = new ui3CursorSphere();
     rightCursor->SetAnchor(ui3CursorBase::CENTER_RIGHT);
     rightMaster->SetCursor(rightCursor);
 
@@ -268,7 +266,7 @@ int main()
                          daVinci, "MTMLClutch",
                          ui3MasterArm::SECONDARY);
     leftMaster->SetTransformation(transform, 0.5 /* scale factor */);
-    ui3CursorBase * leftCursor = new ui3CursorSphere(&guiManager);
+    ui3CursorBase * leftCursor = new ui3CursorSphere();
     leftCursor->SetAnchor(ui3CursorBase::CENTER_LEFT);
     leftMaster->SetCursor(leftCursor);
 

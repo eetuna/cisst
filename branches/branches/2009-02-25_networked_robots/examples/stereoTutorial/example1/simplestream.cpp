@@ -29,13 +29,12 @@ int main()
 {
     // Creating SVL objects
     svlStreamManager stream(4); // number of threads per stream
-    svlStreamEntity *branch;
 
-    svlDummySource video_source(svlTypeImageRGB); // try svlTypeImageRGBStereo for stereo image source
-    svlImageResizer resizer;
-    svlImageWindow window;
-    svlUnsharpMask unsharpmask;
-    svlImageWindow window2;
+    svlFilterSourceDummy video_source(svlTypeImageRGB); // try svlTypeImageRGBStereo for stereo image source
+    svlFilterImageResizer resizer;
+    svlFilterImageWindow window;
+    svlFilterUnsharpMask unsharpmask;
+    svlFilterImageWindow window2;
 
     // Setup dummy video source
     video_source.SetDimensions(320, 240);
@@ -64,11 +63,11 @@ int main()
         stream.Trunk().Append(&resizer)      != SVL_OK ||
         stream.Trunk().Append(&window)       != SVL_OK) goto labError;
 
-    // Adding a branching to the stream right after the source filter
-    branch = stream.CreateBranchAfterFilter(&video_source);
+    // Adding a branch to the stream right after the source filter
+    stream.CreateBranchAfterFilter(&video_source, "mybranch");
     // Chain filters to branch
-    if (branch->Append(&unsharpmask) != SVL_OK ||
-        branch->Append(&window2)     != SVL_OK) goto labError;
+    if (stream.Branch("mybranch").Append(&unsharpmask) != SVL_OK ||
+        stream.Branch("mybranch").Append(&window2)     != SVL_OK) goto labError;
 
     cout << "Streaming is just about to start." << endl;
     cout << "Press any key and ENTER to stop stream..." << endl;

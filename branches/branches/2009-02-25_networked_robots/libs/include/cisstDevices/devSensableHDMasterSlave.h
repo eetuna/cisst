@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstParameterTypes.h>
 #include <cisstCommon.h>
+#include <cisstMultiTask/mtsTaskFromCallback.h>
 #include <cisstDevices/devSensableHD.h>
 
 // Always include last
@@ -38,26 +39,34 @@ public:
                              const std::string & secondDeviceName);
 
     ~devSensableHDMasterSlave(void) {};
+
     void UserControl(void);
-    
-    void GetPositions(void);
-    void SetScaleFactor(double Scale);
-    void SetForceLimit(double FLimit);
+    void SetScaleFactor(const mtsDouble& Scale);
+    void SetForceLimit(const mtsDouble& FLimit);
+    void SetForceMode(const mtsInt& Mode);
+    void SetMasterClutch(const mtsBool& commandedClutch);
+    void SetSlaveClutch(const mtsBool& commandedClutch);
+    void SetMasterSlaveClutch(const mtsBool& commandedClutch);
+    void SetForceCoefficient(const mtsDouble& commandedCoefficient);
     void SetOffsetMultiplier(double OffMult);
     void IncrementScaleFactor(void);
     void DecrementScaleFactor(void);
     void IncrementForceLimit(void);
     void DecrementForceLimit(void);
-    void SetForceMode(int Mode);
     
 protected:
     vctFixedSizeVector<double, 6> ForceMaster;
     vctFixedSizeVector<double, 6> ForceSlave;
     vct3 WorkspaceOffset;
     vct3 ClutchOffset;
+    vct3 LeftClutchOffset;
+    vct3 RightClutchOffset;
+    vct3 LeftClutchMSOffset;
+    vct3 RightClutchMSOffset;
     vct3 Error;
     vct3 p1Goal;
     vct3 p2Goal;
+    vct3 p1RGoal;
     vct3 p2RGoal;
    
     prmForceCartesianSet    firstDeviceForce;
@@ -66,15 +75,23 @@ protected:
     prmPositionCartesianGet p2;
     prmPositionCartesianGet p1Clutched;
     prmPositionCartesianGet p2Clutched;
+    prmPositionCartesianGet p1R;
     prmPositionCartesianGet p2R;
 
-    bool firstIteration;
-    bool clutch;
-    double ScaleFactor;
-    double FMax;
-    double ForceFeedNormMaster;
-    double ForceFeedNormSlave;
-    int ForceMode;
+    bool        firstIteration;
+    bool        clutchDone;
+    bool        bothClutched;
+    bool        clutchOffsetAdd;
+    mtsBool     MasterClutch;
+    mtsBool     SlaveClutch;
+    mtsBool     MasterSlaveClutch;
+    mtsInt      clutchMode;
+    mtsInt      ForceMode;
+    mtsDouble   ForceMasterCoefficient;
+    mtsDouble   ScaleFactor;
+    mtsDouble   FMax;
+    double      ForceFeedNormMaster;
+    double      ForceFeedNormSlave;
 };
 
 

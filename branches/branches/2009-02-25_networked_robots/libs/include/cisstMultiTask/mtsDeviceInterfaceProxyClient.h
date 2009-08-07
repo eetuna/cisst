@@ -63,7 +63,7 @@ public:
     }
 
     void ShutdownSession() {
-        mtsProxyBaseClient::ShutdownSession();
+        mtsProxyBaseClient<mtsTask>::ShutdownSession();
     }
 
     /*! Stop the proxy. */

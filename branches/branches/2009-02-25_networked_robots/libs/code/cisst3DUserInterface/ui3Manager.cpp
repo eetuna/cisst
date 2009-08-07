@@ -26,7 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VTKRenderer.h>
 #include <cisst3DUserInterface/ui3ImagePlane.h>
 #include <cisst3DUserInterface/ui3SlaveArm.h>
-
+#include <cisst3DUserInterface/ui3VisibleList.h>
 
 CMN_IMPLEMENT_SERVICES(ui3Manager)
 
@@ -534,7 +534,7 @@ bool ui3Manager::SetupRenderers()
         // Add live video background if available
         if (this->Renderers[i]->streamindex >= 0) {
 
-            this->Renderers[i]->imageplane = new ui3ImagePlane(this);
+            this->Renderers[i]->imageplane = new ui3ImagePlane();
             CMN_ASSERT(this->Renderers[i]->imageplane);
 
             // Get bitmap dimensions from pipeline.
@@ -648,7 +648,7 @@ void ui3Manager::EnterMaMModeEventHandler(void)
 {
     this->ShowAll();
     this->MaM = true;
-    CMN_LOG_CLASS_VERY_VERBOSE << "EnterMaMMode" << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "EnterMaMMode" << std::endl;
 }
 
 
@@ -656,7 +656,7 @@ void ui3Manager::LeaveMaMModeEventHandler(void)
 {
     this->HideAll();
     this->MaM = false;
-    CMN_LOG_CLASS_VERY_VERBOSE << "LeaveMaMMode" << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "LeaveMaMMode" << std::endl;
 }
 
 
@@ -686,8 +686,15 @@ void* ui3Manager::CVTKRendererProc::Proc(ui3Manager* baseref)
     stopwatch.Start();
     prevtime = stopwatch.GetElapsedTime();
 
+    // update once before starting so we can use the Show method
+    baseref->SceneManager->VisibleObjects->Update(baseref->SceneManager);
+    baseref->SceneManager->VisibleObjects->Show();
+
     // rendering loop
     while (!KillThread) {
+
+        // update VTK objects if needed
+        baseref->SceneManager->VisibleObjects->Update(baseref->SceneManager);
 
         // signal renderers
         for (i = 0; i < renderercount; i ++) {
