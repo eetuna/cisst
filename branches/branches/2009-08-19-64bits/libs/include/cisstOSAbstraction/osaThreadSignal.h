@@ -78,7 +78,7 @@ public:
 
 private:
     /*! Internals that are OS-dependent in some way */
-    enum {INTERNALS_SIZE = 96 };    // PKAZ: this can be reduced
+    enum {INTERNALS_SIZE = 128 };    // adeguet1: minimum for Mac OS 64 bits
     char Internals[INTERNALS_SIZE];
 
     /*! Return the size of the actual object used by the OS.  This is
