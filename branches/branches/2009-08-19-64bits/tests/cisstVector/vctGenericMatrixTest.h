@@ -276,15 +276,15 @@ public:
 
     template<class _matrixType1>
     static void TestExchangeAndPermutationOperations(_matrixType1 & matrix,
-        const unsigned int row1, const unsigned int row2,
-        const unsigned int col1, const unsigned int col2,
-        const unsigned int rowPermutation[], const unsigned int colPermutation[] )
+                                                     const vct::size_type row1, const vct::size_type row2,
+                                                     const vct::size_type col1, const vct::size_type col2,
+                                                     const vct::index_type rowPermutation[], const vct::index_type colPermutation[] )
     {
-        const unsigned int rows = matrix.rows();
-        const unsigned int cols = matrix.cols();
+        const vct::size_type rows = matrix.rows();
+        const vct::size_type cols = matrix.cols();
         _matrixType1 matrixCopy(matrix);
 
-        unsigned int counter;
+        vct::index_type counter;
         matrix.ExchangeRows(row1, row2);
         CPPUNIT_ASSERT( matrixCopy.Row(row1) == matrix.Row(row2) );
         CPPUNIT_ASSERT( matrixCopy.Row(row2) == matrix.Row(row1) );

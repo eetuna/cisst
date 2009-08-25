@@ -378,22 +378,34 @@ public:
             *array = ExtractRandomUnsignedChar(min, max);
     }
 
-    /*! Fill the given array with a random permutation of the numbers 0..length */
-    void ExtractRandomPermutation(const unsigned int length, unsigned int *array)
+    unsigned long long ExtractRandomUnsignedLongLong()
     {
-        unsigned int i;
-        for (i = 0; i < length; ++i)
-            array[i] = ExtractRandomInt(0, length);
-
-        unsigned int next;
-        unsigned int tmp;
-        for (i = 0; i < length; ++i) {
-            next = ExtractRandomInt(i, length);
-            tmp = array[i];
-            array[i] = array[next];
-            array[next] = tmp;
-        }
+        unsigned long long int result;
+        int * part = reinterpret_cast<int *>(&result);
+        *part = ExtractRandomElement();
+        part++;
+        *part = ExtractRandomElement();
+        return result;
     }
+
+    unsigned long long ExtractRandomUnsignedLongLong(const unsigned long long min, const unsigned long long max)
+    {
+        const double randomDouble = ExtractRandomDouble();
+        return static_cast<unsigned long long>((randomDouble * (max - min)) + min);
+    }
+
+    void ExtractRandomUnsignedLongLongArray(const unsigned long long min, const unsigned long long max, unsigned long long *array, 
+                                            const unsigned int arraySize)
+    {
+        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+            *array = ExtractRandomUnsignedLongLong(min, max);
+    }
+
+    /*! Fill the given array with a random permutation of the numbers 0..length */
+    void ExtractRandomPermutation(const unsigned int length, unsigned int * array);
+
+    /*! Fill the given array with a random permutation of the numbers 0..length */
+    void ExtractRandomPermutation(const unsigned long long int length, unsigned long long int * array);
 
 
 private:
@@ -700,6 +712,29 @@ inline void cmnRandomSequence::ExtractRandomValueArray(const unsigned char min, 
                                                        const unsigned int arraySize)
 {
     ExtractRandomUnsignedCharArray(min, max, array, arraySize);
+}
+
+
+/* --- unsigned long long --- */
+CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
+inline void cmnRandomSequence::ExtractRandomValue(unsigned long long & result)
+{
+    result = ExtractRandomUnsignedLongLong();
+}
+
+
+CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
+inline void cmnRandomSequence::ExtractRandomValue(const unsigned long long min, const unsigned long long max, unsigned long long & result)
+{
+    result = ExtractRandomUnsignedLongLong(min, max);
+}
+
+
+CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
+inline void cmnRandomSequence::ExtractRandomValueArray(const unsigned long long min, const unsigned long long max, unsigned long long * array,
+                                                       const unsigned int arraySize)
+{
+    ExtractRandomUnsignedLongLongArray(min, max, array, arraySize);
 }
 
 

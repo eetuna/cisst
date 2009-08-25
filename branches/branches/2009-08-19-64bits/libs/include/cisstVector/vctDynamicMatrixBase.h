@@ -42,7 +42,7 @@ http://www.cisst.org/cisst/license.txt.
   \sa vctDynamicConstMatrixBase
 
 */
-template<class _matrixOwnerType, typename _elementType>
+template <class _matrixOwnerType, typename _elementType>
 class vctDynamicMatrixBase : public vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>
 {
 public:
@@ -266,10 +266,10 @@ public:
         if (! this->col_stride() == 1) {
             cmnThrow(std::runtime_error("vctDynamicMatrix: RowPointers requires compact rows")); 
         }
-        const unsigned int rows = this->rows();
+        const size_type rows = this->rows();
         // resize the vector
         rowPointers.SetSize(rows);
-        unsigned int index;
+        index_type index;
         for (index = 0; index < rows; ++index) {
             rowPointers[index] = this->Row(index).Pointer();
         }
@@ -316,18 +316,18 @@ public:
 
     //@{ Methods to select a subset of rows or columns from another matrix
     /*! Select a subset of rows from another matrix */
-    template<class __inputMatrixOwnerType, class __indexVectorOwnerType>
+    template <class __inputMatrixOwnerType, class __indexVectorOwnerType>
     void SelectRowsFrom(const vctDynamicConstMatrixBase<__inputMatrixOwnerType, _elementType> & inputMatrix,
-        const vctDynamicConstVectorBase<__indexVectorOwnerType, unsigned int> & rowIndexVector)
+                        const vctDynamicConstVectorBase<__indexVectorOwnerType, index_type> & rowIndexVector)
     {
         vctDynamicMatrixLoopEngines::SelectRowsByIndex::
             Run(*this, inputMatrix, rowIndexVector);
     }
 
     /*! Select a subset of columns from another matrix */
-    template<class __inputMatrixOwnerType, class __indexVectorOwnerType>
+    template <class __inputMatrixOwnerType, class __indexVectorOwnerType>
     void SelectColsFrom(const vctDynamicConstMatrixBase<__inputMatrixOwnerType, _elementType> & inputMatrix,
-        const vctDynamicConstVectorBase<__indexVectorOwnerType, unsigned int> & colIndexVector)
+                        const vctDynamicConstVectorBase<__indexVectorOwnerType, index_type> & colIndexVector)
     {
         this->TransposeRef().SelectRowsFrom(inputMatrix.TransposeRef(), colIndexVector);
     }
@@ -346,9 +346,9 @@ public:
 
       \note Do not use this method for an in-place permutation of the input matrix.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     void RowPermutationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
-    const unsigned int permutedRowIndexes[])
+                          const index_type permutedRowIndexes[])
     {
         const size_type numRows = this->rows();
         size_type thisRowIndex;
@@ -370,9 +370,9 @@ public:
 
       \note Do not use this method for an in-place permutation of the input matrix.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     void RowInversePermutationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
-    const unsigned int permutedRowIndexes[])
+                                 const index_type permutedRowIndexes[])
     {
         const size_type numRows = this->rows();
         size_type thisRowIndex;
@@ -393,7 +393,7 @@ public:
 
       \note Do not use this method for an in-place permutation of the input matrix.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     void ColumnPermutationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
     const unsigned int permutedColumnIndexes[])
     {
@@ -416,7 +416,7 @@ public:
 
       \note Do not use this method for an in-place permutation of the input matrix.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     void ColumnInversePermutationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
     const unsigned int permutedColumnIndexes[])
     {
@@ -489,7 +489,7 @@ public:
       \param other The matrix to be copied.
     */
     //@{
-    template<class __matrixOwnerType, typename __elementType>
+    template <class __matrixOwnerType, typename __elementType>
     inline ThisType & Assign(const vctDynamicConstMatrixBase<__matrixOwnerType, __elementType> & other) {
         vctDynamicMatrixLoopEngines::
             MoMi<typename vctUnaryOperations<value_type,
@@ -498,12 +498,12 @@ public:
         return *this;
     }
 
-    template<class __matrixOwnerType, typename __elementType>
+    template <class __matrixOwnerType, typename __elementType>
     inline ThisType & operator = (const vctDynamicConstMatrixBase<__matrixOwnerType, __elementType> & other) {
         return this->Assign(other);
     }
 
-    template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __elementType, class __dataPtrType>
+    template <unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __elementType, class __dataPtrType>
     inline ThisType & Assign(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, __elementType, __dataPtrType>
                              & other) {
         vctDynamicMatrixLoopEngines::
@@ -633,7 +633,7 @@ public:
         <code>vctFastCopy::PerformChecks</code>.
      */
     //@{
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline bool FastCopyOf(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source,
                            bool performSafetyChecks = vctFastCopy::PerformChecks)
         throw(std::runtime_error)
@@ -641,7 +641,7 @@ public:
         return vctFastCopy::MatrixCopy(*this, source, performSafetyChecks);
     }
 
-    template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __dataPtrType>
+    template <size_type __rows, size_type __cols, stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool FastCopyOf(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source,
                            bool performSafetyChecks = vctFastCopy::PerformChecks)
         throw(std::runtime_error)
@@ -746,7 +746,7 @@ public:
       
       \return The matrix "this" modified.
     */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     inline ThisType & SumOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                             const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         vctDynamicMatrixLoopEngines::
@@ -756,7 +756,7 @@ public:
     }    
     
     /* documented above */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     inline ThisType & DifferenceOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                                    const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         vctDynamicMatrixLoopEngines::
@@ -766,7 +766,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     inline ThisType & ElementwiseProductOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                                            const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         vctDynamicMatrixLoopEngines::
@@ -776,7 +776,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     inline ThisType & ElementwiseRatioOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                                          const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         vctDynamicMatrixLoopEngines::
@@ -786,7 +786,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     inline ThisType & ElementwiseMinOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                                        const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         vctDynamicMatrixLoopEngines::
@@ -796,7 +796,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     inline ThisType & ElementwiseMaxOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                                        const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         vctDynamicMatrixLoopEngines::
@@ -824,7 +824,7 @@ public:
       
       \return The matrix "this" modified.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & Add(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MioMi<typename vctStoreBackBinaryOperations<value_type>::Addition >::
@@ -833,7 +833,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & Subtract(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MioMi< typename vctStoreBackBinaryOperations<value_type>::Subtraction >::
@@ -842,7 +842,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ElementwiseMultiply(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MioMi< typename vctStoreBackBinaryOperations<value_type>::Multiplication >::
@@ -851,7 +851,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ElementwiseDivide(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MioMi< typename vctStoreBackBinaryOperations<value_type>::Division >::
@@ -860,7 +860,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ElementwiseMin(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MioMi< typename vctStoreBackBinaryOperations<value_type>::Minimum >::
@@ -869,7 +869,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ElementwiseMax(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MioMi< typename vctStoreBackBinaryOperations<value_type>::Maximum >::
@@ -878,13 +878,13 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & operator += (const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         return this->Add(otherMatrix);
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & operator -= (const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         return this->Subtract(otherMatrix);
     }
@@ -906,7 +906,7 @@ public:
       
       \return The matrix "this" modified.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & SumOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix, 
                             const value_type scalar) {
         vctDynamicMatrixLoopEngines::
@@ -916,7 +916,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & DifferenceOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix,
                                    const value_type scalar) {
         vctDynamicMatrixLoopEngines::
@@ -926,7 +926,7 @@ public:
     }
     
     /* documented above */    
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ProductOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix,
                                 const value_type scalar) {
         vctDynamicMatrixLoopEngines::
@@ -936,7 +936,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & RatioOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix,
                               const value_type scalar) {
         vctDynamicMatrixLoopEngines::
@@ -946,7 +946,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ClippedAboveOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix,
                                      const value_type lowerBound) {
         vctDynamicMatrixLoopEngines::
@@ -956,7 +956,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ClippedBelowOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix,
                                      const value_type upperBound) {
         vctDynamicMatrixLoopEngines::
@@ -983,7 +983,7 @@ public:
       
       \return The matrix "this" modified.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & SumOf(const value_type scalar,
                             const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix) {
         vctDynamicMatrixLoopEngines::
@@ -993,7 +993,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & DifferenceOf(const value_type scalar,
                                    const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix) {
         vctDynamicMatrixLoopEngines::
@@ -1003,7 +1003,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ProductOf(const value_type scalar,
                                 const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix) {
         vctDynamicMatrixLoopEngines::
@@ -1013,7 +1013,7 @@ public:
     }
     
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & RatioOf(const value_type scalar,
                               const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix) {
         vctDynamicMatrixLoopEngines::
@@ -1023,7 +1023,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ClippedAboveOf(const value_type upperBound,
                                      const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix) {
         vctDynamicMatrixLoopEngines::
@@ -1033,7 +1033,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & ClippedBelowOf(const value_type lowerBound,
                                      const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & matrix) {
         vctDynamicMatrixLoopEngines::
@@ -1129,7 +1129,7 @@ public:
     //@}
 
 
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & AddProductOf(const value_type scalar,
                                    const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix)
     {
@@ -1155,7 +1155,7 @@ public:
       
       \return The matrix "this" modified.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & AbsOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MoMi<typename vctUnaryOperations<value_type>::AbsValue>::
@@ -1164,7 +1164,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & NegationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MoMi<typename vctUnaryOperations<value_type>::Negation>::
@@ -1173,7 +1173,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & FloorOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MoMi<typename vctUnaryOperations<value_type>::Floor>::
@@ -1182,7 +1182,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & CeilOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         vctDynamicMatrixLoopEngines::
             MoMi<typename vctUnaryOperations<value_type>::Ceil>::
@@ -1190,7 +1190,7 @@ public:
         return *this;
     }
 
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline ThisType & TransposeOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) {
         Assign(otherMatrix.TransposeRef());
         return *this;
@@ -1249,7 +1249,7 @@ public:
     \param matrix2 The right operand of the binary operation.
     
     \return The matrix "this" modified. */
-    template<class __matrixOwnerType1, class __matrixOwnerType2>
+    template <class __matrixOwnerType1, class __matrixOwnerType2>
     void ProductOf(const vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> & matrix1,
                    const vctDynamicConstMatrixBase<__matrixOwnerType2, _elementType> & matrix2) {
         typedef vctDynamicConstMatrixBase<__matrixOwnerType1, _elementType> Input1MatrixType;
@@ -1264,7 +1264,7 @@ public:
 
     /*! Compute the outer product of two vectors and store the result to
       this matrix.  The outer product (v1*v2)[i,j] = v1[i] * v2[j] */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     void OuterProductOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & colVector,
                         const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & rowVector)
     {

@@ -245,16 +245,18 @@ void vctDynamicMatrixTest::TestExchangeAndPermutation(void)
     enum {ROWS = 8, COLS = 10};
     typedef _elementType value_type;
     typedef vctDynamicMatrix<_elementType> MatrixType;
+    typedef typename MatrixType::size_type size_type;
+    typedef typename MatrixType::index_type index_type;
     MatrixType matrix(ROWS, COLS);
     vctRandom(matrix, value_type(-10), value_type(10));
     cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
-    const unsigned int row1 = randomSequence.ExtractRandomInt(0, ROWS);
-    const unsigned int row2 = randomSequence.ExtractRandomInt(0, ROWS);
-    const unsigned int col1 = randomSequence.ExtractRandomInt(0, COLS);
-    const unsigned int col2 = randomSequence.ExtractRandomInt(0, COLS);
-    unsigned int rowPermutation[ROWS];
+    const size_type row1 = randomSequence.ExtractRandomInt(0, ROWS);
+    const size_type row2 = randomSequence.ExtractRandomInt(0, ROWS);
+    const size_type col1 = randomSequence.ExtractRandomInt(0, COLS);
+    const size_type col2 = randomSequence.ExtractRandomInt(0, COLS);
+    index_type rowPermutation[ROWS];
     randomSequence.ExtractRandomPermutation(ROWS, rowPermutation);
-    unsigned int colPermutation[COLS];
+    index_type colPermutation[COLS];
     randomSequence.ExtractRandomPermutation(COLS, colPermutation);
     vctGenericMatrixTest::TestExchangeAndPermutationOperations(matrix, row1, row2, 
                                                                col1, col2, rowPermutation, colPermutation);

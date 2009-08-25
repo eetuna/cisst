@@ -29,3 +29,35 @@ const cmnRandomSequence::ElementaryRandomNumber cmnRandomSequence::UpperRandomBo
 
 cmnRandomSequence cmnRandomSequence::RandomInstance;
 
+void cmnRandomSequence::ExtractRandomPermutation(const unsigned int length, unsigned int * array)
+{
+    unsigned int i;
+    for (i = 0; i < length; ++i)
+        array[i] = ExtractRandomInt(0, length);
+    
+    unsigned int next;
+    unsigned int tmp;
+    for (i = 0; i < length; ++i) {
+        next = ExtractRandomInt(i, length);
+        tmp = array[i];
+        array[i] = array[next];
+        array[next] = tmp;
+    }
+}
+
+
+void cmnRandomSequence::ExtractRandomPermutation(const unsigned long long int length, unsigned long long int * array)
+{
+    unsigned long long i;
+    for (i = 0; i < length; ++i)
+        array[i] = ExtractRandomUnsignedLongLong(0, length);
+    
+    unsigned long long next;
+    unsigned long long tmp;
+    for (i = 0; i < length; ++i) {
+        next = ExtractRandomUnsignedLongLong(i, length);
+        tmp = array[i];
+        array[i] = array[next];
+        array[next] = tmp;
+    }
+}
