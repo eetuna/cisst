@@ -223,7 +223,7 @@ class vctFixedSizeVector : public vctFixedSizeVectorBase<
         (*this)[4] = element4;
         va_list nextArg;
         va_start(nextArg, element4);
-        for (unsigned int i = 5; i < _size; ++i) {
+        for (index_type i = 5; i < _size; ++i) {
             (*this).at(i) = value_type( va_arg(nextArg, ElementVaArgPromotion) );
         }
         va_end(nextArg);
@@ -558,8 +558,8 @@ vctFixedSizeVectorElementwiseCompareVector(const vctFixedSizeConstVectorBase<_si
 }
 
 /* documented in class vctFixedSizeConstVectorBase */
-template<unsigned int _size,
-         int _stride, class _dataPtrType,
+template<vct::size_type _size,
+         vct::stride_type _stride, class _dataPtrType,
          class _elementType,
          class _elementOperationType>
 inline vctFixedSizeVector<bool, _size>

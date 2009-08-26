@@ -194,15 +194,15 @@ public:
     /*! Extract a random value for a templated type.  These methods are specialized
       by the type argument so that they can be used generically, e.g., in sequence
       testing. */
-    template<typename _valueType>
+    template <typename _valueType>
     void ExtractRandomValue(_valueType & result);
 
-    template<typename _valueType>
+    template <typename _valueType>
     inline void ExtractRandomValue(const _valueType min, const _valueType max, _valueType & result);
 
-    template<typename _valueType>
+    template <typename _valueType>
     inline void ExtractRandomValueArray(const _valueType min, const _valueType max, _valueType * array,
-        const unsigned int arraySize);
+                                        const unsigned int arraySize);
     //@}
 
     /*! Return a random floating point number in the range (0..1) */

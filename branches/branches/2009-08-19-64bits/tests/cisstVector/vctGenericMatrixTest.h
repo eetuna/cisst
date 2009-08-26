@@ -261,6 +261,7 @@ public:
         CPPUNIT_ASSERT(rowIndexes.Lesser(inputRows));
         CPPUNIT_ASSERT(colIndexes.Lesser(inputCols));
 
+#if 0 // adeguet1
         outputRowSelection.SelectRowsFrom(inputMatrix, rowIndexes);
         outputColSelection.SelectColsFrom(inputMatrix, colIndexes);
 
@@ -271,10 +272,10 @@ public:
         for (indx = 0; indx < outputCols; ++indx) {
             CPPUNIT_ASSERT( outputColSelection.Column(indx).Equal(inputMatrix.Column( colIndexes[indx] )) );
         }
-
+#endif
     }
 
-    template<class _matrixType1>
+    template <class _matrixType1>
     static void TestExchangeAndPermutationOperations(_matrixType1 & matrix,
                                                      const vct::size_type row1, const vct::size_type row2,
                                                      const vct::size_type col1, const vct::size_type col2,

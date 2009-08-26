@@ -204,7 +204,7 @@ class vctFixedSizeMatrixRef : public vctFixedSizeMatrixBase
    matrix */
 template <vct::size_type _resultSize, vct::stride_type _resultStride, class _resultElementType, class _resultDataPtrType,
           vct::size_type _matrixCols, vct::stride_type _matrixRowStride, vct::stride_type _matrixColStride, class _matrixDataPtrType,
-          vct::size_type _vectorStride, class _vectorDataPtrType>
+          vct::stride_type _vectorStride, class _vectorDataPtrType>
 inline void MultiplyMatrixVector(
                                  // create matrix references to both vectors and use the matrix product
                                  vctFixedSizeVectorBase<_resultSize, _resultStride, _resultElementType, _resultDataPtrType> & result,

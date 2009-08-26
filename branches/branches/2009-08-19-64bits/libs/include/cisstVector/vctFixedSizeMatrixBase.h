@@ -74,10 +74,10 @@ class vctFixedSizeMatrixBase : public vctFixedSizeConstMatrixBase
     
     /*! Type of the base class. */
     typedef vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, 
-        _elementType, _dataPtrType> BaseType;
+                                        _elementType, _dataPtrType> BaseType;
     
     typedef vctFixedSizeMatrixTraits<_elementType, _rows, _cols, 
-        _rowStride, _colStride> MatrixTraits;
+                                     _rowStride, _colStride> MatrixTraits;
 
     typedef typename MatrixTraits::iterator iterator;
     typedef typename MatrixTraits::const_iterator const_iterator;

@@ -507,7 +507,7 @@ public:
         to turn off the different safety checks for each FastCopyOf.
         \code
         bool canUseFastCopy = destination.FastCopyPossible(source);
-        unsigned int index;
+        vct::index_type index;
         for (index = 0; index < 1000; index++) {
             DoSomethingUseful(source);
             if (canUseFastCopy) {

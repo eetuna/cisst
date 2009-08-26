@@ -395,7 +395,7 @@ public:
     */
     template <class __matrixOwnerType>
     void ColumnPermutationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
-    const unsigned int permutedColumnIndexes[])
+                             const index_type permutedColumnIndexes[])
     {
         const size_type numCols = this->cols();
         size_type thisColumnIndex;
@@ -418,7 +418,7 @@ public:
     */
     template <class __matrixOwnerType>
     void ColumnInversePermutationOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
-    const unsigned int permutedColumnIndexes[])
+                                    const index_type permutedColumnIndexes[])
     {
         const size_type numCols = this->cols();
         size_type thisColumnIndex;
@@ -503,7 +503,9 @@ public:
         return this->Assign(other);
     }
 
-    template <unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __elementType, class __dataPtrType>
+    template <size_type __rows, size_type __cols,
+              stride_type __rowStride, stride_type __colStride,
+              class __elementType, class __dataPtrType>
     inline ThisType & Assign(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, __elementType, __dataPtrType>
                              & other) {
         vctDynamicMatrixLoopEngines::
@@ -539,8 +541,8 @@ public:
         return this->Assign(other);
     }
     
-    template <unsigned int __rows, unsigned int __cols,
-              int __rowStride, int __colStride,
+    template <size_type __rows, size_type __cols,
+              stride_type __rowStride, stride_type __colStride,
               class __elementType, class __dataPtrType>
     inline ThisType & ForceAssign(const vctFixedSizeConstMatrixBase<__rows, __cols,
                                                                     __rowStride, __colStride,
@@ -600,7 +602,7 @@ public:
         to turn off the different safety checks for each FastCopyOf.
         \code
         bool canUseFastCopy = destination.FastCopyCompatible(source);
-        unsigned int index;
+        vct::index_type index;
         for (index = 0; index < 1000; index++) {
             DoSomethingUseful(source);
             if (canUseFastCopy) {

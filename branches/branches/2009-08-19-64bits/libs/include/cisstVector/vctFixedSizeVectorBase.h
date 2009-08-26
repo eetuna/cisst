@@ -75,7 +75,7 @@ inline void vctFixedSizeVectorBaseAssignDynamicConstVectorBase(
 
   \sa vctFixedSizeConstVectorBase
 */
-template<vct::size_type _size, vct::stride_type _stride, class _elementType, class _dataPtrType>
+template <vct::size_type _size, vct::stride_type _stride, class _elementType, class _dataPtrType>
 class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType>
 {
  public:
@@ -273,7 +273,7 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
       \param other The vector to be copied.
     */
     //@{
-    template<stride_type __stride, class __elementType, class __dataPtrType>
+    template <stride_type __stride, class __elementType, class __dataPtrType>
     inline ThisType & Assign(const vctFixedSizeConstVectorBase<_size, __stride, __elementType, __dataPtrType> & other) {
         vctFixedSizeVectorRecursiveEngines<_size>::template
             VoVi< typename vctUnaryOperations<value_type, __elementType>::Identity >::
@@ -281,7 +281,7 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
         return *this;
     }
 
-    template<stride_type __stride, class __elementType, class __dataPtrType>
+    template <stride_type __stride, class __elementType, class __dataPtrType>
     inline ThisType & operator = (const vctFixedSizeConstVectorBase<_size, __stride, __elementType, __dataPtrType> & other) {
         return this->Assign(other);
     }
@@ -499,7 +499,7 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
         avoid safety checks, use with extreme caution.
      */
     //@{
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline bool FastCopyOf(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & source,
                            bool performSafetyChecks = true)
         throw(std::runtime_error)
@@ -507,7 +507,7 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
         return vctFastCopy::VectorCopy(*this, source, performSafetyChecks);
     }
 
-    template<class __dataPtrType>
+    template <class __dataPtrType>
     inline bool FastCopyOf(const vctFixedSizeConstVectorBase<SIZE, STRIDE, value_type, __dataPtrType> & source,
                            bool performSafetyChecks = true)
         throw(std::runtime_error)
@@ -1208,8 +1208,8 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
       
       \return The vector "this" modified.
     */
-    template<unsigned int __matrixCols, int __matrixRowStride, int __matrixColStride, class __matrixDataPtrType,
-             int __vectorStride, class __vectorDataPtrType>
+    template <size_type __matrixCols, stride_type __matrixRowStride, stride_type __matrixColStride, class __matrixDataPtrType,
+              stride_type __vectorStride, class __vectorDataPtrType>
     inline ThisType & ProductOf(const vctFixedSizeConstMatrixBase<_size, __matrixCols, __matrixRowStride, __matrixColStride, _elementType, __matrixDataPtrType> & inputMatrix,
                                 const vctFixedSizeConstVectorBase<__matrixCols, __vectorStride, _elementType, __vectorDataPtrType> & inputVector)
     {
@@ -1217,8 +1217,8 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
         return *this;
     }
 
-    template<unsigned int __vectorSize, int __vectorStride, class __vectorDataPtrType,
-             int __matrixRowStride, int __matrixColStride, class __matrixDataPtrType>
+    template <size_type __vectorSize, stride_type __vectorStride, class __vectorDataPtrType,
+              stride_type __matrixRowStride, stride_type __matrixColStride, class __matrixDataPtrType>
     inline ThisType & ProductOf(const vctFixedSizeConstVectorBase<__vectorSize,  __vectorStride, _elementType, __vectorDataPtrType> & inputVector,
                                 const vctFixedSizeConstMatrixBase<__vectorSize, _size, __matrixRowStride, __matrixColStride, _elementType, __matrixDataPtrType> & inputMatrix )
     {
@@ -1349,7 +1349,7 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
       A subsequence obtained this way may be non-const.  Use
       GetConstSubsequence to obtain a const subsequence.
     */
-    template<class _subsequenceType>
+    template <class _subsequenceType>
     void GetSubsequence(size_type position, _subsequenceType & result) {
         CMN_ASSERT( (_subsequenceType::STRIDE % ThisType::STRIDE) == 0 );
         CMN_ASSERT( position + 
@@ -1358,7 +1358,7 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
         result.SetRef( Pointer(position) );
     }
 
-    template<class _subsequenceType>
+    template <class _subsequenceType>
     void GetConstSubsequence(size_type position, _subsequenceType & result) {
         BaseType::GetConstSubsequence(position, result);
     }
