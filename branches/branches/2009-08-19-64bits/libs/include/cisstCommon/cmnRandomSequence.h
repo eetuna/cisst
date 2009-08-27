@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 
 #include <stdlib.h>
+#include <cstddef>
 
 #include <cisstCommon/cmnExport.h>
 
@@ -202,7 +203,7 @@ public:
 
     template <typename _valueType>
     inline void ExtractRandomValueArray(const _valueType min, const _valueType max, _valueType * array,
-                                        const unsigned int arraySize);
+                                        const size_t arraySize);
     //@}
 
     /*! Return a random floating point number in the range (0..1) */
@@ -222,9 +223,9 @@ public:
     }
 
     void ExtractRandomFloatArray(const float min, const float max, float *array, 
-        const unsigned int arraySize)
+        const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomFloat(min, max);
     }
 
@@ -242,13 +243,13 @@ public:
     }
 
     void ExtractRandomDoubleArray(const double min, const double max, double *array, 
-        const unsigned int arraySize)
+        const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomDouble(min, max);
     }
 
-    int ExtractRandomInt()
+    int ExtractRandomInt(void)
     {
         return ExtractRandomElement();
     }
@@ -260,13 +261,13 @@ public:
     }
 
     void ExtractRandomIntArray(const int min, const int max, int *array, 
-                               const unsigned int arraySize)
+                               const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomInt(min, max);
     }
 
-    unsigned int ExtractRandomUnsignedInt()
+    unsigned int ExtractRandomUnsignedInt(void)
     {
         int randomInt = ExtractRandomElement();
         return static_cast<unsigned int>(randomInt);
@@ -279,9 +280,9 @@ public:
     }
 
     void ExtractRandomUnsignedIntArray(const unsigned int min, const unsigned int max, unsigned int *array, 
-                                        const unsigned int arraySize)
+                                        const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomUnsignedInt(min, max);
     }
 
@@ -297,9 +298,9 @@ public:
     }
 
     void ExtractRandomShortArray(const short min, const short max, short *array, 
-                                 const unsigned int arraySize)
+                                 const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomShort(min, max);
     }
 
@@ -316,9 +317,9 @@ public:
     }
 
     void ExtractRandomUnsignedShortArray(const unsigned short min, const unsigned short max, unsigned short *array, 
-                                         const unsigned int arraySize)
+                                         const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomUnsignedShort(min, max);
     }
 
@@ -334,9 +335,9 @@ public:
     }
 
     void ExtractRandomLongArray(const long min, const long max, long *array, 
-                               const unsigned int arraySize)
+                               const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomLong(min, max);
     }
 
@@ -353,9 +354,9 @@ public:
     }
 
     void ExtractRandomCharArray(const char min, const char max, char *array, 
-                                const unsigned int arraySize)
+                                const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomChar(min, max);
     }
 
@@ -372,9 +373,9 @@ public:
     }
 
     void ExtractRandomUnsignedCharArray(const unsigned char min, const unsigned char max, unsigned char *array, 
-                                        const unsigned int arraySize)
+                                        const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomUnsignedChar(min, max);
     }
 
@@ -395,17 +396,17 @@ public:
     }
 
     void ExtractRandomUnsignedLongLongArray(const unsigned long long min, const unsigned long long max, unsigned long long *array, 
-                                            const unsigned int arraySize)
+                                            const size_t arraySize)
     {
-        for (unsigned int i = 0; i < arraySize; ++i, ++array)
+        for (size_t i = 0; i < arraySize; ++i, ++array)
             *array = ExtractRandomUnsignedLongLong(min, max);
     }
 
     /*! Fill the given array with a random permutation of the numbers 0..length */
-    void ExtractRandomPermutation(const unsigned int length, unsigned int * array);
+    void ExtractRandomPermutation(const size_t length, unsigned int * array);
 
     /*! Fill the given array with a random permutation of the numbers 0..length */
-    void ExtractRandomPermutation(const unsigned long long int length, unsigned long long int * array);
+    void ExtractRandomPermutation(const size_t length, unsigned long long int * array);
 
 
 private:
@@ -429,7 +430,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<float>(const float min, const float max, float & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<float>(const float min, const float max, float * array,
-                                                       const unsigned int arraySize);
+                                                       const size_t arraySize);
 
 /* --- double --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -438,7 +439,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<double>(const double min, const double max, double & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<double>(const double min, const double max, double * array,
-                                                        const unsigned int arraySize);
+                                                        const size_t arraySize);
 
 /* --- int --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -447,7 +448,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<int>(const int min, const int max, int & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<int>(const int min, const int max, int * array,
-                                                     const unsigned int arraySize);
+                                                     const size_t arraySize);
 /* --- unsigned int --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<unsigned int>(unsigned int & result);
@@ -455,7 +456,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<unsigned int>(const unsigned int min, const unsigned int max, unsigned int & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<unsigned int>(const unsigned int min, const unsigned int max, unsigned int * array,
-                                                              const unsigned int arraySize);
+                                                              const size_t arraySize);
 
 /* --- short --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -464,7 +465,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<short>(const short min, const short max, short & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<short>(const short min, const short max, short * array,
-                                                       const unsigned int arraySize);
+                                                       const size_t arraySize);
 /* --- unsigned short --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<unsigned short>(unsigned short & result);
@@ -472,7 +473,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<unsigned short>(const unsigned short min, const unsigned short max, unsigned short & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<unsigned short>(const unsigned short min, const unsigned short max, unsigned short * array,
-                                                                const unsigned int arraySize);
+                                                                const size_t arraySize);
 
 /* --- long --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -481,7 +482,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<long>(const long min, const long max, long & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<long>(const long min, const long max, long * array,
-                                                     const unsigned int arraySize);
+                                                     const size_t arraySize);
 
 /* --- char --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -490,7 +491,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<char>(const char min, const char max, char & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<char>(const char min, const char max, char * array,
-                                                      const unsigned int arraySize);
+                                                      const size_t arraySize);
 
 /* --- unsigned char --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -499,7 +500,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<unsigned char>(const unsigned char min, const unsigned char max, unsigned char & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<unsigned char>(const unsigned char min, const unsigned char max, unsigned char * array,
-                                                               const unsigned int arraySize);
+                                                               const size_t arraySize);
 
 /* --- bool --- */
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
@@ -508,7 +509,7 @@ CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValue<bool>(const bool min, const bool max, bool & result);
 CISST_DECLARE_TEMPLATE_FUNCTION_SPECIALIZATION
 void cmnRandomSequence::ExtractRandomValueArray<bool>(const bool min, const bool max, bool * array,
-                                                               const unsigned int arraySize);
+                                                               const size_t arraySize);
 
 
 /* --- float ---*/
@@ -528,7 +529,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const float min, const float m
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const float min, const float max, float * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomFloatArray(min, max, array, arraySize);
 }
@@ -551,7 +552,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const double min, const double
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const double min, const double max, double * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomDoubleArray(min, max, array, arraySize);
 }
@@ -574,7 +575,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const int min, const int max, 
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const int min, const int max, int * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomIntArray(min, max, array, arraySize);
 }
@@ -597,7 +598,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const unsigned int min, const 
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const unsigned int min, const unsigned int max, unsigned int * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomUnsignedIntArray(min, max, array, arraySize);
 }
@@ -620,7 +621,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const long min, const long max
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const long min, const long max, long * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomLongArray(min, max, array, arraySize);
 }
@@ -642,7 +643,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const short min, const short m
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const short min, const short max, short * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomShortArray(min, max, array, arraySize);
 }
@@ -664,7 +665,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const unsigned short min, cons
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const unsigned short min, const unsigned short max, unsigned short * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomUnsignedShortArray(min, max, array, arraySize);
 }
@@ -686,7 +687,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const char min, const char max
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const char min, const char max, char * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomCharArray(min, max, array, arraySize);
 }
@@ -709,7 +710,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const unsigned char min, const
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const unsigned char min, const unsigned char max, unsigned char * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomUnsignedCharArray(min, max, array, arraySize);
 }
@@ -732,7 +733,7 @@ inline void cmnRandomSequence::ExtractRandomValue(const unsigned long long min, 
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const unsigned long long min, const unsigned long long max, unsigned long long * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
     ExtractRandomUnsignedLongLongArray(min, max, array, arraySize);
 }
@@ -759,9 +760,9 @@ inline void cmnRandomSequence::ExtractRandomValue(const bool min, const bool max
 
 CISST_DEFINE_TEMPLATE_FUNCTION_SPECIALIZATION
 inline void cmnRandomSequence::ExtractRandomValueArray(const bool min, const bool max, bool * array,
-                                                       const unsigned int arraySize)
+                                                       const size_t arraySize)
 {
-    for (unsigned int i = 0; i < arraySize; ++i, ++array) {
+    for (size_t i = 0; i < arraySize; ++i, ++array) {
         ExtractRandomValue(min, max, *array);
     }
 }

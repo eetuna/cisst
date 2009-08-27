@@ -29,9 +29,9 @@ const cmnRandomSequence::ElementaryRandomNumber cmnRandomSequence::UpperRandomBo
 
 cmnRandomSequence cmnRandomSequence::RandomInstance;
 
-void cmnRandomSequence::ExtractRandomPermutation(const unsigned int length, unsigned int * array)
+void cmnRandomSequence::ExtractRandomPermutation(const size_t length, unsigned int * array)
 {
-    unsigned int i;
+    size_t i;
     for (i = 0; i < length; ++i)
         array[i] = ExtractRandomInt(0, length);
     
@@ -46,9 +46,9 @@ void cmnRandomSequence::ExtractRandomPermutation(const unsigned int length, unsi
 }
 
 
-void cmnRandomSequence::ExtractRandomPermutation(const unsigned long long int length, unsigned long long int * array)
+void cmnRandomSequence::ExtractRandomPermutation(const size_t length, unsigned long long int * array)
 {
-    unsigned long long i;
+    size_t i;
     for (i = 0; i < length; ++i)
         array[i] = ExtractRandomUnsignedLongLong(0, length);
     
