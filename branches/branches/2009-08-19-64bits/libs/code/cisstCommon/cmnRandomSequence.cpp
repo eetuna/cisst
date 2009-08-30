@@ -46,16 +46,16 @@ void cmnRandomSequence::ExtractRandomPermutation(const size_t length, unsigned i
 }
 
 
-void cmnRandomSequence::ExtractRandomPermutation(const size_t length, unsigned long long int * array)
+void cmnRandomSequence::ExtractRandomPermutation(const size_t length, unsigned long int * array)
 {
     size_t i;
     for (i = 0; i < length; ++i)
-        array[i] = ExtractRandomUnsignedLongLong(0, length);
+        array[i] = ExtractRandomUnsignedLong(0, length);
     
     unsigned long long next;
     unsigned long long tmp;
     for (i = 0; i < length; ++i) {
-        next = ExtractRandomUnsignedLongLong(i, length);
+        next = ExtractRandomUnsignedLong(i, length);
         tmp = array[i];
         array[i] = array[next];
         array[next] = tmp;

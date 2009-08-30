@@ -128,13 +128,11 @@ void vctFixedSizeMatrixTest::TestExchangeAndPermutation(void)
     const unsigned int col1 = randomSequence.ExtractRandomInt(0, COLS);
     const unsigned int col2 = randomSequence.ExtractRandomInt(0, COLS);
     vct::index_type rowPermutation[ROWS];
-#if 0 // adeguet1
     randomSequence.ExtractRandomPermutation(ROWS, rowPermutation);
     vct::index_type colPermutation[COLS];
     randomSequence.ExtractRandomPermutation(COLS, colPermutation);
     vctGenericMatrixTest::TestExchangeAndPermutationOperations(matrix, row1, row2, 
                                                                col1, col2, rowPermutation, colPermutation);
-#endif
 }
 
 void vctFixedSizeMatrixTest::TestExchangeAndPermutationDouble(void)
@@ -162,14 +160,14 @@ void vctFixedSizeMatrixTest::TestSelect(void)
     enum {OUTPUT_ROWS = 4, OUTPUT_COLS = 4};
     typedef _elementType value_type;
     vctFixedSizeMatrix<_elementType, INPUT_ROWS, INPUT_COLS> inputMatrix;
-    vctFixedSizeVector<unsigned int, OUTPUT_ROWS> rowIndexes;
-    vctFixedSizeVector<unsigned int, OUTPUT_COLS> colIndexes;
+    vctFixedSizeVector<vct::index_type, OUTPUT_ROWS> rowIndexes;
+    vctFixedSizeVector<vct::index_type, OUTPUT_COLS> colIndexes;
     vctFixedSizeMatrix<_elementType, OUTPUT_ROWS, INPUT_COLS> selectedRows;
     vctFixedSizeMatrix<_elementType, INPUT_ROWS, OUTPUT_COLS> selectedCols;
 
     vctRandom(inputMatrix, value_type(-10), value_type(10));
-    vctRandom(rowIndexes, (unsigned int)(0), (unsigned int)INPUT_ROWS);
-    vctRandom(colIndexes, (unsigned int)(0), (unsigned int)INPUT_COLS);
+    vctRandom(rowIndexes, static_cast<vct::index_type>(0), static_cast<vct::index_type>(INPUT_ROWS));
+    vctRandom(colIndexes, static_cast<vct::index_type>(0), static_cast<vct::index_type>(INPUT_COLS));
     vctGenericMatrixTest::TestSelect(inputMatrix, rowIndexes, colIndexes, selectedRows, selectedCols);
 }
 

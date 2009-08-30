@@ -24,8 +24,8 @@ SET(SOURCE_FILES
     vctDynamicMatrixTest.cpp
     vctDynamicMatrixRefTest.cpp
 
-#    vctDynamicNArrayTest.cpp
-#    vctDynamicNArrayRefTest.cpp
+    vctDynamicNArrayTest.cpp
+    vctDynamicNArrayRefTest.cpp
 
     vctDynamicVectorTest.cpp
     vctDynamicVectorRefTest.cpp

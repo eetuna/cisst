@@ -255,9 +255,9 @@ void vctDynamicMatrixTest::TestExchangeAndPermutation(void)
     const size_type col1 = randomSequence.ExtractRandomInt(0, COLS);
     const size_type col2 = randomSequence.ExtractRandomInt(0, COLS);
     index_type rowPermutation[ROWS];
-    // adeguet1, TO FIX randomSequence.ExtractRandomPermutation(ROWS, rowPermutation);
+    randomSequence.ExtractRandomPermutation(ROWS, rowPermutation);
     index_type colPermutation[COLS];
-    // adeguet1, TO FIX randomSequence.ExtractRandomPermutation(COLS, colPermutation);
+    randomSequence.ExtractRandomPermutation(COLS, colPermutation);
     vctGenericMatrixTest::TestExchangeAndPermutationOperations(matrix, row1, row2, 
                                                                col1, col2, rowPermutation, colPermutation);
 }
@@ -288,14 +288,14 @@ void vctDynamicMatrixTest::TestSelect(void)
     enum {OUTPUT_ROWS = 12, OUTPUT_COLS = 24};
     typedef _elementType value_type;
     vctDynamicMatrix<_elementType> inputMatrix(INPUT_ROWS, INPUT_COLS);
-    vctDynamicVector<unsigned int> rowIndexes(OUTPUT_ROWS);
-    vctDynamicVector<unsigned int> colIndexes(OUTPUT_COLS);
+    vctDynamicVector<vct::index_type> rowIndexes(OUTPUT_ROWS);
+    vctDynamicVector<vct::index_type> colIndexes(OUTPUT_COLS);
     vctDynamicMatrix<_elementType> selectedRows(OUTPUT_ROWS, INPUT_COLS);
     vctDynamicMatrix<_elementType> selectedCols(INPUT_ROWS, OUTPUT_COLS);
 
     vctRandom(inputMatrix, value_type(-10), value_type(10));
-    vctRandom(rowIndexes, (unsigned int)(0), (unsigned int)INPUT_ROWS);
-    vctRandom(colIndexes, (unsigned int)(0), (unsigned int)INPUT_COLS);
+    vctRandom(rowIndexes, static_cast<vct::index_type>(0), static_cast<vct::index_type>(INPUT_ROWS));
+    vctRandom(colIndexes, static_cast<vct::index_type>(0), static_cast<vct::index_type>(INPUT_COLS));
     vctGenericMatrixTest::TestSelect(inputMatrix, rowIndexes, colIndexes, selectedRows, selectedCols);
 }
 

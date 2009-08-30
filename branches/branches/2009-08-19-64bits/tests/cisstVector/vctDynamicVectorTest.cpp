@@ -253,7 +253,7 @@ void vctDynamicVectorTest::TestSelect(void)
     vctDynamicVector<_elementType> outputVector(OUTPUT_SIZE);
     vctDynamicVector<vct::index_type> indexVector(OUTPUT_SIZE);
     vctRandom(inputVector, _elementType(-10), _elementType(10));
-    vctRandom(indexVector, static_cast<vct::index_type>(0), static_cast<vct::index_type>(INPUT_SIZE));
+    vctRandom(indexVector, static_cast<vct::size_type>(0), static_cast<vct::size_type>(INPUT_SIZE));
     vctGenericVectorTest::TestSelect(inputVector, indexVector, outputVector);
 }
 

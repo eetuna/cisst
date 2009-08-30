@@ -46,7 +46,7 @@ void vctDynamicNArrayRefTest::TestRefOnArray(void)
     typedef typename ArrayType::nsize_type IndicesType;
 
     SizesType sizes;
-    vctRandom(sizes, static_cast<size_type>(MIN_SIZE), static_cast<size_type>(MAX_SIZE));
+    vctRandom(sizes, static_cast<index_type>(MIN_SIZE), static_cast<index_type>(MAX_SIZE));
 
     ArrayType nArray1(sizes);
     vctRandom(nArray1, static_cast<value_type>(-10), static_cast<value_type>(10));
@@ -130,6 +130,7 @@ void vctDynamicNArrayRefTest::TestSubarrayRef(void)
     typedef vctDynamicNArrayRef<value_type, DIMENSION> ArrayRefType;
     typedef vctDynamicConstNArrayRef<value_type, DIMENSION> ConstArrayRefType;
 
+    typedef typename ArrayType::size_type size_type;
     typedef typename ArrayType::index_type index_type;
     typedef typename ArrayType::nsize_type SizesType;
     typedef typename ArrayType::nsize_type IndicesType;
@@ -200,6 +201,7 @@ void vctDynamicNArrayRefTest::TestPermutationRef(void)
     typedef vctDynamicNArrayRef<value_type, DIMENSION> ArrayRefType;
     typedef vctDynamicConstNArrayRef<value_type, DIMENSION> ConstArrayRefType;
 
+    typedef typename ArrayType::size_type size_type;
     typedef typename ArrayType::index_type index_type;
     typedef typename ArrayType::nsize_type SizesType;
     typedef typename ArrayType::ndimension_type DimensionsType;
@@ -355,6 +357,7 @@ void vctDynamicNArrayRefTest::TestEngines(void)
     typedef vctDynamicNArray<value_type, DIMENSION> ArrayType;
     typedef vctDynamicNArrayRef<value_type, DIMENSION - 1> ArrayRefType;
 
+    typedef ArrayType::size_type size_type;
     typedef ArrayType::index_type index_type;
     typedef ArrayType::nsize_type larger_nsize_type;
     typedef ArrayType::nindex_type larger_nindex_type;
