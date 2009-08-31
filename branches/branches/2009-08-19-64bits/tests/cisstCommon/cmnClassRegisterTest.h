@@ -86,7 +86,9 @@ public:
         this->Elements[0] = 1;
         this->Elements[1] = 2;
     }
-    inline TestC2(const TestC2 & other) {
+    inline TestC2(const TestC2 & other):
+        TestC(other)
+    {
         this->Size = other.Size;
         if (this->Size != 0) {
             this->Elements = new double[this->Size];
