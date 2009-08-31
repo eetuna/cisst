@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector/vctDynamicConstVectorBase.h>
 #include <cisstVector/vctDynamicConstMatrixBase.h>
 
-template <vct::size_type _size, int _stride, class _elementType, class _dataPtrType>
+template <vct::size_type _size, vct::stride_type _stride, class _elementType, class _dataPtrType>
 bool cmnTypePrintf(cmnPrintfParser & parser, 
                    const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & vector)
 {
@@ -72,7 +72,7 @@ bool cmnTypePrintf(cmnPrintfParser & parser,
 }
 
 
-template <vct::size_type _rows, vct::size_type _cols, int _rowStride, int _colStride,
+template <vct::size_type _rows, vct::size_type _cols, vct::stride_type _rowStride, vct::stride_type _colStride,
 class _elementType, class _dataPtrType>
     inline bool cmnTypePrintf(cmnPrintfParser & parser, 
     const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride,
