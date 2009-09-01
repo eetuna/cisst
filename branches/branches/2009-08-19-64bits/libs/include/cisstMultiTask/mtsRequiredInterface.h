@@ -182,11 +182,11 @@ protected:
            if (!isRequired)
                outputStream << "(OPT)";
         }
-        const unsigned int GetCommandID() const
+        unsigned int GetCommandID(void) const
         {
             return (*cmdPtr)->GetCommandID();
         }
-        const std::string GetName() const
+        std::string GetName(void) const
         {
             return (*cmdPtr)->GetName();
         }

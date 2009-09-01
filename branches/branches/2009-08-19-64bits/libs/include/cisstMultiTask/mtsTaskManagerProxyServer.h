@@ -58,12 +58,12 @@ public:
     void Start(mtsTaskManager * callingTaskManager);
 
     /*! Change the proxy state as active. */
-    void SetAsActiveProxy() {
+    void SetAsActiveProxy(void) {
         ChangeProxyState(mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
     }
 
     /*! Return true if the current proxy state is active. */
-    const bool IsActiveProxy() const {
+    bool IsActiveProxy(void) const {
         return (ProxyState == mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
     }
 

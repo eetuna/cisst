@@ -82,6 +82,9 @@ protected:
     EventHandlerWriteProxyMapType EventHandlerWriteProxyMap;
 
 public:
+
+    typedef long int CommandIdType;
+ 
     /*! Create a required interface proxy, populate it with commands and events, and 
         returns the pointer to it. */
     mtsRequiredInterface * CreateRequiredInterfaceProxy(

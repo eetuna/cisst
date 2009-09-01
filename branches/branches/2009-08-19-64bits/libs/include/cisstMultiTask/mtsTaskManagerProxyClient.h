@@ -50,17 +50,17 @@ public:
     void Start(mtsTaskManager * callingTaskManager);
 
     /*! Change the proxy state as active. */
-    void SetAsActiveProxy() {
+    void SetAsActiveProxy(void) {
         ChangeProxyState(mtsProxyBaseClient<mtsTaskManager>::PROXY_ACTIVE);
     }
 
     /*! Return true if the current proxy state is active. */
-    const bool IsActiveProxy() const {
+    bool IsActiveProxy(void) const {
         return (ProxyState == mtsProxyBaseClient<mtsTaskManager>::PROXY_ACTIVE);
     }
 
     /*! End the proxy. */
-    void Stop();
+    void Stop(void);
 
 protected:
     typedef mtsProxyBaseClient<mtsTaskManager> BaseType;

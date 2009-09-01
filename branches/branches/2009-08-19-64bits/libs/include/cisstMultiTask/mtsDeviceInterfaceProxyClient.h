@@ -53,21 +53,21 @@ public:
     void Start(mtsTask * callingTask);
 
     /*! Change the proxy state as active. */
-    void SetAsActiveProxy() {
+    void SetAsActiveProxy(void) {
         ChangeProxyState(mtsProxyBaseClient<mtsTask>::PROXY_ACTIVE);
     }
 
     /*! Return true if the current proxy state is active. */
-    const bool IsActiveProxy() const {
+    bool IsActiveProxy(void) const {
         return (ProxyState == mtsProxyBaseClient<mtsTask>::PROXY_ACTIVE);
     }
 
-    void ShutdownSession() {
+    void ShutdownSession(void) {
         mtsProxyBaseClient<mtsTask>::ShutdownSession();
     }
 
     /*! Stop the proxy. */
-    void Stop();
+    void Stop(void);
 
 protected:
     /*! Typedef for base type. */
@@ -120,7 +120,7 @@ public:
     //-------------------------------------------------------------------------
     //  Methods to Send Events (Client -> Server)
     //-------------------------------------------------------------------------
-    const bool SendGetProvidedInterfaceInfo(
+    bool SendGetProvidedInterfaceInfo(
         const std::string & providedInterfaceName,
         mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
