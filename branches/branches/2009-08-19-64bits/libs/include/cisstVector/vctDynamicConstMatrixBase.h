@@ -1083,8 +1083,8 @@ public:
         const size_type myCols = cols();
         size_type indexRow, indexCol;
         
-        cmnSerializeRaw(outputStream, myRows);
-        cmnSerializeRaw(outputStream, myCols);
+        cmnSerializeSizeRaw(outputStream, myRows);
+        cmnSerializeSizeRaw(outputStream, myCols);
         for (indexRow = 0; indexRow < myRows; ++indexRow) {
             for (indexCol = 0; indexCol < myCols; ++indexCol) {
                 cmnSerializeRaw(outputStream, this->Element(indexRow, indexCol));

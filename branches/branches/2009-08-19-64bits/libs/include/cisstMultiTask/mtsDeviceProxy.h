@@ -83,10 +83,12 @@ protected:
 
 public:
 
+    /*! Type defined to be large enough to cast back and forth to
+      command pointer */
     typedef long int CommandIdType;
  
-    /*! Create a required interface proxy, populate it with commands and events, and 
-        returns the pointer to it. */
+    /*! Create a required interface proxy, populate it with commands
+      and events, and returns the pointer to it. */
     mtsRequiredInterface * CreateRequiredInterfaceProxy(
         mtsProvidedInterface * providedInterface, const std::string & requiredInterfaceName,
         mtsDeviceInterfaceProxyServer * proxyServer);
@@ -109,7 +111,9 @@ protected:
     EventWriteGeneratorProxyMapType EventWriteGeneratorProxyMap;
 
 public:
-    /*! Create a provided interface proxy and returns the pointer to it. */
+    /*! Create a provided interface proxy and returns the pointer to it. All command
+        proxies and event generator proxies are dynamically created here based on the 
+        information received from the server. */
     mtsProvidedInterface * CreateProvidedInterfaceProxy(
         mtsDeviceInterfaceProxyClient * proxyClient,
         const mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);

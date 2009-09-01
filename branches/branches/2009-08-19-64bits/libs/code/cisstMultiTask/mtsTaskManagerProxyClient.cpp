@@ -77,7 +77,11 @@ void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
         ThreadArgumentsInfo.Runner = mtsTaskManagerProxyClient::Runner;
 
         WorkerThread.Create<ProxyWorker<mtsTaskManager>, ThreadArguments<mtsTaskManager>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, "S-PRX");
+            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, 
+            // Set the name of this thread as TMC which means Task Manager Client.
+            // This is to avoid the thread name conflict with mtsDeviceInterfaceProxyClient
+            // class because Linux RTAI doesn't allow two threads to have the same thread name.
+            "TMC");
     }
 }
 
@@ -200,7 +204,7 @@ mtsDeviceInterface * mtsTaskManagerProxyClient::GetProvidedInterfaceProxy(
         return NULL;
     }
 
-    // Create a provided interface proxy using the information received from the 
+    // 5. Create a provided interface proxy using the information received from the 
     // server task.
     mtsDeviceInterface * providedInterfaceProxy = 
         serverTaskProxy->CreateProvidedInterfaceProxy(
@@ -312,7 +316,7 @@ mtsTaskManagerProxyClient::TaskManagerClientI::TaskManagerClientI(const Ice::Com
                                                                   mtsTaskManagerProxyClient * taskManagerClient):
     Runnable(true), 
     Communicator(communicator),
-    Sender(new SendThread<TaskManagerClientIPtr>(this)),
+    SenderThreadPtr(new SenderThread<TaskManagerClientIPtr>(this)),
     Logger(logger),
     Server(server),
     TaskManagerClient(taskManagerClient)
@@ -323,7 +327,7 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Start()
 {
     CMN_LOG_RUN_VERBOSE << "TaskManagerProxyClient: Send thread starts" << std::endl;
 
-    Sender->start();
+    SenderThreadPtr->start();
 }
 
 void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
@@ -334,7 +338,7 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Run()
         static int num = 0;
         std::cout << "client send: " << ++num << std::endl;
 #endif
-        timedWait(IceUtil::Time::milliSeconds(10));
+        osaSleep(10 * cmn_ms);
     }
 }
 
@@ -349,8 +353,8 @@ void mtsTaskManagerProxyClient::TaskManagerClientI::Stop()
         Runnable = false;
         notify();
 
-        callbackSenderThread = Sender;
-        Sender = 0; // Resolve cyclic dependency.
+        callbackSenderThread = SenderThreadPtr;
+        SenderThreadPtr = 0; // Resolve cyclic dependency.
     }
     callbackSenderThread->getThreadControl().join();
 }

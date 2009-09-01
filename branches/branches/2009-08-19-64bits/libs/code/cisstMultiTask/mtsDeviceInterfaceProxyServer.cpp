@@ -20,6 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnSerializer.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsTaskManager.h>
@@ -64,7 +65,11 @@ void mtsDeviceInterfaceProxyServer::Start(mtsTask * callingTask)
         ThreadArgumentsInfo.Runner = mtsDeviceInterfaceProxyServer::Runner;
 
         WorkerThread.Create<ProxyWorker<mtsTask>, ThreadArguments<mtsTask>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsTask>::Run, &ThreadArgumentsInfo, "C-PRX");
+            &ProxyWorkerInfo, &ProxyWorker<mtsTask>::Run, &ThreadArgumentsInfo, 
+            // Set the name of this thread as DIS which means Device Interface Server.
+            // This is to avoid the thread name conflict with mtsTaskManagerProxyServer
+            // class because Linux RTAI doesn't allow two threads to have the same thread name.
+            "DIS");
     }
 }
 
@@ -186,6 +191,19 @@ bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaceInfo(
     providedInterfaceInfo.InterfaceName = providedInterface->GetName();
             
     // 3. Extract all the information on the command objects, events, and so on.
+    // Note that argument prototypes should be serialized as well, if any.
+
+    // Serialization
+    std::stringstream streamBuffer;
+    cmnSerializer serializer(streamBuffer);
+
+    //mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator it
+    //    = providedInterface->CommandsWrite.GetMap().begin();
+    //mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itEnd
+    //    = providedInterface->CommandsWrite.GetMap().end();
+    //for (; it != itEnd; ++it) {
+    //    mtsDeviceInterfaceProxy::CommandWriteInfo info;
+    //}
 #define ITERATE_COMMAND_BEGIN(_commandType) \
     mtsDeviceInterface::Command##_commandType##MapType::MapType::const_iterator iterator##_commandType = \
         providedInterface->Commands##_commandType.GetMap().begin();\
@@ -199,23 +217,35 @@ bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaceInfo(
     }
 
     // 3-1. Command: Void
-    ITERATE_COMMAND_BEGIN(Void);            
+    ITERATE_COMMAND_BEGIN(Void);
     ITERATE_COMMAND_END(Void);
 
     // 3-2. Command: Write
     ITERATE_COMMAND_BEGIN(Write);
-        info.ArgumentTypeName = iteratorWrite->second->GetArgumentClassServices()->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(iteratorWrite->second->GetArgumentPrototype()));
+        info.ArgumentPrototypeSerialized = streamBuffer.str();
     ITERATE_COMMAND_END(Write);
 
     // 3-3. Command: Read
     ITERATE_COMMAND_BEGIN(Read);
-        info.ArgumentTypeName = iteratorRead->second->GetArgumentClassServices()->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(iteratorRead->second->GetArgumentPrototype()));
+        info.ArgumentPrototypeSerialized = streamBuffer.str();
     ITERATE_COMMAND_END(Read);
 
     // 3-4. Command: QualifiedRead
     ITERATE_COMMAND_BEGIN(QualifiedRead);
-        info.Argument1TypeName = iteratorQualifiedRead->second->GetArgument1Prototype()->Services()->GetName();
-        info.Argument2TypeName = iteratorQualifiedRead->second->GetArgument2Prototype()->Services()->GetName();
+        // argument1 serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(iteratorQualifiedRead->second->GetArgument1Prototype()));
+        info.Argument1PrototypeSerialized = streamBuffer.str();
+        // argument2 serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(iteratorQualifiedRead->second->GetArgument2Prototype()));
+        info.Argument2PrototypeSerialized = streamBuffer.str();
     ITERATE_COMMAND_END(QualifiedRead);
 
     // for debug
@@ -245,6 +275,10 @@ bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaceInfo(
 
     // 3-6) Event: Write
     ITERATE_EVENT_BEGIN(Write);
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(iteratorEventWrite->second->GetArgumentPrototype()));
+        info.ArgumentPrototypeSerialized = streamBuffer.str();
     ITERATE_EVENT_END(Write);
 
 #undef ITERATE_COMMAND_BEGIN
@@ -255,7 +289,7 @@ bool mtsDeviceInterfaceProxyServer::ReceiveGetProvidedInterfaceInfo(
     return true;
 }
 
-bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
+bool mtsDeviceInterfaceProxyServer::ReceiveCreateClientProxies(
     const std::string & userTaskName, const std::string & requiredInterfaceName,
     const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
@@ -290,23 +324,49 @@ bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
         return false;
     }
 
-    /*
-    // Get the list of events from the client that are actually bound and 
-    // will be used.
-    const std::string serverTaskProxyName = mtsDeviceProxy::GetServerTaskProxyName(
-        resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
-    mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered eventHandlers;
+    //
+    //
+    //  RECOVER EVENT HANDLER'S ARGUMENT PROTOTYPE HERE!!!
+    //
+    //
 
-    if (!ConnectedClient->GetListsOfEventGeneratorsRegistered(
-            serverTaskProxyName, userTaskName, requiredInterfaceName, eventHandlers))
-    {
+    return true;
+}
+
+bool mtsDeviceInterfaceProxyServer::ReceiveConnectServerSide(
+    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+
+    const std::string clientTaskProxyName = mtsDeviceProxy::GetClientTaskProxyName(
+        resourceTaskName, providedInterfaceName, userTaskName, requiredInterfaceName);
+
+    /*
+    // Get an original provided interface.
+    mtsProvidedInterface * providedInterface = GetProvidedInterface(
+        resourceTaskName, providedInterfaceName);
+    if (!providedInterface) {
         DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
-            "Failed getting the list of event handlers registered: " + 
-            serverTaskProxyName);
+            "Failed looking up a provided interface: " + providedInterfaceName);
         return false;
-    } else {
-        // Update the event handler proxy id and enable the events.
-        clientTaskProxy->UpdateEventHandlerId(eventHandlers);
+    }
+
+    // Create a client task proxy (mtsDeviceProxy).
+    mtsDeviceProxy * clientTaskProxy = new mtsDeviceProxy(clientTaskProxyName);
+    if (!taskManager->AddDevice(clientTaskProxy)) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Failed adding a device proxy: " + clientTaskProxyName);
+        return false;
+    }
+
+    // Create and populate a required interface proxy (mtsRequiredInterface)
+    if (!clientTaskProxy->CreateRequiredInterfaceProxy(
+            providedInterface, requiredInterfaceName, this)) {
+        DeviceInterfaceProxyServerLoggerError("ReceiveConnectServerSide",
+            "Failed creating a required interface proxy: " + 
+            requiredInterfaceName + " @ " + clientTaskProxy->GetName());
+        return false;
     }
     */
 
@@ -376,11 +436,16 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandWriteSerialized(
     IceLogger->trace("TIServer", buf);
 
     // Deserialization
-    DeSerializationBuffer.str("");
-    DeSerializationBuffer << argument;
-    
-    const mtsGenericObject * obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
-    CMN_ASSERT(obj);
+    const mtsGenericObject * obj;
+    //CommandExecution.Lock();
+    {
+        DeSerializationBuffer.str("");
+        DeSerializationBuffer << argument;
+
+        obj = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
+        CMN_ASSERT(obj);
+    }
+    //CommandExecution.Unlock();
 
     (*functionWrite)(*obj);
 }
@@ -420,11 +485,16 @@ void mtsDeviceInterfaceProxyServer::ReceiveExecuteCommandQualifiedReadSerialized
     IceLogger->trace("TIServer", buf);
 
     // Deserialization for argument1
-    DeSerializationBuffer.str("");
-    DeSerializationBuffer << argument1;
+    const mtsGenericObject * argumentIn;
+    //CommandExecution.Lock();
+    {
+        DeSerializationBuffer.str("");
+        DeSerializationBuffer << argument1;
 
-    const mtsGenericObject * argumentIn = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
-    CMN_ASSERT(argumentIn);
+        argumentIn = dynamic_cast<mtsGenericObject *>(DeSerializer->DeSerialize());
+        CMN_ASSERT(argumentIn);
+    }
+    //CommandExecution.Unlock();
     
     mtsGenericObject * placeHolder = dynamic_cast<mtsGenericObject *>(
         functionQualifiedRead->GetCommand()->GetArgument2ClassServices()->Create());
@@ -482,7 +552,7 @@ mtsDeviceInterfaceProxyServer
     Logger(logger),
     DeviceInterfaceServer(deviceInterfaceServer),
     Runnable(true),
-    Sender(new SendThread<DeviceInterfaceServerIPtr>(this))
+    SenderThreadPtr(new SenderThread<DeviceInterfaceServerIPtr>(this))
 {
 }
 
@@ -491,7 +561,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Start()
     DeviceInterfaceServer->GetLogger()->trace(
         "mtsDeviceInterfaceProxyServer", "Send thread starts");
 
-    Sender->start();
+    SenderThreadPtr->start();
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
@@ -502,7 +572,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Run()
 
     while(Runnable)
     {
-        timedWait(IceUtil::Time::milliSeconds(10));
+        osaSleep(10 * cmn_ms);
 
 #ifdef _COMMUNICATION_TEST_
         if(!clients.empty())
@@ -541,8 +611,8 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::Stop()
 
         notify();
 
-        callbackSenderThread = Sender;
-        Sender = 0; // Resolve cyclic dependency.
+        callbackSenderThread = SenderThreadPtr;
+        SenderThreadPtr = 0; // Resolve cyclic dependency.
     }
     callbackSenderThread->getThreadControl().join();
 }
@@ -582,6 +652,17 @@ bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetProvidedInterface
 
     return DeviceInterfaceServer->ReceiveGetProvidedInterfaceInfo(
         providedInterfaceName, providedInterfaceInfo);
+}
+
+bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::CreateClientProxies(
+    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName,
+    const ::Ice::Current&)
+{
+    Logger->trace("TIServer", "<<<<< RECV: CreateClientProxies");
+    
+    return DeviceInterfaceServer->ReceiveCreateClientProxies(
+        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
 bool mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ConnectServerSide(

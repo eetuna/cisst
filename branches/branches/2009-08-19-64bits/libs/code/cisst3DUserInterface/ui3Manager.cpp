@@ -90,7 +90,7 @@ bool ui3Manager::SetupMaM(mtsDevice * mamDevice, const std::string & mamInterfac
 
 
 bool ui3Manager::AddRenderer(unsigned int width, unsigned int height, int x, int y,
-                             vctFrm3 & cameraframe, double viewangle, vct2 opticalcenteroffset,
+                             svlCameraGeometry & camgeometry, unsigned int camid,
                              const std::string & renderername)
 {
     if (width < 1 || height < 1 || renderername.empty()) return false;
@@ -103,9 +103,8 @@ bool ui3Manager::AddRenderer(unsigned int width, unsigned int height, int x, int
     renderer->height = height;
     renderer->windowposx = x;
     renderer->windowposy = y;
-    renderer->cameraframe = cameraframe;
-    renderer->viewangle = viewangle;
-    renderer->opticalcenteroffset = opticalcenteroffset;
+    renderer->camgeometry = camgeometry;
+    renderer->camid = camid;
     renderer->name = renderername;
     renderer->renderer = 0;
     renderer->rendertarget = 0;
@@ -198,9 +197,9 @@ bool ui3Manager::AddBehavior(ui3BehaviorBase * behavior,
     requiredInterface = behavior->AddRequiredInterface("ManagerInterface" + behavior->GetName());
     CMN_ASSERT(requiredInterface);
     requiredInterface->AddEventHandlerWrite(&ui3BehaviorBase::PrimaryMasterButtonCallback,
-                                            behavior, "PrimaryMasterButton", prmEventButton());
+                                            behavior, "PrimaryMasterButton");
     requiredInterface->AddEventHandlerWrite(&ui3BehaviorBase::SecondaryMasterButtonCallback,
-                                            behavior, "SecondaryMasterButton", prmEventButton());
+                                            behavior, "SecondaryMasterButton");
     std::string interfaceName("BehaviorInterface" + behavior->GetName());
     mtsProvidedInterface * providedInterface;
     providedInterface = this->AddProvidedInterface(interfaceName);
@@ -517,7 +516,7 @@ bool ui3Manager::SetupRenderers()
     CMN_LOG_CLASS_INIT_VERBOSE << "Setting up VTK renderers: begin" << std::endl;
 
     unsigned int i;
-    double bgheight, bgwidth;
+    double bgheight, bgwidth, viewangle;
     const unsigned int renderercount = this->Renderers.size();
 
     for (i = 0; i < renderercount; i ++) {
@@ -525,9 +524,8 @@ bool ui3Manager::SetupRenderers()
         Renderers[i]->renderer = new ui3VTKRenderer(this->SceneManager,
                                                     this->Renderers[i]->width,
                                                     this->Renderers[i]->height,
-                                                    this->Renderers[i]->viewangle,
-                                                    this->Renderers[i]->cameraframe,
-                                                    this->Renderers[i]->opticalcenteroffset,
+                                                    this->Renderers[i]->camgeometry,
+                                                    this->Renderers[i]->camid,
                                                     this->Renderers[i]->rendertarget);
         CMN_ASSERT(this->Renderers[i]->renderer);
 
@@ -543,7 +541,8 @@ bool ui3Manager::SetupRenderers()
                                                           GetStreamHeight(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel));
 
             // Calculate plane height to cover the whole vertical field of view
-            bgheight = VIDEO_BACKGROUND_DISTANCE * tan((this->Renderers[i]->renderer->GetViewAngle() / 2.0) * 3.14159265 / 180.0) * 2.0;
+            viewangle = this->Renderers[i]->camgeometry.GetViewAngleVertical(this->Renderers[i]->height, this->Renderers[i]->camid);
+            bgheight = VIDEO_BACKGROUND_DISTANCE * 2.0 * tan(viewangle * 3.14159265 / 360.0);
             // Calculate plane width from plane height and the bitmap aspect ratio
             bgwidth = bgheight *
                       GetStreamWidth(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel) /

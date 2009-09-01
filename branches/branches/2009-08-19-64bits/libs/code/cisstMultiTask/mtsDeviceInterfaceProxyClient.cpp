@@ -74,7 +74,11 @@ void mtsDeviceInterfaceProxyClient::Start(mtsTask * callingTask)
         ThreadArgumentsInfo.Runner = mtsDeviceInterfaceProxyClient::Runner;
 
         WorkerThread.Create<ProxyWorker<mtsTask>, ThreadArguments<mtsTask>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsTask>::Run, &ThreadArgumentsInfo, "S-PRX");
+            &ProxyWorkerInfo, &ProxyWorker<mtsTask>::Run, &ThreadArgumentsInfo, 
+            // Set the name of this thread as DIC which means Device Interface Client.
+            // This is to avoid the thread name conflict with mtsTaskManagerProxyClient
+            // class because Linux RTAI doesn't allow two threads to have the same thread name.
+            "DIC");
     }
 }
 
@@ -182,7 +186,19 @@ void mtsDeviceInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
     IceLogger->trace("TIClient", buf);
 
     // Deserialization
-    DeSerializationBuffer.str("");
+	/*
+    mtsMulticastCommandWriteProxy * eventWriteGeneratorProxy;
+    CommandExecution.Lock();
+    {
+        DeSerializationBuffer.str("");
+        DeSerializationBuffer << argument;
+
+        eventWriteGeneratorProxy = reinterpret_cast<mtsMulticastCommandWriteProxy*>(commandId);
+        CMN_ASSERT(eventWriteGeneratorProxy);
+    }
+    CommandExecution.Unlock();
+	*/
+	DeSerializationBuffer.str("");
     DeSerializationBuffer << argument;
     
     mtsMulticastCommandWriteProxy * eventWriteGeneratorProxy = 
@@ -208,6 +224,18 @@ bool mtsDeviceInterfaceProxyClient::SendGetProvidedInterfaceInfo(
 
     return DeviceInterfaceServerProxy->GetProvidedInterfaceInfo(
         providedInterfaceName, providedInterfaceInfo);
+}
+
+bool mtsDeviceInterfaceProxyClient::SendCreateClientProxies(
+    const std::string & userTaskName, const std::string & requiredInterfaceName,
+    const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    if (!IsValidSession) return false;
+
+    IceLogger->trace("TIClient", ">>>>> SEND: SendCreateClientProxies");
+
+    return DeviceInterfaceServerProxy->CreateClientProxies(
+        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
 }
 
 bool mtsDeviceInterfaceProxyClient::SendConnectServerSide(
@@ -322,7 +350,7 @@ mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::DeviceInterfaceClientI(co
                                                                               mtsDeviceInterfaceProxyClient * deviceInterfaceClient):
     Runnable(true), 
     Communicator(communicator),
-    Sender(new SendThread<DeviceInterfaceClientIPtr>(this)),
+    SenderThreadPtr(new SenderThread<DeviceInterfaceClientIPtr>(this)),
     Logger(logger),
     Server(server),
     DeviceInterfaceClient(deviceInterfaceClient)
@@ -334,14 +362,14 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Start()
     DeviceInterfaceClient->GetLogger()->trace(
         "mtsDeviceInterfaceProxyClient", "Send thread starts");
 
-    Sender->start();
+    SenderThreadPtr->start();
 }
 
 void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Run()
 {
     while (Runnable)
     {
-        timedWait(IceUtil::Time::milliSeconds(10));
+        osaSleep(10 * cmn_ms);
     }
 }
 
@@ -356,8 +384,8 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Stop()
         Runnable = false;
         notify();
 
-        callbackSenderThread = Sender;
-        Sender = 0; // Resolve cyclic dependency.
+        callbackSenderThread = SenderThreadPtr;
+        SenderThreadPtr = 0; // Resolve cyclic dependency.
     }
     callbackSenderThread->getThreadControl().join();
 }

@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsDeviceInterfaceProxyClient_h
 #define _mtsDeviceInterfaceProxyClient_h
 
+//#include <cisstOSAbstraction/osaMutex.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
@@ -79,6 +80,10 @@ protected:
     /*! Pointer to the task connected. */
     mtsTask * ConnectedTask;
 
+    /*! Mutex to prevent the ICE library from calling a callback function before 
+        the previous function call has not completed yet. */
+    //osaMutex CommandExecution;
+
     /*! Connected server object */
     DeviceInterfaceServerProxyType DeviceInterfaceServerProxy;
     
@@ -124,6 +129,10 @@ public:
         const std::string & providedInterfaceName,
         mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
 
+    bool SendCreateClientProxies(
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
+
     bool SendConnectServerSide(
         const std::string & userTaskName, const std::string & requiredInterfaceName,
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
@@ -152,7 +161,7 @@ protected:
     private:
         bool Runnable;
         Ice::CommunicatorPtr Communicator;        
-        IceUtil::ThreadPtr Sender;
+        IceUtil::ThreadPtr SenderThreadPtr;
         Ice::LoggerPtr Logger;
         mtsDeviceInterfaceProxy::DeviceInterfaceServerPrx Server;
         mtsDeviceInterfaceProxyClient * DeviceInterfaceClient;

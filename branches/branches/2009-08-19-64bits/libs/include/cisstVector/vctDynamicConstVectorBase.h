@@ -978,7 +978,7 @@ public:
         const size_type mySize = size();
         size_type index;
         
-        cmnSerializeRaw(outputStream, mySize);
+        cmnSerializeSizeRaw(outputStream, mySize);
         for (index = 0; index < mySize; ++index) {
             cmnSerializeRaw(outputStream, this->Element(index));
         }

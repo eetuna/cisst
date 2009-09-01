@@ -19,7 +19,7 @@ serverTask::serverTask(const std::string & taskName, double period):
     // add one interface, this will create an mtsTaskInterface
     mtsProvidedInterface * provided = AddProvidedInterface("Provided");
     if (provided) {
-        provided->AddCommandVoid(&serverTask::Toggle, this, "Toggle");
+        provided->AddCommandVoid(&serverTask::Void, this, "Void");
         provided->AddCommandWrite(&serverTask::Write, this, "Write");
         provided->AddCommandReadState(this->StateTable, this->ReadValue, "Read");
         provided->AddCommandQualifiedRead(&serverTask::QualifiedRead, this, "QualifiedRead");
@@ -29,15 +29,15 @@ serverTask::serverTask(const std::string & taskName, double period):
 }
 
 
-void serverTask::Toggle(void)
+void serverTask::Void(void)
 {
-    CMN_LOG_CLASS_RUN_VERBOSE << "Toggle" << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "Void" << std::endl;
     fltkMutex.Lock();
     {
-        if (UI.ToggleValue->value() == 0) {
-            UI.ToggleValue->value(1);
+        if (UI.VoidValue->value() == 0) {
+            UI.VoidValue->value(1);
         } else {
-            UI.ToggleValue->value(0);
+            UI.VoidValue->value(0);
         }
     }
     fltkMutex.Unlock();

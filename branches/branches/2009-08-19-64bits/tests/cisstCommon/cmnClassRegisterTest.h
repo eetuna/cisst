@@ -136,11 +136,9 @@ class cmnClassRegisterTest : public CppUnit::TestFixture
     CPPUNIT_TEST_SUITE_END();
     
  public:
-    void setUp(void) {
-    }
-    
-    void tearDown(void) {
-    }
+    void setUp(void);
+
+    void tearDown(void);
     
     /*! Test the class registration. */
     void TestRegistration(void);
@@ -166,6 +164,10 @@ class cmnClassRegisterTest : public CppUnit::TestFixture
 
     /*! Test iterators */
     void TestIterators(void);
+
+protected:
+    /* add an output stream to check the log */
+    std::stringstream OutputStream;
 };
 
 

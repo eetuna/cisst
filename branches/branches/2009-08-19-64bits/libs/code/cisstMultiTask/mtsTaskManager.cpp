@@ -37,7 +37,9 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 mtsTaskManager::mtsTaskManager():
     TaskMap("Tasks"),
-    DeviceMap("Devices")
+    DeviceMap("Devices"),
+    JGraphSocket(osaSocket::TCP),
+    JGraphSocketConnected(false)
 #if CISST_MTS_HAS_ICE
     ,
     TaskManagerTypeMember(TASK_MANAGER_LOCAL),
@@ -50,10 +52,26 @@ mtsTaskManager::mtsTaskManager():
     TaskMap.SetOwner(*this);
     DeviceMap.SetOwner(*this);
     TimeServer.SetTimeOrigin();
+    // Try to connect to the JGraph application software (Java program).
+    // Note that the JGraph application also sends event messages back via the socket,
+    // though we don't currently read them. To do this, it would be best to implement
+    // the TaskManager as a periodic task.
+    JGraphSocketConnected = JGraphSocket.Connect("127.0.0.1", 4444);
+    if (JGraphSocketConnected) {
+        osaSleep(1.0 * cmn_s);  // need to wait or JGraph server will not start properly
+    } else {
+        CMN_LOG_CLASS_INIT_WARNING << "Failed to connect to JGraph server" << std::endl;
+    }
 }
 
 
 mtsTaskManager::~mtsTaskManager()
+{
+    // this should remain empty, please use Cleanup instead!
+}
+
+
+void mtsTaskManager::Cleanup(void)
 {
     this->Kill();
 
@@ -71,6 +89,9 @@ mtsTaskManager::~mtsTaskManager()
         delete ProxyTaskManagerClient;
     }
 #endif
+
+    JGraphSocket.Close();
+    JGraphSocketConnected = false;
 }
 
 
@@ -84,7 +105,12 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
     bool result = TaskMap.AddItem(task->GetName(), task, CMN_LOG_LOD_INIT_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddTask: added task named "
-                                   << task->GetName() << std::endl;    
+                                   << task->GetName() << std::endl;
+        if (JGraphSocketConnected) {
+            std::string buffer = task->ToGraphFormat();
+            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
+            JGraphSocket.Send(buffer);
+        }
     }
     return result;
 }
@@ -111,6 +137,11 @@ bool mtsTaskManager::AddDevice(mtsDevice * device) {
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddDevice: added device named "
                                    << device->GetName() << std::endl;
+        if (JGraphSocketConnected) {
+            std::string buffer = device->ToGraphFormat();
+            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer;
+            JGraphSocket.Send(buffer);
+        }
     }
     return result;
 }
@@ -329,7 +360,7 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     }
     // find the interface pointer from the local resource first
     mtsTask * clientTask = 0;
-    mtsDeviceInterface * resourceInterface;
+    mtsDeviceInterface * resourceInterface = 0;
     if (resourceDevice) {
         // Note that a SERVER task has to be able to get resource interface pointer here
         // (a SERVER task should not reach here).
@@ -390,11 +421,45 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
     AssociationSet.insert(association);
     CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << requiredInterfaceName
                                << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+    if (JGraphSocketConnected) {
+        std::string message = "add edge [" + userTaskName + ", " + resourceTaskName + ", "
+                                           + requiredInterfaceName + ", " + providedInterfaceName + "]\n";
+        CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message;
+        JGraphSocket.Send(message);
+    }
+
 #if CISST_MTS_HAS_ICE
     if (requestServerSideConnect) {
         // At client side, if the connection between the actual required interface and 
-        // the provided interface proxy is established successfully, connect the actual 
-        // provided interface with the required interface proxy at server side.
+        // the provided interface proxy is established successfully, request the server
+        // that it connects the actual provided interface with the required interface proxy.
+        // This server-side connection consists of two steps: 
+        // a. CreateClientProxies() and b. ConnectServerSide()
+
+        // a. CreateClientProxies()
+        // Let the server create client proxy objects (e.g. client task proxy, required 
+        // interface proxy). Note that this command contains the serialized argument 
+        // prototypes of the actual event handlers'.
+
+        //
+        //
+        //  TODO: EXTRACT AND TRANSMIT THE EVENT HANDLER'S ARGUMENT PROTOTYPES
+        //
+        //
+
+        if (!clientTask->SendCreateClientProxies(requiredInterfaceName,
+                                                 userTaskName, requiredInterfaceName,
+                                                 resourceTaskName, providedInterfaceName))
+        {
+            CMN_LOG_CLASS_INIT_ERROR << "Connect: server side proxy creation failed." << std::endl;
+            return false;
+        }
+
+        // b. ConnectServerSide()
+        // Now that we have all the proxy objects for both sides (server and client),
+        // the remaining process is to simply connect two sets of interfaces--actual
+        // provided interface and required interface proxy at the server side and
+        // actual required interface and provided interface proxy at the client side.
         if (!clientTask->SendConnectServerSide(requiredInterfaceName,
                                                userTaskName, requiredInterfaceName,
                                                resourceTaskName, providedInterfaceName))

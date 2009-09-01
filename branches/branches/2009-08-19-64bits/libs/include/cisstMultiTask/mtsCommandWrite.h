@@ -41,6 +41,7 @@ http://www.cisst.org/cisst/license.txt.
   contained in the command object. */
 template <class _classType, class _argumentType>
 class mtsCommandWrite: public mtsCommandWriteBase {
+
 public:
     typedef _argumentType ArgumentType;
     typedef mtsCommandWriteBase BaseType;
@@ -67,15 +68,15 @@ protected:
     /*! Stores the receiver object of the command */
     ClassType * ClassInstantiation;
 
-    /*! Argument prototype */
-    ArgumentType ArgumentPrototype;
-
-public:
+private:
     /*! The constructor. Does nothing */
     mtsCommandWrite(void): BaseType() {}
     
-    
+public:
     /*! The constructor.
+    //
+    // FIXME: this needs to be updated.
+    //
       \param action Pointer to the member function that is to be called
       by the invoker of the command
       \param interface Pointer to the receiver of the command
@@ -84,13 +85,18 @@ public:
                     const ArgumentType & argumentPrototype):
         BaseType(name),
         Action(action),
-        ClassInstantiation(classInstantiation),
-        ArgumentPrototype(argumentPrototype)
-    {}
+        ClassInstantiation(classInstantiation)
+    {
+        this->ArgumentPrototype = new ArgumentType(argumentPrototype);
+    }
 
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCommandWrite() {}
+    virtual ~mtsCommandWrite() {
+        if (this->ArgumentPrototype) {
+            delete this->ArgumentPrototype;
+        }
+    }
 
     
     /*! The execute method. Calling the execute method from the invoker
@@ -119,15 +125,10 @@ public:
     }
 
     /* commented in base class */
-    const mtsGenericObject * GetArgumentPrototype(void) const {
-        return &ArgumentPrototype;
-    }
-
-    /* commented in base class */
     virtual void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandWrite: ";
         if (this->ClassInstantiation) {
-            outputStream << this->Name << "(const " << this->ArgumentPrototype.ClassServices()->GetName() << "&) using class/object \""
+            outputStream << this->Name << "(const " << this->ArgumentPrototype->Services()->GetName() << "&) using class/object \""
                          << mtsObjectName(this->ClassInstantiation) << "\" currently "
                          << (this->IsEnabled() ? "enabled" : "disabled");
         } else {

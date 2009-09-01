@@ -91,14 +91,14 @@ bool mtsTaskGlobal::AddRequiredInterface(
     return true;
 }
 
-bool mtsTaskGlobal::IsRegisteredProvidedInterface(const std::string providedInterfaceName) const
+bool mtsTaskGlobal::IsRegisteredProvidedInterface(const std::string & providedInterfaceName) const
 {
     ProvidedInterfaceMapType::const_iterator it = ProvidedInterfaces.find(providedInterfaceName);
 
     return (it != ProvidedInterfaces.end());
 }
 
-bool mtsTaskGlobal::IsRegisteredRequiredInterface(const std::string requiredInterfaceName) const
+bool mtsTaskGlobal::IsRegisteredRequiredInterface(const std::string & requiredInterfaceName) const
 {
     RequiredInterfaceMapType::const_iterator it = RequiredInterfaces.find(requiredInterfaceName);
 

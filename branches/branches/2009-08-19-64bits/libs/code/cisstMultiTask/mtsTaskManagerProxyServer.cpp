@@ -19,9 +19,10 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstCommon/cmnAssert.h>
+#include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManagerProxyServer.h>
 #include <cisstMultiTask/mtsTaskGlobal.h>
-#include <cisstCommon/cmnAssert.h>
 
 #include <sstream>
 
@@ -86,7 +87,11 @@ void mtsTaskManagerProxyServer::Start(mtsTaskManager * callingTaskManager)
 
         // Note that a worker thread is created but is not yet running.
         WorkerThread.Create<ProxyWorker<mtsTaskManager>, ThreadArguments<mtsTaskManager>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, "C-PRX");
+            &ProxyWorkerInfo, &ProxyWorker<mtsTaskManager>::Run, &ThreadArgumentsInfo, 
+            // Set the name of this thread as TMS which means Task Manager Server.
+            // This is to avoid the thread name conflict with mtsDeviceInterfaceProxyServer
+            // class because Linux RTAI doesn't allow two threads to have the same thread name.
+            "TMS");
     }
 }
 
@@ -431,7 +436,7 @@ mtsTaskManagerProxyServer
     Logger(logger),
     TaskManagerServer(taskManagerServer),
     Runnable(true),
-    Sender(new SendThread<TaskManagerServerIPtr>(this))
+    SenderThreadPtr(new SenderThread<TaskManagerServerIPtr>(this))
 {
 }
 
@@ -441,7 +446,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Start()
     TaskManagerServer->GetLogger()->trace(
         "mtsTaskManagerProxyServer", "Send thread starts");
 
-    Sender->start();
+    SenderThreadPtr->start();
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
@@ -451,7 +456,7 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Run()
 #endif
 
     while(Runnable) {
-        timedWait(IceUtil::Time::milliSeconds(10));
+        osaSleep(10 * cmn_ms);
 
 #ifdef _COMMUNICATION_TEST_
         if(!clients.empty())
@@ -490,8 +495,8 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::Stop()
 
         notify();
 
-        callbackSenderThread = Sender;
-        Sender = 0; // Resolve cyclic dependency.
+        callbackSenderThread = SenderThreadPtr;
+        SenderThreadPtr = 0; // Resolve cyclic dependency.
     }
     callbackSenderThread->getThreadControl().join();
 }

@@ -149,10 +149,10 @@ public:
     bool AddRequiredInterface(const mtsTaskManagerProxy::RequiredInterfaceAccessInfo &);
 
     /*! Return true if the provided interface has been registered. */
-    bool IsRegisteredProvidedInterface(const std::string providedInterfaceName) const;
+    bool IsRegisteredProvidedInterface(const std::string & providedInterfaceName) const;
 
     /*! Return true if the required interface has been registered. */
-    bool IsRegisteredRequiredInterface(const std::string requiredInterfaceName) const;
+    bool IsRegisteredRequiredInterface(const std::string & requiredInterfaceName) const;
 
     /*! Return the access information of the specified provided interface. */
     bool GetProvidedInterfaceAccessInfo(const std::string & providedInterfaceName,
@@ -166,11 +166,11 @@ public:
         const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     /*! Getters */
-    const std::string GetTaskName() const {
+    const std::string & GetTaskName(void) const {
         return TaskName; 
     }
 
-    const mtsTaskManagerProxyServer::TaskManagerIDType GetTaskManagerID() const {
+    const mtsTaskManagerProxyServer::TaskManagerIDType GetTaskManagerID(void) const {
         return TaskManagerID; 
     }
 };
