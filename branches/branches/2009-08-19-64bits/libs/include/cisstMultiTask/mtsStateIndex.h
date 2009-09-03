@@ -139,7 +139,7 @@ public:
       "receiver" is supposed to already know what to expect. */ 
     virtual void SerializeRaw(std::ostream & outputStream) const {
         cmnSerializeRaw(outputStream, this->TimeIndex);
-        cmnSerializeRaw(outputStream, this->TimeTicks);
+        cmnSerializeSizeRaw(outputStream, this->TimeTicks);
         cmnSerializeRaw(outputStream, this->BufferLength);
     }
 
@@ -147,7 +147,7 @@ public:
       information, i.e. no class type nor format version. */
     virtual void DeSerializeRaw(std::istream & inputStream) {
         cmnDeSerializeRaw(inputStream, this->TimeIndex);
-        cmnDeSerializeRaw(inputStream, this->TimeTicks);
+        cmnDeSerializeSizeRaw(inputStream, this->TimeTicks);
         cmnDeSerializeRaw(inputStream, this->BufferLength);
     }
 };
