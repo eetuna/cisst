@@ -252,7 +252,7 @@ public:
                 Work.Pointer(), &Lwork, &Info);
 #elif CISST_HAS_CISSTNETLIB
         ftnlen jobu_len = (ftnlen)1, jobvt_len = (ftnlen)1;
-        __la_dzlapack_MOD_sgesvd_nat(&Jobu, &Jobvt, &M, &N,
+        la_dzlapack_MP_sgesvd_nat(&Jobu, &Jobvt, &M, &N,
                                   A.Pointer(), &Lda, S.Pointer(),
                                   U.Pointer(), &Ldu,
                                   Vt.Pointer(), &Ldvt,

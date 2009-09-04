@@ -7,6 +7,12 @@
 #include <cisstMultiTask.h>
 #include <cisstDevices.h>
 
+
+
+#include <cisstDaVinciAPI/cisstDaVinciAPI.h>
+
+
+
 int main(int argc, char * argv[])
 {
 
@@ -30,11 +36,16 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoD("devSensableHD", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create our server task
-    devSensableHD * robotObject = new devSensableHD("Omni", "Omni1");
+    // devSensableHD * robotObject = new devSensableHD("Omni", "Omni1", true);
+
+    cisstDaVinciAPI *daVinci = new cisstDaVinciAPI("daVinci", 0.0 /* period to be removed */,
+                                                   "10.0.0.5", 5002, 0x1111, 50);
+
+    std::cout << *daVinci << std::endl;
 
     // Get the TaskManager instance and set operation mode
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    taskManager->AddTask(robotObject);
+    taskManager->AddTask(daVinci);
     taskManager->SetGlobalTaskManagerIP(globalTaskManagerIP);
     taskManager->SetServerTaskIP(serverTaskIP);
     

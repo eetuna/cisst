@@ -69,13 +69,16 @@ if (CISST_MTS_HAS_ICE)
 endif (CISST_MTS_HAS_ICE)
 
 
-if (CISST_DEV_HAS_SENSABLEHD AND CISST_MTS_HAS_ICE)
+# if (CISST_DEV_HAS_SENSABLEHD AND CISST_MTS_HAS_ICE)
   # name the main executable and specifies with source files to use
   ADD_EXECUTABLE(devicesTutorialExample1Server
                  # code files to compile
                  serverMain.cpp
                  )
 
+  target_link_libraries(devicesTutorialExample1Server cisstDaVinciAPI)
+
   # link with the cisst libraries
   CISST_REQUIRES("devicesTutorialExample1Server" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstParameterTypes;cisstDevices")
-endif (CISST_DEV_HAS_SENSABLEHD AND CISST_MTS_HAS_ICE)
+# endif (CISST_DEV_HAS_SENSABLEHD AND CISST_MTS_HAS_ICE)
+

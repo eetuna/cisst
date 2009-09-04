@@ -1014,7 +1014,7 @@ inline F_INTEGER nmrSVD(vctDynamicMatrixBase<_matrixOwnerType, double> & A,
             dataFriend.Workspace().Pointer(), &m_Lwork, &Info);
 #elif CISST_HAS_CISSTNETLIB
     ftnlen jobu_len = (ftnlen)1, jobvt_len = (ftnlen)1;
-    __la_dzlapack_MOD_sgesvd_nat(&m_Jobu, &m_Jobvt, &m_Ldu, &m_Ldvt,
+    la_dzlapack_MP_sgesvd_nat(&m_Jobu, &m_Jobvt, &m_Ldu, &m_Ldvt,
                               A.Pointer(), &m_Lda, dataFriend.S().Pointer(),
                               UPtr, &m_Ldu,
                               VtPtr, &m_Ldvt,
@@ -1152,7 +1152,7 @@ inline F_INTEGER nmrSVD(vctFixedSizeMatrix<double, _rows, _cols, _storageOrder> 
             workspace.Pointer(), &lwork, &info);
 #elif CISST_HAS_CISSTNETLIB
     ftnlen jobu_len = (ftnlen)1, jobvt_len = (ftnlen)1;
-    __la_dzlapack_MOD_sgesvd_nat(&jobu, &jobvt, &ldu, &ldvt,
+    la_dzlapack_MP_sgesvd_nat(&jobu, &jobvt, &ldu, &ldvt,
                               A.Pointer(), &lda, S.Pointer(),
                               UPtr, &ldu,
                               VtPtr, &ldvt,

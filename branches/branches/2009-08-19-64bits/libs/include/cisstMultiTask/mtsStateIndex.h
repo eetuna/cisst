@@ -54,7 +54,7 @@ class CISST_EXPORT mtsStateIndex : public mtsGenericObject {
 
  public:
     /*! TimeTicks are typedef'ed as unsigned long */
-    typedef unsigned long TimeTicksType;
+    typedef unsigned long long int TimeTicksType;
     
  private:
 	/*! The index into the set of circular buffers corresponding to
@@ -139,7 +139,7 @@ public:
       "receiver" is supposed to already know what to expect. */ 
     virtual void SerializeRaw(std::ostream & outputStream) const {
         cmnSerializeRaw(outputStream, this->TimeIndex);
-        cmnSerializeSizeRaw(outputStream, this->TimeTicks);
+        cmnSerializeRaw(outputStream, this->TimeTicks);
         cmnSerializeRaw(outputStream, this->BufferLength);
     }
 
@@ -147,7 +147,7 @@ public:
       information, i.e. no class type nor format version. */
     virtual void DeSerializeRaw(std::istream & inputStream) {
         cmnDeSerializeRaw(inputStream, this->TimeIndex);
-        cmnDeSerializeSizeRaw(inputStream, this->TimeTicks);
+        cmnDeSerializeRaw(inputStream, this->TimeTicks);
         cmnDeSerializeRaw(inputStream, this->BufferLength);
     }
 };

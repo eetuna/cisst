@@ -67,7 +67,8 @@ public:
     /*!
         Mutators for GUI related parameters, such as scale factor and force limit.
     */
-    void SetLinearGain(const mtsDouble& Scale);
+    void SetLinearGainMaster(const mtsDouble& Scale);
+    void SetLinearGainSlave(const mtsDouble& Scale);
     void SetForceLimit(const mtsDouble& FLimit);
     void SetForceMode(const mtsInt& Mode);
     void SetMasterClutch(const mtsBool& commandedClutch);

@@ -94,7 +94,8 @@ void devSensableHDMasterSlave::SetupTeleoperationInterfaces(const std::string & 
     DevData * pairData;
     pairData = DevicePair[pair];
     pairData->Parameter.ForceLimit() = 40.0;
-    pairData->Parameter.LinearGain() = 0.15;
+    pairData->Parameter.LinearGainMaster() = 0.15;
+    pairData->Parameter.LinearGainSlave() = 0.15;
     pairData->Parameter.ForceFeedbackRatio() = 1.0;
     pairData->Parameter.ForceMode() = prmCollaborativeControlForce::RATCHETED;
     pairData->MasterClutchGUI = false;
@@ -157,9 +158,14 @@ void devSensableHDMasterSlave::UserControl(void)
     }
 }
 
-void devSensableHDMasterSlave::SetLinearGain(const mtsDouble & Scale)
+void devSensableHDMasterSlave::SetLinearGainMaster(const mtsDouble & Scale)
 {
-    DevicePair[PairNumber]->Parameter.LinearGain() = Scale.Data;
+    DevicePair[PairNumber]->Parameter.LinearGainMaster() = Scale.Data;
+}
+
+void devSensableHDMasterSlave::SetLinearGainSlave(const mtsDouble & Scale)
+{
+    DevicePair[PairNumber]->Parameter.LinearGainSlave() = Scale.Data;
 }
 
 void devSensableHDMasterSlave::SetForceLimit(const mtsDouble& FLimit)
