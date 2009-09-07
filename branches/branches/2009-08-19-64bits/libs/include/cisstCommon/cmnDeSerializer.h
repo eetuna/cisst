@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _cmnDeSerializer_h
 
 #include <cisstCommon/cmnPortability.h>
+#include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstCommon/cmnThrow.h>
@@ -75,7 +76,11 @@ inline void cmnDeSerializeSizeRaw(std::istream & inputStream, size_t & data)
 {
     unsigned long long int dataToRead;
     cmnDeSerializeRaw(inputStream, dataToRead);
-    data = dataToRead;
+    if (data <= cmnTypeTraits<size_t>::MaxPositiveValue()) {
+        data = static_cast<size_t>(dataToRead);
+    } else {
+        cmnThrow("cmnDeSerializeSizeRaw: received size greater than maximum supported on this configuration");
+    }
 }
 
 
