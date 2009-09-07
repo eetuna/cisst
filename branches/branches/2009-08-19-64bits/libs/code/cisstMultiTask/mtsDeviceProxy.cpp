@@ -23,6 +23,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 #include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsFunctionReadOrWriteProxy.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadOrWriteProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsDeviceProxy)
 
@@ -317,50 +319,36 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
     mtsFunctionRead  * functionReadProxy = NULL;
     mtsFunctionQualifiedRead * functionQualifiedReadProxy = NULL;
 
-    //std::vector<std::string> namesOfCommandsVoid = providedInterface.GetNamesOfCommandsVoid();
-    //for (unsigned int i = 0; i < namesOfCommandsVoid.size(); ++i) {
-    //    functionVoidProxy = new mtsFunctionVoid(providedInterface, namesOfCommandsVoid[i]);
-    //    CMN_ASSERT(FunctionVoidProxyMap.AddItem(namesOfCommandsVoid[i], functionVoidProxy));
-    //    CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsVoid[i], *functionVoidProxy));
-    //}
-#define ADD_FUNCTION_PROXY_BEGIN(_commandType)\
-    std::vector<std::string> namesOfCommands##_commandType = providedInterface->GetNamesOfCommands##_commandType##();\
-    for (unsigned int i = 0; i < namesOfCommands##_commandType.size(); ++i) {\
-        function##_commandType##Proxy = new mtsFunction##_commandType##(providedInterface, namesOfCommands##_commandType##[i]);\
-        CMN_ASSERT(Function##_commandType##ProxyMap.AddItem(namesOfCommands##_commandType[i], function##_commandType##Proxy));\
-        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommands##_commandType##[i], *function##_commandType##Proxy));
-#define ADD_FUNCTION_PROXY_END\
-    }
-
-    std::vector<std::string> namesOfCommandsVoid = providedInterface->GetNamesOfCommandsVoid();
+    const std::vector<std::string> namesOfCommandsVoid = providedInterface->GetNamesOfCommandsVoid();
     for (unsigned int i = 0; i < namesOfCommandsVoid.size(); ++i) {
         functionVoidProxy = new mtsFunctionVoid(providedInterface, namesOfCommandsVoid[i]);
         CMN_ASSERT(FunctionVoidProxyMap.AddItem(namesOfCommandsVoid[i], functionVoidProxy)); 
         CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsVoid[i], *functionVoidProxy));
     }
 
-    std::vector<std::string> namesOfCommandsWrite = providedInterface->GetNamesOfCommandsWrite();
+    const std::vector<std::string> namesOfCommandsWrite = providedInterface->GetNamesOfCommandsWrite();
     for (unsigned int i = 0; i < namesOfCommandsWrite.size(); ++i) {
-        functionWriteProxy = new mtsFunctionWrite(providedInterface, namesOfCommandsWrite[i]);
-        CMN_ASSERT(FunctionWriteProxyMap.AddItem(namesOfCommandsWrite[i], functionWriteProxy)); 
-        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsWrite[i], *functionWriteProxy));
+        functionWriteProxy = new mtsFunctionWriteProxy(providedInterface, namesOfCommandsWrite[i]);
+        CMN_ASSERT(FunctionWriteProxyMap.AddItem(namesOfCommandsWrite[i], functionWriteProxy));
+        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsWrite[i], *functionWriteProxy))
     }
 
-    std::vector<std::string> namesOfCommandsRead = providedInterface->GetNamesOfCommandsRead();
+    const std::vector<std::string> namesOfCommandsRead = providedInterface->GetNamesOfCommandsRead();
     for (unsigned int i = 0; i < namesOfCommandsRead.size(); ++i) {
-        functionReadProxy = new mtsFunctionRead(providedInterface, namesOfCommandsRead[i]);
-        CMN_ASSERT(FunctionReadProxyMap.AddItem(namesOfCommandsRead[i], functionReadProxy)); 
-        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsRead[i], *functionReadProxy));
+        functionReadProxy = new mtsFunctionReadProxy(providedInterface, namesOfCommandsRead[i]);
+        CMN_ASSERT(FunctionReadProxyMap.AddItem(namesOfCommandsRead[i], functionReadProxy));
+        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsRead[i], *functionReadProxy))
     }
 
-    std::vector<std::string> namesOfCommandsQualifiedRead = providedInterface->GetNamesOfCommandsQualifiedRead();
+    const std::vector<std::string> namesOfCommandsQualifiedRead = providedInterface->GetNamesOfCommandsQualifiedRead();
     for (unsigned int i = 0; i < namesOfCommandsQualifiedRead.size(); ++i) {
-        functionQualifiedReadProxy = new mtsFunctionQualifiedRead(providedInterface, namesOfCommandsQualifiedRead[i]);
-        CMN_ASSERT(FunctionQualifiedReadProxyMap.AddItem(namesOfCommandsQualifiedRead[i], functionQualifiedReadProxy)); 
-        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsQualifiedRead[i], *functionQualifiedReadProxy));
+        functionQualifiedReadProxy = new mtsFunctionQualifiedReadProxy(providedInterface, namesOfCommandsQualifiedRead[i]);
+        CMN_ASSERT(FunctionQualifiedReadProxyMap.AddItem(namesOfCommandsQualifiedRead[i], functionQualifiedReadProxy));
+        CMN_ASSERT(requiredInterfaceProxy->AddFunction(namesOfCommandsQualifiedRead[i], *functionQualifiedReadProxy))
     }
 
 
+    
     // 2. Event handler proxies.
     std::string eventName;
 
@@ -388,13 +376,6 @@ mtsRequiredInterface * mtsDeviceProxy::CreateRequiredInterfaceProxy(
         eventName = namesOfEventsWrite[i];
         actualEventWriteCommandProxy = new mtsCommandWriteProxy(NULL, proxyServer, eventName);
         actualEventWriteCommandProxy->Disable();
-
-   
-        //
-        //
-        //  FIX: HERE THE ARGUMENT PROTOTYPE OF mtsCommandWrite SHOULD BE RECOVERED!!!
-        //
-        //
 
         CMN_ASSERT(EventHandlerWriteProxyMap.AddItem(eventName, actualEventWriteCommandProxy));
         CMN_ASSERT(requiredInterfaceProxy->EventHandlersWrite.AddItem(
