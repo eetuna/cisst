@@ -1,0 +1,67 @@
+#ifndef _robTrajectory_h
+#define _robTrajectory_h
+
+#include <cisstRobot/robFunction.h>
+#include <vector>
+
+class robDomainLimit {};
+
+class robTrajectory : public robFunction {
+
+protected:
+  
+  std::vector< robFunction* > functions;
+  robFunction* blender;
+  
+  robError PackRn( const robVariables& input1, 
+		   const robVariables& input2,
+		   robVariables& output );
+
+  robError PackSO3( const robVariables& input1, 
+		    const robVariables& input2,
+		    robVariables& output ) ;
+  
+  robError BlendRn( robFunction* initial, 
+		    robFunction* final,
+		    const robVariables& input, 
+		    robVariables& output );
+
+  robError BlendSO3( robFunction* initial, 
+		     robFunction* final,
+		     const robVariables& input, 
+		     robVariables& output );
+  
+  
+public:
+  
+  static const double TAU;
+  
+  robTrajectory(){blender=NULL;}
+  
+  //! Insert a function
+  /**
+     This inserts a new function in the piecewise function. The function is
+     inserted at the begining of a queue and thus its domain has higher priority
+     than the functions after.
+     \param function The new function to be added
+  */
+  robError Insert( robFunction* function );
+  
+  //! Is function defined for the given input
+  robDomainAttribute IsDefinedFor( const robVariables& input ) const ;
+    
+  //! Evaluate the function for the given input
+  /**
+     This querries all the functions starting by the most recently inserted.
+     If a function is defined for the input, it is evaluated. The function also
+     perform blending if it determines that an other function is ramping up
+     or ramping down. Finally, this method performs cleaning of the functions.
+     Functions that are expired or that have a lower priority are removed.
+     \param [in] input The input to the function
+     \param [out] output The output of the function
+  */
+  robError Evaluate( const robVariables& input, robVariables& output );  
+  
+};
+
+#endif
