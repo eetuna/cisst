@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
@@ -110,16 +110,33 @@ protected:
     osaSocket JGraphSocket;
     bool JGraphSocketConnected;
 
+    /*! Local task manager ID elements */
+    const std::string ProcessName;
+    const std::string IPAddress;
+
+    /*! Pointer to global manager.
+        If standalone mode, this points to the actual object of a global 
+        manager that runs in the same process.
+        If network mode, this becomes a pointer to a global manager proxy 
+        that connects to the actual global manager that runs in a different 
+        process. */
+    mtsGlobalManager * GlobalManager;
+
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */
-    mtsTaskManager(void);
+    mtsTaskManager();
+    mtsTaskManager(const std::string & thisProcessName, const std::string & thisIPAddress);
     
     /*! Destructor.  Does OS-specific cleanup. */
     virtual ~mtsTaskManager();
 
+    /*! Initializer */
+    void Initialize(void);
+
  public:
-    /*! Create the static instance of this class. */
-    static mtsTaskManager * GetInstance(void) ;
+    /*! Create the static instance of local task manager. */
+    static mtsTaskManager * GetInstance(
+        const std::string & thisProcessName = "", const std::string & thisIPAddress = "");
 
     /*! Return a reference to the time server. */
     inline const osaTimeServer & GetTimeServer(void) {

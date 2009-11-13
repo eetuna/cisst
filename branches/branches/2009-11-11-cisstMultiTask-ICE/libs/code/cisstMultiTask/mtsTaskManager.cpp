@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
+#include <cisstMultiTask/mtsGlobalManager.h>
 
 #if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsDeviceProxy.h>
@@ -34,24 +35,62 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
-
-mtsTaskManager::mtsTaskManager():
+mtsTaskManager::mtsTaskManager() :
     TaskMap("Tasks"),
     DeviceMap("Devices"),
     JGraphSocket(osaSocket::TCP),
-    JGraphSocketConnected(false)
-#if CISST_MTS_HAS_ICE
-    ,
-    TaskManagerTypeMember(TASK_MANAGER_LOCAL),
-    TaskManagerCommunicatorID("TaskManagerServerSender"),
-    ProxyGlobalTaskManager(NULL),
-    ProxyTaskManagerClient(NULL)
-#endif
+    TaskManagerCommunicatorID("TaskManagerServerSender")
 {
+    Initialize();
+
+    // Run this task manager as standalone mode.
+    GlobalManager = new mtsGlobalManager;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Run task manager as standalone mode. " << std::endl;
+}
+
+mtsTaskManager::mtsTaskManager(const std::string & thisProcessName, 
+                               const std::string & thisIPAddress) :
+    TaskMap("Tasks"),
+    DeviceMap("Devices"),
+    JGraphSocket(osaSocket::TCP),
+    TaskManagerCommunicatorID("TaskManagerServerSender"),
+    ProcessName(thisProcessName),
+    IPAddress(thisIPAddress)
+{
+    Initialize();
+
+    // If both arguments are provided, make this task manager run as network mode.
+    // Then, create and run a global manager proxy and try connecting to the global
+    // manager over a network.
+    if ((thisProcessName != "") && (thisIPAddress != "")) {
+        // TODO: create a global manager proxy
+        // TODO: connect to the global manager
+
+        GlobalManager = new mtsGlobalManager;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Run task manager as network mode. " << std::endl;
+    } 
+    // If one of the arguments is missing, run this task manager as standalone mode.
+    else {
+        GlobalManager = new mtsGlobalManager;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Run task manager as standalone mode. " << std::endl;
+    }
+}
+
+void mtsTaskManager::Initialize(void)
+{
+    JGraphSocketConnected = false;
+
+#if CISST_MTS_HAS_ICE
+    TaskManagerTypeMember = TASK_MANAGER_LOCAL;    
+    ProxyGlobalTaskManager = 0;
+    ProxyTaskManagerClient = 0;
+#endif
+
     __os_init();
     TaskMap.SetOwner(*this);
     DeviceMap.SetOwner(*this);
     TimeServer.SetTimeOrigin();
+    
     // Try to connect to the JGraph application software (Java program).
     // Note that the JGraph application also sends event messages back via the socket,
     // though we don't currently read them. To do this, it would be best to implement
@@ -63,7 +102,6 @@ mtsTaskManager::mtsTaskManager():
         CMN_LOG_CLASS_INIT_WARNING << "Failed to connect to JGraph server" << std::endl;
     }
 }
-
 
 mtsTaskManager::~mtsTaskManager()
 {
@@ -92,12 +130,16 @@ void mtsTaskManager::Cleanup(void)
 
     JGraphSocket.Close();
     JGraphSocketConnected = false;
+    
+    delete GlobalManager;
 }
 
 
-mtsTaskManager* mtsTaskManager::GetInstance(void) {
-    static mtsTaskManager instance;
-    return &instance;
+mtsTaskManager * mtsTaskManager::GetInstance(
+    const std::string & thisProcessName, const std::string & thisIPAddress)
+{    
+    static mtsTaskManager instance(thisProcessName, thisIPAddress);
+    return &instance;    
 }
 
 

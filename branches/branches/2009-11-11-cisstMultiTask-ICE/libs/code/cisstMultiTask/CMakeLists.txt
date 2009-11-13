@@ -138,6 +138,7 @@ if(CISST_MTS_HAS_ICE)
       mtsDeviceInterfaceProxyServer.cpp
       mtsTaskGlobal.cpp
       mtsDeviceProxy.cpp
+      mtsGlobalManager.cpp
       )
 
   SET(HEADER_FILES ${HEADER_FILES}
@@ -159,6 +160,7 @@ if(CISST_MTS_HAS_ICE)
       mtsFunctionQualifiedReadOrWriteProxy.h
       mtsMulticastCommandWriteProxy.h
       mtsEventWriteGeneratorProxy.h
+      mtsGlobalManager.h
       )
 
   SET(ICE_RESOURCE_FILES
