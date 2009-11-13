@@ -100,6 +100,13 @@ osaSocket::~osaSocket(void)
 
 std::string osaSocket::GetLocalhostIP(void)
 {
+    WSADATA wsaData;
+    int retval = WSAStartup(WINSOCKVERSION, &wsaData);
+    if (retval != 0) {
+        CMN_LOG_RUN_ERROR << "osaSocket: WSAStartup() failed with error code " << retval << std::endl;
+        return 0;
+    }
+
     char hostname[256] = { 0 };
     gethostname(hostname, 255);
     CMN_LOG_RUN_VERBOSE << "GetLocalhostIP: hostname is " << hostname << std::endl;
@@ -107,11 +114,54 @@ std::string osaSocket::GetLocalhostIP(void)
     struct hostent * he = gethostbyname(hostname);
     if (!he) {
         CMN_LOG_RUN_ERROR << "GetLocalhostIP: invalid host" << std::endl;
+        WSACleanup();
         return "";
     }
     struct in_addr localAddr;
     memcpy(&localAddr, he->h_addr_list[0], sizeof(struct in_addr));
+
+    WSACleanup();
     return inet_ntoa(localAddr);
+}
+
+int osaSocket::GetLocalhostIP(std::vector<std::string> & IPaddress)
+{    
+    WSADATA wsaData;
+    int retval = WSAStartup(WINSOCKVERSION, &wsaData);
+    if (retval != 0) {
+        CMN_LOG_RUN_ERROR << "osaSocket: WSAStartup() failed with error code " << retval << std::endl;
+        return 0;
+    }
+
+    char hostname[256] = { 0 };
+    if (gethostname(hostname, 255) != 0) {
+        CMN_LOG_RUN_ERROR << "osaSocket: failed to get host name" << std::endl;
+        WSACleanup();
+        return 0;
+    }
+
+    CMN_LOG_RUN_VERBOSE << "GetLocalhostIP: hostname is " << hostname << std::endl;
+
+    struct hostent * he = gethostbyname(hostname);
+    if (!he) {
+        CMN_LOG_RUN_ERROR << "GetLocalhostIP: invalid host" << std::endl;
+        WSACleanup();
+        return 0;
+    }
+
+    int i;
+    struct in_addr localAddr;
+    std::string s;
+    for (i = 0; he->h_addr_list[i] != 0; ++i) {
+        memcpy(&localAddr, he->h_addr_list[i], sizeof(struct in_addr));
+        s = inet_ntoa(localAddr);        
+        IPaddress.push_back(s);
+        CMN_LOG_RUN_VERBOSE << "Localhost IP (" << i << ") : " << s << std::endl;
+    }
+
+    WSACleanup();
+
+    return i;
 }
 
 
@@ -243,6 +293,7 @@ void osaSocket::Close(void)
     if (SocketFD >= 0) {
 #if (CISST_OS == CISST_WINDOWS)
         closesocket(SocketFD);
+        WSACleanup();
 #else
         close(SocketFD);
 #endif
