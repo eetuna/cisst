@@ -114,13 +114,13 @@ protected:
     const std::string ProcessName;
     const std::string IPAddress;
 
-    /*! Pointer to global manager.
-        If standalone mode, this points to the actual object of a global 
+    /*! Pointer to the global manager.
+        If the standalone mode, this points to the actual object of the global 
         manager that runs in the same process.
-        If network mode, this becomes a pointer to a global manager proxy 
-        that connects to the actual global manager that runs in a different 
-        process. */
-    mtsGlobalManager * GlobalManager;
+        If the network mode, this becomes a pointer to a proxy object for the 
+        global manager that connects to the actual global manager that probably
+        runs in a different process (or different machine). */
+    mtsGlobalManagerInterface * GlobalManager;
 
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */

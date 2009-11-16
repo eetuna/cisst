@@ -160,6 +160,8 @@ if(CISST_MTS_HAS_ICE)
       mtsFunctionQualifiedReadOrWriteProxy.h
       mtsMulticastCommandWriteProxy.h
       mtsEventWriteGeneratorProxy.h
+      
+      mtsGlobalManagerInterface.h
       mtsGlobalManager.h
       )
 

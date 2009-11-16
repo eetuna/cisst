@@ -104,7 +104,8 @@ class mtsDeviceInterfaceProxyClient;
 #endif // CISST_MTS_HAS_ICE
 
 
-class mtsGlobalManager;
+class mtsGlobalManagerInterface;
+class mtsGlobalManagerProxyServer;
 
 #endif  // _mtsForwardDeclarations_h
 

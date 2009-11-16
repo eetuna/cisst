@@ -45,7 +45,7 @@ mtsTaskManager::mtsTaskManager() :
 
     // Run this task manager as standalone mode.
     GlobalManager = new mtsGlobalManager;
-    CMN_LOG_CLASS_INIT_VERBOSE << "Run task manager as standalone mode. " << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Standalone mode. " << std::endl;
 }
 
 mtsTaskManager::mtsTaskManager(const std::string & thisProcessName, 
@@ -59,20 +59,22 @@ mtsTaskManager::mtsTaskManager(const std::string & thisProcessName,
 {
     Initialize();
 
-    // If both arguments are provided, make this task manager run as network mode.
-    // Then, create and run a global manager proxy and try connecting to the global
-    // manager over a network.
+    // If both arguments are provided, run this task manager in the network mode.
+    // That is, an instance of mtsGlobalManager acts as a proxy for the global 
+    // manager and it connects to the global manager over a network.
     if ((thisProcessName != "") && (thisIPAddress != "")) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Network mode. " << std::endl;
         // TODO: create a global manager proxy
         // TODO: connect to the global manager
 
         GlobalManager = new mtsGlobalManager;
-        CMN_LOG_CLASS_INIT_VERBOSE << "Run task manager as network mode. " << std::endl;
     } 
-    // If one of the arguments is missing, run this task manager as standalone mode.
+    // If one of the arguments is missing, run this task manager in the standalone 
+    // mode. In this case, an instance of mtsGlobalManager becomes the actual global
+    // manager, not a proxy for it.
     else {
+        CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Standalone mode. " << std::endl;
         GlobalManager = new mtsGlobalManager;
-        CMN_LOG_CLASS_INIT_VERBOSE << "Run task manager as standalone mode. " << std::endl;
     }
 }
 
@@ -144,6 +146,18 @@ mtsTaskManager * mtsTaskManager::GetInstance(
 
 
 bool mtsTaskManager::AddTask(mtsTask * task) {
+    // MJUNG: 11/15/09
+    // Add/RemoveTask() and Add/RemoveDevice() should be combined into one 
+    // function called Add/RemoveComponent().
+    // Use this method until tasks and devices are consolidated into a single 
+    // data structure (e.g. ComponentMap) within Task Manager
+
+    // Try to register this new component to the global manager first.
+    if (!GlobalManager->AddComponent(ProcessName, task->GetName())) {
+        CMN_LOG_CLASS_RUN_ERROR << "failed to add component: " << task->GetName() << std::endl;
+        return false;
+    }
+
     bool result = TaskMap.AddItem(task->GetName(), task, CMN_LOG_LOD_INIT_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddTask: added task named "
@@ -152,13 +166,25 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
             std::string buffer = task->ToGraphFormat();
             CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
             JGraphSocket.Send(buffer);
-        }
+        }        
     }
     return result;
 }
 
 
 bool mtsTaskManager::RemoveTask(mtsTask * task) {
+    // MJUNG: 11/15/09
+    // Add/RemoveTask() and Add/RemoveDevice() should be combined into one 
+    // function called Add/RemoveComponent().
+    // Use this method until tasks and devices are consolidated into a single 
+    // data structure (e.g. ComponentMap) within Task Manager
+
+    // Try to remove this new component from the global manager first.
+    if (!GlobalManager->RemoveComponent(ProcessName, task->GetName())) {
+        CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: " << task->GetName() << std::endl;
+        return false;
+    }
+
     bool result = TaskMap.RemoveItem(task->GetName(), CMN_LOG_LOD_INIT_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "RemoveTask: removed task named "
@@ -171,10 +197,22 @@ bool mtsTaskManager::RemoveTask(mtsTask * task) {
 bool mtsTaskManager::AddDevice(mtsDevice * device) {
     mtsTask * task = dynamic_cast<mtsTask *>(device);
     if (task) {
-        CMN_LOG_CLASS_INIT_ERROR << "AddDevice: Attempt to add " << task->GetName() << "as a device (use AddTask instead)."
-                                 << std::endl;
+        return AddTask(task);
+    }
+
+    // MJUNG: 11/15/09
+    // Add/RemoveTask() and Add/RemoveDevice() should be combined into one 
+    // function called Add/RemoveComponent().
+    // Use this method until tasks and devices are consolidated into a single 
+    // data structure (e.g. ComponentMap) within Task Manager
+    // Also currently we are missing RemoveDevice().
+
+    // Try to register this new component to the global manager first.
+    if (!GlobalManager->AddComponent(ProcessName, device->GetName())) {
+        CMN_LOG_CLASS_RUN_ERROR << "failed to add component: " << device->GetName() << std::endl;
         return false;
     }
+
     bool result = DeviceMap.AddItem(device->GetName(), device, CMN_LOG_LOD_INIT_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddDevice: added device named "
