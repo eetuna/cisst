@@ -29,7 +29,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManagerTestTask);
 
-//-----------------------------------------------------------------------------
 mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName, 
                                                double period) :
 	mtsTaskPeriodic(collectorName, period, false, 5000)
@@ -42,20 +41,20 @@ mtsTaskManagerTestTask::mtsTaskManagerTestTask(const std::string & collectorName
 void mtsTaskManagerTest::TestAddTask(void)
 {
 	mtsTaskManagerTestTask task1("task1"), task2("task2");
-	mtsTaskManager TaskManager;
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 	
-	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(0 == taskManager->TaskMap.size());
 		
-	CPPUNIT_ASSERT(TaskManager.AddTask(&task1));
-	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(taskManager->AddTask(&task1));
+	CPPUNIT_ASSERT(1 == taskManager->TaskMap.size());
 	
-	CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
-	CPPUNIT_ASSERT(TaskManager.AddTask(&task2));
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(!taskManager->AddTask(&task1));
+	CPPUNIT_ASSERT(taskManager->AddTask(&task2));
+	CPPUNIT_ASSERT(2 == taskManager->TaskMap.size());
 	
-	CPPUNIT_ASSERT(!TaskManager.AddTask(&task1));
-	CPPUNIT_ASSERT(!TaskManager.AddTask(&task2));
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(!taskManager->AddTask(&task1));
+	CPPUNIT_ASSERT(!taskManager->AddTask(&task2));
+	CPPUNIT_ASSERT(2 == taskManager->TaskMap.size());
 }
 
 void mtsTaskManagerTest::TestRemoveTask(void)
@@ -65,21 +64,21 @@ void mtsTaskManagerTest::TestRemoveTask(void)
 	mtsTaskManagerTestTask task1(name1),
                            task2(name2),
                            task3("dummy");
-	mtsTaskManager TaskManager;
+	mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 	
-	TaskManager.AddTask(&task1);
-	TaskManager.AddTask(&task2);
+	taskManager->AddTask(&task1);
+	taskManager->AddTask(&task2);
 	
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(2 == taskManager->TaskMap.size());
 	
-	CPPUNIT_ASSERT(!TaskManager.RemoveTask(&task3));
-	CPPUNIT_ASSERT(2 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(!taskManager->RemoveTask(&task3));
+	CPPUNIT_ASSERT(2 == taskManager->TaskMap.size());
 	
-	CPPUNIT_ASSERT(TaskManager.RemoveTask(&task1));
-	CPPUNIT_ASSERT(1 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(taskManager->RemoveTask(&task1));
+	CPPUNIT_ASSERT(1 == taskManager->TaskMap.size());
 	
-	CPPUNIT_ASSERT(TaskManager.RemoveTask(&task2));
-	CPPUNIT_ASSERT(0 == TaskManager.TaskMap.size());
+	CPPUNIT_ASSERT(taskManager->RemoveTask(&task2));
+	CPPUNIT_ASSERT(0 == taskManager->TaskMap.size());
 }
 
 //-----------------------------------------------------------------------------
