@@ -32,30 +32,20 @@ class mtsGlobalManagerTest: public CppUnit::TestFixture
         CPPUNIT_TEST(TestFindComponent);
         CPPUNIT_TEST(TestRemoveComponent);
 
-        CPPUNIT_TEST(TestAddInterface);
-        CPPUNIT_TEST(TestFindInterface);
-        CPPUNIT_TEST(TestRemoveInterface);
-
         CPPUNIT_TEST(TestConnect);
         CPPUNIT_TEST(TestDisconnect);
+
+        CPPUNIT_TEST(TestGetConnectionMap);
 	}
     CPPUNIT_TEST_SUITE_END();
 	
 public:
-    //void setUp(void) {
-    //}
-    //
-    //void tearDown(void) {
-    //}
-    
 	void TestAddComponent(void);
     void TestFindComponent(void);
     void TestRemoveComponent(void);
 
-    void TestAddInterface(void);
-    void TestFindInterface(void);
-    void TestRemoveInterface(void);
-
     void TestConnect(void);
     void TestDisconnect(void);
+
+    void TestGetConnectionMap(void);
 };
