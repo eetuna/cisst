@@ -38,8 +38,10 @@ CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 mtsTaskManager::mtsTaskManager() :
     TaskMap("Tasks"),
     DeviceMap("Devices"),
-    JGraphSocket(osaSocket::TCP),
-    TaskManagerCommunicatorID("TaskManagerServerSender")
+    JGraphSocket(osaSocket::TCP)
+#if CISST_MTS_HAS_ICE
+    , TaskManagerCommunicatorID("TaskManagerServerSender")
+#endif
 {
     Initialize();
 
@@ -53,7 +55,9 @@ mtsTaskManager::mtsTaskManager(const std::string & thisProcessName,
     TaskMap("Tasks"),
     DeviceMap("Devices"),
     JGraphSocket(osaSocket::TCP),
+#if CISST_MTS_HAS_ICE
     TaskManagerCommunicatorID("TaskManagerServerSender"),
+#endif
     ProcessName(thisProcessName),
     IPAddress(thisIPAddress)
 {

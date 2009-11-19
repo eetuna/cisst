@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnNamedMap.h>
 #include <cisstMultiTask/mtsGlobalManagerInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
@@ -41,6 +42,8 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsGlobalManager : public mtsGlobalManagerInterface {
 
+    friend class mtsGlobalManagerTest;
+
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 protected:
@@ -48,31 +51,35 @@ protected:
     //  Data Structure Definition
     //-------------------------------------------------------------------------
     /*! Connection map: (interface id, connected interface info) */
-    typedef struct {
+    class ConnectedInterfaceInfo {
+    public:
         std::string ProcessName;
         std::string ComponentName;
         std::string InterfaceName;
-    } ConnectedInterfaceInfo;
 
-    typedef std::map<std::string, ConnectedInterfaceInfo *> ConnectionMapType;
+        ConnectedInterfaceInfo() : ProcessName(""), ComponentName(""), InterfaceName("") {}
+    };
 
-    /*! Component map: (component id, connection map)*/
-    typedef std::map<std::string, ConnectionMapType *> ComponentMapType;
+    /*! Connection map: (interface name, connected interface information)
+        The name of this map is assigned as the name of the component that these
+        interfaces are managed by. */
+    typedef cmnNamedMap<ConnectedInterfaceInfo> ConnectionMapType;
 
-    /*! Process map: (connected process id, component map) */
-    typedef std::map<std::string, ComponentMapType *> ProcessMapType;
+    /*! Component map: (component name, connection map) 
+        The name of this map is assigned as the name of the process that these
+        components are managed by. */
+    typedef cmnNamedMap<ConnectionMapType> ComponentMapType;
 
-    /*! Process proxy map: (connected process id, proxy for the process) */
-    typedef std::map<std::string, mtsGlobalManagerProxyServer *> ProcessProxyMapType;
+    /*! Process map: (connected process name, component map) */
+    typedef cmnNamedMap<ComponentMapType> ProcessMapType;
+    ProcessMapType ProcessMap;
 
+    /*! Process proxy map: (connected process name, proxy for the process) */
+    typedef cmnNamedMap<mtsGlobalManagerProxyServer> ProcessProxyMapType;
     ProcessProxyMapType ProcessProxyMap;
 
-    /* MJUNG: 11/16/09
-       The following definition generates C4053 warning. This can be resolved by
-       introducing auxiliary structure definitions.
-       (see http://msdn.microsoft.com/en-us/library/074af4b6(VS.80).aspx)
-    */
-    ProcessMapType ProcessMap;
+    /*! Clean up the internal variables */
+    void CleanUp(void);
 
 public:
     /*! Constructor and destructor */
@@ -80,10 +87,40 @@ public:
 
     ~mtsGlobalManager();
 
+    //-----------------------------------------------------
+    //  Component Management
+    //-----------------------------------------------------
     /*! Register a component to the global manager. */
-    bool AddComponent(
+    bool AddComponent(const std::string & processName, const std::string & componentName);
+
+    /*! Find a component using process name and component name */
+    bool FindComponent(const std::string & processName, const std::string & componentName) const;
+
+    /*! Remove a component from the global manager. */
+    bool RemoveComponent(
         const std::string & processName, const std::string & componentName);
 
+    //-----------------------------------------------------
+    //  Interface Management
+    //-----------------------------------------------------
+    /*! Add an interface. Note that adding/removing an interface can be run-time. */
+    bool AddInterface(
+        const std::string & processName, const std::string & componentName,
+        const std::string & interfaceName, const bool isProvidedInterface = true);
+
+    /*! Find an interface using process name, component name, and interface name */
+    bool FindInterface(
+        const std::string & processName, const std::string & componentName,
+        const std::string & interfaceName) const;
+
+    /*! Remove an interface. Note that adding/removing an interface can be run-time. */
+    bool RemoveInterface(
+        const std::string & processName, const std::string & componentName,
+        const std::string & interfaceName, const bool isProvidedInterface = true);
+
+    //-----------------------------------------------------
+    //  Connection Management
+    //-----------------------------------------------------
     /*! Connect two components. */
     bool Connect(
         const std::string & clientProcessName,
@@ -93,9 +130,7 @@ public:
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName);
 
-    /*! Remove a component from the global manager. */
-    bool RemoveComponent(
-        const std::string & processName, const std::string & componentName);
+    bool Disconnect();
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsGlobalManager)
