@@ -120,7 +120,7 @@ protected:
         If the network mode, this becomes a pointer to a proxy object for the 
         global manager that connects to the actual global manager that probably
         runs in a different process (or different machine). */
-    mtsGlobalManagerInterface * GlobalManager;
+    mtsManagerGlobalInterface * ManagerGlobal;
 
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */

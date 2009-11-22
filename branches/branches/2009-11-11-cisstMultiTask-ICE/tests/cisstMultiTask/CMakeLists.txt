@@ -31,7 +31,7 @@ SET(SOURCE_FILES
 #    mtsMacrosTest.cpp
 #    mtsMatrixTest.cpp
 #    mtsTransformationTypesTest.cpp
-    mtsGlobalManagerTest.cpp
+    mtsManagerGlobalTest.cpp
     )
 
 # all header files
@@ -44,7 +44,7 @@ SET(HEADER_FILES
 #    mtsMacrosTest.h
 #    mtsMatrixTest.h
 #    mtsTransformationTypesTest.h
-    mtsGlobalManagerTest.h
+    mtsManagerGlobalTest.h
     )
 
 # Add executable for C++ tests

@@ -60,7 +60,7 @@ SET(SOURCE_FILES
     mtsCollectorBase.cpp
     mtsCollectorState.cpp    
     
-    mtsGlobalManager.cpp
+    mtsManagerGlobal.cpp
 
     mtsHistory.cpp
     )
@@ -125,8 +125,8 @@ SET(HEADER_FILES
     mtsCollectorBase.h    
     mtsCollectorState.h
     
-    mtsGlobalManagerInterface.h
-    mtsGlobalManager.h
+    mtsManagerGlobalInterface.h
+    mtsManagerGlobal.h
 
     mtsHistory.h
     )

@@ -25,7 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsGlobalManager.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
 
 #if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsDeviceProxy.h>
@@ -46,7 +46,7 @@ mtsTaskManager::mtsTaskManager() :
     Initialize();
 
     // Run this task manager as standalone mode.
-    GlobalManager = new mtsGlobalManager;
+    ManagerGlobal = new mtsManagerGlobal;
     CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Standalone mode. " << std::endl;
 }
 
@@ -64,21 +64,21 @@ mtsTaskManager::mtsTaskManager(const std::string & thisProcessName,
     Initialize();
 
     // If both arguments are provided, run this task manager in the network mode.
-    // That is, an instance of mtsGlobalManager acts as a proxy for the global 
+    // That is, an instance of mtsManagerGlobal acts as a proxy for the global 
     // manager and it connects to the global manager over a network.
     if ((thisProcessName != "") && (thisIPAddress != "")) {
         CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Network mode. " << std::endl;
         // TODO: create a global manager proxy
         // TODO: connect to the global manager
 
-        GlobalManager = new mtsGlobalManager;
+        ManagerGlobal = new mtsManagerGlobal;
     } 
     // If one of the arguments is missing, run this task manager in the standalone 
-    // mode. In this case, an instance of mtsGlobalManager becomes the actual global
+    // mode. In this case, an instance of mtsManagerGlobal becomes the actual global
     // manager, not a proxy for it.
     else {
         CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Standalone mode. " << std::endl;
-        GlobalManager = new mtsGlobalManager;
+        ManagerGlobal = new mtsManagerGlobal;
     }
 }
 
@@ -137,7 +137,7 @@ void mtsTaskManager::Cleanup(void)
     JGraphSocket.Close();
     JGraphSocketConnected = false;
     
-    delete GlobalManager;
+    delete ManagerGlobal;
 }
 
 
@@ -157,7 +157,7 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
     // data structure (e.g. ComponentMap) within Task Manager
 
     // Try to register this new component to the global manager first.
-    if (!GlobalManager->AddComponent(ProcessName, task->GetName())) {
+    if (!ManagerGlobal->AddComponent(ProcessName, task->GetName())) {
         CMN_LOG_CLASS_RUN_ERROR << "failed to add component: " << task->GetName() << std::endl;
         return false;
     }
@@ -184,7 +184,7 @@ bool mtsTaskManager::RemoveTask(mtsTask * task) {
     // data structure (e.g. ComponentMap) within Task Manager
 
     // Try to remove this new component from the global manager first.
-    if (!GlobalManager->RemoveComponent(ProcessName, task->GetName())) {
+    if (!ManagerGlobal->RemoveComponent(ProcessName, task->GetName())) {
         CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: " << task->GetName() << std::endl;
         return false;
     }
@@ -212,7 +212,7 @@ bool mtsTaskManager::AddDevice(mtsDevice * device) {
     // Also currently we are missing RemoveDevice().
 
     // Try to register this new component to the global manager first.
-    if (!GlobalManager->AddComponent(ProcessName, device->GetName())) {
+    if (!ManagerGlobal->AddComponent(ProcessName, device->GetName())) {
         CMN_LOG_CLASS_RUN_ERROR << "failed to add component: " << device->GetName() << std::endl;
         return false;
     }

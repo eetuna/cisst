@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsGlobalManagerTest.cpp 2009-03-05 mjung5 $
+  $Id: mtsManagerGlobalTest.cpp 2009-03-05 mjung5 $
   
   Author(s):  Min Yang Jung
   Created on: 2009-11-17
@@ -19,16 +19,17 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include "mtsGlobalManagerTest.h"
+#include "mtsManagerGlobalTest.h"
 
-#include <cisstMultiTask/mtsGlobalManager.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
 
+/*
 //-----------------------------------------------------------------------------
 //	Tests for public variables and methods
 //-----------------------------------------------------------------------------
-void mtsGlobalManagerTest::TestAddComponent(void)
+void mtsManagerGlobalTest::TestAddComponent(void)
 {
-    mtsGlobalManager globalManager;
+    mtsManagerGlobal globalManager;
 
     CPPUNIT_ASSERT(globalManager.AddComponent("P1", "C1"));
     CPPUNIT_ASSERT_EQUAL((unsigned int) 1, globalManager.ProcessMap.GetItem("P1")->size());
@@ -53,18 +54,18 @@ void mtsGlobalManagerTest::TestAddComponent(void)
     CPPUNIT_ASSERT(!globalManager.AddComponent("", "C2"));
 }
 
-void mtsGlobalManagerTest::TestFindComponent(void)
+void mtsManagerGlobalTest::TestFindComponent(void)
 {
-    mtsGlobalManager globalManager;
+    mtsManagerGlobal globalManager;
 
     CPPUNIT_ASSERT(!globalManager.FindComponent("P1", "C1"));
     CPPUNIT_ASSERT(globalManager.AddComponent("P1", "C1"));
     CPPUNIT_ASSERT(globalManager.FindComponent("P1", "C1"));
 }
 
-void mtsGlobalManagerTest::TestRemoveComponent(void)
+void mtsManagerGlobalTest::TestRemoveComponent(void)
 {
-    mtsGlobalManager globalManager;
+    mtsManagerGlobal globalManager;
 
     CPPUNIT_ASSERT(globalManager.AddComponent("P1", "C1"));
     CPPUNIT_ASSERT(globalManager.AddComponent("P1", "C2"));
@@ -94,9 +95,9 @@ void mtsGlobalManagerTest::TestRemoveComponent(void)
     //
 }
 
-void mtsGlobalManagerTest::TestConnect(void)
+void mtsManagerGlobalTest::TestConnect(void)
 {    
-    mtsGlobalManager globalManager;
+    mtsManagerGlobal globalManager;
 
     // Check if the interfaces specified actually exist.
     // These test cases are described in the project wiki.
@@ -112,8 +113,8 @@ void mtsGlobalManagerTest::TestConnect(void)
     // Connect two interfaces
     CPPUNIT_ASSERT(globalManager.Connect("P1", "C1", "r1", "P2", "C2", "p1"));
 
-    mtsGlobalManager::ConnectionMapType * connectionMap;
-    mtsGlobalManager::ConnectedInterfaceInfo * connectedInterfaceInfo;
+    mtsManagerGlobal::ConnectionMapType * connectionMap;
+    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
 
     // Check if the information at the client side is correct.
     connectionMap = globalManager.GetConnectionMap("P1", "C1");
@@ -138,14 +139,14 @@ void mtsGlobalManagerTest::TestConnect(void)
     CPPUNIT_ASSERT(connectedInterfaceInfo->InterfaceName == "r1");
 }
 
-void mtsGlobalManagerTest::TestDisconnect(void)
+void mtsManagerGlobalTest::TestDisconnect(void)
 {
     // TODO: implement this
 }
 
-void mtsGlobalManagerTest::TestGetConnectionMap(void)
+void mtsManagerGlobalTest::TestGetConnectionMap(void)
 {
-    mtsGlobalManager globalManager;
+    mtsManagerGlobal globalManager;
 
     CPPUNIT_ASSERT(!globalManager.GetConnectionMap("P1", "C1"));
     CPPUNIT_ASSERT(globalManager.AddComponent("P1", "C1"));
@@ -155,5 +156,5 @@ void mtsGlobalManagerTest::TestGetConnectionMap(void)
 //-----------------------------------------------------------------------------
 //	Tests for private variables and methods
 //-----------------------------------------------------------------------------
-
-CPPUNIT_TEST_SUITE_REGISTRATION(mtsGlobalManagerTest);
+*/
+CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerGlobalTest);
