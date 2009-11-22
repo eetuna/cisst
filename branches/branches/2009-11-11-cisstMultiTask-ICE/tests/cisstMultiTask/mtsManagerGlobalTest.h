@@ -27,25 +27,39 @@ http://www.cisst.org/cisst/license.txt.
 class mtsManagerGlobalTest: public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(mtsManagerGlobalTest);
-	{		
-		//CPPUNIT_TEST(TestAddComponent);
-  //      CPPUNIT_TEST(TestFindComponent);
-  //      CPPUNIT_TEST(TestRemoveComponent);
+    {
+        CPPUNIT_TEST(TestAddProcess);
+        CPPUNIT_TEST(TestFindProcess);
+        CPPUNIT_TEST(TestRemoveProcess);
 
-  //      CPPUNIT_TEST(TestConnect);
-  //      CPPUNIT_TEST(TestDisconnect);
+        CPPUNIT_TEST(TestAddComponent);
+        CPPUNIT_TEST(TestFindComponent);
+        CPPUNIT_TEST(TestRemoveComponent);
 
-  //      CPPUNIT_TEST(TestGetConnectionMap);
+        CPPUNIT_TEST(TestAddProvidedInterface);
+        CPPUNIT_TEST(TestFindProvidedInterface);
+        CPPUNIT_TEST(TestRemoveProvidedInterface);
+
+        CPPUNIT_TEST(TestAddRequiredInterface);
+        CPPUNIT_TEST(TestFindRequiredInterface);
+        CPPUNIT_TEST(TestRemoveRequiredInterface);
 	}
     CPPUNIT_TEST_SUITE_END();
 	
 public:
-	//void TestAddComponent(void);
- //   void TestFindComponent(void);
- //   void TestRemoveComponent(void);
+    void TestAddProcess(void);
+    void TestFindProcess(void);
+    void TestRemoveProcess(void);
 
- //   void TestConnect(void);
- //   void TestDisconnect(void);
+    void TestAddComponent(void);
+    void TestFindComponent(void);
+    void TestRemoveComponent(void);
 
- //   void TestGetConnectionMap(void);
+    void TestAddProvidedInterface(void);
+    void TestFindProvidedInterface(void);
+    void TestRemoveProvidedInterface(void);
+         
+    void TestAddRequiredInterface(void);
+    void TestFindRequiredInterface(void);
+    void TestRemoveRequiredInterface(void);
 };

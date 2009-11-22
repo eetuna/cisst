@@ -117,23 +117,6 @@ protected:
     /*! Clean up the internal variables */
     void CleanUp(void);
 
-    /*! Helper methods to easily access internal data structure */
-    /*
-    ComponentMapType * GetComponentMap(const std::string & processName);
-
-    ConnectedInterfaceMapType * GetProvidedInterfaceMap(
-        const std::string & processName, const std::string & componentName);
-
-    ConnectedInterfaceMapType * GetRequiredInterfaceMap(
-        const std::string & processName, const std::string & componentName);
-
-    ConnectionMapType * GetProvidedInterfaceConnectionMap(
-        const std::string & processName, const std::string & componentName, const std::string & providedInterfaceName);
-
-    ConnectionMapType * GetRequiredInterfaceConnectionMap(
-        const std::string & processName, const std::string & componentName, const std::string & requiredInterfaceName);
-    */
-
 public:
     /*! Constructor and destructor */
     mtsManagerGlobal();
@@ -213,9 +196,10 @@ public:
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName);
 
-    /*! Get a connection information map of the provided/required interface specified.
-        Note that this does not validity check. Thus, validity should be checked first
-        using FindProvidedInterface()/FindRequiredInterface() before calling this method. */
+    /*! Get a connection information map of the provided/required interface 
+        specified. Note that these functions do not check validity. Argument 
+        validity should be checked first using FindProvidedInterface() and 
+        FindRequiredInterface() before calling this method. */
     ConnectionMapType * GetProvidedInterfaceConnectionMap(
         const std::string & serverProcessName, const std::string & serverComponentName, 
         const std::string & providedInterfaceName, InterfaceMapType ** interfaceMap);

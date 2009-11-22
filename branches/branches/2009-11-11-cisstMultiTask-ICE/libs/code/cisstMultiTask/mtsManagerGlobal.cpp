@@ -38,60 +38,13 @@ mtsManagerGlobal::~mtsManagerGlobal()
 void mtsManagerGlobal::CleanUp(void)
 {    
     // Remove all processes safely
-    for (ProcessMapType::iterator it = ProcessMap.GetMap().begin(); it != ProcessMap.end(); ++it)
+    ProcessMapType::iterator it;
+    while (ProcessMap.GetMap().size() > 0) 
     {
+        it = ProcessMap.GetMap().begin();
         RemoveProcess(it->first);
     }
 }
-
-/*
-mtsManagerGlobal::ComponentMapType * mtsManagerGlobal::GetComponentMap(
-    const std::string & processName)
-{
-    if (!FindProcess(processName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Cannot get component map: no process \"" << processName
-            << "\" is found." << std::endl;
-        return false;
-    }
-
-    return ProcessMap.GetItem(processName, CMN_LOG_LOD_VERY_VERBOSE);
-}
-
-mtsManagerGlobal::ConnectedInterfaceMapType * mtsManagerGlobal::GetProvidedInterfaceMap(
-    const std::string & processName, const std::string & componentName)
-{
-    if (!FindComponent(processName, componentName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Cannot get provided interface map: no process \"" << processName
-            << "\" with component \"" << componentName << "\" is found." << std::endl;
-        return false;
-    }
-
-    //mtsManagerGlobal::ComponentMapType * componentMap = GetComponentMap(processName);
-
-    //if (componentMap == NULL) {
-
-    //GetComponentMap
-    return NULL;
-}
-
-mtsManagerGlobal::ConnectedInterfaceMapType * mtsManagerGlobal::GetRequiredInterfaceMap(
-    const std::string & processName, const std::string & componentName)
-{
-    return NULL;
-}
-
-mtsManagerGlobal::ConnectionMapType * mtsManagerGlobal::GetProvidedInterfaceConnectionMap(
-    const std::string & processName, const std::string & componentName, const std::string & providedInterfaceName)
-{
-    return NULL;
-}
-
-mtsManagerGlobal::ConnectionMapType * mtsManagerGlobal::GetRequiredInterfaceConnectionMap(
-    const std::string & processName, const std::string & componentName, const std::string & requiredInterfaceName)
-{
-    return NULL;
-}
-*/
 
 //-------------------------------------------------------------------------
 //  Process Management
@@ -128,12 +81,13 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
 
     ComponentMapType * componentMap = ProcessMap.GetItem(processName);
     if (componentMap) {
-        for (ComponentMapType::iterator it = componentMap->GetMap().begin(); it != componentMap->GetMap().end(); ++it) 
-        {
+        ComponentMapType::iterator it;
+        while (componentMap->GetMap().size() > 0) {
+            it = componentMap->GetMap().begin();
             ret &= RemoveComponent(processName, it->first);
         }
         delete componentMap;
-    }    
+    }
     ret &= ProcessMap.RemoveItem(processName);
 
     return ret;
@@ -158,11 +112,12 @@ bool mtsManagerGlobal::AddComponent(const std::string & processName, const std::
     if (componentMap == NULL) {
         componentMap = new ComponentMapType(processName);
         
-        if (!ProcessMap.AddItem(processName, componentMap)) {
+        (ProcessMap.GetMap())[processName] = componentMap;
+        /*if (!ProcessMap.AddItem(processName, componentMap)) {
             CMN_LOG_CLASS_RUN_ERROR << "Faild to add a process: " 
                 << "\"" << processName << "\"" << std::endl;
             return false;
-        }
+        }*/
     }
 
     bool ret = componentMap->AddItem(componentName, NULL);
@@ -213,15 +168,13 @@ bool mtsManagerGlobal::RemoveComponent(
         ConnectedInterfaceMapType::iterator it;
 
         // Remove provided interfaces
-        for (it = interfaceMap->ProvidedInterfaceMap.GetMap().begin(); 
-             it != interfaceMap->ProvidedInterfaceMap.GetMap().end(); ++it)
-        {
+        while (interfaceMap->ProvidedInterfaceMap.GetMap().size() > 0) {
+            it = interfaceMap->ProvidedInterfaceMap.GetMap().begin();
             ret &= RemoveProvidedInterface(processName, componentName, it->first);
         }
         // Remove required interfaces
-        for (it = interfaceMap->RequiredInterfaceMap.GetMap().begin(); 
-             it != interfaceMap->RequiredInterfaceMap.GetMap().end(); ++it)
-        {
+        while (interfaceMap->RequiredInterfaceMap.GetMap().size() > 0) {
+            it = interfaceMap->RequiredInterfaceMap.GetMap().begin();
             ret &= RemoveRequiredInterface(processName, componentName, it->first);
         }
         delete interfaceMap;
@@ -253,16 +206,43 @@ bool mtsManagerGlobal::AddProvidedInterface(
     if (interfaceMap == NULL) {
         interfaceMap = new InterfaceMapType;
         
-        if (!componentMap->AddItem(componentName, interfaceMap)) {
-            CMN_LOG_CLASS_RUN_ERROR << "Failed to add a component: " 
-                << "\"" << processName << "\" - \"" << componentName << "\"" << std::endl;
-            return false;
-        }
+        (componentMap->GetMap())[componentName] = interfaceMap;
     }
 
     bool ret = interfaceMap->ProvidedInterfaceMap.AddItem(interfaceName, NULL);
     if (!ret) {
         CMN_LOG_CLASS_RUN_ERROR << "Can't add a provided interface: " 
+            << "\"" << processName << "\" - \"" << componentName << "\" - \"" << interfaceName << "\"" << std::endl;
+    }
+
+    return ret;
+}
+
+bool mtsManagerGlobal::AddRequiredInterface(
+    const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+{
+    // AddRequiredInterface() doesn't need to be called to check duplicate process registration
+    // since cmnNamedMap::AddItem() internally checks duplicity before adding an item.
+
+    if (!FindComponent(processName, componentName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "Can't find a registered component: " 
+            << "\"" << processName << "\" - \"" << componentName << "\"" << std::endl;
+        return false;
+    }
+
+    ComponentMapType * componentMap = ProcessMap.GetItem(processName);
+    InterfaceMapType * interfaceMap = componentMap->GetItem(componentName);
+
+    // If the component did not registered before
+    if (interfaceMap == NULL) {
+        interfaceMap = new InterfaceMapType;
+        
+        (componentMap->GetMap())[componentName] = interfaceMap;
+    }
+
+    bool ret = interfaceMap->RequiredInterfaceMap.AddItem(interfaceName, NULL);
+    if (!ret) {
+        CMN_LOG_CLASS_RUN_ERROR << "Can't add a required interface: " 
             << "\"" << processName << "\" - \"" << componentName << "\" - \"" << interfaceName << "\"" << std::endl;
     }
 
@@ -285,6 +265,24 @@ bool mtsManagerGlobal::FindProvidedInterface(
     }
 
     return interfaceMap->ProvidedInterfaceMap.FindItem(interfaceName);
+}
+
+bool mtsManagerGlobal::FindRequiredInterface(
+    const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
+{
+    if (!FindComponent(processName, componentName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "Can't find a registered component: " 
+            << "\"" << processName << "\" - \"" << componentName << "\"" << std::endl;
+        return false;
+    }
+    
+    ComponentMapType * componentMap = ProcessMap.GetItem(processName);
+    InterfaceMapType * interfaceMap = componentMap->GetItem(componentName);
+    if (!interfaceMap) {
+        return false;
+    }
+
+    return interfaceMap->RequiredInterfaceMap.FindItem(interfaceName);
 }
 
 bool mtsManagerGlobal::RemoveProvidedInterface(
@@ -313,10 +311,8 @@ bool mtsManagerGlobal::RemoveProvidedInterface(
     ConnectionMapType * connectionMap = interfaceMap->ProvidedInterfaceMap.GetItem(interfaceName);
     if (connectionMap) {
         ConnectionMapType::iterator it;
-
-        for (it = connectionMap->GetMap().begin(); 
-             it != connectionMap->GetMap().end(); ++it)
-        {
+        while (connectionMap->GetMap().size() > 0) {
+            it = connectionMap->GetMap().begin();
             ret &= Disconnect(it->second->GetProcessName(),
                               it->second->GetComponentName(),
                               it->second->GetInterfaceName(),
@@ -327,6 +323,48 @@ bool mtsManagerGlobal::RemoveProvidedInterface(
         delete connectionMap;
     }
     ret &= interfaceMap->ProvidedInterfaceMap.RemoveItem(interfaceName);
+
+    return ret;
+}
+
+bool mtsManagerGlobal::RemoveRequiredInterface(
+    const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+{
+    if (!FindRequiredInterface(processName, componentName, interfaceName)) {
+        return false;
+    }
+    
+    // If there is no component registered
+    ComponentMapType * componentMap = ProcessMap.GetItem(processName);
+    if (componentMap == NULL) {
+        // NOP
+        return true;
+    }
+
+    // If there is no interface registered
+    InterfaceMapType * interfaceMap = componentMap->GetItem(componentName);
+    if (interfaceMap == NULL) {
+        // NOP
+        return true;
+    }
+    
+    bool ret = true;
+
+    ConnectionMapType * connectionMap = interfaceMap->RequiredInterfaceMap.GetItem(interfaceName);
+    if (connectionMap) {
+        ConnectionMapType::iterator it;
+        while (connectionMap->GetMap().size() > 0) {
+            it = connectionMap->GetMap().begin();
+            ret &= Disconnect(it->second->GetProcessName(),
+                              it->second->GetComponentName(),
+                              it->second->GetInterfaceName(),
+                              processName,
+                              componentName,
+                              interfaceName);
+        }
+        delete connectionMap;
+    }
+    ret &= interfaceMap->RequiredInterfaceMap.RemoveItem(interfaceName);
 
     return ret;
 }
