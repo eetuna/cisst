@@ -111,11 +111,46 @@ protected:
     typedef cmnNamedMap<ComponentMapType> ProcessMapType;
     ProcessMapType ProcessMap;
 
+    /* This is for test purpose */
+    typedef std::map<unsigned int, unsigned int> AllocatedPointerType;
+    AllocatedPointerType AllocatedPointers;
+
     //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Clean up the internal variables */
-    void CleanUp(void);
+    bool CleanUp(void);
+
+    /*! Get a map containing connection information for a provided interface */
+    ConnectionMapType * GetConnectionsOfProvidedInterface(
+        const std::string & serverProcessName, const std::string & serverComponentName, 
+        const std::string & providedInterfaceName, InterfaceMapType ** interfaceMap);
+    ConnectionMapType * GetConnectionsOfProvidedInterface(
+        const std::string & serverProcessName, const std::string & serverComponentName, 
+        const std::string & providedInterfaceName) const;
+
+    /*! Get a map containing connection information for a required interface */
+    ConnectionMapType * GetConnectionsOfRequiredInterface(
+        const std::string & clientProcessName, const std::string & clientComponentName, 
+        const std::string & requiredInterfaceName, InterfaceMapType ** interfaceMap);
+    
+    ConnectionMapType * GetConnectionsOfRequiredInterface(
+        const std::string & clientProcessName, const std::string & clientComponentName, 
+        const std::string & requiredInterfaceName) const;
+    
+    /*! Add this interface to connectionMap as connected interface */
+    bool AddConnectedInterface(ConnectionMapType * connectionMap, 
+        const std::string & processName, const std::string & componentName,
+        const std::string & interfaceName);
+
+    /*! Check if two interfaces are connected */
+    bool IsAlreadyConnected(
+        const std::string & clientProcessName,
+        const std::string & clientComponentName,
+        const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName,
+        const std::string & serverComponentName,
+        const std::string & serverProvidedInterfaceName);
 
 public:
     /*! Constructor and destructor */
@@ -179,7 +214,7 @@ public:
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------
-    /*! Connect two components. */
+    /*! Connect two interfaces */
     bool Connect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,
@@ -188,26 +223,14 @@ public:
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName);
 
-    bool Disconnect(
+    /*! Disconnect two interfaces */
+    void Disconnect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName,
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName);
-
-    /*! Get a connection information map of the provided/required interface 
-        specified. Note that these functions do not check validity. Argument 
-        validity should be checked first using FindProvidedInterface() and 
-        FindRequiredInterface() before calling this method. */
-    ConnectionMapType * GetProvidedInterfaceConnectionMap(
-        const std::string & serverProcessName, const std::string & serverComponentName, 
-        const std::string & providedInterfaceName, InterfaceMapType ** interfaceMap);
-
-    ConnectionMapType * GetRequiredInterfaceConnectionMap(
-        const std::string & clientProcessName, const std::string & clientComponentName, 
-        const std::string & requiredInterfaceName, InterfaceMapType ** interfaceMap);
-
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerGlobal)

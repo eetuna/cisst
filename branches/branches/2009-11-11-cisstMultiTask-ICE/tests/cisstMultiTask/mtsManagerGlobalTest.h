@@ -23,6 +23,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <cisstCommon/cmnGenericObjectProxy.h>
+#include <string>
+
+using namespace std;
 
 class mtsManagerGlobalTest: public CppUnit::TestFixture
 {
@@ -43,6 +46,13 @@ class mtsManagerGlobalTest: public CppUnit::TestFixture
         CPPUNIT_TEST(TestAddRequiredInterface);
         CPPUNIT_TEST(TestFindRequiredInterface);
         CPPUNIT_TEST(TestRemoveRequiredInterface);
+
+        CPPUNIT_TEST(TestConnect);
+        CPPUNIT_TEST(TestDisconnect);
+        CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
+        CPPUNIT_TEST(TestGetConnectionsOfRequiredInterface);
+        CPPUNIT_TEST(TestAddConnectedInterface);
+
 	}
     CPPUNIT_TEST_SUITE_END();
 	
@@ -62,4 +72,10 @@ public:
     void TestAddRequiredInterface(void);
     void TestFindRequiredInterface(void);
     void TestRemoveRequiredInterface(void);
+
+    void TestConnect(void);
+    void TestDisconnect(void);
+    void TestGetConnectionsOfProvidedInterface(void);
+    void TestGetConnectionsOfRequiredInterface(void);
+    void TestAddConnectedInterface(void);
 };

@@ -21,8 +21,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsTaskGlobal.h>
 
-#include <string>
-
 std::string mtsTaskGlobal::ShowTaskInfo()
 {
 #define HEADING "..... "
