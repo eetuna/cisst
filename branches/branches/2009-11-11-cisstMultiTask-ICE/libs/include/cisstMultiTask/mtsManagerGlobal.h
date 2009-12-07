@@ -38,8 +38,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-#include <map>
-
 class CISST_EXPORT mtsManagerGlobal : public mtsManagerGlobalInterface {
 
     friend class mtsManagerGlobalTest;
@@ -50,8 +48,8 @@ protected:
     /*! List of connected local component managers */
     // TODO: currently this considers standalone mode only. Thus. this should be extended later
     // to be able to handle network mode together.
-    typedef cmnNamedMap<mtsTaskManager> LocalComponentManagerMapType;
-    LocalComponentManagerMapType LocalComponentManagerMap;
+    //typedef cmnNamedMap<mtsTaskManager> LocalComponentManagerMapType;
+    //LocalComponentManagerMapType LocalComponentManagerMap;
 
     //-------------------------------------------------------------------------
     //  Data Structures
@@ -111,7 +109,7 @@ protected:
     typedef cmnNamedMap<ComponentMapType> ProcessMapType;
     ProcessMapType ProcessMap;
 
-    /* This is for test purpose */
+    /* TODO: Remove me. This is for test purpose */
     typedef std::map<unsigned int, unsigned int> AllocatedPointerType;
     AllocatedPointerType AllocatedPointers;
 
@@ -120,6 +118,13 @@ protected:
     //-------------------------------------------------------------------------
     /*! Clean up the internal variables */
     bool CleanUp(void);
+
+    /*! Generate unique id of an interface as string */
+    inline std::string GetInterfaceUID(const std::string & processName,
+        const std::string & componentName, const std::string & interfaceName) const
+    {
+        return processName + ":" + componentName + ":" + interfaceName;
+    }
 
     /*! Get a map containing connection information for a provided interface */
     ConnectionMapType * GetConnectionsOfProvidedInterface(
