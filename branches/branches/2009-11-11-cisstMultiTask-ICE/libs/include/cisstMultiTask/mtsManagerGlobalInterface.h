@@ -44,17 +44,22 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 
+class mtsManagerLocalInterface;
+
 class CISST_EXPORT mtsManagerGlobalInterface : public cmnGenericObject {
 
 public:
     //-------------------------------------------------------------------------
     //  Process Management
     //-------------------------------------------------------------------------
-    /*! Register a process. */
-    virtual bool AddProcess(const std::string & processName) = 0;
+    /*! Register a process */
+    virtual bool AddProcess(mtsManagerLocalInterface * localManager) = 0;
 
     /*! Find a process. */
     virtual bool FindProcess(const std::string & processName) const = 0;
+
+    /*! Get a process object (local component manager object) */
+    virtual mtsManagerLocalInterface * GetProcessObject(const std::string & processName) = 0;
 
     /*! Remove a process. */
     virtual bool RemoveProcess(const std::string & processName) = 0;

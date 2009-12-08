@@ -35,8 +35,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerLocal);
 
-#define MTS_MANAGER_LOCAL_PROCESS_NAME "localhost"
-
 mtsManagerLocal::mtsManagerLocal() : 
     ComponentMap("Components"),
     ManagerGlobal(NULL)
@@ -89,7 +87,7 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
     // If both arguments are provided, run this task manager in the network mode.
     // That is, an instance of mtsManagerGlobal acts as a proxy for the global 
     // manager and it connects to the global manager over a network.
-    if ((thisProcessName != "") && (thisProcessIP != "")) {
+    if ((thisProcessName != "localhost") && (thisProcessIP != "")) {
         CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager running in NETWORK mode" << std::endl;
         // TODO: create a global manager proxy
         // TODO: connect to the global manager
@@ -102,8 +100,8 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
         CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager running in STANDALONE mode. " << std::endl;
 
         ManagerGlobal = new mtsManagerGlobal;
-                
-        if (!ManagerGlobal->AddProcess(MTS_MANAGER_LOCAL_PROCESS_NAME)) {
+
+        if (!ManagerGlobal->AddProcess(this)) {
             CMN_LOG_CLASS_INIT_ERROR << "failed in registering default process" << std::endl;
         }
     }
@@ -162,7 +160,7 @@ bool mtsManagerLocal::AddComponent(mtsDevice * component)
     std::string componentName = component->GetName();
 
     // Try to register new component to the global component manager first.
-    if (!ManagerGlobal->AddComponent(MTS_MANAGER_LOCAL_PROCESS_NAME, componentName)) {
+    if (!ManagerGlobal->AddComponent(ProcessName, componentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "failed to add component: " << componentName << std::endl;
         return false;
     }
@@ -171,8 +169,7 @@ bool mtsManagerLocal::AddComponent(mtsDevice * component)
     // the global component manager.
     std::vector<std::string> interfaceNames = component->GetNamesOfRequiredInterfaces();
     for (unsigned int i = 0; i < interfaceNames.size(); ++i) {
-        if (!ManagerGlobal->AddRequiredInterface(
-            MTS_MANAGER_LOCAL_PROCESS_NAME, componentName, interfaceNames[i]))
+        if (!ManagerGlobal->AddRequiredInterface(ProcessName, componentName, interfaceNames[i]))
         {
             CMN_LOG_CLASS_RUN_ERROR << "failed to add required interface: " 
                 << componentName << ":" << interfaceNames[i] << std::endl;
@@ -182,8 +179,7 @@ bool mtsManagerLocal::AddComponent(mtsDevice * component)
 
     interfaceNames = component->GetNamesOfProvidedInterfaces();
     for (unsigned int i = 0; i < interfaceNames.size(); ++i) {
-        if (!ManagerGlobal->AddProvidedInterface(
-            MTS_MANAGER_LOCAL_PROCESS_NAME, componentName, interfaceNames[i]))
+        if (!ManagerGlobal->AddProvidedInterface(ProcessName, componentName, interfaceNames[i]))
         {
             CMN_LOG_CLASS_RUN_ERROR << "failed to add provided interface: " 
                 << componentName << ":" << interfaceNames[i] << std::endl;
@@ -193,7 +189,8 @@ bool mtsManagerLocal::AddComponent(mtsDevice * component)
 
     CMN_LOG_CLASS_RUN_VERBOSE << "Global component manager: added component: " << component->GetName() << std::endl;
 
-    bool result = ComponentMap.AddItem(component->GetName(), component, CMN_LOG_LOD_INIT_ERROR);
+    ComponentMapChange.Lock();
+    bool result = ComponentMap.AddItem(component->GetName(), component, CMN_LOG_LOD_RUN_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "added component: "
                                    << component->GetName() << std::endl;
@@ -201,8 +198,10 @@ bool mtsManagerLocal::AddComponent(mtsDevice * component)
         //    std::string buffer = task->ToGraphFormat();
         //    CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
         //    JGraphSocket.Send(buffer);
-        //}        
+        //}
     }
+    ComponentMapChange.Unlock();
+
     return result;
 }
 
@@ -219,19 +218,31 @@ bool CISST_DEPRECATED mtsManagerLocal::AddDevice(mtsDevice * component)
 bool mtsManagerLocal::RemoveTask(mtsDevice * component) 
 {
     // Try to remove this component from the global component manager first.
-    if (!ManagerGlobal->RemoveComponent(MTS_MANAGER_LOCAL_PROCESS_NAME, component->GetName())) {
+    if (!ManagerGlobal->RemoveComponent(ProcessName, component->GetName())) {
         CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: " << component->GetName() << std::endl;
         return false;
     }
 
     CMN_LOG_CLASS_RUN_VERBOSE << "Global component manager: removed component: " << component->GetName() << std::endl;
 
-    bool result = ComponentMap.RemoveItem(component->GetName(), CMN_LOG_LOD_INIT_ERROR);
+    ComponentMapChange.Lock();
+    bool result = ComponentMap.RemoveItem(component->GetName(), CMN_LOG_LOD_RUN_ERROR);
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "removed component: "
                                    << component->GetName() << std::endl;
     }
+    ComponentMapChange.Unlock();
     return result;
+}
+
+std::vector<std::string> mtsManagerLocal::GetNamesOfProcesses(void) const
+{
+    //
+    // TODO:
+    // 1. add data structure for process list management
+    // 2. update the following line
+    //
+    return ComponentMap.GetNames();
 }
 
 std::vector<std::string> mtsManagerLocal::GetNamesOfComponents(void) const 
@@ -246,7 +257,7 @@ void mtsManagerLocal::GetNamesOfComponents(std::vector<std::string> & namesOfCom
 
 mtsDevice * mtsManagerLocal::GetComponent(const std::string & componentName) 
 {
-    return ComponentMap.GetItem(componentName, CMN_LOG_LOD_INIT_ERROR);
+    return ComponentMap.GetItem(componentName, CMN_LOG_LOD_RUN_ERROR);
 }
 
 mtsTask CISST_DEPRECATED * mtsManagerLocal::GetTask(const std::string & taskName)
@@ -268,15 +279,20 @@ void mtsManagerLocal::ToStream(std::ostream & outputStream) const {
 void mtsManagerLocal::CreateAll(void) 
 {
     mtsTask * componentTask;
+
+    ComponentMapChange.Lock();
+
     ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
-    
+
     for (; it != itEnd; ++it) {
         componentTask = dynamic_cast<mtsTask*>(it->second);
         if (!componentTask) continue;
 
         componentTask->Create();
     }
+
+    ComponentMapChange.Unlock();
 }
 
 void mtsManagerLocal::StartAll(void) 
@@ -286,21 +302,25 @@ void mtsManagerLocal::StartAll(void)
     const osaThreadId threadId = osaGetCurrentThreadId();
     
     mtsTask * componentTask;
+
+    ComponentMapChange.Lock();
+
     ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     ComponentMapType::const_iterator itLastTask = ComponentMap.end();
 
     for (; it != ComponentMap.end(); ++it) {
         componentTask = dynamic_cast<mtsTask*>(it->second);
-        if (!componentTask) continue;   // Start only components that are of type mtsTask.
+        if (!componentTask) continue;   // Start components that are of type mtsTask
 
         // Check if the task will use the current thread.
         if (componentTask->Thread.GetId() == threadId) {
             CMN_LOG_CLASS_INIT_WARNING << "StartAll: component \"" << it->first << "\" uses current thread, will start last." << std::endl;
-            if (itLastTask != ComponentMap.end())
-                CMN_LOG_CLASS_INIT_ERROR << "StartAll: multiple tasks using current thread (only first will be started)." << std::endl;
-            else
+            if (itLastTask != ComponentMap.end()) {
+                CMN_LOG_CLASS_RUN_ERROR << "StartAll: multiple tasks using current thread (only first will be started)." << std::endl;
+            } else {
                 itLastTask = it;
+            }
         } else {
             CMN_LOG_CLASS_INIT_DEBUG << "StartAll: starting task \"" << it->first << "\"" << std::endl;
             componentTask->Start();  // If task will not use current thread, start it immediately.
@@ -312,12 +332,17 @@ void mtsManagerLocal::StartAll(void)
         CMN_ASSERT(componentTask);
         componentTask->Start();
     }
+
+    ComponentMapChange.Unlock();
 }
 
 void mtsManagerLocal::KillAll(void) 
 {
     // It is not necessary to have any special handling of a task using the current thread.
     mtsTask * componentTask;
+    
+    ComponentMapChange.Lock();
+
     ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     for (; it != itEnd; ++it) {
@@ -326,6 +351,8 @@ void mtsManagerLocal::KillAll(void)
 
         componentTask->Kill();
     }
+
+    ComponentMapChange.Unlock();
 }
 
 void mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const {
@@ -335,9 +362,8 @@ void mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const {
 bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
                               const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
-    if (!ManagerGlobal->Connect(
-        MTS_MANAGER_LOCAL_PROCESS_NAME, clientComponentName, clientRequiredInterfaceName,
-        MTS_MANAGER_LOCAL_PROCESS_NAME, serverComponentName, serverProvidedInterfaceName))
+    if (!ManagerGlobal->Connect(ProcessName, clientComponentName, clientRequiredInterfaceName,
+                                ProcessName, serverComponentName, serverProvidedInterfaceName))
     {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: Global Manager failed to connect two interfaces: "
             << clientComponentName << ":" << clientRequiredInterfaceName << " - "
@@ -386,6 +412,6 @@ void mtsManagerLocal::Disconnect(const std::string & clientComponentName, const 
                                  const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     return ManagerGlobal->Disconnect(
-        MTS_MANAGER_LOCAL_PROCESS_NAME, clientComponentName, clientRequiredInterfaceName,
-        MTS_MANAGER_LOCAL_PROCESS_NAME, serverComponentName, serverProvidedInterfaceName);
+        ProcessName, clientComponentName, clientRequiredInterfaceName,
+        ProcessName, serverComponentName, serverProvidedInterfaceName);
 }

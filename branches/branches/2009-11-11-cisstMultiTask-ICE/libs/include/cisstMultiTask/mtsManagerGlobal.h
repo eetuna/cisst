@@ -33,6 +33,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstCommon/cmnNamedMap.h>
+#include <cisstOSAbstraction/osaMutex.h>
+#include <cisstMultiTask/mtsManagerLocalInterface.h>
 #include <cisstMultiTask/mtsManagerGlobalInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
@@ -45,12 +47,6 @@ class CISST_EXPORT mtsManagerGlobal : public mtsManagerGlobalInterface {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 protected:
-    /*! List of connected local component managers */
-    // TODO: currently this considers standalone mode only. Thus. this should be extended later
-    // to be able to handle network mode together.
-    //typedef cmnNamedMap<mtsTaskManager> LocalComponentManagerMapType;
-    //LocalComponentManagerMapType LocalComponentManagerMap;
-
     //-------------------------------------------------------------------------
     //  Data Structures
     //-------------------------------------------------------------------------
@@ -109,6 +105,18 @@ protected:
     typedef cmnNamedMap<ComponentMapType> ProcessMapType;
     ProcessMapType ProcessMap;
 
+    //
+    // TODO: NEED TO ADD MUTEX FOR PROCESS_MAP
+    //
+
+    /*! Lookup table to access local component manager with process id:
+        (process name, local component manager id) */
+    typedef cmnNamedMap<mtsManagerLocalInterface> LocalManagerMapType;
+    LocalManagerMapType LocalManagerMap;
+
+    /*! Mutex to safely use LocalManagerMap and LocalManagerMapByProcessID */
+    osaMutex LocalManagerMapChange;
+
     /* TODO: Remove me. This is for test purpose */
     typedef std::map<unsigned int, unsigned int> AllocatedPointerType;
     AllocatedPointerType AllocatedPointers;
@@ -163,19 +171,17 @@ public:
 
     ~mtsManagerGlobal();
 
-    /*! Add local component manager */
-    // TODO: currently this considers standalone mode only. Thus. this should be extended later
-    // to be able to handle network mode together.
-    //void AddLocalComponentManager(const std::string & localComponentManagerID
-
     //-------------------------------------------------------------------------
     //  Process Management
     //-------------------------------------------------------------------------
     /*! Register a process. */
-    bool AddProcess(const std::string & processName);
+    bool AddProcess(mtsManagerLocalInterface * localManager);
 
     /*! Find a process. */
     bool FindProcess(const std::string & processName) const;
+
+    /*! Get a process object (local component manager object) */
+    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
 
     /*! Remove a process. */
     bool RemoveProcess(const std::string & processName);

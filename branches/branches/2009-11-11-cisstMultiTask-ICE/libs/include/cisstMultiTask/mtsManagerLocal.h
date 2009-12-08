@@ -58,7 +58,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 //#include <cisstOSAbstraction/osaSocket.h>
+#include <cisstOSAbstraction/osaMutex.h>
 
+#include <cisstMultiTask/mtsManagerLocalInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 //#include <cisstMultiTask/mtsConfig.h>
 
@@ -71,25 +73,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-class CISST_EXPORT mtsManagerLocal: public cmnGenericObject {
+class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface {
 
     friend class mtsManagerLocalTest;
+    friend class mtsManagerGlobalTest;
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
-
-    /*! Typedef for component map: (component name, component object)
-        component object is a pointer to mtsDevice object. */
-    typedef cmnNamedMap<mtsDevice> ComponentMapType;
-
-    ///*! Typedef for user task, composed of task name and "output port"
-    //    name. */
-    //typedef std::pair<std::string, std::string> UserType;
-    ///*! Typedef for resource device or task, composed of device or
-    //    task name and interface name. */ 
-    //typedef std::pair<std::string, std::string> ResourceType;
-    ///*! Typedef for associations between users and resources. */
-    //typedef std::pair<UserType, ResourceType> AssociationType;
-    //typedef std::set<AssociationType> AssociationSetType;
 
 //public:
 //#ifdef CISST_MTS_HAS_ICE
@@ -102,7 +91,9 @@ class CISST_EXPORT mtsManagerLocal: public cmnGenericObject {
 //#endif
 
 protected:
-    /*! Component map */
+    /*! Typedef for component map: (component name, component object)
+        component object is a pointer to mtsDevice object. */
+    typedef cmnNamedMap<mtsDevice> ComponentMapType;
     ComponentMapType ComponentMap;
 
     // TODO: time synchronization between tasks (conversion local relative time
@@ -114,9 +105,14 @@ protected:
     //osaSocket JGraphSocket;
     //bool JGraphSocketConnected;
 
-    /*! ID for this local component manager. Consists of a process name IP */
+    /*! ID for this local component manager. Consists of a process name IP.
+        Note that a process name of "localhost" is reserved for the name of local
+        component manager in the standalone mode and should not be used by users. */
     const std::string ProcessName;
     const std::string ProcessIP;
+
+    /*! Mutex to use ComponentMap in a thread safe manner */
+    osaMutex ComponentMapChange;
 
     /*! Pointer to the global component manager.
         Depending on configurations, this has two different meanings.
@@ -138,7 +134,7 @@ protected:
 public:
     /*! Create the static instance of local task manager. */
     static mtsManagerLocal * GetInstance(
-        const std::string & thisProcessName = "", const std::string & thisProcessIP = "");
+        const std::string & thisProcessName = "localhost", const std::string & thisProcessIP = "");
 
     /*! Return a reference to the time server. */
     inline const osaTimeServer & GetTimeServer(void) {
@@ -147,7 +143,7 @@ public:
 
     //-------------------------------------------------------------------------
     //  Component Management
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------    
     /*! Add a component to this local component manager. */
     bool AddComponent(mtsDevice * component);
 
@@ -203,8 +199,16 @@ public:
     //  Utilities
     //-------------------------------------------------------------------------
     /*! Enumerate all the names of components added */
+    std::vector<std::string> GetNamesOfProcesses(void) const;
+
+    /*! Enumerate all the names of components added */
     std::vector<std::string> GetNamesOfComponents(void) const;
     void GetNamesOfComponents(std::vector<std::string>& namesOfComponents) const;
+
+    /*! Getters */
+    inline const std::string GetProcessName() const {
+        return ProcessName;
+    }
 
     /*! For debugging. Dumps to stream the maps maintained by the manager. */
     void ToStream(std::ostream & outputStream) const;

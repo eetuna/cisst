@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerGlobal);
 
+// TODO: Debug code: remove later!
 #define CHECK_DELETE(_var) \
     {\
         AllocatedPointerType::iterator _it = AllocatedPointers.find(reinterpret_cast<unsigned int>(_var));\
@@ -67,14 +68,32 @@ bool mtsManagerGlobal::CleanUp(void)
 //-------------------------------------------------------------------------
 //  Process Management
 //-------------------------------------------------------------------------
-bool mtsManagerGlobal::AddProcess(const std::string & processName)
+bool mtsManagerGlobal::AddProcess(mtsManagerLocalInterface * localManager)
 {
-    // AddProcess() doesn't need to be called to check duplicate process registration
-    // since cmnNamedMap::AddItem() internally checks duplicity before adding an item.
+    if (!localManager) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: invalid local manager" << std::endl;
+        return false;
+    }
 
+    // Check if the local component manager has already been registered.
+    if (FindProcess(localManager->GetProcessName())) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: already registered process: " << localManager->GetProcessName() << std::endl;
+        return false;
+    }
+    
+    const std::string processName = localManager->GetProcessName();
     bool success = ProcessMap.AddItem(processName, NULL);
-    if (!success ) {
-        CMN_LOG_CLASS_RUN_ERROR << "Can't add process: " << processName << std::endl;
+
+    if (success) {
+        LocalManagerMapChange.Lock();
+        success = LocalManagerMap.AddItem(processName, localManager);
+        LocalManagerMapChange.Unlock();
+
+        if (!success) {
+            CMN_LOG_CLASS_RUN_ERROR << "Failed to add process in local component manager map: " << processName << std::endl;
+        }
+    } else {
+        CMN_LOG_CLASS_RUN_ERROR << "Failed to add process in process map: " << processName << std::endl;
     }
 
     return success;
@@ -83,6 +102,16 @@ bool mtsManagerGlobal::AddProcess(const std::string & processName)
 bool mtsManagerGlobal::FindProcess(const std::string & processName) const
 {
     return ProcessMap.FindItem(processName);
+}
+
+mtsManagerLocalInterface * mtsManagerGlobal::GetProcessObject(const std::string & processName)
+{
+    if (!ProcessMap.FindItem(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "GetProcessObject: Can't find registered process: " << processName << std::endl;
+        return false;
+    }
+
+    return LocalManagerMap.GetItem(processName);
 }
 
 bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
@@ -96,10 +125,12 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
     // 4) Remove from map
     // 5) Memory release
 
-    if (!ProcessMap.FindItem(processName)) return false;
+    if (!ProcessMap.FindItem(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProcess: Can't find registered process: " << processName << std::endl;
+        return false;
+    }
 
     bool ret = true;
-    
     ComponentMapType * componentMap = ProcessMap.GetItem(processName);
 
     // When componentMap is not NULL, all components that the process manages 
@@ -114,6 +145,10 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
         CHECK_DELETE(componentMap);
     }
 
+    LocalManagerMapChange.Lock();
+    ret &= LocalManagerMap.RemoveItem(processName);
+    LocalManagerMapChange.Unlock();
+
     // Remove the process from process map
     ret &= ProcessMap.RemoveItem(processName);
 
@@ -125,9 +160,6 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
 //-------------------------------------------------------------------------
 bool mtsManagerGlobal::AddComponent(const std::string & processName, const std::string & componentName)
 {
-    // AddComponent() doesn't need to be called to check duplicate process registration
-    // since cmnNamedMap::AddItem() internally checks duplicity before adding an item.
-
     if (!FindProcess(processName)) {
         CMN_LOG_CLASS_RUN_ERROR << "Can't find registered process: " << processName << std::endl;
         return false;
@@ -173,8 +205,11 @@ bool mtsManagerGlobal::RemoveComponent(const std::string & processName, const st
     // TODO: Before removing an element from relevent maps, Disconnect() should be 
     // called first for a case that there is any active connection related to the element.
 
-    // Check existence of the process
-    if (!ProcessMap.FindItem(processName)) return false;
+    // Check if the process has been registerd
+    if (!ProcessMap.FindItem(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: Can't find registered process: " << processName << std::endl;
+        return false;
+    }
 
     bool ret = true;
 
@@ -219,9 +254,6 @@ bool mtsManagerGlobal::RemoveComponent(const std::string & processName, const st
 bool mtsManagerGlobal::AddProvidedInterface(
     const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    // AddProvidedInterface() doesn't need to be called to check duplicate process registration
-    // since cmnNamedMap::AddItem() internally checks duplicity before adding an item.
-
     if (!FindComponent(processName, componentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "Can't find a registered component: " 
             << "\"" << processName << "\" - \"" << componentName << "\"" << std::endl;
@@ -251,9 +283,6 @@ bool mtsManagerGlobal::AddProvidedInterface(
 bool mtsManagerGlobal::AddRequiredInterface(
     const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    // AddRequiredInterface() doesn't need to be called to check duplicate process registration
-    // since cmnNamedMap::AddItem() internally checks duplicity before adding an item.
-
     if (!FindComponent(processName, componentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "Can't find a registered component: " 
             << "\"" << processName << "\" - \"" << componentName << "\"" << std::endl;
@@ -319,8 +348,11 @@ bool mtsManagerGlobal::FindRequiredInterface(
 bool mtsManagerGlobal::RemoveProvidedInterface(
     const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    // Check existence of the process
-    if (!ProcessMap.FindItem(processName)) return false;
+    // Check existence of the process        
+    if (!ProcessMap.FindItem(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterface: Can't find registered process: " << processName << std::endl;
+        return false;
+    }
 
     // Check existence of the component
     ComponentMapType * componentMap = ProcessMap.GetItem(processName);
@@ -356,7 +388,10 @@ bool mtsManagerGlobal::RemoveRequiredInterface(
     const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
     // Check existence of the process
-    if (!ProcessMap.FindItem(processName)) return false;
+    if (!ProcessMap.FindItem(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterface: Can't find registered process: " << processName << std::endl;
+        return false;
+    }
 
     // Check existence of the component
     ComponentMapType * componentMap = ProcessMap.GetItem(processName);

@@ -22,14 +22,18 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <cisstCommon/cmnGenericObjectProxy.h>
+class mtsManagerLocalInterface;
 
 class mtsManagerGlobalTest: public CppUnit::TestFixture
 {
+private:
+    mtsManagerLocalInterface *localManager1, *localManager2;
+
     CPPUNIT_TEST_SUITE(mtsManagerGlobalTest);
     {
         CPPUNIT_TEST(TestAddProcess);
         CPPUNIT_TEST(TestFindProcess);
+        CPPUNIT_TEST(TestGetProcessObject);
         CPPUNIT_TEST(TestRemoveProcess);
 
         CPPUNIT_TEST(TestAddComponent);
@@ -53,10 +57,14 @@ class mtsManagerGlobalTest: public CppUnit::TestFixture
 
 	}
     CPPUNIT_TEST_SUITE_END();
-	
+
 public:
+    void setUp();
+    void tearDown();
+
     void TestAddProcess(void);
     void TestFindProcess(void);
+    void TestGetProcessObject(void);
     void TestRemoveProcess(void);
 
     void TestAddComponent(void);
