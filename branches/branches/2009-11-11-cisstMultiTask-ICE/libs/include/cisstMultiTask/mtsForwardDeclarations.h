@@ -68,7 +68,6 @@ class mtsTaskInterface;
 class mtsRequiredInterface;
 class mtsTask;
 class mtsTaskPeriodic;
-class mtsTaskManager;
 
 // containers
 class mtsMailBox;
@@ -104,6 +103,7 @@ class mtsDeviceInterfaceProxyClient;
 #endif // CISST_MTS_HAS_ICE
 
 
+class mtsManagerLocal;
 class mtsManagerGlobalInterface;
 class mtsManagerGlobalProxyServer;
 

@@ -54,12 +54,12 @@ SET(SOURCE_FILES
     mtsTaskPeriodic.cpp
     mtsTaskFromCallback.cpp
 
-    mtsTaskManager.cpp
     mtsDeviceInterface.cpp
 
     mtsCollectorBase.cpp
     mtsCollectorState.cpp    
     
+    mtsManagerLocal.cpp
     mtsManagerGlobal.cpp
 
     mtsHistory.cpp
@@ -125,6 +125,7 @@ SET(HEADER_FILES
     mtsCollectorBase.h    
     mtsCollectorState.h
     
+    mtsManagerLocal.h
     mtsManagerGlobalInterface.h
     mtsManagerGlobal.h
 

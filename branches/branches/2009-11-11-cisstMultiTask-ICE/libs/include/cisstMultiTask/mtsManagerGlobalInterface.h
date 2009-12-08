@@ -24,19 +24,19 @@ http://www.cisst.org/cisst/license.txt.
   \brief Definition of mtsManagerGlobalInterface
   \ingroup cisstMultiTask
 
-  This class defines an interface used by local task manager to communicate 
-  with the global manager.  The interface is defined as a pure abstract 
-  class because there are two different cases that the interface covers:
+  This class defines an interface used by local component manager to communicate 
+  with the global component manager.  The interface is defined as a pure abstract 
+  class because there are two different cases that the interface are used for:
 
-  Standalone Mode: Inter-thread communication, no ICE.  Local task manager 
-    directly connects to the global manager that runs in the same process.
-    In this case, mtsTaskManager::ManagerGlobal is of type mtsManagerGlobal.
+  Standalone Mode: Inter-thread communication, no ICE.  A local component manager 
+    directly connects to the global component manager that runs in the same process.
+    In this case, mtsManagerLocal::ManagerGlobal is of type mtsManagerGlobal.
 
-  Network mode: Inter-process communication, ICE enabled.  Local task manager
-    connects to the global manager via a proxy for the global manager.
-    In this case, mtsTaskManager::ManagerGlobal is of type mtsManagerGlobalProxyClient.
+  Network mode: Inter-process communication, ICE enabled.  A local component 
+    manager connects to the global component manager via a proxy for it.
+    In this case, mtsManagerLocal::ManagerGlobal is of type mtsManagerGlobalProxyClient.
 
-  \note Please refer to mtsManagerGlobal and mtsManagerGlobalProxyClient  as well.
+  \note Please refer to mtsManagerGlobal and mtsManagerGlobalProxyClient for details.
 */
 
 #ifndef _mtsManagerGlobalInterface_h
@@ -47,11 +47,58 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsManagerGlobalInterface : public cmnGenericObject {
 
 public:
-    /*! Register a component to the global manager. */
-    virtual bool AddComponent(
-        const std::string & processName, const std::string & componentName) = 0;
+    //-------------------------------------------------------------------------
+    //  Process Management
+    //-------------------------------------------------------------------------
+    /*! Register a process. */
+    virtual bool AddProcess(const std::string & processName) = 0;
 
-    /*! Connect two components. */
+    /*! Find a process. */
+    virtual bool FindProcess(const std::string & processName) const = 0;
+
+    /*! Remove a process. */
+    virtual bool RemoveProcess(const std::string & processName) = 0;
+
+    //-------------------------------------------------------------------------
+    //  Component Management
+    //-------------------------------------------------------------------------
+    /*! Register a component. */
+    virtual bool AddComponent(const std::string & processName, const std::string & componentName) = 0;
+
+    /*! Find a component using process name and component name */
+    virtual bool FindComponent(const std::string & processName, const std::string & componentName) const = 0;
+
+    /*! Remove a component. */
+    virtual bool RemoveComponent(const std::string & processName, const std::string & componentName) = 0;
+
+    //-------------------------------------------------------------------------
+    //  Interface Management
+    //-------------------------------------------------------------------------
+    /*! Register an interface. Note that adding/removing an interface can be run-time. */
+    virtual bool AddProvidedInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
+
+    virtual bool AddRequiredInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
+
+    /*! Find an interface using process name, component name, and interface name */
+    virtual bool FindProvidedInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) const = 0;
+
+    virtual bool FindRequiredInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) const = 0;
+
+    /*! Remove an interface. Note that adding/removing an interface can be run-time. */
+    virtual bool RemoveProvidedInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
+
+    virtual bool RemoveRequiredInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
+
+    //-------------------------------------------------------------------------
+    //  Connection Management
+    //-------------------------------------------------------------------------
+    /*! Connect two interfaces */
     virtual bool Connect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,
@@ -60,9 +107,14 @@ public:
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName) = 0;
 
-    /*! Remove a component from the global manager. */
-    virtual bool RemoveComponent(
-        const std::string & processName, const std::string & componentName) = 0;
+    /*! Disconnect two interfaces */
+    virtual void Disconnect(
+        const std::string & clientProcessName,
+        const std::string & clientComponentName,
+        const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName,
+        const std::string & serverComponentName,
+        const std::string & serverProvidedInterfaceName) = 0;
 };
 
 #endif // _mtsManagerGlobalInterface_h

@@ -68,7 +68,7 @@ class CISST_EXPORT mtsTask: public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-    friend class mtsTaskManager;
+    friend class mtsManagerLocal;
     //friend class mtsCollectorState;
 
 public:
