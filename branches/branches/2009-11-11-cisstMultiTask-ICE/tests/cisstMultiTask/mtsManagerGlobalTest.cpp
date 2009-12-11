@@ -41,8 +41,8 @@ using namespace std;
 
 void mtsManagerGlobalTest::setUp()
 {
-    localManager1 = new mtsManagerLocal(P1, "localhost");
-    localManager2 = new mtsManagerLocal(P2, "localhost");
+    localManager1 = new mtsManagerLocal(P1, "");
+    localManager2 = new mtsManagerLocal(P2, "");
 }
 
 void mtsManagerGlobalTest::tearDown()

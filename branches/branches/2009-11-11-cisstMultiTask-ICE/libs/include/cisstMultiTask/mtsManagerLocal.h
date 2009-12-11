@@ -80,16 +80,6 @@ class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface {
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-//public:
-//#ifdef CISST_MTS_HAS_ICE
-//    /*! Typedef for task manager type. */
-//    typedef enum {
-//        TASK_MANAGER_LOCAL,
-//        TASK_MANAGER_SERVER, // global task manager
-//        TASK_MANAGER_CLIENT  // general task manager
-//    } TaskManagerType;
-//#endif
-
 protected:
     /*! Typedef for component map: (component name, component object)
         component object is a pointer to mtsDevice object. */
@@ -124,8 +114,14 @@ protected:
     mtsManagerGlobalInterface * ManagerGlobal;
 
     /*! Constructor.  Protected because this is a singleton.
-        In case of real-time OSs, OS-specific initialization should be handled here. */
-    mtsManagerLocal();
+        Unless all two arguments are valid, this local component manager runs in
+        standalone mode, by default.
+        In case of real-time OSs, OS-specific initialization should be handled here. 
+        
+        TODO: Currently I'm just checking if it is empty string or not.
+        Maybe needs to add some more strict process naming rule and/or IP validation
+        check routine?
+    */
     mtsManagerLocal(const std::string & thisProcessName, const std::string & thisProcessIP);
     
     /*! Destructor. Includes OS-specific cleanup. */
@@ -134,7 +130,7 @@ protected:
 public:
     /*! Create the static instance of local task manager. */
     static mtsManagerLocal * GetInstance(
-        const std::string & thisProcessName = "localhost", const std::string & thisProcessIP = "");
+        const std::string & thisProcessName = "", const std::string & thisProcessIP = "");
 
     /*! Return a reference to the time server. */
     inline const osaTimeServer & GetTimeServer(void) {

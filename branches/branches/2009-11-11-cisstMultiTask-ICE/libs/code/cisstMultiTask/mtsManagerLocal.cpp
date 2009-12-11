@@ -35,14 +35,28 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerLocal);
 
-mtsManagerLocal::mtsManagerLocal() : 
+mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName, 
+                                 const std::string & thisProcessIP) :
     ComponentMap("Components"),
-    ManagerGlobal(NULL)
-//    , JGraphSocket(osaSocket::TCP)
+    ManagerGlobal(NULL),
+//    JGraphSocket(osaSocket::TCP),
 //#if CISST_MTS_HAS_ICE
-//    , TaskManagerCommunicatorID("TaskManagerServerSender")
+//    TaskManagerCommunicatorID("TaskManagerServerSender"),
 //#endif
+    ProcessName(thisProcessName),
+    ProcessIP(thisProcessIP)
 {
+    __os_init();
+    ComponentMap.SetOwner(*this);
+    
+    // TODO: The following line is commented out to speed up unit-tests.
+    // (if it is enabled, then every time mtsManagerLocal object is created,
+    // it runs again and again and again).
+    //
+    //  Don't Forget uncomment the following line after finishing implementation!!!
+    //
+    //TimeServer.SetTimeOrigin();
+
     //JGraphSocketConnected = false;
 
 //#if CISST_MTS_HAS_ICE
@@ -51,10 +65,6 @@ mtsManagerLocal::mtsManagerLocal() :
 //    ProxyTaskManagerClient = 0;
 //#endif
 
-    __os_init();
-    ComponentMap.SetOwner(*this);
-    TimeServer.SetTimeOrigin();
-    
     /*
     // Try to connect to the JGraph application software (Java program).
     // Note that the JGraph application also sends event messages back via the socket,
@@ -68,26 +78,15 @@ mtsManagerLocal::mtsManagerLocal() :
     }
     */
 
-    // Run this task manager as standalone mode.
-    ManagerGlobal = new mtsManagerGlobal;
-    CMN_LOG_CLASS_INIT_VERBOSE << "Run local task manager as Standalone mode. " << std::endl;
-}
+    //
+    // TODO: handle multiple network interfaces (how does a user choose which network 
+    // interface is used?)
+    //
 
-mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName, 
-                                 const std::string & thisProcessIP) :
-    ComponentMap("Components"),
-    ManagerGlobal(NULL),
-//    JGraphSocket(osaSocket::TCP),
-//#if CISST_MTS_HAS_ICE
-//    TaskManagerCommunicatorID("TaskManagerServerSender"),
-//#endif
-    ProcessName(thisProcessName),
-    ProcessIP(thisProcessIP)
-{
     // If both arguments are provided, run this task manager in the network mode.
     // That is, an instance of mtsManagerGlobal acts as a proxy for the global 
     // manager and it connects to the global manager over a network.
-    if ((thisProcessName != "localhost") && (thisProcessIP != "")) {
+    if ((thisProcessName != "") && (thisProcessIP != "")) {
         CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager running in NETWORK mode" << std::endl;
         // TODO: create a global manager proxy
         // TODO: connect to the global manager
@@ -109,8 +108,11 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
 
 mtsManagerLocal::~mtsManagerLocal()
 {
-    // This should remain empty. 
-    // If any object is dynamically allocated, they should be released at Cleanup().
+    // If ManagerGlobal is not NULL, it means Cleanup() has not been called 
+    // before. Thus, it needs to be called here to terminate safely and cleanly.
+    if (ManagerGlobal) {
+        Cleanup();
+    }
 }
 
 
@@ -140,6 +142,7 @@ void mtsManagerLocal::Cleanup(void)
     if (ManagerGlobal) {
         // TODO: Add proxy (network) clean-up before delete
         delete ManagerGlobal;
+        ManagerGlobal = NULL;
     }
 }
 
@@ -359,6 +362,16 @@ void mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const {
     // NOP
 }
 
+//
+//  TODO: Currently, we assume that at most one component (either a server or client) 
+//  is missing. However, as noted in the project wiki, there can be a very special and
+//  interesting case that a component needs to use external components. That is, the
+//  component contains no component while it connects an external client component to
+//  an external server component.
+//  (see https://trac.lcsr.jhu.edu/cisst/wiki/Private/cisstMultiTaskNetwork)
+//
+//  Should this be possible, Connect() has to be updated to handle that case.
+//
 bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
                               const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
