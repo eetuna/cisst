@@ -80,6 +80,10 @@ class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface {
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+private:
+    /*! Singleton object */
+    static mtsManagerLocal * Instance;
+
 protected:
     /*! Typedef for component map: (component name, component object)
         component object is a pointer to mtsDevice object. */
@@ -142,17 +146,16 @@ public:
     //-------------------------------------------------------------------------    
     /*! Add a component to this local component manager. */
     bool AddComponent(mtsDevice * component);
-
-    /*! For backward compatibility */
-    bool CISST_DEPRECATED AddTask(mtsTask * component);
-    bool CISST_DEPRECATED AddDevice(mtsDevice * component);
-    mtsTask * GetTask(const std::string & taskName);
+    bool CISST_DEPRECATED AddTask(mtsTask * component); // For backward compatibility
+    bool CISST_DEPRECATED AddDevice(mtsDevice * component); // For backward compatibility
 
     /*! Pull out a cmponent from this manager. */
-    bool RemoveTask(mtsDevice * component);
+    bool RemoveComponent(mtsDevice * component);
+    bool RemoveComponent(const std::string & componentName);
 
     /*! Retrieve a component by name. */
     mtsDevice * GetComponent(const std::string & componentName);
+    mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
 
     /* Interfaces for Connect/Disconnect (note that actual connection is managed
        and established by the global component manager). */
@@ -194,9 +197,6 @@ public:
     //-------------------------------------------------------------------------
     //  Utilities
     //-------------------------------------------------------------------------
-    /*! Enumerate all the names of components added */
-    std::vector<std::string> GetNamesOfProcesses(void) const;
-
     /*! Enumerate all the names of components added */
     std::vector<std::string> GetNamesOfComponents(void) const;
     void GetNamesOfComponents(std::vector<std::string>& namesOfComponents) const;

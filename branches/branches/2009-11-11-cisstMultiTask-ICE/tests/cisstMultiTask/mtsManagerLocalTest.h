@@ -22,8 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "mtsManagerTestClasses.h"
-
 class mtsManagerLocalInterface;
 
 class mtsManagerLocalTest: public CppUnit::TestFixture
@@ -37,6 +35,11 @@ private:
         CPPUNIT_TEST(TestCleanup);
         CPPUNIT_TEST(TestGetInstance);
         CPPUNIT_TEST(TestAddComponent);
+        CPPUNIT_TEST(TestRemoveComponent);
+        CPPUNIT_TEST(TestGetNamesOfComponents);
+        CPPUNIT_TEST(TestGetComponent);
+        CPPUNIT_TEST(TestCreateAll);
+        CPPUNIT_TEST(TestStartAll);
 	}
     CPPUNIT_TEST_SUITE_END();
 
@@ -48,4 +51,9 @@ public:
     void TestCleanup(void);
     void TestGetInstance(void);
     void TestAddComponent(void);
+    void TestRemoveComponent(void);
+    void TestGetNamesOfComponents(void);
+    void TestGetComponent(void);
+    void TestCreateAll(void);
+    void TestStartAll(void);
 };

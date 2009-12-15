@@ -56,7 +56,7 @@ void mtsTask::StartupInternal(void) {
     RequiredInterfacesMapType::const_iterator requiredIterator = RequiredInterfaces.begin();
     mtsDeviceInterface * connectedInterface;
     for (;
-         requiredIterator != RequiredInterfaces.end();
+         requiredIterator != RequiredInterfaces.end() && success;
          requiredIterator++) {
         connectedInterface = requiredIterator->second->GetConnectedInterface();
         if (!connectedInterface) {

@@ -133,6 +133,8 @@ public:
             required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R2, "EventWrite");
         }
     }
+
+    void Run(void) {}
 };
 
 class mtsManagerTestC1Device : public mtsDevice
@@ -140,7 +142,7 @@ class mtsManagerTestC1Device : public mtsDevice
     mtsManagerTestRequiredInterface R1, R2;
 
 public:
-    mtsManagerTestC1Device() : mtsDevice("C1Device")
+    mtsManagerTestC1Device() : mtsDevice("C1")
     {
         mtsRequiredInterface * required;
 
@@ -165,6 +167,8 @@ public:
             required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R2, "EventWrite");
         }
     }
+
+    void Configure(const std::string & filename = "") {}
 };
 
 //-----------------------------------------------------------------------------
@@ -172,13 +176,13 @@ public:
 //  - provided interface: p1, p2
 //  - required interface: r1
 //-----------------------------------------------------------------------------
-class mtsManagerTestC2 : public mtsTaskPeriodic
+class mtsManagerTestC2 : public mtsTaskContinuous
 {
     mtsManagerTestProvidedInterface P1, P2;
     mtsManagerTestRequiredInterface R1;
 
 public:
-    mtsManagerTestC2() : mtsTaskPeriodic("C2", 10 * cmn_ms)
+    mtsManagerTestC2() : mtsTaskContinuous("C2")
     {
         mtsRequiredInterface * required;
         mtsProvidedInterface * provided;
@@ -197,6 +201,12 @@ public:
         // Define provided interface: p2
         provided = AddProvidedInterface("p2");
         if (provided) {
+            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &P2, "Void");
+            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &P2, "Write");
+            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &P2, "Read");            
+            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &P2, "QualifiedRead");
+            provided->AddEventVoid(P2.EventVoid, "EventVoid");
+            provided->AddEventWrite(P2.EventWrite, "EventWrite", mtsInt(-1));
         }
 
         // Define required interface: r1
@@ -210,6 +220,8 @@ public:
             required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
         }
     }
+
+    void Run(void) {}
 };
 
 class mtsManagerTestC2Device : public mtsDevice
@@ -218,7 +230,7 @@ class mtsManagerTestC2Device : public mtsDevice
     mtsManagerTestRequiredInterface R1;
 
 public:
-    mtsManagerTestC2Device() : mtsDevice("C2Device")
+    mtsManagerTestC2Device() : mtsDevice("C2")
     {
         mtsRequiredInterface * required;
         mtsProvidedInterface * provided;
@@ -250,6 +262,8 @@ public:
             required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
         }
     }
+
+    void Configure(const std::string & filename = "") {}
 };
 
 //-----------------------------------------------------------------------------
@@ -257,12 +271,15 @@ public:
 //  - provided interface: none
 //  - required interface: r1
 //-----------------------------------------------------------------------------
-class mtsManagerTestC3 : public mtsTaskPeriodic
+class mtsManagerTestC3 : public mtsTaskFromCallback
 {
     mtsManagerTestRequiredInterface R1;
 
 public:
-    mtsManagerTestC3() : mtsTaskPeriodic("C3", 10 * cmn_ms)
+    // Counters to test Create()
+    int CounterCreateCall;
+
+    mtsManagerTestC3() : mtsTaskFromCallback("C3"), CounterCreateCall(0)
     {
         mtsRequiredInterface * required;
 
@@ -277,6 +294,9 @@ public:
             required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
         }
     }
+
+    void Run(void) {}
+    //void Create(void *data) { ++CounterCreateCall; }
 };
 
 class mtsManagerTestC3Device : public mtsDevice
@@ -284,7 +304,7 @@ class mtsManagerTestC3Device : public mtsDevice
     mtsManagerTestRequiredInterface R1;
 
 public:
-    mtsManagerTestC3Device() : mtsDevice("C3Device")
+    mtsManagerTestC3Device() : mtsDevice("C3")
     {
         mtsRequiredInterface * required;
 
@@ -299,6 +319,8 @@ public:
             required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
         }
     }
+
+    void Configure(const std::string & filename = "") {}
 };
 
 #endif

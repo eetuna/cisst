@@ -23,6 +23,9 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
+#include <cisstOSAbstraction/osaSleep.h>
+
+#include "mtsManagerTestClasses.h"
 
 #define P1 "P1"
 #define P2 "P2"
@@ -100,19 +103,223 @@ void mtsManagerLocalTest::TestGetInstance(void)
 
     CPPUNIT_ASSERT(managerLocal);
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal);
+    CPPUNIT_ASSERT(mtsManagerLocal::Instance);
     CPPUNIT_ASSERT(managerLocal->ProcessName == "");
     CPPUNIT_ASSERT(managerLocal->ProcessIP == "");
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(""));
+
+    // Clear current singleton instance. Note that this is done only for unit-test
+    // purpose. This instance should not be touched from the outside.
+    mtsManagerLocal * temp = managerLocal;
+    mtsManagerLocal::Instance = NULL;   // avoid a crash due to duplicate memory release
+    delete temp;
+
+    managerLocal = mtsManagerLocal::GetInstance(P1, "");
+    CPPUNIT_ASSERT(managerLocal);
+    CPPUNIT_ASSERT(managerLocal->ManagerGlobal);
+    CPPUNIT_ASSERT(mtsManagerLocal::Instance);
+    CPPUNIT_ASSERT(managerLocal->ProcessName == P1);
+    CPPUNIT_ASSERT(managerLocal->ProcessIP == "");
+    CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(P1));
 }
 
 void mtsManagerLocalTest::TestAddComponent(void)
 {
-    mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
+    //-----------------------------------------------------
+    // Test with mtsDevice type components
+    mtsManagerLocal managerLocal1(P1, "");
+    mtsManagerTestC2Device c2Device;
 
     // Invalid argument test
-    //CPPUNIT_ASSERT(!managerLocal.AddComponent(NULL));
+    CPPUNIT_ASSERT(!managerLocal1.AddComponent(NULL));
 
-    // Check if this works correctly with the global component manager
+    // Check with the global component manager.    
+    // Should fail if a component to be added has already been registered before
+    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->AddComponent(P1, C2));
+    CPPUNIT_ASSERT(!managerLocal1.AddComponent(&c2Device));
+
+    // Should succeed if a component is added for the first time
+    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->RemoveComponent(P1, C2));
+    CPPUNIT_ASSERT(managerLocal1.AddComponent(&c2Device));
+    CPPUNIT_ASSERT(managerLocal1.ComponentMap.FindItem(C2));
+    
+    // The C2 has both provided interfaces (p1, p2) and a required interface (r1).
+    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindRequiredInterface(P1, C2, r1));
+    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindProvidedInterface(P1, C2, p1));
+    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindProvidedInterface(P1, C2, p2));
+
+    //-----------------------------------------------------
+    // Test with mtsDevice type components
+    mtsManagerLocal managerLocal2(P1, "");
+    mtsManagerTestC2 c2Task;
+
+    // Invalid argument test
+    CPPUNIT_ASSERT(!managerLocal2.AddComponent(NULL));
+
+    // Check with the global component manager.    
+    // Should fail if a component to be added has already been registered before
+    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->AddComponent(P1, C2));
+    CPPUNIT_ASSERT(!managerLocal2.AddComponent(&c2Task));
+
+    // Should succeed if a component is added for the first time
+    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->RemoveComponent(P1, C2));
+    CPPUNIT_ASSERT(managerLocal2.AddComponent(&c2Task));
+    CPPUNIT_ASSERT(managerLocal2.ComponentMap.FindItem(C2));
+    
+    // The C2 has both provided interfaces (p1, p2) and a required interface (r1).
+    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindRequiredInterface(P1, C2, r1));
+    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindProvidedInterface(P1, C2, p1));
+    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindProvidedInterface(P1, C2, p2));
+}
+
+void mtsManagerLocalTest::TestRemoveComponent(void)
+{
+    //-----------------------------------------------------
+    // Test with mtsDevice type components
+    mtsManagerLocal managerLocal1(P1, "");
+    mtsManagerTestC1Device c1Device;
+
+    // Invalid argument test
+    CPPUNIT_ASSERT(!managerLocal1.RemoveComponent(NULL));
+
+    CPPUNIT_ASSERT(managerLocal1.AddComponent(&c1Device));
+
+    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindComponent(P1, C1));
+    CPPUNIT_ASSERT(managerLocal1.RemoveComponent(&c1Device));
+    CPPUNIT_ASSERT(!managerLocal1.ManagerGlobal->FindComponent(P1, C1));
+    
+    //-----------------------------------------------------
+    // Test with mtsTask type components
+    mtsManagerLocal managerLocal2(P1, "");
+    mtsManagerTestC1 c1Task;
+
+    // Invalid argument test
+    CPPUNIT_ASSERT(!managerLocal2.RemoveComponent(NULL));
+
+    CPPUNIT_ASSERT(managerLocal2.AddComponent(&c1Task));
+
+    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindComponent(P1, C1));
+    CPPUNIT_ASSERT(managerLocal2.RemoveComponent(&c1Task));
+    CPPUNIT_ASSERT(!managerLocal2.ManagerGlobal->FindComponent(P1, C1));
+
+    //-----------------------------------------------------
+    // Test using component name instead of component object
+    mtsManagerLocal managerLocal3(P1, "");
+    
+    // should fail: not yet registered component name
+    CPPUNIT_ASSERT(!managerLocal3.RemoveComponent(C1));
+
+    CPPUNIT_ASSERT(managerLocal3.AddComponent(&c1Device));
+
+    CPPUNIT_ASSERT(managerLocal3.ManagerGlobal->FindComponent(P1, C1));
+    CPPUNIT_ASSERT(managerLocal3.RemoveComponent(C1));
+    CPPUNIT_ASSERT(!managerLocal3.ManagerGlobal->FindComponent(P1, C1));
+}
+
+void mtsManagerLocalTest::TestGetNamesOfComponents(void)
+{
+    mtsManagerLocal managerLocal(P1, "");
+    mtsManagerTestC1Device c1Device;
+    mtsManagerTestC2Device c2Device;
+    mtsManagerTestC3Device c3Device;
+
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Device));
+
+    std::vector<std::string> namesOfComponents1 = managerLocal.GetNamesOfComponents();
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 3, namesOfComponents1.size());
+    for (int i = 0; i < 3; ++i) {
+        CPPUNIT_ASSERT(namesOfComponents1[i] == c1Device.GetName() ||
+                       namesOfComponents1[i] == c2Device.GetName() ||
+                       namesOfComponents1[i] == c3Device.GetName());
+    }
+
+    std::vector<std::string> namesOfComponents2;
+    managerLocal.GetNamesOfComponents(namesOfComponents2);
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 3, namesOfComponents2.size());
+    for (int i = 0; i < 3; ++i) {
+        CPPUNIT_ASSERT(namesOfComponents2[i] == c1Device.GetName() ||
+                       namesOfComponents2[i] == c2Device.GetName() ||
+                       namesOfComponents2[i] == c3Device.GetName());
+    }
+}
+
+void mtsManagerLocalTest::TestGetComponent(void)
+{
+    mtsManagerLocal managerLocal(P1, "");
+    mtsManagerTestC1Device c1Device;
+    mtsManagerTestC2Device c2Device;
+    mtsManagerTestC3Device c3Device;
+
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Device));
+
+    CPPUNIT_ASSERT(&c1Device == managerLocal.GetComponent(C1));
+    CPPUNIT_ASSERT(&c2Device == managerLocal.GetComponent(C2));
+    CPPUNIT_ASSERT(&c3Device == managerLocal.GetComponent(C3));
+}
+
+void mtsManagerLocalTest::TestCreateAll(void)
+{
+    mtsManagerLocal managerLocal(P1, "");
+    mtsManagerTestC1 c1Task;    // C1 is of mtsTaskPeriodic type
+    mtsManagerTestC2 c2Task;    // C2 is of mtsTaskContinuous type
+    mtsManagerTestC3 c3Task;    // C3 is of mtsTaskCallback type
+
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Task));
+    
+    // Check internal states before calling CreateAll()
+    CPPUNIT_ASSERT(c1Task.TaskState == mtsTask::CONSTRUCTED);
+    CPPUNIT_ASSERT(c2Task.TaskState == mtsTask::CONSTRUCTED);
+    CPPUNIT_ASSERT(c3Task.TaskState == mtsTask::CONSTRUCTED);
+
+    managerLocal.CreateAll();
+
+    CPPUNIT_ASSERT(c1Task.TaskState == mtsTask::INITIALIZING);
+    CPPUNIT_ASSERT(c2Task.TaskState == mtsTask::INITIALIZING);
+    CPPUNIT_ASSERT(c3Task.TaskState == mtsTask::INITIALIZING);
+}
+
+void mtsManagerLocalTest::TestStartAll(void)
+{
+    mtsManagerLocal managerLocal(P1, "");
+    mtsManagerTestC1 c1Task;    // C1 is of mtsTaskPeriodic type
+    mtsManagerTestC2 c2Task;    // C2 is of mtsTaskContinuous type
+    mtsManagerTestC3 c3Task;    // C3 is of mtsTaskCallback type
+
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Task));
+
+    // Establish connections between the three components of mtsTask type
+    // Connection: (P1, C1, r1) ~ (P2, C2, p1)
+    CPPUNIT_ASSERT(managerLocal.Connect(C1, r1, C2, p1));
+    // Connection: (P1, C1, r2) ~ (P2, C2, p2)
+    CPPUNIT_ASSERT(managerLocal.Connect(C1, r2, C2, p2));
+    // Connection: (P1, C2, r1) ~ (P2, C2, p2)
+    CPPUNIT_ASSERT(managerLocal.Connect(C2, r1, C2, p2));
+    // Connection: (P2, C3, r1) ~ (P2, C2, p2)
+    CPPUNIT_ASSERT(managerLocal.Connect(C3, r1, C2, p2));
+    
+    managerLocal.CreateAll();
+
+    CPPUNIT_ASSERT(c1Task.TaskState == mtsTask::INITIALIZING);
+    CPPUNIT_ASSERT(c2Task.TaskState == mtsTask::INITIALIZING);
+    CPPUNIT_ASSERT(c3Task.TaskState == mtsTask::INITIALIZING);
+
+    managerLocal.StartAll();
+
+    CPPUNIT_ASSERT(c1Task.TaskState == mtsTask::ACTIVE);
+    CPPUNIT_ASSERT(c2Task.TaskState == mtsTask::ACTIVE);
+    CPPUNIT_ASSERT(c3Task.TaskState == mtsTask::INITIALIZING);
+
+    managerLocal.KillAll();
+
+    osaSleep(1 * cmn_ms);
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerLocalTest);

@@ -125,7 +125,7 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
     // 4) Remove from map
     // 5) Memory release
 
-    if (!ProcessMap.FindItem(processName)) {
+    if (!FindProcess(processName)) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveProcess: Can't find registered process: " << processName << std::endl;
         return false;
     }
@@ -205,41 +205,42 @@ bool mtsManagerGlobal::RemoveComponent(const std::string & processName, const st
     // TODO: Before removing an element from relevent maps, Disconnect() should be 
     // called first for a case that there is any active connection related to the element.
 
-    // Check if the process has been registerd
-    if (!ProcessMap.FindItem(processName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: Can't find registered process: " << processName << std::endl;
+    // Check if the component has been registered
+    if (!FindComponent(processName, componentName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: Can't find component: " 
+            << "\"" << processName << "\" - \"" << componentName << "\"" << std::endl;
         return false;
     }
 
     bool ret = true;
 
-    ComponentMapType * componentMap = ProcessMap.GetItem(processName);
-    if (componentMap) {
-        // Check existence of the component
-        if (!componentMap->FindItem(componentName)) return false;
+    ComponentMapType * componentMap = ProcessMap.GetItem(processName);    
+    CMN_ASSERT(componentMap);
 
-        // When interfaceMapType is not NULL, all interfaces that the component manages
-        // should be removed first.
-        InterfaceMapType * interfaceMap = componentMap->GetItem(componentName);
-        if (interfaceMap) {
-            ConnectedInterfaceMapType::iterator it;
+    // Check existence of the component
+    if (!componentMap->FindItem(componentName)) return false;
 
-            // Remove all required interfaces that the process manage.
+    // When interfaceMapType is not NULL, all interfaces that the component manages
+    // should be removed first.
+    InterfaceMapType * interfaceMap = componentMap->GetItem(componentName);
+    if (interfaceMap) {
+        ConnectedInterfaceMapType::iterator it;
+
+        // Remove all required interfaces that the process manage.
+        it = interfaceMap->RequiredInterfaceMap.GetMap().begin();
+        while (it != interfaceMap->RequiredInterfaceMap.GetMap().end()) {
+            ret &= RemoveRequiredInterface(processName, componentName, it->first);
             it = interfaceMap->RequiredInterfaceMap.GetMap().begin();
-            while (it != interfaceMap->RequiredInterfaceMap.GetMap().end()) {
-                ret &= RemoveRequiredInterface(processName, componentName, it->first);
-                it = interfaceMap->RequiredInterfaceMap.GetMap().begin();
-            }
-
-            // Remove all provided interfaces that the process manage.
-            it = interfaceMap->ProvidedInterfaceMap.GetMap().begin();
-            while (it != interfaceMap->ProvidedInterfaceMap.GetMap().end()) {
-                ret &= RemoveProvidedInterface(processName, componentName, it->first);
-                it = interfaceMap->ProvidedInterfaceMap.GetMap().begin();
-            }
-
-            CHECK_DELETE(interfaceMap);
         }
+
+        // Remove all provided interfaces that the process manage.
+        it = interfaceMap->ProvidedInterfaceMap.GetMap().begin();
+        while (it != interfaceMap->ProvidedInterfaceMap.GetMap().end()) {
+            ret &= RemoveProvidedInterface(processName, componentName, it->first);
+            it = interfaceMap->ProvidedInterfaceMap.GetMap().begin();
+        }
+
+        CHECK_DELETE(interfaceMap);
     }
 
     // Remove the component from component map

@@ -24,6 +24,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDevice.h>
 //#include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsTask.h>
+#include <cisstMultiTask/mtsTaskContinuous.h>
+#include <cisstMultiTask/mtsTaskPeriodic.h>
+#include <cisstMultiTask/mtsTaskFromCallback.h>
 //#include <cisstMultiTask/mtsTaskInterface.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
 
@@ -34,6 +37,8 @@ http://www.cisst.org/cisst/license.txt.
 //#endif // CISST_MTS_HAS_ICE
 
 CMN_IMPLEMENT_SERVICES(mtsManagerLocal);
+
+mtsManagerLocal * mtsManagerLocal::Instance;
 
 mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName, 
                                  const std::string & thisProcessIP) :
@@ -118,7 +123,7 @@ mtsManagerLocal::~mtsManagerLocal()
 
 void mtsManagerLocal::Cleanup(void)
 {
-    this->Kill();
+    Kill();
 
     /*
 #if CISST_MTS_HAS_ICE    // Clean up resources allocated for proxy objects.
@@ -139,6 +144,7 @@ void mtsManagerLocal::Cleanup(void)
     JGraphSocketConnected = false;
     */
     
+    // Release global component manager
     if (ManagerGlobal) {
         // TODO: Add proxy (network) clean-up before delete
         delete ManagerGlobal;
@@ -149,8 +155,11 @@ void mtsManagerLocal::Cleanup(void)
 mtsManagerLocal * mtsManagerLocal::GetInstance(
     const std::string & thisProcessName, const std::string & thisProcessIP)
 {
-    static mtsManagerLocal instance(thisProcessName, thisProcessIP);
-    return &instance;
+    if (!Instance) {
+        Instance = new mtsManagerLocal(thisProcessName, thisProcessIP);
+    }
+
+    return Instance;
 }
 
 bool mtsManagerLocal::AddComponent(mtsDevice * component) 
@@ -218,34 +227,32 @@ bool CISST_DEPRECATED mtsManagerLocal::AddDevice(mtsDevice * component)
     return AddComponent(component);
 }
 
-bool mtsManagerLocal::RemoveTask(mtsDevice * component) 
+bool mtsManagerLocal::RemoveComponent(mtsDevice * component)
 {
-    // Try to remove this component from the global component manager first.
-    if (!ManagerGlobal->RemoveComponent(ProcessName, component->GetName())) {
-        CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: " << component->GetName() << std::endl;
+    if (!component) {
+        CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: invalid argument" << std::endl;
         return false;
     }
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "Global component manager: removed component: " << component->GetName() << std::endl;
-
-    ComponentMapChange.Lock();
-    bool result = ComponentMap.RemoveItem(component->GetName(), CMN_LOG_LOD_RUN_ERROR);
-    if (result) {
-        CMN_LOG_CLASS_INIT_VERBOSE << "removed component: "
-                                   << component->GetName() << std::endl;
-    }
-    ComponentMapChange.Unlock();
-    return result;
+    return RemoveComponent(component->GetName());
 }
 
-std::vector<std::string> mtsManagerLocal::GetNamesOfProcesses(void) const
+bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
 {
-    //
-    // TODO:
-    // 1. add data structure for process list management
-    // 2. update the following line
-    //
-    return ComponentMap.GetNames();
+    // Try to remove this component from the global component manager first.
+    if (!ManagerGlobal->RemoveComponent(ProcessName, componentName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: " << componentName << std::endl;
+        return false;
+    }
+
+    ComponentMapChange.Lock();
+    bool result = ComponentMap.RemoveItem(componentName, CMN_LOG_LOD_RUN_ERROR);
+    if (result) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "removed component: " << componentName << std::endl;
+    }
+    ComponentMapChange.Unlock();
+
+    return result;
 }
 
 std::vector<std::string> mtsManagerLocal::GetNamesOfComponents(void) const 
@@ -275,8 +282,9 @@ mtsTask CISST_DEPRECATED * mtsManagerLocal::GetTask(const std::string & taskName
     return componentTask;
 }
     
-void mtsManagerLocal::ToStream(std::ostream & outputStream) const {
-    // NOP
+void mtsManagerLocal::ToStream(std::ostream & outputStream) const
+{
+    CMN_LOG_CLASS_RUN_VERBOSE << "ToStream() is not yet implemented" << std::endl;
 }
 
 void mtsManagerLocal::CreateAll(void) 
@@ -289,10 +297,34 @@ void mtsManagerLocal::CreateAll(void)
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
 
     for (; it != itEnd; ++it) {
+        // Skip components of mtsDevice type
         componentTask = dynamic_cast<mtsTask*>(it->second);
         if (!componentTask) continue;
 
-        componentTask->Create();
+        // Note that the order of dynamic casts does matter for figuring out 
+        // the original task type because there are multiple inheritance 
+        // relationships between task type components.
+
+        // mtsTaskPeriodic type component
+        componentTask = dynamic_cast<mtsTaskPeriodic*>(it->second);
+        if (componentTask) {
+            componentTask->Create();
+            continue;
+        }
+
+        // mtsTaskContinuous type component
+        componentTask = dynamic_cast<mtsTaskContinuous*>(it->second);
+        if (componentTask) {
+            componentTask->Create();
+            continue;
+        }
+
+        // mtsTaskFromCallback type component
+        componentTask = dynamic_cast<mtsTaskFromCallback*>(it->second);
+        if (componentTask) {
+            componentTask->Create();
+            continue;
+        }
     }
 
     ComponentMapChange.Unlock();
@@ -304,7 +336,7 @@ void mtsManagerLocal::StartAll(void)
     // If so, start that task last because its Start method will not return.
     const osaThreadId threadId = osaGetCurrentThreadId();
     
-    mtsTask * componentTask;
+    mtsTask * componentTask, * componentTaskTemp;
 
     ComponentMapChange.Lock();
 
@@ -313,8 +345,35 @@ void mtsManagerLocal::StartAll(void)
     ComponentMapType::const_iterator itLastTask = ComponentMap.end();
 
     for (; it != ComponentMap.end(); ++it) {
-        componentTask = dynamic_cast<mtsTask*>(it->second);
-        if (!componentTask) continue;   // Start components that are of type mtsTask
+        // Skip components of mtsDevice type
+        componentTaskTemp = dynamic_cast<mtsTask*>(it->second);
+        if (!componentTaskTemp) continue;
+
+        // Note that the order of dynamic casts does matter for figuring out 
+        // the original task type because there are multiple inheritance 
+        // relationships between task type components.
+        
+        // mtsTaskPeriodic type component
+        componentTaskTemp = dynamic_cast<mtsTaskPeriodic*>(it->second);
+        if (componentTaskTemp) {
+            componentTask = componentTaskTemp;
+        } else {
+            // mtsTaskContinuous type component
+            componentTaskTemp = dynamic_cast<mtsTaskContinuous*>(it->second);            
+            if (componentTaskTemp) {
+                componentTask = componentTaskTemp;
+            } else {
+                // mtsTaskFromCallback type component
+                componentTaskTemp = dynamic_cast<mtsTaskFromCallback*>(it->second);
+                if (componentTaskTemp) {
+                    componentTask = componentTaskTemp;
+                } else {
+                    componentTask = NULL;
+                    CMN_LOG_CLASS_RUN_ERROR << "StartAll: invalid component: unknown mtsTask type" << std::endl;
+                    continue;
+                }
+            }
+        }
 
         // Check if the task will use the current thread.
         if (componentTask->Thread.GetId() == threadId) {
@@ -331,9 +390,30 @@ void mtsManagerLocal::StartAll(void)
     }
 
     if (itLastTask != ComponentMap.end()) {
-        componentTask = dynamic_cast<mtsTask*>(itLastTask->second);
-        CMN_ASSERT(componentTask);
-        componentTask->Start();
+        // mtsTaskPeriodic type component
+        componentTaskTemp = dynamic_cast<mtsTaskPeriodic*>(itLastTask->second);
+        if (componentTaskTemp) {
+            componentTask = componentTaskTemp;
+        } else {
+            // mtsTaskContinuous type component
+            componentTaskTemp = dynamic_cast<mtsTaskContinuous*>(itLastTask->second);            
+            if (componentTaskTemp) {
+                componentTask = componentTaskTemp;
+            } else {
+                // mtsTaskFromCallback type component
+                componentTaskTemp = dynamic_cast<mtsTaskFromCallback*>(itLastTask->second);
+                if (componentTaskTemp) {
+                    componentTask = componentTaskTemp;
+                } else {
+                    componentTask = NULL;
+                    CMN_LOG_CLASS_RUN_ERROR << "StartAll: invalid component: unknown mtsTask type (last component)" << std::endl;
+                }
+            }
+        }
+
+        if (componentTask) {
+            componentTask->Start();
+        }
     }
 
     ComponentMapChange.Unlock();
@@ -342,16 +422,34 @@ void mtsManagerLocal::StartAll(void)
 void mtsManagerLocal::KillAll(void) 
 {
     // It is not necessary to have any special handling of a task using the current thread.
-    mtsTask * componentTask;
+    mtsTask *componentTask, *componentTaskTemp;
     
     ComponentMapChange.Lock();
 
     ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     for (; it != itEnd; ++it) {
-        componentTask = dynamic_cast<mtsTask*>(it->second);
-        if (!componentTask) continue;
-
+        // mtsTaskPeriodic type component
+        componentTaskTemp = dynamic_cast<mtsTaskPeriodic*>(it->second);
+        if (componentTaskTemp) {
+            componentTask = componentTaskTemp;
+        } else {
+            // mtsTaskContinuous type component
+            componentTaskTemp = dynamic_cast<mtsTaskContinuous*>(it->second);            
+            if (componentTaskTemp) {
+                componentTask = componentTaskTemp;
+            } else {
+                // mtsTaskFromCallback type component
+                componentTaskTemp = dynamic_cast<mtsTaskFromCallback*>(it->second);
+                if (componentTaskTemp) {
+                    componentTask = componentTaskTemp;
+                } else {
+                    componentTask = NULL;
+                    CMN_LOG_CLASS_RUN_ERROR << "KillAll: invalid component: unknown mtsTask type" << std::endl;
+                    continue;
+                }
+            }
+        }
         componentTask->Kill();
     }
 

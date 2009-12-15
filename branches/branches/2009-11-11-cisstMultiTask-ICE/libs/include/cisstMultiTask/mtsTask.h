@@ -70,6 +70,7 @@ class CISST_EXPORT mtsTask: public mtsDevice
 
     friend class mtsManagerLocal;
     //friend class mtsCollectorState;
+    friend class mtsManagerLocalTest;
 
 public:
     typedef mtsDevice BaseType;
