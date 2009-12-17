@@ -42,6 +42,10 @@ http://www.cisst.org/cisst/license.txt.
  */
 class mtsMulticastCommandWriteProxy : public mtsMulticastCommandWriteBase
 {
+    friend class mtsManagerLocal;
+    //
+    // TODO: remove the following declaration
+    //
     friend class mtsDeviceProxy;
 
 public:

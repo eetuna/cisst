@@ -77,6 +77,10 @@ class CISST_EXPORT mtsRequiredInterface: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    friend class mtsManagerLocal;
+    //
+    // TODO: Remove the following declaration
+    //
     friend class mtsDeviceProxy;
 
 protected:

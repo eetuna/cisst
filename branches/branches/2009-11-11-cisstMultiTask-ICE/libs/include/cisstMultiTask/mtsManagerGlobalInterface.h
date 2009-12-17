@@ -42,13 +42,20 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsManagerGlobalInterface_h
 #define _mtsManagerGlobalInterface_h
 
-#include <cisstCommon/cmnGenericObject.h>
+#include <cisstMultiTask/mtsManagerCommon.h>
 
 class mtsManagerLocalInterface;
 
-class CISST_EXPORT mtsManagerGlobalInterface : public cmnGenericObject {
+class CISST_EXPORT mtsManagerGlobalInterface : public mtsManagerCommon {
 
 public:
+    /* Typedef for the state of connection. See comments on Connect() for details. */
+    typedef enum {
+        CONNECT_ERROR = 0,
+        CONNECT_LOCAL,
+        CONNECT_REMOTE_BASE
+    } CONNECT_STATE;
+
     //-------------------------------------------------------------------------
     //  Process Management
     //-------------------------------------------------------------------------
@@ -103,14 +110,40 @@ public:
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------
-    /*! Connect two interfaces */
-    virtual bool Connect(
+    /*! Connect two interfaces with timeout.
+
+        Returns CONNECT_ERROR : in case of errors
+                CONNECT_LOCAL : in case of local connection.
+                CONNECT_REMOTE_BASE + n : if connection can be established.
+                                          (n: unsigned integer)
+
+        A CONNECT_ERROR is returned when the two components are managed by the 
+        same local component manager (i.e., they are in the same process). 
+        In this case, no timeout is set, no proxy component is created, and 
+        therefore local component managers don't have to call ConnectConfirm().
+
+        A return value of (CONNECT_REMOTE_BASE + n) is a temporary session 
+        id assigned by the global component manager, which is used by 
+        ConnectConfirm() to find connection information.
+
+        If Connect() is called, timer is set at the global component manager. If
+        timeout elapses before BOTH local component managers confirm successful 
+        connection, the global component manager calls Disconnect() to clean up 
+        the connection. */
+    virtual unsigned int Connect(
+        const std::string & thisProcessName,
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName,
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName) = 0;
+
+    /*! Local component manager confirms that connection has been successfully 
+        established.
+
+        Return true if the global component manager acknowledged the connection. */
+    virtual bool ConnectConfirm(unsigned int connectionSessionID) = 0;
 
     /*! Disconnect two interfaces */
     virtual void Disconnect(

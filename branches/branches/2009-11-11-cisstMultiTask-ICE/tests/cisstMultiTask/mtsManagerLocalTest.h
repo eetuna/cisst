@@ -32,14 +32,21 @@ private:
     CPPUNIT_TEST_SUITE(mtsManagerLocalTest);
     {
         CPPUNIT_TEST(TestConstructor);
-        CPPUNIT_TEST(TestCleanup);
         CPPUNIT_TEST(TestGetInstance);
         CPPUNIT_TEST(TestAddComponent);
         CPPUNIT_TEST(TestRemoveComponent);
-        CPPUNIT_TEST(TestGetNamesOfComponents);
         CPPUNIT_TEST(TestGetComponent);
+        CPPUNIT_TEST(TestConnect);
+        CPPUNIT_TEST(TestDisconnect);
         CPPUNIT_TEST(TestCreateAll);
         CPPUNIT_TEST(TestStartAll);
+        CPPUNIT_TEST(TestKillAll);
+        CPPUNIT_TEST(TestCleanup);
+        CPPUNIT_TEST(TestGetNamesOfComponents);
+        //CPPUNIT_TEST(TestGetNamesOfTasks);
+        //CPPUNIT_TEST(TestGetNamesOfDevices);
+        CPPUNIT_TEST(TestGetProcessName);
+        
 	}
     CPPUNIT_TEST_SUITE_END();
 
@@ -48,12 +55,16 @@ public:
     void tearDown(void);
 
     void TestConstructor(void);
-    void TestCleanup(void);
     void TestGetInstance(void);
     void TestAddComponent(void);
     void TestRemoveComponent(void);
-    void TestGetNamesOfComponents(void);
     void TestGetComponent(void);
+    void TestConnect(void);
+    void TestDisconnect(void);
     void TestCreateAll(void);
     void TestStartAll(void);
+    void TestKillAll(void);
+    void TestCleanup(void);
+    void TestGetNamesOfComponents(void);
+    void TestGetProcessName(void);
 };

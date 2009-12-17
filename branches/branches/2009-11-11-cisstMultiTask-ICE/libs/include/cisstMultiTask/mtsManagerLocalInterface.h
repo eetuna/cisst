@@ -44,12 +44,36 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsManagerLocalInterface_h
 #define _mtsManagerLocalInterface_h
 
-#include <cisstCommon/cmnGenericObject.h>
+#include <cisstMultiTask/mtsManagerCommon.h>
 
-class CISST_EXPORT mtsManagerLocalInterface : public cmnGenericObject {
+class CISST_EXPORT mtsManagerLocalInterface : public mtsManagerCommon {
 
 public:
-    /*! Getters */
+    /*! Extract all the information on a provided interface such as command 
+        objects and events with serialization */
+    virtual bool GetProvidedInterfaceDescription(
+        const std::string & componentName,
+        const std::string & providedInterfaceName, 
+        ProvidedInterfaceDescription & providedInterfaceDescription) const = 0;
+
+    /*! Extract all the information on a required interface such as function
+        objects and events with serialization */
+    virtual bool GetRequiredInterfaceDescription(
+        const std::string & componentName,
+        const std::string & requiredInterfaceName, 
+        RequiredInterfaceDescription & requiredInterfaceDescription) const = 0;
+
+    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
+    virtual bool CreateProvidedInterfaceProxy(
+        const std::string & componentName,
+        ProvidedInterfaceDescription & providedInterfaceDescription) const = 0;
+
+    /*! Create a required interface proxy using RequiredInterfaceDescription */
+    virtual bool CreateRequiredInterfaceProxy(
+        const std::string & componentName,
+        RequiredInterfaceDescription & requiredInterfaceDescription) const = 0;
+
+    /*! Returns the name of this local component manager */
     virtual const std::string GetProcessName() const = 0;
 };
 

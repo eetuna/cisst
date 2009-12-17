@@ -62,6 +62,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsManagerLocalInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsManagerGlobalInterface.h>
+
 //#include <cisstMultiTask/mtsConfig.h>
 
 //#if CISST_MTS_HAS_ICE
@@ -131,6 +133,18 @@ protected:
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
 
+    /*! Establish LOCAL connection between two LOCAL components. Note that this
+        method assumes that two components should be in the same process, i.e., 
+        be registered to the same local component manager. 
+        If connectionSessionID is -1 (default value), this local component manager
+        should inform the global task manager of the successful local connection.
+        */
+    bool ConnectLocally(
+        const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const unsigned int connectionID =
+            static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL));
+
 public:
     /*! Create the static instance of local task manager. */
     static mtsManagerLocal * GetInstance(
@@ -154,17 +168,36 @@ public:
     bool RemoveComponent(const std::string & componentName);
 
     /*! Retrieve a component by name. */
-    mtsDevice * GetComponent(const std::string & componentName);
+    mtsDevice * GetComponent(const std::string & componentName) const;
     mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
+    mtsDevice CISST_DEPRECATED * GetDevice(const std::string & deviceName); // For backward compatibility
 
-    /* Interfaces for Connect/Disconnect (note that actual connection is managed
-       and established by the global component manager). */
-    bool Connect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-                 const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+    /* Connect two interfaces (limited to connect two local interfaces) */
+    bool Connect(
+        const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    /* Connect two interfaces (can connect any two interfaces) */
+    bool Connect(
+        const std::string & clientProcessName,
+        const std::string & clientComponentName,
+        const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName,
+        const std::string & serverComponentName,
+        const std::string & serverProvidedInterfaceName);
 
     /*! Disconnect two interfaces */
-    void Disconnect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-                    const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+    void Disconnect(
+        const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    void Disconnect(
+        const std::string & clientProcessName,
+        const std::string & clientComponentName,
+        const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName,
+        const std::string & serverComponentName,
+        const std::string & serverProvidedInterfaceName);
 
     /*! Create all components added if a component is of mtsTask type. 
         Internally, this calls mtsTask::Create() for each task. */
@@ -195,17 +228,49 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //  Utilities
+    //  Methods required by mtsManagerLocalInterface
     //-------------------------------------------------------------------------
-    /*! Enumerate all the names of components added */
-    std::vector<std::string> GetNamesOfComponents(void) const;
-    void GetNamesOfComponents(std::vector<std::string>& namesOfComponents) const;
+    /*! Extract all the information on a provided interface such as command 
+        objects and events with serialization */
+    bool GetProvidedInterfaceDescription(
+        const std::string & componentName,
+        const std::string & providedInterfaceName, 
+        ProvidedInterfaceDescription & providedInterfaceDescription) const;
 
-    /*! Getters */
+    /*! Extract all the information on a required interface such as function
+        objects and events with serialization */
+    bool GetRequiredInterfaceDescription(
+        const std::string & componentName,
+        const std::string & requiredInterfaceName, 
+        RequiredInterfaceDescription & requiredInterfaceDescription) const;
+
+    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
+    bool CreateProvidedInterfaceProxy(
+        const std::string & componentName,
+        ProvidedInterfaceDescription & providedInterfaceDescription) const;
+
+    /*! Create a required interface proxy using RequiredInterfaceDescription */
+    bool CreateRequiredInterfaceProxy(
+        const std::string & componentName,
+        RequiredInterfaceDescription & requiredInterfaceDescription) const;
+
+    /*! Returns the name of this local component manager */
     inline const std::string GetProcessName() const {
         return ProcessName;
     }
 
+    //-------------------------------------------------------------------------
+    //  Utilities
+    //-------------------------------------------------------------------------
+    /*! Enumerate all the names of components added */
+    std::vector<std::string> GetNamesOfComponents(void) const;
+    std::vector<std::string> CISST_DEPRECATED GetNamesOfDevices(void) const;  // For backward compatibility
+    std::vector<std::string> CISST_DEPRECATED GetNamesOfTasks(void) const;  // For backward compatibility    
+
+    void GetNamesOfComponents(std::vector<std::string>& namesOfComponents) const;
+    void CISST_DEPRECATED GetNamesOfDevices(std::vector<std::string>& namesOfDevices) const; // For backward compatibility
+    void CISST_DEPRECATED GetNamesOfTasks(std::vector<std::string>& namesOfTasks) const; // For backward compatibility
+    
     /*! For debugging. Dumps to stream the maps maintained by the manager. */
     void ToStream(std::ostream & outputStream) const;
 
@@ -219,7 +284,9 @@ public:
 //    //-------------------------------------------------------------------------
 //protected:
 //    /*! Task manager type. */
-//    TaskManagerType TaskManagerTypeMember;
+    typedef enum { TASK_MANAGER_LOCAL, TASK_MANAGER_SERVER, TASK_MANAGER_CLIENT } TaskManagerType;
+
+    TaskManagerType TaskManagerTypeMember;
 //
 //    /*! Task manager communicator ID. Used as one of ICE proxy object properties. */
 //    const std::string TaskManagerCommunicatorID;
@@ -249,13 +316,13 @@ public:
 //    /*! Set the type of task manager-global task manager (server) or conventional
 //      task manager (client)-and start an appropriate task manager proxy.
 //      Also start a task interface proxy. */
-//    void SetTaskManagerType(const TaskManagerType taskManagerType) {
-//        TaskManagerTypeMember = taskManagerType;
-//        StartProxies();
-//    }
+    void SetTaskManagerType(const TaskManagerType taskManagerType) {
+        TaskManagerTypeMember = taskManagerType;
+        //StartProxies();
+    }
 //
 //    /*! Getter */
-//    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
+    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
 //
 //    inline mtsManagerLocalProxyServer * GetProxyGlobalTaskManager() const {
 //        return ProxyGlobalTaskManager;

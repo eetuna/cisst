@@ -125,6 +125,7 @@ SET(HEADER_FILES
     mtsCollectorBase.h    
     mtsCollectorState.h
     
+    mtsManagerCommon.h
     mtsManagerLocalInterface.h
     mtsManagerLocal.h
     mtsManagerGlobalInterface.h    

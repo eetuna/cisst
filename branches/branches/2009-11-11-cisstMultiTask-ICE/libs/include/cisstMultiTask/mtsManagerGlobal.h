@@ -24,7 +24,8 @@ http://www.cisst.org/cisst/license.txt.
   \brief Definition of the global manager
   \ingroup cisstMultiTask
 
-  TODO: add description
+  Please see mtsManagerGlobalInterface.h for detailed comments on methods
+  defined as pure virtual in mtsManagerGlobalInterface.
 */
 
 #ifndef _mtsManagerGlobal_h
@@ -118,6 +119,9 @@ protected:
     /*! Mutex to safely use LocalManagerMap and LocalManagerMapByProcessID */
     osaMutex LocalManagerMapChange;
 
+    /*! Connection id */
+    unsigned int ConnectionID;
+
     /* TODO: Remove me. This is for test purpose */
     typedef std::map<unsigned int, unsigned int> AllocatedPointerType;
     AllocatedPointerType AllocatedPointers;
@@ -171,52 +175,42 @@ public:
     mtsManagerGlobal();
 
     ~mtsManagerGlobal();
-
+    
     //-------------------------------------------------------------------------
     //  Process Management
     //-------------------------------------------------------------------------
-    /*! Register a process. */
     bool AddProcess(mtsManagerLocalInterface * localManager);
 
-    /*! Find a process. */
     bool FindProcess(const std::string & processName) const;
 
-    /*! Get a process object (local component manager object) */
     mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
 
-    /*! Remove a process. */
     bool RemoveProcess(const std::string & processName);
 
     //-------------------------------------------------------------------------
     //  Component Management
     //-------------------------------------------------------------------------
-    /*! Register a component. */
     bool AddComponent(const std::string & processName, const std::string & componentName);
 
-    /*! Find a component using process name and component name */
     bool FindComponent(const std::string & processName, const std::string & componentName) const;
 
-    /*! Remove a component. */
     bool RemoveComponent(const std::string & processName, const std::string & componentName);
 
     //-------------------------------------------------------------------------
     //  Interface Management
     //-------------------------------------------------------------------------
-    /*! Register an interface. Note that adding/removing an interface can be run-time. */
     bool AddProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     bool AddRequiredInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
-    /*! Find an interface using process name, component name, and interface name */
     bool FindProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
 
     bool FindRequiredInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
 
-    /*! Remove an interface. Note that adding/removing an interface can be run-time. */
     bool RemoveProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
@@ -226,8 +220,8 @@ public:
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------
-    /*! Connect two interfaces */
-    bool Connect(
+    unsigned int Connect(
+        const std::string & thisProcessName,
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,
@@ -235,7 +229,8 @@ public:
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName);
 
-    /*! Disconnect two interfaces */
+    bool ConnectConfirm(unsigned int connectionSessionID);
+
     void Disconnect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,

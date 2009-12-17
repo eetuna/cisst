@@ -31,7 +31,7 @@ CMN_IMPLEMENT_SERVICES(mtsManagerGlobal);
         AllocatedPointers.erase(_it);\
     }
 
-mtsManagerGlobal::mtsManagerGlobal()
+mtsManagerGlobal::mtsManagerGlobal() : ConnectionID(0)
 {
 }
 
@@ -427,7 +427,8 @@ bool mtsManagerGlobal::RemoveRequiredInterface(
 //-------------------------------------------------------------------------
 //  Connection Management
 //-------------------------------------------------------------------------
-bool mtsManagerGlobal::Connect(
+unsigned int mtsManagerGlobal::Connect(
+    const std::string & thisProcessName,
     const std::string & clientProcessName,
     const std::string & clientComponentName,
     const std::string & clientRequiredInterfaceName,
@@ -440,7 +441,7 @@ bool mtsManagerGlobal::Connect(
         CMN_LOG_CLASS_RUN_VERBOSE << "Can't connect: required interface does not exist: "
             << GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName)
             << std::endl;
-        return false;
+        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
     }
 
     // Check if the provided interface specified actually exist.
@@ -448,7 +449,7 @@ bool mtsManagerGlobal::Connect(
         CMN_LOG_CLASS_RUN_VERBOSE << "Can't connect: provided interface does not exist: "
             << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName)
             << std::endl;
-        return false;
+        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
     }
 
     // Check if the two interfaces are already connected.
@@ -462,20 +463,69 @@ bool mtsManagerGlobal::Connect(
     if (ret < 0) {
         CMN_LOG_CLASS_RUN_VERBOSE << "Can't connect: "
             << "one or more processes, components, or interfaces are missing." << std::endl;
-        return false;
+        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
     }
-    // When interfaces have been connected to each other
+    // When interfaces have already been connected to each other
     else if (ret > 0) {
         CMN_LOG_CLASS_RUN_VERBOSE << "Can't connect: Two interfaces are already connected: "
             << GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName)
             << " and "
             << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName)
             << std::endl;
-        return false;
+        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+    }
+
+    // Determine the type of connection: local, local~remote, remote~remote
+    unsigned int connectionID;
+
+    // Type 1: local connection
+    if (thisProcessName == clientProcessName && thisProcessName == serverProcessName) {
+        connectionID = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL);
+    } else {
+        // Get a client and server local component manager that manages the client
+        // and the server component.
+        mtsManagerLocalInterface * localManagerClient = LocalManagerMap.GetItem(clientProcessName);
+        if (!localManagerClient) {
+            CMN_LOG_CLASS_RUN_ERROR << "Can't connect: cannot find local component manager with client process: " << clientProcessName << std::endl;
+            return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        }
+        mtsManagerLocalInterface * localManagerServer = LocalManagerMap.GetItem(serverProcessName);
+        if (!localManagerServer) {
+            CMN_LOG_CLASS_RUN_ERROR << "Can't connect: cannot find local component manager with server process: " << clientProcessName << std::endl;
+            return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        }
+
+        // From two local component managers, extract the information about the 
+        // two interfaces specified. The global component manager will
+        // deliver this information to another local component managers so that
+        // two local component managers can create proxy components appropriately.
+
+        //
+        // TODO: implement this after GetProvidedInterfaceDescription() is implemented
+        //
+
+        // Hereafter, the 'server manager' represents the local component manager 
+        // that manages the server process and the 'client manager' means the one
+        // that manages the client process.
+
+        //
+        // TODO: implement here
+        //
+        // 1. create connection information structure element
+        // 2. assign connection id for the element
+        // 3. enqueue the element with timer set
+        // 4. let two LCMs create proxy components
+        //localManagerClient->CreateProxyComponent(1
+
+
+        // 5. return connectionID back to LCM while iterating timers, if any
+        //
+
+        // Make the server manager create a local proxy for the client component.
     }
 
 
-    // Step 1. Make serverProcess create a proxy for clientComponent in its local memory space.
+    // Step 1
 
     // Step 2. Make clientProcess create a proxy for serverComponent in its local memory space.
 
@@ -514,7 +564,7 @@ bool mtsManagerGlobal::Connect(
     if (!AddConnectedInterface(connectionMap, serverProcessName, serverComponentName, serverProvidedInterfaceName)) {
         CMN_LOG_CLASS_RUN_ERROR << "Can't connect: "
             << "failed to add information about connected provided interface." << std::endl;
-        return false;
+        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
     }
 
     // Connect server's provided interface with client's required interface.
@@ -540,13 +590,24 @@ bool mtsManagerGlobal::Connect(
         // Before returning false, should clean up required interface's connection information
         Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
                    serverProcessName, serverComponentName, serverProvidedInterfaceName);
-        return false;
+        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
     }
 
     //
     // TODO: create task proxy and connect original task with the proxy (physically)
+    // Just for now: local only
     //
-    
+    connectionID = 1;
+
+    return connectionID;
+}
+
+bool mtsManagerGlobal::ConnectConfirm(unsigned int connectionSessionID)
+{
+    //
+    // TODO: handle connectionSessionID
+    //
+
     return true;
 }
 
