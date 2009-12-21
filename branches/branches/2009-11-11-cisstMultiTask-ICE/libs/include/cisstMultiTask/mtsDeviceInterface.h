@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsMulticastCommandWrite.h>
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsInterfaceCommon.h>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -82,6 +83,7 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     friend class mtsTask;
     friend class mtsTaskPeriodic;
     friend class mtsManagerLocal;
+    friend class mtsComponentProxy;
     //
     // TODO: REMOVE THE FOLLOWING DECLARATIONS
     //
@@ -166,6 +168,10 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName, unsigned int userId = 0) const;
     virtual mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
+
+    /*! Extract all the information on a provided interface (command objects 
+        and event generators with arguments serialized (if any)) */
+    bool GetProvidedInterfaceDescription(ProvidedInterfaceDescription & providedInterfaceDescription) const;
 
     /*! Add events to the interface.  This method creates the
       multicast command used to trigger all the observers for the

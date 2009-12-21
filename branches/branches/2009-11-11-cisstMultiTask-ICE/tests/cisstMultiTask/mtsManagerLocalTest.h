@@ -38,13 +38,17 @@ private:
         CPPUNIT_TEST(TestGetComponent);
         CPPUNIT_TEST(TestConnect);
         CPPUNIT_TEST(TestDisconnect);
-        CPPUNIT_TEST(TestCreateAll);
-        CPPUNIT_TEST(TestStartAll);
-        CPPUNIT_TEST(TestKillAll);
+        //CPPUNIT_TEST(TestCreateAll);
+        //CPPUNIT_TEST(TestStartAll);
+        //CPPUNIT_TEST(TestKillAll);
         CPPUNIT_TEST(TestCleanup);
         CPPUNIT_TEST(TestGetNamesOfComponents);
         //CPPUNIT_TEST(TestGetNamesOfTasks);
         //CPPUNIT_TEST(TestGetNamesOfDevices);
+        //CPPUNIT_TEST(TestCreateRequiredInterfaceProxy);
+        //CPPUNIT_TEST(TestCreateProvidedInterfaceProxy);
+        //CPPUNIT_TEST(TestRemoveRequiredInterfaceProxy);
+        //CPPUNIT_TEST(TestRemoveProvidedInterfaceProxy);
         CPPUNIT_TEST(TestGetProcessName);
         
 	}

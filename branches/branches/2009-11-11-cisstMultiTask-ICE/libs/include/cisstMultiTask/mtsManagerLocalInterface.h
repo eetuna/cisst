@@ -44,20 +44,20 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsManagerLocalInterface_h
 #define _mtsManagerLocalInterface_h
 
-#include <cisstMultiTask/mtsManagerCommon.h>
+#include <cisstMultiTask/mtsInterfaceCommon.h>
 
-class CISST_EXPORT mtsManagerLocalInterface : public mtsManagerCommon {
-
+class CISST_EXPORT mtsManagerLocalInterface 
+{
 public:
-    /*! Extract all the information on a provided interface such as command 
-        objects and events with serialization */
+    /*! Extract all the information on a provided interface (command objects 
+        and event generators with arguments serialized (if any)) */
     virtual bool GetProvidedInterfaceDescription(
         const std::string & componentName,
         const std::string & providedInterfaceName, 
         ProvidedInterfaceDescription & providedInterfaceDescription) const = 0;
 
-    /*! Extract all the information on a required interface such as function
-        objects and events with serialization */
+    /*! Extract all the information on a required interface (function objects
+        and event handlers with arguments serialized (if any)) */
     virtual bool GetRequiredInterfaceDescription(
         const std::string & componentName,
         const std::string & requiredInterfaceName, 
@@ -65,13 +65,21 @@ public:
 
     /*! Create a provided interface proxy using ProvidedInterfaceDescription */
     virtual bool CreateProvidedInterfaceProxy(
-        const std::string & componentName,
-        ProvidedInterfaceDescription & providedInterfaceDescription) const = 0;
+        const std::string & serverComponentProxyName,
+        ProvidedInterfaceDescription & providedInterfaceDescription) = 0;
 
     /*! Create a required interface proxy using RequiredInterfaceDescription */
     virtual bool CreateRequiredInterfaceProxy(
-        const std::string & componentName,
-        RequiredInterfaceDescription & requiredInterfaceDescription) const = 0;
+        const std::string & clientComponentProxyName,
+        RequiredInterfaceDescription & requiredInterfaceDescription) = 0;
+
+    /*! Remove a provided interface proxy */
+    virtual bool RemoveProvidedInterfaceProxy(
+        const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName) = 0;
+
+    /*! Remove a required interface proxy */
+    virtual bool RemoveRequiredInterfaceProxy(
+        const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName) = 0;
 
     /*! Returns the name of this local component manager */
     virtual const std::string GetProcessName() const = 0;

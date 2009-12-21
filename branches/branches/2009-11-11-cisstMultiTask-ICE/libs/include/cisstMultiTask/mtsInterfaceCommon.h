@@ -2,10 +2,10 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsManagerCommon.h 794 2009-09-01 21:43:56Z pkazanz1 $
+  $Id: mtsInterfaceCommon.h 794 2009-09-01 21:43:56Z pkazanz1 $
 
   Author(s):  Min Yang Jung
-  Created on: 2009-12-08
+  Created on: 2009-12-19
 
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -19,42 +19,16 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-/*!
-  \file
-  \brief Definition of mtsManagerCommon
-  \ingroup cisstMultiTask
+#ifndef _mtsInterfaceCommon_h
+#define _mtsInterfaceCommon_h
 
-  This class defines an interface used by the global component manager to 
-  communicate with local component managers. The interface is defined as a pure 
-  abstract class because there are two different configurations:
+#include <string>
+#include <vector>
 
-  Standalone mode: Inter-thread communication, no ICE.  A local component manager 
-    directly connects to the global component manager that runs in the same process. 
-    In this case, the global component manager keeps only one instance of 
-    mtsManagerLocal.
+class CISST_EXPORT mtsInterfaceCommon {
 
-  Network mode: Inter-process communication, ICE enabled.  Local component 
-    managers connect to the global component manager via a proxy.
-    In this case, the global component manager handles instances of 
-    mtsManagerLocalProxyClient.
-
-  \note Please refer to mtsManagerLocal and mtsManagerLocalProxyClient for details.
-*/
-
-#ifndef _mtsManagerCommon_h
-#define _mtsManagerCommon_h
-
-#include <cisstCommon/cmnGenericObject.h>
-
-class CISST_EXPORT mtsManagerCommon : public cmnGenericObject {
-
-    friend class mtsManagerCommonTest;
-
-protected:
-    //-------------------------------------------------------------------------
-    //  Definition of Provided Interface Summary
-    //-------------------------------------------------------------------------
-    /*! Command and event object definition */
+public:
+    /*! Command object definition */
 	struct CommandVoidElement {
         std::string Name;
 	};
@@ -75,6 +49,7 @@ protected:
         std::string Argument2PrototypeSerialized;
 	};
 	
+    /* Event object definition */
 	struct EventVoidElement {
 		std::string Name;
 	};
@@ -128,8 +103,31 @@ protected:
         // Event handlers
         EventHandlerVoidVector  EventHandlersVoid;
 		EventHandlerWriteVector EventHandlersWrite;
-    };
+    };    
 };
 
-#endif // _mtsManagerCommon_h
+/* Typedefs for easy access to internal classes */
+#define TYPEDEF( _class ) typedef mtsInterfaceCommon::_class _class;
+
+TYPEDEF(ProvidedInterfaceDescription);
+TYPEDEF(RequiredInterfaceDescription);
+TYPEDEF(CommandVoidElement);
+TYPEDEF(CommandWriteElement);
+TYPEDEF(CommandReadElement);
+TYPEDEF(CommandQualifiedReadElement);
+TYPEDEF(EventVoidElement);
+TYPEDEF(EventWriteElement);
+
+TYPEDEF(CommandVoidVector);
+TYPEDEF(CommandWriteVector);
+TYPEDEF(CommandReadVector);
+TYPEDEF(CommandQualifiedReadVector);
+TYPEDEF(EventVoidVector);
+TYPEDEF(EventWriteVector);
+
+TYPEDEF(CommandPointerNames);
+TYPEDEF(EventHandlerVoidVector);
+TYPEDEF(EventHandlerWriteVector);
+
+#endif // _mtsInterfaceCommon_h
 

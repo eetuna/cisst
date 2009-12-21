@@ -31,6 +31,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 
+#include <cisstMultiTask/mtsInterfaceCommon.h>
+
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
@@ -77,7 +79,7 @@ class CISST_EXPORT mtsRequiredInterface: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-    friend class mtsManagerLocal;
+    friend class mtsComponentProxy;
     //
     // TODO: Remove the following declaration
     //
@@ -142,6 +144,10 @@ protected:
     virtual mtsCommandWriteBase * GetEventHandlerWrite(const std::string & eventName) const;
     //@}
     
+    /*! Extract all the information on a required interface (function objects 
+        and event handlers with arguments serialized (if any)) */
+    bool GetRequiredInterfaceDescription(RequiredInterfaceDescription & requiredInterfaceDescription) const;
+
     void ConnectTo(mtsDeviceInterface * other) {
         OtherInterface = other;
     }

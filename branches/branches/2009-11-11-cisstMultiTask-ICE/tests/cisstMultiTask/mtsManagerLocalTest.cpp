@@ -128,7 +128,7 @@ void mtsManagerLocalTest::TestAddComponent(void)
     //-----------------------------------------------------
     // Test with mtsDevice type components
     mtsManagerLocal managerLocal1(P1, "");
-    mtsManagerTestC2Device c2Device;
+    mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
 
     // Invalid argument test
     CPPUNIT_ASSERT(!managerLocal1.AddComponent(NULL));
@@ -136,11 +136,11 @@ void mtsManagerLocalTest::TestAddComponent(void)
     // Check with the global component manager.    
     // Should fail if a component to be added has already been registered before
     CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->AddComponent(P1, C2));
-    CPPUNIT_ASSERT(!managerLocal1.AddComponent(&c2Device));
+    CPPUNIT_ASSERT(!managerLocal1.AddComponent(c2Device));
 
     // Should succeed if a component is added for the first time
     CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->RemoveComponent(P1, C2));
-    CPPUNIT_ASSERT(managerLocal1.AddComponent(&c2Device));
+    CPPUNIT_ASSERT(managerLocal1.AddComponent(c2Device));
     CPPUNIT_ASSERT(managerLocal1.ComponentMap.FindItem(C2));
     
     // The C2 has both provided interfaces (p1, p2) and a required interface (r1).
@@ -151,7 +151,7 @@ void mtsManagerLocalTest::TestAddComponent(void)
     //-----------------------------------------------------
     // Test with mtsDevice type components
     mtsManagerLocal managerLocal2(P1, "");
-    mtsManagerTestC2 c2Task;
+    mtsManagerTestC2 * c2Task = new mtsManagerTestC2;
 
     // Invalid argument test
     CPPUNIT_ASSERT(!managerLocal2.AddComponent(NULL));
@@ -159,11 +159,11 @@ void mtsManagerLocalTest::TestAddComponent(void)
     // Check with the global component manager.    
     // Should fail if a component to be added has already been registered before
     CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->AddComponent(P1, C2));
-    CPPUNIT_ASSERT(!managerLocal2.AddComponent(&c2Task));
+    CPPUNIT_ASSERT(!managerLocal2.AddComponent(c2Task));
 
     // Should succeed if a component is added for the first time
     CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->RemoveComponent(P1, C2));
-    CPPUNIT_ASSERT(managerLocal2.AddComponent(&c2Task));
+    CPPUNIT_ASSERT(managerLocal2.AddComponent(c2Task));
     CPPUNIT_ASSERT(managerLocal2.ComponentMap.FindItem(C2));
     
     // The C2 has both provided interfaces (p1, p2) and a required interface (r1).
@@ -177,29 +177,29 @@ void mtsManagerLocalTest::TestRemoveComponent(void)
     //-----------------------------------------------------
     // Test with mtsDevice type components
     mtsManagerLocal managerLocal1(P1, "");
-    mtsManagerTestC1Device c1Device;
+    mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
 
     // Invalid argument test
     CPPUNIT_ASSERT(!managerLocal1.RemoveComponent(NULL));
 
-    CPPUNIT_ASSERT(managerLocal1.AddComponent(&c1Device));
+    CPPUNIT_ASSERT(managerLocal1.AddComponent(c1Device));
 
     CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindComponent(P1, C1));
-    CPPUNIT_ASSERT(managerLocal1.RemoveComponent(&c1Device));
+    CPPUNIT_ASSERT(managerLocal1.RemoveComponent(c1Device));
     CPPUNIT_ASSERT(!managerLocal1.ManagerGlobal->FindComponent(P1, C1));
     
     //-----------------------------------------------------
     // Test with mtsTask type components
     mtsManagerLocal managerLocal2(P1, "");
-    mtsManagerTestC1 c1Task;
+    mtsManagerTestC1 * c1Task = new mtsManagerTestC1;
 
     // Invalid argument test
     CPPUNIT_ASSERT(!managerLocal2.RemoveComponent(NULL));
 
-    CPPUNIT_ASSERT(managerLocal2.AddComponent(&c1Task));
+    CPPUNIT_ASSERT(managerLocal2.AddComponent(c1Task));
 
     CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindComponent(P1, C1));
-    CPPUNIT_ASSERT(managerLocal2.RemoveComponent(&c1Task));
+    CPPUNIT_ASSERT(managerLocal2.RemoveComponent(c1Task));
     CPPUNIT_ASSERT(!managerLocal2.ManagerGlobal->FindComponent(P1, C1));
 
     //-----------------------------------------------------
@@ -209,7 +209,7 @@ void mtsManagerLocalTest::TestRemoveComponent(void)
     // should fail: not yet registered component name
     CPPUNIT_ASSERT(!managerLocal3.RemoveComponent(C1));
 
-    CPPUNIT_ASSERT(managerLocal3.AddComponent(&c1Device));
+    CPPUNIT_ASSERT(managerLocal3.AddComponent(c1Device));
 
     CPPUNIT_ASSERT(managerLocal3.ManagerGlobal->FindComponent(P1, C1));
     CPPUNIT_ASSERT(managerLocal3.RemoveComponent(C1));
@@ -219,50 +219,50 @@ void mtsManagerLocalTest::TestRemoveComponent(void)
 void mtsManagerLocalTest::TestGetNamesOfComponents(void)
 {
     mtsManagerLocal managerLocal(P1, "");
-    mtsManagerTestC1Device c1Device;
-    mtsManagerTestC2Device c2Device;
-    mtsManagerTestC3Device c3Device;
+    mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
+    mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
+    mtsManagerTestC3Device * c3Device = new mtsManagerTestC3Device;
 
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Device));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Device));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c1Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c2Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c3Device));
 
     std::vector<std::string> namesOfComponents1 = managerLocal.GetNamesOfComponents();
     CPPUNIT_ASSERT_EQUAL((unsigned int) 3, namesOfComponents1.size());
     for (int i = 0; i < 3; ++i) {
-        CPPUNIT_ASSERT(namesOfComponents1[i] == c1Device.GetName() ||
-                       namesOfComponents1[i] == c2Device.GetName() ||
-                       namesOfComponents1[i] == c3Device.GetName());
+        CPPUNIT_ASSERT(namesOfComponents1[i] == c1Device->GetName() ||
+                       namesOfComponents1[i] == c2Device->GetName() ||
+                       namesOfComponents1[i] == c3Device->GetName());
     }
 
     std::vector<std::string> namesOfComponents2;
     managerLocal.GetNamesOfComponents(namesOfComponents2);
     CPPUNIT_ASSERT_EQUAL((unsigned int) 3, namesOfComponents2.size());
     for (int i = 0; i < 3; ++i) {
-        CPPUNIT_ASSERT(namesOfComponents2[i] == c1Device.GetName() ||
-                       namesOfComponents2[i] == c2Device.GetName() ||
-                       namesOfComponents2[i] == c3Device.GetName());
+        CPPUNIT_ASSERT(namesOfComponents2[i] == c1Device->GetName() ||
+                       namesOfComponents2[i] == c2Device->GetName() ||
+                       namesOfComponents2[i] == c3Device->GetName());
     }
 }
 
 void mtsManagerLocalTest::TestGetComponent(void)
 {
     mtsManagerLocal managerLocal(P1, "");
-    mtsManagerTestC1Device c1Device;
-    mtsManagerTestC2Device c2Device;
-    mtsManagerTestC3Device c3Device;
+    mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
+    mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
+    mtsManagerTestC3Device * c3Device = new mtsManagerTestC3Device;
 
     CPPUNIT_ASSERT(NULL == managerLocal.GetComponent(C1));
     CPPUNIT_ASSERT(NULL == managerLocal.GetComponent(C2));
     CPPUNIT_ASSERT(NULL == managerLocal.GetComponent(C3));
 
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Device));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Device));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c1Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c2Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c3Device));
 
-    CPPUNIT_ASSERT(&c1Device == managerLocal.GetComponent(C1));
-    CPPUNIT_ASSERT(&c2Device == managerLocal.GetComponent(C2));
-    CPPUNIT_ASSERT(&c3Device == managerLocal.GetComponent(C3));
+    CPPUNIT_ASSERT(c1Device == managerLocal.GetComponent(C1));
+    CPPUNIT_ASSERT(c2Device == managerLocal.GetComponent(C2));
+    CPPUNIT_ASSERT(c3Device == managerLocal.GetComponent(C3));
 }
 
 void mtsManagerLocalTest::TestGetProcessName(void)
@@ -280,13 +280,13 @@ void mtsManagerLocalTest::TestConnect(void)
     {
         // Test with invalid arguments (with non-existing components or interfaces)
         mtsManagerLocal managerLocal(P1, "");
-        mtsManagerTestC1Device c1Device;
-        mtsManagerTestC2Device c2Device;
+        mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
+        mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
 
         CPPUNIT_ASSERT(!managerLocal.Connect("NonExist-C", "NonExist-R", "NonExist-S", "NonExist-P"));
 
-        CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Device));
-        CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Device));
+        CPPUNIT_ASSERT(managerLocal.AddComponent(c1Device));
+        CPPUNIT_ASSERT(managerLocal.AddComponent(c2Device));
 
         CPPUNIT_ASSERT(managerLocal.Connect(C1, r1, C2, p1));
     }
@@ -308,11 +308,11 @@ void mtsManagerLocalTest::TestConnect(void)
         managerLocal2.ManagerGlobal = managerLocal1.ManagerGlobal;
         CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->AddProcess(&managerLocal2));
 
-        mtsManagerTestC1Device c1Device;
-        mtsManagerTestC2Device c2Device;
+        mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
+        mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
 
-        CPPUNIT_ASSERT(managerLocal1.AddComponent(&c1Device));
-        CPPUNIT_ASSERT(managerLocal2.AddComponent(&c2Device));
+        CPPUNIT_ASSERT(managerLocal1.AddComponent(c1Device));
+        CPPUNIT_ASSERT(managerLocal2.AddComponent(c2Device));
 
         //
         // TODO: Implement Proxy Creation Feature!!!
@@ -337,25 +337,25 @@ void mtsManagerLocalTest::TestDisconnect(void)
 void mtsManagerLocalTest::TestCreateAll(void)
 {
     mtsManagerLocal managerLocal(P1, "");
-    mtsManagerTestC1 c1Task;    // C1 is of mtsTaskPeriodic type
-    mtsManagerTestC2 c2Task;    // C2 is of mtsTaskContinuous type
-    mtsManagerTestC3 c3Task;    // C3 is of mtsTaskCallback type
+    mtsManagerTestC1 * c1Task = new mtsManagerTestC1;    // C1 is of mtsTaskPeriodic type
+    mtsManagerTestC2 * c2Task = new mtsManagerTestC2;    // C2 is of mtsTaskContinuous type
+    mtsManagerTestC3 * c3Task = new mtsManagerTestC3;    // C3 is of mtsTaskCallback type
 
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Task));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Task));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c1Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c2Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c3Task));
     
     // Check internal states before calling CreateAll()
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, c1Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, c2Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, c3Task.TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, c1Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, c2Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, c3Task->TaskState);
 
     managerLocal.CreateAll();
 
     // TODO: Resolve this unit-test
-    //CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c1Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c2Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c3Task.TaskState);
+    //CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c1Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c2Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c3Task->TaskState);
 
     managerLocal.KillAll();
 }
@@ -363,13 +363,13 @@ void mtsManagerLocalTest::TestCreateAll(void)
 void mtsManagerLocalTest::TestStartAll(void)
 {
     mtsManagerLocal managerLocal(P1, "");
-    mtsManagerTestC1 c1Task;    // C1 is of mtsTaskPeriodic type
-    mtsManagerTestC2 c2Task;    // C2 is of mtsTaskContinuous type
-    mtsManagerTestC3 c3Task;    // C3 is of mtsTaskCallback type
+    mtsManagerTestC1 * c1Task = new mtsManagerTestC1;    // C1 is of mtsTaskPeriodic type
+    mtsManagerTestC2 * c2Task = new mtsManagerTestC2;    // C2 is of mtsTaskContinuous type
+    mtsManagerTestC3 * c3Task = new mtsManagerTestC3;    // C3 is of mtsTaskCallback type
 
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Task));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Task));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c1Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c2Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c3Task));
 
     // Establish connections between the three components of mtsTask type
     // Connection: (P1, C1, r1) ~ (P2, C2, p1)
@@ -384,15 +384,15 @@ void mtsManagerLocalTest::TestStartAll(void)
     managerLocal.CreateAll();
 
     // TODO: Resolve this unit-test
-    //CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c1Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c2Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c3Task.TaskState);
+    //CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c1Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c2Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c3Task->TaskState);
 
     managerLocal.StartAll();
 
-    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, c1Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, c2Task.TaskState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c3Task.TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, c1Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, c2Task->TaskState);
+    CPPUNIT_ASSERT_EQUAL(mtsTask::INITIALIZING, c3Task->TaskState);
 
     managerLocal.KillAll();
 
@@ -402,13 +402,13 @@ void mtsManagerLocalTest::TestStartAll(void)
 void mtsManagerLocalTest::TestKillAll(void)
 {
     mtsManagerLocal managerLocal(P1, "");
-    mtsManagerTestC1 c1Task;    // C1 is of mtsTaskPeriodic type
-    mtsManagerTestC2 c2Task;    // C2 is of mtsTaskContinuous type
-    mtsManagerTestC3 c3Task;    // C3 is of mtsTaskCallback type
+    mtsManagerTestC1 * c1Task = new mtsManagerTestC1;    // C1 is of mtsTaskPeriodic type
+    mtsManagerTestC2 * c2Task = new mtsManagerTestC2;    // C2 is of mtsTaskContinuous type
+    mtsManagerTestC3 * c3Task = new mtsManagerTestC3;    // C3 is of mtsTaskCallback type
 
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c1Task));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c2Task));
-    CPPUNIT_ASSERT(managerLocal.AddComponent(&c3Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c1Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c2Task));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c3Task));
 
     // Establish connections between the three components of mtsTask type
     // Connection: (P1, C1, r1) ~ (P2, C2, p1)
@@ -426,12 +426,12 @@ void mtsManagerLocalTest::TestKillAll(void)
 
     osaSleep(1 * cmn_ms);
 
-    CPPUNIT_ASSERT(c1Task.TaskState == mtsTask::FINISHING || 
-                   c1Task.TaskState == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(c2Task.TaskState == mtsTask::FINISHING || 
-                   c2Task.TaskState == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(c3Task.TaskState == mtsTask::FINISHING || 
-                   c3Task.TaskState == mtsTask::FINISHED);
+    CPPUNIT_ASSERT(c1Task->TaskState == mtsTask::FINISHING || 
+                   c1Task->TaskState == mtsTask::FINISHED);
+    CPPUNIT_ASSERT(c2Task->TaskState == mtsTask::FINISHING || 
+                   c2Task->TaskState == mtsTask::FINISHED);
+    CPPUNIT_ASSERT(c3Task->TaskState == mtsTask::FINISHING || 
+                   c3Task->TaskState == mtsTask::FINISHED);
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerLocalTest);

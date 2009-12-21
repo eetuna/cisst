@@ -42,6 +42,7 @@ SET(SOURCE_FILES
     mtsCommandQueuedWriteBase.cpp
 
     mtsDevice.cpp
+    mtsComponentProxy.cpp
 
     mtsMailBox.cpp
     mtsStateIndex.cpp
@@ -101,6 +102,7 @@ SET(HEADER_FILES
     mtsForwardDeclarations.h
     
     mtsDevice.h
+    mtsComponentProxy.h
 
     mtsQueue.h
     mtsMailBox.h
@@ -121,11 +123,11 @@ SET(HEADER_FILES
     mtsTaskManager.h
         
     mtsDeviceInterface.h
+    mtsInterfaceCommon.h
 
     mtsCollectorBase.h    
     mtsCollectorState.h
     
-    mtsManagerCommon.h
     mtsManagerLocalInterface.h
     mtsManagerLocal.h
     mtsManagerGlobalInterface.h    

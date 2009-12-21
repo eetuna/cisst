@@ -133,10 +133,16 @@ protected:
     bool CleanUp(void);
 
     /*! Generate unique id of an interface as string */
-    inline std::string GetInterfaceUID(const std::string & processName,
+    inline const std::string GetInterfaceUID(const std::string & processName,
         const std::string & componentName, const std::string & interfaceName) const
     {
         return processName + ":" + componentName + ":" + interfaceName;
+    }
+
+    /*! Generate unique name of a proxy component */
+    inline const std::string GetComponentProxyName(const std::string & processName, const std::string & componentName) const
+    {
+        return processName + ":" + componentName + "Proxy";
     }
 
     /*! Get a map containing connection information for a provided interface */
@@ -183,7 +189,7 @@ public:
 
     bool FindProcess(const std::string & processName) const;
 
-    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
+    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);    
 
     bool RemoveProcess(const std::string & processName);
 
@@ -221,7 +227,6 @@ public:
     //  Connection Management
     //-------------------------------------------------------------------------
     unsigned int Connect(
-        const std::string & thisProcessName,
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,
@@ -231,7 +236,7 @@ public:
 
     bool ConnectConfirm(unsigned int connectionSessionID);
 
-    void Disconnect(
+    bool Disconnect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,

@@ -75,10 +75,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface {
+class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface, public cmnGenericObject {
 
     friend class mtsManagerLocalTest;
     friend class mtsManagerGlobalTest;
+    friend class mtsManagerGlobal;
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -133,9 +134,8 @@ protected:
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
 
-    /*! Establish LOCAL connection between two LOCAL components. Note that this
-        method assumes that two components should be in the same process, i.e., 
-        be registered to the same local component manager. 
+    /*! Establish local connection between two local components. Note that this
+        method assumes that two components should be in the same process.
         If connectionSessionID is -1 (default value), this local component manager
         should inform the global task manager of the successful local connection.
         */
@@ -144,6 +144,46 @@ protected:
         const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const unsigned int connectionID =
             static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL));
+
+    //-------------------------------------------------------------------------
+    //  Methods required by mtsManagerLocalInterface
+    //-------------------------------------------------------------------------
+    /*! Extract all the information on a provided interface such as command 
+        objects and events with serialization */
+    bool GetProvidedInterfaceDescription(
+        const std::string & componentName,
+        const std::string & providedInterfaceName, 
+        ProvidedInterfaceDescription & providedInterfaceDescription) const;
+
+    /*! Extract all the information on a required interface such as function
+        objects and events with serialization */
+    bool GetRequiredInterfaceDescription(
+        const std::string & componentName,
+        const std::string & requiredInterfaceName, 
+        RequiredInterfaceDescription & requiredInterfaceDescription) const;
+
+    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
+    bool CreateProvidedInterfaceProxy(
+        const std::string & serverComponentProxyName,
+        ProvidedInterfaceDescription & providedInterfaceDescription);
+
+    /*! Create a required interface proxy using RequiredInterfaceDescription */
+    bool CreateRequiredInterfaceProxy(
+        const std::string & clientComponentProxyName,
+        RequiredInterfaceDescription & requiredInterfaceDescription);
+
+    /*! Remove a provided interface proxy */
+    bool RemoveProvidedInterfaceProxy(
+        const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName);
+
+    /*! Remove a required interface proxy */
+    bool RemoveRequiredInterfaceProxy(
+        const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName);
+
+    /*! Returns the name of this local component manager */
+    inline const std::string GetProcessName() const {
+        return ProcessName;
+    }
 
 public:
     /*! Create the static instance of local task manager. */
@@ -163,7 +203,7 @@ public:
     bool CISST_DEPRECATED AddTask(mtsTask * component); // For backward compatibility
     bool CISST_DEPRECATED AddDevice(mtsDevice * component); // For backward compatibility
 
-    /*! Pull out a cmponent from this manager. */
+    /*! Remove a component from this local component manager. */
     bool RemoveComponent(mtsDevice * component);
     bool RemoveComponent(const std::string & componentName);
 
@@ -225,38 +265,6 @@ public:
     /*! TODO: is this for immediate exit??? */
     inline void Kill(void) {
         __os_exit();
-    }
-
-    //-------------------------------------------------------------------------
-    //  Methods required by mtsManagerLocalInterface
-    //-------------------------------------------------------------------------
-    /*! Extract all the information on a provided interface such as command 
-        objects and events with serialization */
-    bool GetProvidedInterfaceDescription(
-        const std::string & componentName,
-        const std::string & providedInterfaceName, 
-        ProvidedInterfaceDescription & providedInterfaceDescription) const;
-
-    /*! Extract all the information on a required interface such as function
-        objects and events with serialization */
-    bool GetRequiredInterfaceDescription(
-        const std::string & componentName,
-        const std::string & requiredInterfaceName, 
-        RequiredInterfaceDescription & requiredInterfaceDescription) const;
-
-    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
-    bool CreateProvidedInterfaceProxy(
-        const std::string & componentName,
-        ProvidedInterfaceDescription & providedInterfaceDescription) const;
-
-    /*! Create a required interface proxy using RequiredInterfaceDescription */
-    bool CreateRequiredInterfaceProxy(
-        const std::string & componentName,
-        RequiredInterfaceDescription & requiredInterfaceDescription) const;
-
-    /*! Returns the name of this local component manager */
-    inline const std::string GetProcessName() const {
-        return ProcessName;
     }
 
     //-------------------------------------------------------------------------

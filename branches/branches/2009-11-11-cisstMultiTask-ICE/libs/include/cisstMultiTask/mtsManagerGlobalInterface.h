@@ -42,12 +42,12 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsManagerGlobalInterface_h
 #define _mtsManagerGlobalInterface_h
 
-#include <cisstMultiTask/mtsManagerCommon.h>
+#include <cisstMultiTask/mtsInterfaceCommon.h>
 
 class mtsManagerLocalInterface;
 
-class CISST_EXPORT mtsManagerGlobalInterface : public mtsManagerCommon {
-
+class CISST_EXPORT mtsManagerGlobalInterface 
+{
 public:
     /* Typedef for the state of connection. See comments on Connect() for details. */
     typedef enum {
@@ -131,7 +131,6 @@ public:
         connection, the global component manager calls Disconnect() to clean up 
         the connection. */
     virtual unsigned int Connect(
-        const std::string & thisProcessName,
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,
@@ -146,7 +145,7 @@ public:
     virtual bool ConnectConfirm(unsigned int connectionSessionID) = 0;
 
     /*! Disconnect two interfaces */
-    virtual void Disconnect(
+    virtual bool Disconnect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,

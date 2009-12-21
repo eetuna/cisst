@@ -19,17 +19,13 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstCommon/cmnSerializer.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
-#include <cisstMultiTask/mtsDevice.h>
-//#include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsTask.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
+#include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsTaskContinuous.h>
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsTaskFromCallback.h>
-//#include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsManagerGlobal.h>
 
 #include <cisstMultiTask/mtsCommandVoidProxy.h>
 #include <cisstMultiTask/mtsCommandWriteProxy.h>
@@ -37,10 +33,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
 #include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
-
-#include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
-#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
 
 //#if CISST_MTS_HAS_ICE
 //#include <cisstMultiTask/mtsDeviceProxy.h>
@@ -161,6 +153,8 @@ void mtsManagerLocal::Cleanup(void)
         ManagerGlobal = NULL;
     }
 
+    ComponentMap.DeleteAll();
+
     Kill();
 }
 
@@ -242,7 +236,7 @@ bool CISST_DEPRECATED mtsManagerLocal::AddDevice(mtsDevice * component)
 bool mtsManagerLocal::RemoveComponent(mtsDevice * component)
 {
     if (!component) {
-        CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: invalid argument" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component: invalid component" << std::endl;
         return false;
     }
 
@@ -251,16 +245,16 @@ bool mtsManagerLocal::RemoveComponent(mtsDevice * component)
 
 bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
 {
-    // Try to remove this component from the global component manager first.
+    // Notify the global component manager of the removal of this component
     if (!ManagerGlobal->RemoveComponent(ProcessName, componentName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "failed to remove component: " << componentName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component: " << componentName << std::endl;
         return false;
     }
 
     ComponentMapChange.Lock();
     bool result = ComponentMap.RemoveItem(componentName, CMN_LOG_LOD_RUN_ERROR);
     if (result) {
-        CMN_LOG_CLASS_INIT_VERBOSE << "removed component: " << componentName << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveComponent: removed component: " << componentName << std::endl;
     }
     ComponentMapChange.Unlock();
 
@@ -551,8 +545,7 @@ void mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const {
 bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
                               const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
-    // Try to connect two local components
-    unsigned int connectionID = ManagerGlobal->Connect(ProcessName,
+    unsigned int connectionID = ManagerGlobal->Connect(
         ProcessName, clientComponentName, clientRequiredInterfaceName,
         ProcessName, serverComponentName, serverProvidedInterfaceName);
 
@@ -575,7 +568,7 @@ bool mtsManagerLocal::Connect(
     const std::string & serverComponentName,
     const std::string & serverProvidedInterfaceName)
 {
-    unsigned int connectionID = ManagerGlobal->Connect(ProcessName,
+    unsigned int connectionID = ManagerGlobal->Connect(
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
@@ -689,101 +682,7 @@ bool mtsManagerLocal::GetProvidedInterfaceDescription(
         return false;
     }
 
-    // Extract all the information of the command objects or events registered.
-    // Note that argument prototypes are returned serialized.
-    providedInterfaceDescription.ProvidedInterfaceName = providedInterface->GetName();
-
-    // Serializer initialization
-    std::stringstream streamBuffer;
-    cmnSerializer serializer(streamBuffer);
-
-    // Extract void commands
-    mtsDeviceInterface::CommandVoidMapType::MapType::const_iterator itVoid = 
-        providedInterface->CommandsVoid.begin();
-    mtsDeviceInterface::CommandVoidMapType::MapType::const_iterator itVoidEnd = 
-        providedInterface->CommandsVoid.end();
-    for (; itVoid != itVoidEnd; ++itVoid) {
-        CommandVoidElement element;
-        element.Name = itVoid->second->GetName();
-        providedInterfaceDescription.CommandsVoid.push_back(element);
-    }
-
-    // Extract write commands
-    mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itWrite = 
-        providedInterface->CommandsWrite.begin();
-    mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itWriteEnd = 
-        providedInterface->CommandsWrite.end();
-    for (; itWrite != itWriteEnd; ++itWrite) {
-        CommandWriteElement element;
-        element.Name = itWrite->second->GetName();
-        // argument serialization
-        streamBuffer.str("");
-        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
-        element.ArgumentPrototypeSerialized = streamBuffer.str();
-        providedInterfaceDescription.CommandsWrite.push_back(element);
-    }
-
-    // Extract read commands
-    mtsDeviceInterface::CommandReadMapType::MapType::const_iterator itRead = 
-        providedInterface->CommandsRead.begin();
-    mtsDeviceInterface::CommandReadMapType::MapType::const_iterator itReadEnd = 
-        providedInterface->CommandsRead.end();
-    for (; itRead != itReadEnd; ++itRead) {
-        CommandReadElement element;
-        element.Name = itRead->second->GetName();
-        // argument serialization
-        streamBuffer.str("");
-        serializer.Serialize(*(itRead->second->GetArgumentPrototype()));
-        element.ArgumentPrototypeSerialized = streamBuffer.str();
-        providedInterfaceDescription.CommandsRead.push_back(element);
-    }
-
-    // Extract qualified read commands
-    mtsDeviceInterface::CommandQualifiedReadMapType::MapType::const_iterator itQualifiedRead = 
-        providedInterface->CommandsQualifiedRead.begin();
-    mtsDeviceInterface::CommandQualifiedReadMapType::MapType::const_iterator itQualifiedReadEnd = 
-        providedInterface->CommandsQualifiedRead.end();
-    for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
-        CommandQualifiedReadElement element;
-        element.Name = itQualifiedRead->second->GetName();
-        // argument1 serialization
-        streamBuffer.str("");
-        serializer.Serialize(*(itQualifiedRead->second->GetArgument1Prototype()));
-        element.Argument1PrototypeSerialized = streamBuffer.str();
-        // argument2 serialization
-        streamBuffer.str("");
-        serializer.Serialize(*(itQualifiedRead->second->GetArgument2Prototype()));
-        element.Argument2PrototypeSerialized = streamBuffer.str();
-        providedInterfaceDescription.CommandsQualifiedRead.push_back(element);
-    }
-
-    // Extract void events
-    mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoid = 
-        providedInterface->EventVoidGenerators.begin();
-    mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoidEnd = 
-        providedInterface->EventVoidGenerators.end();
-    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
-        EventVoidElement element;
-        element.Name = itEventVoid->second->GetName();
-        providedInterfaceDescription.EventsVoid.push_back(element);
-    }
-
-    // Extract write events
-    mtsDeviceInterface::EventWriteMapType::MapType::const_iterator itEventWrite = 
-        providedInterface->EventWriteGenerators.begin();
-    mtsDeviceInterface::EventWriteMapType::MapType::const_iterator itEventWriteEnd = 
-        providedInterface->EventWriteGenerators.end();
-    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
-        EventWriteElement element;
-        element.Name = itEventWrite->second->GetName();
-        // argument serialization
-        streamBuffer.str("");
-        serializer.Serialize(*(itEventWrite->second->GetArgumentPrototype()));
-        element.ArgumentPrototypeSerialized = streamBuffer.str();
-        providedInterfaceDescription.EventsWrite.push_back(element);
-    }
-
-    return true;
+    return providedInterface->GetProvidedInterfaceDescription(providedInterfaceDescription);
 }
 
 bool mtsManagerLocal::GetRequiredInterfaceDescription(
@@ -806,462 +705,192 @@ bool mtsManagerLocal::GetRequiredInterfaceDescription(
         return false;
     }
 
-    // Serializer initialization
-    std::stringstream streamBuffer;
-    cmnSerializer serializer(streamBuffer);
+    return requiredInterface->GetRequiredInterfaceDescription(requiredInterfaceDescription);
+}
 
-    // Extract void functions
-    requiredInterfaceDescription.FunctionVoidNames = requiredInterface->GetNamesOfCommandPointersVoid();
-    // Extract write functions
-    requiredInterfaceDescription.FunctionWriteNames = requiredInterface->GetNamesOfCommandPointersWrite();
-    // Extract read functions
-    requiredInterfaceDescription.FunctionReadNames = requiredInterface->GetNamesOfCommandPointersRead();
-    // Extract qualified read functions
-    requiredInterfaceDescription.FunctionQualifiedReadNames = requiredInterface->GetNamesOfCommandPointersQualifiedRead();
+bool mtsManagerLocal::CreateProvidedInterfaceProxy(
+    const std::string & serverComponentProxyName,
+    ProvidedInterfaceDescription & providedInterfaceDescription)
+{
+    const std::string providedInterfaceName = providedInterfaceDescription.ProvidedInterfaceName;
+    
+    bool newProxyComponentCreated = false;    
+    mtsComponentProxy * serverComponentProxy;
+    mtsDevice * serverComponent = GetComponent(serverComponentProxyName);
 
-    // Extract void event handlers
-    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoid =
-        requiredInterface->EventHandlersVoid.begin();
-    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoidEnd =
-        requiredInterface->EventHandlersVoid.end();
-    for (; itVoid != itVoidEnd; ++itVoid) {
-        CommandVoidElement element;
-        element.Name = itVoid->second->GetName();
-        requiredInterfaceDescription.EventHandlersVoid.push_back(element);
+    // Get current component proxy. If none, create a new one.
+    if (!serverComponent) {
+        serverComponentProxy = new mtsComponentProxy(serverComponentProxyName);
+        newProxyComponentCreated = true;
+    } else {
+        serverComponentProxy = dynamic_cast<mtsComponentProxy*>(serverComponent);
+        if (!serverComponentProxy) {
+            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
+                << "invalid component: " << serverComponentProxyName << std::endl;
+            return false;
+        }
     }
 
-    // Extract write event handlers
-    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWrite =
-        requiredInterface->EventHandlersWrite.begin();
-    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWriteEnd =
-        requiredInterface->EventHandlersWrite.end();
-    for (; itWrite != itWriteEnd; ++itWrite) {
-        CommandWriteElement element;
-        element.Name = itWrite->second->GetName();
-        // argument serialization
-        streamBuffer.str("");
-        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
-        element.ArgumentPrototypeSerialized = streamBuffer.str();
-        requiredInterfaceDescription.EventHandlersWrite.push_back(element);
+    // Create provided interface proxy.
+    if (!serverComponentProxy->CreateProvidedInterfaceProxy(providedInterfaceDescription)) {
+        CMN_LOG_CLASS_RUN_VERBOSE << "CreateProvidedInterfaceProxy: "
+            << "failed to create Provided interface proxy: " << serverComponentProxyName << ":" 
+            << providedInterfaceName << std::endl;
+        return false;
     }
+
+    // If component proxy is newly created, it should be added.
+    if (newProxyComponentCreated) {
+        // Add server component proxy to this local component manager. Note that 
+        // AddComponent() iterates interfaces and sends a list of current interfaces 
+        // to the global component manager.
+        if (!AddComponent(serverComponentProxy)) {
+            if (!serverComponentProxy->RemoveProvidedInterfaceProxy(providedInterfaceName)) {
+                CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
+                    << "failed to remove component proxy: " << providedInterfaceName << std::endl;
+                return false;
+            }
+            if (newProxyComponentCreated) {
+                delete serverComponentProxy;
+            }
+
+            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
+                << "failed to add component proxy: " << serverComponentProxyName << std::endl;
+            return false;
+        }
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "CreateProvidedInterfaceProxy: "
+        << "successfully created Provided interface proxy: " << serverComponentProxyName << ":" 
+        << providedInterfaceName << std::endl;
+    return true;
+}
+
+bool mtsManagerLocal::CreateRequiredInterfaceProxy(
+    const std::string & clientComponentProxyName, RequiredInterfaceDescription & requiredInterfaceDescription)
+{
+    const std::string requiredInterfaceName = requiredInterfaceDescription.RequiredInterfaceName;
+    
+    bool newProxyComponentCreated = false;    
+    mtsComponentProxy * clientComponentProxy;
+    mtsDevice * clientComponent = GetComponent(clientComponentProxyName);
+
+    // Get current component proxy. If none, create a new one.
+    if (!clientComponent) {
+        clientComponentProxy = new mtsComponentProxy(clientComponentProxyName);
+        newProxyComponentCreated = true;
+    } else {
+        clientComponentProxy = dynamic_cast<mtsComponentProxy*>(clientComponent);
+        if (!clientComponentProxy) {
+            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
+                << "invalid component: " << clientComponentProxyName << std::endl;
+            return false;
+        }
+    }
+
+    // Create required interface proxy.
+    if (!clientComponentProxy->CreateRequiredInterfaceProxy(requiredInterfaceDescription)) {
+        CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: "
+            << "failed to create required interface proxy: " << clientComponentProxyName << ":" 
+            << requiredInterfaceName << std::endl;
+        return false;
+    }
+
+    // If component proxy is newly created, it should be added.
+    if (newProxyComponentCreated) {
+        // Add client component proxy to this local component manager. Note that 
+        // AddComponent() iterates interfaces and sends a list of current interfaces 
+        // to the global component manager.
+        if (!AddComponent(clientComponentProxy)) {
+            if (!clientComponentProxy->RemoveRequiredInterfaceProxy(requiredInterfaceName)) {
+                CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
+                    << "failed to remove component proxy: " << requiredInterfaceName << std::endl;
+                return false;
+            }
+            if (newProxyComponentCreated) {
+                delete clientComponentProxy;
+            }
+
+            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
+                << "failed to add component proxy: " << clientComponentProxyName << std::endl;
+            return false;
+        }
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: "
+        << "successfully created required interface proxy: " << clientComponentProxyName << ":" 
+        << requiredInterfaceName << std::endl;
+    return true;
+}
+
+bool mtsManagerLocal::RemoveProvidedInterfaceProxy(
+    const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName)
+{
+    mtsDevice * clientComponent = GetComponent(clientComponentProxyName);
+    if (!clientComponent) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: can't find client component: " << clientComponentProxyName << std::endl;
+        return false;
+    }
+
+    mtsComponentProxy * clientComponentProxy = dynamic_cast<mtsComponentProxy*>(clientComponent);
+    if (!clientComponentProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: client component is not a proxy: " << clientComponentProxyName << std::endl;
+        return false;
+    }
+
+    // Remove provided interface from component proxy.
+    if (!clientComponentProxy->RemoveProvidedInterfaceProxy(providedInterfaceProxyName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: failed to remove provided interface proxy: " << providedInterfaceProxyName << std::endl;
+        return false;
+    }
+
+    // Remove component proxy if it has no interface.
+    if (clientComponentProxy->GetInterfaceCount() == 0) {
+        if (!RemoveComponent(clientComponentProxy)) {
+            CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: failed to remove component proxy: " << clientComponentProxyName << std::endl;
+            return false;
+        }
+        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: cleaned up component proxy: " << clientComponentProxyName << std::endl;
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: removed provided interface: " 
+        << clientComponentProxyName << ":" << providedInterfaceProxyName << std::endl;
 
     return true;
 }
 
-bool mtsManagerLocal::CreateProvidedInterfaceProxy(
-    const std::string & componentName,
-    ProvidedInterfaceDescription & providedInterfaceDescription) const
+bool mtsManagerLocal::RemoveRequiredInterfaceProxy(
+    const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName)
 {
-    // Get the component instance specified
-    mtsDevice * component = GetComponent(componentName);
-    if (!component) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: no component \""
-            << componentName << "\" found in local component manager \"" << ProcessName << "\"" << std::endl;
+    mtsDevice * serverComponent = GetComponent(serverComponentProxyName);
+    if (!serverComponent) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: can't find server component: " << serverComponentProxyName << std::endl;
         return false;
     }
 
-    // Check if the name of the provided interface proxy is unique
-    mtsProvidedInterface * providedInterface = 
-        component->GetProvidedInterface(providedInterfaceDescription.ProvidedInterfaceName);
-    if (providedInterface) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: can't create provided interface proxy: "
-            << "duplicate name: " << providedInterfaceDescription.ProvidedInterfaceName << std::endl;
+    mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy*>(serverComponent);
+    if (!serverComponentProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: server component is not a proxy: " << serverComponentProxyName << std::endl;
         return false;
     }
 
-    //
-    // TODO: If an original component is mtsTask, should a component proxy be always of mtsTask type? 
-    //       Currently, it is of mtsDevice type because we assumed that there is only one 
-    //
-    // Create a local provided interface (a provided interface proxy)
-    mtsProvidedInterface * providedInterfaceProxy = NULL;
-    //    AddProvidedInterface(providedInterfaceInfo.InterfaceName);
-    //if (!providedInterfaceProxy) {
-    //    CMN_LOG_RUN_ERROR << "CreateProvidedInterfaceProxy: AddProvidedInterface failed." << std::endl;
-    //    return NULL;
-    //}
-
-    // Create command proxies using the given description on the original
-    // provided interface.
-    // CommandId is initially set to zero and will be updated later by 
-    // GetCommandId() for thread-safety.
-
-    //
-    //  TODO: GetCommandId() should be updated (or renamed)
-    //
-
-    // Note that argument prototypes passed in the description have been
-    // serialized so it should be deserialized to recover and use orignial 
-    // argument prototypes.
-    std::string commandName;
-    mtsGenericObject * argumentPrototype = NULL,
-                     * argument1Prototype = NULL, 
-                     * argument2Prototype = NULL;
-
-    std::stringstream streamBuffer;
-    cmnDeSerializer deserializer(streamBuffer);
-
-    // Create void command proxies
-    mtsCommandVoidProxy * newCommandVoid = NULL;
-    CommandVoidVector::const_iterator itVoid = providedInterfaceDescription.CommandsVoid.begin();
-    const CommandVoidVector::const_iterator itVoidEnd = providedInterfaceDescription.CommandsVoid.end();
-    for (; itVoid != itVoidEnd; ++itVoid) {
-        commandName = itVoid->Name;
-        newCommandVoid = new mtsCommandVoidProxy(0, (mtsDeviceInterfaceProxyClient*) NULL /* TODO: UPDATE THIS PROXY POINTER!!! */, commandName);
-        if (!providedInterfaceProxy->GetCommandVoidMap().AddItem(commandName, newCommandVoid)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add void command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-    }
-
-    // Create write command proxies
-    mtsCommandWriteProxy * newCommandWrite = NULL;
-    CommandWriteVector::const_iterator itWrite = providedInterfaceDescription.CommandsWrite.begin();
-    const CommandWriteVector::const_iterator itWriteEnd = providedInterfaceDescription.CommandsWrite.end();
-    for (; itWrite != itWriteEnd; ++itWrite) {
-        commandName = itWrite->Name;
-        newCommandWrite = new mtsCommandWriteProxy(0, (mtsDeviceInterfaceProxyClient*) NULL /* TODO: UPDATE THIS PROXY POINTER!!! */, commandName);
-        if (!providedInterfaceProxy->GetCommandWriteMap().AddItem(commandName, newCommandWrite)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add write command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-
-        // argument deserialization
-        streamBuffer.str("");
-        streamBuffer << itWrite->ArgumentPrototypeSerialized;
-        argumentPrototype = dynamic_cast<mtsGenericObject *>(deserializer.DeSerialize());
-        if (!argumentPrototype) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to create write command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-        newCommandWrite->SetArgumentPrototype(argumentPrototype);
-    }
-
-    // Create read command proxies
-    mtsCommandReadProxy * newCommandRead = NULL;
-    CommandReadVector::const_iterator itRead = providedInterfaceDescription.CommandsRead.begin();
-    const CommandReadVector::const_iterator itReadEnd = providedInterfaceDescription.CommandsRead.end();
-    for (; itRead != itReadEnd; ++itRead) {
-        commandName = itRead->Name;
-        newCommandRead = new mtsCommandReadProxy(0, (mtsDeviceInterfaceProxyClient*) NULL, commandName);
-        if (!providedInterfaceProxy->GetCommandReadMap().AddItem(commandName, newCommandRead)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add read command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-
-        // argument deserialization
-        streamBuffer.str("");
-        streamBuffer << itRead->ArgumentPrototypeSerialized;
-        argumentPrototype = dynamic_cast<mtsGenericObject *>(deserializer.DeSerialize());
-        if (!argumentPrototype) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to create read command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-        newCommandRead->SetArgumentPrototype(argumentPrototype);
-    }
-
-    // Create qualified read command proxies
-    mtsCommandQualifiedReadProxy * newCommandQualifiedRead = NULL;
-    CommandQualifiedReadVector::const_iterator itQualifiedRead = providedInterfaceDescription.CommandsQualifiedRead.begin();
-    const CommandQualifiedReadVector::const_iterator itQualifiedReadEnd = providedInterfaceDescription.CommandsQualifiedRead.end();
-    for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
-        commandName = itQualifiedRead->Name;
-        newCommandQualifiedRead = new mtsCommandQualifiedReadProxy(0, (mtsDeviceInterfaceProxyClient*) NULL, commandName);
-        if (!providedInterfaceProxy->GetCommandQualifiedReadMap().AddItem(commandName, newCommandQualifiedRead)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add qualified read command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-
-        // argument1 deserialization
-        streamBuffer.str("");
-        streamBuffer << itQualifiedRead->Argument1PrototypeSerialized;
-        argument1Prototype = dynamic_cast<mtsGenericObject *>(deserializer.DeSerialize());        
-        // argument2 deserialization
-        streamBuffer.str("");
-        streamBuffer << itQualifiedRead->Argument2PrototypeSerialized;
-        argument2Prototype = dynamic_cast<mtsGenericObject *>(deserializer.DeSerialize());        
-        if (!argument1Prototype || !argument2Prototype) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to create qualified read command proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-        newCommandQualifiedRead->SetArgumentPrototype(argument1Prototype, argument2Prototype);
-    }
-
-    // Create event generator proxies
-    std::string eventName;
-
-    // Create void event generator proxies
-    mtsFunctionVoid * eventVoidGeneratorProxy = NULL;
-    EventVoidVector::const_iterator itEventVoid = providedInterfaceDescription.EventsVoid.begin();
-    const EventVoidVector::const_iterator itEventVoidEnd = providedInterfaceDescription.EventsVoid.end();
-    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
-        eventName = itEventVoid->Name;
-        eventVoidGeneratorProxy = new mtsFunctionVoid();
-        //if (!EventVoidGeneratorProxyMap.AddItem(eventName, eventVoidGeneratorProxy)) {
-        //    CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add void event proxy: " << eventName << std::endl;
-        //    //
-        //    // TODO: providedInterfaceProxy should be removed from 'component' because 
-        //    // the integrity of the provided interface proxy is corrupted.
-        //    //
-        //    return false;
-        //}
-        
-        if (!eventVoidGeneratorProxy->Bind(providedInterfaceProxy->AddEventVoid(eventName))) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to bind with void event proxy: " << eventName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-    }
-
-    // Create write event generator proxies
-    mtsFunctionWrite * eventWriteGeneratorProxy = NULL;
-    mtsMulticastCommandWriteProxy * eventMulticastCommandProxy = NULL;
-
-    EventWriteVector::const_iterator itEventWrite = providedInterfaceDescription.EventsWrite.begin();
-    const EventWriteVector::const_iterator itEventWriteEnd = providedInterfaceDescription.EventsWrite.end();
-    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
-        eventName = itEventWrite->Name;
-        eventWriteGeneratorProxy = new mtsFunctionWrite();
-        //if (!EventWriteGeneratorProxyMap.AddItem(eventName, eventWriteGeneratorProxy)) {
-        //    CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add write event generator proxy: " << eventName << std::endl;
-        //    //
-        //    // TODO: providedInterfaceProxy should be removed from 'component' because 
-        //    // the integrity of the provided interface proxy is corrupted.
-        //    //
-        //    return false;
-        //}
-        //
-        eventMulticastCommandProxy = new mtsMulticastCommandWriteProxy(eventName);
-
-        // event argument deserialization
-        streamBuffer.str("");
-        streamBuffer << itEventWrite->ArgumentPrototypeSerialized;
-        argumentPrototype = dynamic_cast<mtsGenericObject *>(deserializer.DeSerialize());
-        if (!argumentPrototype) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to create write event proxy: " << commandName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-        eventMulticastCommandProxy->SetArgumentPrototype(argumentPrototype);
-
-        if (!providedInterfaceProxy->AddEvent(eventName, eventMulticastCommandProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add write event proxy: " << eventName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-        if (!eventWriteGeneratorProxy->Bind(eventMulticastCommandProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to bind with write event proxy: " << eventName << std::endl;
-            //
-            // TODO: providedInterfaceProxy should be removed from 'component' because 
-            // the integrity of the provided interface proxy is corrupted.
-            //
-            return false;
-        }
-    }
-
-    return false;
-}
-
-bool mtsManagerLocal::CreateRequiredInterfaceProxy(
-    const std::string & componentName,
-    RequiredInterfaceDescription & requiredInterfaceDescription) const
-{
-    // Get the component instance specified
-    mtsDevice * component = GetComponent(componentName);
-    if (!component) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: no component \""
-            << componentName << "\" found in local component manager \"" << ProcessName << "\"" << std::endl;
+    // Remove required interface from component proxy.
+    if (!serverComponentProxy->RemoveRequiredInterfaceProxy(requiredInterfaceProxyName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: failed to remove required interface proxy: " << requiredInterfaceProxyName << std::endl;
         return false;
     }
 
-    // Check if the name of the required interface proxy is unique
-    mtsRequiredInterface * requiredInterface = 
-        component->GetRequiredInterface(requiredInterfaceDescription.RequiredInterfaceName);
-    if (requiredInterface) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: can't create required interface proxy: "
-            << "duplicate name: " << requiredInterfaceDescription.RequiredInterfaceName << std::endl;
-        return false;
-    }
-
-    // Create a local required interface (a required interface proxy)
-    mtsRequiredInterface * requiredInterfaceProxy = NULL;
-    //AddRequiredInterface(requiredInterfaceName);
-    //if (!requiredInterfaceProxy) {
-    //    CMN_LOG_RUN_ERROR << "CreateRequiredInterfaceProxy: Cannot add required interface: "
-    //        << requiredInterfaceName << std::endl;
-    //    return NULL;
-    //}
-
-    //
-    // TODO: Update the following line
-    //
-    mtsProvidedInterface * providedInterface = NULL;
-
-    // Populate the new required interface
-    mtsFunctionVoid  * functionVoidProxy = NULL;
-    mtsFunctionWrite * functionWriteProxy = NULL;
-    mtsFunctionRead  * functionReadProxy = NULL;
-    mtsFunctionQualifiedRead * functionQualifiedReadProxy = NULL;
-
-    // Create void function proxies
-    const std::vector<std::string> namesOfFunctionVoid = requiredInterfaceDescription.FunctionVoidNames;
-    for (unsigned int i = 0; i < namesOfFunctionVoid.size(); ++i) {
-        functionVoidProxy = new mtsFunctionVoid(providedInterface, namesOfFunctionVoid[i]);
-        //
-        // TODO: How to/where to define FunctionVoidProxyMap to store function pointers waiting for
-        // being updated by the server task??
-        //
-        //CMN_ASSERT(FunctionVoidProxyMap.AddItem(namesOfFunctionVoid[i], functionVoidProxy)); 
-        if (!requiredInterfaceProxy->AddFunction(namesOfFunctionVoid[i], *functionVoidProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add void function proxy: " << namesOfFunctionVoid[i] << std::endl;
+    // Remove component proxy if it has no interface.
+    if (serverComponentProxy->GetInterfaceCount() == 0) {
+        if (!RemoveComponent(serverComponentProxy)) {
+            CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: failed to remove component proxy: " << serverComponentProxyName << std::endl;
             return false;
         }
+        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveRequiredInterfaceProxy: cleaned up component proxy: " << serverComponentProxyName << std::endl;
     }
 
-    // Create write function proxies
-    const std::vector<std::string> namesOfFunctionWrite = requiredInterfaceDescription.FunctionWriteNames;
-    for (unsigned int i = 0; i < namesOfFunctionWrite.size(); ++i) {
-        functionWriteProxy = new mtsFunctionWrite(providedInterface, namesOfFunctionWrite[i]);
-        //
-        // TODO: How to/where to define FunctionWriteProxyMap to store function pointers waiting for
-        // being updated by the server task??
-        //
-        //CMN_ASSERT(FunctionWriteProxyMap.AddItem(namesOfFunctionWrite[i], functionWriteProxy)); 
-        if (!requiredInterfaceProxy->AddFunction(namesOfFunctionWrite[i], *functionWriteProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add write function proxy: " << namesOfFunctionWrite[i] << std::endl;
-            return false;
-        }
-    }
-
-    // Create read function proxies
-    const std::vector<std::string> namesOfFunctionRead = requiredInterfaceDescription.FunctionReadNames;
-    for (unsigned int i = 0; i < namesOfFunctionRead.size(); ++i) {
-        functionReadProxy = new mtsFunctionRead(providedInterface, namesOfFunctionRead[i]);
-        //
-        // TODO: How to/where to define FunctionReadProxyMap to store function pointers waiting for
-        // being updated by the server task??
-        //
-        //CMN_ASSERT(FunctionReadProxyMap.AddItem(namesOfFunctionRead[i], functionReadProxy)); 
-        if (!requiredInterfaceProxy->AddFunction(namesOfFunctionRead[i], *functionReadProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add read function proxy: " << namesOfFunctionRead[i] << std::endl;
-            return false;
-        }
-    }
-
-    // Create QualifiedRead function proxies
-    const std::vector<std::string> namesOfFunctionQualifiedRead = requiredInterfaceDescription.FunctionQualifiedReadNames;
-    for (unsigned int i = 0; i < namesOfFunctionQualifiedRead.size(); ++i) {
-        functionQualifiedReadProxy = new mtsFunctionQualifiedRead(providedInterface, namesOfFunctionQualifiedRead[i]);
-        //
-        // TODO: How to/where to define FunctionQualifiedReadProxyMap to store function pointers waiting for
-        // being updated by the server task??
-        //
-        //CMN_ASSERT(FunctionQualifiedReadProxyMap.AddItem(namesOfFunctionQualifiedRead[i], functionQualifiedReadProxy)); 
-        if (!requiredInterfaceProxy->AddFunction(namesOfFunctionQualifiedRead[i], *functionQualifiedReadProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add qualified read function proxy: " << namesOfFunctionQualifiedRead[i] << std::endl;
-            return false;
-        }
-    }
-
-    // Create event handler proxies
-    std::string eventName;
-
-    // Create event handler proxies with CommandId set to zero which will be 
-    // updated later by UpdateEventHandlerId().
-    //
-    // TODO: CHECK THE FOLLOWING
-    //
-    // Note that all events created are disabled by default. Commands that are
-    // actually bounded and used at the client will only be enabled by the
-    // execution of UpdateEventHandlerId() method.
-
-    // Create void event handler proxy
-    mtsCommandVoidProxy * actualEventVoidCommandProxy = NULL;
-    std::vector<std::string> namesOfEventsVoid = providedInterface->GetNamesOfEventsVoid();
-    for (unsigned int i = 0; i < namesOfEventsVoid.size(); ++i) {
-        eventName = namesOfEventsVoid[i];
-        actualEventVoidCommandProxy = new mtsCommandVoidProxy(0, /* TODO: UPDATE */ (mtsDeviceInterfaceProxyServer*) NULL, eventName);
-        actualEventVoidCommandProxy->Disable();
-
-        if (!requiredInterfaceProxy->EventHandlersVoid.AddItem(eventName, actualEventVoidCommandProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add void event handler proxy: " << eventName << std::endl;
-            return false;
-        }
-        //
-        // TODO: How to handle/Where to define EventHandlerVoidProxyMap???
-        //
-        //CMN_ASSERT(EventHandlerVoidProxyMap.AddItem(eventName, actualEventVoidCommandProxy));
-    }
-
-    // Create write event handler proxy
-    mtsCommandWriteProxy * actualEventWriteCommandProxy = NULL;    
-    std::vector<std::string> namesOfEventsWrite = providedInterface->GetNamesOfEventsWrite();
-    for (unsigned int i = 0; i < namesOfEventsWrite.size(); ++i) {
-        eventName = namesOfEventsWrite[i];
-        actualEventWriteCommandProxy = new mtsCommandWriteProxy(0, /* TODO: UPDATE */ (mtsDeviceInterfaceProxyServer*) NULL, eventName);
-        actualEventWriteCommandProxy->Disable();
-
-        if (!requiredInterfaceProxy->EventHandlersWrite.AddItem(eventName, actualEventWriteCommandProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add write event handler proxy: " << eventName << std::endl;
-            return false;
-        }
-
-        //
-        // TODO: How to handle/Where to define EventHandlerVoidProxyMap???
-        //
-        //CMN_ASSERT(EventHandlerWriteProxyMap.AddItem(eventName, actualEventWriteCommandProxy));
-    }
-
-    // Using AllocateResources(), get pointers which have been allocated for this 
-    // required interface and are thread-safe to use.
-    unsigned int userId;
-    std::string userName = requiredInterfaceProxy->GetName() + "Proxy";
-    userId = providedInterface->AllocateResources(userName);
-
-    // Connect to the original device or task that provides allocated resources.
-    requiredInterfaceProxy->ConnectTo(providedInterface);
-    if (!requiredInterfaceProxy->BindCommandsAndEvents(userId)) {
-        CMN_LOG_RUN_ERROR << "CreateRequiredInterfaceProxy: BindCommandsAndEvents failed: userName="
-            << userName << ", userId=" << userId << std::endl;
-        return false;
-    }
+    CMN_LOG_CLASS_RUN_VERBOSE << "RemoveRequiredInterfaceProxy: removed required interface: " 
+        << serverComponentProxyName << ":" << requiredInterfaceProxyName << std::endl;
 
     return true;
 }

@@ -19,6 +19,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstCommon/cmnSerializer.h>
 
 CMN_IMPLEMENT_SERVICES(mtsRequiredInterface)
 
@@ -246,3 +247,44 @@ void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
     EventHandlersWrite.ToStream(outputStream);
 }
 
+bool mtsRequiredInterface::GetRequiredInterfaceDescription(RequiredInterfaceDescription & requiredInterfaceDescription) const
+{
+    requiredInterfaceDescription.RequiredInterfaceName = GetName();
+
+    // Serializer initialization
+    std::stringstream streamBuffer;
+    cmnSerializer serializer(streamBuffer);
+
+    // Extract void functions
+    requiredInterfaceDescription.FunctionVoidNames = GetNamesOfCommandPointersVoid();
+    // Extract write functions
+    requiredInterfaceDescription.FunctionWriteNames = GetNamesOfCommandPointersWrite();
+    // Extract read functions
+    requiredInterfaceDescription.FunctionReadNames = GetNamesOfCommandPointersRead();
+    // Extract qualified read functions
+    requiredInterfaceDescription.FunctionQualifiedReadNames = GetNamesOfCommandPointersQualifiedRead();
+
+    // Extract void event handlers
+    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoid = EventHandlersVoid.begin();
+    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoidEnd = EventHandlersVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        CommandVoidElement element;
+        element.Name = itVoid->second->GetName();
+        requiredInterfaceDescription.EventHandlersVoid.push_back(element);
+    }
+
+    // Extract write event handlers
+    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWrite = EventHandlersWrite.begin();
+    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWriteEnd = EventHandlersWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        CommandWriteElement element;
+        element.Name = itWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
+        element.ArgumentPrototypeSerialized = streamBuffer.str();
+        requiredInterfaceDescription.EventHandlersWrite.push_back(element);
+    }
+
+    return true;
+}

@@ -22,12 +22,14 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-class mtsManagerLocalInterface;
+#include <cisstMultiTask/mtsManagerLocal.h>
+//class mtsManagerLocalInterface;
 
 class mtsManagerGlobalTest: public CppUnit::TestFixture
 {
 private:
-    mtsManagerLocalInterface *localManager1, *localManager2;
+    //mtsManagerLocalInterface *localManager1, *localManager2;
+    mtsManagerLocal *localManager1, *localManager2;
 
     CPPUNIT_TEST_SUITE(mtsManagerGlobalTest);
     {

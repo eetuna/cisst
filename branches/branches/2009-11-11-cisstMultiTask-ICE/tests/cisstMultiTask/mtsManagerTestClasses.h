@@ -249,6 +249,12 @@ public:
         // Define provided interface: p2
         provided = AddProvidedInterface("p2");
         if (provided) {
+            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &P2, "Void");
+            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &P2, "Write");
+            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &P2, "Read");            
+            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &P2, "QualifiedRead");
+            provided->AddEventVoid(P2.EventVoid, "EventVoid");
+            provided->AddEventWrite(P2.EventWrite, "EventWrite", mtsInt(-1));
         }
 
         // Define required interface: r1
