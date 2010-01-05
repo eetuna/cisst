@@ -60,9 +60,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$1_ltype>($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$1_ltype::DIMENSION>($input)
+           )
         ) {
           return NULL;
     }
@@ -159,12 +160,12 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$*1_ltype>($input)
-          && vctThrowUnlessIsWritable($input)
-          && vctThrowUnlessOwnsData($input)
-          && vctThrowUnlessNotReferenced($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsWritable($input)
+           && vctThrowUnlessOwnsData($input)
+           && vctThrowUnlessNotReferenced($input))
         ) {
           return NULL;
     }
@@ -321,9 +322,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$*1_ltype>($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           )
         ) {
           return NULL;
     }
@@ -418,10 +420,11 @@ http://www.cisst.org/cisst/license.txt.
      IS WRITABLE
     *************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$1_ltype>($input)
-          && vctThrowUnlessIsWritable($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsWritable($input)
+           )
         ) {
           return NULL;
     }
@@ -511,9 +514,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$*1_ltype>($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           )
         ) {
           return NULL;
     }
@@ -583,9 +587,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS N-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$1_ltype>($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$1_ltype::DIMENSION>($input)
+           )
         ) {
           return NULL;
     }
@@ -679,9 +684,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
-    if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-          && vctThrowUnlessDimensionN<$*1_ltype>($input))
+    if (!( vctThrowUnlessIsPyArray($input)
+           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           )
         ) {
           return NULL;
     }
