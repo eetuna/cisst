@@ -283,7 +283,7 @@ public:
     // documented in base class
     template <class __matrixOwnerType, typename __elementType>
     inline ThisType & ForceAssign(const vctDynamicConstMatrixBase<__matrixOwnerType, __elementType> & other) {
-        this->SetSize(other.sizes());
+        this->SetSize(other.sizes(), other.StorageOrder());
         this->Assign(other);
         return *this;
     }
@@ -295,7 +295,7 @@ public:
     inline ThisType & ForceAssign(const vctFixedSizeConstMatrixBase<__rows, __cols,
                                                                     __rowStride, __colStride,
                                                                     __elementType, __dataPtrType>  & other) {
-        this->SetSize(other.sizes());
+        this->SetSize(other.sizes(), other.StorageOrder());
         this->Assign(other);
         return *this;
     }
