@@ -33,7 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #define MINRANK 2
 
-template <unsigned int _rows, unsigned int _cols, bool _storageOrder, unsigned int _minmn>
+template <vct::size_type _rows, vct::size_type _cols, bool _storageOrder, vct::size_type _minmn>
 void nmrPInverseTest::GenericTestFixedSize(void)
 {
     vctFixedSizeMatrix<double, _rows, _cols, _storageOrder> indepVectors;
@@ -57,7 +57,7 @@ void nmrPInverseTest::GenericTestFixedSize(void)
     vctRandom(indepVectors, 0.0, 10.0);
     nmrSVD(indepVectors, U, S, Vt);
     SM.SetAll(0.);
-    for (unsigned int rank = _minmn; rank >= MINRANK; rank--) {
+    for (vct::size_type rank = _minmn; rank >= MINRANK; rank--) {
         if (rank < S.size()) S(rank) = 1e-18; // some number less than eps
         SM.Diagonal().Assign(S);
         P.ProductOf(SM, Vt);
@@ -86,35 +86,35 @@ see: strang, g., linear algebra and its application, second ed. pp145
         error[3] = E3.LinfNorm();
 
         bool ret_value = true;
-        for (unsigned int ii = 0; ii < 4; ii++) {
+        for (vct::size_type ii = 0; ii < 4; ii++) {
             if (!(error[ii] < tolerance)) {
-                CMN_LOG(1) << cmnPrintf("\nF :\n %.14lf \n") << ii;
-                CMN_LOG(1) << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
+                CMN_LOG_INIT_ERROR << cmnPrintf("\nF :\n %.14lf \n") << ii;
+                CMN_LOG_INIT_ERROR << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
                 switch (ii) {
                     case 0:
-                        CMN_LOG(1) << cmnPrintf("EM0:\n %.14lf \n") << E0;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM0:\n %.14lf \n") << E0;
                         break;
                     case 1:
-                        CMN_LOG(1) << cmnPrintf("EM1:\n %.14lf \n") << E1;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM1:\n %.14lf \n") << E1;
                         break;
                     case 2:
-                        CMN_LOG(1) << cmnPrintf("EM2:\n %.14lf \n") << E2;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM2:\n %.14lf \n") << E2;
                         break;
                     case 3:
-                        CMN_LOG(1) << cmnPrintf("EM3:\n %.14lf \n") << E3;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM3:\n %.14lf \n") << E3;
                         break;
                 }
                 ret_value &= false;
             }
         }
         if (!ret_value) {
-            CMN_LOG(1) << cmnPrintf("I :\n %.14lf \n") << inputOrig;
-            CMN_LOG(1) << cmnPrintf("U :\n %.14lf \n") << U;
-            CMN_LOG(1) << cmnPrintf("S :\n %.14lf \n") << S;
-            CMN_LOG(1) << cmnPrintf("Vt:\n %.14lf \n") << Vt;
-            CMN_LOG(1) << cmnPrintf("SM:\n %.14lf \n") << SM;
-            CMN_LOG(1) << cmnPrintf("P :\n %.14lf \n") << P;
-            CMN_LOG(1) << cmnPrintf("O :\n %.14lf \n") << pinverse;
+            CMN_LOG_INIT_ERROR << cmnPrintf("I :\n %.14lf \n") << inputOrig;
+            CMN_LOG_INIT_ERROR << cmnPrintf("U :\n %.14lf \n") << U;
+            CMN_LOG_INIT_ERROR << cmnPrintf("S :\n %.14lf \n") << S;
+            CMN_LOG_INIT_ERROR << cmnPrintf("Vt:\n %.14lf \n") << Vt;
+            CMN_LOG_INIT_ERROR << cmnPrintf("SM:\n %.14lf \n") << SM;
+            CMN_LOG_INIT_ERROR << cmnPrintf("P :\n %.14lf \n") << P;
+            CMN_LOG_INIT_ERROR << cmnPrintf("O :\n %.14lf \n") << pinverse;
         }
         CPPUNIT_ASSERT(error[0] < tolerance);
         CPPUNIT_ASSERT(error[1] < tolerance);
@@ -123,7 +123,7 @@ see: strang, g., linear algebra and its application, second ed. pp145
     }
 }
 
-template <unsigned int _rows, unsigned int _cols, bool _storageOrder, unsigned int _minmn>
+template <vct::size_type _rows, vct::size_type _cols, bool _storageOrder, vct::size_type _minmn>
 void nmrPInverseTest::GenericTestFixedSizeUsingDataObject(void)
 {
     vctFixedSizeMatrix<double, _rows, _cols, _storageOrder> indepVectors;
@@ -147,7 +147,7 @@ void nmrPInverseTest::GenericTestFixedSizeUsingDataObject(void)
     vctRandom(indepVectors, 0.0, 10.0);
     nmrSVD(indepVectors, U, S, Vt);
     SM.SetAll(0.);
-    for (unsigned int rank = _minmn; rank >= MINRANK; rank--) {
+    for (vct::size_type rank = _minmn; rank >= MINRANK; rank--) {
         if (rank < S.size()) S(rank) = 1e-18; // some number less than eps
         SM.Diagonal().Assign(S);
         P.ProductOf(SM, Vt);
@@ -176,35 +176,35 @@ see: strang, g., linear algebra and its application, second ed. pp145
         error[3] = E3.LinfNorm();
 
         bool ret_value = true;
-        for (unsigned int ii = 0; ii < 4; ii++) {
+        for (vct::size_type ii = 0; ii < 4; ii++) {
             if (!(error[ii] < tolerance)) {
-                CMN_LOG(1) << cmnPrintf("\nF :\n %.14lf \n") << ii;
-                CMN_LOG(1) << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
+                CMN_LOG_INIT_ERROR << cmnPrintf("\nF :\n %.14lf \n") << ii;
+                CMN_LOG_INIT_ERROR << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
                 switch (ii) {
                     case 0:
-                        CMN_LOG(1) << cmnPrintf("EM0:\n %.14lf \n") << E0;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM0:\n %.14lf \n") << E0;
                         break;
                     case 1:
-                        CMN_LOG(1) << cmnPrintf("EM1:\n %.14lf \n") << E1;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM1:\n %.14lf \n") << E1;
                         break;
                     case 2:
-                        CMN_LOG(1) << cmnPrintf("EM2:\n %.14lf \n") << E2;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM2:\n %.14lf \n") << E2;
                         break;
                     case 3:
-                        CMN_LOG(1) << cmnPrintf("EM3:\n %.14lf \n") << E3;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM3:\n %.14lf \n") << E3;
                         break;
                 }
                 ret_value &= false;
             }
         }
         if (!ret_value) {
-            CMN_LOG(1) << cmnPrintf("I :\n %.14lf \n") << inputOrig;
-            CMN_LOG(1) << cmnPrintf("U :\n %.14lf \n") << U;
-            CMN_LOG(1) << cmnPrintf("S :\n %.14lf \n") << S;
-            CMN_LOG(1) << cmnPrintf("Vt:\n %.14lf \n") << Vt;
-            CMN_LOG(1) << cmnPrintf("SM:\n %.14lf \n") << SM;
-            CMN_LOG(1) << cmnPrintf("P :\n %.14lf \n") << P;
-            CMN_LOG(1) << cmnPrintf("O :\n %.14lf \n") << data.PInverse();
+            CMN_LOG_INIT_ERROR << cmnPrintf("I :\n %.14lf \n") << inputOrig;
+            CMN_LOG_INIT_ERROR << cmnPrintf("U :\n %.14lf \n") << U;
+            CMN_LOG_INIT_ERROR << cmnPrintf("S :\n %.14lf \n") << S;
+            CMN_LOG_INIT_ERROR << cmnPrintf("Vt:\n %.14lf \n") << Vt;
+            CMN_LOG_INIT_ERROR << cmnPrintf("SM:\n %.14lf \n") << SM;
+            CMN_LOG_INIT_ERROR << cmnPrintf("P :\n %.14lf \n") << P;
+            CMN_LOG_INIT_ERROR << cmnPrintf("O :\n %.14lf \n") << data.PInverse();
         }
         CPPUNIT_ASSERT(error[0] < tolerance);
         CPPUNIT_ASSERT(error[1] < tolerance);
@@ -213,9 +213,9 @@ see: strang, g., linear algebra and its application, second ed. pp145
     }
 }
 
-void nmrPInverseTest::GenericTestDynamicUsingDataObject(unsigned int rows, unsigned int cols, bool storageOrder)
+void nmrPInverseTest::GenericTestDynamicUsingDataObject(vct::size_type rows, vct::size_type cols, bool storageOrder)
 {
-    const unsigned int minmn = (rows < cols) ? rows : cols;
+    const vct::size_type minmn = (rows < cols) ? rows : cols;
     vctDynamicMatrix<double> indepVectors(rows, cols, storageOrder);
     vctDynamicMatrix<double> input       (rows, cols, storageOrder);
     vctDynamicMatrix<double> inputOrig   (rows, cols, storageOrder);
@@ -238,7 +238,7 @@ void nmrPInverseTest::GenericTestDynamicUsingDataObject(unsigned int rows, unsig
     vctRandom(indepVectors, 0.0, 10.0);
     nmrSVD(indepVectors, U, S, Vt);
     SM.SetAll(0.);
-    for (unsigned int rank = minmn; rank >= MINRANK; rank--) {
+    for (vct::size_type rank = minmn; rank >= MINRANK; rank--) {
         if (rank < S.size()) S(rank) = 1e-18; // some number less than eps
         SM.Diagonal().Assign(S);
         P.ProductOf(SM, Vt);
@@ -267,35 +267,35 @@ see: strang, g., linear algebra and its application, second ed. pp145
         error[3] = E3.LinfNorm();
 
         bool ret_value = true;
-        for (unsigned int ii = 0; ii < 4; ii++) {
+        for (vct::size_type ii = 0; ii < 4; ii++) {
             if (!(error[ii] < tolerance)) {
-                CMN_LOG(1) << cmnPrintf("\nF :\n %.14lf \n") << ii;
-                CMN_LOG(1) << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
+                CMN_LOG_INIT_ERROR << cmnPrintf("\nF :\n %.14lf \n") << ii;
+                CMN_LOG_INIT_ERROR << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
                 switch (ii) {
                     case 0:
-                        CMN_LOG(1) << cmnPrintf("EM0:\n %.14lf \n") << E0;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM0:\n %.14lf \n") << E0;
                         break;
                     case 1:
-                        CMN_LOG(1) << cmnPrintf("EM1:\n %.14lf \n") << E1;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM1:\n %.14lf \n") << E1;
                         break;
                     case 2:
-                        CMN_LOG(1) << cmnPrintf("EM2:\n %.14lf \n") << E2;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM2:\n %.14lf \n") << E2;
                         break;
                     case 3:
-                        CMN_LOG(1) << cmnPrintf("EM3:\n %.14lf \n") << E3;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM3:\n %.14lf \n") << E3;
                         break;
                 }
                 ret_value &= false;
             }
         }
         if (!ret_value) {
-            CMN_LOG(1) << cmnPrintf("I :\n %.14lf \n") << inputOrig;
-            CMN_LOG(1) << cmnPrintf("U :\n %.14lf \n") << U;
-            CMN_LOG(1) << cmnPrintf("S :\n %.14lf \n") << S;
-            CMN_LOG(1) << cmnPrintf("Vt:\n %.14lf \n") << Vt;
-            CMN_LOG(1) << cmnPrintf("SM:\n %.14lf \n") << SM;
-            CMN_LOG(1) << cmnPrintf("P :\n %.14lf \n") << P;
-            CMN_LOG(1) << cmnPrintf("O :\n %.14lf \n") << data.PInverse();
+            CMN_LOG_INIT_ERROR << cmnPrintf("I :\n %.14lf \n") << inputOrig;
+            CMN_LOG_INIT_ERROR << cmnPrintf("U :\n %.14lf \n") << U;
+            CMN_LOG_INIT_ERROR << cmnPrintf("S :\n %.14lf \n") << S;
+            CMN_LOG_INIT_ERROR << cmnPrintf("Vt:\n %.14lf \n") << Vt;
+            CMN_LOG_INIT_ERROR << cmnPrintf("SM:\n %.14lf \n") << SM;
+            CMN_LOG_INIT_ERROR << cmnPrintf("P :\n %.14lf \n") << P;
+            CMN_LOG_INIT_ERROR << cmnPrintf("O :\n %.14lf \n") << data.PInverse();
         }
         CPPUNIT_ASSERT(error[0] < tolerance);
         CPPUNIT_ASSERT(error[1] < tolerance);
@@ -304,9 +304,9 @@ see: strang, g., linear algebra and its application, second ed. pp145
     }
 }
 
-void nmrPInverseTest::GenericTestDynamic(unsigned int rows, unsigned int cols, bool storageOrder)
+void nmrPInverseTest::GenericTestDynamic(vct::size_type rows, vct::size_type cols, bool storageOrder)
 {
-    const unsigned int minmn = (rows < cols) ? rows : cols;
+    const vct::size_type minmn = (rows < cols) ? rows : cols;
     vctDynamicMatrix<double> indepVectors(rows, cols, storageOrder);
     vctDynamicMatrix<double> input       (rows, cols, storageOrder);
     vctDynamicMatrix<double> inputOrig   (rows, cols, storageOrder);
@@ -328,7 +328,7 @@ void nmrPInverseTest::GenericTestDynamic(unsigned int rows, unsigned int cols, b
     vctRandom(indepVectors, 0.0, 10.0);
     nmrSVD(indepVectors, U, S, Vt);
     SM.SetAll(0.);
-    for (unsigned int rank = minmn; rank >= MINRANK; rank--) {
+    for (vct::size_type rank = minmn; rank >= MINRANK; rank--) {
         if (rank < S.size()) S(rank) = 1e-18; // some number less than eps
         SM.Diagonal().Assign(S);
         P.ProductOf(SM, Vt);
@@ -357,35 +357,35 @@ see: strang, g., linear algebra and its application, second ed. pp145
         error[3] = E3.LinfNorm();
 
         bool ret_value = true;
-        for (unsigned int ii = 0; ii < 4; ii++) {
+        for (vct::size_type ii = 0; ii < 4; ii++) {
             if (!(error[ii] < tolerance)) {
-                CMN_LOG(1) << cmnPrintf("\nF :\n %.14lf \n") << ii;
-                CMN_LOG(1) << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
+                CMN_LOG_INIT_ERROR << cmnPrintf("\nF :\n %.14lf \n") << ii;
+                CMN_LOG_INIT_ERROR << cmnPrintf("E%d :\n %.14lf \n") << ii  << error[ii];
                 switch (ii) {
                     case 0:
-                        CMN_LOG(1) << cmnPrintf("EM0:\n %.14lf \n") << E0;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM0:\n %.14lf \n") << E0;
                         break;
                     case 1:
-                        CMN_LOG(1) << cmnPrintf("EM1:\n %.14lf \n") << E1;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM1:\n %.14lf \n") << E1;
                         break;
                     case 2:
-                        CMN_LOG(1) << cmnPrintf("EM2:\n %.14lf \n") << E2;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM2:\n %.14lf \n") << E2;
                         break;
                     case 3:
-                        CMN_LOG(1) << cmnPrintf("EM3:\n %.14lf \n") << E3;
+                        CMN_LOG_INIT_ERROR << cmnPrintf("EM3:\n %.14lf \n") << E3;
                         break;
                 }
                 ret_value &= false;
             }
         }
         if (!ret_value) {
-            CMN_LOG(1) << cmnPrintf("I :\n %.14lf \n") << inputOrig;
-            CMN_LOG(1) << cmnPrintf("U :\n %.14lf \n") << U;
-            CMN_LOG(1) << cmnPrintf("S :\n %.14lf \n") << S;
-            CMN_LOG(1) << cmnPrintf("Vt:\n %.14lf \n") << Vt;
-            CMN_LOG(1) << cmnPrintf("SM:\n %.14lf \n") << SM;
-            CMN_LOG(1) << cmnPrintf("P :\n %.14lf \n") << P;
-            CMN_LOG(1) << cmnPrintf("O :\n %.14lf \n") << pinverse;
+            CMN_LOG_INIT_ERROR << cmnPrintf("I :\n %.14lf \n") << inputOrig;
+            CMN_LOG_INIT_ERROR << cmnPrintf("U :\n %.14lf \n") << U;
+            CMN_LOG_INIT_ERROR << cmnPrintf("S :\n %.14lf \n") << S;
+            CMN_LOG_INIT_ERROR << cmnPrintf("Vt:\n %.14lf \n") << Vt;
+            CMN_LOG_INIT_ERROR << cmnPrintf("SM:\n %.14lf \n") << SM;
+            CMN_LOG_INIT_ERROR << cmnPrintf("P :\n %.14lf \n") << P;
+            CMN_LOG_INIT_ERROR << cmnPrintf("O :\n %.14lf \n") << pinverse;
         }
         CPPUNIT_ASSERT(error[0] < tolerance);
         CPPUNIT_ASSERT(error[1] < tolerance);
@@ -426,7 +426,7 @@ void nmrPInverseTest::TestDynamicRowMajor(void) {
     GenericTestDynamic(rows, cols, VCT_ROW_MAJOR);
 }
 
-template <unsigned int _rows, unsigned int _cols>
+template <vct::size_type _rows, vct::size_type _cols>
 void nmrPInverseTest::GenericTestCompareWithMatlab(double input_ptr[], double pinverse_ptr[], int caseNo, double tolerance = cmnTypeTraits<double>::Tolerance())
 {
     vctFixedSizeMatrix<double, _rows, _cols, VCT_COL_MAJOR> input;
@@ -438,15 +438,15 @@ void nmrPInverseTest::GenericTestCompareWithMatlab(double input_ptr[], double pi
     inputCopy.Assign(input);
     nmrPInverse(input, output);
     double *output_ptr = output.Pointer();
-    for (unsigned int ii = 0; ii < _rows*_cols; ii++) {
+    for (vct::size_type ii = 0; ii < _rows*_cols; ii++) {
         errorv(ii) = output_ptr[ii] - pinverse_ptr[ii];
     }
     error = errorv.LinfNorm();
     if (!(error < tolerance)) {
-        CMN_LOG(1) << cmnPrintf("\nCase No: %d\n") << caseNo;
-        CMN_LOG(1) << cmnPrintf("I:\n%.14f\n") << inputCopy;
-        CMN_LOG(1) << cmnPrintf("O:\n%.14f\n") << output;
-        CMN_LOG(1) << cmnPrintf("E:\n%.14f\n") << errorv;
+        CMN_LOG_INIT_ERROR << cmnPrintf("\nCase No: %d\n") << caseNo;
+        CMN_LOG_INIT_ERROR << cmnPrintf("I:\n%.14f\n") << inputCopy;
+        CMN_LOG_INIT_ERROR << cmnPrintf("O:\n%.14f\n") << output;
+        CMN_LOG_INIT_ERROR << cmnPrintf("E:\n%.14f\n") << errorv;
     }
     CPPUNIT_ASSERT(error < tolerance);
 }

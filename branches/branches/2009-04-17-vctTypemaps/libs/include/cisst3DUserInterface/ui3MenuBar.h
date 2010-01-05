@@ -28,24 +28,26 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VisibleObject.h>
 #include <cisst3DUserInterface/ui3MenuButton.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
 
 /*!
  Implements a menu bar to show buttons on the lower part of the image.
 */
-class ui3MenuBar: public ui3VisibleObject
+class CISST_EXPORT ui3MenuBar: public ui3VisibleObject
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     /*!
      Constructor
     */
-    ui3MenuBar(ui3Manager * manager);
+    ui3MenuBar(const std::string & name);
 
     /*!
      Destructor
     */
-    virtual ~ui3MenuBar();
+    ~ui3MenuBar();
 
     /*!
      Checks whether the specified point is visible inside the menu bar area.
@@ -53,7 +55,7 @@ public:
      \param point           Point coordinates [in millimeters]
     */
     typedef ui3MenuButton * ButtonPointer;
-    virtual bool IsPointOnMenuBar(const vct3 & point, ButtonPointer & button);
+    bool IsPointOnMenuBar(const vct3 & point, ButtonPointer & button);
 
     /*!
      Adds a click button to the menu bar. The icon file has to contain images for
@@ -93,7 +95,7 @@ public:
      \param state           Initial state: true=checked, false=unchecked
      \return                Identifier assigned to the button, unique for the menu bar
     */
-    virtual bool AddCheckButton(const std::string& description, int position, const std::string& iconfile, bool state);
+    bool AddCheckButton(const std::string& description, int position, const std::string& iconfile, bool state);
 
     /*!
      Adds an empty button space to the menu bar.
@@ -103,13 +105,13 @@ public:
                             If -1, the spacer will be added to the end of the menu bar.
      \return                Identifier assigned to the spacer, unique for the menu bar
     */
-    virtual bool AddSpacer(int position);
+    bool AddSpacer(int position);
 
-    virtual bool CreateVTKObjects(void);
+    bool CreateVTKObjects(void);
     
-    virtual vtkProp3D * GetVTKProp(void);
+    void SetAllButtonsUnselected(void);
 
-    virtual void SetDepth(double depth);
+    void SetDepth(double depth);
 
 protected:
 

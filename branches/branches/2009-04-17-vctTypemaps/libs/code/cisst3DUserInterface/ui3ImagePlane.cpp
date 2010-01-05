@@ -27,11 +27,11 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(ui3ImagePlane);
 
-ui3ImagePlane::ui3ImagePlane(ui3Manager * manager):
-    ui3VisibleObject(manager),
+ui3ImagePlane::ui3ImagePlane(void):
+    ui3VisibleObject("ImagePlane"),
     Texture(0),
     ImageData(0),
-    PlaneSrc(0),
+    PlaneSource(0),
     Mapper(0),
     Actor(0),
     BitmapWidth(0),
@@ -50,13 +50,13 @@ ui3ImagePlane::~ui3ImagePlane()
 {
     if (this->Texture)   this->Texture->Delete();
     if (this->ImageData) this->ImageData->Delete();
-    if (this->PlaneSrc)  this->PlaneSrc->Delete();
+    if (this->PlaneSource)  this->PlaneSource->Delete();
     if (this->Mapper)    this->Mapper->Delete();
     if (this->Actor)     this->Actor->Delete();
 }
 
 
-bool ui3ImagePlane::CreateVTKObjects()
+bool ui3ImagePlane::CreateVTKObjects(void)
 {
     if (BitmapWidth  < 1 || TextureWidth  < BitmapWidth  ||
         BitmapHeight < 1 || TextureHeight < BitmapHeight) {
@@ -71,15 +71,14 @@ bool ui3ImagePlane::CreateVTKObjects()
     this->ImageData = vtkImageData::New();
     CMN_ASSERT(this->ImageData);
 
-    this->PlaneSrc = vtkPlaneSource::New();
-    CMN_ASSERT(this->PlaneSrc);
+    this->PlaneSource = vtkPlaneSource::New();
+    CMN_ASSERT(this->PlaneSource);
 
     this->Mapper = vtkPolyDataMapper::New();
     CMN_ASSERT(this->Mapper);
 
     this->Actor = vtkActor::New();
     CMN_ASSERT(this->Actor);
-
 
     // Create image object
     this->ImageData->SetDimensions(this->TextureWidth, this->TextureHeight, 1);
@@ -91,27 +90,28 @@ bool ui3ImagePlane::CreateVTKObjects()
     this->TextureBuffer = (unsigned char*)this->ImageData->GetScalarPointer();
 
     // Make whole image opaque by default
-    this->SetAlpha(128);
+    this->SetAlpha(255);
 
     // Create texture object
     this->Texture->SetInput(this->ImageData);
     this->Texture->InterpolateOn();
 
     // Create image plane
-    this->PlaneSrc->SetOrigin(this->PhysicalPositionRelativeToPivot.X(),
-                                this->PhysicalPositionRelativeToPivot.Y(),
-                                  this->PhysicalPositionRelativeToPivot.Z());
-    this->PlaneSrc->SetPoint1(this->PhysicalPositionRelativeToPivot.X() + this->PhysicalWidth * ((double)this->TextureWidth / this->BitmapWidth),
-                                this->PhysicalPositionRelativeToPivot.Y(),
-                                  this->PhysicalPositionRelativeToPivot.Z());
-    this->PlaneSrc->SetPoint2(this->PhysicalPositionRelativeToPivot.X(),
-                                this->PhysicalPositionRelativeToPivot.Y() - this->PhysicalHeight * ((double)this->TextureHeight / this->BitmapHeight),
-                                  this->PhysicalPositionRelativeToPivot.Z());
-    this->PlaneSrc->SetXResolution(1);
-    this->PlaneSrc->SetYResolution(1);
+    this->PlaneSource->SetOrigin(this->PhysicalPositionRelativeToPivot.X(),
+                                 this->PhysicalPositionRelativeToPivot.Y(),
+                                 this->PhysicalPositionRelativeToPivot.Z());
+    this->PlaneSource->SetPoint1(this->PhysicalPositionRelativeToPivot.X() - this->PhysicalWidth * ((double)this->TextureWidth / this->BitmapWidth),
+                                 this->PhysicalPositionRelativeToPivot.Y(),
+                                 this->PhysicalPositionRelativeToPivot.Z());
+    this->PlaneSource->SetPoint2(this->PhysicalPositionRelativeToPivot.X(),
+                                 this->PhysicalPositionRelativeToPivot.Y() - this->PhysicalHeight * ((double)this->TextureHeight / this->BitmapHeight),
+                                 this->PhysicalPositionRelativeToPivot.Z());
+
+    this->PlaneSource->SetXResolution(1);
+    this->PlaneSource->SetYResolution(1);
 
     // Create mapper
-    this->Mapper->SetInput(this->PlaneSrc->GetOutput());
+    this->Mapper->SetInput(this->PlaneSource->GetOutput());
 
     // Create actor
     this->Actor->SetMapper(this->Mapper);
@@ -119,8 +119,7 @@ bool ui3ImagePlane::CreateVTKObjects()
     // Map texture onto the plane
     this->Actor->SetTexture(this->Texture);
     this->Actor->GetProperty()->SetOpacity(1.0);
-
-    this->Assembly->AddPart(this->Actor);
+    this->AddPart(this->Actor);
 
     return true;
 }
@@ -225,7 +224,7 @@ void ui3ImagePlane::SetImage(svlSampleImageBase* image, unsigned int channel)
         const unsigned int  bmpheight = this->BitmapHeight;
         const unsigned int  rightborder = (this->TextureWidth - bmpwidth) << 2;
 
-        unsigned char *imagebuf = reinterpret_cast<unsigned char*>(image->GetPointer(channel));
+        unsigned char *imagebuf = image->GetUCharPointer(channel);
         unsigned char *texture = this->TextureBuffer;
         unsigned int i, j;
 #ifdef USE_BGR

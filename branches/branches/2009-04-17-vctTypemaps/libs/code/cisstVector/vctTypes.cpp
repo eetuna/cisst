@@ -100,7 +100,11 @@ template class vctDynamicVector<float>;
 template class vctDynamicVector<double>;
 template class vctDynamicVector<int>;
 template class vctDynamicVector<char>;
-
+template class vctDynamicVector<bool>;
+template class vctDynamicVector<unsigned int>;
+template class vctDynamicVector<unsigned char>;
+template class vctDynamicVector<short>;
+template class vctDynamicVector<unsigned short>;
 
 #endif
 

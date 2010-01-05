@@ -23,15 +23,17 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _vidDC1394Source_h
 #define _vidDC1394Source_h
 
-#include <cisstStereoVision/svlVideoCaptureSource.h>
+#include <cisstStereoVision/svlFilterSourceVideoCapture.h>
 #include "svlImageBuffer.h"
 
 
 /*********************************************************************
 ** LibDC1394                                                        **
-**  - compatibility: DC1394 2.0.2                                   **
+**  - compatibility: DC1394 2.0.2+                                  **
 **  - get it from:                                                  **
 **    http://sourceforge.net/project/showfiles.php?group_id=8157    **
+**                                 or                               **
+**                       MacPorts (OS X 10.5+)                      **
 *********************************************************************/
 #include "dc1394/dc1394.h"
 
@@ -75,6 +77,35 @@ typedef enum {
 *******************************************/
 
 /*******************************************
+** Color codings                          **
+********************************************
+typedef enum {
+    DC1394_COLOR_CODING_MONO8   = 320,
+    DC1394_COLOR_CODING_YUV411  = 321,
+    DC1394_COLOR_CODING_YUV422  = 322,
+    DC1394_COLOR_CODING_YUV444  = 323,
+    DC1394_COLOR_CODING_RGB8    = 324,
+    DC1394_COLOR_CODING_MONO16  = 325,
+    DC1394_COLOR_CODING_RGB16   = 326,
+    DC1394_COLOR_CODING_MONO16S = 327,
+    DC1394_COLOR_CODING_RGB16S  = 328,
+    DC1394_COLOR_CODING_RAW8    = 329,
+    DC1394_COLOR_CODING_RAW16   = 330
+} dc1394color_coding_t;
+*******************************************/
+
+/*******************************************
+** Bayer patterns                         **
+********************************************
+typedef enum {
+    DC1394_COLOR_FILTER_RGGB = 512,
+    DC1394_COLOR_FILTER_GBRG = 513,
+    DC1394_COLOR_FILTER_GRBG = 514,
+    DC1394_COLOR_FILTER_BGGR = 515
+} dc1394color_filter_t;
+*******************************************/
+
+/*******************************************
 ** Framerates                             **
 ********************************************
 typedef enum {
@@ -89,6 +120,64 @@ typedef enum {
 } dc1394framerate_t;
 *******************************************/
 
+/*******************************************
+** Trigger modes                          **
+********************************************
+typedef enum {
+  DC1394_TRIGGER_MODE_0  = 352,
+  DC1394_TRIGGER_MODE_1  = 353,
+  DC1394_TRIGGER_MODE_2  = 354,
+  DC1394_TRIGGER_MODE_3  = 355,
+  DC1394_TRIGGER_MODE_4  = 356,
+  DC1394_TRIGGER_MODE_5  = 357,
+  DC1394_TRIGGER_MODE_14 = 358,
+  DC1394_TRIGGER_MODE_15 = 359
+} dc1394trigger_mode_t;
+#define DC1394_TRIGGER_MODE_MIN \
+        DC1394_TRIGGER_MODE_0
+#define DC1394_TRIGGER_MODE_MAX \
+        DC1394_TRIGGER_MODE_15
+#define DC1394_TRIGGER_MODE_NUM \
+        (DC1394_TRIGGER_MODE_MAX - \
+         DC1394_TRIGGER_MODE_MIN + 1)
+*******************************************/
+
+/*******************************************
+** Trigger sources                        **
+********************************************
+typedef enum {
+  DC1394_TRIGGER_SOURCE_0 = 576,
+  DC1394_TRIGGER_SOURCE_1 = 577,
+  DC1394_TRIGGER_SOURCE_2 = 578,
+  DC1394_TRIGGER_SOURCE_3 = 579
+} dc1394trigger_source_t;
+#define DC1394_TRIGGER_SOURCE_MIN \
+        DC1394_TRIGGER_SOURCE_0
+#define DC1394_TRIGGER_SOURCE_MAX \
+        DC1394_TRIGGER_SOURCE_3
+#define DC1394_TRIGGER_SOURCE_NUM \
+        (DC1394_TRIGGER_SOURCE_MAX - \
+         DC1394_TRIGGER_SOURCE_MIN + 1)
+*******************************************/
+
+/*******************************************
+** Trigger polarity                       **
+********************************************
+typedef enum {
+  DC1394_TRIGGER_ACTIVE_LOW  = 0,
+  DC1394_TRIGGER_ACTIVE_HIGH = 1
+} dc1394trigger_polarity_t;
+*******************************************/
+
+/*******************************************
+** Log levels                             **
+********************************************
+typedef enum {
+    DC1394_LOG_ERROR   = 768,
+    DC1394_LOG_WARNING = 769,
+    DC1394_LOG_DEBUG   = 770
+} dc1394log_t;
+*******************************************/
 
 class svlDC1394Context
 {
@@ -96,11 +185,12 @@ public:
     static svlDC1394Context* Instance();
 
     dc1394_t* GetContext();
-	int GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo);
+	int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
 	dc1394camera_t** GetCameras();
 	unsigned int GetNumberOfCameras();
     dc1394operation_mode_t* GetBestOpMode();
     dc1394speed_t* GetBestISOSpeed();
+	unsigned int GetPixelTypeBitSize(svlFilterSourceVideoCapture::PixelType type);
 
 private:
     svlDC1394Context();
@@ -113,10 +203,11 @@ private:
     dc1394_t* Context;
     dc1394camera_list_t* CameraList;
     dc1394camera_t** Cameras;
-    svlVideoCaptureSource::DeviceInfo* DeviceInfos;
+    svlFilterSourceVideoCapture::DeviceInfo* DeviceInfos;
     unsigned int NumberOfCameras;
     dc1394operation_mode_t* BestOpMode;
     dc1394speed_t* BestISOSpeed;
+    unsigned int PixelTypeBitSize[svlFilterSourceVideoCapture::PixelTypeCount];
 };
 
 
@@ -131,9 +222,9 @@ public:
 	~CDC1394Source();
 
 public:
-    svlVideoCaptureSource::PlatformType GetPlatformType();
+    svlFilterSourceVideoCapture::PlatformType GetPlatformType();
     int SetStreamCount(unsigned int numofstreams);
-	int GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo);
+	int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
 	int Open();
 	void Close();
 	int Start();
@@ -144,11 +235,13 @@ public:
 	int GetWidth(unsigned int videoch = 0);
 	int GetHeight(unsigned int videoch = 0);
 
-    int GetFormatList(unsigned int deviceid, svlVideoCaptureSource::ImageFormat **formatlist);
-    int SetFormat(svlVideoCaptureSource::ImageFormat& format, unsigned int videoch = 0);
-    int GetFormat(svlVideoCaptureSource::ImageFormat& format, unsigned int videoch = 0);
-    int SetImageProperties(svlVideoCaptureSource::ImageProperties& properties, unsigned int videoch = 0);
-    int GetImageProperties(svlVideoCaptureSource::ImageProperties& properties, unsigned int videoch = 0);
+    int GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist);
+    int SetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch = 0);
+    int GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch = 0);
+    int SetImageProperties(svlFilterSourceVideoCapture::ImageProperties& properties, unsigned int videoch = 0);
+    int GetImageProperties(svlFilterSourceVideoCapture::ImageProperties& properties, unsigned int videoch = 0);
+    int SetTrigger(svlFilterSourceVideoCapture::ExternalTrigger & trigger, unsigned int videoch = 0);
+    int GetTrigger(svlFilterSourceVideoCapture::ExternalTrigger & trigger, unsigned int videoch = 0);
 
 private:
     unsigned int NumOfStreams;
@@ -160,7 +253,6 @@ private:
 
     int* CameraFileNo;
     fd_set* CameraFDSet;
-    int* CameraNFDS;
 
     osaMutex Mutex;
     dc1394_t* Context;
@@ -170,7 +262,8 @@ private:
     dc1394operation_mode_t* BestOpMode;
     dc1394speed_t* BestISOSpeed;
     int* DeviceID;
-    svlVideoCaptureSource::ImageFormat** Format;
+    svlFilterSourceVideoCapture::ImageFormat** Format;
+    svlFilterSourceVideoCapture::ExternalTrigger* Trigger;
     int* Width;
     int* Height;
     unsigned int* ColorCoding;
@@ -180,10 +273,14 @@ private:
     int CaptureFrame(unsigned int videoch);
 
     void Release();
-    int GetModeFromFormat(unsigned int width, unsigned int height, svlVideoCaptureSource::PixelType colspc, unsigned int& mode);
-    int GetSupportedFrameratesForFormat(unsigned int devid, svlVideoCaptureSource::ImageFormat& format, double **fpslist, unsigned int& listsize);
+    int GetModeFromFormat(unsigned int width, unsigned int height, svlFilterSourceVideoCapture::PixelType colspc, unsigned int& mode);
+    int GetSupportedFrameratesForFormat(unsigned int devid, svlFilterSourceVideoCapture::ImageFormat& format, double **fpslist, unsigned int& listsize);
     int GetFramerateFromFPS(double fps, unsigned int& framerate);
-    int GetFormatFromMode(unsigned int mode, svlVideoCaptureSource::ImageFormat& format);
+    int GetFormatFromMode(unsigned int mode, svlFilterSourceVideoCapture::ImageFormat& format);
+    dc1394color_coding_t GetColorCodingFromPixelType(svlFilterSourceVideoCapture::PixelType pixeltype);
+    svlFilterSourceVideoCapture::PixelType GetPixelTypeFromColorCoding(dc1394color_coding_t colorcoding);
+    dc1394color_filter_t GetColorFilterFromPatternType(svlFilterSourceVideoCapture::PatternType patterntype);
+    svlFilterSourceVideoCapture::PatternType GetPatternTypeFromColorFilter(dc1394color_filter_t colorfilter);
     void SwapRGBBuffer(unsigned char* buffer, const unsigned int numberofpixels);
 };
 

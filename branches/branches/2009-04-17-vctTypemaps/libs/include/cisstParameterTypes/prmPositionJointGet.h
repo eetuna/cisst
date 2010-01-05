@@ -27,23 +27,21 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmPositionJointGet_h
 #define _prmPositionJointGet_h
 
-//basic includes
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegisterMacros.h>
-#include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstParameterTypes/prmTypes.h>
-#include <cisstParameterTypes/prmMacros.h>
+// basic includes
+#include <cisstVector/vctDynamicVectorTypes.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
 
 /*! motion command arguments for joint angle based motion
 */
-class CISST_EXPORT prmPositionJointGet: public cmnGenericObject
+class CISST_EXPORT prmPositionJointGet: public mtsGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
+    typedef mtsGenericObject BaseType;
     typedef prmPositionJointGet ThisType;
     typedef unsigned int size_type;
 
@@ -51,7 +49,6 @@ public:
     inline prmPositionJointGet(void) {}
 
     /*! resizes the vector type members */
-
     inline prmPositionJointGet(size_type size) { 
         SetSize(size);
     }
@@ -59,19 +56,18 @@ public:
     void SetSize(size_type size);
 
     /*! constructor with all possible parameters */
-    inline prmPositionJointGet(const prmPosition & position,
-                               const mtsStateIndex & stateIndex):
-            PositionMember(position),
-            StateIndexMember(stateIndex)
+    inline prmPositionJointGet(const vctDoubleVec & position):
+        BaseType(),
+        PositionMember(position)
     {}
 
     /*! destructor */
     virtual ~prmPositionJointGet();
 
     /*! Allocate memory based on an existing object of the same type.  The
-    object is provided via a cmnGenericObject pointer.  If a dynamic cast
+    object is provided via a mtsGenericObject pointer.  If a dynamic cast
     to this type is not possible, this method returns false. */
-    bool inline Allocate(const cmnGenericObject * model)
+    bool inline Allocate(const mtsGenericObject * model)
     {
         const ThisType * pointer = dynamic_cast<const ThisType *>(model);
         if (pointer == 0) {
@@ -83,20 +79,23 @@ public:
 
     /*! Set and Get methods for the the position. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmPosition, Position);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Position);
     //@}
 
-    /*! Set and Get methods for time index.  Current time index, as
-    provided for writer of the task providing the position
-    data. */
-    //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
-
+public:
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
+    /*! To stream raw data. */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const;
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const;
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream);
 
 }; // _prmPositionJointGet_h
 

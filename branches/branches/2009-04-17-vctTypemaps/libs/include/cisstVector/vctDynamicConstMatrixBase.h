@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnThrow.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctContainerTraits.h>
 #include <cisstVector/vctFixedSizeVector.h>
@@ -46,14 +47,14 @@ http://www.cisst.org/cisst/license.txt.
 
 /* Forward declarations */
 #ifndef DOXYGEN
-template<class _matrixOwnerType, class __matrixOwnerType, class _elementType,
-         class _elementOperationType>
+template <class _matrixOwnerType, class __matrixOwnerType, class _elementType,
+          class _elementOperationType>
 inline vctReturnDynamicMatrix<bool>
 vctDynamicMatrixElementwiseCompareMatrix(const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix1,
                                          const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix2);
 
-template<class _matrixOwnerType, class _elementType,
-         class _elementOperationType>
+template <class _matrixOwnerType, class _elementType,
+          class _elementOperationType>
 inline vctReturnDynamicMatrix<bool>
 vctDynamicMatrixElementwiseCompareScalar(const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix,
                                          const _elementType & scalar);
@@ -75,7 +76,7 @@ vctDynamicMatrixElementwiseCompareScalar(const vctDynamicConstMatrixBase<_matrix
 
   \param _elementType the type of elements of the matrix.
 */
-template<class _matrixOwnerType, typename _elementType>
+template <class _matrixOwnerType, typename _elementType>
 class vctDynamicConstMatrixBase
 {
 public:
@@ -402,10 +403,10 @@ public:
         if (! this->col_stride() == 1) {
             cmnThrow(std::runtime_error("vctDynamicMatrix: RowPointers requires compact rows")); 
         }
-        const unsigned int rows = this->rows();
+        const size_type rows = this->rows();
         // resize the vector
         rowPointers.SetSize(rows);
-        unsigned int index;
+        index_type index;
         for (index = 0; index < rows; ++index) {
             rowPointers[index] = this->Row(index).Pointer();
         }
@@ -645,14 +646,14 @@ public:
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     //@{
-    template<class __matrixOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source)
+    template <class __matrixOwnerType>
+    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
     
-    template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source)
+    template <size_type __rows, size_type __cols, stride_type __rowStride, stride_type __colStride, class __dataPtrType>
+    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -768,7 +769,7 @@ public:
 
       \return A matrix of booleans.
     */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline BoolMatrixReturnType
     ElementwiseEqual(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) const {
         return vctDynamicMatrixElementwiseCompareMatrix<_matrixOwnerType, __matrixOwnerType, value_type,
@@ -776,7 +777,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline BoolMatrixReturnType
     ElementwiseNotEqual(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) const {
         return vctDynamicMatrixElementwiseCompareMatrix<_matrixOwnerType, __matrixOwnerType, value_type,
@@ -784,7 +785,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline BoolMatrixReturnType
     ElementwiseLesser(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) const {
         return vctDynamicMatrixElementwiseCompareMatrix<_matrixOwnerType, __matrixOwnerType, value_type,
@@ -792,7 +793,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline BoolMatrixReturnType
     ElementwiseLesserOrEqual(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) const {
         return vctDynamicMatrixElementwiseCompareMatrix<_matrixOwnerType, __matrixOwnerType, value_type,
@@ -800,7 +801,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline BoolMatrixReturnType
     ElementwiseGreater(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) const {
         return vctDynamicMatrixElementwiseCompareMatrix<_matrixOwnerType, __matrixOwnerType, value_type,
@@ -808,7 +809,7 @@ public:
     }
 
     /* documented above */
-    template<class __matrixOwnerType>
+    template <class __matrixOwnerType>
     inline BoolMatrixReturnType
     ElementwiseGreaterOrEqual(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & otherMatrix) const {
         return vctDynamicMatrixElementwiseCompareMatrix<_matrixOwnerType, __matrixOwnerType, value_type,
@@ -987,8 +988,8 @@ public:
         const size_type myRows = rows();
         const size_type myCols = cols();
         // preserve the formatting flags as they were
-        const int width = outputStream.width(12);
-        const int precision = outputStream.precision(6);
+        const size_t width = outputStream.width(12);
+        const size_t precision = outputStream.precision(6);
         bool showpoint = ((outputStream.flags() & std::ios_base::showpoint) != 0);
         outputStream << std::setprecision(6) << std::showpoint;
         size_type indexRow, indexCol;
@@ -1008,6 +1009,45 @@ public:
         outputStream << std::setprecision(precision) << std::setw(width);
         if (!showpoint) {
             outputStream << std::noshowpoint;
+        }
+    }
+
+
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        if (headerOnly) {
+            for (indexRow = 0; indexRow < myRows; ++indexRow) {
+                for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                    outputStream << headerPrefix << "-m" << indexRow << "_" << indexCol; 
+                    // delimiter between elements
+                    if (indexCol < (myCols - 1)) {
+                        outputStream << delimiter;
+                    }
+                }
+                // delimiter between rows, not at the end
+                if (indexRow < (myRows - 1)) {
+                    outputStream << delimiter;
+                }
+            }
+        } else {
+            for (indexRow = 0; indexRow < myRows; ++indexRow) {
+                for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                    outputStream << this->Element(indexRow, indexCol);
+                    // delimiter between elements
+                    if (indexCol < (myCols - 1)) {
+                        outputStream << delimiter;
+                    }
+                }
+                // delimiter between rows, not at the end
+                if (indexRow < (myRows - 1)) {
+                    outputStream << delimiter;
+                }
+            }
         }
     }
 
@@ -1035,11 +1075,28 @@ public:
         typedef vctDynamicConstMatrixRef<value_type> Type;
     };
 #endif // SWIG
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        cmnSerializeSizeRaw(outputStream, myRows);
+        cmnSerializeSizeRaw(outputStream, myCols);
+        for (indexRow = 0; indexRow < myRows; ++indexRow) {
+            for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                cmnSerializeRaw(outputStream, this->Element(indexRow, indexCol));
+            }
+        }
+    }
+
 };
 
 #ifndef DOXYGEN
 /* documented in class.  Implementation moved here for .Net 2003 */
-template<class _matrixOwnerType, class _elementType>
+template <class _matrixOwnerType, class _elementType>
 inline typename vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::BoolMatrixReturnType
 vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseEqual(const _elementType & scalar) const {
     return vctDynamicMatrixElementwiseCompareScalar<_matrixOwnerType, _elementType,
@@ -1047,7 +1104,7 @@ vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseEqual(cons
 }
 
 /* documented in class.  Implementation moved here for .Net 2003 */
-template<class _matrixOwnerType, class _elementType>
+template <class _matrixOwnerType, class _elementType>
 inline typename vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::BoolMatrixReturnType
 vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseNotEqual(const _elementType & scalar) const {
     return vctDynamicMatrixElementwiseCompareScalar<_matrixOwnerType, _elementType,
@@ -1055,7 +1112,7 @@ vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseNotEqual(c
 }
 
 /* documented in class.  Implementation moved here for .Net 2003 */
-template<class _matrixOwnerType, class _elementType>
+template <class _matrixOwnerType, class _elementType>
 inline typename vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::BoolMatrixReturnType
 vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseLesser(const _elementType & scalar) const {
     return vctDynamicMatrixElementwiseCompareScalar<_matrixOwnerType, _elementType,
@@ -1063,7 +1120,7 @@ vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseLesser(con
 }
 
 /* documented in class.  Implementation moved here for .Net 2003 */
-template<class _matrixOwnerType, class _elementType>
+template <class _matrixOwnerType, class _elementType>
 inline typename vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::BoolMatrixReturnType
 vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseLesserOrEqual(const _elementType & scalar) const {
     return vctDynamicMatrixElementwiseCompareScalar<_matrixOwnerType, _elementType,
@@ -1071,7 +1128,7 @@ vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseLesserOrEq
 }
 
 /* documented in class.  Implementation moved here for .Net 2003 */
-template<class _matrixOwnerType, class _elementType>
+template <class _matrixOwnerType, class _elementType>
 inline typename vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::BoolMatrixReturnType
 vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseGreater(const _elementType & scalar) const {
     return vctDynamicMatrixElementwiseCompareScalar<_matrixOwnerType, _elementType,
@@ -1079,7 +1136,7 @@ vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseGreater(co
 }
 
 /* documented in class.  Implementation moved here for .Net 2003 */
-template<class _matrixOwnerType, class _elementType>
+template <class _matrixOwnerType, class _elementType>
 inline typename vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::BoolMatrixReturnType
 vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseGreaterOrEqual(const _elementType & scalar) const {
     return vctDynamicMatrixElementwiseCompareScalar<_matrixOwnerType, _elementType,
@@ -1088,19 +1145,19 @@ vctDynamicConstMatrixBase<_matrixOwnerType, _elementType>::ElementwiseGreaterOrE
 #endif // DOXYGEN
 
 /*! Return true if all the elements of the matrix are nonzero, false otherwise */
-template<class _matrixOwnerType, typename _elementType>
+template <class _matrixOwnerType, typename _elementType>
 inline bool vctAll(const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix) {
     return matrix.All();
 }
 
 /*! Return true if any element of the matrix is nonzero, false otherwise */
-template<class _matrixOwnerType, typename _elementType>
+template <class _matrixOwnerType, typename _elementType>
 inline bool vctAny(const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix) {
     return matrix.Any();
 }
 
 /*! Stream out operator. */
-template<class _matrixOwnerType, typename _elementType>
+template <class _matrixOwnerType, typename _elementType>
 std::ostream & operator << (std::ostream & output,
                             const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix) {
     matrix.ToStream(output);
@@ -1109,9 +1166,9 @@ std::ostream & operator << (std::ostream & output,
 
 
 // helper function declared and used in vctFixedSizeMatrixBase.h
-template<unsigned int _rows, unsigned int _cols,
-         int _rowStride, int _colStride,
-         class _elementType, class _dataPtrType, class _matrixOwnerType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride,
+          class _elementType, class _dataPtrType, class _matrixOwnerType>
 inline void vctFixedSizeMatrixBaseAssignDynamicConstMatrixBase(
     vctFixedSizeMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & fixedSizeMatrix,
     const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & dynamicMatrix)
@@ -1119,7 +1176,6 @@ inline void vctFixedSizeMatrixBaseAssignDynamicConstMatrixBase(
     vctDynamicMatrixRef<_elementType> tempRef(fixedSizeMatrix);
     tempRef.Assign(dynamicMatrix);
 }
-
 
 
 #endif // _vctDynamicConstMatrixBase_h

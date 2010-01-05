@@ -30,9 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector.h>
 #include <iostream>
 
-typedef unsigned int size_type;
-
-template <class _elementType, size_type _size>
+template <class _elementType, vct::size_type _size>
 class vctFixedSizeVectorTypemapsTest
 {
 
@@ -79,17 +77,17 @@ public:
         return copy;
     }
 
-    inline _elementType __getitem__(size_type index) const
+    inline _elementType __getitem__(vct::size_type index) const
     throw(std::out_of_range) {
         return copy.at(index);
     }
 
-    inline void __setitem__(size_type index, _elementType value)
+    inline void __setitem__(vct::size_type index, _elementType value)
     throw(std::out_of_range) {
         copy.at(index) = value;
     }
 
-    inline size_type size() const {
+    inline vct::size_type size(void) const {
         return copy.size();
     }
 };

@@ -30,9 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector.h>
 #include <iostream>
 
-typedef unsigned int size_type;
 
-template <class _elementType, size_type _rows, size_type _cols>
+template <class _elementType, vct::size_type _rows, vct::size_type _cols>
 class vctFixedSizeMatrixTypemapsTest
 {
 
@@ -79,25 +78,25 @@ public:
         return copy;
     }
 
-    inline _elementType GetItem(size_type rowIndex, size_type colIndex) const
+    inline _elementType GetItem(vct::size_type rowIndex, vct::size_type colIndex) const
     throw(std::out_of_range) {
         return copy.at(rowIndex, colIndex);
     }
 
-    inline void SetItem(size_type rowIndex, size_type colIndex, _elementType value)
+    inline void SetItem(vct::size_type rowIndex, vct::size_type colIndex, _elementType value)
     throw(std::out_of_range) {
         copy.at(rowIndex, colIndex) = value;
     }
 
-    inline size_type rows(void) const {
+    inline vct::size_type rows(void) const {
         return copy.rows();
     }
 
-    inline size_type cols(void) const {
+    inline vct::size_type cols(void) const {
         return copy.cols();
     }
 
-    inline vctFixedSizeVector<size_type, 2> sizes(void) const {
+    inline vctFixedSizeVector<vct::size_type, 2> sizes(void) const {
         return copy.sizes();
     }
 };

@@ -24,12 +24,12 @@ displayTask::displayTask(const std::string & taskName, double period):
     requiredInterface = AddRequiredInterface("Button1");
 	if (requiredInterface) {
         requiredInterface->AddEventHandlerWrite(&displayTask::Button1EventHandler, this,
-                                                "Button", prmEventButton());
+                                                "Button");
     }
     requiredInterface = AddRequiredInterface("Button2");
 	if (requiredInterface) {
         requiredInterface->AddEventHandlerWrite(&displayTask::Button2EventHandler, this,
-                                                "Button", prmEventButton());
+                                                "Button");
     }
 }
 
@@ -42,9 +42,9 @@ void displayTask::Configure(const std::string & CMN_UNUSED(filename))
 void displayTask::Startup(void) 
 {
     // find the interface which has been connected to our resource port
-    mtsDeviceInterface * interface = GetProvidedInterfaceFor("Robot");
+    mtsProvidedInterface * providedInterface = GetProvidedInterfaceFor("Robot");
     // make sure an interface has been connected
-    if (interface) {
+    if (providedInterface) {
         // get a pointer on tip node --- name is hardcoded, bad, need a way to query all possible names
         // from the interface
         this->TipTransformationPointer = prmTransformationManager::GetTransformationNodePtr("OmniTip");
@@ -60,22 +60,23 @@ void displayTask::Startup(void)
         // prmPositionJoint contains dynamic vectors so we need to allocate
         // based on the size (number of joints) of the device used
         if (this->DeviceProvidesJointPosition) {
-            this->JointPosition.Allocate(GetJointPosition.GetCommand()->GetArgumentPrototype());
-            CMN_LOG_CLASS(3) << "Startup: Device has "
-                             << this->JointPosition.Position().size()
-                             << " joints" << std::endl;
+            // adeguet1: hack this->JointPosition.Allocate(GetJointPosition.GetCommand()->GetArgumentPrototype());
+            this->JointPosition.Position().SetSize(6);
+            CMN_LOG_CLASS_INIT_VERBOSE << "Startup: Device has "
+                                       << this->JointPosition.Position().size()
+                                       << " joints" << std::endl;
         }
         // the output stream insertion operator << is overloaded for mtsFunction
-        CMN_LOG_CLASS(3) << "Startup:\n - GetCartesianPosition function: "
-                         << GetCartesianPosition
-                         << "\n - GetCartesianVelocity function: "
-                         << GetCartesianVelocity
-                         << "\n - GetJointPosition function: "
-                         << GetJointPosition
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Startup:\n - GetCartesianPosition function: "
+                                   << GetCartesianPosition
+                                   << "\n - GetCartesianVelocity function: "
+                                   << GetCartesianVelocity
+                                   << "\n - GetJointPosition function: "
+                                   << GetJointPosition
+                                   << std::endl;
     } else {
-        CMN_LOG_CLASS(1) << "Startup: can not find provided interface for required interface Robot"
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Startup: can not find provided interface for required interface Robot"
+                                 << std::endl;
         exit(-1);
     }
     // make the UI visible
@@ -120,8 +121,8 @@ void displayTask::Run(void)
         UI.NewReference = false;
     }
     // log some extra information
-    CMN_LOG_CLASS(7) << "Run : " << now.Ticks()
-                     << " - Data: " << CartesianPosition << std::endl;
+    CMN_LOG_CLASS_RUN_WARNING << "Run : " << now.Ticks()
+                              << " - Data: " << CartesianPosition << std::endl;
     // update the UI, process UI events 
     if (Fl::check() == 0) {
         ExitFlag = true;

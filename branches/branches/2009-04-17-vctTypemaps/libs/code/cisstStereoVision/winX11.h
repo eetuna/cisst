@@ -23,13 +23,19 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _winX11_h
 #define _winX11_h
 
-#include <cisstStereoVision/svlImageWindow.h>
+#include <cisstStereoVision/svlFilterImageWindow.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xos.h>
+#if (CISST_SVL_HAS_XV == ON)
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
+#include <X11/extensions/Xv.h>
+#include <X11/extensions/Xvlib.h>
+#endif // CISST_SVL_HAS_XV
 
-class CX11WindowManager : public svlWindowManagerBase
+
+class CX11WindowManager : public CWindowManagerBase
 {
 public:
     CX11WindowManager(unsigned int numofwins);
@@ -38,7 +44,10 @@ public:
     // method overrides
     int DoModal(bool show, bool fullscreen);
     void Show(bool show, int winid);
-    void DrawImageThreadSafe(unsigned char* buffer, unsigned int buffersize, unsigned int winid);
+    void LockBuffers();
+    void UnlockBuffers();
+    void SetImageBuffer(unsigned char *buffer, unsigned int buffersize, unsigned int winid);
+    void DrawImages();
     void Destroy();
     void DestroyThreadSafe();
 
@@ -49,13 +58,25 @@ private:
     Display *xDisplay;
     Window *xWindows;
     GC *xGCs;
-    XImage **xImg;
+    std::string *Titles;
+    std::string *CustomTitles;
+    int *CustomTitleEnabled;
     bool DestroyFlag;
     osaThreadSignal *DestroyedSignal;
-    osaCriticalSection *csImage;
-    unsigned int *ImageCounter;
-    unsigned char **ImageBuffers;
+    osaCriticalSection csImage;
+    osaThreadSignal signalImage;
+    unsigned int ImageCounter;
+
+#if (CISST_SVL_HAS_XV == ON)
+    XvImage **xvImg;
+    XShmSegmentInfo *xvShmInfo;
+    XvPortID *xvPort;
+#else // CISST_SVL_HAS_XV
+    XImage **xImg;
+    unsigned char **xImageBuffers;
+#endif // CISST_SVL_HAS_XV
 };
 
 #endif // _winX11_h
+
 

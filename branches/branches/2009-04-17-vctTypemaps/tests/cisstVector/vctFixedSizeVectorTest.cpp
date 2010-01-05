@@ -285,9 +285,9 @@ void vctFixedSizeVectorTest::TestSelect(void)
     enum {INPUT_SIZE = 12, OUTPUT_SIZE = 5};
     vctFixedSizeVector<_elementType, INPUT_SIZE> inputVector;
     vctFixedSizeVector<_elementType, OUTPUT_SIZE> outputVector;
-    vctFixedSizeVector<unsigned int, OUTPUT_SIZE> indexVector;
+    vctFixedSizeVector<vct::index_type, OUTPUT_SIZE> indexVector;
     vctRandom(inputVector, _elementType(-10), _elementType(10));
-    vctRandom(indexVector, (unsigned int)(0), (unsigned int)(INPUT_SIZE));
+    vctRandom(indexVector, static_cast<vct::index_type>(0), static_cast<vct::index_type>(INPUT_SIZE));
     vctGenericVectorTest::TestSelect(inputVector, indexVector, outputVector);
 }
 
@@ -794,6 +794,34 @@ void vctFixedSizeVectorTest::TestFastCopyOfFloat(void) {
 }
 void vctFixedSizeVectorTest::TestFastCopyOfInt(void) {
     TestFastCopyOf<int>();
+}
+
+
+
+template <class _elementType>
+void vctFixedSizeVectorTest::TestZeros(void) {
+    enum {SIZE = 7};
+    typedef _elementType value_type;
+    
+    // dynamic vector
+    vctFixedSizeVector<value_type, 2 * SIZE> destination;
+    CPPUNIT_ASSERT(destination.Zeros());
+    CPPUNIT_ASSERT(destination.Equal(static_cast<value_type>(0)));
+
+    // test for not compact (every other element)
+    vctFixedSizeVectorRef<value_type, SIZE, 2> nonCompact(destination.Pointer());
+    CPPUNIT_ASSERT(!nonCompact.Zeros());
+    CPPUNIT_ASSERT(nonCompact.Equal(static_cast<value_type>(0)));
+}
+
+void vctFixedSizeVectorTest::TestZerosDouble(void) {
+    TestZeros<double>();
+}
+void vctFixedSizeVectorTest::TestZerosFloat(void) {
+    TestZeros<float>();
+}
+void vctFixedSizeVectorTest::TestZerosInt(void) {
+    TestZeros<int>();
 }
 
 

@@ -27,16 +27,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <iostream>
 #include <string>
+#include <cisstCommon.h>
+#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
 
-#ifdef __GNUC__
-#include <curses.h>
-#include <iostream>
-#include <stdio.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#endif // __GNUC__
 
 using namespace std;
 
@@ -50,20 +44,24 @@ class CFPSFilter : public svlFilterBase
 public:
     CFPSFilter() :
         svlFilterBase(),
+		Show(true),
         FrameCount(0)
     {
+        AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
         AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
     }
 
 protected:
-    int Initialize(svlSample* inputdata = 0)
+    int Initialize(svlSample* inputdata)
     {
         OutputData = inputdata;
         return SVL_OK;
     }
 
-    int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata = 0)
+    int ProcessFrame(ProcInfo* procInfo, svlSample* CMN_UNUSED(inputdata) = 0)
     {
+		if (!Show) return SVL_OK;
+
         _OnSingleThread(procInfo) {
             if ((FrameCount % 30) == 0) {
 #ifdef _WIN32
@@ -99,6 +97,9 @@ protected:
         return SVL_OK;
     }
 
+public:
+	bool Show;
+
 private:
     unsigned int FrameCount;
 #ifdef _WIN32
@@ -120,56 +121,59 @@ class CViewerWindowCallback : public svlImageWindowCallbackBase
 public:
     CViewerWindowCallback() : svlImageWindowCallbackBase()
     {
-        FileWriterFilter = 0;
-        ShowFramerate = true;
+		AdjustmentsEnabled = false;
+		MousePressed = false;
+		OffsetX = OffsetY = 0;
+		ImageRectifier = 0;
+        ImageWriterFilter = 0;
+#if (CISST_SVL_HAS_ZLIB == ON)
+        VideoWriterFilter = 0;
+        Recording = false;
+#endif // CISST_SVL_HAS_ZLIB
     }
 
-    void OnNewFrame(unsigned int frameid)
-    {
-        if (ShowFramerate) {
-            if ((frameid % 30) == 0) {
-#ifdef _WIN32
-                DWORD now;
-                now = ::GetTickCount();
-
-                if (frameid > 0) {
-                    DWORD msec = now - StartMSec;
-                    printf("\rFrame #: %07d; %02.2f frames per second  ", frameid, (double)30000 / msec);
-                }
-
-                StartMSec = now;
-#endif // _WIN32
-
-#ifdef __GNUC__
-                timeval now;
-                gettimeofday(&now, 0);
-
-                if (frameid > 0) {
-                    int sec = now.tv_sec - StartSec;
-                    int usec = now.tv_usec - StartUSec;
-                    usec += 1000000 * sec;
-                    printf("\rFrame #: %07d; %02.2f frames per second  ", frameid, (double)30000000 / usec);
-                    fflush(stdout);
-                }
-
-                StartSec = now.tv_sec;
-                StartUSec = now.tv_usec;
-#endif // __GNUC__
-            }
-        }
-    }
-
-    void OnUserEvent(unsigned int winid, bool ascii, unsigned int eventid)
+    void OnUserEvent(unsigned int CMN_UNUSED(winid), bool ascii, unsigned int eventid)
     {
         // handling user inputs
         if (ascii) {
             switch (eventid) {
+#if (CISST_SVL_HAS_ZLIB == ON)
                 case ' ':
                 {
-                    if (FileWriterFilter) {
-                        FileWriterFilter->Record(1);
-                        cout << endl << " >>> Image files saved <<<" << endl;
+                    if (VideoWriterFilter) {
+                        if (Recording) {
+                            VideoWriterFilter->Pause();
+                            Recording = false;
+                            cout << endl << " >>> Recording paused <<<" << endl;
+                        }
+                        else {
+                            VideoWriterFilter->Record(-1);
+                            Recording = true;
+                            cout << endl << " >>> Recording started <<<" << endl;
+                        }
                     }
+                }
+                break;
+#endif // CISST_SVL_HAS_ZLIB
+
+                case 's':
+                {
+                    if (ImageWriterFilter) {
+                        ImageWriterFilter->Record(1);
+                        cout << endl << " >>> Snapshots saved <<<" << endl;
+                    }
+                }
+                break;
+
+                case 'a':
+                {
+					AdjustmentsEnabled = AdjustmentsEnabled ? false : true;
+					if (AdjustmentsEnabled) {
+						cout << endl << " >>> Adjustments  enabled <<<" << endl;
+					}
+					else {
+						cout << endl << " >>> Adjustments disabled <<<" << endl;
+					}
                 }
                 break;
 
@@ -177,18 +181,53 @@ public:
                     return;
             }
         }
+		else {
+
+			switch (eventid) {
+				case winInput_LBUTTONDOWN:
+                    if (AdjustmentsEnabled && !MousePressed) {
+						MousePressed = true;
+						GetMousePos(MouseOriginX, MouseOriginY);
+						MouseOriginX += OffsetX;
+						MouseOriginY += OffsetY;
+					}
+				break;
+
+				case winInput_LBUTTONUP:
+                    if (MousePressed) {
+						MousePressed = false;
+					}
+				break;
+
+				case winInput_MOUSEMOVE:
+                    if (MousePressed && AdjustmentsEnabled && ImageRectifier) {
+						int x, y;
+						GetMousePos(x, y);
+						OffsetX = MouseOriginX - x;
+						OffsetY = MouseOriginY - y;
+						ImageRectifier->SetSimpleTransform(OffsetX / 2 + (OffsetX % 2), OffsetY /2 + (OffsetY % 2), SVL_LEFT);
+						ImageRectifier->SetSimpleTransform(OffsetX / -2, OffsetY / -2, SVL_RIGHT);
+					}
+				break;
+
+				default:
+					return;
+			}
+		}
     }
 
-    svlImageFileWriter* FileWriterFilter;
-
-    bool ShowFramerate;
-#ifdef _WIN32
-    DWORD StartMSec;
-#endif // _WIN32
-#ifdef __GNUC__
-    unsigned int StartSec;
-    unsigned int StartUSec;
-#endif // __GNUC__
+	bool AdjustmentsEnabled;
+	bool MousePressed;
+	int OffsetX;
+	int OffsetY;
+	int MouseOriginX;
+	int MouseOriginY;
+    svlFilterImageRectifier* ImageRectifier;
+    svlFilterImageFileWriter* ImageWriterFilter;
+#if (CISST_SVL_HAS_ZLIB == ON)
+    svlFilterVideoFileWriter* VideoWriterFilter;
+    bool Recording;
+#endif // CISST_SVL_HAS_ZLIB
 };
 
 
@@ -196,15 +235,24 @@ public:
 //  CameraViewer  //
 ////////////////////
 
-int CameraViewer(bool interpolation, int width, int height)
+int CameraViewer(bool interpolation, bool save, int width, int height, int fullscreen, int offsetx)
 {
+#if (CISST_SVL_HAS_ZLIB == OFF)
+    save = false;
+#endif // CISST_SVL_HAS_ZLIB
+
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(4);
-    svlVideoCaptureSource viewer_source(true);
-    svlImageResizer viewer_resizer;
-    svlImageWindow viewer_window;
+    svlStreamManager viewer_stream(8);
+    svlFilterSourceVideoCapture viewer_source(true);
+    svlFilterImageRectifier viewer_rectifier;
+    svlFilterImageResizer viewer_resizer;
+    svlFilterImageWindow viewer_window;
+    svlFilterStereoImageJoiner viewer_joiner;
     CViewerWindowCallback viewer_window_cb;
-    svlImageFileWriter viewer_writer;
+    svlFilterImageFileWriter viewer_imagewriter;
+#if (CISST_SVL_HAS_ZLIB == ON)
+    svlFilterVideoFileWriter viewer_videowriter;
+#endif // CISST_SVL_HAS_ZLIB
     CFPSFilter viewer_fps;
 
     // setup source
@@ -215,29 +263,88 @@ int CameraViewer(bool interpolation, int width, int height)
         viewer_source.DialogSetup(SVL_RIGHT);
     }
 
-    // setup writer
-    viewer_writer.SetFilePath("left_", "bmp", SVL_LEFT);
-    viewer_writer.SetFilePath("right_", "bmp", SVL_RIGHT);
-    viewer_writer.Pause();
+#if (CISST_SVL_HAS_ZLIB == ON)
+    // setup video writer
+    if (save == true) {
+        viewer_videowriter.DialogFilePath(SVL_LEFT);
+        viewer_videowriter.DialogFilePath(SVL_RIGHT);
+        viewer_videowriter.SetCompressionLevel(1); // 0-9
+        viewer_videowriter.Pause();
+    }
+#endif // CISST_SVL_HAS_ZLIB
+
+    // setup image writer
+    viewer_imagewriter.SetFilePath("left_", "bmp", SVL_LEFT);
+    viewer_imagewriter.SetFilePath("right_", "bmp", SVL_RIGHT);
+    viewer_imagewriter.EnableTimestamps();
+    viewer_imagewriter.Pause();
 
     // setup resizer
     if (width > 0 && height > 0) {
         viewer_resizer.EnableInterpolation(interpolation);
-        viewer_resizer.SetOutputSize(width, height, SVL_LEFT);
-        viewer_resizer.SetOutputSize(width, height, SVL_RIGHT);
+		if (fullscreen == 0) {
+		    viewer_resizer.SetOutputSize(width, height / 2, SVL_LEFT);
+			viewer_resizer.SetOutputSize(width, height / 2, SVL_RIGHT);
+		}
+		else if (fullscreen == 1) {
+		    viewer_resizer.SetOutputSize(width / 2, height, SVL_LEFT);
+			viewer_resizer.SetOutputSize(width / 2, height, SVL_RIGHT);
+		}
+		else if (fullscreen == 2) {
+		    viewer_resizer.SetOutputSize(width, height / 2, SVL_LEFT);
+			viewer_resizer.SetOutputSize(width, height / 2, SVL_RIGHT);
+			viewer_joiner.SetLayout(svlFilterStereoImageJoiner::VerticalInterlaced);
+		}
+		else {
+		    viewer_resizer.SetOutputSize(width, height, SVL_LEFT);
+			viewer_resizer.SetOutputSize(width, height, SVL_RIGHT);
+		}
     }
 
     // setup image window
-    viewer_window_cb.FileWriterFilter = &viewer_writer;
+    viewer_window_cb.ImageWriterFilter = &viewer_imagewriter;
+	viewer_window_cb.ImageRectifier = &viewer_rectifier;
+#if (CISST_SVL_HAS_ZLIB == ON)
+    if (save == true) {
+        viewer_window_cb.VideoWriterFilter = &viewer_videowriter;
+    }
+#endif // CISST_SVL_HAS_ZLIB
     viewer_window.SetCallback(&viewer_window_cb);
     viewer_window.SetTitleText("Camera Viewer");
+//    viewer_window.EnableTimestampInTitle();
+	if (fullscreen >= 0) {
+		viewer_window.SetFullScreen();
+		if (fullscreen == 0) {
+			viewer_window.SetWindowPosition(offsetx, 0, SVL_LEFT);
+			viewer_window.SetWindowPosition(offsetx, height / 2, SVL_RIGHT);
+		}
+		else if (fullscreen == 1) {
+			viewer_window.SetWindowPosition(offsetx, 0, SVL_LEFT);
+			viewer_window.SetWindowPosition(offsetx + width / 2, 0, SVL_RIGHT);
+		}
+		else if (fullscreen == 2) {
+			viewer_window.SetWindowPosition(offsetx, 0);
+		}
+		viewer_rectifier.EnableSimpleMode();
+	}
 
     // chain filters to pipeline
     if (viewer_stream.Trunk().Append(&viewer_source) != SVL_OK) goto labError;
-    if (viewer_stream.Trunk().Append(&viewer_writer) != SVL_OK) goto labError;
+#if (CISST_SVL_HAS_ZLIB == ON)
+    if (save == true) {
+        if (viewer_stream.Trunk().Append(&viewer_videowriter) != SVL_OK) goto labError;
+    }
+#endif // CISST_SVL_HAS_ZLIB
+    if (viewer_stream.Trunk().Append(&viewer_imagewriter) != SVL_OK) goto labError;
+	if (fullscreen >= 0) {
+        if (viewer_stream.Trunk().Append(&viewer_rectifier) != SVL_OK) goto labError;
+	}
     if (width > 0 && height > 0) {
         if (viewer_stream.Trunk().Append(&viewer_resizer) != SVL_OK) goto labError;
     }
+	if (fullscreen == 2) {
+        if (viewer_stream.Trunk().Append(&viewer_joiner) != SVL_OK) goto labError;
+	}
     if (viewer_stream.Trunk().Append(&viewer_fps) != SVL_OK) goto labError;
     if (viewer_stream.Trunk().Append(&viewer_window) != SVL_OK) goto labError;
 
@@ -248,88 +355,48 @@ int CameraViewer(bool interpolation, int width, int height)
 
     cerr << "Done" << endl;
 
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // modify terminal settings for single key inputs
-    struct  termios ksettings;
-    struct  termios new_ksettings;
-    int     kbrd;
-    kbrd = open("/dev/tty",O_RDWR);
-    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCGETS, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TCSETS, &new_ksettings);
-        ioctl(kbrd, TIOCNOTTY);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCGETA, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TIOCSETA, &new_ksettings);
-        ////////////////////////////////////////////////////
-    #endif // (CISST_OS == CISST_DARWIN)
-#endif
-
     // wait for keyboard input in command window
-#ifdef _WIN32
     int ch;
-#endif
-#ifdef __GNUC__
-    char ch;
-#endif
 
     do {
         cerr << endl << "Keyboard commands:" << endl << endl;
         cerr << "  In image window:" << endl;
-        cerr << "    SPACE - Save image snapshots" << endl;
+        cerr << "    'a'   - Enable/disable adjustments" << endl;
+#if (CISST_SVL_HAS_ZLIB == ON)
+        if (save == true) {
+            cerr << "    SPACE - Video recorder control: Record/Pause" << endl;
+        }
+#endif // CISST_SVL_HAS_ZLIB
+        cerr << "    's'   - Take image snapshots" << endl;
         cerr << "  In command window:" << endl;
-        cerr << "    'i'   - Adjust image properties" << endl;
-        cerr << "    's'   - Save image snapshots" << endl;
+        cerr << "    '1'   - Adjust LEFT image properties" << endl;
+        cerr << "    '2'   - Adjust RIGHT image properties" << endl;
         cerr << "    'q'   - Quit" << endl << endl;
 
-#ifdef _WIN32
-        ch = _getch();
-#endif
-#ifdef __GNUC__
-        ch = getchar();
-#endif
+        ch = cmnGetChar();
+
         switch (ch) {
-            case 'i':
-                // Adjust image properties
-                viewer_window_cb.ShowFramerate = false;
+            case '1':
+                viewer_fps.Show = false;
                 cerr << endl << endl;
-                viewer_source.DialogImageProperties();
+                viewer_source.DialogImageProperties(SVL_LEFT);
                 cerr << endl;
-                viewer_window_cb.ShowFramerate = true;
+                viewer_fps.Show = true;
             break;
 
-            case 's':
-                viewer_writer.Record(1);
-                cout << endl << " >>> Image files saved <<<" << endl;
+            case '2':
+                viewer_fps.Show = false;
+                cerr << endl << endl;
+                viewer_source.DialogImageProperties(SVL_RIGHT);
+                cerr << endl;
+                viewer_fps.Show = true;
             break;
 
             default:
             break;
         }
+        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
-
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // reset terminal settings    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCSETS, &ksettings);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCSETA, &ksettings);
-    #endif // (CISST_OS == CISST_DARWIN)
-    
-    close(kbrd);
-    ////////////////////////////////////////////////////
-#endif
 
     cerr << endl;
 
@@ -340,7 +407,7 @@ int CameraViewer(bool interpolation, int width, int height)
     viewer_source.SaveSettings("stereodevice.dat");
 
     // destroy pipeline
-    viewer_stream.EmptyFilterList();
+    viewer_stream.RemoveAll();
 
 labError:
     return 0;
@@ -382,19 +449,22 @@ int ParseNumber(char* string, unsigned int maxlen)
 
 int main(int argc, char** argv)
 {
-    cerr << endl << "svlCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
+    cerr << endl << "stereoTutorialStereoCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl;
-    cerr << "Enter 'svlCameraViewer -?' for help." << endl;
+    cerr << "Enter 'stereoTutorialStereoCameraViewer -?' for help." << endl;
 
     //////////////////////////////
     // parsing arguments
-    int i, options, ivalue, width, height;
-    bool interpolation;
+    int i, options, ivalue, width, height, fullscreen, offsetx;
+    bool interpolation, save;
 
     options = argc - 1;
+    save = false;
     interpolation = false;
     width = -1;
     height = -1;
+	fullscreen = -1;
+	offsetx = 0;
 
     for (i = 1; i <= options; i ++) {
         if (argv[i][0] != '-') continue;
@@ -402,21 +472,40 @@ int main(int argc, char** argv)
         switch (argv[i][1]) {
             case '?':
                 cerr << "Command line format:" << endl;
-                cerr << "     svlCameraViewer [options]" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer [options]" << endl;
                 cerr << "Options:" << endl;
+#if (CISST_SVL_HAS_ZLIB == ON)
+                cerr << "     -v        Save video files" << endl;
+#endif // CISST_SVL_HAS_ZLIB
                 cerr << "     -i        Interpolation ON [default: OFF]" << endl;
                 cerr << "     -w#       Displayed image width" << endl;
                 cerr << "     -h#       Displayed image height" << endl;
+				cerr << "     -f#       Fullscreen mode" << endl;
+				cerr << "                  [width and height needs to be specified, default: OFF]" << endl;
+				cerr << "                  0 - vertical" << endl;
+				cerr << "                  1 - horizontal" << endl;
+				cerr << "                  2 - interlaced" << endl;
+                cerr << "     -x#       Horizontal window position [used only with -f]" << endl;
                 cerr << "Examples:" << endl;
-                cerr << "     svlCameraViewer" << endl;
-                cerr << "     svlCameraViewer -w800 -h600" << endl;
-                cerr << "     svlCameraViewer -i -w1024 -h768" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer" << endl;
+#if (CISST_SVL_HAS_ZLIB == ON)
+                cerr << "     stereoTutorialStereoCameraViewer -v -i -w800 -h600" << endl;
+#else // CISST_SVL_HAS_ZLIB
+                cerr << "     stereoTutorialStereoCameraViewer -i -w1024 -h768" << endl;
+                cerr << "     stereoTutorialStereoCameraViewer -i -w1600 -h1200 -f2 -x160" << endl;
+#endif // CISST_SVL_HAS_ZLIB
                 return 1;
             break;
 
             case 'i':
                 interpolation = true;
             break;
+
+#if (CISST_SVL_HAS_ZLIB == ON)
+            case 'v':
+                save = true;
+            break;
+#endif // CISST_SVL_HAS_ZLIB
 
             case 'w':
                 ivalue = ParseNumber(argv[i] + 2, 4);
@@ -428,6 +517,20 @@ int main(int argc, char** argv)
                 if (ivalue > 0) height = ivalue;
             break;
 
+            case 'f':
+				if (width > 0 && height > 0) {
+					ivalue = ParseNumber(argv[i] + 2, 1);
+					if (ivalue >= 0 && ivalue <= 2) fullscreen = ivalue;
+				}
+            break;
+
+            case 'x':
+				if (width > 0 && height > 0 && fullscreen >= 0) {
+					ivalue = ParseNumber(argv[i] + 2, 4);
+					if (ivalue > 0) offsetx = ivalue;
+				}
+            break;
+
             default:
                 // NOP
             break;
@@ -437,7 +540,7 @@ int main(int argc, char** argv)
     //////////////////////////////
     // starting viewer
 
-    CameraViewer(interpolation, width, height);
+    CameraViewer(interpolation, save, width, height, fullscreen, offsetx);
 
     cerr << "Quit" << endl;
     return 1;

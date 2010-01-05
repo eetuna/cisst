@@ -39,14 +39,14 @@ http://www.cisst.org/cisst/license.txt.
 
 #ifndef DOXYGEN
 // forward declaration of auxiliary function to multiply matrix * vector
-template<class _resultVectorOwnerType, class _matrixOwnerType, class _vectorOwnerType, class _elementType>
+template <class _resultVectorOwnerType, class _matrixOwnerType, class _vectorOwnerType, class _elementType>
 inline
 void vctMultiplyMatrixVector(vctDynamicVectorBase<_resultVectorOwnerType, _elementType> & result,
                              const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & matrix,
                              const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & vector);
 
 // forward declaration of auxiliary function to multiply matrix * vector
-template<class _resultVectorOwnerType, class _vectorOwnerType, class _matrixOwnerType, class _elementType>
+template <class _resultVectorOwnerType, class _vectorOwnerType, class _matrixOwnerType, class _elementType>
 inline
 void vctMultiplyVectorMatrix(vctDynamicVectorBase<_resultVectorOwnerType, _elementType> & result,
                              const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & vector,
@@ -61,7 +61,7 @@ void vctMultiplyVectorMatrix(vctDynamicVectorBase<_resultVectorOwnerType, _eleme
   \sa vctDynamicConstVectorBase
 
 */
-template<class _vectorOwnerType, typename _elementType>
+template <class _vectorOwnerType, typename _elementType>
 class vctDynamicVectorBase : public vctDynamicConstVectorBase<_vectorOwnerType, _elementType>
 {
 public:
@@ -136,12 +136,12 @@ public:
     
     /*! Access an element by index.
       \return a reference to the element[index] */    
-    reference operator[](int index) {
+    reference operator[](index_type index) {
         return *Pointer(index);
     }
 
     /* documented in base class */
-    const_reference operator[](int index) const {
+    const_reference operator[](index_type index) const {
         return BaseType::operator[](index);
     }
     
@@ -156,12 +156,12 @@ public:
     /*! Addition to the STL requirements.  Return a pointer to an element of the
       container, specified by its index.
     */
-    pointer Pointer(int index = 0) {
+    pointer Pointer(index_type index = 0) {
         return this->Vector.Pointer(index);
     }
 
     /* documented in base class */
-    const_pointer Pointer(int index = 0) const {
+    const_pointer Pointer(index_type index = 0) const {
         return BaseType::Pointer(index);
     }
 
@@ -171,23 +171,23 @@ public:
       or inconvenient.
 
       \return a non-const reference to element[index] */
-    reference at(size_type index) throw(std::out_of_range) {
+    reference at(index_type index) throw(std::out_of_range) {
         this->ThrowUnlessValidIndex(index);
         return *(Pointer(index));
     }
 
     /* documented in base class */
-    const_reference at(size_type index) const throw(std::out_of_range) {
+    const_reference at(index_type index) const throw(std::out_of_range) {
         return BaseType::at(index);
     }
 
     /*! Overloaded operator () for simplified (non-const) element access with bounds checking */
-    inline reference operator() (size_type index) throw(std::out_of_range) {
+    inline reference operator() (index_type index) throw(std::out_of_range) {
         return this->at(index);
     }
 
     /* documented in base class */
-    inline const_reference operator() (size_type index) const throw(std::out_of_range) {
+    inline const_reference operator() (index_type index) const throw(std::out_of_range) {
         return BaseType::operator()(index);
     }
 
@@ -196,12 +196,12 @@ public:
       to access an element without any bounds checking.
 
       \return a reference to the element at index */
-    reference Element(size_type index) {
+    reference Element(index_type index) {
         return *(Pointer(index));
     }
 
     /* documented in base class */
-    const_reference Element(size_type index) const {
+    const_reference Element(index_type index) const {
         return BaseType::Element(index);
     }
 
@@ -243,7 +243,7 @@ public:
       \param other The vector to be copied.
     */
     //@{
-    template<class __vectorOwnerType, typename __elementType>
+    template <class __vectorOwnerType, typename __elementType>
     inline ThisType & Assign(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
         vctDynamicVectorLoopEngines::
             VoVi<typename vctUnaryOperations<value_type,
@@ -252,12 +252,12 @@ public:
         return *this;
     }
 
-    template<class __vectorOwnerType, typename __elementType>
+    template <class __vectorOwnerType, typename __elementType>
     inline ThisType & operator = (const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
         return this->Assign(other);
     }
 
-    template<unsigned int __size, int __stride, class __elementType, class __dataPtrType>
+    template <size_type __size, stride_type __stride, class __elementType, class __dataPtrType>
     inline ThisType & Assign(const vctFixedSizeConstVectorBase<__size, __stride, __elementType, __dataPtrType>
                              & other) {
         vctDynamicVectorLoopEngines::
@@ -284,18 +284,22 @@ public:
       vectors for API consistency (usable in templated code).  There
       is obviously not resize involved on fixed size vectors.
 
+      \note If the destination vector doesn't have the same size as
+      the source and can not be resized, an exception will be thrown
+      by the Assign method called internally.
+
       \param other The vector to be copied.
     */
     //@{
     template <class __vectorOwnerType, typename __elementType>
-    inline void ForceAssign(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
-        this->Assign(other);
+    inline ThisType & ForceAssign(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
+        return this->Assign(other);
     }
     
-    template <unsigned int __size, int __stride, class __elementType, class __dataPtrType>
-    inline void ForceAssign(const vctFixedSizeConstVectorBase<__size, __stride, __elementType, __dataPtrType>
+    template <size_type __size, stride_type __stride, class __elementType, class __dataPtrType>
+    inline ThisType & ForceAssign(const vctFixedSizeConstVectorBase<__size, __stride, __elementType, __dataPtrType>
                                   & other) {
-        this->Assign(other);
+        return this->Assign(other);
     }
     //@}
 
@@ -342,7 +346,7 @@ public:
         to turn off the different safety checks for each FastCopyOf.
         \code
         bool canUseFastCopy = destination.FastCopyCompatible(source);
-        unsigned int index;
+        vct::index_type index;
         for (index = 0; index < 1000; index++) {
             DoSomethingUseful(source);
             if (canUseFastCopy) {
@@ -359,7 +363,7 @@ public:
         avoid safety checks, use with extreme caution.
      */
     //@{
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline bool FastCopyOf(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & source,
                            bool performSafetyChecks = true)
         throw(std::runtime_error)
@@ -367,7 +371,7 @@ public:
         return vctFastCopy::VectorCopy(*this, source, performSafetyChecks);
     }
 
-    template<unsigned int __size, int __stride, class __dataPtrType>
+    template <size_type __size, stride_type __stride, class __dataPtrType>
     inline bool FastCopyOf(const vctFixedSizeConstVectorBase<__size, __stride, value_type, __dataPtrType> & source,
                            bool performSafetyChecks = true)
         throw(std::runtime_error)
@@ -412,7 +416,7 @@ public:
     */
 
     inline ThisType & Assign(value_type element0, value_type element1, ...) throw(std::runtime_error) {
-        const unsigned int size = this->size();
+        const size_type size = this->size();
         if (size < 2) {
             cmnThrow(std::runtime_error("vctDynamicVector: Assign from va_list requires size >= 2"));
         }
@@ -420,7 +424,7 @@ public:
         this->at(1) = element1;
         va_list nextArg;
         va_start(nextArg, element1);
-        for (unsigned int i = 2; i < size; ++i) {
+        for (index_type i = 2; i < size; ++i) {
             this->at(i) = value_type( va_arg(nextArg, ElementVaArgPromotion) );
         }
         va_end(nextArg);
@@ -434,7 +438,7 @@ public:
       embedding vectors from R^n into R^{n+1} or into homogeneous
       space.
     */
-    template<class __vectorOwnerType, class __elementType>
+    template <class __vectorOwnerType, class __elementType>
     inline ThisType & ConcatenationOf(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & otherVector,
                                       __elementType lastElement) {
 	vctDynamicVectorRef<value_type> firstElements(*this, 0, otherVector.size() - 1);
@@ -627,10 +631,10 @@ public:
       requirement of order or uniqueness in the indexes sequence, and no verification
       that the indexes are valid.
     */
-    template<class __inputVectorOwner, class __indexVectorOwner>
+    template <class __inputVectorOwner, class __indexVectorOwner>
     inline void SelectFrom(
         const vctDynamicConstVectorBase<__inputVectorOwner, _elementType> & input,
-        const vctDynamicConstVectorBase<__indexVectorOwner, unsigned int> & index)
+        const vctDynamicConstVectorBase<__indexVectorOwner, index_type> & index)
     {
         vctDynamicVectorLoopEngines::SelectByIndex::Run(*this, input, index);
     }
@@ -639,7 +643,7 @@ public:
       to check that the size of the vector is 3, and can only be
       performed on arguments vectors of size 3.
     */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline void CrossProductOf(
             const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & inputVector1,
             const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & inputVector2) 
@@ -672,7 +676,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline ThisType & SumOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
                             const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2) {
         vctDynamicVectorLoopEngines::
@@ -682,7 +686,7 @@ public:
     }    
     
     /* documented above */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline ThisType & DifferenceOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
                                    const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2) {
         vctDynamicVectorLoopEngines::
@@ -692,7 +696,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline ThisType & ElementwiseProductOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
                                            const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2) {
         vctDynamicVectorLoopEngines::
@@ -702,7 +706,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline ThisType & ElementwiseRatioOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
                                          const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2) {
         vctDynamicVectorLoopEngines::
@@ -712,7 +716,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline ThisType & ElementwiseMinOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
                                        const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2) {
         vctDynamicVectorLoopEngines::
@@ -722,7 +726,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType1, class __vectorOwnerType2>
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
     inline ThisType & ElementwiseMaxOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
                                        const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2) {
         vctDynamicVectorLoopEngines::
@@ -750,7 +754,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & Add(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVi<typename vctStoreBackBinaryOperations<value_type>::Addition >::
@@ -759,7 +763,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & Subtract(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVi< typename vctStoreBackBinaryOperations<value_type>::Subtraction >::
@@ -768,7 +772,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ElementwiseMultiply(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVi< typename vctStoreBackBinaryOperations<value_type>::Multiplication >::
@@ -777,7 +781,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ElementwiseDivide(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVi< typename vctStoreBackBinaryOperations<value_type>::Division >::
@@ -786,7 +790,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ElementwiseMin(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVi< typename vctStoreBackBinaryOperations<value_type>::Minimum >::
@@ -795,7 +799,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ElementwiseMax(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVi< typename vctStoreBackBinaryOperations<value_type>::Maximum >::
@@ -804,13 +808,13 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & operator += (const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         return this->Add(otherVector);
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & operator -= (const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         return this->Subtract(otherVector);
     }
@@ -822,7 +826,7 @@ public:
     //@{
     /*! Swap the elements of both vectors with each other.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & SwapElementsWith(vctDynamicVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VioVio<typename vctStoreBackBinaryOperations<value_type>::Swap >::
@@ -846,7 +850,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & SumOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector, 
                             const value_type scalar) {
         vctDynamicVectorLoopEngines::
@@ -856,7 +860,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & DifferenceOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector,
                                    const value_type scalar) {
         vctDynamicVectorLoopEngines::
@@ -866,7 +870,7 @@ public:
     }
     
     /* documented above */    
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ProductOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector,
                                 const value_type scalar) {
         vctDynamicVectorLoopEngines::
@@ -876,7 +880,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & RatioOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector,
                               const value_type scalar) {
         vctDynamicVectorLoopEngines::
@@ -886,7 +890,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ClippedAboveOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector,
                                      const value_type upperBound) {
         vctDynamicVectorLoopEngines::
@@ -896,7 +900,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ClippedBelowOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector,
                                      const value_type lowerBound) {
         vctDynamicVectorLoopEngines::
@@ -923,7 +927,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & SumOf(const value_type scalar,
                             const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector) {
         vctDynamicVectorLoopEngines::
@@ -933,7 +937,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & DifferenceOf(const value_type scalar,
                                    const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector) {
         vctDynamicVectorLoopEngines::
@@ -943,7 +947,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ProductOf(const value_type scalar,
                                 const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector) {
         vctDynamicVectorLoopEngines::
@@ -953,7 +957,7 @@ public:
     }
     
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & RatioOf(const value_type scalar,
                               const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector) {
         vctDynamicVectorLoopEngines::
@@ -963,7 +967,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ClippedAboveOf(const value_type upperBound,
                                      const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector) {
         vctDynamicVectorLoopEngines::
@@ -973,7 +977,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & ClippedBelowOf(const value_type lowerBound,
                                      const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & vector) {
         vctDynamicVectorLoopEngines::
@@ -1068,7 +1072,7 @@ public:
     }
     //@}
 
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & AddProductOf(const value_type scalar,
                                    const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector)
     {
@@ -1096,7 +1100,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __matrixOwnerType, class __vectorOwnerType>
+    template <class __matrixOwnerType, class __vectorOwnerType>
     inline ThisType & ProductOf(const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix,
                                 const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & inputVector) {
         vctMultiplyMatrixVector(*this, inputMatrix, inputVector);
@@ -1113,7 +1117,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __vectorOwnerType, class __matrixOwnerType>
+    template <class __vectorOwnerType, class __matrixOwnerType>
     inline ThisType & ProductOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & inputVector,
                                 const vctDynamicConstMatrixBase<__matrixOwnerType, _elementType> & inputMatrix) {
         vctMultiplyVectorMatrix(*this, inputVector, inputMatrix);
@@ -1161,7 +1165,7 @@ public:
       
       \return The vector "this" modified.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & AbsOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VoVi<typename vctUnaryOperations<value_type>::AbsValue>::
@@ -1170,7 +1174,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & NegationOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VoVi<typename vctUnaryOperations<value_type>::Negation>::
@@ -1179,7 +1183,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & FloorOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VoVi<typename vctUnaryOperations<value_type>::Floor>::
@@ -1188,7 +1192,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & CeilOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) {
         vctDynamicVectorLoopEngines::
             VoVi<typename vctUnaryOperations<value_type>::Ceil>::
@@ -1197,7 +1201,7 @@ public:
     }
 
     /* documented above */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     inline ThisType & NormalizedOf(const vctDynamicConstVectorBase<__vectorOwnerType, _elementType> & otherVector) throw(std::runtime_error) {
         *this = otherVector;
         this->NormalizedSelf();

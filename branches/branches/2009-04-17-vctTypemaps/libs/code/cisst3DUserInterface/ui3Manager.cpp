@@ -23,9 +23,14 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-#include <cisst3DUserInterface/ui3MasterArm.h>
+#include <cisst3DUserInterface/ui3VTKRenderer.h>
+#include <cisst3DUserInterface/ui3ImagePlane.h>
+#include <cisst3DUserInterface/ui3SlaveArm.h>
+#include <cisst3DUserInterface/ui3VisibleList.h>
+#include <cisst3DUserInterface/ui3Widget3D.h>
 
 CMN_IMPLEMENT_SERVICES(ui3Manager)
+
 
 #define VIDEO_BACKGROUND_DISTANCE       10000.0
 
@@ -37,17 +42,7 @@ ui3Manager::ui3Manager(const std::string & name):
     ActiveBehavior(0),
     SceneManager(0),
     RendererThread(0),
-    RightCursor(0),
-    LeftCursor(0),
-    RightButtonPressed(false),
-    RightButtonReleased(false),
-    LeftButtonPressed(false),
-    LeftButtonReleased(false),
-    MaM(true),
-    RightMasterClutch(false),
-    LeftMasterClutch(false),
-    RightMasterExists(false),
-    LeftMasterExists(false)
+    HasMaMDevice(false)
 {
     // add video source interfaces
     AddStream(svlTypeImageRGB,       "MonoVideo");
@@ -57,22 +52,6 @@ ui3Manager::ui3Manager(const std::string & name):
     AddStream(svlTypeImageRGBStereo, "StereoVideo#2");
     AddStream(svlTypeImageRGBStereo, "StereoVideo#3");
 
-    // populate the state table
-    this->StateTable.AddData(this->RightMasterPosition, "RightMasterPosition");
-    this->StateTable.AddData(this->LeftMasterPosition, "LeftMasterPosition");
-
-    // create an interface for all behaviors to access some state information
-    mtsProvidedInterface * behaviorsInterface = 
-        this->AddProvidedInterface("BehaviorsInterface");
-    if (behaviorsInterface) {
-        behaviorsInterface->AddCommandReadState(this->StateTable, this->RightMasterPosition,
-                                                "RightMasterPosition");
-        behaviorsInterface->AddCommandReadState(this->StateTable, this->LeftMasterPosition,
-                                                "LeftMasterPosition");
-    } else {
-        CMN_LOG_CLASS(1) << "constructor: can not add provided interface \"BehaviorsInterface\"" << std::endl;
-    }
-
     // add the UI manager to the task manager
     this->TaskManager = mtsTaskManager::GetInstance();
     CMN_ASSERT(TaskManager);
@@ -81,6 +60,7 @@ ui3Manager::ui3Manager(const std::string & name):
     this->Manager = this;
     this->AddMenuBar(true);
 }
+
 
 ui3Manager::~ui3Manager()
 {
@@ -93,121 +73,32 @@ ui3Manager::~ui3Manager()
 }
 
 
-bool ui3Manager::SetupRightMaster(mtsDevice * positionDevice, const std::string & positionInterface,
-                                  mtsDevice * buttonDevice, const std::string & buttonInterface,
-                                  mtsDevice * clutchDevice, const std::string & clutchInterface,
-                                  const vctFrm3 & transformation, double scale)
-{
-    // add required interface for master arms
-    mtsRequiredInterface * requiredInterface;
-
-    // setup right master arm required interface 
-    requiredInterface = this->AddRequiredInterface("RightMaster");
-    if (requiredInterface) {
-        // bound the mtsFunction to the command provided by the interface 
-        requiredInterface->AddFunction("GetPositionCartesian", RightMasterGetCartesianPosition, mtsRequired);
-    } else {
-        CMN_LOG_CLASS(1) << "SetupRightMaster: failed to add \"RightMaster\" interface, are you trying to set this arm twice?"
-                         << std::endl;
-        return false;
-    }
-    // connect the right master device to the right master required interface
-    this->TaskManager->Connect(this->GetName(), "RightMaster",
-                               positionDevice->GetName(), positionInterface);
-
-    // setup right master button required interface 
-    requiredInterface = this->AddRequiredInterface("RightMasterButton");
-    if (requiredInterface) {
-        requiredInterface->AddEventHandlerWrite(&ui3Manager::RightMasterButtonEventHandler, this,
-                                                "Button", prmEventButton());
-    }
-    // connect the right master button device to the right master button required interface
-    this->TaskManager->Connect(this->GetName(), "RightMasterButton",
-                               buttonDevice->GetName(), buttonInterface);
-
-    // setup right master clutch required interface 
-    requiredInterface = this->AddRequiredInterface("RightMasterClutch");
-    if (requiredInterface) {
-        requiredInterface->AddEventHandlerWrite(&ui3Manager::RightMasterClutchEventHandler, this,
-                                                "Button", prmEventButton());
-    }
-    // connect the right master clutch device to the right master clutch required interface
-    this->TaskManager->Connect(this->GetName(), "RightMasterClutch",
-                               clutchDevice->GetName(), clutchInterface);
-    
-    // keep the transformation and scale
-    this->RightTransform.Assign(transformation);
-    this->RightScale = scale;
-
-    this->RightMasterExists = true;
-    return true;
-}
-
-
-bool ui3Manager::SetupLeftMaster(mtsDevice * positionDevice, const std::string & positionInterface,
-                                 mtsDevice * buttonDevice, const std::string & buttonInterface,
-                                 mtsDevice * clutchDevice, const std::string & clutchInterface,
-                                 const vctFrm3 & transformation, double scale)
-{
-    // add required interface for master arms
-    mtsRequiredInterface * requiredInterface;
-
-    // setup left master arm required interface 
-    requiredInterface = this->AddRequiredInterface("LeftMaster");
-    if (requiredInterface) {
-        // bound the mtsFunction to the command provided by the interface 
-        requiredInterface->AddFunction("GetPositionCartesian", LeftMasterGetCartesianPosition, mtsRequired);
-    }
-    // connect the left master device to the left master required interface
-    this->TaskManager->Connect(this->GetName(), "LeftMaster",
-                               positionDevice->GetName(), positionInterface);
-
-    // setup left master button required interface 
-    requiredInterface = this->AddRequiredInterface("LeftMasterButton");
-    if (requiredInterface) {
-        requiredInterface->AddEventHandlerWrite(&ui3Manager::LeftMasterButtonEventHandler, this,
-                                                "Button", prmEventButton());
-    }
-    // connect the left master button device to the left master button required interface
-    this->TaskManager->Connect(this->GetName(), "LeftMasterButton",
-                               buttonDevice->GetName(), buttonInterface);
-
-    // setup left master clutch required interface 
-    requiredInterface = this->AddRequiredInterface("LeftMasterClutch");
-    if (requiredInterface) {
-        requiredInterface->AddEventHandlerWrite(&ui3Manager::LeftMasterClutchEventHandler, this,
-                                                "Button", prmEventButton());
-    }
-    // connect the left master clutch device to the left master clutch required interface
-    this->TaskManager->Connect(this->GetName(), "LeftMasterClutch",
-                               clutchDevice->GetName(), clutchInterface);
-    
-    // keep the transformation and scale
-    this->LeftTransform.Assign(transformation);
-    this->LeftScale = scale;
-
-    this->LeftMasterExists = true;
-    return true;
-}
-
-
 bool ui3Manager::SetupMaM(mtsDevice * mamDevice, const std::string & mamInterface)
+{
+    return this->SetupMaM(mamDevice->GetName(), mamInterface);
+}
+
+
+bool ui3Manager::SetupMaM(const std::string & mamDevice, const std::string & mamInterface)
 {
     // add required interface to device to switch on/off master as mouse
     mtsRequiredInterface * requiredInterface = this->AddRequiredInterface("MaM");
-    requiredInterface->AddEventHandlerVoid(&ui3Manager::EnterMaMModeEventHandler, this, "Enter");
-    requiredInterface->AddEventHandlerVoid(&ui3Manager::LeaveMaMModeEventHandler, this, "Leave");
+    requiredInterface->AddEventHandlerWrite(&ui3Manager::MaMModeEventHandler, this, "Button");
 
     // connect the left master device to the right master required interface
     this->TaskManager->Connect(this->GetName(), "MaM",
-                               mamDevice->GetName(), mamInterface);
-    this->HideAll();
-    this->MaM = false;
+                               mamDevice, mamInterface);
+    
+    // update flag
+    this->HasMaMDevice = true;
     return true;
 }
 
 
-bool ui3Manager::AddRenderer(unsigned int width, unsigned int height, int x, int y, vctFrm3 & cameraframe, double viewangle, const std::string & renderername)
+bool ui3Manager::AddRenderer(unsigned int width, unsigned int height,
+                             double zoom, bool borderless, int x, int y,
+                             svlCameraGeometry & camgeometry, unsigned int camid,
+                             const std::string & renderername)
 {
     if (width < 1 || height < 1 || renderername.empty()) return false;
 
@@ -217,10 +108,12 @@ bool ui3Manager::AddRenderer(unsigned int width, unsigned int height, int x, int
 
     renderer->width = width;
     renderer->height = height;
+    renderer->zoom = zoom;
+    renderer->borderless = borderless;
     renderer->windowposx = x;
     renderer->windowposy = y;
-    renderer->cameraframe = cameraframe;
-    renderer->viewangle = viewangle;
+    renderer->camgeometry = camgeometry;
+    renderer->camid = camid;
     renderer->name = renderername;
     renderer->renderer = 0;
     renderer->rendertarget = 0;
@@ -271,8 +164,8 @@ bool ui3Manager::AddVideoBackgroundToRenderer(const std::string & renderername, 
 
 ui3Manager * ui3Manager::GetUIManager(void)
 {
-    CMN_LOG_CLASS(2) << "GetUIManager: Called on ui3Manager itself.  Might reveal an error as this behavior is not \"managed\""
-                     << std::endl;
+    CMN_LOG_CLASS_INIT_WARNING << "GetUIManager: Called on ui3Manager itself.  Might reveal an error as this behavior is not \"managed\""
+                               << std::endl;
     return this;
 }
 
@@ -307,29 +200,23 @@ bool ui3Manager::AddBehavior(ui3BehaviorBase * behavior,
     behavior->ConfigureMenuBar();
 
     // create a required interface for all behaviors to connect with the manager
-    mtsRequiredInterface * managerInterface;
-    managerInterface = behavior->AddRequiredInterface("ManagerInterface");
-    CMN_ASSERT(managerInterface);
-    managerInterface->AddFunction("RightMasterPosition", behavior->RightMasterPositionFunction, mtsRequired);
-    managerInterface->AddFunction("LeftMasterPosition", behavior->LeftMasterPositionFunction, mtsRequired);
+    mtsRequiredInterface * requiredInterface;
 
     // create a required interface for this behavior to connect with the manager
-    managerInterface = behavior->AddRequiredInterface("ManagerInterface" + behavior->GetName());
-    CMN_ASSERT(managerInterface);
-    managerInterface->AddEventHandlerWrite(&ui3BehaviorBase::RightMasterButtonCallback,
-                                           behavior, "RightMasterButton", prmEventButton());
-    managerInterface->AddEventHandlerWrite(&ui3BehaviorBase::LeftMasterButtonCallback,
-                                           behavior, "LeftMasterButton", prmEventButton());
+    requiredInterface = behavior->AddRequiredInterface("ManagerInterface" + behavior->GetName());
+    CMN_ASSERT(requiredInterface);
+    requiredInterface->AddEventHandlerWrite(&ui3BehaviorBase::PrimaryMasterButtonCallback,
+                                            behavior, "PrimaryMasterButton");
+    requiredInterface->AddEventHandlerWrite(&ui3BehaviorBase::SecondaryMasterButtonCallback,
+                                            behavior, "SecondaryMasterButton");
     std::string interfaceName("BehaviorInterface" + behavior->GetName());
     mtsProvidedInterface * providedInterface;
     providedInterface = this->AddProvidedInterface(interfaceName);
-    behavior->RightMasterButtonEvent.Bind(providedInterface->AddEventWrite("RightMasterButton", prmEventButton()));
-    behavior->LeftMasterButtonEvent.Bind(providedInterface->AddEventWrite("LeftMasterButton", prmEventButton()));
+    behavior->PrimaryMasterButtonEvent.Bind(providedInterface->AddEventWrite("PrimaryMasterButton", prmEventButton()));
+    behavior->SecondaryMasterButtonEvent.Bind(providedInterface->AddEventWrite("SecondaryMasterButton", prmEventButton()));
 
     // add the task to the task manager (mts) code 
     this->TaskManager->AddTask(behavior);
-    this->TaskManager->Connect(behavior->GetName(), "ManagerInterface",
-                               this->GetName(), "BehaviorsInterface");
     this->TaskManager->Connect(behavior->GetName(), "ManagerInterface" + behavior->GetName(),
                                this->GetName(), "BehaviorInterface" + behavior->GetName());
     // add a button in the main menu bar with callback
@@ -342,19 +229,135 @@ bool ui3Manager::AddBehavior(ui3BehaviorBase * behavior,
 }
 
 
-
 bool ui3Manager::AddMasterArm(ui3MasterArm * arm)
 {
     // setup UI manager pointer in newly added arm
     arm->SetManager(this);
-    this->MasterArms.push_back(arm);
+    this->MasterArms.AddItem(arm->Name, arm, CMN_LOG_LOD_INIT_ERROR);
     return true;
 }
 
 
+bool ui3Manager::AddSlaveArm(ui3SlaveArm * arm)
+{
+    // setup UI manager pointer in newly added arm
+    arm->SetManager(this);
+    this->SlaveArms.AddItem(arm->Name, arm, CMN_LOG_LOD_INIT_ERROR);
+    return true;
+}
+
+
+ui3SlaveArm * ui3Manager::GetSlaveArm(const std::string & armName)
+{
+    return this->SlaveArms.GetItem(armName, CMN_LOG_LOD_INIT_ERROR);
+}
+
+
+ui3MasterArm * ui3Manager::GetMasterArm(const std::string & armName)
+{
+    return  this->MasterArms.GetItem(armName, CMN_LOG_LOD_INIT_ERROR);
+}
+
+
+void ui3Manager::ConnectAll(void)
+{
+    // create read only interface for each arm based on its role
+    // to fix, what if multiple arms have the same role?
+    // should we also show arms under their real name?
+    // create an interface for all behaviors to access some state information
+    mtsRequiredInterface * requiredInterface;
+    BehaviorList::iterator iterator;
+    const BehaviorList::iterator end = this->Behaviors.end();
+    for (iterator = this->Behaviors.begin();
+         iterator != end;
+         iterator++) {
+        requiredInterface = (*iterator)->AddRequiredInterface("ManagerInterface");
+        CMN_ASSERT(requiredInterface);
+    }
+
+    mtsProvidedInterface * behaviorsInterface = 
+        this->AddProvidedInterface("BehaviorsInterface");
+    if (behaviorsInterface) {
+        MasterArmList::iterator armIterator;
+        const MasterArmList::iterator armEnd = this->MasterArms.end();
+        for (armIterator = this->MasterArms.begin();
+             armIterator != armEnd;
+             armIterator++) {
+            std::string commandName;
+            switch (((*armIterator).second)->Role) {
+            case ui3MasterArm::PRIMARY:
+                commandName = "PrimaryMasterCartesianPosition";
+                break;
+            case ui3MasterArm::SECONDARY:
+                commandName = "SecondaryMasterCartesianPosition";
+                break;
+            default:
+                CMN_LOG_CLASS_INIT_ERROR << "ConnectAll: unknown arm role" << std::endl;
+            }
+            CMN_LOG_CLASS_INIT_DEBUG << "ConnectAll: added state data \""
+                                     << commandName << "\" using master arm \"" 
+                                     << ((*armIterator).second)->Name << "\"" << std::endl;
+            this->StateTable.AddData(((*armIterator).second)->CartesianPosition, commandName);
+            behaviorsInterface->AddCommandReadState(this->StateTable, ((*armIterator).second)->CartesianPosition,
+                                                    commandName);
+            for (iterator = this->Behaviors.begin();
+                 iterator != end;
+                 iterator++) {
+                requiredInterface = (*iterator)->GetRequiredInterface("ManagerInterface");
+                CMN_ASSERT(requiredInterface);
+                switch (((*armIterator).second)->Role) {
+                case ui3MasterArm::PRIMARY:
+                    requiredInterface->AddFunction(commandName,
+                                                   (*iterator)->GetPrimaryMasterPosition,
+                                                   mtsRequired);
+                    CMN_LOG_CLASS_INIT_DEBUG << "ConnectAll: added required command \""
+                                             << commandName << "\" to required interface \"ManagerInterface\" of behavior \"" 
+                                             << (*iterator)->GetName() << "\" to be bound to \"GetPrimaryMasterPosition\"" << std::endl;
+                    break;
+                case ui3MasterArm::SECONDARY:
+                    requiredInterface->AddFunction(commandName,
+                                                   (*iterator)->GetSecondaryMasterPosition,
+                                                   mtsRequired);
+                    CMN_LOG_CLASS_INIT_DEBUG << "ConnectAll: added required command \""
+                                             << commandName << "\" to required interface \"ManagerInterface\" of behavior \"" 
+                                             << (*iterator)->GetName() << "\" to be bound to \"GetSecondaryMasterPosition\"" << std::endl;
+                    break;
+                default:
+                    CMN_LOG_CLASS_INIT_ERROR << "ConnectAll: unknown arm role" << std::endl;
+                }
+            }
+        }
+    }
+
+    // finally, connect all
+    for (iterator = this->Behaviors.begin();
+         iterator != end;
+         iterator++) {
+        this->TaskManager->Connect((*iterator)->GetName(), "ManagerInterface",
+                                   this->GetName(), "BehaviorsInterface");
+    }
+}
+
+
+void ui3Manager::DispatchButtonEvent(const ui3MasterArm::RoleType & armRole, const prmEventButton & buttonEvent)
+{
+    switch (armRole) {
+    case ui3MasterArm::PRIMARY:
+        this->Manager->ActiveBehavior->PrimaryMasterButtonEvent(buttonEvent);
+        break;
+    case ui3MasterArm::SECONDARY:
+        this->Manager->ActiveBehavior->SecondaryMasterButtonEvent(buttonEvent);
+        break;
+    default:
+        CMN_LOG_CLASS_RUN_ERROR << "DispatchButtonEvent: unknown role" << std::endl;
+    }
+}
+
+
+
 void ui3Manager::Startup(void)
 {
-    CMN_LOG_CLASS(3) << "StartUp: begin" << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "StartUp: begin" << std::endl;
     CMN_ASSERT(Renderers.size());
 
     this->SceneManager = new ui3SceneManager;
@@ -362,7 +365,7 @@ void ui3Manager::Startup(void)
 
     // create renderer thread
     RendererThread = new osaThread;
-    RendererThread->Create<CVTKRendererProc, ui3Manager*>(&RendererProc, &CVTKRendererProc::Proc, this);
+    RendererThread->Create<ui3ManagerCVTKRendererProc, ui3Manager*>(&RendererProc, &ui3ManagerCVTKRendererProc::Proc, this);
     // wait for all VTK initialization to be finished
     if (RendererProc.ThreadReadySignal.Wait(10.0) && RendererProc.ThreadKilled == false) {
         Initialized = true;
@@ -373,20 +376,20 @@ void ui3Manager::Startup(void)
         Initialized = false;
     }
 
-    if (this->RightMasterExists) {
-        this->RightCursor = new ui3CursorSphere(this);
-        CMN_ASSERT(this->RightCursor);
-        this->SceneManager->Add(this->RightCursor);
+    // add cursors of master arms
+    MasterArmList::iterator armIterator;
+    const MasterArmList::iterator armEnd = this->MasterArms.end();
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        this->SceneManager->Add(((*armIterator).second)->Cursor->GetVisibleObject());
+        ((*armIterator).second)->Show();
     }
 
-    if (this->LeftMasterExists) {
-        this->LeftCursor = new ui3CursorSphere(this);
-        CMN_ASSERT(this->LeftCursor);
-        this->SceneManager->Add(this->LeftCursor);
-    }
-
+    // add main menu bar
     this->SceneManager->Add(this->MenuBar);
 
+    // add menu bar for all behaviors
     BehaviorList::iterator iterator;
     const BehaviorList::iterator end = this->Behaviors.end();
     for (iterator = this->Behaviors.begin();
@@ -395,20 +398,21 @@ void ui3Manager::Startup(void)
              this->SceneManager->Add((*iterator)->MenuBar);
              this->SceneManager->Add((*iterator)->GetVisibleObject());
              (*iterator)->SetState(Idle);
+             (*iterator)->GetVisibleObject()->Hide();
     }
 
     // current active behavior is this
     this->SetState(Foreground);    // UI manager is in foreground by default (main menu)
 
-    if (!Initialized) {
-        // error
-        // return false;
+    // update based on MaMDevice
+    prmEventButton pseudoEvent;
+    if (this->HasMaMDevice) {
+        pseudoEvent.Type() = prmEventButton::RELEASED;
+    } else {
+        pseudoEvent.Type() = prmEventButton::PRESSED;
     }
-    // success
-    // return true;
-    CMN_LOG_CLASS(3) << "StartUp: end" << std::endl;
-    // Perform UI manager initialization
-    // TO DO
+    this->MaMModeEventHandler(pseudoEvent);
+    CMN_LOG_CLASS_INIT_VERBOSE << "StartUp: end" << std::endl;
 }
 
 
@@ -462,163 +466,175 @@ bool ui3Manager::RunNoInput(void)
 
 void ui3Manager::Run(void)
 {
-    // process events
-    this->RightButtonReleased = false;
-    this->RightButtonPressed = false;
-    this->LeftButtonReleased = false;
-    this->LeftButtonPressed = false;
+    // init all arms before processing events
+    MasterArmList::iterator armIterator;
+    const MasterArmList::iterator armEnd = this->MasterArms.end();
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        ((*armIterator).second)->PreRun();
+    }
 
+    BehaviorList::iterator behaviorIterator;
+    SelectableList::iterator selectableIterator;
+    const BehaviorList::iterator behaviorEnd = this->Behaviors.end();
+
+    if (this->MaM) {
+    // init all selectable objects
+    for (behaviorIterator = this->Behaviors.begin();
+         behaviorIterator != behaviorEnd;
+         behaviorIterator++) {
+        // test if the behavior is running
+        if (((*behaviorIterator)->State == ui3BehaviorBase::Foreground)
+            || ((*behaviorIterator)->State == ui3BehaviorBase::Background)) {
+            
+            // go through all the selectable objects
+            const SelectableList::iterator selectableEnd = (*behaviorIterator)->Selectables.end();
+            for (selectableIterator = (*behaviorIterator)->Selectables.begin();
+                 selectableIterator != selectableEnd;
+                 selectableIterator++) {
+                (*selectableIterator)->ResetOverallIntention();
+            }
+        }
+    }
+    }
+    
+    // process events
     this->ProcessQueuedEvents();
 
-    // get cursor position
-    static vctFrm3 rightCursorPosition;
-    if (this->RightMasterExists) {
-        if (!this->RightMasterClutch) {
-            prmPositionCartesianGet rightArmPosition;
-            this->RightMasterGetCartesianPosition(rightArmPosition);
-            // apply transformation and scale
-            this->RightTransform.ApplyTo(rightArmPosition.Position(), rightCursorPosition);
-            rightCursorPosition.Translation().Multiply(this->RightScale);
-            this->RightMasterPosition.Position().Assign(rightCursorPosition);
-        } else {
-            this->RightMasterPosition.Position().Assign(rightCursorPosition);
-        }
+    if (this->MaM) {
+    // for all cursors, update position
+    double averageDepth = 0.0;
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        ((*armIterator).second)->UpdateCursorPosition();
+        averageDepth += ((*armIterator).second)->CursorPosition.Translation().Z();
+    }
+
+    if (MasterArms.size() > 0) {
+        averageDepth /= static_cast<double>(MasterArms.size());
     } else {
-        // temporary fix for menu depth
-        rightCursorPosition.Translation().Z() = -100.0;
+        averageDepth = -100.0; // should be camera focal distance?
     }
-    static vctFrm3 leftCursorPosition;
-    if (this->LeftMasterExists) {
-        if (!this->LeftMasterClutch) {
-            prmPositionCartesianGet leftArmPosition;
-            this->LeftMasterGetCartesianPosition(leftArmPosition);
-            // apply transformation and scale
-            this->LeftTransform.ApplyTo(leftArmPosition.Position(), leftCursorPosition);
-            leftCursorPosition.Translation().Multiply(this->LeftScale);
-            this->LeftMasterPosition.Position().Assign(leftCursorPosition);
+
+    // set depth for current menu, take the average depth of all master arms
+    this->ActiveBehavior->MenuBar->SetDepth(averageDepth); // rightCursorPosition.Translation().Z());
+
+
+    // menu bar refresh and events
+    this->ActiveBehavior->MenuBar->SetAllButtonsUnselected();
+
+    ui3MenuButton * selectedButton = 0;
+    bool isOverMenu;
+    ui3MasterArm * armPointer;
+
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        bool transitionDetected;
+        armPointer = (*armIterator).second;
+
+        // see if this cursor is over the menu and if so returns the current button -- Buttons should be ui3Selectable and code below could be used.
+        isOverMenu = this->ActiveBehavior->MenuBar->IsPointOnMenuBar(armPointer->CursorPosition.Translation(),
+                                                                     selectedButton);
+        armPointer->Cursor->Set2D(isOverMenu);
+        if (selectedButton) {
+            if (armPointer->ButtonReleased) {
+                selectedButton->CallBack();
+            }
+        }
+
+        // test if this arm already has something selected
+        if (armPointer->Selected) {
+			armPointer->Selected->PreviousPosition.Assign(armPointer->Selected->CurrentPosition);
+            armPointer->Selected->CurrentPosition.Assign(armPointer->CursorPosition);
         } else {
-            this->LeftMasterPosition.Position().Assign(leftCursorPosition);
+            BehaviorList::iterator behaviorIterator;
+            const BehaviorList::iterator behaviorEnd = this->Behaviors.end();
+            vctDouble3 position;
+            for (behaviorIterator = this->Behaviors.begin();
+                 behaviorIterator != behaviorEnd;
+                 behaviorIterator++) {
+                // test if the behavior is running
+                if (((*behaviorIterator)->State == ui3BehaviorBase::Foreground)
+                    || ((*behaviorIterator)->State == ui3BehaviorBase::Background)) {
+                    // go through all the selectable objects
+                    const SelectableList::iterator selectableEnd = (*behaviorIterator)->Selectables.end();
+                    for (selectableIterator = (*behaviorIterator)->Selectables.begin();
+                         selectableIterator != selectableEnd;
+                         selectableIterator++) {
+                        armPointer->UpdateIntention((*selectableIterator));
+                    }
+                }
+            }
+        }
+
+        // now figure out which selectable callback if any
+        transitionDetected = false;
+        if (armPointer->ButtonPressed) {
+            if (armPointer->ToBeSelected) {
+                transitionDetected = true;
+                armPointer->Selected = armPointer->ToBeSelected;
+                armPointer->SetCursorPosition(armPointer->Selected->GetAbsoluteTransformation().Translation());
+                armPointer->Selected->Select(armPointer->CursorPosition);
+            }
+        } else if (armPointer->ButtonReleased) {
+            if (armPointer->Selected) {
+                transitionDetected = true;
+                armPointer->Selected->Release(armPointer->CursorPosition);
+                armPointer->Selected = 0;
+            }
         }
     }
 
-    // set depth for current menu - hard coded to follow right arm for now.  Need access to stereo rendering to test better approaches.  Anton
-    this->ActiveBehavior->MenuBar->SetDepth(rightCursorPosition.Translation().Z());
-
-//    if (this->MastersAsMice) {
-        // try to figure out if the cursor is above the menu
-        ui3MenuButton * selectedButton = 0;
-        bool isOverMenu;
-
-        // right side
-        if (this->RightMasterExists) {
-            isOverMenu = this->ActiveBehavior->MenuBar->IsPointOnMenuBar(rightCursorPosition.Translation(),
-                                                                         selectedButton);
-            this->RightCursor->Set2D(isOverMenu);
-            if (selectedButton) {
-                if (this->RightButtonReleased) {
-                    selectedButton->CallBack();
-                    this->RightButtonReleased = false;
-                }
+    // show intention for all selectable objects
+    for (behaviorIterator = this->Behaviors.begin();
+         behaviorIterator != behaviorEnd;
+         behaviorIterator++) {
+        // test if the behavior is running
+        if (((*behaviorIterator)->State == ui3BehaviorBase::Foreground)
+            || ((*behaviorIterator)->State == ui3BehaviorBase::Background)) {
+            // go through all the selectable objects
+            const SelectableList::iterator selectableEnd = (*behaviorIterator)->Selectables.end();
+            for (selectableIterator = (*behaviorIterator)->Selectables.begin();
+                 selectableIterator != selectableEnd;
+                 selectableIterator++) {
+                (*selectableIterator)->ShowIntention();
             }
-            this->RightCursor->SetTransformation(rightCursorPosition);
         }
-        // left side now
-        if (this->LeftMasterExists) {
-            selectedButton = 0;
-            isOverMenu = this->ActiveBehavior->MenuBar->IsPointOnMenuBar(leftCursorPosition.Translation(),
-                                                                         selectedButton);
-            this->LeftCursor->Set2D(isOverMenu);
-            if (selectedButton) {
-                if (this->LeftButtonReleased) {
-                    selectedButton->CallBack();
-                    this->LeftButtonReleased = false;
-                }
-            }
-            this->LeftCursor->SetTransformation(leftCursorPosition);
-      //  }
     }
-
+     
+    // based on callbacks, update position/orientation of 3D Widgets
+    // TODO, add test to see if any arm is selected before doing all of this
+    for (behaviorIterator = this->Behaviors.begin();
+         behaviorIterator != behaviorEnd;
+         behaviorIterator++) {
+        // test if the behavior is running
+        if (((*behaviorIterator)->State == ui3BehaviorBase::Foreground)
+            || ((*behaviorIterator)->State == ui3BehaviorBase::Background)) {
+            Widget3DList::iterator widgetIterator;
+            // go through all the 3D widgets
+            const Widget3DList::iterator widgetEnd = (*behaviorIterator)->Widget3Ds.end();
+            for (widgetIterator =  (*behaviorIterator)->Widget3Ds.begin();
+                 widgetIterator != widgetEnd;
+                 widgetIterator++) {
+                (*widgetIterator)->UpdatePosition();
+            }
+        }
+    }
+    }
     // this needs to change to a parameter
     osaSleep(20.0 * cmn_ms);
 }
 
 
-void ui3Manager::RightMasterButtonEventHandler(const prmEventButton & buttonEvent)
-{
-    if (buttonEvent.Type() == prmEventButton::PRESSED) {
-        this->RightCursor->SetPressed(true);
-        this->RightButtonPressed = true;
-    } else {
-        this->RightCursor->SetPressed(false);
-        this->RightButtonReleased = true;
-    }
-    if (this->ActiveBehavior != this) {
-        this->ActiveBehavior->RightMasterButtonEvent(buttonEvent);
-    }
-}
-
-
-void ui3Manager::LeftMasterButtonEventHandler(const prmEventButton & buttonEvent)
-{
-    if (buttonEvent.Type() == prmEventButton::PRESSED) {
-        this->LeftCursor->SetPressed(true);
-        this->LeftButtonPressed = true;
-    } else {
-        this->LeftCursor->SetPressed(false);
-        this->LeftButtonReleased = true;
-    }
-    if (this->ActiveBehavior) {
-        this->ActiveBehavior->RightMasterButtonEvent(buttonEvent);
-    }
-}
-
-
-void ui3Manager::RightMasterClutchEventHandler(const prmEventButton & buttonEvent)
-{
-    static vctDouble3 initial, final;
-    static prmPositionCartesianGet rightArmPosition;
-    if (buttonEvent.Type() == prmEventButton::PRESSED) {
-        this->RightMasterClutch = true;
-        this->RightCursor->SetClutched(true);
-        this->RightMasterGetCartesianPosition(rightArmPosition);
-        this->RightTransform.ApplyTo(rightArmPosition.Position().Translation(), initial);
-    } else {
-        this->RightMasterClutch = false;
-        this->RightCursor->SetClutched(false);
-        this->RightMasterGetCartesianPosition(rightArmPosition);
-        this->RightTransform.ApplyTo(rightArmPosition.Position().Translation(), final);
-        this->RightTransform.Translation().Add(initial);
-        this->RightTransform.Translation().Subtract(final);
-    }
-}
-
-
-void ui3Manager::LeftMasterClutchEventHandler(const prmEventButton & buttonEvent)
-{
-    static vctDouble3 initial, final;
-    static prmPositionCartesianGet leftArmPosition;
-    if (buttonEvent.Type() == prmEventButton::PRESSED) {
-        this->LeftMasterClutch = true;
-        this->LeftCursor->SetClutched(true);
-        this->LeftMasterGetCartesianPosition(leftArmPosition);
-        this->LeftTransform.ApplyTo(leftArmPosition.Position().Translation(), initial);
-    } else {
-        this->LeftMasterClutch = false;
-        this->LeftCursor->SetClutched(false);
-        this->LeftMasterGetCartesianPosition(leftArmPosition);
-        this->LeftTransform.ApplyTo(leftArmPosition.Position().Translation(), final);
-        this->LeftTransform.Translation().Add(initial);
-        this->LeftTransform.Translation().Subtract(final);
-    }
-}
-
-
 bool ui3Manager::SetupRenderers()
 {
-    CMN_LOG_CLASS(3) << "Setting up VTK renderers: begin" << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Setting up VTK renderers: begin" << std::endl;
 
     unsigned int i;
-    double bgheight, bgwidth;
+    double bgheight, bgwidth, viewangle;
     const unsigned int renderercount = this->Renderers.size();
 
     for (i = 0; i < renderercount; i ++) {
@@ -626,38 +642,54 @@ bool ui3Manager::SetupRenderers()
         Renderers[i]->renderer = new ui3VTKRenderer(this->SceneManager,
                                                     this->Renderers[i]->width,
                                                     this->Renderers[i]->height,
-                                                    this->Renderers[i]->viewangle,
-                                                    this->Renderers[i]->cameraframe,
+                                                    this->Renderers[i]->zoom,
+                                                    this->Renderers[i]->borderless,
+                                                    this->Renderers[i]->camgeometry,
+                                                    this->Renderers[i]->camid,
                                                     this->Renderers[i]->rendertarget);
         CMN_ASSERT(this->Renderers[i]->renderer);
 
         // Add live video background if available
         if (this->Renderers[i]->streamindex >= 0) {
 
-            this->Renderers[i]->imageplane = new ui3ImagePlane(this);
+            this->Renderers[i]->imageplane = new ui3ImagePlane();
             CMN_ASSERT(this->Renderers[i]->imageplane);
 
             // Get bitmap dimensions from pipeline.
             // The pipeline has to be already initialized to get the required info.
-            this->Renderers[i]->imageplane->SetBitmapSize(GetStreamWidth(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel),
-                                                          GetStreamHeight(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel));
+            unsigned int streamwidth = GetStreamWidth(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel);
+            unsigned int streamheight = GetStreamHeight(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel);
+            this->Renderers[i]->imageplane->SetBitmapSize(streamwidth, streamheight);
 
             // Calculate plane height to cover the whole vertical field of view
-            bgheight = VIDEO_BACKGROUND_DISTANCE * tan((this->Renderers[i]->renderer->GetViewAngle() / 2.0) * 3.14159265 / 180.0) * 2.0;
+            viewangle = this->Renderers[i]->camgeometry.GetViewAngleVertical(this->Renderers[i]->height, this->Renderers[i]->camid);
+            bgheight = VIDEO_BACKGROUND_DISTANCE * 2.0 * tan(viewangle * 3.14159265 / 360.0);
             // Calculate plane width from plane height and the bitmap aspect ratio
-            bgwidth = bgheight *
-                      GetStreamWidth(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel) /
-                      GetStreamHeight(this->Renderers[i]->streamindex, this->Renderers[i]->streamchannel);
+            bgwidth = bgheight * streamwidth / streamheight;
 
             // Set plane size (dimensions are already in millimeters)
             this->Renderers[i]->imageplane->SetPhysicalSize(bgwidth, bgheight);
 
+            // Calculate image shift required for correct principal point placement
+            double magratio = bgwidth / streamwidth;
+            double ccx = magratio * (this->Renderers[i]->camgeometry.GetIntrinsics(this->Renderers[i]->camid).cc[0] - streamwidth / 2.0);
+            double ccy = magratio * (this->Renderers[i]->camgeometry.GetIntrinsics(this->Renderers[i]->camid).cc[1] - streamheight / 2.0);
+
             // Change pivot position to move plane to the right location.
             // The pivot point will remain in the origin, only the plane moves.
-            this->Renderers[i]->imageplane->SetPhysicalPositionRelativeToPivot(vct3(-0.5 * bgwidth, 0.5 * bgheight, -VIDEO_BACKGROUND_DISTANCE));
+            this->Renderers[i]->imageplane->SetPhysicalPositionRelativeToPivot(vct3(0.5 * bgwidth + ccx,
+                                                                                    0.5 * bgheight + ccy,
+                                                                                    VIDEO_BACKGROUND_DISTANCE));
 
-            // Add image plane to renderer directly, without going through scene manager
-            this->Renderers[i]->imageplane->CreateVTKObjects();
+            this->Renderers[i]->imageplane->Update(this->SceneManager);
+
+            // Apply camera transformation to the image plane
+            vctFrameBase<vctRot3> frame;
+            vctDoubleFrm4x4 frm4x4(this->Renderers[i]->camgeometry.GetExtrinsics(this->Renderers[i]->camid).frame);
+            frame.Translation().Assign(frm4x4.Translation());
+            frame.Rotation().Assign(frm4x4.Rotation());
+            this->Renderers[i]->imageplane->SetTransformation(frame);
+
             this->Renderers[i]->renderer->Add(this->Renderers[i]->imageplane);
         }
 
@@ -672,7 +704,7 @@ bool ui3Manager::SetupRenderers()
         this->Renderers[i]->renderer->SetWindowPosition(this->Renderers[i]->windowposx, this->Renderers[i]->windowposy);
     }
 
-    CMN_LOG_CLASS(3) << "Setting up VTK renderers: end" << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Setting up VTK renderers: end" << std::endl;
 
     // TO DO:
     //   add some error checking
@@ -712,14 +744,71 @@ void ui3Manager::OnStreamSample(svlSample* sample, int streamindex)
 }
 
 
-void ui3Manager::HideAll(void)
+void ui3Manager::RecenterMasterCursors(const vctDouble3 & lowerCorner, const vctDouble3 & upperCorner)
 {
-    if (this->RightCursor) {
-        this->RightCursor->Hide();
+    MasterArmList::iterator armIterator;
+    const MasterArmList::iterator armEnd = this->MasterArms.end();
+    // compute a bounding box of current cursors
+    vctDouble3 currentLowerCorner, currentUpperCorner;
+    armIterator = this->MasterArms.begin();
+    if (armIterator == armEnd) {
+        CMN_LOG_CLASS_RUN_WARNING << "RecenterMasterCursors: can not recenter, no master arm defined" << std::endl;
+        return;
+    }
+    currentLowerCorner.Assign(((*armIterator).second)->CartesianPosition.Position().Translation());
+    currentUpperCorner.Assign(((*armIterator).second)->CartesianPosition.Position().Translation());
+    armIterator++;
+    for (;
+         armIterator != armEnd;
+         armIterator++) {
+        currentLowerCorner.ElementwiseMinOf(currentLowerCorner, ((*armIterator).second)->CartesianPosition.Position().Translation());
+        currentUpperCorner.ElementwiseMaxOf(currentUpperCorner, ((*armIterator).second)->CartesianPosition.Position().Translation());
+    }    
+
+    // compute size and translation between two bounding boxes
+    vctDouble3 center, currentCenter;
+    // compute sizes
+    center.DifferenceOf(upperCorner, lowerCorner);
+    double size = center.Norm();
+    currentCenter.DifferenceOf(currentUpperCorner, currentLowerCorner);
+    double currentSize = currentCenter.Norm();
+    double ratio = 1.0;
+    if ((size >= 0.1) // original bounding box is not a point (user just want to recenter, not scale)
+        && (currentSize >= 0.1) // current box is not a point (more than one cursor)
+        && (currentSize > size) // we only scale down
+        ) {
+        ratio = size / currentSize;
     }
 
-    if (this->LeftCursor) {
-        this->LeftCursor->Hide();
+    // compute centers
+    center.SumOf(upperCorner, lowerCorner);
+    center.Divide(2.0);
+    currentCenter.SumOf(currentUpperCorner, currentLowerCorner);
+    currentCenter.Divide(2.0);
+
+    // set new cursor position
+    vctDouble3 newPosition;
+    vctDouble3 relativePosition;
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        newPosition.Assign(((*armIterator).second)->CartesianPosition.Position().Translation());
+        relativePosition.DifferenceOf(newPosition, currentCenter);
+        relativePosition.Multiply(ratio);
+        newPosition.SumOf(center, relativePosition);
+        ((*armIterator).second)->SetCursorPosition(newPosition);
+    }    
+}
+
+
+void ui3Manager::HideAll(void)
+{
+    MasterArmList::iterator armIterator;
+    const MasterArmList::iterator armEnd = this->MasterArms.end();
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        ((*armIterator).second)->Hide();
     }
 
     if (this->ActiveBehavior) {
@@ -730,12 +819,12 @@ void ui3Manager::HideAll(void)
 
 void ui3Manager::ShowAll(void)
 {
-    if (this->RightCursor) {
-        this->RightCursor->Show();
-    }
-
-    if (this->LeftCursor) {
-        this->LeftCursor->Show();
+    MasterArmList::iterator armIterator;
+    const MasterArmList::iterator armEnd = this->MasterArms.end();
+    for (armIterator = this->MasterArms.begin();
+         armIterator != armEnd;
+         armIterator++) {
+        ((*armIterator).second)->Show();
     }
 
     if (this->ActiveBehavior) {
@@ -744,19 +833,18 @@ void ui3Manager::ShowAll(void)
 }
 
 
-void ui3Manager::EnterMaMModeEventHandler(void)
+void ui3Manager::MaMModeEventHandler(const prmEventButton & payload)
 {
-    this->ShowAll();
-    this->MaM = true;
-    CMN_LOG_CLASS(9) << "EnterMaMMode" << std::endl;
-}
-
-
-void ui3Manager::LeaveMaMModeEventHandler(void)
-{
-    this->HideAll();
-    this->MaM = false;
-    CMN_LOG_CLASS(9) << "LeaveMaMMode" << std::endl;
+    if (payload.Type() == prmEventButton::PRESSED) {
+        this->RecenterMasterCursors(vct3(-5.0, -10.0, -50), vct3(5.0, 10.0, -50.0));
+        this->ShowAll();
+        this->MaM = true;
+        CMN_LOG_CLASS_RUN_VERBOSE << "EnterMaMMode" << std::endl;
+    } else {
+        this->HideAll();
+        this->MaM = false;
+        CMN_LOG_CLASS_RUN_VERBOSE << "LeaveMaMMode" << std::endl;
+    }
 }
 
 
@@ -764,13 +852,13 @@ void ui3Manager::LeaveMaMModeEventHandler(void)
 /*** ui3Manager::CVTKRendererProc class */
 /****************************************/
 
-ui3Manager::CVTKRendererProc::CVTKRendererProc() :
+ui3ManagerCVTKRendererProc::ui3ManagerCVTKRendererProc() :
     KillThread(false),
     ThreadKilled(true)
 {
 }
 
-void* ui3Manager::CVTKRendererProc::Proc(ui3Manager* baseref)
+void* ui3ManagerCVTKRendererProc::Proc(ui3Manager* baseref)
 {
     // create VTK renderers
     baseref->SetupRenderers();
@@ -786,8 +874,15 @@ void* ui3Manager::CVTKRendererProc::Proc(ui3Manager* baseref)
     stopwatch.Start();
     prevtime = stopwatch.GetElapsedTime();
 
+    // update once before starting so we can use the Show method
+    baseref->SceneManager->VisibleObjects->Update(baseref->SceneManager);
+    baseref->SceneManager->VisibleObjects->Show();
+
     // rendering loop
     while (!KillThread) {
+
+        // update VTK objects if needed
+        baseref->SceneManager->VisibleObjects->Update(baseref->SceneManager);
 
         // signal renderers
         for (i = 0; i < renderercount; i ++) {

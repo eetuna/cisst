@@ -22,6 +22,23 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include "trkCisstNCC.h"
+
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
+
+
+/*********************************/
+/*** trkCisstNCC class ***********/
+/*********************************/
+
 /********************************************************************
 TODO / BUGS
 1) Improve Dynamic Loop Engine. *Don't* use iterators. Possibly specific classes 
@@ -98,10 +115,6 @@ Later TODO
 [ ]	Switch sum & sqsum to long or ulong. If int input data is used
 ********************************************************************/
 
-
-//*******************************************************************
-//               Normalized Crosscorelation class
-//*******************************************************************
 trkCisstNCC::trkCisstNCC(void) : trkCisstBase()
 {
 	convMethod = Standard;
@@ -173,31 +186,34 @@ void trkCisstNCC::setWindowPosition(IndexType r, IndexType c) {
 	windowPosition.X() = c;
 	windowPosition.Y() = r;
 }
+// Set the initial position for tracking (empty in this case)
+void trkCisstNCC::setInitPosition(IndexType CMN_UNUSED(r), IndexType CMN_UNUSED(c)) {
+}
 // Set the size of the current image
 void trkCisstNCC::setCurrentimageSize(IndexType rows, IndexType cols) {
 	Current_image.SetSize(rows,cols, VCT_COL_MAJOR);
 }
 
 //Get image location
-unsigned int trkCisstNCC::getWindowRow() { return windowPosition.Y(); }
-unsigned int trkCisstNCC::getWindowCol() { return windowPosition.X(); }
+trkCisstNCC::IndexType trkCisstNCC::getWindowRow() { return windowPosition.Y(); }
+trkCisstNCC::IndexType trkCisstNCC::getWindowCol() { return windowPosition.X(); }
 //Get the correlation score, bounded [-1,1]	
 double trkCisstNCC::getTrackScore() { return score; }
 //Get template dimentions
-unsigned int trkCisstNCC::getTemplateNumRows() { return templateSize.Y(); }
-unsigned int trkCisstNCC::getTemplateNumCols() { return templateSize.X(); }
+trkCisstNCC::IndexType trkCisstNCC::getTemplateNumRows() { return templateSize.Y(); }
+trkCisstNCC::IndexType trkCisstNCC::getTemplateNumCols() { return templateSize.X(); }
 //Get template center location
-unsigned int trkCisstNCC::getTemplateCenterRow() { return templateCenter.Y(); }
-unsigned int trkCisstNCC::getTemplateCenterCol() { return templateCenter.X(); }
+trkCisstNCC::IndexType trkCisstNCC::getTemplateCenterRow() { return templateCenter.Y(); }
+trkCisstNCC::IndexType trkCisstNCC::getTemplateCenterCol() { return templateCenter.X(); }
 //Get the tracking window size
-unsigned int trkCisstNCC::getWindowNumRows() { return windowSize.Y(); }
-unsigned int trkCisstNCC::getWindowNumCols() { return windowSize.X(); }
+trkCisstNCC::IndexType trkCisstNCC::getWindowNumRows() { return windowSize.Y(); }
+trkCisstNCC::IndexType trkCisstNCC::getWindowNumCols() { return windowSize.X(); }
 //Get the relative center position of the window
-unsigned int trkCisstNCC::getWindowCenterRow() { return windowCenter.Y(); }
-unsigned int trkCisstNCC::getWindowCenterCol() { return windowCenter.X(); }
+trkCisstNCC::IndexType trkCisstNCC::getWindowCenterRow() { return windowCenter.Y(); }
+trkCisstNCC::IndexType trkCisstNCC::getWindowCenterCol() { return windowCenter.X(); }
 //Get the current image size
-unsigned int trkCisstNCC::getCurrentimageNumRows() { return imageSize.Y(); }
-unsigned int trkCisstNCC::getCurrentimageNumCols() { return imageSize.X(); }
+trkCisstNCC::IndexType trkCisstNCC::getCurrentimageNumRows() { return imageSize.Y(); }
+trkCisstNCC::IndexType trkCisstNCC::getCurrentimageNumCols() { return imageSize.X(); }
 //Get the current (tracked) location
 double trkCisstNCC::getOutputPosX() {return outputPosX;}
 double trkCisstNCC::getOutputPosY() {return outputPosY;}
@@ -311,7 +327,7 @@ void trkCisstNCC::copyImage_cisst(MatrixType &src, MatrixType &dst, IndexType st
 	}
 }
 //Copy a input image into buffer matrix
-void trkCisstNCC::copyImage(InterfaceImType *src, IndexType src_rows, IndexType src_cols, MatrixType &dst, IndexType startR, IndexType startC) {
+void trkCisstNCC::copyImage(InterfaceImType *src, IndexType CMN_UNUSED(src_rows), IndexType src_cols, MatrixType &dst, IndexType startR, IndexType startC) {
 	for(IndexType r = 0; r < dst.rows(); r++) {
 		for(IndexType c = 0; c < dst.cols(); c++) {
 			dst.Element(r,c) = src[(startR+r)*src_cols+(startC+c)];
@@ -367,9 +383,9 @@ void trkCisstNCC::pushTemplate(InterfaceImType *src, IndexType src_rows, IndexTy
 	//Add the template to the list
 	allTemplates.push_back(temp2);
 #ifdef IS_LOGGING
-	CMN_LOG(1) << " template : "<<endl;
-	CMN_LOG(1) << temp->Row(0) <<endl;
-	CMN_LOG(1) << temp->Column(0) <<endl;
+	CMN_LOG_INIT_ERROR << " template : "<<endl;
+	CMN_LOG_INIT_ERROR << temp->Row(0) <<endl;
+	CMN_LOG_INIT_ERROR << temp->Column(0) <<endl;
 #endif
 	delete temp;
 }
@@ -383,7 +399,7 @@ void trkCisstNCC::popTemplate() {
 
 //Get the number of templates loaded
 //Explicit unsigned int required, can't use the typedef in MS.Net
-unsigned int trkCisstNCC::getNumberOfTemplates() {
+trkCisstNCC::IndexType trkCisstNCC::getNumberOfTemplates() {
 	return allTemplates.size();
 }
 
@@ -419,9 +435,9 @@ void trkCisstNCC::checkRectangleBoundries(PointType & imSize, PointType & size, 
 	} else if (position.X() > imSize.Y()) { 
 		position.X() = 0;
 	}
-	if(position.Y() < 0)
+	if(position.Y() <= 0)
 		position.Y() = 0;
-	if(position.X() < 0)
+	if(position.X() <= 0)
 		position.X() = 0;
 }
 //Inititalize the pre-allocated data for tracking
@@ -479,16 +495,16 @@ void trkCisstNCC::initializeTrack() {
 	//Sratch image data;
 	imageCopy.SetSize(windowSize.Y(), windowSize.X(), VCT_COL_MAJOR);
 #ifdef IS_LOGGING
-	CMN_LOG(1) << "windowSize :" <<endl;
-	CMN_LOG(1) << windowSize << endl;
-	CMN_LOG(1) << "windowCenter :" <<endl;
-	CMN_LOG(1) << windowCenter << endl;
-	CMN_LOG(1) << "windowPosition :" <<endl;
-	CMN_LOG(1) << windowPosition << endl;
-	CMN_LOG(1) << "templateSize :" <<endl;
-	CMN_LOG(1) << templateSize << endl;
-	CMN_LOG(1) << "templateCenter :" <<endl;
-	CMN_LOG(1) << templateCenter << endl;
+	CMN_LOG_INIT_ERROR << "windowSize :" <<endl;
+	CMN_LOG_INIT_ERROR << windowSize << endl;
+	CMN_LOG_INIT_ERROR << "windowCenter :" <<endl;
+	CMN_LOG_INIT_ERROR << windowCenter << endl;
+	CMN_LOG_INIT_ERROR << "windowPosition :" <<endl;
+	CMN_LOG_INIT_ERROR << windowPosition << endl;
+	CMN_LOG_INIT_ERROR << "templateSize :" <<endl;
+	CMN_LOG_INIT_ERROR << templateSize << endl;
+	CMN_LOG_INIT_ERROR << "templateCenter :" <<endl;
+	CMN_LOG_INIT_ERROR << templateCenter << endl;
 #endif
 }
 //Calculate the energy under the source. Has pre-allocation.
@@ -526,9 +542,9 @@ void trkCisstNCC::updateTrack() {
 	checkRectangleBoundries(imageSize,windowSize,windowPosition);
 	copyImage_cisst(Current_image,imageCopy,windowPosition.Y(),windowPosition.X());
 #ifdef IS_LOGGING
-	CMN_LOG(1) << " current image : "<<endl;
-	CMN_LOG(1) << imageCopy.Row(0) <<endl;
-	CMN_LOG(1) << imageCopy.Column(0) <<endl;
+	CMN_LOG_INIT_ERROR << " current image : "<<endl;
+	CMN_LOG_INIT_ERROR << imageCopy.Row(0) <<endl;
+	CMN_LOG_INIT_ERROR << imageCopy.Column(0) <<endl;
 #endif
 	//Choose the correct correlation method
 	switch(convMethod) {
@@ -556,11 +572,11 @@ void trkCisstNCC::updateTrack() {
 	outputPosX = getWindowCol() + getWindowCenterRow();
 	outputPosY = getWindowRow() + getWindowCenterRow();
 #ifdef IS_LOGGING
-	CMN_LOG(1)<< "I'm in updateTrack()"<<endl;
-	CMN_LOG(1) << "CurLoc :" <<endl;
-	CMN_LOG(1) << CurLoc << endl;
-	CMN_LOG(1) << "windowPosition :" <<endl;
-	CMN_LOG(1) << windowPosition << endl;
+	CMN_LOG_INIT_ERROR<< "I'm in updateTrack()"<<endl;
+	CMN_LOG_INIT_ERROR << "CurLoc :" <<endl;
+	CMN_LOG_INIT_ERROR << CurLoc << endl;
+	CMN_LOG_INIT_ERROR << "windowPosition :" <<endl;
+	CMN_LOG_INIT_ERROR << windowPosition << endl;
 #endif
 }
 /********************************************************************
@@ -690,7 +706,7 @@ void trkCisstNCC::test() {
 	TestType multi(rowsK , colsK , VCT_COL_MAJOR );
 
 	
-	unsigned int indexRow , indexColumn ;
+	trkCisstNCC::IndexType indexRow , indexColumn ;
 	for ( indexRow = 0; indexRow < rowsK ; ++ indexRow ) {
 		for ( indexColumn = 0; indexColumn < colsK ; ++ indexColumn ) {
 			kernel.at( indexRow , indexColumn ) = indexRow;

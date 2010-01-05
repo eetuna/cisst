@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsStateArrayBase_h
 #define _mtsStateArrayBase_h
 
-#include <cisstCommon/cmnGenericObject.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -42,33 +42,36 @@ http://www.cisst.org/cisst/license.txt.
   \sa mtsStateArray */
 class mtsStateArrayBase {
 protected:
-	/*! Protected constructor. Does nothing. */
-	inline mtsStateArrayBase(void){};
+    /*! Protected constructor. Does nothing. */
+    inline mtsStateArrayBase(void){};
+
+    /*! Class services associated to the element contained */
+    const cmnClassServicesBase * DataClassServices;
 
 public:
     typedef unsigned int index_type;
     typedef unsigned int size_type;
 
-	/*! Default destructor. Does nothing. */
-	inline virtual ~mtsStateArrayBase(void) {};
+    /*! Default destructor. Does nothing. */
+    inline virtual ~mtsStateArrayBase(void) {};
+
+    /*! Overloaded subscript operator. */
+    virtual mtsGenericObject & operator[](index_type index) = 0;
 
 	/*! Overloaded subscript operator. */
-	virtual cmnGenericObject & operator[](index_type index) = 0;
-
-	/*! Overloaded subscript operator. */
-	virtual const cmnGenericObject & operator[](index_type index) const = 0;
+	virtual const mtsGenericObject & operator[](index_type index) const = 0;
     
 	/*! Create the array of data. */
-	virtual mtsStateArrayBase * Create(const cmnGenericObject * objectExample, size_type size) = 0;
+	virtual mtsStateArrayBase * Create(const mtsGenericObject * objectExample, size_type size) = 0;
 
 	/*! Copy data from one index to another. */
 	virtual void Copy(index_type indexTo, index_type indexFrom) = 0;
 
 	/*! Get data from array. */
-	virtual bool Get(index_type index, cmnGenericObject & data) const = 0;
+	virtual bool Get(index_type index, mtsGenericObject & data) const = 0;
 
 	/*! Set data in array. */
-	virtual bool Set(index_type index, const cmnGenericObject & data) = 0;
+	virtual bool Set(index_type index, const mtsGenericObject & data) = 0;
 
 };
 

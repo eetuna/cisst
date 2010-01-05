@@ -58,6 +58,7 @@ FOREACH(module ${MODULES})
   # uses .pyd instead of dll on Windows
   IF(WIN32)
     SET_TARGET_PROPERTIES(_${module}Python PROPERTIES SUFFIX .pyd)
+    SET_TARGET_PROPERTIES(_${module}Python PROPERTIES DEBUG_POSTFIX "_d")
   ENDIF(WIN32)
   # Copy the .py file generated to wherever the libraries are
   ADD_CUSTOM_COMMAND(TARGET _${module}Python
@@ -86,13 +87,12 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES
                          ADDITIONAL_MAKE_CLEAN_FILES
                          "${CISST_CLEAN_FILES}")
 
-# Built executable with embedding
+ADD_EXECUTABLE(pythonEmbeddedIRE pythonEmbeddedIRE.cpp)
+
 IF(EXAMPLE_IRE_USE_OSATHREAD)
-  ADD_EXECUTABLE(pythonEmbeddedIRE pythonEmbeddedIRE.cpp IreLaunchCpp.h)
   ADD_DEFINITIONS(-DCISST_OSATHREAD)
   CISST_REQUIRES("pythonEmbeddedIRE" "cisstCommon;cisstInteractive;cisstOSAbstraction")
 ELSE(EXAMPLE_IRE_USE_OSATHREAD)
-  ADD_EXECUTABLE(pythonEmbeddedIRE pythonEmbeddedIRE.cpp IreLaunchPy.h)
   CISST_REQUIRES("pythonEmbeddedIRE" "cisstCommon;cisstInteractive")
 ENDIF(EXAMPLE_IRE_USE_OSATHREAD)
 

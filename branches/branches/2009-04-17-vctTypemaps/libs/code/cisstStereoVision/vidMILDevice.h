@@ -23,7 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _vidMILDevice_h
 #define _vidMILDevice_h
 
-#include <cisstStereoVision/svlVideoCaptureSource.h>
+#include <cisstStereoVision/svlFilterSourceVideoCapture.h>
 #include <cisstStereoVision/svlRenderTargets.h>
 #include "svlImageBuffer.h"
 
@@ -39,7 +39,7 @@ protected:
     ~CMILDeviceRenderTarget();
 
 public:
-    bool SetImage(unsigned char* buffer, bool vflip);
+    bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip);
     unsigned int GetWidth();
     unsigned int GetHeight();
 
@@ -54,6 +54,8 @@ private:
     bool TransferSuccessful;
     bool KillThread;
     bool ThreadKilled;
+
+    void TranslateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip);
 };
 
 
@@ -76,41 +78,42 @@ private:
 
 public:
     static CMILDevice* GetInstance();
+    void ReleaseAll();
 
-    svlVideoCaptureSource::PlatformType GetPlatformType();
+    svlFilterSourceVideoCapture::PlatformType GetPlatformType();
     int SetStreamCount(unsigned int numofstreams);
-	int GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo);
-	int Open();
-	void Close();
-	int Start();
+    int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
+    int Open();
+    void Close();
+    int Start();
     svlImageRGB* GetLatestFrame(bool waitfornew, unsigned int videoch = 0);
-	int Stop();
-	bool IsRunning();
+    int Stop();
+    bool IsRunning();
     int SetDevice(int devid, int inid, unsigned int videoch = 0);
-	int GetWidth(unsigned int videoch = 0);
-	int GetHeight(unsigned int videoch = 0);
+    int GetWidth(unsigned int videoch = 0);
+    int GetHeight(unsigned int videoch = 0);
 
-    int GetFormatList(unsigned int deviceid, svlVideoCaptureSource::ImageFormat **formatlist);
-    int GetFormat(svlVideoCaptureSource::ImageFormat& format, unsigned int videoch = 0);
+    int GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist);
+    int GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch = 0);
     void Release();
 
     bool IsCaptureSupported(int devid);
     bool IsOverlaySupported(int devid);
-    bool EnableCapture(int devid);
-    bool EnableOverlay(int devid);
+    bool EnableCapture(int devid, bool enable = true);
+    bool EnableOverlay(int devid, bool enable = true);
 
 private:
     unsigned int NumOfStreams;
     bool Initialized;
-	bool Running;
+    bool Running;
 
-	int* DeviceID;
-	bool CaptureEnabled[2];
-	bool OverlayEnabled[2];
-	bool CaptureSupported[2];
-	bool OverlaySupported[2];
-	int Width[2];
-	int Height[2];
+    int* DeviceID;
+    bool CaptureEnabled[2];
+    bool OverlayEnabled[2];
+    bool CaptureSupported[2];
+    bool OverlaySupported[2];
+    int Width[2];
+    int Height[2];
     svlImageBuffer** ImageBuffer;
 
     int MILNumberOfDevices;

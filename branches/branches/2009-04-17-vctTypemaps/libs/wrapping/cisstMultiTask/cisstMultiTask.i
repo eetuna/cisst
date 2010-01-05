@@ -38,6 +38,9 @@ http://www.cisst.org/cisst/license.txt.
 %import "cisstCommon/cisstCommon.i"
 %import "cisstVector/cisstVector.i"
 
+// use class type to create the correct Python type
+%apply cmnGenericObject * {mtsGenericObject *};
+
 // It is useful to wrap osaTimeServer. This can be removed
 // if cisstOSAbstraction is wrapped.
 %include "cisstOSAbstraction/osaTimeServer.h"
@@ -65,25 +68,25 @@ http://www.cisst.org/cisst/license.txt.
 #define CISST_DEPRECATED
 
 // Wrap commands
-%import "cisstMultiTask/mtsCommandBase.h"
+%include "cisstMultiTask/mtsCommandBase.h"
 %include "cisstMultiTask/mtsCommandVoidBase.h"
 %include "cisstMultiTask/mtsCommandReadOrWriteBase.h"
 %include "cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h"
 
-%template(mtsCommandReadBase) mtsCommandReadOrWriteBase<cmnGenericObject>;
-%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const cmnGenericObject>; 
-%template(mtsCommandQualifiedReadBase) mtsCommandQualifiedReadOrWriteBase<cmnGenericObject>;
-%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject>; 
+%template(mtsCommandReadBase) mtsCommandReadOrWriteBase<mtsGenericObject>;
+%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const mtsGenericObject>; 
+%template(mtsCommandQualifiedReadBase) mtsCommandQualifiedReadOrWriteBase<mtsGenericObject>;
+%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject>; 
 %{
-    typedef mtsCommandReadOrWriteBase<cmnGenericObject> mtsCommandReadBase;
-    typedef mtsCommandReadOrWriteBase<const cmnGenericObject> mtsCommandWriteBase;
-    typedef mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> mtsCommandQualifiedReadBase;
-    typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQualifiedWriteBase;
+    typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
+    typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
+    typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
+    typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 %}
-typedef mtsCommandReadOrWriteBase<cmnGenericObject> mtsCommandReadBase;
-typedef mtsCommandReadOrWriteBase<const cmnGenericObject> mtsCommandWriteBase;
-typedef mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> mtsCommandQualifiedReadBase;
-typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQualifiedWriteBase;
+typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
+typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
+typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
+typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 %types(mtsCommandReadBase *);
 %types(mtsCommandWriteBase *);
 %types(mtsCommandQualifiedReadBase *);
@@ -98,7 +101,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandWrite
-%extend mtsCommandReadOrWriteBase<const cmnGenericObject> {
+%extend mtsCommandReadOrWriteBase<const mtsGenericObject> {
     %pythoncode {
         def UpdateFromC(self):
             tmpObject = self.GetArgumentClassServices().Create()
@@ -114,21 +117,25 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandRead
-%extend mtsCommandReadOrWriteBase<cmnGenericObject> {
+%extend mtsCommandReadOrWriteBase<mtsGenericObject> {
     %pythoncode {
         def UpdateFromC(self):
             tmpObject = self.GetArgumentClassServices().Create()
             self.ArgumentType = tmpObject.__class__
 
         def __call__(self):
-            argument = self.ArgumentType(self.GetArgumentPrototype())
+            # PK: figure out if the first statement (after try) is still needed
+            try:
+                argument = self.ArgumentType(self.GetArgumentPrototype())
+            except Exception:
+                argument = self.GetArgumentPrototype()
             self.Execute(argument)
             return argument
     }
 }
 
 // Extend mtsCommandQualifiedRead
-%extend mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> {
+%extend mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> {
     %pythoncode {
         def UpdateFromC(self):
             tmp1Object = self.GetArgument1ClassServices().Create()
@@ -155,35 +162,37 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
             interfaces = mtsDevice.GetNamesOfProvidedInterfaces(self)
             for interface in interfaces:
                 self.__dict__[interface] = mtsDevice.GetProvidedInterface(self, interface)
-                self.__dict__[interface].AllocateResourcesForCurrentThread()
-                self.__dict__[interface].UpdateFromC()
+                userId = self.__dict__[interface].AllocateResources('Python')
+                self.__dict__[interface].UpdateFromC(userId)
     }
 }
 
 %include "cisstMultiTask/mtsDeviceInterface.h"
 %extend mtsDeviceInterface {
     %pythoncode {
-        def UpdateFromC(self):
+        def UpdateFromC(self, userId):
             commands = mtsDeviceInterface.GetNamesOfCommandsVoid(self)
             for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandVoid(self, command)
+                self.__dict__[command] = mtsDeviceInterface.GetCommandVoid(self, command, userId)
             commands = mtsDeviceInterface.GetNamesOfCommandsWrite(self)
             for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandWrite(self, command)
-                self.__dict__[command].UpdateFromC()
-            commands = mtsDeviceInterface.GetNamesOfCommandsRead(self)
-            for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandRead(self, command)
+                self.__dict__[command] = mtsDeviceInterface.GetCommandWrite(self, command, userId)
                 self.__dict__[command].UpdateFromC()
             commands = mtsDeviceInterface.GetNamesOfCommandsQualifiedRead(self)
             for command in commands:
                 self.__dict__[command] = mtsDeviceInterface.GetCommandQualifiedRead(self, command)
+                self.__dict__[command].UpdateFromC()
+            commands = mtsDeviceInterface.GetNamesOfCommandsRead(self)
+            for command in commands:
+                self.__dict__[command] = mtsDeviceInterface.GetCommandRead(self, command)
                 self.__dict__[command].UpdateFromC()
     }
 }
 
 %include "cisstMultiTask/mtsTask.h"
 %include "cisstMultiTask/mtsTaskInterface.h"
+
+%include "cisstMultiTask/mtsRequiredInterface.h"
 
 %include "cisstMultiTask/mtsTaskManager.h"
 %extend mtsTaskManager {
@@ -200,6 +209,33 @@ typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQua
     }
 }
 
+%include "cisstMultiTask/mtsCollectorBase.h"
+%include "cisstMultiTask/mtsCollectorState.h"
+
+// Wrap base class
+%include "cisstMultiTask/mtsGenericObject.h"
+
+// Wrap some basic types
+%include "cisstMultiTask/mtsGenericObjectProxy.h"
+%define MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(name, elementType)
+// Instantiate the template
+%template(name) mtsGenericObjectProxy<elementType>;
+// Type addition for dynamic type checking
+%{
+    typedef mtsGenericObjectProxy<elementType> name;
+%}
+typedef mtsGenericObjectProxy<elementType> name;
+%types(name *);
+%enddef
+
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsDouble, double);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsInt, int);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsUInt, unsigned int);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsShort, short);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsUShort, unsigned short);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsLong, long);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsULong, unsigned long);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsBool, bool);
 
 // Wrap mtsVector
 %import "cisstMultiTask/mtsVector.h"
@@ -220,3 +256,26 @@ MTS_INSTANTIATE_VECTOR(mtsIntVec, int);
 MTS_INSTANTIATE_VECTOR(mtsShortVec, short); 
 MTS_INSTANTIATE_VECTOR(mtsLongVec, long); 
 MTS_INSTANTIATE_VECTOR(mtsBoolVec, bool); 
+
+// Wrap mtsMatrix
+%import "cisstMultiTask/mtsMatrix.h"
+
+// define macro
+%define MTS_INSTANTIATE_MATRIX(name, elementType)
+%template(name) mtsMatrix<elementType>;
+%{
+    typedef mtsMatrix<elementType> name;
+%}
+typedef mtsMatrix<elementType> name;
+%types(name *);
+%enddef
+
+// instantiate for types also instantiated in cisstVector wrappers
+MTS_INSTANTIATE_MATRIX(mtsDoubleMat, double); 
+MTS_INSTANTIATE_MATRIX(mtsIntMat, int); 
+MTS_INSTANTIATE_MATRIX(mtsShortMat, short); 
+MTS_INSTANTIATE_MATRIX(mtsLongMat, long); 
+MTS_INSTANTIATE_MATRIX(mtsBoolMat, bool); 
+
+// Wrap mtsStateIndex
+%include "cisstMultiTask/mtsStateIndex.h"

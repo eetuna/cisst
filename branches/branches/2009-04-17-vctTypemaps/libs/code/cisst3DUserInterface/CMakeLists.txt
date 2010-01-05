@@ -27,21 +27,6 @@ SET(DEPENDENCIES
     cisstParameterTypes
     )
 
-# Find VTK settings
-FIND_PACKAGE(VTK REQUIRED)
-IF(NOT VTK_USE_RENDERING)
-    MESSAGE(FATAL_ERROR "${LIBRARY} requires VTK_USE_RENDERING.")
-ENDIF(NOT VTK_USE_RENDERING)
-INCLUDE(${VTK_USE_FILE})
-
-IF(CISST_SVL_HAS_OPENCV)
-    # Link each example against the OpenCV library if enabled
-    FIND_PACKAGE(OpenCV)
-    INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-    #LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
-    #TARGET_LINK_LIBRARIES(stereoTutorialSimpleStream ${OpenCV_LIBRARIES})
-ENDIF(CISST_SVL_HAS_OPENCV)
-
 # all source files
 SET(SOURCE_FILES
     ui3BehaviorBase.cpp
@@ -53,9 +38,14 @@ SET(SOURCE_FILES
     ui3MenuBar.cpp
     ui3MenuButton.cpp
     ui3SceneManager.cpp
+    ui3Selectable.cpp
+    ui3SlaveArm.cpp
     ui3VTKRenderer.cpp
     ui3VideoInterfaceFilter.cpp
+    ui3VisibleList.cpp
     ui3VisibleObject.cpp
+    ui3VisibleAxes.cpp
+    ui3Widget3D.cpp
     )
 
 # all header files
@@ -64,24 +54,78 @@ SET(HEADER_FILES
     ui3BehaviorBase.h
     ui3CursorBase.h
     ui3CursorSphere.h
+    ui3Export.h
     ui3ImagePlane.h
     ui3InputDeviceBase.h
     ui3Manager.h
     ui3MasterArm.h
+    ui3SlaveArm.h
     ui3MenuBar.h
     ui3MenuButton.h
     ui3SceneManager.h
+    ui3Selectable.h
     ui3VTKRenderer.h
     ui3VTKForwardDeclarations.h
     ui3VideoInterfaceFilter.h
+    ui3VisibleList.h
     ui3VisibleObject.h
+    ui3VisibleAxes.h
+    ui3Widget3D.h
     )
+
+
+# VTK Dependency
+FIND_PACKAGE(VTK REQUIRED)
+IF(VTK_FOUND)
+    MARK_AS_ADVANCED(FORCE VTK_DIR)
+
+    IF(VTK_USE_RENDERING)
+        INCLUDE(${VTK_USE_FILE})
+
+        SET(UI3_ADDITIONAL_INCLUDE_DIRECTORIES
+            "${UI3_ADDITIONAL_INCLUDE_DIRECTORIES}"
+            "${VTK_INCLUDE_DIRS}"
+            )
+        SET(UI3_ADDITIONAL_LINK_DIRECTORIES
+            "${UI3_ADDITIONAL_LINK_DIRECTORIES}"
+            "${VTK_LIBRARY_DIRS}"
+            )
+        SET(UI3_ADDITIONAL_LIBRARIES
+            "${UI3_ADDITIONAL_LIBRARIES}"
+            vtkRendering
+            vtkHybrid
+            )
+        SET(UI3_ADDITIONAL_PACKAGES
+            "${UI3_ADDITIONAL_PACKAGES}"
+            VTK
+            )
+        SET(UI3_ADDITIONAL_CMAKE_FILES
+            "${UI3_ADDITIONAL_CMAKE_FILES}"
+            ${VTK_USE_FILE}
+            )
+        MESSAGE(STATUS "VTK found - Switch to advanced view for details")
+
+    ELSE(VTK_USE_RENDERING)
+        MESSAGE(FATAL_ERROR "${LIBRARY} requires vtkRendering to be compiled in VTK.")
+    ENDIF(VTK_USE_RENDERING)
+ELSE(VTK_FOUND)
+    MARK_AS_ADVANCED(CLEAR VTK_DIR)
+    MESSAGE(FATAL_ERROR "${LIBRARY} requires VTK.")
+ENDIF(VTK_FOUND)
+
+
+# Exporting settings to applications that link against cisst
+CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_INCLUDE_DIRECTORIES UI3_ADDITIONAL_INCLUDE_DIRECTORIES)
+CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LINK_DIRECTORIES UI3_ADDITIONAL_LINK_DIRECTORIES)
+CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LIBRARIES UI3_ADDITIONAL_LIBRARIES)
+CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_PACKAGES UI3_ADDITIONAL_PACKAGES)
+CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_CMAKE_FILES UI3_ADDITIONAL_CMAKE_FILES)
+
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
 
 # find icons
-
 set(CISST_UI3_ICONS_DIR "${cisst_SOURCE_DIR}/libs/etc/cisst3DUserInterface/icons")
 file(GLOB CISST_UI3_ICONS RELATIVE ${CISST_UI3_ICONS_DIR} ${CISST_UI3_ICONS_DIR}/*.png)
 
@@ -94,3 +138,4 @@ foreach(icon ${CISST_UI3_ICONS})
                             ${CISST_UI3_ICONS_DIR}/${icon}
                             ${cisst_BINARY_DIR}/etc/cisst3DUserInterface/icons/${icon})
 endforeach(icon)
+

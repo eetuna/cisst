@@ -23,8 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsVector_h
 #define _mtsVector_h
 
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnGenericObjectProxy.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstVector/vctDynamicVector.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -33,10 +31,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsExport.h>
 
 template <class _elementType>
-class mtsVector: public cmnGenericObject,
+class mtsVector: public mtsGenericObject,
                  public vctDynamicVector<_elementType> {
     // declare services, requires dynamic creation
-    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
     /*! Type of elements. */
     typedef _elementType value_type;
@@ -56,10 +54,13 @@ public:
         VectorType(0)
     {}
 
-    /*! Constructor with memory allocation for a given size. */
+    /*! Constructor with memory allocation for a given size.  Assign
+        zero to all elements. */
     inline mtsVector(size_type size):
         VectorType(size)
-    {}
+    {
+        VectorType::Zeros();
+    }
 
     /*! Assignment from vector base class.  This operator assign the
       data from one vector to another, it doesn't replace the object
@@ -71,7 +72,13 @@ public:
 
     /*! Copy constructor. */
     inline mtsVector(const ThisType & otherVector):
-        cmnGenericObject(otherVector),
+        mtsGenericObject(otherVector),
+        VectorType(otherVector)
+    {}
+
+    /*! Pseudo copy constructor from vector type. */
+    inline mtsVector(const VectorType & otherVector):
+        mtsGenericObject(),
         VectorType(otherVector)
     {}
 
@@ -90,6 +97,29 @@ public:
     virtual void ToStream(std::ostream & outputStream) const {
         VectorType::ToStream(outputStream);
     }
+
+    /*! To stream raw data. */
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        mtsGenericObject::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+        outputStream << delimiter;
+        VectorType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        mtsGenericObject::SerializeRaw(outputStream);
+        VectorType::SerializeRaw(outputStream);
+    }
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream) 
+    {
+        mtsGenericObject::DeSerializeRaw(inputStream);
+        VectorType::DeSerializeRaw(inputStream);
+    }
+
 };
 
 
@@ -126,17 +156,6 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsUCharVec);
 
 typedef mtsVector<bool> mtsBoolVec;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsBoolVec);
-
-// PK: the StateTable GetHistory implementation will require an mtsVector
-//     for every parameter type!!
-
-// Following is for a vector of cmnDouble
-typedef mtsVector<cmnDouble> mtsDoubleHistory;
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleHistory);
-
-// Following is for a vector of cmnVector<double>
-typedef mtsVector<mtsDoubleVec> mtsDoubleVecHistory;
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDoubleVecHistory);
 
 
 #endif // _mtsVector_h

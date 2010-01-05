@@ -28,9 +28,27 @@ prmPositionCartesianGet::~prmPositionCartesianGet()
 
 void prmPositionCartesianGet::ToStream(std::ostream & outputStream) const
 {
-    outputStream << "Reference frame: " << this->ReferenceFrameMember
+    BaseType::ToStream(outputStream);
+    outputStream << "\nReference frame: " << this->ReferenceFrameMember
                  << "\nMoving frame: " << this->MovingFrameMember
-                 << "\nPosition: " << this->PositionMember
-                 << "\nState Index: " << this->StateIndexMember;
+                 << "\nPosition: " << this->PositionMember;
 }
 
+void prmPositionCartesianGet::ToStreamRaw(std::ostream & outputStream, const char delimiter,
+                                          bool headerOnly, const std::string & headerPrefix) const {
+    BaseType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    outputStream << delimiter;
+    this->PositionMember.ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+}
+
+void prmPositionCartesianGet::SerializeRaw(std::ostream & outputStream) const 
+{
+    BaseType::SerializeRaw(outputStream);
+    this->PositionMember.SerializeRaw(outputStream);
+}
+
+void prmPositionCartesianGet::DeSerializeRaw(std::istream & inputStream) 
+{
+    BaseType::DeSerializeRaw(inputStream);
+    this->PositionMember.DeSerializeRaw(inputStream);
+}

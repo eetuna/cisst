@@ -57,18 +57,23 @@ http://www.cisst.org/cisst/license.txt.
 #define CISST_DEPRECATED
 
 // Import file with macros and typedefs
-%import "cisstParameterTypes/prmTypes.h"
-%import "cisstParameterTypes/prmMacros.h"
+%import "cisstMultiTask/mtsMacros.h"
 
-// Import base types (not wrapped)
-%import "cisstParameterTypes/prmMotionBase.h"
+// Wrap base type
+%include "cisstParameterTypes/prmMotionBase.h"
 
 // Wrap all others 
 %include "cisstParameterTypes/prmEventButton.h"
+
 %include "cisstParameterTypes/prmPositionCartesianGet.h"
 %include "cisstParameterTypes/prmPositionCartesianSet.h"
-%include "cisstParameterTypes/prmPositionJointGet.h"
-%include "cisstParameterTypes/prmPositionJointSet.h"
 %include "cisstParameterTypes/prmVelocityCartesianGet.h"
 %include "cisstParameterTypes/prmVelocityCartesianSet.h"
+%include "cisstParameterTypes/prmForceCartesianGet.h"
+%include "cisstParameterTypes/prmForceCartesianSet.h"
+%include "cisstParameterTypes/prmCollaborativeControlForce.h"
+
+%include "cisstParameterTypes/prmPositionJointGet.h"
+%include "cisstParameterTypes/prmPositionJointSet.h"
+%include "cisstParameterTypes/prmVelocityJointGet.h"
 %include "cisstParameterTypes/prmVelocityJointSet.h"

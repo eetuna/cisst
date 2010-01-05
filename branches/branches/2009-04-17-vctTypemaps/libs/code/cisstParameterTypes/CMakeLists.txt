@@ -20,25 +20,39 @@ SET(DEPENDENCIES
     cisstVector
     cisstOSAbstraction
     cisstMultiTask
+    cisstRobot
     )
 
 # all source files
 SET(SOURCE_FILES
     prmEventButton.cpp
-    prmTypes.cpp
     prmMotionBase.cpp
+
     prmPositionJointGet.cpp
     prmPositionJointSet.cpp
     prmVelocityJointGet.cpp
     prmVelocityJointSet.cpp
+
     prmPositionCartesianGet.cpp
     prmPositionCartesianSet.cpp
     prmVelocityCartesianGet.cpp
     prmVelocityCartesianSet.cpp
+    prmForceCartesianGet.cpp
+    prmForceCartesianSet.cpp
+
     prmTransformationBase.cpp
     prmTransformationFixed.cpp
     prmTransformationDynamic.cpp
     prmTransformationManager.cpp
+	
+	prmString.cpp
+	prmMaskedVector.cpp
+    prmActuatorState.cpp
+    prmRobotState.cpp
+    prmActuatorParameters.cpp
+    prmGainParameters.cpp
+	
+	prmCollaborativeControlForce.cpp
     )
 
 # all header files
@@ -46,21 +60,33 @@ SET(HEADER_FILES
     prmEventButton.h
     prmExport.h
     prmForwardDeclarations.h
-    prmTypes.h
-    prmMacros.h
     prmMotionBase.h
+
     prmPositionJointGet.h
     prmPositionJointSet.h
     prmVelocityJointGet.h
     prmVelocityJointSet.h
+
     prmPositionCartesianGet.h
     prmPositionCartesianSet.h
     prmVelocityCartesianGet.h
     prmVelocityCartesianSet.h
+    prmForceCartesianGet.h
+    prmForceCartesianSet.h
+
     prmTransformationBase.h
     prmTransformationFixed.h
     prmTransformationDynamic.h
     prmTransformationManager.h
+	
+	prmString.h
+	prmMaskedVector.h
+    prmActuatorState.h
+    prmRobotState.h
+    prmActuatorParameters.h
+    prmGainParameters.h
+	
+	prmCollaborativeControlForce.h
     )
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)

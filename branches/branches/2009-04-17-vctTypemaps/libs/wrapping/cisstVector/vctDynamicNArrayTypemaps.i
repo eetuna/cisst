@@ -77,13 +77,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($1_ltype::value_type));
 
@@ -115,10 +115,10 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    unsigned int sz = $1_ltype::DIMENSION;
-    const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+    vct::size_type sz = $1_ltype::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes($1.sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
-    for (unsigned int i = 0; i < sz; i++) {
+    for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
     int type = vctPythonType<$1_ltype::value_type>();
@@ -130,7 +130,7 @@ http://www.cisst.org/cisst/license.txt.
 
     // Create a temporary vctDynamicNArrayRef container
     // `sizes' defined above, don't need to redefine it
-    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides($1.strides());
+    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides($1.strides());
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
 
     vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
@@ -179,13 +179,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($*1_ltype::value_type));
 
@@ -216,11 +216,11 @@ http://www.cisst.org/cisst/license.txt.
     // input sizes
     npy_intp *_input_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _input_sizesRef(_input_sizes);
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> input_sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> input_sizes;
     input_sizes.Assign(_input_sizesRef);
 
     // output sizes
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> output_sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> output_sizes;
     output_sizes.Assign($1->sizes());
 
     if (!input_sizes.Equal(output_sizes)) {
@@ -229,11 +229,11 @@ http://www.cisst.org/cisst/license.txt.
         //  2)  Pass that array to the resizing function given by NumPy API
 
         // create an array of sizes
-        unsigned int sz = $*1_ltype::DIMENSION;
+        vct::size_type sz = $*1_ltype::DIMENSION;
         npy_intp *sizes = PyDimMem_NEW(sz);
 
         // set the sizes
-        for (unsigned int i = 0; i < sz; i++) {
+        for (vct::size_type i = 0; i < sz; i++) {
             sizes[i] = output_sizes.at(i);
         }
 
@@ -253,13 +253,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($*1_ltype::value_type));
 
@@ -288,10 +288,10 @@ http://www.cisst.org/cisst/license.txt.
      */
 
     // Create a new PyArray and set its shape
-    unsigned int sz = $*1_ltype::DIMENSION;
-    const vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes($1->sizes());
+    vct::size_type sz = $*1_ltype::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes($1->sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
-    for (unsigned int i = 0; i < sz; i++) {
+    for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
@@ -339,13 +339,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($*1_ltype::value_type));
 
@@ -385,10 +385,10 @@ http://www.cisst.org/cisst/license.txt.
      */
 
     // Create a new PyArray and set its shape
-    unsigned int sz = $*1_ltype::DIMENSION;
-    const vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes($1->sizes());
+    vct::size_type sz = $*1_ltype::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes($1->sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
-    for (unsigned int i = 0; i < sz; i++) {
+    for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
@@ -437,13 +437,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($1_ltype::value_type));
 
@@ -468,10 +468,10 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    unsigned int sz = $1_ltype::DIMENSION;
-    const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+    vct::size_type sz = $1_ltype::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes($1.sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
-    for (unsigned int i = 0; i < sz; i++) {
+    for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
@@ -484,7 +484,7 @@ http://www.cisst.org/cisst/license.txt.
 
     // Create a temporary vctDynamicNArrayRef container
     // `sizes' defined above, don't need to redefine it
-    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides($1.strides());
+    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides($1.strides());
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
 
     vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
@@ -531,13 +531,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($*1_ltype::value_type));
 
@@ -604,13 +604,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($1_ltype::value_type));
 
@@ -636,11 +636,11 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    unsigned int sz = $1_ltype::DIMENSION;
-    const vctFixedSizeVector<unsigned int, $1_ltype::DIMENSION> sizes($1.sizes());
+    vct::size_type sz = $1_ltype::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes($1.sizes());
 
     npy_intp *shape = PyDimMem_NEW(sz);
-    for (unsigned int i = 0; i < sz; i++) {
+    for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
@@ -654,7 +654,7 @@ http://www.cisst.org/cisst/license.txt.
 
     // Create a temporary vctDynamicNArrayRef container
     // `sizes' defined above, don't need to redefine it
-    vctFixedSizeVector<int, $1_ltype::DIMENSION> strides($1.strides());
+    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides($1.strides());
     const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
 
     vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
@@ -701,13 +701,13 @@ http://www.cisst.org/cisst/license.txt.
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<unsigned int, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
     vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<int, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
     strides.Assign(_stridesRef);
     strides.Divide(sizeof($*1_ltype::value_type));
 

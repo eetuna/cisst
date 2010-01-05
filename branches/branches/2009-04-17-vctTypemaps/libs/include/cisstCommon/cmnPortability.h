@@ -59,6 +59,7 @@ http://www.cisst.org/cisst/license.txt.
 #define CISST_LINUX_RTAI 6
 #define CISST_CYGWIN 7
 #define CISST_DARWIN 8
+#define CISST_QNX 9
 //@}
 
 /*! \name Testing the compiler */
@@ -109,6 +110,9 @@ http://www.cisst.org/cisst/license.txt.
   #ifdef __APPLE__
     #define CISST_OS CISST_DARWIN
   #endif // __APPLE__
+  #ifdef __QNX__
+    #define CISST_OS CISST_QNX
+  #endif // __QNX__
 #else // __GNUC__
   #ifdef sgi
     #define CISST_OS CISST_IRIX
@@ -307,7 +311,7 @@ extern CISST_EXPORT const std::string cmnCompilersStrings[];
 */
 #ifdef CISST_COMPILER_IS_MSVC
   #include <float.h>
-  #define CMN_ISNAN(x) _isnan(x)
+  #define CMN_ISNAN(x) (_isnan(x) != 0)
 #else
   #if (CISST_OS == CISST_DARWIN)
     #ifndef isnan
@@ -335,6 +339,8 @@ extern CISST_EXPORT const std::string cmnCompilersStrings[];
 */
 #ifdef CISST_COMPILER_IS_MSVC
 #define CMN_ISFINITE(x) _finite(x)
+#elif (CISST_OS == CISST_QNX)
+  #define CMN_ISFINITE(x) isfinite(x)
 #else
   #if (CISST_OS == CISST_SOLARIS)
     #include <ieeefp.h>
@@ -402,18 +408,12 @@ extern CISST_EXPORT const std::string cmnCompilersStrings[];
   (e.g. header file and code file), it is not technically required to
   use the macro in the header file.  Nervertheless, we recommend to
   use it in both places.
- */
-#if 0 
+ */ 
 #if (CISST_COMPILER == CISST_GCC)
 #define CMN_UNUSED(argument) MARKED_AS_UNUSED ## argument __attribute__((unused))
 #else
 #define CMN_UNUSED(argument) MARKED_AS_UNUSED ## argument
-#endif
 #endif 
-
-#define CMN_UNUSED(argument)
- 
-
 
 
 

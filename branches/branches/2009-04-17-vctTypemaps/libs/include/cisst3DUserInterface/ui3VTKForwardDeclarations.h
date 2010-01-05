@@ -25,11 +25,13 @@ http://www.cisst.org/cisst/license.txt.
 
 class vtkActor;
 class vtkAssembly;
-class vtkPNGReader;
+class vtkAxesActor;
 class vtkCamera;
 class vtkCubeSource;
+class vtkLineSource;
 class vtkMatrix4x4;
 class vtkPlaneSource;
+class vtkPNGReader;
 class vtkPolyDataMapper;
 class vtkProp3D;
 class vtkPropAssembly;
@@ -38,7 +40,8 @@ class vtkRenderWindow;
 class vtkRenderWindowInteractor;
 class vtkSphereSource;
 class vtkTexture;
-
+class vtkVolumeReader;
+class vtkVolume16Reader;
 
 #endif // _ui3VTKForwardDeclarations_h
 

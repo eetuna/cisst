@@ -33,13 +33,16 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3InputDeviceBase.h>
 #include <cisst3DUserInterface/ui3MenuBar.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
+
 /*!
  Provides a default behavior and common interface for derived behavior classes.
 */
-class ui3BehaviorBase: public mtsTaskContinuous
+class CISST_EXPORT ui3BehaviorBase: public mtsTaskContinuous
 {
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class ui3Manager;
     friend class ui3MasterArm;
@@ -186,9 +189,12 @@ protected:
     /*! Method called when this behavior becomes active, i.e. the user selected it from the previous menu */
     void SetStateForeground(void);
     void SetStateBackground(void);
+    void SetStateIdle(void);
 
-protected:
+    virtual void OnQuit(void) {};
+    virtual void OnStart(void) {};
 
+public:
     /*!
      If there are any video sources connected to the behavior, this method is
      called by SVL pipelines every time a new stream sample arrives.
@@ -230,7 +236,6 @@ protected:
     vctDynamicVector<ui3VideoInterfaceFilter*> Streams;
     vctDynamicVector<std::string> StreamNames;
 
-public:
     /*!
      Returns a pointer to the filter that interfaces the behavior
      with StereoVision pipelines. Using the its pointer, the filter
@@ -238,14 +243,27 @@ public:
     */
     svlFilterBase* GetStreamSamplerFilter(const std::string & streamname);
 
-protected:
+
+    // list of ui3 widgets
+    typedef std::list<ui3Widget3D *> Widget3DList;
+    Widget3DList Widget3Ds;
+    void AddWidget3D(ui3Widget3D * widget3D);
+
+    // list of selectables objects, includes handles for ui3Widgets
+    typedef std::list<ui3Selectable *> SelectableList;
+    SelectableList Selectables;
+    void AddSelectable(ui3Selectable * selectable);
+
 
     void AddMenuBar(bool isManager = false);
 
     void SetState(const StateType & newState);
 
-    virtual void RightMasterButtonCallback(const prmEventButton & event);
-    virtual void LeftMasterButtonCallback(const prmEventButton & event);
+    virtual void PrimaryMasterButtonCallback(const prmEventButton & event);
+    virtual void SecondaryMasterButtonCallback(const prmEventButton & event);
+    virtual void SetStateIdleCallback(void);
+    virtual void SetStateForegroundCallback(void);
+    virtual void SetStateBackgroundCallback(void);
 
     /*!
      State variable for storing the current UI state of the behavior.
@@ -257,11 +275,11 @@ protected:
     */
     ui3Manager * Manager;
 
-    mtsFunctionRead RightMasterPositionFunction, LeftMasterPositionFunction;
+    mtsFunctionRead GetPrimaryMasterPosition, GetSecondaryMasterPosition;
 
 private:
     /*! Event triggers, used by ui3Manager only */
-    mtsFunctionWrite RightMasterButtonEvent, LeftMasterButtonEvent;
+    mtsFunctionWrite PrimaryMasterButtonEvent, SecondaryMasterButtonEvent;
 };
 
 

@@ -21,7 +21,9 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "svlStereoDP.h"
+
 #include <math.h>
+#include <string.h>
 
 #define MAX_UI16_VAL    0xFFFF
 #define MAX_I32_VAL     0x7FFFFFFF
@@ -38,10 +40,7 @@ using namespace std;
 // arguments:
 //           width                  - width of input and output images
 //           height                 - height of input and output images
-//           left                   - left side of the valid area (where computation will be performed)
-//           top                    - top side of the valid area (where computation will be performed)
-//           right                  - right side of the valid area (where computation will be performed)
-//           bottom                 - bottom side of the valid area (where computation will be performed)
+//           roi                    - region of interest (where computation will be performed)
 //           ppoffset               - horizontal principal point difference (from stereo calibration)
 //           max disparity          - maximum disparity
 //           scale                  - image scale-down factor: 1/2^scale
@@ -50,10 +49,17 @@ using namespace std;
 //           tempfilt               - temporal filtering (0 - off)
 //           disparityinterpolation - disparity interpolation on/off
 // *******************************************************************
-svlStereoDP::svlStereoDP(int width, int height, int left, int top, int right, int bottom,
-                         int mindisparity, int maxdisparity, int ppoffset,
-                         int scale, int blocksize, int searchrad, int smoothness,
-                         double tempfilt, bool disparityinterpolation) : svlStereoMethodBase()
+svlStereoDP::svlStereoDP(int width, int height,
+                         const svlRect & roi,
+                         int mindisparity, int maxdisparity,
+                         int ppoffset,
+                         int scale,
+                         int blocksize,
+                         int searchrad,
+                         int smoothness,
+                         double tempfilt,
+                         bool disparityinterpolation) :
+    svlComputationalStereoMethodBase()
 {
     // ScoreTruncationLevel has been determined
     // experimentally in the Scharstein-Szelinski paper.
@@ -87,10 +93,10 @@ svlStereoDP::svlStereoDP(int width, int height, int left, int top, int right, in
     SurfaceHeight = height >> scale;
     ScaleWidth = width;
     ScaleHeight = height >> scale;
-    ValidAreaLeft = left >> scale;
-    ValidAreaRight = (right + (1 << scale)) >> scale;
-    ValidAreaTop = top >> scale;
-    ValidAreaBottom = (bottom + (1 << scale)) >> scale;
+    ValidAreaLeft = roi.left >> scale;
+    ValidAreaRight = (roi.right + (1 << scale)) >> scale;
+    ValidAreaTop = roi.top >> scale;
+    ValidAreaBottom = (roi.bottom + (1 << scale)) >> scale;
     Smoothness = smoothness >> scale;
     PrincipalPointOffset = ppoffset;
     MinDisparity = mindisparity;
@@ -187,8 +193,8 @@ int svlStereoDP::Process(svlSampleImageBase *images, int *disparitymap)
         return -1;
 
     // Creating scales of the stereo input images
-    CreateScale(reinterpret_cast<svlRGB*>(images->GetPointer(SVL_LEFT)), LeftImage);
-    CreateScale(reinterpret_cast<svlRGB*>(images->GetPointer(SVL_RIGHT)), RightImage);
+    CreateScale(reinterpret_cast<svlRGB*>(images->GetUCharPointer(SVL_LEFT)), LeftImage);
+    CreateScale(reinterpret_cast<svlRGB*>(images->GetUCharPointer(SVL_RIGHT)), RightImage);
 
     // Running optimization
     DisparityOptimization();
@@ -390,8 +396,8 @@ void svlStereoDP::DisparityOptimization()
 
                 // compute ScoreCache (costs from previous diagonal)
                 inputoffset = j * inputrowstride + (i << ScaleFactor);
-                right = reinterpret_cast<unsigned char*>(RightImage + inputoffset + PrincipalPointOffset);
-                left = reinterpret_cast<unsigned char*>(LeftImage + inputoffset + from1 + MinDisparity);
+                right = reinterpret_cast<unsigned char*>(RightImage + inputoffset);
+                left = reinterpret_cast<unsigned char*>(LeftImage + inputoffset + from1 + MinDisparity + PrincipalPointOffset);
 
                 if (BlockSize > 1) {
                     right -= halfbsbytes;
@@ -578,8 +584,8 @@ void svlStereoDP::DisparityOptimization()
 
                 // compute ScoreCache (costs from previous diagonal)
                 inputoffset = j * inputrowstride + (i << ScaleFactor);
-                right = reinterpret_cast<unsigned char*>(RightImage + inputoffset + PrincipalPointOffset);
-                left = reinterpret_cast<unsigned char*>(LeftImage + inputoffset + MinDisparity);
+                right = reinterpret_cast<unsigned char*>(RightImage + inputoffset);
+                left = reinterpret_cast<unsigned char*>(LeftImage + inputoffset + MinDisparity + PrincipalPointOffset);
 
                 if (BlockSize > 1) {
                     right -= halfbsbytes;

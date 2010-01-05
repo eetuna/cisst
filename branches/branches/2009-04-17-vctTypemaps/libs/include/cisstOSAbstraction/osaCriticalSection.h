@@ -4,10 +4,10 @@
 /*
   $Id$
   
-  Author(s):  Balazs Vagvolgyi
+  Author(s):  Balazs Vagvolgyi, Min Yang Jung
   Created on: 2008 
 
-  (C) Copyright 2006-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2006-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -32,12 +32,14 @@ http://www.cisst.org/cisst/license.txt.
     #include <windows.h>
 #endif
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
     #include <cisstOSAbstraction/osaMutex.h>
 #endif
 
+// Always include last
+#include <cisstOSAbstraction/osaExport.h>
 
-class osaCriticalSection
+class CISST_EXPORT osaCriticalSection
 {
 public:
     osaCriticalSection();
@@ -51,7 +53,7 @@ private:
 #if (CISST_OS == CISST_WINDOWS)
     CRITICAL_SECTION csHandle;
 #endif
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
     osaMutex Mutex;
 #endif
 };

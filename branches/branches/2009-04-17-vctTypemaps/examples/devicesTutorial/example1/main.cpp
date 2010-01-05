@@ -14,18 +14,18 @@ using namespace std;
 int main(void)
 {
     // log configuration
-    cmnLogger::SetLoD(10);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
     osaThreadedLogFile threadedLog("example1-");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, 10);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
-    cmnClassRegister::SetLoD("mtsTaskInterface", 10);
-    cmnClassRegister::SetLoD("mtsTaskManager", 10);
-    cmnClassRegister::SetLoD("devSensableHD", 10);
+    cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("devSensableHD", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create our two tasks
-    const long PeriodDisplay = 10; // in milliseconds
+    const double PeriodDisplay = 10.0; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     displayTask * displayTaskObject =
         new displayTask("DISP", PeriodDisplay * cmn_ms);
@@ -49,14 +49,22 @@ int main(void)
     taskManager->ToStreamDot(dotFile);
     dotFile.close();
 
+    // collect all state data in csv file
+    mtsCollectorState * collector =
+        new mtsCollectorState("Omni", mtsCollectorBase::COLLECTOR_LOG_FORMAT_CSV);
+    collector->AddSignal(); // all signals
+    taskManager->AddTask(collector);
+
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
     // start the periodic Run
     taskManager->StartAll();
 
+    collector->Start(0.0 * cmn_s);
+
     // wait until the close button of the UI is pressed
-    while (1) {
-        osaSleep(100.0 * cmn_ms); // sleep to save CPU
+    while (true) {
+        osaSleep(10.0 * cmn_ms); // sleep to save CPU
         if (displayTaskObject->GetExitFlag()) {
             break;
         }
@@ -66,7 +74,7 @@ int main(void)
 
     osaSleep(PeriodDisplay * 2);
     while (!displayTaskObject->IsTerminated()) osaSleep(PeriodDisplay);
-
+    taskManager->Cleanup();
     return 0;
 }
 

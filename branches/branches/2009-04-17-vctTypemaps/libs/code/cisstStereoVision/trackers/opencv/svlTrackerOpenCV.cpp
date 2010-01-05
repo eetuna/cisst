@@ -23,6 +23,21 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/trackers/svlTrackerOpenCV.h>
 #include "trkOCVColor.h"
 
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
+
+
+/*************************************/
+/*** svlTrackerOpenCV class **********/
+/*************************************/
 
 svlTrackerOpenCV::svlTrackerOpenCV() : svlPointTrackerAlgoBase()
 {
@@ -130,7 +145,7 @@ void svlTrackerOpenCV::Release()
     }
 }
 
-int svlTrackerOpenCV::SetTargetCount(unsigned int targetcount)
+int svlTrackerOpenCV::SetTargetCount(unsigned int CMN_UNUSED(targetcount))
 {
     if (Initialized) return -1;
     if (svlPointTrackerAlgoBase::SetTargetCount(5) != 0) return -2;
@@ -174,7 +189,7 @@ int svlTrackerOpenCV::Track(unsigned char* image)
     return 0;
 }
 
-int svlTrackerOpenCV::GetTarget(unsigned int targetid, svlPointTracker::TargetType* target)
+int svlTrackerOpenCV::GetTarget(unsigned int targetid, svlFilterPointTracker::TargetType* target)
 {
     if (!Initialized) return -1;
     if (targetid >= TargetCount) return -2;

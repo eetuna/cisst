@@ -12,7 +12,24 @@
 # 
 # --- end cisst license ---
 
-project(devicesTutorial)
-
-add_subdirectory(example1)
 add_subdirectory(example2)
+
+if(CISST_DEV_HAS_SENSABLEHD OR CISST_MTS_HAS_ICE)
+  add_subdirectory(example1)
+endif(CISST_DEV_HAS_SENSABLEHD OR CISST_MTS_HAS_ICE)
+
+if(CISST_DEV_HAS_SENSABLEHD)
+  add_subdirectory(example3)
+  add_subdirectory(example5)
+endif(CISST_DEV_HAS_SENSABLEHD)
+
+if(CISST_DEV_HAS_OPENIGTLINK)
+  add_subdirectory(example4)
+endif(CISST_DEV_HAS_OPENIGTLINK)
+
+if(CISST_HAS_QT AND CISST_HAS_XML)
+  add_subdirectory(example6)
+  if(CISST_DEV_HAS_MICRONTRACKER)
+    add_subdirectory(example7)
+  endif(CISST_DEV_HAS_MICRONTRACKER)
+endif(CISST_HAS_QT AND CISST_HAS_XML)

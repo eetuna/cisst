@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: devNDiSerial.h 192 2009-03-25 22:12:25Z adeguet1 $
+  $Id$
 
   Author(s): Anton Deguet
   Created on: 2009-03-27
@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaSerialPort.h>
 #include <cisstMultiTask/mtsTaskContinuous.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 
 // Always include last
 #include <cisstDevices/devExport.h>
@@ -36,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT devSartoriusSerial: public mtsTaskContinuous
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 protected:
 
@@ -48,14 +49,16 @@ protected:
 
     /*! "System" Commands: */
     void SendPrintToggle(void);
+public: // Balazs
     bool GetWeight(double & weightInGrams, bool & stable);
+protected: // Balazs
     bool GetModel(std::string & modelName);
     bool ProcessBuffer(void);
     typedef const char * const_char_pointer;
     void UpdateStateTable(const const_char_pointer & buffer);
 
     /*! Placeholder for last weigth read */
-    cmnDouble Weight;
+    mtsDouble Weight;
 
     /*! Replies are limited to 16 chars, to be tested */
     enum {BUFFER_SIZE = 512};
@@ -77,7 +80,7 @@ public:
     void Configure(const std::string & CMN_UNUSED(filename)) {};
     void Startup(void);
     void Run(void);
-    void Cleanup(void) {}; // user defined cleanup
+    void Cleanup(void);
     
 };
 

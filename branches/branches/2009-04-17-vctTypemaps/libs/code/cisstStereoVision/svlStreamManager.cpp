@@ -21,53 +21,56 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlStreamManager.h>
+#include <cisstOSAbstraction/osaSleep.h>
+
+
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
 
 #define MAX_WAIT_LOCK_TIME      1000
 
 using namespace std;
 
-
 /*************************************/
 /*** svlStreamManager class **********/
 /*************************************/
 
-svlStreamManager::svlStreamManager()
+svlStreamManager::svlStreamManager() :
+    ThreadCount(1),
+    SyncPoint(0),
+    CS(0),
+    StreamSource(0),
+    Initialized(false),
+    Running(false),
+    StreamStatus(SVL_STREAM_CREATED)
 {
-    ThreadCount = 1;
-    ControlInstanceMulti = 0;
-    ControlThreadMulti = 0;
-    SyncPoint = 0;
-    CS = 0;
-    StreamSource = 0;
-    Initialized = false;
-    Running = false;
     Entity.Stream = this;
 }
 
-svlStreamManager::svlStreamManager(unsigned int threadcount)
+svlStreamManager::svlStreamManager(unsigned int threadcount) :
+    SyncPoint(0),
+    CS(0),
+    StreamSource(0),
+    Initialized(false),
+    Running(false),
+    StreamStatus(SVL_STREAM_CREATED)
 {
     // To do: autodetect the number of available processor cores
     ThreadCount = std::max(1u, threadcount);
-    ControlInstanceMulti = 0;
-    ControlThreadMulti = 0;
-    SyncPoint = 0;
-    CS = 0;
-    StreamSource = 0;
-    Initialized = false;
-    Running = false;
     Entity.Stream = this;
 }
 
 svlStreamManager::~svlStreamManager()
 {
-    EmptyFilterList();
-}
-
-int svlStreamManager::SetThreads(unsigned int threadcount)
-{
-    if (Running || threadcount < 1) return SVL_FAIL;
-    ThreadCount = threadcount;
-    return SVL_OK;
+    RemoveAll();
 }
 
 svlStreamEntity& svlStreamManager::Trunk()
@@ -88,12 +91,12 @@ svlStreamEntity& svlStreamManager::Branch(const std::string & name)
     return *(iterbranch->first->entity);
 }
 
-svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter)
+svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter, unsigned int threadcount, unsigned int buffersize)
 {
-    return CreateBranchAfterFilter(filter, "");
+    return CreateBranchAfterFilter(filter, "", threadcount, buffersize);
 }
 
-svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter, const std::string & name)
+svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter, const std::string & name, unsigned int threadcount, unsigned int buffersize)
 {
     if (Initialized ||
         GetBranchEntityOfFilter(filter) == 0 ||
@@ -101,17 +104,19 @@ svlStreamEntity* svlStreamManager::CreateBranchAfterFilter(svlFilterBase* filter
         return 0;
 
     // Create branch stream object
-    svlStreamManager* branchstream = new svlStreamManager();
+    svlStreamManager* branchstream = new svlStreamManager(std::max(1u, threadcount));
     // Create branch structure
     _BranchStruct *branch = new _BranchStruct;
+    branchstream->Entity.Root = filter;
     branch->entity = &(branchstream->Entity);
     branch->name = name;
+    branch->buffersize = buffersize;
     // Add branch to the filter's branch list
     filter->OutputBranches.push_back(&(branchstream->Entity));
     // Add branch and the corresponding stream to branch map
     Branches[branch] = branchstream;
     // Create branch stream source
-    svlStreamBranchSource* branchsource = new svlStreamBranchSource(filter->GetOutputType());
+    svlStreamBranchSource* branchsource = new svlStreamBranchSource(filter->GetOutputType(), buffersize);
     // Add branch source to branch stream
     branchstream->AddSourceFilter(branchsource);
 
@@ -132,13 +137,29 @@ int svlStreamManager::RemoveBranch(svlStreamEntity* entity)
     if (iterbranch == Branches.end())
         return SVL_FAIL;
 
+    // Disconnect branch from root filter
+    svlFilterBase* root = entity->Root;
+    if (root) {
+        svlFilterBase::_OutputBranchList::iterator iterbranchlist;
+        for (iterbranchlist  = root->OutputBranches.begin();
+             iterbranchlist != root->OutputBranches.end();
+             iterbranchlist ++) {
+            if ((*iterbranchlist) == entity) {
+                root->OutputBranches.erase(iterbranchlist);
+                if (root->OutputBranches.empty()) root->OutputBranches.clear();
+                break;
+            }
+        }
+    }
+
     // Empty and delete branch stream
     svlStreamManager* branchstream = iterbranch->second;
     if (branchstream) {
+        svlFilterSourceBase* branchsource = branchstream->StreamSource;
         // Remove every filter in the branch from the stream
-        branchstream->EmptyFilterList();
+        branchstream->RemoveAll();
         // Delete branch source
-        if (branchstream->StreamSource) delete branchstream->StreamSource;
+        if (branchsource) delete branchsource;
         // Delete branch stream
         delete branchstream;
     }
@@ -147,6 +168,7 @@ int svlStreamManager::RemoveBranch(svlStreamEntity* entity)
     delete iterbranch->first;
     // Remove branch from branch map
     Branches.erase(iterbranch);
+    if (Branches.empty()) Branches.clear();
 
     return SVL_OK;
 }
@@ -166,10 +188,13 @@ int svlStreamManager::RemoveBranch(const std::string & name)
     // Empty and delete branch stream
     svlStreamManager* branchstream = iterbranch->second;
     if (branchstream) {
+        svlFilterSourceBase* branchsource = branchstream->StreamSource;
         // Remove every filter in the branch from the stream
-        branchstream->EmptyFilterList();
+        branchstream->RemoveAll();
         // Delete branch source
         if (branchstream->StreamSource) delete branchstream->StreamSource;
+        // Delete branch source
+        if (branchsource) delete branchsource;
         // Delete branch stream
         delete branchstream;
     }
@@ -178,6 +203,7 @@ int svlStreamManager::RemoveBranch(const std::string & name)
     delete iterbranch->first;
     // Remove branch from branch map
     Branches.erase(iterbranch);
+    if (Branches.empty()) Branches.clear();
 
     return SVL_OK;
 }
@@ -206,13 +232,14 @@ int svlStreamManager::RemoveFilter(svlFilterBase* filter)
                 DisconnectFilterOutput(filter) == SVL_ALREADY_INITIALIZED)
                 return SVL_ALREADY_INITIALIZED;
             // Remove brenches after the filter, if any
-            for (iterbranchlist  = filter->OutputBranches.begin();
-                 iterbranchlist != filter->OutputBranches.end();
-                 iterbranchlist ++) {
-                RemoveBranch(*iterbranchlist);
+            while (filter->OutputBranches.empty() == false) {
+                RemoveBranch(*(filter->OutputBranches.begin()));
             }
             // Remove filter from the list of filters
             Filters.erase(iterfilter);
+            if (Filters.empty()) Filters.clear();
+            // If filter is source, set source filter to null
+            if (filter == dynamic_cast<svlFilterBase*>(StreamSource)) StreamSource = 0;
             return SVL_OK;
         }
     }
@@ -221,17 +248,10 @@ int svlStreamManager::RemoveFilter(svlFilterBase* filter)
     svlStreamManager* branchstream = GetBranchEntityOfFilter(filter)->Stream;
     if (branchstream == 0) return SVL_FILTER_NOT_IN_LIST;
 
-    // Remove brenches after the filter, if any
-    for (iterbranchlist  = filter->OutputBranches.begin();
-         iterbranchlist != filter->OutputBranches.end();
-         iterbranchlist ++) {
-        RemoveBranch(*iterbranchlist);
-    }
-
     return branchstream->RemoveFilter(filter);
 }
 
-int svlStreamManager::EmptyFilterList()
+int svlStreamManager::RemoveAll()
 {
     Release();
 
@@ -244,23 +264,25 @@ int svlStreamManager::EmptyFilterList()
     return SVL_OK;
 }
 
-int svlStreamManager::SetSourceFilter(svlFilterBase* filter)
+int svlStreamManager::SetSourceFilter(svlFilterSourceBase* source)
 {
-    if (filter == 0) return SVL_FAIL;
+    if (source == 0) return SVL_FAIL;
 
-    if (!(IsFilterInList(filter)))
+    if (!(IsFilterInList(source)))
         return SVL_FILTER_NOT_IN_LIST;
 
-    if (filter->InputType != svlTypeStreamSource)
-        return SVL_NOT_SOURCE;
-
-    if (filter == StreamSource)
+    if (source == StreamSource)
         return SVL_OK;
 
     if (Initialized)
         return SVL_ALREADY_INITIALIZED;
 
-    StreamSource = filter;
+    if (source->GetOutputType() == svlTypeInvalid ||
+        source->GetOutputType() == svlTypeStreamSource ||
+        source->GetOutputType() == svlTypeStreamSink)
+        return SVL_INVALID_OUTPUT_TYPE;
+
+    StreamSource = source;
 
     return SVL_OK;
 }
@@ -299,18 +321,18 @@ int svlStreamManager::ConnectFilters(svlFilterBase* filter1, svlFilterBase* filt
     return SVL_OK;
 }
 
-int svlStreamManager::AddSourceFilter(svlFilterBase* filter)
+int svlStreamManager::AddSourceFilter(svlFilterSourceBase* source)
 {
     if (Initialized) return SVL_ALREADY_INITIALIZED;
 
-    int err = AddFilter(filter);
+    int err = AddFilter(source);
     if (err != SVL_OK) return err;
 
-    err = SetSourceFilter(filter);
+    err = SetSourceFilter(source);
     if (err == SVL_OK) return SVL_OK;
 
     // Remove filter on error
-    RemoveFilter(filter);
+    RemoveFilter(source);
     return err;
 }
 
@@ -400,29 +422,31 @@ int svlStreamManager::Initialize()
     if (Initialized) return SVL_ALREADY_INITIALIZED;
 
     int err;
-    svlFilterBase *prevfilter, *filter = StreamSource;
+    svlFilterBase *prevfilter, *filter;
+    svlFilterSourceBase *source = StreamSource;
     svlFilterBase::_OutputBranchList::iterator iterbranchlist;
     svlStreamManager* branchstream;
 
-    if (filter == 0)
+    if (source == 0)
         return SVL_NO_SOURCE_IN_LIST;
 
     // Initializing the stream
     // starting from the stream source
-    err = filter->Initialize();
+    err = source->Initialize();
     if (err != SVL_OK) {
         Release();
         return err;
     }
-    filter->Initialized = true;
+    source->Initialized = true;
     // Initializing branches connected to the
-    // filter output recursively, if any
-    for (iterbranchlist  = filter->OutputBranches.begin();
-         iterbranchlist != filter->OutputBranches.end();
+    // source filter output recursively, if any
+    for (iterbranchlist  = source->OutputBranches.begin();
+         iterbranchlist != source->OutputBranches.end();
          iterbranchlist ++) {
         // Setup input sample
         branchstream = (*iterbranchlist)->Stream;
-        dynamic_cast<svlStreamBranchSource*>(branchstream->StreamSource)->SetupSource(filter->OutputData, 100.0);
+        svlStreamBranchSource* ptr = dynamic_cast<svlStreamBranchSource*>(branchstream->StreamSource);
+        ptr->SetInput(source->OutputData);
         // Initialize branch stream
         err = branchstream->Initialize();
         if (err != SVL_OK) {
@@ -430,8 +454,8 @@ int svlStreamManager::Initialize()
             return err;
         }
     }
-    prevfilter = filter;
-    filter = filter->NextFilter;
+    prevfilter = source;
+    filter = source->NextFilter;
 
     // Going downstream filter by filter
     while (filter != 0) {
@@ -455,7 +479,7 @@ int svlStreamManager::Initialize()
              iterbranchlist ++) {
             // Setup input sample
             branchstream = (*iterbranchlist)->Stream;
-            dynamic_cast<svlStreamBranchSource*>(branchstream->StreamSource)->SetupSource(filter->OutputData, 100.0);
+            dynamic_cast<svlStreamBranchSource*>(branchstream->StreamSource)->SetInput(filter->OutputData);
             // Initialize branch stream
             err = branchstream->Initialize();
             if (err != SVL_OK) {
@@ -469,6 +493,8 @@ int svlStreamManager::Initialize()
 
     Initialized = true;
 
+    StreamStatus = SVL_STREAM_INITIALIZED;
+
     return SVL_OK;
 }
 
@@ -476,8 +502,23 @@ void svlStreamManager::Release()
 {
     Stop();
 
+    unsigned int i;
     _FilterList::iterator iterfilter;
     svlFilterBase::_OutputBranchList::iterator iterbranchlist;
+
+    // There might be a thread object still open (in case of an internal shutdown)
+    for (i = 0; i < ControlInstanceMulti.size(); i ++) {
+        if (ControlInstanceMulti[i]) {
+            delete ControlInstanceMulti[i];
+            ControlInstanceMulti[i] = 0;
+        }
+    }
+    for (i = 0; i < ControlThreadMulti.size(); i ++) {
+        if (ControlThreadMulti[i]) {
+            delete ControlThreadMulti[i];
+            ControlThreadMulti[i] = 0;
+        }
+    }
 
     // To make sure that no filter is left initialized
     // we try to release all filters in the list, not only
@@ -497,6 +538,8 @@ void svlStreamManager::Release()
     }
 
     Initialized = false;
+
+    StreamStatus = SVL_STREAM_RELEASED;
 }
 
 bool svlStreamManager::IsInitialized()
@@ -509,6 +552,7 @@ int svlStreamManager::Start()
     if (Running) return SVL_ALREADY_RUNNING;
 
     int err;
+    unsigned int i;
     _FilterList::iterator iterfilter;
     svlFilterBase::_OutputBranchList::iterator iterbranchlist;
     svlStreamManager* branchstream;
@@ -529,9 +573,24 @@ int svlStreamManager::Start()
         }
     }
 
-    // Allocate thread control object array
-    ControlInstanceMulti = new svlStreamControlMultiThread*[ThreadCount];
-    ControlThreadMulti = new osaThread*[ThreadCount];
+    // There might be a thread object still open (in case of an internal shutdown)
+    for (i = 0; i < ControlInstanceMulti.size(); i ++) {
+        if (ControlInstanceMulti[i]) {
+            delete ControlInstanceMulti[i];
+            ControlInstanceMulti[i] = 0;
+        }
+    }
+    for (i = 0; i < ControlThreadMulti.size(); i ++) {
+        if (ControlThreadMulti[i]) {
+            delete ControlThreadMulti[i];
+            ControlThreadMulti[i] = 0;
+        }
+    }
+
+    // Allocate new thread control object array
+    ControlInstanceMulti.SetSize(ThreadCount);
+    ControlThreadMulti.SetSize(ThreadCount);
+
     // Create thread synchronization object
     if (ThreadCount > 1) {
         SyncPoint = new svlSyncPoint;
@@ -539,13 +598,13 @@ int svlStreamManager::Start()
         CS = new osaCriticalSection;
     }
 
-    for (unsigned int i = 0; i < ThreadCount; i ++) {
+    for (i = 0; i < ThreadCount; i ++) {
         // Starting multi thread processing
         ControlInstanceMulti[i] = new svlStreamControlMultiThread(ThreadCount, i);
         ControlThreadMulti[i] = new osaThread;
 
         StopThread = false;
-        ErrorOnThread = false;
+        StreamStatus = SVL_STREAM_RUNNING;
         ControlThreadMulti[i]->Create<svlStreamControlMultiThread, svlStreamManager*>(ControlInstanceMulti[i],
                                                                                       &svlStreamControlMultiThread::Proc,
                                                                                       this);
@@ -558,8 +617,6 @@ int svlStreamManager::Start()
              iterbranchlist ++) {
             // Get branch stream object from handle
             branchstream = (*iterbranchlist)->Stream;
-            // Set thread count in branches
-            branchstream->SetThreads(ThreadCount);
             // Start branch stream
             err = branchstream->Start();
             if (err != SVL_OK) {
@@ -568,6 +625,8 @@ int svlStreamManager::Start()
             }
         }
     }
+
+    StreamStatus = SVL_STREAM_RUNNING;
 
     return SVL_OK;
 }
@@ -589,33 +648,29 @@ void svlStreamManager::Stop()
         }
     }
 
-    Running = false;
-    StopThread = true;
-
     for (iterfilter = Filters.begin(); iterfilter != Filters.end(); iterfilter ++) {
-        (*iterfilter)->OnStop();
         (*iterfilter)->Running = false;
     }
+
+    Running = false;
+    StopThread = true;
 
     // Stopping multi thread processing and delete thread objects
     for (unsigned int i = 0; i < ThreadCount; i ++) {
         if (ControlThreadMulti[i]) {
             ControlThreadMulti[i]->Wait();
             delete ControlThreadMulti[i];
+            ControlThreadMulti[i] = 0;
         }
         if (ControlInstanceMulti[i]) {
             delete ControlInstanceMulti[i];
+            ControlInstanceMulti[i] = 0;
         }
     }
+
     // Release thread control arrays and objects
-    if (ControlThreadMulti) {
-        delete [] ControlThreadMulti;
-        ControlThreadMulti = 0;
-    }
-    if (ControlInstanceMulti) {
-        delete [] ControlInstanceMulti;
-        ControlInstanceMulti = 0;
-    }
+    ControlThreadMulti.SetSize(0);
+    ControlInstanceMulti.SetSize(0);
     if (SyncPoint) {
         delete SyncPoint;
         SyncPoint = 0;
@@ -624,11 +679,91 @@ void svlStreamManager::Stop()
         delete CS;
         CS = 0;
     }
+
+    for (iterfilter = Filters.begin(); iterfilter != Filters.end(); iterfilter ++) {
+        (*iterfilter)->OnStop();
+    }
+
+    StreamStatus = SVL_STREAM_STOPPED;
+}
+
+void svlStreamManager::InternalStop(unsigned int callingthreadID)
+{
+    if (!Running) return;
+
+    _FilterList::iterator iterfilter;
+    svlFilterBase::_OutputBranchList::iterator iterbranchlist;
+
+    // Stop branches connected to the filters recursively, if any
+    for (iterfilter = Filters.begin(); iterfilter != Filters.end(); iterfilter ++) {
+        for (iterbranchlist  = (*iterfilter)->OutputBranches.begin();
+             iterbranchlist != (*iterfilter)->OutputBranches.end();
+             iterbranchlist ++) {
+            // Stop branch stream
+            (*iterbranchlist)->Stream->Stop();
+        }
+    }
+
+    for (iterfilter = Filters.begin(); iterfilter != Filters.end(); iterfilter ++) {
+        (*iterfilter)->Running = false;
+    }
+
+    Running = false;
+    StopThread = true;
+
+    // Stopping multi thread processing and delete thread objects
+    for (unsigned int i = 0; i < ThreadCount; i ++) {
+        if (i != callingthreadID) {
+            if (ControlThreadMulti[i]) {
+                ControlThreadMulti[i]->Wait();
+                delete ControlThreadMulti[i];
+                ControlThreadMulti[i] = 0;
+            }
+            if (ControlInstanceMulti[i]) {
+                delete ControlInstanceMulti[i];
+                ControlInstanceMulti[i] = 0;
+            }
+        }
+        else {
+            // Skip calling thread!
+            // That will be deleted at next Start() or Release()
+        }
+    }
+
+    // Release thread control arrays and objects
+    if (SyncPoint) {
+        delete SyncPoint;
+        SyncPoint = 0;
+    }
+    if (CS) {
+        delete CS;
+        CS = 0;
+    }
+
+    for (iterfilter = Filters.begin(); iterfilter != Filters.end(); iterfilter ++) {
+        (*iterfilter)->OnStop();
+    }
 }
 
 bool svlStreamManager::IsRunning()
 {
     return Running;
+}
+
+int svlStreamManager::WaitForStop(double timeout)
+{
+    if (timeout < 0.0) timeout = 1000000000.0;
+    while (Running && timeout > 0.0) {
+        timeout -= 0.2;
+        osaSleep(0.2);
+    }
+    if (!Running) return SVL_OK;
+    else return SVL_WAIT_TIMEOUT;
+}
+
+int svlStreamManager::GetStreamStatus()
+{
+    return StreamStatus;
 }
 
 int svlStreamManager::AppendFilterToTrunk(svlFilterBase* filter)
@@ -641,11 +776,13 @@ int svlStreamManager::AppendFilterToTrunk(svlFilterBase* filter)
     if (StreamSource == 0) {
         // No source filters set yet, so the
         // filter has to be a source filter
-        err = SetSourceFilter(filter);
-        if (err == SVL_OK) return SVL_OK;
+        svlFilterSourceBase* source = dynamic_cast<svlFilterSourceBase*>(filter);
+        if (source) {
+            if (SetSourceFilter(source) == SVL_OK) return SVL_OK;
 
-        // Remove filter on error
-        RemoveFilter(filter);
+            // Remove filter on error
+            RemoveFilter(source);
+        }
         return SVL_FAIL;
     }
 
@@ -726,7 +863,8 @@ int svlStreamManager::ReInitializeDownstreamFilters(svlFilterBase* fromfilter)
 /*******************************************/
 
 svlStreamEntity::svlStreamEntity() :
-    Stream(0)
+    Stream(0),
+    Root(0)
 {
 }
 
@@ -734,6 +872,34 @@ int svlStreamEntity::Append(svlFilterBase* filter)
 {
     if (Stream == 0 || filter == 0) return SVL_FAIL;
     return Stream->AppendFilterToTrunk(filter);
+}
+
+int svlStreamEntity::GetDroppedSampleCount()
+{
+    svlStreamBranchSource* branchsource = dynamic_cast<svlStreamBranchSource*>(Stream->StreamSource);
+    if (branchsource) return static_cast<int>(branchsource->GetDroppedSampleCount());
+    return SVL_FAIL;
+}
+
+int svlStreamEntity::GetBufferUsage()
+{
+    svlStreamBranchSource* branchsource = dynamic_cast<svlStreamBranchSource*>(Stream->StreamSource);
+    if (branchsource) return branchsource->GetBufferUsage();
+    return SVL_FAIL;
+}
+
+double svlStreamEntity::GetBufferUsageRatio()
+{
+    svlStreamBranchSource* branchsource = dynamic_cast<svlStreamBranchSource*>(Stream->StreamSource);
+    if (branchsource) return branchsource->GetBufferUsageRatio();
+    return -1.0;
+}
+
+int svlStreamEntity::BlockInput(bool block)
+{
+    svlStreamBranchSource* branchsource = dynamic_cast<svlStreamBranchSource*>(Stream->StreamSource);
+    if (branchsource) return branchsource->BlockInput(block);
+    return SVL_FAIL;
 }
 
 
@@ -752,15 +918,28 @@ svlStreamControlMultiThread::svlStreamControlMultiThread(unsigned int threadcoun
 svlStreamControlMultiThread::~svlStreamControlMultiThread()
 { /* NOP */ }
 
+double svlStreamControlMultiThread::GetAbsoluteTime(osaTimeServer* timeserver)
+{
+    if (!timeserver) return -1.0;
+
+    osaAbsoluteTime abstime;
+
+    timeserver->RelativeToAbsolute(timeserver->GetRelativeTime(), abstime);
+
+    // Calculate time since UNIX creation
+    return abstime.sec + abstime.nsec / 1000000000.0;
+}
+
 void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
 {
     svlFilterBase *filter, *prevfilter;
+    svlFilterSourceBase *source;
     svlFilterBase::_OutputBranchList::iterator iterbranchlist;
     svlFilterBase::ProcInfo info;
     svlSyncPoint *sync = baseref->SyncPoint;
     unsigned int counter = 0;
-    osaStopwatch timer;
-    int err = SVL_OK;
+    osaTimeServer* timeserver = 0;
+    int status = SVL_OK;
 
     // Initializing thread info structure
     info.count = ThreadCount;
@@ -771,37 +950,37 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
     if (ThreadID == 0) {
     // Execute only on one thread - BEGIN
 
-        // Start timer for time stamping
-        timer.Reset();
-        timer.Start();
+        // Initialize time server for accessing absolute time
+        timeserver = new osaTimeServer;
+        timeserver->SetTimeOrigin();
 
     // Execute only on one thread - END
     }
 
     while (baseref->StopThread == false) {
-        filter = baseref->StreamSource;
-        filter->FrameCounter = counter;
+        source = baseref->StreamSource;
+        source->FrameCounter = counter;
 
     ////////////////////////////////////
     // Starting from the stream source
 
-        err = filter->ProcessFrame(&info);
-        if (err < 0) break;
+        status = source->ProcessFrame(&info);
+        if (status < 0 || status == SVL_STOP_REQUEST) break;
 
         if (ThreadID == 0) {
         // Execute only on one thread - BEGIN
 
-            if (filter->OutputData) {
-                // Get timestamp and assign it to the output sample
-                filter->OutputData->SetTimestamp(timer.GetElapsedTime());
+            if (source->OutputData && source->AutoTimestamp) {
+                // Get fresh timestamp and assign it to the output sample
+                source->OutputData->SetTimestamp(GetAbsoluteTime(timeserver));
             }
 
         // Execute only on one thread - END
         }
 
-        // Check if the filter modified the output sample
-        if (err == SVL_ALREADY_PROCESSED) filter->OutputSampleModified = false;
-        else filter->OutputSampleModified = true;
+        // Check if the source filter modified the output sample
+        if (status == SVL_ALREADY_PROCESSED) source->OutputSampleModified = false;
+        else source->OutputSampleModified = true;
 
         if (ThreadCount > 1) {
         // Execute only if multi-threaded - BEGIN
@@ -813,28 +992,28 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
         }
 
         // Check for errors and stop request
-        if (baseref->StopThread || baseref->ErrorOnThread) break;
+        if (baseref->StopThread || baseref->StreamStatus != SVL_OK) break;
 
-        if (filter->OutputData) {
+        if (source->OutputData) {
             // Set modified flag
-            filter->OutputData->SetModified(filter->OutputSampleModified);
+            source->OutputData->SetModified(source->OutputSampleModified);
         }
 
         if (ThreadID == 0) {
         // Execute only on one thread - BEGIN
 
             // Feed sample to branches, if any
-            for (iterbranchlist  = filter->OutputBranches.begin();
-                iterbranchlist != filter->OutputBranches.end();
+            for (iterbranchlist  = source->OutputBranches.begin();
+                iterbranchlist != source->OutputBranches.end();
                 iterbranchlist ++) {
-                dynamic_cast<svlStreamBranchSource*>((*iterbranchlist)->Stream->StreamSource)->PushSample(filter->OutputData);
+                dynamic_cast<svlStreamBranchSource*>((*iterbranchlist)->Stream->StreamSource)->PushSample(source->OutputData);
             }
 
         // Execute only on one thread - END
         }
 
-        prevfilter = filter;
-        filter = filter->NextFilter;
+        prevfilter = source;
+        filter = source->NextFilter;
 
     ////////////////////////////////////////////
     // Going downstream filter by filter
@@ -843,14 +1022,14 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
             filter->FrameCounter = counter;
 
             // Check if the previous output is valid input for the next filter
-            err = filter->IsDataValid(filter->InputType, prevfilter->OutputData);
-            if (err != SVL_OK) break;
+            status = filter->IsDataValid(filter->InputType, prevfilter->OutputData);
+            if (status != SVL_OK) break;
 
-            err = filter->ProcessFrame(&info, prevfilter->OutputData);
-            if (err < 0) break;
+            status = filter->ProcessFrame(&info, prevfilter->OutputData);
+            if (status < 0) break;
 
             // Check if the filter modified the output sample
-            if (err == SVL_ALREADY_PROCESSED) filter->OutputSampleModified = false;
+            if (status == SVL_ALREADY_PROCESSED) filter->OutputSampleModified = false;
             else filter->OutputSampleModified = true;
 
             if (ThreadCount > 1) {
@@ -863,14 +1042,14 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
             }
 
             // Check for errors and stop request
-            if (baseref->StopThread || baseref->ErrorOnThread) break;
+            if (baseref->StopThread || baseref->StreamStatus != SVL_OK) break;
 
             if (filter->OutputData) {
                 // Set modified flag
                 filter->OutputData->SetModified(filter->OutputSampleModified);
 
-                // Store timstamp of previously processed input sample
-                filter->PrevInputTimestamp = prevfilter->OutputData->GetTimestamp();
+                // Pass timestamp downstream
+                filter->OutputData->SetTimestamp(prevfilter->OutputData->GetTimestamp());
             }
 
             if (ThreadID == 0) {
@@ -889,7 +1068,7 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
             prevfilter = filter;
             filter = filter->NextFilter;
         }
-        if (err < 0) break;
+        if (status < 0) break;
 
         // incrementing frame counter
         counter ++;
@@ -898,14 +1077,17 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
     if (ThreadID == 0) {
     // Execute only on one thread - BEGIN
 
-        // Stop timer
-        timer.Stop();
+        // Delete time server
+        if (timeserver) delete timeserver;
 
     // Execute only on one thread - END
     }
 
     // Signal the error status
-    if (err < 0) baseref->ErrorOnThread = true;
+    if (baseref->StopThread == false) {
+        // Internal shutdown
+        baseref->StreamStatus = status;
+    }
 
     if (ThreadCount > 1) {
     // Execute only if multi-threaded - BEGIN
@@ -915,7 +1097,12 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
     // Execute only if multi-threaded - END
     }
 
-	return this;
+    // Run InternalStop() method in case of internal shutdown
+    if (baseref->StopThread == false && ThreadID == 0) {
+        baseref->InternalStop(ThreadID);
+    }
+
+    return this;
 }
 
 
@@ -923,17 +1110,17 @@ void* svlStreamControlMultiThread::Proc(svlStreamManager* baseref)
 /*** svlFilterBase class *************/
 /*************************************/
 
-svlFilterBase::svlFilterBase()
+svlFilterBase::svlFilterBase() :
+    OutputData(0),
+    FrameCounter(0),
+    Initialized(false),
+    Running(false),
+    OutputFormatModified(false),
+    InputType(svlTypeInvalid),
+    OutputType(svlTypeInvalid),
+    PrevFilter(0),
+    NextFilter(0)
 {
-    InputType = svlTypeInvalid;
-    OutputType = svlTypeInvalid;
-    PrevFilter = 0;
-    NextFilter = 0;
-    OutputData = 0;
-    Initialized = false;
-    Running = false;
-    PrevInputTimestamp = -1.0;
-    OutputFormatModified = false;
 }
 
 svlFilterBase::~svlFilterBase()
@@ -942,7 +1129,6 @@ svlFilterBase::~svlFilterBase()
 
 int svlFilterBase::Initialize(svlSample* CMN_UNUSED(inputdata))
 {
-    Initialized = true;
     return SVL_OK;
 }
 
@@ -951,7 +1137,7 @@ int svlFilterBase::OnStart(unsigned int CMN_UNUSED(procCount))
     return SVL_OK;
 }
 
-int svlFilterBase::ProcessFrame(ProcInfo* CMN_UNUSED(procInfo),
+int svlFilterBase::ProcessFrame(svlFilterBase::ProcInfo* CMN_UNUSED(procInfo),
                                 svlSample* CMN_UNUSED(inputdata))
 {
     return SVL_OK;
@@ -959,6 +1145,11 @@ int svlFilterBase::ProcessFrame(ProcInfo* CMN_UNUSED(procInfo),
 
 void svlFilterBase::OnStop()
 {
+}
+
+int svlFilterBase::Release()
+{
+    return SVL_OK;
 }
 
 int svlFilterBase::IsDataValid(svlStreamType type, svlSample* data)
@@ -972,12 +1163,6 @@ int svlFilterBase::IsDataValid(svlStreamType type, svlSample* data)
 bool svlFilterBase::IsNewSample(svlSample* sample)
 {
     return sample->IsModified();
-}
-
-int svlFilterBase::Release()
-{
-    Initialized = false;
-    return SVL_OK;
 }
 
 bool svlFilterBase::IsInitialized()
@@ -1010,16 +1195,11 @@ svlFilterBase* svlFilterBase::GetDownstreamFilter()
     return NextFilter;
 }
 
-void svlFilterBase::SetFilterToSource(svlStreamType output)
-{
-    SupportedTypes.clear();
-    InputType = svlTypeStreamSource;
-    OutputType = output;
-}
-
 int svlFilterBase::AddSupportedType(svlStreamType input, svlStreamType output)
 {
-    if (InputType == svlTypeStreamSource)
+    if (InputType == svlTypeStreamSource ||
+        input == svlTypeInvalid || input == svlTypeStreamSink || input == svlTypeStreamSource ||
+        output == svlTypeInvalid || output == svlTypeStreamSource)
         return SVL_FAIL;
 
     SupportedTypes[input] = output;
@@ -1042,5 +1222,150 @@ int svlFilterBase::OnConnectInput(svlStreamType inputtype)
     InputType = inputtype;
     OutputType = iter->second;
     return SVL_OK;
+}
+
+
+/*************************************/
+/*** svlFilterSourceBase class *******/
+/*************************************/
+
+svlFilterSourceBase::svlFilterSourceBase(bool autotimestamps) :
+    svlFilterBase(),
+    TargetFrequency(30.0),
+    LoopFlag(true),
+    AutoTimestamp(autotimestamps),
+    TargetStartTime(0.0),
+    TargetFrameTime(0.0)
+{
+}
+
+svlFilterSourceBase::~svlFilterSourceBase()
+{
+}
+
+int svlFilterSourceBase::GetWidth(unsigned int videoch)
+{
+    svlSampleImageBase* image = dynamic_cast<svlSampleImageBase*>(OutputData);
+    if (!image) return SVL_NOT_IMAGE;
+    if (videoch >= image->GetVideoChannels()) return SVL_WRONG_CHANNEL;
+    return image->GetWidth(videoch);
+}
+
+int svlFilterSourceBase::GetHeight(unsigned int videoch)
+{
+    svlSampleImageBase* image = dynamic_cast<svlSampleImageBase*>(OutputData);
+    if (!image) return SVL_NOT_IMAGE;
+    if (videoch >= image->GetVideoChannels()) return SVL_WRONG_CHANNEL;
+    return image->GetHeight(videoch);
+}
+
+double svlFilterSourceBase::GetTargetFrequency()
+{
+    return TargetFrequency;
+}
+
+int svlFilterSourceBase::SetTargetFrequency(double hertz)
+{
+    TargetFrequency = hertz;
+    return SVL_OK;
+}
+
+void svlFilterSourceBase::SetLoop(bool loop)
+{
+    LoopFlag = loop;
+}
+
+bool svlFilterSourceBase::GetLoop()
+{
+    return LoopFlag;
+}
+
+int svlFilterSourceBase::AddSupportedType(svlStreamType output)
+{
+    if (output == svlTypeInvalid ||
+        output == svlTypeStreamSink ||
+        output == svlTypeStreamSource)
+        return SVL_FAIL;
+
+    OutputType = output;
+    return SVL_OK;
+}
+
+int svlFilterSourceBase::AddSupportedType(svlStreamType CMN_UNUSED(input), svlStreamType CMN_UNUSED(output))
+{
+    return SVL_FAIL;
+}
+
+int svlFilterSourceBase::Initialize()
+{
+    return SVL_OK;
+}
+
+int svlFilterSourceBase::OnStart(unsigned int CMN_UNUSED(procCount))
+{
+    RestartTargetTimer();
+    return SVL_OK;
+}
+
+void svlFilterSourceBase::OnStop()
+{
+    StopTargetTimer();
+}
+
+int svlFilterSourceBase::Release()
+{
+    return SVL_OK;
+}
+
+int svlFilterSourceBase::RestartTargetTimer()
+{
+    if (TargetFrequency >= 0.1) {
+        TargetFrameTime = 1.0 / TargetFrequency;
+        TargetTimer.Reset();
+        TargetTimer.Start();
+        return SVL_OK;
+    }
+    return SVL_FAIL;
+}
+
+int svlFilterSourceBase::StopTargetTimer()
+{
+    if (TargetTimer.IsRunning()) {
+        TargetTimer.Stop();
+        return SVL_OK;
+    }
+    return SVL_FAIL;
+}
+
+int svlFilterSourceBase::WaitForTargetTimer()
+{
+    if (TargetTimer.IsRunning()) {
+        if (FrameCounter > 0) {
+            double time = TargetTimer.GetElapsedTime();
+            double t1 = TargetFrameTime * FrameCounter;
+            double t2 = time - TargetStartTime;
+            if (t1 > t2) osaSleep(t1 - t2);
+        }
+        else {
+            TargetStartTime = TargetTimer.GetElapsedTime();
+        }
+        return SVL_OK;
+    }
+    return SVL_FAIL;
+}
+
+bool svlFilterSourceBase::IsTargetTimerRunning()
+{
+    return TargetTimer.IsRunning();
+}
+
+int svlFilterSourceBase::Initialize(svlSample* CMN_UNUSED(inputdata))
+{
+    return Initialize();
+}
+
+int svlFilterSourceBase::ProcessFrame(ProcInfo* procInfo, svlSample* CMN_UNUSED(inputdata))
+{
+    return ProcessFrame(procInfo);
 }
 

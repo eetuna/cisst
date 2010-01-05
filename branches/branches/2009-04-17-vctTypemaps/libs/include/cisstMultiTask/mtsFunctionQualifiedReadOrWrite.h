@@ -37,6 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 template <class _argumentType>
 class CISST_EXPORT mtsFunctionQualifiedReadOrWrite: public mtsFunctionBase {
+protected:
     typedef _argumentType ArgumentType;
     typedef mtsCommandQualifiedReadOrWriteBase<ArgumentType> CommandType;
     CommandType * Command;
@@ -91,18 +92,24 @@ class CISST_EXPORT mtsFunctionQualifiedReadOrWrite: public mtsFunctionBase {
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
-    mtsCommandBase::ReturnType operator()(const cmnGenericObject & qualifier,
-                                          ArgumentType& argument) const;
+    mtsCommandBase::ReturnType operator()(const mtsGenericObject & qualifier,
+                                          ArgumentType & argument) const;
 
     /*! Access to underlying command object. */
     mtsCommandQualifiedReadOrWriteBase<ArgumentType> * GetCommand(void) const { return Command; }
+
+    /*! Access to the command argument 1 prototype. */
+    const mtsGenericObject * GetArgument1Prototype(void) const;
+
+    /*! Access to the command argument 2 prototype. */
+    const mtsGenericObject * GetArgument2Prototype(void) const;
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 };
 
 
-typedef mtsFunctionQualifiedReadOrWrite<cmnGenericObject> mtsFunctionQualifiedRead;
+typedef mtsFunctionQualifiedReadOrWrite<mtsGenericObject> mtsFunctionQualifiedRead;
 
 
 #endif // _mtsFunctionQualifiedReadOrWrite_h

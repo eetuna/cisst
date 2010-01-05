@@ -31,10 +31,20 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnNamedMap.h>
+
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
+#include <cisstOSAbstraction/osaSocket.h>
+
 #include <cisstMultiTask/mtsForwardDeclarations.h>
-#include <cisstMultiTask/mtsMap.h>
+#include <cisstMultiTask/mtsConfig.h>
+
+#if CISST_MTS_HAS_ICE
+#include <cisstMultiTask/mtsProxyBaseCommon.h>
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+#endif // CISST_MTS_HAS_ICE
 
 #include <set>
 
@@ -47,15 +57,16 @@ http://www.cisst.org/cisst/license.txt.
   and devices.  It is a Singleton object.
 */
 class CISST_EXPORT mtsTaskManager: public cmnGenericObject {
-    
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    
-    /*! Typedef for task name and pointer map. */
 
-    typedef mtsMap<mtsTask> TaskMapType;
+    friend class mtsTaskManagerTest;
+
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+    /*! Typedef for task name and pointer map. */
+    typedef cmnNamedMap<mtsTask> TaskMapType;
 
     /*! Typedef for device name and pointer map. */
-    typedef mtsMap<mtsDevice> DeviceMapType;
+    typedef cmnNamedMap<mtsDevice> DeviceMapType;
 
     /*! Typedef for user task, composed of task name and "output port"
         name. */
@@ -72,6 +83,15 @@ public:
     // Default mailbox size -- perhaps this should be specified elsewhere
     enum { MAILBOX_DEFAULT_SIZE = 16 };
 
+#ifdef CISST_MTS_HAS_ICE
+    /*! Typedef for task manager type. */
+    typedef enum {
+        TASK_MANAGER_LOCAL,
+        TASK_MANAGER_SERVER, // global task manager
+        TASK_MANAGER_CLIENT  // general task manager
+    } TaskManagerType;
+#endif
+
 protected:
 
     /*! Mapping of task name (key) and pointer to mtsTask object. */
@@ -87,6 +107,9 @@ protected:
     /*! Time server used by all tasks. */
     osaTimeServer TimeServer;
 
+    osaSocket JGraphSocket;
+    bool JGraphSocketConnected;
+
     /*! Constructor.  Protected because this is a singleton.
         Does OS-specific initialization to start real-time operations. */
     mtsTaskManager(void);
@@ -99,10 +122,15 @@ protected:
     static mtsTaskManager * GetInstance(void) ;
 
     /*! Return a reference to the time server. */
-    const osaTimeServer &GetTimeServer(void) { return TimeServer; }
+    inline const osaTimeServer & GetTimeServer(void) {
+        return TimeServer;
+    }
 
     /*! Put a task under the control of the Manager. */
     bool AddTask(mtsTask * task);
+
+    /*! Pull out a task from the Manager. */
+    bool RemoveTask(mtsTask * task);
 
     /*! Put a device under the control of the Manager. */
     bool AddDevice(mtsDevice * device);
@@ -116,6 +144,9 @@ protected:
 
     /*! List all tasks already added */
     std::vector<std::string> GetNamesOfTasks(void) const;
+    
+    /*! Fetch all tasks already added. (overloaded) */
+    void GetNamesOfTasks(std::vector<std::string>& taskNameContainer) const;
 
     /*! Retrieve a device by name.  Return 0 if the device is not
         known. */
@@ -130,7 +161,7 @@ protected:
     */
     bool Connect(const std::string & userTaskName, const std::string & requiredInterfaceName,
                  const std::string & resourceTaskName, const std::string & providedInterfaceName);
-    
+
     /*! Disconnect the required interface of a user task to the provided
       interface of a resource task (or device).
     */
@@ -151,21 +182,15 @@ protected:
     /*! Stop all tasks.  This method will call the mtsTask::Kill method for each task. */
     void KillAll(void);
 
-    /*! For debugging. Dumps to stream the maps maintained by the manager.
-      Here is a typical output: 
-      <CODE>
-      Task Map: {Name, Address}
-      { BSVO, 0x80a59a0 }
-      { TRAJ, 0x81e3080 }
-      { DISP, 0x81e38d8 }
-      Interface Map: {Name, Address}
-      { BSVO, 0x80a59a0 }
-      { LoPoMoCo, 0x81e40e0 }
-      Interface Association Map: {Task, Task/Interface}
-      { BSVO, LoPoMoCo }
-      { TRAJ, BSVO }
-      </CODE>
-     */
+    /*! Cleanup.  Since the task manager is a singleton, the
+      destructor will be called when the program exits but the
+      user/programmer will not be able to control when exactly.  If
+      the cleanup requires some objects to still be instantiated (log
+      files, ...), this might lead to crashes.  To avoid this, the
+      Cleanup method should be called before the program quits. */
+    void Cleanup(void);
+
+    /*! For debugging. Dumps to stream the maps maintained by the manager. */
     void ToStream(std::ostream & outputStream) const;
 
     /*! Create a dot file to be used by graphviz to generate a nice
@@ -175,11 +200,71 @@ protected:
     inline void Kill(void) {
         __os_exit();
     }
+
+#if CISST_MTS_HAS_ICE
+    //-------------------------------------------------------------------------
+    //  Proxy-related
+    //-------------------------------------------------------------------------
+protected:
+    /*! Task manager type. */
+    TaskManagerType TaskManagerTypeMember;
+
+    /*! Task manager communicator ID. Used as one of ICE proxy object properties. */
+    const std::string TaskManagerCommunicatorID;
+
+    /*! Task manager proxy objects. Both are initialized as null at first and 
+      will be assigned later. Either one of the objects should be null and the 
+      other has to be valid.
+      ProxyServer is valid iff this is the global task manager.
+      ProxyClient is valid iff this is a general task manager.
+    */
+    mtsTaskManagerProxyServer * ProxyGlobalTaskManager;
+    mtsTaskManagerProxyClient * ProxyTaskManagerClient;
+
+    /*! IP address information. */
+    std::string GlobalTaskManagerIP;
+    std::string ServerTaskIP;
+
+    /*! Start two kinds of proxies.
+      Task Manager Layer: Start either GlobalTaskManagerProxy of TaskManagerClientProxy
+      according to the type of this task manager.
+      Task Layer: While iterating all tasks, create and start all provided interface 
+      proxies (see mtsTask::RunProvidedInterfaceProxy()).
+    */
+    void StartProxies();
+
+public:
+    /*! Set the type of task manager-global task manager (server) or conventional
+      task manager (client)-and start an appropriate task manager proxy.
+      Also start a task interface proxy. */
+    void SetTaskManagerType(const TaskManagerType taskManagerType) {
+        TaskManagerTypeMember = taskManagerType;
+        StartProxies();
+    }
+
+    /*! Getter */
+    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
+
+    inline mtsTaskManagerProxyServer * GetProxyGlobalTaskManager() const {
+        return ProxyGlobalTaskManager;
+    }
+
+    inline mtsTaskManagerProxyClient * GetProxyTaskManagerClient() const {
+        return ProxyTaskManagerClient;
+    }
+
+    /*! Setter */
+    inline void SetGlobalTaskManagerIP(const std::string & globalTaskManagerIP) {
+        GlobalTaskManagerIP = globalTaskManagerIP;
+    }
+
+    inline void SetServerTaskIP(const std::string & serverTaskIP) {
+        ServerTaskIP = serverTaskIP;
+    }
+#endif // CISST_MTS_HAS_ICE
 };
 
-
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskManager)
-
 
 #endif // _mtsTaskManager_h
 

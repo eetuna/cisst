@@ -21,26 +21,15 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#ifdef _WIN32
-#include <conio.h>
-#endif // _WIN32
-
 #include <iostream>
 #include <string>
+#include <cisstCommon.h>
+#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
-
-#ifdef __GNUC__
-#include <curses.h>
-#include <iostream>
-#include <stdio.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#endif // __GNUC__
 
 using namespace std;
 
-
+#if (CISST_SVL_HAS_ZLIB == ON)
 ///////////////////////////////////
 //  Icon drawer callback class   //
 ///////////////////////////////////
@@ -56,8 +45,8 @@ public:
     }
 
     void FrameCallback(svlSampleImageBase* image,
-                       svlBMPFileHeader* fileheader1, svlDIBHeader* dibheader1,
-                       svlBMPFileHeader* fileheader2, svlDIBHeader* dibheader2)
+                       svlBMPFileHeader* CMN_UNUSED(fileheader1), svlDIBHeader* CMN_UNUSED(dibheader1),
+                       svlBMPFileHeader* CMN_UNUSED(fileheader2), svlDIBHeader* CMN_UNUSED(dibheader2))
     {
         if (RecordFlag && ((GetFrameCounter() / 15) % 2) == 0) {
 
@@ -90,33 +79,52 @@ private:
     bool RecordFlag;
     double AspectRatio;
 };
+#endif // CISST_SVL_HAS_ZLIB
 
-///////////////////////////////////
-//     Window callback class     //
-///////////////////////////////////
 
-class CViewerWindowCallback : public svlImageWindowCallbackBase
+////////////////////////
+//     FPS filter     //
+////////////////////////
+
+class CFPSFilter : public svlFilterBase
 {
 public:
-    CViewerWindowCallback() : svlImageWindowCallbackBase()
+    CFPSFilter() :
+        svlFilterBase(),
+        Manager(0),
+        ShowFramerate(true)
+
     {
-        IconDrawerFilter = 0;
-        RecorderFilter = 0;
-        Recording = false;
-        ShowFramerate = true;
+        AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
     }
 
-    void OnNewFrame(unsigned int frameid)
+protected:
+    int Initialize(svlSample* inputdata)
     {
-        if (ShowFramerate) {
-            if ((frameid % 30) == 0) {
+        OutputData = inputdata;
+        return SVL_OK;
+    }
+
+    int ProcessFrame(ProcInfo* procInfo, svlSample* CMN_UNUSED(inputdata) = 0)
+    {
+        if (!ShowFramerate) return SVL_OK;
+
+        _OnSingleThread(procInfo) {
+            unsigned int framecount = GetFrameCounter();
+            if ((framecount % 30) == 0) {
 #ifdef _WIN32
                 DWORD now;
                 now = ::GetTickCount();
 
-                if (frameid > 0) {
+                if (framecount > 0) {
                     DWORD msec = now - StartMSec;
-                    printf("\rFrame #: %07d; %02.2f frames per second  ", frameid, (double)30000 / msec);
+                    std::cerr << "\rFrame #: " << framecount << "; "
+                              << std::setprecision(1) << std::fixed << (double)30000 / msec << " fps";
+                    if (Manager) {
+                        std::cerr << " (Buffer: " << Manager->Branch("Recorder").GetBufferUsageRatio() * 100.0
+                                  << "%, Dropped: " << Manager->Branch("Recorder").GetDroppedSampleCount() << ")";
+                    }
+                    std::cerr << "     \r";
                 }
 
                 StartMSec = now;
@@ -126,12 +134,17 @@ public:
                 timeval now;
                 gettimeofday(&now, 0);
 
-                if (frameid > 0) {
+                if (framecount > 0) {
                     int sec = now.tv_sec - StartSec;
                     int usec = now.tv_usec - StartUSec;
                     usec += 1000000 * sec;
-                    printf("\rFrame #: %07d; %02.2f frames per second  ", frameid, (double)30000000 / usec);
-                    fflush(stdout);
+                    std::cerr << "\rFrame #: " << framecount << "; "
+                              << std::setprecision(1) << std::fixed << (double)30000000 / usec << " fps";
+                    if (Manager) {
+                        std::cerr << " (Buffer: " << Manager->Branch("Recorder").GetBufferUsageRatio() * 100.0
+                                  << "%, Dropped: " << Manager->Branch("Recorder").GetDroppedSampleCount() << ")";
+                    }
+                    std::cerr << "     \r";
                 }
 
                 StartSec = now.tv_sec;
@@ -139,43 +152,16 @@ public:
 #endif // __GNUC__
             }
         }
+
+        return SVL_OK;
     }
 
-    void OnUserEvent(unsigned int winid, bool ascii, unsigned int eventid)
-    {
-        // handling user inputs
-        if (ascii) {
-            switch (eventid) {
-                case ' ':
-                {
-                    if (RecorderFilter && IconDrawerFilter) {
-                        if (Recording) {
-                            ((svlVideoFileWriter*)RecorderFilter)->Pause();
-                            IconDrawerFilter->Pause();
-                            Recording = false;
-                            cout << endl << " >>> Recording paused <<<" << endl;
-                        }
-                        else {
-                            ((svlVideoFileWriter*)RecorderFilter)->Record(-1);
-                            IconDrawerFilter->Record();
-                            Recording = true;
-                            cout << endl << " >>> Recording started <<<" << endl;
-                        }
-                    }
-                }
-                break;
-
-                default:
-                    return;
-            }
-        }
-    }
-
-    CViewerIconDrawerCallback* IconDrawerFilter;
-    svlFilterBase* RecorderFilter;
+public:
+    svlStreamManager* Manager;
+    bool ShowFramerate;
     bool Recording;
 
-    bool ShowFramerate;
+private:
 #ifdef _WIN32
     DWORD StartMSec;
 #endif // _WIN32
@@ -186,21 +172,86 @@ public:
 };
 
 
+///////////////////////////////////
+//     Window callback class     //
+///////////////////////////////////
+
+class CViewerWindowCallback : public svlImageWindowCallbackBase
+{
+public:
+    CViewerWindowCallback() : svlImageWindowCallbackBase()
+    {
+#if (CISST_SVL_HAS_ZLIB == ON)
+        IconDrawerFilter = 0;
+        RecorderFilter = 0;
+        Manager = 0;
+        Recording = false;
+#endif // CISST_SVL_HAS_ZLIB
+    }
+
+#if (CISST_SVL_HAS_ZLIB == ON)
+    void OnUserEvent(unsigned int CMN_UNUSED(winid), bool ascii, unsigned int eventid)
+    {
+        // handling user inputs
+        if (ascii) {
+            switch (eventid) {
+                case ' ':
+                    if (RecorderFilter && IconDrawerFilter) {
+                        if (Recording) {
+                            ((svlFilterVideoFileWriter*)RecorderFilter)->Pause();
+                            Manager->Branch("Recorder").BlockInput(true);
+                            IconDrawerFilter->Pause();
+                            Recording = false;
+                            cout << endl << " >>> Recording paused <<<" << endl;
+                        }
+                        else {
+                            Manager->Branch("Recorder").BlockInput(false);
+                            ((svlFilterVideoFileWriter*)RecorderFilter)->Record(-1);
+                            IconDrawerFilter->Record();
+                            Recording = true;
+                            cout << endl << " >>> Recording started <<<" << endl;
+                        }
+                    }
+                break;
+
+                default:
+                    return;
+            }
+        }
+    }
+#endif // CISST_SVL_HAS_ZLIB
+
+#if (CISST_SVL_HAS_ZLIB == ON)
+    svlStreamManager* Manager;
+    CViewerIconDrawerCallback* IconDrawerFilter;
+    svlFilterBase* RecorderFilter;
+    bool Recording;
+#endif // CISST_SVL_HAS_ZLIB
+};
+
+
 ////////////////////
 //  CameraViewer  //
 ////////////////////
 
-int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int height)
+int CameraViewer(bool interpolation, bool save, int width, int height)
 {
+#if (CISST_SVL_HAS_ZLIB == OFF)
+    save = false;
+#endif // CISST_SVL_HAS_ZLIB
+
     // instantiating SVL stream and filters
     svlStreamManager viewer_stream(2);
-    svlVideoCaptureSource viewer_source(false);
-    svlImageResizer viewer_resizer;
-    svlImageSampler viewer_icondrawer;
-    CViewerIconDrawerCallback viewer_icondrawer_cb;
-    svlImageWindow viewer_window;
+    svlFilterSourceVideoCapture viewer_source(false);
+    svlFilterImageResizer viewer_resizer;
+    svlFilterImageWindow viewer_window;
     CViewerWindowCallback viewer_window_cb;
-    svlVideoFileWriter viewer_writer;
+#if (CISST_SVL_HAS_ZLIB == ON)
+    svlFilterImageSampler viewer_icondrawer;
+    CViewerIconDrawerCallback viewer_icondrawer_cb;
+    svlFilterVideoFileWriter viewer_writer;
+#endif // CISST_SVL_HAS_ZLIB
+    CFPSFilter viewer_fps;
 
     // setup source
     // Delete "device.dat" to reinitialize input device
@@ -209,25 +260,7 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
         viewer_source.DialogSetup();
     }
 
-    // setup writer
-    if (save == true) {
-        if (viewer_writer.LoadCodecSettings("codec.dat") != SVL_OK) {
-            viewer_writer.DialogCodec();
-            viewer_writer.SetFramerate(static_cast<double>(fps));
-            viewer_writer.SetKeyFrameInteval(std::max(1u, fps / 3));
-        }
-        cout << endl;
-        viewer_writer.DialogFilePath();
-        cout << endl;
-        viewer_writer.Pause();
-    }
-
-    // setup resizer
-    if (width > 0 && height > 0) {
-        viewer_resizer.EnableInterpolation(interpolation);
-        viewer_resizer.SetOutputSize(width, height);
-    }
-
+#if (CISST_SVL_HAS_ZLIB == ON)
     // setup icon drawer
     viewer_icondrawer.SetCallback(&viewer_icondrawer_cb);
     if (width > 0 && height > 0) {
@@ -237,26 +270,59 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
         viewer_icondrawer_cb.SetAspectRatio(1.0);
     }
 
+    // setup writer
+    if (save == true) {
+        viewer_writer.DialogFilePath();
+        viewer_writer.SetCompressionLevel(2); // 0-9
+        viewer_writer.Pause();
+    }
+#endif // CISST_SVL_HAS_ZLIB
+
+    // setup resizer
+    if (width > 0 && height > 0) {
+        viewer_resizer.EnableInterpolation(interpolation);
+        viewer_resizer.SetOutputSize(width, height);
+    }
+
     // setup image window
+#if (CISST_SVL_HAS_ZLIB == ON)
     if (save == true) {
         viewer_window_cb.IconDrawerFilter = &viewer_icondrawer_cb;
         viewer_window_cb.RecorderFilter = &viewer_writer;
+        viewer_window_cb.Manager = &viewer_stream;
+        viewer_fps.Manager = &viewer_stream;
     }
+#endif // CISST_SVL_HAS_ZLIB
     viewer_window.SetCallback(&viewer_window_cb);
     viewer_window.SetTitleText("Camera Viewer");
+//    viewer_window.EnableTimestampInTitle();
 
     // chain filters to pipeline
     if (viewer_stream.Trunk().Append(&viewer_source) != SVL_OK) goto labError;
-    if (save == true) {
-        if (viewer_stream.Trunk().Append(&viewer_writer) != SVL_OK) goto labError;
-    }
     if (width > 0 && height > 0) {
         if (viewer_stream.Trunk().Append(&viewer_resizer) != SVL_OK) goto labError;
     }
+#if (CISST_SVL_HAS_ZLIB == ON)
     if (save == true) {
         if (viewer_stream.Trunk().Append(&viewer_icondrawer) != SVL_OK) goto labError;
     }
+#endif // CISST_SVL_HAS_ZLIB
     if (viewer_stream.Trunk().Append(&viewer_window) != SVL_OK) goto labError;
+    if (viewer_stream.Trunk().Append(&viewer_fps) != SVL_OK) goto labError;
+
+#if (CISST_SVL_HAS_ZLIB == ON)
+    if (save == true) {
+        // put the recorder on a branch in order to enable buffering
+        if (width > 0 && height > 0) {
+            viewer_stream.CreateBranchAfterFilter(&viewer_resizer, "Recorder", 8, 200); // Buffer size in frames
+        }
+        else {
+            viewer_stream.CreateBranchAfterFilter(&viewer_source, "Recorder", 8, 200); // Buffer size in frames
+        }
+        viewer_stream.Branch("Recorder").BlockInput(true);
+        if (viewer_stream.Branch("Recorder").Append(&viewer_writer) != SVL_OK) goto labError;
+    }
+#endif // CISST_SVL_HAS_ZLIB
 
     cerr << endl << "Starting stream... ";
 
@@ -265,84 +331,38 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
 
     cerr << "Done" << endl;
 
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // modify terminal settings for single key inputs
-    struct  termios ksettings;
-    struct  termios new_ksettings;
-    int     kbrd;
-    kbrd = open("/dev/tty",O_RDWR);
-    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCGETS, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TCSETS, &new_ksettings);
-        ioctl(kbrd, TIOCNOTTY);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCGETA, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TIOCSETA, &new_ksettings);
-        ////////////////////////////////////////////////////
-    #endif // (CISST_OS == CISST_DARWIN)
-#endif
-
     // wait for keyboard input in command window
-#ifdef _WIN32
     int ch;
-#endif
-#ifdef __GNUC__
-    char ch;
-#endif
 
     do {
         cerr << endl << "Keyboard commands:" << endl << endl;
+#if (CISST_SVL_HAS_ZLIB == ON)
         cerr << "  In image window:" << endl;
         if (save == true) {
             cerr << "    SPACE - Video recorder control: Record/Pause" << endl;
         }
+#endif // CISST_SVL_HAS_ZLIB
         cerr << "  In command window:" << endl;
         cerr << "    'i'   - Adjust image properties" << endl;
         cerr << "    'q'   - Quit" << endl << endl;
 
-#ifdef _WIN32
-        ch = _getch();
-#endif
-#ifdef __GNUC__
-        ch = getchar();
-#endif
+        ch = cmnGetChar();
+
         switch (ch) {
             case 'i':
                 // Adjust image properties
-                viewer_window_cb.ShowFramerate = false;
+                viewer_fps.ShowFramerate = false;
                 cerr << endl << endl;
                 viewer_source.DialogImageProperties();
                 cerr << endl;
-                viewer_window_cb.ShowFramerate = true;
+                viewer_fps.ShowFramerate = true;
             break;
 
             default:
             break;
         }
+        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
-
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // reset terminal settings    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCSETS, &ksettings);
-    #endif // (CISST_OS == CISST_LINUX)
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCSETA, &ksettings);
-    #endif // (CISST_OS == CISST_DARWIN)
-    
-    close(kbrd);
-    ////////////////////////////////////////////////////
-#endif
 
     cerr << endl;
 
@@ -351,10 +371,9 @@ int CameraViewer(bool save, unsigned int fps, bool interpolation, int width, int
 
     // save settings
     viewer_source.SaveSettings("device.dat");
-    if (save == true) viewer_writer.SaveCodecSettings("codec.dat");
 
     // destroy pipeline
-    viewer_stream.EmptyFilterList();
+    viewer_stream.RemoveAll();
 
 labError:
     return 0;
@@ -396,13 +415,13 @@ int ParseNumber(char* string, unsigned int maxlen)
 
 int main(int argc, char** argv)
 {
-    cerr << endl << "svlCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
+    cerr << endl << "stereoTutorialCameraViewer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl;
-    cerr << "Enter 'svlCameraViewer -?' for help." << endl;
+    cerr << "Enter 'stereoTutorialCameraViewer -?' for help." << endl;
 
     //////////////////////////////
     // parsing arguments
-    int i, options, ivalue, width, height, fps;
+    int i, options, ivalue, width, height;
     bool interpolation, save;
 
     options = argc - 1;
@@ -410,7 +429,6 @@ int main(int argc, char** argv)
     width = -1;
     height = -1;
     save = false;
-    fps = 30;
 
     for (i = 1; i <= options; i ++) {
         if (argv[i][0] != '-') continue;
@@ -418,17 +436,21 @@ int main(int argc, char** argv)
         switch (argv[i][1]) {
             case '?':
                 cerr << "Command line format:" << endl;
-                cerr << "     svlCameraViewer [options]" << endl;
+                cerr << "     stereoTutorialCameraViewer [options]" << endl;
                 cerr << "Options:" << endl;
-                cerr << "     -f        Save video file" << endl;
-                cerr << "     -r#       Video file frame rate (frames per second) [default: 30]" << endl;
+#if (CISST_SVL_HAS_ZLIB == ON)
+                cerr << "     -v        Save video file" << endl;
+#endif // CISST_SVL_HAS_ZLIB
                 cerr << "     -i        Interpolation ON [default: OFF]" << endl;
                 cerr << "     -w#       Displayed image width" << endl;
                 cerr << "     -h#       Displayed image height" << endl;
                 cerr << "Examples:" << endl;
-                cerr << "     svlCameraViewer" << endl;
-                cerr << "     svlCameraViewer -w800 -h600" << endl;
-                cerr << "     svlCameraViewer -f -i -w1024 -h768" << endl;
+                cerr << "     stereoTutorialCameraViewer" << endl;
+#if (CISST_SVL_HAS_ZLIB == ON)
+                cerr << "     stereoTutorialCameraViewer -v -i -w1024 -h768" << endl;
+#else // CISST_SVL_HAS_ZLIB
+                cerr << "     stereoTutorialCameraViewer -i -w800 -h600" << endl;
+#endif // CISST_SVL_HAS_ZLIB
                 return 1;
             break;
 
@@ -436,9 +458,11 @@ int main(int argc, char** argv)
                 interpolation = true;
             break;
 
-            case 'f':
+#if (CISST_SVL_HAS_ZLIB == ON)
+            case 'v':
                 save = true;
             break;
+#endif // CISST_SVL_HAS_ZLIB
 
             case 'w':
                 ivalue = ParseNumber(argv[i] + 2, 4);
@@ -450,11 +474,6 @@ int main(int argc, char** argv)
                 if (ivalue > 0) height = ivalue;
             break;
 
-            case 'r':
-                ivalue = ParseNumber(argv[i] + 2, 3);
-                if (ivalue > 0) fps = ivalue;
-            break;
-
             default:
                 // NOP
             break;
@@ -464,7 +483,7 @@ int main(int argc, char** argv)
     //////////////////////////////
     // starting viewer
 
-    CameraViewer(save, fps, interpolation, width, height);
+    CameraViewer(interpolation, save, width, height);
 
     cerr << "Quit" << endl;
     return 1;

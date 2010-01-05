@@ -27,20 +27,44 @@ prmEventButton::~prmEventButton()
 
 void prmEventButton::ToStream(std::ostream & outputStream) const
 {
+    BaseType::ToStream(outputStream);
     switch (this->Type()) {
         case prmEventButton::PRESSED:
-            outputStream << "EventButton PRESSED";
+            outputStream << " EventButton PRESSED";
             break;
         case prmEventButton::RELEASED:
-            outputStream << "EventButton RELEASED";
+            outputStream << " EventButton RELEASED";
             break;
         case prmEventButton::CLICKED:
-            outputStream << "EventButton CLICKED";
+            outputStream << " EventButton CLICKED";
             break;
         case prmEventButton::DOUBLE_CLICKED:
-            outputStream << "EventButton DOUBLE_CLICKED";
+            outputStream << " EventButton DOUBLE_CLICKED";
             break;
         default:
-            outputStream << "EventButton of unknown type.  This should not happen." << std::endl;
+            outputStream << " EventButton of unknown type, probably not yet set." << std::endl;
     }
+}
+
+void prmEventButton::ToStreamRaw(std::ostream & outputStream, const char delimiter,
+                                 bool headerOnly, const std::string & headerPrefix) const {
+    BaseType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    outputStream << delimiter;
+    if (headerOnly) {
+        outputStream << headerPrefix << "-type";
+    } else {
+        outputStream << this->Type();
+    }
+}
+
+void prmEventButton::SerializeRaw(std::ostream & outputStream) const 
+{
+    BaseType::SerializeRaw(outputStream);
+    cmnSerializeRaw(outputStream, this->TypeMember);
+}
+
+void prmEventButton::DeSerializeRaw(std::istream & inputStream) 
+{
+    BaseType::DeSerializeRaw(inputStream);
+    cmnDeSerializeRaw(inputStream, this->TypeMember);
 }

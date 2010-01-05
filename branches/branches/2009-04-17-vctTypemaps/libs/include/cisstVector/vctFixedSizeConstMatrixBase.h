@@ -28,6 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _vctFixedSizeConstMatrixBase_h
 #define _vctFixedSizeConstMatrixBase_h
 
+#include <cisstCommon/cmnSerializer.h>
 
 #include <cisstVector/vctFixedSizeVectorRef.h>
 #include <cisstVector/vctFixedSizeVector.h>
@@ -39,21 +40,21 @@ http://www.cisst.org/cisst/license.txt.
 
 /* Forward declarations */
 #ifndef DOXYGEN
-template<unsigned int _rows, unsigned int _cols,
-         int _rowStride, int _colStride, class _dataPtrType,
-         int __rowStride, int __colStride, class __dataPtrType,
-         class _elementType,
-         class _elementOperationType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride, class _dataPtrType,
+          vct::stride_type __rowStride, vct::stride_type __colStride, class __dataPtrType,
+          class _elementType,
+          class _elementOperationType>
 inline vctFixedSizeMatrix<bool, _rows, _cols>
 vctFixedSizeMatrixElementwiseCompareMatrix(const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride,
                                            _elementType, _dataPtrType> & matrix1,
                                            const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                                            _elementType, __dataPtrType> & matrix2);
 
-template<unsigned int _rows, unsigned int _cols,
-         int _rowStride, int _colStride, class _dataPtrType,
-         class _elementType,
-         class _elementOperationType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride, class _dataPtrType,
+          class _elementType,
+          class _elementOperationType>
 inline vctFixedSizeMatrix<bool, _rows, _cols>
 vctFixedSizeMatrixElementwiseCompareScalar(const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride,
                                            _elementType, _dataPtrType> & matrix,
@@ -99,8 +100,9 @@ vctFixedSizeMatrixElementwiseCompareScalar(const vctFixedSizeConstMatrixBase<_ro
 
   \sa vctFixedStrideMatrixConstIterator vctFixedSizeMatrixTraits
 */
-template<unsigned int _rows, unsigned int _cols, int _rowStride, 
-         int _colStride, class _elementType, class _dataPtrType>
+template<vct::size_type _rows, vct::size_type _cols,
+         vct::stride_type _rowStride, vct::stride_type _colStride,
+         class _elementType, class _dataPtrType>
 class vctFixedSizeConstMatrixBase
 {
  public:
@@ -645,8 +647,8 @@ class vctFixedSizeConstMatrixBase
     
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
-    template<unsigned int __rows, unsigned int __cols, int __rowStride, int __colStride, class __dataPtrType>
-    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source)
+    template <size_type __rows, size_type __cols, stride_type __rowStride, stride_type __colStride, class __dataPtrType>
+    inline bool FastCopyCompatible(const vctFixedSizeConstMatrixBase<__rows, __cols, __rowStride, __colStride, value_type, __dataPtrType> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -654,7 +656,7 @@ class vctFixedSizeConstMatrixBase
     /*! Test if the method FastCopyOf can be used instead of Assign.
       See FastCopyOf for more details. */
     template<class __matrixOwnerType>
-    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source)
+    inline bool FastCopyCompatible(const vctDynamicConstMatrixBase<__matrixOwnerType, value_type> & source) const
     {
         return vctFastCopy::MatrixCopyCompatible(*this, source);
     }
@@ -676,7 +678,7 @@ class vctFixedSizeConstMatrixBase
 
       \return A boolean.
     */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool Equal(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                       value_type, __dataPtrType> & otherMatrix) const {
         return vctFixedSizeMatrixLoopEngines::
@@ -686,14 +688,14 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool operator == (const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                              value_type, __dataPtrType> & otherMatrix) const {
         return Equal(otherMatrix);
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool AlmostEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
 			    value_type, __dataPtrType> & otherMatrix,
 			    value_type tolerance) const {
@@ -701,14 +703,14 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool AlmostEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
 			    value_type, __dataPtrType> & otherMatrix) const {
         return ((*this - otherMatrix).LinfNorm() <= cmnTypeTraits<_elementType>::Tolerance());
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool NotEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                          value_type, __dataPtrType> & otherMatrix) const {
         return vctFixedSizeMatrixLoopEngines::
@@ -718,14 +720,14 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool operator != (const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                              value_type, __dataPtrType> & otherMatrix) const {
         return NotEqual(otherMatrix);
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool Lesser(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                        value_type, __dataPtrType> & otherMatrix) const {
         return vctFixedSizeMatrixLoopEngines::
@@ -735,7 +737,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool LesserOrEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                               value_type, __dataPtrType> & otherMatrix) const {
         return vctFixedSizeMatrixLoopEngines::
@@ -745,7 +747,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool Greater(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                         value_type, __dataPtrType> & otherMatrix) const {
         return vctFixedSizeMatrixLoopEngines::
@@ -755,7 +757,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline bool GreaterOrEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                                value_type, __dataPtrType> & otherMatrix) const {
         return vctFixedSizeMatrixLoopEngines::
@@ -781,7 +783,7 @@ class vctFixedSizeConstMatrixBase
 
       \return A matrix of booleans.
     */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline BoolMatrixValueType
     ElementwiseEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                      value_type, __dataPtrType> & otherMatrix) const {
@@ -794,7 +796,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline BoolMatrixValueType
     ElementwiseNotEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                         value_type, __dataPtrType> & otherMatrix) const {
@@ -807,7 +809,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline BoolMatrixValueType
     ElementwiseLesser(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                       value_type, __dataPtrType> & otherMatrix) const {
@@ -820,7 +822,7 @@ class vctFixedSizeConstMatrixBase
     }
     
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline BoolMatrixValueType
     ElementwiseLesserOrEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                              value_type, __dataPtrType> & otherMatrix) const {
@@ -833,7 +835,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline BoolMatrixValueType
     ElementwiseGreater(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                        value_type, __dataPtrType> & otherMatrix) const {
@@ -846,7 +848,7 @@ class vctFixedSizeConstMatrixBase
     }
 
     /* documented above */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline BoolMatrixValueType
     ElementwiseGreaterOrEqual(const vctFixedSizeConstMatrixBase<_rows, _cols, __rowStride, __colStride,
                               value_type, __dataPtrType> & otherMatrix) const {
@@ -1051,7 +1053,7 @@ class vctFixedSizeConstMatrixBase
       memory strides between the elements of the parent matrix and submatrix are equal.
       For more sophisticated submatrices, the user has to write customized code.
     */
-    template<unsigned int _subRows, unsigned int _subCols>
+    template <size_type _subRows, size_type _subCols>
     class ConstSubmatrix
     {
     public:
@@ -1079,13 +1081,13 @@ class vctFixedSizeConstMatrixBase
         return outputStream.str();
     }
 
-    /*!  Print the matrix to a text stream */
+    /*!  Print the matrix in a human readable format */
     void ToStream(std::ostream & outputStream) const {
         const size_type myRows = rows();
         const size_type myCols = cols();
         // preserve the formatting flags as they were
-        const int width = outputStream.width(12);
-        const int precision = outputStream.precision(6);
+        const size_t width = outputStream.width(12);
+        const size_t precision = outputStream.precision(6);
         bool showpoint = ((outputStream.flags() & std::ios_base::showpoint) != 0);
         outputStream << std::setprecision(6) << std::showpoint;
         size_type indexRow, indexCol;
@@ -1107,27 +1109,84 @@ class vctFixedSizeConstMatrixBase
             outputStream << std::noshowpoint;
         }
     }
+
+    /*! Print data only with optional separator */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        if (headerOnly) {
+            for (indexRow = 0; indexRow < myRows; ++indexRow) {
+                for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                    outputStream << headerPrefix << "-m" << indexRow << "_" << indexCol; 
+                    // delimiter between elements
+                    if (indexCol < (myCols - 1)) {
+                        outputStream << delimiter;
+                    }
+                }
+                // delimiter between rows, not at the end
+                if (indexRow < (myRows - 1)) {
+                    outputStream << delimiter;
+                }
+            }
+        } else {
+            for (indexRow = 0; indexRow < myRows; ++indexRow) {
+                for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                    outputStream << this->Element(indexRow, indexCol);
+                    // delimiter between elements
+                    if (indexCol < (myCols - 1)) {
+                        outputStream << delimiter;
+                    }
+                }
+                // delimiter between rows, not at the end
+                if (indexRow < (myRows - 1)) {
+                    outputStream << delimiter;
+                }
+            }
+        }
+    }
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const 
+    {
+        const size_type myRows = rows();
+        const size_type myCols = cols();
+        size_type indexRow, indexCol;
+        
+        for (indexRow = 0; indexRow < myRows; ++indexRow) {
+            for (indexCol = 0; indexCol < myCols; ++indexCol) {
+                cmnSerializeRaw(outputStream, this->Element(indexRow, indexCol));
+            }
+        }
+    }
+
 };
 
 
 
 /*! Return true if all the elements of the matrix are nonzero, false otherwise */
-template<unsigned int _rows, unsigned int _cols, int _rowStride, 
-         int _colStride, class _elementType, class _dataPtrType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride,
+          class _elementType, class _dataPtrType>
 inline bool vctAll(const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & matrix) {
     return matrix.All();
 }
 
 /*! Return true if any element of the matrix is nonzero, false otherwise */
-template<unsigned int _rows, unsigned int _cols, int _rowStride, 
-         int _colStride, class _elementType, class _dataPtrType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride,
+          class _elementType, class _dataPtrType>
 inline bool vctAny(const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & matrix) {
     return matrix.Any();
 }
 
 /*! Stream out operator. */
-template<unsigned int _rows, unsigned int _cols, int _rowStride, 
-         int _colStride, class _elementType, class _dataPtrType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride,
+          class _elementType, class _dataPtrType>
 std::ostream & operator << (std::ostream & output,
                             const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & matrix) {
     matrix.ToStream(output);

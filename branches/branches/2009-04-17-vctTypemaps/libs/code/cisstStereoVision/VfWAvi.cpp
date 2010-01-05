@@ -437,21 +437,59 @@ int CVfWAvi::ShowCompressionDialog()
 	if (AVIFileOpen(&PAviFile, path, OF_WRITE|OF_CREATE, NULL) == 0) {
 		StreamInfo.fccType = streamtypeVIDEO;
 		StreamInfo.fccHandler = 0;
-		StreamInfo.dwScale = 1;
-		StreamInfo.dwRate = 1;
+		StreamInfo.dwScale = static_cast<DWORD>(1000000 / 30.0);
+		StreamInfo.dwRate = 1000000;
 		StreamInfo.dwSuggestedBufferSize = 1000000;
 		StreamInfo.rcFrame.left = 0;
 		StreamInfo.rcFrame.top = 0;
-		StreamInfo.rcFrame.right = 100;
-		StreamInfo.rcFrame.bottom = 100;
+		StreamInfo.rcFrame.right = 320;
+		StreamInfo.rcFrame.bottom = 240;
 
-		if (AVIFileCreateStream(PAviFile, &PAviStream, &StreamInfo) == 0 &&
-			AVISaveOptions(0,
-						   ICMF_CHOOSE_DATARATE|ICMF_CHOOSE_KEYFRAME,
-						   1,
-						   &PAviStream,
-                           reinterpret_cast<LPAVICOMPRESSOPTIONS*>(&tCompr)) == TRUE) {
-            ret = 1;
+        if (AVIFileCreateStream(PAviFile, &PAviStream, &StreamInfo) == 0) {
+
+            // Open codec selection dialog
+			if (AVISaveOptions(0, ICMF_CHOOSE_DATARATE|ICMF_CHOOSE_KEYFRAME, 1, &PAviStream,
+                               reinterpret_cast<LPAVICOMPRESSOPTIONS*>(&tCompr)) == TRUE) {
+
+
+				   HIC hIC;
+				   ICINFO icinfo;
+
+				   int fccType = ICTYPE_VIDEO; //0 to get all installed codecs
+
+				   hIC = ICOpen(fccType, CompressionOptions.fccHandler, ICMODE_QUERY);
+				   if (hIC) {
+
+					   //Find out the compressor name.
+					   ICGetInfo(hIC, &icinfo, sizeof(icinfo));
+
+					   std::wstring tempname = icinfo.szDescription;
+					   CompressorName.assign(tempname.begin(),tempname.end()); //= tempname.;
+					   ret = 1;
+				   
+
+				   }
+                // Create compressed stream
+                HRESULT error = AVIMakeCompressedStream(&PAviCompressedStream, PAviStream, &CompressionOptions, NULL);
+                if (error == AVIERR_OK) {
+
+                    // Store compressor name
+                    /*AVISTREAMINFO info;
+                    if (AVIStreamInfo(PAviCompressedStream, &info, sizeof(AVISTREAMINFO)) == 0) {
+                        CompressorName = info.szName;
+                    }
+
+                    ret = 1;*/
+				}
+                else if (error == AVIERR_NOCOMPRESSOR) {
+                }
+                else if (error == AVIERR_MEMORY) {
+                }
+                else if (error == AVIERR_UNSUPPORTED) {
+                }
+                else {
+                }
+            }
         }
 	}
 

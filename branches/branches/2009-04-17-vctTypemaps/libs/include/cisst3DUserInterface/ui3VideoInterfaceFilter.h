@@ -26,11 +26,14 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
+
 /*!
  Abstract class that provides the structure for implementing interfaces between
  the 3D renderer and video capture devices.
 */
-class ui3VideoInterfaceFilter : public svlFilterBase
+class CISST_EXPORT ui3VideoInterfaceFilter : public svlFilterBase
 {
 public:
     /*!
@@ -50,8 +53,8 @@ private:
     int StreamID;
     ui3BehaviorBase* ParentBehavior;
 
-    int Initialize(svlSample* inputdata = 0);
-    int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata = 0);
+    int Initialize(svlSample* inputdata);
+    int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata);
 };
 
 #endif // _ui3VideoInterfaceFilter_h

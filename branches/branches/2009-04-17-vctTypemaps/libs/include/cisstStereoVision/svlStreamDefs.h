@@ -26,14 +26,32 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnLogger.h>
 #include <cisstVector/vctDynamicMatrix.h>
 #include <cisstVector/vctFixedSizeMatrix.h>
+#include <cisstVector/vctFixedSizeVectorTypes.h>
 
 #include <cisstStereoVision/svlConfig.h>
+
+// Always include last!
+#include <cisstStereoVision/svlExport.h>
+
+
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
 
 #if (CISST_SVL_HAS_OPENCV == ON)
     #if (CISST_OS == CISST_WINDOWS) || (CISST_OS == CISST_DARWIN)
         #include <cv.h>
+        #include <highgui.h>
     #else
         #include <opencv/cv.h>
+        #include <opencv/highgui.h>
     #endif
 #else // CISST_HAS_OPENCV
     typedef void IplImage;
@@ -43,6 +61,8 @@ http://www.cisst.org/cisst/license.txt.
 #define SVL_RIGHT                   1
 #define SVL_OK                      0
 #define SVL_FAIL                    -1
+#define SVL_NO                      0
+#define SVL_YES                     1
 
 
 //////////////////////////////
@@ -55,13 +75,16 @@ enum svlStreamType
     svlTypeStreamSource,      // Capture sources have an input connector of this type
     svlTypeStreamSink,        // Render filters may have an output connector of this type
     svlTypeImageRGB,          // Single RGB image
+    svlTypeImageRGBA,         // Single RGBA image
     svlTypeImageRGBStereo,    // Dual RGB image
+    svlTypeImageRGBAStereo,   // Dual RGBA image
     svlTypeImageMono8,        // Single Grayscale image (8bpp)
     svlTypeImageMono8Stereo,  // Dual Grayscale image (8bpp)
     svlTypeImageMono16,       // Single Grayscale image (16bpp)
     svlTypeImageMono16Stereo, // Dual Grayscale image (16bpp)
+    svlTypeImageMonoFloat,    // Single float image (32bpp)
+    svlTypeImage3DMap,        // Three floats per pixel for storing 3D coordinates
     svlTypeImageCustom,       // Custom, un-enumerated image format
-    svlTypeDepthMap,          // Disparity map
     svlTypeRigidXform,        // 3D transformation
     svlTypePointCloud         // Vector of N dimensional points
 };
@@ -75,10 +98,12 @@ typedef vctDynamicMatrix<unsigned char> svlImageMono8;
 typedef vctDynamicMatrixRef<unsigned char> svlImageMono8Ref;
 typedef vctDynamicMatrix<unsigned short> svlImageMono16;
 typedef vctDynamicMatrixRef<unsigned short> svlImageMono16Ref;
+typedef vctDynamicMatrix<float> svlImageMonoFloat;
+typedef vctDynamicMatrixRef<float> svlImageMonoFloatRef;
 typedef vctDynamicMatrix<unsigned char> svlImageRGB;
 typedef vctDynamicMatrixRef<unsigned char> svlImageRGBRef;
-typedef vctDynamicMatrix<float> svlDepthMap;
-typedef vctDynamicMatrixRef<float> svlDepthMapRef;
+typedef vctDynamicMatrix<unsigned char> svlImageRGBA;
+typedef vctDynamicMatrixRef<unsigned char> svlImageRGBARef;
 
 typedef vctFixedSizeMatrix<double, 4, 4> svlRigidXform;
 typedef vctDynamicMatrix<double> svlPointCloud;
@@ -91,69 +116,74 @@ typedef vctDynamicMatrix<double> svlPointCloud;
 template <class __ValueType>
 static bool IsTypeFloat(__ValueType CMN_UNUSED(val)) { return false; }
 template <>
-static bool IsTypeFloat<float>(float CMN_UNUSED(val)) { return true; }
+inline bool IsTypeFloat<float>(float CMN_UNUSED(val)) { return true; }
 
 template <class __ValueType>
 static bool IsTypeUChar(__ValueType CMN_UNUSED(val)) { return false; }
 template <>
-static bool IsTypeUChar<unsigned char>(unsigned char CMN_UNUSED(val)) { return true; }
+inline bool IsTypeUChar<unsigned char>(unsigned char CMN_UNUSED(val)) { return true; }
 
 template <class __ValueType>
 static bool IsTypeUWord(__ValueType CMN_UNUSED(val)) { return false; }
 template <>
-static bool IsTypeUWord<unsigned short>(unsigned short CMN_UNUSED(val)) { return true; }
+inline bool IsTypeUWord<unsigned short>(unsigned short CMN_UNUSED(val)) { return true; }
 
 
 ///////////////////////////////////////
 // Stream data structure definitions //
 ///////////////////////////////////////
 
-class svlSample
+class CISST_EXPORT svlSample
 {
 public:
-    svlSample() : ModifiedFlag(true) {}
-    virtual ~svlSample() {}
+    svlSample();
+    virtual ~svlSample();
     virtual svlSample* GetNewInstance() = 0;
-    virtual svlStreamType GetType() = 0;
-    virtual bool IsImage() { return false; }
-    virtual bool IsInitialized() { return false; }
-    void SetTimestamp(double ts) { Timestamp = ts; }
-    double GetTimestamp() { return Timestamp; }
-    void SetModified(bool modified) { ModifiedFlag = modified; }
-    bool IsModified() { return ModifiedFlag; }
+    virtual svlStreamType GetType() const = 0;
+    virtual int SetSize(const svlSample & sample) = 0;
+    virtual int CopyOf(const svlSample & sample) = 0;
+    virtual bool IsImage();
+    virtual bool IsInitialized();
+    void SetTimestamp(double ts);
+    double GetTimestamp() const;
+    void SetModified(bool modified);
+    bool IsModified() const;
+    static svlSample* GetNewFromType(svlStreamType type);
 
 private:
-    double Timestamp;       // [seconds]
+    double Timestamp; // [seconds]
     bool ModifiedFlag;
 };
 
 
-class svlSampleImageBase : public svlSample
+class CISST_EXPORT svlSampleImageBase : public svlSample
 {
 public:
-    svlSampleImageBase() : svlSample() {}
-    virtual ~svlSampleImageBase() {}
+    svlSampleImageBase();
+    virtual ~svlSampleImageBase();
     virtual svlSample* GetNewInstance() = 0;
-    virtual IplImage* IplImageRef(const unsigned int CMN_UNUSED(videochannel) = 0) { return 0; }
-    bool IsImage() { return true; }
-    virtual svlStreamType GetType() = 0;
+    virtual IplImage* IplImageRef(const unsigned int videochannel = 0) = 0;
+    bool IsImage();
+    virtual svlStreamType GetType() const = 0;
     virtual bool IsInitialized() = 0;
+    virtual int  SetSize(const svlSample & sample) = 0;
     virtual void SetSize(const unsigned int width, const unsigned int height) = 0;
     virtual void SetSize(const unsigned int videochannel, const unsigned int width, const unsigned int height) = 0;
-    virtual void SetSize(svlSampleImageBase &sample) = 0;
-    virtual unsigned int GetVideoChannels() = 0;
-    virtual unsigned int GetDataChannels() = 0;
-    virtual unsigned int GetBPP() = 0;
-    virtual unsigned int GetWidth(const unsigned int videochannel = 0) = 0;
-    virtual unsigned int GetHeight(const unsigned int videochannel = 0) = 0;
-    virtual unsigned int GetDataSize(const unsigned int videochannel = 0) = 0;
-    virtual void* GetPointer(const unsigned int videochannel = 0) = 0;
-    virtual void* GetPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y) = 0;
+    virtual unsigned int GetVideoChannels() const = 0;
+    virtual unsigned int GetDataChannels() const = 0;
+    virtual unsigned int GetBPP() const = 0;
+    virtual unsigned int GetWidth(const unsigned int videochannel = 0) const = 0;
+    virtual unsigned int GetHeight(const unsigned int videochannel = 0) const = 0;
+    virtual unsigned int GetDataSize(const unsigned int videochannel = 0) const = 0;
+    virtual unsigned char* GetUCharPointer(const unsigned int videochannel = 0) = 0;
+    virtual const unsigned char* GetUCharPointer(const unsigned int videochannel = 0) const = 0;
+    virtual unsigned char* GetUCharPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y) = 0;
+    virtual const unsigned char* GetUCharPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y) const = 0;
 };
 
 
 template <class _ValueType, unsigned int _DataChannels, unsigned int _VideoChannels>
-class svlSampleImageCustom : public svlSampleImageBase
+class CISST_EXPORT svlSampleImageCustom : public svlSampleImageBase
 {
 public:
     svlSampleImageCustom() :
@@ -242,17 +272,17 @@ public:
         if (videochannel < _VideoChannels) return OCVImageHeader[videochannel];
         else return 0;
 #else // CISST_SVL_HAS_OPENCV
-        CMN_LOG(2) << "Class svlSampleImageCustom: IplImageRef() called while OpenCV is disabled" << std::endl;
+        CMN_LOG_INIT_WARNING << "Class svlSampleImageCustom: IplImageRef() called while OpenCV is disabled" << std::endl;
         return 0;
 #endif // CISST_SVL_HAS_OPENCV
     }
 
     bool IsImage() { return true; }
-    unsigned int GetVideoChannels() { return _VideoChannels; }
-    unsigned int GetDataChannels() { return _DataChannels; }
-    unsigned int GetBPP() { return (sizeof(_ValueType) * _DataChannels); }
+    unsigned int GetVideoChannels() const { return _VideoChannels; }
+    unsigned int GetDataChannels() const { return _DataChannels; }
+    unsigned int GetBPP() const { return (sizeof(_ValueType) * _DataChannels); }
 
-    svlStreamType GetType()
+    svlStreamType GetType() const
     {
         if (IsTypeUChar<_ValueType>(static_cast<_ValueType>(0))) {
             if (_DataChannels == 1) {
@@ -263,6 +293,10 @@ public:
                 if (_VideoChannels == 1) return svlTypeImageRGB;
                 if (_VideoChannels == 2) return svlTypeImageRGBStereo;
             }
+            if (_DataChannels == 4) {
+                if (_VideoChannels == 1) return svlTypeImageRGBA;
+                if (_VideoChannels == 2) return svlTypeImageRGBAStereo;
+            }
         }
         if (IsTypeUWord<_ValueType>(static_cast<_ValueType>(0))) {
             if (_DataChannels == 1) {
@@ -271,7 +305,8 @@ public:
             }
         }
         if (IsTypeFloat<_ValueType>(static_cast<_ValueType>(0))) {
-            if (_DataChannels == 1 && _VideoChannels == 1) return svlTypeDepthMap;
+            if (_DataChannels == 1 && _VideoChannels == 1) return svlTypeImageMonoFloat;
+            if (_DataChannels == 3 && _VideoChannels == 1) return svlTypeImage3DMap;
         }
         return svlTypeImageCustom;
     }
@@ -286,6 +321,30 @@ public:
         return true;
     }
 
+    int SetSize(const svlSample & sample)
+    {
+        const svlSampleImageBase* sampleimage = dynamic_cast<const svlSampleImageBase*>(&sample);
+        if (sampleimage == 0) return SVL_FAIL;
+        unsigned int samplevideochannels = sampleimage->GetVideoChannels();
+        for (unsigned int vch = 0; vch < _VideoChannels && vch < samplevideochannels; vch ++) {
+            SetSize(vch, sampleimage->GetWidth(vch), sampleimage->GetHeight(vch));
+        }
+        return SVL_OK;
+    }
+
+    int CopyOf(const svlSample & sample)
+    {
+        if (sample.GetType() != GetType() || SetSize(sample) != SVL_OK) return SVL_FAIL;
+
+        const svlSampleImageBase* sampleimage = dynamic_cast<const svlSampleImageBase*>(&sample);
+        for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
+            memcpy(GetUCharPointer(vch), sampleimage->GetUCharPointer(vch), GetDataSize(vch));
+        }
+        SetTimestamp(sample.GetTimestamp());
+
+        return SVL_OK;
+    }
+
     void SetSize(const unsigned int width, const unsigned int height)
     {
         for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
@@ -296,6 +355,8 @@ public:
     void SetSize(const unsigned int videochannel, const unsigned int width, const unsigned int height)
     {
         if (videochannel < _VideoChannels && Image[videochannel]) {
+            if (GetWidth (videochannel) == width &&
+                GetHeight(videochannel) == height) return;
             Image[videochannel]->SetSize(height,  width * _DataChannels);
             ImageRef[videochannel].SetRef(*(Image[videochannel]));
 #if (CISST_SVL_HAS_OPENCV == ON)
@@ -312,27 +373,19 @@ public:
         }
     }
 
-    void SetSize(svlSampleImageBase &sample)
-    {
-        unsigned int samplevideochannels = sample.GetVideoChannels();
-        for (unsigned int vch = 0; vch < _VideoChannels && vch < samplevideochannels; vch ++) {
-            SetSize(vch, sample.GetWidth(vch), sample.GetHeight(vch));
-        }
-    }
-
-    unsigned int GetWidth(const unsigned int videochannel = 0)
+    unsigned int GetWidth(const unsigned int videochannel = 0) const
     {
         if (videochannel < _VideoChannels && Image[videochannel]) return (Image[videochannel]->width() / _DataChannels);
         return 0;
     }
 
-    unsigned int GetHeight(const unsigned int videochannel = 0)
+    unsigned int GetHeight(const unsigned int videochannel = 0) const
     {
         if (videochannel < _VideoChannels && Image[videochannel]) return Image[videochannel]->height();
         return 0;
     }
 
-    unsigned int GetDataSize(const unsigned int videochannel = 0)
+    unsigned int GetDataSize(const unsigned int videochannel = 0) const
     {
         if (videochannel < _VideoChannels && Image[videochannel]) {
             return (GetBPP() * GetWidth(videochannel) * GetHeight(videochannel));
@@ -340,13 +393,47 @@ public:
         return 0;
     }
 
-    void* GetPointer(const unsigned int videochannel = 0)
+    unsigned char* GetUCharPointer(const unsigned int videochannel = 0)
+    {
+        return reinterpret_cast<unsigned char*>(GetPointer(videochannel));
+    }
+
+    const unsigned char* GetUCharPointer(const unsigned int videochannel = 0) const
+    {
+        return reinterpret_cast<const unsigned char*>(GetPointer(videochannel));
+    }
+
+    unsigned char* GetUCharPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y)
+    {
+        return reinterpret_cast<unsigned char*>(GetPointer(videochannel, x, y));
+    }
+
+    const unsigned char* GetUCharPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y) const
+    {
+        return reinterpret_cast<const unsigned char*>(GetPointer(videochannel, x, y));
+    }
+
+    _ValueType* GetPointer(const unsigned int videochannel = 0)
     {
         if (videochannel < _VideoChannels && Image[videochannel]) return Image[videochannel]->Pointer();
         return 0;
     }
 
-    void* GetPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y)
+    const _ValueType* GetPointer(const unsigned int videochannel = 0) const
+    {
+        if (videochannel < _VideoChannels && Image[videochannel]) return Image[videochannel]->Pointer();
+        return 0;
+    }
+
+    _ValueType* GetPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y)
+    {
+        if (videochannel < _VideoChannels && Image[videochannel]) {
+            return Image[videochannel]->Pointer(y, x * _DataChannels);
+        }
+        return 0;
+    }
+
+    const _ValueType* GetPointer(const unsigned int videochannel, const unsigned int x, const unsigned int y) const
     {
         if (videochannel < _VideoChannels && Image[videochannel]) {
             return Image[videochannel]->Pointer(y, x * _DataChannels);
@@ -379,41 +466,49 @@ typedef svlSampleImageCustom<unsigned char,  1, 2>   svlSampleImageMono8Stereo;
 typedef svlSampleImageCustom<unsigned short, 1, 1>   svlSampleImageMono16;
 typedef svlSampleImageCustom<unsigned short, 1, 2>   svlSampleImageMono16Stereo;
 typedef svlSampleImageCustom<unsigned char,  3, 1>   svlSampleImageRGB;
+typedef svlSampleImageCustom<unsigned char,  4, 1>   svlSampleImageRGBA;
 typedef svlSampleImageCustom<unsigned char,  3, 2>   svlSampleImageRGBStereo;
-typedef svlSampleImageCustom<float,          1, 1>   svlSampleDepthMap;
+typedef svlSampleImageCustom<unsigned char,  4, 2>   svlSampleImageRGBAStereo;
+typedef svlSampleImageCustom<float,          1, 1>   svlSampleImageMonoFloat;
+typedef svlSampleImageCustom<float,          3, 1>   svlSampleImage3DMap;
 
 
-class svlSampleRigidXform : public svlSample
+class CISST_EXPORT svlSampleRigidXform : public svlSample
 {
 public:
-    svlSampleRigidXform() : svlSample() {}
-    svlSample* GetNewInstance() { return new svlSampleRigidXform; }
+    svlSampleRigidXform();
+    svlSample* GetNewInstance();
+    svlStreamType GetType() const;
+    bool IsInitialized();
+    int SetSize(const svlSample & sample);
+    int CopyOf(const svlSample & sample);
+    unsigned char* GetUCharPointer();
+    const unsigned char* GetUCharPointer() const;
+    double* GetPointer();
+    unsigned int GetDataSize() const;
 
     svlRigidXform frame4x4;
-
-    svlStreamType GetType() { return svlTypeRigidXform; }
-    bool IsInitialized() { return true; }
-    void* GetPointer() { return frame4x4.Pointer();}
-    unsigned int GetDataSize() { return (frame4x4.size() * sizeof(double)); }
 };
 
 
-class svlSamplePointCloud : public svlSample
+class CISST_EXPORT svlSamplePointCloud : public svlSample
 {
 public:
-    svlSamplePointCloud() : svlSample() {}
-    svlSample* GetNewInstance() { return new svlSamplePointCloud; }
+    svlSamplePointCloud();
+    svlSample* GetNewInstance();
+    svlStreamType GetType() const;
+    bool IsInitialized();
+    int SetSize(const svlSample & sample);
+    int CopyOf(const svlSample & sample);
+    void SetSize(unsigned int dimensions, unsigned int size);
+    unsigned int GetDimensions() const;
+    unsigned int GetSize() const;
+    unsigned char* GetUCharPointer();
+    const unsigned char* GetUCharPointer() const;
+    double* GetPointer();
+    unsigned int GetDataSize() const;
 
     svlPointCloud points;
-
-    svlStreamType GetType() { return svlTypePointCloud; }
-    bool IsInitialized() { if (points.cols() > 0) { return true; } return false; }
-    void SetSize(unsigned int dimensions, unsigned int size) { points.SetSize(dimensions, size); }
-    void SetSize(svlSamplePointCloud& sample) { SetSize(sample.GetDimensions(), sample.GetSize()); }
-    unsigned int GetDimensions() { return points.rows(); }
-    unsigned int GetSize() { return points.cols(); }
-    void* GetPointer() { return points.Pointer();}
-    unsigned int GetDataSize() { return (points.size() * sizeof(double)); }
 };
 
 
@@ -421,15 +516,20 @@ public:
 // Miscellaneous structure type definitions //
 //////////////////////////////////////////////
 
-typedef struct _svlRect {
+class svlRect {
+public:
+    svlRect();
+    svlRect(int left, int top, int right, int bottom);
+    void Assign(const svlRect & rect);
+    void Assign(int left, int top, int right, int bottom);
+    void Normalize();
+    void Trim(const int minx, const int maxx, const int miny, const int maxy);
+
     int left;
     int top;
     int right;
     int bottom;
-    _svlRect() {}
-    _svlRect(int l, int t, int r, int b) : left(l), top(t), right(r), bottom(b) {}
-    void Assign(int l, int t, int r, int b) { left = l; top = t; right = r; bottom = b; }
-} svlRect;
+};
 
 
 /////////////////////////////////
@@ -468,18 +568,18 @@ typedef struct _svlDIBHeader {
     unsigned int biClrImportant;
 } svlDIBHeader;
 
-typedef struct _svlRGBQUAD {
-    unsigned char B;
-    unsigned char G;
-    unsigned char R;
-    unsigned char A;
-} svlRGBQUAD;
-
 typedef struct _svlRGB {
     unsigned char B;
     unsigned char G;
     unsigned char R;
 } svlRGB;
+
+typedef struct _svlRGBA {
+    unsigned char B;
+    unsigned char G;
+    unsigned char R;
+    unsigned char A;
+} svlRGBA;
 
 #pragma pack()
 

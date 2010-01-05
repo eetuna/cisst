@@ -20,11 +20,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsDeviceInterface.h>
+#include <cisstMultiTask/mtsRequiredInterface.h>
 
-
-// specialize for Read using "cmnGenericObject &"
+// specialize for Read using "mtsGenericObject &"
 template <>
-bool mtsFunctionReadOrWrite<cmnGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
+bool mtsFunctionReadOrWrite<mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
 {
     if (interface) {
         Command = interface->GetCommandRead(commandName);
@@ -33,14 +34,23 @@ bool mtsFunctionReadOrWrite<cmnGenericObject>::Bind(const mtsDeviceInterface * i
 }
 
 
-// specialize for Write using "const cmnGenericObject &"
+// specialize for Write using "const mtsGenericObject &"
 template <>
-bool mtsFunctionReadOrWrite<const cmnGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
+bool mtsFunctionReadOrWrite<const mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
 {
     if (interface) {
         Command = interface->GetCommandWrite(commandName);
     }
     return interface && (Command != 0);
+}
+
+
+template <class _argumentType>
+bool mtsFunctionReadOrWrite<_argumentType>::AddToRequiredInterface(mtsRequiredInterface & requiredInterface,
+                                                                   const std::string & commandName,
+                                                                   bool isRequired)
+{
+    return requiredInterface.AddCommandPointer(commandName, Command, isRequired);
 }
 
 
@@ -52,8 +62,18 @@ mtsCommandBase::ReturnType mtsFunctionReadOrWrite<_argumentType>::operator()(Arg
 
 
 template <class _argumentType>
+const mtsGenericObject * mtsFunctionReadOrWrite<_argumentType>::GetArgumentPrototype(void) const
+{
+    if (this->Command) {
+        return this->Command->GetArgumentPrototype();
+    }
+    return 0;
+}
+
+
+template <class _argumentType>
 void mtsFunctionReadOrWrite<_argumentType>::ToStream(std::ostream & outputStream) const {
-    if (this->Command != 0) {
+    if (this->Command) {
         outputStream << "mtsFunctionReadOrWrite for " << *Command;
     } else {
         outputStream << "mtsFunctionReadOrWrite not initialized";
@@ -62,6 +82,6 @@ void mtsFunctionReadOrWrite<_argumentType>::ToStream(std::ostream & outputStream
 
 
 // force instantiation
-template class mtsFunctionReadOrWrite<cmnGenericObject>;
-template class mtsFunctionReadOrWrite<const cmnGenericObject>;
+template class mtsFunctionReadOrWrite<mtsGenericObject>;
+template class mtsFunctionReadOrWrite<const mtsGenericObject>;
 

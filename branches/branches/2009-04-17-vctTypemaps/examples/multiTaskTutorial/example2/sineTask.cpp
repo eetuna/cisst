@@ -21,8 +21,8 @@ sineTask::sineTask(const std::string & taskName, double period):
         // add a command bound to a user defined method
         mainInterface->AddCommandVoid(&sineTask::ResetTrigger, this,"ResetTrigger");
         // define an event and setup our event sending function
-        cmnDouble eventData; // data type used for the event payload
-        TriggerEvent.Bind(mainInterface->AddEventWrite("TriggerEvent", eventData));
+        mtsDouble eventData; // data type used for the event payload
+        mainInterface->AddEventWrite(TriggerEvent, "TriggerEvent", eventData);
     }
 }
 
@@ -39,11 +39,10 @@ void sineTask::Startup(void) {
 }
 
 void sineTask::Run(void) {
-    const mtsStateIndex now = StateTable.GetIndexWriter();
     ProcessQueuedCommands();
     SineData = SineAmplitude
-        * sin(2 * cmnPI * static_cast<double>(now.Ticks()) * Period / 10.0);
-    // check if the trigger is enabled and it the conditions are right
+        * sin(2 * cmnPI * static_cast<double>(this->GetTick()) * Period / 10.0);
+    // check if the trigger is enabled and if the conditions are right
     // to send an event
     if (TriggerEnabled) {
         if  (SineData >= TriggerValue) {

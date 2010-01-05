@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
   \brief Declaration of vctDynamicVectorRef
 */
 
+#include <cisstCommon/cmnDeSerializer.h>
 
 #include<cisstVector/vctDynamicVectorBase.h>
 #include<cisstVector/vctDynamicVectorRefOwner.h>
@@ -78,7 +79,7 @@ http://www.cisst.org/cisst/license.txt.
   \param _elementType Type of elements referenced.  Also defined as
   <code>value_type</code>.
 */
-template<class _elementType>
+template <class _elementType>
 class vctDynamicVectorRef: public vctDynamicVectorBase<vctDynamicVectorRefOwner<_elementType>, _elementType>
 {
 public:
@@ -118,7 +119,7 @@ public:
       from a fixed-size vector to a dynamic vector representation.
       \note The size and stride values are taken from the fixed size vector.
     */
-    template<unsigned int __size, int __stride, class __dataPtrType>
+    template <size_type __size, stride_type __stride, class __dataPtrType>
     vctDynamicVectorRef(vctFixedSizeVectorBase<__size, __stride, _elementType, __dataPtrType> & otherVector,
                         size_type startPosition = 0)
     {
@@ -131,7 +132,7 @@ public:
       \note The stride values are taken from the fixed size vector, but the starting point and 
       length must be specified.
     */
-    template<unsigned int __size, int __stride, class __dataPtrType>
+    template <size_type __size, stride_type __stride, class __dataPtrType>
     vctDynamicVectorRef(vctFixedSizeVectorBase<__size, __stride, _elementType, __dataPtrType> & otherVector,
                         size_type startPosition, size_type length)
     {
@@ -141,7 +142,7 @@ public:
     /*! Initialize a dynamic reference to a dynamic vector.
       \note the starting point, size, and stride, are taken from the other vector.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     vctDynamicVectorRef(vctDynamicVectorBase<__vectorOwnerType, _elementType> & otherVector)
     {
         this->SetRef(otherVector);
@@ -151,7 +152,7 @@ public:
       \note the stride is taken from the other vector, but the starting point and the
       length must be specified.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     vctDynamicVectorRef(vctDynamicVectorBase<__vectorOwnerType, _elementType> & otherVector,
                         size_type startPosition, size_type length)
     {
@@ -172,7 +173,7 @@ public:
       \note the size and memory stride of this reference will be equal to the
       size and memory stride of the input vector.
     */
-    template<unsigned int __size, int __stride, class __dataPtrType>
+    template <size_type __size, stride_type __stride, class __dataPtrType>
     void SetRef(vctFixedSizeVectorBase<__size, __stride, _elementType, __dataPtrType> & otherVector,
                 size_type startPosition = 0)
     {
@@ -186,7 +187,7 @@ public:
       \note This method verifies that the size of this vector does not exceed the
       size of the input vector (otherwise cmnThrow is used to throw std::out_of_range).
     */
-    template<unsigned int __size, int __stride, class __dataPtrType>
+    template <size_type __size, stride_type __stride, class __dataPtrType>
     void SetRef(vctFixedSizeVectorBase<__size, __stride, _elementType, __dataPtrType> & otherVector,
                 size_type startPosition, size_type length) throw(std::out_of_range)
     {
@@ -200,7 +201,7 @@ public:
       \note the size and memory stride of this reference will be equal to the
       size memory stride of the input vector.
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     void SetRef(vctDynamicVectorBase<__vectorOwnerType, _elementType> & otherVector)
     {
         SetRef(otherVector.size(), otherVector.Pointer(), otherVector.stride());
@@ -212,7 +213,7 @@ public:
       \note This method verifies that the size of this vector does not exceed the
       size of the input vector (otherwise cmnThrow is used to throw std::out_of_range).
     */
-    template<class __vectorOwnerType>
+    template <class __vectorOwnerType>
     void SetRef(vctDynamicVectorBase<__vectorOwnerType, _elementType> & otherVector,
                 size_type startPosition, size_type length) throw(std::out_of_range)
     {
@@ -236,17 +237,17 @@ public:
     /* Equivalent to Assign.  Please note that this operator performs a data
       copy, not an object copy as understood with a C++ copy constructor.  If
       the size of operands don't match an exception will be thrown. */
-	inline ThisType & operator=(const ThisType & other) {
+	inline ThisType & operator = (const ThisType & other) {
 		return reinterpret_cast<ThisType &>(this->Assign(other));
 	}
 #endif // _cisstVectorPython_EXPORTS
 
-	inline ThisType & operator=(const vctDynamicConstVectorRef<value_type> & other) {
+	inline ThisType & operator = (const vctDynamicConstVectorRef<value_type> & other) {
 		return reinterpret_cast<ThisType &>(this->Assign(other));
 	}
 
-    template<class __vectorOwnerType, typename __elementType>
-	inline ThisType & operator=(const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
+    template <class __vectorOwnerType, typename __elementType>
+	inline ThisType & operator = (const vctDynamicConstVectorBase<__vectorOwnerType, __elementType> & other) {
 		return reinterpret_cast<ThisType &>(this->Assign(other));
 	}
     //@}
@@ -255,6 +256,26 @@ public:
     inline ThisType & operator = (const value_type & value) {
         this->SetAll(value);
         return *this;
+    }
+
+    /*! Binary deserialization.  This method can not resize the
+      existing block of memory and will throw an exception is the
+      sizes don't match. */
+    void DeSerializeRaw(std::istream & inputStream) throw(std::runtime_error)
+    {
+        // get and set size
+        size_type mySize;
+        cmnDeSerializeRaw(inputStream, mySize);
+
+        if (mySize != this->size()) {
+            cmnThrow(std::runtime_error("vctDynamicVectorRef::DeSerializeRaw: Sizes of vectors don't match"));
+        }
+        
+        // get data
+        size_type index;
+        for (index = 0; index < mySize; ++index) {
+            cmnDeSerializeRaw(inputStream, this->Element(index));
+        }
     }
 
 };

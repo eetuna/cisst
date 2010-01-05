@@ -36,15 +36,18 @@ CMN_IMPLEMENT_SERVICES(mtsTaskInterface::ThreadResources)
 
 mtsTaskInterface::mtsTaskInterface(const std::string & name, mtsTask * task):
     BaseType(name, task),
-    CommandsQueuedVoid("CommandQueuedVoid"),
-    CommandsQueuedWrite("CommandQueuedWrite"),
+    CommandsQueuedVoid("CommandsQueuedVoid"),
+    CommandsQueuedWrite("CommandsQueuedWrite"),
     Mutex()
-{}
+{
+    CommandsQueuedVoid.SetOwner(*this);
+    CommandsQueuedWrite.SetOwner(*this);
+}
 
 
 
 mtsTaskInterface::~mtsTaskInterface() {
-	CMN_LOG_CLASS(3) << "Class mtsTaskInterface: Class destructor" << std::endl;
+	CMN_LOG_CLASS_INIT_VERBOSE << "Class mtsTaskInterface: Class destructor" << std::endl;
     // ADV: Need to add all cleanup, i.e. make sure all mailboxes are
     // properly deleted.
 }
@@ -57,7 +60,7 @@ void mtsTaskInterface::Cleanup() {
         delete op->second;
     }
     QueuedCommands.erase(QueuedCommands.begin(), QueuedCommands.end());
-	CMN_LOG_CLASS(3) << "Done base class Cleanup " << Name << std::endl;
+	CMN_LOG_CLASS_INIT_VERBOSE << "Done base class Cleanup " << Name << std::endl;
 }
 
 
@@ -82,65 +85,65 @@ unsigned int mtsTaskInterface::ProcessMailBoxes(void)
 }
 
 
-mtsCommandVoidBase * mtsTaskInterface::GetCommandVoid(const std::string & commandName) const {
-    const osaThreadId threadId = osaGetCurrentThreadId();
+mtsCommandVoidBase * mtsTaskInterface::GetCommandVoid(const std::string & commandName,
+                                                      unsigned int userId) const {
     ThreadResourcesMapType::const_iterator iterator = ThreadResourcesMap.begin();
     bool found = false;
     while (!found && iterator != ThreadResourcesMap.end()) {
-        if ((iterator->first).Equal(threadId)) {
+        if (iterator->first == userId) {
             found = true;
         } else {
             iterator++;
         }
     }
     if (found) {
-        CMN_LOG_CLASS(3) << this->GetName()
-                         << " found thread resource to look for void command \""
-                         << commandName << "\""
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << this->GetName()
+                                   << " found resource to look for void command \""
+                                   << commandName << "\" for user [" << userId << "]"
+                                   << std::endl;
         return iterator->second->GetCommandVoid(commandName);
     } else {
-        CMN_LOG_CLASS(1) << this->GetName()
-                         << " can not provide void command \""
-                         << commandName
-                         << "\" to thread ["
-                         << threadId << "] as this thread did not use AllocateResourcesForCurrentThread first."
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << this->GetName()
+                                 << " can not provide void command \""
+                                 << commandName
+                                 << "\" to user ["
+                                 << userId << "] as this user did not use AllocateResources first."
+                                 << std::endl;
         return 0;
     }
 }
 
 
-mtsCommandWriteBase * mtsTaskInterface::GetCommandWrite(const std::string & commandName) const {
-    const osaThreadId threadId = osaGetCurrentThreadId();
+mtsCommandWriteBase * mtsTaskInterface::GetCommandWrite(const std::string & commandName,
+                                                        unsigned int userId) const {
     ThreadResourcesMapType::const_iterator iterator = ThreadResourcesMap.begin();
     bool found = false;
     while (!found && iterator != ThreadResourcesMap.end()) {
-        if ((iterator->first).Equal(threadId)) {
+        if (iterator->first == userId) {
             found = true;
         } else {
             iterator++;
         }
     }
     if (found) {
-        CMN_LOG_CLASS(3) << this->GetName()
-                         << " found thread resource to look for write command \""
-                         << commandName << "\""
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << this->GetName()
+                                   << " found user resource to look for write command \""
+                                   << commandName << "\""
+                                   << std::endl;
         return iterator->second->GetCommandWrite(commandName);
     } else {
-        CMN_LOG_CLASS(1) << "Task " << this->GetName()
-                         << " can not provide write command \""
-                         << commandName
-                         << "\" to thread ["
-                         << threadId << "] as this thread did not use AllocateResourcesForCurrentThread first."
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Task " << this->GetName()
+                                 << " can not provide write command \""
+                                 << commandName
+                                 << "\" to user ["
+                                 << userId << "] as this user did not use AllocateResources first."
+                                 << std::endl;
         return 0;
     }
 }
 
 
-
+#if 0
 unsigned int mtsTaskInterface::AllocateResourcesForCurrentThread(void)
 {
     // keep track of threads using this and create a thread resource
@@ -158,24 +161,49 @@ unsigned int mtsTaskInterface::AllocateResourcesForCurrentThread(void)
         }
     }
     if (!found) {
-        CMN_LOG_CLASS(3) << "AllocateResourcesForCurrentThread: found new thread Id [" << consumerId << "]" << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResourcesForCurrentThread: found new thread Id [" << consumerId << "]" << std::endl;
         ThreadIdCounters.resize(ThreadIdCounters.size() + 1,
                                 ThreadIdCounterPairType(consumerId, 1));
         std::stringstream mailBoxName;
         mailBoxName << this->GetName() << ThreadIdCounters.size();
         ThreadResources * newThreadResources = new ThreadResources(mailBoxName.str(),
                                                                    DEFAULT_ARG_BUFFER_LEN);
-        CMN_LOG_CLASS(3) << "AllocateResourcesForCurrentThread: created mailbox " << newThreadResources->GetMailBox()->GetName()
-                         << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResourcesForCurrentThread: created mailbox " << newThreadResources->GetMailBox()->GetName()
+                                   << std::endl;
         newThreadResources->CloneCommands(*this);
         ThreadResourcesMap.resize(ThreadResourcesMap.size() + 1,
                                   ThreadResourcesPairType(consumerId, newThreadResources));
         Mutex.Unlock();
         return 1;
     } else {
-        CMN_LOG_CLASS(3) << "AllocateResourcesForCurrentThread: already registered thread Id (" << consumerId << ")" << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResourcesForCurrentThread: already registered thread Id (" << consumerId << ")" << std::endl;
         Mutex.Unlock();
         return (iterator->second)++;
     }
 }
+#endif
 
+
+unsigned int mtsTaskInterface::AllocateResources(const std::string & userName)
+{
+    // keep track of threads using this and create a thread resource
+    // per "user thread", i.e. create/clone of mailboxes for queued
+    // commands.
+    Mutex.Lock();
+    this->UserCounter++;
+    unsigned int userId = this->UserCounter;
+    CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResources: interface \"" << this->Name 
+                               << "\" created new Id [" << userId
+                               << "] for user \"" << userName << "\"" << std::endl;
+    std::stringstream mailBoxName;
+    mailBoxName << this->GetName() << "-" << userId << "-" << userName;
+    ThreadResources * newThreadResources = new ThreadResources(mailBoxName.str(),
+                                                               DEFAULT_ARG_BUFFER_LEN);
+    CMN_LOG_CLASS_INIT_VERBOSE << "AllocateResources: created mailbox " << newThreadResources->GetMailBox()->GetName()
+                               << std::endl;
+    newThreadResources->CloneCommands(*this);
+    ThreadResourcesMap.resize(ThreadResourcesMap.size() + 1,
+                              ThreadResourcesPairType(userId, newThreadResources));
+    Mutex.Unlock();
+    return userId;
+}

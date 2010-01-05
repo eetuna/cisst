@@ -62,8 +62,17 @@ from ireEditorNotebook import *
 from ireListCtrlPanel import *
 from ireLogCtrl import *
 from ireWorkspace import *
+from ireTaskTree import *
 from ireInputBox import *
 import ireImages
+
+ireScope = False
+try:
+   from wxOscilloscope import *
+   ireScope = True
+except ImportError,e:
+   print 'Could not import wxOscilloscope:', e
+
 
 # Now, see if the IRE is embedded in a C++ application.
 # This can be determined by checking whether the ireLogger
@@ -108,12 +117,14 @@ class ireMain(wx.Frame):
     ID_TRUNCATEHISTORY = wx.NewId()
     ID_LOADHISTORY = wx.NewId()
     ID_CLEARHISTORY = wx.NewId()
+    ID_TASKTREE = wx.NewId()
     ID_TESTINPUTBOX = wx.NewId()
+    ID_OSCILLOSCOPE = wx.NewId()
     ID_LOAD_CISSTCOMMON = wx.NewId()
     ID_LOAD_CISSTVECTOR = wx.NewId()
     ID_LOAD_CISSTNUMERICAL = wx.NewId()
-    ID_LOAD_CISSTDEVICEINTERFACE = wx.NewId()
-    ID_LOAD_CISSTREALTIME = wx.NewId()
+    ID_LOAD_CISSTMULTITASK = wx.NewId()
+    ID_LOAD_CISSTPARAMETERTYPES = wx.NewId()
 
     #------------------------------------------------------
     #IRE CONSTRUCTOR
@@ -186,14 +197,17 @@ class ireMain(wx.Frame):
         menu.Append(self.ID_LOADHISTORY, "Load &command history... \tCtrl+6", "Load archived commands")
         menu.Append(self.ID_CLEARHISTORY, "C&lear command history... \tCtrl+7", "Clear your command history")
         menu.AppendSeparator()
-        menu.Append(self.ID_TESTINPUTBOX, "&Test input box", "Create test input box")
+        menu.Append(self.ID_TASKTREE, "&Task Manager", "Show Task Manager browser")
+        menu.Append(self.ID_TESTINPUTBOX, "Test &input box", "Create test input box")
+        if ireScope:
+            menu.Append(self.ID_OSCILLOSCOPE, "&Oscilloscope", "Show oscilloscope")
         
         menu = self.ImportMenu = wx.Menu()
         menu.Append(self.ID_LOAD_CISSTCOMMON, "Import cisst&Common", "Import cisstCommon")
         menu.Append(self.ID_LOAD_CISSTVECTOR, "Import cisst&Vector", "Import cisstVector")
         menu.Append(self.ID_LOAD_CISSTNUMERICAL, "Import cisst&Numerical", "Import cisstNumerical")
-        menu.Append(self.ID_LOAD_CISSTDEVICEINTERFACE, "Import cisst&DeviceInterface", "Import cisstDeviceInterface")
-        menu.Append(self.ID_LOAD_CISSTREALTIME, "Import cisst&RealTime", "Import cisstRealTime")
+        menu.Append(self.ID_LOAD_CISSTMULTITASK, "Import cisst&MultiTask", "Import cisstMultiTask")
+        menu.Append(self.ID_LOAD_CISSTPARAMETERTYPES, "Import cisst&ParameterTypes", "Import cisstParameterTypes")
 
         menu = self.HelpMenu = wx.Menu()
         menu.Append(wx.ID_ABOUT, "&About...", "About this program")
@@ -234,12 +248,14 @@ class ireMain(wx.Frame):
         wx.EVT_MENU(self, self.ID_TRUNCATEHISTORY, self.OnTruncateHistory)
         wx.EVT_MENU(self, self.ID_LOADHISTORY, self.OnLoadHistory)
         wx.EVT_MENU(self, self.ID_CLEARHISTORY, self.OnClearHistory)
+        wx.EVT_MENU(self, self.ID_TASKTREE, self.OnTaskTree)
         wx.EVT_MENU(self, self.ID_TESTINPUTBOX, self.OnTestInputBox)
+        wx.EVT_MENU(self, self.ID_OSCILLOSCOPE, self.OnOscilloscope)
         wx.EVT_MENU(self, self.ID_LOAD_CISSTCOMMON,  self.OnImportCisstCommon)
         wx.EVT_MENU(self, self.ID_LOAD_CISSTVECTOR,  self.OnImportCisstVector)
         wx.EVT_MENU(self, self.ID_LOAD_CISSTNUMERICAL,  self.OnImportCisstNumerical)
-        wx.EVT_MENU(self, self.ID_LOAD_CISSTDEVICEINTERFACE,  self.OnImportCisstDeviceInterface)
-        wx.EVT_MENU(self, self.ID_LOAD_CISSTREALTIME,  self.OnImportCisstRealTime)
+        wx.EVT_MENU(self, self.ID_LOAD_CISSTMULTITASK,  self.OnImportCisstMultiTask)
+        wx.EVT_MENU(self, self.ID_LOAD_CISSTPARAMETERTYPES,  self.OnImportCisstParameterTypes)
 
         wx.EVT_UPDATE_UI(self, wx.ID_NEW, self.OnUpdateMenu)
         wx.EVT_UPDATE_UI(self, wx.ID_OPEN, self.OnUpdateMenu)
@@ -256,11 +272,12 @@ class ireMain(wx.Frame):
         wx.EVT_UPDATE_UI(self, wx.ID_SELECTALL, self.OnUpdateMenu)
         wx.EVT_UPDATE_UI(self, self.ID_RUNINSHELL, self.OnUpdateMenu)
         wx.EVT_UPDATE_UI(self, self.ID_RUNINNEWPROCESS, self.OnUpdateMenu)
+        wx.EVT_UPDATE_UI(self, self.ID_TASKTREE, self.OnUpdateMenu)
         wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTCOMMON, self.OnUpdateMenu)
         wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTVECTOR, self.OnUpdateMenu)
         wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTNUMERICAL, self.OnUpdateMenu)
-        wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTDEVICEINTERFACE, self.OnUpdateMenu)
-        wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTREALTIME, self.OnUpdateMenu)
+        wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTMULTITASK, self.OnUpdateMenu)
+        wx.EVT_UPDATE_UI(self, self.ID_LOAD_CISSTPARAMETERTYPES, self.OnUpdateMenu)
         #wx.EVT_UPDATE_UI(self, self.ID_TRUNCATEHISTORY, self.OnTruncateHistory)
         
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
@@ -445,17 +462,17 @@ class ireMain(wx.Frame):
         print "importing cisstNumerical"
 		self.Shell.push("from cisstNumericalPython import *")
 
-    def OnImportCisstDeviceInterface(self, event):
-        self.ImportCisstDeviceInterface()
-    def ImportCisstDeviceInterface(self):
-        print "importing cisstDeviceInterface"
-		self.Shell.push("from cisstDeviceInterfacePython import *")
+    def OnImportCisstMultiTask(self, event):
+        self.ImportCisstMultiTask()
+    def ImportCisstMultiTask(self):
+        print "importing cisstMultiTask"
+		self.Shell.push("from cisstMultiTaskPython import *")
 
-    def OnImportCisstRealTime(self, event):
-        self.ImportCisstRealTime()
-    def ImportCisstRealTime(self):
-        print "importing cisstRealTime"
-		self.Shell.push("from cisstRealTimePython import *")
+    def OnImportCisstParameterTypes(self, event):
+        self.ImportCisstParameterTypes()
+    def ImportCisstParameterTypes(self):
+        print "importing cisstParameterTypes"
+		self.Shell.push("from cisstParameterTypesPython import *")
 
 	#------------------------------------------------------
 	# Diary Functions
@@ -830,6 +847,30 @@ class ireMain(wx.Frame):
         frame = ireInputBox(None, -1, "Test Size/Position")
         frame.Show(True)
         
+    def OnTaskTree(self, event):        
+        taskManager = self.ObjectRegister.FindObject("TaskManager")
+        if taskManager:
+            frame = ireTaskTree(None, -1, "Task Manager", taskManager)
+            frame.Show(True)
+        else:
+            text = "Task Manager not found"
+            msgdlg = wx.MessageDialog(self, text, "Task Manager", wx.OK | wx.ICON_ERROR)
+            msgdlg.ShowModal()
+            msgdlg.Destroy()
+        
+    def OnOscilloscope(self, event):        
+        import gettext
+        gettext.install("irepy")
+        taskManager = self.ObjectRegister.FindObject("TaskManager")
+        if taskManager:
+            self.scopeFrame = COscilloscope(self, taskManager)
+            self.scopeFrame.Show()
+        else:
+            text = "Task Manager not found"
+            msgdlg = wx.MessageDialog(self, text, "Oscilloscope", wx.OK | wx.ICON_ERROR)
+            msgdlg.ShowModal()
+            msgdlg.Destroy()
+        
     #-------------------------------------------------
 	# Methods for running scripts in the main or 
 	# separate threads.
@@ -863,7 +904,7 @@ class ireMain(wx.Frame):
 'Developed by the Engineering Research Center for'.center(twidth) + '\n' + \
 'Computer-Integrated Surgical Systems & Technology (CISST)'.center(twidth) + '\n' + \
 'http://cisst.org'.center(twidth) + '\n\n' + \
-'Copyright (c) 2004-2006, The Johns Hopkins University'.center(twidth) + '\n' + \
+'Copyright (c) 2004-2009, The Johns Hopkins University'.center(twidth) + '\n' + \
 'All Rights Reserved.\n\n'.center(twidth) + '\n\n' + \
 'Based on the Py module of wxPython:\n' + \
 '  Shell Revision: %s\n' % self.Shell.revision + \
@@ -915,16 +956,18 @@ class ireMain(wx.Frame):
             # (otherwise, tries to start a new copy of the entire program).
             elif id == self.ID_RUNINNEWPROCESS:
                 event.Enable(hasattr(self.EditorNotebook, 'bufferSaveAs') and self.EditorNotebook.hasBuffer() and not ireEmbedded)
+            elif id == self.ID_TASKTREE:
+                event.Enable(ireEmbedded)  # Really, should check for existence of TaskManager
             elif id == self.ID_LOAD_CISSTCOMMON:
                 event.Enable(ModuleAvailable('cisstCommonPython'))
             elif id == self.ID_LOAD_CISSTVECTOR:
                 event.Enable(ModuleAvailable('cisstVectorPython'))
             elif id == self.ID_LOAD_CISSTNUMERICAL:
                 event.Enable(ModuleAvailable('cisstNumericalPython'))
-            elif id == self.ID_LOAD_CISSTDEVICEINTERFACE:
-                event.Enable(ModuleAvailable('cisstDeviceInterfacePython'))
-            elif id == self.ID_LOAD_CISSTREALTIME:
-                event.Enable(ModuleAvailable('cisstRealTimePython'))
+            elif id == self.ID_LOAD_CISSTMULTITASK:
+                event.Enable(ModuleAvailable('cisstMultiTaskPython'))
+            elif id == self.ID_LOAD_CISSTPARAMETERTYPES:
+                event.Enable(ModuleAvailable('cisstParameterTypesPython'))
             else:
                 event.Enable(False)
         except AttributeError:

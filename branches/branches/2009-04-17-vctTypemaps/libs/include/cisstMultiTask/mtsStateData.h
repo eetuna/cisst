@@ -118,7 +118,7 @@ public:
         Id = Table->NewElement(dataName, &Data);
         Accessor = dynamic_cast<const AccessorType *>(table.GetAccessor(dataName));
         if (!Accessor)
-            CMN_LOG(1) << "mtsStateData: could not get data accessor for " << dataName << std::endl;
+            CMN_LOG_INIT_ERROR << "mtsStateData: could not get data accessor for " << dataName << std::endl;
     }
 
     /*! Adds command objects to the specified device interface. Note
@@ -137,30 +137,13 @@ public:
 #endif
     }
 
-    void AddReadCommandToTask(mtsTask * task,
-                              const std::string & interfaceName,
-                              const std::string & commandName) {
-        task->AddCommandRead(&ThisType::GetLatest, this, interfaceName, commandName, this->Data);
-        task->AddCommandQualifiedRead(&ThisType::Get, this, interfaceName, commandName, mtsStateIndex(), this->Data);
-#ifdef CISST_GETVECTOR
-        // PK: fix the following
-        task->AddCommandQualifiedRead(&ThisType::GetHistory, this, interfaceName, commandName+"History", mtsStateIndex(), mtsVector<value_type>());
-#endif
-    }
-
     /*! Add write command to the specified task interface. Note that
       this must be a task so that the write is thread-safe. */
     void AddWriteCommandToInterface(mtsTaskInterface * taskInterface,
                                     const std::string & commandName) {
         taskInterface->AddCommandWrite(&ThisType::Set, this, commandName);
     }
-    
-    void AddWriteCommandToTask(mtsTask * task,
-                               const std::string & interfaceName,
-                               const std::string & commandName) {
-        task->AddCommandWrite(&ThisType::Set, this, interfaceName, commandName, this->Data);
-    }
-    
+
 };
 
 

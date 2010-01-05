@@ -22,7 +22,8 @@
 # - DEPENDENCIES is a list of dependencies, for cisstVector, set it to cisstCommon
 # - SOURCE_FILES is a list of files, without any path (absolute or relative)
 # - HEADER_FILES is a list of files, without any path (absolute or relative)
-# - HEADERS is a list of header files with a full path (e.g. configured header)
+# - ADDITIONAL_SOURCE_FILES is a list of source files with a full path (e.g. generated source)
+# - ADDITIONAL_HEADER_FILES is a list of header files with a full path (e.g. configured/generated header)
 #
 # Invoke this macro from within a library's CMakeLists.txt to add that library
 # to a larger project.  The name of the project is given as a macro argument.
@@ -76,14 +77,18 @@ IF(BUILD_LIBS_${LIBRARY} OR BUILD_${LIBRARY})
   # Add the main header to the library, for IDEs
   SET(HEADERS ${HEADERS} ${LIBRARY_MAIN_HEADER})
 
+  # Use the additional include path
+  INCLUDE_DIRECTORIES(${CISST_ADDITIONAL_INCLUDE_DIRECTORIES})
+
   # Add the library
   ADD_LIBRARY(${LIBRARY}
               ${IS_SHARED}
               ${SOURCES}
+              ${ADDITIONAL_SOURCE_FILES}
               ${HEADERS}
+              ${ADDITIONAL_HEADER_FILES}
               )
   INSTALL_TARGETS(/lib ${LIBRARY})
-
 
   # Add dependencies for linking, also check BUILD_xxx for dependencies
   IF(DEPENDENCIES)
@@ -116,7 +121,6 @@ ENDMACRO(CISST_ADD_LIBRARY_TO_PROJECT)
 
 
 
-
 # Macro used to compare required libraries for a given target with
 # libraries actually compiled.  This macro adds the required link
 # options.
@@ -133,15 +137,37 @@ MACRO(CISST_REQUIRES WHO_REQUIRES REQUIRED_CISST_LIBRARIES)
        MESSAGE("${WHO_REQUIRES} requires ${required} which doesn't exist or hasn't been compiled")
      ENDIF("${CISST_LIBRARIES}"  MATCHES ${required})
    ENDFOREACH(required)
+
    # Second, create a list of libraries in the right order
    FOREACH(existing ${CISST_LIBRARIES})
      IF("${REQUIRED_CISST_LIBRARIES}" MATCHES ${existing})
        SET(CISST_LIBRARIES_TO_USE ${CISST_LIBRARIES_TO_USE} ${existing})
      ENDIF("${REQUIRED_CISST_LIBRARIES}" MATCHES ${existing})
    ENDFOREACH(existing)
-   # Link with the required libraries
+
+   # Include extra packages as needed
+   FOREACH(package ${CISST_ADDITIONAL_PACKAGES})
+     FIND_PACKAGE(${package} REQUIRED)
+   ENDFOREACH(package)
+
+   # Include extra cmake files as needed
+   FOREACH(fileCMake ${CISST_ADDITIONAL_CMAKE_FILES})
+     INCLUDE(${fileCMake})
+   ENDFOREACH(fileCMake)
+
+   # Finally, link with the required libraries
    TARGET_LINK_LIBRARIES(${WHO_REQUIRES} ${CISST_LIBRARIES_TO_USE} ${CISST_ADDITIONAL_LIBRARIES})
+   
+   # Optimized/Debug libraries
+   FOREACH(lib ${CISST_ADDITIONAL_LIBRARIES_OPTIMIZED})
+     TARGET_LINK_LIBRARIES(${WHO_REQUIRES} optimized ${lib})
+   ENDFOREACH(lib)
+   FOREACH(lib ${CISST_ADDITIONAL_LIBRARIES_DEBUG})
+     TARGET_LINK_LIBRARIES(${WHO_REQUIRES} debug ${lib})
+   ENDFOREACH(lib)
+
 ENDMACRO(CISST_REQUIRES)
+
 
 
 # Macro to add all the available tests

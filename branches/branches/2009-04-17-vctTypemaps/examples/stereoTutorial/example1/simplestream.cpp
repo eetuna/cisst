@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <iostream>
 #include <cisstStereoVision.h>
+#include <cisstCommon/cmnGetChar.h>
 
 using namespace std;
 
@@ -28,14 +29,13 @@ using namespace std;
 int main()
 {
     // Creating SVL objects
-    svlStreamManager stream(4); // number of threads per stream
-    svlStreamEntity *branch;
+    svlStreamManager stream(2); // number of threads per stream
 
-    svlDummySource video_source(svlTypeImageRGB); // try svlTypeImageRGBStereo for stereo image source
-    svlImageResizer resizer;
-    svlImageWindow window;
-    svlUnsharpMask unsharpmask;
-    svlImageWindow window2;
+    svlFilterSourceDummy video_source(svlTypeImageRGB); // try svlTypeImageRGBStereo for stereo image source
+    svlFilterImageResizer resizer;
+    svlFilterImageWindow window;
+    svlFilterUnsharpMask unsharpmask;
+    svlFilterImageWindow window2;
 
     // Setup dummy video source
     video_source.SetDimensions(320, 240);
@@ -49,7 +49,7 @@ int main()
     resizer.EnableInterpolation();
 
     // Setup window
-    window.SetTitleText("Uniform noise");
+    window.SetTitleText("Resizing");
 
     // Setup unsharp masking
     // (Tip: enable OpenCV in CMake for higher performance)
@@ -64,24 +64,23 @@ int main()
         stream.Trunk().Append(&resizer)      != SVL_OK ||
         stream.Trunk().Append(&window)       != SVL_OK) goto labError;
 
-    // Adding a branching to the stream right after the source filter
-    branch = stream.CreateBranchAfterFilter(&video_source);
+    // Adding a branch to the stream right after the source filter
+    stream.CreateBranchAfterFilter(&video_source, "mybranch", 2);
     // Chain filters to branch
-    if (branch->Append(&unsharpmask) != SVL_OK ||
-        branch->Append(&window2)     != SVL_OK) goto labError;
+    if (stream.Branch("mybranch").Append(&unsharpmask) != SVL_OK ||
+        stream.Branch("mybranch").Append(&window2)     != SVL_OK) goto labError;
 
     cout << "Streaming is just about to start." << endl;
-    cout << "Press any key and ENTER to stop stream..." << endl;
+    cout << "Press any key to stop stream..." << endl;
 
     // Initialize and start stream
     if (stream.Start() != SVL_OK) goto labError;
 
     // Wait for user input
-    char ch; cin.get(ch); cin.get(ch);
-    cout << endl;
+    cmnGetChar();
 
     // Safely stopping and deconstructing stream before de-allocation
-    stream.EmptyFilterList();
+    stream.RemoveAll();
 
     cout << "Success... Quitting." << endl;
     return 1;

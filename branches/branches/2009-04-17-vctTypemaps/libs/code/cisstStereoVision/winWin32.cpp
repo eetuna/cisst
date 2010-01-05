@@ -55,8 +55,10 @@ int CWin32Window::Create(unsigned int width, unsigned int height, bool show,
 {
     Destroy();
 
-    char classnametext[100];
-    sprintf(classnametext, "svlW32WindowClass#%d", ID);
+    std::string classnamestr;
+    std::ostringstream classnametext;
+    classnametext << "svlW32WindowClass#" << ID;
+    classnamestr = classnametext.str();
 
     std::ostringstream ostring;
     if (title.length() > 0) {
@@ -64,10 +66,10 @@ int CWin32Window::Create(unsigned int width, unsigned int height, bool show,
         else ostring << title;
     }
     else {
-        if (titleid >= 0) ostring << title << "svlImageWindow #" << titleid;
-        else ostring << "svlImageWindow";
+        if (titleid >= 0) ostring << title << "svlFilterImageWindow #" << titleid;
+        else ostring << "svlFilterImageWindow";
     }
-    std::string titletext(ostring.str());
+    Title = ostring.str();
 
     // Registering window class
     WNDCLASSEX wcex;
@@ -81,7 +83,7 @@ int CWin32Window::Create(unsigned int width, unsigned int height, bool show,
     wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground	= reinterpret_cast<HBRUSH>(5 + 1);
     wcex.lpszMenuName	= NULL;     // no menu
-    wcex.lpszClassName	= reinterpret_cast<LPCTSTR>(classnametext);
+    wcex.lpszClassName	= classnamestr.c_str();
     wcex.hIconSm		= NULL;     // default icon
     RegisterClassEx(&wcex);
 
@@ -106,8 +108,8 @@ int CWin32Window::Create(unsigned int width, unsigned int height, bool show,
 
     // Perform application initialization:
     if (!borderless) {
-        hWnd = CreateWindow(classnametext,
-                            titletext.c_str(),
+        hWnd = CreateWindow(classnametext.str().c_str(),
+                            Title.c_str(),
                             WS_OVERLAPPED,              // style: non-resizable, no system menu
                             blposx,                     // window position [x]
                             blposy,                     // window position [y]
@@ -119,8 +121,8 @@ int CWin32Window::Create(unsigned int width, unsigned int height, bool show,
                             NULL);
     }
     else {
-        hWnd = CreateWindow(classnametext,
-                            titletext.c_str(),
+        hWnd = CreateWindow(classnametext.str().c_str(),
+                            Title.c_str(),
                             WS_POPUP,                   // style: non-resizable, no system menu, no border
                             blposx,                     // window position [x]
                             blposy,                     // window position [y]
@@ -172,6 +174,16 @@ int CWin32Window::Show(bool show)
     return -1;
 }
 
+void CWin32Window::GetTitle(std::string & title)
+{
+    title = Title;
+}
+
+void CWin32Window::SetTitle(const std::string title)
+{
+    SetWindowText(hWnd, title.c_str());
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	switch (message) {
@@ -195,7 +207,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 /*** CWin32WindowManager class *********/
 /***************************************/
 
-CWin32WindowManager::CWin32WindowManager(unsigned int numofwins) : svlWindowManagerBase(numofwins)
+CWin32WindowManager::CWin32WindowManager(unsigned int numofwins) : CWindowManagerBase(numofwins)
 {
     Windows = 0;
     WindowHandles = 0;
@@ -204,7 +216,6 @@ CWin32WindowManager::CWin32WindowManager(unsigned int numofwins) : svlWindowMana
     ImageBuffers = 0;
     ImageBufferSizes = 0;
     BitmapInfos = 0;
-    csImage = 0;
     LButtonDown = false;
     RButtonDown = false;
 }
@@ -216,9 +227,6 @@ CWin32WindowManager::~CWin32WindowManager()
 
 int CWin32WindowManager::DoModal(bool show, bool fullscreen)
 {
-    // calling default implementation
-    svlWindowManagerBase::DoModal(show, fullscreen);
-
     Destroy();
 
     unsigned int i, posx = 0;
@@ -253,9 +261,6 @@ int CWin32WindowManager::DoModal(bool show, bool fullscreen)
 
     // getting window handles
     for (i = 0; i < NumOfWins; i ++) WindowHandles[i] = Windows[i]->GetHandle();
-
-    // creating critical sections
-    csImage = new osaCriticalSection[NumOfWins];
 
     // allocating image buffers
     LineSize = new unsigned int[NumOfWins];
@@ -320,14 +325,21 @@ void CWin32WindowManager::Show(bool show, int winid)
     }
 }
 
-void CWin32WindowManager::DrawImageThreadSafe(unsigned char* buffer, unsigned int buffersize, unsigned int winid)
+void CWin32WindowManager::LockBuffers()
+{
+    csImage.Enter();
+}
+
+void CWin32WindowManager::UnlockBuffers()
+{
+    csImage.Leave();
+}
+
+void CWin32WindowManager::SetImageBuffer(unsigned char *buffer, unsigned int buffersize, unsigned int winid)
 {
     if (Windows && winid < static_cast<int>(NumOfWins) &&
         Padding != 0 && LineSize != 0 && ImageBufferSizes != 0 && ImageBuffers != 0 &&
         ImageBufferSizes[winid] >= buffersize) {
-
-        // Critical section: starts
-        csImage[winid].Enter();
 
         if (Padding[winid] == 0) {
             memcpy(ImageBuffers[winid], buffer, buffersize);
@@ -345,17 +357,39 @@ void CWin32WindowManager::DrawImageThreadSafe(unsigned char* buffer, unsigned in
             }
         }
 
-        csImage[winid].Leave();
-        // Critical section: ends
+        // Display timestamp if requested
+        if (Timestamp > 0.0) {
+            std::string title;
+            Windows[winid]->GetTitle(title);
+            std::ostringstream timestampstring;
+            timestampstring << " (timestamp=" << std::setprecision(3) << Timestamp << ")";
+            title += timestampstring.str();
+            Windows[winid]->SetTitle(title);
+        }
+        else {
+            if (Timestamp < 0.0) {
+                // Restore original timestamp
+                std::string title;
+                Windows[winid]->GetTitle(title);
+                Windows[winid]->SetTitle(title);
+            }
+        }
+    }
+}
 
-        // force update
+void CWin32WindowManager::DrawImages()
+{
+    if (Windows && Padding != 0 && LineSize != 0 && ImageBufferSizes != 0 && ImageBuffers != 0) {
         RECT rect;
-        rect.left = 0;
-        rect.right = Width[winid];
-        rect.top = 0;
-        rect.bottom = Height[winid];
-        InvalidateRect(WindowHandles[winid], &rect, FALSE);
-        UpdateWindow(WindowHandles[winid]);
+        for (unsigned int i = 0; i < NumOfWins; i ++) {
+            // force update
+            rect.left = 0;
+            rect.right = Width[i];
+            rect.top = 0;
+            rect.bottom = Height[i];
+            InvalidateRect(WindowHandles[i], &rect, FALSE);
+            UpdateWindow(WindowHandles[i]);
+        }
     }
 }
 
@@ -394,10 +428,6 @@ void CWin32WindowManager::Destroy()
         delete [] BitmapInfos;
         BitmapInfos = 0;
     }
-    if (csImage) {
-        delete [] csImage;
-        csImage = 0;
-    }
 }
 
 void CWin32WindowManager::DestroyThreadSafe()
@@ -423,18 +453,16 @@ int CWin32WindowManager::FilterMessage(unsigned int winid, MSG* msg)
 		    hdc = BeginPaint(msg->hwnd, &ps);
             if (ImageBuffers[winid]) {
                 // Critical section: starts
-                csImage[winid].Enter();
-
-                SetDIBitsToDevice(hdc,
-                                  0, 0,
-                                  Width[winid], Height[winid],
-                                  0, 0,
-                                  0, Height[winid],
-                                  ImageBuffers[winid],
-                                  &(BitmapInfos[winid]),
-                                  DIB_RGB_COLORS);
-
-                csImage[winid].Leave();
+                csImage.Enter();
+                    SetDIBitsToDevice(hdc,
+                                      0, 0,
+                                      Width[winid], Height[winid],
+                                      0, 0,
+                                      0, Height[winid],
+                                      ImageBuffers[winid],
+                                      &(BitmapInfos[winid]),
+                                      DIB_RGB_COLORS);
+                csImage.Leave();
                 // Critical section: ends
             }
 		    EndPaint(msg->hwnd, &ps);

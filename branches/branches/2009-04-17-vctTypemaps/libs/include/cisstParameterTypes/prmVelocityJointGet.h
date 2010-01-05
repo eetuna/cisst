@@ -27,51 +27,52 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmVelocityJointGet_h
 #define _prmVelocityJointGet_h
 
-//basic includes
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstCommon/cmnClassRegisterMacros.h>
-#include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstParameterTypes/prmTypes.h>
-#include <cisstParameterTypes/prmMacros.h>
+// basic includes
+#include <cisstVector/vctDynamicVectorTypes.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
 
 /*! motion command arguments for joint angle based motion
 */
-class CISST_EXPORT prmVelocityJointGet: public cmnGenericObject
+class CISST_EXPORT prmVelocityJointGet: public mtsGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
+    typedef mtsGenericObject BaseType;
     typedef prmVelocityJointGet ThisType;
     typedef unsigned int size_type;
 
     /*! default constructor - does nothing for now */
-    inline prmVelocityJointGet(void) {}
+    inline prmVelocityJointGet(void):
+        BaseType()
+    {}
 
     /*! resizes the vector type members */
 
-    inline prmVelocityJointGet(size_type size) { 
+    inline prmVelocityJointGet(size_type size):
+        BaseType()
+    { 
         SetSize(size);
     }
 
     void SetSize(size_type size);
 
     /*! constructor with all possible parameters */
-    inline prmVelocityJointGet(const prmVelocity & velocity,
-                               const mtsStateIndex & stateIndex):
-            VelocityMember(velocity),
-            StateIndexMember(stateIndex)
-    {}
+    inline prmVelocityJointGet(const vctDoubleVec & velocity):
+        BaseType(),
+        VelocityMember(velocity)
+     {}
 
     /*! destructor */
     virtual ~prmVelocityJointGet();
 
     /*! Allocate memory based on an existing object of the same type.  The
-    object is provided via a cmnGenericObject pointer.  If a dynamic cast
+    object is provided via a mtsGenericObject pointer.  If a dynamic cast
     to this type is not possible, this method returns false. */
-    bool inline Allocate(const cmnGenericObject * model)
+    bool inline Allocate(const mtsGenericObject * model)
     {
         const ThisType * pointer = dynamic_cast<const ThisType *>(model);
         if (pointer == 0) {
@@ -83,20 +84,23 @@ public:
 
     /*! Set and Get methods for the the velocity. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmVelocity, Velocity);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Velocity);
     //@}
 
-    /*! Set and Get methods for time index.  Current time index, as
-    provided for writer of the task providing the velocity
-    data. */
-    //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
-
+public:
 
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
+    /*! To stream raw data. */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const;
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const;
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream);
 
 }; // _prmVelocityJointGet_h
 

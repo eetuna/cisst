@@ -1,61 +1,41 @@
 #
 # $Id$
 #
+# (C) Copyright 2005-2009 Johns Hopkins University (JHU), All Rights
+# Reserved.
+#
+# --- begin cisst license - do not edit ---
+# 
+# This software is provided "as is" under an open source license, with
+# no warranty.  The complete license can be found in license.txt and
+# http://www.cisst.org/cisst/license.txt.
+# 
+# --- end cisst license ---
 
-project(3DUserInterfaceExample)
+project(3DUserInterfaceTutorial)
 
-# Find VTK settings
-find_package(VTK REQUIRED)
-if (VTK_FOUND)
-    if (NOT VTK_USE_RENDERING)
-        message (FATAL_ERROR "${PROJECT_NAME} requires VTK_USE_RENDERING.")
-    endif (NOT VTK_USE_RENDERING)
-    include (${VTK_USE_FILE})
-else (VTK_FOUND)
+# library of sample behavior
+add_subdirectory(behaviors)
 
-    message (FATAL ERROR "VTK not found")
-endif (VTK_FOUND)
+include_directories(behaviors)
 
-IF(CISST_SVL_HAS_OPENCV)
-    # Link each example against the OpenCV library if enabled
-    FIND_PACKAGE(OpenCV)
-    INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-    LINK_DIRECTORIES(${OpenCV_LINK_DIRECTORIES})
-ENDIF(CISST_SVL_HAS_OPENCV)
+# programs, depends on hardware availability
 
-OPTION(HAS_DAVINCI "Build using the daVinci API" OFF)
-IF(HAS_DAVINCI)
-   FIND_PATH(daVinci_INCLUDE_DIRS cisstDaVinciAPI.h)
-   IF(daVinci_INCLUDE_DIRS)
-       INCLUDE_DIRECTORIES(${daVinci_INCLUDE_DIRS})
-   ENDIF(daVinci_INCLUDE_DIRS)
-   FIND_LIBRARY(daVinci_LIBRARIES cisstDaVinciAPI)
-ENDIF(HAS_DAVINCI)
+# Sensable specific examples, requires cisstDevices
+if (CISST_DEV_HAS_SENSABLEHD)
+    add_subdirectory(example1)
+    add_subdirectory(example2)
+	add_subdirectory(example5)
+endif (CISST_DEV_HAS_SENSABLEHD)
 
-
-add_executable(${PROJECT_NAME}
-               main.cpp
-               example1.cpp
-               example1.h
-               )
-
-target_link_libraries(${PROJECT_NAME}
-                      vtkRendering
-                      ${CMAKE_THREAD_LIBS_INIT}
-                      ${OpenCV_LIBRARIES}
-                      ${daVinci_LIBRARIES}
-                      )
-
-IF(UNIX)
-    # Link each executable against the X11 library
-    FIND_PACKAGE(X11 REQUIRED)
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${X11_LIBRARIES})
-
-    IF(CISST_SVL_HAS_LIBDC1394)
-        # Also link the examples using live camera source against the DC1394 library if enabled
-        TARGET_LINK_LIBRARIES(${PROJECT_NAME} dc1394)
-    ENDIF(CISST_SVL_HAS_LIBDC1394)
-ENDIF(UNIX)
-
-
-CISST_REQUIRES(${PROJECT_NAME} "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstImage;cisstStereoVision;cisstDevices;cisstParameterTypes;cisst3DUserInterface")
+# Intuitive Surgical Inc daVinci - requires Read Only API.  Contact cisst devel group.
+option (CISST_UI3_HAS_DAVINCI "Build 3DUserInterface example using the daVinci API" OFF)
+if (CISST_UI3_HAS_DAVINCI)
+    find_path (daVinci_INCLUDE_DIRS cisstDaVinciAPI.h)
+    if (daVinci_INCLUDE_DIRS)
+        include_directories(${daVinci_INCLUDE_DIRS})
+    endif (daVinci_INCLUDE_DIRS)
+    find_library (daVinci_LIBRARIES cisstDaVinciAPI)
+    add_subdirectory(example3)
+    add_subdirectory(example4)
+endif (CISST_UI3_HAS_DAVINCI)

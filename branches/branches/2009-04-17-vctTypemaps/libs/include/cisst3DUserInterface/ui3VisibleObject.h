@@ -25,6 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstCommon/cmnClassRegisterMacros.h>
+#include <cisstCommon/cmnAccessorMacros.h>
+
 #include <cisstVector/vctFixedSizeVectorTypes.h>
 #include <cisstVector/vctTransformationTypes.h>
 
@@ -32,24 +34,33 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3SceneManager.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
 
 /*!
  Provides a base class for all visible objects.
 */
-class ui3VisibleObject: public cmnGenericObject
-{   
+class CISST_EXPORT ui3VisibleObject: public cmnGenericObject
+{
     friend class ui3SceneManager;
+    friend class ui3VisibleList;
+    friend class ui3Manager;
 
 public:
+    typedef ui3SceneManager::VTKHandleType VTKHandleType;
 
-    ui3VisibleObject(ui3Manager * manager);
+    ui3VisibleObject(const std::string & name = "Unnamed");
 
     /*!
      Destructor
     */
-    inline virtual ~ui3VisibleObject(void) {};
+    virtual ~ui3VisibleObject(void) {};
 
+    /*! This method needs to be overload by the user to create the
+      actual VTK objects */
     virtual bool CreateVTKObjects(void) = 0;
+
+    virtual bool Update(ui3SceneManager * sceneManager);
 
     virtual vtkProp3D * GetVTKProp(void);
 
@@ -57,28 +68,72 @@ public:
 
     void Hide(void);
 
-    void SetPosition(vctDouble3 & position);
+    void SetPosition(const vctDouble3 & position, bool useLock = true);
 
-    void SetOrientation(vctDoubleMatRot3 & rotationMatrix);
+    void SetOrientation(const vctDoubleMatRot3 & rotationMatrix, bool useLock = true);
 
-    void SetTransformation(vctDoubleFrm3 & frame);
+    void SetScale(const double & scale, bool useLock = true);
+
+    template <bool _storageOrder>
+    void SetTransformation(const vctFrameBase<vctMatrixRotation3<double, _storageOrder> > & frame,
+                           bool useLock = true) {
+        if (useLock) {
+            this->Lock();
+        }
+        this->SetPosition(frame.Translation(), false);
+        this->SetOrientation(frame.Rotation(), false);
+        if (useLock) {
+            this->Unlock();
+        }
+    }
+
+    vctDoubleFrm3 GetTransformation(void) const;
+
+    vctDoubleFrm3 GetAbsoluteTransformation(void) const;
+
+    void SetVTKMatrix(vtkMatrix4x4 * matrix);
 
     void Lock(void);
 
     void Unlock(void);
 
-protected:
-    
-    typedef ui3SceneManager::VTKHandleType VTKHandleType;
+    void AddPart(vtkProp3D * part);
 
-    inline void SetVTKHandle(VTKHandleType handle) {
+    bool IsAddedToScene(void) const;
+
+    void WaitForCreation(void) const;
+
+
+ protected:
+    void SetVTKHandle(VTKHandleType handle) {
         this->VTKHandle = handle;
     }
 
+    
+ private:
+    // make assembly private to control access
     vtkAssembly * Assembly;
+    std::vector<vtkProp3D *> Parts;
+
+ protected:
     vtkMatrix4x4 * Matrix;
-    ui3Manager * Manager;
-    VTKHandleType VTKHandle; 
+    ui3SceneManager * SceneManager;
+    VTKHandleType VTKHandle;
+    ui3VisibleList * ParentList;
+
+ private:
+	bool IsSceneList;
+
+ protected:
+
+    virtual void PropagateVisibility(bool visible);
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, Created);
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(bool, Visible);
+
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(std::string, Name);
+    
 };
 
 

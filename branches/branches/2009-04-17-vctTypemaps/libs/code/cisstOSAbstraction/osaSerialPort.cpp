@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s): Anton Deguet
+  Author(s): Anton Deguet, Min Yang Jung
   Created on: 2004-12-10
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -31,9 +31,15 @@ http://www.cisst.org/cisst/license.txt.
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #endif
 
+/* MJUNG: For detailed information about serial/paralle devices on QNX, please refer
+   to the following link:
 
+   Connecting Character Devices,
+   http://www.qnx.com/developers/docs/qnx_4.25_docs/qnx4/user_guide/chardev.html
+*/
 
 // implement services with a default log LoD of 3
 CMN_IMPLEMENT_SERVICES(osaSerialPort);
@@ -45,13 +51,14 @@ std::string osaSerialPort::SetPortNumber(unsigned int portNumber) {
     std::stringstream portName;
 #if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
     portName << "/dev/ttyS" << (portNumber - 1);
-#endif
-#if (CISST_OS == CISST_WINDOWS)
+#elif (CISST_OS == CISST_WINDOWS)
     portName << "COM" << portNumber;
+#elif (CISST_OS == CISST_QNX)
+    portName << "/dev/ser" << portNumber;
 #endif
     PortName = portName.str();
-    CMN_LOG_CLASS(3) << "Port name set to " << PortName
-                     << " based on port number " << portNumber << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Port name set to " << PortName
+                               << " based on port number " << portNumber << std::endl;
     return PortName;
 }
 
@@ -60,10 +67,10 @@ std::string osaSerialPort::SetPortNumber(unsigned int portNumber) {
 
 #if (CISST_OS == CISST_WINDOWS)
 bool osaSerialPort::Open(void) {
-    CMN_LOG_CLASS(3) << "Start Open for port " << PortName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Start Open for port " << PortName << std::endl;
     // check that the port is not already opened
     if (IsOpenedFlag) {
-        CMN_LOG_CLASS(1) << "Can not re-open an opened port " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Can not re-open an opened port " << PortName << std::endl;
         return false;
     }
     // create the port handle
@@ -76,26 +83,26 @@ bool osaSerialPort::Open(void) {
                             NULL // always for serial port
                             );
     if (PortHandle == INVALID_HANDLE_VALUE) {
-        CMN_LOG_CLASS(1) << "Error opening port (" << PortName << ")" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Error opening port (" << PortName << ")" << std::endl;
         return false;
     } else {
-        CMN_LOG_CLASS(3) << "Correct port handle for " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Correct port handle for " << PortName << std::endl;
     }
 
     // create the overlapped events, remember to close them
     OverlappedStructureRead.hEvent = CreateEvent(NULL, true, false, NULL);
     if (OverlappedStructureRead.hEvent == NULL) {
-        CMN_LOG_CLASS(1) << "Error creating overlapped read event handle for " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Error creating overlapped read event handle for " << PortName << std::endl;
         return false;
     } else {
-        CMN_LOG_CLASS(3) << "Correct overlapped read event handle for " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Correct overlapped read event handle for " << PortName << std::endl;
     }
     OverlappedStructureWrite.hEvent = CreateEvent(NULL, true, false, NULL);
     if (OverlappedStructureWrite.hEvent == NULL) {
-        CMN_LOG_CLASS(1) << "Error creating overlapped write event handle for " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Error creating overlapped write event handle for " << PortName << std::endl;
         return false;
     } else {
-        CMN_LOG_CLASS(3) << "Correct overlapped write event handle for " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Correct overlapped write event handle for " << PortName << std::endl;
     }
     // configure using the current parameters (baud rate, etc.)
     IsOpenedFlag = true;
@@ -104,21 +111,21 @@ bool osaSerialPort::Open(void) {
 }
 #endif
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 bool osaSerialPort::Open(void) {
-    CMN_LOG_CLASS(3) << "Start Open for port " << this->PortName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Start Open for port " << this->PortName << std::endl;
     // check that the port is not already opened
     if (this->IsOpenedFlag) {
-        CMN_LOG_CLASS(1) << "Can not re-open an opened port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Can not re-open an opened port " << this->PortName << std::endl;
         return false;
     }
     // create the file descriptor
     this->FileDescriptor = open(this->PortName.c_str(), O_RDWR);
     if (this->FileDescriptor < 0) {
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Error opening port (" << this->PortName << ")" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Error opening port (" << this->PortName << ")" << std::endl;
         return false;
     } else {
-        CMN_LOG_CLASS(3) << "Correct file descriptor for port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Correct file descriptor for port " << this->PortName << std::endl;
     }
     // configure using the current parameters (baud rate, etc.)
     this->IsOpenedFlag = true;
@@ -148,24 +155,24 @@ bool osaSerialPort::Close(void)
         // close port handle
         CloseHandle(PortHandle);
         IsOpenedFlag = false;
-        CMN_LOG_CLASS(3) << "Port " << PortName << " sucessfully closed." << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Port " << PortName << " sucessfully closed." << std::endl;
     } else {
-        CMN_LOG_CLASS(2) << "Attempt to close an already close port " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_WARNING << "Attempt to close an already close port " << PortName << std::endl;
         return false;
     }
     return true;
 }
 #endif
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 bool osaSerialPort::Close(void)
 {
     if (this->IsOpenedFlag) {
         close(this->FileDescriptor);
         this->IsOpenedFlag = false;
-        CMN_LOG_CLASS(3) << "Port " << this->PortName << " sucessfully closed." << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Port " << this->PortName << " sucessfully closed." << std::endl;
     } else {
-        CMN_LOG_CLASS(2) << "Attempt to close an already close port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_WARNING << "Attempt to close an already close port " << this->PortName << std::endl;
         return false;
     }
     return true;
@@ -179,18 +186,18 @@ bool osaSerialPort::Close(void)
 #if (CISST_OS == CISST_WINDOWS)
 bool osaSerialPort::Configure(void) { 
     
-    CMN_LOG_CLASS(3) << "Start Configure for port " << PortName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Start Configure for port " << PortName << std::endl;
     
   
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Can not Configure a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Can not Configure a closed port " << PortName << std::endl;
         return false;
     }
     
     DCB portOptions = {0};
     if (!GetCommState(PortHandle, &portOptions)) {
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Unable to retrieve current settings for " << PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Unable to retrieve current settings for " << PortName << std::endl;
         return false;
     } else {
         // set baud rate
@@ -213,7 +220,7 @@ bool osaSerialPort::Configure(void) {
             portOptions.Parity = EVENPARITY;
             break;
         default:
-            CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
         }
 
         // set stop bit to 1 or 2
@@ -225,12 +232,12 @@ bool osaSerialPort::Configure(void) {
             portOptions.StopBits = ONESTOPBIT; // 1 stop bit  
             break;
         default:
-            CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
         }
 
         // try to apply these settings
         if (!SetCommState(PortHandle, &portOptions)) {
-            CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Unable to apply current settings for " << PortName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Unable to apply current settings for " << PortName << std::endl;
             return false;
         }
         
@@ -251,19 +258,19 @@ bool osaSerialPort::Configure(void) {
         PurgeComm(PortHandle, PURGE_TXABORT | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_RXCLEAR);
     }
 
-    CMN_LOG_CLASS(3) << "End of Configure for port " << PortName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "End of Configure for port " << PortName << std::endl;
     return true;
 }
 #endif
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 bool osaSerialPort::Configure(void) { 
     
-    CMN_LOG_CLASS(3) << "Start Configure for port " << this->PortName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Start Configure for port " << this->PortName << std::endl;
 
     // check that the port is opened
     if (!this->IsOpenedFlag) {
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Can not Configure a closed port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Can not Configure a closed port " << this->PortName << std::endl;
         return false;
     }
 
@@ -272,7 +279,9 @@ bool osaSerialPort::Configure(void) {
     tcgetattr(this->FileDescriptor, &portOptions);
 
     // set input and output speed
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
     cfsetspeed(&portOptions, this->BaudRate); // might be BSD only, if doesn't compile/work on Linux use CISST_DARWIN
+#endif    
     cfsetispeed(&portOptions, this->BaudRate);
     cfsetospeed(&portOptions, this->BaudRate);
     
@@ -297,7 +306,7 @@ bool osaSerialPort::Configure(void) {
         portOptions.c_iflag |= INPCK; // enable input parity check
         break;
     default:
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
     }
 
     // set stop bit to 1 or 2
@@ -309,26 +318,48 @@ bool osaSerialPort::Configure(void) {
         portOptions.c_cflag &= ~CSTOPB; // 1 stop bit  
         break;
     default:
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
     }
 
     // set hardware flow control
+    /* MJUNG: QNX doesn't recognize CRTSCTS.  Instead, setting both IHFLOW and OHFLOW has
+       the same effect as CRTSCTS set.  Refer the following references for details.
+
+       termios (terminal control structure) :
+           http://www.qnx.com/developers/docs/6.3.0SP3/neutrino/lib_ref/t/termios.html
+       Serial Port - hardware flow Control :
+           http://www.openqnx.com/PNphpBB2-viewtopic-t1750-.html
+    */
     switch (this->FlowControl) {
     case FlowControlNone:
         portOptions.c_iflag &= ~(IXOFF | IXON);
+#if (CISST_OS == CISST_QNX)        
+        portOptions.c_cflag &= ~IHFLOW;
+        portOptions.c_cflag &= ~OHFLOW;
+#else
         portOptions.c_cflag &= ~CRTSCTS;
-
+#endif
         break;
     case FlowControlHardware:
         portOptions.c_iflag &= ~(IXOFF | IXON);
+#if (CISST_OS == CISST_QNX)        
+        portOptions.c_cflag |= IHFLOW;
+        portOptions.c_cflag |= OHFLOW;
+#else
         portOptions.c_cflag |= CRTSCTS;
+#endif
         break;
     case FlowControlSoftware:
+#if (CISST_OS == CISST_QNX)        
+        portOptions.c_cflag &= ~IHFLOW;
+        portOptions.c_cflag &= ~OHFLOW;
+#else
         portOptions.c_cflag &= ~CRTSCTS;
+#endif
         portOptions.c_iflag |= (IXON | IXOFF);
         break;
     default:
-        CMN_LOG_CLASS(1) << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << CMN_LOG_DETAILS << "Fatal error on port " << this->PortName << std::endl;
     }
 
     // defaults we don't modify
@@ -348,7 +379,7 @@ bool osaSerialPort::Configure(void) {
 
     // apply changes
     tcsetattr(this->FileDescriptor, TCSADRAIN, &portOptions);
-    CMN_LOG_CLASS(3) << "End of Configure for port " << this->PortName << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "End of Configure for port " << this->PortName << std::endl;
     return true;
 }
 #endif
@@ -378,25 +409,25 @@ int osaSerialPort::Write(const char * data, int nBytes)
 
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Write on a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Write on a closed port " << PortName << std::endl;
         return 0;
     }
 
     // Issue write.
     if (!WriteFile(PortHandle, data, nBytes, &numBytes, &OverlappedStructureWrite)) {
         if (GetLastError() != ERROR_IO_PENDING) {
-            CMN_LOG_CLASS(5) << "WriteFile failed (not delayed) for " << PortName << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "WriteFile failed (not delayed) for " << PortName << std::endl;
         } else {
-            CMN_LOG_CLASS(7) << "Write is pending for " << PortName << std::endl;
+            CMN_LOG_CLASS_RUN_WARNING << "Write is pending for " << PortName << std::endl;
             if (!GetOverlappedResult(PortHandle, &OverlappedStructureWrite, &numBytes, TRUE)) {
-                CMN_LOG_CLASS(5) << "GetOverlappedResult failed for Write on port " << PortName << std::endl;
+                CMN_LOG_CLASS_RUN_ERROR << "GetOverlappedResult failed for Write on port " << PortName << std::endl;
             } else {
-                CMN_LOG_CLASS(7) << "Write operation completed successfully for " << PortName << std::endl;
+                CMN_LOG_CLASS_RUN_VERBOSE << "Write operation completed successfully for " << PortName << std::endl;
                 sent = true;
             }
         }
     } else {
-        CMN_LOG_CLASS(7) << "Immediate write operation completed successfully for " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "Immediate write operation completed successfully for " << PortName << std::endl;
         sent = true;
     }
 
@@ -404,18 +435,18 @@ int osaSerialPort::Write(const char * data, int nBytes)
 }
 #endif
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 int osaSerialPort::Write(const char * data, int nBytes)
 {
     // check that the port is opened
     if (!this->IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Write on a closed port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Write on a closed port " << this->PortName << std::endl;
         return 0;
     }
 
     int numBytes = write(this->FileDescriptor, data, nBytes);
-    CMN_LOG_CLASS(8) << "Wrote " << data << std::endl
-                     << "(" << nBytes << " bytes) on port " << this->PortName << std::endl;
+    CMN_LOG_CLASS_VERY_VERBOSE << "Wrote " << data << std::endl
+                               << "(" << nBytes << " bytes) on port " << this->PortName << std::endl;
     return numBytes;
 }
 #endif
@@ -430,25 +461,25 @@ int osaSerialPort::Write(const unsigned char * data, int nBytes)
 
     // check that the port is opened
     if (!this->IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Write on a closed port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Write on a closed port " << this->PortName << std::endl;
         return 0;
     }
 
     // Issue write.
     if (!WriteFile(PortHandle, data, nBytes, &numBytes, &OverlappedStructureWrite)) {
         if (GetLastError() != ERROR_IO_PENDING) {
-            CMN_LOG_CLASS(5) << "WriteFile failed (not delayed) for " << PortName << std::endl;
+            CMN_LOG_CLASS_RUN_WARNING << "WriteFile failed (not delayed) for " << PortName << std::endl;
         } else {
-            CMN_LOG_CLASS(7) << "Write is pending for " << PortName << std::endl;
+            CMN_LOG_CLASS_RUN_VERBOSE << "Write is pending for " << PortName << std::endl;
             if (!GetOverlappedResult(PortHandle, &OverlappedStructureWrite, &numBytes, TRUE)) {
-                CMN_LOG_CLASS(5) << "GetOverlappedResult failed for Write on port " << PortName << std::endl;
+                CMN_LOG_CLASS_RUN_WARNING << "GetOverlappedResult failed for Write on port " << PortName << std::endl;
             } else {
-                CMN_LOG_CLASS(7) << "Write operation completed successfully for " << PortName << std::endl;
+                CMN_LOG_CLASS_RUN_VERBOSE << "Write operation completed successfully for " << PortName << std::endl;
                 sent = true;
             }
         }
     } else {
-        CMN_LOG_CLASS(7) << "Immediate write operation completed successfully for " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "Immediate write operation completed successfully for " << PortName << std::endl;
         sent = true;
     }
 
@@ -456,18 +487,18 @@ int osaSerialPort::Write(const unsigned char * data, int nBytes)
 }
 #endif
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 int osaSerialPort::Write(const unsigned char * data, int nBytes)
 {
     // check that the port is opened
     if (!this->IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Write on a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Write on a closed port " << PortName << std::endl;
         return 0;
     }
 
     int numBytes = write(FileDescriptor, data, nBytes);
-    CMN_LOG_CLASS(8) << "Wrote " << data << std::endl
-                     << "(" << nBytes << " bytes) on port " << PortName << std::endl;
+    CMN_LOG_CLASS_VERY_VERBOSE << "Wrote " << data << std::endl
+                               << "(" << nBytes << " bytes) on port " << PortName << std::endl;
     return numBytes;
 }
 #endif
@@ -486,7 +517,7 @@ int osaSerialPort::Read(char * data, int nBytes)
 
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
         return 0;
     }
 
@@ -499,7 +530,7 @@ int osaSerialPort::Read(char * data, int nBytes)
         fReadStat = ReadFile(PortHandle, data, nBytes, &dwLength, &OverlappedStructureRead);
         if (!fReadStat) {
             if (GetLastError() == ERROR_IO_PENDING) {
-                CMN_LOG_CLASS(6) << "IO Pending in Read" << std::endl;
+                CMN_LOG_CLASS_RUN_WARNING << "IO Pending in Read" << std::endl;
                 // We have to wait for read to complete.
                 // Read is right now set up to return nothing if the port
                 // is empty, the while loop is ineffective
@@ -510,7 +541,7 @@ int osaSerialPort::Read(char * data, int nBytes)
                     } else {
                         // an error occurred, try to recover
                         ClearCommError(PortHandle, &dwErrorFlags, &ComStat);
-                        CMN_LOG_CLASS(5) << "I/O error occured in read" << std::endl;
+                        CMN_LOG_CLASS_RUN_ERROR << "I/O error occured in read" << std::endl;
                         break;
                     } // else
                 } // while
@@ -526,19 +557,19 @@ int osaSerialPort::Read(char * data, int nBytes)
 #endif
 
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 int osaSerialPort::Read(char * data, int nBytes)
 {
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
         return 0;
     }
 
     int numBytes = read(FileDescriptor, data, nBytes); // get chars if there
 
     // this is only to log a message of level 8
-    const short lod = 8;
+    const cmnLogLoD lod = CMN_LOG_LOD_VERY_VERBOSE;
     if (numBytes > 0) {
         char * message;
         // create a message only if this is required.  based on CMN_LOG_CLASS code
@@ -566,7 +597,7 @@ int osaSerialPort::Read(unsigned char * data, int nBytes)
 
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
         return 0;
     }
 
@@ -579,7 +610,7 @@ int osaSerialPort::Read(unsigned char * data, int nBytes)
         fReadStat = ReadFile(PortHandle, data, nBytes, &dwLength, &OverlappedStructureRead);
         if (!fReadStat) {
             if (GetLastError() == ERROR_IO_PENDING) {
-                CMN_LOG_CLASS(6) << "IO Pending in Read" << std::endl;
+                CMN_LOG_CLASS_RUN_WARNING << "IO Pending in Read" << std::endl;
                 // We have to wait for read to complete.
                 // Read is right now set up to return nothing if the port
                 // is empty, the while loop is ineffective
@@ -590,7 +621,7 @@ int osaSerialPort::Read(unsigned char * data, int nBytes)
                     } else {
                         // an error occurred, try to recover
                         ClearCommError(PortHandle, &dwErrorFlags, &ComStat);
-                        CMN_LOG_CLASS(5) << "I/O error occured in read" << std::endl;
+                        CMN_LOG_CLASS_RUN_ERROR << "I/O error occured in read" << std::endl;
                         break;
                     } // else
                 } // while
@@ -606,19 +637,19 @@ int osaSerialPort::Read(unsigned char * data, int nBytes)
 #endif
 
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 int osaSerialPort::Read(unsigned char * data, int nBytes)
 {
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Can not Read from a closed port " << PortName << std::endl;
         return 0;
     }
 
     int numBytes = read(FileDescriptor, data, nBytes); // get chars if there
 
     // this is only to log a message of level 8
-    const short lod = 8;
+    const cmnLogLoD lod = CMN_LOG_LOD_VERY_VERBOSE;
     char* message;
     // create a message only if this is required.  based on CMN_LOG_CLASS code
     if ((lod > cmnLogger::GetLoD()) || (lod > Services()->GetLoD())) {
@@ -641,16 +672,16 @@ bool osaSerialPort::WriteBreak(double breakLengthInSeconds)
 {
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not WriteBreak on a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "WriteBreak: can not WriteBreak on a closed port " << PortName << std::endl;
         return false;
     }
     if (!SetCommBreak(PortHandle)) {
-        CMN_LOG_CLASS(5) << "Unable to set break on port  " << PortName << std::endl;        
+        CMN_LOG_CLASS_RUN_ERROR << "WriteBreak: unable to set break on port  " << PortName << std::endl;        
         return false;
     }
     osaSleep(breakLengthInSeconds);
     if (!ClearCommBreak(PortHandle)) {
-        CMN_LOG_CLASS(5) << "Unable to clear break on port  " << PortName << std::endl;        
+        CMN_LOG_CLASS_RUN_ERROR << "WriteBreak: unable to clear break on port  " << PortName << std::endl;        
         return false;
     }
     return true;
@@ -660,17 +691,17 @@ bool osaSerialPort::WriteBreak(double breakLengthInSeconds)
 #if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
 bool osaSerialPort::WriteBreak(double breakLengthInSeconds)
 {
-#if (CISST_OS == LINUX) || (CISST_OS == CISST_LINUX_RTAI)
+#if (CISST_OS == LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_QNX)
     breakLengthInSeconds *= 1000.0; // tcsendbreak on Linux uses milliseconds.
 #endif // CISST_LINUX || CISST_LINUX_RTAI
 
     // check that the port is opened
     if (!this->IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not WriteBreak on a closed port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "WriteBreak: can not WriteBreak on a closed port " << this->PortName << std::endl;
         return false;
     }
     if (tcsendbreak(this->FileDescriptor, static_cast<int>(breakLengthInSeconds)) < 0) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Serial break failed" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "WriteBreak: serial break failed" << std::endl;
         return false;
     }
 
@@ -684,7 +715,7 @@ bool osaSerialPort::WriteBreak(double breakLengthInSeconds)
     }
 #endif // CISST_DARWIN
 
-    CMN_LOG_CLASS(7) << "Wrote a serial break on port " << this->PortName << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "WriteBreak: end of method " << this->PortName << std::endl;
     return true;
 }
 #endif
@@ -698,29 +729,28 @@ bool osaSerialPort::Flush(void)
 {
     // check that the port is opened
     if (!IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Flush a closed port " << PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Flush: can not Flush a closed port " << PortName << std::endl;
         return false;
     }
     if (!FlushFileBuffers(PortHandle)) {
-        CMN_LOG_CLASS(5) << "Unable to flush port  " << PortName << std::endl;        
+        CMN_LOG_CLASS_RUN_ERROR << "Flush: unable to flush port " << PortName << std::endl;        
         return false;
     }
-    CMN_LOG_CLASS(7) << "Wrote a serial break on port " << PortName << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "Flush: end of method " << PortName << std::endl;
     return true;
 }
 #endif
 
-#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN)
+#if (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_QNX)
 bool osaSerialPort::Flush(void)
 {
     // check that the port is opened
     if (!this->IsOpenedFlag) {
-        CMN_LOG_CLASS(5) << CMN_LOG_DETAILS << "Can not Flush a closed port " << this->PortName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << CMN_LOG_DETAILS << "Flush: can not Flush a closed port " << this->PortName << std::endl;
         return false;
     }
     tcflush(this->FileDescriptor, TCIOFLUSH);
     return true;
 }
 #endif
-
 

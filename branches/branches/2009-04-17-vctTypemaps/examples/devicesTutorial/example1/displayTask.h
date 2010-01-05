@@ -5,6 +5,7 @@
 #ifndef _displayTask_h
 #define _displayTask_h
 
+#include <cisstCommon.h>
 #include <cisstVector.h>
 #include <cisstMultiTask.h>
 #include <cisstParameterTypes.h>
@@ -13,7 +14,7 @@
 
 class displayTask: public mtsTaskPeriodic {
     // set log level to 5
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     volatile bool ExitFlag;
     
  protected:

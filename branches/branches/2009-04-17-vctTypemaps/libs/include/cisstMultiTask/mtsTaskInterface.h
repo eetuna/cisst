@@ -30,6 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaMutex.h>
+
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
 #include <cisstMultiTask/mtsCommandRead.h>
@@ -61,15 +62,16 @@ http://www.cisst.org/cisst/license.txt.
   
 */
 class CISST_EXPORT mtsTaskInterface: public mtsDeviceInterface {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
  public:
 
     class ThreadResources: public mtsDeviceInterface {
-        CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+        CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     protected:
         mtsMailBox * MailBox;
     public:
-        inline ThreadResources(const std::string name, unsigned int size)
+        inline ThreadResources(const std::string name, unsigned int size):
+            mtsDeviceInterface(name, 0)
         {
             MailBox = new mtsMailBox(name, size);
         }
@@ -80,37 +82,38 @@ class CISST_EXPORT mtsTaskInterface: public mtsDeviceInterface {
 
         inline void CloneCommands(const mtsTaskInterface & taskInterface) {
             // clone void commands
-            mtsTaskInterface::CommandQueuedVoidMapType::MapType::const_iterator iterVoid;
-            iterVoid = taskInterface.CommandsQueuedVoid.GetMap().begin();
+            mtsTaskInterface::CommandQueuedVoidMapType::const_iterator iterVoid;
+            iterVoid = taskInterface.CommandsQueuedVoid.begin();
             mtsCommandVoidBase * commandVoid;
             for (;
-                 iterVoid != taskInterface.CommandsQueuedVoid.GetMap().end();
+                 iterVoid != taskInterface.CommandsQueuedVoid.end();
                  iterVoid++) {
                 commandVoid = iterVoid->second->Clone(this->MailBox);
-                CommandsVoid.AddItem(iterVoid->first, commandVoid, 1);
-                CMN_LOG_CLASS(3) << "Cloned command " << iterVoid->first << std::endl;
+                CommandsVoid.AddItem(iterVoid->first, commandVoid, CMN_LOG_LOD_INIT_ERROR);
+                CMN_LOG_CLASS_INIT_VERBOSE << "Cloned command " << iterVoid->first << std::endl;
             }
             // clone write commands
-            mtsTaskInterface::CommandQueuedWriteMapType::MapType::const_iterator iterWrite;
-            iterWrite = taskInterface.CommandsQueuedWrite.GetMap().begin();
+            mtsTaskInterface::CommandQueuedWriteMapType::const_iterator iterWrite;
+            iterWrite = taskInterface.CommandsQueuedWrite.begin();
             mtsCommandWriteBase * commandWrite;
             for (;
-                iterWrite != taskInterface.CommandsQueuedWrite.GetMap().end();
+                iterWrite != taskInterface.CommandsQueuedWrite.end();
                 iterWrite++) {
                 commandWrite = iterWrite->second->Clone(this->MailBox, DEFAULT_ARG_BUFFER_LEN);
-                CommandsWrite.AddItem(iterWrite->first, commandWrite, 1);
-                CMN_LOG_CLASS(3) << "Cloned command " << iterWrite->first << std::endl;
+                CommandsWrite.AddItem(iterWrite->first, commandWrite, CMN_LOG_LOD_INIT_ERROR);
+                CMN_LOG_CLASS_INIT_VERBOSE << "Cloned command " << iterWrite->first << std::endl;
             }
         }
     };
 
-    typedef std::pair<osaThreadId, ThreadResources *> ThreadResourcesPairType;
+    // typedef std::pair<osaThreadId, ThreadResources *> ThreadResourcesPairType;
+    typedef std::pair<unsigned int, ThreadResources *> ThreadResourcesPairType;
     typedef std::vector<ThreadResourcesPairType> ThreadResourcesMapType;
     ThreadResourcesMapType ThreadResourcesMap;
 
 public:
-    typedef mtsMap<mtsCommandQueuedVoidBase> CommandQueuedVoidMapType;
-    typedef mtsMap<mtsCommandQueuedWriteBase> CommandQueuedWriteMapType;
+    typedef cmnNamedMap<mtsCommandQueuedVoidBase> CommandQueuedVoidMapType;
+    typedef cmnNamedMap<mtsCommandQueuedWriteBase> CommandQueuedWriteMapType;
 
     CommandQueuedVoidMapType CommandsQueuedVoid;
     CommandQueuedWriteMapType CommandsQueuedWrite;
@@ -128,28 +131,31 @@ private:
     /*! Semaphore used internally */
     osaMutex Mutex;
 
-	/*! A vector of task interfaces (including mailboxes) for incoming commands. */
-	ThreadResourcesMapType QueuedCommands;
+    /*! A vector of task interfaces (including mailboxes) for incoming commands. */
+    ThreadResourcesMapType QueuedCommands;
 
  protected:
     /*! Process all messages in mailboxes. Returns number of commands processed. */
     unsigned int ProcessMailBoxes();
 
  public:
-    virtual unsigned int AllocateResourcesForCurrentThread(void);
+    // virtual unsigned int AllocateResourcesForCurrentThread(void);
+    unsigned int AllocateResources(const std::string & userName);
+ 
+    mtsTaskInterface(const std::string & name, mtsTask * task);
 
-	mtsTaskInterface(const std::string & name, mtsTask * task);
+    /*! Default Destructor. */
+    virtual ~mtsTaskInterface();
 
-	/*! Default Destructor. */
-	virtual ~mtsTaskInterface();
+    /*! The member function that is executed once the task
+      terminates. This does some cleanup work */
+    void Cleanup(void);
 
-	/*! The member function that is executed once the task terminates. This
-	  does some cleanup work */
-	void Cleanup(void);
-
-    virtual mtsCommandVoidBase * GetCommandVoid(const std::string & commandName) const;
-
-    virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
+    virtual mtsCommandVoidBase * GetCommandVoid(const std::string & commandName,
+                                                unsigned int userId) const;
+    
+    virtual mtsCommandWriteBase * GetCommandWrite(const std::string & commandName,
+                                                  unsigned int userId) const;
 
     template <class __classType>
     inline mtsCommandVoidBase * AddCommandVoid(void (__classType::*method)(void),
@@ -164,24 +170,26 @@ private:
                                                  __classType * classInstantiation, const std::string & commandName,
                                                  const __argumentType & argumentPrototype = CMN_DEFAULT_TEMPLATED_CONSTRUCTOR(__argumentType));
 
-    /*! Adds command objects to read from the state table. Note that there are two command
-        objects: a 'read' command to get the latest value, and a 'qualified read' command
-        to get the value at the specified time.
-        In addition, there is a 'get vector' qualified read command to read a vector of data. */
+    /*! Adds command objects to read from the state table. Note that
+      there are two command objects: a 'read' command to get the
+      latest value, and a 'qualified read' command to get the value at
+      the specified time.  In addition, there is a 'get vector'
+      qualified read command to read a vector of data. */
     // Note: Could use string for state, rather than the variable
     template <class _elementType>
-    mtsCommandReadBase * AddCommandReadState(const mtsStateTable &stateTable, const _elementType &stateData,
-                                             const std::string &commandName);
+    mtsCommandReadBase * AddCommandReadState(const mtsStateTable & stateTable, const _elementType & stateData,
+                                             const std::string & commandName);
 
     template <class _elementType>
-    mtsCommandQualifiedReadBase * AddCommandReadHistory(const mtsStateTable &stateTable, const _elementType &stateData,
-                                               const std::string &commandName);
+    mtsCommandQualifiedReadBase * AddCommandReadHistory(const mtsStateTable & stateTable, const _elementType & stateData,
+                                                        const std::string & commandName);
 
-    /*! Adds a command object to write the current value of the state data variable. Since this will
-      be a queued command, it is thread-safe. */
+    /*! Adds a command object to write the current value of the state
+      data variable. Since this will be a queued command, it is
+      thread-safe. */
     template <class _elementType>
-    mtsCommandWriteBase * AddCommandWriteState(const mtsStateTable &stateTable, const _elementType &stateData,
-                                               const std::string &commandName);
+    mtsCommandWriteBase * AddCommandWriteState(const mtsStateTable & stateTable, const _elementType & stateData,
+                                               const std::string & commandName);
 };
 
 
@@ -196,33 +204,33 @@ inline mtsCommandVoidBase * mtsTaskInterface::AddCommandVoid(void (__classType::
                                                              const std::string & commandName) {
     mtsCommandVoidBase * command = new mtsCommandVoidMethod<__classType>(method, classInstantiation, commandName);
     if (command) {
-        if (CommandsVoid.AddItem(commandName, command, 1)) {
+        if (CommandsVoid.AddItem(commandName, command, CMN_LOG_LOD_INIT_ERROR)) {
             mtsCommandQueuedVoidBase * queuedCommand = new mtsCommandQueuedVoid(0, command);
             if (queuedCommand) {
-                if (CommandsQueuedVoid.AddItem(commandName, queuedCommand, 1)) {
+                if (CommandsQueuedVoid.AddItem(commandName, queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                     return queuedCommand;
                 } else {
                     delete command;
                     delete queuedCommand;
-                    CMN_LOG_CLASS(1) << "AddCommandVoid: unable to add command \""
-                                     << commandName << "\"" << std::endl;
+                    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                             << commandName << "\"" << std::endl;
                     return 0;
                 }
             } else {
                 delete command;
-                CMN_LOG_CLASS(1) << "AddCommandVoid: unable to create queued command \""
-                                 << commandName << "\"" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create queued command \""
+                                         << commandName << "\"" << std::endl;
                 return 0;
             }
         } else {
             delete command;
-            CMN_LOG_CLASS(1) << "AddCommandVoid: unable to add command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     } else {
-        CMN_LOG_CLASS(1) << "AddCommandVoid: unable to create command \""
-                         << commandName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create command \""
+                                 << commandName << "\"" << std::endl;
         return 0;
     }
 }
@@ -232,33 +240,33 @@ inline mtsCommandVoidBase * mtsTaskInterface::AddCommandVoid(void (*function)(vo
                                                              const std::string & commandName) {
     mtsCommandVoidBase * command = new mtsCommandVoidFunction(function, commandName);
     if (command) {
-        if (CommandsVoid.AddItem(commandName, command, 1)) {
+        if (CommandsVoid.AddItem(commandName, command, CMN_LOG_LOD_INIT_ERROR)) {
             mtsCommandQueuedVoidBase * queuedCommand = new mtsCommandQueuedVoid(0, command);
             if (queuedCommand) {
-                if (CommandsQueuedVoid.AddItem(commandName, queuedCommand, 1)) {
+                if (CommandsQueuedVoid.AddItem(commandName, queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                     return queuedCommand;
                 } else {
                     delete command;
                     delete queuedCommand;
-                    CMN_LOG_CLASS(1) << "AddCommandVoid: unable to add command \""
-                                     << commandName << "\"" << std::endl;
+                    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                             << commandName << "\"" << std::endl;
                     return 0;
                 }
             } else {
                 delete command;
-                CMN_LOG_CLASS(1) << "AddCommandVoid: unable to create queued command \""
-                                 << commandName << "\"" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create queued command \""
+                                         << commandName << "\"" << std::endl;
                 return 0;
             }
         } else {
             delete command;
-            CMN_LOG_CLASS(1) << "AddCommandVoid: unable to add command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     } else {
-        CMN_LOG_CLASS(1) << "AddCommandVoid: unable to create command \""
-                         << commandName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create command \""
+                                 << commandName << "\"" << std::endl;
         return 0;
     }
 }
@@ -268,36 +276,36 @@ template <class __classType, class __argumentType>
 inline mtsCommandWriteBase * mtsTaskInterface::AddCommandWrite(void (__classType::*method)(const __argumentType &),
                                                                __classType * classInstantiation, const std::string & commandName,
                                                                const __argumentType & argumentPrototype) {
-    mtsCommandWriteBase * command = new mtsCommandWrite<__classType, const __argumentType>
+    mtsCommandWriteBase * command = new mtsCommandWrite<__classType, __argumentType>
         (method, classInstantiation, commandName, argumentPrototype);
     if (command) {
-        if (CommandsWrite.AddItem(commandName, command, 1)) {
+        if (CommandsWrite.AddItem(commandName, command, CMN_LOG_LOD_INIT_ERROR)) {
             mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandQueuedWrite<__argumentType>(command);
             if (queuedCommand) {
-                if (CommandsQueuedWrite.AddItem(commandName, queuedCommand, 1)) {
+                if (CommandsQueuedWrite.AddItem(commandName, queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                     return queuedCommand;
                 } else {
                     delete command;
                     delete queuedCommand;
-                    CMN_LOG_CLASS(1) << "AddCommandWrite: unable to add command \""
-                                     << commandName << "\"" << std::endl;
+                    CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add command \""
+                                             << commandName << "\"" << std::endl;
                     return 0;
                 }
             } else {
                 delete command;
-                CMN_LOG_CLASS(1) << "AddCommandWrite: unable to create queued command \""
-                                 << commandName << "\"" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to create queued command \""
+                                         << commandName << "\"" << std::endl;
                 return 0;
             }
         } else {
             delete command;
-            CMN_LOG_CLASS(1) << "AddCommandWrite: unable to add command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     } else {
-        CMN_LOG_CLASS(1) << "AddCommandWrite: unable to create command \""
-                         << commandName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to create command \""
+                                 << commandName << "\"" << std::endl;
         return 0;
     }
 }
@@ -315,17 +323,17 @@ inline mtsCommandVoidBase * mtsDeviceInterface::AddCommandVoid(void (__classType
     } else {
         mtsCommandVoidBase * command = new mtsCommandVoidMethod<__classType>(method, classInstantiation, commandName);
         if (command) {
-            if (CommandsVoid.AddItem(commandName, command, 1)) {
+            if (CommandsVoid.AddItem(commandName, command, CMN_LOG_LOD_INIT_ERROR)) {
                 return command;
             } else {
                 delete command;
-                CMN_LOG_CLASS(1) << "AddCommandVoid: unable to add command \""
-                                 << commandName << "\"" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                         << commandName << "\"" << std::endl;
                 return 0;
             }
         } else {
-            CMN_LOG_CLASS(1) << "AddCommandVoid: unable to create command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     }
@@ -341,17 +349,17 @@ inline mtsCommandVoidBase * mtsDeviceInterface::AddCommandVoid(void (*function)(
     } else {
         mtsCommandVoidBase * command = new mtsCommandVoidFunction(function, commandName);
         if (command) {
-            if (CommandsVoid.AddItem(commandName, command, 1)) {
+            if (CommandsVoid.AddItem(commandName, command, CMN_LOG_LOD_INIT_ERROR)) {
                 return command;
             } else {
                 delete command;
-                CMN_LOG_CLASS(1) << "AddCommandVoid: unable to add command \""
-                                 << commandName << "\"" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                         << commandName << "\"" << std::endl;
                 return 0;
             }
         } else {
-            CMN_LOG_CLASS(1) << "AddCommandVoid: unable to create command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     }
@@ -368,117 +376,117 @@ inline mtsCommandWriteBase * mtsDeviceInterface::AddCommandWrite(void (__classTy
     if (taskInterface) {
         return taskInterface->AddCommandWrite(method, classInstantiation, commandName, argumentPrototype);
     } else {
-        mtsCommandWriteBase * command = new mtsCommandWrite<__classType, const __argumentType>
+        mtsCommandWriteBase * command = new mtsCommandWrite<__classType, __argumentType>
                                            (method, classInstantiation, commandName, argumentPrototype);
         if (command) {
-            if (CommandsWrite.AddItem(commandName, command, 1)) {
+            if (CommandsWrite.AddItem(commandName, command, CMN_LOG_LOD_INIT_ERROR)) {
                 return command;
             } else {
                 delete command;
-                CMN_LOG_CLASS(1) << "AddCommandWrite: unable to add command \""
-                                 << commandName << "\"" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add command \""
+                                         << commandName << "\"" << std::endl;
                 return 0;
             }
         } else {
-            CMN_LOG_CLASS(1) << "AddCommandWrite: unable to create command \""
-                             << commandName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to create command \""
+                                     << commandName << "\"" << std::endl;
             return 0;
         }
     }
 }
 
 template <class _elementType>
-mtsCommandReadBase * mtsDeviceInterface::AddCommandReadState(const mtsStateTable &stateTable,
-                     const _elementType &stateData, const std::string &commandName)
+mtsCommandReadBase * mtsDeviceInterface::AddCommandReadState(const mtsStateTable & stateTable,
+                                                             const _elementType & stateData, const std::string & commandName)
 {
     mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(this);
-    if (taskInterface)
+    if (taskInterface) {
         return taskInterface->AddCommandReadState(stateTable, stateData, commandName);
-    else {
-        CMN_LOG_CLASS(1) << "AddCommandReadState: only valid for tasks, command = " << commandName << std::endl;
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandReadState: only valid for tasks, command = " << commandName << std::endl;
         return 0;
     }
 }
 
 template <class _elementType>
-mtsCommandQualifiedReadBase * mtsDeviceInterface::AddCommandReadHistory(const mtsStateTable &stateTable,
-                     const _elementType &stateData, const std::string &commandName)
+mtsCommandQualifiedReadBase * mtsDeviceInterface::AddCommandReadHistory(const mtsStateTable & stateTable,
+                                                                        const _elementType & stateData, const std::string & commandName)
 {
     mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(this);
-    if (taskInterface)
+    if (taskInterface) {
         return taskInterface->AddCommandReadHistory(stateTable, stateData, commandName);
-    else {
-        CMN_LOG_CLASS(1) << "AddCommandReadHistory: only valid for tasks, command = " << commandName << std::endl;
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandReadHistory: only valid for tasks, command = " << commandName << std::endl;
         return 0;
     }
 }
 
 template <class _elementType>
-mtsCommandWriteBase * mtsDeviceInterface::AddCommandWriteState(const mtsStateTable &stateTable,
-                     const _elementType &stateData, const std::string &commandName)
+mtsCommandWriteBase * mtsDeviceInterface::AddCommandWriteState(const mtsStateTable & stateTable,
+                                                               const _elementType & stateData, const std::string & commandName)
 {
     mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(this);
-    if (taskInterface)
+    if (taskInterface) {
         return taskInterface->AddCommandWriteState(stateTable, stateData, commandName);
-    else {
-        CMN_LOG_CLASS(1) << "AddCommandWriteState: only valid for tasks, command = " << commandName << std::endl;
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandWriteState: only valid for tasks, command = " << commandName << std::endl;
         return 0;
     }
 }
 
 
 template <class _elementType>
-mtsCommandReadBase * mtsTaskInterface::AddCommandReadState(const mtsStateTable &stateTable,
-                     const _elementType &stateData, const std::string &commandName)
+mtsCommandReadBase * mtsTaskInterface::AddCommandReadState(const mtsStateTable & stateTable,
+                                                           const _elementType & stateData, const std::string & commandName)
 {
     typedef mtsStateTable::Accessor<_elementType> AccessorType;
-    mtsCommandReadBase *result;
-    mtsCommandQualifiedReadBase *result2;
-    AccessorType *stateAcc = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
-    if (stateAcc) {
-        result = new mtsCommandRead<AccessorType, _elementType>(&AccessorType::GetLatest, stateAcc, commandName, stateData);
-        CommandsRead.AddItem(commandName, result, 1);
-        result2 = new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, _elementType>
-                                            (&AccessorType::Get, stateAcc, commandName, mtsStateIndex(), stateData);
-        CommandsQualifiedRead.AddItem(commandName, result2, 1);
+    mtsCommandReadBase * readCommand;
+    mtsCommandQualifiedReadBase * qualifiedReadCommand;
+    AccessorType * stateAccessor = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
+    if (stateAccessor) {
+        readCommand = new mtsCommandRead<AccessorType, _elementType>(&AccessorType::GetLatest, stateAccessor, commandName, stateData);
+        CommandsRead.AddItem(commandName, readCommand, CMN_LOG_LOD_INIT_ERROR);
+        qualifiedReadCommand = new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, _elementType>
+            (&AccessorType::Get, stateAccessor, commandName, mtsStateIndex(), stateData);
+        CommandsQualifiedRead.AddItem(commandName, qualifiedReadCommand, CMN_LOG_LOD_INIT_ERROR);
     }
     else {
-        result = 0;
-        CMN_LOG_CLASS(1) << "AddCommandReadState: invalid parameter for command " << commandName << std::endl;
+        readCommand = 0;
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandReadState: invalid parameter for command " << commandName << std::endl;
     }
-    return result;
+    return readCommand;
 }
 
 template <class _elementType>
-mtsCommandQualifiedReadBase * mtsTaskInterface::AddCommandReadHistory(const mtsStateTable &stateTable,
-                     const _elementType &stateData, const std::string &commandName)
+mtsCommandQualifiedReadBase * mtsTaskInterface::AddCommandReadHistory(const mtsStateTable & stateTable,
+                                                                      const _elementType & stateData, const std::string & commandName)
 {
     typedef mtsStateTable::Accessor<_elementType> AccessorType;
-    mtsCommandQualifiedReadBase *result;
-    AccessorType *stateAcc = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
-    if (stateAcc) {
-        result = new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, mtsVector<_elementType> >
-                                            (&AccessorType::GetHistory, stateAcc, commandName,
-                                             mtsStateIndex(), mtsVector<_elementType>());
-        CommandsQualifiedRead.AddItem(commandName, result, 1);
+    mtsCommandQualifiedReadBase * qualifiedReadCommand;
+    AccessorType * stateAccessor = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
+    if (stateAccessor) {
+        qualifiedReadCommand = new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, mtsHistory<_elementType> >
+            (&AccessorType::GetHistory, stateAccessor, commandName,
+             mtsStateIndex(), mtsHistory<_elementType>());
+        CommandsQualifiedRead.AddItem(commandName, qualifiedReadCommand, CMN_LOG_LOD_INIT_ERROR);
     }
-    return result;
+    return qualifiedReadCommand;
 }
 
 template <class _elementType>
-mtsCommandWriteBase * mtsTaskInterface::AddCommandWriteState(const mtsStateTable &stateTable,
-                     const _elementType &stateData, const std::string &commandName)
+mtsCommandWriteBase * mtsTaskInterface::AddCommandWriteState(const mtsStateTable & stateTable,
+                                                             const _elementType & stateData, const std::string & commandName)
 {
     typedef mtsStateTable::Accessor<_elementType> AccessorType;
-    mtsCommandWriteBase *result = 0;
-    AccessorType *stateAcc = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
-    if (stateAcc)
-        result = AddCommandWrite<AccessorType, _elementType>
-                                (&AccessorType::SetCurrent, stateAcc, commandName, stateData);
-    else
-        CMN_LOG_CLASS(1) << "AddCommandWriteState: invalid parameter for command " << commandName << std::endl;
-    return result;
+    mtsCommandWriteBase * writeCommand = 0;
+    AccessorType * stateAccessor = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
+    if (stateAccessor) {
+        writeCommand = AddCommandWrite<AccessorType, _elementType>
+            (&AccessorType::SetCurrent, stateAccessor, commandName, stateData);
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandWriteState: invalid parameter for command " << commandName << std::endl;
+    }
+    return writeCommand;
 }
 
 #endif // _mtsTaskInterface_h
-

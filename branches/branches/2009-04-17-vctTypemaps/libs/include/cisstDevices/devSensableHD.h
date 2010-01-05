@@ -33,40 +33,142 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstDevices/devExport.h>
 
 // forward declaration for private data
-struct devSensableHDDeviceData;
 struct devSensableHDDriverData;
+struct devSensableHDHandle;
 
 class CISST_EXPORT devSensableHD: public mtsTaskFromCallbackAdapter {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 10);
 
 public:
     enum {NB_JOINTS = 6};
-
-    typedef std::map<std::string, devSensableHDDeviceData *> DevicesMapType;
+    int DeviceCount;
 
 protected:
     // internal data using Sensable data types
-    DevicesMapType Devices;
+    struct DeviceData {
+        bool DeviceEnabled;
+        bool ForceOutputEnabled;
+        
+        // local copy of the buttons state as defined by Sensable
+        mtsInt Buttons;
+        
+        // local copy of the position and velocities
+        prmPositionCartesianGet PositionCartesian;
+        prmVelocityCartesianGet VelocityCartesian;
+        prmPositionJointGet PositionJoint;
+        vctDynamicVectorRef<double> GimbalJointsRef;
+        
+        // mtsFunction called to broadcast the event
+        mtsFunctionWrite Button1Event, Button2Event;
+
+        prmForceCartesianSet ForceCartesian;
+
+        // local buffer used to store the position as provided
+        // by Sensable
+        typedef vctFixedSizeMatrix<double, 4, 4, VCT_COL_MAJOR> Frame4x4Type;
+        Frame4x4Type Frame4x4;
+        vctFixedSizeConstVectorRef<double, 3, Frame4x4Type::ROWSTRIDE> Frame4x4TranslationRef;
+        vctFixedSizeConstMatrixRef<double, 3, 3,
+                                   Frame4x4Type::ROWSTRIDE, Frame4x4Type::COLSTRIDE> Frame4x4RotationRef;
+        
+        // added to provide tip position to the frame manager
+        mtsFunctionRead PositionFunctionForTransformationManager;
+
+        bool Clutch;
+
+        std::string Name;
+
+        int DeviceNumber;
+    };
+
+    vctDynamicVector<DeviceData *> DevicesVector;
+    vctDynamicVector<devSensableHDHandle *> DevicesHandleVector;
     devSensableHDDriverData * Driver;
+    void SetInterfaces(const std::string & firstDeviceName,
+                       const std::string & secondDeviceName,
+                       bool firstDeviceForcesEnabled,
+                       bool secondDeviceForcesEnabled);
+    void SetInterfaces(const std::string & firstDeviceName,
+                       const std::string & secondDeviceName,
+                       const std::string & thirdDeviceName,
+                       const std::string & fourthDeviceName,
+                       bool firstDeviceForcesEnabled,
+                       bool secondDeviceForcesEnabled,
+                       bool thirdDeviceForcesEnabled,
+                       bool fourthDeviceForcesEnabled);
     void SetupInterfaces(void);
 
-public:
+private:
     /*! Default constructor, will use the default device connected and
       create and interface named "Default Arm" */
     devSensableHD(const std::string & taskName);
 
+public:
     /*! Constructor for a single arm with a user specified name.  The
       name must match the device name as defined by Sensable
-      drivers. */
+      drivers. Force output initially disabled*/
     devSensableHD(const std::string & taskName,
                   const std::string & firstDeviceName);
 
+    /*! Constructor for a single arm with a user specified name.  The
+      name must match the device name as defined by Sensable
+      drivers. Overloaded to enable/disable force output.*/
+    devSensableHD(const std::string & taskName,
+                  const std::string & firstDeviceName,
+                  bool firstDeviceForcesEnabled);
+
     /*! Constructor for two arms with a user specified names.  The
       names must match the device names as defined by Sensable
-      drivers. */
+      drivers. Force output initially disabled */
+    //@{
     devSensableHD(const std::string & taskName,
                   const std::string & firstDeviceName,
                   const std::string & secondDeviceName);
+
+    devSensableHD(const char * taskName,
+                  const char * firstDeviceName,
+                  const char * secondDeviceName);
+    //@}
+
+    /*! Constructor for two arms with a user specified names.  The
+      names must match the device names as defined by Sensable
+      drivers. Overloaded to enable/disable force output. */
+    devSensableHD(const std::string & taskName,
+                  const std::string & firstDeviceName,
+                  const std::string & secondDeviceName,
+                  bool firstDeviceForcesEnabled,
+                  bool secondDeviceForcesEnabled);
+
+    /*! Constructor for four arms with a user specified names.  The
+      names must match the device names as defined by Sensable
+      drivers. Force output initially disabled */
+    //@{
+    devSensableHD(const std::string & taskName,
+                  const std::string & firstDeviceName,
+                  const std::string & secondDeviceName,
+                  const std::string & thirdDeviceName,
+                  const std::string & fourthDeviceName);
+
+    devSensableHD(const char * taskName,
+                  const char * firstDeviceName,
+                  const char * secondDeviceName,
+                  const char * thirdDeviceName,
+                  const char * fourthDeviceName);
+    //@}
+
+    /*! Constructor for four arms with a user specified names.  The
+      names must match the device names as defined by Sensable
+      drivers. Overloaded to enable/disable force output. */
+    devSensableHD(const std::string & taskName,
+                  const std::string & firstDeviceName,
+                  const std::string & secondDeviceName,
+                  const std::string & thirdDeviceName,
+                  const std::string & fourthDeviceName,
+                  bool firstDeviceForcesEnabled,
+                  bool secondDeviceForcesEnabled,
+                  bool thirdDeviceForcesEnabled,
+                  bool fourthDeviceForcesEnabled);
+
 
     ~devSensableHD();
     void Configure(const std::string & CMN_UNUSED(filename) = "") {};
@@ -75,13 +177,14 @@ public:
 	void Start(void);
 	void Kill(void);
     void Cleanup(void) {};
+    virtual void UserControl(void) {};
 };
 
 
 CMN_DECLARE_SERVICES_INSTANTIATION(devSensableHD);
 
 
-#endif // CISST_DEV_HAS_LOPOMOCO
+#endif // CISST_DEV_HAS_SENSABLEHD
 
 #endif // _devSensableHD_h
 

@@ -146,7 +146,7 @@ bool vctThrowUnlessDimension2(PyObject * input)
 }
 
 
-template <int _dimension>
+template <vct::size_type _dimension>
 bool vctThrowUnlessDimensionN(PyObject * input)
 {
     if (PyArray_NDIM(input) != _dimension) {
@@ -171,12 +171,12 @@ bool vctThrowUnlessIsWritable(PyObject * input)
 }
 
 
-template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
+template <vct::size_type _size, vct::stride_type _stride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessCorrectVectorSize(PyObject * input,
                                      const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & target)
 {
-    const unsigned int inputSize = PyArray_DIM(input, 0);
-    const unsigned int targetSize = target.size();
+    const vct::size_type inputSize = PyArray_DIM(input, 0);
+    const vct::size_type targetSize = target.size();
     if (inputSize != targetSize) {
         std::stringstream stream;
         stream << "Input vector's size must be " << targetSize;
@@ -196,14 +196,16 @@ bool vctThrowUnlessCorrectVectorSize(PyObject * CMN_UNUSED(input),
 }
 
 
-template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
+template <vct::size_type _rows, vct::size_type _cols,
+          vct::stride_type _rowStride, vct::stride_type _colStride,
+          class _elementType, class _dataPtrType>
 bool vctThrowUnlessCorrectMatrixSize(PyObject * input,
                                      const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & target)
 {
-    const unsigned int inputRows = PyArray_DIM(input, 0);
-    const unsigned int inputCols = PyArray_DIM(input, 1);
-    const unsigned int targetRows = target.rows();
-    const unsigned int targetCols = target.cols();
+    const vct::size_type inputRows = PyArray_DIM(input, 0);
+    const vct::size_type inputCols = PyArray_DIM(input, 1);
+    const vct::size_type targetRows = target.rows();
+    const vct::size_type targetCols = target.cols();
     if (   inputRows != targetRows
         || inputCols != targetCols) {
         std::stringstream stream;
@@ -235,7 +237,7 @@ bool vctThrowUnlessOwnsData(PyObject * input)
 }
 
 
-template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
+template <vct::size_type _size, vct::stride_type _stride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessOwnsData(PyObject * CMN_UNUSED(input),
                             const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
@@ -256,7 +258,9 @@ bool vctThrowUnlessOwnsData(PyObject * input,
 }
 
 
-template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
+template <vct::size_type _rows, vct::size_type _cols,
+	  vct::stride_type _rowStride, vct::stride_type _colStride,
+	  class _elementType, class _dataPtrType>
 bool vctThrowUnlessOwnsData(PyObject * CMN_UNUSED(input),
                             const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
@@ -287,7 +291,7 @@ bool vctThrowUnlessNotReferenced(PyObject * input)
 }
 
 
-template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
+template <vct::size_type _size, vct::stride_type _stride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessNotReferenced(PyObject * CMN_UNUSED(input),
                                  const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
@@ -307,7 +311,9 @@ bool vctThrowUnlessNotReferenced(PyObject * input,
 }
 
 
-template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
+template <vct::size_type _rows, vct::size_type _cols,
+	  vct::stride_type _rowStride, vct::stride_type _colStride,
+	  class _elementType, class _dataPtrType>
 bool vctThrowUnlessNotReferenced(PyObject * CMN_UNUSED(input),
                                  const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
@@ -329,4 +335,3 @@ bool vctThrowUnlessNotReferenced(PyObject * input,
 
 
 #endif // _cisstVector_i_h
-

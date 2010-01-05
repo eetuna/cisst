@@ -22,6 +22,17 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlRenderTargets.h>
 
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
+
 #if (CISST_SVL_HAS_MIL == ON)
     #include "vidMILDevice.h"
 #endif // CISST_SVL_HAS_MIL
@@ -37,7 +48,7 @@ svlRenderTargets::svlRenderTargets()
 {
 #if (CISST_SVL_HAS_MIL == ON)
     CMILDevice *device = CMILDevice::GetInstance();
-    svlVideoCaptureSource::DeviceInfo *devlist;
+    svlFilterSourceVideoCapture::DeviceInfo *devlist;
     int devicecount = device->GetDeviceList(&devlist);
     int overlaycount = 0;
 
@@ -66,9 +77,9 @@ svlRenderTargets* svlRenderTargets::Instance()
     return &instance;
 }
 
+#if (CISST_SVL_HAS_MIL == ON)
 svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
 {
-#if (CISST_SVL_HAS_MIL == ON)
     svlRenderTargets* instance = Instance();
     if (instance->Targets.size() > deviceID) {
         if (!instance->Targets[deviceID]) {
@@ -76,15 +87,23 @@ svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
         }
         return instance->Targets[deviceID];
     }
-#endif // CISST_SVL_HAS_MIL
     return 0;
 }
+#else // CISST_SVL_HAS_MIL
+svlRenderTargetBase* svlRenderTargets::Get(unsigned int CMN_UNUSED(deviceID))
+{
+    return 0;
+}
+#endif // CISST_SVL_HAS_MIL
 
 void svlRenderTargets::Release(unsigned int deviceID)
 {
     svlRenderTargets* instance = Instance();
     if (instance->Targets.size() > deviceID) {
-        delete instance->Targets[deviceID];
+        if (instance->Targets[deviceID]) {
+            delete instance->Targets[deviceID];
+            instance->Targets[deviceID] = 0;
+        }
     }
 }
 
@@ -92,7 +111,13 @@ void svlRenderTargets::ReleaseAll()
 {
     svlRenderTargets* instance = Instance();
     for (unsigned int i = 0; i < instance->Targets.size(); i ++) {
-        delete instance->Targets[i];
+        if (instance->Targets[i]) {
+            delete instance->Targets[i];
+            instance->Targets[i] = 0;
+        }
     }
+#if (CISST_SVL_HAS_MIL == ON)
+    CMILDevice::GetInstance()->ReleaseAll();
+#endif // CISST_SVL_HAS_MIL
 }
 

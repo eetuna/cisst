@@ -33,7 +33,26 @@ void prmVelocityJointGet::SetSize(size_type size)
 
 void prmVelocityJointGet::ToStream(std::ostream & outputStream) const
 {
-    outputStream << "Velocity: " << this->VelocityMember
-                 << "\nState Index: " << this->StateIndexMember;
+    BaseType::ToStream(outputStream);
+    outputStream << " Velocity: " << this->VelocityMember;
 }
 
+void prmVelocityJointGet::ToStreamRaw(std::ostream & outputStream, const char delimiter,
+                                      bool headerOnly, const std::string & headerPrefix) const
+{
+    BaseType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    outputStream << delimiter;
+    this->VelocityMember.ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+}
+
+void prmVelocityJointGet::SerializeRaw(std::ostream & outputStream) const 
+{
+    BaseType::SerializeRaw(outputStream);
+    this->VelocityMember.SerializeRaw(outputStream);
+}
+
+void prmVelocityJointGet::DeSerializeRaw(std::istream & inputStream) 
+{
+    BaseType::DeSerializeRaw(inputStream);
+    this->VelocityMember.DeSerializeRaw(inputStream);
+}

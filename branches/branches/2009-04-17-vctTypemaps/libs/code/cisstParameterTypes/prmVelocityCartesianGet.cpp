@@ -29,10 +29,33 @@ prmVelocityCartesianGet::~prmVelocityCartesianGet()
 
 void prmVelocityCartesianGet::ToStream(std::ostream & outputStream) const
 {
-    outputStream << "Reference frame: " << this->ReferenceFrameMember
+    BaseType::ToStream(outputStream);
+    outputStream << "\nReference frame: " << this->ReferenceFrameMember
                  << "\nMoving frame: " << this->MovingFrameMember
                  << "\nLinear velocity: " << this->VelocityLinearMember
-                 << "\nAngular velocity: " << this->VelocityAngularMember
-                 << "\nState Index: " << this->StateIndexMember;
+                 << "\nAngular velocity: " << this->VelocityAngularMember;
 }
 
+void prmVelocityCartesianGet::ToStreamRaw(std::ostream & outputStream, const char delimiter,
+                                          bool headerOnly, const std::string & headerPrefix) const
+{
+    BaseType::ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix);
+    outputStream << delimiter;
+    this->VelocityLinearMember.ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix + "-linear");
+    outputStream << delimiter;
+    this->VelocityAngularMember.ToStreamRaw(outputStream, delimiter, headerOnly, headerPrefix + "-angular");
+}
+
+void prmVelocityCartesianGet::SerializeRaw(std::ostream & outputStream) const 
+{
+    BaseType::SerializeRaw(outputStream);
+    this->VelocityLinearMember.SerializeRaw(outputStream);
+    this->VelocityAngularMember.SerializeRaw(outputStream);
+}
+
+void prmVelocityCartesianGet::DeSerializeRaw(std::istream & inputStream) 
+{
+    BaseType::DeSerializeRaw(inputStream);
+    this->VelocityLinearMember.DeSerializeRaw(inputStream);
+    this->VelocityAngularMember.DeSerializeRaw(inputStream);
+}

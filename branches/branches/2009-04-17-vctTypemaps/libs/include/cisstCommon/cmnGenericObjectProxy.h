@@ -71,7 +71,7 @@ http://www.cisst.org/cisst/license.txt.
 template <class _elementType>
 class cmnGenericObjectProxy: public cmnGenericObject
 {
-    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     typedef cmnGenericObjectProxy<_elementType> ThisType;
@@ -91,6 +91,7 @@ public:
     
     inline ~cmnGenericObjectProxy(void) {}
 
+#ifndef SWIG
     /*! Conversion assignment.  This allows to assign from an object
       of the actual type without explicitly referencing the public
       data member "Data". */
@@ -105,6 +106,7 @@ public:
     inline operator value_type & (void) {
         return Data;
     }
+#endif // SWIG
 
     /*! Serialization.  Relies on the specialization, if any, of
       cmnSerializeRaw. */
@@ -120,9 +122,28 @@ public:
 
     /*! To stream method.  Uses the default << operator as defined for
         the actual type. */
-    inline virtual void ToStream(std::ostream & out) const {
-        out << Data;
+    inline virtual void ToStream(std::ostream & outputStream) const {
+        outputStream << Data;
     }
+
+    /*! To stream raw data. */
+    inline virtual void ToStreamRaw(std::ostream & outputStream, const char CMN_UNUSED(delimiter) = ' ',
+                                    bool headerOnly = false, const std::string & headerPrefix = "") const {
+        if (headerOnly) {
+            outputStream << headerPrefix << "-data";
+        } else {
+            outputStream << this->Data;
+        }
+    }
+
+    /*! From stream raw data. */
+    inline virtual bool FromStreamRaw(std::istream & inputStream, const char CMN_UNUSED(delimiter) = ' ') {
+        inputStream >> this->Data;  // assumes that operator >> is defined for _elementType
+        bool valid = inputStream.good();
+        if (!valid) inputStream.clear();
+        return valid;
+    }
+
 };
 
 /* Some basic types defined here for now, could move somewhere
@@ -135,6 +156,12 @@ CMN_DECLARE_SERVICES_INSTANTIATION(cmnLong);
 
 typedef cmnGenericObjectProxy<unsigned long> cmnULong;
 CMN_DECLARE_SERVICES_INSTANTIATION(cmnULong);
+
+typedef cmnGenericObjectProxy<long long> cmnLongLong;
+CMN_DECLARE_SERVICES_INSTANTIATION(cmnLongLong);
+
+typedef cmnGenericObjectProxy<unsigned long long> cmnULongLong;
+CMN_DECLARE_SERVICES_INSTANTIATION(cmnULongLong);
 
 typedef cmnGenericObjectProxy<int> cmnInt;
 CMN_DECLARE_SERVICES_INSTANTIATION(cmnInt);

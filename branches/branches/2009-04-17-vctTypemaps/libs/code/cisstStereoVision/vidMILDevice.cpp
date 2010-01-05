@@ -12,7 +12,6 @@
 
 --- begin cisst license - do not edit ---
 
-This software is provided "as is" under an open source license, with
 no warranty.  The complete license can be found in license.txt and
 http://www.cisst.org/cisst/license.txt.
 
@@ -21,6 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "vidMILDevice.h"
+#include <cisstOSAbstraction/osaSleep.h>
 
 using namespace std;
 
@@ -37,8 +37,7 @@ CMILDeviceRenderTarget::CMILDeviceRenderTarget(unsigned int deviceID) :
     KillThread(false),
     ThreadKilled(true)
 {
-    CMILDevice *device = CMILDevice::GetInstance();
-    device->EnableOverlay(deviceID);
+    CMILDevice::GetInstance()->EnableOverlay(deviceID, true);
 
     // Start up overlay thread
     Thread = new osaThread;
@@ -54,15 +53,14 @@ CMILDeviceRenderTarget::CMILDeviceRenderTarget(unsigned int deviceID) :
 
 CMILDeviceRenderTarget::~CMILDeviceRenderTarget()
 {
-    CMILDevice *device = CMILDevice::GetInstance();
-    device->MILReleaseDevice(DeviceID);
-
     KillThread = true;
     if (ThreadKilled == false) Thread->Wait();
     delete Thread;
+
+    CMILDevice::GetInstance()->EnableOverlay(DeviceID, false);
 }
 
-bool CMILDeviceRenderTarget::SetImage(unsigned char* buffer, bool vflip)
+bool CMILDeviceRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip)
 {
     if (DeviceID < 0) return false;
 
@@ -81,19 +79,8 @@ bool CMILDeviceRenderTarget::SetImage(unsigned char* buffer, bool vflip)
         return false;
     }
 
-    if (vflip) {
-        const int linesize = w * 3;
-        unsigned char* dest = device->MilOverlayBuffer[DeviceID];
-        buffer += (h - 1) * linesize;
-        for (int i = 0; i < h; i ++) {
-            memcpy(dest, buffer, linesize);
-            dest += linesize;
-            buffer -= linesize;
-        }
-    }
-    else {
-        memcpy(device->MilOverlayBuffer[DeviceID], buffer, w * h * b);
-    }
+    // Copy image to the Matrox buffer with translation and flip...
+    TranslateImage(buffer, device->MilOverlayBuffer[DeviceID], w * 3, h, offsetx * 3, offsety, vflip);
 
     // Signal Thread that there is a new frame to transfer
     NewFrameSignal.Raise();
@@ -130,7 +117,7 @@ unsigned int CMILDeviceRenderTarget::GetHeight()
     return h;
 }
 
-void* CMILDeviceRenderTarget::ThreadProc(void* param)
+void* CMILDeviceRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 {
     ThreadKilled = false;
     ThreadReadySignal.Raise();
@@ -149,6 +136,78 @@ void* CMILDeviceRenderTarget::ThreadProc(void* param)
 
     ThreadKilled = true;
     return this;
+}
+
+void CMILDeviceRenderTarget::TranslateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip)
+{
+    int abs_h = std::abs(trhoriz);
+    int abs_v = std::abs(trvert);
+
+    if (vflip) {
+        if (width <= abs_h || height <= abs_v) {
+            src += width * (height - 1);
+            for (int j = 0; j < height; j ++) {
+                memcpy(dest, src, width);
+                src -= width;
+                dest += width;
+            }
+            return;
+        }
+
+        int linecopysize = width - abs_h;
+        int xfrom = std::max(0, trhoriz);
+        int yfrom = std::max(0, trvert);
+        int yto = height + std::min(0, trvert);
+        int copyxoffset = std::max(0, -trhoriz);
+        int copyyoffset = std::max(0, -trvert);
+
+        if (trhoriz == 0) {
+            src += width * (height - copyyoffset - 1);
+            dest += width * yfrom;
+            for (int j = height - abs_v - 1; j >= 0; j --) {
+                memcpy(dest, src, width);
+                src -= width;
+                dest += width;
+            }
+            return;
+        }
+
+        src += width * (height - copyyoffset - 1) + copyxoffset;
+        dest += width * yfrom + xfrom;
+        for (int j = yfrom; j < yto; j ++) {
+            memcpy(dest, src, linecopysize);
+            src -= width;
+            dest += width;
+        }
+    }
+    else {
+        if (width <= abs_h || height <= abs_v) {
+            memset(dest, 0, width * height);
+            return;
+        }
+
+        if (trhoriz == 0) {
+            memcpy(dest + std::max(0, trvert) * width,
+                   src + std::max(0, -trvert) * width,
+                   width * (height - abs_v));
+            return;
+        }
+
+        int linecopysize = width - abs_h;
+        int xfrom = std::max(0, trhoriz);
+        int yfrom = std::max(0, trvert);
+        int yto = height + std::min(0, trvert);
+        int copyxoffset = std::max(0, -trhoriz);
+        int copyyoffset = std::max(0, -trvert);
+
+        src += width * copyyoffset + copyxoffset;
+        dest += width * yfrom + xfrom;
+        for (int j = yfrom; j < yto; j ++) {
+            memcpy(dest, src, linecopysize);
+            src += width;
+            dest += width;
+        }
+    }
 }
 
 
@@ -184,8 +243,8 @@ CMILDevice::CMILDevice() :
     MilDigitizer[0] = MilDigitizer[1] = M_NULL;
     MilDisplayImage[0] = MilDisplayImage[1] = M_NULL;
     MilOverlayImage[0] = MilOverlayImage[1] = M_NULL;
-    MilCaptureEnabled[0] = MilCaptureEnabled[0] = false;
-    MilOverlayEnabled[0] = MilOverlayEnabled[0] = false;
+    MilCaptureEnabled[0] = MilCaptureEnabled[1] = false;
+    MilOverlayEnabled[0] = MilOverlayEnabled[1] = false;
     MilDeviceID[0] = M_DEV0;
     MilDeviceID[1] = M_DEV1;
     MilDeviceInitialized[0] = MilDeviceInitialized[1] = false;
@@ -197,10 +256,7 @@ CMILDevice::CMILDevice() :
 
 CMILDevice::~CMILDevice()
 {
-    MILReleaseDevice(0);
-    MILReleaseDevice(1);
-    MILReleaseApplication();
-    Release();
+    ReleaseAll();
 }
 
 CMILDevice* CMILDevice::GetInstance()
@@ -209,9 +265,17 @@ CMILDevice* CMILDevice::GetInstance()
     return &instance;
 }
 
-svlVideoCaptureSource::PlatformType CMILDevice::GetPlatformType()
+void CMILDevice::ReleaseAll()
 {
-    return svlVideoCaptureSource::MatroxImaging;
+    Release();
+    MILReleaseDevice(0);
+    MILReleaseDevice(1);
+    MILReleaseApplication();
+}
+
+svlFilterSourceVideoCapture::PlatformType CMILDevice::GetPlatformType()
+{
+    return svlFilterSourceVideoCapture::MatroxImaging;
 }
 
 int CMILDevice::SetStreamCount(unsigned int numofstreams)
@@ -233,7 +297,7 @@ int CMILDevice::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-int CMILDevice::GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo)
+int CMILDevice::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     if (deviceinfo == 0 || Initialized) return SVL_FAIL;
 
@@ -263,11 +327,11 @@ int CMILDevice::GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo)
     // CALLER HAS TO FREE UP THIS ARRAY!!!
     if (MILNumberOfDevices > 0) {
 
-        deviceinfo[0] = new svlVideoCaptureSource::DeviceInfo[MILNumberOfDevices];
+        deviceinfo[0] = new svlFilterSourceVideoCapture::DeviceInfo[MILNumberOfDevices];
 
         for (i = 0; i < MILNumberOfDevices; i ++) {
             // platform
-            deviceinfo[0][i].platform = svlVideoCaptureSource::MatroxImaging;
+            deviceinfo[0][i].platform = svlFilterSourceVideoCapture::MatroxImaging;
 
             // id
             deviceinfo[0][i].id = devid[i];
@@ -362,7 +426,7 @@ bool CMILDevice::IsRunning()
     return Running;
 }
 
-int CMILDevice::SetDevice(int devid, int inid, unsigned int videoch)
+int CMILDevice::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     DeviceID[videoch] = devid;
@@ -382,14 +446,14 @@ int CMILDevice::GetHeight(unsigned int videoch)
     return ImageBuffer[videoch]->GetHeight();
 }
 
-int CMILDevice::GetFormatList(unsigned int deviceid, svlVideoCaptureSource::ImageFormat **formatlist)
+int CMILDevice::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
 {
     if (static_cast<int>(deviceid) >= MILNumberOfDevices || formatlist == 0) return SVL_FAIL;
 
-    formatlist[0] = new svlVideoCaptureSource::ImageFormat[1];
+    formatlist[0] = new svlFilterSourceVideoCapture::ImageFormat[1];
     formatlist[0][0].width = Width[deviceid];
     formatlist[0][0].height = Height[deviceid];
-    formatlist[0][0].colorspace = svlVideoCaptureSource::PixelRGB8;
+    formatlist[0][0].colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
     formatlist[0][0].framerate = -1.0;
@@ -397,13 +461,13 @@ int CMILDevice::GetFormatList(unsigned int deviceid, svlVideoCaptureSource::Imag
     return 1;
 }
 
-int CMILDevice::GetFormat(svlVideoCaptureSource::ImageFormat& format, unsigned int videoch)
+int CMILDevice::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
 {
     if (DeviceID[videoch] >= MILNumberOfDevices) return SVL_FAIL;
 
     format.width = Width[DeviceID[videoch]];
     format.height = Height[DeviceID[videoch]];
-    format.colorspace = svlVideoCaptureSource::PixelRGB8;
+    format.colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     format.rgb_order = true;
     format.yuyv_order = false;
     format.framerate = -1.0;
@@ -423,17 +487,17 @@ bool CMILDevice::IsOverlaySupported(int devid)
     return OverlaySupported[devid];
 }
 
-bool CMILDevice::EnableCapture(int devid)
+bool CMILDevice::EnableCapture(int devid, bool enable)
 {
     if (devid < 0 || devid > 1) return false;
-    if (CaptureSupported[devid]) CaptureEnabled[devid] = true;
+    if (CaptureSupported[devid]) CaptureEnabled[devid] = enable;
     return CaptureEnabled[devid];
 }
 
-bool CMILDevice::EnableOverlay(int devid)
+bool CMILDevice::EnableOverlay(int devid, bool enable)
 {
     if (devid < 0 || devid > 1) return false;
-    if (OverlaySupported[devid]) OverlayEnabled[devid] = true;
+    if (OverlaySupported[devid]) OverlayEnabled[devid] = enable;
     return OverlayEnabled[devid];
 }
 
@@ -612,10 +676,18 @@ void CMILDevice::MILReleaseDevice(int device)
         MilCaptureParams[device].MilFrames = 0;
     }
 
-    if (MilDisplayImage[device] != M_NULL) MbufFree(MilDisplayImage[device]);
-    if (MilDisplay[device] != M_NULL) MdispFree(MilDisplay[device]);
-    if (MilDigitizer[device] != M_NULL) MdigFree(MilDigitizer[device]);
-    if (MilSystem[device] != M_NULL) MsysFree(MilSystem[device]);
+        if (MilDisplay[device] != M_NULL && MilDisplayImage[device] != M_NULL)
+    MdispDeselect(MilDisplay[device], MilDisplayImage[device]);
+        if (MilDigitizer[device] != M_NULL)
+    MdigHalt(MilDigitizer[device]);
+        if (MilDisplayImage[device] != M_NULL)
+    MbufFree(MilDisplayImage[device]);
+        if (MilDigitizer[device] != M_NULL)
+    MdigFree(MilDigitizer[device]);
+        if (MilDisplay[device] != M_NULL)
+    MdispFree(MilDisplay[device]);
+        if (MilSystem[device] != M_NULL)
+    MsysFree(MilSystem[device]);
 
 	if (MilOverlayBuffer[device]) delete [] MilOverlayBuffer[device];
     MilOverlayBuffer[device] = 0;
@@ -642,15 +714,14 @@ void CMILDevice::MILReleaseApplication()
 /*************************************/
 
 
-MIL_INT MFTYPE MILProcessingCallback(MIL_INT HookType, MIL_ID HookId, void MPTYPE *HookDataPtr)
+MIL_INT MFTYPE MILProcessingCallback(MIL_INT CMN_UNUSED(HookType), MIL_ID HookId, void MPTYPE *HookDataPtr)
 {
-	MIL_INT milbufferindex;
 	CMILDevice::MILCaptureParameters *milcaptureparams = (CMILDevice::MILCaptureParameters*)HookDataPtr;
 
-	// Get modified buffer index
-	MdigGetHookInfo(HookId, M_MODIFIED_BUFFER+M_BUFFER_INDEX, &milbufferindex);
-
     if (milcaptureparams->ImageBuffer) {
+        MIL_INT milbufferindex;
+	    // Get modified buffer index
+	    MdigGetHookInfo(HookId, M_MODIFIED_BUFFER+M_BUFFER_INDEX, &milbufferindex);
     	MbufGetColor(milcaptureparams->MilFrames[milbufferindex],
     				 M_PACKED+M_RGB24,
     				 M_ALL_BANDS,

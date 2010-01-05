@@ -15,20 +15,21 @@ using namespace std;
 int main(void)
 {
     // Log configuration
-    cmnLogger::SetLoD(10);
-    cmnLogger::GetMultiplexer()->AddChannel(cout, 10);
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(cout, CMN_LOG_LOD_VERY_VERBOSE);
     cmnLogger::HaltDefaultLog();
-    cmnLogger::ResumeDefaultLog(10);
+    cmnLogger::ResumeDefaultLog(CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
     osaThreadedLogFile threadedLog("example3-");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, 10);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("appTask", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create our tasks
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    robotLowLevel * robotTask = new robotLowLevel("RobotControl", 100 * cmn_ms);
-    monitorTask * monitor = new monitorTask("Monitor", 50 * cmn_ms);
-    appTask * appTaskControl1 = new appTask("ControlRobot1", "Robot1", "Robot2", 100 * cmn_ms);
-    appTask * appTaskControl2 = new appTask("ControlRobot2", "Robot2", "Robot1", 300 * cmn_ms);
+    robotLowLevel * robotTask = new robotLowLevel("RobotControl", 50 * cmn_ms);
+    monitorTask * monitor = new monitorTask("Monitor", 20 * cmn_ms);
+    appTask * appTaskControl1 = new appTask("ControlRobot1", "Robot1", "Robot2", 50 * cmn_ms);
+    appTask * appTaskControl2 = new appTask("ControlRobot2", "Robot2", "Robot1", 100 * cmn_ms);
 
     // add all tasks
     taskManager->AddTask(robotTask);
@@ -49,15 +50,24 @@ int main(void)
     taskManager->Connect("ControlRobot2", "ObservedRobot",
                          "RobotControl", "Robot1Observer");
 
+    // display a graph of connections
     std::ofstream dotFile("example3.dot"); 
     taskManager->ToStreamDot(dotFile);
     dotFile.close();
 
+    // collect all state data in csv file
+    mtsCollectorState * collector =
+        new mtsCollectorState("RobotControl", mtsCollectorBase::COLLECTOR_LOG_FORMAT_CSV);
+    collector->AddSignal(); // all signals
+    taskManager->AddTask(collector);
+
     taskManager->CreateAll();
     taskManager->StartAll();
 
+    collector->StartCollection(0.0 * cmn_s); // start now
+
     // Loop until both tasks are closed
-    while (!(appTaskControl1->GetExitFlag() && appTaskControl2->GetExitFlag())) {
+    while (!(appTaskControl1->IsTerminated() && appTaskControl2->IsTerminated())) {
         osaSleep(0.1 * cmn_s); // in seconds
     }
     taskManager->KillAll();
@@ -68,6 +78,7 @@ int main(void)
     while (!appTaskControl1->IsTerminated()) osaTime::Sleep(PeriodRobot);
     while (!appTaskControl2->IsTerminated()) osaTime::Sleep(PeriodRobot);
     */
+    taskManager->Cleanup();
     return 0;
 }
 

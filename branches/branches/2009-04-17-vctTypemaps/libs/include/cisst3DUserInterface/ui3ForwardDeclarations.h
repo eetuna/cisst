@@ -26,15 +26,21 @@ http://www.cisst.org/cisst/license.txt.
 class ui3BehaviorBase;
 class ui3CursorBase;
 class ui3CursorSphere;
+class ui3ImagePlane;
 class ui3Manager;
+class ui3ManagerCVTKRendererProc;
 class ui3MasterArm;
 class ui3MenuBar;
 class ui3MenuButton;
 class ui3SceneManager;
+class ui3Selectable;
+class ui3SlaveArm;
 class ui3UIThread;
 class ui3VideoInterfaceFilter;
+class ui3VisibleList;
 class ui3VisibleObject;
 class ui3VTKRenderer;
+class ui3Widget3D;
 
 
 #endif // _ui3ForwardDeclarations_h

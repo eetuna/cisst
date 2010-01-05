@@ -45,7 +45,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 class CISST_EXPORT mtsTaskPeriodic: public mtsTaskContinuous
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsTaskManager;
 
@@ -100,8 +100,11 @@ public:
               in mtsTaskContinuous regarding newThread parameter.
 
 	 */
-	mtsTaskPeriodic(const std::string & name, double periodicityInSeconds, bool isHardRealTime = false,
-                    unsigned int sizeStateTable = 256, bool newThread = true);
+    mtsTaskPeriodic(const std::string & name, 
+                    double periodicityInSeconds, 
+                    bool isHardRealTime = false,
+                    unsigned int sizeStateTable = 256, 
+                    bool newThread = true);
 
 	/*! Default Destructor. */
 	virtual ~mtsTaskPeriodic();
@@ -119,8 +122,7 @@ public:
 
     /*! Return true if thread is periodic.  Currently, returns true if
       the thread was created with a period > 0. */
-    bool IsPeriodic(void) const { return Period > 0;
-    }
+    bool IsPeriodic(void) const { return Period > 0; }
 
 };
 

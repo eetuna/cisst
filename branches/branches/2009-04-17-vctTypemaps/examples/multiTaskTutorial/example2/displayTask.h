@@ -10,14 +10,13 @@
 
 class displayTask: public mtsTaskPeriodic {
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    volatile bool ExitFlag;
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     double StartValue;
     
  protected:
-    cmnDouble Data;
-    cmnDouble Amplitude;
-    cmnDouble TriggerValue;
+    mtsDouble Data;
+    mtsDouble Amplitude;
+    mtsDouble TriggerValue;
     volatile bool WaitingForTrigger;
 
     struct GeneratorStruct {
@@ -33,7 +32,7 @@ class displayTask: public mtsTaskPeriodic {
     } Clock;
 
     // event handler
-    void HandleTrigger(const cmnDouble & value);
+    void HandleTrigger(const mtsDouble & value);
 
     displayUI UI;
     
@@ -44,8 +43,6 @@ class displayTask: public mtsTaskPeriodic {
     void Startup(void);
     void Run(void);
     void Cleanup(void) {};
-
-    bool GetExitFlag (void) { return ExitFlag;}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(displayTask);

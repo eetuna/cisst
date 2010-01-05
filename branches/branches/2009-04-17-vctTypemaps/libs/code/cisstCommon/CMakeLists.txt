@@ -30,6 +30,7 @@ SET(SOURCE_FILES
     cmnPortability.cpp
     cmnRandomSequence.cpp
     cmnSerializer.cpp
+    cmnStreamRawParser.cpp
     cmnPath.cpp
     cmnPrintf.cpp
     cmnTokenizer.cpp
@@ -38,6 +39,7 @@ SET(SOURCE_FILES
 
 # all header files
 SET(HEADER_FILES
+    cmnAccessorMacros.h
     cmnAssert.h
     cmnCallbackStreambuf.h
     cmnClassRegister.h
@@ -51,17 +53,22 @@ SET(HEADER_FILES
     cmnGenericObject.h
     cmnGenericObjectProxy.h
     cmnGetChar.h
+    cmnLogLoD.h
     cmnLogger.h
     cmnLODMultiplexerStreambuf.h
     cmnLODOutputMultiplexer.h
     cmnMultiplexerStreambuf.h
     cmnMultiplexerStreambufProxy.h
+    cmnNamedMap.h
     cmnObjectRegister.h
     cmnOutputMultiplexer.h
     cmnPortability.h
     cmnPrintf.h
     cmnRandomSequence.h
+    cmnRequiresDeepCopy.h
     cmnSerializer.h
+    cmnStreamRawParser.h
+    cmnStrings.h
     cmnPath.h
     cmnThrow.h
     cmnTokenizer.h
@@ -74,6 +81,17 @@ IF(CISST_HAS_XML)
   SET(SOURCE_FILES ${SOURCE_FILES} cmnXMLPath.cpp)
   SET(HEADER_FILES ${HEADER_FILES} cmnXMLPath.h)
 ENDIF(CISST_HAS_XML)
+
+# Qt widgets
+if(CISST_HAS_QT)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  set(SOURCE_FILES
+      ${SOURCE_FILES}
+      cmnLoggerQWidget.cpp)
+  set(HEADER_FILES
+      ${HEADER_FILES}
+      cmnLoggerQWidget.h)
+endif(CISST_HAS_QT)
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 

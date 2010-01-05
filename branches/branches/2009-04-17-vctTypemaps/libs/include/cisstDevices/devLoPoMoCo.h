@@ -27,14 +27,7 @@
 #define _devLoPoMoCo_h
 
 #include <cisstDevices/devConfig.h>
-
-
-#include <cisstCommon/cmnGenericObject.h>
-#include <cisstMultiTask/mtsDevice.h>
-#include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsVector.h>
-#include <cisstMultiTask/mtsTask.h>
-
+#include <cisstMultiTask.h>
 #include <vector>
 #include <string>
 #include <ostream>
@@ -48,7 +41,7 @@ class devLoPoMoCoBoardIO;
  */
 class devLoPoMoCo: public mtsDevice {
 
-	CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+	CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 	/*! A pointer to the low level object that converts make bit level
 	 operation more readable. */
@@ -161,6 +154,7 @@ protected:
 	 the string StartPotFeedbackConv in the PreReadMap. */
 	//mtsCommandBase::ReturnType StartPotFeedbackConv(void);
 	void StartPotFeedbackConv(void);
+	void StartPotFeedbackConvFast(void);
 
 	/*! Enable all axis on this board
 	 */
@@ -263,15 +257,15 @@ protected:
 
 	/*! Enable the specified axis
 	 */
-	void Enable(const cmnShort & axisIndex);
+	void Enable(const mtsShort & axisIndex);
 
 	/*! Disable the specified axis
 	 */
-	void Disable(const cmnShort & axisIndex);
+	void Disable(const mtsShort & axisIndex);
 
 	/*! Reset Encoder
 	 */
-	void ResetEncoders(const cmnShort & axisIndex);
+	void ResetEncoders(const mtsShort & axisIndex);
 
 	/* set digital output */
 	void SetDigitalOutput(const mtsIntVec & DigitalOutput);

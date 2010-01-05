@@ -24,7 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _winWin32_h
 #define _winWin32_h
 
-#include <cisstStereoVision/svlImageWindow.h>
+#include <cisstStereoVision/svlFilterImageWindow.h>
 
 #include <windows.h>
 
@@ -41,15 +41,18 @@ public:
     virtual int Show(bool show = true);
     virtual void Destroy();
     HWND GetHandle() { return hWnd; }
+    void GetTitle(std::string & title);
+    void SetTitle(const std::string title);
 
 private:
+    std::string Title;
     HWND hWnd;
     unsigned int ID;
     int ClientOffsetX;
     int ClientOffsetY;
 };
 
-class CWin32WindowManager : public svlWindowManagerBase
+class CWin32WindowManager : public CWindowManagerBase
 {
 public:
     CWin32WindowManager(unsigned int numofwins);
@@ -57,7 +60,10 @@ public:
 
     int DoModal(bool show, bool fullscreen);
     void Show(bool show, int winid);
-    void DrawImageThreadSafe(unsigned char* buffer, unsigned int buffersize, unsigned int winid);
+    void LockBuffers();
+    void UnlockBuffers();
+    void SetImageBuffer(unsigned char *buffer, unsigned int buffersize, unsigned int winid);
+    void DrawImages();
     void Destroy();
     void DestroyThreadSafe();
     int FilterMessage(unsigned int winid, MSG* msg);
@@ -72,7 +78,7 @@ private:
     unsigned char** ImageBuffers;
     unsigned int* ImageBufferSizes;
     BITMAPINFO* BitmapInfos;
-    osaCriticalSection* csImage;
+    osaCriticalSection csImage;
 };
 
 #endif // _winWin32_h

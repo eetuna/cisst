@@ -28,37 +28,36 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmPositionCartesianGet_h
 #define _prmPositionCartesianGet_h
 
-
-#include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstParameterTypes/prmTransformationBase.h>
 #include <cisstParameterTypes/prmTransformationManager.h>
-#include <cisstParameterTypes/prmTypes.h>
-#include <cisstParameterTypes/prmMacros.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
 
 /*! Cartesian position get command argument */
-class CISST_EXPORT prmPositionCartesianGet: public cmnGenericObject
+class CISST_EXPORT prmPositionCartesianGet: public mtsGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
+    /*! Base type */
+    typedef mtsGenericObject BaseType;
+
     /*! default constructor */
     inline prmPositionCartesianGet(void):
+        BaseType(),
         MovingFrameMember(0),
-        ReferenceFrameMember(0)
+        ReferenceFrameMember(0),
+        PositionMember()
     {}
     
     /*! constructor with all parameters */
     inline prmPositionCartesianGet(const prmTransformationBasePtr & movingFrame, 
                                    const prmTransformationBasePtr & referenceFrame, 
-                                   const prmCartesianPosition & position,
-                                   const mtsStateIndex & stateIndex):
+                                   const vctFrm3 & position):
         MovingFrameMember(movingFrame),
         ReferenceFrameMember(referenceFrame),
-        PositionMember(position),
-        StateIndexMember(stateIndex)
+        PositionMember(position)
     {}
     
     /*!destructor
@@ -70,7 +69,7 @@ class CISST_EXPORT prmPositionCartesianGet: public cmnGenericObject
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, MovingFrame);
     //@}
 
 
@@ -78,15 +77,16 @@ class CISST_EXPORT prmPositionCartesianGet: public cmnGenericObject
         position.  This is defined by a node in the transformation
         tree. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(prmTransformationBasePtr, ReferenceFrame);
     //@}
 
 
     /*! Set and Get methods for position */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmCartesianPosition, Position);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctFrm3, Position);
     //@}
 
+ public:
 
     /*! Set moving to a node in the transformation tree.  The actual
       position is computed with respect to the reference frame carried
@@ -99,16 +99,18 @@ class CISST_EXPORT prmPositionCartesianGet: public cmnGenericObject
     } 
 
     
-    /*! Set and Get methods for state index.  Current state index, as
-      provided for writer of the task providing the position
-      data. */
-    //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
-
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 
+    /*! To stream raw data. */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const;
+
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const;
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream);
 
 }; // _prmPositionCartesianGet_h
 

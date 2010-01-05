@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
@@ -30,6 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaMutex.h>
+
+#include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsStateTable.h>
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
@@ -38,15 +40,19 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsDevice.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
-#include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsHistory.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsTaskInterface.h>
+
+#if CISST_MTS_HAS_ICE
+#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+#endif 
 
 #include <set>
 #include <map>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
-
 
 /*!
   \ingroup cisstMultiTask
@@ -57,11 +63,13 @@ http://www.cisst.org/cisst/license.txt.
   It is derived from mtsDevice, so it also contains the provided and required
   interfaces, with their lists of commands.
 */
+
 class CISST_EXPORT mtsTask: public mtsDevice
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsTaskManager;
+    //friend class mtsCollectorState;
 
 public:
     typedef mtsDevice BaseType;
@@ -99,11 +107,20 @@ protected:
     /*! The task state. */
     TaskStateType TaskState;
 
-    /*! Mutex used when changing task states. */
+    /*! Mutex used when changing task states. Do not change this directly, use the 
+        ChangeState method instead. */
     osaMutex StateChange;
+
+    /*! Signal for caller to wait on task state changes. */
+    osaThreadSignal StateChangeSignal;
 
 	/*! The state data table object to store the states of the task. */
 	mtsStateTable StateTable;
+    
+    /*! Map of state tables, includes the default StateTable under the
+      name "StateTable" */
+    typedef cmnNamedMap<mtsStateTable> StateTableMapType;
+    StateTableMapType StateTables;
 
 	/*! True if the task took more time to do computation than allocated time.
 	  */
@@ -113,18 +130,7 @@ protected:
     void *ThreadStartData;
 
     /*! The return value for RunInternal. */
-    void *retValue;
-
-    /*! Typedef for a map of connected interfaces (receiving commands). */
-    typedef mtsMap<mtsRequiredInterface> RequiredInterfacesMapType;
-    
-    RequiredInterfacesMapType RequiredInterfaces; // Interfaces we can send commands to
-
-    /********************* Methods to connect interfaces  *****************/
-
-    bool ConnectRequiredInterface(const std::string & requiredInterfaceName,
-                                   mtsDeviceInterface * providedInterface);
-
+    void * ReturnValue;
 
     /********************* Methods that call user methods *****************/
 
@@ -167,12 +173,23 @@ protected:
         Otherwise, use osaSleep. */
     void Sleep(double timeInSeconds);
 
+    /*! Return the current tick count. */
+    mtsStateIndex::TimeTicksType GetTick(void) const;
+
     /*********** Methods for thread start data and return values **********/
 
     /*! Save any 'user data' that was passed to the thread start routine. */
-    virtual void SaveThreadStartData(void *data) { ThreadStartData = data; }
+    virtual void SaveThreadStartData(void * data);
 
-    virtual void SetThreadReturnValue(void *ret) { retValue = ret; }
+    virtual void SetThreadReturnValue(void * returnValue);
+
+    /*********** Methods for changing task state **************************/
+
+    /*! Helper function to change the task state. */
+    void ChangeState(TaskStateType newState);
+
+    /*! Helper function to wait on a state change, with specified timeout in seconds. */
+    bool WaitForState(TaskStateType desiredState, double timeout);
 
 public:
     /********************* Task constructor and destructor *****************/
@@ -193,10 +210,11 @@ public:
 
         \sa mtsDevice, mtsTaskContinuous, mtsTaskPeriodic, mtsTaskFromCallback
 	 */
-	mtsTask(const std::string & name, unsigned int sizeStateTable = 256);
+    mtsTask(const std::string & name, 
+            unsigned int sizeStateTable = 256);
 
-	/*! Default Destructor. */
-	virtual ~mtsTask();
+    /*! Default Destructor. */
+    virtual ~mtsTask();
 
     /********************* Methods to be defined by user *****************/
     /* The Run, Startup, and Cleanup methods could be made protected.    */
@@ -261,78 +279,18 @@ public:
     /*! Return the average period. */
     double GetAveragePeriod(void) const { return StateTable.GetAveragePeriod(); }
 
+    /*! Return the name of this state table. */
+    const std::string GetDefaultStateTableName(void) const { return StateTable.GetName(); }
+
+    /*! Return the pointer to the default state table or a specific one if a name is provided. */
+    mtsStateTable * GetStateTable(const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME) {
+        return this->StateTables.GetItem(stateTableName, CMN_LOG_LOD_INIT_ERROR);
+    }
+
     /********************* Methods to manage interfaces *******************/
 	
     /* documented in base class */
     mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
-
-    /*! Add a required interface.  This interface will later on be
-      connected to another task and use the provided interface of the
-      other task.  The required interface created also contains a list
-      of event handlers to be used as observers.
-      PK: should move this to base class (mtsDevice). */
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
-
-    /*! Provide a list of existing required interfaces (by names) */ 
-    std::vector<std::string> GetNamesOfRequiredInterfaces(void) const;
-    
-    /*! Associate an event (defined by its name) to a command object
-      (i.e. handler defined by name) for a given required interface.
-      This method can only work if the required interface has been
-      connected to a provided interface from another task. */
-    bool CISST_DEPRECATED AddObserverToRequiredInterface(const std::string & requiredInterfaceName,
-                                                         const std::string & eventName,
-                                                         const std::string & handlerName);
-
-    /*! Get a pointer on the provided interface that has been
-      connected to a given required interface (defined by its name).
-      This method will return a null pointer if the required interface
-      has not been connected.  See mtsTaskManager::Connect. */
-    mtsDeviceInterface * GetProvidedInterfaceFor(const std::string & requiredInterfaceName) {
-        mtsRequiredInterface *requiredInterface = RequiredInterfaces.GetItem(requiredInterfaceName, 3);
-        return requiredInterface ? requiredInterface->GetConnectedInterface() : 0;
-    }
-
-    /*! Get the required interface */
-    mtsRequiredInterface * GetRequiredInterface(const std::string & requiredInterfaceName) {
-        return RequiredInterfaces.GetItem(requiredInterfaceName);
-    }
-
-    /********************* Methods to manage event handlers *******************/
-	
-    /*! Add a write command to an event handler interface associated
-      to a required interface. */
-    template <class __classType, class __argumentType>
-    CISST_DEPRECATED
-    mtsCommandWriteBase * AddEventHandlerWrite(void (__classType::*action)(const __argumentType &),
-                                               __classType * classInstantiation,
-                                               const std::string & requiredInterfaceName,
-                                               const std::string & commandName,
-                                               const __argumentType & argumentModel = __argumentType(),
-                                               bool queued = true);
-    
-    /*! Get the command defined as user handler based on the required
-      interface name and the command name. */
-    CISST_DEPRECATED
-    mtsCommandWriteBase * GetEventHandlerWrite(const std::string & requiredInterfaceName,
-                                               const std::string & commandName);
-
-    /*! Add a void command to an event handler interface associated
-      to a required interface. */
-    template <class __classType>
-    CISST_DEPRECATED
-    mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*action)(void),
-                                             __classType * classInstantiation,
-                                             const std::string & requiredInterfaceName,
-                                             const std::string & commandName,
-                                             bool queued = true);
-    
-    /*! Get the command defined as user handler based on the required
-      interface name and the command name. */
-    CISST_DEPRECATED
-    mtsCommandVoidBase * GetEventHandlerVoid(const std::string & requiredInterfaceName,
-                                             const std::string & commandName);
 
     
     /********************* Methods for task synchronization ***************/
@@ -369,99 +327,99 @@ public:
 	/*! Reset overran period flag. */
     virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
 
+    /*! Send a human readable description of the device. */
+    void ToStream(std::ostream & outputStream) const;
+
+#if CISST_MTS_HAS_ICE
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation Using ICE
+    //-------------------------------------------------------------------------
+protected:
+    /*! Task interface communicator ID */
+    const std::string TaskInterfaceCommunicatorID;
+
+    /*! Typedef to manage provided interface proxies of which type is 
+        mtsDeviceInterfaceProxyServer. This map is valid only if this task acts 
+        as a server task (or if this task has provided interfaces). */
+    typedef cmnNamedMap<mtsDeviceInterfaceProxyServer> ProvidedInterfaceProxyMapType;
+    ProvidedInterfaceProxyMapType ProvidedInterfaceProxies;
+
+    /*! Typedef to manage required interface proxies of which type is 
+        mtsDeviceInterfaceProxyClient. This map is valid only if this task acts 
+        as a client task (or if this task has required interfaces). */
+    typedef cmnNamedMap<mtsDeviceInterfaceProxyClient> RequiredInterfaceProxyMapType;
+    RequiredInterfaceProxyMapType RequiredInterfaceProxies;
+
+    /*! Assign a new port number for a new device interface proxy (see mtsProxyBaseCommon.h) */
+    const std::string GetNewPortNumberAsString(const unsigned int id);
+
+public:
+    /*! Run proxies for required interfaces. Only a server task can call this method 
+        because a client task has actual required interfaces while a server task has 
+        actual provided interfaces.
+        Note that all provided interface proxy objects in all tasks are created all at 
+        once because they should act as a server; they have to listen the client's
+        connection. */
+    void RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
+                                   const std::string & serverTaskIP);
+
+    /*! Run proxies for required interfaces. only a server task can call this method 
+        because a client task has actual required interfaces while a server task has 
+        actual provided interfaces.
+        In contrast to RunProvidedInterfaceProxy() method, when this method is called, 
+        only one required interface proxy object is created. Then it connects to the
+        provided interface proxy specified by the two arguments. */
+    void RunRequiredInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
+                                   const std::string & requiredInterfaceName,
+                                   const std::string & endpointInfo, 
+                                   const std::string & communicatorID);
+
+    /*! Getters */
+    mtsDeviceInterfaceProxyServer * GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const;
+    mtsDeviceInterfaceProxyClient * GetRequiredInterfaceProxy(const std::string & requiredInterfaceName) const;
+
+    //-------------------------------------------
+    //  Send Methods
+    //-------------------------------------------
+    /*! Get the information on the provided interface as a set of string through
+        required interface proxy. */
+    bool SendGetProvidedInterfaceInfo(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & providedInterfaceName,
+        mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
+
+    /*! Create server-side proxy objects. */
+    bool SendCreateClientProxies(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
+
+    /*! Connect the actual provided interface with the required interface proxy 
+        at server side. */
+    bool SendConnectServerSide(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & userTaskName, const std::string & requiredInterfaceName,
+        const std::string & resourceTaskName, const std::string & providedInterfaceName);
+
+    /*! Update event handler proxy id at server side and enable them if used. 
+        Proxy id is replaced with a pointer to an actual event generator command 
+        object at client side. */
+    bool SendUpdateEventHandlerId(
+        const std::string & requiredInterfaceProxyName,
+        const std::string & serverTaskProxyName,
+        const std::string & clientTaskProxyName);
+
+    /*! Update command id at client side. Command id is replaced with a pointer
+        to a function proxy at server side. */
+    void SendGetCommandId(const std::string & requiredInterfaceName, 
+                          const std::string & serverTaskProxyName,
+                          const std::string & clientTaskProxyName,
+                          const std::string & providedInterfaceName);
+#endif // CISST_MTS_HAS_ICE
 };
 
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTask)
-
-
-#include <cisstMultiTask/mtsTaskInterface.h>
-
-// these two methods are defined in mtsDevice.h but implemented here
-// as they require the definition of mtsTaskInterface
-template <class __classType>
-inline mtsCommandVoidBase * mtsDevice::AddCommandVoid(void (__classType::*action)(void),
-                                                      __classType * classInstantiation,
-                                                      const std::string & providedInterfaceName,
-                                                      const std::string & commandName) {
-    mtsDeviceInterface * deviceInterface = this->GetProvidedInterface(providedInterfaceName);
-    if (deviceInterface) {
-        mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(deviceInterface);
-        if (taskInterface) {
-            return taskInterface->AddCommandVoid(action, classInstantiation, commandName);
-        } else {
-            return deviceInterface->AddCommandVoid(action, classInstantiation, commandName);
-        }
-    }
-    CMN_LOG_CLASS(1) << "AddCommandVoid cannot find an interface named " << providedInterfaceName << std::endl;
-    return 0;
-}
-
-inline mtsCommandVoidBase * mtsDevice::AddCommandVoid(void (*action)(void),
-                                                      const std::string & providedInterfaceName,
-                                                      const std::string & commandName) {
-    mtsDeviceInterface * deviceInterface = this->GetProvidedInterface(providedInterfaceName);
-    if (deviceInterface) {
-        mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(deviceInterface);
-        if (taskInterface) {
-            return taskInterface->AddCommandVoid(action, commandName);
-        } else {
-            return deviceInterface->AddCommandVoid(action, commandName);
-        }
-    }
-    CMN_LOG_CLASS(1) << "AddCommandVoid cannot find an interface named " << providedInterfaceName << std::endl;
-    return 0;
-}
-
-template <class __classType, class __argumentType>
-inline mtsCommandWriteBase * mtsDevice::AddCommandWrite(void (__classType::*action)(const __argumentType &),
-                                                        __classType * classInstantiation,
-                                                        const std::string & providedInterfaceName,
-                                                        const std::string & commandName,
-                                                        const __argumentType & argumentModel) {
-    mtsDeviceInterface * deviceInterface = this->GetProvidedInterface(providedInterfaceName);
-    if (deviceInterface) {
-        mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(deviceInterface);
-        if (taskInterface) {
-            return taskInterface->AddCommandWrite(action, classInstantiation, commandName, argumentModel);
-        } else {
-            return deviceInterface->AddCommandWrite(action, classInstantiation, commandName, argumentModel);
-        }
-    }
-    CMN_LOG_CLASS(1) << "AddCommandWrite cannot find an interface named " << providedInterfaceName << std::endl;
-    return 0;
-}
-
-// this method is defined in this header file
-template <class __classType, class __argumentType>
-inline mtsCommandWriteBase * mtsTask::AddEventHandlerWrite(void (__classType::*action)(const __argumentType &),
-                                                           __classType * classInstantiation,
-                                                           const std::string & requiredInterfaceName,
-                                                           const std::string & commandName,
-                                                           const __argumentType & argumentModel,
-                                                           bool queued)  {
-    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceName);
-    if (requiredInterface) {
-        return requiredInterface->AddEventHandlerWrite(action, classInstantiation, commandName, argumentModel, queued);
-    }
-    CMN_LOG_CLASS(1) << "AddEventHandlerWrite: cannot find an interface named " << requiredInterfaceName << std::endl;
-    return 0;
-}
-
-// this method is defined in this header file
-template <class __classType>
-inline mtsCommandVoidBase * mtsTask::AddEventHandlerVoid(void (__classType::*action)(void),
-                                                         __classType * classInstantiation,
-                                                         const std::string & requiredInterfaceName,
-                                                         const std::string & commandName,
-                                                         bool queued)  {
-    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceName);
-    if (requiredInterface) {
-        return requiredInterface->AddEventHandlerVoid(action, classInstantiation, commandName, queued);
-    }
-    CMN_LOG_CLASS(1) << "AddEventHandlerVoid: cannot find an interface named " << requiredInterfaceName << std::endl;
-    return 0;
-}
 
 
 #endif // _mtsTask_h

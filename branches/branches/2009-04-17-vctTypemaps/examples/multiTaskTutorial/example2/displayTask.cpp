@@ -9,39 +9,38 @@
 CMN_IMPLEMENT_SERVICES(displayTask);
 
 displayTask::displayTask(const std::string taskName, double period):
-    mtsTaskPeriodic(taskName, period, false, 5000),
-    ExitFlag(false)
+    mtsTaskPeriodic(taskName, period, false, 5000)
 {
-    mtsRequiredInterface *req = AddRequiredInterface("DataGenerator");
-    if (req) {
-        req->AddFunction("GetData", Generator.GetData);
-        req->AddFunction("SetAmplitude", Generator.SetAmplitude);
-        req->AddFunction("SetTriggerValue", Generator.SetTriggerValue);
-        req->AddFunction("ResetTrigger", Generator.ResetTrigger);
+    mtsRequiredInterface * required = AddRequiredInterface("DataGenerator");
+    if (required) {
+        required->AddFunction("GetData", Generator.GetData);
+        required->AddFunction("SetAmplitude", Generator.SetAmplitude);
+        required->AddFunction("SetTriggerValue", Generator.SetTriggerValue);
+        required->AddFunction("ResetTrigger", Generator.ResetTrigger);
         // create an event handler associated to the output port.  false
         // means not queued.
-        req->AddEventHandlerWrite(&displayTask::HandleTrigger, this,
-                                  "TriggerEvent", this->Data, false);
+        required->AddEventHandlerWrite(&displayTask::HandleTrigger, this,
+                                       "TriggerEvent", false);
     }
-    req = AddRequiredInterface("Clock");
-    if (req)
-        req->AddFunction("GetTime", Clock.GetClockData);
+    required = AddRequiredInterface("Clock");
+    if (required) {
+        required->AddFunction("GetTime", Clock.GetClockData);
+    }
 }
 
 displayTask::~displayTask()
 {}
 
-void displayTask::HandleTrigger(const cmnDouble & value)
+void displayTask::HandleTrigger(const mtsDouble & value)
 {
-    CMN_LOG(5) << "HandleTrigger: Trigger event (" << this->GetName() << "): "
-               << value << std::endl;
+    CMN_LOG_RUN_VERBOSE << "HandleTrigger: Trigger event (" << this->GetName() << "): "
+                        << value << std::endl;
     WaitingForTrigger = false;
     Wakeup();
 }
 
 void displayTask::Startup(void) 
 {
-    Amplitude = StartValue;
     TriggerValue = 0.0;
     WaitingForTrigger = false;
 
@@ -53,8 +52,7 @@ void displayTask::Startup(void)
 
 void displayTask::Run(void)
 {
-    const mtsStateIndex now = StateTable.GetIndexWriter();
-    cmnDouble time;
+    mtsDouble time;
     Generator.GetData(Data);
     Clock.GetClockData(time);
     UI.Data->value(Data);
@@ -63,26 +61,26 @@ void displayTask::Run(void)
         Amplitude = UI.Amplitude->value();
         Generator.SetAmplitude(Amplitude);
         UI.AmplitudeChanged = false;
-        CMN_LOG(5) << "Run: " << now.Ticks()
-                   << " - Amplitude: " << Amplitude << std::endl;
+        CMN_LOG_RUN_VERBOSE << "Run: " << this->GetTick()
+                            << " - Amplitude: " << Amplitude << std::endl;
     }
     if (UI.TriggerChanged) {
         TriggerValue = UI.Trigger->value() * Amplitude;
         Generator.SetTriggerValue(TriggerValue);
         UI.TriggerChanged = false;
-        CMN_LOG(5) << "Run : " << now.Ticks()
-                   << " - Trigger: " << TriggerValue << std::endl;
+        CMN_LOG_RUN_VERBOSE << "Run : " << this->GetTick()
+                            << " - Trigger: " << TriggerValue << std::endl;
     }
     if (UI.DoReset) {
-        CMN_LOG(5) << "Run : " << now.Ticks()
-                   << " - Reset trigger." << std::endl;
+        CMN_LOG_RUN_VERBOSE << "Run : " << this->GetTick()
+                            << " - Reset trigger." << std::endl;
         Generator.ResetTrigger();
         UI.DoReset = false;
     }
     if (UI.TriggerWaitChanged) {
         UI.TriggerWaitChanged = false;
         if (UI.WaitForTrigger->value()) {
-            CMN_LOG(5) << "Run: Waiting for trigger." << std::endl;
+            CMN_LOG_RUN_VERBOSE << "Run: Waiting for trigger." << std::endl;
             // Reset trigger to make sure we get one
             Generator.ResetTrigger();
             WaitingForTrigger = true;
@@ -97,11 +95,11 @@ void displayTask::Run(void)
         }
     }
     ProcessQueuedEvents();
-    CMN_LOG(7) << "Run: " << now.Ticks()
-               << " - Data: " << Data << std::endl;
+    CMN_LOG_RUN_VERBOSE << "Run: " << this->GetTick()
+                        << " - Data: " << Data << std::endl;
     
     if (UI.Closed == true) {
-        ExitFlag = true;
+        Kill();
     } else {
         if (!displayUI::Semaphore) {
             displayUI::Semaphore = true;
@@ -113,17 +111,17 @@ void displayTask::Run(void)
 
 void displayTask::Configure(const std::string & CMN_UNUSED(filename))
 {
-    double maxValue, minValue;
+    double maxValue, minValue, startValue;
     minValue = 0.5;
     maxValue = 5.0;
-    StartValue =  1.0;
+    startValue =  1.0;
     
-    CMN_LOG_CLASS(3) << "Configure: Setting bounds to: " << minValue << ", " << maxValue << std::endl;
-    CMN_LOG_CLASS(3) << "Configure: Setting start value to: " << StartValue << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: Setting bounds to: " << minValue << ", " << maxValue << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: Setting start value to: " << startValue << std::endl;
     
     UI.Amplitude->bounds(minValue, maxValue);
-    UI.Amplitude->value(StartValue);
-    Amplitude = StartValue;
+    UI.Amplitude->value(startValue);
+    Amplitude = startValue;
     TriggerValue = 0.0;
 }
 

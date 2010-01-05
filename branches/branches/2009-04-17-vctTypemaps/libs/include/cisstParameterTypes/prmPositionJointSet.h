@@ -27,8 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmPositionJointSet_h
 #define _prmPositionJointSet_h
 
-//basic includes
-#include <cisstParameterTypes/prmTypes.h>
+// basic includes
+#include <cisstVector/vctDynamicVectorTypes.h>
 #include <cisstParameterTypes/prmMotionBase.h>
 #include <cisstParameterTypes/prmExport.h>
 
@@ -36,26 +36,26 @@ http://www.cisst.org/cisst/license.txt.
 */
 class CISST_EXPORT prmPositionJointSet: public prmMotionBase
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 
 protected:
     /*! masks correpsonding elements in goal, if an element is set
     true --> corresponding goal should be used */
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmBoolVec, Mask);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctBoolVec, Mask);
 
     /*! a motion goal in joint angles. only goals corresponding to
     mask elements set true are used */
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmPosition, Goal);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Goal);
 
     /*! corresponding joint velocities */
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmVelocity, Velocity);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Velocity);
 
     /*! corresponding accelerations where needed */
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmAcceleration, Acceleration);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Acceleration);
 
     /*! corresponding accelerations where applicable */
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(prmAcceleration, Deceleration);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(vctDoubleVec, Deceleration);
 
 public:
 
@@ -72,11 +72,11 @@ public:
     void SetSize(size_type size);
 
     /*! constructor with all possible parameters */
-    prmPositionJointSet(const prmBoolVec& mask,
-                        const prmPosition& goal, 
-                        const prmVelocity & velocity,
-                        const prmAcceleration & acceleration,
-                        const prmAcceleration & deceleration):
+    prmPositionJointSet(const vctBoolVec & mask,
+                        const vctDoubleVec & goal, 
+                        const vctDoubleVec & velocity,
+                        const vctDoubleVec & acceleration,
+                        const vctDoubleVec & deceleration):
         MaskMember(mask),
         GoalMember(goal),
         VelocityMember(velocity),
@@ -84,7 +84,7 @@ public:
         DecelerationMember(deceleration)
     {}
 
-    bool inline Allocate(const cmnGenericObject * model)
+    bool inline Allocate(const mtsGenericObject * model)
     {
         const ThisType * pointer = dynamic_cast<const ThisType *>(model);
         if (pointer == 0) {
@@ -105,7 +105,7 @@ public:
 
 }; // _prmPositionJointSet_h
 
-
 CMN_DECLARE_SERVICES_INSTANTIATION(prmPositionJointSet);
+
 #endif
 

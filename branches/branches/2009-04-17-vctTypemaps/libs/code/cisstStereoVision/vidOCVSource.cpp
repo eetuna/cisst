@@ -22,6 +22,17 @@ http://www.cisst.org/cisst/license.txt.
 
 #include "vidOCVSource.h"
 
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
+
 using namespace std;
 
 
@@ -54,9 +65,9 @@ COpenCVSource::~COpenCVSource()
     if (OCVHeight) delete [] OCVHeight;
 }
 
-svlVideoCaptureSource::PlatformType COpenCVSource::GetPlatformType()
+svlFilterSourceVideoCapture::PlatformType COpenCVSource::GetPlatformType()
 {
-    return svlVideoCaptureSource::OpenCV;
+    return svlFilterSourceVideoCapture::OpenCV;
 }
 
 int COpenCVSource::SetStreamCount(unsigned int numofstreams)
@@ -84,7 +95,7 @@ int COpenCVSource::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-int COpenCVSource::GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo)
+int COpenCVSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     if (deviceinfo == 0 || Initialized) return SVL_FAIL;
 
@@ -111,13 +122,13 @@ int COpenCVSource::GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo)
         if (j*100 == CV_CAP_VFW) continue;
 #endif // CISST_HAS_VIDEO4LINUX2
 
-#if (CISST_SVL_HAS_LIBDC1394 == ON)
+#if (CISST_SVL_HAS_DC1394 == ON)
         // OpenCV's DC1394 implementation may interfere
         // with SVL's native DC1394 implementation.
         // The two should be used in the same time.
         // Skipping OpenCV DC1394 devices.
         if (j*100 == CV_CAP_IEEE1394) continue;
-#endif // CISST_HAS_LIBDC1394
+#endif // CISST_SVL_HAS_DC1394
 
         for (i = 0; i < maxdevices; i ++) {
         // Find cameras
@@ -164,11 +175,11 @@ int COpenCVSource::GetDeviceList(svlVideoCaptureSource::DeviceInfo **deviceinfo)
         memcpy(OCVWidth, width, OCVNumberOfDevices * sizeof(int));
         memcpy(OCVHeight, height, OCVNumberOfDevices * sizeof(int));
 
-        deviceinfo[0] = new svlVideoCaptureSource::DeviceInfo[OCVNumberOfDevices];
+        deviceinfo[0] = new svlFilterSourceVideoCapture::DeviceInfo[OCVNumberOfDevices];
 
         for (i = 0; i < OCVNumberOfDevices; i ++) {
             // platform
-            deviceinfo[0][i].platform = svlVideoCaptureSource::OpenCV;
+            deviceinfo[0][i].platform = svlFilterSourceVideoCapture::OpenCV;
 
             // id
             deviceinfo[0][i].id = OCVDeviceID[i];
@@ -327,7 +338,7 @@ bool COpenCVSource::IsRunning()
     return Running;
 }
 
-int COpenCVSource::SetDevice(int devid, int inid, unsigned int videoch)
+int COpenCVSource::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     DeviceID[videoch] = devid;
@@ -347,31 +358,33 @@ int COpenCVSource::GetHeight(unsigned int videoch)
     return ImageBuffer[videoch]->GetHeight();
 }
 
-int COpenCVSource::GetFormatList(unsigned int deviceid, svlVideoCaptureSource::ImageFormat **formatlist)
+int COpenCVSource::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
 {
     if (static_cast<int>(deviceid) >= OCVNumberOfDevices || formatlist == 0) return SVL_FAIL;
 
-    formatlist[0] = new svlVideoCaptureSource::ImageFormat[1];
+    formatlist[0] = new svlFilterSourceVideoCapture::ImageFormat[1];
     formatlist[0][0].width = OCVWidth[deviceid];
     formatlist[0][0].height = OCVHeight[deviceid];
-    formatlist[0][0].colorspace = svlVideoCaptureSource::PixelRGB8;
+    formatlist[0][0].colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
     formatlist[0][0].framerate = -1.0;
+    formatlist[0][0].custom_mode = -1;
 
     return 1;
 }
 
-int COpenCVSource::GetFormat(svlVideoCaptureSource::ImageFormat& format, unsigned int videoch)
+int COpenCVSource::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
 {
     if (DeviceID[videoch] >= OCVNumberOfDevices) return SVL_FAIL;
 
     format.width = OCVWidth[DeviceID[videoch]];
     format.height = OCVHeight[DeviceID[videoch]];
-    format.colorspace = svlVideoCaptureSource::PixelRGB8;
+    format.colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     format.rgb_order = true;
     format.yuyv_order = false;
     format.framerate = -1.0;
+    format.custom_mode = -1;
 
     return SVL_OK;
 }

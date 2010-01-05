@@ -36,8 +36,8 @@ CMN_IMPLEMENT_SERVICES(ui3MenuBar);
 const unsigned int MaxButtons = 5;
 
 
-ui3MenuBar::ui3MenuBar(ui3Manager * manager):
-    ui3VisibleObject(manager),
+ui3MenuBar::ui3MenuBar(const std::string & name):
+    ui3VisibleObject(name + "MenuBar"),
     ShowState(false),
     ButtonWidth(10.0),
     ButtonHeight(10.0),
@@ -66,8 +66,7 @@ ui3MenuBar::~ui3MenuBar()
 
 
 bool ui3MenuBar::CreateVTKObjects(void)
-{
- 
+{ 
     // assemble all 3D objects at depth 0.0
     this->Background = vtkCubeSource::New();
     CMN_ASSERT(this->Background);
@@ -83,24 +82,23 @@ bool ui3MenuBar::CreateVTKObjects(void)
     this->Mapper = vtkPolyDataMapper::New();
     CMN_ASSERT(this->Mapper);
     this->Mapper->SetInputConnection(this->Background->GetOutputPort());
+    this->Mapper->ImmediateModeRenderingOn();
 
     this->Actor = vtkActor::New();
     CMN_ASSERT(this->Actor);
     this->Actor->SetMapper(this->Mapper);
 
-    this->Actor->VisibilityOn();
+    this->SetVisible(false);
     this->Actor->GetProperty()->SetColor(0.5, 0.5, 0.5);
     this->Actor->GetProperty()->SetOpacity(0.1);
 
-    this->Assembly = vtkAssembly::New();
-    CMN_ASSERT(this->Assembly);
-    this->Assembly->AddPart(this->Actor);
+    this->AddPart(this->Actor);
 
     // 3D position of menu assembly
     MenuCenter3D.X() = 0.0;
     MenuCenter3D.Y() = (MenuBottom2D + MenuTop2D) / 2.0;
     MenuCenter3D.Z() = this->MenuInitialDepth;
-    Assembly->SetPosition(MenuCenter3D.Pointer());
+    this->SetPosition(MenuCenter3D);
 
     // add all buttons
     ButtonContainerType::iterator iterator;
@@ -110,22 +108,32 @@ bool ui3MenuBar::CreateVTKObjects(void)
          iterator != end;
          iterator++)
     {
-        this->Assembly->AddPart((*iterator).second->GetVTKProp());
+        this->AddPart((*iterator).second->GetVTKProp());
     }
 
     // space all buttons to fill the menu bar
     this->SpreadButtons();
 
+    // hide by default
+    this->Hide();
+
     return true;
 }
 
 
-vtkProp3D * ui3MenuBar::GetVTKProp(void)
+void ui3MenuBar::SetAllButtonsUnselected(void)
 {
-    return this->Assembly;
+    ButtonContainerType::iterator iterator;
+    const ButtonContainerType::iterator end = this->Buttons.end();
+    for (iterator = this->Buttons.begin();
+         iterator != end;
+         iterator++) {
+        (*iterator).second->SetHighlight(false);
+    }
 }
 
 
+ 
 bool ui3MenuBar::IsPointOnMenuBar(const vctDouble3 & cursor3D, ButtonPointer & button)
 {
     button = 0;
@@ -147,8 +155,6 @@ bool ui3MenuBar::IsPointOnMenuBar(const vctDouble3 & cursor3D, ButtonPointer & b
             if ((*iterator).second->IsCursorOver(cursor2D)) {
                 (*iterator).second->SetHighlight(true);
                 button = (*iterator).second;
-            } else {
-                (*iterator).second->SetHighlight(false);
             }
         }
     }
@@ -173,8 +179,8 @@ void ui3MenuBar::SetDepth(double depth)
   double scaleRatio = depth / this->MenuInitialDepth;
   this->MenuCenter3D.Y() = ((this->MenuBottom2D + this->MenuTop2D) / 2.0) * scaleRatio;
   this->MenuCenter3D.Z() = depth;
-  this->Assembly->SetPosition(this->MenuCenter3D.Pointer());
-  this->Assembly->SetScale(scaleRatio); 
+  this->SetPosition(this->MenuCenter3D);
+  this->SetScale(scaleRatio); 
 }
 
 

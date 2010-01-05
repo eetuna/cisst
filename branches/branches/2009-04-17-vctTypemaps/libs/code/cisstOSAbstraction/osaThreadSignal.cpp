@@ -4,10 +4,11 @@
 /*
   $Id$
 
-  Author(s): Ankur Kapoor, Peter Kazanzides, Balazs Vagvolgyi, Anton Deguet
+  Author(s): Ankur Kapoor, Peter Kazanzides, Balazs Vagvolgyi, Anton Deguet, 
+             Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -22,17 +23,18 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaThreadSignal.h>
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
 //PK: Probably some of these include files are not needed
 #include <pthread.h>
 #include <sched.h>
 #include <sys/time.h>
 #include <cmath>
 #include <errno.h>
+#include <string.h>
 #ifdef USE_POSIX_SEMAPHORES
 #include <semaphore.h>
 #endif // USE_POSIX_SEMAPHORES
-#endif // CISST_LINUX_RTAI || CISST_LINUX || CISST_DARWIN || CISST_SOLARIS
+#endif // CISST_LINUX_RTAI || CISST_LINUX || CISST_DARWIN || CISST_SOLARIS || CISST_QNX
 
 #if (CISST_OS == CISST_WINDOWS)
 #include <windows.h>
@@ -105,7 +107,7 @@ void osaThreadSignal::Wait(void)
     // so that messages can still be processed.
     DWORD ret = WaitForSingleObject(INTERNALS(Event), INFINITE);
     if (ret != WAIT_OBJECT_0)
-        CMN_LOG(1) << "osaThreadSignal::Wait: error return = " << ret << std::endl;
+        CMN_LOG_INIT_ERROR << "osaThreadSignal::Wait: error return = " << ret << std::endl;
 #elif (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN)
 #ifdef USE_POSIX_SEMAPHORES
     // Implementation using POSIX semaphores
@@ -117,7 +119,7 @@ void osaThreadSignal::Wait(void)
     pthread_mutex_unlock(&INTERNALS(Mutex));
 #endif  // USE_POSIX_SEMAPHORES
 #else
-    CMN_LOG(1) << "osaThreadSignal::Wait not implemented." << std::endl;
+    CMN_LOG_INIT_ERROR << "osaThreadSignal::Wait not implemented." << std::endl;
 #endif
 }
 
@@ -127,7 +129,7 @@ bool osaThreadSignal::Wait(double timeoutInSec)
 #if (CISST_OS == CISST_WINDOWS)
     unsigned int millisec = static_cast<unsigned int>(timeoutInSec*1000);
     if (WaitForSingleObject(INTERNALS(Event), millisec) == WAIT_TIMEOUT) {
-        CMN_LOG(5) << "osaThreadSignal::Wait timed out" << std::endl;
+        CMN_LOG_RUN_ERROR << "osaThreadSignal::Wait timed out" << std::endl;
         return false;  // timeout
     }
 
@@ -162,7 +164,7 @@ bool osaThreadSignal::Wait(double timeoutInSec)
 #else
     if (ret == ETIMEDOUT) {
         pthread_mutex_unlock(&INTERNALS(Mutex));
-        CMN_LOG(5) << "osaThreadSignal::Wait timed out" << std::endl;
+        CMN_LOG_RUN_ERROR << "osaThreadSignal::Wait timed out" << std::endl;
         return false;  // timeout
     }
 
@@ -178,7 +180,7 @@ bool osaThreadSignal::Wait(double timeoutInSec)
     pthread_mutex_unlock(&INTERNALS(Mutex));
 #endif
 #else
-    CMN_LOG(1) << "osaThreadSignal::Wait not implemented." << std::endl;
+    CMN_LOG_INIT_ERROR << "osaThreadSignal::Wait not implemented." << std::endl;
 #endif
 
     return true;
@@ -189,7 +191,7 @@ void osaThreadSignal::Raise(void)
 #if (CISST_OS == CISST_WINDOWS)
   // Balazs used ::SetEvent
     if (!SetEvent(INTERNALS(Event)))
-        CMN_LOG(1) << "osaThreadSignal::Raise failed" << std::endl;
+        CMN_LOG_INIT_ERROR << "osaThreadSignal::Raise failed" << std::endl;
 #elif (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
 #ifdef USE_POSIX_SEMAPHORES
     sem_post(&INTERNALS(Sem));
@@ -202,7 +204,7 @@ void osaThreadSignal::Raise(void)
     pthread_cond_signal(&INTERNALS(Condition));
 #endif  // USE_POSIX_SEMAPHORES
 #else
-    CMN_LOG(1) << "osaThreadSignal::Raise not implemented." << std::endl;
+    CMN_LOG_INIT_ERROR << "osaThreadSignal::Raise not implemented." << std::endl;
 #endif
 }
 */
@@ -214,7 +216,7 @@ struct osaThreadSignalInternals
     HANDLE hEvent;
 #endif
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
     pthread_mutex_t gnuMutex;
     pthread_cond_t gnuCondition;
     int Condition_State;
@@ -230,13 +232,16 @@ struct osaThreadSignalInternals
 osaThreadSignal::osaThreadSignal()
 {
     CMN_ASSERT(sizeof(Internals) >= SizeOfInternals());
+    memset(&Internals, 0, sizeof(Internals));
 
 #if (CISST_OS == CISST_WINDOWS)
 	INTERNALS(hEvent) = CreateEvent(NULL, FALSE, FALSE, NULL);
 #endif
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
-    pthread_mutex_init(&INTERNALS(gnuMutex), 0);
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
+    if (pthread_mutex_init(&INTERNALS(gnuMutex), 0) != 0) {
+        CMN_LOG_INIT_ERROR << "Class osaThreadSignal: error in constructor \"" << strerror(errno) << "\"" << std::endl;
+    }
     pthread_cond_init(&INTERNALS(gnuCondition), 0);
     INTERNALS(Condition_State) = 0;
 #endif
@@ -248,7 +253,7 @@ osaThreadSignal::~osaThreadSignal()
 	CloseHandle(INTERNALS(hEvent));
 #endif
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
     pthread_cond_destroy(&INTERNALS(gnuCondition));
     pthread_mutex_destroy(&INTERNALS(gnuMutex));
 #endif
@@ -264,7 +269,7 @@ void osaThreadSignal::Raise()
     ::SetEvent(INTERNALS(hEvent));
 #endif
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
     pthread_mutex_lock(&INTERNALS(gnuMutex));
         pthread_cond_broadcast(&INTERNALS(gnuCondition));
         INTERNALS(Condition_State) = 1;
@@ -287,12 +292,27 @@ bool osaThreadSignal::Wait(double timeoutInSec)
     }
 #endif
 
-#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS)
+#if (CISST_OS == CISST_LINUX_RTAI) || (CISST_OS == CISST_LINUX) || (CISST_OS == CISST_DARWIN) || (CISST_OS == CISST_SOLARIS) || (CISST_OS == CISST_QNX)
     pthread_mutex_lock(&INTERNALS(gnuMutex));
 
     // If the condition state is triggered, then release the thread.
     if (INTERNALS(Condition_State) == 0) {
         // getting absolute time timeout
+#if (CISST_OS == CISST_QNX)
+        unsigned long ret, sec, nsec;
+        timespec now, timeout;
+        if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
+            CMN_LOG_RUN_ERROR << "Wait(): failed to get time information" << std::endl;
+        }
+        sec = now.tv_sec + millisec / 1000;
+        nsec = now.tv_nsec + (millisec % 1000) * 1000 * 1000;
+        while (nsec >= 1000000000L) {
+            ++sec;
+            nsec -= 1000000000L;
+        }
+        timeout.tv_sec = sec;
+        timeout.tv_nsec = nsec;
+#else
         int ret, sec, usec;
         timeval now;
         timespec timeout;
@@ -305,6 +325,7 @@ bool osaThreadSignal::Wait(double timeoutInSec)
         }
         timeout.tv_sec = sec;
         timeout.tv_nsec = usec * 1000;
+#endif
 
         ret = pthread_cond_timedwait(&INTERNALS(gnuCondition), &INTERNALS(gnuMutex), &timeout);
 
@@ -326,4 +347,3 @@ bool osaThreadSignal::Wait(double timeoutInSec)
 
     return true;
 }
-

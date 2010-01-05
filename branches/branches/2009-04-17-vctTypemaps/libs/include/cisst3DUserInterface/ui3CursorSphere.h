@@ -27,31 +27,41 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3CursorBase.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
+
+class ui3CursorSphereTip;
+class ui3CursorSphereAnchor;
 
 /*!  Simple cursor using a sphere for rendering.  Color, diameter and
   transparency are used to show the different states.
 */
-class ui3CursorSphere: public ui3CursorBase
+class CISST_EXPORT ui3CursorSphere: public ui3CursorBase
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 protected:  
-    vtkSphereSource * Source;
-    vtkPolyDataMapper * Mapper;
-    vtkActor * Actor;
+    /*! VTK objects used for the cursor itself, i.e. a simple
+      sphere */
+    vtkSphereSource * SphereSource;
+    vtkPolyDataMapper * SphereMapper;
+    vtkActor * SphereActor;
+
+    /*! VTK objects used for the "anchor" */
+    vtkLineSource * LineSource;
+    vtkPolyDataMapper * LineMapper;
+    vtkActor * LineActor;
 
 public:
     /*!
      Constructor: called when instantiating behaviors
     */
-    ui3CursorSphere(ui3Manager * manager);
+    ui3CursorSphere(void);
 
     /*!
      Destructor
     */
     ~ui3CursorSphere();
-
-    bool CreateVTKObjects(void);
 
     void SetPressed(bool pressed);
 
@@ -59,12 +69,20 @@ public:
 
     void SetClutched(bool clutched);
 
+    ui3VisibleObject * GetVisibleObject(void);
+
+    void SetTransformation(vctDoubleFrm3 & frame);
+
 protected:
     void UpdateColor(void);
 
     bool IsPressed;
     bool Is2D;
     bool IsClutched;
+    
+    ui3CursorSphereTip * VisibleTip;
+    ui3CursorSphereAnchor * VisibleAnchor;
+    ui3VisibleList * VisibleList;
 };
 
 

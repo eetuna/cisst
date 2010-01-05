@@ -28,8 +28,11 @@ http://www.cisst.org/cisst/license.txt.
   \brief Forward declarations and \#define for cisstMultiTask
 */
 
-#include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassServices.h>
+#include <cisstMultiTask/mtsGenericObject.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
+
+#include <cisstMultiTask/mtsConfig.h>
 
 // commands
 class mtsCommandBase;
@@ -41,15 +44,15 @@ class mtsFunctionVoid;
 
 // one argument commands
 template <class _argumentBaseType> class mtsCommandReadOrWriteBase;
-typedef mtsCommandReadOrWriteBase<cmnGenericObject> mtsCommandReadBase;
-typedef mtsCommandReadOrWriteBase<const cmnGenericObject> mtsCommandWriteBase;
+typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
+typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
 
 template <class _argumentType> class mtsFunctionReadOrWrite;
 
 // two arguments commands
 template <class _argument2BaseType> class mtsCommandQualifiedReadOrWriteBase;
-typedef mtsCommandQualifiedReadOrWriteBase<cmnGenericObject> mtsCommandQualifiedReadBase;
-typedef mtsCommandQualifiedReadOrWriteBase<const cmnGenericObject> mtsCommandQualifiedWriteBase;
+typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
+typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 
 template <class _argumentType> class mtsFunctionQualifiedReadOrWrite;
 
@@ -67,11 +70,13 @@ class mtsTask;
 class mtsTaskPeriodic;
 class mtsTaskManager;
 
+// containers
 class mtsMailBox;
+class mtsStateTable;
 
-// mts vectors
-template <class _elementType> class mtsVector;
-typedef mtsVector<double> mtsDoubleVec;
+// data collection class
+class tsCollectorBase;
+class mtsCollectorState;
 
 
 // global function to retrieve object name if available
@@ -79,8 +84,8 @@ inline std::string mtsObjectName(const void * CMN_UNUSED(object)) {
     return "UnnamedObject";
 }
 
-// overload for cmnGenericObject to give at least the class name
-inline std::string mtsObjectName(const cmnGenericObject * object) {
+// overload for mtsGenericObject to give at least the class name
+inline std::string mtsObjectName(const mtsGenericObject * object) {
     return object->Services()->GetName();
 }
 
@@ -89,6 +94,14 @@ inline std::string mtsObjectName(const cmnGenericObject * object) {
 const bool mtsRequired = true;
 const bool mtsOptional = false;
 
+
+// classes defined when ICE is used
+#ifdef CISST_MTS_HAS_ICE
+class mtsTaskManagerProxyServer;
+class mtsTaskManagerProxyClient;
+class mtsDeviceInterfaceProxyServer;
+class mtsDeviceInterfaceProxyClient;
+#endif // CISST_MTS_HAS_ICE
 
 #endif  // _mtsForwardDeclarations_h
 

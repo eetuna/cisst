@@ -28,17 +28,22 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3CursorBase.h>
 
+// Always include last!
+#include <cisst3DUserInterface/ui3Export.h>
 
 /*!
   Defines a master arm with cursor and callbacks
 */
-class ui3MasterArm
+class CISST_EXPORT ui3MasterArm
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class ui3Manager;
 
 public:
+
+    enum RoleType {PRIMARY, SECONDARY};
+
     /*!
      Constructor
     */
@@ -51,10 +56,18 @@ public:
 
     virtual bool SetInput(mtsDevice * positionDevice, const std::string & positionInterface,
                           mtsDevice * buttonDevice, const std::string & buttonInterface,
-                          mtsDevice * clutchDevice, const std::string & clutchInterface);
+                          mtsDevice * clutchDevice, const std::string & clutchInterface,
+                          const RoleType & role);
     
+    virtual bool SetInput(const std::string & positionDeviceInterface, const std::string & positionInterface,
+                          const std::string & buttonDeviceInterface, const std::string & buttonInterface,
+                          const std::string & clutchDeviceInterface, const std::string & clutchInterface,
+                          const RoleType & role);
+
     virtual bool SetTransformation(const vctFrm3 & transformation = vctFrm3::Identity(),
                                    double scale = 1.0);
+
+    virtual void SetCursorPosition(const vctDouble3 & position);
 
     virtual bool SetCursor(ui3CursorBase * cursor);
 
@@ -74,6 +87,9 @@ protected:
     bool ButtonPressed;
     bool ButtonReleased;
 
+    // role
+    RoleType Role;
+
     // transformation between inputs and scene
     vctFrm3 Transformation;
     double Scale;
@@ -82,8 +98,12 @@ protected:
     prmPositionCartesianGet CartesianPosition;
     mtsFunctionRead GetCartesianPosition;
 
+    // cursor position
+    vctFrm3 CursorPosition;
+
     // arm clutch
     bool Clutched;
+    vctDouble3 ClutchedOutPosition;
 
     // ui3Manager used
     ui3Manager * Manager;
@@ -92,6 +112,21 @@ protected:
         this->Manager = manager;
         return true;
     }
+
+    // used by the ui3Manager
+    void PreRun(void);
+    void UpdateCursorPosition(void);
+    void Hide(void);
+    void Show(void);
+
+    // used to figure out which object is selected or to be selected
+    ui3Selectable * Selected;
+    double HighestIntention;
+    ui3Selectable * ToBeSelected;
+
+    void UpdateIntention(ui3Selectable * selectable);
+
+
 };
 
 

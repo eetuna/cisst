@@ -20,39 +20,56 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+
 #ifndef _svlStreamManager_h
 #define _svlStreamManager_h
 
 #include <vector>
 #include <map>
 
+#include <cisstVector/vctDynamicVector.h>
 #include <cisstOSAbstraction/osaThread.h>
+#include <cisstOSAbstraction/osaTimeServer.h>
+#include <cisstOSAbstraction/osaStopwatch.h>
 #include <cisstStereoVision/svlStreamDefs.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
+
+// Status codes
+#define SVL_STREAM_RUNNING            0
+#define SVL_STREAM_CREATED            1
+#define SVL_STREAM_INITIALIZED        2
+#define SVL_STREAM_STOPPED            3
+#define SVL_STREAM_RELEASED           4
 #define SVL_ALREADY_PROCESSED        10
+#define SVL_STOP_REQUEST             11
+
+// Error codes
 #define SVL_TYPE_MISMATCH           -12
 #define SVL_ALREADY_INITIALIZED     -13
-#define SVL_FILTER_NOT_IN_LIST      -14
-#define SVL_NOT_SOURCE              -15
-#define SVL_NO_SOURCE_IN_LIST       -16
-#define SVL_NOT_YET_INITIALIZED     -17
-#define SVL_ALREADY_RUNNING         -18
+#define SVL_NOT_INITIALIZED         -14
+#define SVL_ALREADY_RUNNING         -15
+#define SVL_FILTER_NOT_IN_LIST      -16
+#define SVL_NOT_SOURCE              -17
+#define SVL_NO_SOURCE_IN_LIST       -18
 #define SVL_INVALID_INPUT_TYPE      -19
 #define SVL_INVALID_OUTPUT_TYPE     -20
 #define SVL_NO_INPUT_DATA           -21
 #define SVL_WRONG_CHANNEL           -22
 #define SVL_CONSTRUCTION_FAILED     -23
 #define SVL_ALLOCATION_ERROR        -24
+#define SVL_NOT_IMAGE               -25
+#define SVL_WAIT_TIMEOUT            -26
 
 
 #define _OnSingleThread(_info) \
             if((_info)->id==0)
 #define _ParallelLoop(_info, _idx, _count) \
-            _idx=(_info)->id*((_count)/(_info)->count+1);for(const unsigned int _end=std::min((_count),_idx+(_count)/(_info)->count+1);_idx<_end;_idx++)
+            _idx=(_info)->id*std::max(1001*(_count)/(_info)->count,1000u)/1000; \
+            for(const unsigned int _end=std::min((_count),((_info)->id+1)*std::max(1001*(_count)/(_info)->count,1000u)/1000);_idx<_end;_idx++)
 #define _ParallelInterleavedLoop(_info, _idx, _count) \
             _idx=(_info)->id;for(const unsigned int _step=(_info)->count,_end=(_count);_idx<_end;_idx+=_step)
 #define _GetParallelSubRange(_info, _count, _from, _to) \
@@ -64,6 +81,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 class svlFilterBase;
+class svlFilterSourceBase;
 class svlStreamManager;
 class svlStreamControlMultiThread;
 
@@ -76,22 +94,28 @@ friend class svlStreamControlMultiThread;
 public:
     int Append(svlFilterBase* filter);
 
+    int GetDroppedSampleCount();
+    int GetBufferUsage();
+    double GetBufferUsageRatio();
+    int BlockInput(bool block);
+
 private:
     svlStreamEntity();
-    svlStreamEntity(svlStreamEntity const&);
-    svlStreamManager* Stream;
+    svlStreamEntity(svlStreamEntity const &) {};
+    svlStreamManager * Stream;
+    svlFilterBase * Root;
 };
-
 
 class CISST_EXPORT svlFilterBase
 {
+friend class svlFilterSourceBase;
 friend class svlStreamManager;
 friend class svlStreamControlMultiThread;
 
     typedef std::map<svlStreamType, svlStreamType> _StreamTypeMap;
     typedef std::vector<svlStreamEntity*> _OutputBranchList;
 
-protected:
+public:
     typedef struct _ProcInfo {
         unsigned int  count;
         unsigned int  id;
@@ -107,18 +131,18 @@ public:
     svlStreamType GetOutputType();
     bool IsInitialized();
     bool IsRunning();
+    inline unsigned int GetFrameCounter() { return FrameCounter; }
 
 protected:
     svlSample* OutputData;
     unsigned int FrameCounter;
 
-    virtual int Initialize(svlSample* inputdata = 0);
+    virtual int Initialize(svlSample* inputdata);
     virtual int OnStart(unsigned int procCount);
-    virtual int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata = 0);
+    virtual int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata) = 0;
     virtual void OnStop();
     virtual int Release();
 
-    void SetFilterToSource(svlStreamType output);
     int AddSupportedType(svlStreamType input, svlStreamType output);
     void UpdateOutputFormat();
     int IsDataValid(svlStreamType type, svlSample* data);
@@ -129,7 +153,6 @@ private:
     bool Running;
     bool OutputSampleModified;
     bool OutputFormatModified;
-    double PrevInputTimestamp;
     _StreamTypeMap SupportedTypes;
     _OutputBranchList OutputBranches;
     svlStreamType InputType;
@@ -144,6 +167,55 @@ private:
 };
 
 
+class CISST_EXPORT svlFilterSourceBase : public svlFilterBase
+{
+friend class svlFilterBase;
+friend class svlStreamManager;
+friend class svlStreamControlMultiThread;
+
+public:
+    svlFilterSourceBase(bool autotimestamps = true);
+    virtual ~svlFilterSourceBase();
+
+    virtual int GetWidth(unsigned int videoch = SVL_LEFT);
+    virtual int GetHeight(unsigned int videoch = SVL_LEFT);
+    virtual double GetTargetFrequency();
+    virtual int SetTargetFrequency(double hertz);
+    virtual void SetLoop(bool loop = true);
+    virtual bool GetLoop();
+
+protected:
+    int AddSupportedType(svlStreamType output);
+
+    virtual int Initialize();
+    virtual int OnStart(unsigned int procCount);
+    virtual int ProcessFrame(ProcInfo* procInfo) = 0;
+    virtual void OnStop();
+    virtual int Release();
+
+    int RestartTargetTimer();
+    int StopTargetTimer();
+    int WaitForTargetTimer();
+    bool IsTargetTimerRunning();
+
+    double TargetFrequency;
+    bool LoopFlag;
+
+private:
+    // Dispatched to source specific methods declared above
+    int Initialize(svlSample* inputdata);
+    int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata);
+
+    // Hidden from derived classes
+    int AddSupportedType(svlStreamType input, svlStreamType output);
+
+    bool AutoTimestamp;
+    osaStopwatch TargetTimer;
+    double TargetStartTime;
+    double TargetFrameTime;
+};
+
+
 #include <cisstStereoVision/svlStreamBranchSource.h>
 
 
@@ -155,6 +227,7 @@ friend class svlStreamControlMultiThread;
     typedef struct tagBranchStruct {
         svlStreamEntity* entity;
         std::string name;
+        unsigned int buffersize;
     } _BranchStruct;
     typedef std::map<_BranchStruct*, svlStreamManager*> _BranchMap;
     typedef std::vector<svlFilterBase*> _FilterList;
@@ -166,12 +239,12 @@ public:
 
     svlStreamEntity& Trunk();
     svlStreamEntity& Branch(const std::string & name);
-    svlStreamEntity* CreateBranchAfterFilter(svlFilterBase* filter);
-    svlStreamEntity* CreateBranchAfterFilter(svlFilterBase* filter, const std::string & name);
+    svlStreamEntity* CreateBranchAfterFilter(svlFilterBase* filter, unsigned int threadcount = 1, unsigned int buffersize = 3);
+    svlStreamEntity* CreateBranchAfterFilter(svlFilterBase* filter, const std::string & name, unsigned int threadcount = 1, unsigned int buffersize = 3);
     int RemoveBranch(svlStreamEntity* entity);
     int RemoveBranch(const std::string & name);
     int RemoveFilter(svlFilterBase* filter);
-    int EmptyFilterList();
+    int RemoveAll();
 
     int Initialize();
     void Release();
@@ -179,21 +252,21 @@ public:
     int Start();
     void Stop();
     bool IsRunning();
+    int WaitForStop(double timeout = -1.0);
+    int GetStreamStatus();
 
 private:
     ///////////////////////////////////////////////
     // Methods that may be public in the future
 
-    int SetThreads(unsigned int threadcount);
-
     int AddFilter(svlFilterBase* filter);
-    int SetSourceFilter(svlFilterBase* filter);
+    int SetSourceFilter(svlFilterSourceBase* source);
 
     int ConnectFilterToBranch(svlStreamEntity* entity, svlFilterBase* filter);
     int ConnectFilters(svlFilterBase* filter1, svlFilterBase* filter2);
 
     // Convenience method combining AddFilter and SetSourceFilter
-    int AddSourceFilter(svlFilterBase* filter);
+    int AddSourceFilter(svlFilterSourceBase* source);
     // Convenience method combining AddFilter and ConnectFilters
     int AddFilterAndConnect(svlFilterBase* filter, svlFilterBase* connect_to);
 
@@ -204,8 +277,8 @@ private:
 
 private:
     unsigned int ThreadCount;
-    svlStreamControlMultiThread** ControlInstanceMulti;
-    osaThread** ControlThreadMulti;
+    vctDynamicVector<svlStreamControlMultiThread*> ControlInstanceMulti;
+    vctDynamicVector<osaThread*> ControlThreadMulti;
     svlSyncPoint* SyncPoint;
     osaCriticalSection* CS;
 
@@ -213,16 +286,17 @@ private:
     svlStreamEntity InvalidEntity;
     _BranchMap Branches;
     _FilterList Filters;
-    svlFilterBase* StreamSource;
+    svlFilterSourceBase* StreamSource;
     bool Initialized;
     bool Running;
     bool StopThread;
-    bool ErrorOnThread;
+    int StreamStatus;
 
     int AppendFilterToTrunk(svlFilterBase* filter);
     svlStreamEntity* GetBranchEntityOfFilter(svlFilterBase* filter);
     bool IsFilterInList(svlFilterBase* filter);
     int ReInitializeDownstreamFilters(svlFilterBase* fromfilter);
+    void InternalStop(unsigned int callingthreadID);
 };
 
 
@@ -236,6 +310,8 @@ public:
 
 private:
     svlStreamControlMultiThread();
+
+    double GetAbsoluteTime(osaTimeServer* timeserver);
 
     unsigned int ThreadID;
     unsigned int ThreadCount;

@@ -29,14 +29,14 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsFunctionBase.h>
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
-#include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsForwardDeclarations.h>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
 template <class _argumentType>
 class CISST_EXPORT mtsFunctionReadOrWrite: public mtsFunctionBase {
+protected:
     typedef _argumentType ArgumentType;
     typedef mtsCommandReadOrWriteBase<ArgumentType> CommandType;
     CommandType * Command;
@@ -56,7 +56,7 @@ public:
     }
     
     /*! Destructor. */
-    ~mtsFunctionReadOrWrite() {}
+    virtual ~mtsFunctionReadOrWrite() {}
 
     /*! Bind the function object to a command.  The method will return
       false if the interface pointer is null, if the command can not
@@ -80,14 +80,14 @@ public:
     }
 
     /*! Add the function object to the required interface
-      \param interface Required interface
+      \param requiredInterface Required interface
       \param commandName Name of command to bind with (string)
       \param isRequired Whether or not the command is required (false if command is optional)
       \result Boolean value, true if success, false otherwise
     */
-    bool AddToRequiredInterface(mtsRequiredInterface & intfc, const std::string & commandName,
-                                bool isRequired = true)
-    { return intfc.AddCommandPointer(commandName, Command, isRequired); }
+    bool AddToRequiredInterface(mtsRequiredInterface & requiredInterface,
+                                const std::string & commandName,
+                                bool isRequired = true);
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
@@ -96,13 +96,16 @@ public:
     /*! Access to underlying command object. */
     mtsCommandReadOrWriteBase<ArgumentType> * GetCommand(void) const { return Command; }
 
+    /*! Access to the command argument prototype. */
+    const mtsGenericObject * GetArgumentPrototype(void) const;
+
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 };
 
 
-typedef mtsFunctionReadOrWrite<cmnGenericObject> mtsFunctionRead;
-typedef mtsFunctionReadOrWrite<const cmnGenericObject> mtsFunctionWrite;
+typedef mtsFunctionReadOrWrite<mtsGenericObject> mtsFunctionRead;
+typedef mtsFunctionReadOrWrite<const mtsGenericObject> mtsFunctionWrite;
 
 
 #endif // _mtsFunctionReadOrWrite_h

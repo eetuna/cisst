@@ -21,11 +21,26 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/trackers/svlTrackerCisst.h>
+#include <cisstStereoVision/svlConverters.h>
 #include "trkCisstBase.h"
 #include "trkCisstNCC.h"
 #include "trkCisstWSSD.h"
-#include "../../svlConverters.h"
 
+#ifdef _MSC_VER
+    // Quick fix for Visual Studio Intellisense:
+    // The Intellisense parser can't handle the CMN_UNUSED macro
+    // correctly if defined in cmnPortability.h, thus
+    // we should redefine it here for it.
+    // Removing this part of the code will not effect compilation
+    // in any way, on any platforms.
+    #undef CMN_UNUSED
+    #define CMN_UNUSED(argument) argument
+#endif
+
+
+/*************************************/
+/*** svlTrackerCisst class ***********/
+/*************************************/
 
 svlTrackerCisst::svlTrackerCisst() : svlPointTrackerAlgoBase()
 {
@@ -128,7 +143,7 @@ int svlTrackerCisst::Track(unsigned char* image)
     unsigned int templatesize, windowsize;
 
     // the Cisst trackers work on 16bpp grayscale images only
-    RGB24toGray16(image, Image16, Width * Height);
+    svlConverter::RGB24toGray16(image, Image16, Width * Height);
 
     if (!TargetsAdded) {
     // tracker and target initialization
@@ -169,7 +184,7 @@ int svlTrackerCisst::Track(unsigned char* image)
     return 0;
 }
 
-int svlTrackerCisst::GetTarget(unsigned int targetid, svlPointTracker::TargetType* target)
+int svlTrackerCisst::GetTarget(unsigned int targetid, svlFilterPointTracker::TargetType* target)
 {
     if (!Initialized) return -1;
     if (targetid >= TargetCount) return -2;

@@ -39,19 +39,21 @@ protected:
     mtsMailBox * MailBox;
     mtsCommandWriteBase * ActualCommand;
 
- public:
+private:
     inline mtsCommandQueuedWriteBase(void):
         BaseType("??"),
         MailBox(0),
         ActualCommand(0)
     {}
 
-
+public:
     inline mtsCommandQueuedWriteBase(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand):
         BaseType(actualCommand->GetName()),
         MailBox(mailBox),
         ActualCommand(actualCommand)
-    { }
+    {
+        this->SetArgumentPrototype(ActualCommand->GetArgumentPrototype());
+    }
 
 
     inline virtual ~mtsCommandQueuedWriteBase() {}
@@ -72,13 +74,13 @@ protected:
     virtual void Allocate(unsigned int size) = 0;
 
 
-    virtual mtsCommandBase::ReturnType Execute(const cmnGenericObject & argument) = 0;
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) = 0;
 
     
-    virtual const cmnGenericObject * ArgumentPeek(void) const = 0;
+    virtual const mtsGenericObject * ArgumentPeek(void) const = 0;
 
 
-    virtual cmnGenericObject * ArgumentGet(void) = 0;
+    virtual mtsGenericObject * ArgumentGet(void) = 0;
 
 
     inline virtual const std::string & GetMailBoxName(void) const {

@@ -25,6 +25,7 @@ SET(EXECUTABLE_OUTPUT_PATH ${cisstExamples_BINARY_DIR}/bin)
 # Lists all examples (one per subdirectory)
 SET(CISST_EXAMPLES
     3DUserInterfaceTutorial
+    cisstMultiTask
     commonTutorial
     devicesTutorial
     interactiveTutorial
@@ -32,6 +33,7 @@ SET(CISST_EXAMPLES
     nArrayBenchmark
     numericalTutorial
     osAbstractionTutorial
+    registrationTest
     stereoTutorial
     vectorTutorial
     )    

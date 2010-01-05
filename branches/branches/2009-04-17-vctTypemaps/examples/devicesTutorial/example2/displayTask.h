@@ -13,12 +13,12 @@
 
 class displayTask: public mtsTaskPeriodic {
     // set log level to 5
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     volatile bool ExitFlag;
     
  protected:
     // local copy of data used in commands
-    cmnDouble Weight;
+    mtsDouble Weight;
 
     // functions which will be bound to commands
     mtsFunctionRead GetWeight;

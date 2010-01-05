@@ -30,56 +30,34 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(devSensableHD);
 
-struct devSensableHDDeviceData {
-    HHD DeviceHandle;
-    bool DeviceEnabled;
-    
-    // local copy of the buttons state as defined by Sensable
-    cmnInt Buttons;
-    
-    // local copy of the position and velocities
-    prmPositionCartesianGet PositionCartesian;
-    prmVelocityCartesianGet VelocityCartesian;
-    prmPositionJointGet PositionJoint;
-    vctDynamicVectorRef<double> GimbalJointsRef;
-    
-    // mtsFunction called to broadcast the event
-    mtsFunctionWrite Button1Event, Button2Event;
-	
-    // local buffer used to store the position as provided
-    // by Sensable
-    typedef vctFixedSizeMatrix<double, 4, 4, VCT_COL_MAJOR> Frame4x4Type;
-    Frame4x4Type Frame4x4;
-    vctFixedSizeConstVectorRef<double, 3, Frame4x4Type::ROWSTRIDE> Frame4x4TranslationRef;
-    vctFixedSizeConstMatrixRef<double, 3, 3,
-                               Frame4x4Type::ROWSTRIDE, Frame4x4Type::COLSTRIDE> Frame4x4RotationRef;
-    
-    // added to provide tip position to the frame manager
-    mtsFunctionRead PositionFunctionForTransformationManager;
-};
-
-
 struct devSensableHDDriverData {
     HDSchedulerHandle CallbackHandle;
     HDCallbackCode CallbackReturnValue;
+};
+
+struct devSensableHDHandle {
+    HHD DeviceHandle;
 };
 
 
 // The task Run method
 void devSensableHD::Run(void)
 {
+	ProcessQueuedCommands();
+
     int currentButtons;
-    DevicesMapType::iterator iterator = this->Devices.begin();
-    const DevicesMapType::iterator end = this->Devices.end();
-    devSensableHDDeviceData * deviceData;
+    unsigned int index = 0;
+    const unsigned int end = this->DevicesVector.size();
+    DeviceData * deviceData;
+    devSensableHDHandle     * handle;
     HHD hHD;
 
-    for (; iterator != end; iterator++) {
+    for (index; index != end; index++) {
         currentButtons = 0;
-        deviceData = iterator->second;
-
+        deviceData = DevicesVector(index);
+        handle = DevicesHandleVector(index);
         // begin haptics frame
-        hHD = deviceData->DeviceHandle;
+        hHD = handle->DeviceHandle;
         hdMakeCurrentDevice(hHD);
         hdBeginFrame(hHD);
 
@@ -90,13 +68,19 @@ void devSensableHD::Run(void)
         hdGetDoublev(HD_CURRENT_VELOCITY, deviceData->VelocityCartesian.VelocityLinear().Pointer());
         hdGetDoublev(HD_CURRENT_ANGULAR_VELOCITY, deviceData->VelocityCartesian.VelocityAngular().Pointer());
         
-        // retrive joint positions, write directly in state data
+        // retrieve joint positions, write directly in state data
         hdGetDoublev(HD_CURRENT_JOINT_ANGLES, deviceData->PositionJoint.Position().Pointer());
         hdGetDoublev(HD_CURRENT_GIMBAL_ANGLES, deviceData->GimbalJointsRef.Pointer());
 
         // retrieve the current button(s).
         hdGetIntegerv(HD_CURRENT_BUTTONS, &currentButtons);
 
+        // apply forces
+       // deviceData->ForceCartesian.Force().Y() += 0.784;
+        if(deviceData->ForceOutputEnabled)
+        {
+            hdSetDoublev(HD_CURRENT_FORCE, deviceData->ForceCartesian.Force().Pointer());
+        }
         // end haptics frame
         hdEndFrame(hHD);
 
@@ -104,18 +88,13 @@ void devSensableHD::Run(void)
         mtsStateIndex stateIndex = this->StateTable.GetIndexWriter();
 
         // copy transformation to the state table
-        deviceData->PositionCartesian.SetStateIndex(stateIndex);
         deviceData->PositionCartesian.Position().Translation().Assign(deviceData->Frame4x4TranslationRef);
         deviceData->PositionCartesian.Position().Rotation().Assign(deviceData->Frame4x4RotationRef);
         
-        // time stamp velocity
-        deviceData->VelocityCartesian.SetStateIndex(stateIndex);
-
         // compare to previous value to create events
         if (currentButtons != deviceData->Buttons) {
             int currentButtonState, previousButtonState;
             prmEventButton event;
-            event.SetStateIndex(stateIndex); 
             // test for button 1
             currentButtonState = currentButtons & HD_DEVICE_BUTTON_1;
             previousButtonState = deviceData->Buttons & HD_DEVICE_BUTTON_1;
@@ -133,8 +112,10 @@ void devSensableHD::Run(void)
             previousButtonState = deviceData->Buttons & HD_DEVICE_BUTTON_2;
             if (currentButtonState != previousButtonState) {
                 if (currentButtonState == 0) {
+                    deviceData->Clutch = false;
                     event.SetType(prmEventButton::RELEASED);
                 } else {
+                    deviceData->Clutch = true;
                     event.SetType(prmEventButton::PRESSED);
                 }
                 // throw the event
@@ -148,36 +129,76 @@ void devSensableHD::Run(void)
     // check for errors and abort the callback if a scheduler error
     HDErrorInfo error;
     if (HD_DEVICE_ERROR(error = hdGetError())) {
-        CMN_LOG(5) << "devSensableHDCallback: Device error detected";
+        CMN_LOG_RUN_ERROR << "devSensableHDCallback: Device error detected \""
+                          << hdGetErrorString(error.errorCode) << "\"\n";
         if (hduIsSchedulerError(&error)) {
-            CMN_LOG(5) << "devSensableHDCallback: Scheduler error detected";
+            CMN_LOG_RUN_ERROR << "devSensableHDCallback: Scheduler error detected\n";
             this->Driver->CallbackReturnValue = HD_CALLBACK_DONE;
             return;
         }
     }
-
-    // always last, sync the state table
-    this->StateTable.Advance();
+   
+    // call user defined control loop (if redefined from derived class)
+    UserControl();
     
     // return flag to continue calling this function
     this->Driver->CallbackReturnValue = HD_CALLBACK_CONTINUE;
+
 }
 
 
 devSensableHD::devSensableHD(const std::string & taskName):
     mtsTaskFromCallbackAdapter(taskName, 5000)
 {
-    CMN_LOG_CLASS(4) << "constructor called, looking for \"DefaultArm\"" << std::endl;
-    Devices["DefaultArm"] = 0;
+    CMN_LOG_CLASS_INIT_DEBUG << "constructor called, looking for \"DefaultArm\"" << std::endl;
+    DevicesVector.SetSize(1);
+    DevicesHandleVector.SetSize(1);
+    DevicesVector(0) = new DeviceData;
+    DevicesVector(0)->DeviceNumber = 0;
+    DevicesVector(0)->Name = "DefaultArm";
+    DevicesVector(0)->ForceOutputEnabled = false;
     this->SetupInterfaces();
 }
 
 
-devSensableHD::devSensableHD(const std::string & taskName, const std::string & firstDeviceName):
+devSensableHD::devSensableHD(const std::string & taskName, 
+                             const std::string & firstDeviceName):
     mtsTaskFromCallbackAdapter(taskName, 5000)
 {
-    CMN_LOG_CLASS(4) << "constructor called, looking for \"" << firstDeviceName << "\"" << std::endl;
-    Devices[firstDeviceName] = 0;
+    CMN_LOG_CLASS_INIT_DEBUG << "constructor called, looking for \"" << firstDeviceName << "\"" << std::endl;
+    DevicesVector.SetSize(1);
+    DevicesHandleVector.SetSize(1);
+    DevicesVector(0) = new DeviceData;
+    DevicesVector(0)->DeviceNumber = 0;
+    DevicesVector(0)->Name = firstDeviceName;
+    DevicesVector(0)->ForceOutputEnabled = false;
+    
+    this->SetupInterfaces();
+}
+
+devSensableHD::devSensableHD(const std::string & taskName, 
+                             const std::string & firstDeviceName, 
+                             bool firstDeviceForcesEnabled):
+    mtsTaskFromCallbackAdapter(taskName, 5000)
+{
+    CMN_LOG_CLASS_INIT_DEBUG << "constructor called, looking for \"" << firstDeviceName << "\"" << std::endl;
+    DevicesVector.SetSize(1);
+    DevicesHandleVector.SetSize(1);
+    DevicesVector(0) = new DeviceData;
+    DevicesVector(0)->DeviceNumber = 0;
+    DevicesVector(0)->Name = firstDeviceName;
+    DevicesVector(0)->ForceOutputEnabled = firstDeviceForcesEnabled;
+    
+    this->SetupInterfaces();
+}
+
+devSensableHD::devSensableHD(const char * taskName,
+                             const char * firstDeviceName,
+                             const char * secondDeviceName):
+    mtsTaskFromCallbackAdapter(taskName, 5000)
+{
+    this->SetInterfaces(std::string(firstDeviceName), std::string(secondDeviceName), 
+                        false, false);
     this->SetupInterfaces();
 }
 
@@ -187,37 +208,136 @@ devSensableHD::devSensableHD(const std::string & taskName,
                              const std::string & secondDeviceName):
     mtsTaskFromCallbackAdapter(taskName, 5000)
 {
-    if (firstDeviceName == secondDeviceName) {
-        CMN_LOG_CLASS(1) << "In constructor: name of devices provided are identical, \""
-                         << firstDeviceName << "\" and \""
-                         << secondDeviceName << "\"" << std::endl;
-    }
-    CMN_LOG_CLASS(4) << "constructor called, looking for \"" << firstDeviceName
-                     << "\" and \"" << secondDeviceName << "\"" << std::endl;
-    Devices[firstDeviceName] = 0;
-    Devices[secondDeviceName] = 0;
+    this->SetInterfaces(firstDeviceName, secondDeviceName, 
+                        false, false);
     this->SetupInterfaces();
 }
 
+devSensableHD::devSensableHD(const std::string & taskName,
+                             const std::string & firstDeviceName,
+                             const std::string & secondDeviceName,
+                             bool firstDeviceForcesEnabled,
+                             bool secondDeviceForcesEnabled):
+    mtsTaskFromCallbackAdapter(taskName, 5000)
+{
+    this->SetInterfaces(firstDeviceName, secondDeviceName, 
+                        firstDeviceForcesEnabled, secondDeviceForcesEnabled);
+    this->SetupInterfaces();
+}
+
+devSensableHD::devSensableHD(const std::string & taskName,
+                             const std::string & firstDeviceName,
+                             const std::string & secondDeviceName,
+                             const std::string & thirdDeviceName,
+                             const std::string & fourthDeviceName):
+    mtsTaskFromCallbackAdapter(taskName, 5000)
+{
+    this->SetInterfaces(firstDeviceName, secondDeviceName, thirdDeviceName, fourthDeviceName,
+                        false, false, false, false);
+    this->SetupInterfaces();
+}
+
+devSensableHD::devSensableHD(const char * taskName,
+                             const char * firstDeviceName,
+                             const char * secondDeviceName,
+                             const char * thirdDeviceName,
+                             const char * fourthDeviceName):
+    mtsTaskFromCallbackAdapter(taskName, 5000)
+{
+    this->SetInterfaces(std::string(firstDeviceName), std::string(secondDeviceName), 
+                        std::string(thirdDeviceName), std::string(fourthDeviceName),
+                        false, false, false, false);
+    this->SetupInterfaces();
+}
+
+devSensableHD::devSensableHD(const std::string & taskName,
+                             const std::string & firstDeviceName,
+                             const std::string & secondDeviceName,
+                             const std::string & thirdDeviceName,
+                             const std::string & fourthDeviceName,
+                             bool firstDeviceForcesEnabled,
+                             bool secondDeviceForcesEnabled,
+                             bool thirdDeviceForcesEnabled,
+                             bool fourthDeviceForcesEnabled):
+    mtsTaskFromCallbackAdapter(taskName, 5000)
+{
+    this->SetInterfaces(firstDeviceName, secondDeviceName, thirdDeviceName, fourthDeviceName,
+                        firstDeviceForcesEnabled, secondDeviceForcesEnabled, 
+                        thirdDeviceForcesEnabled, fourthDeviceForcesEnabled);
+    this->SetupInterfaces();
+}
+
+void devSensableHD::SetInterfaces(const std::string & firstDeviceName,
+                                  const std::string & secondDeviceName,
+                                  bool firstDeviceForcesEnabled,
+                                  bool secondDeviceForcesEnabled)
+{
+    if (firstDeviceName == secondDeviceName) {
+        CMN_LOG_CLASS_INIT_ERROR << "In constructor: name of devices provided are identical, \""
+                                 << firstDeviceName << "\" and \""
+                                 << secondDeviceName << "\"" << std::endl;
+    }
+    CMN_LOG_CLASS_INIT_DEBUG << "constructor called, looking for \"" << firstDeviceName
+                             << "\" and \"" << secondDeviceName << "\"" << std::endl;
+    DevicesVector.SetSize(2);
+    DevicesHandleVector.SetSize(2);
+    int index = 0;
+    for(index; index < 2; index++)
+    {
+        DevicesVector(index) = new DeviceData;
+        DevicesVector(index)->DeviceNumber = index;
+    }
+    DevicesVector(0)->Name = firstDeviceName;
+    DevicesVector(1)->Name = secondDeviceName;
+    DevicesVector(0)->ForceOutputEnabled = firstDeviceForcesEnabled;
+    DevicesVector(1)->ForceOutputEnabled = secondDeviceForcesEnabled;
+}
+
+void devSensableHD::SetInterfaces(const std::string & firstDeviceName,
+                                  const std::string & secondDeviceName,
+                                  const std::string & thirdDeviceName,
+                                  const std::string & fourthDeviceName,
+                                  bool firstDeviceForcesEnabled,
+                                  bool secondDeviceForcesEnabled,
+                                  bool thirdDeviceForcesEnabled,
+                                  bool fourthDeviceForcesEnabled)
+{
+    DevicesVector.SetSize(4);
+    DevicesHandleVector.SetSize(4);
+    int index = 0;
+    for(index; index < 4; index++)
+    {
+        DevicesVector(index) = new DeviceData;
+        DevicesVector(index)->DeviceNumber = index;
+    }
+    DevicesVector(0)->Name = firstDeviceName;
+    DevicesVector(1)->Name = secondDeviceName;
+    DevicesVector(2)->Name = thirdDeviceName;
+    DevicesVector(3)->Name = fourthDeviceName;
+    DevicesVector(0)->ForceOutputEnabled = firstDeviceForcesEnabled;
+    DevicesVector(1)->ForceOutputEnabled = secondDeviceForcesEnabled;
+    DevicesVector(2)->ForceOutputEnabled = thirdDeviceForcesEnabled;
+    DevicesVector(3)->ForceOutputEnabled = fourthDeviceForcesEnabled;
+}
+   
 
 void devSensableHD::SetupInterfaces(void)
 {
     this->Driver = new devSensableHDDriverData;
     CMN_ASSERT(this->Driver);
 
-    DevicesMapType::iterator iterator = this->Devices.begin();
-    const DevicesMapType::iterator end = this->Devices.end();
-    devSensableHDDeviceData * deviceData;
+    unsigned int index = 0;
+    const unsigned int end = this->DevicesVector.size();
+    DeviceData * deviceData;
     std::string interfaceName;
     mtsProvidedInterface * providedInterface;
 
-    for (; iterator != end; iterator++) {
-        // allocate memory
-        iterator->second = new devSensableHDDeviceData;
+    for (index; index != end; index++) {
         // use local data pointer to make code more readable
-        deviceData = iterator->second;
+        deviceData = DevicesVector(index);
         CMN_ASSERT(deviceData);
-        interfaceName = iterator->first;
+        interfaceName = DevicesVector(index)->Name;
+        DevicesHandleVector(index) = new devSensableHDHandle;
 
         deviceData->Frame4x4TranslationRef.SetRef(deviceData->Frame4x4.Column(3), 0);
         deviceData->Frame4x4RotationRef.SetRef(deviceData->Frame4x4, 0, 0);
@@ -228,9 +348,10 @@ void devSensableHD::SetupInterfaces(void)
         deviceData->PositionJoint.Position().SetAll(0.0);
         deviceData->VelocityCartesian.VelocityLinear().SetAll(0.0);
         deviceData->VelocityCartesian.VelocityAngular().SetAll(0.0);
+        deviceData->Clutch = false;
 
         // create interface with the device name, i.e. the map key
-        CMN_LOG_CLASS(4) << "SetupInterfaces: creating interface \"" << interfaceName << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_DEBUG << "SetupInterfaces: creating interface \"" << interfaceName << "\"" << std::endl;
         providedInterface = this->AddProvidedInterface(interfaceName);
 
         // add the state data to the table
@@ -239,6 +360,13 @@ void devSensableHD::SetupInterfaces(void)
         this->StateTable.AddData(deviceData->PositionJoint, interfaceName + "PositionJoint");
         this->StateTable.AddData(deviceData->Buttons, interfaceName + "Buttons");
 
+        if(deviceData->ForceOutputEnabled)
+        {
+            this->StateTable.AddData(deviceData->ForceCartesian, interfaceName + "ForceCartesian");
+            providedInterface->AddCommandWriteState(this->StateTable,
+                                                    deviceData->ForceCartesian,
+                                                    "SetForceCartesian");
+        }
         // provide read methods for state data
         providedInterface->AddCommandReadState(this->StateTable,
                                                deviceData->PositionCartesian,
@@ -249,6 +377,7 @@ void devSensableHD::SetupInterfaces(void)
         providedInterface->AddCommandReadState(this->StateTable,
                                                deviceData->PositionJoint,
                                                "GetPositionJoint");
+
 
         // add a method to read the current state index
         providedInterface->AddCommandRead(&mtsStateTable::GetIndexReader, &StateTable,
@@ -278,8 +407,8 @@ void devSensableHD::SetupInterfaces(void)
         this->Driver->CallbackReturnValue = HD_CALLBACK_CONTINUE;
         this->SetThreadReturnValue(static_cast<void *>(&this->Driver->CallbackReturnValue));
     }
-    CMN_LOG_CLASS(4) << "SetupInterfaces: interfaces created: " << std::endl
-                     << *this << std::endl;
+    CMN_LOG_CLASS_INIT_DEBUG << "SetupInterfaces: interfaces created: " << std::endl
+                             << *this << std::endl;
 }
 
 
@@ -290,12 +419,17 @@ devSensableHD::~devSensableHD()
         delete this->Driver;
         this->Driver = 0;
     }
-    DevicesMapType::iterator iterator = this->Devices.begin();
-    const DevicesMapType::iterator end = this->Devices.end();
-    for (; iterator != end; iterator++) {
-        if (iterator->second) {
-            delete iterator->second;
-            iterator->second = 0;
+    unsigned int index = 0;
+    const unsigned int end = this->DevicesVector.size();
+    
+    for (index; index != end; index++) {
+        if (DevicesVector(index)) {
+            delete DevicesVector(index);
+            DevicesVector(index) = 0;
+        }
+        if (DevicesHandleVector(index)) {
+            delete DevicesHandleVector(index);
+            DevicesHandleVector(index) = 0;
         }
     }
 }
@@ -303,39 +437,43 @@ devSensableHD::~devSensableHD()
 
 void devSensableHD::Create(void * data)
 { 
-    DevicesMapType::iterator iterator = this->Devices.begin();
-    const DevicesMapType::iterator end = this->Devices.end();
-    devSensableHDDeviceData * deviceData;
+    unsigned int index = 0;
+    const unsigned int end = this->DevicesVector.size();
+    
+    DeviceData * deviceData;
+    devSensableHDHandle     * handle;
     std::string interfaceName;
     HDErrorInfo error;
 
     CMN_ASSERT(this->Driver);
 
-    for (; iterator != end; iterator++) {
-        deviceData = iterator->second;
-        interfaceName = iterator->first;
+    for (index; index != end; index++) {
+        deviceData = DevicesVector(index);
+        interfaceName = DevicesVector(index)->Name;
+        handle = DevicesHandleVector(index);
         CMN_ASSERT(deviceData);
-        deviceData->DeviceHandle = hdInitDevice(interfaceName.c_str());
+        handle->DeviceHandle = hdInitDevice(interfaceName.c_str());
         if (HD_DEVICE_ERROR(error = hdGetError())) {
-            CMN_LOG_CLASS(1) << "Create: Failed to initialize haptic device \""
-                             << interfaceName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "Create: Failed to initialize haptic device \""
+                                     << interfaceName << "\"" << std::endl;
             deviceData->DeviceEnabled = false;
             return;
         }
         deviceData->DeviceEnabled = true;
-        CMN_LOG_CLASS(3) << "Create: Found device model: "
-                         << hdGetString(HD_DEVICE_MODEL_TYPE) << " for device \""
-                         << interfaceName << "\"" << std::endl;
-        
+        CMN_LOG_CLASS_INIT_VERBOSE << "Create: Found device model: "
+                                   << hdGetString(HD_DEVICE_MODEL_TYPE) << " for device \""
+                                   << interfaceName << "\"" << std::endl;
+        if(deviceData->ForceOutputEnabled) {
+            hdEnable(HD_FORCE_OUTPUT);
+        } else {
+            hdDisable(HD_FORCE_OUTPUT);
+        }
     }
 
     // Schedule the main callback that will communicate with the device
     this->Driver->CallbackHandle = hdScheduleAsynchronous(mtsTaskFromCallbackAdapter::CallbackAdapter<HDCallbackCode>,
                                                           this->GetCallbackParameter(),
                                                           HD_MAX_SCHEDULER_PRIORITY);
-    // Forces should be disabled by default but make sure they are
-    hdDisable(HD_FORCE_OUTPUT);
-
     // Call base class Create function
     mtsTaskFromCallback::Create();
 }
@@ -344,10 +482,11 @@ void devSensableHD::Create(void * data)
 void devSensableHD::Start(void)
 {
     HDErrorInfo error;
+    hdSetSchedulerRate(1000);
     hdStartScheduler();
     // Check for errors
     if (HD_DEVICE_ERROR(error = hdGetError())) {
-        CMN_LOG_CLASS(1) << "Start: Failed to start scheduler" << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "Start: Failed to start scheduler" << std::endl;
     }
     
     // Call base class Start function
@@ -362,13 +501,15 @@ void devSensableHD::Kill(void)
     hdUnschedule(this->Driver->CallbackHandle);
 
     // Disable the devices
-    DevicesMapType::iterator iterator = this->Devices.begin();
-    const DevicesMapType::iterator end = this->Devices.end();
-    devSensableHDDeviceData * deviceData;
-    for (; iterator != end; iterator++) {
-        deviceData = iterator->second;
+    unsigned int index = 0;
+    const unsigned int end = this->DevicesVector.size();
+    DeviceData * deviceData;
+    devSensableHDHandle     * handle;
+    for (index; index != end; index++) {
+        deviceData = DevicesVector(index);
+        handle = DevicesHandleVector(index);
         if (deviceData->DeviceEnabled) {
-            hdDisableDevice(deviceData->DeviceHandle);
+            hdDisableDevice(handle->DeviceHandle);
         }
     }
 

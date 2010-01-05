@@ -46,16 +46,10 @@ In IEEE Computer Society Conference on Computer Vision and Pattern Recognition (
 #include <iostream>
 
 #include <string>
+#include <cisstCommon.h>
+#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
 
-#ifdef __GNUC__
-#include <curses.h>
-#include <iostream>
-#include <stdio.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#endif
 
 using namespace std;
 
@@ -65,14 +59,14 @@ using namespace std;
 //////////////////////////////////
 
 int ComputeStereo(const char* filepath1, const char* filepath2,
-                  int mindisparity, int maxdisparity, int smoothness, int blocksize, bool interpolation, bool xcheck)
+                  int mindisparity, int maxdisparity, int smoothness, int blocksize, bool subpixel_precision, bool xcheck)
 {
     cerr << "Please wait while initializing... ";
 
     int srcwidth, srcheight;
-    double focallength, baseline, ppx_left, ppx_right, ppy;
-    int left, right, top, bottom;
     char filestr[1024];
+    svlCameraGeometry geometry;
+    svlRect roi;
 
     svlImageFileTypeList filetype;
     svlImageFile* bmphandler = filetype.GetHandlerInstance("bmp");
@@ -82,10 +76,11 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
 
     // 3D reconstruction
     svlStreamManager stereo_stream(2);
-    svlImageFileSource stereo_source(true);
-    svlComputationalStereo stereo_stereo;
-    svlStreamTypeConverter stereo_converter(svlTypeDepthMap, svlTypeImageRGB);
-    svlImageWindow stereo_window;
+    svlFilterSourceImageFile stereo_source(true);
+    svlFilterComputationalStereo stereo_stereo;
+    svlFilterDisparityMapToSurface stereo_3d;
+    svlFilterStreamTypeConverter stereo_converter(svlTypeImageMonoFloat, svlTypeImageRGB);
+    svlFilterImageWindow stereo_window;
 
 
 //////////////////////////////////////////////////////////////
@@ -101,23 +96,27 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     delete(bmphandler);
 
     // setup stereo
-    focallength = (double)srcwidth;
-    baseline = 10.0;
-    ppx_left = (double)srcwidth / 2;
-    ppx_right = (double)srcwidth / 2;
-    ppy = (double)srcheight / 2;
-    left = 5;
-    right = srcwidth - maxdisparity;
-    top = 5;
-    bottom = srcheight - 5;
+    geometry.SetIntrinsics((double)srcwidth, (double)srcwidth,
+                           (double)srcwidth / 2, (double)srcheight / 2,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           SVL_LEFT);
+    geometry.SetIntrinsics((double)srcwidth, (double)srcwidth,
+                           (double)srcwidth / 2, (double)srcheight / 2,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           SVL_RIGHT);
+    geometry.SetExtrinsics(0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0,
+                           SVL_LEFT);
+    geometry.SetExtrinsics(0.0, 0.0, 0.0,
+                           10.0, 0.0, 0.0, // baseline = 10.0 mm
+                           SVL_RIGHT);
+    stereo_stereo.SetCameraGeometry(geometry);
+
+    roi.Assign(5, 5, srcwidth - maxdisparity, srcheight - 5);
+    stereo_stereo.SetROI(roi);
 
     stereo_stereo.SetCrossCheck(xcheck);
-    stereo_stereo.DisparityOutput(true);
-    stereo_stereo.DisparityInterpolation(interpolation);
-    stereo_stereo.SetFocalLength(focallength);
-    stereo_stereo.SetStereoBaseline(baseline);
-    stereo_stereo.SetPrincipalPoints(ppx_left, ppx_right, ppy);
-    stereo_stereo.SetValidRect(left, top, right, bottom);
+    stereo_stereo.SetSubpixelPrecision(subpixel_precision);
     stereo_stereo.SetDisparityRange(mindisparity, maxdisparity);
     stereo_stereo.SetScalingFactor(0);
     stereo_stereo.SetBlockSize(blocksize);
@@ -127,7 +126,7 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     stereo_stereo.SetSpatialFiltering(0);
 
     // setup converter
-    stereo_converter.SetDistanceIntensityRatio((float)(255.0 / maxdisparity));
+    stereo_converter.SetScaling(255.0f / maxdisparity);
 
     // chain filters to pipeline
     if (stereo_stream.Trunk().Append(&stereo_source)    != SVL_OK ||
@@ -147,64 +146,12 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     cerr << "Done" << endl << endl << "Keyboard commands:" << endl << endl;
     cerr << "    'q' - Quit" << endl;
 
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // modify terminal settings for single key inputs
-    struct  termios ksettings;
-    struct  termios new_ksettings;
-    int     kbrd;
-    kbrd = open("/dev/tty",O_RDWR);
-    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCGETS, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TCSETS, &new_ksettings);
-        ioctl(kbrd, TIOCNOTTY);
-    #endif // (CISST_OS == CISST_LINUX)
-    
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCGETA, &ksettings);
-        new_ksettings = ksettings;
-        new_ksettings.c_lflag &= !ICANON;
-        new_ksettings.c_lflag &= !ECHO;
-        ioctl(kbrd, TIOCSETA, &new_ksettings);
-        ////////////////////////////////////////////////////
-    #endif // (CISST_OS == CISST_DARWIN)
-#endif
-
-    // wait for keyboard input in command window
-#ifdef _WIN32
     int ch;
-#endif
-#ifdef __GNUC__
-    char ch;
-#endif
 
     do {
-#ifdef _WIN32
-        ch = _getch();
-#endif
-#ifdef __GNUC__
-        ch = getchar();
-#endif
+        ch = cmnGetChar();
+        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
-
-#ifdef __GNUC__
-    ////////////////////////////////////////////////////
-    // reset terminal settings    
-    #if (CISST_OS == CISST_LINUX)
-        ioctl(kbrd, TCSETS, &ksettings);
-    #endif // (CISST_OS == CISST_LINUX)
-    
-    #if (CISST_OS == CISST_DARWIN)
-        ioctl(kbrd, TIOCSETA, &ksettings);
-    #endif // (CISST_OS == CISST_DARWIN)
-    
-    close(kbrd);
-    ////////////////////////////////////////////////////
-#endif
 
     cerr << endl;
 
@@ -213,7 +160,7 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
 
 labError:
     // clean up
-    stereo_stream.EmptyFilterList();
+    stereo_stream.RemoveAll();
     return 0;
 }
 
@@ -222,13 +169,13 @@ labError:
 //             main             //
 //////////////////////////////////
 
-int main(int argc, char** argv)
+int main(int CMN_UNUSED(argc), char** CMN_UNUSED(argv))
 {
     cerr << endl << "computestereo - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl << endl;
 
-    ComputeStereo("venus_l",  "venus_r",  0, 20, 80, 1, false, true);
-    //ComputeStereo("tsukuba3", "tsukuba4", 0, 16, 40, 1, false, true);
+    //ComputeStereo("venus_l",  "venus_r",  0, 20, 80, 1, false, true);
+    ComputeStereo("tsukuba3", "tsukuba4", 0, 16, 40, 1, false, true);
 
     cerr << "Quit" << endl;
     return 1;

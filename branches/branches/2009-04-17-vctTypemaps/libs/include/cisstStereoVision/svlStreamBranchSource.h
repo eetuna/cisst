@@ -23,42 +23,38 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlStreamBranchSource_h
 #define _svlStreamBranchSource_h
 
-#include <cisstOSAbstraction/osaStopwatch.h>
 #include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlSampleQueue.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
-#define SMPSRC_BUFFERS          2
 
-class CISST_EXPORT svlStreamBranchSource : public svlFilterBase
+class svlStreamBranchSource : public svlFilterSourceBase
 {
 friend class svlStreamManager;
 friend class svlStreamControlMultiThread;
 
 private:
-    int NextFreeBufferPos;
-    svlSample* DataBuffer[SMPSRC_BUFFERS];
-    osaThreadSignal NewFrameEvent;
-
-    osaStopwatch Timer;
-    double ulStartTime;
-    double ulFrameTime;
-    double Hertz;
-
-private:
-    svlStreamBranchSource(svlStreamType type);
+    svlStreamBranchSource(svlStreamType type, unsigned int buffersize);
     svlStreamBranchSource();
     ~svlStreamBranchSource();
 
-    int Initialize(svlSample* inputdata = 0);
-    int ProcessFrame(ProcInfo* procInfo, svlSample* inputdata = 0);
-    int Release();
+    int Initialize();
+    int ProcessFrame(ProcInfo* procInfo);
 
     static bool IsTypeSupported(svlStreamType type);
-    void SetupSource(svlSample* inputdata, double hertz);
+    void SetInput(svlSample* inputdata);
     void PushSample(svlSample* inputdata);
-    int PullSample();
+
+    bool InputBlocked;
+    svlSampleQueue SampleQueue;
+
+public:
+    int GetBufferUsage();
+    double GetBufferUsageRatio();
+    unsigned int GetDroppedSampleCount();
+    int BlockInput(bool block);
 };
 
 #endif // _svlStreamBranchSource_h

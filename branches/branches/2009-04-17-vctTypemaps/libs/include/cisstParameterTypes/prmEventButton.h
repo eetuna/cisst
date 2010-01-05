@@ -28,51 +28,59 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _prmEventButton_h
 #define _prmEventButton_h
 
-#include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstParameterTypes/prmMacros.h>
+#include <cisstMultiTask/mtsGenericObject.h>
 
 // Always include last
 #include <cisstParameterTypes/prmExport.h>
 
 /*! Button event payload */
-class CISST_EXPORT prmEventButton: public cmnGenericObject
+class CISST_EXPORT prmEventButton: public mtsGenericObject
 {
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, 5);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
+    typedef mtsGenericObject BaseType;
     typedef enum {PRESSED, RELEASED, CLICKED, DOUBLE_CLICKED} EventType;
     
  public:
-    /*! default constructor */
+    /*! Default constructor */
     inline prmEventButton()
     {}
     
-    /*!constructor with all parameters */
-    inline prmEventButton(const mtsStateIndex & stateIndex, 
-                          const EventType & type):
-        StateIndexMember(stateIndex),
+    /*! Constructor with all parameters */
+    inline prmEventButton(const EventType & type):
         TypeMember(type)
     {}
+
+    /*! Copy constructor */
+    inline prmEventButton(const prmEventButton & other):
+        BaseType(other),
+        TypeMember(other.TypeMember)
+    {}
     
-    /*!destructor
-     */
+    /*! Destructor */
     virtual ~prmEventButton();
     
-    /*! Set and Get methods for state index.  The state index is set by
-      the task initiating the event and corresponds to the task's
-      state index.  It allows to query any state elements that occured
-      in the same state frame. */
-    //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(mtsStateIndex, StateIndex);
-    //@}
-
     /*! Set and Get methods for event type. */
     //@{
-    PRM_DECLARE_MEMBER_AND_ACCESSORS(EventType, Type);
+    CMN_DECLARE_MEMBER_AND_ACCESSORS(EventType, Type);
     //@}
+
+public:
 
     /*! Overloaded ToStream */
     virtual void ToStream(std::ostream & outputStream) const;
+
+    /*! To stream raw data. */
+    void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
+                     bool headerOnly = false, const std::string & headerPrefix = "") const;
+    
+    /*! Binary serialization */
+    void SerializeRaw(std::ostream & outputStream) const;
+
+    /*! Binary deserialization */
+    void DeSerializeRaw(std::istream & inputStream);
+
 };
 
 
