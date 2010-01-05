@@ -51,14 +51,14 @@ public:
     vctDynamicNArrayTypemapsTest()
     {}
 
-    void in_argout_vctDynamicNArray_ref(vctDynamicNArray<_elementType, _dimension> &param, size_type sizeFactor) {
+    void in_argout_vctDynamicNArray_ref(vctDynamicNArray<_elementType, _dimension> & param, size_type sizeFactor) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
 
         if (sizeFactor != 0) {
             const vctFixedSizeVector<size_type, _dimension> sizesOld(param.sizes());
-            const size_type sizeOld = sizesOld.ProductOfElements();
+            // const size_type sizeOld = sizesOld.ProductOfElements();
             const vctFixedSizeVector<size_type, _dimension> sizesNew(sizesOld * sizeFactor);
             const size_type sizeNew = sizesNew.ProductOfElements();
             param.SetSize(sizesNew);
@@ -70,33 +70,33 @@ public:
         }
     }
 
-    void in_vctDynamicNArrayRef(vctDynamicNArrayRef<_elementType, _dimension> param, size_type dummy) {
+    void in_vctDynamicNArrayRef(vctDynamicNArrayRef<_elementType, _dimension> param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
         param += 1;
     }
 
-    void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<_elementType, _dimension> param, size_type dummy) {
+    void in_vctDynamicConstNArrayRef(vctDynamicConstNArrayRef<_elementType, _dimension> param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicConstNArrayRef_ref(const vctDynamicConstNArrayRef<_elementType, _dimension> &param, size_type dummy) {
+    void in_argout_const_vctDynamicConstNArrayRef_ref(const vctDynamicConstNArrayRef<_elementType, _dimension> & param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicNArrayRef_ref(const vctDynamicNArrayRef<_elementType, _dimension> &param, size_type dummy) {
+    void in_argout_const_vctDynamicNArrayRef_ref(const vctDynamicNArrayRef<_elementType, _dimension> & param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_vctDynamicNArray(vctDynamicNArray<_elementType, _dimension> param, size_type dummy) {
+    void in_vctDynamicNArray(vctDynamicNArray<_elementType, _dimension> param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicNArray_ref(const vctDynamicNArray<_elementType, _dimension> &param, size_type dummy) {
+    void in_argout_const_vctDynamicNArray_ref(const vctDynamicNArray<_elementType, _dimension> & param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.sizes());
         copy.Assign(param);
     }

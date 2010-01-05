@@ -40,6 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <arrayobject.h>
 #include <math.h>
 #include <cisstCommon/cmnAssert.h>
+#include <cisstCommon/cmnPortability.h>
 #include <cisstVector/vctFixedSizeConstVectorBase.h>
 #include <cisstVector/vctDynamicConstVectorBase.h>
 #include <cisstVector/vctFixedSizeConstMatrixBase.h>
@@ -172,7 +173,7 @@ bool vctThrowUnlessIsWritable(PyObject * input)
 
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessCorrectVectorSize(PyObject * input,
-                                     const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
+                                     const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & target)
 {
     const unsigned int inputSize = PyArray_DIM(input, 0);
     const unsigned int targetSize = target.size();
@@ -188,8 +189,8 @@ bool vctThrowUnlessCorrectVectorSize(PyObject * input,
 
 
 template <class _vectorOwnerType, typename _elementType>
-bool vctThrowUnlessCorrectVectorSize(PyObject * input,
-                                     const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> &target)
+bool vctThrowUnlessCorrectVectorSize(PyObject * CMN_UNUSED(input),
+                                     const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & CMN_UNUSED(target))
 {
     return true;
 }
@@ -197,7 +198,7 @@ bool vctThrowUnlessCorrectVectorSize(PyObject * input,
 
 template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
 bool vctThrowUnlessCorrectMatrixSize(PyObject * input,
-                                     const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> &target)
+                                     const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & target)
 {
     const unsigned int inputRows = PyArray_DIM(input, 0);
     const unsigned int inputCols = PyArray_DIM(input, 1);
@@ -216,8 +217,8 @@ bool vctThrowUnlessCorrectMatrixSize(PyObject * input,
 
 
 template <class _matrixOwnerType, typename _elementType>
-bool vctThrowUnlessCorrectMatrixSize(PyObject * input,
-                                     const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> &target)
+bool vctThrowUnlessCorrectMatrixSize(PyObject * CMN_UNUSED(input),
+                                     const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & CMN_UNUSED(target))
 {
     return true;
 }
@@ -235,8 +236,8 @@ bool vctThrowUnlessOwnsData(PyObject * input)
 
 
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
-bool vctThrowUnlessOwnsData(PyObject * input,
-                            const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
+bool vctThrowUnlessOwnsData(PyObject * CMN_UNUSED(input),
+                            const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
     return true;
 }
@@ -244,7 +245,7 @@ bool vctThrowUnlessOwnsData(PyObject * input,
 
 template <class _vectorOwnerType, typename _elementType>
 bool vctThrowUnlessOwnsData(PyObject * input,
-                            const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> &target)
+                            const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & CMN_UNUSED(target))
 {
     const int flags = PyArray_FLAGS(input);
     if(!(flags & NPY_OWNDATA)) {
@@ -256,8 +257,8 @@ bool vctThrowUnlessOwnsData(PyObject * input,
 
 
 template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
-bool vctThrowUnlessOwnsData(PyObject * input,
-                            const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> &target)
+bool vctThrowUnlessOwnsData(PyObject * CMN_UNUSED(input),
+                            const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
     return true;
 }
@@ -265,7 +266,7 @@ bool vctThrowUnlessOwnsData(PyObject * input,
 
 template <class _matrixOwnerType, typename _elementType>
 bool vctThrowUnlessOwnsData(PyObject * input,
-                            const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> &target)
+                            const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & CMN_UNUSED(target))
 {
     const int flags = PyArray_FLAGS(input);
     if(!(flags & NPY_OWNDATA)) {
@@ -287,8 +288,8 @@ bool vctThrowUnlessNotReferenced(PyObject * input)
 
 
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
-bool vctThrowUnlessNotReferenced(PyObject * input,
-                                 const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> &target)
+bool vctThrowUnlessNotReferenced(PyObject * CMN_UNUSED(input),
+                                 const vctFixedSizeConstVectorBase<_size, _stride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
     return true;
 }
@@ -296,7 +297,7 @@ bool vctThrowUnlessNotReferenced(PyObject * input,
 
 template <class _vectorOwnerType, typename _elementType>
 bool vctThrowUnlessNotReferenced(PyObject * input,
-                                 const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> &target)
+                                 const vctDynamicConstVectorBase<_vectorOwnerType, _elementType> & CMN_UNUSED(target))
 {
     if (PyArray_REFCOUNT(input) > 4) {
         PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");
@@ -307,8 +308,8 @@ bool vctThrowUnlessNotReferenced(PyObject * input,
 
 
 template <unsigned int _rows, unsigned int _cols, int _rowStride, int _colStride, class _elementType, class _dataPtrType>
-bool vctThrowUnlessNotReferenced(PyObject * input,
-                                 const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> &target)
+bool vctThrowUnlessNotReferenced(PyObject * CMN_UNUSED(input),
+                                 const vctFixedSizeConstMatrixBase<_rows, _cols, _rowStride, _colStride, _elementType, _dataPtrType> & CMN_UNUSED(target))
 {
     return true;
 }
@@ -316,7 +317,7 @@ bool vctThrowUnlessNotReferenced(PyObject * input,
 
 template <class _matrixOwnerType, typename _elementType>
 bool vctThrowUnlessNotReferenced(PyObject * input,
-                                 const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> &target)
+                                 const vctDynamicConstMatrixBase<_matrixOwnerType, _elementType> & CMN_UNUSED(target))
 {
     if (PyArray_REFCOUNT(input) > 4) {
         PyErr_SetString(PyExc_ValueError, "Array must not be referenced by other objects.  Try making a deep copy of the array and call the function again.");

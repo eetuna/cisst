@@ -45,7 +45,7 @@ public:
     vctDynamicVectorTypemapsTest()
     {}
 
-    void in_argout_vctDynamicVector_ref(vctDynamicVector<_elementType> &param, size_type sizeFactor) {
+    void in_argout_vctDynamicVector_ref(vctDynamicVector<_elementType> & param, size_type sizeFactor) {
         copy.SetSize(param.size());
         copy.Assign(param);
         param += 1;
@@ -62,73 +62,63 @@ public:
         }
     }
 
-    void in_vctDynamicVectorRef(vctDynamicVectorRef<_elementType> param, size_type dummy) {
+    void in_vctDynamicVectorRef(vctDynamicVectorRef<_elementType> param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.size());
         copy.Assign(param);
         param += 1;
     }
 
-    void in_vctDynamicConstVectorRef(vctDynamicConstVectorRef<_elementType> param, size_type dummy) {
+    void in_vctDynamicConstVectorRef(vctDynamicConstVectorRef<_elementType> param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicConstVectorRef_ref(const vctDynamicConstVectorRef<_elementType> &param, size_type dummy) {
+    void in_argout_const_vctDynamicConstVectorRef_ref(const vctDynamicConstVectorRef<_elementType> & param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicVectorRef_ref(const vctDynamicVectorRef<_elementType> &param, size_type dummy) {
+    void in_argout_const_vctDynamicVectorRef_ref(const vctDynamicVectorRef<_elementType> & param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_vctDynamicVector(vctDynamicVector<_elementType> param, size_type dummy) {
+    void in_vctDynamicVector(vctDynamicVector<_elementType> param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
-    void in_argout_const_vctDynamicVector_ref(const vctDynamicVector<_elementType> &param, size_type dummy) {
+    void in_argout_const_vctDynamicVector_ref(const vctDynamicVector<_elementType> & param, size_type CMN_UNUSED(dummy)) {
         copy.SetSize(param.size());
         copy.Assign(param);
     }
 
     vctDynamicVector<_elementType> out_vctDynamicVector(size_type size) {
         copy.SetSize(size);
-        size_type min = 0;
-        size_type max = 10;
         vctRandom(copy, 0, 10);
         return copy;
     }
 
     vctDynamicVector<_elementType> &out_vctDynamicVector_ref(size_type size) {
         copy.SetSize(size);
-        size_type min = 0;
-        size_type max = 10;
         vctRandom(copy, 0, 10);
         return copy;
     }
 
     const vctDynamicVector<_elementType> &out_const_vctDynamicVector_ref(size_type size) {
         copy.SetSize(size);
-        size_type min = 0;
-        size_type max = 10;
-        vctRandom(copy, 0, 10);     // TODO: this is actually not random!
+        vctRandom(copy, 0, 10);
         return copy;
     }
 
     vctDynamicVectorRef<_elementType> out_vctDynamicVectorRef(size_type size) {
         copy.SetSize(size);
-        size_type min = 0;
-        size_type max = 10;
         vctRandom(copy, 0, 10);
         return vctDynamicVectorRef<_elementType>(copy);
     }
 
     vctDynamicConstVectorRef<_elementType> out_vctDynamicConstVectorRef(size_type size) {
         copy.SetSize(size);
-        size_type min = 0;
-        size_type max = 10;
         vctRandom(copy, 0, 10);
         return vctDynamicConstVectorRef<_elementType>(copy);
     }
