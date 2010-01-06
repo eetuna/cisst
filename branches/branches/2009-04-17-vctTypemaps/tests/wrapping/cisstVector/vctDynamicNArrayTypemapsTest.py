@@ -36,7 +36,6 @@ import cisstVectorTypemapsTestTypes
 class DynamicNArrayTypemapsTest(unittest.TestCase):
 
     types = cisstVectorTypemapsTestTypes.vctDynamicNArrayTypemapsTest_types
-    size_type = numpy.uint32
 
     ###########################################################################
     #   SET UP function                                                       #
@@ -49,6 +48,16 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     ###########################################################################
     #   HELPER FUNCTIONS - Used by the functions in this .py file             #
     ###########################################################################
+
+    # Assuming the CObject is already set, defines the type used for
+    # indices and sizes
+    def SetSizeType(self):
+        if (self.CObject.sizeOfSizes() == 4):
+            self.size_type = numpy.uint32
+        else:
+            self.size_type = numpy.uint64
+        return self.size_type
+
 
     # Given a dimensionality, returns a vector of random sizes for an ndarray
     # of that dimension
@@ -105,7 +114,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
             if (self.dtype != numpy.float64):
                 badvar = numpy.ones(sizes, dtype=numpy.float64)
             else:
-                badvar = numpy.ones(sizes, dtype=numpy.int32)
+                badvar = numpy.ones(sizes, dtype=self.size_type)
             function(badvar, 0)
         except:
             exceptionOccurred = True
@@ -194,7 +203,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     def StdTestThrowUnlessReturnedNArrayIsWritable(self, function):
         # Expect the returned array to be writable
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        sizes = numpy.array(sizes, dtype=numpy.uint32)
+        sizes = numpy.array(sizes, dtype=self.size_type)
         v = function(sizes)
         assert(v.flags['WRITEABLE'] == True)
 
@@ -202,7 +211,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     def StdTestThrowUnlessReturnedNArrayIsNonWritable(self, function):
         # Expect the returned array to be non-writable
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        sizes = numpy.array(sizes, dtype=numpy.uint32)
+        sizes = numpy.array(sizes, dtype=self.size_type)
         v = function(sizes)
         assert(v.flags['WRITEABLE'] == False)
 
@@ -299,7 +308,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
     def SpecTestThrowUnlessReceivesCorrectNArray(self, function):
         ndim = self.CObject.Dim()
         sizes = self.HelperRandSizes(self.CObject.Dim())
-        sizes = numpy.array(sizes, dtype=numpy.uint32)
+        sizes = numpy.array(sizes, dtype=self.size_type)
 
         v = function(sizes)
         vShape = v.shape
@@ -322,6 +331,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_argout_vctDynamicNArray_ref
 
@@ -342,6 +352,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_vctDynamicNArrayRef
 
@@ -359,6 +370,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_vctDynamicConstNArrayRef
 
@@ -375,6 +387,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_argout_const_vctDynamicConstNArrayRef_ref
 
@@ -391,6 +404,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_argout_const_vctDynamicNArrayRef_ref
 
@@ -407,6 +421,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_vctDynamicNArray
 
@@ -423,6 +438,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.in_argout_const_vctDynamicNArray_ref
 
@@ -439,6 +455,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.out_vctDynamicNArray
 
@@ -453,6 +470,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.out_vctDynamicNArray_ref
 
@@ -467,6 +485,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.out_const_vctDynamicNArray_ref
 
@@ -481,6 +500,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.out_vctDynamicNArrayRef
 
@@ -495,6 +515,7 @@ class DynamicNArrayTypemapsTest(unittest.TestCase):
         for (dtype, CObject) in self.types.iteritems():
             self.dtype = dtype
             self.CObject = CObject()
+            self.SetSizeType()
 
             function = self.CObject.out_vctDynamicConstNArrayRef
 

@@ -36,13 +36,9 @@ class vctDynamicNArrayTypemapsTest
 {
 
 public:
-
-    // enum {MY_DIM = 4};     // SWIG cannot understand enums
     typedef vctDynamicNArray<_elementType, _dimension> ArrayType;
-    //typedef ArrayType::nsize_type nsize_type;
 
 protected:
-
     ArrayType copy;
 
 public:
@@ -106,13 +102,13 @@ public:
         return copy;
     }
 
-    vctDynamicNArray<_elementType, _dimension> &out_vctDynamicNArray_ref(vctFixedSizeVector<vct::size_type, _dimension> sizes) {
+    vctDynamicNArray<_elementType, _dimension> & out_vctDynamicNArray_ref(vctFixedSizeVector<vct::size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);
         return copy;
     }
 
-    const vctDynamicNArray<_elementType, _dimension> &out_const_vctDynamicNArray_ref(vctFixedSizeVector<vct::size_type, _dimension> sizes) {
+    const vctDynamicNArray<_elementType, _dimension> & out_const_vctDynamicNArray_ref(vctFixedSizeVector<vct::size_type, _dimension> sizes) {
         copy.SetSize(sizes);
         vctRandom(copy, 0, 10);
         return copy;
@@ -144,7 +140,12 @@ public:
         copy.at(metaIndex) = value;
     }
 
-    inline void sizes(vctFixedSizeVector<vct::size_type, _dimension> &shape) const {
+    inline void sizes(vctFixedSizeVector<vct::size_type, _dimension> & shape) const {
         shape.Assign(copy.sizes());
     }
+
+    inline static int sizeOfSizes(void) {
+        return sizeof(vct::size_type);
+    }
+   
 };
