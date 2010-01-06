@@ -613,3 +613,6 @@ http://www.cisst.org/cisst/license.txt.
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
+
+%apply vctDynamicVector         {vctDoubleVec, vctDouble, vctIntVec};
+%apply vctDynamicVector &       {vctDoubleVec &, vctDouble &, vctIntVec &};

@@ -50,8 +50,7 @@ http://www.cisst.org/cisst/license.txt.
 %rename(__str__) ToString;
 %ignore *::ToStream;
 
-// The traits are used everywhere
-%include "cisstVector/vctContainerTraits.h"
+
 
 // Define some basic flags
 %include "cisstVector/vctForwardDeclarations.h"
@@ -70,6 +69,9 @@ http://www.cisst.org/cisst/license.txt.
 // %include "cisstVector/vctFrame.i"
 
 */
+
+// The traits are used everywhere
+%include "cisstVector/vctContainerTraits.h"
 
 %include "cisstVector/vctDynamicVectorTypemaps.i"
 %include "cisstVector/vctFixedSizeVectorTypemaps.i"

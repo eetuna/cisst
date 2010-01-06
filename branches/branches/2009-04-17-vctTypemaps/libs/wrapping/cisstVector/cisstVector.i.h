@@ -58,7 +58,7 @@ bool vctThrowUnlessIsPyArray(PyObject * input)
 
 
 template <class _elementType>
-bool vctThrowUnlessIsSameTypeArray(PyObject * input)
+bool vctThrowUnlessIsSameTypeArray(PyObject * CMN_UNUSED(input))
 {
     PyErr_SetString(PyExc_ValueError, "Unsupported data type");
     return false;

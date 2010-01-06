@@ -21,6 +21,7 @@
 
 import numpy
 
+# import all test classes
 from cisstVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_int
 from cisstVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_double
 
@@ -39,6 +40,7 @@ from cisstVectorTypemapsTestPython import vctDynamicNArrayTypemapsTest_int_4
 from cisstVectorTypemapsTestPython import vctDynamicNArrayTypemapsTest_double_4
 
 
+# define which types to use and their numpy/C++ test classes correspondences
 vctDynamicVectorTypemapsTest_types = {numpy.int32  : vctDynamicVectorTypemapsTest_int,
                                       numpy.double : vctDynamicVectorTypemapsTest_double}
 
