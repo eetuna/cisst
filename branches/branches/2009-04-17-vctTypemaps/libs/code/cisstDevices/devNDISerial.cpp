@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnXMLPath.h>
 #include <cisstVector/vctDynamicMatrixTypes.h>
 #include <cisstOSAbstraction/osaSleep.h>
-#include <cisstNumerical/nmrLSSolver.h>
+// #include <cisstNumerical/nmrLSSolver.h>
 #include <cisstDevices/devNDISerial.h>
 
 CMN_IMPLEMENT_SERVICES(devNDISerial);
@@ -766,62 +766,62 @@ void devNDISerial::Track(void)
 
 void devNDISerial::CalibratePivot(const prmString & toolName)
 {
-    const unsigned int numPoints = 500;
+//     const unsigned int numPoints = 500;
 
-    CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: calibrating " << toolName.GetString() << std::endl;
-    Tool * tool = Tools.GetItem(toolName.GetString());
-    tool->TooltipOffset.SetAll(0.0);
+//     CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: calibrating " << toolName.GetString() << std::endl;
+//     Tool * tool = Tools.GetItem(toolName.GetString());
+//     tool->TooltipOffset.SetAll(0.0);
 
-    CommandSend("TSTART 80");
-    ResponseRead("OKAY");
+//     CommandSend("TSTART 80");
+//     ResponseRead("OKAY");
 
-    CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: starting calibration in 5 seconds" << std::endl;
-    osaSleep(5.0 * cmn_s);
-    CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: calibration stopped" << std::endl;
-    Beep(2);
+//     CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: starting calibration in 5 seconds" << std::endl;
+//     osaSleep(5.0 * cmn_s);
+//     CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: calibration stopped" << std::endl;
+//     Beep(2);
 
-    vctMat A(3 * numPoints, 6, VCT_COL_MAJOR);
-    vctMat b(3 * numPoints, 1, VCT_COL_MAJOR);
+//     vctMat A(3 * numPoints, 6, VCT_COL_MAJOR);
+//     vctMat b(3 * numPoints, 1, VCT_COL_MAJOR);
 
-    for (unsigned int i = 0; i < numPoints; i++) {
-        Track();
+//     for (unsigned int i = 0; i < numPoints; i++) {
+//         Track();
 
-        vctDynamicMatrixRef<double> rotation(3, 3, 1, numPoints*3, A.Pointer(i*3, 0));
-        rotation.Assign(tool->Position.Position().Rotation());
+//         vctDynamicMatrixRef<double> rotation(3, 3, 1, numPoints*3, A.Pointer(i*3, 0));
+//         rotation.Assign(tool->Position.Position().Rotation());
 
-        vctDynamicMatrixRef<double> identity(3, 3, 1, numPoints*3, A.Pointer(i*3, 3));
-        identity.Assign(-vctRot3::Identity());
+//         vctDynamicMatrixRef<double> identity(3, 3, 1, numPoints*3, A.Pointer(i*3, 3));
+//         identity.Assign(-vctRot3::Identity());
 
-        vctDynamicVectorRef<double> translation(3, b.Pointer(i*3, 0));
-        translation.Assign(tool->Position.Position().Translation());
-    }
+//         vctDynamicVectorRef<double> translation(3, b.Pointer(i*3, 0));
+//         translation.Assign(tool->Position.Position().Translation());
+//     }
 
-    CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: calibration started" << std::endl;
-    CommandSend("TSTOP ");
-    ResponseRead("OKAY");
+//     CMN_LOG_CLASS_RUN_WARNING << "CalibratePivot: calibration started" << std::endl;
+//     CommandSend("TSTOP ");
+//     ResponseRead("OKAY");
 
-    nmrLSSolver calibration(A, b);
-    calibration.Solve(A, b);
+//     nmrLSSolver calibration(A, b);
+//     calibration.Solve(A, b);
 
-    vct3 tooltip;
-    vct3 pivot;
-    for (unsigned int i = 0; i < 3; i++) {
-        tooltip.Element(i) = b.at(i, 0);
-        pivot.Element(i) = b.at(i+3, 0);
-    }
-    tool->TooltipOffset = tooltip;
+//     vct3 tooltip;
+//     vct3 pivot;
+//     for (unsigned int i = 0; i < 3; i++) {
+//         tooltip.Element(i) = b.at(i, 0);
+//         pivot.Element(i) = b.at(i+3, 0);
+//     }
+//     tool->TooltipOffset = tooltip;
 
-//    vct3 error;
-//    double errorRMS = 0.0;
-//    for (int i = 0; i < numPoints; i++) {
-//        error = frame[i] * tooltip - pivot;
-//        errorRMS += error.NormSquare();
-//    }
-//    errorRMS = sqrt(error / numPoints);
+// //    vct3 error;
+// //    double errorRMS = 0.0;
+// //    for (int i = 0; i < numPoints; i++) {
+// //        error = frame[i] * tooltip - pivot;
+// //        errorRMS += error.NormSquare();
+// //    }
+// //    errorRMS = sqrt(error / numPoints);
 
-    CMN_LOG_CLASS_RUN_DEBUG << "CalibratePivot:\n "
-                            << " * tooltip offset: " << tooltip << "\n"
-                            << " * pivot position: " << pivot << std::endl;
+//     CMN_LOG_CLASS_RUN_DEBUG << "CalibratePivot:\n "
+//                             << " * tooltip offset: " << tooltip << "\n"
+//                             << " * pivot position: " << pivot << std::endl;
 }
 
 
