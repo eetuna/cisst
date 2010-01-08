@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-11-17
   
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -274,64 +274,80 @@ void mtsManagerLocalTest::TestGetProcessName(void)
     CPPUNIT_ASSERT(managerLocal2.GetProcessName() == P2);
 }
 
-void mtsManagerLocalTest::TestConnect(void)
-{    
-    // Case 1: Connection between a LOCAL component and a LOCAL component
-    {
-        // Test with invalid arguments (with non-existing components or interfaces)
-        mtsManagerLocal managerLocal(P1, "");
-        mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
-        mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
-
-        CPPUNIT_ASSERT(!managerLocal.Connect("NonExist-C", "NonExist-R", "NonExist-S", "NonExist-P"));
-
-        CPPUNIT_ASSERT(managerLocal.AddComponent(c1Device));
-        CPPUNIT_ASSERT(managerLocal.AddComponent(c2Device));
-
-        CPPUNIT_ASSERT(managerLocal.Connect(C1, r1, C2, p1));
-    }
-    
-    // Case 2: Connection between a LOCAL component and a REMOTE component
-    // - This requires proxy creation tests and valiation
-    {
-        mtsManagerLocal managerLocal1(P1, "");
-        mtsManagerLocal managerLocal2(P2, "");
-
-        // MJUNG: Comments for the following hack for unit-test:
-        // In the current architecture, the global component manager instance 
-        // should be unique across a network. However, in this unit-test, we 
-        // need to simulate a case that there are two different local component 
-        // manager in two different processes which are connected to the same 
-        // global task manager. Thus, the global component manager of the second
-        // local component manager is replaced with that of the first one.
-        mtsManagerGlobalInterface * managerGlobalNotUsed = managerLocal2.ManagerGlobal;
-        managerLocal2.ManagerGlobal = managerLocal1.ManagerGlobal;
-        CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->AddProcess(&managerLocal2));
-
-        mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
-        mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
-
-        CPPUNIT_ASSERT(managerLocal1.AddComponent(c1Device));
-        CPPUNIT_ASSERT(managerLocal2.AddComponent(c2Device));
-
-        //
-        // TODO: Implement Proxy Creation Feature!!!
-        //
-
-        //CPPUNIT_ASSERT(managerLocal1.Connect(P1, C1, r1, P2, C2, p1));
-
-        managerLocal2.ManagerGlobal = managerGlobalNotUsed; // Recover the original instance
-    }
-
-    // Case 3: Connection between a REMOTE component and a REMOTE component
-    // - This requires proxy creation tests and valiation
-}
-
-void mtsManagerLocalTest::TestDisconnect(void)
+void mtsManagerLocalTest::TestConnectDisconnect(void)
 {
-    //-----------------------------------------------------
-    // Test with invalid arguments
+    //
+    // Local connection test
+    //
     mtsManagerLocal managerLocal(P1, "");
+
+    // Test with invalid arguments
+    CPPUNIT_ASSERT(!managerLocal.Connect(C1, r1, C2, p1));
+
+    mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
+    mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c1Device));
+    CPPUNIT_ASSERT(managerLocal.AddComponent(c2Device));
+
+    CPPUNIT_ASSERT(managerLocal.Connect(C1, r1, C2, p1));
+
+    //
+    // Remote connection test
+    //
+
+    // Test with invalid arguments
+    CPPUNIT_ASSERT(!managerLocal.Connect(P1, C1, r1, P2, C2, p1));
+
+    mtsManagerGlobal managerGlobal;
+
+    // Prepare local managers for this test
+    mtsManagerTestC1Device * P1C1 = new mtsManagerTestC1Device;
+    mtsManagerTestC2Device * P1C2 = new mtsManagerTestC2Device;
+    mtsManagerTestC2Device * P2C2 = new mtsManagerTestC2Device;
+    mtsManagerTestC3Device * P2C3 = new mtsManagerTestC3Device;
+
+    mtsManagerLocalInterface * managerLocal1 = new mtsManagerLocal(P1);
+    mtsManagerLocal * managerLocal1Object = dynamic_cast<mtsManagerLocal*>(managerLocal1);
+    managerLocal1Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(managerLocal1);
+    managerLocal1Object->AddComponent(P1C1);
+    managerLocal1Object->AddComponent(P1C2);
+
+    mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
+    mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
+    managerLocal2Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(managerLocal2);
+    managerLocal2Object->AddComponent(P2C2);
+    managerLocal2Object->AddComponent(P2C3);
+
+    // Connecting two interfaces for the first time should success.
+    CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P2, C3, r1, P2, C2, p2));
+
+    // Connecting two interfaces that are already connected should fail.
+    CPPUNIT_ASSERT(!managerLocal1Object->Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerLocal1Object->Connect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(!managerLocal1Object->Connect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(!managerLocal2Object->Connect(P2, C3, r1, P2, C2, p2));
+
+    // Disconnect all the connections for the next tests
+    CPPUNIT_ASSERT(managerLocal1Object->Disconnect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerLocal1Object->Disconnect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerLocal1Object->Disconnect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerLocal2Object->Disconnect(P2, C3, r1, P2, C2, p2));
+
+    // Disconnect should fail if disconnecting non-connected interfaces.
+    CPPUNIT_ASSERT(!managerLocal1Object->Disconnect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerLocal1Object->Disconnect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(!managerLocal1Object->Disconnect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(!managerLocal2Object->Disconnect(P2, C3, r1, P2, C2, p2));
+
+    // Connection should be established correctly regardless whoever calls Connect() method.
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C2, r1, P2, C2, p2));    
 }
 
 void mtsManagerLocalTest::TestCreateAll(void)
@@ -432,6 +448,161 @@ void mtsManagerLocalTest::TestKillAll(void)
                    c2Task->TaskState == mtsTask::FINISHED);
     CPPUNIT_ASSERT(c3Task->TaskState == mtsTask::FINISHING || 
                    c3Task->TaskState == mtsTask::FINISHED);
+}
+
+void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
+{
+    mtsManagerGlobal managerGlobal;
+
+    // Prepare local managers for this test
+    mtsManagerTestC2Device * P2C2 = new mtsManagerTestC2Device;
+    mtsManagerTestC3Device * P2C3 = new mtsManagerTestC3Device;
+
+    mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
+    mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
+    managerLocal2Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(managerLocal2);
+    managerLocal2Object->AddComponent(P2C2);
+    managerLocal2Object->AddComponent(P2C3);
+
+    // Connect two interfaces (establish local connection) and test if commands 
+    // and events work correctly.
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P2, C3, r1, P2, C2, p2));
+
+    // Check initial values
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());
+
+    // Test void command
+    P2C3->RequiredInterface1.CommandVoid();
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(0,  P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());
+
+    // Test write command
+    mtsInt valueWrite;
+    valueWrite.Data = 2;
+    P2C3->RequiredInterface1.CommandWrite(valueWrite);
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());
+
+    // Test read command
+    mtsInt valueRead;
+    valueRead.Data = 0;
+    P2C3->RequiredInterface1.CommandRead(valueRead);
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, valueRead.Data);
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());    
+
+    // Test qualified read command
+    valueWrite.Data = 3;
+    valueRead.Data = 0;
+    P2C3->RequiredInterface1.CommandQualifiedRead(valueWrite, valueRead);
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());    
+
+    // Test void event
+    P2C2->ProvidedInterface2.EventVoid();
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(0, P2C3->RequiredInterface1.GetValue());
+
+    // Test write event
+    valueWrite.Data = 4;
+    P2C2->ProvidedInterface2.EventWrite(valueWrite);
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, P2C3->RequiredInterface1.GetValue());
+}
+
+void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
+{
+    mtsManagerGlobal managerGlobal;
+
+    // Prepare local managers for this test
+    mtsManagerTestC1Device * P1C1 = new mtsManagerTestC1Device;
+    mtsManagerTestC2Device * P1C2 = new mtsManagerTestC2Device;
+    mtsManagerTestC2Device * P2C2 = new mtsManagerTestC2Device;
+    mtsManagerTestC3Device * P2C3 = new mtsManagerTestC3Device;
+
+    mtsManagerLocalInterface * managerLocal1 = new mtsManagerLocal(P1);
+    mtsManagerLocal * managerLocal1Object = dynamic_cast<mtsManagerLocal*>(managerLocal1);
+    managerLocal1Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(managerLocal1);
+    managerLocal1Object->AddComponent(P1C1);
+    managerLocal1Object->AddComponent(P1C2);
+
+    mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
+    mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
+    managerLocal2Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(managerLocal2);
+    managerLocal2Object->AddComponent(P2C2);
+    managerLocal2Object->AddComponent(P2C3);
+
+    // Connect two interfaces (establish remote connection) and test if commands
+    // and events work correctly.
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C1, r1, P2, C2, p1));
+
+    // Check initial values
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());
+
+    // Test void command
+    P2C3->RequiredInterface1.CommandVoid();
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(0,  P2C2->ProvidedInterface2.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());
+
+    // Test write command
+    //mtsInt valueWrite;
+    //valueWrite.Data = 2;
+    //P2C3->RequiredInterface1.CommandWrite(valueWrite);
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());
+
+    //// Test read command
+    //mtsInt valueRead;
+    //valueRead.Data = 0;
+    //P2C3->RequiredInterface1.CommandRead(valueRead);
+    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data, valueRead.Data);
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());    
+
+    //// Test qualified read command
+    //valueWrite.Data = 3;
+    //valueRead.Data = 0;
+    //P2C3->RequiredInterface1.CommandQualifiedRead(valueWrite, valueRead);
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->RequiredInterface1.GetValue());    
+
+    //// Test void event
+    //P2C2->ProvidedInterface2.EventVoid();
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(0, P2C3->RequiredInterface1.GetValue());
+
+    //// Test write event
+    //valueWrite.Data = 4;
+    //P2C2->ProvidedInterface2.EventWrite(valueWrite);
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data, P2C3->RequiredInterface1.GetValue());
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerLocalTest);

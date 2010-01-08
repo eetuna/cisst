@@ -105,9 +105,9 @@ public:
 //-----------------------------------------------------------------------------
 class mtsManagerTestC1 : public mtsTaskPeriodic
 {
-    mtsManagerTestRequiredInterface R1, R2;
-
 public:
+    mtsManagerTestRequiredInterface RequiredInterface1, RequiredInterface2;
+
     mtsManagerTestC1() : mtsTaskPeriodic("C1", 10 * cmn_ms)
     {
         mtsRequiredInterface * required;
@@ -115,22 +115,22 @@ public:
         // Define required interface: r1
         required = AddRequiredInterface("r1");
         if (required) {
-            required->AddFunction("Void", R1.CommandVoid);
-            required->AddFunction("Write", R1.CommandWrite);
-            required->AddFunction("Read", R1.CommandRead);
-            required->AddFunction("QualifiedRead", R1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R1, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
+            required->AddFunction("Void", RequiredInterface1.CommandVoid);
+            required->AddFunction("Write", RequiredInterface1.CommandWrite);
+            required->AddFunction("Read", RequiredInterface1.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface1.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface1, "EventVoid");
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface1, "EventWrite");
         }
         // Define required interface: r2
         required = AddRequiredInterface("r2");
         if (required) {
-            required->AddFunction("Void", R2.CommandVoid);
-            required->AddFunction("Write", R2.CommandWrite);
-            required->AddFunction("Read", R2.CommandRead);
-            required->AddFunction("QualifiedRead", R2.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R2, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R2, "EventWrite");
+            required->AddFunction("Void", RequiredInterface2.CommandVoid);
+            required->AddFunction("Write", RequiredInterface2.CommandWrite);
+            required->AddFunction("Read", RequiredInterface2.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface2.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface2, "EventVoid", false);
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface2, "EventWrite", false);
         }
     }
 
@@ -139,9 +139,9 @@ public:
 
 class mtsManagerTestC1Device : public mtsDevice
 {
-    mtsManagerTestRequiredInterface R1, R2;
-
 public:
+    mtsManagerTestRequiredInterface RequiredInterface1, RequiredInterface2;
+
     mtsManagerTestC1Device() : mtsDevice("C1")
     {
         mtsRequiredInterface * required;
@@ -149,22 +149,22 @@ public:
         // Define required interface: r1
         required = AddRequiredInterface("r1");
         if (required) {
-            required->AddFunction("Void", R1.CommandVoid);
-            required->AddFunction("Write", R1.CommandWrite);
-            required->AddFunction("Read", R1.CommandRead);
-            required->AddFunction("QualifiedRead", R1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R1, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
+            required->AddFunction("Void", RequiredInterface1.CommandVoid);
+            required->AddFunction("Write", RequiredInterface1.CommandWrite);
+            required->AddFunction("Read", RequiredInterface1.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface1.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface1, "EventVoid");
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface1, "EventWrite");
         }
         // Define required interface: r2
         required = AddRequiredInterface("r2");
         if (required) {
-            required->AddFunction("Void", R2.CommandVoid);
-            required->AddFunction("Write", R2.CommandWrite);
-            required->AddFunction("Read", R2.CommandRead);
-            required->AddFunction("QualifiedRead", R2.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R2, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R2, "EventWrite");
+            required->AddFunction("Void", RequiredInterface2.CommandVoid);
+            required->AddFunction("Write", RequiredInterface2.CommandWrite);
+            required->AddFunction("Read", RequiredInterface2.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface2.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface2, "EventVoid");
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface2, "EventWrite");
         }
     }
 
@@ -178,10 +178,10 @@ public:
 //-----------------------------------------------------------------------------
 class mtsManagerTestC2 : public mtsTaskContinuous
 {
-    mtsManagerTestProvidedInterface P1, P2;
-    mtsManagerTestRequiredInterface R1;
-
 public:
+    mtsManagerTestProvidedInterface ProvidedInterface1, ProvidedInterface2;
+    mtsManagerTestRequiredInterface RequiredInterface1;
+
     mtsManagerTestC2() : mtsTaskContinuous("C2")
     {
         mtsRequiredInterface * required;
@@ -190,34 +190,34 @@ public:
         // Define provided interface: p1
         provided = AddProvidedInterface("p1");
         if (provided) {
-            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &P1, "Void");
-            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &P1, "Write");
-            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &P1, "Read");            
-            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &P1, "QualifiedRead");
-            provided->AddEventVoid(P1.EventVoid, "EventVoid");
-            provided->AddEventWrite(P1.EventWrite, "EventWrite", mtsInt(-1));
+            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &ProvidedInterface1, "Void");
+            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &ProvidedInterface1, "Write");
+            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &ProvidedInterface1, "Read");            
+            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &ProvidedInterface1, "QualifiedRead");
+            provided->AddEventVoid(ProvidedInterface1.EventVoid, "EventVoid");
+            provided->AddEventWrite(ProvidedInterface1.EventWrite, "EventWrite", mtsInt(-1));
         }
 
         // Define provided interface: p2
         provided = AddProvidedInterface("p2");
         if (provided) {
-            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &P2, "Void");
-            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &P2, "Write");
-            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &P2, "Read");            
-            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &P2, "QualifiedRead");
-            provided->AddEventVoid(P2.EventVoid, "EventVoid");
-            provided->AddEventWrite(P2.EventWrite, "EventWrite", mtsInt(-1));
+            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &ProvidedInterface2, "Void");
+            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &ProvidedInterface2, "Write");
+            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &ProvidedInterface2, "Read");            
+            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &ProvidedInterface2, "QualifiedRead");
+            provided->AddEventVoid(ProvidedInterface2.EventVoid, "EventVoid");
+            provided->AddEventWrite(ProvidedInterface2.EventWrite, "EventWrite", mtsInt(-1));
         }
 
         // Define required interface: r1
         required = AddRequiredInterface("r1");
         if (required) {
-            required->AddFunction("Void", R1.CommandVoid);
-            required->AddFunction("Write", R1.CommandWrite);
-            required->AddFunction("Read", R1.CommandRead);
-            required->AddFunction("QualifiedRead", R1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R1, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
+            required->AddFunction("Void", RequiredInterface1.CommandVoid);
+            required->AddFunction("Write", RequiredInterface1.CommandWrite);
+            required->AddFunction("Read", RequiredInterface1.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface1.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface1, "EventVoid", false);
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface1, "EventWrite", false);
         }
     }
 
@@ -226,10 +226,10 @@ public:
 
 class mtsManagerTestC2Device : public mtsDevice
 {
-    mtsManagerTestProvidedInterface P1, P2;
-    mtsManagerTestRequiredInterface R1;
-
 public:
+    mtsManagerTestProvidedInterface ProvidedInterface1, ProvidedInterface2;
+    mtsManagerTestRequiredInterface RequiredInterface1;
+
     mtsManagerTestC2Device() : mtsDevice("C2")
     {
         mtsRequiredInterface * required;
@@ -238,34 +238,34 @@ public:
         // Define provided interface: p1
         provided = AddProvidedInterface("p1");
         if (provided) {
-            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &P1, "Void");
-            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &P1, "Write");
-            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &P1, "Read");            
-            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &P1, "QualifiedRead");
-            provided->AddEventVoid(P1.EventVoid, "EventVoid");
-            provided->AddEventWrite(P1.EventWrite, "EventWrite", mtsInt(-1));
+            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &ProvidedInterface1, "Void");
+            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &ProvidedInterface1, "Write");
+            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &ProvidedInterface1, "Read");            
+            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &ProvidedInterface1, "QualifiedRead");
+            provided->AddEventVoid(ProvidedInterface1.EventVoid, "EventVoid");
+            provided->AddEventWrite(ProvidedInterface1.EventWrite, "EventWrite", mtsInt(-1));
         }
 
         // Define provided interface: p2
         provided = AddProvidedInterface("p2");
         if (provided) {
-            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &P2, "Void");
-            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &P2, "Write");
-            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &P2, "Read");            
-            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &P2, "QualifiedRead");
-            provided->AddEventVoid(P2.EventVoid, "EventVoid");
-            provided->AddEventWrite(P2.EventWrite, "EventWrite", mtsInt(-1));
+            provided->AddCommandVoid(&mtsManagerTestProvidedInterface::CommandVoid, &ProvidedInterface2, "Void");
+            provided->AddCommandWrite(&mtsManagerTestProvidedInterface::CommandWrite, &ProvidedInterface2, "Write");
+            provided->AddCommandRead(&mtsManagerTestProvidedInterface::CommandRead, &ProvidedInterface2, "Read");            
+            provided->AddCommandQualifiedRead(&mtsManagerTestProvidedInterface::CommandQualifiedRead, &ProvidedInterface2, "QualifiedRead");
+            provided->AddEventVoid(ProvidedInterface2.EventVoid, "EventVoid");
+            provided->AddEventWrite(ProvidedInterface2.EventWrite, "EventWrite", mtsInt(-1));
         }
 
         // Define required interface: r1
         required = AddRequiredInterface("r1");
         if (required) {
-            required->AddFunction("Void", R1.CommandVoid);
-            required->AddFunction("Write", R1.CommandWrite);
-            required->AddFunction("Read", R1.CommandRead);
-            required->AddFunction("QualifiedRead", R1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R1, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
+            required->AddFunction("Void", RequiredInterface1.CommandVoid);
+            required->AddFunction("Write", RequiredInterface1.CommandWrite);
+            required->AddFunction("Read", RequiredInterface1.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface1.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface1, "EventVoid", false);
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface1, "EventWrite", false);
         }
     }
 
@@ -279,9 +279,9 @@ public:
 //-----------------------------------------------------------------------------
 class mtsManagerTestC3 : public mtsTaskFromCallback
 {
-    mtsManagerTestRequiredInterface R1;
-
 public:
+    mtsManagerTestRequiredInterface RequiredInterface1;
+
     // Counters to test Create()
     int CounterCreateCall;
 
@@ -292,24 +292,23 @@ public:
         // Define required interface: r1
         required = AddRequiredInterface("r1");
         if (required) {
-            required->AddFunction("Void", R1.CommandVoid);
-            required->AddFunction("Write", R1.CommandWrite);
-            required->AddFunction("Read", R1.CommandRead);
-            required->AddFunction("QualifiedRead", R1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R1, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
+            required->AddFunction("Void", RequiredInterface1.CommandVoid);
+            required->AddFunction("Write", RequiredInterface1.CommandWrite);
+            required->AddFunction("Read", RequiredInterface1.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface1.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface1, "EventVoid", false);
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface1, "EventWrite", false);
         }
     }
 
     void Run(void) {}
-    //void Create(void *data) { ++CounterCreateCall; }
 };
 
 class mtsManagerTestC3Device : public mtsDevice
 {
-    mtsManagerTestRequiredInterface R1;
-
 public:
+    mtsManagerTestRequiredInterface RequiredInterface1;
+
     mtsManagerTestC3Device() : mtsDevice("C3")
     {
         mtsRequiredInterface * required;
@@ -317,12 +316,12 @@ public:
         // Define required interface: r1
         required = AddRequiredInterface("r1");
         if (required) {
-            required->AddFunction("Void", R1.CommandVoid);
-            required->AddFunction("Write", R1.CommandWrite);
-            required->AddFunction("Read", R1.CommandRead);
-            required->AddFunction("QualifiedRead", R1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &R1, "EventVoid");
-            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &R1, "EventWrite");
+            required->AddFunction("Void", RequiredInterface1.CommandVoid);
+            required->AddFunction("Write", RequiredInterface1.CommandWrite);
+            required->AddFunction("Read", RequiredInterface1.CommandRead);
+            required->AddFunction("QualifiedRead", RequiredInterface1.CommandQualifiedRead);
+            required->AddEventHandlerVoid(&mtsManagerTestRequiredInterface::EventVoidHandler, &RequiredInterface1, "EventVoid", false);
+            required->AddEventHandlerWrite(&mtsManagerTestRequiredInterface::EventWriteHandler, &RequiredInterface1, "EventWrite", false);
         }
     }
 

@@ -578,18 +578,16 @@ bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std
         return false;
     }
 
-    return ConnectLocally(clientComponentName, clientRequiredInterfaceName, 
-                          serverComponentName, serverProvidedInterfaceName);
+    return ConnectLocally(ProcessName, clientComponentName, clientRequiredInterfaceName, 
+                          ProcessName, serverComponentName, serverProvidedInterfaceName);
 }
 
 bool mtsManagerLocal::Connect(
-    const std::string & clientProcessName,
-    const std::string & clientComponentName,
-    const std::string & clientRequiredInterfaceName,
-    const std::string & serverProcessName,
-    const std::string & serverComponentName,
-    const std::string & serverProvidedInterfaceName)
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
+    // Within mtsManagerGlobal::Connect() method, all the proxy components with
+    // proxy interfaces are created internally.
     unsigned int connectionID = ManagerGlobal->Connect(
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
@@ -601,32 +599,34 @@ bool mtsManagerLocal::Connect(
         return false;
     }
 
-    // TODO: before proceeding to the ConnectLocally(), proxy components should be
-    // created by the GCM.
-
-    return ConnectLocally(clientComponentName, clientRequiredInterfaceName, 
-                          serverComponentName, serverProvidedInterfaceName, connectionID);
+    return ConnectLocally(clientProcessName, clientComponentName, clientRequiredInterfaceName, 
+                          serverProcessName, serverComponentName, serverProvidedInterfaceName, connectionID);
 }
 
 bool mtsManagerLocal::ConnectLocally(
-    const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-    const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
     const unsigned int connectionID)
 {
-    // At this point, the connection can be established without validity check
-    // because it is assumed that this method is called only after the global 
-    // component manager has successfully confirmed the validity and existence 
-    // of components and interfaces specified.
-    mtsDevice * clientComponent = GetComponent(clientComponentName);    
+    // At this point, it is guaranteed that all components and interfaces exist
+    // in the same process because the global component manager has already 
+    // checked and created proxy objects as needed.
+    mtsDevice * clientComponent = GetComponent(clientComponentName);
     if (!clientComponent) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find client component: " << clientComponentName << std::endl;
-        return false;
+        clientComponent = GetComponent(mtsManagerGlobal::GetComponentProxyName(clientProcessName, clientComponentName));
+        if (!clientComponent) {
+            CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find client component: " << clientComponentName << std::endl;
+            return false;
+        }
     }
 
     mtsDevice * serverComponent = GetComponent(serverComponentName);
     if (!serverComponent) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find server component: " << serverComponentName << std::endl;
-        return false;
+        serverComponent = GetComponent(mtsManagerGlobal::GetComponentProxyName(serverProcessName, serverComponentName));
+        if (!serverComponent) {
+            CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find server component: " << serverComponentName << std::endl;
+            return false;
+        }
     }
 
     // Get the client component and the provided interface object.

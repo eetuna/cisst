@@ -137,14 +137,14 @@ protected:
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
 
-    /*! Establish local connection between two local components. Note that this
-        method assumes that two components should be in the same process.
+    /*! Connect two local components (interfaces). Note that this method assumes 
+        that two components are in the same process.
         If connectionSessionID is -1 (default value), this local component manager
         should inform the global task manager of the successful local connection.
         */
     bool ConnectLocally(
-        const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const unsigned int connectionID =
             static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL));
 

@@ -434,7 +434,7 @@ void mtsManagerGlobalTest::TestRemoveRequiredInterface(void)
     // Case 2. When interfaces have connection with other interfaces
 }
 
-void mtsManagerGlobalTest::TestConnectStandAlone(void)
+void mtsManagerGlobalTest::TestConnectLocal(void)
 {
     mtsManagerGlobal managerGlobal;
 
@@ -494,7 +494,7 @@ void mtsManagerGlobalTest::TestConnectStandAlone(void)
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
 }
 
-void mtsManagerGlobalTest::TestConnectNetwork(void)
+void mtsManagerGlobalTest::TestConnectRemote(void)
 {
     mtsManagerGlobal managerGlobal;
     mtsManagerGlobal::ConnectionMapType * connectionMap;

@@ -154,19 +154,6 @@ protected:
     /*! Clean up the internal variables */
     bool CleanUp(void);
 
-    /*! Generate unique id of an interface as string */
-    inline const std::string GetInterfaceUID(const std::string & processName,
-        const std::string & componentName, const std::string & interfaceName) const
-    {
-        return processName + ":" + componentName + ":" + interfaceName;
-    }
-
-    /*! Generate unique name of a proxy component */
-    inline const std::string GetComponentProxyName(const std::string & processName, const std::string & componentName) const
-    {
-        return processName + ":" + componentName + "Proxy";
-    }
-
     /*! Get a map containing connection information for a provided interface */
     ConnectionMapType * GetConnectionsOfProvidedInterface(
         const std::string & serverProcessName, const std::string & serverComponentName, 
@@ -265,6 +252,22 @@ public:
         const std::string & serverProcessName,
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName);
+
+    //-------------------------------------------------------------------------
+    //  Public Getters
+    //-------------------------------------------------------------------------
+    /*! Generate unique id of an interface as string */
+    static const std::string GetInterfaceUID(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+    {
+        return processName + ":" + componentName + ":" + interfaceName;
+    }
+
+    /*! Generate unique name of a proxy component */
+    static const std::string GetComponentProxyName(const std::string & processName, const std::string & componentName)
+    {
+        return processName + ":" + componentName + "Proxy";
+    }
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerGlobal)

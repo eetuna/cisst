@@ -23,12 +23,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <cisstMultiTask/mtsManagerLocal.h>
-//class mtsManagerLocalInterface;
 
 class mtsManagerGlobalTest: public CppUnit::TestFixture
 {
 private:
-    //mtsManagerLocalInterface *localManager1, *localManager2;
     mtsManagerLocal *localManager1, *localManager2;
 
     CPPUNIT_TEST_SUITE(mtsManagerGlobalTest);
@@ -50,8 +48,8 @@ private:
         CPPUNIT_TEST(TestFindRequiredInterface);
         CPPUNIT_TEST(TestRemoveRequiredInterface);
 
-        CPPUNIT_TEST(TestConnectStandAlone);
-        CPPUNIT_TEST(TestConnectNetwork);
+        CPPUNIT_TEST(TestConnectLocal);
+        CPPUNIT_TEST(TestConnectRemote);
         CPPUNIT_TEST(TestDisconnect);
         CPPUNIT_TEST(TestIsAlreadyConnected);
         CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
@@ -82,8 +80,8 @@ public:
     void TestFindRequiredInterface(void);
     void TestRemoveRequiredInterface(void);
 
-    void TestConnectStandAlone(void);
-    void TestConnectNetwork(void);
+    void TestConnectLocal(void);
+    void TestConnectRemote(void);
     void TestDisconnect(void);
     void TestIsAlreadyConnected(void);
     void TestGetConnectionsOfProvidedInterface(void);

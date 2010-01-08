@@ -36,8 +36,7 @@ private:
         CPPUNIT_TEST(TestAddComponent);
         CPPUNIT_TEST(TestRemoveComponent);
         CPPUNIT_TEST(TestGetComponent);
-        CPPUNIT_TEST(TestConnect);
-        CPPUNIT_TEST(TestDisconnect);
+        CPPUNIT_TEST(TestConnectDisconnect);
         //CPPUNIT_TEST(TestCreateAll);
         //CPPUNIT_TEST(TestStartAll);
         //CPPUNIT_TEST(TestKillAll);
@@ -50,7 +49,11 @@ private:
         //CPPUNIT_TEST(TestRemoveRequiredInterfaceProxy);
         //CPPUNIT_TEST(TestRemoveProvidedInterfaceProxy);
         CPPUNIT_TEST(TestGetProcessName);
-        
+
+        // These are special type of unit tests to check if two components
+        // can bind and run together correctly.
+        CPPUNIT_TEST(TestLocalCommandsAndEvents);
+        CPPUNIT_TEST(TestRemoteCommandsAndEvents);
 	}
     CPPUNIT_TEST_SUITE_END();
 
@@ -63,12 +66,13 @@ public:
     void TestAddComponent(void);
     void TestRemoveComponent(void);
     void TestGetComponent(void);
-    void TestConnect(void);
-    void TestDisconnect(void);
+    void TestConnectDisconnect(void);
     void TestCreateAll(void);
     void TestStartAll(void);
     void TestKillAll(void);
     void TestCleanup(void);
     void TestGetNamesOfComponents(void);
     void TestGetProcessName(void);
+    void TestLocalCommandsAndEvents(void);
+    void TestRemoteCommandsAndEvents(void);
 };
