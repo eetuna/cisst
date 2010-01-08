@@ -86,12 +86,12 @@ public:
     //-------------------------------------------------------------------------
     //  Interface Management
     //-------------------------------------------------------------------------
-    /*! Register an interface. Note that adding/removing an interface can be run-time. */
+    /*! Register an interface. An interface can be added/removed dynamically. */
     virtual bool AddProvidedInterface(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface) = 0;
 
     virtual bool AddRequiredInterface(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface) = 0;
 
     /*! Find an interface using process name, component name, and interface name */
     virtual bool FindProvidedInterface(
@@ -100,7 +100,7 @@ public:
     virtual bool FindRequiredInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const = 0;
 
-    /*! Remove an interface. Note that adding/removing an interface can be run-time. */
+    /*! Remove an interface. An interface can be added/removed dynamically. */
     virtual bool RemoveProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
 
@@ -144,7 +144,8 @@ public:
         Return true if the global component manager acknowledged the connection. */
     virtual bool ConnectConfirm(unsigned int connectionSessionID) = 0;
 
-    /*! Disconnect two interfaces */
+    /*! Disconnect two interfaces.
+        Return true if disconnecting already disconnected connection. */
     virtual bool Disconnect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,

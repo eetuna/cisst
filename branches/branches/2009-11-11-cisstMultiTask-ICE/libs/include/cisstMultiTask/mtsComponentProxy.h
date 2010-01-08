@@ -21,7 +21,11 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Defines a periodic task.
+  \brief Definition of Component Proxy
+  \ingroup cisstMultiTask
+
+  A component proxy is of mtsDevice type rather than mtsTask type. This 
+  helps avoiding potential thread synchronization issues between ICE and cisst.  
 */
 
 #ifndef _mtsComponentProxy_h
@@ -34,15 +38,15 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <string>
 
-class mtsComponentProxy : public mtsDevice 
+class mtsComponentProxy : public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-    mtsComponentProxy(const std::string & deviceName) : mtsDevice(deviceName) {}
+    mtsComponentProxy(const std::string & componentProxyName) : mtsDevice(componentProxyName) {}
     virtual ~mtsComponentProxy() {}
 
-    inline void Configure(const std::string & CMN_UNUSED(deviceName)) {};
+    inline void Configure(const std::string & CMN_UNUSED(componentProxyName)) {};
 
     /*! Create or remove a provided interface proxy */
     bool CreateProvidedInterfaceProxy(ProvidedInterfaceDescription & providedInterfaceDescription);
@@ -53,8 +57,8 @@ public:
     bool RemoveRequiredInterfaceProxy(const std::string & requiredInterfaceProxyName);
 
     /*! Return a total number of interfaces (used to determine if this componet 
-        proxy should be removed; if all interfaces are removed, the component
-        proxy also has to be cleaned up) */
+        proxy should be removed; when all interfaces are removed, the component
+        proxy has to be cleaned up) */
     unsigned int GetInterfaceCount() const {
         return ProvidedInterfaces.size() + RequiredInterfaces.size();
     }

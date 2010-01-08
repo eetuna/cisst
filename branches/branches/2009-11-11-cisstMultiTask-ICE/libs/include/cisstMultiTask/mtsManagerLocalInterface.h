@@ -49,6 +49,42 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsManagerLocalInterface 
 {
 public:
+    //-------------------------------------------------------------------------
+    //  Proxy Object Control (Creation, Removal)
+    //-------------------------------------------------------------------------
+    /*! Create a component proxy. This should be called before an interface 
+        proxy is created. */
+    virtual bool CreateComponentProxy(const std::string & componentProxyName) = 0;
+
+    /*! Remove a component proxy. Note that all the interface proxies that the
+        proxy manages should be automatically removed when removing a component
+        proxy. */
+    virtual bool RemoveComponentProxy(const std::string & componentProxyName) = 0;
+
+    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
+    virtual bool CreateProvidedInterfaceProxy(
+        const std::string & serverComponentProxyName,
+        ProvidedInterfaceDescription & providedInterfaceDescription) = 0;
+
+    /*! Create a required interface proxy using RequiredInterfaceDescription */
+    virtual bool CreateRequiredInterfaceProxy(
+        const std::string & clientComponentProxyName,
+        RequiredInterfaceDescription & requiredInterfaceDescription) = 0;
+
+    /*! Remove a provided interface proxy.  Because a provided interface can
+        have multiple connections with more than one required interface, this
+        method removes a provided interface proxy only when a user counter 
+        variable (mtsDeviceInterface::UserCounter) becomes zero. */
+    virtual bool RemoveProvidedInterfaceProxy(
+        const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName) = 0;
+
+    /*! Remove a required interface proxy */
+    virtual bool RemoveRequiredInterfaceProxy(
+        const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName) = 0;
+
+    //-------------------------------------------------------------------------
+    //  Getters
+    //-------------------------------------------------------------------------
     /*! Extract all the information on a provided interface (command objects 
         and event generators with arguments serialized (if any)) */
     virtual bool GetProvidedInterfaceDescription(
@@ -63,26 +99,11 @@ public:
         const std::string & requiredInterfaceName, 
         RequiredInterfaceDescription & requiredInterfaceDescription) const = 0;
 
-    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
-    virtual bool CreateProvidedInterfaceProxy(
-        const std::string & serverComponentProxyName,
-        ProvidedInterfaceDescription & providedInterfaceDescription) = 0;
-
-    /*! Create a required interface proxy using RequiredInterfaceDescription */
-    virtual bool CreateRequiredInterfaceProxy(
-        const std::string & clientComponentProxyName,
-        RequiredInterfaceDescription & requiredInterfaceDescription) = 0;
-
-    /*! Remove a provided interface proxy */
-    virtual bool RemoveProvidedInterfaceProxy(
-        const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName) = 0;
-
-    /*! Remove a required interface proxy */
-    virtual bool RemoveRequiredInterfaceProxy(
-        const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName) = 0;
-
     /*! Returns the name of this local component manager */
     virtual const std::string GetProcessName() const = 0;
+
+    /*! Returns the total number of interfaces that are running on a component */
+    virtual const int GetCurrentInterfaceCount(const std::string & componentName) const = 0;
 };
 
 #endif // _mtsManagerLocalInterface_h

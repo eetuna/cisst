@@ -246,10 +246,7 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(ProvidedInterfaceDescriptio
     // is not added to the component yet. Only when all proxy objects 
     // (command proxies and event proxies) are confirmed to be successfully 
     // created, the interface proxy can be added to the component proxy.
-    mtsProvidedInterface * providedInterfaceProxy = NULL;
-
-    // Either one of the following line should be uncommented
-    providedInterfaceProxy = new mtsDeviceInterface(providedInterfaceName, this);
+    mtsProvidedInterface * providedInterfaceProxy = new mtsDeviceInterface(providedInterfaceName, this);
 
     // Create command proxies using the given description on the original
     // provided interface.

@@ -50,7 +50,8 @@ private:
         CPPUNIT_TEST(TestFindRequiredInterface);
         CPPUNIT_TEST(TestRemoveRequiredInterface);
 
-        CPPUNIT_TEST(TestConnect);
+        CPPUNIT_TEST(TestConnectStandAlone);
+        CPPUNIT_TEST(TestConnectNetwork);
         CPPUNIT_TEST(TestDisconnect);
         CPPUNIT_TEST(TestIsAlreadyConnected);
         CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
@@ -81,7 +82,8 @@ public:
     void TestFindRequiredInterface(void);
     void TestRemoveRequiredInterface(void);
 
-    void TestConnect(void);
+    void TestConnectStandAlone(void);
+    void TestConnectNetwork(void);
     void TestDisconnect(void);
     void TestIsAlreadyConnected(void);
     void TestGetConnectionsOfProvidedInterface(void);

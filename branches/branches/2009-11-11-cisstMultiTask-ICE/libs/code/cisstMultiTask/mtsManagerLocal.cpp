@@ -115,6 +115,16 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
     }
 }
 
+mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName) :
+    ComponentMap("Components"),
+    ManagerGlobal(NULL),
+    ProcessName(thisProcessName),
+    ProcessIP("")
+{
+    __os_init();
+    ComponentMap.SetOwner(*this);
+}
+
 mtsManagerLocal::~mtsManagerLocal()
 {
     // If ManagerGlobal is not NULL, it means Cleanup() has not been called 
@@ -168,18 +178,18 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(
     return Instance;
 }
 
-bool mtsManagerLocal::AddComponent(mtsDevice * component) 
+bool mtsManagerLocal::AddComponent(mtsDevice * component)
 {
     if (!component) {
-        CMN_LOG_CLASS_RUN_ERROR << "added component: " << "invalid argument" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "AddComponent: invalid component" << std::endl;
         return false;
     }
 
-    std::string componentName = component->GetName();
+    const std::string componentName = component->GetName();
 
     // Try to register new component to the global component manager first.
     if (!ManagerGlobal->AddComponent(ProcessName, componentName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "failed to add component: " << componentName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "AddComponent: failed to add component: " << componentName << std::endl;
         return false;
     }
 
@@ -187,40 +197,42 @@ bool mtsManagerLocal::AddComponent(mtsDevice * component)
     // the global component manager.
     std::vector<std::string> interfaceNames = component->GetNamesOfRequiredInterfaces();
     for (unsigned int i = 0; i < interfaceNames.size(); ++i) {
-        if (!ManagerGlobal->AddRequiredInterface(ProcessName, componentName, interfaceNames[i]))
+        if (!ManagerGlobal->AddRequiredInterface(ProcessName, componentName, interfaceNames[i], false))
         {
-            CMN_LOG_CLASS_RUN_ERROR << "failed to add required interface: " 
+            CMN_LOG_CLASS_RUN_ERROR << "AddComponent: failed to add required interface: " 
                 << componentName << ":" << interfaceNames[i] << std::endl;
             return false;
         }
     }
-
+ 
     interfaceNames = component->GetNamesOfProvidedInterfaces();
     for (unsigned int i = 0; i < interfaceNames.size(); ++i) {
-        if (!ManagerGlobal->AddProvidedInterface(ProcessName, componentName, interfaceNames[i]))
+        if (!ManagerGlobal->AddProvidedInterface(ProcessName, componentName, interfaceNames[i], false))
         {
-            CMN_LOG_CLASS_RUN_ERROR << "failed to add provided interface: " 
+            CMN_LOG_CLASS_RUN_ERROR << "AddComponent: failed to add provided interface: " 
                 << componentName << ":" << interfaceNames[i] << std::endl;
             return false;
         }
     }
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "Global component manager: added component: " << component->GetName() << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "AddComponent: "
+        << "successfully added component to the global component manager: " << componentName << std::endl;
 
+    bool success;
     ComponentMapChange.Lock();
-    bool result = ComponentMap.AddItem(component->GetName(), component, CMN_LOG_LOD_RUN_ERROR);
-    if (result) {
-        CMN_LOG_CLASS_INIT_VERBOSE << "added component: "
-                                   << component->GetName() << std::endl;
-        //if (JGraphSocketConnected) {
-        //    std::string buffer = task->ToGraphFormat();
-        //    CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
-        //    JGraphSocket.Send(buffer);
-        //}
-    }
+    success = ComponentMap.AddItem(componentName, component);
     ComponentMapChange.Unlock();
 
-    return result;
+    if (!success) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddComponent: "
+            << "failed to add component to local component manager: " << componentName << std::endl;
+        return false;
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "AddComponent: "
+        << "successfully added component to local component manager: " << componentName << std::endl;
+
+    return true;
 }
 
 bool CISST_DEPRECATED mtsManagerLocal::AddTask(mtsTask * component)
@@ -236,7 +248,7 @@ bool CISST_DEPRECATED mtsManagerLocal::AddDevice(mtsDevice * component)
 bool mtsManagerLocal::RemoveComponent(mtsDevice * component)
 {
     if (!component) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component: invalid component" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: invalid argument" << std::endl;
         return false;
     }
 
@@ -247,18 +259,23 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
 {
     // Notify the global component manager of the removal of this component
     if (!ManagerGlobal->RemoveComponent(ProcessName, componentName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component: " << componentName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component at global component manager: " << componentName << std::endl;
         return false;
     }
 
+    bool success;
     ComponentMapChange.Lock();
-    bool result = ComponentMap.RemoveItem(componentName, CMN_LOG_LOD_RUN_ERROR);
-    if (result) {
-        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveComponent: removed component: " << componentName << std::endl;
-    }
+    success = ComponentMap.RemoveItem(componentName);
     ComponentMapChange.Unlock();
 
-    return result;
+    if (!success) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to removed component: " << componentName << std::endl;
+        return false;
+    }
+    
+    CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: removed component: " << componentName << std::endl;
+
+    return true;
 }
 
 std::vector<std::string> mtsManagerLocal::GetNamesOfComponents(void) const 
@@ -353,6 +370,11 @@ mtsTask CISST_DEPRECATED * mtsManagerLocal::GetTask(const std::string & taskName
 mtsDevice CISST_DEPRECATED * mtsManagerLocal::GetDevice(const std::string & deviceName)
 {
     return ComponentMap.GetItem(deviceName);
+}
+
+const bool mtsManagerLocal::FindComponent(const std::string & componentName) const
+{
+    return (GetComponent(componentName) != NULL);
 }
    
 void mtsManagerLocal::ToStream(std::ostream & outputStream) const
@@ -595,20 +617,20 @@ bool mtsManagerLocal::ConnectLocally(
     // because it is assumed that this method is called only after the global 
     // component manager has successfully confirmed the validity and existence 
     // of components and interfaces specified.
-    mtsDevice * client = GetComponent(clientComponentName);    
-    if (!client) {
+    mtsDevice * clientComponent = GetComponent(clientComponentName);    
+    if (!clientComponent) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find client component: " << clientComponentName << std::endl;
         return false;
     }
 
-    mtsDevice * server = GetComponent(serverComponentName);
-    if (!server) {
+    mtsDevice * serverComponent = GetComponent(serverComponentName);
+    if (!serverComponent) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find server component: " << serverComponentName << std::endl;
         return false;
     }
 
     // Get the client component and the provided interface object.
-    mtsProvidedInterface * serverProvidedInterface = server->GetProvidedInterface(serverProvidedInterfaceName);
+    mtsProvidedInterface * serverProvidedInterface = serverComponent->GetProvidedInterface(serverProvidedInterfaceName);
     if (!serverProvidedInterface) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find provided interface: " 
             << serverComponentName << ":" << serverProvidedInterface << std::endl;
@@ -616,7 +638,7 @@ bool mtsManagerLocal::ConnectLocally(
     }
 
     // Connect two interfaces
-    if (!client->ConnectRequiredInterface(clientRequiredInterfaceName, serverProvidedInterface)) {
+    if (!clientComponent->ConnectRequiredInterface(clientRequiredInterfaceName, serverProvidedInterface)) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to connect interfaces: " 
             << clientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
@@ -635,21 +657,29 @@ bool mtsManagerLocal::ConnectLocally(
             CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to confirm connection" << std::endl;
             return false;
         }
-        CMN_LOG_CLASS_RUN_VERBOSE << "Connect: succeeded to confirm connection" << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully confirmed remote connection" << std::endl;
     }
 
     return true;
 }
 
-void mtsManagerLocal::Disconnect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+bool mtsManagerLocal::Disconnect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
                                  const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
-    ManagerGlobal->Disconnect(
+    bool success = ManagerGlobal->Disconnect(
         ProcessName, clientComponentName, clientRequiredInterfaceName,
         ProcessName, serverComponentName, serverProvidedInterfaceName);
+
+    if (!success) {
+        CMN_LOG_CLASS_RUN_ERROR << "Disconnect: disconnection failed." << std::endl;
+        return false;
+    }
+
+    CMN_LOG_CLASS_RUN_ERROR << "Disconnect: successfully disconnected." << std::endl;
+    return true;
 }
 
-void mtsManagerLocal::Disconnect(
+bool mtsManagerLocal::Disconnect(
     const std::string & clientProcessName,
     const std::string & clientComponentName,
     const std::string & clientRequiredInterfaceName,
@@ -657,9 +687,17 @@ void mtsManagerLocal::Disconnect(
     const std::string & serverComponentName,
     const std::string & serverProvidedInterfaceName)
 {
-    //
-    // TODO: IMPLEMENT THIS
-    //
+    bool success = ManagerGlobal->Disconnect(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName);
+
+    if (!success) {
+        CMN_LOG_CLASS_RUN_ERROR << "Disconnect: disconnection failed." << std::endl;
+        return false;
+    }
+
+    CMN_LOG_CLASS_RUN_ERROR << "Disconnect: successfully disconnected." << std::endl;
+    return true;
 }
 
 bool mtsManagerLocal::GetProvidedInterfaceDescription(
@@ -708,27 +746,46 @@ bool mtsManagerLocal::GetRequiredInterfaceDescription(
     return requiredInterface->GetRequiredInterfaceDescription(requiredInterfaceDescription);
 }
 
+bool mtsManagerLocal::CreateComponentProxy(const std::string & componentProxyName)
+{
+    // Create a component proxy
+    mtsDevice * newComponent = new mtsComponentProxy(componentProxyName);
+
+    bool success = AddComponent(newComponent);
+    if (!success) {
+        delete newComponent;
+        return false;
+    }
+
+    return true;
+}
+
+bool mtsManagerLocal::RemoveComponentProxy(const std::string & componentProxyName)
+{
+    return RemoveComponent(componentProxyName);
+}
+
 bool mtsManagerLocal::CreateProvidedInterfaceProxy(
     const std::string & serverComponentProxyName,
     ProvidedInterfaceDescription & providedInterfaceDescription)
 {
     const std::string providedInterfaceName = providedInterfaceDescription.ProvidedInterfaceName;
-    
-    bool newProxyComponentCreated = false;    
-    mtsComponentProxy * serverComponentProxy;
-    mtsDevice * serverComponent = GetComponent(serverComponentProxyName);
 
-    // Get current component proxy. If none, create a new one.
+    // Get current component proxy. If none, returns false because a component
+    // proxy should be created before an interface proxy is created.
+    mtsDevice * serverComponent = GetComponent(serverComponentProxyName);
     if (!serverComponent) {
-        serverComponentProxy = new mtsComponentProxy(serverComponentProxyName);
-        newProxyComponentCreated = true;
-    } else {
-        serverComponentProxy = dynamic_cast<mtsComponentProxy*>(serverComponent);
-        if (!serverComponentProxy) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
-                << "invalid component: " << serverComponentProxyName << std::endl;
-            return false;
-        }
+        CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
+            << "no component proxy found: " << serverComponentProxyName << std::endl;
+        return false;
+    }
+
+    // Convert the component into its original type
+    mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy*>(serverComponent);
+    if (!serverComponentProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
+            << "invalid component proxy: " << serverComponentProxyName << std::endl;
+        return false;
     }
 
     // Create provided interface proxy.
@@ -739,25 +796,13 @@ bool mtsManagerLocal::CreateProvidedInterfaceProxy(
         return false;
     }
 
-    // If component proxy is newly created, it should be added.
-    if (newProxyComponentCreated) {
-        // Add server component proxy to this local component manager. Note that 
-        // AddComponent() iterates interfaces and sends a list of current interfaces 
-        // to the global component manager.
-        if (!AddComponent(serverComponentProxy)) {
-            if (!serverComponentProxy->RemoveProvidedInterfaceProxy(providedInterfaceName)) {
-                CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
-                    << "failed to remove component proxy: " << providedInterfaceName << std::endl;
-                return false;
-            }
-            if (newProxyComponentCreated) {
-                delete serverComponentProxy;
-            }
-
-            CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
-                << "failed to add component proxy: " << serverComponentProxyName << std::endl;
-            return false;
-        }
+    // Notify the global component manager of the creation of provided interface proxy
+    if (!ManagerGlobal->AddProvidedInterface(ProcessName, serverComponentProxyName, providedInterfaceName, true))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: "
+            << "failed to add provided interface proxy to global component manager: "
+            << ProcessName << ":" << serverComponentProxyName << ":" << providedInterfaceName << std::endl;
+        return false;
     }
 
     CMN_LOG_CLASS_RUN_VERBOSE << "CreateProvidedInterfaceProxy: "
@@ -770,25 +815,25 @@ bool mtsManagerLocal::CreateRequiredInterfaceProxy(
     const std::string & clientComponentProxyName, RequiredInterfaceDescription & requiredInterfaceDescription)
 {
     const std::string requiredInterfaceName = requiredInterfaceDescription.RequiredInterfaceName;
-    
-    bool newProxyComponentCreated = false;    
-    mtsComponentProxy * clientComponentProxy;
-    mtsDevice * clientComponent = GetComponent(clientComponentProxyName);
 
-    // Get current component proxy. If none, create a new one.
+    // Get current component proxy. If none, returns false because a component
+    // proxy should be created before an interface proxy is created.
+    mtsDevice * clientComponent = GetComponent(clientComponentProxyName);
     if (!clientComponent) {
-        clientComponentProxy = new mtsComponentProxy(clientComponentProxyName);
-        newProxyComponentCreated = true;
-    } else {
-        clientComponentProxy = dynamic_cast<mtsComponentProxy*>(clientComponent);
-        if (!clientComponentProxy) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
-                << "invalid component: " << clientComponentProxyName << std::endl;
-            return false;
-        }
+        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
+            << "no component proxy found: " << clientComponentProxyName << std::endl;
+        return false;
     }
 
-    // Create required interface proxy.
+    // Convert the component into its orginal type
+    mtsComponentProxy * clientComponentProxy = dynamic_cast<mtsComponentProxy*>(clientComponent);
+    if (!clientComponentProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
+            << "invalid component proxy: " << clientComponentProxyName << std::endl;
+        return false;
+    }
+
+    // Create required interface proxy
     if (!clientComponentProxy->CreateRequiredInterfaceProxy(requiredInterfaceDescription)) {
         CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: "
             << "failed to create required interface proxy: " << clientComponentProxyName << ":" 
@@ -796,25 +841,13 @@ bool mtsManagerLocal::CreateRequiredInterfaceProxy(
         return false;
     }
 
-    // If component proxy is newly created, it should be added.
-    if (newProxyComponentCreated) {
-        // Add client component proxy to this local component manager. Note that 
-        // AddComponent() iterates interfaces and sends a list of current interfaces 
-        // to the global component manager.
-        if (!AddComponent(clientComponentProxy)) {
-            if (!clientComponentProxy->RemoveRequiredInterfaceProxy(requiredInterfaceName)) {
-                CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
-                    << "failed to remove component proxy: " << requiredInterfaceName << std::endl;
-                return false;
-            }
-            if (newProxyComponentCreated) {
-                delete clientComponentProxy;
-            }
-
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
-                << "failed to add component proxy: " << clientComponentProxyName << std::endl;
-            return false;
-        }
+    // Notify the global component manager of the creation of provided interface proxy
+    if (!ManagerGlobal->AddRequiredInterface(ProcessName, clientComponentProxyName, requiredInterfaceName, true))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
+            << "failed to add required interface proxy to global component manager: "
+            << ProcessName << ":" << clientComponentProxyName << ":" << requiredInterfaceName << std::endl;
+        return false;
     }
 
     CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: "
@@ -838,23 +871,27 @@ bool mtsManagerLocal::RemoveProvidedInterfaceProxy(
         return false;
     }
 
-    // Remove provided interface from component proxy.
-    if (!clientComponentProxy->RemoveProvidedInterfaceProxy(providedInterfaceProxyName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: failed to remove provided interface proxy: " << providedInterfaceProxyName << std::endl;
+    // Check the number of required interfaces using (connecting to) this provided interface.
+    mtsProvidedInterface * providedInterfaceProxy = clientComponentProxy->GetProvidedInterface(providedInterfaceProxyName);
+    if (!providedInterfaceProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: can't get provided interface proxy.: " << providedInterfaceProxyName << std::endl;
         return false;
     }
 
-    // Remove component proxy if it has no interface.
-    if (clientComponentProxy->GetInterfaceCount() == 0) {
-        if (!RemoveComponent(clientComponentProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: failed to remove component proxy: " << clientComponentProxyName << std::endl;
+    // Remove provided interface proxy only when user counter is zero.
+    if (--providedInterfaceProxy->UserCounter == 0) {
+        // Remove provided interface from component proxy.
+        if (!clientComponentProxy->RemoveProvidedInterfaceProxy(providedInterfaceProxyName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: failed to remove provided interface proxy: " << providedInterfaceProxyName << std::endl;
             return false;
         }
-        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: cleaned up component proxy: " << clientComponentProxyName << std::endl;
-    }
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: removed provided interface: " 
-        << clientComponentProxyName << ":" << providedInterfaceProxyName << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: removed provided interface: " 
+            << clientComponentProxyName << ":" << providedInterfaceProxyName << std::endl;
+    } else {
+        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: decreased active user counter. current counter: " 
+            << providedInterfaceProxy->UserCounter << std::endl;
+    }
 
     return true;
 }
@@ -880,17 +917,23 @@ bool mtsManagerLocal::RemoveRequiredInterfaceProxy(
         return false;
     }
 
-    // Remove component proxy if it has no interface.
-    if (serverComponentProxy->GetInterfaceCount() == 0) {
-        if (!RemoveComponent(serverComponentProxy)) {
-            CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: failed to remove component proxy: " << serverComponentProxyName << std::endl;
-            return false;
-        }
-        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveRequiredInterfaceProxy: cleaned up component proxy: " << serverComponentProxyName << std::endl;
-    }
-
     CMN_LOG_CLASS_RUN_VERBOSE << "RemoveRequiredInterfaceProxy: removed required interface: " 
         << serverComponentProxyName << ":" << requiredInterfaceProxyName << std::endl;
 
     return true;
+}
+
+const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componentName) const
+{
+    // Check if the component specified exists
+    mtsDevice * component = GetComponent(componentName);
+    if (!component) {
+        CMN_LOG_CLASS_RUN_ERROR << "GetCurrentInterfaceCount: no component found: " << componentName << " on " << ProcessName << std::endl;
+        return -1;
+    }
+
+    const unsigned int numOfProvidedInterfaces = component->ProvidedInterfaces.size();
+    const unsigned int numOfRequiredInterfaces = component->RequiredInterfaces.size();
+
+    return (const int) (numOfProvidedInterfaces + numOfRequiredInterfaces);
 }

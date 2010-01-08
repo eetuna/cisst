@@ -126,11 +126,14 @@ protected:
         In case of real-time OSs, OS-specific initialization should be handled here. 
         
         TODO: Currently I'm just checking if it is empty string or not.
-        Maybe needs to add some more strict process naming rule and/or IP validation
+        Maybe we need to add some more strict process naming rule and/or IP validation
         check routine?
     */
     mtsManagerLocal(const std::string & thisProcessName, const std::string & thisProcessIP);
-    
+
+    /*! Constructor for unit tests (used only by unit tests) */
+    mtsManagerLocal(const std::string & thisProcessName);
+
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
 
@@ -145,22 +148,24 @@ protected:
         const unsigned int connectionID =
             static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL));
 
+    /*! Check if a component is a proxy object based on a component name */
+    inline const bool IsProxyComponent(const std::string & componentName) {
+        const std::string proxyStr = "Proxy";
+        size_t found = componentName.find(proxyStr);
+        return found != std::string::npos;
+    }
+
     //-------------------------------------------------------------------------
     //  Methods required by mtsManagerLocalInterface
     //-------------------------------------------------------------------------
-    /*! Extract all the information on a provided interface such as command 
-        objects and events with serialization */
-    bool GetProvidedInterfaceDescription(
-        const std::string & componentName,
-        const std::string & providedInterfaceName, 
-        ProvidedInterfaceDescription & providedInterfaceDescription) const;
+    /*! Create a component proxy. This should be called before an interface 
+        proxy is created. */
+    bool CreateComponentProxy(const std::string & componentProxyName);
 
-    /*! Extract all the information on a required interface such as function
-        objects and events with serialization */
-    bool GetRequiredInterfaceDescription(
-        const std::string & componentName,
-        const std::string & requiredInterfaceName, 
-        RequiredInterfaceDescription & requiredInterfaceDescription) const;
+    /*! Remove a component proxy. Note that all the interface proxies that the
+        proxy manages should be automatically removed when removing a component
+        proxy. */
+    bool RemoveComponentProxy(const std::string & componentProxyName);
 
     /*! Create a provided interface proxy using ProvidedInterfaceDescription */
     bool CreateProvidedInterfaceProxy(
@@ -180,10 +185,27 @@ protected:
     bool RemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName);
 
+    /*! Extract all the information on a provided interface such as command 
+        objects and events with serialization */
+    bool GetProvidedInterfaceDescription(
+        const std::string & componentName,
+        const std::string & providedInterfaceName, 
+        ProvidedInterfaceDescription & providedInterfaceDescription) const;
+
+    /*! Extract all the information on a required interface such as function
+        objects and events with serialization */
+    bool GetRequiredInterfaceDescription(
+        const std::string & componentName,
+        const std::string & requiredInterfaceName, 
+        RequiredInterfaceDescription & requiredInterfaceDescription) const;
+
     /*! Returns the name of this local component manager */
     inline const std::string GetProcessName() const {
         return ProcessName;
     }
+
+    /*! Returns the total number of interfaces that are running on a component */
+    const int GetCurrentInterfaceCount(const std::string & componentName) const;
 
 public:
     /*! Create the static instance of local task manager. */
@@ -212,6 +234,9 @@ public:
     mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
     mtsDevice CISST_DEPRECATED * GetDevice(const std::string & deviceName); // For backward compatibility
 
+    /*! Check the existence of a component by name. */
+    const bool FindComponent(const std::string & componentName) const;
+
     /* Connect two interfaces (limited to connect two local interfaces) */
     bool Connect(
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -227,11 +252,11 @@ public:
         const std::string & serverProvidedInterfaceName);
 
     /*! Disconnect two interfaces */
-    void Disconnect(
+    bool Disconnect(
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
-    void Disconnect(
+    bool Disconnect(
         const std::string & clientProcessName,
         const std::string & clientComponentName,
         const std::string & clientRequiredInterfaceName,

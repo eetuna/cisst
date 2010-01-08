@@ -64,6 +64,8 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    friend class mtsManagerLocal;
+
  protected:
 
     /*! A string identifying the 'Name' of the device. */

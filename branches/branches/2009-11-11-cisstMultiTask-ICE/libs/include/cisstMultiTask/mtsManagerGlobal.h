@@ -72,38 +72,60 @@ protected:
         const std::string ProcessName;
         const std::string ComponentName;
         const std::string InterfaceName;
+        const bool RemoteConnection;
 
-        ConnectedInterfaceInfo() : ProcessName(""), ComponentName(""), InterfaceName("")
+        ConnectedInterfaceInfo() : ProcessName(""), ComponentName(""), InterfaceName(""), RemoteConnection(false)
         {}
 
     public:
         ConnectedInterfaceInfo(const std::string & processName, const std::string & componentName, 
-                               const std::string & interfaceName)
-            : ProcessName(processName), ComponentName(componentName), InterfaceName(interfaceName)
+                               const std::string & interfaceName, const bool isRemoteConnection)
+            : ProcessName(processName), ComponentName(componentName), InterfaceName(interfaceName), RemoteConnection(isRemoteConnection)
         {}
 
-        std::string GetProcessName()     { return ProcessName; }
-        std::string GetComponentName()   { return ComponentName; }
-        std::string GetInterfaceName()   { return InterfaceName; }
+        const std::string GetProcessName() const   { return ProcessName; }
+        const std::string GetComponentName() const { return ComponentName; }
+        const std::string GetInterfaceName() const { return InterfaceName; }
+        const bool IsRemoteConnection() const      { return RemoteConnection; }
     };
 
     /*! Connection map: (connected interface name, connected interface information)
-        Map name: name of component that has these interfaces. */
+        Map name: a name of component that has these interfaces. */
     typedef cmnNamedMap<mtsManagerGlobal::ConnectedInterfaceInfo> ConnectionMapType;
 
-    /*! Interface map: (interface name, connection map)
-        Map name: name of component that has these interfaces. */
+    // Interface map consists of two pairs of containers: 
+    // containers for connection map (provided/required interface maps) and
+    // containers for interface type flag map (provided/required interface maps)
+
+    /*! Interface map: a map of registered interfaces in a component
+        key=(interface name), value=(connection map)
+        value can be null if an interface does not have any connection. */
     typedef cmnNamedMap<ConnectionMapType> ConnectedInterfaceMapType;
-    typedef struct {    
+
+    /*! Interface type flag map: a map of registered interfaces in a component
+        key=(interface name), value=(bool) that represents the type of an interface
+        value is false if an interface is an original interface
+                 true  if an interface is a proxy interface 
+        This information is used to determine if an interface should be removed 
+        (cleaned up) when a connection is disconnected. See 
+        mtsManagerGlobal::Disconnect() for more details. */
+    typedef std::map<std::string, bool> InterfaceTypeMapType;
+
+    typedef struct {
         ConnectedInterfaceMapType ProvidedInterfaceMap;
         ConnectedInterfaceMapType RequiredInterfaceMap;
+        InterfaceTypeMapType ProvidedInterfaceTypeMap;
+        InterfaceTypeMapType RequiredInterfaceTypeMap;
     } InterfaceMapType;
 
-    /*! Component map: (component name, interface map) 
-        Map name: name of process that manages these components. */
+    /*! Component map: a map of registered components in a process
+        key=(component name), value=(interface map) 
+        value can be null if a component does not have any interface. */
     typedef cmnNamedMap<InterfaceMapType> ComponentMapType;
 
-    /*! Process map: (process name, component map) */
+    /*! Process map: a map of registered processes (i.e., local component managers)
+        key=(process name), value=(component map) 
+        value can be null if a process does not have any component. */
     typedef cmnNamedMap<ComponentMapType> ProcessMapType;
     ProcessMapType ProcessMap;
 
@@ -165,7 +187,7 @@ protected:
     /*! Add this interface to connectionMap as connected interface */
     bool AddConnectedInterface(ConnectionMapType * connectionMap, 
         const std::string & processName, const std::string & componentName,
-        const std::string & interfaceName);
+        const std::string & interfaceName, const bool isRemoteConnection = false);
 
     /*! Check if two interfaces are connected */
     bool IsAlreadyConnected(
@@ -206,10 +228,10 @@ public:
     //  Interface Management
     //-------------------------------------------------------------------------
     bool AddProvidedInterface(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
 
     bool AddRequiredInterface(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
 
     bool FindProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
