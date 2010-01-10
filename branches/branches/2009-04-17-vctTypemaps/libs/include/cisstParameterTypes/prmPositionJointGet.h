@@ -84,6 +84,22 @@ public:
 
 public:
 
+    void Set(vctDynamicConstVectorRef<double> newPosition) throw(std::runtime_error) {
+        this->PositionMember.Assign(newPosition);
+    }
+
+    void Get(vctDynamicVectorRef<double> & placeHolder) throw(std::runtime_error) {
+        placeHolder.Assign(this->PositionMember);
+    }
+
+    vctDynamicVectorRef<double> GetRef(void) {
+        return vctDynamicVectorRef<double>(this->PositionMember);
+    }
+
+    vctDynamicVector<double> GetCopy(void) const {
+        return this->PositionMember;
+    }
+
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 

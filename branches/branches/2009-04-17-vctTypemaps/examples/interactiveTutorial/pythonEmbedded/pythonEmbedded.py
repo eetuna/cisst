@@ -34,9 +34,9 @@ print "Create and register derived2"
 derived2 = myDerivedClass()
 cmnObjectRegister.Register("derived2", derived2)
 
-print "modifying derived1.FixedVector()"
-fixedVector1 = derived1.FixedVector()
-fixedVector1.Divide(derived1.FixedVector().Norm())
+print "modifying derived1.FixedSizeVector()"
+fixedVector1 = derived1.FixedSizeVector()
+fixedVector1 / 100
 
 print cmnObjectRegister.ToString()
 

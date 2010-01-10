@@ -25,6 +25,12 @@ http://www.cisst.org/cisst/license.txt.
 *                          Applying Typemaps
 **************************************************************************/
 
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME(name)
+%apply vctDynamicVector         {name};
+%apply vctDynamicVector &       {name &};
+%apply const vctDynamicVector & {const name &};
+%enddef
+
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
 %apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
 %apply vctDynamicVector &       {vctFixedSizeVector<elementType, size> &};
@@ -50,3 +56,6 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(vct::size_type);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(vct::stride_type);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(size_type);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(stride_type);
+
+
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME(vctDouble3)
