@@ -38,6 +38,10 @@ http://www.cisst.org/cisst/license.txt.
 %import "cisstCommon/cisstCommon.i"
 %import "cisstVector/cisstVector.i"
 
+%init %{
+    import_array() // numpy initialization
+%}
+
 // use class type to create the correct Python type
 %apply cmnGenericObject * {mtsGenericObject *};
 
@@ -58,6 +62,7 @@ http://www.cisst.org/cisst/license.txt.
 %rename(__str__) ToString;
 %ignore *::ToStream;
 %ignore operator<<;
+%ignore operator=;
 
 %ignore *::operator[]; // We define __setitem__ and __getitem__
 
@@ -255,7 +260,6 @@ MTS_INSTANTIATE_VECTOR(mtsDoubleVec, double);
 MTS_INSTANTIATE_VECTOR(mtsIntVec, int); 
 MTS_INSTANTIATE_VECTOR(mtsShortVec, short); 
 MTS_INSTANTIATE_VECTOR(mtsLongVec, long); 
-MTS_INSTANTIATE_VECTOR(mtsBoolVec, bool); 
 
 // Wrap mtsMatrix
 %import "cisstMultiTask/mtsMatrix.h"
@@ -275,7 +279,6 @@ MTS_INSTANTIATE_MATRIX(mtsDoubleMat, double);
 MTS_INSTANTIATE_MATRIX(mtsIntMat, int); 
 MTS_INSTANTIATE_MATRIX(mtsShortMat, short); 
 MTS_INSTANTIATE_MATRIX(mtsLongMat, long); 
-MTS_INSTANTIATE_MATRIX(mtsBoolMat, bool); 
 
 // Wrap mtsStateIndex
 %include "cisstMultiTask/mtsStateIndex.h"

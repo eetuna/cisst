@@ -36,18 +36,14 @@ class mtsVector: public mtsGenericObject,
     // declare services, requires dynamic creation
     CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
-    /*! Type of elements. */
-    typedef _elementType value_type;
+    /* defines useful types */
+    VCT_CONTAINER_TRAITS_TYPEDEFS(_elementType);
 
     /*! This type. */
     typedef mtsVector<value_type> ThisType;
 
     /*! Type of vector used to store the elements. */
     typedef vctDynamicVector<value_type> VectorType;
-
-    /*! Type used to define the size of the vector. */
-    typedef typename VectorType::size_type size_type;
-
 
     /*! Default constructor. */
     inline mtsVector(void):
@@ -120,6 +116,21 @@ public:
         VectorType::DeSerializeRaw(inputStream);
     }
 
+    /*! Methods provided for SWIG compatibility */
+    //@{
+    inline VectorType & Data(void) {
+        return *this;
+    }
+    inline const VectorType & Data(void) const {
+        return *this;
+    }
+    inline void SetSize(size_type newSize) {
+        VectorType::SetSize(newSize);
+    }
+    inline void resize(size_type newSize) {
+        VectorType::resize(newSize);
+    }
+    //@}
 };
 
 

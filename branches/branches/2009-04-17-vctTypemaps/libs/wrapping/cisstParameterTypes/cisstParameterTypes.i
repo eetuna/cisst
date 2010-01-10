@@ -39,6 +39,10 @@ http://www.cisst.org/cisst/license.txt.
 %import "cisstVector/cisstVector.i"
 %import "cisstMultiTask/cisstMultiTask.i"
 
+%init %{
+    import_array() // numpy initialization
+%}
+
 %header %{
     // Put header files here
     #include "cisstParameterTypes/cisstParameterTypes.i.h"
