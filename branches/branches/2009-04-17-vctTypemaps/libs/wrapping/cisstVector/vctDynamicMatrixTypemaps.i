@@ -647,3 +647,7 @@ http://www.cisst.org/cisst/license.txt.
 
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
+
+%apply vctDynamicMatrix         {vctDoubleMat, vctMat, vctIntMat};
+%apply vctDynamicMatrix &       {vctDoubleMat &, vctMat &, vctIntMat &};
+%apply const vctDynamicMatrix & {const vctDoubleMat &, const vctMat &, const vctIntMat &};

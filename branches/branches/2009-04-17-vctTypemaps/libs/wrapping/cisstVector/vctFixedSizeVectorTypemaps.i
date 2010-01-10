@@ -20,42 +20,51 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-
-/**************************************************************************
-*                          Applying Typemaps
-**************************************************************************/
-
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME(name)
+// macro used to apply using the full name of fixed size vector
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name)
 %apply vctDynamicVector         {name};
 %apply vctDynamicVector &       {name &};
 %apply const vctDynamicVector & {const name &};
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, size)
+// macro used to apply using a full prefix (e.g. vctDouble) and will add suffix for size 
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ALL(name)
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name##1);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name##2);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name##3);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name##4);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name##5);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ONE(name##6);
+%enddef
+
+// macro used to apply using the parameter types, both elementType and size
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, size)
 %apply vctDynamicVector         {vctFixedSizeVector<elementType, size>};
 %apply vctDynamicVector &       {vctFixedSizeVector<elementType, size> &};
 %apply const vctDynamicVector & {const vctFixedSizeVector<elementType, size> &};
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(elementType)
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 2);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 3);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 4);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 5);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 6);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 7);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_ONE_SIZE(elementType, 8);
+// macro used to apply using the elementType, will apply for sizes 1 to ...
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(elementType)
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, 1);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, 2);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, 3);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, 4);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, 5);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ONE(elementType, 6);
 %enddef
  
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(unsigned int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(double);
+// now call macros for basic types, template specializations and typedefs 
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ALL(vctInt);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(unsigned int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ALL(vctUInt);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(double);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ALL(vctDouble);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME_ALL(vct);
 
 // to access sizes and strides of matrices and N-arrays
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(vct::size_type);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(vct::stride_type);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(size_type);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS(stride_type);
-
-
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_FULL_NAME(vctDouble3)
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(vct::size_type);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(vct::stride_type);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(size_type);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(stride_type);

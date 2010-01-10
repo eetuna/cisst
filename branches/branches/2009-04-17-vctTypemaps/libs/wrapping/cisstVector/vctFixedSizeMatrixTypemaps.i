@@ -20,27 +20,45 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+// macro used to apply using the full name of fixed size vector
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name)
+%apply vctDynamicMatrix         {name};
+%apply vctDynamicMatrix &       {name &};
+%apply const vctDynamicMatrix & {const name &};
+%enddef
 
-/**************************************************************************
-*                           Applying Typemaps
-**************************************************************************/
+// macro used to apply using a full prefix (e.g. vctDouble) and will add suffix for size 
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ALL(name)
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name##1x1);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name##2x2);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name##3x3);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name##4x4);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name##5x5);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name##6x6);
+%enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, rows, cols)
+// macro used to apply using the parameter types, both elementType and size
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, rows, cols)
 %apply vctDynamicMatrix         {vctFixedSizeMatrix<elementType, rows, cols>};
 %apply vctDynamicMatrix &       {vctFixedSizeMatrix<elementType, rows, cols> &};
 %apply const vctDynamicMatrix & {const vctFixedSizeMatrix<elementType, rows, cols> &};
 %enddef
 
-%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(elementType)
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 2, 2);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 3, 3);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 4, 4);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 5, 5);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 6, 6);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 7, 7);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_ONE_SIZE(elementType, 8, 8);
+// macro used to apply using the elementType, will apply for sizes 1 to ...
+%define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ALL(elementType)
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, 1, 1);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, 2, 2);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, 3, 3);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, 4, 4);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, 5, 5);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ONE(elementType, 6, 6);
 %enddef
-
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(unsigned int);
-VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES(double);
+ 
+// now call macros for basic types, template specializations and typedefs 
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ALL(int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ALL(vctInt);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ALL(unsigned int);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ALL(vctUInt);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_TEMPLATE_PARAMETERS_ALL(double);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ALL(vctDouble);
+VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ALL(vct);

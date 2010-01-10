@@ -601,7 +601,7 @@ http://www.cisst.org/cisst/license.txt.
 *                          Applying Typemaps
 **************************************************************************/
 
-%define VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(elementType)
+%define VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(name)
 %apply vctDynamicVector         {vctDynamicVector<elementType>};
 %apply vctDynamicVector &       {vctDynamicVector<elementType> &};
 %apply const vctDynamicVector & {const vctDynamicVector<elementType> &};
@@ -614,5 +614,6 @@ http://www.cisst.org/cisst/license.txt.
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
 
-%apply vctDynamicVector         {vctDoubleVec, vctDouble, vctIntVec};
-%apply vctDynamicVector &       {vctDoubleVec &, vctDouble &, vctIntVec &};
+%apply vctDynamicVector         {vctDoubleVec, vctVec, vctIntVec};
+%apply vctDynamicVector &       {vctDoubleVec &, vctVec &, vctIntVec &};
+%apply const vctDynamicVector & {const vctDoubleVec &, const vctVec &, const vctIntVec &};
