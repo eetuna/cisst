@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2005-08-21
 
-  (C) Copyright 2005-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2005-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -38,7 +38,6 @@ http://www.cisst.org/cisst/license.txt.
 /* Put header files here */
 #include <Python.h>
 #include <arrayobject.h>
-#include <math.h>
 #include <cisstCommon/cmnAssert.h>
 #include <cisstCommon/cmnPortability.h>
 #include <cisstVector/vctFixedSizeConstVectorBase.h>
@@ -46,6 +45,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector/vctFixedSizeConstMatrixBase.h>
 #include <cisstVector/vctDynamicConstMatrixBase.h>
 #include <cisstVector/vctDynamicConstNArrayBase.h>
+#include <cisstVector/vctTransformationTypes.h>
+
 
 bool vctThrowUnlessIsPyArray(PyObject * input)
 {

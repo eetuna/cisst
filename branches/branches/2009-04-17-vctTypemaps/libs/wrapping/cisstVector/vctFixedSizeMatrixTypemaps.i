@@ -20,6 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+%include "cisstVector/vctDynamicMatrixTypemaps.i"
+
 // macro used to apply using the full name of fixed size vector
 %define VCT_TYPEMAPS_APPLY_FIXED_SIZE_MATRICES_FULL_NAME_ONE(name)
 %apply vctDynamicMatrix         {name};
