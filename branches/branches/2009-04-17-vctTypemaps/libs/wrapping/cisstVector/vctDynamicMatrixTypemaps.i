@@ -20,6 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+#ifndef _vctDynamicMatrixTypemaps_i
+#define _vctDynamicMatrixTypemaps_i
 
 /*****************************************************************************
  PLACEHOLDER STRINGS TO LOOK FOR:
@@ -651,3 +653,5 @@ VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
 %apply vctDynamicMatrix         {vctDoubleMat, vctMat, vctIntMat};
 %apply vctDynamicMatrix &       {vctDoubleMat &, vctMat &, vctIntMat &};
 %apply const vctDynamicMatrix & {const vctDoubleMat &, const vctMat &, const vctIntMat &};
+
+#endif // _vctDynamicMatrixTypemaps_i

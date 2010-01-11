@@ -20,6 +20,9 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+#ifndef _vctDynamicVectorTypemaps_i
+#define _vctDynamicVectorTypemaps_i
+
 /*****************************************************************************
  PLACEHOLDER STRINGS TO LOOK FOR:
 
@@ -601,6 +604,10 @@ http://www.cisst.org/cisst/license.txt.
 *                          Applying Typemaps
 **************************************************************************/
 
+%apply vctDynamicVector         {vctDoubleVec, vctVec, vctIntVec};
+%apply vctDynamicVector &       {vctDoubleVec &, vctVec &, vctIntVec &};
+%apply const vctDynamicVector & {const vctDoubleVec &, const vctVec &, const vctIntVec &};
+
 %define VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(name)
 %apply vctDynamicVector         {vctDynamicVector<elementType>};
 %apply vctDynamicVector &       {vctDynamicVector<elementType> &};
@@ -614,6 +621,4 @@ http://www.cisst.org/cisst/license.txt.
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_VECTORS(double);
 
-%apply vctDynamicVector         {vctDoubleVec, vctVec, vctIntVec};
-%apply vctDynamicVector &       {vctDoubleVec &, vctVec &, vctIntVec &};
-%apply const vctDynamicVector & {const vctDoubleVec &, const vctVec &, const vctIntVec &};
+#endif _vctDynamicVectorTypemapsTest_i

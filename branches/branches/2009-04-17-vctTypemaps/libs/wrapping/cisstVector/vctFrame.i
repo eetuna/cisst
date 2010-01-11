@@ -21,6 +21,9 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
+#ifndef _vctFrame_i
+#define _vctFrame_i
+
 #include "cisstVector/vctFrameBase.h"
 
 %ignore Inverse;
@@ -60,6 +63,7 @@ typedef vctFrameBase<vctRot3 > vctFrm3;
 
 %types(vctFrm3 *);
 
+
 // clean-up to avoid side effects of %apply
 %clear vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION >;
 %clear vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION > &;
@@ -68,3 +72,5 @@ typedef vctFrameBase<vctRot3 > vctFrm3;
 %clear vctFrameBase< vctMatrixRotation3< double,true > >::RotationType;
 %clear vctFrameBase< vctMatrixRotation3< double,true > >::RotationType &;
 %clear const vctFrameBase< vctMatrixRotation3< double,true > >::RotationType &;
+
+#endif // _vctFrame_i

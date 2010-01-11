@@ -92,12 +92,14 @@ public:
      /*! To stream human readable output */
     virtual  std::string ToString(void) const {
         std::stringstream outputStream;
-         MatrixType::ToStream(outputStream);
+        this->ToStream(outputStream);
         return outputStream.str();
     }
 
     /*! To stream human readable output */
     virtual void ToStream(std::ostream & outputStream) const {
+        mtsGenericObject::ToStream(outputStream);
+        outputStream << std::endl;
         MatrixType::ToStream(outputStream);
     }
 
@@ -123,21 +125,6 @@ public:
         MatrixType::DeSerializeRaw(inputStream);
     }
 
-    /*! Methods provided for SWIG compatibility */
-    //@{
-    inline MatrixType & Data(void) {
-        return *this;
-    }
-    inline const MatrixType & Data(void) const {
-        return *this;
-    }
-    inline void SetSize(size_type newRows, size_type newCols) {
-        MatrixType::SetSize(newRows, newCols);
-    }
-    inline void resize(size_type newRows, size_type newCols) {
-        MatrixType::resize(newRows, newCols);
-    }
-    //@}
 };
 
 

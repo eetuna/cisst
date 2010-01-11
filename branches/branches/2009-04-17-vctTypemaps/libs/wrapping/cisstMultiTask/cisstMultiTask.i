@@ -253,6 +253,14 @@ MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsBool, bool);
 %}
 typedef mtsVector<elementType> name;
 %types(name *);
+%extend mtsVector<elementType>{
+    inline VectorType & Data(void) {
+        return *self;
+    }
+    inline const VectorType & Data(void) const {
+        return *self;
+    }
+}
 %enddef
 
 // instantiate for types also instantiated in cisstVector wrappers
@@ -272,6 +280,14 @@ MTS_INSTANTIATE_VECTOR(mtsLongVec, long);
 %}
 typedef mtsMatrix<elementType> name;
 %types(name *);
+%extend mtsMatrix<elementType>{
+    inline MatrixType & Data(void) {
+        return *self;
+    }
+    inline const MatrixType & Data(void) const {
+        return *self;
+    }
+}
 %enddef
 
 // instantiate for types also instantiated in cisstVector wrappers

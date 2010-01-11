@@ -20,6 +20,9 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+#ifndef _vctFixedSizeVectorTypemaps_i
+#define _vctFixedSizeVectorTypemaps_i
+
 %include "cisstVector/vctDynamicVectorTypemaps.i"
 
 // macro used to apply using the full name of fixed size vector
@@ -70,3 +73,5 @@ VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(vct::size_type);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(vct::stride_type);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(size_type);
 VCT_TYPEMAPS_APPLY_FIXED_SIZE_VECTORS_TEMPLATE_PARAMETERS_ALL(stride_type);
+
+#endif // _vctFixedSizeVectorTypemaps_i

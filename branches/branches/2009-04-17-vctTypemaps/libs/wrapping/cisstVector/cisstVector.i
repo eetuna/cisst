@@ -32,16 +32,9 @@ http://www.cisst.org/cisst/license.txt.
     // Put header files here
     #include "cisstVector/cisstVector.i.h"
 %}
-/*
+
 %ignore *::operator[]; // We define __setitem__ and __getitem__
 %ignore *::operator=; // Just to avoid warnings
-
-// We don't use iterators in Python, so far.
-%ignore *::begin;
-%ignore *::end;
-%ignore *::rbegin;
-%ignore *::rend;
-%ignore *::at;
 
 // Generate parameter documentation for IRE
 %feature("autodoc", "1");
@@ -50,34 +43,15 @@ http://www.cisst.org/cisst/license.txt.
 %rename(__str__) ToString;
 %ignore *::ToStream;
 
-
-
-// Define some basic flags
-
-
-// Include per type of container
-%include "cisstVector/vctDynamicVector.i"
-%include "cisstVector/vctFixedSizeVector.i"
-
-%include "cisstVector/vctDynamicMatrix.i"
-%include "cisstVector/vctFixedSizeMatrix.i"
-
-// %include "cisstVector/vctQuaternion.i"
-// %include "cisstVector/vctQuaternionRotation3.i"
-// %include "cisstVector/vctMatrixRotation3.i"
-// %include "cisstVector/vctAxisAngleRotation3.i"
-// %include "cisstVector/vctFrame.i"
-
-*/
-
 // The traits are used everywhere
 %include "cisstVector/vctContainerTraits.h"
+%include "cisstVector/vctForwardDeclarations.h"
 
 %include "cisstVector/vctDynamicVectorTypemaps.i"
-%include "cisstVector/vctFixedSizeVectorTypemaps.i"
 %include "cisstVector/vctDynamicMatrixTypemaps.i"
-%include "cisstVector/vctFixedSizeMatrixTypemaps.i"
 %include "cisstVector/vctDynamicNArrayTypemaps.i"
 
-%include "cisstVector/vctForwardDeclarations.h"
+%include "cisstVector/vctFixedSizeVectorTypemaps.i"
+%include "cisstVector/vctFixedSizeMatrixTypemaps.i"
+
 %include "cisstVector/vctFrame.i"

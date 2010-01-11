@@ -85,12 +85,14 @@ public:
      /*! To stream human readable output */
     virtual  std::string ToString(void) const {
         std::stringstream outputStream;
-         VectorType::ToStream(outputStream);
+        this->ToStream(outputStream);
         return outputStream.str();
     }
 
     /*! To stream human readable output */
     virtual void ToStream(std::ostream & outputStream) const {
+        mtsGenericObject::ToStream(outputStream);
+        outputStream << std::endl;
         VectorType::ToStream(outputStream);
     }
 
@@ -116,21 +118,6 @@ public:
         VectorType::DeSerializeRaw(inputStream);
     }
 
-    /*! Methods provided for SWIG compatibility */
-    //@{
-    inline VectorType & Data(void) {
-        return *this;
-    }
-    inline const VectorType & Data(void) const {
-        return *this;
-    }
-    inline void SetSize(size_type newSize) {
-        VectorType::SetSize(newSize);
-    }
-    inline void resize(size_type newSize) {
-        VectorType::resize(newSize);
-    }
-    //@}
 };
 
 
