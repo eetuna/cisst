@@ -45,7 +45,6 @@ http://www.cisst.org/cisst/license.txt.
 
 // The traits are used everywhere
 %include "cisstVector/vctContainerTraits.h"
-%include "cisstVector/vctForwardDeclarations.h"
 
 %include "cisstVector/vctDynamicVectorTypemaps.i"
 %include "cisstVector/vctDynamicMatrixTypemaps.i"
