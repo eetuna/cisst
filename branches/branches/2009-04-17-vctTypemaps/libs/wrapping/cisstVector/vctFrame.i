@@ -42,15 +42,15 @@ http://www.cisst.org/cisst/license.txt.
 
 // to get access to the translation data member
 %include "cisstVector/vctDynamicVectorTypemaps.i"
-%apply vctDynamicVector         {vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION >};
-%apply vctDynamicVector &       {vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION > &};
-%apply const vctDynamicVector & {const vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION > &};
+%apply vctDynamicVector         {vctFixedSizeVector< vctMatrixRotation3< double,VCT_ROW_MAJOR >::value_type,vctFrameBase< vctMatrixRotation3< double,VCT_ROW_MAJOR > >::DIMENSION >};
+%apply vctDynamicVector &       {vctFixedSizeVector< vctMatrixRotation3< double,VCT_ROW_MAJOR >::value_type,vctFrameBase< vctMatrixRotation3< double,VCT_ROW_MAJOR > >::DIMENSION > &};
+%apply const vctDynamicVector & {const vctFixedSizeVector< vctMatrixRotation3< double,VCT_ROW_MAJOR >::value_type,vctFrameBase< vctMatrixRotation3< double,VCT_ROW_MAJOR > >::DIMENSION > &};
 
 // to get access to the rotation data member
 %include "cisstVector/vctDynamicMatrixTypemaps.i"
-%apply vctDynamicMatrix         {vctFrameBase< vctMatrixRotation3< double,true > >::RotationType};
-%apply vctDynamicMatrix &       {vctFrameBase< vctMatrixRotation3< double,true > >::RotationType &};
-%apply const vctDynamicMatrix & {const vctFrameBase< vctMatrixRotation3< double,true > >::RotationType &};
+%apply vctDynamicMatrix         {vctFrameBase< vctMatrixRotation3< double,VCT_ROW_MAJOR > >::RotationType};
+%apply vctDynamicMatrix &       {vctFrameBase< vctMatrixRotation3< double,VCT_ROW_MAJOR > >::RotationType &};
+%apply const vctDynamicMatrix & {const vctFrameBase< vctMatrixRotation3< double,VCT_ROW_MAJOR > >::RotationType &};
 
 %template(vctFrm3) vctFrameBase<vctRot3 >;
 
@@ -63,14 +63,5 @@ typedef vctFrameBase<vctRot3 > vctFrm3;
 
 %types(vctFrm3 *);
 
-
-// clean-up to avoid side effects of %apply
-%clear vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION >;
-%clear vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION > &;
-%clear const vctFixedSizeVector< vctMatrixRotation3< double,true >::value_type,vctFrameBase< vctMatrixRotation3< double,true > >::DIMENSION > &;
-
-%clear vctFrameBase< vctMatrixRotation3< double,true > >::RotationType;
-%clear vctFrameBase< vctMatrixRotation3< double,true > >::RotationType &;
-%clear const vctFrameBase< vctMatrixRotation3< double,true > >::RotationType &;
 
 #endif // _vctFrame_i
