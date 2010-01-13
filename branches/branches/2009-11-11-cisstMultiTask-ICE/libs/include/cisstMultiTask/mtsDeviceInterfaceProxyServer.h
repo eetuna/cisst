@@ -53,21 +53,6 @@ public:
     /*! Entry point to run a proxy. */
     void Start(mtsTask * callingTask);
 
-    /*! Change the proxy state as active. */
-    void SetAsActiveProxy(void) {
-        ChangeProxyState(mtsProxyBaseServer<mtsTask>::PROXY_ACTIVE);
-    }
-
-    /*! Return true if the current proxy state is active. */
-    bool IsActiveProxy(void) const {
-        return (ProxyState == mtsProxyBaseServer<mtsTask>::PROXY_ACTIVE);
-    }
-
-    void ShutdownSession(const Ice::Current & current) {
-        current.adapter->getCommunicator()->shutdown();
-        mtsProxyBaseServer<mtsTask>::ShutdownSession();
-    }
-
     /*! Stop the proxy. */
     void Stop(void);
 
@@ -234,10 +219,10 @@ protected:
             const std::string & clientTaskProxyName,
             mtsDeviceInterfaceProxy::FunctionProxySet&, const ::Ice::Current&) const;
 
-        void ExecuteCommandVoid(::Ice::IceCommandIDType, const ::Ice::Current&);
-        void ExecuteCommandWriteSerialized(::Ice::IceCommandIDType, const ::std::string&, const ::Ice::Current&);
-        void ExecuteCommandReadSerialized(::Ice::IceCommandIDType, ::std::string&, const ::Ice::Current&);
-        void ExecuteCommandQualifiedReadSerialized(::Ice::IceCommandIDType, const ::std::string&, ::std::string&, const ::Ice::Current&);
+        void ExecuteCommandVoid(IceCommandIDType, const ::Ice::Current&);
+        void ExecuteCommandWriteSerialized(IceCommandIDType, const ::std::string&, const ::Ice::Current&);
+        void ExecuteCommandReadSerialized(IceCommandIDType, ::std::string&, const ::Ice::Current&);
+        void ExecuteCommandQualifiedReadSerialized(IceCommandIDType, const ::std::string&, ::std::string&, const ::Ice::Current&);
 
     };
 };

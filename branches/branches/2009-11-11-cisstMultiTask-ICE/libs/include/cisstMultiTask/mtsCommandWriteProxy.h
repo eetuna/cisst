@@ -29,8 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandWriteProxy_h
 
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
+//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 
 /*!
@@ -42,9 +42,9 @@ http://www.cisst.org/cisst/license.txt.
   connected server task across a network.
 
   Note that there are two different usages of this class: as a command or an event.
-  If this class used as COMMANDS, an instance of mtsDeviceInterfaceProxyClient 
+  If this class used as COMMANDS, an instance of mtsComponentInterfaceProxyClient 
   class should be provided and this is used to execute a write command at a server.
-  When this is used for EVENTS, an instance of mtsDeviceInterfaceProxyServer class
+  When this is used for EVENTS, an instance of mtsComponentInterfaceProxyServer class
   takes care of the process of event propagation across a network so that an event
   is sent to a client and an event handler is called at a client side.
   Currently, only one of them can be initialized as a valid value while the other 
@@ -69,8 +69,8 @@ protected:
     
     /*! Device interface proxy objects which execute a write command at 
         peer's memory space across networks. */
-    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
-    mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
+    mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsComponentInterfaceProxyServer * RequiredInterfaceProxy;
 
     /*! Per-command serializer and deserializer */
     mtsProxySerializer Serializer;
@@ -84,44 +84,44 @@ public:
 
     /*! The constructors. */
     mtsCommandWriteProxy(const CommandIDType commandId, 
-                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy) :
+                         mtsComponentInterfaceProxyClient * providedInterfaceProxy) :
         mtsCommandWriteBase(),
-        CommandId(commandId),        
-        ProvidedInterfaceProxy(providedInterfaceProxy),
-        RequiredInterfaceProxy(0)
+        CommandId(commandId)
+        //ProvidedInterfaceProxy(providedInterfaceProxy),
+        //RequiredInterfaceProxy(0)
     {
         Initialize();
     }
 
     mtsCommandWriteProxy(const CommandIDType commandId, 
-                         mtsDeviceInterfaceProxyServer * requiredInterfaceProxy) :
+                         mtsComponentInterfaceProxyServer * requiredInterfaceProxy) :
         mtsCommandWriteBase(),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(0),
-        RequiredInterfaceProxy(requiredInterfaceProxy)
+        CommandId(commandId)
+        //ProvidedInterfaceProxy(0),
+        //RequiredInterfaceProxy(requiredInterfaceProxy)
     {
         Initialize();
     }
     
     /*! The constructor with a name. */
     mtsCommandWriteProxy(const CommandIDType commandId,
-                         mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                         mtsComponentInterfaceProxyClient * providedInterfaceProxy,
                          const std::string & name) :
         mtsCommandWriteBase(name),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(providedInterfaceProxy),
-        RequiredInterfaceProxy(0)
+        CommandId(commandId)
+        //ProvidedInterfaceProxy(providedInterfaceProxy),
+        //RequiredInterfaceProxy(0)
     {
         Initialize();
     }
 
     mtsCommandWriteProxy(const CommandIDType commandId,
-                         mtsDeviceInterfaceProxyServer * requiredInterfaceProxy,
+                         mtsComponentInterfaceProxyServer * requiredInterfaceProxy,
                          const std::string & name) :
         mtsCommandWriteBase(name),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(0),
-        RequiredInterfaceProxy(requiredInterfaceProxy)
+        CommandId(commandId)
+        //ProvidedInterfaceProxy(0),
+        //RequiredInterfaceProxy(requiredInterfaceProxy)
     {
         Initialize();
     }
@@ -137,25 +137,25 @@ public:
     void SetCommandId(const CommandIDType & newCommandId) {
         CommandId = newCommandId;
 
-        if (ProvidedInterfaceProxy) {
-            CMN_ASSERT(ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer));
-        } else {
-            // Either ProvidedInterfaceProxy or RequiredInterfaceProxy should be valid.
-            CMN_ASSERT(RequiredInterfaceProxy);
-            CMN_ASSERT(RequiredInterfaceProxy->AddPerEventGeneratorSerializer(CommandId, &Serializer));
-        }
+        //if (ProvidedInterfaceProxy) {
+        //    CMN_ASSERT(ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer));
+        //} else {
+        //    // Either ProvidedInterfaceProxy or RequiredInterfaceProxy should be valid.
+        //    CMN_ASSERT(RequiredInterfaceProxy);
+        //    CMN_ASSERT(RequiredInterfaceProxy->AddPerEventGeneratorSerializer(CommandId, &Serializer));
+        //}
     }
     
 public:    
     /*! Direct execute can be used for mtsMulticastCommandWrite. */
     inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
         if (this->IsEnabled()) {
-            if (ProvidedInterfaceProxy) {
-                ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
-            } else {
-                CMN_ASSERT(RequiredInterfaceProxy);
-                RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
-            }
+            //if (ProvidedInterfaceProxy) {
+            //    ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
+            //} else {
+            //    CMN_ASSERT(RequiredInterfaceProxy);
+            //    RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
+            //}
         }
         return mtsCommandBase::DISABLED;
     }
@@ -164,11 +164,11 @@ public:
       command object */
     void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandWriteProxy: " << this->Name << ", " << CommandId << " with ";
-        if (ProvidedInterfaceProxy) {
-            outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
-        } else {
-            outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
-        }
+        //if (ProvidedInterfaceProxy) {
+        //    outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
+        //} else {
+        //    outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
+        //}
         outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 

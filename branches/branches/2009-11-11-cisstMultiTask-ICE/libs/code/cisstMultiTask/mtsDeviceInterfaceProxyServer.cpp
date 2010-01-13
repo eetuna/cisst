@@ -717,7 +717,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::GetCommandId(
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandVoid(
-    ::Ice::IceCommandIDType commandID, const ::Ice::Current&)
+    IceCommandIDType commandID, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandVoid");
 
@@ -725,7 +725,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandVoid(
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandWriteSerialized(
-    ::Ice::IceCommandIDType commandID, const ::std::string& argument, const ::Ice::Current&)
+    IceCommandIDType commandID, const ::std::string& argument, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandWriteSerialized");
 
@@ -733,7 +733,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandWriteS
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandReadSerialized(
-    ::Ice::IceCommandIDType commandID, ::std::string& argument, const ::Ice::Current&)
+    IceCommandIDType commandID, ::std::string& argument, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandReadSerialized");
 
@@ -741,7 +741,7 @@ void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandReadSe
 }
 
 void mtsDeviceInterfaceProxyServer::DeviceInterfaceServerI::ExecuteCommandQualifiedReadSerialized(
-    ::Ice::IceCommandIDType commandID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Current&)
+    IceCommandIDType commandID, const ::std::string& argument1, ::std::string& argument2, const ::Ice::Current&)
 {
     //Logger->trace("TIServer", "<<<<< RECV: ExecuteCommandQualifiedReadSerialized");
 

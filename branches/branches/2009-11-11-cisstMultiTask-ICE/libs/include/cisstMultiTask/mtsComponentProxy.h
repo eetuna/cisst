@@ -40,12 +40,57 @@ class mtsComponentProxy : public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    //-------------------------------------------------------------------------
+    //  Data Structures for Server Component
+    //-------------------------------------------------------------------------
+protected:
+    /*! Function proxies. CreateProvidedInterfaceProxy() uses these maps to
+        assign commandIDs of the command proxies in a provided interface proxy. */
+    //typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
+    //typedef cmnNamedMap<mtsFunctionWrite> FunctionWriteProxyMapType;
+    //typedef cmnNamedMap<mtsFunctionRead>  FunctionReadProxyMapType;
+    //typedef cmnNamedMap<mtsFunctionQualifiedRead> FunctionQualifiedReadProxyMapType;
+    //FunctionVoidProxyMapType FunctionVoidProxyMap;
+    //FunctionWriteProxyMapType FunctionWriteProxyMap;
+    //FunctionReadProxyMapType FunctionReadProxyMap;
+    //FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
+
+    /*! Event handler proxies. CreateRequiredInterfaceProxy() uses these maps
+        to assign ----- TODO ----- */
+    //typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidProxyMapType;
+    //typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteProxyMapType;
+    //EventHandlerVoidProxyMapType  EventHandlerVoidProxyMap;
+    //EventHandlerWriteProxyMapType EventHandlerWriteProxyMap;
+
+    //-------------------------------------------------------------------------
+    //  Data Structures for Client Component
+    //-------------------------------------------------------------------------
+
+    //
+    // TODO: add codes here
+    //
+
+
+
+    /*! Typedef to manage provided interface proxies of which type is 
+        mtsComponentInterfaceProxyServer. */
+    typedef cmnNamedMap<mtsComponentInterfaceProxyServer> ProvidedInterfaceProxyMapType;
+    ProvidedInterfaceProxyMapType ProvidedInterfaceProxies;
+
+    /*! Typedef to manage required interface proxies of which type is 
+        mtsComponentInterfaceProxyClient. */
+    //typedef cmnNamedMap<mtsDeviceInterfaceProxyClient> RequiredInterfaceProxyMapType;
+    //RequiredInterfaceProxyMapType RequiredInterfaceProxies;
+
 public:
     mtsComponentProxy(const std::string & componentProxyName) : mtsDevice(componentProxyName) {}
-    virtual ~mtsComponentProxy() {}
+    virtual ~mtsComponentProxy();
 
     inline void Configure(const std::string & CMN_UNUSED(componentProxyName)) {};
 
+    //-------------------------------------------------------------------------
+    //  Methods to Manage Interface Proxy
+    //-------------------------------------------------------------------------
     /*! Create or remove a provided interface proxy */
     bool CreateProvidedInterfaceProxy(ProvidedInterfaceDescription & providedInterfaceDescription);
     bool RemoveProvidedInterfaceProxy(const std::string & providedInterfaceProxyName);
@@ -54,12 +99,32 @@ public:
     bool CreateRequiredInterfaceProxy(RequiredInterfaceDescription & requiredInterfaceDescription);
     bool RemoveRequiredInterfaceProxy(const std::string & requiredInterfaceProxyName);
 
+    //-------------------------------------------------------------------------
+    //  Methods to Manage Network Proxy
+    //-------------------------------------------------------------------------
+    /*! Create a network proxy which corresponds to a provided interface proxy. */
+    bool CreateInterfaceProxyServer(const std::string & providedInterfaceProxyName,
+                                    std::string & adapterName,
+                                    std::string & endpointAccessInfo,
+                                    std::string & communicatorId);
+
+    /*! Create a network proxy which corresponds to a required interface proxy. */
+    bool CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName);
+
+    //-------------------------------------------------------------------------
+    //  Getters
+    //-------------------------------------------------------------------------
     /*! Return a total number of interfaces (used to determine if this componet 
         proxy should be removed; when all interfaces are removed, the component
         proxy has to be cleaned up) */
     unsigned int GetInterfaceCount() const {
         return ProvidedInterfaces.size() + RequiredInterfaces.size();
     }
+
+    //-------------------------------------------------------------------------
+    //  Utilities
+    //-------------------------------------------------------------------------
+    const std::string GetNewPortNumberAsString(const unsigned int id) const;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentProxy)

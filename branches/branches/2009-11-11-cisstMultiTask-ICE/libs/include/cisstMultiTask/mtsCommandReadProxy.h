@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -67,27 +67,27 @@ protected:
 
     /*! Device interface proxy objects which execute a read command at 
         peer's memory space across networks. */
-    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
+    //mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! Per-command serializer and deserializer */
     mtsProxySerializer Serializer;
 
 public:
     mtsCommandReadProxy(const CommandIDType commandId, 
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
+                        mtsComponentInterfaceProxyClient * providedInterfaceProxy):
         mtsCommandReadBase(),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(providedInterfaceProxy)
+        CommandId(commandId)
+//        ProvidedInterfaceProxy(providedInterfaceProxy)
     {
         Initialize();
     }
 
     mtsCommandReadProxy(const CommandIDType commandId,
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                        mtsComponentInterfaceProxyClient * providedInterfaceProxy,
                         const std::string & name):
         mtsCommandReadBase(name),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(providedInterfaceProxy)
+        CommandId(commandId)
+        //ProvidedInterfaceProxy(providedInterfaceProxy)
     {
         Initialize();
     }
@@ -103,7 +103,7 @@ public:
     void SetCommandId(const CommandIDType & newCommandId) {
         CommandId = newCommandId;
 
-        ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer);
+        //ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer);
 
         // MJUNG: Currently, there are only two types of events: eventVoid, eventWrite.
         // Thus, we don't need to modify the mtsCommandReadProxy or 
@@ -117,8 +117,8 @@ public:
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
         if (this->IsEnabled()) {
-            CMN_ASSERT(ProvidedInterfaceProxy);
-            ProvidedInterfaceProxy->SendExecuteCommandReadSerialized(CommandId, argument);
+            //CMN_ASSERT(ProvidedInterfaceProxy);
+            //ProvidedInterfaceProxy->SendExecuteCommandReadSerialized(CommandId, argument);
             return mtsCommandBase::DEV_OK;
         }
         return mtsCommandBase::DISABLED;

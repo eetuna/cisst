@@ -65,7 +65,7 @@ void mtsTaskManagerProxyClient::Start(mtsTaskManager * callingTaskManager)
 
         // Set an implicit context (per proxy context)
         // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
-        IceCommunicator->getImplicitContext()->put(CONNECTION_ID, 
+        IceCommunicator->getImplicitContext()->put(ConnectionIDKey, 
             IceCommunicator->identityToString(ident));
 
         // Generate an event so that the global task manager register this task manager.

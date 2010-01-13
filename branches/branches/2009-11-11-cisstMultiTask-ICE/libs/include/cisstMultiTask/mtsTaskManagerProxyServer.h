@@ -57,21 +57,6 @@ public:
     /*! Entry point to run a proxy. */
     void Start(mtsTaskManager * callingTaskManager);
 
-    /*! Change the proxy state as active. */
-    void SetAsActiveProxy(void) {
-        ChangeProxyState(mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
-    }
-
-    /*! Return true if the current proxy state is active. */
-    bool IsActiveProxy(void) const {
-        return (ProxyState == mtsProxyBaseServer<mtsTaskManager>::PROXY_ACTIVE);
-    }
-
-    void ShutdownSession(const Ice::Current & current) {
-        current.adapter->getCommunicator()->shutdown();
-        mtsProxyBaseServer<mtsTaskManager>::ShutdownSession();
-    }
-
     /*! End the proxy. */
     void Stop();
 

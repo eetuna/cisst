@@ -194,8 +194,8 @@ protected:
         void Stop();
 
         // Server -> Client
-        void ExecuteEventVoid(::Ice::IceCommandIDType, const ::Ice::Current&);
-        void ExecuteEventWriteSerialized(::Ice::IceCommandIDType, const ::std::string&, const ::Ice::Current&);
+        void ExecuteEventVoid(IceCommandIDType, const ::Ice::Current&);
+        void ExecuteEventWriteSerialized(IceCommandIDType, const ::std::string&, const ::Ice::Current&);
     };
 };
 

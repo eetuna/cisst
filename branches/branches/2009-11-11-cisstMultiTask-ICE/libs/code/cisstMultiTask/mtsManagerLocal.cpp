@@ -19,8 +19,12 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
+
+#include <cisstCommon/cmnGetChar.h>
+#include <cisstOSAbstraction/osaSleep.h>
+#include <cisstOSAbstraction/osaSocket.h>
+
 #include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsTaskContinuous.h>
@@ -173,6 +177,7 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(
 {
     if (!Instance) {
         Instance = new mtsManagerLocal(thisProcessName, thisProcessIP);
+        Instance->SetIPAddress();
     }
 
     return Instance;
@@ -262,6 +267,11 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
         CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component at global component manager: " << componentName << std::endl;
         return false;
     }
+
+    //
+    // TODO: Before removing a component from the map,
+    //       shouldn't it be deactivated, terminated, and cleaned up??
+    //
 
     bool success;
     ComponentMapChange.Lock();
@@ -377,11 +387,6 @@ const bool mtsManagerLocal::FindComponent(const std::string & componentName) con
     return (GetComponent(componentName) != NULL);
 }
    
-void mtsManagerLocal::ToStream(std::ostream & outputStream) const
-{
-    CMN_LOG_CLASS_RUN_VERBOSE << "ToStream() is not yet implemented" << std::endl;
-}
-
 void mtsManagerLocal::CreateAll(void) 
 {
     mtsTask * componentTask;
@@ -551,10 +556,6 @@ void mtsManagerLocal::KillAll(void)
     ComponentMapChange.Unlock();
 }
 
-void mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const {
-    // NOP
-}
-
 //
 //  TODO: Currently, we assume that at most one component (either a server or client) 
 //  is missing. However, as noted in the project wiki, there can be a very special and
@@ -567,6 +568,9 @@ void mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const {
 bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
                               const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
+    // Within mtsManagerGlobal::Connect() method, all the proxy components are
+    // created and injected into this local component manager by the global
+    // component manager.
     unsigned int connectionID = ManagerGlobal->Connect(
         ProcessName, clientComponentName, clientRequiredInterfaceName,
         ProcessName, serverComponentName, serverProvidedInterfaceName);
@@ -586,47 +590,174 @@ bool mtsManagerLocal::Connect(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
-    // Within mtsManagerGlobal::Connect() method, all the proxy components with
-    // proxy interfaces are created internally.
+    // Prevent this method from being called with two same process names.
+    if (clientProcessName == serverProcessName) {
+        return Connect(clientComponentName, clientRequiredInterfaceName,
+                       serverComponentName, serverProvidedInterfaceName);
+    }
+
+    // Within mtsManagerGlobal::Connect() method, all the proxy components are
+    // created and injected into this local component manager by the global
+    // component manager.
     unsigned int connectionID = ManagerGlobal->Connect(
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     if (connectionID == static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: Global Manager failed to reserve connection: "
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: Global Component Manager failed to reserve connection: "
             << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
         return false;
     }
 
-    return ConnectLocally(clientProcessName, clientComponentName, clientRequiredInterfaceName, 
-                          serverProcessName, serverComponentName, serverProvidedInterfaceName, connectionID);
+    // Determine which component is missing and, thus, is a proxy.
+    bool isRequiredInterfaceProxy = false;
+    bool isProvidedInterfaceProxy = false;
+
+    if (ProcessName == clientProcessName) {
+        isProvidedInterfaceProxy = true;
+    } else if (ProcessName == serverProcessName) {
+        isRequiredInterfaceProxy = true;
+    }
+
+    // TODO: Remove the following line.
+    CMN_ASSERT(!(isRequiredInterfaceProxy && isProvidedInterfaceProxy));
+
+    std::string actualClientComponentName = clientComponentName;
+    std::string actualServerComponentName = serverComponentName;
+
+    if (isRequiredInterfaceProxy) {
+        actualClientComponentName = mtsManagerGlobal::GetComponentProxyName(clientProcessName, clientComponentName);
+    } else if (isProvidedInterfaceProxy) {
+        actualServerComponentName = mtsManagerGlobal::GetComponentProxyName(serverProcessName, serverComponentName);
+    }
+
+    // Connect two local components
+    if (!ConnectLocally(clientProcessName, actualClientComponentName, clientRequiredInterfaceName, 
+                        serverProcessName, actualServerComponentName, serverProvidedInterfaceName))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to connect two local components: "
+            << clientProcessName << ":" << actualClientComponentName << ":" << clientRequiredInterfaceName << " - "
+            << serverProcessName << ":" << actualServerComponentName << ":" << serverProvidedInterfaceName << std::endl;
+        return false;
+    }
+
+    mtsDevice * clientComponent = GetComponent(clientComponentName);
+    if (!clientComponent) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get client component: " << clientComponentName << std::endl;
+        return false;
+    }
+
+    mtsDevice * serverComponent = GetComponent(serverComponentName);
+    if (!serverComponent) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get server component: " << serverComponentName << std::endl;
+        return false;
+    }
+
+    // Post-processing for successful remote connection: Create and run network proxies
+    if (isRequiredInterfaceProxy) {
+        //
+        // TODO: implement here
+        //
+    }
+
+    if (isProvidedInterfaceProxy) {
+        // Downcast to get component proxy object
+        mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
+        if (!serverComponentProxy) {
+            CMN_LOG_CLASS_RUN_ERROR << "Connect: error: The server component is not a proxy: " << serverComponent->GetName() << std::endl;
+            return false;
+        }
+
+        // Create and run interface proxy server
+        std::string adapterName, endpointAccessInfo, communicatorId;
+
+        if (!serverComponentProxy->CreateInterfaceProxyServer(
+            serverProvidedInterfaceName, adapterName, endpointAccessInfo, communicatorId))
+        {
+            CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to make a remote connection: "
+                << ": " << serverComponent->GetName() << std::endl;
+            return false;
+        }
+
+        // Inform the global component manager of access information of a
+        // server proxy so that a client proxy of type mtsComponentInterfaceProxyClient
+        // can connect to the server proxy.
+        if (!SetProvidedInterfaceProxyAccessInfo(
+            clientProcessName, clientComponentName, clientRequiredInterfaceName,
+            serverProcessName, serverComponentName, serverProvidedInterfaceName,
+            adapterName, endpointAccessInfo, communicatorId)) 
+        {
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyServer failed: "
+                << "cannot add provided interface proxy to GCM: " << serverProvidedInterfaceName << std::endl;
+            return false;
+        } else {
+            CMN_LOG_CLASS_RUN_VERBOSE << "CreateInterfaceProxyServer: "
+                << "successfully added provided interface proxy to GCM: " << serverProvidedInterfaceName << std::endl;
+        }
+
+    }
+
+    // b. Update command IDs and event handler IDs (crucial step). Before
+    //    the updates, an ICE proxy does not send anything over a networks
+    //    (the global component manager doesn't involve this update).
+    if (isRequiredInterfaceProxy) {
+        // Fetch event generator proxy pointers from the provided interface
+        // proxy at the client component, update event handler IDs of the 
+        // event handlers in the required interface proxy at the server 
+        // component, and let the provided interface proxy know that event
+        // handler IDs are successfully updated in order to start data 
+        // communication betwen interface proxies.
+        //FetchEventGeneratorProxyPointersFrom(providedInterfaceProxyUID);
+    } else if (isProvidedInterfaceProxy) {
+        // Fetch function proxy pointers from the required interface proxy
+        // at the server component, update command IDs of the command proxy
+        // objects in the provided interface proxy at the client component,
+        // and let the required interface proxy know that command IDs are 
+        // successfully updated in order to start data communication betwen
+        // interface proxies.
+
+        // TODO:
+        // get ICE proxy object using providedInterfaceProxyUID
+        // the ICE proxy object should be running and is connected to the peer interface
+        // thus, the proxy can easily run FetchFunctionProxyPointersFrom() across network
+        // it then updates command id with what it receives from the peer interface
+        // let the peer interface know this interface (proxy) is ready to start.
+        //FetchFunctionProxyPointersFrom(requiredInterfaceProxyUID);
+    }
+
+    // c. If the peer interface notifies that it has updated its proxy 
+    //    objects appropriately, begin data communication across a network.
+
+    // d. Inform the global component manager that the connection is 
+    //    successfully established and becomes active.
+    if (!ManagerGlobal->ConnectConfirm(connectionID)) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to confirm connection" << std::endl;
+        return false;
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully confirmed remote connection" << std::endl;
+
+    return true;
 }
 
 bool mtsManagerLocal::ConnectLocally(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    const unsigned int connectionID)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     // At this point, it is guaranteed that all components and interfaces exist
     // in the same process because the global component manager has already 
     // checked and created proxy objects as needed.
     mtsDevice * clientComponent = GetComponent(clientComponentName);
     if (!clientComponent) {
-        clientComponent = GetComponent(mtsManagerGlobal::GetComponentProxyName(clientProcessName, clientComponentName));
-        if (!clientComponent) {
-            CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find client component: " << clientComponentName << std::endl;
-            return false;
-        }
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get client component: " << clientComponentName << std::endl;
+        return false;
     }
 
     mtsDevice * serverComponent = GetComponent(serverComponentName);
     if (!serverComponent) {
-        serverComponent = GetComponent(mtsManagerGlobal::GetComponentProxyName(serverProcessName, serverComponentName));
-        if (!serverComponent) {
-            CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find server component: " << serverComponentName << std::endl;
-            return false;
-        }
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get server component: " << serverComponentName << std::endl;
+        return false;
     }
 
     // Get the client component and the provided interface object.
@@ -648,17 +779,6 @@ bool mtsManagerLocal::ConnectLocally(
     CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully connected: " 
             << clientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
-
-    // Inform the global component manager of that the connection is successfully
-    // established (otherwise, the global component manager disconnects this
-    // connection after timeout).
-    if (connectionID != static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL)) {
-        if (!ManagerGlobal->ConnectConfirm(connectionID)) {
-            CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to confirm connection" << std::endl;
-            return false;
-        }
-        CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully confirmed remote connection" << std::endl;
-    }
 
     return true;
 }
@@ -936,4 +1056,63 @@ const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componen
     const unsigned int numOfRequiredInterfaces = component->RequiredInterfaces.size();
 
     return (const int) (numOfProvidedInterfaces + numOfRequiredInterfaces);
+}
+
+void mtsManagerLocal::SetIPAddress()
+{
+#if CISST_MTS_HAS_ICE
+    // Fetch all ip addresses available on this machine.
+    std::vector<std::string> ipAddresses;
+    osaSocket::GetLocalhostIP(ipAddresses);
+
+    // If there is only one ip address is detected, set it as this machine's ip address.
+    if (ipAddresses.size() == 1) {
+        ProcessIP = ipAddresses[0];
+    } else {
+        // If there are more than one ip address detected, wait for an user's input 
+        // to decide what to use as an ip address of this machine.
+
+        // Print out a list of all IP addresses detected
+        std::cout << "\nList of IP addresses detected on this machine: " << std::endl;
+        for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
+            std::cout << "\t" << i + 1 << ": " << ipAddresses[i] << std::endl;
+        }
+
+        // Wait for user's input
+        char maxChoice = '1' + ipAddresses.size() - 1;
+        int choice = 0;
+        while (!('1' <= choice && choice <= maxChoice)) {
+            std::cout << "\nChoose one to use: ";
+            choice = cmnGetChar();
+        }
+        ProcessIP = ipAddresses[choice - '1'];
+
+        std::cout << ProcessIP << std::endl;
+    }
+#else
+    ProcessIP = "localhost";
+#endif
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "SetIPAddress: This machine's IP address is " << ProcessIP << std::endl;
+}
+
+bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
+{
+    return ManagerGlobal->SetProvidedInterfaceProxyAccessInfo(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName,
+        adapterName, endpointInfo, communicatorID);
+}
+
+bool mtsManagerLocal::FetchEventGeneratorProxyPointersFrom(const std::string & requiredInterfaceProxyUID)
+{
+    return false;
+}
+
+bool mtsManagerLocal::FetchFunctionProxyPointersFrom(const std::string & providedInterfaceProxyUID)
+{
+    return false;
 }

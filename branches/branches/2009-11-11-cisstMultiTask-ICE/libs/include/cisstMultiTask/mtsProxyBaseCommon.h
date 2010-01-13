@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-04-10
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -28,58 +28,39 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnDeSerializer.h>
 
 #include <cisstMultiTask/mtsConfig.h>
+
 #include <cisstMultiTask/mtsExport.h>
 
 #include <IceUtil/IceUtil.h>
 #include <Ice/Ice.h>
 
-
 /*!
   \ingroup cisstMultiTask
 
-  This class defines core functions and data members that are common in both 
-  clients and servers are required to be implemented in order to use ICE.
-
-  If a new server or client proxy class is to be defined using ICE, they should
-  be derived from either mtsProxyBaseServer or mtsProxyBaseClient, respectively,
-  rather than inheriting from this class.
-
-  Term definitions for proxy objects:
-
-     Proxy server: a proxy that WORKS AS a server and runs at the server side
-     Proxy client: a proxy that WORKS AS a client and runs at the client side
-     Server proxy: a virtual server that runs at the client side
-     Client proxy: a virtual client that runs at the server side
+  This class implements core features for ICE proxy objects and is used by 
+  mtsProxyBaseServer or mtsProxyBaseClient. That is, if a new type of proxy 
+  server or proxy client class is to be defined using ICE, it should be derived
+  from either mtsProxyBaseServer or mtsProxyBaseClient, respectively, rather 
+  than directly from this common class.
 */
-
-//-----------------------------------------------------------------------------
-//  Definitions for constant string values
-//-----------------------------------------------------------------------------
-/*! Implicit per-proxy context to set connection id. */
-#define CONNECTION_ID "ConnectionID"
-
-/*! The base port number is assigned as follows, which is not registered yet to 
-IANA (Internet Assigned Numbers Authority) as of June 25th, 2009. 
-See http://www.iana.org/assignments/port-numbers for more details.
-
-Current port number assignment for proxies
------------------------------------------------------------
-Task manager layer  : 10705 (e.g. the global task manager)
-Task layer          : 11705 (e.g. the server task)
-*/
-#define BASE_PORT_NUMBER_TASK_MANAGER_LAYER 10705
-#define BASE_PORT_NUMBER_TASK_LAYER         11705
 
 /*! Typedef for Command ID */
-#define CommandIDType unsigned long long
-#define IceCommandIDType Long
+typedef cmnDeSerializer::TypeId CommandIDType;
+typedef ::Ice::Long IceCommandIDType;
+
+// TODO: Replace #define with other (const std::string??)
+#define ConnectionIDKey "ConnectionID"
 
 //-----------------------------------------------------------------------------
 //  Common Base Class Definitions
 //-----------------------------------------------------------------------------
-template<class _ArgumentType>
+template<class _proxyOwner>
 class CISST_EXPORT mtsProxyBaseCommon {
+
 public:
+    /*! Implicit per-proxy context to set connection id. */
+    //static const char * ConnectionIDKey;
+
     /*! Typedef for proxy type. */
     enum ProxyType { PROXY_SERVER, PROXY_CLIENT };
 
@@ -100,11 +81,11 @@ public:
                               or mtsProxyBaseClient::SetAsActiveProxy().
                               If a proxy is in this state, it is running and can 
                               process events.
-        PROXY_FINISHING    -- Set by either mtsProxyBaseServer::OnEnd() or
-                              mtsProxyBaseClient::OnEnd() before trying to stop ICE 
+        PROXY_FINISHING    -- Set by either mtsProxyBaseServer::Stop() or
+                              mtsProxyBaseClient::Stop() before trying to stop ICE 
                               proxy processing.
-        PROXY_FINISHED     -- Set by either mtsProxyBaseServer::OnEnd() or
-                              mtsProxyBaseClient::OnEnd() after successful clean-up.
+        PROXY_FINISHED     -- Set by either mtsProxyBaseServer::Stop() or
+                              mtsProxyBaseClient::Stop() after successful clean-up.
     */
     enum ProxyStateType { 
         PROXY_CONSTRUCTED, 
@@ -115,74 +96,88 @@ public:
         PROXY_FINISHED 
     };
 
-    class ProxyLogger : public Ice::Logger
+protected:
+    ProxyType ProxyTypeMember;
+    ProxyStateType ProxyState;
+
+    //-----------------------------------------------------
+    // Auxiliary Class Definitions
+    //-----------------------------------------------------
+    /*! Logger class using the internal logging mechanism of cisst */
+    class ProxyLoggerForCISST : public Ice::Logger
     {
     public:
         void print(const ::std::string & message) {
             CMN_LOG_RUN_VERBOSE << "ICE: " << message << std::endl;
-            // Log(log);
         }
         void trace(const ::std::string & category, const ::std::string & message) {
             CMN_LOG_RUN_DEBUG << "ICE: " << category << " :: " << message << std::endl;
-            // Log(log1, log2);
         }
         void warning(const ::std::string & message) {
             CMN_LOG_RUN_WARNING << "ICE: " << message << std::endl;
-            // Log("##### WARNING: " + log);
         }
         void error(const ::std::string & message) {
             CMN_LOG_RUN_ERROR << "ICE: " << message << std::endl;
-            // Log("##### ERROR: " + log);
+        }
+    };
+
+    /*! Logger class using OutputDebugString() on Windows */
+    class ProxyLogger : public Ice::Logger
+    {
+    public:
+        void print(const ::std::string & message) { 
+            Log(message); 
+        }
+        void trace(const ::std::string & category, const ::std::string & message) {
+            Log(category, message);
+        }
+        void warning(const ::std::string & message) {
+            Log("##### WARNING: " + message);
+        }
+        void error(const ::std::string & message) {
+            Log("##### ERROR: " + message);
         }
 
         void Log(const std::string & className, const std::string & description) {
             std::string log = className + ": ";
             log += description;
-
             Log(log);
         }
 
     protected:
         void Log(const std::string& log)
         {
-        //
-        // TODO: need to diversify the output?
-        //
 #if (CISST_OS == CISST_WINDOWS)
             OutputDebugString(log.c_str());
 #else
-            std::cout << log.c_str() << std::endl;
+            CMN_LOG_RUN_VERBOSE << log << std::endl;
 #endif
         }        
     };
 
-protected:
-    ProxyType ProxyTypeMember;
-    ProxyStateType ProxyState;
-
-    //-----------------------------------------------------
-    // Auxiliary Class Definition
-    //-----------------------------------------------------
-    template<class __ArgumentType>
+    /* Internal class for thread arguments */
+    template<class __proxyOwner>
     class ThreadArguments {
     public:
-        _ArgumentType * argument;
+        _proxyOwner * argument;
         mtsProxyBaseCommon * proxy;
-        void (*Runner)(ThreadArguments<__ArgumentType> *);
+        void (*Runner)(ThreadArguments<__proxyOwner> *);
     };
 
-    template<class __ArgumentType>
+    /* Internal class for proxy worker */
+    template<class __proxyOwner>
     class ProxyWorker {
     public:
         ProxyWorker(void) {}
         virtual ~ProxyWorker(void) {}
 
-        void * Run(ThreadArguments<__ArgumentType> * arguments) {
+        void * Run(ThreadArguments<__proxyOwner> * arguments) {
             arguments->Runner(arguments);
             return 0;
         }
     };
 
+    /* Internal class for send thread */
     template<class _SenderType>
     class SenderThread : public IceUtil::Thread
     {
@@ -206,6 +201,7 @@ protected:
     /*! The flag which is true only if this proxy is runnable. */
     bool Runnable;
 
+    // TODO: is the following comment correct????
     /*! Set as true when a session is to be closed.
         For a client, this is set when a client notifies a server of disconnection.
         For a server, this is set when a client calls Shutdown() which allows safe
@@ -216,10 +212,10 @@ protected:
     osaThread WorkerThread;
 
     /*! The arguments container used for thread creation */
-    ProxyWorker<_ArgumentType> ProxyWorkerInfo;
-    ThreadArguments<_ArgumentType> ThreadArgumentsInfo;
+    ProxyWorker<_proxyOwner> ProxyWorkerInfo;
+    ThreadArguments<_proxyOwner> ThreadArgumentsInfo;
 
-    /*! Helper function to change the proxy state. */
+    /*! Helper function to change the proxy state in a thread-safe manner */
     void ChangeProxyState(const enum ProxyStateType newProxyState) {
         StateChange.Lock();
         ProxyState = newProxyState;
@@ -262,7 +258,7 @@ protected:
 public:
     mtsProxyBaseCommon(const std::string& propertyFileName,
                        const std::string& objectIdentity,
-                       const ProxyType proxyType) :
+                       const ProxyType& proxyType) :
         ProxyTypeMember(proxyType),
         ProxyState(PROXY_CONSTRUCTED),
         InitSuccessFlag(false),
@@ -276,23 +272,18 @@ public:
         //IceUtil::CtrlCHandler ctrCHandler(onCtrlC);
     }
 
-    virtual ~mtsProxyBaseCommon() 
-    {}
+    virtual ~mtsProxyBaseCommon() {}
 
     /*! Initialize and start the proxy (returns immediately). */
-    virtual void Start(_ArgumentType * callingClass) = 0;
+    virtual void Start(_proxyOwner * proxyOwner) = 0;
     
     /*! Terminate the proxy. */
     virtual void Stop() = 0;
 
     /*! Close a session. */
-    virtual void ShutdownSession()
-    {
+    virtual void ShutdownSession() {
         IsValidSession = false;
     }
-
-    /*! Called when the worker thread terminates. */
-    virtual void OnEnd(void) = 0;
 
     //-----------------------------------------------------
     //  Getters
@@ -302,6 +293,12 @@ public:
     inline const Ice::LoggerPtr GetLogger(void) const { return IceLogger; }
 
     inline Ice::CommunicatorPtr GetIceCommunicator(void) const { return IceCommunicator; }
+
+    /*! Base port numbers. These numbers are not yet registered to IANA (Internet 
+        Assigned Numbers Authority) as of January 12th, 2010.
+        See http://www.iana.org/assignments/port-numbers for more details. */
+    inline static unsigned int GetBasePortNumberForGlobalComponentManager() { return 10705; }
+    inline static unsigned int GetBasePortNumberForLocalComponentManager() { return 11705; }
 };
 
 #endif // _mtsProxyBaseCommon_h

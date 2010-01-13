@@ -410,7 +410,7 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::Stop()
 //}
 
 void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::ExecuteEventVoid(
-    ::Ice::IceCommandIDType commandId, const ::Ice::Current&)
+    IceCommandIDType commandId, const ::Ice::Current&)
 {
     Logger->trace("TIClient", "<<<<< RECV: ExecuteEventVoid");
 
@@ -418,7 +418,7 @@ void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::ExecuteEventVoid(
 }
 
 void mtsDeviceInterfaceProxyClient::DeviceInterfaceClientI::ExecuteEventWriteSerialized(
-    ::Ice::IceCommandIDType commandId, const ::std::string& argument, const ::Ice::Current&)
+    IceCommandIDType commandId, const ::std::string& argument, const ::Ice::Current&)
 {
     Logger->trace("TIClient", "<<<<< RECV: ExecuteEventWriteSerialized");
 

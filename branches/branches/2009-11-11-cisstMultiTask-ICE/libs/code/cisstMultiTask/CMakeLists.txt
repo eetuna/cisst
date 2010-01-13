@@ -142,25 +142,29 @@ option(CISST_MTS_HAS_ICE "Build network proxies for task and devices, requires I
 if(CISST_MTS_HAS_ICE)
 
   SET(SOURCE_FILES ${SOURCE_FILES}
-      mtsTaskManagerProxyClient.cpp
-      mtsTaskManagerProxyServer.cpp
-      mtsDeviceInterfaceProxyClient.cpp
-      mtsDeviceInterfaceProxyServer.cpp
-      mtsTaskGlobal.cpp
-      mtsDeviceProxy.cpp      
+      #mtsTaskManagerProxyClient.cpp
+      #mtsTaskManagerProxyServer.cpp
+      #mtsDeviceInterfaceProxyClient.cpp
+      #mtsDeviceInterfaceProxyServer.cpp
+      mtsComponentInterfaceProxyServer.cpp
+      #mtsComponentInterfaceProxyClient.cpp
+      #mtsTaskGlobal.cpp
+      #mtsDeviceProxy.cpp      
       )
 
   SET(HEADER_FILES ${HEADER_FILES}
       mtsProxyBaseCommon.h
       mtsProxyBaseClient.h
       mtsProxyBaseServer.h
+      mtsComponentInterfaceProxyServer.h
+      
       mtsProxySerializer.h
-      mtsTaskManagerProxyClient.h
-      mtsTaskManagerProxyServer.h
-      mtsDeviceInterfaceProxyClient.h
-      mtsDeviceInterfaceProxyServer.h
-      mtsTaskGlobal.h
-      mtsDeviceProxy.h
+      #mtsTaskManagerProxyClient.h
+      #mtsTaskManagerProxyServer.h
+      #mtsDeviceInterfaceProxyClient.h
+      #mtsDeviceInterfaceProxyServer.h
+      #mtsTaskGlobal.h
+      #mtsDeviceProxy.h
       mtsCommandVoidProxy.h
       mtsCommandWriteProxy.h
       mtsCommandReadProxy.h
@@ -172,10 +176,11 @@ if(CISST_MTS_HAS_ICE)
       )
 
   SET(ICE_RESOURCE_FILES
-      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client
-      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.server
-      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsDeviceInterfaceProxy.ice
-      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskManagerProxy.ice
+      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client
+      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.server
+      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsDeviceInterfaceProxy.ice
+      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskManagerProxy.ice
+      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsComponentInterfaceProxy.ice
       )
 
   #
@@ -184,8 +189,9 @@ if(CISST_MTS_HAS_ICE)
   SOURCE_GROUP(Resources FILES ${ICE_RESOURCE_FILES})
 
   SET(SLICE_FILES
-      mtsDeviceInterfaceProxy
-      mtsTaskManagerProxy
+      #mtsDeviceInterfaceProxy
+      #mtsTaskManagerProxy
+      mtsComponentInterfaceProxy
       )
 
   find_package(Ice)

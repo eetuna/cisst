@@ -29,8 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandVoidProxy_h
 
 #include <cisstMultiTask/mtsCommandVoidBase.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyServer.h>
+//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -41,9 +41,9 @@ http://www.cisst.org/cisst/license.txt.
   over networks without payload. 
 
   Note that there can be two kinds of interface proxy class that manages 
-  this process. The first one is mtsDeviceInterfaceProxyClient which is used
+  this process. The first one is mtsComponentInterfaceProxyClient which is used
   to execute a void command at a server, and the other one is 
-  mtsDeviceInterfaceProxyServer which propagates events generated at a server
+  mtsComponentInterfaceProxyServer which propagates events generated at a server
   to a client. Only either one of the device interface proxies can be
   initialized while the other should be NULL.
 */
@@ -59,13 +59,13 @@ protected:
 
     /*! Device interface proxy object which executes a void command at 
         peer's memory space across networks. */
-    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
-    mtsDeviceInterfaceProxyServer * RequiredInterfaceProxy;
+    mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
+    mtsComponentInterfaceProxyServer * RequiredInterfaceProxy;
 
 public:    
     /*! The constructor. */
     mtsCommandVoidProxy(const CommandIDType commandId, 
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy) :
+                        mtsComponentInterfaceProxyClient * providedInterfaceProxy) :
         BaseType(),
         CommandId(commandId),
         ProvidedInterfaceProxy(providedInterfaceProxy),
@@ -73,7 +73,7 @@ public:
     {}
 
     mtsCommandVoidProxy(const CommandIDType commandId, 
-                        mtsDeviceInterfaceProxyServer * requiredInterfaceProxy) :
+                        mtsComponentInterfaceProxyServer * requiredInterfaceProxy) :
         BaseType(),
         CommandId(commandId),
         ProvidedInterfaceProxy(NULL),
@@ -82,7 +82,7 @@ public:
     
     /*! The constructor with a name. */
     mtsCommandVoidProxy(const CommandIDType commandId,
-                        mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                        mtsComponentInterfaceProxyClient * providedInterfaceProxy,
                         const std::string & name) :
         BaseType(name),
         CommandId(commandId),
@@ -91,7 +91,7 @@ public:
     {}
 
     mtsCommandVoidProxy(const CommandIDType commandId,
-                        mtsDeviceInterfaceProxyServer * requiredInterfaceProxy,
+                        mtsComponentInterfaceProxyServer * requiredInterfaceProxy,
                         const std::string & name) :
         BaseType(name),
         CommandId(commandId),
@@ -110,11 +110,11 @@ public:
     /*! The execute method. */
     mtsCommandBase::ReturnType Execute() {
         if (this->IsEnabled()) {
-            if (ProvidedInterfaceProxy) {
-                ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
-            } else {
-                RequiredInterfaceProxy->SendExecuteEventVoid(CommandId);
-            }
+            //if (ProvidedInterfaceProxy) {
+            //    ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
+            //} else {
+            //    RequiredInterfaceProxy->SendExecuteEventVoid(CommandId);
+            //}
             return mtsCommandBase::DEV_OK;
         }
         return mtsCommandBase::DISABLED;
@@ -122,11 +122,11 @@ public:
 
     void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << " with ";
-        if (ProvidedInterfaceProxy) {
-            outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
-        } else {            
-            outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
-        }
+        //if (ProvidedInterfaceProxy) {
+        //    outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
+        //} else {            
+        //    outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
+        //}
         outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 

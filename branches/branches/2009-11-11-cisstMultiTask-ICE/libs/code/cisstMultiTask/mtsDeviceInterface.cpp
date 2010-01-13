@@ -346,5 +346,10 @@ bool mtsDeviceInterface::GetProvidedInterfaceDescription(ProvidedInterfaceDescri
         providedInterfaceDescription.EventsWrite.push_back(element);
     }
 
+    //
+    // TODO: add codes that extracts function pointers and export it into the 
+    // provided interface description structure.
+    //
+
     return true;
 }

@@ -102,11 +102,11 @@ protected:
     //osaSocket JGraphSocket;
     //bool JGraphSocketConnected;
 
-    /*! ID for this local component manager. Consists of a process name IP.
-        Note that a process name of "localhost" is reserved for the name of local
-        component manager in the standalone mode and should not be used by users. */
+    /*! Process name of this local component manager */
     const std::string ProcessName;
-    const std::string ProcessIP;
+
+    /*! IP address of this machine. This is internally set by SetIPAddress(). */
+    std::string ProcessIP;
 
     /*! Mutex to use ComponentMap in a thread safe manner */
     osaMutex ComponentMapChange;
@@ -144,16 +144,7 @@ protected:
         */
     bool ConnectLocally(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const unsigned int connectionID =
-            static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL));
-
-    /*! Check if a component is a proxy object based on a component name */
-    inline const bool IsProxyComponent(const std::string & componentName) {
-        const std::string proxyStr = "Proxy";
-        size_t found = componentName.find(proxyStr);
-        return found != std::string::npos;
-    }
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Methods required by mtsManagerLocalInterface
@@ -198,11 +189,6 @@ protected:
         const std::string & componentName,
         const std::string & requiredInterfaceName, 
         RequiredInterfaceDescription & requiredInterfaceDescription) const;
-
-    /*! Returns the name of this local component manager */
-    inline const std::string GetProcessName() const {
-        return ProcessName;
-    }
 
     /*! Returns the total number of interfaces that are running on a component */
     const int GetCurrentInterfaceCount(const std::string & componentName) const;
@@ -304,76 +290,57 @@ public:
     void CISST_DEPRECATED GetNamesOfDevices(std::vector<std::string>& namesOfDevices) const; // For backward compatibility
     void CISST_DEPRECATED GetNamesOfTasks(std::vector<std::string>& namesOfTasks) const; // For backward compatibility
     
+    /*! Returns the name of this local component manager */
+    inline const std::string GetProcessName() const {
+        return ProcessName;
+    }
+
+    /*! Setter to set an IP address of this machine. 
+        In standalone mode, IP address is set to localhost by default.
+        In network mode, if there are more than one network interface in this 
+        machine, a user should choose what to use as an IP address of this 
+        machine, which clients connect to. */
+    void SetIPAddress();
+
     /*! For debugging. Dumps to stream the maps maintained by the manager. */
-    void ToStream(std::ostream & outputStream) const;
+    void CISST_DEPRECATED ToStream(std::ostream & outputStream) const {}
 
     /*! Create a dot file to be used by graphviz to generate a nice
       graph of connections between tasks/interfaces. */
-    void ToStreamDot(std::ostream & outputStream) const;
-    
-//#if CISST_MTS_HAS_ICE
-//    //-------------------------------------------------------------------------
-//    //  Proxy-related
-//    //-------------------------------------------------------------------------
-//protected:
-//    /*! Task manager type. */
-    typedef enum { TASK_MANAGER_LOCAL, TASK_MANAGER_SERVER, TASK_MANAGER_CLIENT } TaskManagerType;
+    void CISST_DEPRECATED ToStreamDot(std::ostream & outputStream) const {}
 
-    TaskManagerType TaskManagerTypeMember;
-//
-//    /*! Task manager communicator ID. Used as one of ICE proxy object properties. */
-//    const std::string TaskManagerCommunicatorID;
-//
-//    /*! Task manager proxy objects. Both are initialized as null at first and 
-//      will be assigned later. Either one of the objects should be null and the 
-//      other has to be valid.
-//      ProxyServer is valid iff this is the global task manager.
-//      ProxyClient is valid iff this is a general task manager.
-//    */
-//    mtsManagerLocalProxyServer * ProxyGlobalTaskManager;
-//    mtsManagerLocalProxyClient * ProxyTaskManagerClient;
-//
-//    /*! IP address information. */
-//    std::string GlobalTaskManagerIP;
-//    std::string ServerTaskIP;
-//
-//    /*! Start two kinds of proxies.
-//      Task Manager Layer: Start either GlobalTaskManagerProxy of TaskManagerClientProxy
-//      according to the type of this task manager.
-//      Task Layer: While iterating all tasks, create and start all provided interface 
-//      proxies (see mtsTask::RunProvidedInterfaceProxy()).
-//    */
-//    void StartProxies();
-//
-//public:
-//    /*! Set the type of task manager-global task manager (server) or conventional
-//      task manager (client)-and start an appropriate task manager proxy.
-//      Also start a task interface proxy. */
-    void SetTaskManagerType(const TaskManagerType taskManagerType) {
-        TaskManagerTypeMember = taskManagerType;
-        //StartProxies();
+    //-------------------------------------------------------------------------
+    //  Networking
+    //-------------------------------------------------------------------------
+#if CISST_MTS_HAS_ICE
+public:
+    /*! Check if a component is a proxy object based on a component name */
+    inline const bool IsProxyComponent(const std::string & componentName) {
+        const std::string proxyStr = "Proxy";
+        size_t found = componentName.find(proxyStr);
+        return found != std::string::npos;
     }
-//
-//    /*! Getter */
-    inline TaskManagerType GetTaskManagerType() { return TaskManagerTypeMember; }
-//
-//    inline mtsManagerLocalProxyServer * GetProxyGlobalTaskManager() const {
-//        return ProxyGlobalTaskManager;
-//    }
-//
-//    inline mtsManagerLocalProxyClient * GetProxyTaskManagerClient() const {
-//        return ProxyTaskManagerClient;
-//    }
-//
-//    /*! Setter */
-//    inline void SetGlobalTaskManagerIP(const std::string & globalTaskManagerIP) {
-//        GlobalTaskManagerIP = globalTaskManagerIP;
-//    }
-//
-//    inline void SetServerTaskIP(const std::string & serverTaskIP) {
-//        ServerTaskIP = serverTaskIP;
-//    }
-//#endif // CISST_MTS_HAS_ICE
+
+    /*! Return IP address of this machine. */
+    std::string GetIPAddress() const { return ProcessIP; }
+
+    bool SetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID);
+
+    //
+    // TODO: Double check the following comments
+    //
+    /*! Fetch event generator proxy pointers from the connected provided interface.
+        requiredInterfaceProxyUID is a name of the proxy connected to the interface. */
+    bool FetchEventGeneratorProxyPointersFrom(const std::string & requiredInterfaceProxyUID);
+
+    /*! Fetch function proxy pointers from the connected required interface.
+        providedInterfaceProxyUID is a name of the proxy connected to the interface. */
+    bool FetchFunctionProxyPointersFrom(const std::string & providedInterfaceProxyUID);
+
+#endif
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerLocal)

@@ -50,7 +50,7 @@ class CISST_EXPORT mtsManagerGlobal : public mtsManagerGlobalInterface {
 
 protected:
     //-------------------------------------------------------------------------
-    //  Data Structures
+    //  Data Structure of Process Map
     //-------------------------------------------------------------------------
     /*
         P1 - C1 - p1 - r1   Process Map: (P, ComponentMap)
@@ -67,14 +67,27 @@ protected:
              |
              C2
     */
+
+    /*! Data structure to keep the information about a connected interface */
     class ConnectedInterfaceInfo {
     protected:
+        // Names (IDs)
         const std::string ProcessName;
         const std::string ComponentName;
         const std::string InterfaceName;
+        // True if this interface is remote
         const bool RemoteConnection;
+#if CISST_MTS_HAS_ICE
+        // Server proxy access information (sent to client proxy as requested)
+        std::string AdapterName;
+        std::string EndpointInfo;
+        std::string CommunicatorID;
+#endif
 
         ConnectedInterfaceInfo() : ProcessName(""), ComponentName(""), InterfaceName(""), RemoteConnection(false)
+#if CISST_MTS_HAS_ICE
+            , AdapterName(""), EndpointInfo(""), CommunicatorID("")
+#endif
         {}
 
     public:
@@ -83,10 +96,24 @@ protected:
             : ProcessName(processName), ComponentName(componentName), InterfaceName(interfaceName), RemoteConnection(isRemoteConnection)
         {}
 
+        // Getters
         const std::string GetProcessName() const   { return ProcessName; }
         const std::string GetComponentName() const { return ComponentName; }
         const std::string GetInterfaceName() const { return InterfaceName; }
         const bool IsRemoteConnection() const      { return RemoteConnection; }
+#if CISST_MTS_HAS_ICE
+        std::string GetAdapterName() const         { return AdapterName; }
+        std::string GetEndpointInfo() const        { return EndpointInfo; }
+        std::string GetCommunicatorID() const      { return CommunicatorID; }
+
+        // Setters
+        void SetProxyAccessInfo(const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
+        {
+            AdapterName = adapterName;
+            EndpointInfo = endpointInfo;
+            CommunicatorID = communicatorID;
+        }
+#endif
     };
 
     /*! Connection map: (connected interface name, connected interface information)
@@ -103,7 +130,7 @@ protected:
     typedef cmnNamedMap<ConnectionMapType> ConnectedInterfaceMapType;
 
     /*! Interface type flag map: a map of registered interfaces in a component
-        key=(interface name), value=(bool) that represents the type of an interface
+        key=(interface name), value=(bool)
         value is false if an interface is an original interface
                  true  if an interface is a proxy interface 
         This information is used to determine if an interface should be removed 
@@ -268,9 +295,25 @@ public:
     {
         return processName + ":" + componentName + "Proxy";
     }
+
+    //-------------------------------------------------------------------------
+    //  Networking
+    //-------------------------------------------------------------------------
+    /*! Add access information of a server proxy (i.e., provided interface proxy)
+        which a client proxy (i.e., required interface proxy) connects to. */
+#if CISST_MTS_HAS_ICE
+    bool SetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID);
+
+    bool GetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        std::string & adapterName, std::string & endpointInfo, std::string & communicatorID);
+#endif
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerGlobal)
 
 #endif // _mtsManagerGlobal_h
-

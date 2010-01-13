@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
-#include <cisstMultiTask/mtsDeviceInterfaceProxyClient.h>
+//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -59,29 +59,29 @@ protected:
 
     /*! Device interface proxy objects which execute a command at 
         peer's memory space across networks. */
-    mtsDeviceInterfaceProxyClient * ProvidedInterfaceProxy;
+    //mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
 
     /*! Per-command serializer and deserializer */
     mtsProxySerializer Serializer;
 
 public:
     mtsCommandQualifiedReadProxy(const CommandIDType commandId, 
-                                 mtsDeviceInterfaceProxyClient * providedInterfaceProxy):
+                                 mtsComponentInterfaceProxyClient * providedInterfaceProxy):
         BaseType(),
         CommandId(commandId),
         Argument1Prototype(NULL),
-        Argument2Prototype(NULL),
-        ProvidedInterfaceProxy(providedInterfaceProxy)
+        Argument2Prototype(NULL)
+        //ProvidedInterfaceProxy(providedInterfaceProxy)
     {}
 
     mtsCommandQualifiedReadProxy(const CommandIDType commandId,
-                                 mtsDeviceInterfaceProxyClient * providedInterfaceProxy,
+                                 mtsComponentInterfaceProxyClient * providedInterfaceProxy,
                                  const std::string & name):
         BaseType(name),
         CommandId(commandId),
         Argument1Prototype(NULL),
-        Argument2Prototype(NULL),
-        ProvidedInterfaceProxy(providedInterfaceProxy)
+        Argument2Prototype(NULL)
+        //ProvidedInterfaceProxy(providedInterfaceProxy)
     {}
 
     /*! The destructor. Does nothing */
@@ -92,7 +92,7 @@ public:
     void SetCommandId(const CommandIDType & newCommandId) {
         CommandId = newCommandId;
 
-        ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer);
+        //ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer);
 
         // MJUNG: Currently, there are only two types of events: eventVoid, eventWrite.
         // Thus, we don't need to modify the mtsCommandReadProxy or 
@@ -108,9 +108,9 @@ public:
                                                mtsGenericObject & argument2) 
     {
         if (this->IsEnabled()) {
-            CMN_ASSERT(ProvidedInterfaceProxy);
-            ProvidedInterfaceProxy->SendExecuteCommandQualifiedReadSerialized(
-                CommandId, argument1, argument2);
+            //CMN_ASSERT(ProvidedInterfaceProxy);
+            //ProvidedInterfaceProxy->SendExecuteCommandQualifiedReadSerialized(
+            //    CommandId, argument1, argument2);
             return mtsCommandBase::DEV_OK;
         }
         return mtsCommandBase::DISABLED;

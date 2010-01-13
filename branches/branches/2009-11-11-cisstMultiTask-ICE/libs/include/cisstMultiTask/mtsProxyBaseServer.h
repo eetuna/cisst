@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-03-17
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -28,34 +28,76 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  This class inherits from mtsProxyBaseCommon and implements the basic structure of
-  the ICE server which includes an independent logger, an adapter, and a servant.
-  The actual processing routines are implemented by a class inherited from this
-  class.
-
-  TODO: Read an ICE property configuration file and set the properties of proxy
-  connection based on it.
+  This class inherits mtsProxyBaseCommon and implements the basic structure of
+  ICE proxy object acting as a server. The actual processing routines should be
+  implemented by a derived class.
 */
-template<class _argumentType>
-class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_argumentType> {
+template<class _proxyOwner, class _clientProxyType>
+class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_proxyOwner> {
+
 public:
-    typedef mtsProxyBaseCommon<_argumentType> BaseType;
-    
+    typedef mtsProxyBaseCommon<_proxyOwner> BaseType;
+    typedef _clientProxyType ClientProxyType;
+
+    /*! Typedef for proxy connection id (defined by ICE). Set as Ice::Identity
+        which can be transformed to std::string by Communicator->identityToString()
+        See http://www.zeroc.com/doc/Ice-3.3.1/reference/Ice/Identity.html */
+    typedef std::string ConnectionIDType;
+
+    /*! Typedef for client id (defined by user) which is an interface name and
+        of which value is human readable. */
+    typedef std::string ClientIDType;
+
+    /*! Start server proxy */
+    virtual void Start(_proxyOwner * proxyOwner) = 0;
+
+    /*! Terminate proxy. */
+    virtual void Stop()
+    {
+        if (this->ProxyState != BaseType::PROXY_ACTIVE) {
+            return;
+        }
+
+        if (this->ProxyState == BaseType::PROXY_ACTIVE) {
+            ChangeProxyState(BaseType::PROXY_FINISHING);
+
+            if (this->IceCommunicator) {                
+                try {
+                    this->IceCommunicator->destroy();
+                    this->ChangeProxyState(BaseType::PROXY_FINISHED);
+                    this->IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
+                } catch (const Ice::Exception & e) {
+                    this->IceLogger->error("mtsProxyBaseServer: Server proxy clean-up failure.");
+                    this->IceLogger->trace("mtsProxyBaseServer", e.what());
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //  Networking: ICE
+    //-------------------------------------------------------------------------
 protected:
+    /*! ICE Objects */
     Ice::ObjectAdapterPtr IceAdapter;
     Ice::ObjectPtr Servant;
+
+    /*! Endpoint information for a client to connect to server proxy */
     const std::string AdapterName;
     const std::string EndpointInfo;
     const std::string CommunicatorID;
 
+    /*! Create servant object */
     virtual Ice::ObjectPtr CreateServant() = 0;
 
+    /*! Initialize server proxy */
     void IceInitialize(void)
     {
         try {
             ChangeProxyState(BaseType::PROXY_INITIALIZING);
 
             Ice::InitializationData initData;
+            //initData.logger = new typename BaseType::ProxyLoggerForCISST();
             initData.logger = new typename BaseType::ProxyLogger();
             initData.properties = Ice::createProperties();
             // There are two different modes of using implicit context: 
@@ -91,19 +133,19 @@ protected:
             this->IceLogger->trace("mtsProxyBaseServer", "Server proxy initialization success.");
         } catch (const Ice::Exception& e) {
             if (this->IceLogger) {
-                this->IceLogger->trace("mtsProxyBaseServer", "Server proxy initialization error");
+                this->IceLogger->error("mtsProxyBaseServer: Server proxy initialization error");
                 this->IceLogger->trace("mtsProxyBaseServer", e.what());
             } else {
-                std::cerr << "mtsProxyBaseServer: Server proxy initialization error." << std::endl;
-                std::cerr << "mtsProxyBaseServer: " << e.what() << std::endl;
+                CMN_LOG_RUN_ERROR << "mtsProxyBaseServer: Server proxy initialization error." << std::endl;
+                CMN_LOG_RUN_ERROR << "mtsProxyBaseServer: " << e.what() << std::endl;
             }
         } catch (const char * msg) {
             if (this->IceLogger) {
-                this->IceLogger->trace("mtsProxyBaseServer", "Server proxy initialization error");
+                this->IceLogger->error("mtsProxyBaseServer: Server proxy initialization error");
                 this->IceLogger->trace("mtsProxyBaseServer", msg);
             } else {
-                std::cerr << "mtsProxyBaseServer: Server proxy initialization error." << std::endl;
-                std::cerr << "mtsProxyBaseServer: " << msg << std::endl;
+                CMN_LOG_RUN_ERROR << "mtsProxyBaseServer: Server proxy initialization error." << std::endl;
+                CMN_LOG_RUN_ERROR << "mtsProxyBaseServer: " << msg << std::endl;
             }
         }
 
@@ -112,14 +154,79 @@ protected:
                 this->IceCommunicator->destroy();
             } catch (const Ice::Exception & e) {
                 if (this->IceLogger) {
-                    this->IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up error");
+                    this->IceLogger->error("mtsProxyBaseServer: Server proxy clean-up error");
                     this->IceLogger->trace("mtsProxyBaseServer", e.what());
                 } else {
-                    std::cerr << "mtsProxyBaseServer: Server proxy clean-up error." << std::endl;
-                    std::cerr << e.what() << std::endl;
+                    CMN_LOG_RUN_ERROR << "mtsProxyBaseServer: Server proxy clean-up error." << std::endl;
+                    CMN_LOG_RUN_ERROR << e.what() << std::endl;
                 }
             }
         }
+    }
+
+    /*! Change the proxy state as active. */
+    void SetAsActiveProxy(void) {
+        ChangeProxyState(BaseType::PROXY_ACTIVE);
+    }
+
+    /*! Check if this proxy is active */
+    bool IsActiveProxy(void) const {
+        return (ProxyState == BaseType::PROXY_ACTIVE);
+    }
+
+    /*! Shutdown the current session for graceful termination */
+    void ShutdownSession(const Ice::Current & current) {
+        current.adapter->getCommunicator()->shutdown();
+        BaseType::ShutdownSession();
+    }
+
+    //-------------------------------------------------------------------------
+    //  Connection and Client Proxy Management
+    //-------------------------------------------------------------------------
+protected:
+    /*! Lookup table to fetch connection id with client id */
+    typedef std::map<ClientIDType, ConnectionIDType> ConnectionIDMapType;
+    ConnectionIDMapType ConnectionIDMap;
+
+    /*! Container to manage connected client proxies based on its connection id */
+    typedef std::map<ConnectionIDType, ClientProxyType*> ClientProxyMapType;
+    ClientProxyMapType ClientProxyMap;
+
+    /*! When a client proxy is connected to this server proxy, add it to client 
+        proxy map with a key of connection id */
+    bool ReceiveAddClient(const ConnectionIDType & connectionID, const ClientProxyType & clientProxy)
+    {
+        if (GetClientProxyByConnectionID(connectionID)) {
+            this->IceLogger->trace("WARNING: duplicate connection id", connectionID);
+            return false;
+        }
+
+        ClientProxyMap.insert(make_pair(connectionID, &clientProxy));
+
+        return (GetClientProxyByConnectionID(connectionID) != NULL);
+    }
+
+    ClientProxyType * GetClientProxyByConnectionID(const ConnectionIDType & connectionID) const
+    {
+        ClientProxyMapType::const_iterator it = ClientProxyMap.find(connectionID);
+        if (it == ClientProxyMap.end()) {
+            this->IceLogger->trace("WARNING: can't find client proxy with connection id", connectionID);
+            return NULL;
+        }
+
+        return it->second;
+    }
+
+    ClientProxyType * GetClientProxyByClientID(const ClientIDType & clientID) const
+    {
+        // Fetch a connection id from connection id map
+        ConnectionIDMapType::const_iterator it = ConnectionIDMap.find(clientID);
+        if (it == ConnectionIDMap.end()) {
+            this->IceLogger->trace("WARNING: can't find client proxy with client id", clientID);
+            return NULL;
+        }
+
+        return GetClientProxyByConnectionID(it->second);
     }
 
 public:
@@ -132,34 +239,6 @@ public:
         CommunicatorID(communicatorID)        
     {}
     virtual ~mtsProxyBaseServer() {}
-    
-    virtual void Start(_argumentType * callingClass) = 0;
-
-    virtual void SetAsActiveProxy() = 0;
-
-    /* Return true if the current proxy state is active. */
-    virtual void OnEnd()
-    {
-        if (this->ProxyState != BaseType::PROXY_ACTIVE) {
-            return;
-        }
-
-        if (this->ProxyState == BaseType::PROXY_ACTIVE) {
-            ChangeProxyState(BaseType::PROXY_FINISHING);
-
-            if (this->IceCommunicator) {                
-                try {
-                    this->IceCommunicator->destroy();
-
-                    this->ChangeProxyState(BaseType::PROXY_FINISHED);
-                    this->IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up success.");
-                } catch (const Ice::Exception & e) {
-                    this->IceLogger->trace("mtsProxyBaseServer", "Server proxy clean-up failure.");
-                    this->IceLogger->trace("mtsProxyBaseServer", e.what());
-                }
-            }
-        }
-    }
 };
 
 #endif // _mtsProxyBaseServer_h

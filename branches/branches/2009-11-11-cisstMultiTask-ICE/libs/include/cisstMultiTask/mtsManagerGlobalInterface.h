@@ -153,6 +153,22 @@ public:
         const std::string & serverProcessName,
         const std::string & serverComponentName,
         const std::string & serverProvidedInterfaceName) = 0;
+
+    //-------------------------------------------------------------------------
+    //  Networking
+    //-------------------------------------------------------------------------
+    /*! Add access information of a server proxy (i.e., provided interface proxy)
+        which a client proxy (i.e., required interface proxy) connects to. */
+    virtual bool SetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID) = 0;
+
+    /*! Fetch access information of a server proxy (i.e., provided interface proxy) */
+    virtual bool GetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        std::string & adapterName, std::string & endpointInfo, std::string & communicatorID) = 0;
 };
 
 #endif // _mtsManagerGlobalInterface_h

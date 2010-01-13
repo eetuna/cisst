@@ -30,20 +30,16 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  This class inherits from mtsProxyBaseCommon and implements the basic structure of
-  the ICE client which includes an independent logger and a proxy.
-  The actual processing routines are implemented by a class inherited from this
-  class.
-
-  TODO: Read an ICE property configuration file and set the properties of proxy
-  connection based on it.
+  This class inherits mtsProxyBaseCommon and implements the basic structure of
+  ICE proxy object acting as a client. The actual processing routines should be
+  implemented by a derived class.
 */
 
-template<class _argumentType>
-class CISST_EXPORT mtsProxyBaseClient: public mtsProxyBaseCommon<_argumentType> {
+template<class _originalType>
+class CISST_EXPORT mtsProxyBaseClient: public mtsProxyBaseCommon<_originalType> {
 
 public:
-    typedef mtsProxyBaseCommon<_argumentType> BaseType;
+    typedef mtsProxyBaseCommon<_originalType> BaseType;
 
 protected:
     const std::string EndpointInfo;
@@ -58,6 +54,7 @@ protected:
             ChangeProxyState(BaseType::PROXY_INITIALIZING);
 
             Ice::InitializationData initData;
+            //initData.logger = new typename BaseType::ProxyLoggerForCISST();
             initData.logger = new typename BaseType::ProxyLogger();
             initData.properties = Ice::createProperties();
             initData.properties->setProperty("Ice.ImplicitContext", "Shared");
@@ -125,7 +122,7 @@ public:
 
     inline bool IsRunnable(void) const { return this->Runnable; }
 
-    virtual void Start(_argumentType * callingClass) = 0;
+    virtual void Start(_originalType * callingClass) = 0;
 
     virtual void SetAsActiveProxy() = 0;
 

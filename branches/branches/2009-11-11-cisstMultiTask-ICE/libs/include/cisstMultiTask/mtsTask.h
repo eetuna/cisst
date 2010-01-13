@@ -45,7 +45,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskInterface.h>
 
 #if CISST_MTS_HAS_ICE
-#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
+//#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
 #endif 
 
 #include <set>
@@ -331,7 +331,7 @@ public:
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
 
-#if CISST_MTS_HAS_ICE
+#if 0 //CISST_MTS_HAS_ICE
     //-------------------------------------------------------------------------
     //  Proxy Implementation Using ICE
     //-------------------------------------------------------------------------

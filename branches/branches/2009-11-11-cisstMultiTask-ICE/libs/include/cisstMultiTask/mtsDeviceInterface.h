@@ -84,13 +84,6 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     friend class mtsTaskPeriodic;
     friend class mtsManagerLocal;
     friend class mtsComponentProxy;
-    //
-    // TODO: REMOVE THE FOLLOWING DECLARATIONS
-    //
-    // For ICE proxy objects
-    friend class mtsDeviceProxy;
-    friend class mtsDeviceInterfaceProxyServer;
-    friend class mtsDeviceInterfaceProxyClient;
     
  public:
 

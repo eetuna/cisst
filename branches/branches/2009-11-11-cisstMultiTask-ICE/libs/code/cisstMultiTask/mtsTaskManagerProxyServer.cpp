@@ -534,13 +534,13 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::UpdateTaskManager(
     //!!!!!!!!!!!!!
     // MJUNG: don't know why this doesn't work. FIXME later.
     //Ice::ImplicitContextPtr a = Communicator->getImplicitContext();
-    //std::string s = a->get(CONNECTION_ID);
+    //std::string s = a->get(ConnectionIDKey);
     // The following line does work.
-    //std::string ss = current.ctx.find(CONNECTION_ID)->second;
+    //std::string ss = current.ctx.find(ConnectionIDKey)->second;
 
     TaskManagerServer->ReceiveUpdateTaskManagerClient(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID), localTaskInfo);
-        current.ctx.find(CONNECTION_ID)->second, localTaskInfo);
+        //Communicator->getImplicitContext()->get(ConnectionIDKey), localTaskInfo);
+        current.ctx.find(ConnectionIDKey)->second, localTaskInfo);
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
@@ -551,8 +551,8 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddProvidedInterface(
         + providedInterfaceAccessInfo.taskName + ", " + providedInterfaceAccessInfo.interfaceName);
 
     return TaskManagerServer->ReceiveAddProvidedInterface(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID), providedInterfaceInfo);
-        current.ctx.find(CONNECTION_ID)->second, providedInterfaceAccessInfo);
+        //Communicator->getImplicitContext()->get(ConnectionIDKey), providedInterfaceInfo);
+        current.ctx.find(ConnectionIDKey)->second, providedInterfaceAccessInfo);
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::AddRequiredInterface(
@@ -563,8 +563,8 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::AddRequiredInterface(
         + requiredInterfaceAccessInfo.taskName + ", " + requiredInterfaceAccessInfo.interfaceName);
 
     return TaskManagerServer->ReceiveAddRequiredInterface(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID), requiredInterfaceAccessInfo);
-        current.ctx.find(CONNECTION_ID)->second, requiredInterfaceAccessInfo);
+        //Communicator->getImplicitContext()->get(ConnectionIDKey), requiredInterfaceAccessInfo);
+        current.ctx.find(ConnectionIDKey)->second, requiredInterfaceAccessInfo);
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::IsRegisteredProvidedInterface(
@@ -575,8 +575,8 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::IsRegisteredProvidedInterfac
         + taskName + ", " + providedInterfaceName);
 
     return TaskManagerServer->ReceiveIsRegisteredProvidedInterface(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID), taskName, providedInterfaceName);
-        current.ctx.find(CONNECTION_ID)->second, taskName, providedInterfaceName);
+        //Communicator->getImplicitContext()->get(ConnectionIDKey), taskName, providedInterfaceName);
+        current.ctx.find(ConnectionIDKey)->second, taskName, providedInterfaceName);
 }
 
 bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceAccessInfo(
@@ -587,8 +587,8 @@ bool mtsTaskManagerProxyServer::TaskManagerServerI::GetProvidedInterfaceAccessIn
         + taskName + ", " + providedInterfaceName);
 
     return TaskManagerServer->ReceiveGetProvidedInterfaceAccessInfo(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID), taskName, providedInterfaceName, info);
-        current.ctx.find(CONNECTION_ID)->second, taskName, providedInterfaceName, info);
+        //Communicator->getImplicitContext()->get(ConnectionIDKey), taskName, providedInterfaceName, info);
+        current.ctx.find(ConnectionIDKey)->second, taskName, providedInterfaceName, info);
 }
 
 void mtsTaskManagerProxyServer::TaskManagerServerI::NotifyInterfaceConnectionResult(
@@ -602,8 +602,8 @@ void mtsTaskManagerProxyServer::TaskManagerServerI::NotifyInterfaceConnectionRes
         + userTaskName + " : " + requiredInterfaceName);
 
     TaskManagerServer->ReceiveNotifyInterfaceConnectionResult(
-        //Communicator->getImplicitContext()->get(CONNECTION_ID),
-        current.ctx.find(CONNECTION_ID)->second,
+        //Communicator->getImplicitContext()->get(ConnectionIDKey),
+        current.ctx.find(ConnectionIDKey)->second,
         isServerTask, isSuccess, 
         userTaskName, requiredInterfaceName, 
         resourceTaskName, providedInterfaceName);

@@ -105,7 +105,11 @@ void mtsManagerLocalTest::TestGetInstance(void)
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal);
     CPPUNIT_ASSERT(mtsManagerLocal::Instance);
     CPPUNIT_ASSERT(managerLocal->ProcessName == "");
-    CPPUNIT_ASSERT(managerLocal->ProcessIP == "");
+#if CISST_MTS_HAS_ICE
+    // IP is automatically set so we don't need to check.
+#else
+    CPPUNIT_ASSERT(managerLocal->ProcessIP == "localhost");
+#endif
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(""));
 
     // Clear current singleton instance. Note that this is done only for unit-test
@@ -119,7 +123,11 @@ void mtsManagerLocalTest::TestGetInstance(void)
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal);
     CPPUNIT_ASSERT(mtsManagerLocal::Instance);
     CPPUNIT_ASSERT(managerLocal->ProcessName == P1);
-    CPPUNIT_ASSERT(managerLocal->ProcessIP == "");
+#if CISST_MTS_HAS_ICE
+    // IP is automatically set so we don't need to check.
+#else
+    CPPUNIT_ASSERT(managerLocal->ProcessIP == "localhost");
+#endif
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(P1));
 }
 
@@ -549,7 +557,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
 
     // Connect two interfaces (establish remote connection) and test if commands
     // and events work correctly.
-    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C1, r1, P2, C2, p1));
 
     // Check initial values
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->RequiredInterface1.GetValue());

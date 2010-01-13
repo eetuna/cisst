@@ -27,7 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 
-#if CISST_MTS_HAS_ICE
+#if 0 //CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsDeviceProxy.h>
 #include <cisstMultiTask/mtsTaskManagerProxyClient.h>
@@ -198,7 +198,7 @@ mtsTask::mtsTask(const std::string & name,
     OverranPeriod(false),
     ThreadStartData(0),
     ReturnValue(0)
-#if CISST_MTS_HAS_ICE
+#if 0 //CISST_MTS_HAS_ICE
     ,
     TaskInterfaceCommunicatorID("TaskInterfaceServerSender")
 #endif
@@ -219,7 +219,7 @@ mtsTask::~mtsTask()
         CleanupInternal();
     }
 
-#if CISST_MTS_HAS_ICE
+#if 0 //CISST_MTS_HAS_ICE
     // Stop all provided interface proxies running.
     ProvidedInterfaceProxyMapType::MapType::iterator it1 =
         ProvidedInterfaceProxies.GetMap().begin();
@@ -331,7 +331,7 @@ void mtsTask::ToStream(std::ostream & outputStream) const
 //-----------------------------------------------------------------------------
 //  Processing Methods
 //-----------------------------------------------------------------------------
-#if CISST_MTS_HAS_ICE
+#if 0 //CISST_MTS_HAS_ICE
 void mtsTask::RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
                                         const std::string & serverTaskIP)
 {
@@ -492,7 +492,7 @@ mtsDeviceInterfaceProxyClient * mtsTask::GetRequiredInterfaceProxy(const std::st
 
 const std::string mtsTask::GetNewPortNumberAsString(const unsigned int id)
 {
-    unsigned int newPortNumber = BASE_PORT_NUMBER_TASK_LAYER + (id * 5);
+    unsigned int newPortNumber = BasePortNumberForLocalComponentManager + (id * 5);
 
     std::stringstream newPortNumberAsString;
     newPortNumberAsString << newPortNumber;

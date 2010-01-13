@@ -543,31 +543,15 @@ unsigned int mtsManagerGlobal::Connect(
 
         // Create an interface proxy (or proxies) as needed.
         //
-        // From server and client managers, extract the information about the 
-        // two interfaces specified. The global component manager will
-        // deliver this information to peer local component managers so that 
-        // they can create proxy components.
+        // From the server manager and the client manager, extract the 
+        // information about the two interfaces specified. The global component
+        // manager will deliver this information to a peer local component 
+        // manager so that they can create proxy components.
+        //
+        // Note that required interface proxy has to be created first because
+        // pointers to function proxy objects in the required interface should
+        // be available in order to create the provided interface.
 
-        // Create provided interface proxy
-        if (!foundProvidedInterfaceProxy) {
-            // Extract provided interface description
-            ProvidedInterfaceDescription providedInterfaceDescription;
-            if (!localManagerServer->GetProvidedInterfaceDescription(
-                serverComponentName, serverProvidedInterfaceName, providedInterfaceDescription)) 
-            {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get provided interface description: "
-                    << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
-                return false;
-            }
-
-            // Create provided interface proxy at the client side
-            if (!localManagerClient->CreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription)) {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to create provided interface proxy: "
-                    << serverComponentProxyName << " in " << clientProcessName << std::endl;
-                return false;
-            }
-        }
-        
         // Create required interface proxy
         if (!foundRequiredInterfaceProxy) {
             // Extract required interface description
@@ -588,43 +572,47 @@ unsigned int mtsManagerGlobal::Connect(
             }
         }
 
+        // Create provided interface proxy
+        if (!foundProvidedInterfaceProxy) {
+            // Extract provided interface description
+            ProvidedInterfaceDescription providedInterfaceDescription;
+            if (!localManagerServer->GetProvidedInterfaceDescription(
+                serverComponentName, serverProvidedInterfaceName, providedInterfaceDescription)) 
+            {
+                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get provided interface description: "
+                    << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
+                return false;
+            }
+
+            // Create provided interface proxy at the client side
+            if (!localManagerClient->CreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription)) {
+                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to create provided interface proxy: "
+                    << serverComponentProxyName << " in " << clientProcessName << std::endl;
+                return false;
+            }
+        }
+
+        //
+        // THIS NOTE IS DISCARDED!!!
+        //
         // TODO: implement here
         //
         // 1. create connection information structure element
         // 2. assign connection id for the element
         // 3. enqueue the element with timer set
         // 4. let two LCMs create proxy components
-        // 5. return connectionID back to LCM while iterating timers, if any
+        // 5. wait for responses from LCMs
+        //    - if timeouts, call disconnect to break and clean current connection
+        //    - if success at both sides, update command id and event handler id
         thisConnectionID = ConnectionID++;
         isRemoteConnection = true;
     }
 
-
-    // Step 1
-
-    // Step 2. Make clientProcess create a proxy for serverComponent in its local memory space.
-
-    // Step 3. If both proxies are created successfully, let clientComponentProxy connect to 
-    //         serverComponentProxy across a network.
-
-    // Step 4. If the connection is established well, then make both client process and
-    //         server process establish local connection. That is,
-    //
-    //         for client process: connect requiredInterface to providedInterfaceProxy locally
-    //         for server process: connect requiredInterfaceProxy to providedInterface locally
-
-    // Step 5. After confirming that both local connections are established well,
-    //         update Global Manager's connection data structure.
-
     InterfaceMapType * interfaceMap;
-    ConnectionMapType * connectionMap;    
-    std::string interfaceUID;
 
     // Connect client's required interface with server's provided interface.
-    connectionMap = GetConnectionsOfRequiredInterface(clientProcessName,
-                                                      clientComponentName,
-                                                      clientRequiredInterfaceName,
-                                                      &interfaceMap);
+    ConnectionMapType * connectionMap = GetConnectionsOfRequiredInterface(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName, &interfaceMap);
     // If the required interface has never connected to other provided interfaces
     if (connectionMap == NULL) {
         // Create a connection map for the required interface
@@ -924,6 +912,72 @@ bool mtsManagerGlobal::AddConnectedInterface(ConnectionMapType * connectionMap,
             << GetInterfaceUID(processName, componentName, interfaceName) << std::endl;
         return false;
     }
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
+//  Networking
+//-------------------------------------------------------------------------
+bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
+{
+    // Get a connection map of the provided interface at server side.
+    ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
+        serverProcessName, serverComponentName, serverProvidedInterfaceName);
+    if (!connectionMap) {
+        CMN_LOG_CLASS_RUN_ERROR << "SetProvidedInterfaceProxyAccessInfo: failed to get connection map: " 
+            << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
+        return false;
+    }
+
+    // Get the information about the connected required interface
+    const std::string requiredInterfaceUID = GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName);
+    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo = connectionMap->GetItem(requiredInterfaceUID);
+    if (!connectedInterfaceInfo) {
+        CMN_LOG_CLASS_RUN_ERROR << "SetProvidedInterfaceProxyAccessInfo: failed to get connection information"
+            << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << std::endl;
+        return false;
+    }
+
+    // Set server proxy access information
+    connectedInterfaceInfo->SetProxyAccessInfo(adapterName, endpointInfo, communicatorID);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "SetProvidedInterfaceProxyAccessInfo: set proxy access info: "
+            << adapterName << ", " << endpointInfo << ", " << communicatorID << std::endl;
+
+    return true;
+}
+
+bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    std::string & adapterName, std::string & endpointInfo, std::string & communicatorID)
+{
+    // Get a connection map of the provided interface at server side.
+    ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
+        serverProcessName, serverComponentName, serverProvidedInterfaceName);
+    if (!connectionMap) {
+        CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection map: " 
+            << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
+        return false;
+    }
+
+    // Get the information about the connected required interface
+    const std::string requiredInterfaceUID = GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName);
+    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo = connectionMap->GetItem(requiredInterfaceUID);
+    if (!connectedInterfaceInfo) {
+        CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection information"
+            << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << std::endl;
+        return false;
+    }
+
+    // Get server proxy access information
+    adapterName = connectedInterfaceInfo->GetAdapterName();
+    endpointInfo = connectedInterfaceInfo->GetEndpointInfo();
+    communicatorID = connectedInterfaceInfo->GetCommunicatorID();
 
     return true;
 }

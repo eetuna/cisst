@@ -96,10 +96,10 @@ const bool mtsOptional = false;
 
 // classes defined when ICE is used
 #ifdef CISST_MTS_HAS_ICE
-class mtsTaskManagerProxyServer;
-class mtsTaskManagerProxyClient;
-class mtsDeviceInterfaceProxyServer;
-class mtsDeviceInterfaceProxyClient;
+//class mtsTaskManagerProxyServer;
+//class mtsTaskManagerProxyClient;
+class mtsComponentInterfaceProxyServer;
+class mtsComponentInterfaceProxyClient;
 #endif // CISST_MTS_HAS_ICE
 
 
