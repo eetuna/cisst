@@ -29,8 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandVoidProxy_h
 
 #include <cisstMultiTask/mtsCommandVoidBase.h>
-//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
+#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 
 /*!
   \ingroup cisstMultiTask

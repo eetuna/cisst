@@ -105,7 +105,6 @@ class mtsComponentInterfaceProxyClient;
 
 class mtsManagerLocal;
 class mtsManagerGlobalInterface;
-class mtsManagerGlobalProxyServer;
 
 #endif  // _mtsForwardDeclarations_h
 

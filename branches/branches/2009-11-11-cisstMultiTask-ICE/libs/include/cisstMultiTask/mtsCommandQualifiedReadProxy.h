@@ -29,8 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandQualifiedReadProxy_h
 
 #include <cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h>
+#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
-//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 
 /*!
   \ingroup cisstMultiTask

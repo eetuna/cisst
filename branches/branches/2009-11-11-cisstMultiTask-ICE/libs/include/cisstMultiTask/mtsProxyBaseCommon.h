@@ -97,14 +97,33 @@ public:
     };
 
 protected:
+    /*! Proxy owner */
+    _proxyOwner * ProxyOwner;
+
+    /*! Proxy type */
     ProxyType ProxyTypeMember;
+    
+    //-----------------------------------------------------
+    //  Proxy State Management
+    //-----------------------------------------------------
+    /*! Proxy state */
     ProxyStateType ProxyState;
+
+    /*! Change the proxy state as active. */
+    void SetAsActiveProxy(void) {
+        ChangeProxyState(PROXY_ACTIVE);
+    }
+
+    /*! Check if this proxy is active */
+    bool IsActiveProxy(void) const {
+        return (ProxyState == PROXY_ACTIVE);
+    }
 
     //-----------------------------------------------------
     // Auxiliary Class Definitions
     //-----------------------------------------------------
     /*! Logger class using the internal logging mechanism of cisst */
-    class ProxyLoggerForCISST : public Ice::Logger
+    class CisstLogger : public Ice::Logger
     {
     public:
         void print(const ::std::string & message) {
@@ -156,22 +175,22 @@ protected:
     };
 
     /* Internal class for thread arguments */
-    template<class __proxyOwner>
+    template<class _proxyOwner>
     class ThreadArguments {
     public:
-        _proxyOwner * argument;
-        mtsProxyBaseCommon * proxy;
-        void (*Runner)(ThreadArguments<__proxyOwner> *);
+        _proxyOwner * ProxyOwner;
+        mtsProxyBaseCommon * Proxy;
+        void (*Runner)(ThreadArguments<_proxyOwner> *);
     };
 
     /* Internal class for proxy worker */
-    template<class __proxyOwner>
+    template<class _proxyOwner>
     class ProxyWorker {
     public:
         ProxyWorker(void) {}
         virtual ~ProxyWorker(void) {}
 
-        void * Run(ThreadArguments<__proxyOwner> * arguments) {
+        void * Run(ThreadArguments<_proxyOwner> * arguments) {
             arguments->Runner(arguments);
             return 0;
         }
@@ -285,6 +304,11 @@ public:
         IsValidSession = false;
     }
 
+    /*! Set proxy owner */
+    virtual void SetProxyOwner(_proxyOwner * proxyOwner) {
+        ProxyOwner = proxyOwner;
+    }
+
     //-----------------------------------------------------
     //  Getters
     //-----------------------------------------------------
@@ -293,6 +317,8 @@ public:
     inline const Ice::LoggerPtr GetLogger(void) const { return IceLogger; }
 
     inline Ice::CommunicatorPtr GetIceCommunicator(void) const { return IceCommunicator; }
+
+    inline bool IsRunnable(void) const { return Runnable; }
 
     /*! Base port numbers. These numbers are not yet registered to IANA (Internet 
         Assigned Numbers Authority) as of January 12th, 2010.

@@ -31,6 +31,11 @@ http://www.cisst.org/cisst/license.txt.
   This class inherits mtsProxyBaseCommon and implements the basic structure of
   ICE proxy object acting as a server. The actual processing routines should be
   implemented by a derived class.
+
+  This base class supports multiple clients regardless the type of clients
+  (type is templated) because a proxy server usually handles multiple clients.
+  For example, one provided interface proxy (proxy server) should be able to
+  handle multiple required interface proxy (proxy client).
 */
 template<class _proxyOwner, class _clientProxyType>
 class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_proxyOwner> {
@@ -97,8 +102,11 @@ protected:
             ChangeProxyState(BaseType::PROXY_INITIALIZING);
 
             Ice::InitializationData initData;
-            //initData.logger = new typename BaseType::ProxyLoggerForCISST();
+
+            // Use the following line if you want to use CISST logger.
+            //initData.logger = new typename BaseType::CisstLogger();
             initData.logger = new typename BaseType::ProxyLogger();
+
             initData.properties = Ice::createProperties();
             // There are two different modes of using implicit context: 
             // shared vs. PerThread.
@@ -107,7 +115,7 @@ protected:
             //initData.properties->load(IcePropertyFileName);           
             this->IceCommunicator = Ice::initialize(initData);
             
-            // Create Logger
+            // Create a logger
             this->IceLogger = this->IceCommunicator->getLogger();
 
             // Create an adapter (server-side only)
@@ -164,16 +172,6 @@ protected:
         }
     }
 
-    /*! Change the proxy state as active. */
-    void SetAsActiveProxy(void) {
-        ChangeProxyState(BaseType::PROXY_ACTIVE);
-    }
-
-    /*! Check if this proxy is active */
-    bool IsActiveProxy(void) const {
-        return (ProxyState == BaseType::PROXY_ACTIVE);
-    }
-
     /*! Shutdown the current session for graceful termination */
     void ShutdownSession(const Ice::Current & current) {
         current.adapter->getCommunicator()->shutdown();
@@ -181,7 +179,7 @@ protected:
     }
 
     //-------------------------------------------------------------------------
-    //  Connection and Client Proxy Management
+    //  Connection Management and Client Proxy Management
     //-------------------------------------------------------------------------
 protected:
     /*! Lookup table to fetch connection id with client id */

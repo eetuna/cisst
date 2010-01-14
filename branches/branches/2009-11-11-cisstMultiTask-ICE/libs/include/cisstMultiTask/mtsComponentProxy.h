@@ -33,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsInterfaceCommon.h>
+#include <cisstMultiTask/mtsForwardDeclarations.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -43,7 +44,9 @@ class mtsComponentProxy : public mtsDevice
     //-------------------------------------------------------------------------
     //  Data Structures for Server Component
     //-------------------------------------------------------------------------
-protected:
+    //-------------------------------------------------------------------------
+    //  Data Structures for Client Component
+    //-------------------------------------------------------------------------
     /*! Function proxies. CreateProvidedInterfaceProxy() uses these maps to
         assign commandIDs of the command proxies in a provided interface proxy. */
     //typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
@@ -62,16 +65,7 @@ protected:
     //EventHandlerVoidProxyMapType  EventHandlerVoidProxyMap;
     //EventHandlerWriteProxyMapType EventHandlerWriteProxyMap;
 
-    //-------------------------------------------------------------------------
-    //  Data Structures for Client Component
-    //-------------------------------------------------------------------------
-
-    //
-    // TODO: add codes here
-    //
-
-
-
+protected:
     /*! Typedef to manage provided interface proxies of which type is 
         mtsComponentInterfaceProxyServer. */
     typedef cmnNamedMap<mtsComponentInterfaceProxyServer> ProvidedInterfaceProxyMapType;
@@ -79,8 +73,8 @@ protected:
 
     /*! Typedef to manage required interface proxies of which type is 
         mtsComponentInterfaceProxyClient. */
-    //typedef cmnNamedMap<mtsDeviceInterfaceProxyClient> RequiredInterfaceProxyMapType;
-    //RequiredInterfaceProxyMapType RequiredInterfaceProxies;
+    typedef cmnNamedMap<mtsComponentInterfaceProxyClient> RequiredInterfaceProxyMapType;
+    RequiredInterfaceProxyMapType RequiredInterfaceProxies;
 
 public:
     mtsComponentProxy(const std::string & componentProxyName) : mtsDevice(componentProxyName) {}
@@ -106,10 +100,12 @@ public:
     bool CreateInterfaceProxyServer(const std::string & providedInterfaceProxyName,
                                     std::string & adapterName,
                                     std::string & endpointAccessInfo,
-                                    std::string & communicatorId);
+                                    std::string & communicatorID);
 
     /*! Create a network proxy which corresponds to a required interface proxy. */
-    bool CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName);
+    bool CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName,
+                                    const std::string & serverEndpointInfo,
+                                    const std::string & communicatorID);
 
     //-------------------------------------------------------------------------
     //  Getters

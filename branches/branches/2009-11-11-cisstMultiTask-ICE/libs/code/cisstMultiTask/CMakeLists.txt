@@ -146,10 +146,11 @@ if(CISST_MTS_HAS_ICE)
       #mtsTaskManagerProxyServer.cpp
       #mtsDeviceInterfaceProxyClient.cpp
       #mtsDeviceInterfaceProxyServer.cpp
-      mtsComponentInterfaceProxyServer.cpp
-      #mtsComponentInterfaceProxyClient.cpp
       #mtsTaskGlobal.cpp
-      #mtsDeviceProxy.cpp      
+      #mtsDeviceProxy.cpp
+      
+      mtsComponentInterfaceProxyServer.cpp
+      mtsComponentInterfaceProxyClient.cpp
       )
 
   SET(HEADER_FILES ${HEADER_FILES}
@@ -157,6 +158,7 @@ if(CISST_MTS_HAS_ICE)
       mtsProxyBaseClient.h
       mtsProxyBaseServer.h
       mtsComponentInterfaceProxyServer.h
+      mtsComponentInterfaceProxyClient.h
       
       mtsProxySerializer.h
       #mtsTaskManagerProxyClient.h

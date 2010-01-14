@@ -34,26 +34,6 @@ CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
         IceLogger->error(s); }
 
 //-----------------------------------------------------------------------------
-//  Inner Class Definition
-//-----------------------------------------------------------------------------
-/*
-bool mtsComponentInterfaceProxyServer::TaskManagerClient::AddTaskGlobal(mtsTaskGlobal * taskGlobal)
-{
-    return GlobalTaskMap.AddItem(taskGlobal->GetTaskName(), taskGlobal);
-}
-
-mtsTaskGlobal * mtsComponentInterfaceProxyServer::TaskManagerClient::GetTaskGlobal(const std::string taskName)
-{
-    return GlobalTaskMap.GetItem(taskName);
-}
-
-mtsComponentInterfaceProxyServer::TaskManagerClient::~TaskManagerClient()
-{
-    GlobalTaskMap.DeleteAll();
-}
-*/
-
-//-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
 //-----------------------------------------------------------------------------
 mtsComponentInterfaceProxyServer::~mtsComponentInterfaceProxyServer()
@@ -75,18 +55,17 @@ void mtsComponentInterfaceProxyServer::Start(mtsComponentProxy * proxyOwner)
     
     if (InitSuccessFlag) {
         // Create a worker thread here and returns immediately.
-        ThreadArgumentsInfo.argument = proxyOwner;
-        ThreadArgumentsInfo.proxy = this;
+        ThreadArgumentsInfo.ProxyOwner = proxyOwner;
+        ThreadArgumentsInfo.Proxy = this;
         ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyServer::Runner;
 
         // Note that a worker thread is created but is not yet running.
         WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
             &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo,
             // Set the name of this thread as CIPS which means Component 
-            // Interface Proxy Server. Such a very condensed naming rule 
-            // is adopted because sometimes there is a limitation of the 
-            // total number of characters as a thread name on some systems 
-            // (e.g. LINUX RTAI).
+            // Interface Proxy Server. Such a very short naming rule is
+            // because sometimes there is a limitation of the total number 
+            // of characters as a thread name on some systems (e.g. LINUX RTAI).
             "CIPS");
     }
 }
@@ -95,19 +74,22 @@ void mtsComponentInterfaceProxyServer::StartServer()
 {
     Sender->Start();
 
-    // This is a blocking call that should run in a different thread.
+    // This is a blocking call that should be run in a different thread.
     IceCommunicator->waitForShutdown();
 }
 
 void mtsComponentInterfaceProxyServer::Runner(ThreadArguments<mtsComponentProxy> * arguments)
 {
     mtsComponentInterfaceProxyServer * ProxyServer = 
-        dynamic_cast<mtsComponentInterfaceProxyServer*>(arguments->proxy);
+        dynamic_cast<mtsComponentInterfaceProxyServer*>(arguments->ProxyOwner);
     if (!ProxyServer) {
         CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyServer: Failed to create a proxy server." << std::endl;
         return;
     }
-    
+
+    // Set owner of this proxy object
+    ProxyServer->SetProxyOwner(arguments->ProxyOwner);
+
     ProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "Proxy server starts.....");
 
     try {
@@ -136,19 +118,22 @@ void mtsComponentInterfaceProxyServer::Stop()
 }
 
 //-----------------------------------------------------------------------------
-//  Task Manager Proxy Server Processing
+//  Network Event Processing Methods
 //-----------------------------------------------------------------------------
-/*
 void mtsComponentInterfaceProxyServer::ReceiveAddClient(
-    const ConnectionIDType & connectionID, const TaskManagerClientProxyType & clientProxy)
+    const ConnectionIDType & connectionID, const ComponentInterfaceClientProxyType & clientProxy)
 {
+    /*
     TaskManagerClient * newTaskManagerClient = new TaskManagerClient(connectionID, clientProxy);
     
     TaskManagerMap.insert(make_pair(connectionID, newTaskManagerClient));
 
     ComponentInterfaceProxyServerLogger("Added the task manager with connection id: " + connectionID);
+    */
+    std::cout << "########## Receive Add CLient ############# "<< std::endl;
 }
 
+/*
 bool mtsComponentInterfaceProxyServer::ReceiveUpdateTaskManagerClient(
     const ConnectionIDType & connectionID, const mtsTaskManagerProxy::TaskList& localTaskInfo)
 {
@@ -357,29 +342,29 @@ bool mtsComponentInterfaceProxyServer::SendConnectServerSide(
 */
 
 //-------------------------------------------------------------------------
-//  Definition by mtsTaskManagerProxy.ice
+//  Definition by mtsComponentInterfaceProxy.ice
 //-------------------------------------------------------------------------
 mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ComponentInterfaceServerI(
     const Ice::CommunicatorPtr& communicator, const Ice::LoggerPtr& logger,
-    mtsComponentInterfaceProxyServer * componentInterfaceProxyServer):
-        Communicator(communicator),
-        Logger(logger),
-        ComponentInterfaceProxyServer(componentInterfaceProxyServer),
-        Runnable(true),
-        SenderThreadPtr(new SenderThread<ComponentInterfaceServerIPtr>(this))
+    mtsComponentInterfaceProxyServer * componentInterfaceProxyServer)
+    : Communicator(communicator),
+      SenderThreadPtr(new SenderThread<ComponentInterfaceServerIPtr>(this)),
+      Logger(logger),
+      Runnable(true),
+      ComponentInterfaceProxyServer(componentInterfaceProxyServer)
 {
 }
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Start()
 {
-    //CMN_LOG_RUN_VERBOSE << "ComponentInterfaceProxyServer: Send thread starts." << std::endl;
-    this->ComponentInterfaceProxyServer->GetLogger()->trace(
+    ComponentInterfaceProxyServer->GetLogger()->trace(
         "mtsComponentInterfaceProxyServer", "Send thread starts");
 
     SenderThreadPtr->start();
 }
 
-//#define _COMMUNICATION_TEST_
+// TODO: Remove this
+#define _COMMUNICATION_TEST_
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 {
@@ -388,9 +373,12 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 #endif
 
     while(Runnable) {
+#ifndef _COMMUNICATION_TEST_
         osaSleep(10 * cmn_ms);
-
-#ifdef _COMMUNICATION_TEST_
+#else
+        osaSleep(1 * cmn_s);
+        std::cout << "Component interface proxy server: " << ++num << std::endl;
+        /*
         if(!clients.empty())
         {
             ++num;
@@ -411,6 +399,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
                 }
             }
         }
+        */
 #endif
     }
 }
@@ -434,31 +423,31 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
 }
 
 //-----------------------------------------------------------------------------
-//  Task Manager Proxy Server Implementation
+//  Network Event Handlers
 //-----------------------------------------------------------------------------
-/*
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::AddClient(
     const ::Ice::Identity & identity, const ::Ice::Current& current)
 {
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-    Logger->trace("TMServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(identity));
+    Logger->trace("InterfaceServer", "<<<<< RECV: AddClient: " + Communicator->identityToString(identity));
 
-    mtsTaskManagerProxy::TaskManagerClientPrx clientProxy = 
-        mtsTaskManagerProxy::TaskManagerClientPrx::uncheckedCast(current.con->createProxy(identity));
+    ComponentInterfaceClientProxyType clientProxy = 
+        ComponentInterfaceClientProxyType::uncheckedCast(current.con->createProxy(identity));
     
-    TaskManagerServer->ReceiveAddClient(Communicator->identityToString(identity), clientProxy);
+    ComponentInterfaceProxyServer->ReceiveAddClient(Communicator->identityToString(identity), clientProxy);
 }
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const ::Ice::Current& current)
 {
-    Logger->trace("TMServer", "<<<<< RECV: Shutdown");
+    Logger->trace("InterfaceServer", "<<<<< RECV: Shutdown");
 
     // Set as true to represent that this connection (session) is going to be closed.
     // After this flag is set, no message is allowed to be sent to a server.
-    TaskManagerServer->ShutdownSession(current);
+    //ComponentInterfaceProxyServer->ShutdownSession(current);
 }
 
+/*
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::UpdateTaskManager(
     const mtsTaskManagerProxy::TaskList& localTaskInfo, const ::Ice::Current& current)
 {

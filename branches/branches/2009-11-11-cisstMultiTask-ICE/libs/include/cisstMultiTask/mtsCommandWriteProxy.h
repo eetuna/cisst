@@ -29,8 +29,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandWriteProxy_h
 
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
-//#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
+#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 
 /*!

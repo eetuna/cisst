@@ -61,8 +61,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaMutex.h>
 
 #include <cisstMultiTask/mtsManagerLocalInterface.h>
-#include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsManagerGlobalInterface.h>
+#include <cisstMultiTask/mtsForwardDeclarations.h>
 
 //#include <cisstMultiTask/mtsConfig.h>
 
@@ -86,6 +86,11 @@ class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface, public cmnG
 private:
     /*! Singleton object */
     static mtsManagerLocal * Instance;
+
+    /*! Flag to skip network-related processing such as proxy creation, proxy
+        startup, connection, and so on. This flag is set to false by default 
+        and turned on only by unit tests. */
+    bool UnitTestOn;
 
 protected:
     /*! Typedef for component map: (component name, component object)

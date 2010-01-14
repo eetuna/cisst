@@ -44,20 +44,50 @@ public:
     /*! Entry point to run a proxy. */
     void Start(mtsComponentProxy * owner);
 
-    /*! Clean up thread-related resources. */
+    /*! Stop the proxy (clean up thread-related resources) */
     void Stop();
 
 protected:
-    /*! Typedef for base type. */
+    /*! Typedef for base type */
     typedef mtsProxyBaseServer<mtsComponentProxy, mtsComponentInterfaceProxy::ComponentInterfaceClientPrx> BaseType;
+
+    /*! Typedef for client proxy type */
+    typedef mtsComponentInterfaceProxy::ComponentInterfaceClientPrx ComponentInterfaceClientProxyType;
 
     /*! Definitions for send thread */
     class ComponentInterfaceServerI;
     typedef IceUtil::Handle<ComponentInterfaceServerI> ComponentInterfaceServerIPtr;
     ComponentInterfaceServerIPtr Sender;
 
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation
+    //-------------------------------------------------------------------------
+    /*! Create a servant */
+    Ice::ObjectPtr CreateServant() {
+        Sender = new ComponentInterfaceServerI(IceCommunicator, IceLogger, this);
+        return Sender;
+    }
+    
+    /*! Start a send thread and wait for shutdown (this is a blocking method). */
+    void StartServer();
+
+    /*! Resource clean-up when a client disconnects or is disconnected.
+        TODO: add session
+        TODO: add resource clean up
+        TODO: review/add safe termination  */
+    void OnClose();
+
+    /*! Thread runner */
+    static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
+
+    //-------------------------------------------------------------------------
+    //  Methods to Process Network Events (Client -> Server)
+    //-------------------------------------------------------------------------
+    /*! When a new client connects, add it to the client management list. */
+    void ReceiveAddClient(const ConnectionIDType & connectionID, const ComponentInterfaceClientProxyType & clientProxy);
+
     ////-------------------------------------------------------------------------
-    ////  Methods to Receive and Process Events
+    ////  Methods to Process Events
     ////-------------------------------------------------------------------------
     ///*! Update the information on the newly connected task manager. */
     //bool ReceiveUpdateTaskManagerClient(const ConnectionIDType & connectionID,
@@ -92,26 +122,6 @@ protected:
     //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
 
     //-------------------------------------------------------------------------
-    //  Proxy Implementation
-    //-------------------------------------------------------------------------
-    /*! Create a servant which serves TaskManager clients. */
-    Ice::ObjectPtr CreateServant() {
-        Sender = new ComponentInterfaceServerI(IceCommunicator, IceLogger, this);
-        return Sender;
-    }
-    
-    /*! Start a send thread and wait for shutdown (blocking call). */
-    void StartServer();
-
-    /*! Thread runner */
-    static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
-
-    /*! Resource clean-up when a client disconnects or is disconnected.
-        MJUNG: Right now, this method is not called because we don't detect the 
-        closure of the connection, which should be soon to be fixed. */
-    void OnClose();
-    
-    //-------------------------------------------------------------------------
     //  Definition by mtsComponentInterfaceProxy.ice
     //-------------------------------------------------------------------------
     class ComponentInterfaceServerI : 
@@ -119,12 +129,18 @@ protected:
         public IceUtil::Monitor<IceUtil::Mutex>
     {
     private:
+        /*! Ice objects */
         Ice::CommunicatorPtr Communicator;
-        Ice::LoggerPtr Logger;
-        mtsComponentInterfaceProxyServer * ComponentInterfaceProxyServer;
-        bool Runnable;
         IceUtil::ThreadPtr SenderThreadPtr;
+        Ice::LoggerPtr Logger;
 
+        // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
+        /*! True if ICE proxy is running */
+        bool Runnable;
+
+        /*! Network event handler */
+        mtsComponentInterfaceProxyServer * ComponentInterfaceProxyServer;
+        
     public:
         ComponentInterfaceServerI(
             const Ice::CommunicatorPtr& communicator, 
@@ -135,8 +151,14 @@ protected:
         void Run();
         void Stop();
 
-        //void AddClient(const Ice::Identity&, const Ice::Current&);
-        //void Shutdown(const ::Ice::Current&);
+        //
+        // Methods called by a proxy client (component interface proxy client).
+        //
+        /*! Add a client proxy. Called when a proxy client connects to server proxy. */
+        void AddClient(const Ice::Identity&, const Ice::Current&);
+
+        /*! Shutdown this session; prepare shutdown for safe and clean termination. */
+        void Shutdown(const ::Ice::Current&);
 
         //void UpdateTaskManager(const mtsComponentInterfaceProxy::TaskList&, const Ice::Current&);
         //bool AddProvidedInterface(const mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo&, const Ice::Current&);

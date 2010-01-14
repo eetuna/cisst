@@ -328,8 +328,15 @@ void mtsManagerLocalTest::TestConnectDisconnect(void)
     managerLocal2Object->AddComponent(P2C2);
     managerLocal2Object->AddComponent(P2C3);
 
+    // Enable unit test flag in local component managers
+    managerLocal1Object->UnitTestOn = true;
+    managerLocal2Object->UnitTestOn = true;
+
     // Connecting two interfaces for the first time should success.
     CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C1, r1, P2, C2, p1));
+    managerLocal1Object->UnitTestOn = false;
+    managerLocal2Object->UnitTestOn = false;
+
     CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C1, r2, P2, C2, p2));
     CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C2, r1, P2, C2, p2));
     CPPUNIT_ASSERT(managerLocal2Object->Connect(P2, C3, r1, P2, C2, p2));

@@ -18,7 +18,7 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsComponentProxy.h>
+//#include <cisstMultiTask/mtsComponentProxy.h>
 
 #include <cisstCommon/cmnUnits.h>
 #include <cisstOSAbstraction/osaSleep.h>
@@ -36,7 +36,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
 
-#include <sstream>
+//#include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
+
+//#include <sstream>
 
 CMN_IMPLEMENT_SERVICES(mtsComponentProxy);
 
@@ -537,7 +539,7 @@ bool mtsComponentProxy::RemoveProvidedInterfaceProxy(const std::string & provide
 bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedInterfaceProxyName,
                                                    std::string & adapterName, 
                                                    std::string & endpointAccessInfo,
-                                                   std::string & communicatorId)
+                                                   std::string & communicatorID)
 {
     mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
 
@@ -549,20 +551,20 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
     // Generate parameters to initialize server proxy    
     adapterName = adapterNameBase + "_" + providedInterfaceProxyName;    
     endpointAccessInfo = ":default -h " + managerLocal->GetIPAddress() + " " + "-p " + portNumber;
-    communicatorId = ComponentInterfaceCommunicatorID;
+    communicatorID = ComponentInterfaceCommunicatorID;
 
     // Create an instance of mtsComponentInterfaceProxyServer
     mtsComponentInterfaceProxyServer * providedInterfaceProxy =
-        new mtsComponentInterfaceProxyServer(adapterName, endpointInfo, communicatorId);
+        new mtsComponentInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
 
     // Add it to provided interface proxy object map
     if (!ProvidedInterfaceProxies.AddItem(providedInterfaceProxyName, providedInterfaceProxy)) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyServer failed: "
-            << "cannot register provided interface proxy: " << providedInterfaceProxyName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyServer: "
+            << "Cannot register provided interface proxy: " << providedInterfaceProxyName << std::endl;
         return false;
     }
 
-    // Run provided interface proxy (component interface proxy server)
+    // Run provided interface proxy (i.e., component interface proxy server)
     providedInterfaceProxy->Start(this);
     providedInterfaceProxy->GetLogger()->trace(
         "mtsComponentProxy", "Provided interface proxy starts: " + providedInterfaceProxyName);
@@ -570,12 +572,27 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
     return true;
 }
 
-bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName)
+bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName,
+                                                   const std::string & serverEndpointInfo,
+                                                   const std::string & communicatorID)
 {
-    //
-    // TODO
-    //
-    return false;
+    // Create an instance of mtsComponentInterfaceProxyClient
+    mtsComponentInterfaceProxyClient * requiredInterfaceProxy = 
+        new mtsComponentInterfaceProxyClient(serverEndpointInfo, communicatorID);
+
+    // Add it to required interface proxy object map
+    if (!RequiredInterfaceProxies.AddItem(requiredInterfaceProxyName, requiredInterfaceProxy)) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyClient: "
+            << "Cannot register required interface proxy: " << requiredInterfaceProxyName << std::endl;
+        return false;
+    }
+
+    // Run required interface proxy (i.e., component interface proxy client)
+    requiredInterfaceProxy->Start(this);
+    requiredInterfaceProxy->GetLogger()->trace(
+        "mtsComponentProxy", "Required interface proxy starts: " + requiredInterfaceProxyName);
+
+    return true;
 }
 
 const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int id) const
