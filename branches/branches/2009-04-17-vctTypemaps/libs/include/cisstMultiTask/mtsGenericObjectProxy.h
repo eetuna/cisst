@@ -178,6 +178,8 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsUChar);
 typedef mtsGenericObjectProxy<bool> mtsBool;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsBool);
 
+typedef mtsGenericObjectProxy<std::string> mtsStdString;
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsStdString);
 
 #endif
 

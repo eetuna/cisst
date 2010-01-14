@@ -38,7 +38,7 @@ devNDISerial::devNDISerial(const std::string & taskName, const double period) :
         provided->AddCommandVoid(&devNDISerial::PortHandlesInitialize, this, "PortHandlesInitialize");
         provided->AddCommandVoid(&devNDISerial::PortHandlesQuery, this, "PortHandlesQuery");
         provided->AddCommandVoid(&devNDISerial::PortHandlesEnable, this, "PortHandlesEnable");
-        provided->AddCommandWrite(&devNDISerial::CalibratePivot, this, "CalibratePivot", prmString(512));
+        provided->AddCommandWrite(&devNDISerial::CalibratePivot, this, "CalibratePivot", mtsStdString());
         provided->AddCommandWrite(&devNDISerial::ToggleTracking, this, "ToggleTracking");
     }
 
@@ -98,6 +98,7 @@ void devNDISerial::Configure(const std::string & filename)
             }
         }
     }
+    CMN_LOG_CLASS_INIT_DEBUG << "Configure: done" << std::endl;
 }
 
 
@@ -764,7 +765,7 @@ void devNDISerial::Track(void)
 }
 
 
-void devNDISerial::CalibratePivot(const prmString & toolName)
+void devNDISerial::CalibratePivot(const mtsStdString & toolName)
 {
 //     const unsigned int numPoints = 500;
 

@@ -195,6 +195,8 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 }
 
 %include "cisstMultiTask/mtsTask.h"
+%include "cisstMultiTask/mtsTaskContinuous.h"
+%include "cisstMultiTask/mtsTaskPeriodic.h"
 %include "cisstMultiTask/mtsTaskInterface.h"
 
 %include "cisstMultiTask/mtsRequiredInterface.h"
@@ -241,6 +243,7 @@ MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsUShort, unsigned short);
 MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsLong, long);
 MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsULong, unsigned long);
 MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsBool, bool);
+MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsStdString, std::string);
 
 // Wrap mtsVector
 %import "cisstMultiTask/mtsVector.h"

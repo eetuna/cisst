@@ -2,12 +2,12 @@
 
 <config>
 
-  <device port="COM3" />
+  <device port="/dev/ttyUSB0" />
 
   <tools>
 
     <tool name="Vicra Probe"
-          enabled="true"
+          enabled="false"
           serial="34802401"
           definition="C:\\Program Files\\Northern Digital Inc\\Tool Definition Files\\8700340.rom"
           description="NDI Vicra passive probe (at JHMI)" />
@@ -37,7 +37,7 @@
           description="Traxtal active probe (at Homewood)" />
 
     <tool name="Traxtal Cross"
-          enabled="false"
+          enabled="true"
           serial="3499D401"
           definition="C:\\Program Files\\Northern Digital Inc\\Tool Definition Files\\Traxtal_C-Arm_Tracker.rom"
           description="Traxtal passive c-arm tracker (at Homewood)" />

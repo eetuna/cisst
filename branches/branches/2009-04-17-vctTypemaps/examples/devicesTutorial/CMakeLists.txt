@@ -12,7 +12,7 @@
 # 
 # --- end cisst license ---
 
-add_subdirectory(example2)
+#add_subdirectory(example2)
 
 if(CISST_DEV_HAS_SENSABLEHD OR CISST_MTS_HAS_ICE)
   add_subdirectory(example1)
