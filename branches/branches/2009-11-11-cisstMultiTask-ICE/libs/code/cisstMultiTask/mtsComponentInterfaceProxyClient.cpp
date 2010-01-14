@@ -61,33 +61,38 @@ void mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     // Initialize Ice object.
     IceInitialize();
 
-    if (InitSuccessFlag) {
-        // Client configuration for bidirectional communication
-        Ice::ObjectAdapterPtr adapter = IceCommunicator->createObjectAdapter("");
-        Ice::Identity ident;
-        ident.name = GetGUID();
-        ident.category = "";
-
-        mtsComponentInterfaceProxy::ComponentInterfaceClientPtr client = 
-            new ComponentInterfaceClientI(IceCommunicator, IceLogger, ComponentInterfaceServerProxy, this);
-        adapter->add(client, ident);
-        adapter->activate();
-        ComponentInterfaceServerProxy->ice_getConnection()->setAdapter(adapter);
-        ComponentInterfaceServerProxy->AddClient(ident);
-
-        // Create a worker thread here but is not running yet.
-        ThreadArgumentsInfo.ProxyOwner = proxyOwner;
-        ThreadArgumentsInfo.Proxy = this;        
-        ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyClient::Runner;
-
-        WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo, 
-            // Set the name of this thread as CIPC which means Component 
-            // Interface Proxy Client. Such a very short naming rule is
-            // because sometimes there is a limitation of the total number 
-            // of characters as a thread name on some systems (e.g. LINUX RTAI).
-            "CIPC");
+    if (!InitSuccessFlag) {
+        ComponentInterfaceProxyClientLogger("Initialization failed");
+        return;
     }
+
+    // Client configuration for bidirectional communication
+    Ice::ObjectAdapterPtr adapter = IceCommunicator->createObjectAdapter("");
+    Ice::Identity ident;
+    ident.name = GetGUID();
+    ident.category = "";
+
+    mtsComponentInterfaceProxy::ComponentInterfaceClientPtr client = 
+        new ComponentInterfaceClientI(IceCommunicator, IceLogger, ComponentInterfaceServerProxy, this);
+    adapter->add(client, ident);
+    adapter->activate();
+    ComponentInterfaceServerProxy->ice_getConnection()->setAdapter(adapter);
+
+    // Connect to server proxy through adding this ICE proxy to server proxy
+    ComponentInterfaceServerProxy->AddClient(ident);
+
+    // Create a worker thread here but is not running yet.
+    ThreadArgumentsInfo.ProxyOwner = proxyOwner;
+    ThreadArgumentsInfo.Proxy = this;        
+    ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyClient::Runner;
+
+    WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
+        &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo, 
+        // Set the name of this thread as CIPC which means Component 
+        // Interface Proxy Client. Such a very short naming rule is
+        // because sometimes there is a limitation of the total number 
+        // of characters as a thread name on some systems (e.g. LINUX RTAI).
+        "CIPC");
 }
 
 void mtsComponentInterfaceProxyClient::StartClient()

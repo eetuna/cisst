@@ -126,33 +126,27 @@ public:
         id assigned by the global component manager, which is used by 
         ConnectConfirm() to find connection information.
 
+        //
+        TODO: Update the following comments
+        //
         If Connect() is called, timer is set at the global component manager. If
         timeout elapses before BOTH local component managers confirm successful 
         connection, the global component manager calls Disconnect() to clean up 
         the connection. */
     virtual unsigned int Connect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
     /*! Local component manager confirms that connection has been successfully 
         established.
-
         Return true if the global component manager acknowledged the connection. */
     virtual bool ConnectConfirm(unsigned int connectionSessionID) = 0;
 
     /*! Disconnect two interfaces.
         Return true if disconnecting already disconnected connection. */
     virtual bool Disconnect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
     //-------------------------------------------------------------------------
     //  Networking
@@ -162,13 +156,29 @@ public:
     virtual bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID) = 0;
+        const std::string & endpointInfo, const std::string & communicatorID) = 0;
 
     /*! Fetch access information of a server proxy (i.e., provided interface proxy) */
     virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        std::string & adapterName, std::string & endpointInfo, std::string & communicatorID) = 0;
+        std::string & endpointInfo, std::string & communicatorID) = 0;
+
+    /*! Make a client process initiate connection process. 
+        When LCM::Connect() is called at the server side, the server process
+        internally calls this method to start connection process at the client 
+        side. */
+    virtual bool ConnectStart(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+
+    /*! Make a server process connect components. Internally, a required 
+        interface network proxy (of type mtsComponentInterfaceProxyClient)
+        is created, run, and connects to a provided interface network proxy
+        (of type mtsComponentInterfaceProxyServer). */
+    virtual bool ConnectServerSide(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 };
 
 #endif // _mtsManagerGlobalInterface_h

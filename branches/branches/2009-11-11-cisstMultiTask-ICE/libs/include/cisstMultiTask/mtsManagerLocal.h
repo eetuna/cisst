@@ -198,6 +198,10 @@ protected:
     /*! Returns the total number of interfaces that are running on a component */
     const int GetCurrentInterfaceCount(const std::string & componentName) const;
 
+    bool ConnectByGlobalComponentManager(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
 public:
     /*! Create the static instance of local task manager. */
     static mtsManagerLocal * GetInstance(
@@ -332,7 +336,15 @@ public:
     bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID);
+        const std::string & endpointInfo, const std::string & communicatorID);
+
+    bool ConnectServerProcess(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    bool ConnectClientProcess(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //
     // TODO: Double check the following comments

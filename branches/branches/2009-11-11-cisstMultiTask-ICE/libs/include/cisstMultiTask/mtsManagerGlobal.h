@@ -79,14 +79,13 @@ protected:
         const bool RemoteConnection;
 #if CISST_MTS_HAS_ICE
         // Server proxy access information (sent to client proxy as requested)
-        std::string AdapterName;
         std::string EndpointInfo;
         std::string CommunicatorID;
 #endif
 
         ConnectedInterfaceInfo() : ProcessName(""), ComponentName(""), InterfaceName(""), RemoteConnection(false)
 #if CISST_MTS_HAS_ICE
-            , AdapterName(""), EndpointInfo(""), CommunicatorID("")
+            , EndpointInfo(""), CommunicatorID("")
 #endif
         {}
 
@@ -102,14 +101,12 @@ protected:
         const std::string GetInterfaceName() const { return InterfaceName; }
         const bool IsRemoteConnection() const      { return RemoteConnection; }
 #if CISST_MTS_HAS_ICE
-        std::string GetAdapterName() const         { return AdapterName; }
         std::string GetEndpointInfo() const        { return EndpointInfo; }
         std::string GetCommunicatorID() const      { return CommunicatorID; }
 
         // Setters
-        void SetProxyAccessInfo(const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
+        void SetProxyAccessInfo(const std::string & endpointInfo, const std::string & communicatorID)
         {
-            AdapterName = adapterName;
             EndpointInfo = endpointInfo;
             CommunicatorID = communicatorID;
         }
@@ -205,12 +202,8 @@ protected:
 
     /*! Check if two interfaces are connected */
     bool IsAlreadyConnected(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName);
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
 public:
     /*! Constructor and destructor */
@@ -263,22 +256,14 @@ public:
     //  Connection Management
     //-------------------------------------------------------------------------
     unsigned int Connect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName);
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     bool ConnectConfirm(unsigned int connectionSessionID);
 
     bool Disconnect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName);
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Public Getters
@@ -299,18 +284,24 @@ public:
     //-------------------------------------------------------------------------
     //  Networking
     //-------------------------------------------------------------------------
-    /*! Add access information of a server proxy (i.e., provided interface proxy)
-        which a client proxy (i.e., required interface proxy) connects to. */
 #if CISST_MTS_HAS_ICE
     bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID);
+        const std::string & endpointInfo, const std::string & communicatorID);
 
     bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        std::string & adapterName, std::string & endpointInfo, std::string & communicatorID);
+        std::string & endpointInfo, std::string & communicatorID);
+
+    bool ConnectStart(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    bool ConnectServerSide(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 #endif
 };
 

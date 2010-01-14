@@ -53,21 +53,24 @@ void mtsComponentInterfaceProxyServer::Start(mtsComponentProxy * proxyOwner)
     // Initialize Ice object.
     IceInitialize();
     
-    if (InitSuccessFlag) {
-        // Create a worker thread here and returns immediately.
-        ThreadArgumentsInfo.ProxyOwner = proxyOwner;
-        ThreadArgumentsInfo.Proxy = this;
-        ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyServer::Runner;
-
-        // Note that a worker thread is created but is not yet running.
-        WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
-            &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo,
-            // Set the name of this thread as CIPS which means Component 
-            // Interface Proxy Server. Such a very short naming rule is
-            // because sometimes there is a limitation of the total number 
-            // of characters as a thread name on some systems (e.g. LINUX RTAI).
-            "CIPS");
+    if (!InitSuccessFlag) {
+        ComponentInterfaceProxyServerLogger("Initialization failed");
+        return;
     }
+
+    // Create a worker thread here and returns immediately.
+    ThreadArgumentsInfo.ProxyOwner = proxyOwner;
+    ThreadArgumentsInfo.Proxy = this;
+    ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyServer::Runner;
+
+    // Note that a worker thread is created but is not yet running.
+    WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
+        &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo,
+        // Set the name of this thread as CIPS which means Component 
+        // Interface Proxy Server. Such a very short naming rule is
+        // because sometimes there is a limitation of the total number 
+        // of characters as a thread name on some systems (e.g. LINUX RTAI).
+        "CIPS");
 }
 
 void mtsComponentInterfaceProxyServer::StartServer()

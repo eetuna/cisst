@@ -489,7 +489,7 @@ unsigned int mtsManagerGlobal::Connect(
         // - Server manager : local component manager that manages server components
         // - Client manager : local component manager that manages client components
         
-        // Get local component managers that manages the client and the server component.
+        // Get local component managers
         mtsManagerLocalInterface * localManagerClient = GetProcessObject(clientProcessName);
         if (!localManagerClient) {
             CMN_LOG_CLASS_RUN_ERROR << "Connect: cannot find local component manager with client process: " << clientProcessName << std::endl;
@@ -922,7 +922,7 @@ bool mtsManagerGlobal::AddConnectedInterface(ConnectionMapType * connectionMap,
 bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
+    const std::string & endpointInfo, const std::string & communicatorID)
 {
     // Get a connection map of the provided interface at server side.
     ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
@@ -943,10 +943,10 @@ bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
     }
 
     // Set server proxy access information
-    connectedInterfaceInfo->SetProxyAccessInfo(adapterName, endpointInfo, communicatorID);
+    connectedInterfaceInfo->SetProxyAccessInfo(endpointInfo, communicatorID);
 
     CMN_LOG_CLASS_RUN_VERBOSE << "SetProvidedInterfaceProxyAccessInfo: set proxy access info: "
-            << adapterName << ", " << endpointInfo << ", " << communicatorID << std::endl;
+            << endpointInfo << ", " << communicatorID << std::endl;
 
     return true;
 }
@@ -954,7 +954,7 @@ bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
 bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    std::string & adapterName, std::string & endpointInfo, std::string & communicatorID)
+    std::string & endpointInfo, std::string & communicatorID)
 {
     // Get a connection map of the provided interface at server side.
     ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
@@ -975,9 +975,40 @@ bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
     }
 
     // Get server proxy access information
-    adapterName = connectedInterfaceInfo->GetAdapterName();
     endpointInfo = connectedInterfaceInfo->GetEndpointInfo();
     communicatorID = connectedInterfaceInfo->GetCommunicatorID();
 
     return true;
+}
+
+bool mtsManagerGlobal::ConnectStart(
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+{
+    // Get local component manager that manages the client component.
+    mtsManagerLocalInterface * localManagerClient = GetProcessObject(clientProcessName);
+    if (!localManagerClient) {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectStart: Cannot find local component manager with client process: " << clientProcessName << std::endl;
+        return false;
+    }
+
+    return localManagerClient->ConnectClientProcess(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName);
+}
+
+bool mtsManagerGlobal::ConnectServerSide(
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+{
+    // Get local component manager that manages the server component.
+    mtsManagerLocalInterface * localManagerServer = GetProcessObject(serverProcessName);
+    if (!localManagerServer) {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSide: Cannot find local component manager with server process: " << serverProcessName << std::endl;
+        return false;
+    }
+
+    return localManagerServer->ConnectServerProcess(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }

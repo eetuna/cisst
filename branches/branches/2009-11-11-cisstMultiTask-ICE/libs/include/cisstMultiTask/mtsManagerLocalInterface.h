@@ -83,6 +83,20 @@ public:
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName) = 0;
 
     //-------------------------------------------------------------------------
+    //  Connection Management
+    //-------------------------------------------------------------------------
+    /*! Connect two local components of a server process. After a client process 
+        connects two components, it makes the GCM call this method to connect 
+        two local components of a server process. */
+    virtual bool ConnectServerProcess(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+
+    virtual bool ConnectClientProcess(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+
+    //-------------------------------------------------------------------------
     //  Getters
     //-------------------------------------------------------------------------
     /*! Extract all the information on a provided interface (command objects 
