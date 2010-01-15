@@ -166,9 +166,10 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
         def UpdateFromC(self):
             interfaces = mtsDevice.GetNamesOfProvidedInterfaces(self)
             for interface in interfaces:
-                self.__dict__[interface] = mtsDevice.GetProvidedInterface(self, interface)
-                userId = self.__dict__[interface].AllocateResources('Python')
-                self.__dict__[interface].UpdateFromC(userId)
+                interfaceNoSpace = interface.replace(' ', '')
+                self.__dict__[interfaceNoSpace] = mtsDevice.GetProvidedInterface(self, interface)
+                userId = self.__dict__[interfaceNoSpace].AllocateResources('Python')
+                self.__dict__[interfaceNoSpace].UpdateFromC(userId)
     }
 }
 
