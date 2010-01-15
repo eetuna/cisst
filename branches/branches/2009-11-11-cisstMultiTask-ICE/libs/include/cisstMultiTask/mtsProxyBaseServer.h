@@ -57,7 +57,7 @@ public:
     virtual void Start(_proxyOwner * proxyOwner) = 0;
 
     /*! Terminate proxy. */
-    virtual void Stop()
+    virtual void Stop(void)
     {
         if (this->ProxyState != BaseType::PROXY_ACTIVE) {
             return;
@@ -187,25 +187,23 @@ protected:
     ConnectionIDMapType ConnectionIDMap;
 
     /*! Container to manage connected client proxies based on its connection id */
-    typedef std::map<ConnectionIDType, ClientProxyType*> ClientProxyMapType;
+    typedef std::map<ConnectionIDType, ClientProxyType> ClientProxyMapType;
     ClientProxyMapType ClientProxyMap;
 
     /*! When a client proxy is connected to this server proxy, add it to client 
         proxy map with a key of connection id */
-    bool ReceiveAddClient(const ConnectionIDType & connectionID, const ClientProxyType & clientProxy)
-    {
-        if (GetClientProxyByConnectionID(connectionID)) {
+    bool AddProxyClient(const ConnectionIDType & connectionID, ClientProxyType & clientProxy) {
+        if (FindProxyClientByConnectionID(connectionID)) {
             this->IceLogger->trace("WARNING: duplicate connection id", connectionID);
             return false;
         }
 
-        ClientProxyMap.insert(make_pair(connectionID, &clientProxy));
+        ClientProxyMap.insert(make_pair(connectionID, clientProxy));
 
-        return (GetClientProxyByConnectionID(connectionID) != NULL);
+        return (GetProxyClientByConnectionID(connectionID) != NULL);
     }
 
-    ClientProxyType * GetClientProxyByConnectionID(const ConnectionIDType & connectionID) const
-    {
+    ClientProxyType GetProxyClientByConnectionID(const ConnectionIDType & connectionID) const {
         ClientProxyMapType::const_iterator it = ClientProxyMap.find(connectionID);
         if (it == ClientProxyMap.end()) {
             this->IceLogger->trace("WARNING: can't find client proxy with connection id", connectionID);
@@ -215,8 +213,7 @@ protected:
         return it->second;
     }
 
-    ClientProxyType * GetClientProxyByClientID(const ClientIDType & clientID) const
-    {
+    ClientProxyType GetProxyProxyByClientID(const ClientIDType & clientID) const {
         // Fetch a connection id from connection id map
         ConnectionIDMapType::const_iterator it = ConnectionIDMap.find(clientID);
         if (it == ConnectionIDMap.end()) {
@@ -225,6 +222,10 @@ protected:
         }
 
         return GetClientProxyByConnectionID(it->second);
+    }
+
+    bool FindProxyClientByConnectionID(const ConnectionIDType & connectionID) const {
+        return (ClientProxyMap.find(connectionID) != ClientProxyMap.end());
     }
 
 public:

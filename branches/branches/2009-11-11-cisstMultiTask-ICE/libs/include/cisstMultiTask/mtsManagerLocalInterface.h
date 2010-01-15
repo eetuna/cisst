@@ -87,12 +87,13 @@ public:
     //-------------------------------------------------------------------------
     /*! Connect two local components of a server process. After a client process 
         connects two components, it makes the GCM call this method to connect 
-        two local components of a server process. */
-    virtual bool ConnectServerProcess(
+        two local components of a server process. A required interface proxy
+        client is also created and connects to a provided interface proxy server. */
+    virtual bool ConnectServerSideInterface(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
-    virtual bool ConnectClientProcess(
+    virtual bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 

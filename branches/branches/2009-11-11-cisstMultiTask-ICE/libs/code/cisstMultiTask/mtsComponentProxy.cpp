@@ -604,3 +604,22 @@ const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int
 
     return newPortNumberAsString.str();
 }
+
+bool mtsComponentProxy::IsActiveProxy(const std::string & proxyName, const bool isProxyServer) const
+{
+    if (isProxyServer) {
+        mtsComponentInterfaceProxyServer * providedInterfaceProxy = ProvidedInterfaceProxies.GetItem(proxyName);
+        if (!providedInterfaceProxy) {
+            CMN_LOG_CLASS_RUN_ERROR << "IsActiveProxy: Cannot find provided interface proxy: " << proxyName << std::endl;
+            return false;
+        }
+        return providedInterfaceProxy->IsActiveProxy();
+    } else {
+        mtsComponentInterfaceProxyClient * requiredInterfaceProxy = RequiredInterfaceProxies.GetItem(proxyName);
+        if (!requiredInterfaceProxy) {
+            CMN_LOG_CLASS_RUN_ERROR << "IsActiveProxy: Cannot find required interface proxy: " << proxyName << std::endl;
+            return false;
+        }
+        return requiredInterfaceProxy->IsActiveProxy();
+    }
+}

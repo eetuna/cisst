@@ -48,7 +48,7 @@ public:
 
 protected:
     /*! Typedef for base type. */
-    typedef mtsProxyBaseClient<mtsComponentProxy> BaseType;
+    typedef mtsProxyBaseClient<mtsComponentProxy> BaseClientType;
 
     /*! Typedef for connected server proxy. */
     typedef mtsComponentInterfaceProxy::ComponentInterfaceServerPrx ComponentInterfaceServerProxyType;
@@ -97,15 +97,19 @@ protected:
     //bool AddPerCommandSerializer(
     //    const CommandIDType commandId, mtsProxySerializer * argumentSerializer);
 
-    ////-------------------------------------------------------------------------
-    ////  Methods to Receive and Process Events (Server -> Client)
-    ////-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+    //  Event Handlers : Server -> Client
+    //-------------------------------------------------------------------------
+    void TestReceiveMessageFromServerToClient(const std::string & str) const;
     //void ReceiveExecuteEventVoid(const CommandIDType commandId);
     //void ReceiveExecuteEventWriteSerialized(const CommandIDType commandId, const std::string argument);
 
-    ////-------------------------------------------------------------------------
-    ////  Methods to Send Events (Client -> Server)
-    ////-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+    //  Event Generators (Event Sender) : Client -> Server
+    //-------------------------------------------------------------------------
+public:
+    void SendTestMessageFromClientToServer(const std::string & str) const;
+
     //bool SendGetProvidedInterfaceInfo(
     //    const std::string & providedInterfaceName,
     //    mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
@@ -167,9 +171,14 @@ protected:
         void Run();
         void Stop();
 
-        // Server -> Client
+        //---------------------------------------
+        // Event handlers (Server -> Client)
+        //---------------------------------------
         //void ExecuteEventVoid(IceCommandIDType, const ::Ice::Current&);
         //void ExecuteEventWriteSerialized(IceCommandIDType, const ::std::string&, const ::Ice::Current&);
+
+        // 
+        void TestSendMessageFromServerToClient(const std::string & str, const ::Ice::Current & current);
     };
 };
 

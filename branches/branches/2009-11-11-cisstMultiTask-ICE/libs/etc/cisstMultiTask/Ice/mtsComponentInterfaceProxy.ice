@@ -146,6 +146,9 @@ module mtsComponentInterfaceProxy
 	{
         //void ExecuteEventVoid(long CommandId);
         //void ExecuteEventWriteSerialized(long CommandId, string argument);
+
+        /*! Methods for testing and unit tests */
+        void TestSendMessageFromServerToClient(string str);
 	};
 
 	//-----------------------------------------------------------------------------
@@ -153,6 +156,9 @@ module mtsComponentInterfaceProxy
 	//-----------------------------------------------------------------------------
 	interface ComponentInterfaceServer
 	{
+        /*! Methods for testing and unit tests */
+        void TestSendMessageFromClientToServer(string str);
+
 		/*! Called by a proxy client when it connects to a proxy server */
 		void AddClient(Ice::Identity ident);
 

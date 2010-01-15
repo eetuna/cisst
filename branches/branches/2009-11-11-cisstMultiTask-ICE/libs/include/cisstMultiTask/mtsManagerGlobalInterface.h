@@ -168,7 +168,7 @@ public:
         When LCM::Connect() is called at the server side, the server process
         internally calls this method to start connection process at the client 
         side. */
-    virtual bool ConnectStart(
+    virtual bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
@@ -176,7 +176,7 @@ public:
         interface network proxy (of type mtsComponentInterfaceProxyClient)
         is created, run, and connects to a provided interface network proxy
         (of type mtsComponentInterfaceProxyServer). */
-    virtual bool ConnectServerSide(
+    virtual bool ConnectServerSideInterface(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 };

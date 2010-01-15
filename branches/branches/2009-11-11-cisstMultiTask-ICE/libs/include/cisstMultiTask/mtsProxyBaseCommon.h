@@ -114,11 +114,6 @@ protected:
         ChangeProxyState(PROXY_ACTIVE);
     }
 
-    /*! Check if this proxy is active */
-    bool IsActiveProxy(void) const {
-        return (ProxyState == PROXY_ACTIVE);
-    }
-
     //-----------------------------------------------------
     // Auxiliary Class Definitions
     //-----------------------------------------------------
@@ -318,7 +313,13 @@ public:
 
     inline Ice::CommunicatorPtr GetIceCommunicator(void) const { return IceCommunicator; }
 
+    /*! Check if this proxy is running */
     inline bool IsRunnable(void) const { return Runnable; }
+
+    /*! Check if this proxy is active */
+    bool IsActiveProxy(void) const {
+        return (ProxyState == PROXY_ACTIVE);
+    }
 
     /*! Base port numbers. These numbers are not yet registered to IANA (Internet 
         Assigned Numbers Authority) as of January 12th, 2010.

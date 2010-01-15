@@ -117,6 +117,9 @@ public:
         return ProvidedInterfaces.size() + RequiredInterfaces.size();
     }
 
+    /*! Check if a network proxy is active */
+    bool IsActiveProxy(const std::string & proxyName, const bool isProxyServer) const;
+
     //-------------------------------------------------------------------------
     //  Utilities
     //-------------------------------------------------------------------------

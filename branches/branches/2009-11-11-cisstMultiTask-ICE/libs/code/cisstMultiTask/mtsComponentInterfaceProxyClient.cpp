@@ -45,7 +45,7 @@ CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 //-----------------------------------------------------------------------------
 mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
     const std::string & serverEndpointInfo, const std::string & communicatorID)
-    : BaseType(serverEndpointInfo, communicatorID)
+    : BaseClientType(serverEndpointInfo, communicatorID)
 {
 }
 
@@ -118,7 +118,12 @@ void mtsComponentInterfaceProxyClient::Runner(ThreadArguments<mtsComponentProxy>
     ProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "Proxy client starts.....");
 
     try {
+        // TODO: By this call, it is 'assumed' that a client proxy is successfully
+        // connected to a server proxy.
+        // If I can find better way to detect successful connection establishment
+        // between a client and a server, this should be updated.
         ProxyClient->SetAsActiveProxy();
+
         ProxyClient->StartClient();        
     } catch (const Ice::Exception& e) {
         std::string error("mtsComponentInterfaceProxyClient: ");
@@ -145,7 +150,7 @@ void mtsComponentInterfaceProxyClient::Stop()
 
     ShutdownSession();
     
-    BaseType::Stop();
+    BaseClientType::Stop();
     
     Sender->Stop();
 }
@@ -184,10 +189,16 @@ bool mtsComponentInterfaceProxyClient::AddPerCommandSerializer(
 
     return true;
 }
+*/
 
 //-------------------------------------------------------------------------
-//  Methods to Receive and Process Events (Server -> Client)
+//  Event Handlers (Server -> Client)
 //-------------------------------------------------------------------------
+void mtsComponentInterfaceProxyClient::TestReceiveMessageFromServerToClient(const std::string & str) const
+{
+    std::cout << "Test: Server -> Client: Received: " << str << std::endl;
+}
+/*
 void mtsComponentInterfaceProxyClient::ReceiveExecuteEventVoid(const CommandIDType commandId)
 {
     mtsMulticastCommandVoid * eventVoidGeneratorProxy = 
@@ -216,7 +227,19 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
 
     eventWriteGeneratorProxy->Execute(*serializedArgument);
 }
+*/
 
+//-------------------------------------------------------------------------
+//  Event Generators (Event Sender) : Client -> Server
+//-------------------------------------------------------------------------
+void mtsComponentInterfaceProxyClient::SendTestMessageFromClientToServer(const std::string & str) const
+{
+    this->IceLogger->trace("ComponentInterface: Client", ">>>>> SEND: SendMessageFromClientToServer");
+
+    ComponentInterfaceServerProxy->TestSendMessageFromClientToServer(str);
+}
+
+/*
 //-------------------------------------------------------------------------
 //  Methods to Send Events
 //-------------------------------------------------------------------------
@@ -407,18 +430,24 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Start()
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
 {
 #ifdef _COMMUNICATION_TEST_
-    int num = 0;
-#endif
+    int count = 0;
 
+    while (Runnable) {
+        osaSleep(1 * cmn_s);
+        std::cout << "Client Proxy [" << (unsigned long) this << "] Running..." << ++count << std::endl;
+
+        std::stringstream ss;
+        ss << "Client: ";
+        ss << count;        
+
+        ComponentInterfaceProxyClient->SendTestMessageFromClientToServer(ss.str());
+    }
+#else
     while (Runnable)
     {
-#ifndef _COMMUNICATION_TEST_
         osaSleep(10 * cmn_ms);
-#else
-        osaSleep(1 * cmn_s);
-        std::cout << "Component interface proxy client: " << ++num << std::endl;
-#endif
     }
+#endif
 }
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
@@ -441,8 +470,15 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
 }
 
 //-----------------------------------------------------------------------------
-//  Device Interface Proxy Client Implementation
+//  Network Event Handlers
 //-----------------------------------------------------------------------------
+void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::TestSendMessageFromServerToClient(
+    const std::string & str, const ::Ice::Current & current)
+{
+    Logger->trace("ComponentInterface: Client", "<<<<< RECV: TestSendMessageFromServerToClient");
+
+    ComponentInterfaceProxyClient->TestReceiveMessageFromServerToClient(str);
+}
 //bool mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::GetListsOfEventGeneratorsRegistered(
 //    const std::string & serverTaskProxyName,
 //    const std::string & clientTaskName,

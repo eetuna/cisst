@@ -564,6 +564,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
 
     // Connect two interfaces (establish remote connection) and test if commands
     // and events work correctly.
+    managerLocal1Object->UnitTestOn = true;
     CPPUNIT_ASSERT(managerLocal1Object->Connect(P1, C1, r1, P2, C2, p1));
 
     // Check initial values

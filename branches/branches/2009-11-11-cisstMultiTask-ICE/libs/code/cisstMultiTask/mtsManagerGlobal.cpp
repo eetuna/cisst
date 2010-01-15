@@ -981,34 +981,34 @@ bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
     return true;
 }
 
-bool mtsManagerGlobal::ConnectStart(
+bool mtsManagerGlobal::InitiateConnect(const unsigned int connectionID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     // Get local component manager that manages the client component.
     mtsManagerLocalInterface * localManagerClient = GetProcessObject(clientProcessName);
     if (!localManagerClient) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectStart: Cannot find local component manager with client process: " << clientProcessName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "InitiateConnect: Cannot find local component manager with client process: " << clientProcessName << std::endl;
         return false;
     }
 
-    return localManagerClient->ConnectClientProcess(
+    return localManagerClient->ConnectClientSideInterface(connectionID,
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }
 
-bool mtsManagerGlobal::ConnectServerSide(
+bool mtsManagerGlobal::ConnectServerSideInterface(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     // Get local component manager that manages the server component.
     mtsManagerLocalInterface * localManagerServer = GetProcessObject(serverProcessName);
     if (!localManagerServer) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSide: Cannot find local component manager with server process: " << serverProcessName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Cannot find local component manager with server process: " << serverProcessName << std::endl;
         return false;
     }
 
-    return localManagerServer->ConnectServerProcess(
+    return localManagerServer->ConnectServerSideInterface(
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }

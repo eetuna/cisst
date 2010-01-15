@@ -84,7 +84,7 @@ void mtsComponentInterfaceProxyServer::StartServer()
 void mtsComponentInterfaceProxyServer::Runner(ThreadArguments<mtsComponentProxy> * arguments)
 {
     mtsComponentInterfaceProxyServer * ProxyServer = 
-        dynamic_cast<mtsComponentInterfaceProxyServer*>(arguments->ProxyOwner);
+        dynamic_cast<mtsComponentInterfaceProxyServer*>(arguments->Proxy);
     if (!ProxyServer) {
         CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyServer: Failed to create a proxy server." << std::endl;
         return;
@@ -115,25 +115,28 @@ void mtsComponentInterfaceProxyServer::Runner(ThreadArguments<mtsComponentProxy>
 
 void mtsComponentInterfaceProxyServer::Stop()
 {
-    BaseType::Stop();
+    BaseServerType::Stop();
 
     Sender->Stop();
 }
 
-//-----------------------------------------------------------------------------
-//  Network Event Processing Methods
-//-----------------------------------------------------------------------------
-void mtsComponentInterfaceProxyServer::ReceiveAddClient(
-    const ConnectionIDType & connectionID, const ComponentInterfaceClientProxyType & clientProxy)
-{
-    /*
-    TaskManagerClient * newTaskManagerClient = new TaskManagerClient(connectionID, clientProxy);
-    
-    TaskManagerMap.insert(make_pair(connectionID, newTaskManagerClient));
+//-------------------------------------------------------------------------
+//  Event Handlers (Server -> Client)
+//-------------------------------------------------------------------------
+void mtsComponentInterfaceProxyServer::TestReceiveMessageFromClientToServer(const std::string & str) const
+{    
+    std::cout << "Test: Client -> Server: Received: " << str << std::endl;
+}
 
-    ComponentInterfaceProxyServerLogger("Added the task manager with connection id: " + connectionID);
-    */
-    std::cout << "########## Receive Add CLient ############# "<< std::endl;
+void mtsComponentInterfaceProxyServer::ReceiveAddClient(
+    const ConnectionIDType & connectionID, ComponentInterfaceClientProxyType & clientProxy)
+{
+    if (!this->AddProxyClient(connectionID, clientProxy)) {
+        ComponentInterfaceProxyServerLoggerError("ReceiveAddClient: failed to add proxy client: ", connectionID);
+        return;
+    }
+
+    IceLogger->trace("ReceiveAddClient: added proxy client: ", connectionID);
 }
 
 /*
@@ -177,6 +180,31 @@ bool mtsComponentInterfaceProxyServer::ReceiveUpdateTaskManagerClient(
     return success;
 }
 */
+
+//-------------------------------------------------------------------------
+//  Event Generators (Event Sender) : Server -> Client
+//-------------------------------------------------------------------------
+void mtsComponentInterfaceProxyServer::SendTestMessageFromServerToClient(const std::string & str)
+{
+    IceLogger->trace("ComponentInterface: Server", ">>>>> SEND: SendMessageFromServerToClient");
+
+    // iterate client map -> send message to ALL clients (broadcasts)
+    ComponentInterfaceClientProxyType * clientProxy;
+    ClientProxyMapType::iterator it = ClientProxyMap.begin();
+    ClientProxyMapType::const_iterator itEnd = ClientProxyMap.end();
+    for (; it != itEnd; ++it) {
+        clientProxy = &it->second;
+        try 
+        {
+            (*clientProxy)->TestSendMessageFromServerToClient(str);
+        }
+        catch (const ::Ice::Exception & ex)
+        {
+            std::cerr << "Error: " << ex << std::endl;
+            continue;
+        }
+    }
+}
 
 void mtsComponentInterfaceProxyServer::OnClose()
 {
@@ -372,16 +400,24 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Start()
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 {
 #ifdef _COMMUNICATION_TEST_
-    int num = 0;
-#endif
+    int count = 100;
 
-    while(Runnable) {
-#ifndef _COMMUNICATION_TEST_
-        osaSleep(10 * cmn_ms);
-#else
+    while (Runnable) 
+    {
         osaSleep(1 * cmn_s);
-        std::cout << "Component interface proxy server: " << ++num << std::endl;
-        /*
+        std::cout << "Server Proxy [" << (unsigned long) this << "] Running..." << ++count << std::endl;
+
+        std::stringstream ss;
+        ss << "Server: ";
+        ss << count;
+
+        ComponentInterfaceProxyServer->SendTestMessageFromServerToClient(ss.str());
+    }
+#else
+    while(Runnable) 
+    {
+        osaSleep(10 * cmn_ms);
+
         if(!clients.empty())
         {
             ++num;
@@ -402,9 +438,8 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
                 }
             }
         }
-        */
-#endif
     }
+#endif
 }
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
@@ -428,6 +463,14 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
 //-----------------------------------------------------------------------------
 //  Network Event Handlers
 //-----------------------------------------------------------------------------
+void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::TestSendMessageFromClientToServer(
+    const std::string & str, const ::Ice::Current & current)
+{
+    Logger->trace("ComponentInterface: Server", "<<<<< RECV: TestSendMessageFromClientToServer");
+
+    ComponentInterfaceProxyServer->TestReceiveMessageFromClientToServer(str);
+}
+
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::AddClient(
     const ::Ice::Identity & identity, const ::Ice::Current& current)
 {

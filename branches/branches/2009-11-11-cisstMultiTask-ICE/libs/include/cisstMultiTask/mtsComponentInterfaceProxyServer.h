@@ -33,10 +33,16 @@ class CISST_EXPORT mtsComponentInterfaceProxyServer :
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    /*! Typedef for client proxy type */
+    typedef mtsComponentInterfaceProxy::ComponentInterfaceClientPrx ComponentInterfaceClientProxyType;
+
+    /*! Typedef for base type */
+    typedef mtsProxyBaseServer<mtsComponentProxy, ComponentInterfaceClientProxyType> BaseServerType;
+
 public:
     mtsComponentInterfaceProxyServer(
         const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
-        : mtsProxyBaseServer<mtsComponentProxy, mtsComponentInterfaceProxy::ComponentInterfaceClientPrx>(adapterName, endpointInfo, communicatorID)
+        : BaseServerType(adapterName, endpointInfo, communicatorID)
     {}
 
     ~mtsComponentInterfaceProxyServer();
@@ -48,12 +54,6 @@ public:
     void Stop();
 
 protected:
-    /*! Typedef for base type */
-    typedef mtsProxyBaseServer<mtsComponentProxy, mtsComponentInterfaceProxy::ComponentInterfaceClientPrx> BaseType;
-
-    /*! Typedef for client proxy type */
-    typedef mtsComponentInterfaceProxy::ComponentInterfaceClientPrx ComponentInterfaceClientProxyType;
-
     /*! Definitions for send thread */
     class ComponentInterfaceServerI;
     typedef IceUtil::Handle<ComponentInterfaceServerI> ComponentInterfaceServerIPtr;
@@ -81,14 +81,23 @@ protected:
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
 
     //-------------------------------------------------------------------------
-    //  Methods to Process Network Events (Client -> Server)
+    //  Event Handlers (Client -> Server)
     //-------------------------------------------------------------------------
+    void TestReceiveMessageFromClientToServer(const std::string & str) const;
+
     /*! When a new client connects, add it to the client management list. */
-    void ReceiveAddClient(const ConnectionIDType & connectionID, const ComponentInterfaceClientProxyType & clientProxy);
+    void ReceiveAddClient(const ConnectionIDType & connectionID, ComponentInterfaceClientProxyType & clientProxy);
+
+    //-------------------------------------------------------------------------
+    //  Event Generators (Event Sender) : Client -> Server
+    //-------------------------------------------------------------------------
+public:
+    void SendTestMessageFromServerToClient(const std::string & str);
 
     ////-------------------------------------------------------------------------
     ////  Methods to Process Events
     ////-------------------------------------------------------------------------
+protected:
     ///*! Update the information on the newly connected task manager. */
     //bool ReceiveUpdateTaskManagerClient(const ConnectionIDType & connectionID,
     //                                    const ::mtsComponentInterfaceProxy::TaskList& localTaskInfo);
@@ -151,9 +160,9 @@ protected:
         void Run();
         void Stop();
 
-        //
-        // Methods called by a proxy client (component interface proxy client).
-        //
+        //---------------------------------------
+        //  Event Handlers (Client -> Server)
+        //---------------------------------------
         /*! Add a client proxy. Called when a proxy client connects to server proxy. */
         void AddClient(const Ice::Identity&, const Ice::Current&);
 
@@ -166,6 +175,8 @@ protected:
         //bool IsRegisteredProvidedInterface(const std::string&, const ::std::string&, const Ice::Current&) const;
         //bool GetProvidedInterfaceAccessInfo(const std::string&, const std::string&, mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo & info, const Ice::Current&) const;
         //void NotifyInterfaceConnectionResult(bool, bool, const ::std::string&, const ::std::string&, const ::std::string&, const ::std::string&, const Ice::Current&);
+
+        void TestSendMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
     };
 };
 
