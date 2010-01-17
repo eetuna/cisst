@@ -59,13 +59,6 @@ http://www.cisst.org/cisst/license.txt.
 // Generate parameter documentation for IRE
 %feature("autodoc", "1");
 
-%rename(__str__) ToString;
-%ignore *::ToStream;
-%ignore operator<<;
-%ignore operator=;
-
-%ignore *::operator[]; // We define __setitem__ and __getitem__
-
 %ignore *::AddCommandVoid;
 %ignore *::AddEventVoid;
 
@@ -226,14 +219,14 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 // Wrap some basic types
 %include "cisstMultiTask/mtsGenericObjectProxy.h"
 %define MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(name, elementType)
-// Instantiate the template
-%template(name) mtsGenericObjectProxy<elementType>;
-// Type addition for dynamic type checking
-%{
+    // Instantiate the template
+    %template(name) mtsGenericObjectProxy<elementType>;
+    // Type addition for dynamic type checking
+    %{
+        typedef mtsGenericObjectProxy<elementType> name;
+    %}
     typedef mtsGenericObjectProxy<elementType> name;
-%}
-typedef mtsGenericObjectProxy<elementType> name;
-%types(name *);
+    %types(name *);
 %enddef
 
 MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsDouble, double);

@@ -39,10 +39,6 @@ http://www.cisst.org/cisst/license.txt.
 // Generate parameter documentation for IRE
 %feature("autodoc", "1");
 
-// General approach for Python print
-%rename(__str__) ToString;
-%ignore *::ToStream;
-
 // The traits are used everywhere
 %include "cisstVector/vctContainerTraits.h"
 

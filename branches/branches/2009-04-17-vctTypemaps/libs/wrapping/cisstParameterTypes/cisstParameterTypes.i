@@ -51,12 +51,6 @@ http://www.cisst.org/cisst/license.txt.
 // Generate parameter documentation for IRE
 %feature("autodoc", "1");
 
-%rename(__str__) ToString;
-%ignore *::ToStream;
-%ignore operator<<;
-
-%ignore *::operator[]; // We define __setitem__ and __getitem__
-
 #define CISST_EXPORT
 #define CISST_DEPRECATED
 

@@ -54,7 +54,16 @@ http://www.cisst.org/cisst/license.txt.
 // Generate parameter documentation for IRE
 %feature("autodoc", "1");
 
+%rename (__str__) *::ToString;
 %ignore *::ToStream;
+%ignore *::ToStreamRaw;
+%ignore *::FromStreamRaw;
+%ignore *::Serialize;
+%ignore *::DeSerialize;
+%ignore *::SerializeRaw;
+%ignore *::DeSerializeRaw;
+
+
 %ignore operator<<;
 
 #define CISST_EXPORT
