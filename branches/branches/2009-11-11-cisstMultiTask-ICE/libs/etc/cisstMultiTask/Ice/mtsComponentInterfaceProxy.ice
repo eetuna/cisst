@@ -160,7 +160,7 @@ module mtsComponentInterfaceProxy
         void TestSendMessageFromClientToServer(string str);
 
 		/*! Called by a proxy client when it connects to a proxy server */
-		void AddClient(Ice::Identity ident);
+		bool AddClient(string connectingProxyName, Ice::Identity ident);
 
         /*! This is called by a client when it terminates. This allows a server to
             shutdown (or close) safely and cleanly. */

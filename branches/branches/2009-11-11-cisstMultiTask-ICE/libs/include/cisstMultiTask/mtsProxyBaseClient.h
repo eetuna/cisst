@@ -47,7 +47,7 @@ public:
 
 protected:
     /*! Start client proxy */
-    virtual void Start(_proxyOwner * proxyOwner) = 0;
+    virtual bool Start(_proxyOwner * proxyOwner) = 0;
 
     /*! Terminate proxy */
     virtual void Stop(void)

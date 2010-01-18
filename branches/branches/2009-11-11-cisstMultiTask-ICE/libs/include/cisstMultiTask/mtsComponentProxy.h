@@ -107,6 +107,18 @@ public:
                                     const std::string & serverEndpointInfo,
                                     const std::string & communicatorID);
 
+    /*! Check whether a network proxy server for a provided interface proxy has 
+        been created or not. */
+    inline bool FindInterfaceProxyServer(const std::string & providedInterfaceName) const {
+        return ProvidedInterfaceProxies.FindItem(providedInterfaceName);
+    }
+
+    /*! Check whether a network proxy client for a required interface proxy has 
+        been created or not. */
+    inline bool FindInterfaceProxyClient(const std::string & requiredInterfaceName) const {
+        return RequiredInterfaceProxies.FindItem(requiredInterfaceName);
+    }
+
     //-------------------------------------------------------------------------
     //  Getters
     //-------------------------------------------------------------------------

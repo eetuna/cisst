@@ -158,9 +158,19 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const std::string & endpointInfo, const std::string & communicatorID) = 0;
 
-    /*! Fetch access information of a server proxy (i.e., provided interface proxy) */
+    /*! Fetch access information of a server proxy (i.e., provided interface 
+        proxy) with the complete specification of connection  */
     virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        std::string & endpointInfo, std::string & communicatorID) = 0;
+
+    /*! Fetch access information of a server proxy (i.e., provided interface 
+        proxy) without specifying client interface. 
+        Because one proxy server at client side can handle multiple connections,
+        it is required to have a way to fetch the access information of a proxy 
+        server only with a server interface specification. */
+    virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo, std::string & communicatorID) = 0;
 

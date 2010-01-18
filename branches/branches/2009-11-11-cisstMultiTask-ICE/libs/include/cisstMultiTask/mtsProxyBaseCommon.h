@@ -28,6 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnDeSerializer.h>
 
 #include <cisstMultiTask/mtsConfig.h>
+#include <cisstMultiTask/mtsManagerLocal.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -102,6 +103,9 @@ protected:
 
     /*! Proxy type */
     ProxyType ProxyTypeMember;
+
+    /*! Proxy Name. Internally set as the name of this proxy owner's */
+    std::string ProxyName;
     
     //-----------------------------------------------------
     //  Proxy State Management
@@ -289,7 +293,7 @@ public:
     virtual ~mtsProxyBaseCommon() {}
 
     /*! Initialize and start the proxy (returns immediately). */
-    virtual void Start(_proxyOwner * proxyOwner) = 0;
+    virtual bool Start(_proxyOwner * proxyOwner) = 0;
     
     /*! Terminate the proxy. */
     virtual void Stop() = 0;
@@ -302,23 +306,41 @@ public:
     /*! Set proxy owner */
     virtual void SetProxyOwner(_proxyOwner * proxyOwner) {
         ProxyOwner = proxyOwner;
+        ProxyName = proxyOwner->GetName();
+
+        mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
+        ProxyName += "On";
+        ProxyName += managerLocal->GetProcessName();
     }
 
     //-----------------------------------------------------
     //  Getters
     //-----------------------------------------------------
-    inline bool IsInitalized(void) const  { return InitSuccessFlag; }
+    inline bool IsInitalized(void) const { 
+        return InitSuccessFlag; 
+    }
     
-    inline const Ice::LoggerPtr GetLogger(void) const { return IceLogger; }
+    inline const Ice::LoggerPtr GetLogger(void) const {
+        return IceLogger; 
+    }
 
-    inline Ice::CommunicatorPtr GetIceCommunicator(void) const { return IceCommunicator; }
+    inline Ice::CommunicatorPtr GetIceCommunicator(void) const { 
+        return IceCommunicator; 
+    }
 
     /*! Check if this proxy is running */
-    inline bool IsRunnable(void) const { return Runnable; }
+    inline bool IsRunnable(void) const {
+        return Runnable; 
+    }
 
     /*! Check if this proxy is active */
     bool IsActiveProxy(void) const {
         return (ProxyState == PROXY_ACTIVE);
+    }
+
+    /*! Get the name of this proxy */
+    inline std::string GetProxyName() const {
+        return ProxyName;
     }
 
     /*! Base port numbers. These numbers are not yet registered to IANA (Internet 

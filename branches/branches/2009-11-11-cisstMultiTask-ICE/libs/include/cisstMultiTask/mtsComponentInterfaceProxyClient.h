@@ -41,7 +41,7 @@ public:
     ~mtsComponentInterfaceProxyClient();
 
     /*! Entry point to run a proxy. */
-    void Start(mtsComponentProxy * proxyOwner);
+    bool Start(mtsComponentProxy * proxyOwner);
 
     /*! Stop the proxy (clean up thread-related resources) */
     void Stop(void);

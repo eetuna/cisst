@@ -565,7 +565,11 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
     }
 
     // Run provided interface proxy (i.e., component interface proxy server)
-    providedInterfaceProxy->Start(this);
+    if (!providedInterfaceProxy->Start(this)) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyServer: Proxy failed to start: " << providedInterfaceProxyName << std::endl;
+        return false;
+    }
+
     providedInterfaceProxy->GetLogger()->trace(
         "mtsComponentProxy", "Provided interface proxy starts: " + providedInterfaceProxyName);
 
@@ -588,7 +592,11 @@ bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredI
     }
 
     // Run required interface proxy (i.e., component interface proxy client)
-    requiredInterfaceProxy->Start(this);
+    if (!requiredInterfaceProxy->Start(this)) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyClient: Proxy failed to start: " << requiredInterfaceProxyName << std::endl;
+        return false;
+    }
+
     requiredInterfaceProxy->GetLogger()->trace(
         "mtsComponentProxy", "Required interface proxy starts: " + requiredInterfaceProxyName);
 

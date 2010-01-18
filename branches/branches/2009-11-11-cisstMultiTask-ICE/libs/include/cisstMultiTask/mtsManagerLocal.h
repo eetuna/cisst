@@ -75,8 +75,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface, public cmnGenericObject {
-
+class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface, public cmnGenericObject 
+{
     friend class mtsManagerLocalTest;
     friend class mtsManagerGlobalTest;
     friend class mtsManagerGlobal;
@@ -87,10 +87,12 @@ private:
     /*! Singleton object */
     static mtsManagerLocal * Instance;
 
-    /*! Flag to skip network-related processing such as proxy creation, proxy
-        startup, connection, and so on. This flag is set to false by default 
-        and turned on only by unit tests. */
-    bool UnitTestOn;
+    /*! Flag for unit tests. Enabled only by unit tests. Set false by default */
+    bool UnitTestEnabled;
+
+    /*! Flag to skip network-related processing such as network proxy creation,
+        network proxy startup, remote connection, and so on. Set false by default */
+    bool UnitTestNetworkProxyEnabled;
 
 protected:
     /*! Typedef for component map: (component name, component object)
@@ -141,6 +143,9 @@ protected:
 
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
+
+    /*! Initialization */
+    void Initialize(void);
 
     /*! Connect two local components (interfaces). Note that this method assumes 
         that two components are in the same process.

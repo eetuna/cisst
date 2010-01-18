@@ -60,11 +60,9 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
 //    TaskManagerCommunicatorID("TaskManagerServerSender"),
 //#endif
     ProcessName(thisProcessName),
-    ProcessIP(thisProcessIP),
-    UnitTestOn(false)
+    ProcessIP(thisProcessIP)
 {
-    __os_init();
-    ComponentMap.SetOwner(*this);
+    Initialize();
     
     // TODO: The following line is commented out to speed up unit-tests.
     // (if it is enabled, then every time mtsManagerLocal object is created,
@@ -127,11 +125,9 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName) :
     ComponentMap("Components"),
     ManagerGlobal(NULL),
     ProcessName(thisProcessName),
-    ProcessIP(""),
-    UnitTestOn(false)
+    ProcessIP("")
 {
-    __os_init();
-    ComponentMap.SetOwner(*this);
+    Initialize();
 }
 
 mtsManagerLocal::~mtsManagerLocal()
@@ -143,6 +139,14 @@ mtsManagerLocal::~mtsManagerLocal()
     }
 }
 
+void mtsManagerLocal::Initialize(void)
+{
+    UnitTestEnabled = false;
+    UnitTestNetworkProxyEnabled = false;
+
+    __os_init();
+    ComponentMap.SetOwner(*this);
+}
 
 void mtsManagerLocal::Cleanup(void)
 {
@@ -1048,6 +1052,10 @@ const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componen
     return (const int) (numOfProvidedInterfaces + numOfRequiredInterfaces);
 }
 
+//
+// TODO: this should be fixed such that all ProcessIPs detected are kept in std::vector,
+// not a single std::string.
+//
 void mtsManagerLocal::SetIPAddress()
 {
 #if CISST_MTS_HAS_ICE
@@ -1056,29 +1064,29 @@ void mtsManagerLocal::SetIPAddress()
     osaSocket::GetLocalhostIP(ipAddresses);
 
     // If there is only one ip address is detected, set it as this machine's ip address.
-    if (ipAddresses.size() == 1) {
+//    if (ipAddresses.size() == 1) {
         ProcessIP = ipAddresses[0];
-    } else {
-        // If there are more than one ip address detected, wait for an user's input 
-        // to decide what to use as an ip address of this machine.
+    //} else {
+    //    // If there are more than one ip address detected, wait for an user's input 
+    //    // to decide what to use as an ip address of this machine.
 
-        // Print out a list of all IP addresses detected
-        std::cout << "\nList of IP addresses detected on this machine: " << std::endl;
-        for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
-            std::cout << "\t" << i + 1 << ": " << ipAddresses[i] << std::endl;
-        }
+    //    // Print out a list of all IP addresses detected
+    //    std::cout << "\nList of IP addresses detected on this machine: " << std::endl;
+    //    for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
+    //        std::cout << "\t" << i + 1 << ": " << ipAddresses[i] << std::endl;
+    //    }
 
-        // Wait for user's input
-        char maxChoice = '1' + ipAddresses.size() - 1;
-        int choice = 0;
-        while (!('1' <= choice && choice <= maxChoice)) {
-            std::cout << "\nChoose one to use: ";
-            choice = cmnGetChar();
-        }
-        ProcessIP = ipAddresses[choice - '1'];
+    //    // Wait for user's input
+    //    char maxChoice = '1' + ipAddresses.size() - 1;
+    //    int choice = 0;
+    //    while (!('1' <= choice && choice <= maxChoice)) {
+    //        std::cout << "\nChoose one to use: ";
+    //        choice = cmnGetChar();
+    //    }
+    //    ProcessIP = ipAddresses[choice - '1'];
 
-        std::cout << ProcessIP << std::endl;
-    }
+    //    std::cout << ProcessIP << std::endl;
+    //}
 #else
     ProcessIP = "localhost";
 #endif
@@ -1104,6 +1112,8 @@ bool mtsManagerLocal::ConnectServerSideInterface(
     // This method is called only by the GCM to connect two local interfaces
     // (one is an original interface and the other one is a proxy interface)
     // at the server process.
+
+    std::string serverEndpointInfo, communicatorID;
 
     // Check if this is the server process.
     if (this->ProcessName != serverProcessName) {
@@ -1132,12 +1142,12 @@ bool mtsManagerLocal::ConnectServerSideInterface(
     mtsComponent * clientComponent = GetComponent(clientComponentProxyName);
     if (!clientComponent) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: The client component is not a proxy: " << clientComponentProxyName << std::endl;
-        return false;
+        goto ConnectServerSideInterfaceError;
     }
     mtsComponentProxy * clientComponentProxy = dynamic_cast<mtsComponentProxy *>(clientComponent);
     if (!clientComponentProxy) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Client component is not a proxy: " << clientComponent->GetName() << std::endl;
-        return false;
+        goto ConnectServerSideInterfaceError;
     }
 
     // Fetch access information from the global component manager to connect
@@ -1149,8 +1159,6 @@ bool mtsManagerLocal::ConnectServerSideInterface(
     // After the five seconds without success, this connection can't be established.
 
     // Fecth server proxy access information from the global component manager
-    std::string serverEndpointInfo, communicatorID;
-
     int numTrial = 0;
     const int maxTrial = 5;
     while (++numTrial <= maxTrial) {
@@ -1174,44 +1182,55 @@ bool mtsManagerLocal::ConnectServerSideInterface(
     // If this client proxy finally didn't get the access information.
     if (numTrial > maxTrial) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to fetch server proxy access information" << std::endl;
-        return false;
+        goto ConnectServerSideInterfaceError;
     }
 
     // Create and run required interface proxy client
-    if (!clientComponentProxy->CreateInterfaceProxyClient(clientRequiredInterfaceName, serverEndpointInfo, communicatorID))
-    {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to create interface proxy client"
-            << ": " << clientComponentProxy->GetName() << std::endl;
-        return false;
-    }
-
-    //
-    // TODO: If there are more than one endpoints received, try connecting to one by one
-    // until it successfully connects to server.
-    //
-
-    // Wait for the required interface proxy client to successfully connect to 
-    // provided interface proxy server.
-    numTrial = 0;
-    while (++numTrial <= maxTrial) {
-        if (clientComponentProxy->IsActiveProxy(clientRequiredInterfaceName, false)) {
-            CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: Connected to server proxy" << std::endl;
-            break;
+    if (!UnitTestEnabled || (UnitTestEnabled && UnitTestNetworkProxyEnabled)) {
+        if (!clientComponentProxy->CreateInterfaceProxyClient(clientRequiredInterfaceName, serverEndpointInfo, communicatorID))
+        {
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to create interface proxy client"
+                << ": " << clientComponentProxy->GetName() << std::endl;
+            goto ConnectServerSideInterfaceError;
         }
 
-        // Wait for 1 second
-        CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: Connecting to server proxy... "
-            << numTrial << " / " << maxTrial << std::endl;
-        osaSleep(1.0 * cmn_s);
-    }
+        //
+        // TODO: If there are more than one endpoints received, try connecting to one by one
+        // until it successfully connects to server.
+        //
 
-    // If this client proxy finally didn't connected to server proxy
-    if (numTrial > maxTrial) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to connect to server proxy" << std::endl;
-        return false;
+        // Wait for the required interface proxy client to successfully connect to 
+        // provided interface proxy server.
+        numTrial = 0;
+        while (++numTrial <= maxTrial) {
+            if (clientComponentProxy->IsActiveProxy(clientRequiredInterfaceName, false)) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: Connected to server proxy" << std::endl;
+                break;
+            }
+
+            // Wait for 1 second
+            CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: Connecting to server proxy... "
+                << numTrial << " / " << maxTrial << std::endl;
+            osaSleep(1.0 * cmn_s);
+        }
+
+        // If this client proxy didn't connected to server proxy
+        if (numTrial > maxTrial) {
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to connect to server proxy" << std::endl;
+            goto ConnectServerSideInterfaceError;
+        }
     }
 
     return true;
+
+ConnectServerSideInterfaceError:
+    if (!Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                    serverProcessName, serverComponentName, serverProvidedInterfaceName))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: CLEAN-UP ERROR: Disconnect failed";
+    }
+
+    return false;
 }
 
 bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID,
@@ -1257,20 +1276,38 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
         goto ConnectClientSideInterfaceError;
     }
 
-    // Create and run interface proxy server
-    if (!serverComponentProxy->CreateInterfaceProxyServer(
-            serverProvidedInterfaceName, adapterName, endpointAccessInfo, communicatorId))
-    {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to create interface proxy server: "
-            << serverComponentProxy->GetName() << std::endl;
-        goto ConnectClientSideInterfaceError;
+    // Create and run interface proxy server only when there is no network
+    // proxy server object running that serves the 'serverProvidedInterfaceName'
+    // provided interface.
+    if (!serverComponentProxy->FindInterfaceProxyServer(serverProvidedInterfaceName)) {
+        if (!UnitTestEnabled || (UnitTestEnabled && UnitTestNetworkProxyEnabled)) {
+            if (!serverComponentProxy->CreateInterfaceProxyServer(
+                    serverProvidedInterfaceName, adapterName, endpointAccessInfo, communicatorId))
+            {
+                CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to create interface proxy server: "
+                    << serverComponentProxy->GetName() << std::endl;
+                goto ConnectClientSideInterfaceError;
+            }
+            CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Successfully created interface proxy server: "
+                << serverComponentProxy->GetName() << std::endl;
+        }
     }
-    CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Successfully created interface proxy server: "
-        << serverComponentProxy->GetName() << std::endl;
+    // If there is a server proxy already running, fetch and use the access 
+    // information of it.
+    else {
+        if (!ManagerGlobal->GetProvidedInterfaceProxyAccessInfo(
+            serverProcessName, serverComponentName, serverProvidedInterfaceName,
+            endpointAccessInfo, communicatorId))
+        {
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to fecth server proxy access information: "
+                << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
+            goto ConnectClientSideInterfaceError;
+        }
+    }
 
-    // Inform the global component manager of the access information of a
+    // Inform the global component manager of the access information of this
     // server proxy so that a client proxy of type mtsComponentInterfaceProxyClient
-    // can connect to this server proxy.
+    // can connect to this server proxy later.
     if (!SetProvidedInterfaceProxyAccessInfo(
             clientProcessName, clientComponentName, clientRequiredInterfaceName,
             serverProcessName, serverComponentName, serverProvidedInterfaceName,
@@ -1307,8 +1344,10 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     // TODO: Update command ID and event handler ID!!!
     //
 
-    if (this->UnitTestOn)
-        osaSleep(100);
+    // Sleep for unit tests which include networking
+    if (UnitTestEnabled && UnitTestNetworkProxyEnabled) {
+        osaSleep(3);
+    }
 
     return true;
 

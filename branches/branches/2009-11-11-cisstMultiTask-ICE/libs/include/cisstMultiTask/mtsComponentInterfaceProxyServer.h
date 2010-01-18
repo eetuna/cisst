@@ -48,7 +48,7 @@ public:
     ~mtsComponentInterfaceProxyServer();
 
     /*! Entry point to run a proxy. */
-    void Start(mtsComponentProxy * owner);
+    bool Start(mtsComponentProxy * owner);
 
     /*! Stop the proxy (clean up thread-related resources) */
     void Stop();
@@ -86,7 +86,8 @@ protected:
     void TestReceiveMessageFromClientToServer(const std::string & str) const;
 
     /*! When a new client connects, add it to the client management list. */
-    void ReceiveAddClient(const ConnectionIDType & connectionID, ComponentInterfaceClientProxyType & clientProxy);
+    bool ReceiveAddClient(const std::string & connectingProxyName, 
+        const ConnectionIDType & connectionID, ComponentInterfaceClientProxyType & clientProxy);
 
     //-------------------------------------------------------------------------
     //  Event Generators (Event Sender) : Client -> Server
@@ -164,7 +165,7 @@ protected:
         //  Event Handlers (Client -> Server)
         //---------------------------------------
         /*! Add a client proxy. Called when a proxy client connects to server proxy. */
-        void AddClient(const Ice::Identity&, const Ice::Current&);
+        bool AddClient(const std::string&, const Ice::Identity&, const Ice::Current&);
 
         /*! Shutdown this session; prepare shutdown for safe and clean termination. */
         void Shutdown(const ::Ice::Current&);

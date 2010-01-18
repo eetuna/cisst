@@ -34,6 +34,8 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 
+//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+
 #define ComponentInterfaceProxyClientLogger(_log) IceLogger->trace("mtsComponentInterfaceProxyClient", _log)
 #define ComponentInterfaceProxyClientLoggerError(_log1, _log2) {\
         std::string s("mtsComponentInterfaceProxyClient: ");\
@@ -56,14 +58,14 @@ mtsComponentInterfaceProxyClient::~mtsComponentInterfaceProxyClient()
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
 //-----------------------------------------------------------------------------
-void mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
+bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
 {
     // Initialize Ice object.
     IceInitialize();
 
     if (!InitSuccessFlag) {
-        ComponentInterfaceProxyClientLogger("Initialization failed");
-        return;
+        ComponentInterfaceProxyClientLogger("ICE proxy initialization failed");
+        return false;
     }
 
     // Client configuration for bidirectional communication
@@ -78,11 +80,17 @@ void mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     adapter->activate();
     ComponentInterfaceServerProxy->ice_getConnection()->setAdapter(adapter);
 
+    // Set the owner of this proxy object
+    this->SetProxyOwner(proxyOwner);
+
     // Connect to server proxy through adding this ICE proxy to server proxy
-    ComponentInterfaceServerProxy->AddClient(ident);
+    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), ident)) {
+        ComponentInterfaceProxyClientLogger("AddClient() failed: duplicate proxy name or identity");
+        return false;
+    }
 
     // Create a worker thread here but is not running yet.
-    ThreadArgumentsInfo.ProxyOwner = proxyOwner;
+    //ThreadArgumentsInfo.ProxyOwner = proxyOwner;
     ThreadArgumentsInfo.Proxy = this;        
     ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyClient::Runner;
 
@@ -93,6 +101,8 @@ void mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
         // because sometimes there is a limitation of the total number 
         // of characters as a thread name on some systems (e.g. LINUX RTAI).
         "CIPC");
+
+    return true;
 }
 
 void mtsComponentInterfaceProxyClient::StartClient()
@@ -111,9 +121,6 @@ void mtsComponentInterfaceProxyClient::Runner(ThreadArguments<mtsComponentProxy>
         CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: Failed to create a proxy client." << std::endl;
         return;
     }
-
-    // Set owner of this proxy object
-    ProxyClient->SetProxyOwner(arguments->ProxyOwner);
 
     ProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "Proxy client starts.....");
 
@@ -196,7 +203,7 @@ bool mtsComponentInterfaceProxyClient::AddPerCommandSerializer(
 //-------------------------------------------------------------------------
 void mtsComponentInterfaceProxyClient::TestReceiveMessageFromServerToClient(const std::string & str) const
 {
-    std::cout << "Test: Server -> Client: Received: " << str << std::endl;
+    std::cout << "Client received (Server -> Client): " << str << std::endl;
 }
 /*
 void mtsComponentInterfaceProxyClient::ReceiveExecuteEventVoid(const CommandIDType commandId)
@@ -234,7 +241,9 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
 //-------------------------------------------------------------------------
 void mtsComponentInterfaceProxyClient::SendTestMessageFromClientToServer(const std::string & str) const
 {
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     this->IceLogger->trace("ComponentInterface: Client", ">>>>> SEND: SendMessageFromClientToServer");
+#endif
 
     ComponentInterfaceServerProxy->TestSendMessageFromClientToServer(str);
 }
@@ -434,11 +443,10 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
 
     while (Runnable) {
         osaSleep(1 * cmn_s);
-        std::cout << "Client Proxy [" << (unsigned long) this << "] Running..." << ++count << std::endl;
+        std::cout << "\tClient [" << ComponentInterfaceProxyClient->GetProxyName() << "] running (" << ++count << ")" << std::endl;
 
         std::stringstream ss;
-        ss << "Client: ";
-        ss << count;        
+        ss << "Msg " << count << " from Client " << ComponentInterfaceProxyClient->GetProxyName();
 
         ComponentInterfaceProxyClient->SendTestMessageFromClientToServer(ss.str());
     }
@@ -475,7 +483,9 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::TestSendMessageFromServerToClient(
     const std::string & str, const ::Ice::Current & current)
 {
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     Logger->trace("ComponentInterface: Client", "<<<<< RECV: TestSendMessageFromServerToClient");
+#endif
 
     ComponentInterfaceProxyClient->TestReceiveMessageFromServerToClient(str);
 }

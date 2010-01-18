@@ -54,7 +54,7 @@ public:
     typedef std::string ClientIDType;
 
     /*! Start server proxy */
-    virtual void Start(_proxyOwner * proxyOwner) = 0;
+    virtual bool Start(_proxyOwner * proxyOwner) = 0;
 
     /*! Terminate proxy. */
     virtual void Stop(void)
@@ -192,15 +192,22 @@ protected:
 
     /*! When a client proxy is connected to this server proxy, add it to client 
         proxy map with a key of connection id */
-    bool AddProxyClient(const ConnectionIDType & connectionID, ClientProxyType & clientProxy) {
+    bool AddProxyClient(const ClientIDType & clientID, const ConnectionIDType & connectionID, ClientProxyType & clientProxy) {
+        // Check the uniqueness of clientID
+        if (FindProxyClientByClientID(clientID)) {
+            this->IceLogger->trace("WARNING: duplicate client id", clientID);
+            return false;
+        }
+        // Check the uniqueness of connectionID
         if (FindProxyClientByConnectionID(connectionID)) {
             this->IceLogger->trace("WARNING: duplicate connection id", connectionID);
             return false;
         }
 
         ClientProxyMap.insert(make_pair(connectionID, clientProxy));
+        ConnectionIDMap.insert(make_pair(clientID, connectionID));
 
-        return (GetProxyClientByConnectionID(connectionID) != NULL);
+        return (FindProxyClientByClientID(clientID) && FindProxyClientByConnectionID(connectionID));
     }
 
     ClientProxyType GetProxyClientByConnectionID(const ConnectionIDType & connectionID) const {
@@ -226,6 +233,10 @@ protected:
 
     bool FindProxyClientByConnectionID(const ConnectionIDType & connectionID) const {
         return (ClientProxyMap.find(connectionID) != ClientProxyMap.end());
+    }
+
+    bool FindProxyClientByClientID(const ClientIDType & clientID) const {
+        return (ConnectionIDMap.find(clientID) != ConnectionIDMap.end());
     }
 
 public:
