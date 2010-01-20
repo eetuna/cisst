@@ -42,6 +42,11 @@ http://www.cisst.org/cisst/license.txt.
     import_array() // numpy initialization
 %}
 
+%header %{
+    // Put header files here
+    #include "cisstMultiTask/cisstMultiTask.i.h"
+%}
+
 // use class type to create the correct Python type
 %apply cmnGenericObject * {mtsGenericObject *};
 
@@ -50,11 +55,6 @@ http://www.cisst.org/cisst/license.txt.
 %include "cisstOSAbstraction/osaTimeServer.h"
 
 %template(mtsStringVector) std::vector<std::string>;
-
-%header %{
-    // Put header files here
-    #include "cisstMultiTask/cisstMultiTask.i.h"
-%}
 
 // Generate parameter documentation for IRE
 %feature("autodoc", "1");
@@ -214,11 +214,16 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 %include "cisstMultiTask/mtsCollectorState.h"
 
 // Wrap base class
+CMN_REWRITE_ACCESSOR(mtsGenericObject, Valid, bool);
+CMN_REWRITE_ACCESSOR(mtsGenericObject, AutomaticTimestamp, bool);
+CMN_REWRITE_ACCESSOR(mtsGenericObject, Timestamp, double);
 %include "cisstMultiTask/mtsGenericObject.h"
 
 // Wrap some basic types
 %include "cisstMultiTask/mtsGenericObjectProxy.h"
 %define MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(name, elementType)
+    // ignore the operator &
+    %ignore mtsGenericObjectProxy<elementType>::operator value_type&;
     // Instantiate the template
     %template(name) mtsGenericObjectProxy<elementType>;
     // Type addition for dynamic type checking
@@ -244,20 +249,24 @@ MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsStdString, std::string);
 
 // define macro
 %define MTS_INSTANTIATE_VECTOR(name, elementType)
-%template(name) mtsVector<elementType>;
-%{
+    // suppress warning about base class not known
+    %warnfilter(401) mtsVector<elementType>;
+    // force instantiation and define name for SWIG
+    %template(name) mtsVector<elementType>;
+    %{
+         typedef mtsVector<elementType> name;
+    %}
     typedef mtsVector<elementType> name;
-%}
-typedef mtsVector<elementType> name;
-%types(name *);
-%extend mtsVector<elementType>{
-    inline VectorType & Data(void) {
-        return *self;
-    }
-    inline const VectorType & Data(void) const {
-        return *self;
-    }
-}
+    %types(name *);
+    // add two methods to retrieve the vector
+    %extend mtsVector<elementType>{
+        inline VectorType & Data(void) {
+            return *self;
+        }
+        inline const VectorType & Data(void) const {
+            return *self;
+        }
+   }
 %enddef
 
 // instantiate for types also instantiated in cisstVector wrappers
@@ -271,20 +280,24 @@ MTS_INSTANTIATE_VECTOR(mtsLongVec, long);
 
 // define macro
 %define MTS_INSTANTIATE_MATRIX(name, elementType)
-%template(name) mtsMatrix<elementType>;
-%{
+    // suppress warning about base class not known
+    %warnfilter(401) mtsMatrix<elementType>;
+    // force instantiation and define name for SWIG
+    %template(name) mtsMatrix<elementType>;
+    %{
+        typedef mtsMatrix<elementType> name;
+    %}
     typedef mtsMatrix<elementType> name;
-%}
-typedef mtsMatrix<elementType> name;
-%types(name *);
-%extend mtsMatrix<elementType>{
-    inline MatrixType & Data(void) {
-        return *self;
+    %types(name *);
+    // add two methods to retrieve the matrix
+    %extend mtsMatrix<elementType>{
+        inline MatrixType & Data(void) {
+            return *self;
+        }
+        inline const MatrixType & Data(void) const {
+            return *self;
+        }
     }
-    inline const MatrixType & Data(void) const {
-        return *self;
-    }
-}
 %enddef
 
 // instantiate for types also instantiated in cisstVector wrappers

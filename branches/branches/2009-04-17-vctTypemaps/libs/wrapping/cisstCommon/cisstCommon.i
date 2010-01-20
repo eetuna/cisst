@@ -72,6 +72,24 @@ http://www.cisst.org/cisst/license.txt.
 
 %ignore CMN_LOG_DETAILS;
 
+
+// Macro used to redefine the accessors as defined by C macro
+// CMN_DECLARE_MEMBER_AND_ACCESSORS.  This macro should be used for
+// native types, not for types with existing typemaps for C references
+// such as cisstVector dynamic and fixed size vectors and matrices.
+%define CMN_REWRITE_ACCESSOR(class, member, type)
+    // ignore existing methods working on references
+    %ignore class::member;
+    %ignore class::Get##member(type &);
+    // extend the class, add a GetMember which returns by const reference
+    %extend class {
+        const type & Get##member(void) const {
+            return self->member();
+        }
+    }
+%enddef
+
+
 // Typemap used so that C++ pointers on cmnGenericObject base class
 // can be "casted" to the actual derived class in Python.  This is
 // useful for objects stored in cmnObjectRegister.  Without the
@@ -88,7 +106,7 @@ http://www.cisst.org/cisst/license.txt.
         } else {
             // fail, maybe a better fall back would be to return the base type, but this is really useless
             char buffer[256];
-            sprintf(buffer, "Sorry, can't create a python object of type %s",
+            sprintf(buffer, "cisstCommonPython.i: sorry, can't create a python object of type %s.  Make sure the python module which defines this type has been imported",
             className.c_str());
             PyErr_SetString(PyExc_TypeError, buffer);
             SWIG_fail;
@@ -148,14 +166,16 @@ http://www.cisst.org/cisst/license.txt.
 // Wrap some basic types
 %include "cisstCommon/cmnGenericObjectProxy.h"
 %define CMN_GENERIC_OBJECT_PROXY_INSTANTIATE(name, elementType)
-// Instantiate the template
-%template(name) cmnGenericObjectProxy<elementType>;
-// Type addition for dynamic type checking
-%{
+    // ignore the operator &
+    %ignore cmnGenericObjectProxy<elementType>::operator value_type&;
+    // Instantiate the template
+    %template(name) cmnGenericObjectProxy<elementType>;
+    // Type addition for dynamic type checking
+    %{
+        typedef cmnGenericObjectProxy<elementType> name;
+    %}
     typedef cmnGenericObjectProxy<elementType> name;
-%}
-typedef cmnGenericObjectProxy<elementType> name;
-%types(name *);
+    %types(name *);
 %enddef
 
 CMN_GENERIC_OBJECT_PROXY_INSTANTIATE(cmnDouble, double);
