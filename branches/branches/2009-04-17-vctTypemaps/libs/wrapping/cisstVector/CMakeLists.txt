@@ -21,7 +21,6 @@ PROJECT(cisstVectorWrapping)
 SET(cisstVector_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/cisstVector.i)
   
 IF(EXISTS ${cisstVector_INTERFACE})
-  INCLUDE_DIRECTORIES("C:/Python25/Lib/site-packages/numpy/core/include/numpy")
   # We are using C++ code
   SET_SOURCE_FILES_PROPERTIES(${cisstVector_INTERFACE} PROPERTIES CPLUSPLUS ON)
   # Make sure the runtime code is not included

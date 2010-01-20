@@ -7,7 +7,7 @@
 # Author(s):  Daniel Li, Anton Deguet
 # Created on: 2009-05-20
 #
-# (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -22,22 +22,22 @@
 import numpy
 
 # import all test classes
-from cisstVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_int
-from cisstVectorTypemapsTestPython import vctDynamicVectorTypemapsTest_double
+from cisstVectorPythonTestPython import vctDynamicVectorTypemapsTest_int
+from cisstVectorPythonTestPython import vctDynamicVectorTypemapsTest_double
 
-from cisstVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_int_4
-from cisstVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_uint_4
-from cisstVectorTypemapsTestPython import vctFixedSizeVectorTypemapsTest_double_4
+from cisstVectorPythonTestPython import vctFixedSizeVectorTypemapsTest_int_4
+from cisstVectorPythonTestPython import vctFixedSizeVectorTypemapsTest_uint_4
+from cisstVectorPythonTestPython import vctFixedSizeVectorTypemapsTest_double_4
 
-from cisstVectorTypemapsTestPython import vctDynamicMatrixTypemapsTest_int
-from cisstVectorTypemapsTestPython import vctDynamicMatrixTypemapsTest_double
+from cisstVectorPythonTestPython import vctDynamicMatrixTypemapsTest_int
+from cisstVectorPythonTestPython import vctDynamicMatrixTypemapsTest_double
 
-from cisstVectorTypemapsTestPython import vctFixedSizeMatrixTypemapsTest_int_4_4
-from cisstVectorTypemapsTestPython import vctFixedSizeMatrixTypemapsTest_uint_4_4
-from cisstVectorTypemapsTestPython import vctFixedSizeMatrixTypemapsTest_double_4_4
+from cisstVectorPythonTestPython import vctFixedSizeMatrixTypemapsTest_int_4_4
+from cisstVectorPythonTestPython import vctFixedSizeMatrixTypemapsTest_uint_4_4
+from cisstVectorPythonTestPython import vctFixedSizeMatrixTypemapsTest_double_4_4
 
-from cisstVectorTypemapsTestPython import vctDynamicNArrayTypemapsTest_int_4
-from cisstVectorTypemapsTestPython import vctDynamicNArrayTypemapsTest_double_4
+from cisstVectorPythonTestPython import vctDynamicNArrayTypemapsTest_int_4
+from cisstVectorPythonTestPython import vctDynamicNArrayTypemapsTest_double_4
 
 
 # define which types to use and their numpy/C++ test classes correspondences

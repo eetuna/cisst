@@ -21,7 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-%module cisstVectorTypemapsTestPython
+%module cisstVectorPythonTestPython
 
 %include "cisstVector/cisstVector.i"
 
