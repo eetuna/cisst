@@ -147,19 +147,16 @@ protected:
             Log(message); 
         }
         void trace(const ::std::string & category, const ::std::string & message) {
-            Log(category, message);
+            std::string s;
+            s += category;
+            s += message;
+            Log(s);
         }
         void warning(const ::std::string & message) {
             Log("##### WARNING: " + message);
         }
         void error(const ::std::string & message) {
             Log("##### ERROR: " + message);
-        }
-
-        void Log(const std::string & className, const std::string & description) {
-            std::string log = className + ": ";
-            log += description;
-            Log(log);
         }
 
     protected:
@@ -349,5 +346,26 @@ public:
     inline static unsigned int GetBasePortNumberForGlobalComponentManager() { return 10705; }
     inline static unsigned int GetBasePortNumberForLocalComponentManager() { return 11705; }
 };
+
+#define LogPrint(_className, _logStream)\
+        std::stringstream ss;\
+        ss << #_className;\
+        ss << _logStream << std::endl;\
+        std::string s = ss.str();\
+        IceLogger->print(s);
+
+#define LogWarning(_className, _logStream)\
+        std::stringstream ss;\
+        ss << #_className;\
+        ss << _logStream << std::endl;\
+        std::string s = ss.str();\
+        IceLogger->warning(s);
+
+#define LogError(_className, _logStream)\
+        std::stringstream ss;\
+        ss << #_className;\
+        ss << _logStream << std::endl;\
+        std::string s = ss.str();\
+        IceLogger->error(s);
 
 #endif // _mtsProxyBaseCommon_h

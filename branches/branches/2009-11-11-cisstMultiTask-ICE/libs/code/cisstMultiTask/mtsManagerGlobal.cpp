@@ -1042,7 +1042,7 @@ bool mtsManagerGlobal::InitiateConnect(const unsigned int connectionID,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }
 
-bool mtsManagerGlobal::ConnectServerSideInterface(
+bool mtsManagerGlobal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
@@ -1053,7 +1053,7 @@ bool mtsManagerGlobal::ConnectServerSideInterface(
         return false;
     }
 
-    return localManagerServer->ConnectServerSideInterface(
+    return localManagerServer->ConnectServerSideInterface(providedInterfaceProxyInstanceId,
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }

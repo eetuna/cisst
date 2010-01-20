@@ -185,8 +185,10 @@ public:
     /*! Make a server process connect components. Internally, a required 
         interface network proxy (of type mtsComponentInterfaceProxyClient)
         is created, run, and connects to a provided interface network proxy
-        (of type mtsComponentInterfaceProxyServer). */
-    virtual bool ConnectServerSideInterface(
+        (of type mtsComponentInterfaceProxyServer). 
+        providedInterfaceProxyInstanceId is used by a network proxy server
+        to map it to get a network proxy client correctly. */
+    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 };

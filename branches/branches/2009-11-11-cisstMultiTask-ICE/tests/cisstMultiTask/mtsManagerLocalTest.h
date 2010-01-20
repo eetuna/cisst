@@ -36,7 +36,9 @@ private:
         CPPUNIT_TEST(TestAddComponent);
         CPPUNIT_TEST(TestRemoveComponent);
         CPPUNIT_TEST(TestGetComponent);
+
         CPPUNIT_TEST(TestConnectDisconnect);
+
         //CPPUNIT_TEST(TestCreateAll);
         //CPPUNIT_TEST(TestStartAll);
         //CPPUNIT_TEST(TestKillAll);

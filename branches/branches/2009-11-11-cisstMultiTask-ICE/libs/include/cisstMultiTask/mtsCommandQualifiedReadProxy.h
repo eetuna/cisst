@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-04-29
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandQualifiedReadProxy_h
 
 #include <cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h>
-#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsCommandProxyBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 
 /*!
@@ -41,86 +41,68 @@ http://www.cisst.org/cisst/license.txt.
   is sent to the server task over networks with two payloads. 
   The provided interface proxy manages this process.
 */
-class mtsCommandQualifiedReadProxy: public mtsCommandQualifiedReadBase {
-
-    friend class mtsDeviceProxy;
-
-public:
-    typedef mtsCommandQualifiedReadBase BaseType;
+class mtsCommandQualifiedReadProxy : public mtsCommandQualifiedReadBase, public mtsCommandProxyBase
+{
+    friend class mtsComponentProxy;
 
 protected:
-    /*! CommandId is set as a pointer to a mtsFunctionQualifiedRead at peer's
-        memory space which binds to an actual write command. */
-    CommandIDType CommandId;
+    /*! Per-command serializer and deserializer */
+    mtsProxySerializer Serializer;
 
     /*! Argument prototypes. Deserialization recovers the original argument
         prototype objects. */
     mtsGenericObject *Argument1Prototype, *Argument2Prototype;
 
-    /*! Device interface proxy objects which execute a command at 
-        peer's memory space across networks. */
-    //mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
-
-    /*! Per-command serializer and deserializer */
-    mtsProxySerializer Serializer;
-
 public:
-    mtsCommandQualifiedReadProxy(const CommandIDType commandId, 
-                                 mtsComponentInterfaceProxyClient * providedInterfaceProxy):
-        BaseType(),
-        CommandId(commandId),
-        Argument1Prototype(NULL),
-        Argument2Prototype(NULL)
-        //ProvidedInterfaceProxy(providedInterfaceProxy)
-    {}
-
-    mtsCommandQualifiedReadProxy(const CommandIDType commandId,
-                                 mtsComponentInterfaceProxyClient * providedInterfaceProxy,
-                                 const std::string & name):
-        BaseType(name),
-        CommandId(commandId),
-        Argument1Prototype(NULL),
-        Argument2Prototype(NULL)
-        //ProvidedInterfaceProxy(providedInterfaceProxy)
-    {}
+    /*! Typedef for base type */
+    typedef mtsCommandQualifiedReadBase BaseType;
+    
+    mtsCommandQualifiedReadProxy(const std::string & commandName) : BaseType(commandName)
+    {
+        // Command proxy is disabled by default (enabled when command id and
+        // network proxy are set).
+        Disable();
+    }
 
     /*! The destructor. Does nothing */
     virtual ~mtsCommandQualifiedReadProxy() 
-    {}
-
-    /*! Update CommandId. */
-    void SetCommandId(const CommandIDType & newCommandId) {
-        CommandId = newCommandId;
-
-        //ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer);
-
-        // MJUNG: Currently, there are only two types of events: eventVoid, eventWrite.
-        // Thus, we don't need to modify the mtsCommandReadProxy or 
-        // the mtsCommandQualifiedReadProxy class such that it can support events.
-        // In the future, however, if the design is extended such that event types such 
-        // as eventRead or eventQualifiedRead are introduced, we should update here as
-        // well.
-    }
-
-public:
-    /*! The execute method. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1,
-                                               mtsGenericObject & argument2) 
     {
-        if (this->IsEnabled()) {
-            //CMN_ASSERT(ProvidedInterfaceProxy);
-            //ProvidedInterfaceProxy->SendExecuteCommandQualifiedReadSerialized(
-            //    CommandId, argument1, argument2);
-            return mtsCommandBase::DEV_OK;
-        }
-        return mtsCommandBase::DISABLED;
+        //
+        // TODO: Don't need to release these???
+        //
+        //if (this->ArgumentPrototype) {
+        //    delete this->ArgumentPrototype;
+        //}
     }
 
-    /*! For debugging. Generate a human readable output for the
-      command object */
+    /*! Set command id */
+    virtual void SetCommandId(const CommandIDType & commandId) {
+        mtsCommandProxyBase::SetCommandId(commandId);
+        //
+        // TODO: What's this???
+        //
+        //NetworkProxyServer->AddPerCommandSerializer(CommandId, &Serializer);
+    }
+
+    /*! The execute method. */
+    mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1, mtsGenericObject & argument2) {
+        if (this->IsDisabled()) mtsCommandBase::DISABLED;
+
+        //NetworkProxyServer->SendExecuteCommandQualifiedReadSerialized(
+        //    CommandId, argument1, argument2);
+
+        return mtsCommandBase::DEV_OK;
+    }
+
+    /*! Generate human readable description of this object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandQualifiedReadProxy: " << Name << ", " << CommandId << std::endl;
-        outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
+        outputStream << "mtsCommandWriteProxy: " << Name << ", " << CommandId << " with ";
+        if (NetworkProxyServer) {
+            outputStream << NetworkProxyServer->ClassServices()->GetName();
+        } else {
+            outputStream << NetworkProxyClient->ClassServices()->GetName();
+        }
+        outputStream << ": currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 
     /*! Set argument prototypes */

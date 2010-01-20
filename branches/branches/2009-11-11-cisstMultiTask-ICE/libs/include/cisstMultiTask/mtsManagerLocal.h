@@ -149,12 +149,14 @@ protected:
 
     /*! Connect two local components (interfaces). Note that this method assumes 
         that two components are in the same process.
-        If connectionSessionID is -1 (default value), this local component manager
-        should inform the global task manager of the successful local connection.
+        Returns provided interface proxy instance id, 
+                      if server component is a proxy component
+                zero, if server component is an original component
+                -1,   if error occurs
         */
-    bool ConnectLocally(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+    int ConnectLocally(
+        const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Methods required by mtsManagerLocalInterface
@@ -329,39 +331,27 @@ public:
 #if CISST_MTS_HAS_ICE
 public:
     /*! Check if a component is a proxy object based on a component name */
-    inline const bool IsProxyComponent(const std::string & componentName) {
+    const bool IsProxyComponent(const std::string & componentName) const {
         const std::string proxyStr = "Proxy";
         size_t found = componentName.find(proxyStr);
         return found != std::string::npos;
     }
 
     /*! Return IP address of this machine. */
-    std::string GetIPAddress() const { return ProcessIP; }
+    inline std::string GetIPAddress() const { return ProcessIP; }
 
     bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const std::string & endpointInfo, const std::string & communicatorID);
 
-    bool ConnectServerSideInterface(
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
-
-    //
-    // TODO: Double check the following comments
-    //
-    /*! Fetch event generator proxy pointers from the connected provided interface.
-        requiredInterfaceProxyUID is a name of the proxy connected to the interface. */
-    bool FetchEventGeneratorProxyPointersFrom(const std::string & requiredInterfaceProxyUID);
-
-    /*! Fetch function proxy pointers from the connected required interface.
-        providedInterfaceProxyUID is a name of the proxy connected to the interface. */
-    bool FetchFunctionProxyPointersFrom(const std::string & providedInterfaceProxyUID);
-
 #endif
 };
 

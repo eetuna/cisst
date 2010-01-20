@@ -74,26 +74,57 @@ protected:
     /*! Resource clean-up when a client disconnects or is disconnected.
         TODO: add session
         TODO: add resource clean up
-        TODO: review/add safe termination  */
+        TODconnectionID,O: review/add safe termination  */
     void OnClose();
 
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
 
+    /*! Get a network proxy client object using clientID. If no network proxy 
+        client with the clientID didn't connect or the proxy is not active,
+        this method returns NULL. */
+    ComponentInterfaceClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
+
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)
     //-------------------------------------------------------------------------
-    void TestReceiveMessageFromClientToServer(const std::string & str) const;
+    void ReceiveTestMessageFromClientToServer(const ConnectionIDType &connectionID, const std::string & str);
 
     /*! When a new client connects, add it to the client management list. */
-    bool ReceiveAddClient(const std::string & connectingProxyName, 
-        const ConnectionIDType & connectionID, ComponentInterfaceClientProxyType & clientProxy);
+    bool ReceiveAddClient(const ConnectionIDType & connectionID, 
+                          const std::string & connectingProxyName, 
+                          const unsigned int providedInterfaceProxyInstanceId, 
+                          ComponentInterfaceClientProxyType & clientProxy);
+
+    bool ReceiveFetchEventGeneratorProxyPointers(const ConnectionIDType & connectionID, 
+                                                 const std::string & clientComponentName, 
+                                                 const std::string & requiredInterfaceName,
+                                                 mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers);
 
     //-------------------------------------------------------------------------
-    //  Event Generators (Event Sender) : Client -> Server
+    //  Event Generators (Event Sender) : Server -> Client
     //-------------------------------------------------------------------------
 public:
+    /*! Test method: broadcast string to all clients connected */
     void SendTestMessageFromServerToClient(const std::string & str);
+
+    /*! Fetch function proxy pointers from the connected required interface 
+        proxy at server process. */
+    bool SendFetchFunctionProxyPointers(
+        const ClientIDType clientID, const std::string & requiredInterfaceName, 
+        mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers);
+
+    /*! Execute commands. This will call function proxies in the required 
+        interface proxy at server process. 
+        clientID designates which network proxy client should execute a command 
+        and commandID represents which function proxy object should be called. */
+    bool SendExecuteCommandVoid(const ClientIDType clientID, const CommandIDType commandID);
+
+    void SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument);
+
+    void SendExecuteCommandReadSerialized(const ClientIDType clientID, const CommandIDType commandID, mtsGenericObject & argument);
+
+    void SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument1, mtsGenericObject & argument2);
 
     ////-------------------------------------------------------------------------
     ////  Methods to Process Events
@@ -142,7 +173,7 @@ protected:
         /*! Ice objects */
         Ice::CommunicatorPtr Communicator;
         IceUtil::ThreadPtr SenderThreadPtr;
-        Ice::LoggerPtr Logger;
+        Ice::LoggerPtr IceLogger;
 
         // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
         /*! True if ICE proxy is running */
@@ -165,10 +196,15 @@ protected:
         //  Event Handlers (Client -> Server)
         //---------------------------------------
         /*! Add a client proxy. Called when a proxy client connects to server proxy. */
-        bool AddClient(const std::string&, const Ice::Identity&, const Ice::Current&);
+        bool AddClient(const std::string&, ::Ice::Int, const Ice::Identity&, const Ice::Current&);
 
         /*! Shutdown this session; prepare shutdown for safe and clean termination. */
         void Shutdown(const ::Ice::Current&);
+
+        bool FetchEventGeneratorProxyPointers(
+            const std::string & clientComponentName, const std::string & requiredInterfaceName,
+            mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers,
+            const ::Ice::Current & current) const;
 
         //void UpdateTaskManager(const mtsComponentInterfaceProxy::TaskList&, const Ice::Current&);
         //bool AddProvidedInterface(const mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo&, const Ice::Current&);

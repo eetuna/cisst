@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-04-29
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -29,18 +29,20 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandWriteProxy_h
 
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
-#include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
-#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsCommandProxyBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 
 /*!
   \ingroup cisstMultiTask
 
   mtsCommandWriteProxy is a proxy class for mtsCommandWrite. This class contains
-  CommandId of which value is a function pointer of mtsFunctionWrite type.
-  When Execute() method is called, a CommandId value with payload is sent to the 
-  connected server task across a network.
+  CommandId of which value is set to a function pointer of type mtsFunctionWrite.
+  When Execute() method is called, the command id with payload is sent to the 
+  connected peer interface across a network.
 
+  //
+  // TODO: Rewrite the following comments
+  //
   Note that there are two different usages of this class: as a command or an event.
   If this class used as COMMANDS, an instance of mtsComponentInterfaceProxyClient 
   class should be provided and this is used to execute a write command at a server.
@@ -50,131 +52,74 @@ http://www.cisst.org/cisst/license.txt.
   Currently, only one of them can be initialized as a valid value while the other 
   has to be 0.
 */
-class mtsCommandWriteProxy: public mtsCommandWriteBase {
-
-    friend class mtsDeviceProxy;
+class mtsCommandWriteProxy : public mtsCommandWriteBase, public mtsCommandProxyBase 
+{
+    friend class mtsComponentProxy;
     friend class mtsMulticastCommandWriteBase;
     
-public:
-    typedef mtsCommandWriteBase BaseType;
-
 protected:
-    /*! CommandId is set as a pointer to a mtsFunctionWrite at peer's
-        memory space which binds to an actual write command. */
-    CommandIDType CommandId;
-
-    /*! Argument prototype. Deserialization recovers the original argument
-        prototype object. */
-    //mtsGenericObject * ArgumentPrototype;
-    
-    /*! Device interface proxy objects which execute a write command at 
-        peer's memory space across networks. */
-    mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
-    mtsComponentInterfaceProxyServer * RequiredInterfaceProxy;
-
     /*! Per-command serializer and deserializer */
     mtsProxySerializer Serializer;
 
 public:
-    /*! Initialization method */
-    void Initialize()
+    /*! Typedef for base type */
+    typedef mtsCommandWriteBase BaseType;
+
+    /*! Constructor */
+    mtsCommandWriteProxy(const std::string & commandName) : BaseType(commandName)
     {
-        this->ArgumentPrototype = 0;
+        // Command proxy is disabled by default (enabled when command id and
+        // network proxy are set).
+        Disable();
     }
 
-    /*! The constructors. */
-    mtsCommandWriteProxy(const CommandIDType commandId, 
-                         mtsComponentInterfaceProxyClient * providedInterfaceProxy) :
-        mtsCommandWriteBase(),
-        CommandId(commandId)
-        //ProvidedInterfaceProxy(providedInterfaceProxy),
-        //RequiredInterfaceProxy(0)
-    {
-        Initialize();
-    }
-
-    mtsCommandWriteProxy(const CommandIDType commandId, 
-                         mtsComponentInterfaceProxyServer * requiredInterfaceProxy) :
-        mtsCommandWriteBase(),
-        CommandId(commandId)
-        //ProvidedInterfaceProxy(0),
-        //RequiredInterfaceProxy(requiredInterfaceProxy)
-    {
-        Initialize();
-    }
-    
-    /*! The constructor with a name. */
-    mtsCommandWriteProxy(const CommandIDType commandId,
-                         mtsComponentInterfaceProxyClient * providedInterfaceProxy,
-                         const std::string & name) :
-        mtsCommandWriteBase(name),
-        CommandId(commandId)
-        //ProvidedInterfaceProxy(providedInterfaceProxy),
-        //RequiredInterfaceProxy(0)
-    {
-        Initialize();
-    }
-
-    mtsCommandWriteProxy(const CommandIDType commandId,
-                         mtsComponentInterfaceProxyServer * requiredInterfaceProxy,
-                         const std::string & name) :
-        mtsCommandWriteBase(name),
-        CommandId(commandId)
-        //ProvidedInterfaceProxy(0),
-        //RequiredInterfaceProxy(requiredInterfaceProxy)
-    {
-        Initialize();
-    }
-
-    /*! The destructor. */
-    virtual ~mtsCommandWriteProxy() {
+    /*! Destructor */
+    ~mtsCommandWriteProxy() {
         if (this->ArgumentPrototype) {
             delete this->ArgumentPrototype;
         }
     }
 
-    /*! Update CommandId. */
-    void SetCommandId(const CommandIDType & newCommandId) {
-        CommandId = newCommandId;
-
-        //if (ProvidedInterfaceProxy) {
-        //    CMN_ASSERT(ProvidedInterfaceProxy->AddPerCommandSerializer(CommandId, &Serializer));
-        //} else {
-        //    // Either ProvidedInterfaceProxy or RequiredInterfaceProxy should be valid.
-        //    CMN_ASSERT(RequiredInterfaceProxy);
-        //    CMN_ASSERT(RequiredInterfaceProxy->AddPerEventGeneratorSerializer(CommandId, &Serializer));
-        //}
-    }
-    
-public:    
-    /*! Direct execute can be used for mtsMulticastCommandWrite. */
-    inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
-        if (this->IsEnabled()) {
-            //if (ProvidedInterfaceProxy) {
-            //    ProvidedInterfaceProxy->SendExecuteCommandWriteSerialized(CommandId, argument);
-            //} else {
-            //    CMN_ASSERT(RequiredInterfaceProxy);
-            //    RequiredInterfaceProxy->SendExecuteEventWriteSerialized(CommandId, argument);
-            //}
+    /*! Set command id */
+    virtual void SetCommandId(const CommandIDType & commandId) {
+        mtsCommandProxyBase::SetCommandId(commandId);
+        //
+        // TODO: What's this???
+        //
+        if (NetworkProxyServer) {
+            //NetworkProxyServer->AddPerCommandSerializer(CommandId, &Serializer);
+        } else {
+            //NetworkProxyClient->AddPerEventGeneratorSerializer(CommandId, &Serializer);
         }
-        return mtsCommandBase::DISABLED;
-    }
-
-    /*! For debugging. Generate a human readable output for the
-      command object */
-    void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandWriteProxy: " << this->Name << ", " << CommandId << " with ";
-        //if (ProvidedInterfaceProxy) {
-        //    outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
-        //} else {
-        //    outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
-        //}
-        outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 
     /*! Set an argument prototype */
     void SetArgumentPrototype(mtsGenericObject * argumentPrototype) {
         this->ArgumentPrototype = argumentPrototype;
+    }
+
+    /*! Direct execute can be used for mtsMulticastCommandWrite. */
+    inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
+        if (this->IsDisabled()) mtsCommandBase::DISABLED;
+
+        if (NetworkProxyServer) {
+            //NetworkProxyServer->SendExecuteCommandWriteSerialized(CommandId, argument);
+        } else {
+            //NetworkProxyClient->SendExecuteEventWriteSerialized(CommandId, argument);
+        }
+
+        return mtsCommandBase::DEV_OK;
+    }
+
+    /*! Generate human readable description of this object */
+    void ToStream(std::ostream & outputStream) const {
+        outputStream << "mtsCommandWriteProxy: " << Name << ", " << CommandId << " with ";
+        if (NetworkProxyServer) {
+            outputStream << NetworkProxyServer->ClassServices()->GetName();
+        } else {
+            outputStream << NetworkProxyClient->ClassServices()->GetName();
+        }
+        outputStream << ": currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 };
 

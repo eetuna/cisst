@@ -89,7 +89,7 @@ public:
         connects two components, it makes the GCM call this method to connect 
         two local components of a server process. A required interface proxy
         client is also created and connects to a provided interface proxy server. */
-    virtual bool ConnectServerSideInterface(
+    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 

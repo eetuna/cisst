@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-12-07
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -591,8 +591,9 @@ bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std
         return false;
     }
 
-    return ConnectLocally(ProcessName, clientComponentName, clientRequiredInterfaceName, 
-                          ProcessName, serverComponentName, serverProvidedInterfaceName);
+    int ret = ConnectLocally(clientComponentName, clientRequiredInterfaceName, 
+                             serverComponentName, serverProvidedInterfaceName);
+    return (ret != -1);
 }
 
 bool mtsManagerLocal::Connect(
@@ -735,46 +736,77 @@ bool mtsManagerLocal::Connect(
     return true;
 }
 
-bool mtsManagerLocal::ConnectLocally(
-    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+int mtsManagerLocal::ConnectLocally(
+    const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     // At this point, it is guaranteed that all components and interfaces exist
     // in the same process because the global component manager has already 
     // checked and created proxy objects as needed.
     mtsComponent * clientComponent = GetComponent(clientComponentName);
     if (!clientComponent) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get client component: " << clientComponentName << std::endl;
-        return false;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: failed to get client component: " << clientComponentName << std::endl;
+        return -1;
     }
 
     mtsComponent * serverComponent = GetComponent(serverComponentName);
     if (!serverComponent) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get server component: " << serverComponentName << std::endl;
-        return false;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: failed to get server component: " << serverComponentName << std::endl;
+        return -1;
     }
 
     // Get the client component and the provided interface object.
     mtsProvidedInterface * serverProvidedInterface = serverComponent->GetProvidedInterface(serverProvidedInterfaceName);
     if (!serverProvidedInterface) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to find provided interface: " 
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: failed to find provided interface: " 
             << serverComponentName << ":" << serverProvidedInterface << std::endl;
-        return false;
+        return -1;
+    }
+
+    // If a server component is not an original component but a proxy, the server
+    // component should create a new instance of provided interface proxy and 
+    // clone command proxies from a provided interface proxy.
+    unsigned int providedInterfaceInstanceID = 0;
+    mtsProvidedInterface * providedInterfaceInstance = NULL;
+    const bool isServerComponentProxy = IsProxyComponent(serverComponentName);
+    if (isServerComponentProxy) {
+        mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
+        if (!serverComponentProxy) {
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: invalid type of server component: " << serverComponentName << std::endl;
+            return -1;
+        }
+
+        // Issue a new resource user id and clone command proxy objects
+        providedInterfaceInstance = serverComponentProxy->CreateProvidedInterfaceInstance(serverProvidedInterface, providedInterfaceInstanceID);
+        if (!providedInterfaceInstance) {
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: failed to create provided interface proxy instance: "
+                << clientComponentName << ":" << clientRequiredInterfaceName << std::endl;
+            return -1;
+        }
+
+        CMN_LOG_CLASS_RUN_VERBOSE << "ConnectLocally: "
+            << "created provided interface proxy instance: id = " << providedInterfaceInstanceID << std::endl;
+    }
+    
+    // if providedInterfaceInstance is NULL, this is local connection between
+    // two original interfaces.
+    if (!providedInterfaceInstance) {
+        providedInterfaceInstance = serverProvidedInterface;
     }
 
     // Connect two interfaces
-    if (!clientComponent->ConnectRequiredInterface(clientRequiredInterfaceName, serverProvidedInterface)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to connect interfaces: " 
+    if (!clientComponent->ConnectRequiredInterface(clientRequiredInterfaceName, providedInterfaceInstance)) {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: failed to connect interfaces: " 
             << clientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
-        return false;
+        return -1;
     }
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully connected: " 
+    CMN_LOG_CLASS_RUN_VERBOSE << "ConnectLocally: successfully connected: " 
             << clientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
 
-    return true;
+    return providedInterfaceInstanceID;
 }
 
 bool mtsManagerLocal::Disconnect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -1105,7 +1137,7 @@ bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(
         endpointInfo, communicatorID);
 }
 
-bool mtsManagerLocal::ConnectServerSideInterface(
+bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
@@ -1127,10 +1159,13 @@ bool mtsManagerLocal::ConnectServerSideInterface(
     std::string actualServerComponentName = serverComponentName;
 
     // Connect two local interfaces
-    if (!ConnectLocally(clientProcessName, actualClientComponentName, clientRequiredInterfaceName, 
-                        serverProcessName, actualServerComponentName, serverProvidedInterfaceName))
-    {
+    const int ret = ConnectLocally(actualClientComponentName, clientRequiredInterfaceName, 
+                                   actualServerComponentName, serverProvidedInterfaceName);
+    if (ret == -1) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: ConnectLocally() failed" << std::endl;
+        return false;
+    } else if (ret != 0) {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: ConnectLocally() failed: should return zero: " << ret << std::endl;
         return false;
     }
 
@@ -1187,7 +1222,8 @@ bool mtsManagerLocal::ConnectServerSideInterface(
 
     // Create and run required interface proxy client
     if (!UnitTestEnabled || (UnitTestEnabled && UnitTestNetworkProxyEnabled)) {
-        if (!clientComponentProxy->CreateInterfaceProxyClient(clientRequiredInterfaceName, serverEndpointInfo, communicatorID))
+        if (!clientComponentProxy->CreateInterfaceProxyClient(
+            clientRequiredInterfaceName, serverEndpointInfo, communicatorID, providedInterfaceProxyInstanceId))
         {
             CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to create interface proxy client"
                 << ": " << clientComponentProxy->GetName() << std::endl;
@@ -1219,6 +1255,24 @@ bool mtsManagerLocal::ConnectServerSideInterface(
             CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to connect to server proxy" << std::endl;
             goto ConnectServerSideInterfaceError;
         }
+
+        // Now it is guaranteed that two local connections--one at the server side
+        // and the other one at the client side--are successfully established.
+        // That is, event handler IDs can be updated.
+
+        // Update event handler ID: Set event handler IDs in a required interface 
+        // proxy at the server side as event generator IDs fetched from a provided
+        // interface proxy at the client side so that original event generators
+        // at the server process can invoke correspoding original event handlers
+        // at the client process across a network.
+
+        //
+        // TODO: implement this
+        //
+        //if (!clientComponentProxy->UpdateEventHandlerProxyID(clientRequiredInterfaceName)) {
+        //    CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to update event handler proxy id" << std::endl;
+        //    goto ConnectServerSideInterfaceError;
+        //}
     }
 
     return true;
@@ -1248,10 +1302,12 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     // Connect two local components. Internally, this sets [command/function/
     // event handlers/event generators] pointers of which values will be 
     // transferred to the peer process to set command IDs and event handler IDs.
-    if (!ConnectLocally(clientProcessName, actualClientComponentName, clientRequiredInterfaceName, 
-                        serverProcessName, actualServerComponentName, serverProvidedInterfaceName))
+    const int providedInterfaceProxyInstanceId =
+        ConnectLocally(actualClientComponentName, clientRequiredInterfaceName, 
+                       actualServerComponentName, serverProvidedInterfaceName);
+    if (providedInterfaceProxyInstanceId == -1)
     {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to connect two local components: "
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to connect two local components: "
             << clientProcessName << ":" << actualClientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverProcessName << ":" << actualServerComponentName << ":" << serverProvidedInterfaceName << std::endl;
         return false;
@@ -1260,19 +1316,19 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     // Get the components
     serverComponent = GetComponent(actualServerComponentName);
     if (!serverComponent) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to get server component: " << actualServerComponentName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to get server component: " << actualServerComponentName << std::endl;
         goto ConnectClientSideInterfaceError;
     }
     clientComponent = GetComponent(actualClientComponentName);
     if (!clientComponent) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to get client component: " << actualClientComponentName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to get client component: " << actualClientComponentName << std::endl;
         goto ConnectClientSideInterfaceError;
     }
 
     // Downcast to get server component proxy
     mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
     if (!serverComponentProxy) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Server component is not a proxy object: " << serverComponent->GetName() << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: server component is not a proxy object: " << serverComponent->GetName() << std::endl;
         goto ConnectClientSideInterfaceError;
     }
 
@@ -1284,11 +1340,11 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
             if (!serverComponentProxy->CreateInterfaceProxyServer(
                     serverProvidedInterfaceName, adapterName, endpointAccessInfo, communicatorId))
             {
-                CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to create interface proxy server: "
+                CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to create interface proxy server: "
                     << serverComponentProxy->GetName() << std::endl;
                 goto ConnectClientSideInterfaceError;
             }
-            CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Successfully created interface proxy server: "
+            CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully created interface proxy server: "
                 << serverComponentProxy->GetName() << std::endl;
         }
     }
@@ -1299,7 +1355,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
             serverProcessName, serverComponentName, serverProvidedInterfaceName,
             endpointAccessInfo, communicatorId))
         {
-            CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to fecth server proxy access information: "
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to fecth server proxy access information: "
                 << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
             goto ConnectClientSideInterfaceError;
         }
@@ -1313,23 +1369,45 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
             serverProcessName, serverComponentName, serverProvidedInterfaceName,
             endpointAccessInfo, communicatorId)) 
     {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to set server proxy access information: "
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to set server proxy access information: "
             << serverProvidedInterfaceName << ", " << endpointAccessInfo << std::endl;
         goto ConnectClientSideInterfaceError;
     }
-    CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Successfully set server proxy access information: "
+    CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully set server proxy access information: "
         << serverProvidedInterfaceName << ", " << endpointAccessInfo << std::endl;
 
     // Make the server process begin connection process via the GCM.
-    if (!ManagerGlobal->ConnectServerSideInterface(
+    if (!ManagerGlobal->ConnectServerSideInterface(providedInterfaceProxyInstanceId,
             clientProcessName, clientComponentName, clientRequiredInterfaceName,
             serverProcessName, serverComponentName, serverProvidedInterfaceName))
     {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: Failed to connect interfaces at server process" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to connect interfaces at server process" << std::endl;
         goto ConnectClientSideInterfaceError;
     }
-    CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Successfully connected server-side interfaces: "
+    CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully connected server-side interfaces: "
         << clientRequiredInterfaceName << " - " << serverProvidedInterfaceName << std::endl;
+
+    // Now it is guaranteed that two local connections--one at the server side
+    // and the other one at the client side--are successfully established.
+    // That is, command IDs and event handler IDs can be updated.
+
+    // Update command ID: Set command proxy IDs in a provided interface proxy at
+    // the client side as function IDs fetched from a required interface proxy at 
+    // the server side so that an original function object at the client process 
+    // can call an original command at the server process across networks.
+    if (!serverComponentProxy->UpdateCommandProxyID(serverProvidedInterfaceName, 
+                                                    clientComponentName, 
+                                                    clientRequiredInterfaceName, 
+                                                    (unsigned int) providedInterfaceProxyInstanceId))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to update command proxy id" << std::endl;
+        goto ConnectClientSideInterfaceError;
+    }
+
+    // Sleep for unit tests which include networking
+    if (UnitTestEnabled && UnitTestNetworkProxyEnabled) {
+        osaSleep(3);
+    }
 
     // Inform the GCM that the connection is successfully established and 
     // becomes active (network proxies are running now and an ICE client 
@@ -1340,33 +1418,14 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     }
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Informed global component manager of successful connection: " << connectionID << std::endl;
 
-    //
-    // TODO: Update command ID and event handler ID!!!
-    //
-
-    // Sleep for unit tests which include networking
-    if (UnitTestEnabled && UnitTestNetworkProxyEnabled) {
-        osaSleep(3);
-    }
-
     return true;
 
 ConnectClientSideInterfaceError:
     if (!Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
                     serverProcessName, serverComponentName, serverProvidedInterfaceName))
     {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: CLEAN-UP ERROR: Disconnect failed";
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: CLEAN-UP ERROR: Disconnect failed" << std::endl;
     }
 
-    return false;
-}
-
-bool mtsManagerLocal::FetchEventGeneratorProxyPointersFrom(const std::string & requiredInterfaceProxyUID)
-{
-    return false;
-}
-
-bool mtsManagerLocal::FetchFunctionProxyPointersFrom(const std::string & providedInterfaceProxyUID)
-{
     return false;
 }

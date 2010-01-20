@@ -167,6 +167,7 @@ if(CISST_MTS_HAS_ICE)
       #mtsDeviceInterfaceProxyServer.h
       #mtsTaskGlobal.h
       #mtsDeviceProxy.h
+      mtsCommandProxyBase.h
       mtsCommandVoidProxy.h
       mtsCommandWriteProxy.h
       mtsCommandReadProxy.h

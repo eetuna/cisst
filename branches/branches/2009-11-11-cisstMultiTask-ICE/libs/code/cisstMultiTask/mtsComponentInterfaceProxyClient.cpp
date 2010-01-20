@@ -20,34 +20,22 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
 
 #include <cisstOSAbstraction/osaSleep.h>
 
-//#include <cisstMultiTask/mtsTaskManager.h>
-//#include <cisstMultiTask/mtsCommandVoidProxy.h>
-//#include <cisstMultiTask/mtsCommandWriteProxy.h>
-//#include <cisstMultiTask/mtsCommandReadProxy.h>
-//#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
-//#include <cisstMultiTask/mtsRequiredInterface.h>
-//#include <cisstMultiTask/mtsDeviceProxy.h>
-//#include <cisstMultiTask/mtsTask.h>
-
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 
-//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-
-#define ComponentInterfaceProxyClientLogger(_log) IceLogger->trace("mtsComponentInterfaceProxyClient", _log)
-#define ComponentInterfaceProxyClientLoggerError(_log1, _log2) {\
-        std::string s("mtsComponentInterfaceProxyClient: ");\
-        s += _log1; s+= _log2;\
-        IceLogger->error(s); }
+#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
 
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
 //-----------------------------------------------------------------------------
 mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
-    const std::string & serverEndpointInfo, const std::string & communicatorID)
-    : BaseClientType(serverEndpointInfo, communicatorID)
+    const std::string & serverEndpointInfo, const std::string & communicatorID,
+    const unsigned int providedInterfaceProxyInstanceId)
+    : BaseClientType(serverEndpointInfo, communicatorID),
+      ProvidedInterfaceProxyInstanceId(providedInterfaceProxyInstanceId)
 {
 }
 
@@ -64,7 +52,7 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     IceInitialize();
 
     if (!InitSuccessFlag) {
-        ComponentInterfaceProxyClientLogger("ICE proxy initialization failed");
+        LogError(mtsComponentInterfaceProxyClient, "ICE proxy initialization failed");
         return false;
     }
 
@@ -80,12 +68,19 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     adapter->activate();
     ComponentInterfaceServerProxy->ice_getConnection()->setAdapter(adapter);
 
+    //
+    // TODO: we can use a provided interface proxy instance id instead of an implicit context key.
+    //
+    // Set an implicit context (per proxy context)
+    // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
+    IceCommunicator->getImplicitContext()->put(ConnectionIDKey, IceCommunicator->identityToString(ident));
+
     // Set the owner of this proxy object
     this->SetProxyOwner(proxyOwner);
 
     // Connect to server proxy through adding this ICE proxy to server proxy
-    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), ident)) {
-        ComponentInterfaceProxyClientLogger("AddClient() failed: duplicate proxy name or identity");
+    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) ProvidedInterfaceProxyInstanceId, ident)) {
+        LogError(mtsComponentInterfaceProxyClient, "AddClient() failed: duplicate proxy name or identity");
         return false;
     }
 
@@ -149,7 +144,7 @@ void mtsComponentInterfaceProxyClient::Runner(ThreadArguments<mtsComponentProxy>
 
 void mtsComponentInterfaceProxyClient::Stop()
 {
-    ComponentInterfaceProxyClientLogger("ComponentInterfaceProxy client ends.");
+    LogPrint(mtsComponentInterfaceProxyClient, "ComponentInterfaceProxy client ends.");
 
     // Let a server disconnect this client safely.
     // TODO: gcc says this doesn't exist???
@@ -205,6 +200,43 @@ void mtsComponentInterfaceProxyClient::TestReceiveMessageFromServerToClient(cons
 {
     std::cout << "Client received (Server -> Client): " << str << std::endl;
 }
+
+bool mtsComponentInterfaceProxyClient::ReceiveFetchFunctionProxyPointers(
+    const std::string & requiredInterfaceName, mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers) const
+{
+    // Get proxy owner object (of type mtsComponentProxy)
+    mtsComponentProxy * proxyOwner = this->ProxyOwner;
+    if (!proxyOwner) {
+        LogError(mtsComponentInterfaceProxyClient, "invalid proxy owner");
+        return false;
+    }
+
+    return proxyOwner->GetFunctionProxyPointers(requiredInterfaceName, functionProxyPointers);
+}
+
+void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandVoid(const CommandIDType commandID)
+{
+    mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandID);
+    if (!functionVoid) {
+        LogError(mtsComponentInterfaceProxyClient, "invalid function proxy id: " << commandID);
+        return;
+    }
+
+    (*functionVoid)();
+}
+
+void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument)
+{
+}
+
+void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandReadSerialized(const CommandIDType commandID, std::string & serializedArgument)
+{
+}
+
+void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandQualifiedReadSerialized(const CommandIDType commandID, const std::string & serializedArgumentIn, std::string & serializedArgumentOut)
+{
+}
+
 /*
 void mtsComponentInterfaceProxyClient::ReceiveExecuteEventVoid(const CommandIDType commandId)
 {
@@ -242,12 +274,23 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
 void mtsComponentInterfaceProxyClient::SendTestMessageFromClientToServer(const std::string & str) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    this->IceLogger->trace("ComponentInterface: Client", ">>>>> SEND: SendMessageFromClientToServer");
+    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: MessageFromClientToServer");
 #endif
 
     ComponentInterfaceServerProxy->TestSendMessageFromClientToServer(str);
 }
 
+bool mtsComponentInterfaceProxyClient::SendFetchEventGeneratorProxyPointers(
+    const std::string & clientComponentName, const std::string & requiredInterfaceName,
+    mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: FetchEventGeneratorProxyPointers");
+#endif
+
+    return ComponentInterfaceServerProxy->FetchEventGeneratorProxyPointers(
+        clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
+}
 /*
 //-------------------------------------------------------------------------
 //  Methods to Send Events
@@ -418,7 +461,7 @@ mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ComponentInterfaceC
     mtsComponentInterfaceProxyClient * componentInterfaceClient)
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ComponentInterfaceClientIPtr>(this)),
-      Logger(logger),
+      IceLogger(logger),
       Runnable(true), 
       ComponentInterfaceProxyClient(componentInterfaceClient),
       Server(server)
@@ -478,43 +521,50 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
 }
 
 //-----------------------------------------------------------------------------
-//  Network Event Handlers
+//  Network Event handlers (Server -> Client)
 //-----------------------------------------------------------------------------
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::TestSendMessageFromServerToClient(
     const std::string & str, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    Logger->trace("ComponentInterface: Client", "<<<<< RECV: TestSendMessageFromServerToClient");
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: TestSendMessageFromServerToClient");
 #endif
 
     ComponentInterfaceProxyClient->TestReceiveMessageFromServerToClient(str);
 }
-//bool mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::GetListsOfEventGeneratorsRegistered(
-//    const std::string & serverTaskProxyName,
-//    const std::string & clientTaskName,
-//    const std::string & requiredInterfaceName,
-//    mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies,
-//    const ::Ice::Current&) const
-//{
-//    IceLogger->trace("TIClient", "<<<<< RECV: GetListsOfEventGeneratorsRegistered");
-//
-//    return ComponentInterfaceClient->ReceiveGetListsOfEventGeneratorsRegistered(
-//        serverTaskProxyName, clientTaskName, 
-//        requiredInterfaceName, eventGeneratorProxies);
-//}
 
-//void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteEventVoid(
-//    IceCommandIDType commandId, const ::Ice::Current&)
-//{
-//    Logger->trace("TIClient", "<<<<< RECV: ExecuteEventVoid");
-//
-//    ComponentInterfaceClient->ReceiveExecuteEventVoid(commandId);
-//}
-//
-//void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteEventWriteSerialized(
-//    IceCommandIDType commandId, const ::std::string& argument, const ::Ice::Current&)
-//{
-//    Logger->trace("TIClient", "<<<<< RECV: ExecuteEventWriteSerialized");
-//
-//    ComponentInterfaceClient->ReceiveExecuteEventWriteSerialized(commandId, argument);
-//}
+bool mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::FetchFunctionProxyPointers(
+    const std::string & requiredInterfaceName, mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers, 
+    const ::Ice::Current & current) const
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: FetchFunctionProxyPointers: " << requiredInterfaceName);
+#endif
+
+    return ComponentInterfaceProxyClient->ReceiveFetchFunctionProxyPointers(requiredInterfaceName, functionProxyPointers);
+}
+
+void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandVoid(
+    ::Ice::Long commandID, const ::Ice::Current & current)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandVoid: " << commandID);
+#endif
+
+    ComponentInterfaceProxyClient->ReceiveExecuteCommandVoid(commandID);
+}
+
+void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandWriteSerialized(
+    ::Ice::Long commandID, const ::std::string & argument, const ::Ice::Current & current)
+{
+}
+
+void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandReadSerialized(
+    ::Ice::Long commandID, ::std::string & argument, const ::Ice::Current & current)
+{
+}
+
+void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandQualifiedReadSerialized(
+    ::Ice::Long commandID, const ::std::string & argumentIn, ::std::string & argumentOut, const ::Ice::Current & current)
+{
+}

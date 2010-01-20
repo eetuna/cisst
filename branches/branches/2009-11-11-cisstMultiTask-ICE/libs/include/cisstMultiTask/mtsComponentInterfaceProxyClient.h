@@ -37,7 +37,8 @@ class CISST_EXPORT mtsComponentInterfaceProxyClient : public mtsProxyBaseClient<
 
 public:
     mtsComponentInterfaceProxyClient(
-        const std::string & serverEndpointInfo, const std::string & communicatorID);
+        const std::string & serverEndpointInfo, const std::string & communicatorID,
+        const unsigned int providedInterfaceProxyInstanceId);
     ~mtsComponentInterfaceProxyClient();
 
     /*! Entry point to run a proxy. */
@@ -58,6 +59,13 @@ protected:
     class ComponentInterfaceClientI;
     typedef IceUtil::Handle<ComponentInterfaceClientI> ComponentInterfaceClientIPtr;
     ComponentInterfaceClientIPtr Sender;
+
+    /*! Provided interface proxy instance id that this network proxy client is
+        connected to. When a network proxy server sends a message to a network
+        proxy client, this information is used to determine with which the server
+        should communicate. (Note that a provided interface proxy should be able
+        to handle multiple required interface proxies) */
+    const unsigned int ProvidedInterfaceProxyInstanceId;
 
     /*! Typedef for per-command proxy serializer. */
     //typedef std::map<CommandIDType, mtsProxySerializer *> PerCommandSerializerMapType;
@@ -101,6 +109,21 @@ protected:
     //  Event Handlers : Server -> Client
     //-------------------------------------------------------------------------
     void TestReceiveMessageFromServerToClient(const std::string & str) const;
+
+    /*! Fetch pointers of function proxies from a required interface proxy at 
+        server side */
+    bool ReceiveFetchFunctionProxyPointers(const std::string & requiredInterfaceName,
+        mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers) const;
+
+    /*! Execute commands by callling function proxy objects. */
+    void ReceiveExecuteCommandVoid(const CommandIDType commandID);
+
+    void ReceiveExecuteCommandWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument);
+
+    void ReceiveExecuteCommandReadSerialized(const CommandIDType commandID, std::string & serializedArgument);
+
+    void ReceiveExecuteCommandQualifiedReadSerialized(const CommandIDType commandID, const std::string & serializedArgumentIn, std::string & serializedArgumentOut);
+
     //void ReceiveExecuteEventVoid(const CommandIDType commandId);
     //void ReceiveExecuteEventWriteSerialized(const CommandIDType commandId, const std::string argument);
 
@@ -109,6 +132,12 @@ protected:
     //-------------------------------------------------------------------------
 public:
     void SendTestMessageFromClientToServer(const std::string & str) const;
+
+    /*! Fetch pointers of event generator proxies from a provided interface 
+        proxy at server side */
+    bool SendFetchEventGeneratorProxyPointers(
+        const std::string & clientComponentName, const std::string & requiredInterfaceName,
+        mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers);
 
     //bool SendGetProvidedInterfaceInfo(
     //    const std::string & providedInterfaceName,
@@ -148,7 +177,7 @@ protected:
         /*! Ice objects */
         Ice::CommunicatorPtr Communicator;
         IceUtil::ThreadPtr SenderThreadPtr;
-        Ice::LoggerPtr Logger;
+        Ice::LoggerPtr IceLogger;
 
         // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
         /*! True if ICE proxy is running */
@@ -171,14 +200,23 @@ protected:
         void Run();
         void Stop();
 
-        //---------------------------------------
-        // Event handlers (Server -> Client)
-        //---------------------------------------
+        //-------------------------------------------------
+        //  Network Event handlers (Server -> Client)
+        //-------------------------------------------------
         //void ExecuteEventVoid(IceCommandIDType, const ::Ice::Current&);
         //void ExecuteEventWriteSerialized(IceCommandIDType, const ::std::string&, const ::Ice::Current&);
-
-        // 
         void TestSendMessageFromServerToClient(const std::string & str, const ::Ice::Current & current);
+
+        bool FetchFunctionProxyPointers(const std::string &, mtsComponentInterfaceProxy::FunctionProxyPointerSet &, const ::Ice::Current & current) const;
+
+        void ExecuteCommandVoid(::Ice::Long, const ::Ice::Current&);
+
+        void ExecuteCommandWriteSerialized(::Ice::Long, const ::std::string&, const ::Ice::Current&);
+
+        void ExecuteCommandReadSerialized(::Ice::Long, ::std::string&, const ::Ice::Current&);
+
+        void ExecuteCommandQualifiedReadSerialized(::Ice::Long, const ::std::string&, ::std::string&, const ::Ice::Current&);
+
     };
 };
 

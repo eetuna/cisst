@@ -51,7 +51,10 @@ public:
 
     /*! Typedef for client id (defined by user) which is an interface name and
         of which value is human readable. */
-    typedef std::string ClientIDType;
+    //typedef std::string ClientIDType;
+
+    /*! Typedef for client id (provided interface proxy instance id) */
+    typedef unsigned int ClientIDType;
 
     /*! Start server proxy */
     virtual bool Start(_proxyOwner * proxyOwner) = 0;
@@ -182,61 +185,92 @@ protected:
     //  Connection Management and Client Proxy Management
     //-------------------------------------------------------------------------
 protected:
-    /*! Lookup table to fetch connection id with client id */
-    typedef std::map<ClientIDType, ConnectionIDType> ConnectionIDMapType;
-    ConnectionIDMapType ConnectionIDMap;
+    /*! Client information */
+    typedef struct {
+        std::string ClientName;
+        ClientIDType ClientID;
+        ConnectionIDType ConnectionID;
+        ClientProxyType ClientProxy;
+    } ClientInformation;
 
-    /*! Container to manage connected client proxies based on its connection id */
-    typedef std::map<ConnectionIDType, ClientProxyType> ClientProxyMapType;
-    ClientProxyMapType ClientProxyMap;
+    /*! Lookup table to fetch client information with ClientID */
+    typedef std::map<ClientIDType, ClientInformation> ClientIDMapType;
+    ClientIDMapType ClientIDMap;
+
+    /*! Lookup table to fetch client information with ConnectionID */
+    typedef std::map<ConnectionIDType, ClientInformation> ConnectionIDMapType;
+    ConnectionIDMapType ConnectionIDMap;
 
     /*! When a client proxy is connected to this server proxy, add it to client 
         proxy map with a key of connection id */
-    bool AddProxyClient(const ClientIDType & clientID, const ConnectionIDType & connectionID, ClientProxyType & clientProxy) {
+    bool AddProxyClient(const std::string & clientName, const ClientIDType & clientID, 
+        const ConnectionIDType & connectionID, ClientProxyType & clientProxy) 
+    {
         // Check the uniqueness of clientID
-        if (FindProxyClientByClientID(clientID)) {
-            this->IceLogger->trace("WARNING: duplicate client id", clientID);
+        if (FindClientByClientID(clientID)) {
+            std::stringstream ss;
+            ss << "WARNING: duplicate client id: " << clientID;
+            std::string s = ss.str();
+            this->IceLogger->warning(s);
             return false;
         }
+
         // Check the uniqueness of connectionID
-        if (FindProxyClientByConnectionID(connectionID)) {
-            this->IceLogger->trace("WARNING: duplicate connection id", connectionID);
+        if (FindClientByConnectionID(connectionID)) {
+            std::stringstream ss;
+            ss << "WARNING: duplicate connection id: " << connectionID;
+            std::string s = ss.str();
+            this->IceLogger->warning(s);
             return false;
         }
 
-        ClientProxyMap.insert(make_pair(connectionID, clientProxy));
-        ConnectionIDMap.insert(make_pair(clientID, connectionID));
+        ClientInformation client;
+        client.ClientName = clientName;
+        client.ClientID = clientID;
+        client.ConnectionID = connectionID;
+        client.ClientProxy = clientProxy;
 
-        return (FindProxyClientByClientID(clientID) && FindProxyClientByConnectionID(connectionID));
+        ClientIDMap.insert(std::make_pair(clientID, client));
+        ConnectionIDMap.insert(std::make_pair(connectionID, client));
+
+        return (FindClientByClientID(clientID) && FindClientByConnectionID(connectionID));
     }
 
-    ClientProxyType GetProxyClientByConnectionID(const ConnectionIDType & connectionID) const {
-        ClientProxyMapType::const_iterator it = ClientProxyMap.find(connectionID);
-        if (it == ClientProxyMap.end()) {
-            this->IceLogger->trace("WARNING: can't find client proxy with connection id", connectionID);
-            return NULL;
-        }
-
-        return it->second;
-    }
-
-    ClientProxyType GetProxyProxyByClientID(const ClientIDType & clientID) const {
-        // Fetch a connection id from connection id map
-        ConnectionIDMapType::const_iterator it = ConnectionIDMap.find(clientID);
+    /*! Return ClientIDType */
+    ClientIDType GetClientID(const ConnectionIDType & connectionID) {
+        ConnectionIDMapType::iterator it = ConnectionIDMap.find(connectionID);
         if (it == ConnectionIDMap.end()) {
-            this->IceLogger->trace("WARNING: can't find client proxy with client id", clientID);
+            return 0;
+        }
+        return it->second.ClientID;
+    }
+
+    /*! Get an ICE proxy object using connection id to send a message to a client */
+    ClientProxyType * GetClientByConnectionID(const ConnectionIDType & connectionID) {
+        ConnectionIDMapType::iterator it = ConnectionIDMap.find(connectionID);
+        if (it == ConnectionIDMap.end()) {
             return NULL;
         }
-
-        return GetClientProxyByConnectionID(it->second);
+        return &(it->second.ClientProxy);
     }
 
-    bool FindProxyClientByConnectionID(const ConnectionIDType & connectionID) const {
-        return (ClientProxyMap.find(connectionID) != ClientProxyMap.end());
+    /*! Get an ICE proxy object using client id to send a message to a client */
+    ClientProxyType * GetClientByClientID(const ClientIDType & clientID) {
+        ClientIDMapType::iterator it = ClientIDMap.find(clientID);
+        if (it == ClientIDMap.end()) {
+            return NULL;
+        }
+        return &(it->second.ClientProxy);
     }
 
-    bool FindProxyClientByClientID(const ClientIDType & clientID) const {
-        return (ConnectionIDMap.find(clientID) != ConnectionIDMap.end());
+    /*! Check if there is an ICE proxy object using connection id */
+    bool FindClientByConnectionID(const ConnectionIDType & connectionID) const {
+        return (ConnectionIDMap.find(connectionID) != ConnectionIDMap.end());
+    }
+
+    /*! Check if there is an ICE proxy object using client id */
+    bool FindClientByClientID(const ClientIDType & clientID) const {
+        return (ClientIDMap.find(clientID) != ClientIDMap.end());
     }
 
 public:

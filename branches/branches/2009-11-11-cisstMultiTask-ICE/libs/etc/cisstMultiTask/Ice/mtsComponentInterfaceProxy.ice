@@ -101,15 +101,15 @@ module mtsComponentInterfaceProxy
     // The information about the function proxies.
     struct FunctionProxyInfo {
         string Name;
-        // This id is set as the pointer to the function proxy at server side.
-        // Note that this is valid only for 32-bit OS. Under 64-bit machine, this
-        // should be changed so as to be able to handle 64-bit address space.
+        // This id is set as a pointer to a function proxy at server side.
+        // Note that type 'long' in slice is converted to ::Ice::Long which can
+        // handle 64-bit numbers.
         long FunctionProxyId;
     };
 
     sequence<FunctionProxyInfo> FunctionProxySequence;
 
-    struct FunctionProxySet {
+    struct FunctionProxyPointerSet {
         // A name of the server task proxy. This is used as a key to find a server 
         // task proxy at client side.
         string ServerTaskProxyName;
@@ -124,16 +124,18 @@ module mtsComponentInterfaceProxy
         FunctionProxySequence FunctionQualifiedReadProxies;
     };
 
+    //
+    //  Definitions for Event Generator Proxy Pointers
+    //
     struct EventGeneratorProxyElement {
         string Name;
-        // This id is set as the pointer to the function proxy at client side.
-        // Note that this is valid only for 32-bit OS. Under 64-bit machine, this
-        // should be changed so as to be able to handle 64-bit address space.
+        // This id is set as a pointer to a function proxy at server side.
+        // Note that type 'long' in slice is converted to ::Ice::Long which can
+        // handle 64-bit numbers.
         long ProxyId;
     };
     sequence<EventGeneratorProxyElement> EventGeneratorProxySequence;
 
-    // Used by GetListOfEventHandlerRegistered()
     struct ListsOfEventGeneratorsRegistered {
         EventGeneratorProxySequence EventGeneratorVoidProxies;
         EventGeneratorProxySequence EventGeneratorWriteProxies;
@@ -149,6 +151,22 @@ module mtsComponentInterfaceProxy
 
         /*! Methods for testing and unit tests */
         void TestSendMessageFromServerToClient(string str);
+
+        /*! Fetch function proxy pointers from a required interface proxy at 
+            server side. */
+        ["cpp:const"] idempotent
+        bool FetchFunctionProxyPointers(string requiredInterfaceName, out FunctionProxyPointerSet functionProxyPointers);
+
+        /*! Execute command objects across a network. In these APIs, Slice's 
+            'long' type is used instead of 'unsigned int' because Slice does 
+            not support unsigned type.
+		    See http://zeroc.com/doc/Ice-3.3.1/manual/Slice.5.8.html for details.
+            Also see http://www.zeroc.com/doc/Ice-3.3.1/manual/Cpp.7.6.html for
+		    mapping for simple built-in types. */
+		void ExecuteCommandVoid(long commandID);
+        void ExecuteCommandWriteSerialized(long commandID, string argument);
+        void ExecuteCommandReadSerialized(long commandID, out string argument);
+        void ExecuteCommandQualifiedReadSerialized(long commandID, string argumentIn, out string argumentOut);
 	};
 
 	//-----------------------------------------------------------------------------
@@ -159,64 +177,27 @@ module mtsComponentInterfaceProxy
         /*! Methods for testing and unit tests */
         void TestSendMessageFromClientToServer(string str);
 
+        //
+        //  Connection Management
+        //
 		/*! Called by a proxy client when it connects to a proxy server */
-		bool AddClient(string connectingProxyName, Ice::Identity ident);
+		bool AddClient(string connectingProxyName, int providedInterfaceProxyInstanceId, Ice::Identity ident);
 
         /*! This is called by a client when it terminates. This allows a server to
             shutdown (or close) safely and cleanly. */
         void Shutdown();
 
-  //      /*! Get the information on the provided interface which will be used to 
-  //          create a provided interface proxy at client side. */
-  //      ["cpp:const"] idempotent 
-  //      bool GetProvidedInterfaceInfo(string providedInterfaceName,
-  //                                    out ProvidedInterfaceInfo info);
-
-  //      /*! Send the information on the required interface that will be used to
-  //          create a required interface proxy at the server side. Then, the server will
-  //          create client proxies (e.g. client task proxy, required interface proxy)
-  //          using this information.
-  //          This information includes the serialized argument prototypes of the event 
-  //          handlers' at the client side.
-  //          Return false if any proxy object creation process failed. */
-  //      bool CreateClientProxies(string userTaskName, string requiredInterfaceName,
-		//	                     string resourceTaskName, string providedInterfaceName);
-
-  //      /*! Call mtsTaskManager::Connect() at server side. */
-  //      bool ConnectServerSide(string userTaskName, string requiredInterfaceName,
-		//	                   string resourceTaskName, string providedInterfaceName);
-
-  //      /*! Update CommandId. This updates the command id of command proxies
-  //          at client side, which is a critical step regarding thread 
-  //          synchronization. */
-  //      ["cpp:const"] idempotent
-  //      void GetCommandId(string clientTaskProxyName, out FunctionProxySet functionProxies);
-
-  //      /*! Update event handler proxy objects' commandId field. This replaces default 
-  //          value (zero) with the pointers to actual event handler object 
-  //          (instance of either mtsFunctionVoid or mtsFunctionWrite type).
-  //          When the server task receives the return value with updated 'functionProxies'
-  //          object, it has to do the following two things.
-  //          1) Iterating the list of actual event handler objects registered (used) by
-  //          the client, the server task has to enable corresponding events.            
-  //          2) Update event handler proxy objects' commandId field (required interface
-  //          proxy contains all the information about event handler proxy objects). 
-  //      */
-  //      ["cpp:const"] idempotent
-  //      bool UpdateEventHandlerId(string clientTaskProxyName, 
-  //          ListsOfEventGeneratorsRegistered eventGeneratorProxies);
-
-
-		///*! Execute command objects across networks. */
-		//// Here 'int' type is used instead of 'unsigned int' because SLICE does not
-		//// support unsigned type.
-		//// (see http://zeroc.com/doc/Ice-3.3.1/manual/Slice.5.8.html)
-		//// (Also see http://www.zeroc.com/doc/Ice-3.3.1/manual/Cpp.7.6.html for
-		//// Mapping for simple built-in types)
-		//void ExecuteCommandVoid(long CommandId);
-  //      void ExecuteCommandWriteSerialized(long CommandId, string argument);
-  //      void ExecuteCommandReadSerialized(long CommandId, out string argument);
-  //      void ExecuteCommandQualifiedReadSerialized(long CommandId, string argument1, out string argument2);
+        //
+        //  Interface Interaction
+        //
+        /*! Fetch pointers of event generator proxies from a provided interface
+            proxy at server side. */
+        ["cpp:const"] idempotent
+        bool FetchEventGeneratorProxyPointers(
+            // TODO: We don't need clientComponentName because proxy server already
+            // knows its owner (mtsComponentProxy).
+            string clientComponentName, string requiredInterfaceName,
+            out ListsOfEventGeneratorsRegistered eventGeneratorProxyPointers);
 	};
 };
 

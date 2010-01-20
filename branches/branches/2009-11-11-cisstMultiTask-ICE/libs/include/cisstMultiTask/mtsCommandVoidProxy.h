@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-04-28
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -22,118 +22,61 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Definition of a proxy class for a command with no argument
+  \brief Definition of a command object proxy class for a command with no argument
  */
 
 #ifndef _mtsCommandVoidProxy_h
 #define _mtsCommandVoidProxy_h
 
 #include <cisstMultiTask/mtsCommandVoidBase.h>
-#include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
-#include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsCommandProxyBase.h>
 
 /*!
   \ingroup cisstMultiTask
 
-  mtsCommandVoidProxy is a proxy for mtsCommandVoid. This proxy contains
-  CommandId set as a function pointer of which type is mtsFunctionVoid.
-  When Execute() method is called, the CommandId is sent to the server task
-  over networks without payload. 
-
-  Note that there can be two kinds of interface proxy class that manages 
-  this process. The first one is mtsComponentInterfaceProxyClient which is used
-  to execute a void command at a server, and the other one is 
-  mtsComponentInterfaceProxyServer which propagates events generated at a server
-  to a client. Only either one of the device interface proxies can be
-  initialized while the other should be NULL.
+  mtsCommandVoidProxy is a proxy for mtsCommandVoid. When Execute() method is 
+  called, CommandId is sent to a connected required interface proxy across a 
+  network without payload.
 */
-class mtsCommandVoidProxy: public mtsCommandVoidBase 
+class mtsCommandVoidProxy: public mtsCommandVoidBase, public mtsCommandProxyBase
 {
 public:
-    typedef mtsCommandVoidBase BaseType;    
+    typedef mtsCommandVoidBase BaseType;
 
-protected:
-    /*! CommandId is set as a pointer to a mtsFunctionVoid at peer's
-      memory space which binds to an actual void command. */
-    CommandIDType CommandId;
+public:
+    /*! Constructor */
+    mtsCommandVoidProxy(const std::string & commandName) : BaseType(commandName)
+    {
+        // Command proxy is disabled by default (enabled when command id and
+        // network proxy are set).
+        Disable();
+    }
 
-    /*! Device interface proxy object which executes a void command at 
-        peer's memory space across networks. */
-    mtsComponentInterfaceProxyClient * ProvidedInterfaceProxy;
-    mtsComponentInterfaceProxyServer * RequiredInterfaceProxy;
-
-public:    
-    /*! The constructor. */
-    mtsCommandVoidProxy(const CommandIDType commandId, 
-                        mtsComponentInterfaceProxyClient * providedInterfaceProxy) :
-        BaseType(),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(providedInterfaceProxy),
-        RequiredInterfaceProxy(NULL)
-    {}
-
-    mtsCommandVoidProxy(const CommandIDType commandId, 
-                        mtsComponentInterfaceProxyServer * requiredInterfaceProxy) :
-        BaseType(),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(NULL),
-        RequiredInterfaceProxy(requiredInterfaceProxy)
-    {}
-    
-    /*! The constructor with a name. */
-    mtsCommandVoidProxy(const CommandIDType commandId,
-                        mtsComponentInterfaceProxyClient * providedInterfaceProxy,
-                        const std::string & name) :
-        BaseType(name),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(providedInterfaceProxy),
-        RequiredInterfaceProxy(NULL)
-    {}
-
-    mtsCommandVoidProxy(const CommandIDType commandId,
-                        mtsComponentInterfaceProxyServer * requiredInterfaceProxy,
-                        const std::string & name) :
-        BaseType(name),
-        CommandId(commandId),
-        ProvidedInterfaceProxy(NULL),
-        RequiredInterfaceProxy(requiredInterfaceProxy)
-    {}
-    
-    /*! The destructor. Does nothing */
+    /*! Destructor */
     ~mtsCommandVoidProxy() {}
 
-    /*! Update CommandId. */
-    void SetCommandId(const CommandIDType & newCommandId) {
-        CommandId = newCommandId;
-    }
-    
-    /*! The execute method. */
+    /*! Execute void command */
     mtsCommandBase::ReturnType Execute() {
-        if (this->IsEnabled()) {
-            //if (ProvidedInterfaceProxy) {
-            //    ProvidedInterfaceProxy->SendExecuteCommandVoid(CommandId);
-            //} else {
-            //    RequiredInterfaceProxy->SendExecuteEventVoid(CommandId);
-            //}
-            return mtsCommandBase::DEV_OK;
+        if (IsDisabled()) return mtsCommandBase::DISABLED;
+
+        if (NetworkProxyServer) {
+            //NetworkProxyServer->SendExecuteCommandVoid(CommandId);
+        } else {
+            //NetworkProxyClient->SendExecuteEventVoid(CommandId);
         }
-        return mtsCommandBase::DISABLED;
+
+        return mtsCommandBase::DEV_OK;
     }
 
+    /*! Generate human readable description of this object */
     void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << " with ";
-        //if (ProvidedInterfaceProxy) {
-        //    outputStream << ProvidedInterfaceProxy->ClassServices()->GetName() << std::endl;
-        //} else {            
-        //    outputStream << RequiredInterfaceProxy->ClassServices()->GetName() << std::endl;
-        //}
-        outputStream << "Currently " << (this->IsEnabled() ? "enabled" : "disabled");
-    }
-
-    /*! Returns number of arguments (parameters) expected by Execute().
-        Overloaded to return NULL. */
-    unsigned int NumberOfArguments(void) const {
-        return NULL;
+        if (NetworkProxyServer) {
+            outputStream << NetworkProxyServer->ClassServices()->GetName();
+        } else {
+            outputStream << NetworkProxyClient->ClassServices()->GetName();
+        }
+        outputStream << ": currently " << (this->IsEnabled() ? "enabled" : "disabled");
     }
 };
 
