@@ -72,24 +72,6 @@ http://www.cisst.org/cisst/license.txt.
 
 %ignore CMN_LOG_DETAILS;
 
-
-// Macro used to redefine the accessors as defined by C macro
-// CMN_DECLARE_MEMBER_AND_ACCESSORS.  This macro should be used for
-// native types, not for types with existing typemaps for C references
-// such as cisstVector dynamic and fixed size vectors and matrices.
-%define CMN_REWRITE_ACCESSOR(class, member, type)
-    // ignore existing methods working on references
-    %ignore class::member;
-    %ignore class::Get##member(type &);
-    // extend the class, add a GetMember which returns by const reference
-    %extend class {
-        const type & Get##member(void) const {
-            return self->member();
-        }
-    }
-%enddef
-
-
 // Typemap used so that C++ pointers on cmnGenericObject base class
 // can be "casted" to the actual derived class in Python.  This is
 // useful for objects stored in cmnObjectRegister.  Without the

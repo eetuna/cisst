@@ -214,9 +214,6 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 %include "cisstMultiTask/mtsCollectorState.h"
 
 // Wrap base class
-CMN_REWRITE_ACCESSOR(mtsGenericObject, Valid, bool);
-CMN_REWRITE_ACCESSOR(mtsGenericObject, AutomaticTimestamp, bool);
-CMN_REWRITE_ACCESSOR(mtsGenericObject, Timestamp, double);
 %include "cisstMultiTask/mtsGenericObject.h"
 
 // Wrap some basic types
