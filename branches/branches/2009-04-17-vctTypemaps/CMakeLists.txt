@@ -18,7 +18,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(cisst)
 
 
-
 # Function to expend a list without repetitions, forces the list to be internal
 FUNCTION(CISST_ADD_TO_INTERNAL list newElements)
   SET(TEMP_${list} ${${list}} ${${newElements}})
@@ -83,16 +82,23 @@ IF(CISST_HAS_SWIG_PYTHON)
 
 ENDIF(CISST_HAS_SWIG_PYTHON)
 
-IF(CISST_HAS_SWIG_PYTHON)
-  # Find Python
-  FIND_PACKAGE(PythonLibs REQUIRED)
-  # Some older CMake don't define the debug library
-  IF(NOT PYTHON_DEBUG_LIBRARIES)
-    SET(PYTHON_DEBUG_LIBRARIES ${PYTHON_LIBRARIES})
-  ENDIF(NOT PYTHON_DEBUG_LIBRARIES)
-  FIND_PACKAGE(PythonInterp REQUIRED)
-  INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-ENDIF(CISST_HAS_SWIG_PYTHON)
+if(CISST_HAS_SWIG_PYTHON)
+    # Find Python
+    find_package(PythonLibs REQUIRED)
+    # Some older CMake don't define the debug library
+    if(NOT PYTHON_DEBUG_LIBRARIES)
+	set(PYTHON_DEBUG_LIBRARIES ${PYTHON_LIBRARIES})
+    endif(NOT PYTHON_DEBUG_LIBRARIES)
+    find_package(PythonInterp REQUIRED)
+    include_directories(${PYTHON_INCLUDE_PATH})
+    # We also need numpy if we have cisstVector
+    if(BUILD_LIBS_cisstVector)
+	find_package(Numpy REQUIRED)
+	if(PYTHON_NUMPY_FOUND)
+	    include_directories(${PYTHON_NUMPY_INCLUDE_DIR})
+	endif(PYTHON_NUMPY_FOUND)
+    endif(BUILD_LIBS_cisstVector)
+endif(CISST_HAS_SWIG_PYTHON)
 
 
 # Use XML or not
