@@ -608,7 +608,7 @@ bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredI
 
 const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int id) const
 {
-    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForGlobalComponentManager() + (id * 5);
+    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForLocalComponentManager() + (id * 5);
 
     std::stringstream newPortNumberAsString;
     newPortNumberAsString << newPortNumber;

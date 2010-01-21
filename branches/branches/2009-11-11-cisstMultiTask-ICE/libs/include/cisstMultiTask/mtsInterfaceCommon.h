@@ -28,6 +28,9 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsInterfaceCommon {
 
 public:
+    //-------------------------------------------------------------------------
+    //  Structures for Provided Interface Description
+    //-------------------------------------------------------------------------
     /*! Command object definition */
 	struct CommandVoidElement {
         std::string Name;
@@ -83,7 +86,7 @@ public:
 	};
 
     //-------------------------------------------------------------------------
-    //  Definition of Required Interface Summary
+    //  Structure for Required Interface Description
     //-------------------------------------------------------------------------
     typedef std::vector<std::string> CommandPointerNames;
     typedef CommandVoidVector  EventHandlerVoidVector;

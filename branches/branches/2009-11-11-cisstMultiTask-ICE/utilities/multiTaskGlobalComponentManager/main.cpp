@@ -2,12 +2,12 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: main.cpp 682 2009-08-14 03:18:33Z adeguet1 $
   
-  Author(s):  Anton Deguet
-  Created on: 2009-08-13
+  Author(s):  Min Yang Jung
+  Created on: 2010-01-20
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -24,20 +24,28 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnLogger.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
-#include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
 
 int main(int CMN_UNUSED(argc), char ** CMN_UNUSED(argv))
 {
     // log configuration, add a log per thread
-    osaThreadedLogFile threadedLog("multiTaskNetworkManager");
+    osaThreadedLogFile threadedLog("GlobalComponentManager");
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_RUN_WARNING);
     // specify a higher, more verbose log level for these classes
-    cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_RUN_WARNING);
+    cmnClassRegister::SetLoD("mtsManagerGlobal", CMN_LOG_LOD_RUN_WARNING);
 
-    // Get the TaskManager instance and set operation mode
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_SERVER);
+    // Create and start global component manager
+    mtsManagerGlobal globalComponentManager;
+    if (!globalComponentManager.StartServer()) {
+        CMN_LOG_INIT_ERROR << "Failed to start global component manager." << std::endl;
+        return 1;
+    }
+    CMN_LOG_INIT_VERBOSE << "Global component manager started..." << std::endl;
 
+    //
+    // TODO: instead of 1, mtsManagerGlobal::StartServer() can be blocking
+    // such that while loop ends if mtsManagerGlobal finishes??
+    //
     while (1) {
         osaSleep(10 * cmn_ms);
     }

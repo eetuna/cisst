@@ -151,6 +151,8 @@ if(CISST_MTS_HAS_ICE)
       
       mtsComponentInterfaceProxyServer.cpp
       mtsComponentInterfaceProxyClient.cpp
+      mtsManagerProxyServer.cpp
+      mtsManagerProxyClient.cpp
       )
 
   SET(HEADER_FILES ${HEADER_FILES}
@@ -159,6 +161,8 @@ if(CISST_MTS_HAS_ICE)
       mtsProxyBaseServer.h
       mtsComponentInterfaceProxyServer.h
       mtsComponentInterfaceProxyClient.h
+      mtsManagerProxyServer.h
+      mtsManagerProxyClient.h
       
       mtsProxySerializer.h
       #mtsTaskManagerProxyClient.h
@@ -184,6 +188,7 @@ if(CISST_MTS_HAS_ICE)
       #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsDeviceInterfaceProxy.ice
       #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskManagerProxy.ice
       ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsComponentInterfaceProxy.ice
+      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsManagerProxy.ice
       )
 
   #
@@ -195,6 +200,7 @@ if(CISST_MTS_HAS_ICE)
       #mtsDeviceInterfaceProxy
       #mtsTaskManagerProxy
       mtsComponentInterfaceProxy
+      mtsManagerProxy
       )
 
   find_package(Ice)

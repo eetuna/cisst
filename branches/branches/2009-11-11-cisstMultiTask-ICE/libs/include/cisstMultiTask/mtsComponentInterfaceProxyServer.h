@@ -206,13 +206,6 @@ protected:
             mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers,
             const ::Ice::Current & current) const;
 
-        //void UpdateTaskManager(const mtsComponentInterfaceProxy::TaskList&, const Ice::Current&);
-        //bool AddProvidedInterface(const mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo&, const Ice::Current&);
-        //bool AddRequiredInterface(const mtsComponentInterfaceProxy::RequiredInterfaceAccessInfo&, const Ice::Current&);
-        //bool IsRegisteredProvidedInterface(const std::string&, const ::std::string&, const Ice::Current&) const;
-        //bool GetProvidedInterfaceAccessInfo(const std::string&, const std::string&, mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo & info, const Ice::Current&) const;
-        //void NotifyInterfaceConnectionResult(bool, bool, const ::std::string&, const ::std::string&, const ::std::string&, const ::std::string&, const Ice::Current&);
-
         void TestSendMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
     };
 };

@@ -60,13 +60,10 @@ public:
     //  Process Management
     //-------------------------------------------------------------------------
     /*! Register a process */
-    virtual bool AddProcess(mtsManagerLocalInterface * localManager) = 0;
+    virtual bool AddProcess(const std::string & processName) = 0;
 
     /*! Find a process. */
     virtual bool FindProcess(const std::string & processName) const = 0;
-
-    /*! Get a process object (local component manager object) */
-    virtual mtsManagerLocalInterface * GetProcessObject(const std::string & processName) = 0;
 
     /*! Remove a process. */
     virtual bool RemoveProcess(const std::string & processName) = 0;
@@ -159,18 +156,14 @@ public:
         const std::string & endpointInfo, const std::string & communicatorID) = 0;
 
     /*! Fetch access information of a server proxy (i.e., provided interface 
-        proxy) with the complete specification of connection  */
+        proxy) with the complete specification of connection. If all the three
+        strings in arguments are "", fetch the access information without 
+        specifying client interface. This second option should be provided
+        because one proxy server at client side can handle multiple connections
+        and, thus, it is required to have a way to fetch the access information 
+        of a proxy server without specifying a client interface. */
     virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        std::string & endpointInfo, std::string & communicatorID) = 0;
-
-    /*! Fetch access information of a server proxy (i.e., provided interface 
-        proxy) without specifying client interface. 
-        Because one proxy server at client side can handle multiple connections,
-        it is required to have a way to fetch the access information of a proxy 
-        server only with a server interface specification. */
-    virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo, std::string & communicatorID) = 0;
 

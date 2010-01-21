@@ -81,7 +81,7 @@ protected:
         ComponentInterfaceServerProxy = 
             mtsComponentInterfaceProxy::ComponentInterfaceServerPrx::checkedCast(ProxyObject);
         if (!ComponentInterfaceServerProxy) {
-            throw "Invalid proxy";
+            throw "mtsComponentInterfaceProxyClient:: Invalid proxy";
         }
 
         Sender = new ComponentInterfaceClientI(IceCommunicator, IceLogger, ComponentInterfaceServerProxy, this);

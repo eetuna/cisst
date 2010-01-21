@@ -319,7 +319,7 @@ void mtsManagerLocalTest::TestConnectDisconnect(void)
     mtsManagerLocalInterface * managerLocal1 = new mtsManagerLocal(P1);
     mtsManagerLocal * managerLocal1Object = dynamic_cast<mtsManagerLocal*>(managerLocal1);
     managerLocal1Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal1);
+    managerGlobal.AddProcess(managerLocal1->GetProcessName());
     managerLocal1Object->AddComponent(P1C1);
     managerLocal1Object->AddComponent(P1C2);
     managerLocal1Object->UnitTestEnabled = true; // run in unit test mode
@@ -328,7 +328,7 @@ void mtsManagerLocalTest::TestConnectDisconnect(void)
     mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
     mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
     managerLocal2Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal2);
+    managerGlobal.AddProcess(managerLocal2->GetProcessName());
     managerLocal2Object->AddComponent(P2C2);
     managerLocal2Object->AddComponent(P2C3);
     managerLocal2Object->UnitTestEnabled = true; // run in unit test mode
@@ -481,7 +481,7 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
     mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
     managerLocal2Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal2);
+    managerGlobal.AddProcess(managerLocal2->GetProcessName());
     managerLocal2Object->AddComponent(P2C2);
     managerLocal2Object->AddComponent(P2C3);
 
@@ -556,7 +556,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     mtsManagerLocalInterface * managerLocal1 = new mtsManagerLocal(P1);
     mtsManagerLocal * managerLocal1Object = dynamic_cast<mtsManagerLocal*>(managerLocal1);
     managerLocal1Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal1);
+    managerGlobal.AddProcess(managerLocal1->GetProcessName());
     managerLocal1Object->AddComponent(P1C1);
     managerLocal1Object->AddComponent(P1C2);
     managerLocal1Object->UnitTestEnabled = true; // run in unit test mode
@@ -565,7 +565,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
     mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
     managerLocal2Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal2);
+    managerGlobal.AddProcess(managerLocal2->GetProcessName());
     managerLocal2Object->AddComponent(P2C2);
     managerLocal2Object->AddComponent(P2C3);
     managerLocal2Object->UnitTestEnabled = true; // run in unit test mode

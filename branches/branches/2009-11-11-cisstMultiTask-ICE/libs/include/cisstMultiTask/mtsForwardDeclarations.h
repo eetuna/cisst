@@ -100,6 +100,7 @@ const bool mtsOptional = false;
 //class mtsTaskManagerProxyClient;
 class mtsComponentInterfaceProxyServer;
 class mtsComponentInterfaceProxyClient;
+class mtsManagerProxyServer;
 #endif // CISST_MTS_HAS_ICE
 
 

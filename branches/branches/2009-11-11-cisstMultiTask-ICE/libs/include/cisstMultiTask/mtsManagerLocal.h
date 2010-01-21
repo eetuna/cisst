@@ -188,6 +188,14 @@ protected:
     bool RemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName);
 
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    bool ConnectClientSideInterface(const unsigned int connectionID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
     /*! Extract all the information on a provided interface such as command 
         objects and events with serialization */
     bool GetProvidedInterfaceDescription(
@@ -204,10 +212,6 @@ protected:
 
     /*! Returns the total number of interfaces that are running on a component */
     const int GetCurrentInterfaceCount(const std::string & componentName) const;
-
-    bool ConnectByGlobalComponentManager(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
 public:
     /*! Create the static instance of local task manager. */
@@ -345,13 +349,6 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const std::string & endpointInfo, const std::string & communicatorID);
 
-    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
-
-    bool ConnectClientSideInterface(const unsigned int connectionID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 #endif
 };
 

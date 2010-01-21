@@ -172,11 +172,27 @@ protected:
     typedef std::map<unsigned int, unsigned int> AllocatedPointerType;
     AllocatedPointerType AllocatedPointers;
 
+    /*! IP address of this machine */
+    std::string ProcessIP;
+
+    /*! Network proxy server */
+    mtsManagerProxyServer * ProxyServer;
+
+    /*! Proxy server access information */
+    std::string endpointAccessInfo;
+    std::string communicatorID;
+
     //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Clean up the internal variables */
     bool CleanUp(void);
+
+    /*! Set this machine's IP */
+    void SetIPAddress();
+
+    /*! Get a process object (local component manager object) */
+    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
 
     /*! Get a map containing connection information for a provided interface */
     ConnectionMapType * GetConnectionsOfProvidedInterface(
@@ -214,11 +230,9 @@ public:
     //-------------------------------------------------------------------------
     //  Process Management
     //-------------------------------------------------------------------------
-    bool AddProcess(mtsManagerLocalInterface * localManager);
+    bool AddProcess(const std::string & processName);
 
     bool FindProcess(const std::string & processName) const;
-
-    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);    
 
     bool RemoveProcess(const std::string & processName);
 
@@ -268,6 +282,14 @@ public:
     //-------------------------------------------------------------------------
     //  Public Getters
     //-------------------------------------------------------------------------
+    /*! Return the name of the global component manager (for mtsProxyBaseCommon.h) */
+    inline static std::string GetName() {
+        return "GlobalComponentManager";
+    }
+
+    /*! Return IP address of this machine. */
+    inline std::string GetIPAddress() const { return ProcessIP; }
+
     /*! Generate unique id of an interface as string */
     static const std::string GetInterfaceUID(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName)
@@ -285,6 +307,11 @@ public:
     //  Networking
     //-------------------------------------------------------------------------
 #if CISST_MTS_HAS_ICE
+    /*! Start network proxy server. If user port number is not specified, it is 
+        internally set as default port number, 10705
+        (See mtsProxyBaseCommon::GetBasePortNumberForGlobalComponentManager()) */
+    bool StartServer(const unsigned int userPortNumber = 0);
+
     bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
@@ -292,10 +319,6 @@ public:
 
     bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        std::string & endpointInfo, std::string & communicatorID);
-
-    bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo, std::string & communicatorID);
 

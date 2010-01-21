@@ -115,7 +115,7 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
 
         ManagerGlobal = new mtsManagerGlobal;
 
-        if (!ManagerGlobal->AddProcess(this)) {
+        if (!ManagerGlobal->AddProcess(ProcessName)) {
             CMN_LOG_CLASS_INIT_ERROR << "failed in registering default process" << std::endl;
         }
     }
@@ -1332,9 +1332,9 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
         goto ConnectClientSideInterfaceError;
     }
 
-    // Create and run interface proxy server only when there is no network
-    // proxy server object running that serves the 'serverProvidedInterfaceName'
-    // provided interface.
+    // Create and run interface proxy server only if there is no network
+    // proxy server running that serves the provided interface with a name of
+    // 'serverProvidedInterfaceName.'
     if (!serverComponentProxy->FindInterfaceProxyServer(serverProvidedInterfaceName)) {
         if (!UnitTestEnabled || (UnitTestEnabled && UnitTestNetworkProxyEnabled)) {
             if (!serverComponentProxy->CreateInterfaceProxyServer(
@@ -1349,11 +1349,11 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
         }
     }
     // If there is a server proxy already running, fetch and use the access 
-    // information of it.
+    // information of it without specifying client interface.
     else {
-        if (!ManagerGlobal->GetProvidedInterfaceProxyAccessInfo(
-            serverProcessName, serverComponentName, serverProvidedInterfaceName,
-            endpointAccessInfo, communicatorId))
+        if (!ManagerGlobal->GetProvidedInterfaceProxyAccessInfo("", "", "",
+                serverProcessName, serverComponentName, serverProvidedInterfaceName,
+                endpointAccessInfo, communicatorId))
         {
             CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to fecth server proxy access information: "
                 << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;

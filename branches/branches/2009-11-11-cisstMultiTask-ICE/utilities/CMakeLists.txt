@@ -24,7 +24,7 @@ set (EXECUTABLE_OUTPUT_PATH ${cisstUtilities_BINARY_DIR}/bin)
 
 # Utilities provided based on existing settings
 if (BUILD_LIBS_cisstMultiTask AND CISST_MTS_HAS_ICE)
-  set (CISST_UTILITIES ${CISST_UTILITIES} multiTaskNetworkManager)
+  set (CISST_UTILITIES ${CISST_UTILITIES} multiTaskGlobalComponentManager)
 endif (BUILD_LIBS_cisstMultiTask AND CISST_MTS_HAS_ICE)
 
 # Which utilities to build

@@ -20,8 +20,12 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsManagerGlobal.h>
+#include <cisstMultiTask/mtsManagerProxyServer.h>
+#include <cisstOSAbstraction/osaSocket.h>
 
 CMN_IMPLEMENT_SERVICES(mtsManagerGlobal);
+
+const std::string ManagerCommunicatorID = "ManagerServerSender";
 
 // TODO: Debug code: remove later!
 #define CHECK_DELETE(_var) \
@@ -69,35 +73,43 @@ bool mtsManagerGlobal::CleanUp(void)
 //-------------------------------------------------------------------------
 //  Process Management
 //-------------------------------------------------------------------------
-bool mtsManagerGlobal::AddProcess(mtsManagerLocalInterface * localManager)
+bool mtsManagerGlobal::AddProcess(const std::string & processName)
 {
-    if (!localManager) {
-        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: invalid local manager" << std::endl;
-        return false;
-    }
-
     // Check if the local component manager has already been registered.
-    if (FindProcess(localManager->GetProcessName())) {
-        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: already registered process: " << localManager->GetProcessName() << std::endl;
+    if (FindProcess(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: already registered process: " << processName << std::endl;
         return false;
     }
     
-    const std::string processName = localManager->GetProcessName();
-    bool success = ProcessMap.AddItem(processName, NULL);
-
-    if (success) {
-        LocalManagerMapChange.Lock();
-        success = LocalManagerMap.AddItem(processName, localManager);
-        LocalManagerMapChange.Unlock();
-
-        if (!success) {
-            CMN_LOG_CLASS_RUN_ERROR << "Failed to add process in local component manager map: " << processName << std::endl;
-        }
-    } else {
-        CMN_LOG_CLASS_RUN_ERROR << "Failed to add process in process map: " << processName << std::endl;
+    // Register to process map
+    if (!ProcessMap.AddItem(processName, NULL)) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: failed to add process in process map: " << processName << std::endl;
+        return false;
     }
 
-    return success;
+    mtsManagerLocalInterface * localManager = NULL;
+
+#if !defined(CISST_MTS_HAS_ICE)
+    localManager = mtsManagerLocal::GetInstance();
+#else
+    //
+    // TODO: How to set value of LocalManagerMap(processName, LCM *)???
+    //
+    //localManager = new mtsManagerProxyClient ????
+#endif
+
+    bool success;
+
+    LocalManagerMapChange.Lock();
+    success = LocalManagerMap.AddItem(processName, localManager);
+    LocalManagerMapChange.Unlock();
+
+    if (!success) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddProcess: failed to add process in local component manager map: " << processName << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 bool mtsManagerGlobal::FindProcess(const std::string & processName) const
@@ -919,6 +931,86 @@ bool mtsManagerGlobal::AddConnectedInterface(ConnectionMapType * connectionMap,
 //-------------------------------------------------------------------------
 //  Networking
 //-------------------------------------------------------------------------
+bool mtsManagerGlobal::StartServer(const unsigned int userPortNumber)
+{
+    const std::string adapterName = "ManagerServerAdapter";
+    const std::string endpointInfoBase = "tcp -p ";
+
+    // Get port number for global component manager
+    unsigned int portNumber;
+    if (userPortNumber == 0) {
+        portNumber = mtsProxyBaseCommon<mtsManagerGlobal>::GetBasePortNumberForGlobalComponentManager();
+    } else {
+        portNumber = userPortNumber;
+    }
+    std::stringstream ss;
+    ss << portNumber;
+
+    const std::string portNumberString = ss.str();
+    const std::string endpointInfo = endpointInfoBase + portNumberString;
+
+    // Get this machine's IP
+    SetIPAddress();
+
+    // Generate parameters to initialize server proxy    
+    endpointAccessInfo = ":default -h " + ProcessIP + " -p " + portNumberString;
+    communicatorID = ManagerCommunicatorID;
+
+    // Create an instance of mtsComponentInterfaceProxyServer
+    ProxyServer = new mtsManagerProxyServer(adapterName, endpointInfo, communicatorID);
+
+    // Run proxy server
+    if (!ProxyServer->Start(this)) {
+        CMN_LOG_CLASS_RUN_ERROR << "StartServer: Proxy failed to start: " << GetName() << std::endl;
+        return false;
+    }
+
+    ProxyServer->GetLogger()->trace("mtsManagerGlobal", "Global component manager started.");
+
+    return true;
+}
+
+//
+// TODO: FIX THIS METHOD
+//
+void mtsManagerGlobal::SetIPAddress()
+{
+#if CISST_MTS_HAS_ICE
+    // Fetch all ip addresses available on this machine.
+    std::vector<std::string> ipAddresses;
+    osaSocket::GetLocalhostIP(ipAddresses);
+
+    // If there is only one ip address is detected, set it as this machine's ip address.
+//    if (ipAddresses.size() == 1) {
+        ProcessIP = ipAddresses[0];
+    //} else {
+    //    // If there are more than one ip address detected, wait for an user's input 
+    //    // to decide what to use as an ip address of this machine.
+
+    //    // Print out a list of all IP addresses detected
+    //    std::cout << "\nList of IP addresses detected on this machine: " << std::endl;
+    //    for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
+    //        std::cout << "\t" << i + 1 << ": " << ipAddresses[i] << std::endl;
+    //    }
+
+    //    // Wait for user's input
+    //    char maxChoice = '1' + ipAddresses.size() - 1;
+    //    int choice = 0;
+    //    while (!('1' <= choice && choice <= maxChoice)) {
+    //        std::cout << "\nChoose one to use: ";
+    //        choice = cmnGetChar();
+    //    }
+    //    ProcessIP = ipAddresses[choice - '1'];
+
+    //    std::cout << ProcessIP << std::endl;
+    //}
+#else
+    ProcessIP = "localhost";
+#endif
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "SetIPAddress: This machine's IP address is " << ProcessIP << std::endl;
+}
+
 bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
@@ -975,47 +1067,32 @@ bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
         return false;
     }
 
+    //
+    // TODO: Why don't you just pull out access information from the first element
+    // in the map? Does a user really need to specify the client interface???
+    //
+
     // Get the information about the connected required interface
-    const std::string requiredInterfaceUID = GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName);
-    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo = connectionMap->GetItem(requiredInterfaceUID);
+    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
+    // If a client interface is not specified
+    if (clientProcessName == "" && clientComponentName == "" && clientRequiredInterfaceName == "") {
+        mtsManagerGlobal::ConnectionMapType::const_iterator itFirst = connectionMap->begin();
+        if (itFirst == connectionMap->end()) {
+            CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection information (no data): "
+                << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
+            return false;
+        }
+        connectedInterfaceInfo = itFirst->second;
+    }
+    // If a client interface is specified
+    else {
+        const std::string requiredInterfaceUID = GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName);
+        connectedInterfaceInfo = connectionMap->GetItem(requiredInterfaceUID);
+    }
+
     if (!connectedInterfaceInfo) {
         CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection information"
             << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << std::endl;
-        return false;
-    }
-
-    // Get server proxy access information
-    endpointInfo = connectedInterfaceInfo->GetEndpointInfo();
-    communicatorID = connectedInterfaceInfo->GetCommunicatorID();
-
-    return true;
-}
-
-bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    std::string & endpointInfo, std::string & communicatorID)
-{
-    // Get a connection map of the provided interface at server side.
-    ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
-        serverProcessName, serverComponentName, serverProvidedInterfaceName);
-    if (!connectionMap) {
-        CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection map: " 
-            << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
-        return false;
-    }
-
-    // Get the information about the connected required interface
-    mtsManagerGlobal::ConnectionMapType::const_iterator itFirst = connectionMap->begin();
-    if (itFirst == connectionMap->end()) {
-        CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection information (no data): "
-            << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
-        return false;
-    }
-
-    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo = itFirst->second;
-    if (!connectedInterfaceInfo) {
-        CMN_LOG_CLASS_RUN_ERROR << "GetProvidedInterfaceProxyAccessInfo: failed to get connection information: "
-            << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
         return false;
     }
 
