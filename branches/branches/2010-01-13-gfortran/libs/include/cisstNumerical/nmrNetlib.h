@@ -29,10 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstConfig.h>
 
-/*! Technically the netlib binaries could be provided by cisstNetlib
-  or come from somewhere else.  This section sets CISST_HAS_NETLIB
-  if the binaries are cisstNetlib */
-#if CISST_HAS_CISSTNETLIB
+#ifdef CISST_HAS_CISSTNETLIB
 
 #define CISST_HAS_NETLIB
 #include <cisstNetlib.h>

@@ -1026,12 +1026,14 @@ CISSTNETLIB_INTEGER nmrSVD(vctDynamicMatrixBase<_matrixOwnerType, CISSTNETLIB_DO
         VtPtr = dataFriend.U().Pointer();
     }
 
-
+#if CISST_HAS_CISSTNETLIB
+#warning "asdfasfsaf"
     dgesvd_(&m_Jobu, &m_Jobvt, &m_Ldu, &m_Ldvt,
            A.Pointer(), &m_Lda, dataFriend.S().Pointer(),
            UPtr, &m_Ldu,
            VtPtr, &m_Ldvt,
            dataFriend.Workspace().Pointer(), &m_Lwork, &Info);
+#endif
 
     return Info;
 }
@@ -1166,11 +1168,13 @@ CISSTNETLIB_INTEGER nmrSVD(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _rows, _cols, 
 
     /* no checks are nessary for this case */
     /* call the LAPACK C function */
+#if CISST_HAS_CISSTNETLIB
     dgesvd_( &jobu, &jobvt, &ldu, &ldvt,
              A.Pointer(), &lda, S.Pointer(),
              UPtr, &ldu,
              VtPtr, &ldvt,
              workspace.Pointer(), &lwork, &info );
+#endif
 
     return info;
 }
