@@ -33,42 +33,51 @@ FIND_PACKAGE(Threads REQUIRED)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CISST_SWIG_INCLUDE_DIR})
 
-# We are using C++ code
-SET(PROXY_TESTS cisstMultiTaskPythonTest)
-FOREACH(proxyTest ${PROXY_TESTS})
-  SET(interface ${CMAKE_CURRENT_SOURCE_DIR}/${proxyTest}.i)
-  SET(module ${proxyTest}Python)
-  SET(TEST_PROGRAMS ${TEST_PROGRAMS} ${proxyTest}.py)
+# We are using C++ code that needs to be wrapped
+add_library(cisstMultiTaskPythonTest SHARED
+            mtsPeriodicTaskTest.h mtsPeriodicTaskTest.cpp)
+cisst_requires(cisstMultiTaskPythonTest "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask")
 
-  SET_SOURCE_FILES_PROPERTIES(${interface} PROPERTIES CPLUSPLUS ON)
-  SET_SOURCE_FILES_PROPERTIES(${interface}
-                              PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
-  SWIG_ADD_MODULE(${module} python ${interface})
-  IF(WIN32)
-    SWIG_LINK_LIBRARIES(${module}
-                        cisstMultiTask cisstVector cisstCommon
-                        debug ${PYTHON_DEBUG_LIBRARIES}
-                        optimized ${PYTHON_LIBRARIES})
-    SET_TARGET_PROPERTIES(_${module} PROPERTIES SUFFIX .pyd)
-  ELSE(WIN32)
-    SWIG_LINK_LIBRARIES(${module} cisstMultiTask cisstVector cisstCommon ${PYTHON_LIBRARIES})
-  ENDIF(WIN32)
-  # Copy the .py file generated to wherever the libraries are
-  ADD_CUSTOM_COMMAND(TARGET _${module}
-                     POST_BUILD
-                     COMMAND ${CMAKE_COMMAND}
-                     ARGS -E copy
-                             ${CMAKE_CURRENT_BINARY_DIR}/${module}.py
-                             ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/${module}.py)
-  # Create a cisstMultiTask.py as CMake assumes one should be created
-  # This is a bug that should be fixed in future releases of CMake.
-  ADD_CUSTOM_COMMAND(TARGET _${module}
-                     POST_BUILD
-                     COMMAND ${CMAKE_COMMAND}
-                     ARGS -E copy
-                             ${CMAKE_CURRENT_BINARY_DIR}/${module}.py
-                             ${CMAKE_CURRENT_BINARY_DIR}/${proxyTest}.py)
-ENDFOREACH(proxyTest)
+# Python wrappers
+set(PROXY_TESTS cisstMultiTaskPythonTest)
+foreach(proxyTest ${PROXY_TESTS})
+    set(interface ${CMAKE_CURRENT_SOURCE_DIR}/${proxyTest}.i)
+    set(module ${proxyTest}Python)
+    set(TEST_PROGRAMS ${TEST_PROGRAMS} ${proxyTest}.py)
+
+    set_source_files_properties(${interface} PROPERTIES CPLUSPLUS ON)
+    set_source_files_properties(${interface}
+                                PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
+    swig_add_module(${module} python ${interface})
+    if(WIN32)
+	swig_link_libraries(${module}
+	                    cisstMultiTaskPythonTest
+                            cisstMultiTask cisstVector cisstCommon
+                            debug ${PYTHON_DEBUG_LIBRARIES}
+                            optimized ${PYTHON_LIBRARIES})
+	set_source_files_properties(_${module} PROPERTIES SUFFIX .pyd)
+    else(WIN32)
+	swig_link_libraries(${module}
+	                    cisstMultiTaskPythonTest
+                            cisstMultiTask cisstVector cisstCommon
+			    ${PYTHON_LIBRARIES})
+    endif(WIN32)
+    # Copy the .py file generated to wherever the libraries are
+    add_custom_command(TARGET _${module}
+                       POST_BUILD
+                       COMMAND ${CMAKE_COMMAND}
+                       ARGS -E copy
+                               ${CMAKE_CURRENT_BINARY_DIR}/${module}.py
+                               ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/${module}.py)
+    # Create a cisstMultiTask.py as CMake assumes one should be created
+    # This is a bug that should be fixed in future releases of CMake.
+    add_custom_command(TARGET _${module}
+                       POST_BUILD
+                       COMMAND ${CMAKE_COMMAND}
+                       ARGS -E copy
+                               ${CMAKE_CURRENT_BINARY_DIR}/${module}.py
+                               ${CMAKE_CURRENT_BINARY_DIR}/${proxyTest}.py)
+endforeach(proxyTest)
 
 # Create the scripts from .in
 SET(LIB cisstMultiTask)

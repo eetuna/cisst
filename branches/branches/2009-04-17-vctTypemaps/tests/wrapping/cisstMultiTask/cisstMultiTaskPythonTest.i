@@ -27,8 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 
 
 %header %{
-    // Put header files here
-    // #include "mtsDeviceTest.h"
+    #include <cisstMultiTask/cisstMultiTask.i.h>
+    #include "mtsPeriodicTaskTest.h"
 %}
 
-// %include "mtsDeviceTest.h"
+%include "mtsPeriodicTaskTest.h"
