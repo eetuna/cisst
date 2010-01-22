@@ -992,8 +992,8 @@ CISSTNETLIB_INTEGER nmrSVD(vctDynamicMatrixBase<_matrixOwnerType, CISSTNETLIB_DO
     char m_Jobu = 'A';
     char m_Jobvt = 'A';
     CISSTNETLIB_INTEGER m_Lwork = 
-        (CISSTNETLIB_INTEGER)nmrSVDDynamicData::WorkspaceSize(dataFriend.M(),
-                                                              dataFriend.N());
+        static_cast<CISSTNETLIB_INTEGER>(nmrSVDDynamicData::WorkspaceSize(dataFriend.M(),
+                                                                          dataFriend.N()));
 
     /* check that storage order matches with Allocate() */
     if (A.StorageOrder() != dataFriend.StorageOrder()) {
@@ -1142,16 +1142,16 @@ CISSTNETLIB_INTEGER nmrSVD(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _rows, _cols, 
                            vctFixedSizeVector<CISSTNETLIB_DOUBLE, _work> & workspace)
 {
     const CISSTNETLIB_INTEGER minmn = 
-        (CISSTNETLIB_INTEGER)nmrSVDFixedSizeData<_rows, _cols, _storageOrder>::MIN_MN;
+        static_cast<CISSTNETLIB_INTEGER>(nmrSVDFixedSizeData<_rows, _cols, _storageOrder>::MIN_MN);
     //Assert if requirement is greater than size provided!
-    CMN_ASSERT(minmn <= (CISSTNETLIB_INTEGER)_minmn);
+    CMN_ASSERT(minmn <= static_cast<CISSTNETLIB_INTEGER>(_minmn));
     CISSTNETLIB_INTEGER ldu = (_storageOrder == VCT_COL_MAJOR) ? _rows : _cols;
     CISSTNETLIB_INTEGER lda = (1 > ldu) ? 1 : ldu;
     CISSTNETLIB_INTEGER ldvt = (_storageOrder == VCT_COL_MAJOR) ? _cols : _rows;
     CISSTNETLIB_INTEGER lwork = 
-        (CISSTNETLIB_INTEGER)nmrSVDFixedSizeData<_rows, _cols, _storageOrder>::LWORK;
+        static_cast<CISSTNETLIB_INTEGER>(nmrSVDFixedSizeData<_rows, _cols, _storageOrder>::LWORK);
     //Assert if requirement is greater than size provided!
-    CMN_ASSERT(lwork <= (CISSTNETLIB_INTEGER)_work);
+    CMN_ASSERT(lwork <= static_casst<CISSTNETLIB_INTEGER>(_work));
     char jobu = 'A';
     char jobvt = 'A';
     CISSTNETLIB_INTEGER info;

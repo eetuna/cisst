@@ -214,14 +214,14 @@ public:
         throw (std::runtime_error)
     {
         /* check that the size matches with Allocate() */
-        if ((M  != (CISSTNETLIB_INTEGER) A.rows()) || 
-            (N  != (CISSTNETLIB_INTEGER) A.cols()) || 
-            (Nb != (CISSTNETLIB_INTEGER) B.cols())) {
+        if ((M  != static_cast<CISSTNETLIB_INTEGER>(A.rows())) || 
+            (N  != static_cast<CISSTNETLIB_INTEGER>(A.cols())) || 
+            (Nb != static_cast<CISSTNETLIB_INTEGER>(B.cols()))) {
             cmnThrow(std::runtime_error("nmrSVDRSSolver Solve: Sizes used for Allocate were different"));
         }
         
         /* check other dimensions */
-        if (M != (CISSTNETLIB_INTEGER) B.rows()) {
+        if (M != static_cast<CISSTNETLIB_INTEGER>(B.rows())) {
             cmnThrow(std::runtime_error("nmrSVDRSSolver Solve: Sizes of parameters are incompatible"));
         }
         

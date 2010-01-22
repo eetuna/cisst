@@ -34,9 +34,9 @@ void nmrLSISolver::Solve(vctDynamicMatrix<CISSTNETLIB_DOUBLE> &C, vctDynamicMatr
     throw (std::runtime_error)
 {
     /* check that the size matches with Allocate() */
-    if ((Ma != (CISSTNETLIB_INTEGER) C.rows())
-        || (Na != (CISSTNETLIB_INTEGER) C.cols())
-        || (Mg != (CISSTNETLIB_INTEGER) A.rows())) {
+    if ((Ma != static_cast<CISSTNETLIB_INTEGER>( C.rows()))
+        || (Na != static_cast<CISSTNETLIB_INTEGER>( C.cols()))
+        || (Mg != static_cast<CISSTNETLIB_INTEGER>( A.rows()))) {
         cmnThrow(std::runtime_error("nmrLSISolver Solve: Sizes used for Allocate were different"));
     }
     

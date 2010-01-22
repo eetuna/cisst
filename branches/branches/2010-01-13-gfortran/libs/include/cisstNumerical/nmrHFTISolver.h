@@ -169,9 +169,9 @@ public:
      */
     inline void Solve(vctDynamicMatrix<CISSTNETLIB_DOUBLE> &A, vctDynamicMatrix<CISSTNETLIB_DOUBLE> &B) throw (std::runtime_error) {
         /* check that the size matches with Allocate() */
-        if ((M != (CISSTNETLIB_INTEGER) A.rows())
-            || (N != (CISSTNETLIB_INTEGER) A.cols())
-            || (NB != (CISSTNETLIB_INTEGER) B.cols())) {
+        if ((M != static_cast<CISSTNETLIB_INTEGER>(A.rows()))
+            || (N != static_cast<CISSTNETLIB_INTEGER>(A.cols()))
+            || (NB != static_cast<CISSTNETLIB_INTEGER>(B.cols()))) {
             cmnThrow(std::runtime_error("nmrHFTISolver Solve: Sizes used for Allocate were different"));
         }
         

@@ -114,7 +114,7 @@ public:
     template <CISSTNETLIB_INTEGER __instanceLine, class __elementType>
     inline void Solve(nmrCallBackFunctionF1<__instanceLine, __elementType> &callBack, vctDynamicVector<CISSTNETLIB_DOUBLE> &X) 
 	    throw (std::runtime_error) {
-        if (N+1 != (CISSTNETLIB_INTEGER) X.size()) {
+        if (N+1 != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
             cmnThrow(std::runtime_error("nmrFminSolver Solve: Size used for Allocate was different"));
         }
         /* set the user functions */
@@ -132,7 +132,7 @@ public:
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &lbound, vctDynamicVector<CISSTNETLIB_DOUBLE> &ubound,
                       vctDynamicMatrix<CISSTNETLIB_DOUBLE> &alin) 
 	    throw (std::runtime_error) {
-        if (N+1 != (CISSTNETLIB_INTEGER) X.size()) {
+        if (N+1 != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
             cmnThrow(std::runtime_error("nmrFminSolver Solve: Size used for Allocate was different"));
         }
         /* set the user functions */
@@ -155,7 +155,7 @@ public:
                       nmrCallBackFunctionC<__instanceLineC, __elementTypeC> &callBackC,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &lbound, vctDynamicVector<CISSTNETLIB_DOUBLE> &ubound)
 	    throw (std::runtime_error) {
-        if (N+1 != (CISSTNETLIB_INTEGER) X.size()) {
+        if (N+1 != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
             cmnThrow(std::runtime_error("nmrFminSolver Solve: Size used for Allocate was different"));
         }
         /* set the user functions */
@@ -176,7 +176,7 @@ public:
                       vctDynamicMatrix<CISSTNETLIB_DOUBLE> &alin)
         //			    vctDynamicMatrix<CISSTNETLIB_DOUBLE> &alin)
 	    throw (std::runtime_error) {
-        if (N+1 != (CISSTNETLIB_INTEGER) X.size()) {
+        if (N+1 != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
             cmnThrow(std::runtime_error("nmrFminSolver Solve: Size used for Allocate was different"));
         }
         /* set the user functions */
@@ -202,7 +202,7 @@ public:
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &lbound,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &ubound,
                       vctDynamicMatrix<CISSTNETLIB_DOUBLE> &alin) throw (std::runtime_error) {
-        if (N+1 != (CISSTNETLIB_INTEGER) X.size()) {
+        if (N+1 != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
             cmnThrow(std::runtime_error("nmrFminSolver Solve: Size used for Allocate was different"));
         }
         UserFn.user_ef = efFunctionPointer;
@@ -232,7 +232,7 @@ public:
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &Ub,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &ALin) 
         throw (std::runtime_error) {
-        if (N != (CISSTNETLIB_INTEGER) X.size()) {
+        if (N != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
             cmnThrow(std::runtime_error("nmrFminSolver Solve: Size used for Allocate was different"));
         }
         /* set the user functions */

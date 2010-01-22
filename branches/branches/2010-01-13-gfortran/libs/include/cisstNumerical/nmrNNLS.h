@@ -812,8 +812,8 @@ inline CISSTNETLIB_INTEGER nmrNNLS(vctDynamicMatrixBase<_matrixOwnerType, CISSTN
     CISSTNETLIB_INTEGER Info;
     char m_Jobu = 'A';
     char m_Jobvt = 'A';
-    CISSTNETLIB_INTEGER m_Lwork = (CISSTNETLIB_INTEGER) nmrNNLSDynamicData::WorkspaceSize(dataFriend.M(),
-                                                                     dataFriend.N());
+    CISSTNETLIB_INTEGER m_Lwork = static_cast<CISSTNETLIB_INTEGER>(nmrNNLSDynamicData::WorkspaceSize(dataFriend.M(),
+                                                                                                     dataFriend.N()));
     /* check that storage order matches with Allocate() */
     if (A.StorageOrder() != dataFriend.StorageOrder()) {
         cmnThrow(std::runtime_error("nmrNNLS: Storage order used for Allocate was different"));

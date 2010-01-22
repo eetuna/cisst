@@ -247,14 +247,14 @@ public:
            debug (Anton) 
         */
         if (A.IsColMajor()) {
-            if ((M != (CISSTNETLIB_INTEGER) A.rows()) || 
-                (N != (CISSTNETLIB_INTEGER) A.cols())) {
+            if ((M != static_cast<CISSTNETLIB_INTEGER>(A.rows())) || 
+                (N != static_cast<CISSTNETLIB_INTEGER>(A.cols()))) {
                 cmnThrow(std::runtime_error("nmrSVDSolver Solve: Size used for Allocate was different"));
             }
         } 
         else if (A.IsRowMajor()) {
-            if ((M != (CISSTNETLIB_INTEGER) A.cols()) || 
-                (N != (CISSTNETLIB_INTEGER) A.rows())) {
+            if ((M != static_cast<CISSTNETLIB_INTEGER>(A.cols())) || 
+                (N != static_cast<CISSTNETLIB_INTEGER>(A.rows()))) {
                 cmnThrow(std::runtime_error("nmrSVDSolver Solve: Size used for Allocate was different"));
             }
         }

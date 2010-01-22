@@ -284,7 +284,7 @@ public:
         }
 
         /* check sizes */
-        if ((M != (CISSTNETLIB_INTEGER) A.rows()) || (N != (CISSTNETLIB_INTEGER) A.cols())) {
+        if ((M != static_cast<CISSTNETLIB_INTEGER>(A.rows())) || (N != static_cast<CISSTNETLIB_INTEGER>(A.cols()))) {
             cmnThrow(std::runtime_error("nmrLUSolver Solve: Size used for Allocate was different"));
         }
 

@@ -26,8 +26,8 @@ void nmrLDPSolver::Solve(vctDynamicMatrix<CISSTNETLIB_DOUBLE> &G, vctDynamicMatr
     throw (std::runtime_error) 
 {
     /* check that the size matches with Allocate() */
-    if ((M != (CISSTNETLIB_INTEGER) G.rows())
-        || (N != (CISSTNETLIB_INTEGER) G.cols())) {
+    if ((M != static_cast<CISSTNETLIB_INTEGER>( G.rows()))
+        || (N != static_cast<CISSTNETLIB_INTEGER>( G.cols()))) {
         cmnThrow(std::runtime_error("nmrLDPSolver Solve: Sizes used for Allocate were different"));
     }
 

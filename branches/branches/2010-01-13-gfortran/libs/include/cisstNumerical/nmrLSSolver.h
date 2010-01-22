@@ -204,12 +204,12 @@ public:
            expression for this test but I find this easier to read and
            debug (Anton) */
         if (A.IsColMajor()) {
-            if ((M != (CISSTNETLIB_INTEGER) A.rows()) || (N != (CISSTNETLIB_INTEGER) A.cols())) {
+            if ((M != static_cast<CISSTNETLIB_INTEGER>(A.rows())) || (N != static_cast<CISSTNETLIB_INTEGER>(A.cols()))) {
                 cmnThrow(std::runtime_error("nmrLSSolver Solve: Size used for Allocate was different"));
             }
         } 
         if (B.IsColMajor()) {
-            if ((M != (CISSTNETLIB_INTEGER) B.rows()) || (NRHS != (CISSTNETLIB_INTEGER) B.cols())) {
+            if ((M != static_cast<CISSTNETLIB_INTEGER>(B.rows())) || (NRHS != static_cast<CISSTNETLIB_INTEGER>(B.cols()))) {
                 cmnThrow(std::runtime_error("nmrLSSolver Solve: Size used for Allocate was different"));
             }
         } 

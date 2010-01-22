@@ -683,11 +683,11 @@ inline CISSTNETLIB_INTEGER nmrInverse(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _si
                             vctFixedSizeVector<CISSTNETLIB_INTEGER, _maxSize1> & pivotIndices,
                             vctFixedSizeVector<CISSTNETLIB_DOUBLE, _lWork> & workspace)
 {
-    const CISSTNETLIB_INTEGER maxSize1 = (CISSTNETLIB_INTEGER) nmrInverseFixedSizeData<_size, _storageOrder>::MAX_SIZE_1;
-    const CISSTNETLIB_INTEGER lWork = (CISSTNETLIB_INTEGER) nmrInverseFixedSizeData<_size, _storageOrder>::LWORK;
+    const CISSTNETLIB_INTEGER maxSize1 = static_cast<CISSTNETLIB_INTEGER>(nmrInverseFixedSizeData<_size, _storageOrder>::MAX_SIZE_1);
+    const CISSTNETLIB_INTEGER lWork = static_cast<CISSTNETLIB_INTEGER>(nmrInverseFixedSizeData<_size, _storageOrder>::LWORK);
     //Assert if requirement is equal to size provided!
-    CMN_ASSERT(maxSize1 == (CISSTNETLIB_INTEGER) _maxSize1);
-    CMN_ASSERT(lWork <= (CISSTNETLIB_INTEGER) _lWork);
+    CMN_ASSERT(maxSize1 == static_cast<CISSTNETLIB_INTEGER>(_maxSize1));
+    CMN_ASSERT(lWork <= static_cast<CISSTNETLIB_INTEGER>(_lWork));
 
     CISSTNETLIB_INTEGER info;
     CISSTNETLIB_INTEGER lda = _maxSize1;

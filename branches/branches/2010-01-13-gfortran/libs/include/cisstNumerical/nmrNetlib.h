@@ -30,10 +30,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstConfig.h>
 
 #if CISST_HAS_CISSTNETLIB
+
 #define CISST_HAS_NETLIB
 #include <cisstNetlib.h>
-#endif
 
+#else
+
+// If you don't have cisstNetlib you will need the followings
+
+typedef long int CISSTNETLIB_INTEGER;
+typedef long int CISSTNETLIB_LOGICAL;
+typedef float CISSTNETLIB_FLOAT;
+typedef double CISSTNETLIB_DOUBLE;
+
+#endif
 
 /*!
   \var typedef long int F_INTEGER

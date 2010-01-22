@@ -179,7 +179,7 @@ public:
     template <CISSTNETLIB_INTEGER __instanceLine, class __elementType>
     inline void Solve(nmrCallBackFunctionF<__instanceLine, __elementType> &callBack, vctDynamicVector<CISSTNETLIB_DOUBLE> &X,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &F, CISSTNETLIB_DOUBLE tolerance) throw (std::runtime_error) {
-        if ((N != (CISSTNETLIB_INTEGER) X.size()) || (N != (CISSTNETLIB_INTEGER) F.size())) {
+        if ((N != static_cast<CISSTNETLIB_INTEGER>(X.size())) || (N != static_cast<CISSTNETLIB_INTEGER>(F.size()))) {
             cmnThrow(std::runtime_error("nmrFnSolver Solve: Size used for Allocate was different"));
         }
         Tolerance = tolerance;

@@ -804,9 +804,9 @@ template <vct::size_type _rows, vct::size_type _cols, vct::size_type _minmn>
 inline CISSTNETLIB_INTEGER nmrLU(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _rows, _cols, VCT_COL_MAJOR> & A, 
                        vctFixedSizeVector<CISSTNETLIB_INTEGER, _minmn> & pivotIndices)
 {
-    const CISSTNETLIB_INTEGER minmn = (CISSTNETLIB_INTEGER)nmrLUFixedSizeData<_rows, _cols>::MIN_MN;
+    const CISSTNETLIB_INTEGER minmn = static_cast<CISSTNETLIB_INTEGER>(nmrLUFixedSizeData<_rows, _cols>::MIN_MN);
     //Assert if requirement is equal to size provided!
-    CMN_ASSERT(minmn == (CISSTNETLIB_INTEGER)_minmn);
+    CMN_ASSERT(minmn == static_cast<CISSTNETLIB_INTEGER>(_minmn));
 
     CISSTNETLIB_INTEGER info;
     CISSTNETLIB_INTEGER lda = (_rows> 1) ? _rows : 1;

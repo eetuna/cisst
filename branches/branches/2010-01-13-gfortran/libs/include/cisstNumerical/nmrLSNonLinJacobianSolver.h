@@ -222,7 +222,7 @@ public:
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &J, 
                       CISSTNETLIB_DOUBLE tolerance) throw (std::runtime_error) {
 	//if ((N != (CISSTNETLIB_INTEGER) X.size()) || (M != (CISSTNETLIB_INTEGER) F.size()) || (Ldfjac != (CISSTNETLIB_INTEGER) J.rows()) || (N != (CISSTNETLIB_INTEGER) J.cols())) {
-	if ((N != (CISSTNETLIB_INTEGER) X.size()) || (M != (CISSTNETLIB_INTEGER) F.size()) || (Ldfjac*N != (CISSTNETLIB_INTEGER) J.size())) {
+        if ((N != static_cast<CISSTNETLIB_INTEGER>(X.size())) || (M != static_cast<CISSTNETLIB_INTEGER>(F.size())) || (Ldfjac*N != static_cast<CISSTNETLIB_INTEGER>(J.size()))) {
 	    cmnThrow(std::runtime_error("nmrLSNonLinJacobianSolver Solve: Size used for Allocate was different"));
 	}
 	Tolerance = tolerance;

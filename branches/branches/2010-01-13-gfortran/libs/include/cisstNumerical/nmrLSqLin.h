@@ -382,10 +382,10 @@ public:
       nmrLSqLinSolutionDynamic::SetRef)
     */
     nmrLSqLinSolutionDynamic():
-        m_Ma((CISSTNETLIB_INTEGER)0),
-        m_Me((CISSTNETLIB_INTEGER)0),
-        m_Mg((CISSTNETLIB_INTEGER)0),
-        m_N((CISSTNETLIB_INTEGER)0) {};
+        m_Ma(static_cast<CISSTNETLIB_INTEGER>(0)),
+        m_Me(static_cast<CISSTNETLIB_INTEGER>(0)),
+        m_Mg(static_cast<CISSTNETLIB_INTEGER>(0)),
+        m_N(static_cast<CISSTNETLIB_INTEGER>(0)) {};
     
     /*! contructor to use with LS */
     nmrLSqLinSolutionDynamic(CISSTNETLIB_INTEGER ma, CISSTNETLIB_INTEGER n)
@@ -999,7 +999,7 @@ public:
                          vctDynamicVectorBase<_vectorOwnerTypeWork, CISSTNETLIB_DOUBLE> &inWork)
     {
         CISSTNETLIB_INTEGER lwork = nmrLSqLinSolutionDynamic::GetWorkspaceSize(ma, me, mg, n);
-        if (lwork > (CISSTNETLIB_INTEGER)inWork.size()) {
+        if (lwork > static_cast<CISSTNETLIB_INTEGER>(inWork.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for Work"));
         }
         this->Malloc(ma, me, mg, n, false, true, true);
@@ -1021,11 +1021,11 @@ public:
                          vctDynamicVectorBase<_vectorOwnerTypeWork, CISSTNETLIB_DOUBLE> &inIWork)
     {
         CISSTNETLIB_INTEGER lwork = nmrLSqLinSolutionDynamic::GetWorkspaceSize(ma, me, mg, n);
-        if (lwork > (CISSTNETLIB_INTEGER)inWork.size()) {
+        if (lwork > static_cast<CISSTNETLIB_INTEGER>(inWork.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for Work"));
         }
         CISSTNETLIB_INTEGER liwork = nmrLSqLinSolutionDynamic::GetIWorkspaceSize(ma, me, mg, n);
-        if (liwork > (CISSTNETLIB_INTEGER)inIWork.size()) {
+        if (liwork > static_cast<CISSTNETLIB_INTEGER>(inIWork.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for IWork"));
         }
         this->Malloc(ma, me, mg, n, false, true, true);
@@ -1051,10 +1051,10 @@ public:
                 vctDynamicVectorBase<_vectorOwnerTypeX, CISSTNETLIB_DOUBLE> &inX, vctDynamicVectorBase<_vectorOwnerTypeWork, CISSTNETLIB_DOUBLE> &inWork)
     {
         CISSTNETLIB_INTEGER lwork = nmrLSqLinSolutionDynamic::GetWorkspaceSize(ma, me, mg, n);
-        if (lwork > (CISSTNETLIB_INTEGER)inWork.size()) {
+        if (lwork > static_cast<CISSTNETLIB_INTEGER>(inWork.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for Work"));
         }
-        if (n > (CISSTNETLIB_INTEGER)inX.size()) {
+        if (n > static_cast<CISSTNETLIB_INTEGER>(inX.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for X"));
         }
         this->Malloc(ma, me, mg, n, false, true, false);
@@ -1076,14 +1076,14 @@ public:
                 vctDynamicVectorBase<_vectorOwnerTypeIWork, CISSTNETLIB_DOUBLE> &inIWork)
     {
         CISSTNETLIB_INTEGER lwork = nmrLSqLinSolutionDynamic::GetWorkspaceSize(ma, me, mg, n);
-        if (lwork > (CISSTNETLIB_INTEGER)inWork.size()) {
+        if (lwork > static_cast<CISSTNETLIB_INTEGER>(inWork.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for Work"));
         }
         CISSTNETLIB_INTEGER liwork = nmrLSqLinSolutionDynamic::GetIWorkspaceSize(ma, me, mg, n);
-        if (liwork > (CISSTNETLIB_INTEGER)inIWork.size()) {
+        if (liwork > static_cast<CISSTNETLIB_INTEGER>(inIWork.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for IWork"));
         }
-        if (n > (CISSTNETLIB_INTEGER)inX.size()) {
+        if (n > static_cast<CISSTNETLIB_INTEGER>(inX.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for X"));
         }
         this->Malloc(ma, me, mg, n, false, true, false);
@@ -1103,7 +1103,7 @@ public:
     void SetRef(CISSTNETLIB_INTEGER ma, CISSTNETLIB_INTEGER me, CISSTNETLIB_INTEGER mg, CISSTNETLIB_INTEGER n,
                 vctDynamicVectorBase<_vectorOwnerTypeX, CISSTNETLIB_DOUBLE> &inX)
     {
-        if (n > (CISSTNETLIB_INTEGER)inX.size()) {
+        if (n > static_cast<CISSTNETLIB_INTEGER>(inX.size())) {
             cmnThrow(std::runtime_error("nmrLSqLin: Incorrect size for X"));
         }
         this->Malloc(ma, me, mg, n, true, true, false);
@@ -1221,12 +1221,12 @@ inline CISSTNETLIB_INTEGER nmrLSqLin(vctDynamicMatrixBase<_matrixOwnerType, CISS
     if (A.IsRowMajor() != VCT_COL_MAJOR) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Input must be in Column Major format"));
     }
-    CISSTNETLIB_INTEGER rows = (CISSTNETLIB_INTEGER)A.rows();
-    CISSTNETLIB_INTEGER cols = (CISSTNETLIB_INTEGER)A.cols();
+    CISSTNETLIB_INTEGER rows = static_cast<CISSTNETLIB_INTEGER>(A.rows());
+    CISSTNETLIB_INTEGER cols = static_cast<CISSTNETLIB_INTEGER>(A.cols());
     if ((rows != solutionFriend.GetMa()) || (cols != solutionFriend.GetN())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size used for Allocate was different"));
     }
-    if (rows != (CISSTNETLIB_INTEGER)b.size()) {
+    if (rows != static_cast<CISSTNETLIB_INTEGER>(b.size())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size of b must be same as number of rows of A"));
     }
     char trans = 'N';
@@ -1278,18 +1278,18 @@ inline CISSTNETLIB_INTEGER nmrLSqLin(vctDynamicMatrixBase<_matrixOwnerTypeA, CIS
     if ((A.IsRowMajor() != VCT_COL_MAJOR) || (G.IsRowMajor() != VCT_COL_MAJOR)) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Input must be in Column Major format"));
     }
-    CISSTNETLIB_INTEGER ma = (CISSTNETLIB_INTEGER)A.rows();
-    CISSTNETLIB_INTEGER mg = (CISSTNETLIB_INTEGER)G.rows();
-    CISSTNETLIB_INTEGER na = (CISSTNETLIB_INTEGER)A.cols();
-    CISSTNETLIB_INTEGER ng = (CISSTNETLIB_INTEGER)G.cols();
+    CISSTNETLIB_INTEGER ma = static_cast<CISSTNETLIB_INTEGER>(A.rows());
+    CISSTNETLIB_INTEGER mg = static_cast<CISSTNETLIB_INTEGER>(G.rows());
+    CISSTNETLIB_INTEGER na = static_cast<CISSTNETLIB_INTEGER>(A.cols());
+    CISSTNETLIB_INTEGER ng = static_cast<CISSTNETLIB_INTEGER>(G.cols());
     if ((ma != solutionFriend.GetMa()) || (mg != solutionFriend.GetMg())
         || (na != solutionFriend.GetN()) || (ng != solutionFriend.GetN())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size used for Allocate was different"));
     }
-    if (ma != (CISSTNETLIB_INTEGER)b.size()) {
+    if (ma != static_cast<CISSTNETLIB_INTEGER>(b.size())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size of b must be same as number of rows of A"));
     }
-    if (mg != (CISSTNETLIB_INTEGER)h.size()) {
+    if (mg != static_cast<CISSTNETLIB_INTEGER>(h.size())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size of h must be same as number of rows of G"));
     }
     // make a copy of A, b, G, h
@@ -1348,24 +1348,24 @@ inline CISSTNETLIB_INTEGER nmrLSqLin(vctDynamicMatrixBase<_matrixOwnerTypeA, CIS
     if ((A.IsRowMajor() != VCT_COL_MAJOR) || (G.IsRowMajor() != VCT_COL_MAJOR) || (E.IsRowMajor() != VCT_COL_MAJOR)) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Input must be in Column Major format"));
     }
-    CISSTNETLIB_INTEGER ma = (CISSTNETLIB_INTEGER)A.rows();
-    CISSTNETLIB_INTEGER me = (CISSTNETLIB_INTEGER)E.rows();
-    CISSTNETLIB_INTEGER mg = (CISSTNETLIB_INTEGER)G.rows();
-    CISSTNETLIB_INTEGER na = (CISSTNETLIB_INTEGER)A.cols();
-    CISSTNETLIB_INTEGER ne = (CISSTNETLIB_INTEGER)E.cols();
-    CISSTNETLIB_INTEGER ng = (CISSTNETLIB_INTEGER)G.cols();
+    CISSTNETLIB_INTEGER ma = static_cast<CISSTNETLIB_INTEGER>(A.rows());
+    CISSTNETLIB_INTEGER me = static_cast<CISSTNETLIB_INTEGER>(E.rows());
+    CISSTNETLIB_INTEGER mg = static_cast<CISSTNETLIB_INTEGER>(G.rows());
+    CISSTNETLIB_INTEGER na = static_cast<CISSTNETLIB_INTEGER>(A.cols());
+    CISSTNETLIB_INTEGER ne = static_cast<CISSTNETLIB_INTEGER>(E.cols());
+    CISSTNETLIB_INTEGER ng = static_cast<CISSTNETLIB_INTEGER>(G.cols());
     if ((ma != solutionFriend.GetMa()) || (mg != solutionFriend.GetMg()) || (me != solutionFriend.GetMe())
         || (na != solutionFriend.GetN()) || (ng != solutionFriend.GetN() || (ne != solutionFriend.GetN()))
         ) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size used for Allocate was different"));
     }
-    if (ma != (CISSTNETLIB_INTEGER)b.size()) {
+    if (ma != static_cast<CISSTNETLIB_INTEGER>(b.size())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size of b must be same as number of rows of A"));
     }
-    if (mg != (CISSTNETLIB_INTEGER)h.size()) {
+    if (mg != static_cast<CISSTNETLIB_INTEGER>(h.size())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size of h must be same as number of rows of G"));
     }
-    if (me != (CISSTNETLIB_INTEGER)f.size()) {
+    if (me != static_cast<CISSTNETLIB_INTEGER>(f.size())) {
         cmnThrow(std::runtime_error("nmrLSqLinSolver Solve: Size of f must be same as number of rows of E"));
     }
     // make a copy of A, b, E, f, G, h
@@ -1716,14 +1716,14 @@ inline CISSTNETLIB_INTEGER nmrLSqLin(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _ma,
 {
     CISSTNETLIB_INTEGER ret_value;
     char trans = 'N';
-    CISSTNETLIB_INTEGER rows = (CISSTNETLIB_INTEGER)_ma;
-    CISSTNETLIB_INTEGER cols = (CISSTNETLIB_INTEGER)_n;
+    CISSTNETLIB_INTEGER rows = static_cast<CISSTNETLIB_INTEGER>(_ma);
+    CISSTNETLIB_INTEGER cols = static_cast<CISSTNETLIB_INTEGER>(_n);
     CISSTNETLIB_INTEGER nrhs = 1;
     CISSTNETLIB_INTEGER lda = (1>_ma)?1:_ma;
     CISSTNETLIB_INTEGER maxmn = (_ma > _n)?_ma:_n;
     maxmn  = (1>maxmn)?1:maxmn;
-    CISSTNETLIB_INTEGER lwork = (CISSTNETLIB_INTEGER)nmrLSqLinSolutionFixedSize<_ma, 0, 0, _n>::LWORK;
-    CMN_ASSERT(lwork <= (CISSTNETLIB_INTEGER)_work);
+    CISSTNETLIB_INTEGER lwork = static_cast<CISSTNETLIB_INTEGER>(nmrLSqLinSolutionFixedSize<_ma, 0, 0, _n>::LWORK);
+    CMN_ASSERT(lwork <= static_cast<CISSTNETLIB_INTEGER>(_work));
     dgels_(&trans, &rows, &cols, &nrhs,
            A.Pointer(), &lda,
            b.Pointer(), &maxmn,
@@ -1765,9 +1765,9 @@ inline CISSTNETLIB_INTEGER nmrLSqLin(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _ma,
                           vctFixedSizeVector<CISSTNETLIB_DOUBLE, _work> &Work, vctFixedSizeVector<CISSTNETLIB_INTEGER, _iwork> &IWork)
 {
     typedef vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _ma + _mg, _n + 1, VCT_COL_MAJOR> InputType;
-    CISSTNETLIB_INTEGER ma = (CISSTNETLIB_INTEGER)_ma;
-    CISSTNETLIB_INTEGER mg = (CISSTNETLIB_INTEGER)_mg;
-    CISSTNETLIB_INTEGER na = (CISSTNETLIB_INTEGER)_n;
+    CISSTNETLIB_INTEGER ma = static_cast<CISSTNETLIB_INTEGER>(_ma);
+    CISSTNETLIB_INTEGER mg = static_cast<CISSTNETLIB_INTEGER>(_mg);
+    CISSTNETLIB_INTEGER na = static_cast<CISSTNETLIB_INTEGER>(_n;)
     vctFixedSizeMatrixRef<CISSTNETLIB_DOUBLE, _ma, _n, 1, _ma + _mg> ARef(W, 0, 0);
     vctFixedSizeMatrixRef<CISSTNETLIB_DOUBLE, _mg, _n, 1, _ma + _mg> GRef(W, _ma, 0);
     vctFixedSizeVectorRef<CISSTNETLIB_DOUBLE, _ma, 1> bRef(W.Column(_n).Pointer(0));
@@ -1841,10 +1841,10 @@ inline CISSTNETLIB_INTEGER nmrLSqLin(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _ma,
                           vctFixedSizeVector<CISSTNETLIB_DOUBLE, _ma + _me> &RNorm,
                           vctFixedSizeVector<CISSTNETLIB_DOUBLE, _work> &Work, vctFixedSizeVector<CISSTNETLIB_INTEGER, _iwork> &IWork)
 {
-    CISSTNETLIB_INTEGER me = (CISSTNETLIB_INTEGER)_me;
-    CISSTNETLIB_INTEGER ma = (CISSTNETLIB_INTEGER)_ma;
-    CISSTNETLIB_INTEGER mg = (CISSTNETLIB_INTEGER)_mg;
-    CISSTNETLIB_INTEGER na = (CISSTNETLIB_INTEGER)_n;
+    CISSTNETLIB_INTEGER me = static_cast<CISSTNETLIB_INTEGER>(_me);
+    CISSTNETLIB_INTEGER ma = static_cast<CISSTNETLIB_INTEGER>(_ma);
+    CISSTNETLIB_INTEGER mg = static_cast<CISSTNETLIB_INTEGER>(_mg);
+    CISSTNETLIB_INTEGER na = static_cast<CISSTNETLIB_INTEGER>(_n);
     vctFixedSizeMatrixRef<CISSTNETLIB_DOUBLE, _me, _n, 1, _ma + _me + _mg> ERef(W, 0, 0);
     vctFixedSizeMatrixRef<CISSTNETLIB_DOUBLE, _ma, _n, 1, _ma + _me + _mg> ARef(W, _me, 0);
     vctFixedSizeMatrixRef<CISSTNETLIB_DOUBLE, _mg, _n, 1, _ma + _me + _mg> GRef(W, _me + _ma, 0);

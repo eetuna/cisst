@@ -60,7 +60,8 @@ IF(CISST_HAS_CISSTNETLIB)
   SET(SOURCE_FILES
       ${SOURCE_FILES}
       nmrLDPSolver.cpp
-      nmrLSISolver.cpp
+#      lsi solver is included in nmrLSqLin
+#      nmrLSISolver.cpp
       nmrLSqLin.cpp
       nmrPInverse.cpp
       nmrPInverseEconomy.cpp
@@ -72,11 +73,13 @@ IF(CISST_HAS_CISSTNETLIB)
       nmrNetlib.h
       nmrInverse.h
       nmrLDPSolver.h
-      nmrLSSolver.h
-      nmrLSISolver.h
+#     dgels solver is include in nmrLSqLin
+#      nmrLSSolver.h
+#     lsi solver is include in nmrLSqLin
+#      nmrLSISolver.h
       nmrLSqLin.h
       nmrLU.h
-      nmrLUSolver.h
+#      nmrLUSolver.h
       nmrHFTISolver.h
       nmrNNLSSolver.h
       nmrCallBack.h
@@ -84,7 +87,7 @@ IF(CISST_HAS_CISSTNETLIB)
       nmrPInverseEconomy.h
       nmrSVD.h
       nmrSVDEconomy.h
-      nmrSVDSolver.h
+#      nmrSVDSolver.h
       nmrSVDRSSolver.h
       )
 ENDIF(CISST_HAS_CISSTNETLIB)

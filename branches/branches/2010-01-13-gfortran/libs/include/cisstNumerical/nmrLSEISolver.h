@@ -118,8 +118,8 @@ public:
         Work.SetSize(2 * (ME + N) + K + (MG + 2) * (N + 7), 1, VCT_COL_MAJOR);
         Index.SetSize(MG + 2 * N + 2, 1, VCT_COL_MAJOR);
         Options.SetSize(1, 1, VCT_COL_MAJOR);
-        Index(0, 0) = (CISSTNETLIB_INTEGER) Work.rows();
-        Index(1, 0) = (CISSTNETLIB_INTEGER) Index.rows();
+        Index(0, 0) = static_cast<CISSTNETLIB_INTEGER>(Work.rows());
+        Index(1, 0) = static_cast<CISSTNETLIB_INTEGER>(Index.rows());
         Options(0, 0) = 1;
         // otherMatrix, startRow, startCol, rows, cols
         ERef.SetRef(W, 0,     0, ME, N);
@@ -168,9 +168,9 @@ public:
     {
         /* check that the size matches with Allocate() */
         if (
-            (MA != (CISSTNETLIB_INTEGER) A.rows()) || (ME != (CISSTNETLIB_INTEGER) E.rows()) || (MG != (CISSTNETLIB_INTEGER) G.rows())
-            || (N != (CISSTNETLIB_INTEGER) A.cols()) || (N != (CISSTNETLIB_INTEGER) E.cols()) || (N != (CISSTNETLIB_INTEGER) G.cols())
-            || (1 != (CISSTNETLIB_INTEGER) b.cols()) || (1 != (CISSTNETLIB_INTEGER) f.cols()) || (1 != (CISSTNETLIB_INTEGER) h.cols())
+            (MA != static_cast<CISSTNETLIB_INTEGER>(A.rows())) || (ME != static_cast<CISSTNETLIB_INTEGER>(E.rows())) || (MG != static_cast<CISSTNETLIB_INTEGER>(G.rows()))
+            || (N != static_cast<CISSTNETLIB_INTEGER>(A.cols())) || (N != static_cast<CISSTNETLIB_INTEGER>(E.cols())) || (N != static_cast<CISSTNETLIB_INTEGER>(G.cols()))
+            || (1 != static_cast<CISSTNETLIB_INTEGER>(b.cols())) || (1 != static_cast<CISSTNETLIB_INTEGER>(f.cols())) || (1 != static_cast<CISSTNETLIB_INTEGER>(h.cols()))
             ) {
             cmnThrow(std::runtime_error("nmrLSEISolver Solve: Sizes used for Allocate were different"));
         }
@@ -186,7 +186,7 @@ public:
             cmnThrow(std::runtime_error("nmrLSEISolver Solve: All parameters must be Fortran compatible"));
         }
        
-	if ((MDW != (CISSTNETLIB_INTEGER) W.rows() ) || (N+1 != (CISSTNETLIB_INTEGER)W.cols())) {
+        if ((MDW != static_cast<CISSTNETLIB_INTEGER>(W.rows()) ) || (N+1 != static_cast<CISSTNETLIB_INTEGER>(W.cols()))) {
             cmnThrow(std::runtime_error("nmrLSEISolver Solve: Memory for W was not allocated"));
 	}
 
@@ -208,7 +208,7 @@ public:
     inline void Solve(vctDynamicMatrix<CISSTNETLIB_DOUBLE> &W)
 	    throw (std::runtime_error)
     {
-        if ((MDW != (CISSTNETLIB_INTEGER) W.rows() ) || (N+1 != (CISSTNETLIB_INTEGER)W.cols())) {
+        if ((MDW != static_cast<CISSTNETLIB_INTEGER>(W.rows()) ) || (N+1 != static_cast<CISSTNETLIB_INTEGER>(W.cols()))) {
             cmnThrow(std::runtime_error("nmrLSEISolver Solve: Sizes used for Allocate were different"));
         }
         

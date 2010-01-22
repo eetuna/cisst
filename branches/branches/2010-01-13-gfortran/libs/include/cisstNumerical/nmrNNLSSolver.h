@@ -161,8 +161,8 @@ public:
         throw (std::runtime_error)
     {
         /* check that the size matches with Allocate() */
-        if ((M != (CISSTNETLIB_INTEGER) C.rows())
-            || (N != (CISSTNETLIB_INTEGER) C.cols())) {
+      if ((M != static_cast<CISSTNETLIB_INTEGER>(C.rows()))
+	  || (N != static_cast<CISSTNETLIB_INTEGER>(C.cols()))) {
             cmnThrow(std::runtime_error("nmrNNLSSolver Solve: Sizes used for Allocate were different"));
         }
         

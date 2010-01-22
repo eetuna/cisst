@@ -808,8 +808,8 @@ inline CISSTNETLIB_INTEGER nmrSVDEconomy(vctDynamicMatrixBase<_matrixOwnerType, 
     CISSTNETLIB_INTEGER Info;
     char m_Jobu = 'S';
     char m_Jobvt = 'A';
-    CISSTNETLIB_INTEGER m_Lwork = (CISSTNETLIB_INTEGER) nmrSVDEconomyDynamicData::WorkspaceSize(dataFriend.M(),
-                                                                            dataFriend.N());
+    CISSTNETLIB_INTEGER m_Lwork = static_cast<CISSTNETLIB_INTEGER>(nmrSVDEconomyDynamicData::WorkspaceSize(dataFriend.M(),
+                                                                                                           dataFriend.N()));
     /* check that storage order matches with Allocate() */
     if (A.StorageOrder() != dataFriend.StorageOrder()) {
         cmnThrow(std::runtime_error("nmrSVDEconomy: Storage order used for Allocate was different"));
