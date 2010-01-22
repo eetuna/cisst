@@ -21,6 +21,7 @@
 
 import unittest
 import numpy
+import time
 
 import cisstCommonPython as cisstCommon
 import cisstVectorPython as cisstVector
@@ -36,39 +37,91 @@ class PeriodicTaskTest(unittest.TestCase):
         
     def TestType(self):
         """Test constructor and types of mtsPeriodicTask"""
-        variable = cisstMultiTaskPythonTest.mtsPeriodicTaskTest(0.05)
+        periodicTask = cisstMultiTaskPythonTest.mtsPeriodicTaskTest(0.05)
         # check type
-        self.failUnless(isinstance(variable, cisstMultiTaskPythonTest.mtsPeriodicTaskTest))
-        self.failUnless(isinstance(variable, cisstMultiTask.mtsTaskPeriodic))
-        self.failUnless(isinstance(variable, cisstMultiTask.mtsTaskContinuous))
-        self.failUnless(isinstance(variable, cisstMultiTask.mtsDevice))
-        self.failUnless(isinstance(variable, cisstCommon.cmnGenericObject))
+        self.failUnless(isinstance(periodicTask, cisstMultiTaskPythonTest.mtsPeriodicTaskTest))
+        self.failUnless(isinstance(periodicTask, cisstMultiTask.mtsTaskPeriodic))
+        self.failUnless(isinstance(periodicTask, cisstMultiTask.mtsTaskContinuous))
+        self.failUnless(isinstance(periodicTask, cisstMultiTask.mtsDevice))
+        self.failUnless(isinstance(periodicTask, cisstCommon.cmnGenericObject))
 
     def TestUpdateFromC(self):
         """Test UpdateFromC for mtsPeriodicTask"""
-        variable = cisstMultiTaskPythonTest.mtsPeriodicTaskTest(0.05)
-        variable.UpdateFromC()
+        periodicTask = cisstMultiTaskPythonTest.mtsPeriodicTaskTest(0.05)
+        periodicTask.UpdateFromC()
         # verify that both interfaces have been created
-        self.failUnless(variable.__dict__.has_key("MainInterface"))
-        self.failUnless(variable.__dict__.has_key("EmptyInterface")) # space should have been removed
+        self.failUnless(periodicTask.__dict__.has_key("MainInterface"))
+        self.failUnless(periodicTask.__dict__.has_key("EmptyInterface")) # space should have been removed
         # test that MainInterface has been populated properly
         # command AddDouble(mtsDouble)
-        self.failUnless(variable.MainInterface.__dict__.has_key("AddDouble"))
-        self.failUnless(isinstance(variable.MainInterface.AddDouble, cisstMultiTask.mtsCommandWriteBase))
-        proto = variable.MainInterface.AddDouble.GetArgumentPrototype()
+        self.failUnless(periodicTask.MainInterface.__dict__.has_key("AddDouble"))
+        self.failUnless(isinstance(periodicTask.MainInterface.AddDouble, cisstMultiTask.mtsCommandWriteBase))
+        proto = periodicTask.MainInterface.AddDouble.GetArgumentPrototype()
         self.failUnless(isinstance(proto, cisstMultiTask.mtsDouble))
         # command ZeroAll(void)
-        self.failUnless(variable.MainInterface.__dict__.has_key("ZeroAll"))
-        self.failUnless(isinstance(variable.MainInterface.ZeroAll, cisstMultiTask.mtsCommandVoidBase))
+        self.failUnless(periodicTask.MainInterface.__dict__.has_key("ZeroAll"))
+        self.failUnless(isinstance(periodicTask.MainInterface.ZeroAll, cisstMultiTask.mtsCommandVoidBase))
         # command GetDouble(mtsDouble)
-        self.failUnless(variable.MainInterface.__dict__.has_key("GetDouble"))
-        self.failUnless(isinstance(variable.MainInterface.GetDouble, cisstMultiTask.mtsCommandReadBase))
-        proto = variable.MainInterface.GetDouble.GetArgumentPrototype()
+        self.failUnless(periodicTask.MainInterface.__dict__.has_key("GetDouble"))
+        self.failUnless(isinstance(periodicTask.MainInterface.GetDouble, cisstMultiTask.mtsCommandReadBase))
+        proto = periodicTask.MainInterface.GetDouble.GetArgumentPrototype()
         self.failUnless(isinstance(proto, cisstMultiTask.mtsDouble))
         # command GetVector(mtsDoubleVec)
-        self.failUnless(variable.MainInterface.__dict__.has_key("GetVector"))
-        self.failUnless(isinstance(variable.MainInterface.GetVector, cisstMultiTask.mtsCommandReadBase))
-        proto = variable.MainInterface.GetVector.GetArgumentPrototype()
+        self.failUnless(periodicTask.MainInterface.__dict__.has_key("GetVector"))
+        self.failUnless(isinstance(periodicTask.MainInterface.GetVector, cisstMultiTask.mtsCommandReadBase))
+        proto = periodicTask.MainInterface.GetVector.GetArgumentPrototype()
         self.failUnless(isinstance(proto, cisstMultiTask.mtsDoubleVec))
         
-
+    def TestRun(self):
+        """Test run mtsPeriodicTask"""
+        # create the task
+        period = 0.05
+        periodicTask = cisstMultiTaskPythonTest.mtsPeriodicTaskTest(period)
+        periodicTask.UpdateFromC()
+        # get the task manager
+        taskManager = cisstMultiTask.mtsTaskManager_GetInstance()
+        self.failUnless(isinstance(taskManager, cisstMultiTask.mtsTaskManager))
+        # add the task
+        self.failUnless(taskManager.AddTask(periodicTask))
+        # create and start the task(s)
+        taskManager.CreateAll()
+        taskManager.StartAll()
+        # and now use the task ...
+        # -1- set all to zero and check result
+        periodicTask.MainInterface.ZeroAll()
+        time.sleep(2 * period)
+        result = periodicTask.MainInterface.GetDouble()
+        timestamp1 = result.GetTimestamp()
+        self.failUnless(result.Data == 0.0)
+        result = periodicTask.MainInterface.GetVector()
+        data = result.Data()
+        size = data.size
+        expected = numpy.zeros(size)
+        self.failUnless((data == expected).all())
+        # -2- use the AddDouble to modify all and test 
+        periodicTask.MainInterface.AddDouble(1.0)
+        time.sleep(2 * period)
+        result = periodicTask.MainInterface.GetDouble()
+        timestamp2 = result.GetTimestamp()
+        self.failUnless(result.Data == 1.0)
+        result = periodicTask.MainInterface.GetVector()
+        data = result.Data()
+        size = data.size
+        expected = numpy.ones(size)
+        self.failUnless((data == expected).all())
+        # -3- set to zero again and test
+        periodicTask.MainInterface.ZeroAll()
+        time.sleep(2 * period)
+        result = periodicTask.MainInterface.GetDouble()
+        timestamp3 = result.GetTimestamp()
+        self.failUnless(result.Data == 0.0)
+        result = periodicTask.MainInterface.GetVector()
+        data = result.Data()
+        size = data.size
+        expected = numpy.zeros(size)
+        self.failUnless((data == expected).all())
+        # ... and now check the timestamps
+        self.failUnless(timestamp1 < timestamp2)
+        self.failUnless(timestamp2 < timestamp3)
+        # kill all
+        taskManager.KillAll()
