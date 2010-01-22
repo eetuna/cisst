@@ -17,8 +17,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(cisst)
 
-SET(CMAKE_VERBOSE_MAKEFILE TRUE)
-
 
 # Function to expend a list without repetitions, forces the list to be internal
 FUNCTION(CISST_ADD_TO_INTERNAL list newElements)

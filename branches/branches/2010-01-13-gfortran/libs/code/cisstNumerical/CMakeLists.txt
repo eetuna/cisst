@@ -3,7 +3,7 @@
 #
 # CMakeLists for cisstNumerical
 #
-# (C) Copyright 2003-2007 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2003-2010 Johns Hopkins University (JHU), All Rights
 # Reserved.
 # 
 # --- begin cisst license - do not edit ---
@@ -91,22 +91,6 @@ IF(CISST_HAS_CISSTNETLIB)
       nmrSVDRSSolver.h
       )
 ENDIF(CISST_HAS_CISSTNETLIB)
-
-# add files if cnetlib is used
-# IF(CISST_HAS_CNETLIB)
-#
-#  SET(HEADER_FILES
-#      ${HEADER_FILES}
-#      nmrFnSolver.h
-#      nmrFminSolver.h
-#      nmrFnJacobianSolver.h
-#      nmrLSEISolver.h
-#      nmrLSNonLinSolver.h
-#      nmrLSNonLinJacobianSolver.h
-#      nmrPInverseSolver.h
-#      )
-#
-#ENDIF(CISST_HAS_CNETLIB)
 
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
