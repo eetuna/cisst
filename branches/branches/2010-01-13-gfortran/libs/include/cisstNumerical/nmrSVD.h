@@ -1151,7 +1151,7 @@ CISSTNETLIB_INTEGER nmrSVD(vctFixedSizeMatrix<CISSTNETLIB_DOUBLE, _rows, _cols, 
     CISSTNETLIB_INTEGER lwork = 
         static_cast<CISSTNETLIB_INTEGER>(nmrSVDFixedSizeData<_rows, _cols, _storageOrder>::LWORK);
     //Assert if requirement is greater than size provided!
-    CMN_ASSERT(lwork <= static_casst<CISSTNETLIB_INTEGER>(_work));
+    CMN_ASSERT(lwork <= static_cast<CISSTNETLIB_INTEGER>(_work));
     char jobu = 'A';
     char jobvt = 'A';
     CISSTNETLIB_INTEGER info;

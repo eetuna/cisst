@@ -211,9 +211,9 @@ public:
     */
 
     //@{
-    template <CISSTNETLIB_INTEGER __instanceLineF, 
+    template <int __instanceLineF, 
               class __elementTypeF, 
-              CISSTNETLIB_INTEGER __instanceLineJ, 
+              int __instanceLineJ, 
               class __elementTypeJ>
     inline void Solve(nmrCallBackFunctionF<__instanceLineF, __elementTypeF> &callBackF,
                       nmrCallBackFunctionJ<__instanceLineJ, __elementTypeJ> &callBackJ,

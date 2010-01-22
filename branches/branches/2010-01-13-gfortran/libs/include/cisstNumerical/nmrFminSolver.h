@@ -111,7 +111,7 @@ public:
 	    donlp2_printoptions(stderr);
     }
 
-    template <CISSTNETLIB_INTEGER __instanceLine, class __elementType>
+    template <int __instanceLine, class __elementType>
     inline void Solve(nmrCallBackFunctionF1<__instanceLine, __elementType> &callBack, vctDynamicVector<CISSTNETLIB_DOUBLE> &X) 
 	    throw (std::runtime_error) {
         if (N+1 != static_cast<CISSTNETLIB_INTEGER>(X.size())) {
@@ -127,7 +127,7 @@ public:
         donlp2_getresult(X.Pointer(), &fx);
     }
     
-    template <CISSTNETLIB_INTEGER __instanceLine, class __elementType>
+    template <int __instanceLine, class __elementType>
     inline void Solve(nmrCallBackFunctionF1<__instanceLine, __elementType> &callBack, vctDynamicVector<CISSTNETLIB_DOUBLE> &X,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &lbound, vctDynamicVector<CISSTNETLIB_DOUBLE> &ubound,
                       vctDynamicMatrix<CISSTNETLIB_DOUBLE> &alin) 
@@ -150,7 +150,7 @@ public:
         donlp2_getresult(X.Pointer(), &fx);
     }
     
-    template <CISSTNETLIB_INTEGER __instanceLineF, class __elementTypeF, CISSTNETLIB_INTEGER __instanceLineC, class __elementTypeC>
+    template <int __instanceLineF, class __elementTypeF, int __instanceLineC, class __elementTypeC>
     inline void Solve(nmrCallBackFunctionF1<__instanceLineF, __elementTypeF> &callBackF, vctDynamicVector<CISSTNETLIB_DOUBLE> &X,
                       nmrCallBackFunctionC<__instanceLineC, __elementTypeC> &callBackC,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &lbound, vctDynamicVector<CISSTNETLIB_DOUBLE> &ubound)
@@ -169,7 +169,7 @@ public:
         donlp2_getresult(X.Pointer(), &fx);
     }
     
-    template <CISSTNETLIB_INTEGER __instanceLineF, class __elementTypeF, CISSTNETLIB_INTEGER __instanceLineC, class __elementTypeC>
+    template <int __instanceLineF, class __elementTypeF, int __instanceLineC, class __elementTypeC>
     inline void Solve(nmrCallBackFunctionF1<__instanceLineF, __elementTypeF> &callBackF, vctDynamicVector<CISSTNETLIB_DOUBLE> &X,
                       nmrCallBackFunctionC<__instanceLineC, __elementTypeC> &callBackC,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &lbound, vctDynamicVector<CISSTNETLIB_DOUBLE> &ubound,
@@ -222,8 +222,8 @@ public:
     }
     
 #if 0
-    template <CISSTNETLIB_INTEGER __instanceLineF, class __elementTypeF, CISSTNETLIB_INTEGER __instanceLineG, class __elementTypeG,
-              CISSTNETLIB_INTEGER __instanceLineC, class __elementTypeC, CISSTNETLIB_INTEGER __instanceLineCG, class __elementTypeCG>
+    template <int __instanceLineF, class __elementTypeF, int __instanceLineG, class __elementTypeG,
+              int __instanceLineC, class __elementTypeC, int __instanceLineCG, class __elementTypeCG>
     inline void Solve(nmrCallBackFunctionF1<__instanceLineF, __elementTypeF> &callBackF, vctDynamicVector<CISSTNETLIB_DOUBLE> &X,
                       nmrCallBackFunctionF<__instanceLineG, __elementTypeG> &callBackG,
                       nmrCallBackFunctionC<__instanceLineC, __elementTypeC> &callBackC,

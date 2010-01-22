@@ -208,7 +208,7 @@ public:
     */
 
     //@{
-    template <CISSTNETLIB_INTEGER __instanceLine, class __elementType>
+    template <int __instanceLine, class __elementType>
     inline void Solve(nmrCallBackFunctionF<__instanceLine, __elementType> &callBack, vctDynamicVector<CISSTNETLIB_DOUBLE> &X,
                       vctDynamicVector<CISSTNETLIB_DOUBLE> &F, CISSTNETLIB_DOUBLE tolerance) throw (std::runtime_error) {
         if ((N != static_cast<CISSTNETLIB_INTEGER>(X.size())) || (M != static_cast<CISSTNETLIB_INTEGER>(F.size()))) {
