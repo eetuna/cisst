@@ -159,10 +159,19 @@ protected:
 
     /*! Lookup table to access local component manager with process id:
         (process name, local component manager id) */
-    typedef cmnNamedMap<mtsManagerLocalInterface> LocalManagerMapType;
-    LocalManagerMapType LocalManagerMap;
+    //typedef cmnNamedMap<mtsManagerLocalInterface> LocalManagerMapType;
+    //LocalManagerMapType LocalManagerMap;
+
+    /*! Instance of connected local component manager. Note that the global 
+        component manager communicates with the only one instance of 
+        mtsManagerLocalInterface regardless of connection type (standalone
+        or network mode) */
+    mtsManagerLocalInterface * LocalManagerConnected;
 
     /*! Mutex to safely use LocalManagerMap and LocalManagerMapByProcessID */
+    //
+    // TODO: Do I really need this???
+    //
     osaMutex LocalManagerMapChange;
 
     /*! Connection id */
@@ -231,6 +240,14 @@ public:
     //  Process Management
     //-------------------------------------------------------------------------
     bool AddProcess(const std::string & processName);
+
+    /*! Add process object. In Standalone mode, this method does not need to be
+        called because AddProcess() will internally register local component manager
+        instance to the global component manager. In Network mode, however, this 
+        should be called to register a proxy server to the global component manager.
+        Note that, in any cases, the global component manager communicates with
+        the only one instance of mtsManagerLocalInterface. */
+    bool AddProcessObject(mtsManagerLocalInterface * localManagerObject);
 
     bool FindProcess(const std::string & processName) const;
 
@@ -306,10 +323,8 @@ public:
     //-------------------------------------------------------------------------
     //  Networking
     //-------------------------------------------------------------------------
-#if CISST_MTS_HAS_ICE
-    /*! Start network proxy server. If user port number is not specified, it is 
-        internally set as default port number, 10705
-        (See mtsProxyBaseCommon::GetBasePortNumberForGlobalComponentManager()) */
+    /*! Start network proxy server. If user port number is not specified, default
+        port 10705 (defined in mtsProxyBaseCommon.h) is used. */
     bool StartServer(const unsigned int userPortNumber = 0);
 
     bool SetProvidedInterfaceProxyAccessInfo(
@@ -329,7 +344,6 @@ public:
     bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
-#endif
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerGlobal)

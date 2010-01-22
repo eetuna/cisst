@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
   For example, one provided interface proxy (proxy server) should be able to
   handle multiple required interface proxy (proxy client).
 */
-template<class _proxyOwner, class _clientProxyType>
+template<class _proxyOwner, class _clientProxyType, class _clientIDType>
 class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_proxyOwner> {
 
 public:
@@ -54,7 +54,7 @@ public:
     //typedef std::string ClientIDType;
 
     /*! Typedef for client id (provided interface proxy instance id) */
-    typedef unsigned int ClientIDType;
+    typedef _clientIDType ClientIDType;
 
     /*! Start server proxy */
     virtual bool Start(_proxyOwner * proxyOwner) = 0;

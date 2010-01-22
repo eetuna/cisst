@@ -150,7 +150,7 @@ module mtsComponentInterfaceProxy
         //void ExecuteEventWriteSerialized(long CommandId, string argument);
 
         /*! Methods for testing and unit tests */
-        void TestSendMessageFromServerToClient(string str);
+        void TestMessageFromServerToClient(string str);
 
         /*! Fetch function proxy pointers from a required interface proxy at 
             server side. */
@@ -175,7 +175,7 @@ module mtsComponentInterfaceProxy
 	interface ComponentInterfaceServer
 	{
         /*! Methods for testing and unit tests */
-        void TestSendMessageFromClientToServer(string str);
+        void TestMessageFromClientToServer(string str);
 
         //
         //  Connection Management

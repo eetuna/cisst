@@ -108,7 +108,7 @@ protected:
     //-------------------------------------------------------------------------
     //  Event Handlers : Server -> Client
     //-------------------------------------------------------------------------
-    void TestReceiveMessageFromServerToClient(const std::string & str) const;
+    void ReceiveTestMessageFromServerToClient(const std::string & str) const;
 
     /*! Fetch pointers of function proxies from a required interface proxy at 
         server side */
@@ -205,7 +205,7 @@ protected:
         //-------------------------------------------------
         //void ExecuteEventVoid(IceCommandIDType, const ::Ice::Current&);
         //void ExecuteEventWriteSerialized(IceCommandIDType, const ::std::string&, const ::Ice::Current&);
-        void TestSendMessageFromServerToClient(const std::string & str, const ::Ice::Current & current);
+        void TestMessageFromServerToClient(const std::string & str, const ::Ice::Current & current);
 
         bool FetchFunctionProxyPointers(const std::string &, mtsComponentInterfaceProxy::FunctionProxyPointerSet &, const ::Ice::Current & current) const;
 

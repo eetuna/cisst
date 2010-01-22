@@ -75,8 +75,12 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
     IceCommunicator->getImplicitContext()->put(ConnectionIDKey, IceCommunicator->identityToString(ident));
 
-    // Set the owner of this proxy object
-    this->SetProxyOwner(proxyOwner);
+    // Set the owner and name of this proxy object
+    std::string thisProcessName = "On";
+    mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
+    thisProcessName += managerLocal->GetProcessName();
+
+    SetProxyOwner(proxyOwner, thisProcessName);
 
     // Connect to server proxy through adding this ICE proxy to server proxy
     if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) ProvidedInterfaceProxyInstanceId, ident)) {
@@ -196,7 +200,7 @@ bool mtsComponentInterfaceProxyClient::AddPerCommandSerializer(
 //-------------------------------------------------------------------------
 //  Event Handlers (Server -> Client)
 //-------------------------------------------------------------------------
-void mtsComponentInterfaceProxyClient::TestReceiveMessageFromServerToClient(const std::string & str) const
+void mtsComponentInterfaceProxyClient::ReceiveTestMessageFromServerToClient(const std::string & str) const
 {
     std::cout << "Client received (Server -> Client): " << str << std::endl;
 }
@@ -277,7 +281,7 @@ void mtsComponentInterfaceProxyClient::SendTestMessageFromClientToServer(const s
     LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: MessageFromClientToServer");
 #endif
 
-    ComponentInterfaceServerProxy->TestSendMessageFromClientToServer(str);
+    ComponentInterfaceServerProxy->TestMessageFromClientToServer(str);
 }
 
 bool mtsComponentInterfaceProxyClient::SendFetchEventGeneratorProxyPointers(
@@ -523,14 +527,14 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
 //-----------------------------------------------------------------------------
 //  Network Event handlers (Server -> Client)
 //-----------------------------------------------------------------------------
-void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::TestSendMessageFromServerToClient(
+void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::TestMessageFromServerToClient(
     const std::string & str, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: TestSendMessageFromServerToClient");
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: TestMessageFromServerToClient");
 #endif
 
-    ComponentInterfaceProxyClient->TestReceiveMessageFromServerToClient(str);
+    ComponentInterfaceProxyClient->ReceiveTestMessageFromServerToClient(str);
 }
 
 bool mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::FetchFunctionProxyPointers(

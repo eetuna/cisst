@@ -87,7 +87,7 @@ mtsComponentProxy::~mtsComponentProxy()
 //-----------------------------------------------------------------------------
 //  Methods for Server Components
 //-----------------------------------------------------------------------------
-bool mtsComponentProxy::CreateRequiredInterfaceProxy(RequiredInterfaceDescription & requiredInterfaceDescription)
+bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDescription & requiredInterfaceDescription)
 {    
     const std::string requiredInterfaceName = requiredInterfaceDescription.RequiredInterfaceName;
 
@@ -283,7 +283,7 @@ bool mtsComponentProxy::RemoveRequiredInterfaceProxy(const std::string & require
 //-----------------------------------------------------------------------------
 //  Methods for Client Components
 //-----------------------------------------------------------------------------
-bool mtsComponentProxy::CreateProvidedInterfaceProxy(ProvidedInterfaceDescription & providedInterfaceDescription)
+bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDescription & providedInterfaceDescription)
 {
     const std::string providedInterfaceName = providedInterfaceDescription.ProvidedInterfaceName;
 

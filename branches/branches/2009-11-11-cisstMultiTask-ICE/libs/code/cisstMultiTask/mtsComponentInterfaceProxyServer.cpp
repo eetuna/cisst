@@ -53,8 +53,12 @@ bool mtsComponentInterfaceProxyServer::Start(mtsComponentProxy * proxyOwner)
         return false;
     }
 
-    // Set the owner of this proxy object
-    SetProxyOwner(proxyOwner);
+    // Set the owner and name of this proxy object
+    std::string thisProcessName = "On";
+    mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
+    thisProcessName += managerLocal->GetProcessName();
+
+    SetProxyOwner(proxyOwner, thisProcessName);
 
     // Create a worker thread here and returns immediately.
     //ThreadArgumentsInfo.ProxyOwner = proxyOwner;
@@ -258,7 +262,7 @@ void mtsComponentInterfaceProxyServer::SendTestMessageFromServerToClient(const s
         clientProxy = &(it->second.ClientProxy);
         try 
         {
-            (*clientProxy)->TestSendMessageFromServerToClient(str);
+            (*clientProxy)->TestMessageFromServerToClient(str);
         }
         catch (const ::Ice::Exception & ex)
         {
@@ -578,11 +582,11 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
 //-----------------------------------------------------------------------------
 //  Network Event Handlers
 //-----------------------------------------------------------------------------
-void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::TestSendMessageFromClientToServer(
+void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::TestMessageFromClientToServer(
     const std::string & str, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: TestSendMessageFromClientToServer");
+    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: TestMessageFromClientToServer");
 #endif
 
     const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;

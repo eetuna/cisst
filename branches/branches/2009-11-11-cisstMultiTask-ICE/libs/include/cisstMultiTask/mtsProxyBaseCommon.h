@@ -300,14 +300,11 @@ public:
         IsValidSession = false;
     }
 
-    /*! Set proxy owner */
-    virtual void SetProxyOwner(_proxyOwner * proxyOwner) {
+    /*! Set proxy owner and this proxy's name */
+    virtual void SetProxyOwner(_proxyOwner * proxyOwner, const std::string & suffix = "") {
         ProxyOwner = proxyOwner;
         ProxyName = proxyOwner->GetName();
-
-        mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
-        ProxyName += "On";
-        ProxyName += managerLocal->GetProcessName();
+        ProxyName += suffix;
     }
 
     //-----------------------------------------------------

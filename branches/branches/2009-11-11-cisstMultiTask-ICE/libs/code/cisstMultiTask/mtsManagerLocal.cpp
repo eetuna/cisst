@@ -115,7 +115,7 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
 
         ManagerGlobal = new mtsManagerGlobal;
 
-        if (!ManagerGlobal->AddProcess(ProcessName)) {
+        if (ManagerGlobal->AddProcess(ProcessName)) {
             CMN_LOG_CLASS_INIT_ERROR << "failed in registering default process" << std::endl;
         }
     }
@@ -848,7 +848,7 @@ bool mtsManagerLocal::Disconnect(
 
 bool mtsManagerLocal::GetProvidedInterfaceDescription(
     const std::string & componentName, const std::string & providedInterfaceName, 
-    ProvidedInterfaceDescription & providedInterfaceDescription) const
+    ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID) const
 {
     // Get the component instance specified
     mtsComponent * component = GetComponent(componentName);
@@ -871,7 +871,7 @@ bool mtsManagerLocal::GetProvidedInterfaceDescription(
 
 bool mtsManagerLocal::GetRequiredInterfaceDescription(
     const std::string & componentName, const std::string & requiredInterfaceName, 
-    RequiredInterfaceDescription & requiredInterfaceDescription) const
+    RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID) const
 {
     // Get the component instance specified
     mtsComponent * component = GetComponent(componentName);
@@ -892,7 +892,7 @@ bool mtsManagerLocal::GetRequiredInterfaceDescription(
     return requiredInterface->GetRequiredInterfaceDescription(requiredInterfaceDescription);
 }
 
-bool mtsManagerLocal::CreateComponentProxy(const std::string & componentProxyName)
+bool mtsManagerLocal::CreateComponentProxy(const std::string & componentProxyName, const std::string & listenerID)
 {
     // Create a component proxy
     mtsComponent * newComponent = new mtsComponentProxy(componentProxyName);
@@ -906,14 +906,14 @@ bool mtsManagerLocal::CreateComponentProxy(const std::string & componentProxyNam
     return true;
 }
 
-bool mtsManagerLocal::RemoveComponentProxy(const std::string & componentProxyName)
+bool mtsManagerLocal::RemoveComponentProxy(const std::string & componentProxyName, const std::string & listenerID)
 {
     return RemoveComponent(componentProxyName);
 }
 
 bool mtsManagerLocal::CreateProvidedInterfaceProxy(
     const std::string & serverComponentProxyName,
-    ProvidedInterfaceDescription & providedInterfaceDescription)
+    const ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID)
 {
     const std::string providedInterfaceName = providedInterfaceDescription.ProvidedInterfaceName;
 
@@ -958,7 +958,7 @@ bool mtsManagerLocal::CreateProvidedInterfaceProxy(
 }
 
 bool mtsManagerLocal::CreateRequiredInterfaceProxy(
-    const std::string & clientComponentProxyName, RequiredInterfaceDescription & requiredInterfaceDescription)
+    const std::string & clientComponentProxyName, const RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID)
 {
     const std::string requiredInterfaceName = requiredInterfaceDescription.RequiredInterfaceName;
 
@@ -1003,7 +1003,7 @@ bool mtsManagerLocal::CreateRequiredInterfaceProxy(
 }
 
 bool mtsManagerLocal::RemoveProvidedInterfaceProxy(
-    const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName)
+    const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const std::string & listenerID)
 {
     mtsComponent * clientComponent = GetComponent(clientComponentProxyName);
     if (!clientComponent) {
@@ -1043,7 +1043,7 @@ bool mtsManagerLocal::RemoveProvidedInterfaceProxy(
 }
 
 bool mtsManagerLocal::RemoveRequiredInterfaceProxy(
-    const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName)
+    const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID)
 {
     mtsComponent * serverComponent = GetComponent(serverComponentProxyName);
     if (!serverComponent) {
@@ -1069,7 +1069,7 @@ bool mtsManagerLocal::RemoveRequiredInterfaceProxy(
     return true;
 }
 
-const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componentName) const
+const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID) const
 {
     // Check if the component specified exists
     mtsComponent * component = GetComponent(componentName);
@@ -1139,7 +1139,7 @@ bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(
 
 bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
 {
     // This method is called only by the GCM to connect two local interfaces
     // (one is an original interface and the other one is a proxy interface)
@@ -1289,7 +1289,7 @@ ConnectServerSideInterfaceError:
 
 bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
 {
     std::string adapterName, endpointAccessInfo, communicatorId;
 

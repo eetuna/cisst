@@ -54,33 +54,33 @@ public:
     //-------------------------------------------------------------------------
     /*! Create a component proxy. This should be called before an interface 
         proxy is created. */
-    virtual bool CreateComponentProxy(const std::string & componentProxyName) = 0;
+    virtual bool CreateComponentProxy(const std::string & componentProxyName, const std::string & listenerID = "") = 0;
 
     /*! Remove a component proxy. Note that all the interface proxies that the
         proxy manages should be automatically removed when removing a component
         proxy. */
-    virtual bool RemoveComponentProxy(const std::string & componentProxyName) = 0;
+    virtual bool RemoveComponentProxy(const std::string & componentProxyName, const std::string & listenerID = "") = 0;
 
     /*! Create a provided interface proxy using ProvidedInterfaceDescription */
     virtual bool CreateProvidedInterfaceProxy(
         const std::string & serverComponentProxyName,
-        ProvidedInterfaceDescription & providedInterfaceDescription) = 0;
+        const ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") = 0;
 
     /*! Create a required interface proxy using RequiredInterfaceDescription */
     virtual bool CreateRequiredInterfaceProxy(
         const std::string & clientComponentProxyName,
-        RequiredInterfaceDescription & requiredInterfaceDescription) = 0;
+        const RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "") = 0;
 
     /*! Remove a provided interface proxy.  Because a provided interface can
         have multiple connections with more than one required interface, this
         method removes a provided interface proxy only when a user counter 
         variable (mtsDeviceInterface::UserCounter) becomes zero. */
     virtual bool RemoveProvidedInterfaceProxy(
-        const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName) = 0;
+        const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const std::string & listenerID = "") = 0;
 
     /*! Remove a required interface proxy */
     virtual bool RemoveRequiredInterfaceProxy(
-        const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName) = 0;
+        const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID = "") = 0;
 
     //-------------------------------------------------------------------------
     //  Connection Management
@@ -91,11 +91,11 @@ public:
         client is also created and connects to a provided interface proxy server. */
     virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
 
     virtual bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
 
     //-------------------------------------------------------------------------
     //  Getters
@@ -105,20 +105,20 @@ public:
     virtual bool GetProvidedInterfaceDescription(
         const std::string & componentName,
         const std::string & providedInterfaceName, 
-        ProvidedInterfaceDescription & providedInterfaceDescription) const = 0;
+        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") const = 0;
 
     /*! Extract all the information on a required interface (function objects
         and event handlers with arguments serialized (if any)) */
     virtual bool GetRequiredInterfaceDescription(
         const std::string & componentName,
         const std::string & requiredInterfaceName, 
-        RequiredInterfaceDescription & requiredInterfaceDescription) const = 0;
+        RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "") const = 0;
 
     /*! Returns the name of this local component manager */
-    virtual const std::string GetProcessName() const = 0;
+    virtual const std::string GetProcessName(const std::string & listenerID = "") const = 0;
 
     /*! Returns the total number of interfaces that are running on a component */
-    virtual const int GetCurrentInterfaceCount(const std::string & componentName) const = 0;
+    virtual const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "") const = 0;
 };
 
 #endif // _mtsManagerLocalInterface_h

@@ -114,11 +114,11 @@ public:
     //  Methods to Manage Interface Proxy
     //-------------------------------------------------------------------------
     /*! Create or remove a provided interface proxy */
-    bool CreateProvidedInterfaceProxy(ProvidedInterfaceDescription & providedInterfaceDescription);
+    bool CreateProvidedInterfaceProxy(const ProvidedInterfaceDescription & providedInterfaceDescription);
     bool RemoveProvidedInterfaceProxy(const std::string & providedInterfaceProxyName);
 
     /*! Create or remove a required interface proxy */
-    bool CreateRequiredInterfaceProxy(RequiredInterfaceDescription & requiredInterfaceDescription);
+    bool CreateRequiredInterfaceProxy(const RequiredInterfaceDescription & requiredInterfaceDescription);
     bool RemoveRequiredInterfaceProxy(const std::string & requiredInterfaceProxyName);
 
     /*! Create a provided interface instance by cloning a provided interface

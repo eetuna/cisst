@@ -29,7 +29,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsExport.h>
 
 class CISST_EXPORT mtsComponentInterfaceProxyServer : 
-    public mtsProxyBaseServer<mtsComponentProxy, mtsComponentInterfaceProxy::ComponentInterfaceClientPrx>
+    public mtsProxyBaseServer<mtsComponentProxy, 
+                              mtsComponentInterfaceProxy::ComponentInterfaceClientPrx,
+                              unsigned int>
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -37,7 +39,7 @@ class CISST_EXPORT mtsComponentInterfaceProxyServer :
     typedef mtsComponentInterfaceProxy::ComponentInterfaceClientPrx ComponentInterfaceClientProxyType;
 
     /*! Typedef for base type */
-    typedef mtsProxyBaseServer<mtsComponentProxy, ComponentInterfaceClientProxyType> BaseServerType;
+    typedef mtsProxyBaseServer<mtsComponentProxy, ComponentInterfaceClientProxyType, unsigned int> BaseServerType;
 
 public:
     mtsComponentInterfaceProxyServer(
@@ -206,7 +208,7 @@ protected:
             mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers,
             const ::Ice::Current & current) const;
 
-        void TestSendMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
+        void TestMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
     };
 };
 
