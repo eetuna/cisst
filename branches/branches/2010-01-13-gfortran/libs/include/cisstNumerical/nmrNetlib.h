@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstConfig.h>
 
-#ifdef CISST_HAS_CISSTNETLIB
+#if CISST_HAS_CISSTNETLIB
 
 #define CISST_HAS_NETLIB
 #include <cisstNetlib.h>
