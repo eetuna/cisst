@@ -26,7 +26,9 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
 
-#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+
+std::string mtsComponentInterfaceProxyServer::InterfaceCommunicatorID = "InterfaceCommunicator";
 
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
@@ -515,7 +517,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Start()
 }
 
 // TODO: Remove this
-#define _COMMUNICATION_TEST_
+//#define _COMMUNICATION_TEST_
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 {
@@ -537,6 +539,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
     {
         osaSleep(10 * cmn_ms);
 
+        /*
         if(!clients.empty())
         {
             ++num;
@@ -557,6 +560,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
                 }
             }
         }
+        */
     }
 #endif
 }

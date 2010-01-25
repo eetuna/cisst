@@ -42,8 +42,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsComponentProxy);
 
-const std::string ComponentInterfaceCommunicatorID = "ComponentInterfaceServerSender";
-
 mtsComponentProxy::mtsComponentProxy(const std::string & componentProxyName) 
 : mtsDevice(componentProxyName), ProvidedInterfaceProxyInstanceID(0)
 {
@@ -553,7 +551,7 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
     // Generate parameters to initialize server proxy    
     adapterName = adapterNameBase + "_" + providedInterfaceProxyName;
     endpointAccessInfo = ":default -h " + managerLocal->GetIPAddress() + " " + "-p " + portNumber;
-    communicatorID = ComponentInterfaceCommunicatorID;
+    communicatorID = mtsComponentInterfaceProxyServer::InterfaceCommunicatorID;
 
     // Create an instance of mtsComponentInterfaceProxyServer
     mtsComponentInterfaceProxyServer * providedInterfaceProxy =
@@ -608,7 +606,7 @@ bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredI
 
 const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int id) const
 {
-    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForLocalComponentManager() + (id * 5);
+    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForComponentInterface() + (id * 5);
 
     std::stringstream newPortNumberAsString;
     newPortNumberAsString << newPortNumber;

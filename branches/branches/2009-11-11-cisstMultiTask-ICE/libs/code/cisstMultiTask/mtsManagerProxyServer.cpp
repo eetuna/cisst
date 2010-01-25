@@ -26,7 +26,9 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerProxyServer);
 
-#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+
+std::string mtsManagerProxyServer::ManagerCommunicatorID = "ManagerServerCommunicator";
 
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
@@ -56,8 +58,8 @@ bool mtsManagerProxyServer::Start(mtsManagerGlobal * proxyOwner)
     // Set the owner of this proxy object
     SetProxyOwner(proxyOwner);
 
-    // Register this to the owner
-    if (!proxyOwner->AddProcessObject(this)) {
+    // Register this proxy to the owner
+    if (!proxyOwner->AddProcessObject(this, true)) {
         LogError(mtsManagerProxyServer, "Failed to register proxy server to the global component manager");
         return false;
     }
@@ -150,6 +152,255 @@ mtsManagerProxyServer::ManagerClientProxyType * mtsManagerProxyServer::GetNetwor
     return (IsActiveProxy() ? clientProxy : NULL);
 }
 
+void mtsManagerProxyServer::ConstructConnectionStringSet(
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
+{
+    connectionStringSet.ClientProcessName = clientProcessName;
+    connectionStringSet.ClientComponentName = clientComponentName;
+    connectionStringSet.ClientRequiredInterfaceName = clientRequiredInterfaceName;
+    connectionStringSet.ServerProcessName = serverProcessName;
+    connectionStringSet.ServerComponentName = serverComponentName;
+    connectionStringSet.ServerProvidedInterfaceName = serverProvidedInterfaceName;
+}
+
+void mtsManagerProxyServer::ConvertProvidedInterfaceDescription(
+    const ::mtsManagerProxy::ProvidedInterfaceDescription & src, ProvidedInterfaceDescription & dest)
+{
+    // Initialize destination structure
+    dest.CommandsVoid.clear();
+    dest.CommandsWrite.clear();
+    dest.CommandsRead.clear();
+    dest.CommandsQualifiedRead.clear();
+    dest.EventsVoid.clear();
+    dest.EventsWrite.clear();
+
+    // Conversion of provided interface name
+    dest.ProvidedInterfaceName = src.ProvidedInterfaceName;
+
+    // Conversion of command void vector
+    mtsInterfaceCommon::CommandVoidElement commandVoid;
+    ::mtsManagerProxy::CommandVoidSequence::const_iterator itVoid = src.CommandsVoid.begin();
+    const ::mtsManagerProxy::CommandVoidSequence::const_iterator itVoidEnd = src.CommandsVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        commandVoid.Name = itVoid->Name;
+        dest.CommandsVoid.push_back(commandVoid);
+    }
+
+    // Conversion of command write vector
+    mtsInterfaceCommon::CommandWriteElement commandWrite;
+    ::mtsManagerProxy::CommandWriteSequence::const_iterator itWrite = src.CommandsWrite.begin();
+    const ::mtsManagerProxy::CommandWriteSequence::const_iterator itWriteEnd = src.CommandsWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        commandWrite.Name = itWrite->Name;
+        commandWrite.ArgumentPrototypeSerialized = itWrite->ArgumentPrototypeSerialized;
+        dest.CommandsWrite.push_back(commandWrite);
+    }
+
+    // Conversion of command read vector
+    mtsInterfaceCommon::CommandReadElement commandRead;
+    ::mtsManagerProxy::CommandReadSequence::const_iterator itRead = src.CommandsRead.begin();
+    const ::mtsManagerProxy::CommandReadSequence::const_iterator itReadEnd = src.CommandsRead.end();
+    for (; itRead != itReadEnd; ++itRead) {
+        commandRead.Name = itRead->Name;
+        commandRead.ArgumentPrototypeSerialized = itRead->ArgumentPrototypeSerialized;
+        dest.CommandsRead.push_back(commandRead);
+    }
+
+    // Conversion of command qualified read vector
+    mtsInterfaceCommon::CommandQualifiedReadElement commandQualifiedRead;
+    ::mtsManagerProxy::CommandQualifiedReadSequence::const_iterator itQualifiedRead = src.CommandsQualifiedRead.begin();
+    const ::mtsManagerProxy::CommandQualifiedReadSequence::const_iterator itQualifiedReadEnd = src.CommandsQualifiedRead.end();
+    for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
+        commandQualifiedRead.Name = itQualifiedRead->Name;
+        commandQualifiedRead.Argument1PrototypeSerialized = itQualifiedRead->Argument1PrototypeSerialized;
+        commandQualifiedRead.Argument2PrototypeSerialized = itQualifiedRead->Argument2PrototypeSerialized;
+        dest.CommandsQualifiedRead.push_back(commandQualifiedRead);
+    }
+
+    // Conversion of event void generator vector
+    mtsInterfaceCommon::EventVoidElement eventVoid;
+    ::mtsManagerProxy::EventVoidSequence::const_iterator itEventVoid = src.EventsVoid.begin();
+    const ::mtsManagerProxy::EventVoidSequence::const_iterator itEventVoidEnd = src.EventsVoid.end();
+    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
+        eventVoid.Name = itEventVoid->Name;
+        dest.EventsVoid.push_back(eventVoid);
+    }
+
+    // Conversion of event write generator vector
+    mtsInterfaceCommon::EventWriteElement eventWrite;
+    ::mtsManagerProxy::EventWriteSequence::const_iterator itEventWrite = src.EventsWrite.begin();
+    const ::mtsManagerProxy::EventWriteSequence::const_iterator itEventWriteEnd = src.EventsWrite.end();
+    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
+        eventWrite.Name = itEventWrite->Name;
+        eventWrite.ArgumentPrototypeSerialized = itEventWrite->ArgumentPrototypeSerialized;
+        dest.EventsWrite.push_back(eventWrite);
+    }
+}
+
+void mtsManagerProxyServer::ConvertRequiredInterfaceDescription(
+    const ::mtsManagerProxy::RequiredInterfaceDescription & src, RequiredInterfaceDescription & dest)
+{
+    // Initialize destination structure
+    dest.FunctionVoidNames.clear();
+    dest.FunctionWriteNames.clear();
+    dest.FunctionReadNames.clear();
+    dest.FunctionQualifiedReadNames.clear();
+    dest.EventHandlersVoid.clear();
+    dest.EventHandlersWrite.clear();
+
+    // Conversion of required interface name
+    dest.RequiredInterfaceName = src.RequiredInterfaceName;
+    
+    // Conversion of function void vector
+    dest.FunctionVoidNames.insert(dest.FunctionVoidNames.begin(), src.FunctionVoidNames.begin(), src.FunctionVoidNames.end());
+
+    // Conversion of function write vector
+    dest.FunctionWriteNames.insert(dest.FunctionWriteNames.begin(), src.FunctionWriteNames.begin(), src.FunctionWriteNames.end());
+
+    // Conversion of function read vector
+    dest.FunctionReadNames.insert(dest.FunctionReadNames.begin(), src.FunctionReadNames.begin(), src.FunctionReadNames.end());
+
+    // Conversion of function qualified read vector
+    dest.FunctionQualifiedReadNames.insert(dest.FunctionQualifiedReadNames.begin(), src.FunctionQualifiedReadNames.begin(), src.FunctionQualifiedReadNames.end());
+
+    // Conversion of event void handler vector
+    mtsInterfaceCommon::CommandVoidElement eventVoidHandler;
+    ::mtsManagerProxy::CommandVoidSequence::const_iterator itEventVoid = src.EventHandlersVoid.begin();
+    const ::mtsManagerProxy::CommandVoidSequence::const_iterator itEventVoidEnd = src.EventHandlersVoid.end();
+    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
+        eventVoidHandler.Name = itEventVoid->Name;
+        dest.EventHandlersVoid.push_back(eventVoidHandler);
+    }
+
+    // Conversion of event write handler vector
+    mtsInterfaceCommon::CommandWriteElement eventWriteHandler;
+    ::mtsManagerProxy::CommandWriteSequence::const_iterator itEventWrite = src.EventHandlersWrite.begin();
+    const ::mtsManagerProxy::CommandWriteSequence::const_iterator itEventWriteEnd = src.EventHandlersWrite.end();
+    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
+        eventWriteHandler.Name = itEventWrite->Name;
+        eventWriteHandler.ArgumentPrototypeSerialized = itEventWrite->ArgumentPrototypeSerialized;
+        dest.EventHandlersWrite.push_back(eventWriteHandler);
+    }
+}
+
+void mtsManagerProxyServer::ConstructProvidedInterfaceDescriptionFrom(
+    const ProvidedInterfaceDescription & src, ::mtsManagerProxy::ProvidedInterfaceDescription & dest)
+{
+    // Initialize destination structure
+    dest.CommandsVoid.clear();
+    dest.CommandsWrite.clear();
+    dest.CommandsRead.clear();
+    dest.CommandsQualifiedRead.clear();
+    dest.EventsVoid.clear();
+    dest.EventsWrite.clear();
+
+    // Construct provided interface name
+    dest.ProvidedInterfaceName = src.ProvidedInterfaceName;
+
+    // Construct command void vector
+    ::mtsManagerProxy::CommandVoidElement commandVoid;
+    CommandVoidVector::const_iterator itVoid = src.CommandsVoid.begin();
+    const CommandVoidVector::const_iterator itVoidEnd = src.CommandsVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        commandVoid.Name = itVoid->Name;
+        dest.CommandsVoid.push_back(commandVoid);
+    }
+
+    // Construct command write vector
+    ::mtsManagerProxy::CommandWriteElement commandWrite;
+    CommandWriteVector::const_iterator itWrite = src.CommandsWrite.begin();
+    const CommandWriteVector::const_iterator itWriteEnd = src.CommandsWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        commandWrite.Name = itWrite->Name;
+        dest.CommandsWrite.push_back(commandWrite);
+    }
+
+    // Construct command read vector
+    ::mtsManagerProxy::CommandReadElement commandRead;
+    CommandReadVector::const_iterator itRead = src.CommandsRead.begin();
+    const CommandReadVector::const_iterator itReadEnd = src.CommandsRead.end();
+    for (; itRead != itReadEnd; ++itRead) {
+        commandRead.Name = itRead->Name;
+        dest.CommandsRead.push_back(commandRead);
+    }
+
+    // Construct command QualifiedRead vector
+    ::mtsManagerProxy::CommandQualifiedReadElement commandQualifiedRead;
+    CommandQualifiedReadVector::const_iterator itQualifiedRead = src.CommandsQualifiedRead.begin();
+    const CommandQualifiedReadVector::const_iterator itQualifiedReadEnd = src.CommandsQualifiedRead.end();
+    for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
+        commandQualifiedRead.Name = itQualifiedRead->Name;
+        dest.CommandsQualifiedRead.push_back(commandQualifiedRead);
+    }
+
+    // Construct event void generator vector
+    ::mtsManagerProxy::EventVoidElement eventVoidGenerator;
+    EventVoidVector::const_iterator itEventVoid = src.EventsVoid.begin();
+    const EventVoidVector::const_iterator itEventVoidEnd = src.EventsVoid.end();
+    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
+        eventVoidGenerator.Name = itEventVoid->Name;
+        dest.EventsVoid.push_back(eventVoidGenerator);
+    }
+
+    // Construct event write generator vector
+    ::mtsManagerProxy::EventWriteElement eventWriteGenerator;
+    EventWriteVector::const_iterator itEventWrite = src.EventsWrite.begin();
+    const EventWriteVector::const_iterator itEventWriteEnd = src.EventsWrite.end();
+    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
+        eventWriteGenerator.Name = itEventWrite->Name;
+        eventWriteGenerator.ArgumentPrototypeSerialized = itEventWrite->ArgumentPrototypeSerialized;
+        dest.EventsWrite.push_back(eventWriteGenerator);
+    }
+}
+
+void mtsManagerProxyServer::ConstructRequiredInterfaceDescriptionFrom(
+    const RequiredInterfaceDescription & src, ::mtsManagerProxy::RequiredInterfaceDescription & dest)
+{
+    // Initialize destination structure
+    dest.FunctionVoidNames.clear();
+    dest.FunctionWriteNames.clear();
+    dest.FunctionReadNames.clear();
+    dest.FunctionQualifiedReadNames.clear();
+    dest.EventHandlersVoid.clear();
+    dest.EventHandlersWrite.clear();
+
+    // Construct required interface name
+    dest.RequiredInterfaceName = src.RequiredInterfaceName;
+    
+    // Construct function void vector
+    dest.FunctionVoidNames.insert(dest.FunctionVoidNames.begin(), src.FunctionVoidNames.begin(), src.FunctionVoidNames.end());
+
+    // Construct function write vector
+    dest.FunctionWriteNames.insert(dest.FunctionWriteNames.begin(), src.FunctionWriteNames.begin(), src.FunctionWriteNames.end());
+
+    // Construct function read vector
+    dest.FunctionReadNames.insert(dest.FunctionReadNames.begin(), src.FunctionReadNames.begin(), src.FunctionReadNames.end());
+
+    // Construct function qualified read vector
+    dest.FunctionQualifiedReadNames.insert(dest.FunctionQualifiedReadNames.begin(), src.FunctionQualifiedReadNames.begin(), src.FunctionQualifiedReadNames.end());
+
+    // Construct event void handler vector
+    ::mtsManagerProxy::CommandVoidElement eventVoidHandler;
+    mtsInterfaceCommon::CommandVoidVector::const_iterator itEventVoid = src.EventHandlersVoid.begin();
+    const mtsInterfaceCommon::CommandVoidVector::const_iterator itEventVoidEnd = src.EventHandlersVoid.end();
+    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
+        eventVoidHandler.Name = itEventVoid->Name;
+        dest.EventHandlersVoid.push_back(eventVoidHandler);
+    }
+
+    // Construct event write handler vector
+    ::mtsManagerProxy::CommandWriteElement eventWriteHandler;
+    mtsInterfaceCommon::CommandWriteVector::const_iterator itEventWrite = src.EventHandlersWrite.begin();
+    const mtsInterfaceCommon::CommandWriteVector::const_iterator itEventWriteEnd = src.EventHandlersWrite.end();
+    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
+        eventWriteHandler.Name = itEventWrite->Name;
+        eventWriteHandler.ArgumentPrototypeSerialized = itEventWrite->ArgumentPrototypeSerialized;
+        dest.EventHandlersWrite.push_back(eventWriteHandler);
+    }
+}
+
 //-------------------------------------------------------------------------
 //  Implementation of mtsManagerLocalInterface
 //  (See mtsManagerLocalInterface.h for comments)
@@ -161,67 +412,109 @@ bool mtsManagerProxyServer::CreateComponentProxy(const std::string & componentPr
 
 bool mtsManagerProxyServer::RemoveComponentProxy(const std::string & componentProxyName, const std::string & listenerID)
 {
-    return true;
+    return SendRemoveComponentProxy(componentProxyName, listenerID);
 }
 
 bool mtsManagerProxyServer::CreateProvidedInterfaceProxy(const std::string & serverComponentProxyName,
     const ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID)
 {
-    return true;
+    // Convert providedInterfaceDescription to an object of type mtsManagerProxy::ProvidedInterfaceDescription
+    mtsManagerProxy::ProvidedInterfaceDescription interfaceDescription;
+    mtsManagerProxyServer::ConstructProvidedInterfaceDescriptionFrom(providedInterfaceDescription, interfaceDescription);
+
+    return SendCreateProvidedInterfaceProxy(serverComponentProxyName, interfaceDescription, listenerID);
 }
 
 bool mtsManagerProxyServer::CreateRequiredInterfaceProxy(const std::string & clientComponentProxyName,
     const RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID)
 {
-    return true;
+    // Convert requiredInterfaceDescription to an object of type mtsManagerProxy::RequiredInterfaceDescription
+    mtsManagerProxy::RequiredInterfaceDescription interfaceDescription;
+    mtsManagerProxyServer::ConstructRequiredInterfaceDescriptionFrom(requiredInterfaceDescription, interfaceDescription);
+    
+    return SendCreateRequiredInterfaceProxy(clientComponentProxyName, interfaceDescription, listenerID);
 }
 
 bool mtsManagerProxyServer::RemoveProvidedInterfaceProxy(
     const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const std::string & listenerID)
 {
-    return true;
+    return SendRemoveProvidedInterfaceProxy(clientComponentProxyName, providedInterfaceProxyName, listenerID);
 }
 
 bool mtsManagerProxyServer::RemoveRequiredInterfaceProxy(
     const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID)
 {
-    return true;
+    return SendRemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName, listenerID);
 }
 
 bool mtsManagerProxyServer::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
 {
-    return true;
+    // Create an instance of mtsManagerProxy::ConnectionStringSet out of a set of strings given
+    ::mtsManagerProxy::ConnectionStringSet connectionStringSet;
+    ConstructConnectionStringSet(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName,
+        connectionStringSet);
+
+    return SendConnectServerSideInterface(providedInterfaceProxyInstanceId, connectionStringSet, listenerID);
 }
 
 bool mtsManagerProxyServer::ConnectClientSideInterface(const unsigned int connectionID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
 {
-    return true;
+    // Create an instance of mtsManagerProxy::ConnectionStringSet out of a set of strings given
+    ::mtsManagerProxy::ConnectionStringSet connectionStringSet;
+    ConstructConnectionStringSet(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName,
+        connectionStringSet);
+
+    return SendConnectClientSideInterface(connectionID, connectionStringSet, listenerID);
 }
 
 bool mtsManagerProxyServer::GetProvidedInterfaceDescription(const std::string & componentName, const std::string & providedInterfaceName, 
-    ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID) const
+    ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID)
 {
+    mtsManagerProxy::ProvidedInterfaceDescription src;
+
+    if (!SendGetProvidedInterfaceDescription(componentName, providedInterfaceName, src, listenerID)) {
+        LogError(mtsManagerProxyServer, "GetProvidedInterfaceDescription() failed");
+        return false;
+    }
+
+    // Construct an instance of type ProvidedInterfaceDescription from an object of type mtsManagerProxy::ProvidedInterfaceDescription
+    mtsManagerProxyServer::ConvertProvidedInterfaceDescription(src, providedInterfaceDescription);
+
     return true;
 }
 
 bool mtsManagerProxyServer::GetRequiredInterfaceDescription(const std::string & componentName, const std::string & requiredInterfaceName, 
-    RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID) const
+    RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID)
 {
+    mtsManagerProxy::RequiredInterfaceDescription src;
+
+    if (!SendGetRequiredInterfaceDescription(componentName, requiredInterfaceName, src, listenerID)) {
+        LogError(mtsManagerProxyServer, "GetRequiredInterfaceDescription() failed");
+        return false;
+    }
+
+    // Construct an instance of type RequiredInterfaceDescription from an object of type mtsManagerProxy::RequiredInterfaceDescription
+    mtsManagerProxyServer::ConvertRequiredInterfaceDescription(src, requiredInterfaceDescription);
+
     return true;
 }
 
-const std::string mtsManagerProxyServer::GetProcessName(const std::string & listenerID) const
+const std::string mtsManagerProxyServer::GetProcessName(const std::string & listenerID)
 {
-    return "";
+    return SendGetProcessName(listenerID);
 }
 
-const int mtsManagerProxyServer::GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID) const
+const int mtsManagerProxyServer::GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID)
 {
-    return 0;
+    return SendGetCurrentInterfaceCount(componentName, listenerID);
 }
 
 //-------------------------------------------------------------------------
@@ -329,7 +622,7 @@ bool mtsManagerProxyServer::ReceiveRemoveRequiredInterface(const std::string & p
 {
     return ProxyOwner->Connect(
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
-        connectionStringSet.serverProcessName, connectionStringSet.serverComponentName, connectionStringSet.serverProvidedInterfaceName);
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
 
 bool mtsManagerProxyServer::ReceiveConnectConfirm(::Ice::Int connectionSessionID)
@@ -341,14 +634,14 @@ bool mtsManagerProxyServer::ReceiveDisconnect(const ::mtsManagerProxy::Connectio
 {
     return ProxyOwner->Disconnect(
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
-        connectionStringSet.serverProcessName, connectionStringSet.serverComponentName, connectionStringSet.serverProvidedInterfaceName);
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
 
 bool mtsManagerProxyServer::ReceiveSetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo, const std::string & communicatorID)
 {
     return ProxyOwner->SetProvidedInterfaceProxyAccessInfo(
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
-        connectionStringSet.serverProcessName, connectionStringSet.serverComponentName, connectionStringSet.serverProvidedInterfaceName,
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName,
         endpointInfo, communicatorID);
 }
 
@@ -356,7 +649,7 @@ bool mtsManagerProxyServer::ReceiveGetProvidedInterfaceProxyAccessInfo(const ::m
 {
     return ProxyOwner->GetProvidedInterfaceProxyAccessInfo(
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
-        connectionStringSet.serverProcessName, connectionStringSet.serverComponentName, connectionStringSet.serverProvidedInterfaceName,
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName,
         endpointInfo, communicatorID);
 }
 
@@ -364,14 +657,14 @@ bool mtsManagerProxyServer::ReceiveInitiateConnect(::Ice::Int connectionID, cons
 {
     return ProxyOwner->InitiateConnect(connectionID,
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
-        connectionStringSet.serverProcessName, connectionStringSet.serverComponentName, connectionStringSet.serverProvidedInterfaceName);
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
 
 bool mtsManagerProxyServer::ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
     return ProxyOwner->ConnectServerSideInterface(providedInterfaceProxyInstanceId,
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
-        connectionStringSet.serverProcessName, connectionStringSet.serverComponentName, connectionStringSet.serverProvidedInterfaceName);
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
 
 //-------------------------------------------------------------------------
@@ -398,6 +691,13 @@ void mtsManagerProxyServer::SendTestMessageFromServerToClient(const std::string 
         catch (const ::Ice::Exception & ex)
         {
             std::cerr << "Error: " << ex << std::endl;
+
+            //
+            // TODO: Ice::ConnectionLostException -> is thrown when a connected
+            // client disconnects abruptly (ctrl+C, etc.).
+            // When this exception is thrown, it can be used for handling disconnect()
+            // properly.
+            //
             continue;
         }
     }
@@ -569,8 +869,7 @@ std::string mtsManagerProxyServer::SendGetProcessName(const std::string & client
     return (*clientProxy)->GetProcessName();
 }
 
-::Ice::Int mtsManagerProxyServer::SendGetCurrentInterfaceCount(
-    const std::string & componentName, const std::string & clientID)
+::Ice::Int mtsManagerProxyServer::SendGetCurrentInterfaceCount(const std::string & componentName, const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) {
@@ -604,7 +903,7 @@ void mtsManagerProxyServer::ManagerServerI::Start()
 }
 
 // TODO: Remove this
-#define _COMMUNICATION_TEST_
+//#define _COMMUNICATION_TEST_
 
 void mtsManagerProxyServer::ManagerServerI::Run()
 {
@@ -626,6 +925,7 @@ void mtsManagerProxyServer::ManagerServerI::Run()
     {
         osaSleep(10 * cmn_ms);
 
+        /*
         if(!clients.empty())
         {
             ++num;
@@ -646,6 +946,7 @@ void mtsManagerProxyServer::ManagerServerI::Run()
                 }
             }
         }
+        */
     }
 #endif
 }

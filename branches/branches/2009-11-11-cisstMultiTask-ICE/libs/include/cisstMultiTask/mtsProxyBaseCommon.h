@@ -52,6 +52,9 @@ typedef ::Ice::Long IceCommandIDType;
 // TODO: Replace #define with other (const std::string??)
 #define ConnectionIDKey "ConnectionID"
 
+/*! Enable/disable detailed log */
+#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+
 //-----------------------------------------------------------------------------
 //  Common Base Class Definitions
 //-----------------------------------------------------------------------------
@@ -149,6 +152,7 @@ protected:
         void trace(const ::std::string & category, const ::std::string & message) {
             std::string s;
             s += category;
+            s += ": ";
             s += message;
             Log(s);
         }
@@ -340,27 +344,27 @@ public:
     /*! Base port numbers. These numbers are not yet registered to IANA (Internet 
         Assigned Numbers Authority) as of January 12th, 2010.
         See http://www.iana.org/assignments/port-numbers for more details. */
-    inline static unsigned int GetBasePortNumberForGlobalComponentManager() { return 10705; }
-    inline static unsigned int GetBasePortNumberForLocalComponentManager() { return 11705; }
+    inline static unsigned int GetPortNumberForComponentManager() { return 10705; }
+    inline static unsigned int GetBasePortNumberForComponentInterface() { return 11705; }
 };
 
 #define LogPrint(_className, _logStream)\
         std::stringstream ss;\
-        ss << #_className;\
+        ss << #_className << ": ";\
         ss << _logStream << std::endl;\
         std::string s = ss.str();\
         IceLogger->print(s);
 
 #define LogWarning(_className, _logStream)\
         std::stringstream ss;\
-        ss << #_className;\
+        ss << #_className << ": ";\
         ss << _logStream << std::endl;\
         std::string s = ss.str();\
         IceLogger->warning(s);
 
 #define LogError(_className, _logStream)\
         std::stringstream ss;\
-        ss << #_className;\
+        ss << #_className << ": ";\
         ss << _logStream << std::endl;\
         std::string s = ss.str();\
         IceLogger->error(s);

@@ -107,6 +107,10 @@ protected:
     //  Event Generators (Event Sender) : Server -> Client
     //-------------------------------------------------------------------------
 public:
+    /*! Communicator (proxy) ID for communication between component interface
+        server and component interface client */
+    static std::string InterfaceCommunicatorID;
+
     /*! Test method: broadcast string to all clients connected */
     void SendTestMessageFromServerToClient(const std::string & str);
 
@@ -128,45 +132,10 @@ public:
 
     void SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument1, mtsGenericObject & argument2);
 
-    ////-------------------------------------------------------------------------
-    ////  Methods to Process Events
-    ////-------------------------------------------------------------------------
-protected:
-    ///*! Update the information on the newly connected task manager. */
-    //bool ReceiveUpdateTaskManagerClient(const ConnectionIDType & connectionID,
-    //                                    const ::mtsComponentInterfaceProxy::TaskList& localTaskInfo);
-
-    ///*! Add a new provided interface. */
-    //bool ReceiveAddProvidedInterface(
-    //    const ConnectionIDType & connectionID,
-    //    const mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo & providedInterfaceAccessInfo);
-
-    ///*! Add a new required interface. */
-    //bool ReceiveAddRequiredInterface(
-    //    const ConnectionIDType & connectionID,
-    //    const ::mtsComponentInterfaceProxy::RequiredInterfaceAccessInfo & requiredInterfaceAccessInfo);
-
-    ///*! Check if the provided interface has been registered before. */
-    //bool ReceiveIsRegisteredProvidedInterface(
-    //    const ConnectionIDType & connectionID,
-    //    const std::string & taskName, const std::string & providedInterfaceName);
-
-    ///*! Get the information about the provided interface. */
-    //bool ReceiveGetProvidedInterfaceAccessInfo(
-    //    const ConnectionIDType & connectionID,
-    //    const std::string & taskName, const std::string & providedInterfaceName,
-    //    mtsComponentInterfaceProxy::ProvidedInterfaceAccessInfo & info);
-
-    ///*! Inform the global task manager of the fact that connect() succeeded. */
-    //void ReceiveNotifyInterfaceConnectionResult(
-    //    const ConnectionIDType & connectionID,
-    //    const bool isServerTask, const bool isSuccess,
-    //    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-    //    const std::string & resourceTaskName, const std::string & providedInterfaceName);
-
     //-------------------------------------------------------------------------
     //  Definition by mtsComponentInterfaceProxy.ice
     //-------------------------------------------------------------------------
+protected:
     class ComponentInterfaceServerI : 
         public mtsComponentInterfaceProxy::ComponentInterfaceServer,
         public IceUtil::Monitor<IceUtil::Mutex>

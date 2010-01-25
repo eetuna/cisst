@@ -105,20 +105,20 @@ public:
     virtual bool GetProvidedInterfaceDescription(
         const std::string & componentName,
         const std::string & providedInterfaceName, 
-        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") const = 0;
+        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") = 0;
 
     /*! Extract all the information on a required interface (function objects
         and event handlers with arguments serialized (if any)) */
     virtual bool GetRequiredInterfaceDescription(
         const std::string & componentName,
         const std::string & requiredInterfaceName, 
-        RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "") const = 0;
+        RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "") = 0;
 
     /*! Returns the name of this local component manager */
-    virtual const std::string GetProcessName(const std::string & listenerID = "") const = 0;
+    virtual const std::string GetProcessName(const std::string & listenerID = "") = 0;
 
     /*! Returns the total number of interfaces that are running on a component */
-    virtual const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "") const = 0;
+    virtual const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "") = 0;
 };
 
 #endif // _mtsManagerLocalInterface_h

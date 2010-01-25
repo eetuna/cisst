@@ -112,8 +112,16 @@ protected:
     /*! Process name of this local component manager */
     const std::string ProcessName;
 
+    /*! IP address of the global component manager. Set in network mode */
+    const std::string GlobalComponentManagerIP;
+
     /*! IP address of this machine. This is internally set by SetIPAddress(). */
     std::string ProcessIP;
+
+    /*! True if this local component manager has received ProxyCreationCompleted
+        message from the global component manager and all the proxy objects are 
+        created successfully. */
+    bool isProxyCreationCompleted;
 
     /*! Mutex to use ComponentMap in a thread safe manner */
     osaMutex ComponentMapChange;
@@ -127,19 +135,21 @@ protected:
         which probably runs in a different process (or different machine). */
     mtsManagerGlobalInterface * ManagerGlobal;
 
-    /*! Constructor.  Protected because this is a singleton.
-        Unless all two arguments are valid, this local component manager runs in
-        standalone mode, by default.
-        In case of real-time OSs, OS-specific initialization should be handled here. 
-        
-        TODO: Currently I'm just checking if it is empty string or not.
-        Maybe we need to add some more strict process naming rule and/or IP validation
-        check routine?
+    /*! Protected constructor (singleton local component manager)
+        If thisProcessName is not given and thus set as "", this local component
+        manager will run as standalone mode and globalComponentManagerIP is
+        ignored.
+        If thisProcessName is given and globalComponentManagerIP is not,
+        process name is set and GlobalComponentManagerIP is set as default value
+        which is localhost (127.0.0.1).
+        If both thisProcessName and globalComponentManagerIP are specified,
+        both will be set.
     */
-    mtsManagerLocal(const std::string & thisProcessName, const std::string & thisProcessIP);
+    mtsManagerLocal(const std::string & thisProcessName = "", 
+                    const std::string & globalComponentManagerIP = "localhost");
 
     /*! Constructor for unit tests (used only by unit tests) */
-    mtsManagerLocal(const std::string & thisProcessName);
+    //mtsManagerLocal(const std::string & thisProcessName);
 
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
@@ -202,21 +212,21 @@ public:
     bool GetProvidedInterfaceDescription(
         const std::string & componentName,
         const std::string & providedInterfaceName, 
-        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") const;
+        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "");
 
     /*! Extract all the information on a required interface such as function
         objects and events with serialization */
     bool GetRequiredInterfaceDescription(
         const std::string & componentName,
         const std::string & requiredInterfaceName, 
-        RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "") const;
+        RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "");
 
     /*! Returns the total number of interfaces that are running on a component */
-    const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "") const;
+    const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "");
 
-    /*! Create the static instance of local task manager. */
+    /*! Create an instance of local component manager (singleton) */
     static mtsManagerLocal * GetInstance(
-        const std::string & thisProcessName = "", const std::string & thisProcessIP = "");
+        const std::string & thisProcessName = "", const std::string & globalComponentManagerIP = "");
 
     /*! Return a reference to the time server. */
     inline const osaTimeServer & GetTimeServer(void) {
@@ -278,7 +288,11 @@ public:
         Internally, this calls mtsTask::Start() for each task.
         If a task will use the current thread, it is called last because its Start method
         will not return until the task is terminated. There should be no more than one task
-        using the current thread. */
+        using the current thread. 
+
+        TODO: After all thread are created, proxy client should be created and run!!!
+        
+        */
     void StartAll(void);
 
     /*! Stop all components.
@@ -311,12 +325,16 @@ public:
     void CISST_DEPRECATED GetNamesOfTasks(std::vector<std::string>& namesOfTasks) const; // For backward compatibility
     
     /*! Returns the name of this local component manager */
-    inline const std::string GetProcessName(const std::string & listenerID = "") const {
+    inline const std::string GetProcessName(const std::string & listenerID = "") {
         return ProcessName;
     }
 
+    //
+    // TODO: shouldn't this be inline const std::string GetName() const??? (CONST keyword!)
+    //
+
     /*! Returns the name of this local component manager (for mtsProxyBaseCommon.h) */
-    inline const std::string GetName() const {
+    inline const std::string GetName() {
         return GetProcessName();
     }
 

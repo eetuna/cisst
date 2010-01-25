@@ -8,17 +8,18 @@
 
 #include "clientTask.h"
 
-
 int main(int argc, char * argv[])
 {
+    // TODO: uncomment this
+    //if (argc != 2) {
+    //    std::cerr << "Usage: " << argv[0] << "[global component manager IP]" << std::endl;
+    //    exit(-1);
+    //}
 
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " GlobalManagerIP ServerTaskIP" << std::endl;
-        exit(-1);
-    }
-
-    std::string globalTaskManagerIP(argv[1]);
-    std::string serverTaskIP(argv[2]);
+    // Set global component manager IP
+    //const std::string globalComponentManagerIP(argv[1]);
+    const std::string globalComponentManagerIP("127.0.0.1");
+    std::cout << "Global component manager IP is set as " << globalComponentManagerIP << std::endl;
 
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
@@ -31,28 +32,23 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("clientTask", CMN_LOG_LOD_VERY_VERBOSE);
 
+    // Get the local component manager
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance("example9Client", globalComponentManagerIP);
+
     // create our server task
     const double PeriodClient = 10 * cmn_ms; // in milliseconds
     clientTask * client = new clientTask("Client", PeriodClient);
-
-    // Get the TaskManager instance and set operation mode
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    taskManager->AddTask(client);        
-    taskManager->SetGlobalTaskManagerIP(globalTaskManagerIP);
-    taskManager->SetServerTaskIP(serverTaskIP);
-    
-    // Set the type of task manager either as a server or as a client.
-    // mtsTaskManager::SetTaskManagerType() should be called before
-    // mtsTaskManager::Connect()
-    taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
-
-    //
-    // TODO: Hide this waiting routine inside mtsTaskManager using events or other things.
-    //
-    osaSleep(0.5 * cmn_s);
+    //taskManager->AddTask(client);  // deprecated API
+    taskManager->AddComponent(client);
 
     // Connect the tasks across networks
-    taskManager->Connect("Client", "Required", "Server", "Provided");
+    //taskManager->Connect("Client", "Required", "Server", "Provided");
+    if (!taskManager->Connect("example9Client", "Client", "Required", 
+                             "example9Server", "Server", "Provided"))
+    {
+        CMN_LOG_INIT_ERROR << "Connect failed" << std::endl;
+        exit(-1);
+    }
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();

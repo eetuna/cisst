@@ -10,14 +10,16 @@
 
 int main(int argc, char * argv[])
 {
-
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " GlobalManagerIP ServerTaskIP" << std::endl;
-        exit(-1);
-    }
-
-    std::string globalTaskManagerIP(argv[1]);
-    std::string serverTaskIP(argv[2]);
+    // TODO: uncomment this
+    //if (argc != 2) {
+    //    std::cerr << "Usage: " << argv[0] << "[global component manager IP]" << std::endl;
+    //    exit(-1);
+    //}
+    
+    // Set global component manager IP
+    //const std::string globalComponentManagerIP(argv[1]);
+    const std::string globalComponentManagerIP("127.0.0.1");
+    std::cout << "Global component manager IP is set as " << globalComponentManagerIP << std::endl;
 
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
@@ -30,25 +32,15 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("serverTask", CMN_LOG_LOD_VERY_VERBOSE);
 
-    // create our server task
+    // Get local component manager
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance("example9Server", globalComponentManagerIP);
+
+    // create our server component
     const double PeriodServer = 10 * cmn_ms; // in milliseconds
     serverTask * server = new serverTask("Server", PeriodServer);
 
-    // Get the TaskManager instance and set operation mode
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
-    taskManager->AddTask(server);
-    taskManager->SetGlobalTaskManagerIP(globalTaskManagerIP);
-    taskManager->SetServerTaskIP(serverTaskIP);
-    
-    // Set the type of task manager either as a server or as a client.
-    // mtsTaskManager::SetTaskManagerType() should be called before
-    // mtsTaskManager::Connect()
-    taskManager->SetTaskManagerType(mtsTaskManager::TASK_MANAGER_CLIENT);
-    
-    //
-    // TODO: Hide this waiting routine inside mtsTaskManager using events or other things.
-    //
-    osaSleep(0.5 * cmn_s);
+    //taskManager->AddTask(server); // deprecated call
+    taskManager->AddComponent(server);
     
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
@@ -61,7 +53,8 @@ int main(int argc, char * argv[])
     
     // cleanup
     taskManager->KillAll();
-    taskManager->Cleanup();    
+    taskManager->Cleanup();
+
     return 0;
 }
 
@@ -69,7 +62,7 @@ int main(int argc, char * argv[])
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---

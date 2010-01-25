@@ -243,11 +243,14 @@ public:
 
     /*! Add process object. In Standalone mode, this method does not need to be
         called because AddProcess() will internally register local component manager
-        instance to the global component manager. In Network mode, however, this 
-        should be called to register a proxy server to the global component manager.
-        Note that, in any cases, the global component manager communicates with
-        the only one instance of mtsManagerLocalInterface. */
-    bool AddProcessObject(mtsManagerLocalInterface * localManagerObject);
+        instance (of type mtsManagerLocal) to the global component manager. 
+        In Network mode, however, this method should be called explicitly to add 
+        a network proxy server (of type mtsManagerProxyServer) to the global 
+        component manager. In both cases, the global component manager keeps 
+        only one instance of mtsManagerLocalInterface.
+        Note that this method does not run across a network, which means the
+        Slice does not implement this method. */
+    bool AddProcessObject(mtsManagerLocalInterface * localManagerObject, const bool isManagerProxyServer = false);
 
     bool FindProcess(const std::string & processName) const;
 

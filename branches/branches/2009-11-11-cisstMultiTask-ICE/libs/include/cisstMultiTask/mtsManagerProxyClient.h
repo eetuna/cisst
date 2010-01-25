@@ -25,22 +25,15 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsManagerLocal.h>
 #include <cisstMultiTask/mtsManagerProxy.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
+#include <cisstMultiTask/mtsManagerGlobalInterface.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
-class CISST_EXPORT mtsManagerProxyClient : public mtsProxyBaseClient<mtsManagerLocal> {
+class CISST_EXPORT mtsManagerProxyClient : 
+    public mtsProxyBaseClient<mtsManagerLocal>, public mtsManagerGlobalInterface
+{
     
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
-
-public:
-    mtsManagerProxyClient(const std::string & serverEndpointInfo, const std::string & communicatorID);
-    ~mtsManagerProxyClient();
-
-    /*! Entry point to run a proxy. */
-    bool Start(mtsManagerLocal * proxyOwner);
-
-    /*! Stop the proxy (clean up thread-related resources) */
-    void Stop(void);
 
 protected:
     /*! Typedef for base type. */
@@ -81,6 +74,12 @@ protected:
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsManagerLocal> * arguments);
 
+    /*! Miscellaneous methods */
+    void GetConnectionStringSet(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        mtsManagerProxy::ConnectionStringSet & connectionStringSet);
+
     //-------------------------------------------------------------------------
     //  Event Handlers : Server -> Client
     //-------------------------------------------------------------------------
@@ -99,15 +98,77 @@ protected:
     bool ReceiveConnectClientSideInterface(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
 
     // Getters
-    bool ReceiveGetProvidedInterfaceDescription(const std::string & componentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription) const;
-    bool ReceiveGetRequiredInterfaceDescription(const std::string & componentName, const std::string & requiredInterfaceName, ::mtsManagerProxy::RequiredInterfaceDescription & requiredInterfaceDescription) const;
+    bool ReceiveGetProvidedInterfaceDescription(const std::string & componentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription);
+    bool ReceiveGetRequiredInterfaceDescription(const std::string & componentName, const std::string & requiredInterfaceName, ::mtsManagerProxy::RequiredInterfaceDescription & requiredInterfaceDescription);
     std::string ReceiveGetProcessName();
     ::Ice::Int ReceiveGetCurrentInterfaceCount(const std::string & componentName);
+
+public:
+    mtsManagerProxyClient(const std::string & serverEndpointInfo, const std::string & communicatorID);
+    ~mtsManagerProxyClient();
+
+    /*! Entry point to run a proxy. */
+    bool Start(mtsManagerLocal * proxyOwner);
+
+    /*! Stop the proxy (clean up thread-related resources) */
+    void Stop(void);
+
+    //-------------------------------------------------------------------------
+    //  Implementation of mtsManagerGlobalInterface
+    //  (See mtsManagerGlobalInterface.h for details)
+    //-------------------------------------------------------------------------
+    //  Process Management
+    bool AddProcess(const std::string & processName);
+    bool FindProcess(const std::string & processName) const;
+    bool RemoveProcess(const std::string & processName);
+
+    //  Component Management
+    bool AddComponent(const std::string & processName, const std::string & componentName);
+    bool FindComponent(const std::string & processName, const std::string & componentName) const;
+    bool RemoveComponent(const std::string & processName, const std::string & componentName);
+
+    //  Interface Management
+    bool AddProvidedInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface);
+    bool AddRequiredInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface);
+    bool FindProvidedInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
+    bool FindRequiredInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
+    bool RemoveProvidedInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+    bool RemoveRequiredInterface(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+
+    //  Connection Management
+    unsigned int Connect(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+    bool ConnectConfirm(unsigned int connectionSessionID);
+    bool Disconnect(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    //  Networking
+    bool SetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & endpointInfo, const std::string & communicatorID);
+    bool GetProvidedInterfaceProxyAccessInfo(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        std::string & endpointInfo, std::string & communicatorID);
+    bool InitiateConnect(const unsigned int connectionID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Event Generators (Event Sender) : Client -> Server
     //-------------------------------------------------------------------------
-public:
     void SendTestMessageFromClientToServer(const std::string & str) const;
 
     // Process Management

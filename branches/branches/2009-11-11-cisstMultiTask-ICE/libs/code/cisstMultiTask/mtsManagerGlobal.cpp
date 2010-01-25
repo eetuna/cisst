@@ -25,8 +25,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerGlobal);
 
-const std::string ManagerCommunicatorID = "ManagerServerSender";
-
 // TODO: Debug code: remove later!
 #define CHECK_DELETE(_var) \
     {\
@@ -87,27 +85,31 @@ bool mtsManagerGlobal::AddProcess(const std::string & processName)
         return false;
     }
 
-    mtsManagerLocalInterface * localManager = NULL;
-
-#if !defined(CISST_MTS_HAS_ICE)
-    localManager = mtsManagerLocal::GetInstance();
-#endif
-
-    LocalManagerMapChange.Lock();
-    LocalManagerConnected = localManager;
-    LocalManagerMapChange.Unlock();
-
     return true;
 }
 
-bool mtsManagerGlobal::AddProcessObject(mtsManagerLocalInterface * localManagerObject)
+bool mtsManagerGlobal::AddProcessObject(mtsManagerLocalInterface * localManagerObject, const bool isManagerProxyServer)
 {
     if (LocalManagerConnected) {
         CMN_LOG_CLASS_RUN_ERROR << "AddProcessObject: local manager object has already been registered." << std::endl;
         return false;
     }
 
-    const std::string & processName = localManagerObject->GetProcessName();
+    // Name of local component manager which is now connecting
+    std::string processName;
+
+    // If localManagerObject is of type mtsManagerProxyServer, process name can
+    // be set without calling mtsManagerLocalInterface::GetProcessName()
+    if (isManagerProxyServer) {
+        mtsManagerProxyServer * managerProxyServer = dynamic_cast<mtsManagerProxyServer *>(localManagerObject);
+        if (!managerProxyServer) {
+            CMN_LOG_CLASS_RUN_ERROR << "AddProcessObject: invalid object type (mtsManagerProxyServer expected)" << std::endl;
+            return false;
+        }
+        processName = managerProxyServer->GetProxyName();
+    } else {
+        processName = localManagerObject->GetProcessName();
+    }
 
     // Check if the local component manager has already been registered.
     if (FindProcess(processName)) {
@@ -470,12 +472,14 @@ unsigned int mtsManagerGlobal::Connect(
     const std::string & serverComponentName,
     const std::string & serverProvidedInterfaceName)
 {
+    const unsigned int retError = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+
     // Check if the required interface specified actually exist.
     if (!FindRequiredInterface(clientProcessName, clientComponentName, clientRequiredInterfaceName)) {
         CMN_LOG_CLASS_RUN_VERBOSE << "Connect: required interface does not exist: "
             << GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName)
             << std::endl;
-        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        return retError;
     }
 
     // Check if the provided interface specified actually exist.
@@ -483,7 +487,7 @@ unsigned int mtsManagerGlobal::Connect(
         CMN_LOG_CLASS_RUN_VERBOSE << "Connect: provided interface does not exist: "
             << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName)
             << std::endl;
-        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        return retError;
     }
 
     // Check if the two interfaces are already connected.
@@ -497,7 +501,7 @@ unsigned int mtsManagerGlobal::Connect(
     if (ret < 0) {
         CMN_LOG_CLASS_RUN_VERBOSE << "Connect: "
             << "one or more processes, components, or interfaces are missing." << std::endl;
-        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        return retError;
     }
     // When interfaces have already been connected to each other
     else if (ret > 0) {
@@ -506,7 +510,7 @@ unsigned int mtsManagerGlobal::Connect(
             << " and "
             << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName)
             << std::endl;
-        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        return retError;
     }
 
     // Determine the type of connection: local vs. remote
@@ -527,13 +531,13 @@ unsigned int mtsManagerGlobal::Connect(
         mtsManagerLocalInterface * localManagerClient = GetProcessObject(clientProcessName);
         if (!localManagerClient) {
             CMN_LOG_CLASS_RUN_ERROR << "Connect: cannot find local component manager with client process: " << clientProcessName << std::endl;
-            return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+            return retError;
         }
 
         mtsManagerLocalInterface * localManagerServer = GetProcessObject(serverProcessName);
         if (!localManagerServer) {
             CMN_LOG_CLASS_RUN_ERROR << "Connect: cannot find local component manager with server process: " << serverProcessName << std::endl;
-            return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+            return retError;
         }
 
         // Check if the server manager has the client component proxy. If not,
@@ -661,7 +665,7 @@ unsigned int mtsManagerGlobal::Connect(
     if (!AddConnectedInterface(connectionMap, serverProcessName, serverComponentName, serverProvidedInterfaceName, isRemoteConnection)) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: "
             << "failed to add information about connected provided interface." << std::endl;
-        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        return retError;
     }
 
     // Connect server's provided interface with client's required interface.
@@ -687,7 +691,7 @@ unsigned int mtsManagerGlobal::Connect(
         // Before returning false, should clean up required interface's connection information
         Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
                    serverProcessName, serverComponentName, serverProvidedInterfaceName);
-        return static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+        return retError;
     }
 
     CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully connected: " 
@@ -961,7 +965,7 @@ bool mtsManagerGlobal::StartServer(const unsigned int userPortNumber)
     // Get port number for global component manager
     unsigned int portNumber;
     if (userPortNumber == 0) {
-        portNumber = mtsProxyBaseCommon<mtsManagerGlobal>::GetBasePortNumberForGlobalComponentManager();
+        portNumber = mtsProxyBaseCommon<mtsManagerGlobal>::GetPortNumberForComponentManager();
     } else {
         portNumber = userPortNumber;
     }
@@ -976,7 +980,7 @@ bool mtsManagerGlobal::StartServer(const unsigned int userPortNumber)
 
     // Generate parameters to initialize server proxy    
     endpointAccessInfo = ":default -h " + ProcessIP + " -p " + portNumberString;
-    communicatorID = ManagerCommunicatorID;
+    communicatorID = mtsManagerProxyServer::ManagerCommunicatorID;
 
     // Create an instance of mtsComponentInterfaceProxyServer
     ProxyServer = new mtsManagerProxyServer(adapterName, endpointInfo, communicatorID);

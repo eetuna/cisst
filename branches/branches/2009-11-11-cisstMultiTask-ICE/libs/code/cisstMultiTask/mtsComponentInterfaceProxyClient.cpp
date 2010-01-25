@@ -26,7 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 
-#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
 
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
@@ -481,7 +481,7 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Start()
 }
 
 // TODO: Remove this
-#define _COMMUNICATION_TEST_
+//#define _COMMUNICATION_TEST_
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
 {
