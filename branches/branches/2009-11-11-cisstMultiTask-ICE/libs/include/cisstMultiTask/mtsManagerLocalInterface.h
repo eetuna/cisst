@@ -82,6 +82,9 @@ public:
     virtual bool RemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID = "") = 0;
 
+    /*! The GCM informs LCM of the successful completion of proxy creation */
+    virtual void ProxyCreationCompleted(const std::string & listenerID = "") = 0;
+
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------

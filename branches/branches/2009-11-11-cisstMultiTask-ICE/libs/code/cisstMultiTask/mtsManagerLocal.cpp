@@ -83,70 +83,58 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
 
     // If process name is "", this local component manager will run as standalone mode.
     if (thisProcessName == "") {
-        CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: STANDALONE mode. " << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: STANDALONE mode" << std::endl;
 
-        // In standalone mode, global component manager runs in the same process
-        // that local component manager runs in.
-        ManagerGlobal = new mtsManagerGlobal;
+        // In standalone mode, the global component manager is an instance of 
+        // mtsManagerGlobal that runs in the same process in which this local
+        // component manager runs.
+        mtsManagerGlobal * globalManager = new mtsManagerGlobal;
 
         // Register process name to the global component manager
-        if (!ManagerGlobal->AddProcess(ProcessName)) {
-            CMN_LOG_CLASS_INIT_ERROR << "Failed to register process name to the global component manager" << std::endl;
+        if (!globalManager->AddProcess(ProcessName)) {
             cmnThrow(std::runtime_error("Failed to register process name to the global component manager"));
         }
 
         // Register process object to the global component manager
-        mtsManagerGlobal * globalManager = dynamic_cast<mtsManagerGlobal*>(ManagerGlobal);
         if (!globalManager->AddProcessObject(this)) {
-            CMN_LOG_CLASS_INIT_ERROR << "Failed to register process object to the global component manager" << std::endl;
             cmnThrow(std::runtime_error("Failed to register process object to the global component manager"));
         }
+
+        ManagerGlobal = globalManager;
     }
     // If process name is not "", this local component manager will run as network mode.
     else {
         CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: NETWORK mode" << std::endl;
-        CMN_LOG_CLASS_INIT_VERBOSE << "Global component manager's ip: " << GlobalComponentManagerIP << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Global component manager IP: " << GlobalComponentManagerIP << std::endl;
 
-        // Generate a string for endpoint information
+        // Generate an endpoint string to connect to the global component manager
         std::stringstream ss;
         ss << ":default -h " << GlobalComponentManagerIP 
            << " -p " << mtsProxyBaseCommon<mtsManagerLocal>::GetPortNumberForComponentManager();
 
-        // Create a proxy of the global component manager
+        // In network mode, the gobal component manager is a network (ICE) proxy
+        // client of type mtsManagerProxyClient which transfers data between this
+        // local component manager and the GCM across a network.
         mtsManagerProxyClient * globalComponentManagerProxy = 
             new mtsManagerProxyClient(ss.str(), mtsManagerProxyServer::ManagerCommunicatorID);
 
-        ManagerGlobal = globalComponentManagerProxy;
-
         // Run and connect to the global component manager
         if (!globalComponentManagerProxy->Start(this)) {
-            CMN_LOG_CLASS_INIT_ERROR << "Global component manager proxy failed to start" << std::endl;
             cmnThrow(std::runtime_error("Global component manager proxy failed to start"));
         }
 
         // Register process name to the global component manager.
-        if (!ManagerGlobal->AddProcess(ProcessName)) {
-            CMN_LOG_CLASS_INIT_ERROR << "Failed to register process name to the global component manager" << std::endl;
+        if (!globalComponentManagerProxy->AddProcess(ProcessName)) {
             cmnThrow(std::runtime_error("Failed to register process name to the global component manager"));
         }
 
         // In case of network mode, a process object doesn't need to be registered
-        // to the global component manager because it has already been set as 
-        // an instance of mtsManagerProxyServer.
-    } 
-    
-}
+        // to the global component manager because the GCM sets a process object
+        // as a network (ICE) proxy server of type mtsManagerProxyServer.
 
-    /*
-mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName) :
-    ComponentMap("Components"),
-    ManagerGlobal(NULL),
-    ProcessName(thisProcessName),
-    ProcessIP("")
-{
-    Initialize();
+        ManagerGlobal = globalComponentManagerProxy;
+    }
 }
-*/
 
 mtsManagerLocal::~mtsManagerLocal()
 {
@@ -587,7 +575,7 @@ void mtsManagerLocal::KillAll(void)
 bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
                               const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
-    unsigned int connectionID = ManagerGlobal->Connect(
+    unsigned int connectionID = ManagerGlobal->Connect(ProcessName,
         ProcessName, clientComponentName, clientRequiredInterfaceName,
         ProcessName, serverComponentName, serverProvidedInterfaceName);
 
@@ -607,25 +595,19 @@ bool mtsManagerLocal::Connect(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
-    // Prevent this method from being called with two same process names.
+    // Prevent this method from being used to connect two local interfaces
     if (clientProcessName == serverProcessName) {
-        return Connect(clientComponentName, clientRequiredInterfaceName,
-                       serverComponentName, serverProvidedInterfaceName);
+        return Connect(clientComponentName, clientRequiredInterfaceName, serverComponentName, serverProvidedInterfaceName);
     }
-
-#if !defined(CISST_MTS_HAS_ICE)
-    CMN_LOG_CLASS_RUN_ERROR << "Connect: Cannot connect components in different processes unless CISST_MTS_HAS_ICE enabled" << std::endl;
-    return false;
-#endif
 
     // Reset the flag
     isProxyCreationCompleted = false;
 
     // Inform the global component manager of the fact that a new connection is
-    // to be established. Then, the GCM issues a new connection id and begins
-    // connection process which includes injecting component proxy and/or 
-    // interface proxy into relevant processes.
-    unsigned int connectionID = ManagerGlobal->Connect(
+    // to be established. The GCM then issues a new connection id and begins
+    // connect process that creates component/interface proxy into relevant 
+    // processes.
+    unsigned int connectionID = ManagerGlobal->Connect(ProcessName,
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
@@ -650,16 +632,12 @@ bool mtsManagerLocal::Connect(
         currentTime = osaGetTime();
     }
 
-    //
-    // TODO: Where to set isProxyCreationCompleted flag???
-    //
-
-    // If ProxyCreationCompleted message has not been received yet, proxy objects
-    // are not correctly created in this process.
+    // If ProxyCreationCompleted message was not received, proxy objects are 
+    // not correctly created.
     if (!isProxyCreationCompleted) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: Proxy creation failed" << std::endl;
         return false;
-    }    
+    }
 
     // Connect() can be called by two different processes: either by the client
     // process or by the server process. Note that Connect() result should be
@@ -691,8 +669,8 @@ bool mtsManagerLocal::Connect(
     //   established and becomes active.
     if (isConnectCalledByClientProcess) {
         if (!ConnectClientSideInterface(connectionID, 
-            clientProcessName, clientComponentName, clientRequiredInterfaceName,
-            serverProcessName, serverComponentName, serverProvidedInterfaceName))
+                clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                serverProcessName, serverComponentName, serverProvidedInterfaceName))
         {
             CMN_LOG_CLASS_RUN_ERROR << "Connect: Failed to connect at client process" << std::endl;
             
@@ -1017,7 +995,7 @@ bool mtsManagerLocal::CreateRequiredInterfaceProxy(
 
     // Create required interface proxy
     if (!clientComponentProxy->CreateRequiredInterfaceProxy(requiredInterfaceDescription)) {
-        CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: "
+        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: "
             << "failed to create required interface proxy: " << clientComponentProxyName << ":" 
             << requiredInterfaceName << std::endl;
         return false;
@@ -1035,6 +1013,7 @@ bool mtsManagerLocal::CreateRequiredInterfaceProxy(
     CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: "
         << "successfully created required interface proxy: " << clientComponentProxyName << ":" 
         << requiredInterfaceName << std::endl;
+
     return true;
 }
 
@@ -1105,6 +1084,13 @@ bool mtsManagerLocal::RemoveRequiredInterfaceProxy(
     return true;
 }
 
+void mtsManagerLocal::ProxyCreationCompleted(const std::string & listenerID)
+{
+    CMN_LOG_CLASS_RUN_VERBOSE << "ProxyCreationCompleted: proxy creation completed" << std::endl;
+
+    isProxyCreationCompleted = true;
+}
+
 const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID)
 {
     // Check if the component specified exists
@@ -1159,7 +1145,7 @@ void mtsManagerLocal::SetIPAddress()
     ProcessIP = "localhost";
 #endif
 
-    CMN_LOG_CLASS_INIT_VERBOSE << "SetIPAddress: This machine's IP address is detected as " << ProcessIP << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "this machine's IP address: " << ProcessIP << std::endl;
 }
 
 bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(

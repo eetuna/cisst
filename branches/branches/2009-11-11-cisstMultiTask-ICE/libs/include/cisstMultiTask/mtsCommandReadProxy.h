@@ -35,11 +35,9 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  mtsCommandReadProxy is a proxy for mtsCommandRead. This proxy contains
-  CommandId set as a function pointer of which type is mtsFunctionRead.
-  When Execute() method is called, the CommandId is sent to the server task
-  over networks with one payload. The provided interface proxy manages 
-  this process.
+  mtsCommandReadProxy is a proxy for mtsCommandRead. When Execute() 
+  method is called, the command id with payload is sent to the connected peer 
+  interface across a network.
 */
 class mtsCommandReadProxy : public mtsCommandReadBase, public mtsCommandProxyBase 
 {
@@ -54,8 +52,7 @@ public:
     typedef mtsCommandReadBase BaseType;
 
     /*! Constructor */
-    mtsCommandReadProxy(const std::string & commandName) : BaseType(commandName)
-    {
+    mtsCommandReadProxy(const std::string & commandName) : BaseType(commandName) {
         // Command proxy is disabled by default (enabled when command id and
         // network proxy are set).
         Disable();
@@ -63,38 +60,37 @@ public:
 
     /*! Destructor */
     virtual ~mtsCommandReadProxy() {
-        if (this->ArgumentPrototype) {
-            delete this->ArgumentPrototype;
+        if (ArgumentPrototype) {
+            delete ArgumentPrototype;
         }
     }
 
-    /*! Set command id */
-    virtual void SetCommandId(const CommandIDType & commandId) {
-        mtsCommandProxyBase::SetCommandId(commandId);
-        //
-        // TODO: What's this???
-        //
-        //NetworkProxyServer->AddPerCommandSerializer(CommandId, &Serializer);
+    /*! Set command id and register serializer to network proxy. This method
+        should be called after SetNetworkProxy() is called. */
+    void SetCommandID(const CommandIDType & commandID) {
+        mtsCommandProxyBase::SetCommandID(commandID);
+
+        if (NetworkProxyServer) {
+            NetworkProxyServer->RegisterPerCommandSerializer(CommandID, &Serializer);
+        }
     }
 
     /*! Set an argument prototype */
     void SetArgumentPrototype(mtsGenericObject * argumentPrototype) {
-        this->ArgumentPrototype = argumentPrototype;
+        ArgumentPrototype = argumentPrototype;
     }
     
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
-        if (this->IsDisabled()) mtsCommandBase::DISABLED;
+        if (IsDisabled()) mtsCommandBase::DISABLED;
 
-        //NetworkProxyServer->SendExecuteCommandReadSerialized(CommandId, argument);
+        NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument);
         return mtsCommandBase::DEV_OK;
     }
     
     /*! Generate human readable description of this object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandReadProxy: " << Name << ", " << CommandId << " with "
-                     << NetworkProxyServer->ClassServices()->GetName()
-                     << ": currently " << (this->IsEnabled() ? "enabled" : "disabled");
+        ToStreamBase("mtsCommandReadProxy", Name, CommandID, IsEnabled(), outputStream);
     }
 };
 

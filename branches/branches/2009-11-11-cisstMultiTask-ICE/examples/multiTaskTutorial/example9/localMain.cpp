@@ -23,15 +23,16 @@ int main(int CMN_UNUSED(argc), char ** CMN_UNUSED(argv))
     cmnClassRegister::SetLoD("clientTask", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("serverTask", CMN_LOG_LOD_VERY_VERBOSE);
 
+    // Get a local component manager
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+
     // create our two tasks
     const double PeriodClient = 10 * cmn_ms; // in milliseconds
     const double PeriodServer = 10 * cmn_ms; // in milliseconds
     serverTask * server = new serverTask("Server", PeriodServer);
     clientTask * client = new clientTask("Client", PeriodClient);
 
-
     // add the tasks to the task manager
-    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
     taskManager->AddTask(client);
     taskManager->AddTask(server);
 

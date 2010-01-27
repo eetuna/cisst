@@ -31,7 +31,10 @@ class mtsComponentProxy;
 class mtsCommandProxyBase {
 protected:
     /*! Pointer to mtsFunctionXXX object at the peer's memory space */
-    CommandIDType CommandId;
+    CommandIDType CommandID;
+
+    /*! Client ID */
+    mtsComponentInterfaceProxyServer::ClientIDType ClientID;
 
     /*! Network (ICE) proxy which enables communication with the connected
         interface across a network. This is an instance of either
@@ -45,19 +48,33 @@ protected:
 
 public:
     /*! Constructor */
-    mtsCommandProxyBase() : CommandId(0) {}
-
-    /*! Set command id */
-    virtual void SetCommandId(const CommandIDType & commandId) {
-        CommandId = commandId;
-    }
+    mtsCommandProxyBase() : CommandID(0), ClientID(0), NetworkProxy(0), NetworkProxyClient(0), NetworkProxyServer(0)
+    {}
 
     /*! Set network proxy */
-    bool SetNetworkProxy(mtsProxyBaseCommon<mtsComponentProxy> * networkProxy) {
+    bool SetNetworkProxy(const mtsComponentInterfaceProxyServer::ClientIDType clientID, mtsProxyBaseCommon<mtsComponentProxy> * networkProxy) {
+        ClientID = clientID;
+
         NetworkProxyClient = dynamic_cast<mtsComponentInterfaceProxyClient*>(networkProxy);
         NetworkProxyServer = dynamic_cast<mtsComponentInterfaceProxyServer*>(networkProxy);
         
         return ((!NetworkProxyClient && NetworkProxyServer) || (NetworkProxyClient && !NetworkProxyServer));
+    }
+
+    /*! Set command id */
+    virtual void SetCommandID(const CommandIDType & commandID) {
+        CommandID = commandID;
+    }
+
+    /*! Generate human readable description of this object */
+    void ToStreamBase(const std::string & className, const std::string & commandName, const CommandIDType & commandID, const bool enabled, std::ostream & outputStream) const {
+        outputStream << className << ": " << commandName << ", " << commandID << " with ";
+        if (NetworkProxyServer) {
+            outputStream << NetworkProxyServer->ClassServices()->GetName();
+        } else {
+            outputStream << NetworkProxyClient->ClassServices()->GetName();
+        }
+        outputStream << ": currently " << (enabled ? "enabled" : "disabled");
     }
 };
 

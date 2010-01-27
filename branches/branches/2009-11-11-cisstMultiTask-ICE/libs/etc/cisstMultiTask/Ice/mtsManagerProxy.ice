@@ -37,6 +37,8 @@ module mtsManagerProxy
 	//-----------------------------------------------------------------------------
     /*! Set of string arguments used to connect and disconnect two interfaces */
 	struct ConnectionStringSet {
+        // connect request process name
+        string RequestProcessName;
         // client side (required interface)
 		string ClientProcessName;
         string ClientComponentName;
@@ -117,12 +119,6 @@ module mtsManagerProxy
 		EventHandlerWriteSequence EventHandlersWrite;
     };    
 
-	//-----------------------------------------------------------------------------
-	// Interface for Local Component Manager (Proxy Client)
-    // 
-    // This interface implements APIs defined in mtsManagerLocalInterface.h
-    // See mtsManagerLocalInterface.h for detailed comments
-	//-----------------------------------------------------------------------------
 	interface ManagerClient
 	{
         //-------------------------------------------------
@@ -131,25 +127,26 @@ module mtsManagerProxy
         // Methods for testing and unit tests
         void TestMessageFromServerToClient(string str);
 
-        //-------------------------------------------------
+        //-----------------------------------------------------------------------------
+	    // Interface for Local Component Manager (Proxy Client)
+        // 
+        // This interface implements APIs defined in mtsManagerLocalInterface.h
+        // See mtsManagerLocalInterface.h for detailed comments
+	    //-----------------------------------------------------------------------------
         //  Proxy Object Control (Creation, Removal)
-        //-------------------------------------------------
         bool CreateComponentProxy(string componentProxyName);
         bool RemoveComponentProxy(string componentProxyName);
         bool CreateProvidedInterfaceProxy(string serverComponentProxyName, ProvidedInterfaceDescription providedInterface);
         bool CreateRequiredInterfaceProxy(string clientComponentProxyName, RequiredInterfaceDescription requiredInterface);
         bool RemoveProvidedInterfaceProxy(string clientComponentProxyName, string providedInterfaceProxyName);
         bool RemoveRequiredInterfaceProxy(string serverComponentProxyName, string requiredInterfaceProxyName);
+        void ProxyCreationCompleted();
 
-        //-------------------------------------------------
         //  Connection Management
-        //-------------------------------------------------
         bool ConnectServerSideInterface(int providedInterfaceProxyInstanceId, ConnectionStringSet connectionStrings);
         bool ConnectClientSideInterface(int connectionID, ConnectionStringSet connectionStrings);
 
-        //-------------------------------------------------
         //  Getters
-        //-------------------------------------------------
         ["cpp:const"] idempotent
         bool GetProvidedInterfaceDescription(string componentName, string providedInterfaceName, out ProvidedInterfaceDescription providedInterface);
         ["cpp:const"] idempotent
@@ -160,12 +157,6 @@ module mtsManagerProxy
         int GetCurrentInterfaceCount(string componentName);
 	};
 
-	//-----------------------------------------------------------------------------
-	// Interface for Global Component Manager (Proxy Server)
-    // 
-    // This interface implements APIs defined in mtsManagerGlobalInterface.h
-    // See mtsManagerGlobalInterface.h for detailed comments
-	//-----------------------------------------------------------------------------
 	interface ManagerServer
 	{
         //-------------------------------------------------
@@ -181,25 +172,25 @@ module mtsManagerProxy
         // shutdown (or close) safely and cleanly
         void Shutdown();
 
-        //-------------------------------------------------
-        //  Process Management
-        //-------------------------------------------------
+        //-----------------------------------------------------------------------------
+	    // Interface for Global Component Manager (Proxy Server)
+        // 
+        // This interface implements APIs defined in mtsManagerGlobalInterface.h
+        // See mtsManagerGlobalInterface.h for detailed comments
+	    //-----------------------------------------------------------------------------
+        // Process Management
         bool AddProcess(string processName);
         ["cpp:const"] idempotent
         bool FindProcess(string processName);
         bool RemoveProcess(string processName);
 
-        //-------------------------------------------------
-        //  Component Management
-        //-------------------------------------------------
+        // Component Management
         bool AddComponent(string processName, string componentName);
         ["cpp:const"] idempotent
         bool FindComponent(string processName, string componentName);
         bool RemoveComponent(string processName, string componentName);
 
-        //-------------------------------------------------
-        //  Interface Management
-        //-------------------------------------------------
+        // Interface Management
         bool AddProvidedInterface(string processName, string componentName, string interfaceName, bool isProxyInterface);
         bool AddRequiredInterface(string processName, string componentName, string interfaceName, bool isProxyInterface);
         bool FindProvidedInterface(string processName, string componentName, string interfaceName);
@@ -208,16 +199,12 @@ module mtsManagerProxy
         bool RemoveProvidedInterface(string processName, string componentName, string interfaceName);
         bool RemoveRequiredInterface(string processName, string componentName, string interfaceName);
 
-        //-------------------------------------------------
-        //  Connection Management
-        //-------------------------------------------------
+        // Connection Management
         int Connect(ConnectionStringSet connectionStrings); 
         bool ConnectConfirm(int connectionSessionID);
         bool Disconnect(ConnectionStringSet connectionStrings);
 
-        //-------------------------------------------------
-        //  Networking
-        //-------------------------------------------------
+        // Networking
         bool SetProvidedInterfaceProxyAccessInfo(ConnectionStringSet connectionStrings, string endpointInfo, string communicatorID);
         bool GetProvidedInterfaceProxyAccessInfo(ConnectionStringSet connectionStrings, out string endpointInfo, out string communicatorID);
         bool InitiateConnect(int connectionID, ConnectionStringSet connectionStrings);

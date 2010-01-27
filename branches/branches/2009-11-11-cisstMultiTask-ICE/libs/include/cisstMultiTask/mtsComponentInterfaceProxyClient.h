@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsComponentInterfaceProxyClient_h
 #define _mtsComponentInterfaceProxyClient_h
 
-#include <cisstMultiTask/mtsComponentProxy.h>
+//#include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
 
@@ -30,6 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 
 // TODO: ADD the following line in the forward declaration.h (???)
 //class mtsProxySerializer;
+
+class mtsComponentProxy;
 
 class CISST_EXPORT mtsComponentInterfaceProxyClient : public mtsProxyBaseClient<mtsComponentProxy> {
     

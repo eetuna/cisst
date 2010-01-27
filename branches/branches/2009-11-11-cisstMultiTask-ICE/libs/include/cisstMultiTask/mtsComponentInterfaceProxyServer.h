@@ -22,11 +22,14 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsComponentInterfaceProxyServer_h
 #define _mtsComponentInterfaceProxyServer_h
 
-#include <cisstMultiTask/mtsComponentProxy.h>
+//#include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseServer.h>
 
 #include <cisstMultiTask/mtsExport.h>
+
+class mtsComponentProxy;
+class mtsProxySerializer;
 
 class CISST_EXPORT mtsComponentInterfaceProxyServer : 
     public mtsProxyBaseServer<mtsComponentProxy, 
@@ -83,9 +86,13 @@ protected:
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
 
     /*! Get a network proxy client object using clientID. If no network proxy 
-        client with the clientID didn't connect or the proxy is not active,
+        client with the clientID is not connected or the proxy is inactive,
         this method returns NULL. */
     ComponentInterfaceClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
+
+    /*! Typedef for per-command argument serializer */
+    typedef std::map<CommandIDType, mtsProxySerializer *> PerCommandSerializerMapType;
+    PerCommandSerializerMapType PerCommandSerializerMap;
 
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)
@@ -103,14 +110,17 @@ protected:
                                                  const std::string & requiredInterfaceName,
                                                  mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers);
 
-    //-------------------------------------------------------------------------
-    //  Event Generators (Event Sender) : Server -> Client
-    //-------------------------------------------------------------------------
 public:
     /*! Communicator (proxy) ID for communication between component interface
         server and component interface client */
     static std::string InterfaceCommunicatorID;
 
+    /*! Register per-command (de)serializer */
+    bool RegisterPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer);
+
+    //-------------------------------------------------------------------------
+    //  Event Generators (Event Sender) : Server -> Client
+    //-------------------------------------------------------------------------
     /*! Test method: broadcast string to all clients connected */
     void SendTestMessageFromServerToClient(const std::string & str);
 
@@ -126,11 +136,11 @@ public:
         and commandID represents which function proxy object should be called. */
     bool SendExecuteCommandVoid(const ClientIDType clientID, const CommandIDType commandID);
 
-    void SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument);
+    bool SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument);
 
-    void SendExecuteCommandReadSerialized(const ClientIDType clientID, const CommandIDType commandID, mtsGenericObject & argument);
+    bool SendExecuteCommandReadSerialized(const ClientIDType clientID, const CommandIDType commandID, mtsGenericObject & argument);
 
-    void SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument1, mtsGenericObject & argument2);
+    bool SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument1, mtsGenericObject & argument2);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsComponentInterfaceProxy.ice

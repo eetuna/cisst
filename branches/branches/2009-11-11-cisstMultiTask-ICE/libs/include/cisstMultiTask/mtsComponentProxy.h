@@ -48,6 +48,17 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
+
+#include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
+#include <cisstMultiTask/mtsCommandVoidProxy.h>
+#include <cisstMultiTask/mtsCommandWriteProxy.h>
+#include <cisstMultiTask/mtsCommandReadProxy.h>
+#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
+#include <cisstMultiTask/mtsMulticastCommandVoid.h>
+#include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
+
 #include <cisstMultiTask/mtsInterfaceCommon.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxy.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -59,33 +70,6 @@ class mtsComponentProxy : public mtsDevice
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 protected:
-    //-------------------------------------------------------------------------
-    //  Data Structures for Server Component Proxy
-    //-------------------------------------------------------------------------
-    
-    //-------------------------------------------------------------------------
-    //  Data Structures for Client Component Proxy
-    //-------------------------------------------------------------------------
-    //class RequiredInterfaceProxyResources {
-    //};
-    /*! Function proxies. CreateProvidedInterfaceProxy() uses these maps to
-        assign commandIDs of the command proxies in a provided interface proxy. */
-    //typedef cmnNamedMap<mtsFunctionVoid>  FunctionVoidProxyMapType;
-    //typedef cmnNamedMap<mtsFunctionWrite> FunctionWriteProxyMapType;
-    //typedef cmnNamedMap<mtsFunctionRead>  FunctionReadProxyMapType;
-    //typedef cmnNamedMap<mtsFunctionQualifiedRead> FunctionQualifiedReadProxyMapType;
-    //FunctionVoidProxyMapType FunctionVoidProxyMap;
-    //FunctionWriteProxyMapType FunctionWriteProxyMap;
-    //FunctionReadProxyMapType FunctionReadProxyMap;
-    //FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
-
-    /*! Event handler proxies. CreateRequiredInterfaceProxy() uses these maps
-        to assign ----- TODO ----- */
-    //typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidProxyMapType;
-    //typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteProxyMapType;
-    //EventHandlerVoidProxyMapType  EventHandlerVoidProxyMap;
-    //EventHandlerWriteProxyMapType EventHandlerWriteProxyMap;
-
     /*! Typedef to manage provided interface proxies of which type is 
         mtsComponentInterfaceProxyServer. */
     typedef cmnNamedMap<mtsComponentInterfaceProxyServer> ProvidedInterfaceNetworkProxyMapType;
@@ -103,6 +87,40 @@ protected:
 
     /*! Counter for provided interface proxy instances */
     unsigned int ProvidedInterfaceProxyInstanceID;
+
+    //-------------------------------------------------------------------------
+    //  Data Structures for Server Component Proxy
+    //-------------------------------------------------------------------------
+    /*! Set of function proxy pointers. CreateProvidedInterfaceProxy() uses these 
+        maps to assign commandIDs of the command proxies in a provided interface 
+        proxy. See mtsComponentProxy::CreateRequiredInterfaceProxy() and
+        mtsComponentProxy::GetFunctionProxyPointers for details. */
+
+    /*! Typedef for function proxies */
+    typedef cmnNamedMap<mtsFunctionVoid>          FunctionVoidProxyMapType;
+    typedef cmnNamedMap<mtsFunctionWrite>         FunctionWriteProxyMapType;
+    typedef cmnNamedMap<mtsFunctionRead>          FunctionReadProxyMapType;
+    typedef cmnNamedMap<mtsFunctionQualifiedRead> FunctionQualifiedReadProxyMapType;
+    
+    /*! Typedef for event handler proxies */
+    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidProxyMapType;
+    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteProxyMapType;
+
+    class FunctionProxyAndEventHandlerProxyMapElement {
+    public:
+        FunctionVoidProxyMapType          FunctionVoidProxyMap;
+        FunctionWriteProxyMapType         FunctionWriteProxyMap;
+        FunctionReadProxyMapType          FunctionReadProxyMap;
+        FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
+        EventHandlerVoidProxyMapType      EventHandlerVoidProxyMap;
+        EventHandlerWriteProxyMapType     EventHandlerWriteProxyMap;
+    };
+
+    /*! Typedef to link a FunctionProxyAndEventHandlerProxyMaps instance with
+        required interface proxy name. Note that there can be more than one
+        required interface proxy in a client component proxy. */
+    typedef cmnNamedMap<FunctionProxyAndEventHandlerProxyMapElement> FunctionProxyAndEventHandlerProxyMapType;
+    FunctionProxyAndEventHandlerProxyMapType FunctionProxyAndEventHandlerProxyMap;
 
 public:
     mtsComponentProxy(const std::string & componentProxyName);

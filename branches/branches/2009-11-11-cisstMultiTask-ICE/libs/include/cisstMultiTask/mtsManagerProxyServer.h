@@ -177,6 +177,8 @@ public:
     bool RemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID = "");
 
+    void ProxyCreationCompleted(const std::string & listenerID = "");
+
     //  Connection Management
     bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -227,6 +229,8 @@ public:
     bool SendRemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, 
         const std::string & requiredInterfaceProxyName, const std::string & clientID);
+
+    void SendProxyCreationCompleted(const std::string & clientID);
 
     /*! Connection management */
     bool SendConnectServerSideInterface(

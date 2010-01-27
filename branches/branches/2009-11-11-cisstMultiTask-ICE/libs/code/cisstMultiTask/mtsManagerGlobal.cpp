@@ -464,13 +464,9 @@ bool mtsManagerGlobal::RemoveRequiredInterface(
 //-------------------------------------------------------------------------
 //  Connection Management
 //-------------------------------------------------------------------------
-unsigned int mtsManagerGlobal::Connect(
-    const std::string & clientProcessName,
-    const std::string & clientComponentName,
-    const std::string & clientRequiredInterfaceName,
-    const std::string & serverProcessName,
-    const std::string & serverComponentName,
-    const std::string & serverProvidedInterfaceName)
+unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     const unsigned int retError = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
 
@@ -513,192 +509,36 @@ unsigned int mtsManagerGlobal::Connect(
         return retError;
     }
 
-    // Determine the type of connection: local vs. remote
-    unsigned int thisConnectionID;
-    bool isRemoteConnection = false;
+    // Create ConnectionElement object
+    ConnectionElement connectionElement;
+    connectionElement.RequestProcessName = requestProcessName;
+    connectionElement.ClientProcessName = clientProcessName;
+    connectionElement.ClientComponentName = clientComponentName;
+    connectionElement.ClientRequiredInterfaceName = clientRequiredInterfaceName;
+    connectionElement.ServerProcessName = serverProcessName;
+    connectionElement.ServerComponentName = serverComponentName;
+    connectionElement.ServerProvidedInterfaceName = serverProvidedInterfaceName;
 
     // In case of local connection
     if (clientProcessName == serverProcessName) {
-        thisConnectionID = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL);        
+        connectionElement.ConnectionID = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL);
     }
     // In case of remote connection
     else {
         // Term definitions
-        // - Server manager : local component manager that manages server components
-        // - Client manager : local component manager that manages client components
-        
-        // Get local component managers
-        mtsManagerLocalInterface * localManagerClient = GetProcessObject(clientProcessName);
-        if (!localManagerClient) {
-            CMN_LOG_CLASS_RUN_ERROR << "Connect: cannot find local component manager with client process: " << clientProcessName << std::endl;
-            return retError;
-        }
-
-        mtsManagerLocalInterface * localManagerServer = GetProcessObject(serverProcessName);
-        if (!localManagerServer) {
-            CMN_LOG_CLASS_RUN_ERROR << "Connect: cannot find local component manager with server process: " << serverProcessName << std::endl;
-            return retError;
-        }
-
-        // Check if the server manager has the client component proxy. If not,
-        // create one.
-        const std::string clientComponentProxyName = GetComponentProxyName(clientProcessName, clientComponentName);
-        if (!FindComponent(serverProcessName, clientComponentProxyName)) {
-            if (!localManagerServer->CreateComponentProxy(clientComponentProxyName, serverProcessName)) {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to create client component proxy" << std::endl;
-                return false;
-            }
-            CMN_LOG_CLASS_RUN_VERBOSE << "Connect: client component proxy is created: " 
-                << clientComponentProxyName << " on " << serverProcessName << std::endl;
-        }
-
-        // Check if the client manager has the client component proxy. If not,
-        // create one.
-        const std::string serverComponentProxyName = GetComponentProxyName(serverProcessName, serverComponentName);
-        if (!FindComponent(clientProcessName, serverComponentProxyName)) {
-            if (!localManagerClient->CreateComponentProxy(serverComponentProxyName, clientProcessName)) {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to create server component proxy" << std::endl;
-                return false;
-            }
-            CMN_LOG_CLASS_RUN_VERBOSE << "Connect: server component proxy is created: " 
-                << serverComponentProxyName << " on " << clientProcessName << std::endl;
-        }
-
-        // Check if the specified interfaces exist in each process. If not,
-        // create an interface proxy.
-        // Note that, under the current design, a required interface can connect
-        // to multiple provided interfaces whereas a required interface connects
-        // to only one provided interface.
-        // Thus, a required interface proxy is created whenever a server component
-        // doesn't have it while a provided interface proxy is generated only at 
-        // the first time when a client component doesn't have it.
-        
-        // Check if provided interface proxy already exists at the client side.
-        bool foundProvidedInterfaceProxy = FindProvidedInterface(clientProcessName, serverComponentProxyName, serverProvidedInterfaceName);
-
-        // Check if required interface proxy already exists at the server side.
-        bool foundRequiredInterfaceProxy = FindRequiredInterface(serverProcessName, clientComponentProxyName, clientRequiredInterfaceName);
-
-        // Create an interface proxy (or proxies) as needed.
-        //
-        // From the server manager and the client manager, extract the 
-        // information about the two interfaces specified. The global component
-        // manager will deliver this information to a peer local component 
-        // manager so that they can create proxy components.
-        //
-        // Note that required interface proxy has to be created first because
-        // pointers to function proxy objects in the required interface should
-        // be available in order to create the provided interface.
-
-        // Create required interface proxy
-        if (!foundRequiredInterfaceProxy) {
-            // Extract required interface description
-            RequiredInterfaceDescription requiredInterfaceDescription;
-            if (!localManagerClient->GetRequiredInterfaceDescription(
-                clientComponentName, clientRequiredInterfaceName, requiredInterfaceDescription, clientProcessName)) 
-            {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get required interface description: "
-                    << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << std::endl;
-                return false;
-            }
-
-            // Create required interface proxy at the server side
-            if (!localManagerServer->CreateRequiredInterfaceProxy(clientComponentProxyName, requiredInterfaceDescription, serverProcessName)) {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to create required interface proxy: "
-                    << clientComponentProxyName << " in " << serverProcessName << std::endl;
-                return false;
-            }
-        }
-
-        // Create provided interface proxy
-        if (!foundProvidedInterfaceProxy) {
-            // Extract provided interface description
-            ProvidedInterfaceDescription providedInterfaceDescription;
-            if (!localManagerServer->GetProvidedInterfaceDescription(
-                serverComponentName, serverProvidedInterfaceName, providedInterfaceDescription, serverProcessName)) 
-            {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get provided interface description: "
-                    << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
-                return false;
-            }
-
-            // Create provided interface proxy at the client side
-            if (!localManagerClient->CreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription, clientProcessName)) {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to create provided interface proxy: "
-                    << serverComponentProxyName << " in " << clientProcessName << std::endl;
-                return false;
-            }
-        }
-
-        //
-        // THIS NOTE IS DISCARDED!!!
-        //
-        // TODO: implement here
-        //
-        // 1. create connection information structure element
-        // 2. assign connection id for the element
-        // 3. enqueue the element with timer set
-        // 4. let two LCMs create proxy components
-        // 5. wait for responses from LCMs
-        //    - if timeouts, call disconnect to break and clean current connection
-        //    - if success at both sides, update command id and event handler id
-        thisConnectionID = ConnectionID++;
-        isRemoteConnection = true;
+        // - Server manager: local component manager that manages server components
+        // - Client manager: local component manager that manages client components
+        connectionElement.ConnectionID = ConnectionID++;
     }
 
-    InterfaceMapType * interfaceMap;
+    // Enqueue ConnectionElement object. This element will be dequeued and 
+    // processed by network proxy server 
+    // (See mtsManagerProxyServer::ManagerServerI::Run() method)
+    ConnectionElementQueueChange.Lock();
+    ConnectionElementQueue.push_back(connectionElement);
+    ConnectionElementQueueChange.Unlock();
 
-    // Connect client's required interface with server's provided interface.
-    ConnectionMapType * connectionMap = GetConnectionsOfRequiredInterface(
-        clientProcessName, clientComponentName, clientRequiredInterfaceName, &interfaceMap);
-    // If the required interface has never connected to other provided interfaces
-    if (connectionMap == NULL) {
-        // Create a connection map for the required interface
-        connectionMap = new ConnectionMapType(clientRequiredInterfaceName);
-        (interfaceMap->RequiredInterfaceMap.GetMap())[clientRequiredInterfaceName] = connectionMap;
-
-        // TODO: Remove this
-        AllocatedPointers[reinterpret_cast<unsigned int>(connectionMap)] = __LINE__;
-    }
-
-    // Add an element containing information about the connected provided interface
-    if (!AddConnectedInterface(connectionMap, serverProcessName, serverComponentName, serverProvidedInterfaceName, isRemoteConnection)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: "
-            << "failed to add information about connected provided interface." << std::endl;
-        return retError;
-    }
-
-    // Connect server's provided interface with client's required interface.
-    connectionMap = GetConnectionsOfProvidedInterface(serverProcessName,
-                                                      serverComponentName,
-                                                      serverProvidedInterfaceName,
-                                                      &interfaceMap);
-    // If the provided interface has never been connected with other required interfaces
-    if (connectionMap == NULL) {
-        // Create a connection map for the provided interface
-        connectionMap = new ConnectionMapType(serverProvidedInterfaceName);
-        (interfaceMap->ProvidedInterfaceMap.GetMap())[serverProvidedInterfaceName] = connectionMap;
-
-        // TODO: Remove this
-        AllocatedPointers[reinterpret_cast<unsigned int>(connectionMap)] = __LINE__;
-    }
-
-    // Add an element containing information about the connected provided interface
-    if (!AddConnectedInterface(connectionMap, clientProcessName, clientComponentName, clientRequiredInterfaceName, isRemoteConnection)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: "
-            << "failed to add information about connected required interface." << std::endl;
-
-        // Before returning false, should clean up required interface's connection information
-        Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
-                   serverProcessName, serverComponentName, serverProvidedInterfaceName);
-        return retError;
-    }
-
-    CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully connected: " 
-        << GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
-        << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
-
-    return thisConnectionID;
+    return connectionElement.ConnectionID;
 }
 
 bool mtsManagerGlobal::ConnectConfirm(unsigned int connectionSessionID)
@@ -1162,4 +1002,187 @@ bool mtsManagerGlobal::ConnectServerSideInterface(const unsigned int providedInt
     return localManagerServer->ConnectServerSideInterface(providedInterfaceProxyInstanceId,
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName, serverProcessName);
+}
+
+void mtsManagerGlobal::ProcessConnectionQueue()
+{
+    if (ConnectionElementQueue.size() == 0) return;
+
+    // Pop the oldest queued element
+    ConnectionElementQueueType::iterator it = ConnectionElementQueue.begin();
+
+    const unsigned int connectionID = it->ConnectionID;
+    const std::string requestProcessName = it->RequestProcessName;
+    const std::string clientProcessName = it->ClientProcessName;
+    const std::string clientComponentName = it->ClientComponentName;
+    const std::string clientRequiredInterfaceName = it->ClientRequiredInterfaceName;
+    const std::string serverProcessName = it->ServerProcessName;
+    const std::string serverComponentName = it->ServerComponentName;
+    const std::string serverProvidedInterfaceName = it->ServerProvidedInterfaceName;
+
+    ConnectionElementQueueChange.Lock();
+    ConnectionElementQueue.pop_front();
+    ConnectionElementQueueChange.Unlock();
+
+    bool isRemoteConnection;
+
+    // Local connection
+    if (clientProcessName == serverProcessName) {
+        isRemoteConnection = false;
+    }
+    // Remote connection
+    else {
+        isRemoteConnection = true;
+
+        // Check if the server manager has client component proxies.
+        // If not, create one.
+        const std::string clientComponentProxyName = GetComponentProxyName(clientProcessName, clientComponentName);
+        if (!FindComponent(serverProcessName, clientComponentProxyName)) {
+            if (!LocalManagerConnected->CreateComponentProxy(clientComponentProxyName, serverProcessName)) {
+                CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: failed to create client component proxy" << std::endl;
+                return;
+            }
+            CMN_LOG_CLASS_RUN_VERBOSE << "ProcessConnectionQueue: client component proxy is created: " 
+                << clientComponentProxyName << " on " << serverProcessName << std::endl;
+        }
+
+        // Check if the client manager has the client component proxy. If not,
+        // create one.
+        const std::string serverComponentProxyName = GetComponentProxyName(serverProcessName, serverComponentName);
+        if (!FindComponent(clientProcessName, serverComponentProxyName)) {
+            if (!LocalManagerConnected->CreateComponentProxy(serverComponentProxyName, clientProcessName)) {
+                CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: failed to create server component proxy" << std::endl;
+                return;
+            }
+            CMN_LOG_CLASS_RUN_VERBOSE << "ProcessConnectionQueue: server component proxy is created: " 
+                << serverComponentProxyName << " on " << clientProcessName << std::endl;
+        }
+
+        // Check if the specified interfaces exist in each process. If not,
+        // create an interface proxy.
+        // Note that, under the current design, a required interface can connect
+        // to multiple provided interfaces whereas a required interface connects
+        // to only one provided interface.
+        // Thus, a required interface proxy is created whenever a server component
+        // doesn't have it while a provided interface proxy is generated only at 
+        // the first time when a client component doesn't have it.
+        
+        // Check if provided interface proxy already exists at the client side.
+        bool foundProvidedInterfaceProxy = FindProvidedInterface(clientProcessName, serverComponentProxyName, serverProvidedInterfaceName);
+
+        // Check if required interface proxy already exists at the server side.
+        bool foundRequiredInterfaceProxy = FindRequiredInterface(serverProcessName, clientComponentProxyName, clientRequiredInterfaceName);
+
+        // Create an interface proxy (or proxies) as needed.
+        //
+        // From the server manager and the client manager, extract the 
+        // information about the two interfaces specified. The global component
+        // manager will deliver this information to a peer local component 
+        // manager so that they can create proxy components.
+        //
+        // Note that required interface proxy has to be created first because
+        // pointers to function proxy objects in the required interface should
+        // be available in order to create the provided interface.
+
+        // Create required interface proxy
+        if (!foundRequiredInterfaceProxy) {
+            // Extract required interface description
+            RequiredInterfaceDescription requiredInterfaceDescription;
+            if (!LocalManagerConnected->GetRequiredInterfaceDescription(
+                clientComponentName, clientRequiredInterfaceName, requiredInterfaceDescription, clientProcessName)) 
+            {
+                CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: failed to get required interface description: "
+                    << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << std::endl;
+                return;
+            }
+
+            // Create required interface proxy at the server side
+            if (!LocalManagerConnected->CreateRequiredInterfaceProxy(clientComponentProxyName, requiredInterfaceDescription, serverProcessName)) {
+                CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: failed to create required interface proxy: "
+                    << clientComponentProxyName << " in " << serverProcessName << std::endl;
+                return;
+            }
+        }
+
+        // Create provided interface proxy
+        if (!foundProvidedInterfaceProxy) {
+            // Extract provided interface description
+            ProvidedInterfaceDescription providedInterfaceDescription;
+            if (!LocalManagerConnected->GetProvidedInterfaceDescription(
+                serverComponentName, serverProvidedInterfaceName, providedInterfaceDescription, serverProcessName)) 
+            {
+                CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: failed to get provided interface description: "
+                    << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
+                return;
+            }
+
+            // Create provided interface proxy at the client side
+            if (!LocalManagerConnected->CreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription, clientProcessName)) {
+                CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: failed to create provided interface proxy: "
+                    << serverComponentProxyName << " in " << clientProcessName << std::endl;
+                return;
+            }
+        }
+
+        // TODO:
+        // 4. let two LCMs create proxy components
+        // 5. wait for responses from LCMs
+        //    - if timeouts, call disconnect to break and clean current connection
+        //    - if success at both sides, update command id and event handler id
+    }
+
+    InterfaceMapType * interfaceMap;
+
+    // Connect client's required interface with server's provided interface.
+    ConnectionMapType * connectionMap = GetConnectionsOfRequiredInterface(
+        clientProcessName, clientComponentName, clientRequiredInterfaceName, &interfaceMap);
+    // If the required interface has never connected to other provided interfaces
+    if (connectionMap == NULL) {
+        // Create a connection map for the required interface
+        connectionMap = new ConnectionMapType(clientRequiredInterfaceName);
+        (interfaceMap->RequiredInterfaceMap.GetMap())[clientRequiredInterfaceName] = connectionMap;
+
+        // TODO: Remove this
+        AllocatedPointers[reinterpret_cast<unsigned int>(connectionMap)] = __LINE__;
+    }
+
+    // Add an element containing information about the connected provided interface
+    if (!AddConnectedInterface(connectionMap, serverProcessName, serverComponentName, serverProvidedInterfaceName, isRemoteConnection)) {
+        CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: "
+            << "failed to add information about connected provided interface." << std::endl;
+        return;
+    }
+
+    // Connect server's provided interface with client's required interface.
+    connectionMap = GetConnectionsOfProvidedInterface(serverProcessName,
+                                                      serverComponentName,
+                                                      serverProvidedInterfaceName,
+                                                      &interfaceMap);
+    // If the provided interface has never been connected with other required interfaces
+    if (connectionMap == NULL) {
+        // Create a connection map for the provided interface
+        connectionMap = new ConnectionMapType(serverProvidedInterfaceName);
+        (interfaceMap->ProvidedInterfaceMap.GetMap())[serverProvidedInterfaceName] = connectionMap;
+
+        // TODO: Remove this
+        AllocatedPointers[reinterpret_cast<unsigned int>(connectionMap)] = __LINE__;
+    }
+
+    // Add an element containing information about the connected provided interface
+    if (!AddConnectedInterface(connectionMap, clientProcessName, clientComponentName, clientRequiredInterfaceName, isRemoteConnection)) {
+        CMN_LOG_CLASS_RUN_ERROR << "ProcessConnectionQueue: "
+            << "failed to add information about connected required interface." << std::endl;
+
+        // Before returning false, should clean up required interface's connection information
+        Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                   serverProcessName, serverComponentName, serverProvidedInterfaceName);
+        return;
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "ProcessConnectionQueue: successfully connected: " 
+        << GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
+        << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
+
+    // Inform local component manager of the successful establishment of the connection
+    LocalManagerConnected->ProxyCreationCompleted(requestProcessName);
 }

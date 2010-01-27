@@ -54,7 +54,7 @@ public:
         CONNECT_ERROR = 0,
         CONNECT_LOCAL,
         CONNECT_REMOTE_BASE
-    } CONNECT_STATE;
+    } CONNECT_ID;
 
     //-------------------------------------------------------------------------
     //  Process Management
@@ -130,7 +130,7 @@ public:
         timeout elapses before BOTH local component managers confirm successful 
         connection, the global component manager calls Disconnect() to clean up 
         the connection. */
-    virtual unsigned int Connect(
+    virtual unsigned int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 

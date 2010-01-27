@@ -80,10 +80,7 @@ class CISST_EXPORT mtsRequiredInterface: public cmnGenericObject
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsComponentProxy;
-    //
-    // TODO: Remove the following declaration
-    //
-    friend class mtsDeviceProxy;
+    friend class mtsComponentInterfaceProxyClient;
 
 protected:
 
@@ -205,15 +202,6 @@ protected:
             } else {
                 outputStream << " (required)";
             }
-        }
-        unsigned int GetCommandID(void) const
-        {
-            return (*CommandPointer)->GetCommandID();
-        }
-
-        std::string GetName(void) const
-        {
-            return (*CommandPointer)->GetName();
         }
     };
     

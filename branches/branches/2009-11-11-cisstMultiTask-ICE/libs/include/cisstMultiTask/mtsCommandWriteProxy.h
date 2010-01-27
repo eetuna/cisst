@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Defines a command with one argument 
+  \brief Defines a command proxy class with one argument 
 */
 
 #ifndef _mtsCommandWriteProxy_h
@@ -35,10 +35,9 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  mtsCommandWriteProxy is a proxy class for mtsCommandWrite. This class contains
-  CommandId of which value is set to a function pointer of type mtsFunctionWrite.
-  When Execute() method is called, the command id with payload is sent to the 
-  connected peer interface across a network.
+  mtsCommandWriteProxy is a proxy class for mtsCommandWrite. When Execute() 
+  method is called, the command id with payload is sent to the connected peer 
+  interface across a network.
 
   //
   // TODO: Rewrite the following comments
@@ -58,7 +57,7 @@ class mtsCommandWriteProxy : public mtsCommandWriteBase, public mtsCommandProxyB
     friend class mtsMulticastCommandWriteBase;
     
 protected:
-    /*! Per-command serializer and deserializer */
+    /*! Per-command (de)serializer */
     mtsProxySerializer Serializer;
 
 public:
@@ -66,8 +65,7 @@ public:
     typedef mtsCommandWriteBase BaseType;
 
     /*! Constructor */
-    mtsCommandWriteProxy(const std::string & commandName) : BaseType(commandName)
-    {
+    mtsCommandWriteProxy(const std::string & commandName) : BaseType(commandName) {
         // Command proxy is disabled by default (enabled when command id and
         // network proxy are set).
         Disable();
@@ -75,21 +73,18 @@ public:
 
     /*! Destructor */
     ~mtsCommandWriteProxy() {
-        if (this->ArgumentPrototype) {
-            delete this->ArgumentPrototype;
+        if (ArgumentPrototype) {
+            delete ArgumentPrototype;
         }
     }
+    
+    /*! Set command id and register serializer to network proxy. This method
+        should be called after SetNetworkProxy() is called. */
+    void SetCommandID(const CommandIDType & commandID) {
+        mtsCommandProxyBase::SetCommandID(commandID);
 
-    /*! Set command id */
-    virtual void SetCommandId(const CommandIDType & commandId) {
-        mtsCommandProxyBase::SetCommandId(commandId);
-        //
-        // TODO: What's this???
-        //
         if (NetworkProxyServer) {
-            //NetworkProxyServer->AddPerCommandSerializer(CommandId, &Serializer);
-        } else {
-            //NetworkProxyClient->AddPerEventGeneratorSerializer(CommandId, &Serializer);
+            NetworkProxyServer->RegisterPerCommandSerializer(CommandID, &Serializer);
         }
     }
 
@@ -100,26 +95,25 @@ public:
 
     /*! Direct execute can be used for mtsMulticastCommandWrite. */
     inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
-        if (this->IsDisabled()) mtsCommandBase::DISABLED;
+        if (IsDisabled()) return mtsCommandBase::DISABLED;
 
         if (NetworkProxyServer) {
-            //NetworkProxyServer->SendExecuteCommandWriteSerialized(CommandId, argument);
+            NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument);
         } else {
-            //NetworkProxyClient->SendExecuteEventWriteSerialized(CommandId, argument);
+            //NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument);
         }
 
         return mtsCommandBase::DEV_OK;
     }
 
+    /*! Getter for per-command (de)serializer */
+    inline mtsProxySerializer * GetSerializer() {
+        return &Serializer;
+    }
+
     /*! Generate human readable description of this object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandWriteProxy: " << Name << ", " << CommandId << " with ";
-        if (NetworkProxyServer) {
-            outputStream << NetworkProxyServer->ClassServices()->GetName();
-        } else {
-            outputStream << NetworkProxyClient->ClassServices()->GetName();
-        }
-        outputStream << ": currently " << (this->IsEnabled() ? "enabled" : "disabled");
+        ToStreamBase("mtsCommandWriteProxy", Name, CommandID, IsEnabled(), outputStream);
     }
 };
 

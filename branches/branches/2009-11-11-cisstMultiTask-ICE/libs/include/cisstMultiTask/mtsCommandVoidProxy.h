@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Definition of a command object proxy class for a command with no argument
+  \brief Defines a command proxy class with no argument
  */
 
 #ifndef _mtsCommandVoidProxy_h
@@ -35,7 +35,7 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
 
   mtsCommandVoidProxy is a proxy for mtsCommandVoid. When Execute() method is 
-  called, CommandId is sent to a connected required interface proxy across a 
+  called, CommandID is sent to a connected required interface proxy across a 
   network without payload.
 */
 class mtsCommandVoidProxy: public mtsCommandVoidBase, public mtsCommandProxyBase
@@ -45,8 +45,7 @@ public:
 
 public:
     /*! Constructor */
-    mtsCommandVoidProxy(const std::string & commandName) : BaseType(commandName)
-    {
+    mtsCommandVoidProxy(const std::string & commandName) : BaseType(commandName) {
         // Command proxy is disabled by default (enabled when command id and
         // network proxy are set).
         Disable();
@@ -60,9 +59,9 @@ public:
         if (IsDisabled()) return mtsCommandBase::DISABLED;
 
         if (NetworkProxyServer) {
-            //NetworkProxyServer->SendExecuteCommandVoid(CommandId);
+            NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID);
         } else {
-            //NetworkProxyClient->SendExecuteEventVoid(CommandId);
+            //NetworkProxyClient->SendExecuteEventVoid(CommandID);
         }
 
         return mtsCommandBase::DEV_OK;
@@ -70,13 +69,7 @@ public:
 
     /*! Generate human readable description of this object */
     void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandVoidProxy: " << Name << ", " << CommandId << " with ";
-        if (NetworkProxyServer) {
-            outputStream << NetworkProxyServer->ClassServices()->GetName();
-        } else {
-            outputStream << NetworkProxyClient->ClassServices()->GetName();
-        }
-        outputStream << ": currently " << (this->IsEnabled() ? "enabled" : "disabled");
+        ToStreamBase("mtsCommandVoidProxy", Name, CommandID, IsEnabled(), outputStream);
     }
 };
 

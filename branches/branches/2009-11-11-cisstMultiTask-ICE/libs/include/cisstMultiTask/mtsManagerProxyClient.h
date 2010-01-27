@@ -75,10 +75,10 @@ protected:
     static void Runner(ThreadArguments<mtsManagerLocal> * arguments);
 
     /*! Miscellaneous methods */
-    void GetConnectionStringSet(
+    void GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStringSet,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        mtsManagerProxy::ConnectionStringSet & connectionStringSet);
+        const std::string & requestProcessName = "");
 
     //-------------------------------------------------------------------------
     //  Event Handlers : Server -> Client
@@ -92,6 +92,7 @@ protected:
     bool ReceiveCreateRequiredInterfaceProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::RequiredInterfaceDescription & requiredInterfaceDescription);
     bool ReceiveRemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName);
     bool ReceiveRemoveRequiredInterfaceProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName);
+    void ReceiveProxyCreationCompleted();
 
     // Connection management
     bool ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
@@ -142,7 +143,7 @@ public:
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     //  Connection Management
-    unsigned int Connect(
+    unsigned int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
     bool ConnectConfirm(unsigned int connectionSessionID);
@@ -247,6 +248,7 @@ protected:
         bool CreateRequiredInterfaceProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::RequiredInterfaceDescription & requiredInterfaceDescription, const ::Ice::Current & current);
         bool RemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const ::Ice::Current & current);
         bool RemoveRequiredInterfaceProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const ::Ice::Current & current);
+        void ProxyCreationCompleted(const ::Ice::Current & current);
 
         // Connection management
         bool ConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);

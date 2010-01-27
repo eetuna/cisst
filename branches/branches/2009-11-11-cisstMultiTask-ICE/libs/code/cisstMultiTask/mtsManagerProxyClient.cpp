@@ -159,17 +159,18 @@ void mtsManagerProxyClient::Stop()
     Sender->Stop();
 }
 
-void mtsManagerProxyClient::GetConnectionStringSet(
+void mtsManagerProxyClient::GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStringSet,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    mtsManagerProxy::ConnectionStringSet & connectionStringSet)
-{
+    const std::string & requestProcessName)
+{    
     connectionStringSet.ClientProcessName = clientProcessName;
     connectionStringSet.ClientComponentName = clientComponentName;
     connectionStringSet.ClientRequiredInterfaceName = clientRequiredInterfaceName;
     connectionStringSet.ServerProcessName = serverProcessName;
     connectionStringSet.ServerComponentName = serverComponentName;
     connectionStringSet.ServerProvidedInterfaceName = serverProvidedInterfaceName;
+    connectionStringSet.RequestProcessName = requestProcessName;
 }
 
 //-------------------------------------------------------------------------
@@ -236,14 +237,15 @@ bool mtsManagerProxyClient::RemoveRequiredInterface(const std::string & processN
     return SendRemoveRequiredInterface(processName, componentName, interfaceName);
 }
 
-unsigned int mtsManagerProxyClient::Connect(
+unsigned int mtsManagerProxyClient::Connect(const std::string & requestProcessName,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
-    GetConnectionStringSet(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+    GetConnectionStringSet(connectionStringSet,
+                           clientProcessName, clientComponentName, clientRequiredInterfaceName,
                            serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                           connectionStringSet);
+                           requestProcessName);
 
     return SendConnect(connectionStringSet);
 }
@@ -260,9 +262,9 @@ bool mtsManagerProxyClient::Disconnect(
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
-    GetConnectionStringSet(clientProcessName, clientComponentName, clientRequiredInterfaceName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                           connectionStringSet);
+    GetConnectionStringSet(connectionStringSet,
+                           clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     return SendDisconnect(connectionStringSet);
 }
@@ -273,9 +275,9 @@ bool mtsManagerProxyClient::SetProvidedInterfaceProxyAccessInfo(
     const std::string & endpointInfo, const std::string & communicatorID)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
-    GetConnectionStringSet(clientProcessName, clientComponentName, clientRequiredInterfaceName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                           connectionStringSet);
+    GetConnectionStringSet(connectionStringSet,
+                           clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     return SendSetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo, communicatorID);
 }
@@ -286,9 +288,9 @@ bool mtsManagerProxyClient::GetProvidedInterfaceProxyAccessInfo(
     std::string & endpointInfo, std::string & communicatorID)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
-    GetConnectionStringSet(clientProcessName, clientComponentName, clientRequiredInterfaceName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                           connectionStringSet);
+    GetConnectionStringSet(connectionStringSet,
+                           clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     return SendGetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo, communicatorID);
 }
@@ -300,9 +302,9 @@ bool mtsManagerProxyClient::InitiateConnect(const unsigned int connectionID,
     ::Ice::Int thisConnectionID = connectionID;
 
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
-    GetConnectionStringSet(clientProcessName, clientComponentName, clientRequiredInterfaceName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                           connectionStringSet);
+    GetConnectionStringSet(connectionStringSet,
+                           clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     return SendInitiateConnect(connectionID, connectionStringSet);
 }
@@ -314,9 +316,9 @@ bool mtsManagerProxyClient::ConnectServerSideInterface(const unsigned int provid
     ::Ice::Int thisProvidedInterfaceProxyInstanceId = providedInterfaceProxyInstanceId;
     
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
-    GetConnectionStringSet(clientProcessName, clientComponentName, clientRequiredInterfaceName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                           connectionStringSet);
+    GetConnectionStringSet(connectionStringSet,
+                           clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     return SendConnectServerSideInterface(thisProvidedInterfaceProxyInstanceId, connectionStringSet);
 }
@@ -367,18 +369,23 @@ bool mtsManagerProxyClient::ReceiveRemoveRequiredInterfaceProxy(const std::strin
     return ProxyOwner->RemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
 }
 
+void mtsManagerProxyClient::ReceiveProxyCreationCompleted()
+{
+    ProxyOwner->ProxyCreationCompleted();
+}
+
 bool mtsManagerProxyClient::ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
     return ProxyOwner->ConnectServerSideInterface(providedInterfaceProxyInstanceId, 
-        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName,
-        connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName);
+        connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
 
 bool mtsManagerProxyClient::ReceiveConnectClientSideInterface(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
     return ProxyOwner->ConnectClientSideInterface(connectionID,
-        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName,
-        connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName);
+        connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
 
 bool mtsManagerProxyClient::ReceiveGetProvidedInterfaceDescription(const std::string & componentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription)
@@ -674,6 +681,15 @@ bool mtsManagerProxyClient::ManagerClientI::RemoveRequiredInterfaceProxy(const s
 #endif
 
     return ManagerProxyClient->ReceiveRemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
+}
+
+void mtsManagerProxyClient::ManagerClientI::ProxyCreationCompleted(const ::Ice::Current & current)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+	LogPrint(ManagerClientI, "<<<<< RECV: ProxyCreationCompleted");
+#endif
+
+    return ManagerProxyClient->ReceiveProxyCreationCompleted();
 }
 
 bool mtsManagerProxyClient::ManagerClientI::ConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current)

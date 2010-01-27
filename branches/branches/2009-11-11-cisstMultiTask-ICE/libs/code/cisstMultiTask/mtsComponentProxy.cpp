@@ -18,27 +18,22 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-//#include <cisstMultiTask/mtsComponentProxy.h>
+#include <cisstMultiTask/mtsComponentProxy.h>
 
 #include <cisstCommon/cmnUnits.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
 #include <cisstMultiTask/mtsRequiredInterface.h>
 
-#include <cisstMultiTask/mtsCommandVoidProxy.h>
-#include <cisstMultiTask/mtsCommandWriteProxy.h>
-#include <cisstMultiTask/mtsCommandReadProxy.h>
-#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
-#include <cisstMultiTask/mtsMulticastCommandVoid.h>
-#include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
-
-#include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
-#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
-
-//#include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
-
-//#include <sstream>
+//#include <cisstMultiTask/mtsFunctionVoid.h>
+//#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+//#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
+//#include <cisstMultiTask/mtsCommandVoidProxy.h>
+//#include <cisstMultiTask/mtsCommandWriteProxy.h>
+//#include <cisstMultiTask/mtsCommandReadProxy.h>
+//#include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
+//#include <cisstMultiTask/mtsMulticastCommandVoid.h>
+//#include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
 
 CMN_IMPLEMENT_SERVICES(mtsComponentProxy);
 
@@ -69,17 +64,7 @@ mtsComponentProxy::~mtsComponentProxy()
     ProvidedInterfaceNetworkProxies.DeleteAll();
     RequiredInterfaceNetworkProxies.DeleteAll();
 
-    //
-    // TODO: deallocate ProvidedInterfaceProxyInstanceMap
-    //
-    //ProvidedInterfaceProxyInstanceMap
-
-    //FunctionVoidProxyMap.DeleteAll();
-    //FunctionWriteProxyMap.DeleteAll();
-    //FunctionReadProxyMap.DeleteAll();
-    //FunctionQualifiedReadProxyMap.DeleteAll();
-    //EventVoidGeneratorProxyMap.DeleteAll();
-    //EventWriteGeneratorProxyMap.DeleteAll();
+    FunctionProxyAndEventHandlerProxyMap.DeleteAll();
 }
 
 //-----------------------------------------------------------------------------
@@ -98,8 +83,11 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
     }
 
     // Create a required interface proxy
-    bool success;
     mtsRequiredInterface * requiredInterfaceProxy = new mtsRequiredInterface(requiredInterfaceName);
+
+    // Store function proxy pointers and event handler proxy pointers to assign
+    // command proxies' id at server side.
+    FunctionProxyAndEventHandlerProxyMapElement * mapElement = new FunctionProxyAndEventHandlerProxyMapElement;    
 
     // Populate the new required interface
     mtsFunctionVoid * functionVoidProxy;
@@ -107,13 +95,14 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
     mtsFunctionRead * functionReadProxy;
     mtsFunctionQualifiedRead * functionQualifiedReadProxy;
 
+    bool success;
+
     // Create void function proxies
     const std::vector<std::string> namesOfFunctionVoid = requiredInterfaceDescription.FunctionVoidNames;
     for (unsigned int i = 0; i < namesOfFunctionVoid.size(); ++i) {
-        //functionVoidProxy = new mtsFunctionVoid(providedInterface, namesOfFunctionVoid[i]);
         functionVoidProxy = new mtsFunctionVoid();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionVoid[i], *functionVoidProxy);
-        //success &= FunctionVoidProxyMap.AddItem(namesOfFunctionVoid[i], functionVoidProxy);
+        success &= mapElement->FunctionVoidProxyMap.AddItem(namesOfFunctionVoid[i], functionVoidProxy);
         if (!success) {
             delete requiredInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add void function proxy: " << namesOfFunctionVoid[i] << std::endl;
@@ -124,10 +113,9 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
     // Create write function proxies
     const std::vector<std::string> namesOfFunctionWrite = requiredInterfaceDescription.FunctionWriteNames;
     for (unsigned int i = 0; i < namesOfFunctionWrite.size(); ++i) {
-        //functionWriteProxy = new mtsFunctionWrite(providedInterface, namesOfFunctionWrite[i]);
         functionWriteProxy = new mtsFunctionWrite();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionWrite[i], *functionWriteProxy);
-        //success &= FunctionWriteProxyMap.AddItem(namesOfFunctionWrite[i], functionWriteProxy);
+        success &= mapElement->FunctionWriteProxyMap.AddItem(namesOfFunctionWrite[i], functionWriteProxy);
         if (!success) {
             delete requiredInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add write function proxy: " << namesOfFunctionWrite[i] << std::endl;
@@ -138,10 +126,9 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
     // Create read function proxies
     const std::vector<std::string> namesOfFunctionRead = requiredInterfaceDescription.FunctionReadNames;
     for (unsigned int i = 0; i < namesOfFunctionRead.size(); ++i) {
-        //functionReadProxy = new mtsFunctionRead(providedInterface, namesOfFunctionRead[i]);
         functionReadProxy = new mtsFunctionRead();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionRead[i], *functionReadProxy);
-        //success &= FunctionReadProxyMap.AddItem(namesOfFunctionRead[i], functionReadProxy);
+        success &= mapElement->FunctionReadProxyMap.AddItem(namesOfFunctionRead[i], functionReadProxy);
         if (!success) {
             delete requiredInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add read function proxy: " << namesOfFunctionRead[i] << std::endl;
@@ -152,10 +139,9 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
     // Create QualifiedRead function proxies
     const std::vector<std::string> namesOfFunctionQualifiedRead = requiredInterfaceDescription.FunctionQualifiedReadNames;
     for (unsigned int i = 0; i < namesOfFunctionQualifiedRead.size(); ++i) {
-        //functionQualifiedReadProxy = new mtsFunctionQualifiedRead(providedInterface, namesOfFunctionQualifiedRead[i]);
         functionQualifiedReadProxy = new mtsFunctionQualifiedRead();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionQualifiedRead[i], *functionQualifiedReadProxy);
-        //success &= FunctionQualifiedReadProxyMap.AddItem(namesOfFunctionQualifiedRead[i], functionQualifiedReadProxy);
+        success &= success &= mapElement->FunctionQualifiedReadProxyMap.AddItem(namesOfFunctionQualifiedRead[i], functionQualifiedReadProxy);
         if (!success) {
             delete requiredInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add qualified read function proxy: " << namesOfFunctionQualifiedRead[i] << std::endl;
@@ -182,7 +168,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         //
         actualEventVoidCommandProxy = new mtsCommandVoidProxy(eventName);
         success = requiredInterfaceProxy->EventHandlersVoid.AddItem(eventName, actualEventVoidCommandProxy);
-        //success &= EventHandlerVoidProxyMap.AddItem(eventName, actualEventVoidCommandProxy);
+        success &= mapElement->EventHandlerVoidProxyMap.AddItem(eventName, actualEventVoidCommandProxy);
         if (!success) {
             delete requiredInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add void event handler proxy: " << eventName << std::endl;
@@ -199,7 +185,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         //
         actualEventWriteCommandProxy = new mtsCommandWriteProxy(eventName);
         success = requiredInterfaceProxy->EventHandlersWrite.AddItem(eventName, actualEventWriteCommandProxy);
-        //success &= EventHandlerWriteProxyMap.AddItem(eventName, actualEventWriteCommandProxy);
+        success &= mapElement->EventHandlerWriteProxyMap.AddItem(eventName, actualEventWriteCommandProxy);
         if (!success) {
             delete requiredInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add write event handler proxy: " << eventName << std::endl;
@@ -214,40 +200,13 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         return false;
     }
 
-    /*
-    //
-    // TODO: CHECK: Maybe, all the following codes are redundant because once a
-    // proxy is created and added to LCM, it acts as if it were a plain component.
-    //
-
-    // Using AllocateResources(), get pointers which have been allocated for this 
-    // required interface and are thread-safe to use.
-    unsigned int userId;
-    std::string userName = requiredInterfaceName + "Proxy";
-    //
-    // TODO: AllocateResources should resolve thread-safety issues in the connection between
-    // multiple required interfaces and a provided interface
-    // (e.g. serializer, stringstream buffer in serializer, ...)
-    //
-    //userId = providedInterface->AllocateResources(userName);
-
-    /* Don't connect right now
-    // Connect to the original device or task that provides allocated resources.
-    requiredInterfaceProxy->ConnectTo(providedInterface);
-    if (!requiredInterfaceProxy->BindCommandsAndEvents(userId)) {
-        // return without adding the required interface proxy to the component
-        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: BindCommandsAndEvents failed: userName="
-            << userName << ", userId=" << userId << std::endl;
-        //
-        // TODO: providedInterface->DeAllocateResources()????
-        // TODO: requiredInterfaceProxy->DisconnectFrom()????
-        //
-        delete requiredInterfaceProxy;
+    // Add to function proxy and event handler proxy map
+    if (!FunctionProxyAndEventHandlerProxyMap.AddItem(requiredInterfaceName, mapElement)) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add proxy map: " << requiredInterfaceName << std::endl;
         return false;
     }
-    */
 
-    CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: added required interface proxy: " << requiredInterfaceName << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: added required interface proxy: " << requiredInterfaceName << std::endl;
 
     return true;
 }
@@ -505,7 +464,7 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
         return false;
     }
 
-    CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: added provided interface proxy: " << providedInterfaceName << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "CreateProvidedInterfaceProxy: added provided interface proxy: " << providedInterfaceName << std::endl;
 
     return true;
 }
@@ -648,7 +607,7 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & requiredIn
     // Fetch pointers of event generator proxies from the connected provided 
     // interface proxy (network proxy server) at the client side.
 
-    // bbbbbbbbbbbbbbbb
+    // TODO: Implement this
     
     return false;
 }
@@ -656,8 +615,9 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & requiredIn
 bool mtsComponentProxy::UpdateCommandProxyID(
     const std::string & serverProvidedInterfaceName, const std::string & clientComponentName, 
     const std::string & clientRequiredInterfaceName, const unsigned int providedInterfaceProxyInstanceId)
-
 {
+    const unsigned int clientID = providedInterfaceProxyInstanceId;
+
     // Note that this method is only called by a client process.
 
     // Get a network proxy server that corresponds to 'serverProvidedInterfaceName'
@@ -694,89 +654,82 @@ bool mtsComponentProxy::UpdateCommandProxyID(
 
     // Void command
     mtsCommandVoidProxy * commandVoid = NULL;
-    mtsComponentInterfaceProxy::FunctionProxySequence::iterator itVoid = 
-        functionProxyPointers.FunctionVoidProxies.begin();
-    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itVoidEnd= 
-        functionProxyPointers.FunctionVoidProxies.end();
+    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itVoid = functionProxyPointers.FunctionVoidProxies.begin();
+    const mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itVoidEnd= functionProxyPointers.FunctionVoidProxies.end();
     for (; itVoid != itVoidEnd; ++itVoid) {
         commandVoid = dynamic_cast<mtsCommandVoidProxy*>(instance->GetCommandVoid(itVoid->Name));
         if (!commandVoid) {
-            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command Void proxy id: " << itVoid->Name << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command void proxy id: " << itVoid->Name << std::endl;
             return false;
         }
-        // Set command void proxy's network proxy
-        if (!commandVoid->SetNetworkProxy(interfaceProxyServer)) {
+        // Set client ID and network proxy. Note that SetNetworkProxy() should 
+        // be called before SetCommandID().
+        if (!commandVoid->SetNetworkProxy(clientID, interfaceProxyServer)) {
             CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to set network proxy: " << itVoid->Name << std::endl;
             return false;
         }
-        // Set command void proxy's command id and enable the command
-        commandVoid->SetCommandId(itVoid->FunctionProxyId);
+        // Set command void proxy's id and enable this command
+        commandVoid->SetCommandID(itVoid->FunctionProxyId);
         commandVoid->Enable();
     }
 
     // Write command
     mtsCommandWriteProxy * commandWrite = NULL;
-    mtsComponentInterfaceProxy::FunctionProxySequence::iterator itWrite = 
-        functionProxyPointers.FunctionWriteProxies.begin();
-    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itWriteEnd= 
-        functionProxyPointers.FunctionWriteProxies.end();
+    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itWrite = functionProxyPointers.FunctionWriteProxies.begin();
+    const mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itWriteEnd = functionProxyPointers.FunctionWriteProxies.end();
     for (; itWrite != itWriteEnd; ++itWrite) {
         commandWrite = dynamic_cast<mtsCommandWriteProxy*>(instance->GetCommandWrite(itWrite->Name));
         if (!commandWrite) {
-            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command Write proxy id: " << itWrite->Name << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command write proxy id: " << itWrite->Name << std::endl;
             return false;
         }
-        // Set command write proxy's network proxy
-        if (!commandWrite->SetNetworkProxy(interfaceProxyServer)) {
+        // Set client ID and network proxy
+        if (!commandWrite->SetNetworkProxy(clientID, interfaceProxyServer)) {
             CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to set network proxy: " << itWrite->Name << std::endl;
             return false;
         }
-        // Set command write proxy's command id and enable the command
-        commandVoid->SetCommandId(itWrite->FunctionProxyId);
+        // Set command write proxy's id and enable this command
+        commandVoid->SetCommandID(itWrite->FunctionProxyId);
         commandVoid->Enable();
     }
 
     // Read command
     mtsCommandReadProxy * commandRead = NULL;
-    mtsComponentInterfaceProxy::FunctionProxySequence::iterator itRead = 
-        functionProxyPointers.FunctionReadProxies.begin();
-    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itReadEnd= 
-        functionProxyPointers.FunctionReadProxies.end();
+    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itRead = functionProxyPointers.FunctionReadProxies.begin();
+    const mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itReadEnd = functionProxyPointers.FunctionReadProxies.end();
     for (; itRead != itReadEnd; ++itRead) {
         commandRead = dynamic_cast<mtsCommandReadProxy*>(instance->GetCommandRead(itRead->Name));
         if (!commandRead) {
-            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command Read proxy id: " << itRead->Name << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command read proxy id: " << itRead->Name << std::endl;
             return false;
         }
-        // Set command read proxy's network proxy
-        if (!commandRead->SetNetworkProxy(interfaceProxyServer)) {
-            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to set network proxy: " << itWrite->Name << std::endl;
+        // Set client ID and network proxy
+        if (!commandRead->SetNetworkProxy(clientID, interfaceProxyServer)) {
+            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to set network proxy: " << itRead->Name << std::endl;
             return false;
         }
-        // Set command read proxy's command id and enable the command
-        commandRead->SetCommandId(itRead->FunctionProxyId);
+        // Set command read proxy's id and enable this command
+        commandRead->SetCommandID(itRead->FunctionProxyId);
         commandRead->Enable();
     }
 
     // QualifiedRead command
     mtsCommandQualifiedReadProxy * commandQualifiedRead = NULL;
-    mtsComponentInterfaceProxy::FunctionProxySequence::iterator itQualifiedRead = 
-        functionProxyPointers.FunctionQualifiedReadProxies.begin();
-    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itQualifiedReadEnd= 
-        functionProxyPointers.FunctionQualifiedReadProxies.end();
+    mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itQualifiedRead = functionProxyPointers.FunctionQualifiedReadProxies.begin();
+    const mtsComponentInterfaceProxy::FunctionProxySequence::const_iterator itQualifiedReadEnd = functionProxyPointers.FunctionQualifiedReadProxies.end();
     for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
         commandQualifiedRead = dynamic_cast<mtsCommandQualifiedReadProxy*>(instance->GetCommandQualifiedRead(itQualifiedRead->Name));
         if (!commandQualifiedRead) {
-            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command QualifiedRead proxy id: " << itQualifiedRead->Name << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to update command qualifiedRead proxy id: " << itQualifiedRead->Name << std::endl;
             return false;
         }
-        // Set command qualified read proxy's network proxy
-        if (!commandQualifiedRead->SetNetworkProxy(interfaceProxyServer)) {
-            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to set network proxy: " << itWrite->Name << std::endl;
+        // Set client ID and network proxy
+        if (!commandQualifiedRead->SetNetworkProxy(clientID, interfaceProxyServer)) {
+            CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID:: failed to set network proxy: " << itQualifiedRead->Name << std::endl;
             return false;
         }
-        // Set command qualified read proxy's command id and enable the command
-        commandQualifiedRead->SetCommandId(itQualifiedRead->FunctionProxyId);
+        // Set command qualified read proxy's id and enable this command
+        commandQualifiedRead->SetCommandID(itQualifiedRead->FunctionProxyId);
         commandQualifiedRead->Enable();
     }
 
@@ -835,13 +788,18 @@ bool mtsComponentProxy::GetFunctionProxyPointers(const std::string & requiredInt
         return false;
     }
 
+    // Get function proxy and event handler proxy map element
+    FunctionProxyAndEventHandlerProxyMapElement * mapElement = FunctionProxyAndEventHandlerProxyMap.GetItem(requiredInterfaceName);
+    if (!mapElement) {
+        CMN_LOG_CLASS_RUN_ERROR << "GetFunctionProxyPointers: failed to get proxy map element: " << requiredInterfaceName << std::endl;
+        return false;
+    }
+
     mtsComponentInterfaceProxy::FunctionProxyInfo function;
 
     // Void function proxy
-    mtsRequiredInterface::CommandPointerVoidMapType::const_iterator itVoid = 
-        requiredInterfaceProxy->CommandPointersVoid.begin();
-    mtsRequiredInterface::CommandPointerVoidMapType::const_iterator itVoidEnd = 
-        requiredInterfaceProxy->CommandPointersVoid.end();
+    FunctionVoidProxyMapType::const_iterator itVoid = mapElement->FunctionVoidProxyMap.begin();
+    const FunctionVoidProxyMapType::const_iterator itVoidEnd = mapElement->FunctionVoidProxyMap.end();
     for (; itVoid != itVoidEnd; ++itVoid) {
         function.Name = itVoid->first;
         function.FunctionProxyId = reinterpret_cast<CommandIDType>(itVoid->second);
@@ -849,10 +807,8 @@ bool mtsComponentProxy::GetFunctionProxyPointers(const std::string & requiredInt
     }
 
     // Write function proxy
-    mtsRequiredInterface::CommandPointerWriteMapType::const_iterator itWrite = 
-        requiredInterfaceProxy->CommandPointersWrite.begin();
-    mtsRequiredInterface::CommandPointerWriteMapType::const_iterator itWriteEnd = 
-        requiredInterfaceProxy->CommandPointersWrite.end();
+    FunctionWriteProxyMapType::const_iterator itWrite = mapElement->FunctionWriteProxyMap.begin();
+    const FunctionWriteProxyMapType::const_iterator itWriteEnd = mapElement->FunctionWriteProxyMap.end();
     for (; itWrite != itWriteEnd; ++itWrite) {
         function.Name = itWrite->first;
         function.FunctionProxyId = reinterpret_cast<CommandIDType>(itWrite->second);
@@ -860,10 +816,8 @@ bool mtsComponentProxy::GetFunctionProxyPointers(const std::string & requiredInt
     }
 
     // Read function proxy
-    mtsRequiredInterface::CommandPointerReadMapType::const_iterator itRead = 
-        requiredInterfaceProxy->CommandPointersRead.begin();
-    mtsRequiredInterface::CommandPointerReadMapType::const_iterator itReadEnd = 
-        requiredInterfaceProxy->CommandPointersRead.end();
+    FunctionReadProxyMapType::const_iterator itRead = mapElement->FunctionReadProxyMap.begin();
+    const FunctionReadProxyMapType::const_iterator itReadEnd = mapElement->FunctionReadProxyMap.end();
     for (; itRead != itReadEnd; ++itRead) {
         function.Name = itRead->first;
         function.FunctionProxyId = reinterpret_cast<CommandIDType>(itRead->second);
@@ -871,15 +825,14 @@ bool mtsComponentProxy::GetFunctionProxyPointers(const std::string & requiredInt
     }
 
     // QualifiedRead function proxy
-    mtsRequiredInterface::CommandPointerQualifiedReadMapType::const_iterator itQualifiedRead = 
-        requiredInterfaceProxy->CommandPointersQualifiedRead.begin();
-    mtsRequiredInterface::CommandPointerQualifiedReadMapType::const_iterator itQualifiedReadEnd = 
-        requiredInterfaceProxy->CommandPointersQualifiedRead.end();
+    FunctionQualifiedReadProxyMapType::const_iterator itQualifiedRead = mapElement->FunctionQualifiedReadProxyMap.begin();
+    const FunctionQualifiedReadProxyMapType::const_iterator itQualifiedReadEnd = mapElement->FunctionQualifiedReadProxyMap.end();
     for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
         function.Name = itQualifiedRead->first;
         function.FunctionProxyId = reinterpret_cast<CommandIDType>(itQualifiedRead->second);
         functionProxyPointers.FunctionQualifiedReadProxies.push_back(function);
     }
+
 
     //
     // TODO: Add event handler proxy id fetch

@@ -447,6 +447,11 @@ bool mtsManagerProxyServer::RemoveRequiredInterfaceProxy(
     return SendRemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName, listenerID);
 }
 
+void mtsManagerProxyServer::ProxyCreationCompleted(const std::string & listenerID)
+{
+    return SendProxyCreationCompleted(listenerID);
+}
+
 bool mtsManagerProxyServer::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
@@ -620,7 +625,7 @@ bool mtsManagerProxyServer::ReceiveRemoveRequiredInterface(const std::string & p
 
 ::Ice::Int mtsManagerProxyServer::ReceiveConnect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
-    return ProxyOwner->Connect(
+    return ProxyOwner->Connect(connectionStringSet.RequestProcessName,
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientRequiredInterfaceName,
         connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
 }
@@ -800,6 +805,17 @@ bool mtsManagerProxyServer::SendRemoveRequiredInterfaceProxy(
     return (*clientProxy)->RemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
 }
 
+void mtsManagerProxyServer::SendProxyCreationCompleted(const std::string & clientID)
+{
+    ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
+    if (!clientProxy) {
+        LogError(mtsManagerProxyServer, "SendProxyCreationCompleted: invalid listenerID (" << clientID << ") or inactive server proxy");
+        return;
+    }
+
+    (*clientProxy)->ProxyCreationCompleted();
+}
+
 bool mtsManagerProxyServer::SendConnectServerSideInterface(
     ::Ice::Int providedInterfaceProxyInstanceId, 
     const ::mtsManagerProxy::ConnectionStringSet & connectionStrings, 
@@ -923,7 +939,9 @@ void mtsManagerProxyServer::ManagerServerI::Run()
 #else
     while(Runnable) 
     {
-        osaSleep(10 * cmn_ms);
+        osaSleep(1 * cmn_ms);
+
+        ManagerProxyServer->ProxyOwner->ProcessConnectionQueue();
 
         /*
         if(!clients.empty())

@@ -113,6 +113,30 @@ protected:
 #endif
     };
 
+    /*! Data structure for two-phase connect */
+    class ConnectionElement {
+    public:
+        // Name of connect request process
+        std::string RequestProcessName;
+
+        // This connection ID
+        unsigned int ConnectionID;
+
+        // Set of strings
+        std::string ClientProcessName;
+        std::string ClientComponentName;
+        std::string ClientRequiredInterfaceName;
+        std::string ServerProcessName;
+        std::string ServerComponentName;
+        std::string ServerProvidedInterfaceName;
+    };
+
+    /*! Connection element list. An element is enqueued when a local component
+        manager requests a new connection and is dequeued when the global
+        component manager begins proxy creation process. */
+    typedef std::list<mtsManagerGlobal::ConnectionElement> ConnectionElementQueueType;
+    ConnectionElementQueueType ConnectionElementQueue;
+
     /*! Connection map: (connected interface name, connected interface information)
         Map name: a name of component that has these interfaces. */
     typedef cmnNamedMap<mtsManagerGlobal::ConnectedInterfaceInfo> ConnectionMapType;
@@ -168,11 +192,12 @@ protected:
         or network mode) */
     mtsManagerLocalInterface * LocalManagerConnected;
 
-    /*! Mutex to safely use LocalManagerMap and LocalManagerMapByProcessID */
+    /*! Mutex to safely use resources */
     //
     // TODO: Do I really need this???
     //
     osaMutex LocalManagerMapChange;
+    osaMutex ConnectionElementQueueChange;
 
     /*! Connection id */
     unsigned int ConnectionID;
@@ -200,6 +225,7 @@ protected:
     /*! Set this machine's IP */
     void SetIPAddress();
 
+    // TODO: Do I really need this???
     /*! Get a process object (local component manager object) */
     mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
 
@@ -289,7 +315,7 @@ public:
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------
-    unsigned int Connect(
+    unsigned int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
@@ -347,6 +373,9 @@ public:
     bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    /*! Process connection element queue */
+    void ProcessConnectionQueue();
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerGlobal)

@@ -105,6 +105,9 @@ protected:
             // shared vs. PerThread.
             // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
             initData.properties->setProperty("Ice.ImplicitContext", "Shared");
+            // For nested invocation
+            initData.properties->setProperty("Ice.ThreadPool.Client.Size", "2");
+            initData.properties->setProperty("Ice.ThreadPool.Client.SizeMax", "4");
             //initData.properties->load(IcePropertyFileName);
             this->IceCommunicator = Ice::initialize(initData);
             

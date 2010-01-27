@@ -19,8 +19,11 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionReadOrWriteProxy.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadOrWriteProxy.h>
 
 #include <cisstOSAbstraction/osaSleep.h>
 
@@ -222,7 +225,7 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandVoid(const CommandID
 {
     mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandID);
     if (!functionVoid) {
-        LogError(mtsComponentInterfaceProxyClient, "invalid function proxy id: " << commandID);
+        LogError(mtsComponentInterfaceProxyClient, "invalid function void proxy id: " << commandID);
         return;
     }
 
@@ -231,6 +234,26 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandVoid(const CommandID
 
 void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument)
 {
+    mtsFunctionWriteProxy * functionWriteProxy = reinterpret_cast<mtsFunctionWriteProxy*>(commandID);
+    if (!functionWriteProxy) {
+        LogError(mtsComponentInterfaceProxyClient, "invalid function write proxy id: " << commandID);
+        return;
+    }
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "ExecuteCommandWriteSerialized: " << serializedArgument.size() << " bytes received");
+#endif
+
+    // Get per-command deserializer
+    mtsProxySerializer * deSerializer = functionWriteProxy->GetSerializer();
+    
+    mtsGenericObject * argument = deSerializer->DeSerialize(serializedArgument);
+    if (!argument) {
+        LogError(mtsComponentInterfaceProxyClient, "deserialization failed");
+        return;
+    }
+
+    (*functionWriteProxy)(*argument);
 }
 
 void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandReadSerialized(const CommandIDType commandID, std::string & serializedArgument)
@@ -295,78 +318,8 @@ bool mtsComponentInterfaceProxyClient::SendFetchEventGeneratorProxyPointers(
     return ComponentInterfaceServerProxy->FetchEventGeneratorProxyPointers(
         clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
 }
+
 /*
-//-------------------------------------------------------------------------
-//  Methods to Send Events
-//-------------------------------------------------------------------------
-bool mtsComponentInterfaceProxyClient::SendGetProvidedInterfaceInfo(
-    const std::string & providedInterfaceName,
-    mtsComponentInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo)
-{
-    if (!IsValidSession) return false;
-
-    IceLogger->trace("TIClient", ">>>>> SEND: SendGetProvidedInterface");
-
-    return ComponentInterfaceServerProxy->GetProvidedInterfaceInfo(
-        providedInterfaceName, providedInterfaceInfo);
-}
-
-bool mtsComponentInterfaceProxyClient::SendCreateClientProxies(
-    const std::string & userTaskName, const std::string & requiredInterfaceName,
-    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-{
-    if (!IsValidSession) return false;
-
-    IceLogger->trace("TIClient", ">>>>> SEND: SendCreateClientProxies");
-
-    return ComponentInterfaceServerProxy->CreateClientProxies(
-        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
-}
-
-bool mtsComponentInterfaceProxyClient::SendConnectServerSide(
-    const std::string & userTaskName, const std::string & requiredInterfaceName,
-    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-{
-    if (!IsValidSession) return false;
-
-    IceLogger->trace("TIClient", ">>>>> SEND: SendConnectServerSide");
-
-    return ComponentInterfaceServerProxy->ConnectServerSide(
-        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
-}
-
-bool mtsComponentInterfaceProxyClient::SendUpdateEventHandlerId(
-    const std::string & clientTaskProxyName,
-    const mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxies)
-{
-    if (!IsValidSession) return false;
-
-    IceLogger->trace("TIClient", ">>>>> SEND: SendUpdateEventHandlerId");
-
-    return ComponentInterfaceServerProxy->UpdateEventHandlerId(
-        clientTaskProxyName, eventGeneratorProxies);
-}
-
-void mtsComponentInterfaceProxyClient::SendGetCommandId(
-    const std::string & clientTaskProxyName,
-    mtsComponentInterfaceProxy::FunctionProxySet & functionProxies)
-{
-    if (!IsValidSession) return;
-
-    IceLogger->trace("TIClient", ">>>>> SEND: SendGetCommandId");
-
-    ComponentInterfaceServerProxy->GetCommandId(clientTaskProxyName, functionProxies);
-}
-
-void mtsComponentInterfaceProxyClient::SendExecuteCommandVoid(const CommandIDType commandId) const
-{
-    if (!IsValidSession) return;
-
-    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandVoid");
-
-    ComponentInterfaceServerProxy->ExecuteCommandVoid(commandId);
-}
-
 void mtsComponentInterfaceProxyClient::SendExecuteCommandWriteSerialized(
     const CommandIDType commandId, const mtsGenericObject & argument)
 {
@@ -561,14 +514,29 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommand
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandWriteSerialized(
     ::Ice::Long commandID, const ::std::string & argument, const ::Ice::Current & current)
 {
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandWriteSerialized: " << commandID);
+#endif
+
+    ComponentInterfaceProxyClient->ReceiveExecuteCommandWriteSerialized(commandID, argument);
 }
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandReadSerialized(
     ::Ice::Long commandID, ::std::string & argument, const ::Ice::Current & current)
 {
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandReadSerialized: " << commandID);
+#endif
+
+    ComponentInterfaceProxyClient->ReceiveExecuteCommandReadSerialized(commandID, argument);
 }
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommandQualifiedReadSerialized(
     ::Ice::Long commandID, const ::std::string & argumentIn, ::std::string & argumentOut, const ::Ice::Current & current)
 {
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandQualifiedReadSerialized: " << commandID);
+#endif
+
+    ComponentInterfaceProxyClient->ReceiveExecuteCommandQualifiedReadSerialized(commandID, argumentIn, argumentOut);
 }
