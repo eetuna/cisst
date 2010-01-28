@@ -10,15 +10,13 @@
 
 int main(int argc, char * argv[])
 {
-    // TODO: uncomment this
-    //if (argc != 2) {
-    //    std::cerr << "Usage: " << argv[0] << "[global component manager IP]" << std::endl;
-    //    exit(-1);
-    //}
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << "[global component manager IP]" << std::endl;
+        exit(-1);
+    }
     
     // Set global component manager IP
-    //const std::string globalComponentManagerIP(argv[1]);
-    const std::string globalComponentManagerIP("127.0.0.1");
+    const std::string globalComponentManagerIP(argv[1]);
     std::cout << "Global component manager IP is set as " << globalComponentManagerIP << std::endl;
 
     // log configuration
