@@ -13,8 +13,11 @@ C2ClientTask::C2ClientTask(const std::string & taskName, double period):
     // to communicate with the interface of the resource
     mtsRequiredInterface * required = AddRequiredInterface("r1");
     if (required) {
+                required->AddFunction("Void", this->VoidServer);
+        required->AddFunction("Write", this->WriteServer);
         required->AddFunction("Read", this->ReadServer);
         required->AddFunction("QualifiedRead", this->QualifiedReadServer);
+        required->AddEventHandlerVoid(&C2ClientTask::EventVoidHandler, this, "EventVoid");
         required->AddEventHandlerWrite(&C2ClientTask::EventWriteHandler, this, "EventWrite");
     }
 }
@@ -53,6 +56,16 @@ void C2ClientTask::EventWriteHandler(const mtsDouble & value)
 }
 
 
+void C2ClientTask::EventVoidHandler(void)
+{
+    fltkMutex.Lock();
+    {
+        UI.EventValue->value(0);
+    }
+    fltkMutex.Unlock();
+}
+
+
 void C2ClientTask::Run(void)
 {
     if (this->UIOpened()) {
@@ -61,6 +74,18 @@ void C2ClientTask::Run(void)
         // check if toggle requested in UI
         fltkMutex.Lock();
         {
+            if (UI.VoidRequested) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidRequested" << std::endl;
+                this->VoidServer();
+                UI.VoidRequested = false;
+            }
+            
+            if (UI.WriteRequested) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteRequested" << std::endl;
+                this->WriteServer(mtsDouble(UI.WriteValue->value()));
+                UI.WriteRequested = false;
+            }
+
             if (UI.ReadRequested) {
                 CMN_LOG_CLASS_RUN_VERBOSE << "Run: ReadRequested" << std::endl;
                 mtsDouble data;

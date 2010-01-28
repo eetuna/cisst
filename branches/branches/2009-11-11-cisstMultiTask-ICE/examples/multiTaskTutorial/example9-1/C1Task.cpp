@@ -13,19 +13,22 @@ C1Task::C1Task(const std::string & taskName, double period):
     // to communicate with the interface of the resource
     mtsRequiredInterface * required = AddRequiredInterface("r1");
     if (required) {
-        required->AddFunction("Void", this->VoidServer);
-        required->AddFunction("Write", this->WriteServer);
-        required->AddFunction("Read", this->ReadServer);
-        required->AddFunction("QualifiedRead", this->QualifiedReadServer);
-        required->AddEventHandlerVoid(&C1Task::EventVoidHandler, this, "EventVoid");
-        required->AddEventHandlerWrite(&C1Task::EventWriteHandler, this, "EventWrite");
+        required->AddFunction("Void", this->VoidServer1);
+        required->AddFunction("Write", this->WriteServer1);
+        required->AddFunction("Read", this->ReadServer1);
+        required->AddFunction("QualifiedRead", this->QualifiedReadServer1);
+        required->AddEventHandlerVoid(&C1Task::EventVoidHandler1, this, "EventVoid");
+        required->AddEventHandlerWrite(&C1Task::EventWriteHandler1, this, "EventWrite");
     }
 
     required = AddRequiredInterface("r2");
     if (required) {
-        required->AddFunction("Void", this->VoidServer);
-        required->AddFunction("Write", this->WriteServer);
-        required->AddEventHandlerVoid(&C1Task::EventVoidHandler, this, "EventVoid");
+        required->AddFunction("Void", this->VoidServer2);
+        required->AddFunction("Write", this->WriteServer2);
+        required->AddFunction("Read", this->ReadServer2);
+        required->AddFunction("QualifiedRead", this->QualifiedReadServer2);
+        required->AddEventHandlerVoid(&C1Task::EventVoidHandler2, this, "EventVoid");
+        required->AddEventHandlerWrite(&C1Task::EventWriteHandler2, this, "EventWrite");
     }
 }
 
@@ -52,22 +55,41 @@ void C1Task::Startup(void)
 }
 
 
-void C1Task::EventWriteHandler(const mtsDouble & value)
+void C1Task::EventWriteHandler1(const mtsDouble & value)
 {
     fltkMutex.Lock();
     {
-        double result = value.Data + UI.EventValue->value();
-        UI.EventValue->value(result);
+        double result = value.Data + UI.EventValue1->value();
+        UI.EventValue1->value(result);
+    }
+    fltkMutex.Unlock();
+}
+
+void C1Task::EventWriteHandler2(const mtsDouble & value)
+{
+    fltkMutex.Lock();
+    {
+        double result = value.Data + UI.EventValue2->value();
+        UI.EventValue2->value(result);
     }
     fltkMutex.Unlock();
 }
 
 
-void C1Task::EventVoidHandler(void)
+void C1Task::EventVoidHandler1(void)
 {
     fltkMutex.Lock();
     {
-        UI.EventValue->value(0);
+        UI.EventValue1->value(0);
+    }
+    fltkMutex.Unlock();
+}
+
+void C1Task::EventVoidHandler2(void)
+{
+    fltkMutex.Lock();
+    {
+        UI.EventValue2->value(0);
     }
     fltkMutex.Unlock();
 }
@@ -81,32 +103,60 @@ void C1Task::Run(void)
         // check if toggle requested in UI
         fltkMutex.Lock();
         {
-            if (UI.VoidRequested) {
-                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidRequested" << std::endl;
-                this->VoidServer();
-                UI.VoidRequested = false;
+            if (UI.VoidRequested1) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidRequested1" << std::endl;
+                this->VoidServer1();
+                UI.VoidRequested1 = false;
             }
             
-            if (UI.WriteRequested) {
-                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteRequested" << std::endl;
-                this->WriteServer(mtsDouble(UI.WriteValue->value()));
-                UI.WriteRequested = false;
+            if (UI.WriteRequested1) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteRequested1" << std::endl;
+                this->WriteServer1(mtsDouble(UI.WriteValue1->value()));
+                UI.WriteRequested1 = false;
             }
             
-            if (UI.ReadRequested) {
-                CMN_LOG_CLASS_RUN_VERBOSE << "Run: ReadRequested" << std::endl;
+            if (UI.ReadRequested1) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: ReadRequested1" << std::endl;
                 mtsDouble data;
-                this->ReadServer(data);
-                UI.ReadValue->value(data.Data);
-                UI.ReadRequested = false;
+                this->ReadServer1(data);
+                UI.ReadValue1->value(data.Data);
+                UI.ReadRequested1 = false;
             }
             
-            if (UI.QualifiedReadRequested) {
-                CMN_LOG_CLASS_RUN_VERBOSE << "Run: QualifiedReadRequested" << std::endl;
+            if (UI.QualifiedReadRequested1) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: QualifiedReadRequested1" << std::endl;
                 mtsDouble data;
-                this->QualifiedReadServer(mtsDouble(UI.WriteValue->value()), data);
-                UI.QualifiedReadValue->value(data.Data);
-                UI.QualifiedReadRequested = false;
+                this->QualifiedReadServer1(mtsDouble(UI.WriteValue1->value()), data);
+                UI.QualifiedReadValue1->value(data.Data);
+                UI.QualifiedReadRequested1 = false;
+            }
+
+            if (UI.VoidRequested2) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidRequested2" << std::endl;
+                this->VoidServer2();
+                UI.VoidRequested2 = false;
+            }
+            
+            if (UI.WriteRequested2) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteRequested2" << std::endl;
+                this->WriteServer2(mtsDouble(UI.WriteValue2->value()));
+                UI.WriteRequested2 = false;
+            }
+            
+            if (UI.ReadRequested2) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: ReadRequested2" << std::endl;
+                mtsDouble data;
+                this->ReadServer2(data);
+                UI.ReadValue2->value(data.Data);
+                UI.ReadRequested2 = false;
+            }
+            
+            if (UI.QualifiedReadRequested2) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: QualifiedReadRequested2" << std::endl;
+                mtsDouble data;
+                this->QualifiedReadServer2(mtsDouble(UI.WriteValue2->value()), data);
+                UI.QualifiedReadValue2->value(data.Data);
+                UI.QualifiedReadRequested2 = false;
             }
             Fl::check();
         }
