@@ -44,6 +44,10 @@ int main(int argc, char * argv[])
         CMN_LOG_INIT_ERROR << "Connect failed: P1:C1:r1-P2:C2:p1" << std::endl;
         return 1;
     }
+    if (!localManager->Connect("P1", "C1", "r2", "P2", "C2", "p2")) {
+        CMN_LOG_INIT_ERROR << "Connect failed: P1:C2:r1-P2:C2:p2" << std::endl;
+        return 1;
+    }
     if (!localManager->Connect("P1", "C2", "r1", "P2", "C2", "p2")) {
         CMN_LOG_INIT_ERROR << "Connect failed: P1:C2:r1-P2:C2:p2" << std::endl;
         return 1;

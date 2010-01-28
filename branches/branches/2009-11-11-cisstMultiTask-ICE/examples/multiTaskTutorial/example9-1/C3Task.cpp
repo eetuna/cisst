@@ -37,7 +37,7 @@ void C3Task::Startup(void)
     }
     fltkMutex.Unlock();
     // check argument prototype for event handler
-    mtsRequiredInterface * required = GetRequiredInterface("Required");
+    mtsRequiredInterface * required = GetRequiredInterface("r1");
     CMN_ASSERT(required);
     mtsCommandWriteBase * eventHandler = required->GetEventHandlerWrite("EventWrite");
     CMN_ASSERT(eventHandler);

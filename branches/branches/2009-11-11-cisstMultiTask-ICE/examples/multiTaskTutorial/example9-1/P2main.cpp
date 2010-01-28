@@ -38,6 +38,11 @@ int main(int argc, char * argv[])
     C3Task * C3 = new C3Task("C3", PeriodClient);
     localManager->AddComponent(C2Server);
     localManager->AddComponent(C3);
+
+    if (!localManager->Connect("C3", "r1", "C2", "p2")) {
+        CMN_LOG_INIT_ERROR << "Connect failed: C3:r1-C2:p2" << std::endl;
+        return 1;
+    }
     
     // create the tasks, i.e. find the commands
     localManager->CreateAll();
