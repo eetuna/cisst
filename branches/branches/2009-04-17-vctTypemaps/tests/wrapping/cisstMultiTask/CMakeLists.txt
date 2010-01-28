@@ -104,7 +104,10 @@ ADD_DEPENDENCIES(cisstMultiTask_CREATE_PYTHON_TESTS_LIST
                  cisstMultiTask
                  _cisstCommonPython
                  _cisstVectorPython
-                 _cisstMultiTaskPython)
+                 _cisstMultiTaskPython
+		 cisstMultiTaskPythonTest
+		 _cisstMultiTaskPythonTestPython
+		 )
 
 FILE(APPEND ${DART_TEST_FILE} "INCLUDE(\"${DART_TEST_FILE_AUTO}\")\n")
 
