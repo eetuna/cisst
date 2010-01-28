@@ -61,7 +61,7 @@ public:
         if (NetworkProxyServer) {
             NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID);
         } else {
-            //NetworkProxyClient->SendExecuteEventVoid(CommandID);
+            NetworkProxyClient->SendExecuteEventVoid(CommandID);
         }
 
         return mtsCommandBase::DEV_OK;

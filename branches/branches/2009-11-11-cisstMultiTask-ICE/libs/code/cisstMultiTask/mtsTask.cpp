@@ -586,7 +586,7 @@ bool mtsTask::SendUpdateEventHandlerId(
     CMN_ASSERT(serverTaskProxy);
 
     // Get the information about the event generator proxies.
-    mtsDeviceInterfaceProxy::ListsOfEventGeneratorsRegistered eventGeneratorProxies;
+    mtsDeviceInterfaceProxy::EventGeneratorProxyPointerSet eventGeneratorProxies;
     serverTaskProxy->GetEventGeneratorProxyPointers(
         providedInterfaceProxy, requiredInterface, eventGeneratorProxies);
 

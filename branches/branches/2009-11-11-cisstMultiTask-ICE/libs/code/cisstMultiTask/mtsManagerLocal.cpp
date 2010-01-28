@@ -703,49 +703,7 @@ bool mtsManagerLocal::Connect(
 
     }
 
-#if 0
-    // Post-processing for successful remote connection: Create and run network proxies
-
-    // b. Update command IDs and event handler IDs (crucial step). Before
-    //    the updates, an ICE proxy does not send anything over a networks
-    //    (the global component manager doesn't involve this update).
-    if (isRequiredInterfaceProxy) {
-        // Fetch event generator proxy pointers from the provided interface
-        // proxy at the client component, update event handler IDs of the 
-        // event handlers in the required interface proxy at the server 
-        // component, and let the provided interface proxy know that event
-        // handler IDs are successfully updated in order to start data 
-        // communication betwen interface proxies.
-        //FetchEventGeneratorProxyPointersFrom(providedInterfaceProxyUID);
-    } else if (isProvidedInterfaceProxy) {
-        // Fetch function proxy pointers from the required interface proxy
-        // at the server component, update command IDs of the command proxy
-        // objects in the provided interface proxy at the client component,
-        // and let the required interface proxy know that command IDs are 
-        // successfully updated in order to start data communication betwen
-        // interface proxies.
-
-        // TODO:
-        // get ICE proxy object using providedInterfaceProxyUID
-        // the ICE proxy object should be running and is connected to the peer interface
-        // thus, the proxy can easily run FetchFunctionProxyPointersFrom() across network
-        // it then updates command id with what it receives from the peer interface
-        // let the peer interface know this interface (proxy) is ready to start.
-        //FetchFunctionProxyPointersFrom(requiredInterfaceProxyUID);
-    }
-
-    // c. If the peer interface notifies that it has updated its proxy 
-    //    objects appropriately, begin data communication across a network.
-
-    // d. Inform the global component manager that the connection is 
-    //    successfully established and becomes active.
-    if (!ManagerGlobal->ConnectConfirm(connectionID)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to confirm connection" << std::endl;
-        return false;
-    }
-
     CMN_LOG_CLASS_RUN_VERBOSE << "Connect: successfully confirmed remote connection" << std::endl;
-#endif
 
     return true;
 }
@@ -773,7 +731,7 @@ int mtsManagerLocal::ConnectLocally(
     mtsProvidedInterface * serverProvidedInterface = serverComponent->GetProvidedInterface(serverProvidedInterfaceName);
     if (!serverProvidedInterface) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectLocally: failed to find provided interface: " 
-            << serverComponentName << ":" << serverProvidedInterface << std::endl;
+            << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
         return -1;
     }
 
@@ -880,13 +838,99 @@ bool mtsManagerLocal::GetProvidedInterfaceDescription(
         return false;
     }
 
-    return providedInterface->GetProvidedInterfaceDescription(providedInterfaceDescription);
+    // Extract all the information of the command objects or events registered.
+    // Note that argument prototypes are returned with serialization.
+    providedInterfaceDescription.ProvidedInterfaceName = providedInterfaceName;
+
+    // Serializer initialization
+    std::stringstream streamBuffer;
+    cmnSerializer serializer(streamBuffer);
+
+    // Extract void commands
+    CommandVoidElement elementCommandVoid;
+    mtsDeviceInterface::CommandVoidMapType::MapType::const_iterator itVoid = providedInterface->CommandsVoid.begin();
+    const mtsDeviceInterface::CommandVoidMapType::MapType::const_iterator itVoidEnd = providedInterface->CommandsVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        elementCommandVoid.Name = itVoid->second->GetName();
+        providedInterfaceDescription.CommandsVoid.push_back(elementCommandVoid);
+    }
+
+    // Extract write commands
+    CommandWriteElement elementCommandWrite;
+    mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itWrite = providedInterface->CommandsWrite.begin();
+    const mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itWriteEnd = providedInterface->CommandsWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        elementCommandWrite.Name = itWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
+        elementCommandWrite.ArgumentPrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.CommandsWrite.push_back(elementCommandWrite);
+    }
+
+    // Extract read commands
+    CommandReadElement elementCommandRead;
+    mtsDeviceInterface::CommandReadMapType::MapType::const_iterator itRead = providedInterface->CommandsRead.begin();
+    const mtsDeviceInterface::CommandReadMapType::MapType::const_iterator itReadEnd = providedInterface->CommandsRead.end();
+    for (; itRead != itReadEnd; ++itRead) {
+        elementCommandRead.Name = itRead->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itRead->second->GetArgumentPrototype()));
+        elementCommandRead.ArgumentPrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.CommandsRead.push_back(elementCommandRead);
+    }
+
+    // Extract qualified read commands
+    CommandQualifiedReadElement elementCommandQualifiedRead;
+    mtsDeviceInterface::CommandQualifiedReadMapType::MapType::const_iterator itQualifiedRead = providedInterface->CommandsQualifiedRead.begin();
+    const mtsDeviceInterface::CommandQualifiedReadMapType::MapType::const_iterator itQualifiedReadEnd = providedInterface->CommandsQualifiedRead.end();
+    for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
+        elementCommandQualifiedRead.Name = itQualifiedRead->second->GetName();
+        // argument1 serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itQualifiedRead->second->GetArgument1Prototype()));
+        elementCommandQualifiedRead.Argument1PrototypeSerialized = streamBuffer.str();
+        // argument2 serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itQualifiedRead->second->GetArgument2Prototype()));
+        elementCommandQualifiedRead.Argument2PrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.CommandsQualifiedRead.push_back(elementCommandQualifiedRead);
+    }
+
+    return true;
+
+    // Extract void events
+    EventVoidElement elementEventVoid;
+    mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoid = providedInterface->EventVoidGenerators.begin();
+    const mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoidEnd = providedInterface->EventVoidGenerators.end();
+    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
+        elementEventVoid.Name = itEventVoid->second->GetName();
+        providedInterfaceDescription.EventsVoid.push_back(elementEventVoid);
+    }
+
+    // Extract write events
+    EventWriteElement elementEventWrite;
+    mtsDeviceInterface::EventWriteMapType::MapType::const_iterator itEventWrite = providedInterface->EventWriteGenerators.begin();
+    const mtsDeviceInterface::EventWriteMapType::MapType::const_iterator itEventWriteEnd = providedInterface->EventWriteGenerators.end();
+    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
+        elementEventWrite.Name = itEventWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itEventWrite->second->GetArgumentPrototype()));
+        elementEventWrite.ArgumentPrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.EventsWrite.push_back(elementEventWrite);
+    }
+
+    return true;
 }
 
 bool mtsManagerLocal::GetRequiredInterfaceDescription(
     const std::string & componentName, const std::string & requiredInterfaceName, 
     RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID)
 {
+    requiredInterfaceDescription.RequiredInterfaceName = requiredInterfaceName;
+
     // Get the component instance specified
     mtsComponent * component = GetComponent(componentName);
     if (!component) {
@@ -903,7 +947,44 @@ bool mtsManagerLocal::GetRequiredInterfaceDescription(
         return false;
     }
 
-    return requiredInterface->GetRequiredInterfaceDescription(requiredInterfaceDescription);
+    // Serializer initialization
+    std::stringstream streamBuffer;
+    cmnSerializer serializer(streamBuffer);
+
+    // Extract void functions
+    requiredInterfaceDescription.FunctionVoidNames = requiredInterface->GetNamesOfCommandPointersVoid();
+    // Extract write functions
+    requiredInterfaceDescription.FunctionWriteNames = requiredInterface->GetNamesOfCommandPointersWrite();
+    // Extract read functions
+    requiredInterfaceDescription.FunctionReadNames = requiredInterface->GetNamesOfCommandPointersRead();
+    // Extract qualified read functions
+    requiredInterfaceDescription.FunctionQualifiedReadNames = requiredInterface->GetNamesOfCommandPointersQualifiedRead();
+
+    return true;
+
+    // Extract void event handlers
+    CommandVoidElement elementEventVoidHandler;
+    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoid = requiredInterface->EventHandlersVoid.begin();
+    const mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoidEnd = requiredInterface->EventHandlersVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        elementEventVoidHandler.Name = itVoid->second->GetName();
+        requiredInterfaceDescription.EventHandlersVoid.push_back(elementEventVoidHandler);
+    }
+
+    // Extract write event handlers
+    CommandWriteElement elementEventWriteHandler;
+    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWrite = requiredInterface->EventHandlersWrite.begin();
+    const mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWriteEnd = requiredInterface->EventHandlersWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        elementEventWriteHandler.Name = itWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
+        elementEventWriteHandler.ArgumentPrototypeSerialized = streamBuffer.str();
+        requiredInterfaceDescription.EventHandlersWrite.push_back(elementEventWriteHandler);
+    }
+
+    return true;
 }
 
 bool mtsManagerLocal::CreateComponentProxy(const std::string & componentProxyName, const std::string & listenerID)
@@ -968,6 +1049,7 @@ bool mtsManagerLocal::CreateProvidedInterfaceProxy(
     CMN_LOG_CLASS_RUN_VERBOSE << "CreateProvidedInterfaceProxy: "
         << "successfully created Provided interface proxy: " << serverComponentProxyName << ":" 
         << providedInterfaceName << std::endl;
+
     return true;
 }
 
@@ -1284,14 +1366,10 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
 
         // Update event handler ID: Set event handler IDs in a required interface 
         // proxy at the server side as event generator IDs fetched from a provided
-        // interface proxy at the client side so that original event generators
-        // at the server process can invoke correspoding original event handlers
-        // at the client process across a network.
+        // interface proxy at the client side.
 
-        //
-        // TODO: implement this
-        //
-        //if (!clientComponentProxy->UpdateEventHandlerProxyID(clientRequiredInterfaceName)) {
+        // aaaaaaaaaaaaaaaaaaaa
+        //if (!clientComponentProxy->UpdateEventHandlerProxyID(clientComponentName, clientRequiredInterfaceName)) {
         //    CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to update event handler proxy id" << std::endl;
         //    goto ConnectServerSideInterfaceError;
         //}

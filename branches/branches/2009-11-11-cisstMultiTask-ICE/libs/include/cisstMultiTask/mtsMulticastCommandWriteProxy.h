@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-06-24
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -31,7 +31,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
-#include <vector>
+#include <cisstMultiTask/mtsCommandProxyBase.h>
+//#include <vector>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -40,27 +41,19 @@ http://www.cisst.org/cisst/license.txt.
 
   mtsMulticastCommandWriteProxy is a proxy for mtsMulticastCommandWrite.  
  */
-class mtsMulticastCommandWriteProxy : public mtsMulticastCommandWriteBase
+class mtsMulticastCommandWriteProxy : public mtsMulticastCommandWriteBase, public mtsCommandProxyBase
 {
     friend class mtsComponentProxy;
-    //
-    // TODO: REMOVE THE FOLLOWING DECLARATION
-    //
-    friend class mtsDeviceProxy;
 
 public:
     typedef mtsMulticastCommandWriteBase BaseType;
     mtsProxySerializer Serializer;
 
 protected:
-    /*! Argument prototype. Deserialization recovers the original argument
-        prototype object. */
-    //mtsGenericObject * ArgumentPrototype;
-
     /*! The constructor with a name. */
     mtsMulticastCommandWriteProxy(const std::string & name) : BaseType(name)
     {
-        ArgumentPrototype = 0;
+        //ArgumentPrototype = 0;
     }
 
     /*! Default destructor. Does nothing. */
@@ -80,13 +73,25 @@ public:
         return mtsCommandBase::DEV_OK;
     }
 
+    /*! Set command id and register serializer to network proxy. This method
+        should be called after SetNetworkProxy() is called. */
+    void SetCommandID(const CommandIDType & commandID) {
+        mtsCommandProxyBase::SetCommandID(commandID);
+
+        if (NetworkProxyClient) {
+            NetworkProxyClient->RegisterPerEventSerializer(CommandID, &Serializer);
+        }
+    }
+
     /*! Set an argument prototype */
     void SetArgumentPrototype(mtsGenericObject * argumentPrototype) {
         this->ArgumentPrototype = argumentPrototype;
     }
 
     /*! Getter */
-    mtsProxySerializer * GetSerializer() { return &Serializer; }
+    inline mtsProxySerializer * GetSerializer() { 
+        return &Serializer; 
+    }
 };
 
 #endif // _mtsMulticastCommandWriteProxy_h

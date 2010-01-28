@@ -348,25 +348,25 @@ public:
     inline static unsigned int GetBasePortNumberForComponentInterface() { return 11705; }
 };
 
-#define LogPrint(_className, _logStream)\
+#define LogPrint(_className, _logStream) {\
         std::stringstream ss;\
         ss << #_className << ": ";\
         ss << _logStream << std::endl;\
         std::string s = ss.str();\
-        IceLogger->print(s);
+        IceLogger->print(s); }
 
-#define LogWarning(_className, _logStream)\
+#define LogWarning(_className, _logStream) {\
         std::stringstream ss;\
         ss << #_className << ": ";\
         ss << _logStream << std::endl;\
         std::string s = ss.str();\
-        IceLogger->warning(s);
+        IceLogger->warning(s); }
 
-#define LogError(_className, _logStream)\
+#define LogError(_className, _logStream) {\
         std::stringstream ss;\
         ss << #_className << ": ";\
         ss << _logStream << std::endl;\
         std::string s = ss.str();\
-        IceLogger->error(s);
+        IceLogger->error(s); }
 
 #endif // _mtsProxyBaseCommon_h

@@ -162,10 +162,6 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     virtual mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
 
-    /*! Extract all the information on a provided interface (command objects 
-        and event generators with arguments serialized (if any)) */
-    bool GetProvidedInterfaceDescription(ProvidedInterfaceDescription & providedInterfaceDescription) const;
-
     /*! Add events to the interface.  This method creates the
       multicast command used to trigger all the observers for the
       event. */

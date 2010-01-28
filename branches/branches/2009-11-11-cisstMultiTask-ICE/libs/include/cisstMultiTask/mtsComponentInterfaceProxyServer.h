@@ -105,10 +105,14 @@ protected:
                           const unsigned int providedInterfaceProxyInstanceId, 
                           ComponentInterfaceClientProxyType & clientProxy);
 
-    bool ReceiveFetchEventGeneratorProxyPointers(const ConnectionIDType & connectionID, 
-                                                 const std::string & clientComponentName, 
+    bool ReceiveFetchEventGeneratorProxyPointers(const ConnectionIDType & connectionID,
+                                                 const std::string & clientComponentName,
                                                  const std::string & requiredInterfaceName,
-                                                 mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers);
+                                                 mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers);
+
+    void ReceiveExecuteEventVoid(const CommandIDType commandID);
+
+    void ReceiveExecuteEventWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument);
 
 public:
     /*! Communicator (proxy) ID for communication between component interface
@@ -130,7 +134,7 @@ public:
         const ClientIDType clientID, const std::string & requiredInterfaceName, 
         mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers);
 
-    /*! Execute commands. This will call function proxies in the required 
+    /*! Execute commands and events. This will call function proxies in the required 
         interface proxy at server process. 
         clientID designates which network proxy client should execute a command 
         and commandID represents which function proxy object should be called. */
@@ -140,7 +144,7 @@ public:
 
     bool SendExecuteCommandReadSerialized(const ClientIDType clientID, const CommandIDType commandID, mtsGenericObject & argument);
 
-    bool SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument1, mtsGenericObject & argument2);
+    bool SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argumentIn, mtsGenericObject & argumentOut);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsComponentInterfaceProxy.ice
@@ -176,6 +180,8 @@ protected:
         //---------------------------------------
         //  Event Handlers (Client -> Server)
         //---------------------------------------
+        void TestMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
+
         /*! Add a client proxy. Called when a proxy client connects to server proxy. */
         bool AddClient(const std::string&, ::Ice::Int, const Ice::Identity&, const Ice::Current&);
 
@@ -184,10 +190,12 @@ protected:
 
         bool FetchEventGeneratorProxyPointers(
             const std::string & clientComponentName, const std::string & requiredInterfaceName,
-            mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers,
+            mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers,
             const ::Ice::Current & current) const;
 
-        void TestMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
+        void ExecuteEventVoid(::Ice::Long, const ::Ice::Current&);
+
+        void ExecuteEventWriteSerialized(::Ice::Long, const ::std::string &, const ::Ice::Current&);
     };
 };
 

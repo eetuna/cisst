@@ -23,16 +23,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnLogger.h>
 #include <cisstOSAbstraction/osaSleep.h>
+#include <cisstOSAbstraction/osaSocket.h>
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
 
 int main(int CMN_UNUSED(argc), char ** CMN_UNUSED(argv))
 {
-    // log configuration, add a log per thread
+    // log configuration
+    cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
+    cmnLogger::GetMultiplexer()->AddChannel(std::cout, CMN_LOG_LOD_VERY_VERBOSE);
+    // add a log per thread
     osaThreadedLogFile threadedLog("GlobalComponentManager");
-    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_RUN_WARNING);
+    cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
-    cmnClassRegister::SetLoD("mtsManagerGlobal", CMN_LOG_LOD_RUN_WARNING);
+    cmnClassRegister::SetLoD("mtsManagerGlobal", CMN_LOG_LOD_VERY_VERBOSE);
 
     // Create and start global component manager
     mtsManagerGlobal globalComponentManager;

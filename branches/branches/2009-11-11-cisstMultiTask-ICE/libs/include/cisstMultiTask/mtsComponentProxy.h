@@ -102,9 +102,9 @@ protected:
     typedef cmnNamedMap<mtsFunctionRead>          FunctionReadProxyMapType;
     typedef cmnNamedMap<mtsFunctionQualifiedRead> FunctionQualifiedReadProxyMapType;
     
-    /*! Typedef for event handler proxies */
-    typedef cmnNamedMap<mtsCommandVoidProxy>  EventHandlerVoidProxyMapType;
-    typedef cmnNamedMap<mtsCommandWriteProxy> EventHandlerWriteProxyMapType;
+    /*! Typedef for event generator proxies */
+    typedef cmnNamedMap<mtsFunctionVoid>  EventGeneratorVoidProxyMapType;
+    typedef cmnNamedMap<mtsFunctionWrite> EventGeneratorWriteProxyMapType;
 
     class FunctionProxyAndEventHandlerProxyMapElement {
     public:
@@ -112,8 +112,8 @@ protected:
         FunctionWriteProxyMapType         FunctionWriteProxyMap;
         FunctionReadProxyMapType          FunctionReadProxyMap;
         FunctionQualifiedReadProxyMapType FunctionQualifiedReadProxyMap;
-        EventHandlerVoidProxyMapType      EventHandlerVoidProxyMap;
-        EventHandlerWriteProxyMapType     EventHandlerWriteProxyMap;
+        EventGeneratorVoidProxyMapType    EventGeneratorVoidProxyMap;
+        EventGeneratorWriteProxyMapType   EventGeneratorWriteProxyMap;
     };
 
     /*! Typedef to link a FunctionProxyAndEventHandlerProxyMaps instance with
@@ -182,7 +182,8 @@ public:
     /*! Set event handler IDs in a required interface proxy at the server side
         as event generator IDs fetched from a provided interface proxy at the 
         client side. */
-    bool UpdateEventHandlerProxyID(const std::string & requiredInterfaceName);
+    bool UpdateEventHandlerProxyID(
+        const std::string & clientComponentName, const std::string & requiredInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Getters
@@ -200,6 +201,11 @@ public:
     /*! Extract function proxy pointers */
     bool GetFunctionProxyPointers(const std::string & requiredInterfaceName, 
         mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers);
+
+    /*! Extract event generator proxy pointers */
+    bool GetEventGeneratorProxyPointer(
+        const std::string & clientComponentName, const std::string & requiredInterfaceName,
+        mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers);
 
     //-------------------------------------------------------------------------
     //  Utilities

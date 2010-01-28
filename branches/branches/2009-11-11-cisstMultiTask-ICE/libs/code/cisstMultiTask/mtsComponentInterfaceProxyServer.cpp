@@ -21,13 +21,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
-
-#include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstOSAbstraction/osaSleep.h>
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
-
-//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
 
 std::string mtsComponentInterfaceProxyServer::InterfaceCommunicatorID = "InterfaceCommunicator";
 
@@ -159,10 +156,12 @@ void mtsComponentInterfaceProxyServer::ReceiveTestMessageFromClientToServer(
 {
     const ClientIDType clientID = GetClientID(connectionID);
 
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer,
              "ReceiveTestMessageFromClientToServer: " 
              << "\n..... ConnectionID: " << connectionID
              << "\n..... Message: " << str);
+#endif
 
     std::cout << "Server: received from Client " << clientID << ": " << str << std::endl;
 }
@@ -176,75 +175,34 @@ bool mtsComponentInterfaceProxyServer::ReceiveAddClient(
         return false;
     }
 
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer,
              "ReceiveAddClient: added proxy client: " 
              << "\n..... ConnectionID: " << connectionID 
              << "\n..... Proxy Name: " << connectingProxyName 
              << "\n..... ClientID: " << providedInterfaceProxyInstanceId);
+#endif
 
     return true;
 }
 
 bool mtsComponentInterfaceProxyServer::ReceiveFetchEventGeneratorProxyPointers(
-    const ConnectionIDType & connectionID, const std::string & clientComponentName, const std::string & requiredInterfaceName,
-    mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers)
+    const ConnectionIDType & connectionID, const std::string & clientComponentName,
+    const std::string & requiredInterfaceName,
+    mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers)
 {
     const ClientIDType clientID = GetClientID(connectionID);
 
-    //
-    // TODO: implement this
-    //
-
-    //IceLogger->trace("ReceiveFetchEventGeneratorProxyPointers: ", clientComponentName + ":" + requiredInterfaceName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer,
              "ReceiveFetchEventGeneratorProxyPointers: " 
              << "\n..... ConnectionID: " << connectionID 
+             << "\n..... Client component name: " << clientComponentName
              << "\n..... Required interface name: " << requiredInterfaceName);
+#endif
 
-    return false;
+    return ProxyOwner->GetEventGeneratorProxyPointer(clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
 }
-
-/*
-bool mtsComponentInterfaceProxyServer::ReceiveUpdateTaskManagerClient(
-    const ConnectionIDType & connectionID, const mtsTaskManagerProxy::TaskList& localTaskInfo)
-{
-    const TaskManagerIDType taskManagerID = localTaskInfo.taskManagerID;
-
-    ConnectionIDMap.insert(make_pair(taskManagerID, connectionID));
-    
-    TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
-    if (!taskManagerClient) {
-        ComponentInterfaceProxyServerLoggerError("[UpdateTaskManagerClient] Cannot find a task manager: ", connectionID);
-        return false;
-    }
-
-    ComponentInterfaceProxyServerLogger("Adding tasks from connection id: " + connectionID);
-
-    bool success = true;
-    std::string taskName;
-    mtsTaskManagerProxy::TaskNameSeq::const_iterator it = localTaskInfo.taskNames.begin();    
-    for (; it != localTaskInfo.taskNames.end(); ++it) {
-        taskName = *it;
-        mtsTaskGlobal * newTask = new mtsTaskGlobal(taskName, taskManagerID);
-
-        if (!taskManagerClient->AddTaskGlobal(newTask)) {
-            ComponentInterfaceProxyServerLoggerError("[UpdateTaskManagerClient] Add failed: ", taskName);
-            success = false;
-        } else {
-            if (!TaskManagerMapByTaskName.AddItem(taskName, taskManagerClient)) {
-                ComponentInterfaceProxyServerLoggerError("[UpdateTaskManagerClient] Add failed (duplicate task name): ", taskName);
-                success = false;
-            } else {
-                ComponentInterfaceProxyServerLogger("Successfully added a task: " + taskName);
-            }
-        }
-
-        ComponentInterfaceProxyServerLogger(newTask->ShowTaskInfo());
-    }
-
-    return success;
-}
-*/
 
 bool mtsComponentInterfaceProxyServer::RegisterPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
 {
@@ -257,6 +215,40 @@ bool mtsComponentInterfaceProxyServer::RegisterPerCommandSerializer(const Comman
     PerCommandSerializerMap[commandID] = serializer;
 
     return true;
+}
+
+void mtsComponentInterfaceProxyServer::ReceiveExecuteEventVoid(const CommandIDType commandID)
+{
+    mtsMulticastCommandVoid * eventVoidGeneratorProxy = reinterpret_cast<mtsMulticastCommandVoid*>(commandID);
+    if (!eventVoidGeneratorProxy) {
+        LogError(mtsComponentInterfaceProxyServer, "ReceiveExecuteCommandQualifiedReadSerialized: invalid proxy id of event void: " << commandID);
+        return;
+    }
+
+    eventVoidGeneratorProxy->Execute();
+}
+
+void mtsComponentInterfaceProxyServer::ReceiveExecuteEventWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventWriteSerialized: received " << serializedArgument.size() << " bytes");
+#endif
+
+    mtsMulticastCommandWriteProxy * eventWriteGeneratorProxy = reinterpret_cast<mtsMulticastCommandWriteProxy*>(commandID);
+    if (!eventWriteGeneratorProxy) {
+        LogError(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventWriteSerialized: invalid proxy id of event write: " << commandID);
+        return;
+    }
+
+    // Get a per-command serializer.
+    mtsProxySerializer * deserializer = eventWriteGeneratorProxy->GetSerializer();
+    mtsGenericObject * argument = deserializer->DeSerialize(serializedArgument);
+    if (!argument) {
+        LogError(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventWriteSerialized: Deserialization failed");
+        return;
+    }
+
+    eventWriteGeneratorProxy->Execute(*argument);
 }
 
 //-------------------------------------------------------------------------
@@ -325,12 +317,15 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(const ClientIDType
 bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument)
 {
     ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
-    if (!clientProxy) return false;
+    if (!clientProxy) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: no proxy client found or inactive proxy: " << clientID);
+        return false;
+    }
 
     // Get per-command serializer
     mtsProxySerializer * serializer = PerCommandSerializerMap[commandID];
     if (!serializer) {
-        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: no proxy client found or inactive proxy: " << clientID);
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: cannot find per-command serializer");
         return false;
     }
 
@@ -338,15 +333,16 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(const C
     std::string serializedArgument;
     serializer->Serialize(argument, serializedArgument);
     if (serializedArgument.empty()) {
-        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: serialization failure (commandWrite): " << argument.ToString());
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: serialization failure: " << argument.ToString());
         return false;
     }
 
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID << " sent " << serializedArgument.size() << " bytes");
+#endif
     (*clientProxy)->ExecuteCommandWriteSerialized(commandID, serializedArgument);
 
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID);
-#endif
+    return true;
 }
 
 bool mtsComponentInterfaceProxyServer::SendExecuteCommandReadSerialized(const ClientIDType clientID, const CommandIDType commandID, mtsGenericObject & argument)
@@ -354,180 +350,68 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandReadSerialized(const Cl
     ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) return false;
 
+    // Argument placeholder of which value is set by the read command
+    std::string serializedArgument;
+
+    // Execute read command
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandReadSerialized: " << commandID);
 #endif
+
+    (*clientProxy)->ExecuteCommandReadSerialized(commandID, serializedArgument);
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandReadSerialized: received " << serializedArgument.size() << " bytes");
+#endif
+
+    // Deserialize the argument returned
+    mtsProxySerializer * deserializer = PerCommandSerializerMap[commandID];
+    if (!deserializer) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandReadSerialized: cannot find per-command serializer");
+        return false;
+    }
+    deserializer->DeSerialize(serializedArgument, argument);
 
     return true;
 }
 
 bool mtsComponentInterfaceProxyServer::SendExecuteCommandQualifiedReadSerialized(
-    const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument1, mtsGenericObject & argument2)
+    const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argumentIn, mtsGenericObject & argumentOut)
 {
     ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
-    if (!clientProxy) return false;
+    if (!clientProxy) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandQualifiedReadSerialized: no proxy client found or inactive proxy: " << clientID);
+        return false;
+    }
+
+    // Get per-command serializer
+    mtsProxySerializer * serializer = PerCommandSerializerMap[commandID];
+    if (!serializer) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandQualifiedReadSerialized: cannot find per-command serializer");
+        return false;
+    }
+
+    // Serialize the input argument
+    std::string serializedArgumentIn;
+    serializer->Serialize(argumentIn, serializedArgumentIn);
+    if (serializedArgumentIn.empty()) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandQualifiedReadSerialized: serialization failure: " << argumentIn.ToString());
+        return false;
+    }
+
+    // Argument placeholder of which value is set by the qualified read command
+    std::string serializedArgumentOut;
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandQualifiedReadSerialized: " << commandID);
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandQualifiedReadSerialized: " << commandID << " sent " << serializedArgumentIn.size() << " bytes");
 #endif
+    (*clientProxy)->ExecuteCommandQualifiedReadSerialized(commandID, serializedArgumentIn, serializedArgumentOut);
+
+    // Deserialize
+    serializer->DeSerialize(serializedArgumentOut, argumentOut);
     
     return true;
 }
-
-/*
-bool mtsComponentInterfaceProxyServer::ReceiveAddProvidedInterface(
-    const ConnectionIDType & connectionID, 
-    const mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & providedInterfaceAccessInfo)
-{
-    TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
-    if (!taskManagerClient) {
-        ComponentInterfaceProxyServerLoggerError("[AddProvidedInterface] Cannot find a task manager: ", connectionID);
-        return false;
-    }
-
-    const std::string taskName = providedInterfaceAccessInfo.taskName;
-    const std::string interfaceName = providedInterfaceAccessInfo.interfaceName;
-
-    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(taskName);
-    if (!taskGlobal) {
-        ComponentInterfaceProxyServerLoggerError("[AddProvidedInterface] Cannot find a global task: ", taskName);
-        return false;
-    }
-
-    bool success = taskGlobal->AddProvidedInterface(providedInterfaceAccessInfo);
-    if (success) {
-        ComponentInterfaceProxyServerLogger(
-            "Successfully added a provided interface: " + 
-            interfaceName + " @ " + taskName);
-        ComponentInterfaceProxyServerLogger(taskGlobal->ShowTaskInfo());        
-    } else {
-        ComponentInterfaceProxyServerLoggerError(
-            "[AddProvidedInterface] Failed to add a provided interface: ", 
-            interfaceName + " @ " + taskName);
-    }
-
-    return success;
-}
-
-bool mtsComponentInterfaceProxyServer::ReceiveAddRequiredInterface(
-    const ConnectionIDType & connectionID,
-    const mtsTaskManagerProxy::RequiredInterfaceAccessInfo & requiredInterfaceAccessInfo)
-{
-    TaskManagerClient * taskManagerClient = GetTaskManagerByConnectionID(connectionID);
-    if (!taskManagerClient) {
-        ComponentInterfaceProxyServerLoggerError("[AddRequiredInterface] Cannot find a task manager: ", connectionID);
-        return false;
-    }
-
-    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(requiredInterfaceAccessInfo.taskName);
-    if (!taskGlobal) {
-        ComponentInterfaceProxyServerLoggerError("[AddRequiredInterface] Cannot find a global task: ", requiredInterfaceAccessInfo.taskName);
-        return false;
-    }
-
-    bool success = taskGlobal->AddRequiredInterface(requiredInterfaceAccessInfo);
-    if (success) {
-        ComponentInterfaceProxyServerLogger(
-            "Successfully added a required interface: " + 
-            requiredInterfaceAccessInfo.interfaceName + " @ " +
-            requiredInterfaceAccessInfo.taskName);
-        ComponentInterfaceProxyServerLogger(taskGlobal->ShowTaskInfo());        
-    } else {
-        ComponentInterfaceProxyServerLoggerError(
-            "[AddRequiredInterface] Failed to add a required interface: ",
-            requiredInterfaceAccessInfo.interfaceName + " @ " +
-            requiredInterfaceAccessInfo.taskName);
-    }
-
-    return success;
-}
-
-bool mtsComponentInterfaceProxyServer::ReceiveIsRegisteredProvidedInterface(
-    const ConnectionIDType & connectionID,
-    const std::string & taskName, const std::string & providedInterfaceName)
-{
-    TaskManagerClient * taskManagerClient = TaskManagerMapByTaskName.GetItem(taskName);
-    if (!taskManagerClient) {
-        ComponentInterfaceProxyServerLoggerError("[IsRegisteredProvidedInterface] Cannot find a task manager with the task: ", taskName);
-        return false;
-    }
-
-    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(taskName);
-    if (!taskGlobal) {
-        ComponentInterfaceProxyServerLoggerError("[IsRegisteredProvidedInterface] Cannot find a global task: ", taskName);
-        return false;
-    }
-
-    return taskGlobal->IsRegisteredProvidedInterface(providedInterfaceName);
-}
-
-bool mtsComponentInterfaceProxyServer::ReceiveGetProvidedInterfaceAccessInfo(
-    const ConnectionIDType & connectionID,
-    const std::string & taskName, const std::string & providedInterfaceName,
-    mtsTaskManagerProxy::ProvidedInterfaceAccessInfo & info)
-{
-    TaskManagerClient * taskManagerClient = TaskManagerMapByTaskName.GetItem(taskName);
-    if (!taskManagerClient) {
-        ComponentInterfaceProxyServerLoggerError("[GetProvidedInterfaceAccessInfo] Cannot find a task manager: ", connectionID);
-        return false;
-    }
-
-    mtsTaskGlobal * taskGlobal = taskManagerClient->GetTaskGlobal(taskName);
-    if (!taskGlobal) {
-        ComponentInterfaceProxyServerLoggerError("[GetProvidedInterfaceAccessInfo] Cannot find a global task: ", taskName);
-        return false;
-    }
-
-    return taskGlobal->GetProvidedInterfaceAccessInfo(providedInterfaceName, info);
-}
-
-void mtsComponentInterfaceProxyServer::ReceiveNotifyInterfaceConnectionResult(
-    const ConnectionIDType & connectionID,
-    const bool isServerTask, const bool isSuccess,
-    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-{
-    if (!isSuccess) {
-        std::stringstream buf;
-        buf << (isServerTask ? "Server task: " : "Client task: ")
-            << resourceTaskName << " : " << providedInterfaceName << " - "
-            << userTaskName << " : " << requiredInterfaceName;
-
-        ComponentInterfaceProxyServerLoggerError("[NotifyInterfaceConnectionResult] failed to connect - ", buf.str());
-        return;
-    } else {
-        std::stringstream buf;
-        buf << "[NotifyInterfaceConnectionResult] succeeded to connect - "
-            << (isServerTask ? "Server task: " : "Client task: ")
-            << resourceTaskName << " : " << providedInterfaceName << " - "
-            << userTaskName << " : " << requiredInterfaceName;
-
-        ComponentInterfaceProxyServerLogger(buf.str());
-    }
-
-    //
-    // TODO: IMPLEMENT ME
-    //
-}
-*/
-
-//-------------------------------------------------------------------------
-//  Send Methods
-//-------------------------------------------------------------------------
-/*
-bool mtsComponentInterfaceProxyServer::SendConnectServerSide(
-    TaskManagerClient * taskManagerWithServerTask,
-    const std::string & userTaskName,     const std::string & requiredInterfaceName,
-    const std::string & resourceTaskName, const std::string & providedInterfaceName)
-{
-    GetLogger()->trace("TMServer", ">>>>> SEND: ConnectServerSide: " 
-            + resourceTaskName + " : " + providedInterfaceName + " - "
-            + userTaskName + " : " + requiredInterfaceName);
-
-    return taskManagerWithServerTask->GetClientProxy()->ConnectServerSide(
-        userTaskName, requiredInterfaceName, resourceTaskName, providedInterfaceName);
-}
-*/
 
 //-------------------------------------------------------------------------
 //  Definition by mtsComponentInterfaceProxy.ice
@@ -551,7 +435,6 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Start()
     SenderThreadPtr->start();
 }
 
-// TODO: Remove this
 //#define _COMMUNICATION_TEST_
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
@@ -666,16 +549,36 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const
 }
 
 bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::FetchEventGeneratorProxyPointers(
-    const std::string & clientComponentName, const std::string & requiredInterfaceName,
-    mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers,
+    const std::string & requiredInterfaceName, const std::string & providedInterfaceName,
+    mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers,
     const ::Ice::Current & current) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: FetchEventGeneratorProxyPointers: " << clientComponentName << ":" << requiredInterfaceName);
+    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: FetchEventGeneratorProxyPointers: req.int=" << requiredInterfaceName << ", prv.int=" << providedInterfaceName);
 #endif
 
     const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
 
     return ComponentInterfaceProxyServer->ReceiveFetchEventGeneratorProxyPointers(
-        connectionID, clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
+        connectionID, requiredInterfaceName, providedInterfaceName, eventGeneratorProxyPointers);
+}
+
+void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ExecuteEventVoid(
+    ::Ice::Long commandID, const ::Ice::Current & current)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: ExecuteEventVoid: " << commandID);
+#endif
+
+    ComponentInterfaceProxyServer->ReceiveExecuteEventVoid(commandID);
+}
+
+void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ExecuteEventWriteSerialized(
+    ::Ice::Long commandID, const ::std::string & argument, const ::Ice::Current & current)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: ExecuteEventWriteSerialized: " << commandID);
+#endif
+
+    ComponentInterfaceProxyServer->ReceiveExecuteEventWriteSerialized(commandID, argument);
 }

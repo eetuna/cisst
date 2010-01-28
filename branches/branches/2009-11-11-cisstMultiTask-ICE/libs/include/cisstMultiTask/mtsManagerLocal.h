@@ -218,7 +218,7 @@ public:
         ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "");
 
     /*! Extract all the information on a required interface such as function
-        objects and events with serialization */
+        objects and event handlers with arguments serialized */
     bool GetRequiredInterfaceDescription(
         const std::string & componentName,
         const std::string & requiredInterfaceName, 

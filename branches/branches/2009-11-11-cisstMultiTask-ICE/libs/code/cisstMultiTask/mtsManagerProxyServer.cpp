@@ -19,14 +19,10 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsManagerProxyServer.h>
 
-#include <cisstOSAbstraction/osaSleep.h>
-//#include <cisstMultiTask/mtsManagerProxyClient.h>
-
 CMN_IMPLEMENT_SERVICES(mtsManagerProxyServer);
-
-//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
 
 std::string mtsManagerProxyServer::ManagerCommunicatorID = "ManagerServerCommunicator";
 
@@ -314,6 +310,7 @@ void mtsManagerProxyServer::ConstructProvidedInterfaceDescriptionFrom(
     const CommandWriteVector::const_iterator itWriteEnd = src.CommandsWrite.end();
     for (; itWrite != itWriteEnd; ++itWrite) {
         commandWrite.Name = itWrite->Name;
+        commandWrite.ArgumentPrototypeSerialized = itWrite->ArgumentPrototypeSerialized;
         dest.CommandsWrite.push_back(commandWrite);
     }
 
@@ -323,6 +320,7 @@ void mtsManagerProxyServer::ConstructProvidedInterfaceDescriptionFrom(
     const CommandReadVector::const_iterator itReadEnd = src.CommandsRead.end();
     for (; itRead != itReadEnd; ++itRead) {
         commandRead.Name = itRead->Name;
+        commandRead.ArgumentPrototypeSerialized = itRead->ArgumentPrototypeSerialized;
         dest.CommandsRead.push_back(commandRead);
     }
 
@@ -332,6 +330,8 @@ void mtsManagerProxyServer::ConstructProvidedInterfaceDescriptionFrom(
     const CommandQualifiedReadVector::const_iterator itQualifiedReadEnd = src.CommandsQualifiedRead.end();
     for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
         commandQualifiedRead.Name = itQualifiedRead->Name;
+        commandQualifiedRead.Argument1PrototypeSerialized = itQualifiedRead->Argument1PrototypeSerialized;
+        commandQualifiedRead.Argument2PrototypeSerialized = itQualifiedRead->Argument2PrototypeSerialized;
         dest.CommandsQualifiedRead.push_back(commandQualifiedRead);
     }
 

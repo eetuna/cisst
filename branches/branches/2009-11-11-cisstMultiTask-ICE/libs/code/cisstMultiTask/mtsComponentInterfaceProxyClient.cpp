@@ -29,8 +29,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 
-//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
 //-----------------------------------------------------------------------------
@@ -179,26 +177,20 @@ void mtsComponentInterfaceProxyClient::OnEnd()
     
     Sender->Stop();
 }
+*/
 
-//-------------------------------------------------------------------------
-//  Method to register per-command serializer
-//-------------------------------------------------------------------------
-bool mtsComponentInterfaceProxyClient::AddPerCommandSerializer(
-    const CommandIDType commandId, mtsProxySerializer * argumentSerializer)
+bool mtsComponentInterfaceProxyClient::RegisterPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
 {
-    CMN_ASSERT(argumentSerializer);
-
-    PerCommandSerializerMapType::const_iterator it = PerCommandSerializerMap.find(commandId);
-    if (it != PerCommandSerializerMap.end()) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: CommandId already exists." << std::endl;
+    PerEventSerializerMapType::const_iterator it = PerEventSerializerMap.find(commandID);
+    if (!serializer || it != PerEventSerializerMap.end()) {
+        LogError(mtsComponentInterfaceProxyClient, "failed to add per-event serializer" << std::endl);
         return false;
     }
 
-    PerCommandSerializerMap[commandId] = argumentSerializer;
+    PerEventSerializerMap[commandID] = serializer;
 
     return true;
 }
-*/
 
 //-------------------------------------------------------------------------
 //  Event Handlers (Server -> Client)
@@ -214,7 +206,7 @@ bool mtsComponentInterfaceProxyClient::ReceiveFetchFunctionProxyPointers(
     // Get proxy owner object (of type mtsComponentProxy)
     mtsComponentProxy * proxyOwner = this->ProxyOwner;
     if (!proxyOwner) {
-        LogError(mtsComponentInterfaceProxyClient, "invalid proxy owner");
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveFetchFunctionProxyPointers: invalid proxy owner");
         return false;
     }
 
@@ -225,10 +217,11 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandVoid(const CommandID
 {
     mtsFunctionVoid * functionVoid = reinterpret_cast<mtsFunctionVoid *>(commandID);
     if (!functionVoid) {
-        LogError(mtsComponentInterfaceProxyClient, "invalid function void proxy id: " << commandID);
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandVoid: invalid proxy id of function void: " << commandID);
         return;
     }
 
+    // Execute the command
     (*functionVoid)();
 }
 
@@ -236,64 +229,100 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandWriteSerialized(cons
 {
     mtsFunctionWriteProxy * functionWriteProxy = reinterpret_cast<mtsFunctionWriteProxy*>(commandID);
     if (!functionWriteProxy) {
-        LogError(mtsComponentInterfaceProxyClient, "invalid function write proxy id: " << commandID);
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandWriteSerialized: invalid proxy id of function write: " << commandID);
         return;
     }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "ExecuteCommandWriteSerialized: " << serializedArgument.size() << " bytes received");
+    LogPrint(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandWriteSerialized: received " << serializedArgument.size() << " bytes");
 #endif
 
-    // Get per-command deserializer
-    mtsProxySerializer * deSerializer = functionWriteProxy->GetSerializer();
-    
-    mtsGenericObject * argument = deSerializer->DeSerialize(serializedArgument);
+    // Deserialize
+    mtsProxySerializer * deserializer = functionWriteProxy->GetSerializer();    
+    mtsGenericObject * argument = deserializer->DeSerialize(serializedArgument);
     if (!argument) {
-        LogError(mtsComponentInterfaceProxyClient, "deserialization failed");
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandWriteSerialized: Deserialization failed");
         return;
     }
 
+    // Execute the command
     (*functionWriteProxy)(*argument);
 }
 
 void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandReadSerialized(const CommandIDType commandID, std::string & serializedArgument)
 {
+    mtsFunctionReadProxy * functionReadProxy = reinterpret_cast<mtsFunctionReadProxy*>(commandID);
+    if (!functionReadProxy) {
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandReadSerialized: invalid proxy id of function read: " << commandID);
+        return;
+    }
+
+    // Create a temporary argument which includes dynamic allocation internally.
+    // Therefore, this object should be deallocated manually.
+    mtsGenericObject * tempArgument = dynamic_cast<mtsGenericObject *>(
+        functionReadProxy->GetCommand()->GetArgumentClassServices()->Create());
+    if (!tempArgument) {
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandReadSerialized: failed to create a temporary argument");
+        return;
+    }
+
+    // Execute the command
+    (*functionReadProxy)(*tempArgument);
+
+    // Serialize
+    mtsProxySerializer * serializer = functionReadProxy->GetSerializer();
+    serializer->Serialize(*tempArgument, serializedArgument);
+
+    // Deallocate memory
+    delete tempArgument;
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandReadSerialized: sent " << serializedArgument.size() << " bytes");
+#endif
 }
 
 void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandQualifiedReadSerialized(const CommandIDType commandID, const std::string & serializedArgumentIn, std::string & serializedArgumentOut)
 {
+    mtsFunctionQualifiedReadProxy * functionQualifiedReadProxy = reinterpret_cast<mtsFunctionQualifiedReadProxy*>(commandID);
+    if (!functionQualifiedReadProxy) {
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: invalid proxy id of function qualified read: " << commandID);
+        return;
+    }
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: received " << serializedArgumentIn.size() << " bytes");
+#endif
+
+    // Deserialize
+    mtsProxySerializer * deserializer = functionQualifiedReadProxy->GetSerializer();    
+    mtsGenericObject * argumentIn = deserializer->DeSerialize(serializedArgumentIn);
+    if (!argumentIn) {
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: Deserialization failed");
+        return;
+    }
+
+    // Create a temporary argument which includes dynamic allocation internally.
+    // Therefore, this object should be deallocated manually.
+    mtsGenericObject * tempArgumentOut = dynamic_cast<mtsGenericObject *>(
+        functionQualifiedReadProxy->GetCommand()->GetArgument2ClassServices()->Create());
+    if (!tempArgumentOut) {
+        LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: failed to create a temporary argument");
+        return;
+    }
+
+    // Execute the command
+    (*functionQualifiedReadProxy)(*argumentIn, *tempArgumentOut);
+
+    // Serialize
+    deserializer->Serialize(*tempArgumentOut, serializedArgumentOut);
+
+    // Deallocate memory
+    delete tempArgumentOut;
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: sent " << serializedArgumentOut.size() << " bytes");
+#endif
 }
-
-/*
-void mtsComponentInterfaceProxyClient::ReceiveExecuteEventVoid(const CommandIDType commandId)
-{
-    mtsMulticastCommandVoid * eventVoidGeneratorProxy = 
-        reinterpret_cast<mtsMulticastCommandVoid*>(commandId);
-    CMN_ASSERT(eventVoidGeneratorProxy);
-
-    eventVoidGeneratorProxy->Execute();
-}
-
-void mtsComponentInterfaceProxyClient::ReceiveExecuteEventWriteSerialized(
-    const CommandIDType commandId, const std::string argument)
-{
-    static char buf[1024];
-    sprintf(buf, "ReceiveExecuteEventWriteSerialized: %lu bytes received", argument.size());
-    IceLogger->trace("TIClient", buf);
-
-    mtsMulticastCommandWriteProxy * eventWriteGeneratorProxy = 
-        reinterpret_cast<mtsMulticastCommandWriteProxy*>(commandId);
-    CMN_ASSERT(eventWriteGeneratorProxy);
-
-    // Get a per-command serializer.
-    mtsProxySerializer * deserializer = eventWriteGeneratorProxy->GetSerializer();
-        
-    mtsGenericObject * serializedArgument = deserializer->DeSerialize(argument);
-    CMN_ASSERT(serializedArgument);
-
-    eventWriteGeneratorProxy->Execute(*serializedArgument);
-}
-*/
 
 //-------------------------------------------------------------------------
 //  Event Generators (Event Sender) : Client -> Server
@@ -308,105 +337,53 @@ void mtsComponentInterfaceProxyClient::SendTestMessageFromClientToServer(const s
 }
 
 bool mtsComponentInterfaceProxyClient::SendFetchEventGeneratorProxyPointers(
-    const std::string & clientComponentName, const std::string & requiredInterfaceName,
-    mtsComponentInterfaceProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers)
+    const std::string & requiredInterfaceName, const std::string & providedInterfaceName,
+    mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: FetchEventGeneratorProxyPointers");
+    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: FetchEventGeneratorProxyPointers: req.int=" << requiredInterfaceName << ", prv.int=" << providedInterfaceName);
 #endif
 
     return ComponentInterfaceServerProxy->FetchEventGeneratorProxyPointers(
-        clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
+        requiredInterfaceName, providedInterfaceName, eventGeneratorProxyPointers);
 }
 
-/*
-void mtsComponentInterfaceProxyClient::SendExecuteCommandWriteSerialized(
-    const CommandIDType commandId, const mtsGenericObject & argument)
+bool mtsComponentInterfaceProxyClient::SendExecuteEventVoid(const CommandIDType commandID)
 {
-    if (!IsValidSession) return;
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: SendExecuteEventVoid: " << commandID);
+#endif
 
-    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandWriteSerialized");
+    ComponentInterfaceServerProxy->ExecuteEventVoid(commandID);
 
-    // Get a per-command serializer.
-    mtsProxySerializer * serializer = PerCommandSerializerMap[commandId];
+    return true;
+}
+
+bool mtsComponentInterfaceProxyClient::SendExecuteEventWriteSerialized(const CommandIDType commandID, const mtsGenericObject & argument)
+{
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: SendExecuteEventWriteSerialized: " << commandID);
+#endif
+
+    // Get per-event serializer.
+    mtsProxySerializer * serializer = PerEventSerializerMap[commandID];
     if (!serializer) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: cannot find serializer (commandWrite)." << std::endl;
-        return;
+        LogError(mtsComponentInterfaceProxyClient, "SendExecuteEventWriteSerialized: cannot find per-event serializer");
+        return false;
     }
 
     // Serialize the argument passed.
     std::string serializedArgument;
     serializer->Serialize(argument, serializedArgument);
-    if (serializedArgument.size() == 0) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: serialization failure (commandWrite): " 
-            << argument.ToString() << std::endl;
-        return;
+    if (serializedArgument.empty()) {
+        LogError(mtsComponentInterfaceProxyClient, "SendExecuteEventWriteSerialized: serialization failure: " << argument.ToString());
+        return false;
     }
-    
-    ComponentInterfaceServerProxy->ExecuteCommandWriteSerialized(commandId, serializedArgument);
+
+    ComponentInterfaceServerProxy->ExecuteEventWriteSerialized(commandID, serializedArgument);
+
+    return true;
 }
-
-void mtsComponentInterfaceProxyClient::SendExecuteCommandReadSerialized(
-    const CommandIDType commandId, mtsGenericObject & argument)
-{
-    if (!IsValidSession) return;
-
-    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandReadSerialized");
-
-    // Placeholder for an argument of which value is to be set by the peer.
-    std::string serializedArgument;
-
-    ComponentInterfaceServerProxy->ExecuteCommandReadSerialized(commandId, serializedArgument);
-
-    // Deserialize the argument.
-    // Get a per-command serializer.
-    mtsProxySerializer * deserializer = PerCommandSerializerMap[commandId];
-    if (!deserializer) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: cannot find deserializer (commandRead)" << std::endl;
-        return;
-    }
-
-    deserializer->DeSerialize(serializedArgument, argument);
-}
-
-void mtsComponentInterfaceProxyClient::SendExecuteCommandQualifiedReadSerialized(
-    const CommandIDType commandId, const mtsGenericObject & argument1, mtsGenericObject & argument2)
-{
-    if (!IsValidSession) return;
-
-    //Logger->trace("TIClient", ">>>>> SEND: SendExecuteCommandQualifiedRead");
-    
-    // Get a per-command serializer.
-    mtsProxySerializer * serializer = PerCommandSerializerMap[commandId];
-    if (!serializer) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: cannot find serializer (commandQRead)" << std::endl;
-        return;
-    }
-
-    // Serialize the argument1.
-    std::string serializedArgument1;
-    serializer->Serialize(argument1, serializedArgument1);
-    if (serializedArgument1.size() == 0) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: serialization failure (commandQRead): " 
-            << argument1.ToString() << std::endl;
-        return;
-    }
-
-    // Placeholder for an argument of which value is to be set by the peer.
-    std::string serializedArgument2;
-
-    // Execute the command across networks
-    ComponentInterfaceServerProxy->ExecuteCommandQualifiedReadSerialized(
-        commandId, serializedArgument1, serializedArgument2);
-
-    // Deserialize the argument2.
-    serializer->DeSerialize(serializedArgument2, argument2);
-}
-
-//-------------------------------------------------------------------------
-//  Send Methods
-//-------------------------------------------------------------------------
-*/
 
 //-------------------------------------------------------------------------
 //  Definition by mtsComponentInterfaceProxy.ice

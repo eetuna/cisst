@@ -47,7 +47,7 @@ int main(int argc, char * argv[])
                              "example9Server", "Server", "Provided"))
     {
         CMN_LOG_INIT_ERROR << "Connect failed" << std::endl;
-        exit(-1);
+        return 1;
     }
 
     // create the tasks, i.e. find the commands

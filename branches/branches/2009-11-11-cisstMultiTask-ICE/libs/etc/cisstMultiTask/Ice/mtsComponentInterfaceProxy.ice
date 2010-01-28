@@ -129,14 +129,14 @@ module mtsComponentInterfaceProxy
     //
     struct EventGeneratorProxyElement {
         string Name;
-        // This id is set as a pointer to a function proxy at server side.
+        // This ID is set as a pointer to a event generator proxy poninter at client side.
         // Note that type 'long' in slice is converted to ::Ice::Long which can
         // handle 64-bit numbers.
-        long ProxyId;
+        long EventGeneratorProxyId;
     };
     sequence<EventGeneratorProxyElement> EventGeneratorProxySequence;
 
-    struct ListsOfEventGeneratorsRegistered {
+    struct EventGeneratorProxyPointerSet {
         EventGeneratorProxySequence EventGeneratorVoidProxies;
         EventGeneratorProxySequence EventGeneratorWriteProxies;
     };
@@ -146,9 +146,6 @@ module mtsComponentInterfaceProxy
 	//-----------------------------------------------------------------------------
 	interface ComponentInterfaceClient
 	{
-        //void ExecuteEventVoid(long CommandId);
-        //void ExecuteEventWriteSerialized(long CommandId, string argument);
-
         /*! Methods for testing and unit tests */
         void TestMessageFromServerToClient(string str);
 
@@ -194,10 +191,11 @@ module mtsComponentInterfaceProxy
             proxy at server side. */
         ["cpp:const"] idempotent
         bool FetchEventGeneratorProxyPointers(
-            // TODO: We don't need clientComponentName because proxy server already
-            // knows its owner (mtsComponentProxy).
             string clientComponentName, string requiredInterfaceName,
-            out ListsOfEventGeneratorsRegistered eventGeneratorProxyPointers);
+            out EventGeneratorProxyPointerSet eventGeneratorProxyPointers);
+
+        void ExecuteEventVoid(long CommandID);
+        void ExecuteEventWriteSerialized(long CommandID, string argument);
 	};
 };
 

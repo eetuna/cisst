@@ -81,6 +81,7 @@ class CISST_EXPORT mtsRequiredInterface: public cmnGenericObject
 
     friend class mtsComponentProxy;
     friend class mtsComponentInterfaceProxyClient;
+    friend class mtsManagerLocal;
 
 protected:
 
@@ -141,10 +142,6 @@ protected:
     virtual mtsCommandWriteBase * GetEventHandlerWrite(const std::string & eventName) const;
     //@}
     
-    /*! Extract all the information on a required interface (function objects 
-        and event handlers with arguments serialized (if any)) */
-    bool GetRequiredInterfaceDescription(RequiredInterfaceDescription & requiredInterfaceDescription) const;
-
     void ConnectTo(mtsDeviceInterface * other) {
         OtherInterface = other;
     }

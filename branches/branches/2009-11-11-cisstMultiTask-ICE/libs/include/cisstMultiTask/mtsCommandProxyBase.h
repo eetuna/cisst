@@ -52,7 +52,7 @@ public:
     {}
 
     /*! Set network proxy */
-    bool SetNetworkProxy(const mtsComponentInterfaceProxyServer::ClientIDType clientID, mtsProxyBaseCommon<mtsComponentProxy> * networkProxy) {
+    bool SetNetworkProxy(mtsProxyBaseCommon<mtsComponentProxy> * networkProxy, const mtsComponentInterfaceProxyServer::ClientIDType clientID = 0) {
         ClientID = clientID;
 
         NetworkProxyClient = dynamic_cast<mtsComponentInterfaceProxyClient*>(networkProxy);

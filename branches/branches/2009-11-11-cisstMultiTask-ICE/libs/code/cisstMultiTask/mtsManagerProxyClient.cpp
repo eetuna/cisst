@@ -27,8 +27,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerProxyClient);
 
-//#define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
 //-----------------------------------------------------------------------------
@@ -439,18 +437,6 @@ void mtsManagerProxyClient::SendTestMessageFromClientToServer(const std::string 
 
     ManagerServerProxy->TestMessageFromClientToServer(str);
 }
-
-//bool mtsManagerProxyClient::SendFetchEventGeneratorProxyPointers(
-//    const std::string & clientComponentName, const std::string & requiredInterfaceName,
-//    mtsManagerProxy::ListsOfEventGeneratorsRegistered & eventGeneratorProxyPointers)
-//{
-//#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-//    LogPrint(mtsManagerProxyClient, ">>>>> SEND: FetchEventGeneratorProxyPointers");
-//#endif
-//
-//    return ManagerServerProxy->FetchEventGeneratorProxyPointers(
-//        clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
-//}
 
 bool mtsManagerProxyClient::SendAddProcess(const std::string & processName)
 {

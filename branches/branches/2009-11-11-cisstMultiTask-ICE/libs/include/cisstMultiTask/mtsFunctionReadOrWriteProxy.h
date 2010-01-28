@@ -39,17 +39,22 @@ protected:
     mtsProxySerializer Serializer;
 
 public:
+    mtsFunctionReadOrWriteProxy()
+    {}
+
+    /*! This constructor is not used */
     mtsFunctionReadOrWriteProxy(const mtsDeviceInterface * associatedInterface, const std::string & commandName)
         : BaseFunctionType(associatedInterface, commandName)
     {}
     
-    ~mtsFunctionReadOrWriteProxy() 
+    ~mtsFunctionReadOrWriteProxy()
     {}
 
     /*! Getter */
-    mtsProxySerializer * GetSerializer() { return &Serializer; }
+    inline mtsProxySerializer * GetSerializer() { 
+        return &Serializer; 
+    }
 };
-
 
 typedef mtsFunctionReadOrWriteProxy<mtsGenericObject> mtsFunctionReadProxy;
 typedef mtsFunctionReadOrWriteProxy<const mtsGenericObject> mtsFunctionWriteProxy;

@@ -100,7 +100,7 @@ public:
         if (NetworkProxyServer) {
             NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument);
         } else {
-            //NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument);
+            NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument);
         }
 
         return mtsCommandBase::DEV_OK;
