@@ -23,8 +23,8 @@ serverTask::serverTask(const std::string & taskName, double period):
         provided->AddCommandWrite(&serverTask::Write, this, "Write");
         provided->AddCommandReadState(this->StateTable, this->ReadValue, "Read");
         provided->AddCommandQualifiedRead(&serverTask::QualifiedRead, this, "QualifiedRead");
-        //provided->AddEventVoid(this->EventVoid, "EventVoid");
-        //provided->AddEventWrite(this->EventWrite, "EventWrite", mtsDouble(3.14));
+        provided->AddEventVoid(this->EventVoid, "EventVoid");
+        provided->AddEventWrite(this->EventWrite, "EventWrite", mtsDouble(3.14));
     }
 }
 
@@ -79,7 +79,6 @@ void serverTask::Run(void) {
         // compute the new values based on the current time and amplitude
         fltkMutex.Lock();
         {
-            /*
             if (UI.VoidEventRequested) {
                 CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidEventRequested" << std::endl;
                 this->EventVoid();
@@ -91,7 +90,6 @@ void serverTask::Run(void) {
                 this->EventWrite(mtsDouble(UI.ReadValue->value()));
                 UI.WriteEventRequested = false;
             }
-            */
             
             this->ReadValue = UI.ReadValue->value();
             Fl::check();

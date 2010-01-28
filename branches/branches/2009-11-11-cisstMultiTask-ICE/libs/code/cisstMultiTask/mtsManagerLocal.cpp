@@ -898,8 +898,6 @@ bool mtsManagerLocal::GetProvidedInterfaceDescription(
         providedInterfaceDescription.CommandsQualifiedRead.push_back(elementCommandQualifiedRead);
     }
 
-    return true;
-
     // Extract void events
     EventVoidElement elementEventVoid;
     mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoid = providedInterface->EventVoidGenerators.begin();
@@ -959,8 +957,6 @@ bool mtsManagerLocal::GetRequiredInterfaceDescription(
     requiredInterfaceDescription.FunctionReadNames = requiredInterface->GetNamesOfCommandPointersRead();
     // Extract qualified read functions
     requiredInterfaceDescription.FunctionQualifiedReadNames = requiredInterface->GetNamesOfCommandPointersQualifiedRead();
-
-    return true;
 
     // Extract void event handlers
     CommandVoidElement elementEventVoidHandler;
@@ -1368,11 +1364,10 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
         // proxy at the server side as event generator IDs fetched from a provided
         // interface proxy at the client side.
 
-        // aaaaaaaaaaaaaaaaaaaa
-        //if (!clientComponentProxy->UpdateEventHandlerProxyID(clientComponentName, clientRequiredInterfaceName)) {
-        //    CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to update event handler proxy id" << std::endl;
-        //    goto ConnectServerSideInterfaceError;
-        //}
+        if (!clientComponentProxy->UpdateEventHandlerProxyID(clientComponentName, clientRequiredInterfaceName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: Failed to update event handler proxy id" << std::endl;
+            goto ConnectServerSideInterfaceError;
+        }
     }
 
     return true;

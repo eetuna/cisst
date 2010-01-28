@@ -97,8 +97,8 @@ protected:
             Ice::InitializationData initData;
             
             // Use the following line if you want to use CISST logger.
-            initData.logger = new typename BaseType::CisstLogger();
-            //initData.logger = new typename BaseType::ProxyLogger();
+            //initData.logger = new typename BaseType::CisstLogger();
+            initData.logger = new typename BaseType::ProxyLogger();
 
             initData.properties = Ice::createProperties();
             // There are two different modes of using implicit context: 

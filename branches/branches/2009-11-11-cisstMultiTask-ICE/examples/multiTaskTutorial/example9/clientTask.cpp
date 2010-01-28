@@ -17,8 +17,8 @@ clientTask::clientTask(const std::string & taskName, double period):
         required->AddFunction("Write", this->WriteServer);
         required->AddFunction("Read", this->ReadServer);
         required->AddFunction("QualifiedRead", this->QualifiedReadServer);
-        //required->AddEventHandlerVoid(&clientTask::EventVoidHandler, this, "EventVoid");
-        //required->AddEventHandlerWrite(&clientTask::EventWriteHandler, this, "EventWrite");
+        required->AddEventHandlerVoid(&clientTask::EventVoidHandler, this, "EventVoid");
+        required->AddEventHandlerWrite(&clientTask::EventWriteHandler, this, "EventWrite");
     }
 }
 
@@ -39,9 +39,9 @@ void clientTask::Startup(void)
     // check argument prototype for event handler
     mtsRequiredInterface * required = GetRequiredInterface("Required");
     CMN_ASSERT(required);
-    //mtsCommandWriteBase * eventHandler = required->GetEventHandlerWrite("EventWrite");
-    //CMN_ASSERT(eventHandler);
-    //std::cout << "Event handler argument prototype: " << *(eventHandler->GetArgumentPrototype()) << std::endl;
+    mtsCommandWriteBase * eventHandler = required->GetEventHandlerWrite("EventWrite");
+    CMN_ASSERT(eventHandler);
+    std::cout << "Event handler argument prototype: " << *(eventHandler->GetArgumentPrototype()) << std::endl;
 }
 
 

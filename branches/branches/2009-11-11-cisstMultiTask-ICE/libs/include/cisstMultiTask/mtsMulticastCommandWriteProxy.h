@@ -73,16 +73,6 @@ public:
         return mtsCommandBase::DEV_OK;
     }
 
-    /*! Set command id and register serializer to network proxy. This method
-        should be called after SetNetworkProxy() is called. */
-    void SetCommandID(const CommandIDType & commandID) {
-        mtsCommandProxyBase::SetCommandID(commandID);
-
-        if (NetworkProxyClient) {
-            NetworkProxyClient->RegisterPerEventSerializer(CommandID, &Serializer);
-        }
-    }
-
     /*! Set an argument prototype */
     void SetArgumentPrototype(mtsGenericObject * argumentPrototype) {
         this->ArgumentPrototype = argumentPrototype;

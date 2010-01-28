@@ -148,7 +148,6 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         }
     }
 
-#if 0
     // Create event handler proxies
     std::string eventName;
 
@@ -207,7 +206,6 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         }
         newEventWriteHandlerProxy->SetArgumentPrototype(argumentPrototype);
     }
-#endif
 
     // Add the required interface proxy to the component
     if (!AddRequiredInterface(requiredInterfaceName, requiredInterfaceProxy)) {
@@ -416,7 +414,6 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
         newCommandQualifiedRead->SetArgumentPrototype(argument1Prototype, argument2Prototype);
     }
 
-#if 0
     // Create event generator proxies
     std::string eventName;
     
@@ -496,7 +493,6 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
             return false;
         }
     }
-#endif
 
     // Add the provided interface proxy to the component
     if (!ProvidedInterfaces.AddItem(providedInterfaceName, providedInterfaceProxy)) {
@@ -942,8 +938,6 @@ bool mtsComponentProxy::GetEventGeneratorProxyPointer(
     const std::string & clientComponentName, const std::string & requiredInterfaceName,
     mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers)
 {
-    return true;
-
     mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
     mtsDevice * clientComponent = localManager->GetComponent(clientComponentName);
     if (!clientComponent) {

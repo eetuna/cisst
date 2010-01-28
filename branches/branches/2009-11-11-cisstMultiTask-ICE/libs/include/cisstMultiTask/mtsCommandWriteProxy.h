@@ -85,6 +85,8 @@ public:
 
         if (NetworkProxyServer) {
             NetworkProxyServer->RegisterPerCommandSerializer(CommandID, &Serializer);
+        } else {
+            NetworkProxyClient->RegisterPerEventSerializer(CommandID, &Serializer);
         }
     }
 
