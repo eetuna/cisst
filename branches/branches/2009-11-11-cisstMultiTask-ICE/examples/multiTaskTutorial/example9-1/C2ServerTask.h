@@ -13,16 +13,24 @@ class C2ServerTask: public mtsTaskPeriodic {
     // used to control the log level, 5 by default
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 protected:
-    mtsFunctionVoid EventVoid;
-    mtsFunctionWrite EventWrite;
+    mtsFunctionVoid EventVoid1;
+    mtsFunctionWrite EventWrite1;
+    
+    mtsFunctionVoid EventVoid2;
+    mtsFunctionWrite EventWrite2;
 
-    void Void(void);
-    void Write(const mtsDouble & data);
-    void QualifiedRead(const mtsDouble & data, mtsDouble & placeHolder) const;
+    void Void1(void);
+    void Write1(const mtsDouble & data);
+    void QualifiedRead1(const mtsDouble & data, mtsDouble & placeHolder) const;
 
-    mtsDouble ReadValue;
+    void Void2(void);
+    void Write2(const mtsDouble & data);
+    void QualifiedRead2(const mtsDouble & data, mtsDouble & placeHolder) const;
 
-    void SendButtonClickEvent() { EventVoid(); }
+    mtsDouble ReadValue1, ReadValue2;
+
+    void SendButtonClickEvent1() { EventVoid1(); }
+    void SendButtonClickEvent2() { EventVoid2(); }
 
     serverUI UI;
 

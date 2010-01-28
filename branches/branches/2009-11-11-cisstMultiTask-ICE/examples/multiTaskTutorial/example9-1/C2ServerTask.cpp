@@ -15,61 +15,87 @@ C2ServerTask::C2ServerTask(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 5000)
 {
     // add ServerData to the StateTable defined in mtsTask
-    this->StateTable.AddData(ReadValue, "ReadValue");
+    this->StateTable.AddData(ReadValue1, "ReadValue1");
+    this->StateTable.AddData(ReadValue2, "ReadValue2");
     // add one interface, this will create an mtsTaskInterface
     mtsProvidedInterface * provided = AddProvidedInterface("p1");
     if (provided) {
-        provided->AddCommandVoid(&C2ServerTask::Void, this, "Void");
-        provided->AddCommandWrite(&C2ServerTask::Write, this, "Write");
-        provided->AddCommandReadState(this->StateTable, this->ReadValue, "Read");
-        provided->AddCommandQualifiedRead(&C2ServerTask::QualifiedRead, this, "QualifiedRead");
-        provided->AddEventVoid(this->EventVoid, "EventVoid");
-        provided->AddEventWrite(this->EventWrite, "EventWrite", mtsDouble(3.14));
+        provided->AddCommandVoid(&C2ServerTask::Void1, this, "Void");
+        provided->AddCommandWrite(&C2ServerTask::Write1, this, "Write");
+        provided->AddCommandReadState(this->StateTable, this->ReadValue1, "Read");
+        provided->AddCommandQualifiedRead(&C2ServerTask::QualifiedRead1, this, "QualifiedRead");
+        provided->AddEventVoid(this->EventVoid1, "EventVoid");
+        provided->AddEventWrite(this->EventWrite1, "EventWrite", mtsDouble(3.14));
     }
 
     provided = AddProvidedInterface("p2");
     if (provided) {
-        provided->AddCommandVoid(&C2ServerTask::Void, this, "Void");
-        provided->AddCommandWrite(&C2ServerTask::Write, this, "Write");
-        provided->AddCommandReadState(this->StateTable, this->ReadValue, "Read");
-        provided->AddCommandQualifiedRead(&C2ServerTask::QualifiedRead, this, "QualifiedRead");
-        provided->AddEventVoid(this->EventVoid, "EventVoid");
-        provided->AddEventWrite(this->EventWrite, "EventWrite", mtsDouble(3.14));
+        provided->AddCommandVoid(&C2ServerTask::Void2, this, "Void");
+        provided->AddCommandWrite(&C2ServerTask::Write2, this, "Write");
+        provided->AddCommandReadState(this->StateTable, this->ReadValue2, "Read");
+        provided->AddCommandQualifiedRead(&C2ServerTask::QualifiedRead2, this, "QualifiedRead");
+        provided->AddEventVoid(this->EventVoid2, "EventVoid");
+        provided->AddEventWrite(this->EventWrite2, "EventWrite", mtsDouble(3.14));
     }
 }
 
-
-void C2ServerTask::Void(void)
+void C2ServerTask::Void1(void)
 {
-    CMN_LOG_CLASS_RUN_VERBOSE << "Void" << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "Void1" << std::endl;
     fltkMutex.Lock();
     {
-        if (UI.VoidValue->value() == 0) {
-            UI.VoidValue->value(1);
+        if (UI.VoidValue1->value() == 0) {
+            UI.VoidValue1->value(1);
         } else {
-            UI.VoidValue->value(0);
+            UI.VoidValue1->value(0);
         }
     }
     fltkMutex.Unlock();
 }
 
-
-void C2ServerTask::Write(const mtsDouble & data)
+void C2ServerTask::Write1(const mtsDouble & data)
 {
-    CMN_LOG_CLASS_RUN_VERBOSE << "Write" << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "Write1" << std::endl;
     fltkMutex.Lock();
     {
-        UI.WriteValue->value(data.Data);
+        UI.WriteValue1->value(data.Data);
     }
     fltkMutex.Unlock();
 }
 
-
-void C2ServerTask::QualifiedRead(const mtsDouble & data, mtsDouble & placeHolder) const
+void C2ServerTask::QualifiedRead1(const mtsDouble & data, mtsDouble & placeHolder) const
 {
-    placeHolder.Data = data.Data + UI.ReadValue->value();
+    placeHolder.Data = data.Data + UI.ReadValue1->value();
 }
 
+void C2ServerTask::Void2(void)
+{
+    CMN_LOG_CLASS_RUN_VERBOSE << "Void2" << std::endl;
+    fltkMutex.Lock();
+    {
+        if (UI.VoidValue2->value() == 0) {
+            UI.VoidValue2->value(1);
+        } else {
+            UI.VoidValue2->value(0);
+        }
+    }
+    fltkMutex.Unlock();
+}
+
+void C2ServerTask::Write2(const mtsDouble & data)
+{
+    CMN_LOG_CLASS_RUN_VERBOSE << "Write2" << std::endl;
+    fltkMutex.Lock();
+    {
+        UI.WriteValue2->value(data.Data);
+    }
+    fltkMutex.Unlock();
+}
+
+void C2ServerTask::QualifiedRead2(const mtsDouble & data, mtsDouble & placeHolder) const
+{
+    placeHolder.Data = data.Data + UI.ReadValue2->value();
+}
 
 void C2ServerTask::Startup(void)
 {
@@ -89,19 +115,32 @@ void C2ServerTask::Run(void) {
         // compute the new values based on the current time and amplitude
         fltkMutex.Lock();
         {
-            if (UI.VoidEventRequested) {
-                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidEventRequested" << std::endl;
-                this->EventVoid();
-                UI.VoidEventRequested = false;
+            if (UI.VoidEventRequested1) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidEventRequested1" << std::endl;
+                this->EventVoid1();
+                UI.VoidEventRequested1 = false;
             }
             
-            if (UI.WriteEventRequested) {
-                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteEventRequested" << std::endl;
-                this->EventWrite(mtsDouble(UI.ReadValue->value()));
-                UI.WriteEventRequested = false;
+            if (UI.WriteEventRequested1) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteEventRequested1" << std::endl;
+                this->EventWrite1(mtsDouble(UI.ReadValue1->value()));
+                UI.WriteEventRequested1 = false;
             }
             
-            this->ReadValue = UI.ReadValue->value();
+            if (UI.VoidEventRequested2) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: VoidEventRequested2" << std::endl;
+                this->EventVoid2();
+                UI.VoidEventRequested2 = false;
+            }
+            
+            if (UI.WriteEventRequested2) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: WriteEventRequested2" << std::endl;
+                this->EventWrite2(mtsDouble(UI.ReadValue2->value()));
+                UI.WriteEventRequested2 = false;
+            }
+
+            this->ReadValue1 = UI.ReadValue1->value();
+            this->ReadValue2 = UI.ReadValue2->value();
             Fl::check();
         }
     fltkMutex.Unlock();

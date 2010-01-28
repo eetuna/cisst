@@ -97,9 +97,12 @@ protected:
             Ice::InitializationData initData;
             
             // Use the following line if you want to use CISST logger.
-            //initData.logger = new typename BaseType::CisstLogger();
-            initData.logger = new typename BaseType::ProxyLogger();
+            initData.logger = new typename BaseType::CisstLogger();
+            //initData.logger = new typename BaseType::ProxyLogger();
 
+            // Create a set ICE proxy properties
+            // TODO: It would be better if we could control these properties 
+            // not within codes but using an external property file.
             initData.properties = Ice::createProperties();
             // There are two different modes of using implicit context: 
             // shared vs. PerThread.
@@ -108,6 +111,12 @@ protected:
             // For nested invocation
             initData.properties->setProperty("Ice.ThreadPool.Client.Size", "2");
             initData.properties->setProperty("Ice.ThreadPool.Client.SizeMax", "4");
+            // Disable Active Connection Management (ACM). ACM is configured 
+            // separately for client (outgoing) and server (incoming) connections
+            // and enabled and disabled by default for outgoing and incoming
+            // connection, respectively.
+            // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.4.html)
+            initData.properties->setProperty("Ice.ACM.Client", "0");
             //initData.properties->load(IcePropertyFileName);
             this->IceCommunicator = Ice::initialize(initData);
             

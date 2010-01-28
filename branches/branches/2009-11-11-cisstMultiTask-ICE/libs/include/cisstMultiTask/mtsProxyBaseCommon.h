@@ -370,3 +370,8 @@ public:
         IceLogger->error(s); }
 
 #endif // _mtsProxyBaseCommon_h
+
+/* TODO MEMO
+   
+   Connection closure: http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.6.html
+*/

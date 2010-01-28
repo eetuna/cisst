@@ -7,35 +7,58 @@ class serverUI {open
   Function {serverUI()} {open
   } {
     Fl_Window ServerWindow {
-      label Server open
-      xywh {785 393 356 258} type Double visible
+      label Server open selected
+      xywh {836 191 276 380} type Double visible
     } {
       Fl_Return_Button Close {
         label Close
         callback {ServerWindow->hide();  Opened = false;}
-        xywh {230 215 105 30} box THIN_UP_BOX
+        xywh {15 335 245 30} box THIN_UP_BOX
       }
-      Fl_Check_Button VoidValue {
-        label Void
-        xywh {130 9 35 26} down_box THIN_DOWN_BOX align 4
+      Fl_Check_Button VoidValue1 {
+        label {Void 1}
+        xywh {55 9 35 26} down_box THIN_DOWN_BOX align 4
       }
-      Fl_Value_Output WriteValue {
-        label Write
-        xywh {130 47 195 27}
+      Fl_Value_Output WriteValue1 {
+        label {Write 1}
+        xywh {55 47 195 27}
       }
-      Fl_Button VoidEventButton {
-        label {Void Event}
-        callback {this->VoidEventRequested = true;}
+      Fl_Button VoidEventButton1 {
+        label {Void Event 1}
+        callback {this->VoidEventRequested1 = true;}
         xywh {15 125 115 30}
       }
-      Fl_Button WriteEventButton {
-        label {Write Event}
-        callback {this->WriteEventRequested = true;}
-        xywh {15 165 115 30}
+      Fl_Button WriteEventButton1 {
+        label {Write Event 1}
+        callback {this->WriteEventRequested1 = true;}
+        xywh {145 125 115 30}
       }
-      Fl_Value_Slider ReadValue {
-        label Read
-        xywh {130 85 195 25} type {Horz Knob} align 4 maximum 100 step 1 value 50 textsize 14
+      Fl_Value_Slider ReadValue1 {
+        label {Read 1}
+        xywh {55 85 195 25} type {Horz Knob} align 4 maximum 100 step 1 value 50 textsize 14
+      }
+      
+      Fl_Check_Button VoidValue2 {
+        label {Void 2}
+        xywh {55 174 35 26} down_box THIN_DOWN_BOX align 4
+      }
+      Fl_Value_Output WriteValue2 {
+        label {Write 2}
+        xywh {55 212 195 27}
+      }
+      Fl_Button VoidEventButton2 {
+        label {Void Event 2}
+        callback {this->VoidEventRequested2 = true;}
+        xywh {15 290 115 30}
+      }
+      Fl_Button WriteEventButton2 {
+        label {Write Event 2}
+        callback {this->WriteEventRequested2 = true;}
+        xywh {145 290 115 30}
+      }
+      Fl_Value_Slider ReadValue2 {
+        label {Read 2}
+        xywh {55 250 195 25} type {Horz Knob} align 4 maximum 100 step 1 value 50 textsize 14
       }
     }
   }
@@ -43,9 +66,13 @@ class serverUI {open
   } {
     code {ServerWindow->show();} {}
   }
-  decl {bool VoidEventRequested;} {public
+  decl {bool VoidEventRequested1;} {public
   }
-  decl {bool WriteEventRequested;} {public
+  decl {bool WriteEventRequested1;} {public
+  }
+  decl {bool VoidEventRequested2;} {public
+  }
+  decl {bool WriteEventRequested2;} {public
   }
   decl {bool Opened;} {public
   }
