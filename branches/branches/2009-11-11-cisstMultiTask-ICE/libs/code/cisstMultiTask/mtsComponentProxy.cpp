@@ -425,6 +425,9 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
 
     // Create void event generator proxies
     mtsFunctionVoid * eventVoidGeneratorProxy = NULL;
+    // TODO: Isn't mtsMulticastCommandVoidProxy needed?
+    //mtsMulticastCommandVoidProxy eventMulticastCommandVoidProxy;
+
     EventVoidVector::const_iterator itEventVoid = providedInterfaceDescription.EventsVoid.begin();
     const EventVoidVector::const_iterator itEventVoidEnd = providedInterfaceDescription.EventsVoid.end();
     for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
@@ -446,7 +449,7 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
     // Create write event generator proxies
     //mtsFunctionWriteProxy * eventWriteGeneratorProxy;
     mtsFunctionWrite * eventWriteGeneratorProxy;
-    mtsMulticastCommandWriteProxy * eventMulticastCommandProxy;
+    mtsMulticastCommandWriteProxy * eventMulticastCommandWriteProxy;
 
     EventWriteVector::const_iterator itEventWrite = providedInterfaceDescription.EventsWrite.begin();
     const EventWriteVector::const_iterator itEventWriteEnd = providedInterfaceDescription.EventsWrite.end();
@@ -460,7 +463,7 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
             return false;
         }
 
-        eventMulticastCommandProxy = new mtsMulticastCommandWriteProxy(eventName);
+        eventMulticastCommandWriteProxy = new mtsMulticastCommandWriteProxy(eventName);
         
         // event argument deserialization
         streamBuffer.str("");
@@ -472,22 +475,22 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
             argumentPrototype = NULL;
         }
         if (!argumentPrototype) {
-            delete eventMulticastCommandProxy;
+            delete eventMulticastCommandWriteProxy;
             delete providedInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to create write event proxy: " << eventName << std::endl;
             return false;
         }
-        eventMulticastCommandProxy->SetArgumentPrototype(argumentPrototype);
+        eventMulticastCommandWriteProxy->SetArgumentPrototype(argumentPrototype);
 
-        if (!providedInterfaceProxy->AddEvent(eventName, eventMulticastCommandProxy)) {
-            delete eventMulticastCommandProxy;
+        if (!providedInterfaceProxy->AddEvent(eventName, eventMulticastCommandWriteProxy)) {
+            delete eventMulticastCommandWriteProxy;
             delete providedInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to add event multicast write command proxy: " << eventName << std::endl;
             return false;
         }
 
-        if (!eventWriteGeneratorProxy->Bind(eventMulticastCommandProxy)) {
-            delete eventMulticastCommandProxy;
+        if (!eventWriteGeneratorProxy->Bind(eventMulticastCommandWriteProxy)) {
+            delete eventMulticastCommandWriteProxy;
             delete providedInterfaceProxy;
             CMN_LOG_CLASS_RUN_ERROR << "CreateProvidedInterfaceProxy: failed to bind with event multicast write command proxy: " << eventName << std::endl;
             return false;

@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -21,11 +21,17 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
 
+void mtsMulticastCommandVoid::AddCommand(BaseType * command) 
+{
+    if (!command) return;
 
-void mtsMulticastCommandVoid::AddCommand(BaseType * command) {
-    if (command) {
-        this->Commands.push_back(command);
-    }
+    //if (IsEventDisabled()) {
+    //    if (Commands.size() > 0) {
+    //        return;
+    //    }
+    //}
+    
+    this->Commands.push_back(command);
 }
 
 

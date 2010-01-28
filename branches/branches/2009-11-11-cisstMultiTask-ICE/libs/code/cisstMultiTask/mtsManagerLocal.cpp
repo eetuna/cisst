@@ -756,6 +756,26 @@ int mtsManagerLocal::ConnectLocally(
             return -1;
         }
 
+        /*
+        // Disable event void (see mtsCommandBase.h for detailed comments)
+        mtsDeviceInterface::EventVoidMapType::const_iterator itVoid = 
+            providedInterfaceInstance->EventVoidGenerators.begin();
+        const mtsDeviceInterface::EventVoidMapType::const_iterator itVoidEnd = 
+            providedInterfaceInstance->EventVoidGenerators.end();
+        for (; itVoid != itVoidEnd; ++itVoid) {
+            itVoid->second->DisableEvent();
+        }
+
+        // Disable event write
+        mtsDeviceInterface::EventWriteMapType::const_iterator itWrite = 
+            providedInterfaceInstance->EventWriteGenerators.begin();
+        const mtsDeviceInterface::EventWriteMapType::const_iterator itWriteEnd = 
+            providedInterfaceInstance->EventWriteGenerators.end();
+        for (; itWrite != itWriteEnd; ++itWrite) {
+            itWrite->second->DisableEvent();
+        }
+        */
+
         CMN_LOG_CLASS_RUN_VERBOSE << "ConnectLocally: "
             << "created provided interface proxy instance: id = " << providedInterfaceInstanceID << std::endl;
     }

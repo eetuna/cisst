@@ -100,8 +100,10 @@ public:
         if (IsDisabled()) return mtsCommandBase::DISABLED;
 
         if (NetworkProxyServer) {
+            // Command write execution: client (request) -> server (execution)
             NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument);
         } else {
+            // Event write execution: server (event generator) -> client (event handler)
             NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument);
         }
 

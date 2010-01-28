@@ -57,6 +57,25 @@ protected:
       owned by an object being deleted. */
     bool EnableFlag;
 
+    /*! Flag to disable events.
+        When an event is generated at server side and it is propagated to the
+        connected component through network proxy clients that are running at 
+        server side and are connected to the same network proxy server at client
+        side, the event is executed twice at client side.
+        
+        For example, in a situation described in the new cisstMultiTask project
+        wiki page (https://trac.lcsr.jhu.edu/cisst/wiki/Private/cisstMultiTaskNetwork),
+        consider two connections as follows:
+            Connect("P1", "C1", "r2", "P2", "C2", "p2");
+            Connect("P1", "C2", "r1", "P2", "C2", "p2");
+        In this case, when an event is generated at "p2", it is executed twice
+        at "p2" proxy on "P2C2onP1" component.
+
+        To prevent this duplicate execution of the same event, only an original
+        provided interface should have event generators enabled, i.e., all the
+        provided interface instances have to disable event generators. */
+    bool DisableEventFlag;
+
 public:
     /* use to bitshift and or for return value of a composite
        would limit the number of composite interfaces to 31 for
@@ -80,13 +99,15 @@ public:
     /*! The constructor. Does nothing */
     inline mtsCommandBase(void):
         Name("??"),
-        EnableFlag(true)
+        EnableFlag(true),
+        DisableEventFlag(false)
     {}
 
     /*! Constructor with command name. */
     inline mtsCommandBase(const std::string & name):
         Name(name),
-        EnableFlag(true)
+        EnableFlag(true),
+        DisableEventFlag(false)
     {}
     
     /*! The destructor. Does nothing */
@@ -119,12 +140,20 @@ public:
         this->EnableFlag = false;
     }
 
+    inline void DisableEvent(void) {
+        this->DisableEventFlag = true;
+    }
+
     inline bool IsEnabled(void) const {
         return this->EnableFlag;
     }
 
     inline bool IsDisabled(void) const {
         return !(this->EnableFlag);
+    }
+
+    inline bool IsEventDisabled(void) const {
+        return this->DisableEventFlag;
     }
     //@}
 

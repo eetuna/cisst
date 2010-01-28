@@ -59,8 +59,10 @@ public:
         if (IsDisabled()) return mtsCommandBase::DISABLED;
 
         if (NetworkProxyServer) {
+            // Command void execution: client (request) -> server (execution)
             NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID);
         } else {
+            // Event void execution: server (event generator) -> client (event handler)
             NetworkProxyClient->SendExecuteEventVoid(CommandID);
         }
 

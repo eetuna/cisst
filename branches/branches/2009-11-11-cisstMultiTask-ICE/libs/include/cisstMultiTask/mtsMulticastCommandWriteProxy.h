@@ -52,9 +52,7 @@ public:
 protected:
     /*! The constructor with a name. */
     mtsMulticastCommandWriteProxy(const std::string & name) : BaseType(name)
-    {
-        //ArgumentPrototype = 0;
-    }
+    {}
 
     /*! Default destructor. Does nothing. */
     ~mtsMulticastCommandWriteProxy() {
