@@ -42,10 +42,10 @@ CMN_DECLARE_SERVICES_INSTANTIATION(C3Task);
 #endif // _C3Task_h
 
 /*
-  Author(s):  Anton Deguet
+  Author(s):  Anton Deguet, Min Yang Jung
   Created on: 2009-08-10
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
