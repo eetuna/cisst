@@ -102,7 +102,7 @@ bool vctThrowUnlessIsSameTypeArray<int>(PyObject * input)
 template <>
 bool vctThrowUnlessIsSameTypeArray<unsigned int>(PyObject * input)
 {
-    if (PyArray_ObjectType(input, 0) != NPY_INT32) {
+    if (PyArray_ObjectType(input, 0) != NPY_UINT32) {
         PyErr_SetString(PyExc_ValueError, "Array must be of type unsigned int (uint32)");
         return false;
     }
@@ -111,10 +111,10 @@ bool vctThrowUnlessIsSameTypeArray<unsigned int>(PyObject * input)
 
 
 template <>
-bool vctThrowUnlessIsSameTypeArray<long long int>(PyObject * input)
+bool vctThrowUnlessIsSameTypeArray<long int>(PyObject * input)
 {
     if (PyArray_ObjectType(input, 0) != NPY_INT64) {
-        PyErr_SetString(PyExc_ValueError, "Array must be of type long long int (int64)");
+        PyErr_SetString(PyExc_ValueError, "Array must be of type long int (int64)");
         return false;
     }
     return true;
@@ -122,10 +122,10 @@ bool vctThrowUnlessIsSameTypeArray<long long int>(PyObject * input)
 
 
 template <>
-bool vctThrowUnlessIsSameTypeArray<unsigned long long int>(PyObject * input)
+bool vctThrowUnlessIsSameTypeArray<unsigned long int>(PyObject * input)
 {
-    if (PyArray_ObjectType(input, 0) != NPY_INT64) {
-        PyErr_SetString(PyExc_ValueError, "Array must be of type unsigned long long int (uint64)");
+    if (PyArray_ObjectType(input, 0) != NPY_UINT64) {
+        PyErr_SetString(PyExc_ValueError, "Array must be of type unsigned long int (uint64)");
         return false;
     }
     return true;
@@ -179,14 +179,14 @@ int vctPythonType<unsigned int>(void)
 
 
 template <>
-int vctPythonType<long long int>(void)
+int vctPythonType<long int>(void)
 {
     return NPY_INT64;
 }
 
 
 template <>
-int vctPythonType<unsigned long long int>(void)
+int vctPythonType<unsigned long int>(void)
 {
     return NPY_UINT64;
 }

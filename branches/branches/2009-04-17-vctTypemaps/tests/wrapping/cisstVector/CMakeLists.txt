@@ -94,7 +94,7 @@ ADD_DEPENDENCIES(cisstVector_CREATE_PYTHON_TESTS_LIST
                  cisstVector
                  _cisstCommonPython
                  _cisstVectorPython
-                 _cisstVectorTypemapsTestPython)
+                 _cisstVectorPythonTestPython)
 
 FILE(APPEND ${DART_TEST_FILE} "INCLUDE(\"${DART_TEST_FILE_AUTO}\")\n")
 
