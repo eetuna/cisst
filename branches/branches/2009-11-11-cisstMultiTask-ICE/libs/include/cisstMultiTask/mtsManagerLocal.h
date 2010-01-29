@@ -172,6 +172,7 @@ protected:
     //  Methods required by mtsManagerLocalInterface
     //-------------------------------------------------------------------------
 public:
+#if CISST_MTS_HAS_ICE
     /*! Create a component proxy. This should be called before an interface 
         proxy is created. */
     bool CreateComponentProxy(const std::string & componentProxyName, const std::string & listenerID = "");
@@ -202,14 +203,6 @@ public:
     /*! The GCM informs LCM of the successful completion of proxy creation */
     void ProxyCreationCompleted(const std::string & listenerID = "");
 
-    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
-
-    bool ConnectClientSideInterface(const unsigned int connectionID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
-
     /*! Extract all the information on a provided interface such as command 
         objects and events with serialization */
     bool GetProvidedInterfaceDescription(
@@ -226,6 +219,15 @@ public:
 
     /*! Returns the total number of interfaces that are running on a component */
     const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "");
+#endif
+
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
+
+    bool ConnectClientSideInterface(const unsigned int connectionID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
 
     /*! Create an instance of local component manager (singleton) */
     static mtsManagerLocal * GetInstance(
@@ -256,15 +258,23 @@ public:
     /*! Check the existence of a component by name. */
     const bool FindComponent(const std::string & componentName) const;
 
-    /* Connect two local interfaces */
+    /* Connect two interfaces */
     bool Connect(
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
-    /*! Disconnect two local interfaces */
+    bool Connect(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    /*! Disconnect two interfaces */
     bool Disconnect(
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    bool Disconnect(
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     /*! Create all components added if a component is of mtsTask type. 
         Internally, this calls mtsTask::Create() for each task. */
@@ -342,24 +352,6 @@ public:
     //  Networking
     //-------------------------------------------------------------------------
 #if CISST_MTS_HAS_ICE
-    /*! Connect two remote interfaces */
-    bool Connect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName);
-
-    /*! DisConnect two remote interfaces */
-    bool Disconnect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName,
-        const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName,
-        const std::string & serverProvidedInterfaceName);
-
     /*! Check if a component is a proxy object based on a component name */
     const bool IsProxyComponent(const std::string & componentName) const {
         const std::string proxyStr = "Proxy";

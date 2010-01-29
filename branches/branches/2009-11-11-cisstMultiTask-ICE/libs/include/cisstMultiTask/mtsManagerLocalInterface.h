@@ -49,6 +49,7 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsManagerLocalInterface 
 {
 public:
+#if CISST_MTS_HAS_ICE
     //-------------------------------------------------------------------------
     //  Proxy Object Control (Creation, Removal)
     //-------------------------------------------------------------------------
@@ -84,6 +85,7 @@ public:
 
     /*! The GCM informs LCM of the successful completion of proxy creation */
     virtual void ProxyCreationCompleted(const std::string & listenerID = "") = 0;
+#endif
 
     //-------------------------------------------------------------------------
     //  Connection Management
@@ -103,6 +105,10 @@ public:
     //-------------------------------------------------------------------------
     //  Getters
     //-------------------------------------------------------------------------
+    /*! Returns the name of this local component manager */
+    virtual const std::string GetProcessName(const std::string & listenerID = "") = 0;
+
+#if CISST_MTS_HAS_ICE
     /*! Extract all the information on a provided interface (command objects 
         and event generators with arguments serialized (if any)) */
     virtual bool GetProvidedInterfaceDescription(
@@ -117,11 +123,9 @@ public:
         const std::string & requiredInterfaceName, 
         RequiredInterfaceDescription & requiredInterfaceDescription, const std::string & listenerID = "") = 0;
 
-    /*! Returns the name of this local component manager */
-    virtual const std::string GetProcessName(const std::string & listenerID = "") = 0;
-
     /*! Returns the total number of interfaces that are running on a component */
     virtual const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "") = 0;
+#endif
 };
 
 #endif // _mtsManagerLocalInterface_h

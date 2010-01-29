@@ -145,9 +145,28 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
+    /*! Make a client process initiate connection process. 
+        When LCM::Connect() is called at the server side, the server process
+        internally calls this method to start connection process at the client 
+        side. */
+    virtual bool InitiateConnect(const unsigned int connectionID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+
+    /*! Make a server process connect components. Internally, a required 
+        interface network proxy (of type mtsComponentInterfaceProxyClient)
+        is created, run, and connects to a provided interface network proxy
+        (of type mtsComponentInterfaceProxyServer). 
+        providedInterfaceProxyInstanceId is used by a network proxy server
+        to map it to get a network proxy client correctly. */
+    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+
     //-------------------------------------------------------------------------
     //  Networking
     //-------------------------------------------------------------------------
+#if CISST_MTS_HAS_ICE
     /*! Add access information of a server proxy (i.e., provided interface proxy)
         which a client proxy (i.e., required interface proxy) connects to. */
     virtual bool SetProvidedInterfaceProxyAccessInfo(
@@ -166,24 +185,7 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo, std::string & communicatorID) = 0;
-
-    /*! Make a client process initiate connection process. 
-        When LCM::Connect() is called at the server side, the server process
-        internally calls this method to start connection process at the client 
-        side. */
-    virtual bool InitiateConnect(const unsigned int connectionID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
-
-    /*! Make a server process connect components. Internally, a required 
-        interface network proxy (of type mtsComponentInterfaceProxyClient)
-        is created, run, and connects to a provided interface network proxy
-        (of type mtsComponentInterfaceProxyServer). 
-        providedInterfaceProxyInstanceId is used by a network proxy server
-        to map it to get a network proxy client correctly. */
-    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+#endif
 };
 
 #endif // _mtsManagerGlobalInterface_h

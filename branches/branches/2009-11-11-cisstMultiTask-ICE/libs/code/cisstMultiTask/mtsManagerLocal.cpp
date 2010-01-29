@@ -104,6 +104,9 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
     }
     // If process name is not "", this local component manager will run as network mode.
     else {
+#if !CISST_MTS_HAS_ICE
+        cmnThrow(std::runtime_error("cisstMultiTask does not support inter-process communication unless CISST_MTS_HAS_ICE is enabled."));
+#else
         CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: NETWORK mode" << std::endl;
         CMN_LOG_CLASS_INIT_VERBOSE << "Global component manager IP: " << GlobalComponentManagerIP << std::endl;
 
@@ -133,6 +136,7 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
         // as a network (ICE) proxy server of type mtsManagerProxyServer.
 
         ManagerGlobal = globalComponentManagerProxy;
+#endif
     }
 }
 
@@ -193,7 +197,9 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & thisProcessNa
 {
     if (!Instance) {
         Instance = new mtsManagerLocal(thisProcessName, globalComponentManagerIP);
+#if CISST_HAS_MTS_ICE
         Instance->SetIPAddress();
+#endif
     }
 
     return Instance;
@@ -618,27 +624,6 @@ bool mtsManagerLocal::Connect(
         return false;
     }
 
-    // Wait for up to 5 seconds to receive ProxyCreationCompleted message from
-    // the global component manager. The GCM sends this message after it
-    // finishes injecting proxy objects into processes and/or components.
-    double startTime = osaGetTime();
-    double currentTime = startTime;
-    const double endTime = startTime + 5.0;
-    while (currentTime < endTime) {
-        if (isProxyCreationCompleted) {
-            CMN_LOG_CLASS_RUN_VERBOSE << "Connect: Proxy creation completed" << std::endl;
-            break;
-        }
-        currentTime = osaGetTime();
-    }
-
-    // If ProxyCreationCompleted message was not received, proxy objects are 
-    // not correctly created.
-    if (!isProxyCreationCompleted) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: Proxy creation failed" << std::endl;
-        return false;
-    }
-
     // Connect() can be called by two different processes: either by the client
     // process or by the server process. Note that Connect() result should be
     // the same regardless a calling process.
@@ -740,6 +725,8 @@ int mtsManagerLocal::ConnectLocally(
     // clone command proxies from a provided interface proxy.
     unsigned int providedInterfaceInstanceID = 0;
     mtsProvidedInterface * providedInterfaceInstance = NULL;
+
+#if CISST_MTS_HAS_ICE
     const bool isServerComponentProxy = IsProxyComponent(serverComponentName);
     if (isServerComponentProxy) {
         mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
@@ -779,6 +766,7 @@ int mtsManagerLocal::ConnectLocally(
         CMN_LOG_CLASS_RUN_VERBOSE << "ConnectLocally: "
             << "created provided interface proxy instance: id = " << providedInterfaceInstanceID << std::endl;
     }
+#endif
     
     // if providedInterfaceInstance is NULL, this is local connection between
     // two original interfaces.
@@ -838,6 +826,7 @@ bool mtsManagerLocal::Disconnect(
     return true;
 }
 
+#if CISST_MTS_HAS_ICE
 bool mtsManagerLocal::GetProvidedInterfaceDescription(
     const std::string & componentName, const std::string & providedInterfaceName, 
     ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID)
@@ -1210,7 +1199,6 @@ const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componen
 //
 void mtsManagerLocal::SetIPAddress()
 {
-#if CISST_MTS_HAS_ICE
     // Fetch all ip addresses available on this machine.
     std::vector<std::string> ipAddresses;
     osaSocket::GetLocalhostIP(ipAddresses);
@@ -1239,9 +1227,6 @@ void mtsManagerLocal::SetIPAddress()
 
     //    std::cout << ProcessIP << std::endl;
     //}
-#else
-    ProcessIP = "localhost";
-#endif
 
     CMN_LOG_CLASS_INIT_VERBOSE << "this machine's IP address: " << ProcessIP << std::endl;
 }
@@ -1256,6 +1241,7 @@ bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(
         serverProcessName, serverComponentName, serverProvidedInterfaceName,
         endpointInfo, communicatorID);
 }
+#endif
 
 bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -1291,6 +1277,7 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
 
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: Established local connection at server process: " << ProcessName << std::endl;
 
+#if CISST_MTS_HAS_ICE
     // Get component proxy object. Note that this process is the server process
     // and the client component is a proxy object, not an original component.
     const std::string clientComponentProxyName = mtsManagerGlobal::GetComponentProxyName(clientProcessName, clientComponentName);
@@ -1389,6 +1376,7 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
             goto ConnectServerSideInterfaceError;
         }
     }
+#endif
 
     return true;
 
@@ -1410,7 +1398,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
 
     // Get the actual names of components (either a client component or a server
     // component is a proxy object).
-    mtsComponent *serverComponent, *clientComponent;
     std::string actualClientComponentName = clientComponentName;
     std::string actualServerComponentName = mtsManagerGlobal::GetComponentProxyName(serverProcessName, serverComponentName);
 
@@ -1427,6 +1414,9 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
             << serverProcessName << ":" << actualServerComponentName << ":" << serverProvidedInterfaceName << std::endl;
         return false;
     }
+
+#if CISST_MTS_HAS_ICE
+    mtsComponent *serverComponent, *clientComponent;
 
     // Get the components
     serverComponent = GetComponent(actualServerComponentName);
@@ -1490,6 +1480,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     }
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully set server proxy access information: "
         << serverProvidedInterfaceName << ", " << endpointAccessInfo << std::endl;
+#endif
 
     // Make the server process begin connection process via the GCM.
     if (!ManagerGlobal->ConnectServerSideInterface(providedInterfaceProxyInstanceId,
@@ -1502,6 +1493,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully connected server-side interfaces: "
         << clientRequiredInterfaceName << " - " << serverProvidedInterfaceName << std::endl;
 
+#if CISST_MTS_HAS_ICE
     // Now it is guaranteed that two local connections--one at the server side
     // and the other one at the client side--are successfully established.
     // That is, command IDs and event handler IDs can be updated.
@@ -1523,6 +1515,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     if (UnitTestEnabled && UnitTestNetworkProxyEnabled) {
         osaSleep(3);
     }
+#endif
 
     // Inform the GCM that the connection is successfully established and 
     // becomes active (network proxies are running now and an ICE client 

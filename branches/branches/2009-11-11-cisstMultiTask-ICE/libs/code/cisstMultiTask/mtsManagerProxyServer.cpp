@@ -941,8 +941,6 @@ void mtsManagerProxyServer::ManagerServerI::Run()
     {
         osaSleep(1 * cmn_ms);
 
-        ManagerProxyServer->ProxyOwner->ProcessConnectionQueue();
-
         /*
         if(!clients.empty())
         {

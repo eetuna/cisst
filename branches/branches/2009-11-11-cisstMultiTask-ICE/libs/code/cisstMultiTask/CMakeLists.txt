@@ -3,7 +3,7 @@
 #
 # CMakeLists for cisstMultiTask
 #
-# (C) Copyright 2003-2008 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2003-2010 Johns Hopkins University (JHU), All Rights
 # Reserved.
 # 
 # --- begin cisst license - do not edit ---
@@ -42,7 +42,6 @@ SET(SOURCE_FILES
     mtsCommandQueuedWriteBase.cpp
 
     mtsDevice.cpp
-    mtsComponentProxy.cpp
 
     mtsMailBox.cpp
     mtsStateIndex.cpp
@@ -102,7 +101,6 @@ SET(HEADER_FILES
     mtsForwardDeclarations.h
     
     mtsDevice.h
-    mtsComponentProxy.h
 
     mtsQueue.h
     mtsMailBox.h
@@ -137,40 +135,31 @@ SET(HEADER_FILES
     )
 
 # make sure all options are set for all devices to OFF
-option(CISST_MTS_HAS_ICE "Build network proxies for task and devices, requires ICE from ZeroC" OFF)
+option(CISST_MTS_HAS_ICE "Enable inter-process communication (IPC) feature of cisstMultiTask, requires ICE from ZeroC" OFF)
 
 if(CISST_MTS_HAS_ICE)
 
   SET(SOURCE_FILES ${SOURCE_FILES}
-      #mtsTaskManagerProxyClient.cpp
-      #mtsTaskManagerProxyServer.cpp
-      #mtsDeviceInterfaceProxyClient.cpp
-      #mtsDeviceInterfaceProxyServer.cpp
-      #mtsTaskGlobal.cpp
-      #mtsDeviceProxy.cpp
-      
       mtsComponentInterfaceProxyServer.cpp
       mtsComponentInterfaceProxyClient.cpp
       mtsManagerProxyServer.cpp
       mtsManagerProxyClient.cpp
+      mtsComponentProxy.cpp
       )
 
   SET(HEADER_FILES ${HEADER_FILES}
+      mtsComponentProxy.h
+
       mtsProxyBaseCommon.h
       mtsProxyBaseClient.h
       mtsProxyBaseServer.h
+      mtsProxySerializer.h
+
       mtsComponentInterfaceProxyServer.h
       mtsComponentInterfaceProxyClient.h
       mtsManagerProxyServer.h
       mtsManagerProxyClient.h
-      
-      mtsProxySerializer.h
-      #mtsTaskManagerProxyClient.h
-      #mtsTaskManagerProxyServer.h
-      #mtsDeviceInterfaceProxyClient.h
-      #mtsDeviceInterfaceProxyServer.h
-      #mtsTaskGlobal.h
-      #mtsDeviceProxy.h
+
       mtsCommandProxyBase.h
       mtsCommandVoidProxy.h
       mtsCommandWriteProxy.h
@@ -183,10 +172,6 @@ if(CISST_MTS_HAS_ICE)
       )
 
   SET(ICE_RESOURCE_FILES
-      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client
-      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.server
-      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsDeviceInterfaceProxy.ice
-      #${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsTaskManagerProxy.ice
       ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsComponentInterfaceProxy.ice
       ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsManagerProxy.ice
       )
@@ -197,8 +182,6 @@ if(CISST_MTS_HAS_ICE)
   SOURCE_GROUP(Resources FILES ${ICE_RESOURCE_FILES})
 
   SET(SLICE_FILES
-      #mtsDeviceInterfaceProxy
-      #mtsTaskManagerProxy
       mtsComponentInterfaceProxy
       mtsManagerProxy
       )

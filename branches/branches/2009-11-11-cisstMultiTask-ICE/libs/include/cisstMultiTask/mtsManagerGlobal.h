@@ -131,12 +131,6 @@ protected:
         std::string ServerProvidedInterfaceName;
     };
 
-    /*! Connection element list. An element is enqueued when a local component
-        manager requests a new connection and is dequeued when the global
-        component manager begins proxy creation process. */
-    typedef std::list<mtsManagerGlobal::ConnectionElement> ConnectionElementQueueType;
-    ConnectionElementQueueType ConnectionElementQueue;
-
     /*! Connection map: (connected interface name, connected interface information)
         Map name: a name of component that has these interfaces. */
     typedef cmnNamedMap<mtsManagerGlobal::ConnectedInterfaceInfo> ConnectionMapType;
@@ -197,7 +191,6 @@ protected:
     // TODO: Do I really need this???
     //
     osaMutex LocalManagerMapChange;
-    osaMutex ConnectionElementQueueChange;
 
     /*! Connection id */
     unsigned int ConnectionID;
@@ -325,6 +318,14 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
+    bool InitiateConnect(const unsigned int connectionID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+
     //-------------------------------------------------------------------------
     //  Public Getters
     //-------------------------------------------------------------------------
@@ -337,21 +338,21 @@ public:
     inline std::string GetIPAddress() const { return ProcessIP; }
 
     /*! Generate unique id of an interface as string */
-    static const std::string GetInterfaceUID(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+    inline static const std::string GetInterfaceUID(
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName) 
     {
         return processName + ":" + componentName + ":" + interfaceName;
     }
 
     /*! Generate unique name of a proxy component */
-    static const std::string GetComponentProxyName(const std::string & processName, const std::string & componentName)
-    {
+    inline static const std::string GetComponentProxyName(const std::string & processName, const std::string & componentName) {
         return processName + ":" + componentName + "Proxy";
     }
 
     //-------------------------------------------------------------------------
     //  Networking
     //-------------------------------------------------------------------------
+#if CISST_MTS_HAS_ICE
     /*! Start network proxy server. If user port number is not specified, default
         port 10705 (defined in mtsProxyBaseCommon.h) is used. */
     bool StartServer(const unsigned int userPortNumber = 0);
@@ -365,17 +366,7 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo, std::string & communicatorID);
-
-    bool InitiateConnect(const unsigned int connectionID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
-
-    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
-
-    /*! Process connection element queue */
-    void ProcessConnectionQueue();
+#endif
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerGlobal)
