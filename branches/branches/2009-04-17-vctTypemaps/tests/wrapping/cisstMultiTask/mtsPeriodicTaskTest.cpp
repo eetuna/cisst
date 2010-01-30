@@ -30,7 +30,7 @@ mtsPeriodicTaskTest::mtsPeriodicTaskTest(double periodInSeconds):
     mtsTaskPeriodic("mtsPeriodicTaskTest", periodInSeconds, false, 500)
 {
     this->Double = 0.0;
-    this->Vector.SetSize(5.0);
+    this->Vector.SetSize(5);
     this->Vector.SetAll(0.0);
     StateTable.AddData(this->Double, "Double");
     StateTable.AddData(this->Vector, "Vector");

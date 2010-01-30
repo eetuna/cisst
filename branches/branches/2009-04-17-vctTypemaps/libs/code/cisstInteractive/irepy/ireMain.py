@@ -27,7 +27,7 @@ To launch the IRE without the CISST Object Register, call:
 >>>ireMain.launchIrePython( False )
 
 Authors: Chris Abidin, Andrew LaMora, Peter Kazanzides
-Copyright 2004-2005
+Copyright 2004-2010
 ERC CISST
 Johns Hopkins University
 Baltimore, MD 21218
@@ -508,7 +508,7 @@ class ireMain(wx.Frame):
         if not self.ObjectRegister:
             if sys.modules.has_key('cisstCommonPython'):
                 import cisstCommonPython
-                self.ObjectRegister = cisstCommonPython.cmnObjectRegister
+                self.ObjectRegister = cisstCommonPython.cmnObjectRegister_Instance()
         if self.ObjectRegister:
             self.CheckRegisterContents()
         self.CheckScopeVariables()
@@ -516,7 +516,7 @@ class ireMain(wx.Frame):
 
 
     def CheckRegisterContents(self):
-        CurrentRegister = String.split(self.ObjectRegister.ToString())
+        CurrentRegister = String.split(self.ObjectRegister.__str__())
         if CurrentRegister != self.Register:
             self.UpdateList(self.RegisterContentsListCtrl, self.GetRegisterContents(self.TYPES_TO_EXCLUDE))
             self.Register = CurrentRegister
@@ -539,7 +539,7 @@ class ireMain(wx.Frame):
         Contents = {}
         VariableName = ""
         VariableType = ""
-        for tok in String.split(self.ObjectRegister.ToString(), " "):
+        for tok in String.split(self.ObjectRegister.__str__(), " "):
             #if starts with lparen, is type, else is name
             if tok.find('(')==0:  #this is a variabletype
                 VariableType = tok[1:tok.rfind(')')]
