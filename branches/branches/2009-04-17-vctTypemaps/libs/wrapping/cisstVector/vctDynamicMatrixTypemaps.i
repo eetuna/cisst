@@ -647,7 +647,14 @@ http://www.cisst.org/cisst/license.txt.
 %apply const vctDynamicConstMatrixRef & {const vctDynamicConstMatrixRef<elementType> &};
 %enddef
 
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(char);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(unsigned char);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(short);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(unsigned short);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(int);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(unsigned int);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(long long int);
+VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(unsigned long long int);
 VCT_TYPEMAPS_APPLY_DYNAMIC_MATRICES(double);
 
 %apply vctDynamicMatrix         {vctDoubleMat, vctMat, vctIntMat};

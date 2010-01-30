@@ -89,6 +89,28 @@ bool vctThrowUnlessIsSameTypeArray<unsigned char>(PyObject * input)
 
 
 template <>
+bool vctThrowUnlessIsSameTypeArray<short>(PyObject * input)
+{
+    if (PyArray_ObjectType(input, 0) != NPY_INT16) {
+        PyErr_SetString(PyExc_ValueError, "Array must be of type short (int16)");
+        return false;
+    }
+    return true;
+}
+
+
+template <>
+bool vctThrowUnlessIsSameTypeArray<unsigned short>(PyObject * input)
+{
+    if (PyArray_ObjectType(input, 0) != NPY_UINT16) {
+        PyErr_SetString(PyExc_ValueError, "Array must be of type unsigned short (uint16)");
+        return false;
+    }
+    return true;
+}
+
+
+template <>
 bool vctThrowUnlessIsSameTypeArray<int>(PyObject * input)
 {
     if (PyArray_ObjectType(input, 0) != NPY_INT32) {
@@ -161,6 +183,20 @@ template <>
 int vctPythonType<unsigned char>(void)
 {
     return NPY_UINT8;
+}
+
+
+template <>
+int vctPythonType<short>(void)
+{
+    return NPY_INT16;
+}
+
+
+template <>
+int vctPythonType<unsigned short>(void)
+{
+    return NPY_UINT16;
 }
 
 

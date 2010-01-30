@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector.h>
 #include <iostream>
 
-typedef unsigned int size_type;
+typedef vct::size_type size_type;
 
 template <class _elementType>
 class vctDynamicVectorTypemapsTest
