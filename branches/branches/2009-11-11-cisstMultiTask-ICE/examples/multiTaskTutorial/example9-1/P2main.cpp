@@ -30,7 +30,13 @@ int main(int argc, char * argv[])
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
 
     // Get the local component manager
-    mtsManagerLocal * localManager = mtsManagerLocal::GetInstance("P2", globalComponentManagerIP);
+    mtsManagerLocal * localManager;
+    try {
+        localManager = mtsManagerLocal::GetInstance("P2", globalComponentManagerIP);
+    } catch (...) {
+        CMN_LOG_INIT_ERROR << "Failed to initialize local component manager" << std::endl;
+        return 1;
+    }
 
     // create our server task
     const double PeriodClient = 10 * cmn_ms; // in milliseconds
@@ -61,10 +67,10 @@ int main(int argc, char * argv[])
 }
 
 /*
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
-  Created on: 2004-04-30
+  Author(s):  Min Yang Jung
+  Created on: 2009-01-27
 
-  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---

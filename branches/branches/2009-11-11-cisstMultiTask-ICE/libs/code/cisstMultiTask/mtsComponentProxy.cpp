@@ -550,7 +550,7 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
     // Generate parameters to initialize server proxy    
     adapterName = adapterNameBase + "_" + providedInterfaceProxyName;
     endpointAccessInfo = ":default -h " + managerLocal->GetIPAddress() + " " + "-p " + portNumber;
-    communicatorID = mtsComponentInterfaceProxyServer::InterfaceCommunicatorID;
+    communicatorID = mtsComponentInterfaceProxyServer::GetInterfaceCommunicatorID();
 
     // Create an instance of mtsComponentInterfaceProxyServer
     mtsComponentInterfaceProxyServer * providedInterfaceProxy =

@@ -70,7 +70,8 @@ bool mtsManagerProxyClient::Start(mtsManagerLocal * proxyOwner)
     //
     // Set an implicit context (per proxy context)
     // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
-    IceCommunicator->getImplicitContext()->put(ConnectionIDKey, IceCommunicator->identityToString(ident));
+    IceCommunicator->getImplicitContext()->put(
+        mtsManagerProxyServer::GetConnectionIDKey(), IceCommunicator->identityToString(ident));
 
     // Set the owner and name of this proxy object
     SetProxyOwner(proxyOwner);
@@ -544,7 +545,6 @@ mtsManagerProxyClient::ManagerClientI::ManagerClientI(
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ManagerClientIPtr>(this)),
       IceLogger(logger),
-      Runnable(true), 
       ManagerProxyClient(ManagerClient),
       Server(server)
 {
@@ -566,7 +566,7 @@ void mtsManagerProxyClient::ManagerClientI::Run()
 #ifdef _COMMUNICATION_TEST_
     int count = 0;
 
-    while (Runnable) {
+    while (IsActiveProxy()) {
         osaSleep(1 * cmn_s);
         std::cout << "\tClient [" << ManagerProxyClient->GetProxyName() << "] running (" << ++count << ")" << std::endl;
 
@@ -576,8 +576,10 @@ void mtsManagerProxyClient::ManagerClientI::Run()
         ManagerProxyClient->SendTestMessageFromClientToServer(ss.str());
     }
 #else
-    while (Runnable)
+    while (this->IsActiveProxy())
     {
+        //ManagerProxyClient->RunMonitor();
+        //osaSleep(500 * cmn_ms);
         osaSleep(10 * cmn_ms);
     }
 #endif
@@ -592,7 +594,8 @@ void mtsManagerProxyClient::ManagerClientI::Stop()
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        Runnable = false;
+        // TODO: change this from active to prepare stop(?)
+        //Runnable = false;
 
         notify();
 

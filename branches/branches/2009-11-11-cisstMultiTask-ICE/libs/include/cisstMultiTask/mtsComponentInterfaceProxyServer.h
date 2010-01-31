@@ -44,20 +44,6 @@ class CISST_EXPORT mtsComponentInterfaceProxyServer :
     /*! Typedef for base type */
     typedef mtsProxyBaseServer<mtsComponentProxy, ComponentInterfaceClientProxyType, unsigned int> BaseServerType;
 
-public:
-    mtsComponentInterfaceProxyServer(
-        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
-        : BaseServerType(adapterName, endpointInfo, communicatorID)
-    {}
-
-    ~mtsComponentInterfaceProxyServer();
-
-    /*! Entry point to run a proxy. */
-    bool Start(mtsComponentProxy * owner);
-
-    /*! Stop the proxy (clean up thread-related resources) */
-    void Stop();
-
 protected:
     /*! Definitions for send thread */
     class ComponentInterfaceServerI;
@@ -94,6 +80,14 @@ protected:
     typedef std::map<CommandIDType, mtsProxySerializer *> PerCommandSerializerMapType;
     PerCommandSerializerMapType PerCommandSerializerMap;
 
+    /*! String key to set an implicit per-proxy context for connection id */
+    static std::string ConnectionIDKey;
+
+    /*! Communicator (proxy) ID to initialize mtsComponentInterfaceProxyServer. 
+        A component interface proxy client uses this ID to connect to a proxy 
+        server. */
+    static std::string InterfaceCommunicatorID;
+
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)
     //-------------------------------------------------------------------------
@@ -115,9 +109,18 @@ protected:
     void ReceiveExecuteEventWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument);
 
 public:
-    /*! Communicator (proxy) ID for communication between component interface
-        server and component interface client */
-    static std::string InterfaceCommunicatorID;
+    mtsComponentInterfaceProxyServer(
+        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
+        : BaseServerType(adapterName, endpointInfo, communicatorID)
+    {}
+
+    ~mtsComponentInterfaceProxyServer();
+
+    /*! Entry point to run a proxy. */
+    bool Start(mtsComponentProxy * owner);
+
+    /*! Stop the proxy (clean up thread-related resources) */
+    void Stop();
 
     /*! Register per-command (de)serializer */
     bool RegisterPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer);
@@ -147,6 +150,19 @@ public:
     bool SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argumentIn, mtsGenericObject & argumentOut);
 
     //-------------------------------------------------------------------------
+    //  Getters
+    //-------------------------------------------------------------------------
+    /*! Returns connection id key */
+    inline static std::string GetConnectionIDKey() {
+        return mtsComponentInterfaceProxyServer::ConnectionIDKey;
+    }
+
+    /*! Returns communicator (proxy) ID */
+    inline static std::string GetInterfaceCommunicatorID() {
+        return mtsComponentInterfaceProxyServer::InterfaceCommunicatorID;
+    }
+
+    //-------------------------------------------------------------------------
     //  Definition by mtsComponentInterfaceProxy.ice
     //-------------------------------------------------------------------------
 protected:
@@ -160,10 +176,6 @@ protected:
         IceUtil::ThreadPtr SenderThreadPtr;
         Ice::LoggerPtr IceLogger;
 
-        // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
-        /*! True if ICE proxy is running */
-        bool Runnable;
-
         /*! Network event handler */
         mtsComponentInterfaceProxyServer * ComponentInterfaceProxyServer;
         
@@ -176,6 +188,9 @@ protected:
         void Start();
         void Run();
         void Stop();
+        bool IsActiveProxy() const {
+            return ComponentInterfaceProxyServer->IsActiveProxy();
+        }
 
         //---------------------------------------
         //  Event Handlers (Client -> Server)

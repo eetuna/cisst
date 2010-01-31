@@ -21,31 +21,28 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsManagerLocal.h>
 
+#include <cisstMultiTask/mtsConfig.h>
 #include <cisstCommon/cmnThrow.h>
 #include <cisstOSAbstraction/osaSleep.h>
-#include <cisstOSAbstraction/osaSocket.h>
 #include <cisstOSAbstraction/osaGetTime.h>
 
 #include <cisstMultiTask/mtsManagerGlobal.h>
-#include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsTaskContinuous.h>
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsTaskFromCallback.h>
 
+#if CISST_MTS_HAS_ICE
+#include <cisstMultiTask/mtsComponentProxy.h>
+#include <cisstOSAbstraction/osaSocket.h>
+#include <cisstMultiTask/mtsManagerProxyClient.h>
+#include <cisstMultiTask/mtsManagerProxyServer.h>
 #include <cisstMultiTask/mtsCommandVoidProxy.h>
 #include <cisstMultiTask/mtsCommandWriteProxy.h>
 #include <cisstMultiTask/mtsCommandReadProxy.h>
 #include <cisstMultiTask/mtsCommandQualifiedReadProxy.h>
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
 #include <cisstMultiTask/mtsMulticastCommandWriteProxy.h>
-
-#if CISST_MTS_HAS_ICE
-#include <cisstMultiTask/mtsManagerProxyClient.h>
-#include <cisstMultiTask/mtsManagerProxyServer.h>
 #endif
-//#include <cisstMultiTask/mtsDeviceProxy.h>
-//#include <cisstMultiTask/mtsManagerLocalProxyServer.h>
-//#include <cisstMultiTask/mtsManagerLocalProxyClient.h>
 
 CMN_IMPLEMENT_SERVICES(mtsManagerLocal);
 
@@ -119,11 +116,11 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName,
         // client of type mtsManagerProxyClient which transfers data between this
         // local component manager and the GCM across a network.
         mtsManagerProxyClient * globalComponentManagerProxy = 
-            new mtsManagerProxyClient(ss.str(), mtsManagerProxyServer::ManagerCommunicatorID);
+            new mtsManagerProxyClient(ss.str(), mtsManagerProxyServer::GetManagerCommunicatorID());
 
         // Run and connect to the global component manager
         if (!globalComponentManagerProxy->Start(this)) {
-            cmnThrow(std::runtime_error("Global component manager proxy failed to start"));
+            cmnThrow(std::runtime_error("Failed to initialize global component manager proxy"));
         }
 
         // Register process name to the global component manager.
@@ -197,7 +194,7 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & thisProcessNa
 {
     if (!Instance) {
         Instance = new mtsManagerLocal(thisProcessName, globalComponentManagerIP);
-#if CISST_HAS_MTS_ICE
+#if CISST_MTS_HAS_ICE
         Instance->SetIPAddress();
 #endif
     }

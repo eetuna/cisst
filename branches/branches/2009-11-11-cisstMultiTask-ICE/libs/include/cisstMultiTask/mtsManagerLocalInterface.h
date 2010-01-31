@@ -44,6 +44,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsManagerLocalInterface_h
 #define _mtsManagerLocalInterface_h
 
+#include <cisstMultiTask/mtsConfig.h>
 #include <cisstMultiTask/mtsInterfaceCommon.h>
 
 class CISST_EXPORT mtsManagerLocalInterface 

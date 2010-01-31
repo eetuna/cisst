@@ -50,6 +50,13 @@ protected:
     //-------------------------------------------------------------------------
     //  Proxy Implementation
     //-------------------------------------------------------------------------
+    /*! String key to set an implicit per-proxy context for connection id */
+    static std::string ConnectionIDKey;
+
+    /*! Communicator (proxy) ID to initialize mtsManagerProxyServer. A manager
+        proxy client uses this ID to connect to proxy server. */
+    static std::string ManagerCommunicatorID;
+
     /*! Create a servant */
     Ice::ObjectPtr CreateServant() {
         Sender = new ManagerServerI(IceCommunicator, IceLogger, this);
@@ -128,10 +135,6 @@ public:
 
     /*! Stop the proxy (clean up thread-related resources) */
     void Stop();
-
-    /*! Communicator (proxy) ID for communication between global component manager
-        and local component managers */
-    static std::string ManagerCommunicatorID;
 
     /*! Construct mtsManagerProxy::ConnectionStringSet structure */
     void ConstructConnectionStringSet(
@@ -261,6 +264,19 @@ public:
     ::Ice::Int SendGetCurrentInterfaceCount(const std::string & componentName, const std::string & clientID);
 
     //-------------------------------------------------------------------------
+    //  Getters
+    //-------------------------------------------------------------------------
+    /*! Returns connection id key */
+    inline static std::string GetConnectionIDKey() {
+        return mtsManagerProxyServer::ConnectionIDKey;
+    }
+
+    /*! Returns communicator (proxy) ID */
+    inline static std::string GetManagerCommunicatorID() {
+        return mtsManagerProxyServer::ManagerCommunicatorID;
+    }
+
+    //-------------------------------------------------------------------------
     //  Definition by mtsManagerProxy.ice
     //-------------------------------------------------------------------------
 protected:
@@ -274,10 +290,6 @@ protected:
         IceUtil::ThreadPtr SenderThreadPtr;
         Ice::LoggerPtr IceLogger;
 
-        // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
-        /*! True if ICE proxy is running */
-        bool Runnable;
-
         /*! Network event handler */
         mtsManagerProxyServer * ManagerProxyServer;
         
@@ -290,6 +302,9 @@ protected:
         void Start();
         void Run();
         void Stop();
+        bool IsActiveProxy() const {
+            return ManagerProxyServer->IsActiveProxy();
+        }
 
         //---------------------------------------
         //  Event Handlers (Client -> Server)

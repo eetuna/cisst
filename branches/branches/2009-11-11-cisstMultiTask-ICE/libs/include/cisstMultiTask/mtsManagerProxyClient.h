@@ -215,10 +215,6 @@ protected:
         IceUtil::ThreadPtr SenderThreadPtr;
         Ice::LoggerPtr IceLogger;
 
-        // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
-        /*! True if ICE proxy is running */
-        bool Runnable;
-
         /*! Network event processor */
         mtsManagerProxyClient * ManagerProxyClient;
 
@@ -235,6 +231,9 @@ protected:
         void Start();
         void Run();
         void Stop();
+        bool IsActiveProxy() const {
+            return ManagerProxyClient->IsActiveProxy();
+        }
 
         //-------------------------------------------------
         //  Network Event handlers (Server -> Client)

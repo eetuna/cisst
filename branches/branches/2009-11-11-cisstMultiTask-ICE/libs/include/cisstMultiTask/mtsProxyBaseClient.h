@@ -23,7 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsProxyBaseClient_h
 
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
-#include <cisstOSAbstraction/osaSleep.h>
 
 #include <cisstMultiTask/mtsExport.h>
 
@@ -46,7 +45,7 @@ public:
     typedef mtsProxyBaseCommon<_proxyOwner> BaseType;
 
 protected:
-    /*! Start client proxy */
+    /*! Start proxy client */
     virtual bool Start(_proxyOwner * proxyOwner) = 0;
 
     /*! Terminate proxy */
@@ -56,19 +55,16 @@ protected:
             return;
         }
 
-        if (this->ProxyState == BaseType::PROXY_ACTIVE) {
-            ChangeProxyState(BaseType::PROXY_FINISHING);
+        ChangeProxyState(BaseType::PROXY_FINISHING);
 
-            if (this->IceCommunicator) {
-                try {                    
-                    this->IceCommunicator->destroy();
-                    
-                    ChangeProxyState(BaseType::PROXY_FINISHED);
-                    this->IceLogger->trace("mtsProxyBaseClient", "Client proxy clean-up success.");
-                } catch (const Ice::Exception& e) {
-                    this->IceLogger->trace("mtsProxyBaseClient", "Client proxy clean-up failure.");
-                    this->IceLogger->trace("mtsProxyBaseClient", e.what());
-                }
+        if (this->IceCommunicator) {
+            try {                    
+                this->IceCommunicator->destroy();
+                ChangeProxyState(BaseType::PROXY_FINISHED);
+                this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up success.");
+            } catch (const Ice::Exception& e) {
+                this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up failure.");
+                this->IceLogger->trace("mtsProxyBaseClient", e.what());
             }
         }
     }
@@ -80,48 +76,19 @@ protected:
     /*! ICE Object */
     Ice::ObjectPrx ProxyObject;
 
-    /*! Endpoint information to connect to server proxy. This information is
+    /*! Endpoint information to connect to proxy server. This information is
         feteched from  the global component manager. */
     const std::string EndpointInfo;
     const std::string CommunicatorID;
 
-    /*! Create client proxy object */
+    /*! Create ICE proxy client object */
     virtual void CreateProxy() = 0;
 
     /*! Initialize client proxy */
     void IceInitialize(void)
     {
         try {
-            ChangeProxyState(BaseType::PROXY_INITIALIZING);
-
-            Ice::InitializationData initData;
-            
-            // Use the following line if you want to use CISST logger.
-            //initData.logger = new typename BaseType::CisstLogger();
-            initData.logger = new typename BaseType::ProxyLogger();
-
-            // Create a set ICE proxy properties
-            // TODO: It would be better if we could control these properties 
-            // not within codes but using an external property file.
-            initData.properties = Ice::createProperties();
-            // There are two different modes of using implicit context: 
-            // shared vs. PerThread.
-            // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
-            initData.properties->setProperty("Ice.ImplicitContext", "Shared");
-            // For nested invocation
-            initData.properties->setProperty("Ice.ThreadPool.Client.Size", "2");
-            initData.properties->setProperty("Ice.ThreadPool.Client.SizeMax", "4");
-            // Disable Active Connection Management (ACM). ACM is configured 
-            // separately for client (outgoing) and server (incoming) connections
-            // and enabled and disabled by default for outgoing and incoming
-            // connection, respectively.
-            // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.4.html)
-            initData.properties->setProperty("Ice.ACM.Client", "0");
-            //initData.properties->load(IcePropertyFileName);
-            this->IceCommunicator = Ice::initialize(initData);
-            
-            // Create a logger
-            this->IceLogger = this->IceCommunicator->getLogger();
+            BaseType::IceInitialize();
 
             // Create a proxy object from stringfied proxy information
             std::string stringfiedProxy = CommunicatorID + EndpointInfo;
@@ -131,26 +98,25 @@ protected:
             CreateProxy();
 
             this->InitSuccessFlag = true;
-            this->Runnable = true;
             
             ChangeProxyState(BaseType::PROXY_READY);
 
             this->IceLogger->trace("mtsProxyBaseClient", "Client proxy initialization success.");
-        } catch (const Ice::Exception& e) {
+        } catch (const ::Ice::ConnectionRefusedException & e) {
+            if (this->IceLogger) {
+                this->IceLogger->error("mtsProxyBaseClient: Connection refused. Check if server is running.");
+                this->IceLogger->trace("mtsProxyBaseClient", e.what());
+            } else {
+                std::cout << "mtsProxyBaseClient: Connection refused. Check if server is running." << std::endl;
+                std::cout << "mtsProxyBaseClient: " << e.what() << std::endl;
+            }
+        } catch (const ::Ice::Exception & e) {
             if (this->IceLogger) {
                 this->IceLogger->error("mtsProxyBaseClient: Client proxy initialization error");
                 this->IceLogger->trace("mtsProxyBaseClient", e.what());
             } else {
                 std::cout << "mtsProxyBaseClient: Client proxy initialization error." << std::endl;
                 std::cout << "mtsProxyBaseClient: " << e.what() << std::endl;
-            }
-        } catch (const char * msg) {
-            if (this->IceLogger) {
-                this->IceLogger->error("mtsProxyBaseClient: Client proxy initialization error");
-                this->IceLogger->trace("mtsProxyBaseClient", msg);
-            } else {
-                std::cout << "mtsProxyBaseClient: Client proxy initialization error." << std::endl;
-                std::cout << "mtsProxyBaseClient: " << msg << std::endl;
             }
         }
 

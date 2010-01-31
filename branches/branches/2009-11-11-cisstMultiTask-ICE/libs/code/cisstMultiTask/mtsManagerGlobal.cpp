@@ -978,7 +978,7 @@ bool mtsManagerGlobal::StartServer(const unsigned int userPortNumber)
 
     // Generate parameters to initialize server proxy    
     endpointAccessInfo = ":default -h " + ProcessIP + " -p " + portNumberString;
-    communicatorID = mtsManagerProxyServer::ManagerCommunicatorID;
+    communicatorID = mtsManagerProxyServer::GetManagerCommunicatorID();
 
     // Create an instance of mtsComponentInterfaceProxyServer
     ProxyServer = new mtsManagerProxyServer(adapterName, endpointInfo, communicatorID);

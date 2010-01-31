@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
 
 std::string mtsComponentInterfaceProxyServer::InterfaceCommunicatorID = "InterfaceCommunicator";
+std::string mtsComponentInterfaceProxyServer::ConnectionIDKey = "InterfaceConnectionID";
 
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
@@ -422,7 +423,6 @@ mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ComponentInterfaceS
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ComponentInterfaceServerIPtr>(this)),
       IceLogger(logger),
-      Runnable(true),
       ComponentInterfaceProxyServer(componentInterfaceProxyServer)
 {
 }
@@ -442,7 +442,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 #ifdef _COMMUNICATION_TEST_
     int count = 0;
 
-    while (Runnable) 
+    while (IsActiveProxy()) 
     {
         osaSleep(1 * cmn_s);
         std::cout << "\tServer [" << ComponentInterfaceProxyServer->GetProxyName() << "] running (" << ++count << ")" << std::endl;
@@ -453,7 +453,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
         ComponentInterfaceProxyServer->SendTestMessageFromServerToClient(ss.str());
     }
 #else
-    while(Runnable) 
+    while(IsActiveProxy()) 
     {
         osaSleep(10 * cmn_ms);
 
@@ -491,7 +491,8 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        Runnable = false;
+        // TODO: Change proxy state from active to 'prepare to stop(?)'
+        //Runnable = false;
 
         notify();
 
@@ -511,7 +512,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::TestMessageFro
     LogPrint(ComponentInterfaceServerI, "<<<<< RECV: TestMessageFromClientToServer");
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
 
     ComponentInterfaceProxyServer->ReceiveTestMessageFromClientToServer(connectionID, str);
 }
@@ -524,7 +525,7 @@ bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::AddClient(
    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: AddClient: " << connectingProxyName << " (" << Communicator->identityToString(identity) << ")");
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
 
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
@@ -541,7 +542,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const
     LogPrint(ComponentInterfaceServerI, "<<<<< RECV: Shutdown");
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
 
     // Set as true to represent that this connection (session) is going to be closed.
     // After this flag is set, no message is allowed to be sent to a server.
@@ -557,7 +558,7 @@ bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::FetchEventGene
     LogPrint(ComponentInterfaceServerI, "<<<<< RECV: FetchEventGeneratorProxyPointers: req.int=" << requiredInterfaceName << ", prv.int=" << providedInterfaceName);
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
 
     return ComponentInterfaceProxyServer->ReceiveFetchEventGeneratorProxyPointers(
         connectionID, requiredInterfaceName, providedInterfaceName, eventGeneratorProxyPointers);

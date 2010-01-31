@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsManagerProxyServer);
 
 std::string mtsManagerProxyServer::ManagerCommunicatorID = "ManagerServerCommunicator";
+std::string mtsManagerProxyServer::ConnectionIDKey = "ManagerConnectionID";
 
 //-----------------------------------------------------------------------------
 //  Constructor, Destructor, Initializer
@@ -905,7 +906,6 @@ mtsManagerProxyServer::ManagerServerI::ManagerServerI(
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ManagerServerIPtr>(this)),
       IceLogger(logger),
-      Runnable(true),
       ManagerProxyServer(managerProxyServer)
 {
 }
@@ -926,7 +926,7 @@ void mtsManagerProxyServer::ManagerServerI::Run()
 #ifdef _COMMUNICATION_TEST_
     int count = 0;
 
-    while (Runnable) 
+    while (IsActiveProxy()) 
     {
         osaSleep(1 * cmn_s);
         std::cout << "\tServer [" << ManagerProxyServer->GetProxyName() << "] running (" << ++count << ")" << std::endl;
@@ -937,10 +937,17 @@ void mtsManagerProxyServer::ManagerServerI::Run()
         ManagerProxyServer->SendTestMessageFromServerToClient(ss.str());
     }
 #else
-    while(Runnable) 
+    while(IsActiveProxy()) 
     {
-        osaSleep(1 * cmn_ms);
+        osaSleep(10 * cmn_ms);
 
+        //if (!a) {
+        //    mtsManagerProxyServer::ConnectionIDType id = ManagerProxyServer->ClientIDMap.begin()->second.ConnectionID;
+        //    std::cout << "Closing connection: " << id << std::endl;
+        //    ManagerProxyServer->CloseClient(id);
+        //    a = true;
+        //}
+        
         /*
         if(!clients.empty())
         {
@@ -975,7 +982,8 @@ void mtsManagerProxyServer::ManagerServerI::Stop()
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        Runnable = false;
+        // Change this from active to 'prepare stop(?)'
+        //Runnable = false;
 
         notify();
 
@@ -995,7 +1003,7 @@ void mtsManagerProxyServer::ManagerServerI::TestMessageFromClientToServer(
     LogPrint(ManagerServerI, "<<<<< RECV: TestMessageFromClientToServer");
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsManagerProxyServer::GetConnectionIDKey())->second;
 
     ManagerProxyServer->ReceiveTestMessageFromClientToServer(connectionID, str);
 }
@@ -1007,7 +1015,7 @@ bool mtsManagerProxyServer::ManagerServerI::AddClient(
    LogPrint(ManagerServerI, "<<<<< RECV: AddClient: " << processName << " (" << Communicator->identityToString(identity) << ")");
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsManagerProxyServer::GetConnectionIDKey())->second;
 
     IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
@@ -1023,7 +1031,7 @@ void mtsManagerProxyServer::ManagerServerI::Shutdown(const ::Ice::Current& curre
     LogPrint(ManagerServerI, "<<<<< RECV: Shutdown");
 #endif
 
-    const ConnectionIDType connectionID = current.ctx.find(ConnectionIDKey)->second;
+    const ConnectionIDType connectionID = current.ctx.find(mtsManagerProxyServer::GetConnectionIDKey())->second;
 
     // TODO:
     // Set as true to represent that this connection (session) is going to be closed.

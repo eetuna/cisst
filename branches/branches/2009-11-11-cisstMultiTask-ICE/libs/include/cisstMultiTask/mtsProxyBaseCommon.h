@@ -38,21 +38,16 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  This class implements core features for ICE proxy objects and is used by 
-  mtsProxyBaseServer or mtsProxyBaseClient. That is, if a new type of proxy 
-  server or proxy client class is to be defined using ICE, it should be derived
-  from either mtsProxyBaseServer or mtsProxyBaseClient, respectively, rather 
-  than directly from this common class.
+  This class implements basic features of ICE proxy such as proxy name, proxy
+  state, and logging classes which are common in proxy server and proxy client
+  object.
 */
 
-/*! Typedef for Command ID */
+/*! Typedef for command ID. These typedef cover both 32 and 64 bit pointers. */
 typedef cmnDeSerializer::TypeId CommandIDType;
 typedef ::Ice::Long IceCommandIDType;
 
-// TODO: Replace #define with other (const std::string??)
-#define ConnectionIDKey "ConnectionID"
-
-/*! Enable/disable detailed log */
+/*! Enable/disable detailed log. This affects all proxy objects. */
 #define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
 
 //-----------------------------------------------------------------------------
@@ -62,14 +57,11 @@ template<class _proxyOwner>
 class CISST_EXPORT mtsProxyBaseCommon {
 
 public:
-    /*! Implicit per-proxy context to set connection id. */
-    //static const char * ConnectionIDKey;
-
     /*! Typedef for proxy type. */
     enum ProxyType { PROXY_SERVER, PROXY_CLIENT };
 
-    /*! The proxy status definition. This is adopted from mtsTask.h with slight
-        modification.
+    /*! The proxy status definition. This definition is adopted from mtsTask.h 
+        with slight modification.
 
         PROXY_CONSTRUCTED  -- Set by mtsProxyBaseCommon constructor. 
                               Initial state.
@@ -104,7 +96,7 @@ protected:
     /*! Proxy owner */
     _proxyOwner * ProxyOwner;
 
-    /*! Proxy type */
+    /*! Proxy type: PROXY_SERVER or PROXY_CLIENT */
     ProxyType ProxyTypeMember;
 
     /*! Proxy Name. Internally set as the name of this proxy owner's */
@@ -124,7 +116,7 @@ protected:
     //-----------------------------------------------------
     // Auxiliary Class Definitions
     //-----------------------------------------------------
-    /*! Logger class using the internal logging mechanism of cisst */
+    /*! Logger class using the cisst's internal logging mechanism */
     class CisstLogger : public Ice::Logger
     {
     public:
@@ -142,8 +134,9 @@ protected:
         }
     };
 
-    /*! Logger class using OutputDebugString() on Windows */
-    class ProxyLogger : public Ice::Logger
+    /*! Logger class using OutputDebugString() on Windows. */
+#if (CISST_OS == CISST_WINDOWS)
+    class WindowLogger : public Ice::Logger
     {
     public:
         void print(const ::std::string & message) { 
@@ -166,13 +159,12 @@ protected:
     protected:
         void Log(const std::string& log)
         {
-#if (CISST_OS == CISST_WINDOWS)
             OutputDebugString(log.c_str());
-#else
-            CMN_LOG_RUN_VERBOSE << log << std::endl;
-#endif
         }        
     };
+#else
+    typedef CisstLogger WindowLogger;
+#endif
 
     /* Internal class for thread arguments */
     template<class _proxyOwner>
@@ -211,14 +203,11 @@ protected:
     //-----------------------------------------------------
     //  Thread Management
     //-----------------------------------------------------
-    /*! Mutex to change the proxy state. */
+    /*! Mutex to change proxy state */
     osaMutex StateChange;
 
-    /*! The flag which is true only if all initiliazation process succeeded. */
+    /*! The flag which is true if a proxy is properly initialized */
     bool InitSuccessFlag;
-
-    /*! The flag which is true only if this proxy is runnable. */
-    bool Runnable;
 
     // TODO: is the following comment correct????
     /*! Set as true when a session is to be closed.
@@ -261,7 +250,32 @@ protected:
     std::string IceGUID;
 
     /*! Initialize Ice module. */
-    virtual void IceInitialize(void) = 0;
+    virtual void IceInitialize(void) {
+        ChangeProxyState(PROXY_INITIALIZING);
+
+        // Load configuration file to set the properties of ICE proxy server
+        Ice::InitializationData initData;
+        initData.properties = Ice::createProperties();
+
+        std::string iceServerPropertyFile = CISST_SOURCE_ROOT"/libs/etc/cisstMultiTask/Ice/";
+        if (ProxyTypeMember == PROXY_SERVER) {
+            iceServerPropertyFile += "config.server";
+        } else {
+            iceServerPropertyFile += "config.client";
+        }
+        initData.properties->load(iceServerPropertyFile);
+
+        // Create a logger
+        const std::string loggerProperty = initData.properties->getProperty("Logger");
+        if (loggerProperty == "Windows") {
+            initData.logger = new WindowLogger();
+        } else {
+            initData.logger = new CisstLogger();
+        }
+
+        IceCommunicator = Ice::initialize(initData);
+        IceLogger = IceCommunicator->getLogger();
+    }
 
     /*! Return the global unique id of this object. Currently, IceUtil::generateUUID()
         is used to set the id which is guaranteed to be unique across networks by ICE.
@@ -281,7 +295,6 @@ public:
         ProxyTypeMember(proxyType),
         ProxyState(PROXY_CONSTRUCTED),
         InitSuccessFlag(false),
-        Runnable(false),
         IsValidSession(true),
         IcePropertyFileName(propertyFileName),
         IceObjectIdentity(objectIdentity),
@@ -299,6 +312,9 @@ public:
     /*! Terminate the proxy. */
     virtual void Stop() = 0;
 
+    //
+    // TODO: graceful termination. do i really need this???
+    //
     /*! Close a session. */
     virtual void ShutdownSession() {
         IsValidSession = false;
@@ -322,15 +338,6 @@ public:
         return IceLogger; 
     }
 
-    inline Ice::CommunicatorPtr GetIceCommunicator(void) const { 
-        return IceCommunicator; 
-    }
-
-    /*! Check if this proxy is running */
-    inline bool IsRunnable(void) const {
-        return Runnable; 
-    }
-
     /*! Check if this proxy is active */
     bool IsActiveProxy(void) const {
         return (ProxyState == PROXY_ACTIVE);
@@ -341,9 +348,10 @@ public:
         return ProxyName;
     }
 
-    /*! Base port numbers. These numbers are not yet registered to IANA (Internet 
-        Assigned Numbers Authority) as of January 12th, 2010.
-        See http://www.iana.org/assignments/port-numbers for more details. */
+    /*! Return base port numbers that proxy servers use. These numbers are not 
+        yet registered to IANA (Internet Assigned Numbers Authority) as of 
+        January 30th, 2010.
+        (See http://www.iana.org/assignments/port-numbers for further details) */
     inline static unsigned int GetPortNumberForComponentManager() { return 10705; }
     inline static unsigned int GetBasePortNumberForComponentInterface() { return 11705; }
 };

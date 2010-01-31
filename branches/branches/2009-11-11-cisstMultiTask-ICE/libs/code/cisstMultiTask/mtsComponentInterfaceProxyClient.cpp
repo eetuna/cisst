@@ -74,7 +74,8 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     //
     // Set an implicit context (per proxy context)
     // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
-    IceCommunicator->getImplicitContext()->put(ConnectionIDKey, IceCommunicator->identityToString(ident));
+    IceCommunicator->getImplicitContext()->put(
+        mtsComponentInterfaceProxyServer::GetConnectionIDKey(), IceCommunicator->identityToString(ident));
 
     // Set the owner and name of this proxy object
     std::string thisProcessName = "On";
@@ -396,7 +397,6 @@ mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ComponentInterfaceC
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ComponentInterfaceClientIPtr>(this)),
       IceLogger(logger),
-      Runnable(true), 
       ComponentInterfaceProxyClient(componentInterfaceClient),
       Server(server)
 {
@@ -418,7 +418,7 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
 #ifdef _COMMUNICATION_TEST_
     int count = 0;
 
-    while (Runnable) {
+    while (this->IsActiveProxy()) {
         osaSleep(1 * cmn_s);
         std::cout << "\tClient [" << ComponentInterfaceProxyClient->GetProxyName() << "] running (" << ++count << ")" << std::endl;
 
@@ -428,7 +428,7 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
         ComponentInterfaceProxyClient->SendTestMessageFromClientToServer(ss.str());
     }
 #else
-    while (Runnable)
+    while (this->IsActiveProxy())
     {
         osaSleep(10 * cmn_ms);
     }
@@ -444,7 +444,8 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        Runnable = false;
+        // TODO: Set proxy state from active to 'prepare stop(?)'
+        //Runnable = false;
 
         notify();
 

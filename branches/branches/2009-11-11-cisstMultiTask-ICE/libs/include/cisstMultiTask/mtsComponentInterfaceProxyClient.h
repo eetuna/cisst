@@ -22,14 +22,10 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsComponentInterfaceProxyClient_h
 #define _mtsComponentInterfaceProxyClient_h
 
-//#include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxy.h>
 #include <cisstMultiTask/mtsProxyBaseClient.h>
 
 #include <cisstMultiTask/mtsExport.h>
-
-// TODO: ADD the following line in the forward declaration.h (???)
-//class mtsProxySerializer;
 
 class mtsComponentProxy;
 
@@ -159,10 +155,6 @@ protected:
         IceUtil::ThreadPtr SenderThreadPtr;
         Ice::LoggerPtr IceLogger;
 
-        // TODO: Do I really need this flag??? what about mtsProxyBaseCommon::Runnable???
-        /*! True if ICE proxy is running */
-        bool Runnable;
-
         /*! Network event processor */
         mtsComponentInterfaceProxyClient * ComponentInterfaceProxyClient;
 
@@ -179,6 +171,9 @@ protected:
         void Start();
         void Run();
         void Stop();
+        bool IsActiveProxy() const {
+            return ComponentInterfaceProxyClient->IsActiveProxy();
+        }
 
         //-------------------------------------------------
         //  Network Event handlers (Server -> Client)
