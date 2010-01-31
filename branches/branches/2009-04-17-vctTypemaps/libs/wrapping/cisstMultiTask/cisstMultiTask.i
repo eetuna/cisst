@@ -7,7 +7,7 @@
   Author(s):	Anton Deguet
   Created on:   2008-01-17
 
-  (C) Copyright 2006-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2006-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -37,6 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 %import "cisstCommon/cisstCommon.i"
 %import "cisstVector/cisstVector.i"
+%import "cisstOSAbstraction/cisstOSAbstraction.i"
 
 %init %{
     import_array() // numpy initialization
@@ -49,10 +50,6 @@ http://www.cisst.org/cisst/license.txt.
 
 // use class type to create the correct Python type
 %apply cmnGenericObject * {mtsGenericObject *};
-
-// It is useful to wrap osaTimeServer. This can be removed
-// if cisstOSAbstraction is wrapped.
-%include "cisstOSAbstraction/osaTimeServer.h"
 
 %template(mtsStringVector) std::vector<std::string>;
 
