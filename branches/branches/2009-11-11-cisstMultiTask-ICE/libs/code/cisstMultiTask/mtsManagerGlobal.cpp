@@ -25,14 +25,6 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerGlobal);
 
-// TODO: Debug code: remove later!
-#define CHECK_DELETE(_var) \
-    {\
-        AllocatedPointerType::iterator _it = AllocatedPointers.find(reinterpret_cast<unsigned int>(_var));\
-        CMN_ASSERT(_it != AllocatedPointers.end());\
-        AllocatedPointers.erase(_it);\
-    }
-
 mtsManagerGlobal::mtsManagerGlobal() : LocalManagerConnected(0)
 {
     ConnectionID = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_REMOTE_BASE);
@@ -55,14 +47,6 @@ bool mtsManagerGlobal::CleanUp(void)
     while (it != ProcessMap.GetMap().end()) {        
         ret &= RemoveProcess(it->first);
         it = ProcessMap.GetMap().begin();
-    }
-
-    // Debugging code
-    if (AllocatedPointers.size() != 0) {
-        AllocatedPointerType::const_iterator it = AllocatedPointers.begin();
-        for (; it != AllocatedPointers.end(); ++it) {
-            std::cout << "############# LINE: " << it->second << std::endl;
-        }
     }
 
     return ret;
@@ -114,9 +98,7 @@ bool mtsManagerGlobal::AddProcessObject(mtsManagerLocalInterface * localManagerO
     // Check if the local component manager has already been registered.
     if (FindProcess(processName)) {
         // Update LocalManagerMap
-        LocalManagerMapChange.Lock();
         LocalManagerConnected = localManagerObject;
-        LocalManagerMapChange.Unlock();
 
         CMN_LOG_CLASS_RUN_VERBOSE << "AddProcessObject: updated local manager object" << std::endl;
         return true;
@@ -129,9 +111,7 @@ bool mtsManagerGlobal::AddProcessObject(mtsManagerLocalInterface * localManagerO
     }
 
     // Register to local manager object map
-    LocalManagerMapChange.Lock();
     LocalManagerConnected = localManagerObject;
-    LocalManagerMapChange.Unlock();
 
     return true;
 }
@@ -179,12 +159,10 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
             it = componentMap->begin();
         }
         
-        CHECK_DELETE(componentMap);
+        delete componentMap;
     }
 
-    LocalManagerMapChange.Lock();
     LocalManagerConnected = NULL;
-    LocalManagerMapChange.Unlock();
 
     // Remove the process from process map
     ret &= ProcessMap.RemoveItem(processName);
@@ -208,9 +186,6 @@ bool mtsManagerGlobal::AddComponent(const std::string & processName, const std::
     if (componentMap == NULL) {
         componentMap = new ComponentMapType(processName);
         (ProcessMap.GetMap())[processName] = componentMap;
-
-        // TOOD: REMOVE THIS
-        AllocatedPointers[reinterpret_cast<unsigned int>(componentMap)] = __LINE__;
     }
 
     bool ret = componentMap->AddItem(componentName, NULL);
@@ -271,7 +246,7 @@ bool mtsManagerGlobal::RemoveComponent(const std::string & processName, const st
             it = interfaceMap->ProvidedInterfaceMap.GetMap().begin();
         }
 
-        CHECK_DELETE(interfaceMap);
+        delete interfaceMap;
     }
 
     // Remove the component from component map
@@ -299,9 +274,6 @@ bool mtsManagerGlobal::AddProvidedInterface(
     if (interfaceMap == NULL) {
         interfaceMap = new InterfaceMapType;
         (componentMap->GetMap())[componentName] = interfaceMap;
-
-        // TODO: Remove this
-        AllocatedPointers[reinterpret_cast<unsigned int>(interfaceMap)] = __LINE__;
     }
 
     // Add the interface    
@@ -331,9 +303,6 @@ bool mtsManagerGlobal::AddRequiredInterface(
     if (interfaceMap == NULL) {
         interfaceMap = new InterfaceMapType;
         (componentMap->GetMap())[componentName] = interfaceMap;
-
-        // TODO: Remove this
-        AllocatedPointers[reinterpret_cast<unsigned int>(interfaceMap)] = __LINE__;
     }
 
     // Add the interface    
@@ -413,7 +382,7 @@ bool mtsManagerGlobal::RemoveProvidedInterface(
                 processName, componentName, interfaceName);
             it = connectionMap->begin();
         }
-        CHECK_DELETE(connectionMap);
+        delete connectionMap;
     }
 
     // Remove the provided interface from provided interface map
@@ -452,7 +421,7 @@ bool mtsManagerGlobal::RemoveRequiredInterface(
                 it->second->GetProcessName(), it->second->GetComponentName(), it->second->GetInterfaceName());
             it = connectionMap->begin();
         }
-        CHECK_DELETE(connectionMap);
+        delete connectionMap;
     }
 
     // Remove the required interface from provided interface map
@@ -646,9 +615,6 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
         // Create a connection map for the required interface
         connectionMap = new ConnectionMapType(clientRequiredInterfaceName);
         (interfaceMap->RequiredInterfaceMap.GetMap())[clientRequiredInterfaceName] = connectionMap;
-
-        // TODO: Remove this
-        AllocatedPointers[reinterpret_cast<unsigned int>(connectionMap)] = __LINE__;
     }
 
     // Add an element containing information about the connected provided interface
@@ -668,9 +634,6 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
         // Create a connection map for the provided interface
         connectionMap = new ConnectionMapType(serverProvidedInterfaceName);
         (interfaceMap->ProvidedInterfaceMap.GetMap())[serverProvidedInterfaceName] = connectionMap;
-
-        // TODO: Remove this
-        AllocatedPointers[reinterpret_cast<unsigned int>(connectionMap)] = __LINE__;
     }
 
     // Add an element containing information about the connected provided interface
@@ -694,7 +657,7 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
 bool mtsManagerGlobal::ConnectConfirm(unsigned int connectionSessionID)
 {
     //
-    // TODO: handle connectionSessionID
+    // TODO: handle ack of connect confirm message with connectionSessionID
     //
 
     return true;
@@ -772,7 +735,7 @@ bool mtsManagerGlobal::Disconnect(
         // Release allocated memory
         if (connectionInfo) {
             remoteConnection = connectionInfo->IsRemoteConnection();
-            CHECK_DELETE(connectionInfo);
+            delete connectionInfo;
         }
 
         // Remove connection information
@@ -819,7 +782,7 @@ bool mtsManagerGlobal::Disconnect(
         // Release allocated memory
         if (connectionInfo) {
             remoteConnection = connectionInfo->IsRemoteConnection();
-            CHECK_DELETE(connectionInfo);
+            delete connectionInfo;
         }
 
         // Remove connection information
@@ -935,9 +898,6 @@ bool mtsManagerGlobal::AddConnectedInterface(ConnectionMapType * connectionMap,
     ConnectedInterfaceInfo * connectedInterfaceInfo = 
         new ConnectedInterfaceInfo(processName, componentName, interfaceName, isRemoteConnection);
 
-    // TOOD: REMOVE THIS
-    AllocatedPointers[reinterpret_cast<unsigned int>(connectedInterfaceInfo)] = __LINE__;
-
     std::string interfaceUID = GetInterfaceUID(processName, componentName, interfaceName);
     if (!connectionMap->AddItem(interfaceUID, connectedInterfaceInfo)) {
         CMN_LOG_CLASS_RUN_ERROR << "Cannot add peer interface's information: " 
@@ -1036,16 +996,6 @@ bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
     const std::string & endpointInfo, const std::string & communicatorID)
 {
-    //
-    // TODO: Remove these debug codes
-    // 
-    //std::stringstream ss;
-    //ss << "######## " << clientProcessName << ":" << clientComponentName << ":" << clientRequiredInterfaceName << "-"
-    //    << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
-    //ss << "=======> " << endpointInfo << ", " << communicatorID << std::endl;
-    //std::string s = ss.str();
-    //std::cout << s;
-
     // Get a connection map of the provided interface at server side.
     ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
@@ -1086,11 +1036,6 @@ bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
             << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
         return false;
     }
-
-    //
-    // TODO: Why don't you just pull out access information from the first element
-    // in the map? Does a user really need to specify the client interface???
-    //
 
     // Get the information about the connected required interface
     mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
@@ -1140,7 +1085,7 @@ bool mtsManagerGlobal::InitiateConnect(const unsigned int connectionID,
         serverProcessName, serverComponentName, serverProvidedInterfaceName, clientProcessName);
 }
 
-bool mtsManagerGlobal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+bool mtsManagerGlobal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
@@ -1151,7 +1096,7 @@ bool mtsManagerGlobal::ConnectServerSideInterface(const unsigned int providedInt
         return false;
     }
 
-    return localManagerServer->ConnectServerSideInterface(providedInterfaceProxyInstanceId,
+    return localManagerServer->ConnectServerSideInterface(providedInterfaceProxyInstanceID,
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName, serverProcessName);
 }

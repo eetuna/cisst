@@ -165,7 +165,7 @@ module mtsComponentInterfaceProxy
         //  Connection Management
         //
 		/*! Called by a proxy client when it connects to a proxy server */
-		bool AddClient(string connectingProxyName, int providedInterfaceProxyInstanceId, Ice::Identity ident);
+		bool AddClient(string connectingProxyName, int providedInterfaceProxyInstanceID, Ice::Identity ident);
 
         /*! This is called by a client when it terminates. This allows a server to
             shutdown (or close) connections safely and cleanly. */

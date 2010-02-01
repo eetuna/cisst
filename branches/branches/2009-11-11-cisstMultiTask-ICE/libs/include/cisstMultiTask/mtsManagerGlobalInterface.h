@@ -24,19 +24,13 @@ http://www.cisst.org/cisst/license.txt.
   \brief Definition of mtsManagerGlobalInterface
   \ingroup cisstMultiTask
 
-  This class defines an interface used by local component manager to communicate 
+  This class defines an interface used by local component managers to communicate 
   with the global component manager.  The interface is defined as a pure abstract 
-  class because there are two different cases that the interface are used for:
-
-  Standalone Mode: Inter-thread communication, no ICE.  A local component manager 
-    directly connects to the global component manager that runs in the same process.
-    In this case, mtsManagerLocal::ManagerGlobal is of type mtsManagerGlobal.
-
-  Network mode: Inter-process communication, ICE enabled.  A local component 
-    manager connects to the global component manager via a proxy for it.
-    In this case, mtsManagerLocal::ManagerGlobal is of type mtsManagerGlobalProxyClient.
-
-  \note Please refer to mtsManagerGlobal and mtsManagerGlobalProxyClient for details.
+  class to support two different scenarios that the interface is used for:
+     
+     Standalone vs. Network mode.
+  
+  See mtsManagerLocalInteface.h for further comments.
 */
 
 #ifndef _mtsManagerGlobalInterface_h
@@ -44,9 +38,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsInterfaceCommon.h>
 
-class mtsManagerLocalInterface;
-
-class CISST_EXPORT mtsManagerGlobalInterface 
+class CISST_EXPORT mtsManagerGlobalInterface
 {
 public:
     /* Typedef for the state of connection. See comments on Connect() for details. */
@@ -107,29 +99,7 @@ public:
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------
-    /*! Connect two interfaces with timeout.
-
-        Returns CONNECT_ERROR : in case of errors
-                CONNECT_LOCAL : in case of local connection.
-                CONNECT_REMOTE_BASE + n : if connection can be established.
-                                          (n: unsigned integer)
-
-        A CONNECT_ERROR is returned when the two components are managed by the 
-        same local component manager (i.e., they are in the same process). 
-        In this case, no timeout is set, no proxy component is created, and 
-        therefore local component managers don't have to call ConnectConfirm().
-
-        A return value of (CONNECT_REMOTE_BASE + n) is a temporary session 
-        id assigned by the global component manager, which is used by 
-        ConnectConfirm() to find connection information.
-
-        //
-        TODO: Update the following comments
-        //
-        If Connect() is called, timer is set at the global component manager. If
-        timeout elapses before BOTH local component managers confirm successful 
-        connection, the global component manager calls Disconnect() to clean up 
-        the connection. */
+    /*! Connect two interfaces with timeout */
     virtual unsigned int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
@@ -139,27 +109,25 @@ public:
         Return true if the global component manager acknowledged the connection. */
     virtual bool ConnectConfirm(unsigned int connectionSessionID) = 0;
 
-    /*! Disconnect two interfaces.
-        Return true if disconnecting already disconnected connection. */
+    /*! Disconnect two interfaces */
     virtual bool Disconnect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
-    /*! Make a client process initiate connection process. 
-        When LCM::Connect() is called at the server side, the server process
-        internally calls this method to start connection process at the client 
-        side. */
+    /*! Let a client process initiate connection process. When LCM::Connect()
+        is called at server side, the server process internally calls this 
+        method to start connection process at client side. */
     virtual bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
-    /*! Make a server process connect components. Internally, a required 
+    /*! Let a server process connect components. Internally, a required 
         interface network proxy (of type mtsComponentInterfaceProxyClient)
         is created, run, and connects to a provided interface network proxy
         (of type mtsComponentInterfaceProxyServer). 
-        providedInterfaceProxyInstanceId is used by a network proxy server
-        to map it to get a network proxy client correctly. */
-    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+        A network proxy server uses providedInterfaceProxyInstanceID to 
+        a proxy client object . */
+    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
 
@@ -177,10 +145,10 @@ public:
     /*! Fetch access information of a server proxy (i.e., provided interface 
         proxy) with the complete specification of connection. If all the three
         strings in arguments are "", fetch the access information without 
-        specifying client interface. This second option should be provided
-        because one proxy server at client side can handle multiple connections
-        and, thus, it is required to have a way to fetch the access information 
-        of a proxy server without specifying a client interface. */
+        specifying client interface. This second option is provided because one 
+        proxy server at client side can handle multiple connections and, thus, 
+        it is required to have a way to fetch the access information of a proxy 
+        server without specifying a client interface. */
     virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,

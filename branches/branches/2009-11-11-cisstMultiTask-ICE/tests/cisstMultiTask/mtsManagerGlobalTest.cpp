@@ -1056,11 +1056,6 @@ void mtsManagerGlobalTest::TestAddConnectedInterface(void)
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C1);
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
 
-    // TODO: REMOVE THIS
-    mtsManagerGlobal::AllocatedPointerType::iterator _it = 
-        managerGlobal.AllocatedPointers.find(reinterpret_cast<unsigned int>(connectedInterfaceInfo));
-    managerGlobal.AllocatedPointers.erase(_it);
-
     // Should release an internal object that AddConnectedInterface() creates dynamically.
     delete connectedInterfaceInfo;
 }

@@ -159,7 +159,7 @@ public:
     bool CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName,
                                     const std::string & serverEndpointInfo,
                                     const std::string & communicatorID,
-                                    const unsigned int providedInterfaceProxyInstanceId);
+                                    const unsigned int providedInterfaceProxyInstanceID);
 
     /*! Check if a network proxy server for the provided interface proxy has 
         been created. */
@@ -206,6 +206,16 @@ public:
     //-------------------------------------------------------------------------
     /*! Return a new port number */
     const std::string GetNewPortNumberAsString(const unsigned int id) const;
+
+    /*! Extract complete information about all commands and event generators in 
+        a provided interface. Argument prototypes are fetched with serialization. */
+    static void ExtractProvidedInterfaceDescription(mtsDeviceInterface * providedInterface,
+        ProvidedInterfaceDescription & providedInterfaceDescription);
+
+    /*! Extract complete information about all functions and event handlers in 
+        a required interface. Argument prototypes are fetched with serialization. */
+    static void ExtractRequiredInterfaceDescription(mtsRequiredInterface * requiredInterface, 
+        RequiredInterfaceDescription & requiredInterfaceDescription);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentProxy)

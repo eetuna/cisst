@@ -96,7 +96,7 @@ protected:
     /*! When a new client connects, add it to the client management list. */
     bool ReceiveAddClient(const ConnectionIDType & connectionID, 
                           const std::string & connectingProxyName, 
-                          const unsigned int providedInterfaceProxyInstanceId, 
+                          const unsigned int providedInterfaceProxyInstanceID, 
                           ComponentInterfaceClientProxyType & clientProxy);
 
     bool ReceiveFetchEventGeneratorProxyPointers(const ConnectionIDType & connectionID,

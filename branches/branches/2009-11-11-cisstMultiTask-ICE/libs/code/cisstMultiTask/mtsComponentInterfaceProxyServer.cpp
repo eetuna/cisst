@@ -157,9 +157,9 @@ void mtsComponentInterfaceProxyServer::ReceiveTestMessageFromClientToServer(cons
 
 bool mtsComponentInterfaceProxyServer::ReceiveAddClient(
     const ConnectionIDType & connectionID, const std::string & connectingProxyName,
-    const unsigned int providedInterfaceProxyInstanceId, ComponentInterfaceClientProxyType & clientProxy)
+    const unsigned int providedInterfaceProxyInstanceID, ComponentInterfaceClientProxyType & clientProxy)
 {
-    if (!AddProxyClient(connectingProxyName, providedInterfaceProxyInstanceId, connectionID, clientProxy)) {
+    if (!AddProxyClient(connectingProxyName, providedInterfaceProxyInstanceID, connectionID, clientProxy)) {
         LogError(mtsComponentInterfaceProxyServer, "ReceiveAddClient: failed to add proxy client: " << connectingProxyName);
         return false;
     }
@@ -169,7 +169,7 @@ bool mtsComponentInterfaceProxyServer::ReceiveAddClient(
              "ReceiveAddClient: added proxy client: " 
              << "\n..... ConnectionID: " << connectionID 
              << "\n..... Proxy Name: " << connectingProxyName 
-             << "\n..... ClientID: " << providedInterfaceProxyInstanceId);
+             << "\n..... ClientID: " << providedInterfaceProxyInstanceID);
 #endif
 
     return true;
@@ -510,7 +510,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::TestMessageFro
 }
 
 bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::AddClient(
-    const std::string & connectingProxyName, ::Ice::Int providedInterfaceProxyInstanceId, 
+    const std::string & connectingProxyName, ::Ice::Int providedInterfaceProxyInstanceID, 
     const ::Ice::Identity & identity, const ::Ice::Current& current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
@@ -525,7 +525,7 @@ bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::AddClient(
         ComponentInterfaceClientProxyType::uncheckedCast(current.con->createProxy(identity));
     
     return ComponentInterfaceProxyServer->ReceiveAddClient(connectionID,
-        connectingProxyName, (unsigned int) providedInterfaceProxyInstanceId, clientProxy);
+        connectingProxyName, (unsigned int) providedInterfaceProxyInstanceID, clientProxy);
 }
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const ::Ice::Current& current)

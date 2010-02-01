@@ -25,7 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <string>
 #include <vector>
 
-class CISST_EXPORT mtsInterfaceCommon {
+class mtsInterfaceCommon {
 
 public:
     //-------------------------------------------------------------------------
@@ -133,4 +133,3 @@ TYPEDEF(EventHandlerVoidVector);
 TYPEDEF(EventHandlerWriteVector);
 
 #endif // _mtsInterfaceCommon_h
-

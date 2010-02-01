@@ -7,7 +7,7 @@
   Author(s):  Min Yang Jung
   Created on: 2009-11-12
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -31,7 +31,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsManagerGlobal_h
 #define _mtsManagerGlobal_h
 
-#include <cisstCommon/cmnGenericObject.h>
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstCommon/cmnNamedMap.h>
 #include <cisstOSAbstraction/osaMutex.h>
@@ -41,8 +40,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-class CISST_EXPORT mtsManagerGlobal : public mtsManagerGlobalInterface {
-
+class CISST_EXPORT mtsManagerGlobal : public mtsManagerGlobalInterface 
+{
     friend class mtsManagerGlobalTest;
     friend class mtsManagerLocalTest;
 
@@ -68,7 +67,7 @@ protected:
              C2
     */
 
-    /*! Data structure to keep the information about a connected interface */
+    /*! Inner class definition to keep information about a connected interface */
     class ConnectedInterfaceInfo {
     protected:
         // Names (IDs)
@@ -166,19 +165,10 @@ protected:
     typedef cmnNamedMap<InterfaceMapType> ComponentMapType;
 
     /*! Process map: a map of registered processes (i.e., local component managers)
-        key=(process name), value=(component map) 
+        key=(process name), value=(component map)
         value can be null if a process does not have any component. */
     typedef cmnNamedMap<ComponentMapType> ProcessMapType;
     ProcessMapType ProcessMap;
-
-    //
-    // TODO: NEED TO ADD MUTEX FOR PROCESS_MAP
-    //
-
-    /*! Lookup table to access local component manager with process id:
-        (process name, local component manager id) */
-    //typedef cmnNamedMap<mtsManagerLocalInterface> LocalManagerMapType;
-    //LocalManagerMapType LocalManagerMap;
 
     /*! Instance of connected local component manager. Note that the global 
         component manager communicates with the only one instance of 
@@ -186,18 +176,8 @@ protected:
         or network mode) */
     mtsManagerLocalInterface * LocalManagerConnected;
 
-    /*! Mutex to safely use resources */
-    //
-    // TODO: Do I really need this???
-    //
-    osaMutex LocalManagerMapChange;
-
-    /*! Connection id */
+    /*! Connection id to issue a new connection session ID */
     unsigned int ConnectionID;
-
-    /* TODO: Remove me. This is for test purpose */
-    typedef std::map<unsigned int, unsigned int> AllocatedPointerType;
-    AllocatedPointerType AllocatedPointers;
 
     /*! IP address of this machine */
     std::string ProcessIP;
@@ -260,15 +240,6 @@ public:
     //-------------------------------------------------------------------------
     bool AddProcess(const std::string & processName);
 
-    /*! Add process object. In Standalone mode, this method does not need to be
-        called because AddProcess() will internally register local component manager
-        instance (of type mtsManagerLocal) to the global component manager. 
-        In Network mode, however, this method should be called explicitly to add 
-        a network proxy server (of type mtsManagerProxyServer) to the global 
-        component manager. In both cases, the global component manager keeps 
-        only one instance of mtsManagerLocalInterface.
-        Note that this method does not run across a network, which means the
-        Slice does not implement this method. */
     bool AddProcessObject(mtsManagerLocalInterface * localManagerObject, const bool isManagerProxyServer = false);
 
     bool FindProcess(const std::string & processName) const;
@@ -322,7 +293,7 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
-    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
@@ -339,7 +310,7 @@ public:
 
     /*! Generate unique id of an interface as string */
     inline static const std::string GetInterfaceUID(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName) 
+        const std::string & processName, const std::string & componentName, const std::string & interfaceName)
     {
         return processName + ":" + componentName + ":" + interfaceName;
     }

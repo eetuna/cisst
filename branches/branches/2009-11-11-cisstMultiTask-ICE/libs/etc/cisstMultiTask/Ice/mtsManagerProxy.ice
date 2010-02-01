@@ -141,7 +141,7 @@ module mtsManagerProxy
         bool RemoveRequiredInterfaceProxy(string serverComponentProxyName, string requiredInterfaceProxyName);
 
         //  Connection Management
-        bool ConnectServerSideInterface(int providedInterfaceProxyInstanceId, ConnectionStringSet connectionStrings);
+        bool ConnectServerSideInterface(int providedInterfaceProxyInstanceID, ConnectionStringSet connectionStrings);
         bool ConnectClientSideInterface(int connectionID, ConnectionStringSet connectionStrings);
 
         //  Getters

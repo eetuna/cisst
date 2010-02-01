@@ -97,7 +97,7 @@ protected:
     bool ReceiveRemoveRequiredInterfaceProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName);
 
     // Connection management
-    bool ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
+    bool ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
     bool ReceiveConnectClientSideInterface(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
 
     // Getters
@@ -170,7 +170,7 @@ public:
     bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
-    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
@@ -206,7 +206,7 @@ public:
     bool SendSetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo, const std::string & communicatorID);
     bool SendGetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo, std::string & communicatorID);
     bool SendInitiateConnect(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
-    bool SendConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
+    bool SendConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
 
     //-------------------------------------------------------------------------
     //  Definition by mtsDeviceInterfaceProxy.ice
@@ -259,7 +259,7 @@ protected:
         bool RemoveRequiredInterfaceProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const ::Ice::Current & current);
 
         /*! Connection management */
-        bool ConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
+        bool ConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
         bool ConnectClientSideInterface(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
 
         /*! Getters */

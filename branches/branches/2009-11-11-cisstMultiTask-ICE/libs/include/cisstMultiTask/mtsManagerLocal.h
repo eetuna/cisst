@@ -30,13 +30,12 @@ http://www.cisst.org/cisst/license.txt.
   
   Major differences between the two are:
   
-  1) The LCM does not differentiate tasks and devices while the task manager did.
-  The LCM manages them as a unified object, a component, which is of type mtsDevice.
-  For this, task map and device map in the task manager has been consolidated into
-  a single data structure.
+  1) The LCM manages tasks and devices as a unified object, a component, which 
+  is of type mtsDevice. For this, task map and device map in the task manager 
+  has been consolidated into a single data structure, component map.
 
-  2) The LCM does not keep the connection information; All the information are 
-  now maintained and managed by the global component manager (GCM).
+  2) The LCM does not keep the connection information; All connection information
+  are now maintained and managed by the global component manager (GCM).
   
   \note Related classes: mtsManagerLocalInterface, mtsManagerGlobalInterface, mtsManagerGlobal
 */
@@ -193,7 +192,7 @@ public:
 #endif
 
     /*! Connect interfaces at server side */
-    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+    bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
 

@@ -26,7 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 
   This class defines an interface used by the global component manager to 
   communicate with local component managers. The interface is defined as a pure 
-  abstract class because there are two different configurations that this interface
+  abstract class to support two different configurations that this interface
   is used for:
 
   Standalone mode: Inter-thread communication, no ICE.  A local component manager 
@@ -38,8 +38,6 @@ http://www.cisst.org/cisst/license.txt.
     managers connect to the global component manager via a network proxy.
     In this case, the global component manager keeps an instance of type
     mtsManagerProxyServer.
-
-  \note Please refer to mtsManagerLocal and mtsManagerLocalProxyClient for details.
 */
 
 #ifndef _mtsManagerLocalInterface_h
@@ -93,7 +91,7 @@ public:
         interfaces via the GCM. Internally, a network proxy client (of type
         mtsComponentInterfaceProxyClient) is created and connects to a network
         proxy server (of type mtsComponentInterfaceProxyClient). */
-    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
+    virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
 

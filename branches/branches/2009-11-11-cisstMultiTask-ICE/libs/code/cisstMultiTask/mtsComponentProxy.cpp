@@ -551,11 +551,11 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
 bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName,
                                                    const std::string & serverEndpointInfo,
                                                    const std::string & communicatorID,
-                                                   const unsigned int providedInterfaceProxyInstanceId)
+                                                   const unsigned int providedInterfaceProxyInstanceID)
 {
     // Create an instance of mtsComponentInterfaceProxyClient
     mtsComponentInterfaceProxyClient * requiredInterfaceProxy = 
-        new mtsComponentInterfaceProxyClient(serverEndpointInfo, communicatorID, providedInterfaceProxyInstanceId);
+        new mtsComponentInterfaceProxyClient(serverEndpointInfo, communicatorID, providedInterfaceProxyInstanceID);
 
     // Add it to required interface proxy object map
     if (!RequiredInterfaceNetworkProxies.AddItem(requiredInterfaceProxyName, requiredInterfaceProxy)) {
@@ -574,16 +574,6 @@ bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredI
         "mtsComponentProxy", "required interface proxy starts: " + requiredInterfaceProxyName);
 
     return true;
-}
-
-const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int id) const
-{
-    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForComponentInterface() + (id * 5);
-
-    std::stringstream newPortNumberAsString;
-    newPortNumberAsString << newPortNumber;
-
-    return newPortNumberAsString.str();
 }
 
 bool mtsComponentProxy::IsActiveProxy(const std::string & proxyName, const bool isProxyServer) const
@@ -680,9 +670,9 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & clientComp
 
 bool mtsComponentProxy::UpdateCommandProxyID(
     const std::string & serverProvidedInterfaceName, const std::string & clientComponentName, 
-    const std::string & clientRequiredInterfaceName, const unsigned int providedInterfaceProxyInstanceId)
+    const std::string & clientRequiredInterfaceName, const unsigned int providedInterfaceProxyInstanceID)
 {
-    const unsigned int clientID = providedInterfaceProxyInstanceId;
+    const unsigned int clientID = providedInterfaceProxyInstanceID;
 
     // Note that this method is only called by a client process.
 
@@ -698,19 +688,19 @@ bool mtsComponentProxy::UpdateCommandProxyID(
     // at server side, which will be used to set command proxies' IDs.
     mtsComponentInterfaceProxy::FunctionProxyPointerSet functionProxyPointers;
     if (!interfaceProxyServer->SendFetchFunctionProxyPointers(
-            providedInterfaceProxyInstanceId, clientRequiredInterfaceName, functionProxyPointers))
+            providedInterfaceProxyInstanceID, clientRequiredInterfaceName, functionProxyPointers))
     {
         CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID: failed to fetch function proxy pointers: " 
-            << clientRequiredInterfaceName << " @ " << providedInterfaceProxyInstanceId << std::endl;
+            << clientRequiredInterfaceName << " @ " << providedInterfaceProxyInstanceID << std::endl;
         return false;
     }
     
     // Get a provided interface proxy instance of which command proxies are updated.
     ProvidedInterfaceProxyInstanceMapType::const_iterator it = 
-        ProvidedInterfaceProxyInstanceMap.find(providedInterfaceProxyInstanceId);
+        ProvidedInterfaceProxyInstanceMap.find(providedInterfaceProxyInstanceID);
     if (it == ProvidedInterfaceProxyInstanceMap.end()) {
         CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID: failed to fetch provided interface proxy instance: " 
-            << providedInterfaceProxyInstanceId << std::endl;
+            << providedInterfaceProxyInstanceID << std::endl;
         return false;
     }
     mtsProvidedInterface * instance = it->second;
@@ -960,4 +950,140 @@ bool mtsComponentProxy::GetEventGeneratorProxyPointer(
     }
 
     return true;
+}
+
+//-------------------------------------------------------------------------
+//  Utilities
+//-------------------------------------------------------------------------
+const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int id) const
+{
+    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForComponentInterface() + (id * 5);
+
+    std::stringstream newPortNumberAsString;
+    newPortNumberAsString << newPortNumber;
+
+    return newPortNumberAsString.str();
+}
+
+void mtsComponentProxy::ExtractProvidedInterfaceDescription(
+    mtsDeviceInterface * providedInterface, ProvidedInterfaceDescription & providedInterfaceDescription)
+{
+    if (!providedInterface) return;
+
+    // Serializer initialization
+    std::stringstream streamBuffer;
+    cmnSerializer serializer(streamBuffer);
+
+    // Extract void commands
+    CommandVoidElement elementCommandVoid;
+    mtsDeviceInterface::CommandVoidMapType::MapType::const_iterator itVoid = providedInterface->CommandsVoid.begin();
+    const mtsDeviceInterface::CommandVoidMapType::MapType::const_iterator itVoidEnd = providedInterface->CommandsVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        elementCommandVoid.Name = itVoid->second->GetName();
+        providedInterfaceDescription.CommandsVoid.push_back(elementCommandVoid);
+    }
+
+    // Extract write commands
+    CommandWriteElement elementCommandWrite;
+    mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itWrite = providedInterface->CommandsWrite.begin();
+    const mtsDeviceInterface::CommandWriteMapType::MapType::const_iterator itWriteEnd = providedInterface->CommandsWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        elementCommandWrite.Name = itWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
+        elementCommandWrite.ArgumentPrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.CommandsWrite.push_back(elementCommandWrite);
+    }
+
+    // Extract read commands
+    CommandReadElement elementCommandRead;
+    mtsDeviceInterface::CommandReadMapType::MapType::const_iterator itRead = providedInterface->CommandsRead.begin();
+    const mtsDeviceInterface::CommandReadMapType::MapType::const_iterator itReadEnd = providedInterface->CommandsRead.end();
+    for (; itRead != itReadEnd; ++itRead) {
+        elementCommandRead.Name = itRead->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itRead->second->GetArgumentPrototype()));
+        elementCommandRead.ArgumentPrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.CommandsRead.push_back(elementCommandRead);
+    }
+
+    // Extract qualified read commands
+    CommandQualifiedReadElement elementCommandQualifiedRead;
+    mtsDeviceInterface::CommandQualifiedReadMapType::MapType::const_iterator itQualifiedRead = providedInterface->CommandsQualifiedRead.begin();
+    const mtsDeviceInterface::CommandQualifiedReadMapType::MapType::const_iterator itQualifiedReadEnd = providedInterface->CommandsQualifiedRead.end();
+    for (; itQualifiedRead != itQualifiedReadEnd; ++itQualifiedRead) {
+        elementCommandQualifiedRead.Name = itQualifiedRead->second->GetName();
+        // argument1 serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itQualifiedRead->second->GetArgument1Prototype()));
+        elementCommandQualifiedRead.Argument1PrototypeSerialized = streamBuffer.str();
+        // argument2 serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itQualifiedRead->second->GetArgument2Prototype()));
+        elementCommandQualifiedRead.Argument2PrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.CommandsQualifiedRead.push_back(elementCommandQualifiedRead);
+    }
+
+    // Extract void events
+    EventVoidElement elementEventVoid;
+    mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoid = providedInterface->EventVoidGenerators.begin();
+    const mtsDeviceInterface::EventVoidMapType::MapType::const_iterator itEventVoidEnd = providedInterface->EventVoidGenerators.end();
+    for (; itEventVoid != itEventVoidEnd; ++itEventVoid) {
+        elementEventVoid.Name = itEventVoid->second->GetName();
+        providedInterfaceDescription.EventsVoid.push_back(elementEventVoid);
+    }
+
+    // Extract write events
+    EventWriteElement elementEventWrite;
+    mtsDeviceInterface::EventWriteMapType::MapType::const_iterator itEventWrite = providedInterface->EventWriteGenerators.begin();
+    const mtsDeviceInterface::EventWriteMapType::MapType::const_iterator itEventWriteEnd = providedInterface->EventWriteGenerators.end();
+    for (; itEventWrite != itEventWriteEnd; ++itEventWrite) {
+        elementEventWrite.Name = itEventWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itEventWrite->second->GetArgumentPrototype()));
+        elementEventWrite.ArgumentPrototypeSerialized = streamBuffer.str();
+        providedInterfaceDescription.EventsWrite.push_back(elementEventWrite);
+    }
+}
+
+void mtsComponentProxy::ExtractRequiredInterfaceDescription(
+    mtsRequiredInterface * requiredInterface, RequiredInterfaceDescription & requiredInterfaceDescription)
+{
+    // Serializer initialization
+    std::stringstream streamBuffer;
+    cmnSerializer serializer(streamBuffer);
+
+    // Extract void functions
+    requiredInterfaceDescription.FunctionVoidNames = requiredInterface->GetNamesOfCommandPointersVoid();
+    // Extract write functions
+    requiredInterfaceDescription.FunctionWriteNames = requiredInterface->GetNamesOfCommandPointersWrite();
+    // Extract read functions
+    requiredInterfaceDescription.FunctionReadNames = requiredInterface->GetNamesOfCommandPointersRead();
+    // Extract qualified read functions
+    requiredInterfaceDescription.FunctionQualifiedReadNames = requiredInterface->GetNamesOfCommandPointersQualifiedRead();
+
+    // Extract void event handlers
+    CommandVoidElement elementEventVoidHandler;
+    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoid = requiredInterface->EventHandlersVoid.begin();
+    const mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoidEnd = requiredInterface->EventHandlersVoid.end();
+    for (; itVoid != itVoidEnd; ++itVoid) {
+        elementEventVoidHandler.Name = itVoid->second->GetName();
+        requiredInterfaceDescription.EventHandlersVoid.push_back(elementEventVoidHandler);
+    }
+
+    // Extract write event handlers
+    CommandWriteElement elementEventWriteHandler;
+    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWrite = requiredInterface->EventHandlersWrite.begin();
+    const mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWriteEnd = requiredInterface->EventHandlersWrite.end();
+    for (; itWrite != itWriteEnd; ++itWrite) {
+        elementEventWriteHandler.Name = itWrite->second->GetName();
+        // argument serialization
+        streamBuffer.str("");
+        serializer.Serialize(*(itWrite->second->GetArgumentPrototype()));
+        elementEventWriteHandler.ArgumentPrototypeSerialized = streamBuffer.str();
+        requiredInterfaceDescription.EventHandlersWrite.push_back(elementEventWriteHandler);
+    }
 }

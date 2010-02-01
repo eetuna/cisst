@@ -172,6 +172,8 @@ if(CISST_MTS_HAS_ICE)
       )
 
   SET(ICE_RESOURCE_FILES
+      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.client
+      ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/config.server
       ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsComponentInterfaceProxy.ice
       ${cisst_SOURCE_DIR}/libs/etc/${LIBRARY}/Ice/mtsManagerProxy.ice
       )
