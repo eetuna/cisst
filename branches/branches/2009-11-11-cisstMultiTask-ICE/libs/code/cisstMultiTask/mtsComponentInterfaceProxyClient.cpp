@@ -29,20 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 
-//-----------------------------------------------------------------------------
-//  Constructor, Destructor, Initializer
-//-----------------------------------------------------------------------------
-mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
-    const std::string & serverEndpointInfo, const std::string & communicatorID,
-    const unsigned int providedInterfaceProxyInstanceId)
-    : BaseClientType(serverEndpointInfo, communicatorID),
-      ProvidedInterfaceProxyInstanceId(providedInterfaceProxyInstanceId)
-{
-}
-
-mtsComponentInterfaceProxyClient::~mtsComponentInterfaceProxyClient()
-{
-}
+unsigned int mtsComponentInterfaceProxyClient::InstanceCounter = 0;
 
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
@@ -53,7 +40,7 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     IceInitialize();
 
     if (!InitSuccessFlag) {
-        LogError(mtsComponentInterfaceProxyClient, "ICE proxy initialization failed");
+        LogError(mtsComponentInterfaceProxyClient, "ICE proxy client initialization failed");
         return false;
     }
 
@@ -69,39 +56,38 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     adapter->activate();
     ComponentInterfaceServerProxy->ice_getConnection()->setAdapter(adapter);
 
-    //
-    // TODO: we can use a provided interface proxy instance id instead of an implicit context key.
-    //
     // Set an implicit context (per proxy context)
-    // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
     IceCommunicator->getImplicitContext()->put(
         mtsComponentInterfaceProxyServer::GetConnectionIDKey(), IceCommunicator->identityToString(ident));
 
-    // Set the owner and name of this proxy object
+    // Set proxy owner and name of this proxy object
     std::string thisProcessName = "On";
     mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
     thisProcessName += managerLocal->GetProcessName();
 
     SetProxyOwner(proxyOwner, thisProcessName);
 
-    // Connect to server proxy through adding this ICE proxy to server proxy
-    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) ProvidedInterfaceProxyInstanceId, ident)) {
+    // Connect to server proxy by adding this ICE proxy client to server
+    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) ProvidedInterfaceProxyInstanceID, ident)) {
         LogError(mtsComponentInterfaceProxyClient, "AddClient() failed: duplicate proxy name or identity");
         return false;
     }
 
     // Create a worker thread here but is not running yet.
-    //ThreadArgumentsInfo.ProxyOwner = proxyOwner;
     ThreadArgumentsInfo.Proxy = this;        
     ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyClient::Runner;
 
+    // Set a short name of this thread as CIPC which means "Component Interface 
+    // Proxy Client." Such a condensed naming rule is required because a total
+    // number of characters in a thread name is sometimes limited to a small
+    // number (e.g. LINUX RTAI).
+    std::stringstream ss;
+    ss << "CIPC" << mtsComponentInterfaceProxyClient::InstanceCounter++;
+    std::string threadName = ss.str();
+
+    // Create worker thread. Note that it is created but is not yet running.
     WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
-        &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo, 
-        // Set the name of this thread as CIPC which means Component 
-        // Interface Proxy Client. Such a very short naming rule is
-        // because sometimes there is a limitation of the total number 
-        // of characters as a thread name on some systems (e.g. LINUX RTAI).
-        "CIPC");
+        &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo, threadName.c_str());
 
     return true;
 }
@@ -119,19 +105,14 @@ void mtsComponentInterfaceProxyClient::Runner(ThreadArguments<mtsComponentProxy>
     mtsComponentInterfaceProxyClient * ProxyClient = 
         dynamic_cast<mtsComponentInterfaceProxyClient*>(arguments->Proxy);
     if (!ProxyClient) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: Failed to create a proxy client." << std::endl;
+        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyClient: failed to create a proxy client." << std::endl;
         return;
     }
 
-    ProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "Proxy client starts.....");
+    ProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "proxy client starts");
 
     try {
-        // TODO: By this call, it is 'assumed' that a client proxy is successfully
-        // connected to a server proxy.
-        // If I can find better way to detect successful connection establishment
-        // between a client and a server, this should be updated.
         ProxyClient->SetAsActiveProxy();
-
         ProxyClient->StartClient();        
     } catch (const Ice::Exception& e) {
         std::string error("mtsComponentInterfaceProxyClient: ");
@@ -143,14 +124,18 @@ void mtsComponentInterfaceProxyClient::Runner(ThreadArguments<mtsComponentProxy>
         ProxyClient->GetLogger()->error(error);
     }
 
-    ProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "Proxy client terminates.....");
+    ProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "Proxy client terminates");
 
     ProxyClient->Stop();
 }
 
 void mtsComponentInterfaceProxyClient::Stop()
 {
-    LogPrint(mtsComponentInterfaceProxyClient, "ComponentInterfaceProxy client ends.");
+    LogPrint(mtsComponentInterfaceProxyClient, "ComponentInterfaceProxy client stops.");
+
+    //
+    // TODO: Review this method
+    //
 
     // Let a server disconnect this client safely.
     // TODO: gcc says this doesn't exist???
@@ -162,23 +147,6 @@ void mtsComponentInterfaceProxyClient::Stop()
     
     Sender->Stop();
 }
-
-/*
-void mtsComponentInterfaceProxyClient::OnEnd()
-{
-    ComponentInterfaceProxyClientLogger("ComponentInterfaceProxy client ends.");
-
-    // Let a server disconnect this client safely.
-    // gcc says this doesn't exist
-    ComponentInterfaceServerProxy->Shutdown();
-
-    ShutdownSession();
-    
-    BaseType::OnEnd();
-    
-    Sender->Stop();
-}
-*/
 
 bool mtsComponentInterfaceProxyClient::RegisterPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
 {
@@ -234,10 +202,6 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandWriteSerialized(cons
         return;
     }
 
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandWriteSerialized: received " << serializedArgument.size() << " bytes");
-#endif
-
     // Deserialize
     mtsProxySerializer * deserializer = functionWriteProxy->GetSerializer();    
     mtsGenericObject * argument = deserializer->DeSerialize(serializedArgument);
@@ -289,10 +253,6 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandQualifiedReadSeriali
         LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: invalid proxy id of function qualified read: " << commandID);
         return;
     }
-
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandQualifiedReadSerialized: received " << serializedArgumentIn.size() << " bytes");
-#endif
 
     // Deserialize
     mtsProxySerializer * deserializer = functionQualifiedReadProxy->GetSerializer();    
@@ -362,10 +322,6 @@ bool mtsComponentInterfaceProxyClient::SendExecuteEventVoid(const CommandIDType 
 
 bool mtsComponentInterfaceProxyClient::SendExecuteEventWriteSerialized(const CommandIDType commandID, const mtsGenericObject & argument)
 {
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: SendExecuteEventWriteSerialized: " << commandID);
-#endif
-
     // Get per-event serializer.
     mtsProxySerializer * serializer = PerEventSerializerMap[commandID];
     if (!serializer) {
@@ -380,6 +336,10 @@ bool mtsComponentInterfaceProxyClient::SendExecuteEventWriteSerialized(const Com
         LogError(mtsComponentInterfaceProxyClient, "SendExecuteEventWriteSerialized: serialization failure: " << argument.ToString());
         return false;
     }
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: SendExecuteEventWriteSerialized: " << commandID);
+#endif
 
     ComponentInterfaceServerProxy->ExecuteEventWriteSerialized(commandID, serializedArgument);
 
@@ -397,22 +357,18 @@ mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ComponentInterfaceC
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ComponentInterfaceClientIPtr>(this)),
       IceLogger(logger),
-      ComponentInterfaceProxyClient(componentInterfaceClient),
-      Server(server)
+      ComponentInterfaceProxyClient(componentInterfaceClient)
 {
 }
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Start()
 {
-    ComponentInterfaceProxyClient->GetLogger()->trace(
-        "mtsComponentInterfaceProxyClient", "Send thread starts");
+    ComponentInterfaceProxyClient->GetLogger()->trace("mtsComponentInterfaceProxyClient", "Send thread starts");
 
     SenderThreadPtr->start();
 }
 
-// TODO: Remove this
 //#define _COMMUNICATION_TEST_
-
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
 {
 #ifdef _COMMUNICATION_TEST_
@@ -445,7 +401,6 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
         // TODO: Set proxy state from active to 'prepare stop(?)'
-        //Runnable = false;
 
         notify();
 
@@ -493,7 +448,7 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommand
     ::Ice::Long commandID, const ::std::string & argument, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandWriteSerialized: " << commandID);
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandWriteSerialized: " << commandID << ", " << argument.size());
 #endif
 
     ComponentInterfaceProxyClient->ReceiveExecuteCommandWriteSerialized(commandID, argument);
@@ -503,7 +458,7 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommand
     ::Ice::Long commandID, ::std::string & argument, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandReadSerialized: " << commandID);
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandReadSerialized: " << commandID << ", " << argument.size());
 #endif
 
     ComponentInterfaceProxyClient->ReceiveExecuteCommandReadSerialized(commandID, argument);
@@ -513,7 +468,7 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ExecuteCommand
     ::Ice::Long commandID, const ::std::string & argumentIn, ::std::string & argumentOut, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandQualifiedReadSerialized: " << commandID);
+    LogPrint(mtsComponentInterfaceProxyClient, "<<<<< RECV: ExecuteCommandQualifiedReadSerialized: " << commandID << ", " << argumentIn.size());
 #endif
 
     ComponentInterfaceProxyClient->ReceiveExecuteCommandQualifiedReadSerialized(commandID, argumentIn, argumentOut);

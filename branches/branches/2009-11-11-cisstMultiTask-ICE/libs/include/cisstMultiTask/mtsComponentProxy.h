@@ -24,10 +24,11 @@ http://www.cisst.org/cisst/license.txt.
   \brief Definition of Component Proxy
   \ingroup cisstMultiTask
 
-  A component proxy is of mtsDevice type rather than mtsTask type. This 
-  helps avoiding potential thread synchronization issues between ICE and cisst.
+  A component proxy is of type mtsDevice rather than mtsTask. This helps 
+  avoiding possible thread synchronization issues between ICE threads and
+  cisst internal threads.
   
-  The following shows how proxy components exchange data across a network:
+  How proxy components exchange data across a network is as follows:
 
        Client Process                             Server Process
   ---------------------------             --------------------------------
@@ -40,7 +41,7 @@ http://www.cisst.org/cisst/license.txt.
                                           -> Argument calculation, if any
                                           -> Serialization
             Deserialization  <-  Network  <- Return data (if any)
-            -> Return data
+   <- Return data to app
 */
 
 #ifndef _mtsComponentProxy_h
@@ -65,7 +66,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsExport.h>
 
-class mtsComponentProxy : public mtsDevice
+class CISST_EXPORT mtsComponentProxy : public mtsDevice
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -81,7 +82,6 @@ protected:
     RequiredInterfaceNetworkProxyMapType RequiredInterfaceNetworkProxies;
 
     /*! Typedef to manage provided interface proxy resources */
-    //typedef std::map<unsigned int, ProvidedInterfaceProxyResources *> ProvidedInterfaceProxyResourceMapType;
     typedef std::map<unsigned int, mtsProvidedInterface *> ProvidedInterfaceProxyInstanceMapType;
     ProvidedInterfaceProxyInstanceMapType ProvidedInterfaceProxyInstanceMap;
 
@@ -91,10 +91,10 @@ protected:
     //-------------------------------------------------------------------------
     //  Data Structures for Server Component Proxy
     //-------------------------------------------------------------------------
-    /*! Set of function proxy pointers. CreateProvidedInterfaceProxy() uses these 
+    /*! Sets of function proxy pointers. CreateProvidedInterfaceProxy() uses these 
         maps to assign commandIDs of the command proxies in a provided interface 
         proxy. See mtsComponentProxy::CreateRequiredInterfaceProxy() and
-        mtsComponentProxy::GetFunctionProxyPointers for details. */
+        mtsComponentProxy::GetFunctionProxyPointers() for details. */
 
     /*! Typedef for function proxies */
     typedef cmnNamedMap<mtsFunctionVoid>          FunctionVoidProxyMapType;
@@ -116,13 +116,14 @@ protected:
         EventGeneratorWriteProxyMapType   EventGeneratorWriteProxyMap;
     };
 
-    /*! Typedef to link a FunctionProxyAndEventHandlerProxyMaps instance with
-        required interface proxy name. Note that there can be more than one
-        required interface proxy in a client component proxy. */
+    /*! Typedef to link FunctionProxyAndEventHandlerProxyMaps instances with
+        required interface proxy name (there can be more than one required 
+        interface proxy in a client component proxy). */
     typedef cmnNamedMap<FunctionProxyAndEventHandlerProxyMapElement> FunctionProxyAndEventHandlerProxyMapType;
     FunctionProxyAndEventHandlerProxyMapType FunctionProxyAndEventHandlerProxyMap;
 
 public:
+    /*! Constructor and destructors */
     mtsComponentProxy(const std::string & componentProxyName);
     virtual ~mtsComponentProxy();
 
@@ -148,53 +149,46 @@ public:
     //-------------------------------------------------------------------------
     //  Methods to Manage Network Proxy
     //-------------------------------------------------------------------------
-    /*! Create a network proxy which corresponds to a provided interface proxy. */
+    /*! Create a network proxy server which serves a provided interface proxy. */
     bool CreateInterfaceProxyServer(const std::string & providedInterfaceProxyName,
                                     std::string & adapterName,
                                     std::string & endpointAccessInfo,
                                     std::string & communicatorID);
 
-    /*! Create a network proxy which corresponds to a required interface proxy. */
+    /*! Create a network proxy client which serves a required interface proxy. */
     bool CreateInterfaceProxyClient(const std::string & requiredInterfaceProxyName,
                                     const std::string & serverEndpointInfo,
                                     const std::string & communicatorID,
                                     const unsigned int providedInterfaceProxyInstanceId);
 
-    /*! Check whether a network proxy server for a provided interface proxy has 
-        been created or not. */
+    /*! Check if a network proxy server for the provided interface proxy has 
+        been created. */
     inline bool FindInterfaceProxyServer(const std::string & providedInterfaceName) const {
         return ProvidedInterfaceNetworkProxies.FindItem(providedInterfaceName);
     }
 
-    /*! Check whether a network proxy client for a required interface proxy has 
-        been created or not. */
+    /*! Check if a network proxy client for the required interface proxy has 
+        been created. */
     inline bool FindInterfaceProxyClient(const std::string & requiredInterfaceName) const {
         return RequiredInterfaceNetworkProxies.FindItem(requiredInterfaceName);
     }
 
-    /*! Set command proxy IDs in a provided interface proxy at client side as 
+    /*! Assign command proxy IDs in a provided interface proxy at client side as
         function proxy IDs fetched from a required interface proxy at server 
         side. */
     bool UpdateCommandProxyID(
         const std::string & serverProvidedInterfaceName, const std::string & clientComponentName, 
         const std::string & clientRequiredInterfaceName, const unsigned int providedInterfaceProxyInstanceId);
 
-    /*! Set event handler IDs in a required interface proxy at the server side
-        as event generator IDs fetched from a provided interface proxy at the 
-        client side. */
+    /*! Assign event handler IDs in a required interface proxy at server side
+        as event generator IDs fetched from a provided interface proxy at client 
+        side. */
     bool UpdateEventHandlerProxyID(
         const std::string & clientComponentName, const std::string & requiredInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Getters
     //-------------------------------------------------------------------------
-    /*! Return a total number of interfaces (used to determine if this componet 
-        proxy should be removed; when all interfaces are removed, the component
-        proxy has to be cleaned up) */
-    inline unsigned int GetInterfaceCount() const {
-        return ProvidedInterfaces.size() + RequiredInterfaces.size();
-    }
-
     /*! Check if a network proxy is active */
     bool IsActiveProxy(const std::string & proxyName, const bool isProxyServer) const;
 
@@ -210,10 +204,10 @@ public:
     //-------------------------------------------------------------------------
     //  Utilities
     //-------------------------------------------------------------------------
+    /*! Return a new port number */
     const std::string GetNewPortNumberAsString(const unsigned int id) const;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentProxy)
 
-#endif
-
+#endif // _mtsComponentProxy_h

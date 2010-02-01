@@ -28,18 +28,7 @@ CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
 
 std::string mtsComponentInterfaceProxyServer::InterfaceCommunicatorID = "InterfaceCommunicator";
 std::string mtsComponentInterfaceProxyServer::ConnectionIDKey = "InterfaceConnectionID";
-
-//-----------------------------------------------------------------------------
-//  Constructor, Destructor, Initializer
-//-----------------------------------------------------------------------------
-mtsComponentInterfaceProxyServer::~mtsComponentInterfaceProxyServer()
-{
-    //// Add any resource clean-up related methods here, if any.
-    //TaskManagerMapType::iterator it = TaskManagerMap.begin();
-    //for (; it != TaskManagerMap.end(); ++it) {
-    //    delete it->second;
-    //}
-}
+unsigned int mtsComponentInterfaceProxyServer::InstanceCounter = 0;
 
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
@@ -50,7 +39,7 @@ bool mtsComponentInterfaceProxyServer::Start(mtsComponentProxy * proxyOwner)
     IceInitialize();
     
     if (!InitSuccessFlag) {
-        LogError(mtsComponentInterfaceProxyServer, "ICE proxy Initialization failed");
+        LogError(mtsComponentInterfaceProxyServer, "ICE proxy server Initialization failed");
         return false;
     }
 
@@ -58,22 +47,23 @@ bool mtsComponentInterfaceProxyServer::Start(mtsComponentProxy * proxyOwner)
     std::string thisProcessName = "On";
     mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
     thisProcessName += managerLocal->GetProcessName();
-
     SetProxyOwner(proxyOwner, thisProcessName);
 
     // Create a worker thread here and returns immediately.
-    //ThreadArgumentsInfo.ProxyOwner = proxyOwner;
     ThreadArgumentsInfo.Proxy = this;
     ThreadArgumentsInfo.Runner = mtsComponentInterfaceProxyServer::Runner;
 
-    // Note that a worker thread is created but is not yet running.
+    // Set a short name of this thread as CIPS which means "Component Interface 
+    // Proxy Server." Such a condensed naming rule is required because a total
+    // number of characters in a thread name is sometimes limited to a small
+    // number (e.g. LINUX RTAI).
+    std::stringstream ss;
+    ss << "CIPS" << mtsComponentInterfaceProxyServer::InstanceCounter++;
+    std::string threadName = ss.str();
+
+    // Create worker thread. Note that it is created but is not yet running.
     WorkerThread.Create<ProxyWorker<mtsComponentProxy>, ThreadArguments<mtsComponentProxy>*>(
-        &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo,
-        // Set the name of this thread as CIPS which means Component 
-        // Interface Proxy Server. Such a very short naming rule is
-        // because sometimes there is a limitation of the total number 
-        // of characters as a thread name on some systems (e.g. LINUX RTAI).
-        "CIPS");
+        &ProxyWorkerInfo, &ProxyWorker<mtsComponentProxy>::Run, &ThreadArgumentsInfo, threadName.c_str());
 
     return true;
 }
@@ -91,11 +81,11 @@ void mtsComponentInterfaceProxyServer::Runner(ThreadArguments<mtsComponentProxy>
     mtsComponentInterfaceProxyServer * ProxyServer = 
         dynamic_cast<mtsComponentInterfaceProxyServer*>(arguments->Proxy);
     if (!ProxyServer) {
-        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyServer: Failed to create a proxy server." << std::endl;
+        CMN_LOG_RUN_ERROR << "mtsComponentInterfaceProxyServer: failed to create a proxy server." << std::endl;
         return;
     }
 
-    ProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "Proxy server starts.....");
+    ProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "proxy server starts");
 
     try {
         ProxyServer->SetAsActiveProxy();
@@ -110,13 +100,15 @@ void mtsComponentInterfaceProxyServer::Runner(ThreadArguments<mtsComponentProxy>
         ProxyServer->GetLogger()->error(error);
     }
 
-    ProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "Proxy server terminates.....");
+    ProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "Proxy server terminates");
 
     ProxyServer->Stop();
 }
 
 void mtsComponentInterfaceProxyServer::Stop()
 {
+    LogPrint(mtsComponentInterfaceProxyClient, "ComponentInterfaceProxy server stops.");
+
     BaseServerType::Stop();
 
     Sender->Stop();
@@ -127,10 +119,6 @@ void mtsComponentInterfaceProxyServer::OnClose()
     //
     //  TODO: Add OnClose() event handler.
     //
-
-    // remove from TaskManagerMapByTaskName
-    // remove from TaskManagerClient
-    //RemoveTaskManagerByConnectionID();
 }
 
 mtsComponentInterfaceProxyServer::ComponentInterfaceClientProxyType * mtsComponentInterfaceProxyServer::GetNetworkProxyClient(const ClientIDType clientID)
@@ -141,19 +129,19 @@ mtsComponentInterfaceProxyServer::ComponentInterfaceClientProxyType * mtsCompone
         return NULL;
     }
 
+    // Check if this network proxy server is active. We don't need to check if
+    // a proxy client is still active since any disconnection or inactive proxy
+    // has already been detected and taken care of.
     //
-    // TODO: Check if the network proxy client is active
+    // TODO: add client proxy disconnection/inactive client proxy clean-up
     //
-
-    // Check if this network proxy server is active
     return (IsActiveProxy() ? clientProxy : NULL);
 }
 
 //-------------------------------------------------------------------------
 //  Event Handlers (Client -> Server)
 //-------------------------------------------------------------------------
-void mtsComponentInterfaceProxyServer::ReceiveTestMessageFromClientToServer(
-    const ConnectionIDType & connectionID, const std::string & str)
+void mtsComponentInterfaceProxyServer::ReceiveTestMessageFromClientToServer(const ConnectionIDType & connectionID, const std::string & str)
 {
     const ClientIDType clientID = GetClientID(connectionID);
 
@@ -220,9 +208,13 @@ bool mtsComponentInterfaceProxyServer::RegisterPerCommandSerializer(const Comman
 
 void mtsComponentInterfaceProxyServer::ReceiveExecuteEventVoid(const CommandIDType commandID)
 {
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventVoid: " << commandID);
+#endif
+
     mtsMulticastCommandVoid * eventVoidGeneratorProxy = reinterpret_cast<mtsMulticastCommandVoid*>(commandID);
     if (!eventVoidGeneratorProxy) {
-        LogError(mtsComponentInterfaceProxyServer, "ReceiveExecuteCommandQualifiedReadSerialized: invalid proxy id of event void: " << commandID);
+        LogError(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventVoid: invalid proxy id of event void: " << commandID);
         return;
     }
 
@@ -232,8 +224,9 @@ void mtsComponentInterfaceProxyServer::ReceiveExecuteEventVoid(const CommandIDTy
 void mtsComponentInterfaceProxyServer::ReceiveExecuteEventWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventWriteSerialized: received " << serializedArgument.size() << " bytes");
+    LogPrint(mtsComponentInterfaceProxyServer, "ReceiveExecuteEventWriteSerialized: " << commandID << ", " << serializedArgument.size() << " bytes");
 #endif
+
 
     mtsMulticastCommandWriteProxy * eventWriteGeneratorProxy = reinterpret_cast<mtsMulticastCommandWriteProxy*>(commandID);
     if (!eventWriteGeneratorProxy) {
@@ -339,8 +332,9 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(const C
     }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID << " sent " << serializedArgument.size() << " bytes");
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID << ", " << serializedArgument.size() << " bytes");
 #endif
+
     (*clientProxy)->ExecuteCommandWriteSerialized(commandID, serializedArgument);
 
     return true;
@@ -404,7 +398,7 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandQualifiedReadSerialized
     std::string serializedArgumentOut;
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandQualifiedReadSerialized: " << commandID << " sent " << serializedArgumentIn.size() << " bytes");
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandQualifiedReadSerialized: " << commandID << ", " << serializedArgumentIn.size() << " bytes");
 #endif
     (*clientProxy)->ExecuteCommandQualifiedReadSerialized(commandID, serializedArgumentIn, serializedArgumentOut);
 
@@ -429,14 +423,12 @@ mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ComponentInterfaceS
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Start()
 {
-    ComponentInterfaceProxyServer->GetLogger()->trace(
-        "mtsComponentInterfaceProxyServer", "Send thread starts");
+    ComponentInterfaceProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "Send thread starts");
 
     SenderThreadPtr->start();
 }
 
 //#define _COMMUNICATION_TEST_
-
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 {
 #ifdef _COMMUNICATION_TEST_
@@ -487,12 +479,12 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
 {
     if (!ComponentInterfaceProxyServer->IsActiveProxy()) return;
 
+    // TODO: Review the following codes
     IceUtil::ThreadPtr callbackSenderThread;
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
         // TODO: Change proxy state from active to 'prepare to stop(?)'
-        //Runnable = false;
 
         notify();
 
@@ -544,6 +536,7 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const
 
     const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
 
+    // TODO:
     // Set as true to represent that this connection (session) is going to be closed.
     // After this flag is set, no message is allowed to be sent to a server.
     //ComponentInterfaceProxyServer->ShutdownSession(current);

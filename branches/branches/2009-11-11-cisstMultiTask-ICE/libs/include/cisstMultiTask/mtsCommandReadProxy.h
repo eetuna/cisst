@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Defines a command with one argument 
+  \brief Defines a command proxy class with one argument 
 */
 
 #ifndef _mtsCommandReadProxy_h
@@ -51,18 +51,10 @@ public:
     /*! Typedef for base type */
     typedef mtsCommandReadBase BaseType;
 
-    /*! Constructor */
+    /*! Constructor. Command proxy is disabled by defaultand is enabled when 
+        command id and network proxy are set. */
     mtsCommandReadProxy(const std::string & commandName) : BaseType(commandName) {
-        // Command proxy is disabled by default (enabled when command id and
-        // network proxy are set).
         Disable();
-    }
-
-    /*! Destructor */
-    virtual ~mtsCommandReadProxy() {
-        if (ArgumentPrototype) {
-            delete ArgumentPrototype;
-        }
     }
 
     /*! Set command id and register serializer to network proxy. This method
@@ -84,7 +76,9 @@ public:
     virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
         if (IsDisabled()) mtsCommandBase::DISABLED;
 
-        NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument);
+        if (NetworkProxyServer) {
+            NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument);
+        }
         return mtsCommandBase::DEV_OK;
     }
     

@@ -38,18 +38,6 @@ http://www.cisst.org/cisst/license.txt.
   mtsCommandWriteProxy is a proxy class for mtsCommandWrite. When Execute() 
   method is called, the command id with payload is sent to the connected peer 
   interface across a network.
-
-  //
-  // TODO: Rewrite the following comments
-  //
-  Note that there are two different usages of this class: as a command or an event.
-  If this class used as COMMANDS, an instance of mtsComponentInterfaceProxyClient 
-  class should be provided and this is used to execute a write command at a server.
-  When this is used for EVENTS, an instance of mtsComponentInterfaceProxyServer class
-  takes care of the process of event propagation across a network so that an event
-  is sent to a client and an event handler is called at a client side.
-  Currently, only one of them can be initialized as a valid value while the other 
-  has to be 0.
 */
 class mtsCommandWriteProxy : public mtsCommandWriteBase, public mtsCommandProxyBase 
 {
@@ -64,20 +52,12 @@ public:
     /*! Typedef for base type */
     typedef mtsCommandWriteBase BaseType;
 
-    /*! Constructor */
+    /*! Constructor. Command proxy is disabled by defaultand is enabled when 
+        command id and network proxy are set. */
     mtsCommandWriteProxy(const std::string & commandName) : BaseType(commandName) {
-        // Command proxy is disabled by default (enabled when command id and
-        // network proxy are set).
         Disable();
     }
 
-    /*! Destructor */
-    ~mtsCommandWriteProxy() {
-        if (ArgumentPrototype) {
-            delete ArgumentPrototype;
-        }
-    }
-    
     /*! Set command id and register serializer to network proxy. This method
         should be called after SetNetworkProxy() is called. */
     void SetCommandID(const CommandIDType & commandID) {

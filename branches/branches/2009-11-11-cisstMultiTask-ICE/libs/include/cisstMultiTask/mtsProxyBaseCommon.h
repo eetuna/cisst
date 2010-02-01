@@ -170,7 +170,6 @@ protected:
     template<class _proxyOwner>
     class ThreadArguments {
     public:
-        _proxyOwner * ProxyOwner;
         mtsProxyBaseCommon * Proxy;
         void (*Runner)(ThreadArguments<_proxyOwner> *);
     };

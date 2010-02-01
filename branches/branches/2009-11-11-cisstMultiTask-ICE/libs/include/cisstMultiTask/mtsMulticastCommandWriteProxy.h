@@ -32,9 +32,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 #include <cisstMultiTask/mtsCommandProxyBase.h>
-//#include <vector>
-
-#include <cisstMultiTask/mtsExport.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -53,13 +50,6 @@ protected:
     /*! The constructor with a name. */
     mtsMulticastCommandWriteProxy(const std::string & name) : BaseType(name)
     {}
-
-    /*! Default destructor. Does nothing. */
-    ~mtsMulticastCommandWriteProxy() {
-        if (this->ArgumentPrototype) {
-            delete this->ArgumentPrototype;
-        }
-    }
 
 public:
     /*! Execute all the commands in the composite. */

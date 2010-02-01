@@ -20,10 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 //
-// This Slice file defines the communication between a provided interface
-// and a required interfaces. 
-// A provided interfaces act as a server while a required interface does 
-// as a client.
+// This Slice file defines an interface between a provided interface and a 
+// required interfaces.
 //
 
 #ifndef _mtsComponentInterfaceProxy_ICE_h
@@ -94,16 +92,12 @@ module mtsComponentInterfaceProxy
     //-----------------------------------------------------------------------------
 	//	Function Proxy Related Definition
 	//-----------------------------------------------------------------------------	
-    
-    //
-    // TODO: Change the name of FunctionProxyInfo => ProxyElementInfo (?)
-    //
     // The information about the function proxies.
     struct FunctionProxyInfo {
         string Name;
         // This id is set as a pointer to a function proxy at server side.
-        // Note that type 'long' in slice is converted to ::Ice::Long which can
-        // handle 64-bit numbers.
+        // Note that type 'long' in slice is converted to ::Ice::Long which is
+        // big enough to handle 64-bit numbers.
         long FunctionProxyId;
     };
 
@@ -113,10 +107,8 @@ module mtsComponentInterfaceProxy
         // A name of the server task proxy. This is used as a key to find a server 
         // task proxy at client side.
         string ServerTaskProxyName;
-        
         // A name of the provided interface proxy that has command proxies at client side.
         string ProvidedInterfaceProxyName;
-
         // Set of pointers to the function proxies.
         FunctionProxySequence FunctionVoidProxies;
         FunctionProxySequence FunctionWriteProxies;
@@ -130,8 +122,8 @@ module mtsComponentInterfaceProxy
     struct EventGeneratorProxyElement {
         string Name;
         // This ID is set as a pointer to a event generator proxy poninter at client side.
-        // Note that type 'long' in slice is converted to ::Ice::Long which can
-        // handle 64-bit numbers.
+        // Note that type 'long' in slice is converted to ::Ice::Long which is
+        // big enough to handle 64-bit numbers.
         long EventGeneratorProxyId;
     };
     sequence<EventGeneratorProxyElement> EventGeneratorProxySequence;
@@ -146,7 +138,7 @@ module mtsComponentInterfaceProxy
 	//-----------------------------------------------------------------------------
 	interface ComponentInterfaceClient
 	{
-        /*! Methods for testing and unit tests */
+        /*! Methods for testing */
         void TestMessageFromServerToClient(string str);
 
         /*! Fetch function proxy pointers from a required interface proxy at 
@@ -154,12 +146,7 @@ module mtsComponentInterfaceProxy
         ["cpp:const"] idempotent
         bool FetchFunctionProxyPointers(string requiredInterfaceName, out FunctionProxyPointerSet functionProxyPointers);
 
-        /*! Execute command objects across a network. In these APIs, Slice's 
-            'long' type is used instead of 'unsigned int' because Slice does 
-            not support unsigned type.
-		    See http://zeroc.com/doc/Ice-3.3.1/manual/Slice.5.8.html for details.
-            Also see http://www.zeroc.com/doc/Ice-3.3.1/manual/Cpp.7.6.html for
-		    mapping for simple built-in types. */
+        /*! Execute command across a network */
 		void ExecuteCommandVoid(long commandID);
         void ExecuteCommandWriteSerialized(long commandID, string argument);
         void ExecuteCommandReadSerialized(long commandID, out string argument);
@@ -171,7 +158,7 @@ module mtsComponentInterfaceProxy
 	//-----------------------------------------------------------------------------
 	interface ComponentInterfaceServer
 	{
-        /*! Methods for testing and unit tests */
+        /*! Methods for testing */
         void TestMessageFromClientToServer(string str);
 
         //
@@ -181,7 +168,7 @@ module mtsComponentInterfaceProxy
 		bool AddClient(string connectingProxyName, int providedInterfaceProxyInstanceId, Ice::Identity ident);
 
         /*! This is called by a client when it terminates. This allows a server to
-            shutdown (or close) safely and cleanly. */
+            shutdown (or close) connections safely and cleanly. */
         void Shutdown();
 
         //
@@ -194,6 +181,7 @@ module mtsComponentInterfaceProxy
             string clientComponentName, string requiredInterfaceName,
             out EventGeneratorProxyPointerSet eventGeneratorProxyPointers);
 
+        /*! Execute events across a network */
         void ExecuteEventVoid(long CommandID);
         void ExecuteEventWriteSerialized(long CommandID, string argument);
 	};

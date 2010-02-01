@@ -47,9 +47,9 @@ protected:
     typedef IceUtil::Handle<ManagerServerI> ManagerServerIPtr;
     ManagerServerIPtr Sender;
 
-    //-------------------------------------------------------------------------
-    //  Proxy Implementation
-    //-------------------------------------------------------------------------
+    /*! Instance counter used to set a short name of this thread */
+    static unsigned int InstanceCounter;
+
     /*! String key to set an implicit per-proxy context for connection id */
     static std::string ConnectionIDKey;
 
@@ -57,6 +57,9 @@ protected:
         proxy client uses this ID to connect to proxy server. */
     static std::string ManagerCommunicatorID;
 
+    //-------------------------------------------------------------------------
+    //  Proxy Implementation
+    //-------------------------------------------------------------------------
     /*! Create a servant */
     Ice::ObjectPtr CreateServant() {
         Sender = new ManagerServerI(IceCommunicator, IceLogger, this);
@@ -75,14 +78,14 @@ protected:
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsManagerGlobal> * arguments);
 
-    /*! Get a network proxy client object using clientID. If no network proxy 
-        client with the clientID didn't connect or the proxy is not active,
-        this method returns NULL. */
+    /*! Get a network proxy client using clientID. If no network proxy client 
+        with the clientID found or inactive proxy, this method returns NULL. */
     ManagerClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
 
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)
     //-------------------------------------------------------------------------
+    /*! Test method */
     void ReceiveTestMessageFromClientToServer(const ConnectionIDType &connectionID, const std::string & str);
 
     /*! When a new client connects, add it to the client management list. */
@@ -123,12 +126,14 @@ protected:
     bool ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
 
 public:
+    /*! Constructor and destructor */
     mtsManagerProxyServer(
         const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
         : BaseServerType(adapterName, endpointInfo, communicatorID)
     {}
 
-    ~mtsManagerProxyServer();
+    ~mtsManagerProxyServer()
+    {}
 
     /*! Entry point to run a proxy */
     bool Start(mtsManagerGlobal * owner);
@@ -144,20 +149,16 @@ public:
 
     /*! Data structure converters */
     static void ConvertProvidedInterfaceDescription(
-        const ::mtsManagerProxy::ProvidedInterfaceDescription & src,
-        ProvidedInterfaceDescription & dest);
+        const ::mtsManagerProxy::ProvidedInterfaceDescription & src, ProvidedInterfaceDescription & dest);
 
     static void ConvertRequiredInterfaceDescription(
-        const ::mtsManagerProxy::RequiredInterfaceDescription & src,
-        RequiredInterfaceDescription & dest);
+        const ::mtsManagerProxy::RequiredInterfaceDescription & src, RequiredInterfaceDescription & dest);
 
     static void ConstructProvidedInterfaceDescriptionFrom(
-        const ProvidedInterfaceDescription & src,
-        ::mtsManagerProxy::ProvidedInterfaceDescription & dest);
+        const ProvidedInterfaceDescription & src, ::mtsManagerProxy::ProvidedInterfaceDescription & dest);
 
     static void ConstructRequiredInterfaceDescriptionFrom(
-        const RequiredInterfaceDescription & src,
-        ::mtsManagerProxy::RequiredInterfaceDescription & dest);
+        const RequiredInterfaceDescription & src, ::mtsManagerProxy::RequiredInterfaceDescription & dest);
 
     //-------------------------------------------------------------------------
     //  Implementation of mtsManagerLocalInterface
@@ -179,8 +180,6 @@ public:
 
     bool RemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID = "");
-
-    void ProxyCreationCompleted(const std::string & listenerID = "");
 
     //  Connection Management
     bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceId,
@@ -233,8 +232,6 @@ public:
         const std::string & serverComponentProxyName, 
         const std::string & requiredInterfaceProxyName, const std::string & clientID);
 
-    void SendProxyCreationCompleted(const std::string & clientID);
-
     /*! Connection management */
     bool SendConnectServerSideInterface(
         ::Ice::Int providedInterfaceProxyInstanceId, 
@@ -281,8 +278,7 @@ public:
     //-------------------------------------------------------------------------
 protected:
     class ManagerServerI : 
-        public mtsManagerProxy::ManagerServer,
-        public IceUtil::Monitor<IceUtil::Mutex>
+        public mtsManagerProxy::ManagerServer, public IceUtil::Monitor<IceUtil::Mutex>
     {
     private:
         /*! Ice objects */
@@ -299,9 +295,12 @@ protected:
             const Ice::LoggerPtr& logger,
             mtsManagerProxyServer * ManagerProxyServer);
 
+        /*! Proxy management */
         void Start();
         void Run();
         void Stop();
+
+        /*! Getter */
         bool IsActiveProxy() const {
             return ManagerProxyServer->IsActiveProxy();
         }
@@ -309,6 +308,7 @@ protected:
         //---------------------------------------
         //  Event Handlers (Client -> Server)
         //---------------------------------------
+        /*! Test method */
         void TestMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
 
         // Add a client proxy. Called when a proxy client connects to server proxy

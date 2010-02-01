@@ -27,18 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerProxyClient);
 
-//-----------------------------------------------------------------------------
-//  Constructor, Destructor, Initializer
-//-----------------------------------------------------------------------------
-mtsManagerProxyClient::mtsManagerProxyClient(
-    const std::string & serverEndpointInfo, const std::string & communicatorID)
-    : BaseClientType(serverEndpointInfo, communicatorID)
-{
-}
-
-mtsManagerProxyClient::~mtsManagerProxyClient()
-{
-}
+unsigned int mtsManagerProxyClient::InstanceCounter = 0;
 
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
@@ -65,15 +54,11 @@ bool mtsManagerProxyClient::Start(mtsManagerLocal * proxyOwner)
     adapter->activate();
     ManagerServerProxy->ice_getConnection()->setAdapter(adapter);
 
-    //
-    // TODO: we can use a provided interface proxy instance id instead of an implicit context key.
-    //
     // Set an implicit context (per proxy context)
-    // (see http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.12.html)
     IceCommunicator->getImplicitContext()->put(
         mtsManagerProxyServer::GetConnectionIDKey(), IceCommunicator->identityToString(ident));
 
-    // Set the owner and name of this proxy object
+    // Set proxy owner and name of this proxy object
     SetProxyOwner(proxyOwner);
 
     // Connect to server proxy through adding this ICE proxy to server proxy
@@ -83,20 +68,20 @@ bool mtsManagerProxyClient::Start(mtsManagerLocal * proxyOwner)
     }
 
     // Create a worker thread here but is not running yet.
-    //ThreadArgumentsInfo.ProxyOwner = proxyOwner;
     ThreadArgumentsInfo.Proxy = this;        
     ThreadArgumentsInfo.Runner = mtsManagerProxyClient::Runner;
 
-    WorkerThread.Create<ProxyWorker<mtsManagerLocal>, ThreadArguments<mtsManagerLocal>*>(
-        &ProxyWorkerInfo, &ProxyWorker<mtsManagerLocal>::Run, &ThreadArgumentsInfo, 
-        // Set the name of this thread as CIPC which means Component 
-        // Interface Proxy Client. Such a very short naming rule is
-        // because sometimes there is a limitation of the total number 
-        // of characters as a thread name on some systems (e.g. LINUX RTAI).
-        "CIPC");
+    // Set a short name of this thread as MPC which means "Manager Proxy Client."
+    // Such a condensed naming rule is required because a total number of 
+    // characters in a thread name is sometimes limited to a small number (e.g. 
+    // LINUX RTAI).
+    std::stringstream ss;
+    ss << "MPC" << mtsManagerProxyClient::InstanceCounter++;
+    std::string threadName = ss.str();
 
-    // Wait for threads to be created and a proxy to connect to server.
-    osaSleep(3 * cmn_s);
+    // Create worker thread. Note that it is created but is not yet running.
+    WorkerThread.Create<ProxyWorker<mtsManagerLocal>, ThreadArguments<mtsManagerLocal>*>(
+        &ProxyWorkerInfo, &ProxyWorker<mtsManagerLocal>::Run, &ThreadArgumentsInfo, threadName.c_str());
 
     return true;
 }
@@ -114,19 +99,14 @@ void mtsManagerProxyClient::Runner(ThreadArguments<mtsManagerLocal> * arguments)
     mtsManagerProxyClient * ProxyClient = 
         dynamic_cast<mtsManagerProxyClient*>(arguments->Proxy);
     if (!ProxyClient) {
-        CMN_LOG_RUN_ERROR << "mtsManagerProxyClient: Failed to create a proxy client." << std::endl;
+        CMN_LOG_RUN_ERROR << "mtsManagerProxyClient: failed to create a proxy client." << std::endl;
         return;
     }
 
-    ProxyClient->GetLogger()->trace("mtsManagerProxyClient", "Proxy client starts.....");
+    ProxyClient->GetLogger()->trace("mtsManagerProxyClient", "proxy client starts");
 
     try {
-        // TODO: By this call, it is 'assumed' that a client proxy is successfully
-        // connected to a server proxy.
-        // If I can find better way to detect successful connection establishment
-        // between a client and a server, this should be updated.
         ProxyClient->SetAsActiveProxy();
-
         ProxyClient->StartClient();        
     } catch (const Ice::Exception& e) {
         std::string error("mtsManagerProxyClient: ");
@@ -138,7 +118,7 @@ void mtsManagerProxyClient::Runner(ThreadArguments<mtsManagerLocal> * arguments)
         ProxyClient->GetLogger()->error(error);
     }
 
-    ProxyClient->GetLogger()->trace("mtsManagerProxyClient", "Proxy client terminates.....");
+    ProxyClient->GetLogger()->trace("mtsManagerProxyClient", "proxy client terminates");
 
     ProxyClient->Stop();
 }
@@ -146,6 +126,10 @@ void mtsManagerProxyClient::Runner(ThreadArguments<mtsManagerLocal> * arguments)
 void mtsManagerProxyClient::Stop()
 {
     LogPrint(mtsManagerProxyClient, "ManagerProxy client ends.");
+
+    //
+    // TODO: Review this method
+    //
 
     // Let a server disconnect this client safely.
     // TODO: gcc says this doesn't exist???
@@ -368,11 +352,6 @@ bool mtsManagerProxyClient::ReceiveRemoveRequiredInterfaceProxy(const std::strin
     return ProxyOwner->RemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
 }
 
-void mtsManagerProxyClient::ReceiveProxyCreationCompleted()
-{
-    ProxyOwner->ProxyCreationCompleted();
-}
-
 bool mtsManagerProxyClient::ReceiveConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
     return ProxyOwner->ConnectServerSideInterface(providedInterfaceProxyInstanceId, 
@@ -552,15 +531,12 @@ mtsManagerProxyClient::ManagerClientI::ManagerClientI(
 
 void mtsManagerProxyClient::ManagerClientI::Start()
 {
-    ManagerProxyClient->GetLogger()->trace(
-        "mtsManagerProxyClient", "Send thread starts");
+    ManagerProxyClient->GetLogger()->trace("mtsManagerProxyClient", "Send thread starts");
 
     SenderThreadPtr->start();
 }
 
-// TODO: Remove this
 //#define _COMMUNICATION_TEST_
-
 void mtsManagerProxyClient::ManagerClientI::Run()
 {
 #ifdef _COMMUNICATION_TEST_
@@ -578,6 +554,7 @@ void mtsManagerProxyClient::ManagerClientI::Run()
 #else
     while (this->IsActiveProxy())
     {
+        // TODO: add monitoring
         //ManagerProxyClient->RunMonitor();
         //osaSleep(500 * cmn_ms);
         osaSleep(10 * cmn_ms);
@@ -621,7 +598,7 @@ void mtsManagerProxyClient::ManagerClientI::TestMessageFromServerToClient(
 bool mtsManagerProxyClient::ManagerClientI::CreateComponentProxy(const std::string & componentProxyName, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: CreateComponentProxy");
+    LogPrint(ManagerClientI, "<<<<< RECV: CreateComponentProxy: " << componentProxyName);
 #endif
 
     return ManagerProxyClient->ReceiveCreateComponentProxy(componentProxyName);
@@ -630,7 +607,7 @@ bool mtsManagerProxyClient::ManagerClientI::CreateComponentProxy(const std::stri
 bool mtsManagerProxyClient::ManagerClientI::RemoveComponentProxy(const std::string & componentProxyName, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: RemoveComponentProxy");
+    LogPrint(ManagerClientI, "<<<<< RECV: RemoveComponentProxy: " << componentProxyName);
 #endif
 
     return ManagerProxyClient->ReceiveRemoveComponentProxy(componentProxyName);
@@ -639,7 +616,7 @@ bool mtsManagerProxyClient::ManagerClientI::RemoveComponentProxy(const std::stri
 bool mtsManagerProxyClient::ManagerClientI::CreateProvidedInterfaceProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: CreateProvidedInterfaceProxy");
+    LogPrint(ManagerClientI, "<<<<< RECV: CreateProvidedInterfaceProxy: " << serverComponentProxyName << ", " << providedInterfaceDescription.ProvidedInterfaceName);
 #endif
 
     return ManagerProxyClient->ReceiveCreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription);
@@ -648,7 +625,7 @@ bool mtsManagerProxyClient::ManagerClientI::CreateProvidedInterfaceProxy(const s
 bool mtsManagerProxyClient::ManagerClientI::CreateRequiredInterfaceProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::RequiredInterfaceDescription & requiredInterfaceDescription, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: CreateRequiredInterfaceProxy");
+    LogPrint(ManagerClientI, "<<<<< RECV: CreateRequiredInterfaceProxy: " << clientComponentProxyName << ", " << requiredInterfaceDescription.RequiredInterfaceName);
 #endif
 
     return ManagerProxyClient->ReceiveCreateRequiredInterfaceProxy(clientComponentProxyName, requiredInterfaceDescription);
@@ -657,7 +634,7 @@ bool mtsManagerProxyClient::ManagerClientI::CreateRequiredInterfaceProxy(const s
 bool mtsManagerProxyClient::ManagerClientI::RemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: RemoveProvidedInterfaceProxy");
+    LogPrint(ManagerClientI, "<<<<< RECV: RemoveProvidedInterfaceProxy: " << clientComponentProxyName << ", " << providedInterfaceProxyName);
 #endif
 
     return ManagerProxyClient->ReceiveRemoveProvidedInterfaceProxy(clientComponentProxyName, providedInterfaceProxyName);
@@ -666,25 +643,16 @@ bool mtsManagerProxyClient::ManagerClientI::RemoveProvidedInterfaceProxy(const s
 bool mtsManagerProxyClient::ManagerClientI::RemoveRequiredInterfaceProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: RemoveRequiredInterfaceProxy");
+    LogPrint(ManagerClientI, "<<<<< RECV: RemoveRequiredInterfaceProxy: " << serverComponentProxyName << ", " << requiredInterfaceProxyName);
 #endif
 
     return ManagerProxyClient->ReceiveRemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
 }
 
-void mtsManagerProxyClient::ManagerClientI::ProxyCreationCompleted(const ::Ice::Current & current)
-{
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: ProxyCreationCompleted");
-#endif
-
-    return ManagerProxyClient->ReceiveProxyCreationCompleted();
-}
-
 bool mtsManagerProxyClient::ManagerClientI::ConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceId, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: ConnectServerSideInterface");
+    LogPrint(ManagerClientI, "<<<<< RECV: ConnectServerSideInterface: " << providedInterfaceProxyInstanceId);
 #endif
 
     return ManagerProxyClient->ReceiveConnectServerSideInterface(providedInterfaceProxyInstanceId, connectionStringSet);
@@ -693,7 +661,7 @@ bool mtsManagerProxyClient::ManagerClientI::ConnectServerSideInterface(::Ice::In
 bool mtsManagerProxyClient::ManagerClientI::ConnectClientSideInterface(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: ConnectClientSideInterface");
+    LogPrint(ManagerClientI, "<<<<< RECV: ConnectClientSideInterface: " << connectionID);
 #endif
 
     return ManagerProxyClient->ReceiveConnectClientSideInterface(connectionID, connectionStringSet);
@@ -702,7 +670,7 @@ bool mtsManagerProxyClient::ManagerClientI::ConnectClientSideInterface(::Ice::In
 bool mtsManagerProxyClient::ManagerClientI::GetProvidedInterfaceDescription(const std::string & componentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription, const ::Ice::Current &) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: GetProvidedInterfaceDescription");
+    LogPrint(ManagerClientI, "<<<<< RECV: GetProvidedInterfaceDescription: " << componentName << ", " << providedInterfaceName << providedInterfaceDescription.ProvidedInterfaceName);
 #endif
 
     return ManagerProxyClient->ReceiveGetProvidedInterfaceDescription(componentName, providedInterfaceName, providedInterfaceDescription);
@@ -711,7 +679,7 @@ bool mtsManagerProxyClient::ManagerClientI::GetProvidedInterfaceDescription(cons
 bool mtsManagerProxyClient::ManagerClientI::GetRequiredInterfaceDescription(const std::string & componentName, const std::string & requiredInterfaceName, ::mtsManagerProxy::RequiredInterfaceDescription & requiredInterfaceDescription, const ::Ice::Current &) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: GetRequiredInterfaceDescription");
+    LogPrint(ManagerClientI, "<<<<< RECV: GetRequiredInterfaceDescription" << componentName << ", " << requiredInterfaceName << requiredInterfaceDescription.RequiredInterfaceName);
 #endif
 
     return ManagerProxyClient->ReceiveGetRequiredInterfaceDescription(componentName, requiredInterfaceName, requiredInterfaceDescription);
@@ -729,7 +697,7 @@ std::string mtsManagerProxyClient::ManagerClientI::GetProcessName(const ::Ice::C
 ::Ice::Int mtsManagerProxyClient::ManagerClientI::GetCurrentInterfaceCount(const ::std::string & componentName, const ::Ice::Current & current) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-	LogPrint(ManagerClientI, "<<<<< RECV: GetCurrentInterfaceCount");
+    LogPrint(ManagerClientI, "<<<<< RECV: GetCurrentInterfaceCount: " << componentName);
 #endif
 
     return ManagerProxyClient->ReceiveGetCurrentInterfaceCount(componentName);

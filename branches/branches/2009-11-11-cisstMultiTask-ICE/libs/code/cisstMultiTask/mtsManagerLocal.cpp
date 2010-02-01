@@ -603,9 +603,6 @@ bool mtsManagerLocal::Connect(
         return Connect(clientComponentName, clientRequiredInterfaceName, serverComponentName, serverProvidedInterfaceName);
     }
 
-    // Reset the flag
-    isProxyCreationCompleted = false;
-
     // Inform the global component manager of the fact that a new connection is
     // to be established. The GCM then issues a new connection id and begins
     // connect process that creates component/interface proxy into relevant 
@@ -1166,13 +1163,6 @@ bool mtsManagerLocal::RemoveRequiredInterfaceProxy(
         << serverComponentProxyName << ":" << requiredInterfaceProxyName << std::endl;
 
     return true;
-}
-
-void mtsManagerLocal::ProxyCreationCompleted(const std::string & listenerID)
-{
-    CMN_LOG_CLASS_RUN_VERBOSE << "ProxyCreationCompleted: proxy creation completed" << std::endl;
-
-    isProxyCreationCompleted = true;
 }
 
 const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID)

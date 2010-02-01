@@ -31,9 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
-#include <vector>
 
-// Always include last
 #include <cisstMultiTask/mtsExport.h>
 
 /*!
@@ -56,9 +54,6 @@ public:
     /*! Default destructor. Does nothing. */
     ~mtsEventWriteGeneratorProxy() {}
 
-    /*! Add a command to the composite. */
-    // virtual void AddCommand(BaseType * command);
-    
     /*! Execute all the commands in the composite. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
         if (this->Commands[0]) {
@@ -75,9 +70,6 @@ public:
         }
         return 0;
     }
-
-    /* documented in base class */
-    // virtual void ToStream(std::ostream & outputStream) const;
 };
 
 

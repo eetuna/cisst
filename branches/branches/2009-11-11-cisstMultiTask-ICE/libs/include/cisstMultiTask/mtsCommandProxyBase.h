@@ -25,8 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
-
-class mtsComponentProxy;
+#include <cisstMultiTask/mtsForwardDeclarations.h>
 
 class mtsCommandProxyBase {
 protected:
@@ -37,7 +36,7 @@ protected:
     mtsComponentInterfaceProxyServer::ClientIDType ClientID;
 
     /*! Network (ICE) proxy which enables communication with the connected
-        interface across a network. This is an instance of either
+        interface across a network. This is of type either
         mtsComponentInterfaceProxyClient or mtsComponentInterfaceProxyServer */
     mtsProxyBaseCommon<mtsComponentProxy> * NetworkProxy;
 

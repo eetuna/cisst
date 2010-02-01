@@ -44,10 +44,9 @@ public:
     typedef mtsCommandVoidBase BaseType;
 
 public:
-    /*! Constructor */
+    /*! Constructor. Command proxy is disabled by defaultand is enabled when 
+        command id and network proxy are set. */
     mtsCommandVoidProxy(const std::string & commandName) : BaseType(commandName) {
-        // Command proxy is disabled by default (enabled when command id and
-        // network proxy are set).
         Disable();
     }
 

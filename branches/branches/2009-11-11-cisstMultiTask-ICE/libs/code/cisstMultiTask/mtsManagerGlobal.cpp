@@ -688,9 +688,6 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
         << GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
         << GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
 
-    // Inform local component manager of the successful establishment of the connection
-    //LocalManagerConnected->ProxyCreationCompleted(requestProcessName);
-
     return thisConnectionID;
 }
 

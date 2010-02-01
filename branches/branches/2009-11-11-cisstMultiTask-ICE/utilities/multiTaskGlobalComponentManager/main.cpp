@@ -23,7 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnLogger.h>
 #include <cisstOSAbstraction/osaSleep.h>
-#include <cisstOSAbstraction/osaSocket.h>
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
 

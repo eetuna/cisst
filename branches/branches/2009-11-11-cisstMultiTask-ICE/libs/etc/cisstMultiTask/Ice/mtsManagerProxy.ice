@@ -20,9 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 //
-// This Slice file defines interaction between the global component manager
-// and local component managers, which is defined by mtsManagerGlobalInterface.h 
-// and mtsManagerLocalInterface.h.
+// This Slice file defines an interface between the global component manager
+// and local component managers
 //
 
 #ifndef _mtsManagerProxy_ICE_h
@@ -124,7 +123,7 @@ module mtsManagerProxy
         //-------------------------------------------------
         //  Test Method
         //-------------------------------------------------
-        // Methods for testing and unit tests
+        // Methods for testing
         void TestMessageFromServerToClient(string str);
 
         //-----------------------------------------------------------------------------
@@ -140,7 +139,6 @@ module mtsManagerProxy
         bool CreateRequiredInterfaceProxy(string clientComponentProxyName, RequiredInterfaceDescription requiredInterface);
         bool RemoveProvidedInterfaceProxy(string clientComponentProxyName, string providedInterfaceProxyName);
         bool RemoveRequiredInterfaceProxy(string serverComponentProxyName, string requiredInterfaceProxyName);
-        void ProxyCreationCompleted();
 
         //  Connection Management
         bool ConnectServerSideInterface(int providedInterfaceProxyInstanceId, ConnectionStringSet connectionStrings);
@@ -162,14 +160,14 @@ module mtsManagerProxy
         //-------------------------------------------------
         //  Test Method and Connection Management
         //-------------------------------------------------
-        // Methods for testing and unit tests
+        // Methods for testing
         void TestMessageFromClientToServer(string str);
 
 	    // Called by a proxy client when it connects to a proxy server
 		bool AddClient(string connectingProcessName, Ice::Identity ident);
 
         // This is called by a client when it terminates. This allows a server to
-        // shutdown (or close) safely and cleanly
+        // shutdown (or close) connections safely and cleanly
         void Shutdown();
 
         //-----------------------------------------------------------------------------

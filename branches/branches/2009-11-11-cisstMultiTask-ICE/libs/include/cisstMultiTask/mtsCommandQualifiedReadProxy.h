@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Defines a command with two arguments.
+  \brief Defines a command proxy class with two arguments.
 */
 
 #ifndef _mtsCommandQualifiedReadProxy_h
@@ -36,9 +36,8 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
 
   mtsCommandQualifiedReadProxy is a proxy for mtsCommandQualifiedRead. 
-  When Execute() 
-  method is called, the command id with two payloads is sent to the connected 
-  peer interface across a network.
+  When Execute() method is called, the command id with two payloads is sent to 
+  the connected peer interface across a network.
 */
 class mtsCommandQualifiedReadProxy : public mtsCommandQualifiedReadBase, public mtsCommandProxyBase
 {
@@ -56,21 +55,10 @@ public:
     /*! Typedef for base type */
     typedef mtsCommandQualifiedReadBase BaseType;
     
+    /*! Constructor. Command proxy is disabled by defaultand is enabled when 
+        command id and network proxy are set. */
     mtsCommandQualifiedReadProxy(const std::string & commandName) : BaseType(commandName) {
-        // Command proxy is disabled by default (enabled when command id and
-        // network proxy are set).
         Disable();
-    }
-
-    /*! The destructor. Does nothing */
-    virtual ~mtsCommandQualifiedReadProxy() 
-    {
-        //
-        // TODO: Do we need this???
-        //
-        //if (this->ArgumentPrototype) {
-        //    delete this->ArgumentPrototype;
-        //}
     }
 
     /*! Set command id and register serializer to network proxy. This method
@@ -91,9 +79,11 @@ public:
 
     /*! The execute method. */
     mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1, mtsGenericObject & argument2) {
-        if (this->IsDisabled()) mtsCommandBase::DISABLED;
+        if (IsDisabled()) mtsCommandBase::DISABLED;
 
-        NetworkProxyServer->SendExecuteCommandQualifiedReadSerialized(ClientID, CommandID, argument1, argument2);
+        if (NetworkProxyServer) {
+            NetworkProxyServer->SendExecuteCommandQualifiedReadSerialized(ClientID, CommandID, argument1, argument2);
+        }
 
         return mtsCommandBase::DEV_OK;
     }
