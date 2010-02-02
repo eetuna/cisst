@@ -74,7 +74,7 @@ public:
     }
 
     /*! Called when a client disconnection is detected */
-    virtual void OnClientDisconnect(const ClientIDType clientID) = 0;
+    virtual bool OnClientDisconnect(const ClientIDType clientID) = 0;
 
     //-------------------------------------------------------------------------
     //  Networking: ICE
@@ -248,6 +248,40 @@ protected:
         return (ClientIDMap.find(clientID) != ClientIDMap.end());
     }
 
+    /*! Remove an ICE proxy object using connection id */
+    bool RemoveClientByConnectionID(const ConnectionIDType & connectionID) {
+        ConnectionIDMapType::iterator it1 = ConnectionIDMap.find(connectionID);
+        if (it1 == ConnectionIDMap.end()) {
+            return false;
+        }
+        ClientIDMapType::iterator it2 = ClientIDMap.find(clientID);
+        if (it2 == ClientIDMap.end()) {
+            return false;
+        }
+
+        ConnectionIDMap.erase(it1);
+        ClientIDMap.erase(it2);
+
+        return true;
+    }
+
+    /*! Remove an ICE proxy object using client id */
+    bool RemoveClientByClientID(const ClientIDType & clientID) {
+        ClientIDMapType::iterator it1 = ClientIDMap.find(clientID);
+        if (it1 == ClientIDMap.end()) {
+            return false;
+        }
+        ConnectionIDMapType::iterator it2 = ConnectionIDMap.find(it1->second.ConnectionID);
+        if (it2 == ConnectionIDMap.end()) {
+            return false;
+        }
+
+        ClientIDMap.erase(it1);
+        ConnectionIDMap.erase(it2);
+
+        return true;
+    }
+
     /*! Close a connection with a specific client */
     void CloseClient(const ConnectionIDType & connectionID) {
         ClientProxyType * clientProxy = GetClientByConnectionID(connectionID);
@@ -275,16 +309,19 @@ protected:
             } catch (const Ice::Exception & e) {
                 std::stringstream ss;
                 ss << "ProxyBaseServer Monitor: remove disconnected client: client id=\"" << it->second.ClientID << "\", "
-                    << "connection id=\"" << it->second.ConnectionID << "\"\n" << e;
+                   << "connection id=\"" << it->second.ConnectionID << "\"\n" << e;
                 std::string s = ss.str();
                 this->IceLogger->warning(s);
 
-                OnClientDisconnect(it->second.ClientID);
+                if (!this->OnClientDisconnect(it->second.ClientID)) {
+                    std::stringstream ss;
+                    ss << "ProxyBaseServer Monitor: failed to remove disconnected client: client id=\"" << it->second.ClientID << "\", "
+                       << "connection id=\"" << it->second.ConnectionID << "\"\n" << e;
+                    std::string s = ss.str();
+                    this->IceLogger->error(s);
+                }
 
-                ClientIDMapType::iterator itr = ClientIDMap.find(it->second.ClientID);
-                ClientIDMap.erase(itr);
-
-                it = ConnectionIDMap.erase(it);
+                it = ConnectionIDMap.begin();
             }
         }
     }

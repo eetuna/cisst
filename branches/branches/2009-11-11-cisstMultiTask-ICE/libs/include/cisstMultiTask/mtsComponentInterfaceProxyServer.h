@@ -83,7 +83,7 @@ protected:
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
 
     /*! Event handler for client's disconnect event */
-    void OnClientDisconnect(const ClientIDType clientID);
+    bool OnClientDisconnect(const ClientIDType clientID);
 
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)

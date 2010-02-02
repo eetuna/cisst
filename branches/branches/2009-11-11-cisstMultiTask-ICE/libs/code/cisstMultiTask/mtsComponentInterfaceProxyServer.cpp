@@ -114,11 +114,13 @@ void mtsComponentInterfaceProxyServer::Stop()
     Sender->Stop();
 }
 
-void mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType clientID)
+bool mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
     //
     // TODO: implement this!!! (local resource clean up, logical connection clean up, and so forth)
     //
+
+    return false;
 }
 
 mtsComponentInterfaceProxyServer::ComponentInterfaceClientProxyType * mtsComponentInterfaceProxyServer::GetNetworkProxyClient(const ClientIDType clientID)
@@ -262,12 +264,9 @@ void mtsComponentInterfaceProxyServer::SendTestMessageFromServerToClient(const s
     ClientIDMapType::const_iterator itEnd = ClientIDMap.end();
     for (; it != itEnd; ++it) {
         clientProxy = &(it->second.ClientProxy);
-        try 
-        {
+        try {
             (*clientProxy)->TestMessageFromServerToClient(str);
-        }
-        catch (const ::Ice::Exception & ex)
-        {
+        } catch (const ::Ice::Exception & ex) {
             std::cerr << "Error: " << ex << std::endl;
             continue;
         }
@@ -288,7 +287,13 @@ bool mtsComponentInterfaceProxyServer::SendFetchFunctionProxyPointers(
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendFetchFunctionProxyPointers: provided interface proxy instance id: " << clientID);
 #endif
 
-    return (*clientProxy)->FetchFunctionProxyPointers(requiredInterfaceName, functionProxyPointers);
+    try {
+        return (*clientProxy)->FetchFunctionProxyPointers(requiredInterfaceName, functionProxyPointers);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendFetchFunctionProxyPointers: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(const ClientIDType clientID, const CommandIDType commandID)
@@ -299,11 +304,17 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(const ClientIDType
         return false;
     }
 
-    (*clientProxy)->ExecuteCommandVoid(commandID);
-
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandVoid: " << commandID);
 #endif
+
+    try {
+        (*clientProxy)->ExecuteCommandVoid(commandID);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandVoid: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 
     return true;
 }
@@ -335,7 +346,13 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(const C
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID << ", " << serializedArgument.size() << " bytes");
 #endif
 
-    (*clientProxy)->ExecuteCommandWriteSerialized(commandID, serializedArgument);
+    try {
+        (*clientProxy)->ExecuteCommandWriteSerialized(commandID, serializedArgument);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 
     return true;
 }
@@ -353,7 +370,13 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandReadSerialized(const Cl
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandReadSerialized: " << commandID);
 #endif
 
-    (*clientProxy)->ExecuteCommandReadSerialized(commandID, serializedArgument);
+    try {
+        (*clientProxy)->ExecuteCommandReadSerialized(commandID, serializedArgument);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandReadSerialized: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandReadSerialized: received " << serializedArgument.size() << " bytes");
@@ -400,7 +423,14 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandQualifiedReadSerialized
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
     LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandQualifiedReadSerialized: " << commandID << ", " << serializedArgumentIn.size() << " bytes");
 #endif
-    (*clientProxy)->ExecuteCommandQualifiedReadSerialized(commandID, serializedArgumentIn, serializedArgumentOut);
+
+    try {
+        (*clientProxy)->ExecuteCommandQualifiedReadSerialized(commandID, serializedArgumentIn, serializedArgumentOut);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandQualifiedReadSerialized: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 
     // Deserialize
     serializer->DeSerialize(serializedArgumentOut, argumentOut);

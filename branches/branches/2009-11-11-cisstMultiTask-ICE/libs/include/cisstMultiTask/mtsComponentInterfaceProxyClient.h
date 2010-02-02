@@ -74,11 +74,8 @@ protected:
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();
 
-    /*! Resource clean-up when a client disconnects or is disconnected.
-        TODO: add session
-        TODO: add resource clean up
-        TODO: review/add safe termination  */
-    void OnClose();
+    /*! Called when server disconnection is detected */
+    bool OnServerDisconnect();
 
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);

@@ -148,6 +148,15 @@ void mtsComponentInterfaceProxyClient::Stop()
     Sender->Stop();
 }
 
+bool mtsComponentInterfaceProxyClient::OnServerDisconnect()
+{
+    //
+    // TODO
+    //
+
+    return false;
+}
+
 bool mtsComponentInterfaceProxyClient::RegisterPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
 {
     PerEventSerializerMapType::const_iterator it = PerEventSerializerMap.find(commandID);
@@ -305,8 +314,14 @@ bool mtsComponentInterfaceProxyClient::SendFetchEventGeneratorProxyPointers(
     LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: FetchEventGeneratorProxyPointers: req.int=" << requiredInterfaceName << ", prv.int=" << providedInterfaceName);
 #endif
 
-    return ComponentInterfaceServerProxy->FetchEventGeneratorProxyPointers(
-        requiredInterfaceName, providedInterfaceName, eventGeneratorProxyPointers);
+    try {
+        return ComponentInterfaceServerProxy->FetchEventGeneratorProxyPointers(
+            requiredInterfaceName, providedInterfaceName, eventGeneratorProxyPointers);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendFetchEventGeneratorProxyPointers: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsComponentInterfaceProxyClient::SendExecuteEventVoid(const CommandIDType commandID)
@@ -315,7 +330,13 @@ bool mtsComponentInterfaceProxyClient::SendExecuteEventVoid(const CommandIDType 
     LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: SendExecuteEventVoid: " << commandID);
 #endif
 
-    ComponentInterfaceServerProxy->ExecuteEventVoid(commandID);
+    try {
+        ComponentInterfaceServerProxy->ExecuteEventVoid(commandID);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteEventVoid: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 
     return true;
 }
@@ -341,7 +362,13 @@ bool mtsComponentInterfaceProxyClient::SendExecuteEventWriteSerialized(const Com
     LogPrint(mtsComponentInterfaceProxyClient, ">>>>> SEND: SendExecuteEventWriteSerialized: " << commandID);
 #endif
 
-    ComponentInterfaceServerProxy->ExecuteEventWriteSerialized(commandID, serializedArgument);
+    try {
+        ComponentInterfaceServerProxy->ExecuteEventWriteSerialized(commandID, serializedArgument);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteEventWriteSerialized: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 
     return true;
 }

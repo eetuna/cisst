@@ -133,15 +133,6 @@ mtsManagerLocalInterface * mtsManagerGlobal::GetProcessObject(const std::string 
 
 bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
 {
-    // TODO: To remove a process safely, the following things should be handled first:
-    //
-    // 1) Notifying connected processes (if any)
-    // 2) Terminate session
-    // 3) Proxy termination
-
-    // 4) Remove from map
-    // 5) Memory release
-
     if (!FindProcess(processName)) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveProcess: Can't find registered process: " << processName << std::endl;
         return false;

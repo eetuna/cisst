@@ -142,6 +142,15 @@ void mtsManagerProxyClient::Stop()
     Sender->Stop();
 }
 
+bool mtsManagerProxyClient::OnServerDisconnect()
+{
+    //
+    // TODO
+    //
+
+    return false;
+}
+
 void mtsManagerProxyClient::GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStringSet,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
@@ -167,7 +176,7 @@ bool mtsManagerProxyClient::AddProcess(const std::string & processName)
 
 bool mtsManagerProxyClient::FindProcess(const std::string & processName) const
 {
-    return SendFindProcess(processName);
+    return const_cast<mtsManagerProxyClient*>(this)->SendFindProcess(processName);
 }
 
 bool mtsManagerProxyClient::RemoveProcess(const std::string & processName)
@@ -182,7 +191,7 @@ bool mtsManagerProxyClient::AddComponent(const std::string & processName, const 
 
 bool mtsManagerProxyClient::FindComponent(const std::string & processName, const std::string & componentName) const
 {
-    return SendFindComponent(processName, componentName);
+    return const_cast<mtsManagerProxyClient*>(this)->SendFindComponent(processName, componentName);
 }
 
 bool mtsManagerProxyClient::RemoveComponent(const std::string & processName, const std::string & componentName)
@@ -202,12 +211,12 @@ bool mtsManagerProxyClient::AddRequiredInterface(const std::string & processName
 
 bool mtsManagerProxyClient::FindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
 {
-    return SendFindProvidedInterface(processName, componentName, interfaceName);
+    return const_cast<mtsManagerProxyClient*>(this)->SendFindProvidedInterface(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyClient::FindRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
 {
-    return SendFindRequiredInterface(processName, componentName, interfaceName);
+    return const_cast<mtsManagerProxyClient*>(this)->SendFindRequiredInterface(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyClient::RemoveProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
@@ -420,97 +429,287 @@ void mtsManagerProxyClient::SendTestMessageFromClientToServer(const std::string 
 
 bool mtsManagerProxyClient::SendAddProcess(const std::string & processName)
 {
-    return ManagerServerProxy->AddProcess(processName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendAddProcess: " << processName);
+#endif
+
+    try {
+        return ManagerServerProxy->AddProcess(processName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendAddProcess: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
-bool mtsManagerProxyClient::SendFindProcess(const std::string & processName) const
+bool mtsManagerProxyClient::SendFindProcess(const std::string & processName)
 {
-    return ManagerServerProxy->FindProcess(processName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendFindProcess: " << processName);
+#endif
+
+    try {
+        return ManagerServerProxy->FindProcess(processName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendFindProcess: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendRemoveProcess(const std::string & processName)
 {
-    return ManagerServerProxy->RemoveProcess(processName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendRemoveProcess: " << processName);
+#endif
+
+    try {
+        return ManagerServerProxy->RemoveProcess(processName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendRemoveProcess: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendAddComponent(const std::string & processName, const std::string & componentName)
 {
-    return ManagerServerProxy->AddComponent(processName, componentName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendAddComponent: " << processName << ", " << componentName);
+#endif
+
+    try {
+        return ManagerServerProxy->AddComponent(processName, componentName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendAddComponent: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
-bool mtsManagerProxyClient::SendFindComponent(const std::string & processName, const std::string & componentName) const
+bool mtsManagerProxyClient::SendFindComponent(const std::string & processName, const std::string & componentName)
 {
-    return ManagerServerProxy->FindComponent(processName, componentName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendFindComponent: " << processName << ", " << componentName);
+#endif
+
+    try {
+        return ManagerServerProxy->FindComponent(processName, componentName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendFindComponent: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendRemoveComponent(const std::string & processName, const std::string & componentName)
 {
-    return ManagerServerProxy->RemoveComponent(processName, componentName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendRemoveComponent: " << processName << ", " << componentName);
+#endif
+
+    try {
+        return ManagerServerProxy->RemoveComponent(processName, componentName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendRemoveComponent: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendAddProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface)
 {
-    return ManagerServerProxy->AddProvidedInterface(processName, componentName, interfaceName, isProxyInterface);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendAddProvidedInterface: " << processName << ", " << componentName << ", " << interfaceName << ", " << isProxyInterface);
+#endif
+
+    try {
+        return ManagerServerProxy->AddProvidedInterface(processName, componentName, interfaceName, isProxyInterface);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendAddProvidedInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
-bool mtsManagerProxyClient::SendFindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
+bool mtsManagerProxyClient::SendFindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return ManagerServerProxy->FindProvidedInterface(processName, componentName, interfaceName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendFindProvidedInterface: " << processName << ", " << componentName << ", " << interfaceName);
+#endif
+
+    try {
+        return ManagerServerProxy->FindProvidedInterface(processName, componentName, interfaceName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendFindProvidedInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendRemoveProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return ManagerServerProxy->RemoveProvidedInterface(processName, componentName, interfaceName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendRemoveProvidedInterface: " << processName << ", " << componentName << ", " << interfaceName);
+#endif
+
+    try {
+        return ManagerServerProxy->RemoveProvidedInterface(processName, componentName, interfaceName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendRemoveProvidedInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendAddRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface)
 {
-    return ManagerServerProxy->AddRequiredInterface(processName, componentName, interfaceName, isProxyInterface);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendAddRequiredInterface: " << processName << ", " << componentName << ", " << interfaceName << ", " << isProxyInterface);
+#endif
+
+    try {
+        return ManagerServerProxy->AddRequiredInterface(processName, componentName, interfaceName, isProxyInterface);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendAddRequiredInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
-bool mtsManagerProxyClient::SendFindRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
+bool mtsManagerProxyClient::SendFindRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return ManagerServerProxy->FindRequiredInterface(processName, componentName, interfaceName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendFindRequiredInterface: " << processName << ", " << componentName << ", " << interfaceName);
+#endif
+
+    try {
+        return ManagerServerProxy->FindRequiredInterface(processName, componentName, interfaceName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendFindRequiredInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendRemoveRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return ManagerServerProxy->RemoveRequiredInterface(processName, componentName, interfaceName);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendRemoveRequiredInterface: " << processName << ", " << componentName << ", " << interfaceName);
+#endif
+
+    try {
+        return ManagerServerProxy->RemoveRequiredInterface(processName, componentName, interfaceName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendRemoveRequiredInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 ::Ice::Int mtsManagerProxyClient::SendConnect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
-    return ManagerServerProxy->Connect(connectionStringSet);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendConnectConfirm: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
+#endif
+
+    try {
+        return ManagerServerProxy->Connect(connectionStringSet);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendConnect: network exception: " << ex);
+        OnServerDisconnect();
+        return 0; // 0 is defined as error in mtsManagerGlobalInterface::CONNECT_ERROR
+    }
 }
 
 bool mtsManagerProxyClient::SendConnectConfirm(::Ice::Int connectionSessionID)
 {
-    return ManagerServerProxy->ConnectConfirm(connectionSessionID);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendConnectConfirm: " << connectionSessionID);
+#endif
+
+    try {
+        return ManagerServerProxy->ConnectConfirm(connectionSessionID);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendConnectConfirm: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendDisconnect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
-    return ManagerServerProxy->Disconnect(connectionStringSet);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendDisconnect: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
+#endif
+
+    try {
+        return ManagerServerProxy->Disconnect(connectionStringSet);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendDisconnect: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendSetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo, const std::string & communicatorID)
 {
-    return ManagerServerProxy->SetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo, communicatorID);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendSetProvidedInterfaceProxyAccessInfo: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName << ", " << endpointInfo << ", " << communicatorID);
+#endif
+
+    try {
+        return ManagerServerProxy->SetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo, communicatorID);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendSetProvidedInterfaceProxyAccessInfo: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendGetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo, std::string & communicatorID)
 {
-    return ManagerServerProxy->GetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo, communicatorID);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendGetProvidedInterfaceProxyAccessInfo: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
+#endif
+
+    try {
+        return ManagerServerProxy->GetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo, communicatorID);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendGetProvidedInterfaceProxyAccessInfo: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendInitiateConnect(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
-    return ManagerServerProxy->InitiateConnect(connectionID, connectionStringSet);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendInitiateConnect: " << connectionID << ", " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
+#endif
+
+    try {
+        return ManagerServerProxy->InitiateConnect(connectionID, connectionStringSet);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendInitiateConnect: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 bool mtsManagerProxyClient::SendConnectServerSideInterface(::Ice::Int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
-    return ManagerServerProxy->ConnectServerSideInterface(providedInterfaceProxyInstanceID, connectionStringSet);
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendConnectServerSideInterface: " << providedInterfaceProxyInstanceID << ", " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
+#endif
+
+    try {
+        return ManagerServerProxy->ConnectServerSideInterface(providedInterfaceProxyInstanceID, connectionStringSet);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyClient, "SendConnectServerSideInterface: network exception: " << ex);
+        OnServerDisconnect();
+        return false;
+    }
 }
 
 //-------------------------------------------------------------------------

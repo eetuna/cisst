@@ -81,10 +81,14 @@ public:
 
         if (NetworkProxyServer) {
             // Command write execution: client (request) -> server (execution)
-            NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument);
+            if (!NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument)) {
+                return mtsCommandBase::COMMAND_FAILED;
+            }
         } else {
             // Event write execution: server (event generator) -> client (event handler)
-            NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument);
+            if (!NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument)) {
+                return mtsCommandBase::COMMAND_FAILED;
+            }
         }
 
         return mtsCommandBase::DEV_OK;

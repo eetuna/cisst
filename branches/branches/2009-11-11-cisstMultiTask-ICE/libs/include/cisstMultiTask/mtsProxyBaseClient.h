@@ -69,6 +69,9 @@ protected:
         }
     }
 
+    /*! Called when server disconnection is detected */
+    virtual bool OnServerDisconnect() = 0;
+
     //-------------------------------------------------------------------------
     //  Networking: ICE
     //-------------------------------------------------------------------------

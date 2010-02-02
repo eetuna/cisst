@@ -113,11 +113,50 @@ void mtsManagerProxyServer::Stop()
     Sender->Stop();
 }
 
-void mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
+bool mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
-    //
-    // TODO: implement this!!! (local resource clean up, logical connection clean up, and so forth)
-    //
+    // Get network proxy client serving the client with the clientID
+    ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
+    if (!clientProxy) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: no client proxy found with client id: " << clientID);
+        return false;
+    }
+
+    // Deactivate object adapter which makes all subsequent requests from clients
+    // be ignored.
+    Ice::CommunicatorPtr communicator = (*clientProxy)->ice_getCommunicator();
+    if (!communicator) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: invalid communicator: " << clientID);
+        return false;
+    }
+    // This might cause ObjectAdapterDeactivatedException at client side.
+    // smmy: this should not be killing a server adapter; instead, it should DISCONNECT
+    // the client.
+    //communicator->shutdown();
+
+    // Remove client from client list
+    if (!BaseServerType::RemoveClientByClientID(clientID)) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to remove client from client map: " << clientID);
+        return false;
+    }
+
+    // Clean up proxy instance and client map
+    try {
+        communicator->destroy();
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to destroy proxy object: " << clientID << ": " << ex);
+        return false;
+    }
+
+    // Remove the process logically
+    if (!ProxyOwner->RemoveProcess(clientID)) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to remove process: " << clientID);
+        return false;
+    }
+
+    LogPrint(mtsManagerProxyServer, "OnClientDisconnect: successfully removed process: " << clientID);
+
+    return true;
 }
 
 mtsManagerProxyServer::ManagerClientProxyType * mtsManagerProxyServer::GetNetworkProxyClient(const ClientIDType clientID)
@@ -559,7 +598,7 @@ bool mtsManagerProxyServer::ReceiveFindProcess(const std::string & processName) 
 
 bool mtsManagerProxyServer::ReceiveRemoveProcess(const std::string & processName)
 {
-    return ProxyOwner->RemoveProcess(processName);
+    return OnClientDisconnect(processName);
 }
 
 bool mtsManagerProxyServer::ReceiveAddComponent(const std::string & processName, const std::string & componentName)
@@ -675,21 +714,13 @@ void mtsManagerProxyServer::SendTestMessageFromServerToClient(const std::string 
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendTestMessageFromServerToClient: " << str);
 #endif
             (*clientProxy)->TestMessageFromServerToClient(str);
-
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendMessageFromServerToClient");
-#endif
         }
         catch (const ::Ice::Exception & ex)
         {
             std::cerr << "Error: " << ex << std::endl;
-
-            //
-            // TODO: Ice::ConnectionLostException -> is thrown when a connected
-            // client disconnects abruptly (ctrl+C, etc.).
-            // When this exception is thrown, it can be used for handling disconnect()
-            // properly.
-            //
+            if (!OnClientDisconnect(it->second.ClientID)) {
+                std::cerr << "Failed to remove client: " << it->second.ClientID << std::endl;
+            }
             continue;
         }
     }
@@ -707,7 +738,13 @@ bool mtsManagerProxyServer::SendCreateComponentProxy(const std::string & compone
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendCreateComponentProxy: " << componentProxyName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->CreateComponentProxy(componentProxyName);
+    try {
+        return (*clientProxy)->CreateComponentProxy(componentProxyName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendCreateComponentProxy: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendRemoveComponentProxy(const std::string & componentProxyName, const std::string & clientID)
@@ -722,7 +759,13 @@ bool mtsManagerProxyServer::SendRemoveComponentProxy(const std::string & compone
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendRemoveComponentProxy: " << componentProxyName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->RemoveComponentProxy(componentProxyName);
+    try {
+        return (*clientProxy)->RemoveComponentProxy(componentProxyName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendRemoveComponentProxy: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendCreateProvidedInterfaceProxy(
@@ -740,7 +783,13 @@ bool mtsManagerProxyServer::SendCreateProvidedInterfaceProxy(
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendCreateProvidedInterfaceProxy: " << serverComponentProxyName << ", " << providedInterfaceDescription.ProvidedInterfaceName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->CreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription);
+    try {
+        return (*clientProxy)->CreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendCreateProvidedInterfaceProxy: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendCreateRequiredInterfaceProxy(
@@ -758,7 +807,13 @@ bool mtsManagerProxyServer::SendCreateRequiredInterfaceProxy(
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendCreateRequiredInterfaceProxy: " << clientComponentProxyName << ", " << requiredInterfaceDescription.RequiredInterfaceName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->CreateRequiredInterfaceProxy(clientComponentProxyName, requiredInterfaceDescription);
+    try {
+        return (*clientProxy)->CreateRequiredInterfaceProxy(clientComponentProxyName, requiredInterfaceDescription);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendCreateRequiredInterfaceProxy: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendRemoveProvidedInterfaceProxy(
@@ -794,7 +849,13 @@ bool mtsManagerProxyServer::SendRemoveRequiredInterfaceProxy(
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendRemoveRequiredInterfaceProxy: " << serverComponentProxyName << ", " << requiredInterfaceProxyName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->RemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
+    try {
+        return (*clientProxy)->RemoveRequiredInterfaceProxy(serverComponentProxyName, requiredInterfaceProxyName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendRemoveRequiredInterfaceProxy: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendConnectServerSideInterface(
@@ -830,7 +891,13 @@ bool mtsManagerProxyServer::SendConnectClientSideInterface(
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendConnectClientSideInterface: " << connectionID << ", " << clientID);
 #endif
 
-    return (*clientProxy)->ConnectClientSideInterface(connectionID, connectionStrings);
+    try {
+        return (*clientProxy)->ConnectClientSideInterface(connectionID, connectionStrings);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendConnectClientSideInterface: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendGetProvidedInterfaceDescription(
@@ -849,7 +916,13 @@ bool mtsManagerProxyServer::SendGetProvidedInterfaceDescription(
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendGetProvidedInterfaceDescription: " << componentName << ", " << providedInterfaceName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->GetProvidedInterfaceDescription(componentName, providedInterfaceName, providedInterfaceDescription);
+    try {
+        return (*clientProxy)->GetProvidedInterfaceDescription(componentName, providedInterfaceName, providedInterfaceDescription);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendGetProvidedInterfaceDescription: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 bool mtsManagerProxyServer::SendGetRequiredInterfaceDescription(
@@ -883,7 +956,13 @@ std::string mtsManagerProxyServer::SendGetProcessName(const std::string & client
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendGetProcessName: " << clientID);
 #endif
 
-    return (*clientProxy)->GetProcessName();
+    try {
+        return (*clientProxy)->GetProcessName();
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendGetProcessName: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 ::Ice::Int mtsManagerProxyServer::SendGetCurrentInterfaceCount(const std::string & componentName, const std::string & clientID)
@@ -898,7 +977,13 @@ std::string mtsManagerProxyServer::SendGetProcessName(const std::string & client
     LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendGetCurrentInterfaceCount: " << componentName << ", " << clientID);
 #endif
 
-    return (*clientProxy)->GetCurrentInterfaceCount(componentName);
+    try {
+        return (*clientProxy)->GetCurrentInterfaceCount(componentName);
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "SendGetCurrentInterfaceCount: network exception: " << ex);
+        OnClientDisconnect(clientID);
+        return false;
+    }
 }
 
 //-------------------------------------------------------------------------

@@ -68,11 +68,8 @@ protected:
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();
 
-    /*! Resource clean-up when a client disconnects or is disconnected.
-        TODO: add session
-        TODO: add resource clean up
-        TODO: review/add safe termination  */
-    void OnClose();
+    /*! Called when server disconnection is detected */
+    bool OnServerDisconnect();
 
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsManagerLocal> * arguments);
@@ -181,20 +178,20 @@ public:
 
     // Process Management
     bool SendAddProcess(const std::string & processName);
-    bool SendFindProcess(const std::string & processName) const;
+    bool SendFindProcess(const std::string & processName);
     bool SendRemoveProcess(const std::string & processName);
 
     // Component Management
     bool SendAddComponent(const std::string & processName, const std::string & componentName);
-    bool SendFindComponent(const std::string & processName, const std::string & componentName) const;
+    bool SendFindComponent(const std::string & processName, const std::string & componentName);
     bool SendRemoveComponent(const std::string & processName, const std::string & componentName);
 
     bool SendAddProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface);
-    bool SendFindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
+    bool SendFindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
     bool SendRemoveProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     bool SendAddRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface);
-    bool SendFindRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
+    bool SendFindRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
     bool SendRemoveRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     // Connection Management

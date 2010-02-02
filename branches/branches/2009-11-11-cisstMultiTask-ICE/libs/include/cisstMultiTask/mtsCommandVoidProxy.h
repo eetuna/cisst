@@ -59,10 +59,14 @@ public:
 
         if (NetworkProxyServer) {
             // Command void execution: client (request) -> server (execution)
-            NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID);
+            if (!NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID)) {
+                return mtsCommandBase::COMMAND_FAILED;
+            }
         } else {
             // Event void execution: server (event generator) -> client (event handler)
-            NetworkProxyClient->SendExecuteEventVoid(CommandID);
+            if (!NetworkProxyClient->SendExecuteEventVoid(CommandID)) {
+                return mtsCommandBase::COMMAND_FAILED;
+            }
         }
 
         return mtsCommandBase::DEV_OK;

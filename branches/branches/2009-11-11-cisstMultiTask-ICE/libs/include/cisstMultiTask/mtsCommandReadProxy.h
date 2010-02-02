@@ -77,7 +77,9 @@ public:
         if (IsDisabled()) mtsCommandBase::DISABLED;
 
         if (NetworkProxyServer) {
-            NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument);
+            if (!NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument)) {
+                return mtsCommandBase::COMMAND_FAILED;
+            }
         }
         return mtsCommandBase::DEV_OK;
     }

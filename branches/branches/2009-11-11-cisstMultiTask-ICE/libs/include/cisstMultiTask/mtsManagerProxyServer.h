@@ -70,7 +70,7 @@ protected:
     void StartServer();
 
     /*! Event handler for client's disconnect event */
-    void OnClientDisconnect(const ClientIDType clientID);
+    bool OnClientDisconnect(const ClientIDType clientID);
 
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsManagerGlobal> * arguments);
