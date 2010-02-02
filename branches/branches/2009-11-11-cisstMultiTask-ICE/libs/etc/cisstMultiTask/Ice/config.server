@@ -25,9 +25,8 @@ Logger = Cisst
 #Logger = Windows
 
 #
-# MJ: Please do not modify these property settings unless you understand what 
-# they are because these configurations bring significant effects on all ICE 
-# proxies.
+# MJ: Please do not modify these property settings because these configurations 
+# bring global effects on all ICE proxies.
 #
 
 #------------------------------------------------------------------------------

@@ -69,11 +69,8 @@ protected:
     /*! Start a send thread and wait for shutdown (this is a blocking method). */
     void StartServer();
 
-    /*! Resource clean-up when a client disconnects or is disconnected.
-        TODO: add session
-        TODO: add resource clean up
-        TODconnectionID,O: review/add safe termination  */
-    void OnClose();
+    /*! Event handler for client's disconnect event */
+    void OnClientDisconnect(const ClientIDType clientID);
 
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsManagerGlobal> * arguments);
@@ -81,6 +78,11 @@ protected:
     /*! Get a network proxy client using clientID. If no network proxy client 
         with the clientID found or inactive proxy, this method returns NULL. */
     ManagerClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
+
+    /*! Monitor current connections */
+    void MonitorConnections() {
+        BaseServerType::Monitor();
+    }
 
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)

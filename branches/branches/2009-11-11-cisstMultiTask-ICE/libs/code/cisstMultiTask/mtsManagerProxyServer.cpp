@@ -113,15 +113,11 @@ void mtsManagerProxyServer::Stop()
     Sender->Stop();
 }
 
-void mtsManagerProxyServer::OnClose()
+void mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
     //
-    //  TODO: Add OnClose() event handler.
+    // TODO: implement this!!! (local resource clean up, logical connection clean up, and so forth)
     //
-
-    // remove from TaskManagerMapByTaskName
-    // remove from TaskManagerClient
-    //RemoveTaskManagerByConnectionID();
 }
 
 mtsManagerProxyServer::ManagerClientProxyType * mtsManagerProxyServer::GetNetworkProxyClient(const ClientIDType clientID)
@@ -944,7 +940,9 @@ void mtsManagerProxyServer::ManagerServerI::Run()
 #else
     while(IsActiveProxy()) 
     {
-        osaSleep(10 * cmn_ms);
+        // Check connections every 1 second
+        ManagerProxyServer->MonitorConnections();
+        osaSleep(1 * cmn_s);
 
         // Testing
         //if (!a) {

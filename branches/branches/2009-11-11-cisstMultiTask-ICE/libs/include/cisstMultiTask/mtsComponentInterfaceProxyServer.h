@@ -79,14 +79,11 @@ protected:
     /*! Start a send thread and wait for shutdown (this is a blocking method). */
     void StartServer();
 
-    /*! Resource clean-up when a client disconnects or is disconnected.
-        TODO: add session
-        TODO: add resource clean up
-        TODconnectionID,O: review/add safe termination  */
-    void OnClose();
-
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
+
+    /*! Event handler for client's disconnect event */
+    void OnClientDisconnect(const ClientIDType clientID);
 
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)

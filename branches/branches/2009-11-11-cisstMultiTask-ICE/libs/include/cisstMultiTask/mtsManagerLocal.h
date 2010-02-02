@@ -95,13 +95,16 @@ protected:
 
     /*! Process name of this local component manager. Should be globally unique 
         across a system. */
-    const std::string ProcessName;
+    std::string ProcessName;
 
     /*! IP address of the global component manager */
     const std::string GlobalComponentManagerIP;
 
     /*! IP address of this machine. Set internally by SetIPAddress(). */
     std::string ProcessIP;
+
+    /*! A list of all IP addresses detected on this machine */
+    std::vector<std::string> ProcessIPList;
 
     /*! Mutex to use ComponentMap safely */
     osaMutex ComponentMapChange;
@@ -115,16 +118,14 @@ protected:
           GCM. In this case, the GCM normally runs in a different process. */
     mtsManagerGlobalInterface * ManagerGlobal;
 
-    /*! Protected constructor (singleton)
-        If a process name is not specified and thus set as "", this local component
-        manager will run in standalone mode and the GCM IP is ignored.
-        If a process name is given and the GCM IP is not, a process name is set 
-        as specified and GlobalComponentManagerIP is set as default value, which 
-        is localhost (127.0.0.1).
-        If both a process name and the GCM IP are specified, both will be set.
-    */
-    mtsManagerLocal(const std::string & thisProcessName = "", 
-                    const std::string & globalComponentManagerIP = "localhost");
+    /*! Protected constructor (singleton) */
+#if !CISST_MTS_HAS_ICE
+    mtsManagerLocal(const std::string & thisProcessName = "");
+#else
+    mtsManagerLocal(const std::string & globalComponentManagerIP = "localhost", 
+                    const std::string & thisProcessName = "",
+                    const std::string & thisProcessIP = "localhost");
+#endif
 
     /*! Destructor. Includes OS-specific cleanup. */
     virtual ~mtsManagerLocal();
@@ -132,11 +133,14 @@ protected:
     /*! Initialization */
     void Initialize(void);
 
-    /*! Connect two local interfaces. This method assumes two components are in 
+    /*! Set an IP address of this machine */
+    void SetIPAddress();
+
+    /*! Connect two local interfaces. This method assumes two interfaces are in 
         the same process.
         
-        Returns: provided interface proxy instance id, if server component is a proxy,
-                 zero, if server component is an original component,
+        Returns: provided interface proxy instance id, if remote connection
+                 zero, if local connection
                  -1,   if error occurs */
     int ConnectLocally(
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -201,14 +205,19 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
 
-    /*! Get an instance of local component manager */
-    static mtsManagerLocal * GetInstance(
-        const std::string & thisProcessName = "", const std::string & globalComponentManagerIP = "");
+#if !CISST_MTS_HAS_ICE
+    /*! Get an instance of local component manager. If process name is not 
+        specified, the default process name "LCM" is used. */
+    static mtsManagerLocal * GetInstance(const std::string & thisProcessName = "");
+#else
+    /*! Get an instance of local component manager.
+        If process ip is not specified, the first ip address detected is used.
+        If process name is not given, the ip address is used instead. */
+    static mtsManagerLocal * GetInstance(const std::string & globalComponentManagerIP = "localhost",
+                                         const std::string & thisProcessName = "",
+                                         const std::string & thisProcessIP = "");
 
-    /*! Return a reference to the time server. */
-    inline const osaTimeServer & GetTimeServer(void) {
-        return TimeServer;
-    }
+#endif
 
     //-------------------------------------------------------------------------
     //  Component Management
@@ -272,7 +281,7 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //  Utilities
+    //  Getters and Utilities
     //-------------------------------------------------------------------------
     /*! Enumerate all the names of components added */
     std::vector<std::string> GetNamesOfComponents(void) const;
@@ -283,6 +292,18 @@ public:
     void CISST_DEPRECATED GetNamesOfDevices(std::vector<std::string>& namesOfDevices) const; // For backward compatibility
     void CISST_DEPRECATED GetNamesOfTasks(std::vector<std::string>& namesOfTasks) const; // For backward compatibility
     
+    /*! Return a reference to the time server. */
+    inline const osaTimeServer & GetTimeServer(void) {
+        return TimeServer;
+    }
+
+    /*! Return IP address of this process */
+    inline std::string GetIPAddress() const { return ProcessIP; }
+
+    /*! Return a list of all IP addresses detected on this machine. */
+    static std::vector<std::string> GetIPAddressList();
+    inline static void GetIPAddressList(std::vector<std::string> & ipAddresses);
+
     /*! Returns name of this local component manager */
     inline const std::string GetProcessName(const std::string & listenerID = "") {
         return ProcessName;
@@ -292,14 +313,6 @@ public:
     inline const std::string GetName() {
         return GetProcessName();
     }
-
-    /*! Set an IP address of this machine.
-        In standalone mode, IP address is set to "localhost" by default.
-        In network mode, if there are more than one network interfaces in this 
-        machine, all IPs detected are registered to the GCM so that interface 
-        proxy clients in other processes can use them one-by-one until it 
-        successfully connects to this machine. */
-    void SetIPAddress();
 
     // TODO: do we need this?
     /*! For debugging. Dumps to stream the maps maintained by the manager. */
@@ -320,9 +333,6 @@ public:
         size_t found = componentName.find(proxyStr);
         return found != std::string::npos;
     }
-
-    /*! Return IP address of this machine. */
-    inline std::string GetIPAddress() const { return ProcessIP; }
 
     /*! Set endpoint access information */
     bool SetProvidedInterfaceProxyAccessInfo(

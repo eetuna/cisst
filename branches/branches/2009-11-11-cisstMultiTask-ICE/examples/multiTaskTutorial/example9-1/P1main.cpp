@@ -11,16 +11,14 @@
 
 int main(int argc, char * argv[])
 {
-    // TODO: uncomment this
-    //if (argc != 2) {
-    //    std::cerr << "Usage: " << argv[0] << "[global component manager IP]" << std::endl;
-    //    exit(-1);
-    //}
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " (global component manager IP)" << std::endl;
+        return 1;
+    }
 
     // Set global component manager IP
-    //const std::string globalComponentManagerIP(argv[1]);
-    const std::string globalComponentManagerIP("127.0.0.1");
-    std::cout << "Global component manager IP is set as " << globalComponentManagerIP << std::endl;
+    const std::string globalComponentManagerIP(argv[1]);
+    std::cout << "Global component manager IP: " << globalComponentManagerIP << std::endl;
 
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
@@ -32,11 +30,20 @@ int main(int argc, char * argv[])
     // Get the local component manager
     mtsManagerLocal * localManager;
     try {
-        localManager = mtsManagerLocal::GetInstance("P1", globalComponentManagerIP);
+        localManager = mtsManagerLocal::GetInstance(globalComponentManagerIP, "P1");
     } catch (...) {
         CMN_LOG_INIT_ERROR << "Failed to initialize local component manager" << std::endl;
         return 1;
     }
+    /* If there are more than one network interfaces installed on this machine
+       and an user wants to specify one of them to use, the following codes can
+       be used:
+        
+       std::vector<std::string> ipAddresses = mtsManagerLocal::GetIPAddressList();
+       std::string thisProcessIP = ipAddresses[i];  // i=[0, ipAddresses.size()-1]
+
+       mtsManagerLocal * localManager = mtsManagerLocal::GetInstance(globalComponentManagerIP, "P2", thisProcessIP);
+    */
 
     // create our server task
     const double PeriodClient = 10 * cmn_ms; // in milliseconds

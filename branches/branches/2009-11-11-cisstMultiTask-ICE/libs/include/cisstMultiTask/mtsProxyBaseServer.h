@@ -52,15 +52,6 @@ public:
     /*! Start proxy server */
     virtual bool Start(_proxyOwner * proxyOwner) = 0;
 
-    /*! Connection monitor */
-    virtual void Monitor(void) {
-        //try {
-        //    ProxyObject->ice_ping();
-        //} catch (const Ice::Exception & e) {
-        //    this->IceLogger->warning("mtsProxyBaseClient", e.what());
-        //}
-    }
-
     /*! Terminate proxy */
     virtual void Stop(void)
     {
@@ -81,6 +72,9 @@ public:
             }
         }
     }
+
+    /*! Called when a client disconnection is detected */
+    virtual void OnClientDisconnect(const ClientIDType clientID) = 0;
 
     //-------------------------------------------------------------------------
     //  Networking: ICE
@@ -166,7 +160,6 @@ protected:
     //-------------------------------------------------------------------------
     //  Connection Management and Client Proxy Management
     //-------------------------------------------------------------------------
-protected:
     /*! Client information */
     typedef struct {
         std::string ClientName;
@@ -270,7 +263,31 @@ protected:
         Ice::ConnectionPtr conn = ClientIDMap.begin()->second.ClientProxy->ice_getConnection();
         conn->close(false);
     }
-    
+
+    /*! Monitor active connection by heart beat. If a client proxy disconnects or is
+        disconnected, the close event is detected here. */
+    virtual void Monitor(void) {
+        ConnectionIDMapType::iterator it = ConnectionIDMap.begin();
+        while (it != ConnectionIDMap.end()) {
+            try {
+                it->second.ClientProxy->ice_ping();
+                ++it;
+            } catch (const Ice::Exception & e) {
+                std::stringstream ss;
+                ss << "ProxyBaseServer Monitor: remove disconnected client: client id=\"" << it->second.ClientID << "\", "
+                    << "connection id=\"" << it->second.ConnectionID << "\"\n" << e;
+                std::string s = ss.str();
+                this->IceLogger->warning(s);
+
+                OnClientDisconnect(it->second.ClientID);
+
+                ClientIDMapType::iterator itr = ClientIDMap.find(it->second.ClientID);
+                ClientIDMap.erase(itr);
+
+                it = ConnectionIDMap.erase(it);
+            }
+        }
+    }
 
     /*! Close all the connections with all the clients */
 

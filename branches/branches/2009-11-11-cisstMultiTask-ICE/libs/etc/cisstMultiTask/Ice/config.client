@@ -21,13 +21,12 @@
 # Cisst = Use cisst internal logger (CMN_LOG and CMN_LOG_CLASS)
 # Windows = Use OutputDebugString() API for logging. Works only on Windows
 #
-#Logger = Cisst
-Logger = Windows
+Logger = Cisst
+#Logger = Windows
 
 #
-# MJ: Please do not modify these property settings unless you understand what 
-# they are because these configurations bring significant effects on all ICE 
-# proxies.
+# MJ: Please do not modify these property settings because these configurations 
+# bring global effects on all ICE proxies.
 #
 
 #------------------------------------------------------------------------------
@@ -52,7 +51,7 @@ Ice.Warn.Connections = 1
 # 2 = like 1, but more detailed
 # 3 = like 2, but also trace data transfer
 #
-Ice.Trace.Network = 1
+Ice.Trace.Network = 0
 
 #
 # Timeout in msec
@@ -80,5 +79,5 @@ Ice.ACM.Client = 0
 #
 # Retry interval
 #
-Ice.RetryIntervals=-1
-Ice.Trace.Retry=2
+Ice.RetryIntervals = 0 100 200 500
+#Ice.Trace.Retry=2

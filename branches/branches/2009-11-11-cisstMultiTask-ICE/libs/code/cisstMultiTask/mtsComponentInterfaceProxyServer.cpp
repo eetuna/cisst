@@ -114,10 +114,10 @@ void mtsComponentInterfaceProxyServer::Stop()
     Sender->Stop();
 }
 
-void mtsComponentInterfaceProxyServer::OnClose()
+void mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
     //
-    //  TODO: Add OnClose() event handler.
+    // TODO: implement this!!! (local resource clean up, logical connection clean up, and so forth)
     //
 }
 
