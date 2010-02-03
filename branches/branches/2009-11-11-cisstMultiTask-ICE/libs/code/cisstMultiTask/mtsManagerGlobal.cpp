@@ -153,8 +153,6 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
         delete componentMap;
     }
 
-    LocalManagerConnected = NULL;
-
     // Remove the process from process map
     ret &= ProcessMap.RemoveItem(processName);
 

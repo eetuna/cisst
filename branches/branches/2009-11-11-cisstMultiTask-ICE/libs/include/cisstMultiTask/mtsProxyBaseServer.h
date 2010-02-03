@@ -69,6 +69,12 @@ public:
             } catch (const Ice::Exception & e) {
                 this->IceLogger->error("mtsProxyBaseServer: Proxy server clean-up failure.");
                 this->IceLogger->trace("mtsProxyBaseServer", e.what());
+            } catch (const std::string& msg) {
+                this->IceLogger->error("mtsProxyBaseServer: Proxy server clean-up failure.");
+                this->IceLogger->trace("mtsProxyBaseServer", msg.c_str());
+            } catch (const char* msg) {
+                this->IceLogger->error("mtsProxyBaseServer: Proxy server clean-up failure.");
+                this->IceLogger->trace("mtsProxyBaseServer", msg);
             }
         }
     }
@@ -99,6 +105,7 @@ protected:
             BaseType::IceInitialize();
 
             // Create an adapter (server-side only)
+            // (http://www.zeroc.com/doc/Ice-3.3.1/reference/Ice/ObjectAdapter.html)
             IceAdapter = this->IceCommunicator->
                 createObjectAdapterWithEndpoints(AdapterName, EndpointInfo);
 
@@ -306,19 +313,20 @@ protected:
             try {
                 it->second.ClientProxy->ice_ping();
                 ++it;
-            } catch (const Ice::Exception & e) {
+            } catch (const Ice::Exception & ex) {
                 std::stringstream ss;
                 ss << "ProxyBaseServer Monitor: remove disconnected client: client id=\"" << it->second.ClientID << "\", "
-                   << "connection id=\"" << it->second.ConnectionID << "\"\n" << e;
+                   << "connection id=\"" << it->second.ConnectionID << "\"\n" << ex;
                 std::string s = ss.str();
                 this->IceLogger->warning(s);
 
                 if (!this->OnClientDisconnect(it->second.ClientID)) {
                     std::stringstream ss;
                     ss << "ProxyBaseServer Monitor: failed to remove disconnected client: client id=\"" << it->second.ClientID << "\", "
-                       << "connection id=\"" << it->second.ConnectionID << "\"\n" << e;
+                       << "connection id=\"" << it->second.ConnectionID << "\"\n" << ex;
                     std::string s = ss.str();
                     this->IceLogger->error(s);
+                    break; // prevents infinite loop
                 }
 
                 it = ConnectionIDMap.begin();

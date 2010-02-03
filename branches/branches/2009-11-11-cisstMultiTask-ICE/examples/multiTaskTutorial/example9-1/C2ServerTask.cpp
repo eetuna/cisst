@@ -141,12 +141,55 @@ void C2ServerTask::Run(void) {
 
             this->ReadValue1 = UI.ReadValue1->value();
             this->ReadValue2 = UI.ReadValue2->value();
+
+            if (UI.Disconnect) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: Disconnect" << std::endl;
+                this->DisconnectGCM();
+                UI.Disconnect = false;
+            }
+
+            if (UI.Reconnect) {
+                CMN_LOG_CLASS_RUN_VERBOSE << "Run: Reconnect" << std::endl;
+                this->ReconnectGCM();
+                UI.Reconnect = false;
+            }
+
             Fl::check();
         }
     fltkMutex.Unlock();
     }
 }
 
+void C2ServerTask::DisconnectGCM()
+{
+    static int count = 0;
+    if (++count < 3) return;
+
+    mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
+
+    //localManager->RemoveComponent("C2");
+    //localManager->RemoveComponent("C3");
+    if (!localManager->Disconnect("C3", "r1", "C2", "p2")) {
+        CMN_LOG_INIT_ERROR << "Disconnect failed: C3:r1-C2:p2" << std::endl;
+    }
+
+    localManager->DisconnectGCM();
+}
+
+void C2ServerTask::ReconnectGCM() 
+{
+    static int count = 0;
+    if (++count < 3) return;
+
+    mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
+    localManager->ReconnectGCM();
+
+    //localManager->AddComponent(C2Server);
+    //localManager->AddComponent(C3);
+    //if (!localManager->Connect("C3", "r1", "C2", "p2")) {
+    //    CMN_LOG_INIT_ERROR << "Connect failed: C3:r1-C2:p2" << std::endl;
+    //}
+}
 /*
   Author(s):  Anton Deguet, Min Yang Jung
   Created on: 2009-08-10

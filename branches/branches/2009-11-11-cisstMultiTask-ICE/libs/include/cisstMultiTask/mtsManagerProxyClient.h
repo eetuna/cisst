@@ -64,9 +64,19 @@ protected:
 
         Sender = new ManagerClientI(IceCommunicator, IceLogger, ManagerServerProxy, this);
     }
+
+    /*! Create a proxy object and a send thread. */
+    void RemoveProxy() {
+        Sender->Stop();
+    }
     
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();
+
+    /*! Monitor all the current connections */
+    void MonitorConnection() {
+        BaseClientType::Monitor();
+    }
 
     /*! Called when server disconnection is detected */
     bool OnServerDisconnect();
@@ -109,8 +119,7 @@ public:
         : BaseClientType(serverEndpointInfo, communicatorID)
     {}
 
-    ~mtsManagerProxyClient()
-    {}
+    ~mtsManagerProxyClient();
 
     /*! Entry point to run a proxy. */
     bool Start(mtsManagerLocal * proxyOwner);
@@ -225,11 +234,13 @@ protected:
         mtsManagerProxy::ManagerServerPrx Server;
 
     public:
+        /*! Constructor and destructor */
         ManagerClientI(
             const Ice::CommunicatorPtr& communicator,                           
             const Ice::LoggerPtr& logger,
             const mtsManagerProxy::ManagerServerPrx& server,
             mtsManagerProxyClient * ManagerClient);
+        ~ManagerClientI();
 
         /*! Proxy management */
         void Start();

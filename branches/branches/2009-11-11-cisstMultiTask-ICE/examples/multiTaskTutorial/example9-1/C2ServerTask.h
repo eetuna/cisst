@@ -32,6 +32,9 @@ protected:
     void SendButtonClickEvent1() { EventVoid1(); }
     void SendButtonClickEvent2() { EventVoid2(); }
 
+    void DisconnectGCM();
+    void ReconnectGCM();
+
     serverUI UI;
 
 public:

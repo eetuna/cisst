@@ -843,6 +843,10 @@ bool mtsManagerLocal::Disconnect(const std::string & clientComponentName, const 
         return false;
     }
 
+    //
+    // TODO: LOCAL DISCONNECT!!!
+    //
+
     CMN_LOG_CLASS_RUN_VERBOSE << "Disconnect: successfully disconnected." << std::endl;
 
     return true;
@@ -864,6 +868,10 @@ bool mtsManagerLocal::Disconnect(
         CMN_LOG_CLASS_RUN_ERROR << "Disconnect: disconnection failed." << std::endl;
         return false;
     }
+
+    //
+    // TODO: LOCAL DISCONNECT!!!
+    //
 
     CMN_LOG_CLASS_RUN_VERBOSE << "Disconnect: successfully disconnected." << std::endl;
 
@@ -1440,8 +1448,35 @@ ConnectClientSideInterfaceError:
     if (!Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
                     serverProcessName, serverComponentName, serverProvidedInterfaceName))
     {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: clean up (disconnect failed) error";
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: clean up (disconnect failed) error" << std::endl;
     }
 
     return false;
 }
+
+
+#if CISST_MTS_HAS_ICE
+void mtsManagerLocal::DisconnectGCM()
+{
+    mtsManagerProxyClient * globalComponentManagerProxy = dynamic_cast<mtsManagerProxyClient*>(ManagerGlobal);
+    CMN_ASSERT(globalComponentManagerProxy);
+
+    globalComponentManagerProxy->Stop();
+}
+
+void mtsManagerLocal::ReconnectGCM()
+{
+    mtsManagerProxyClient * globalComponentManagerProxy = dynamic_cast<mtsManagerProxyClient*>(ManagerGlobal);
+    CMN_ASSERT(globalComponentManagerProxy);
+
+    if (!globalComponentManagerProxy->Start(this)) {
+        CMN_LOG_CLASS_RUN_ERROR << "ReconnectGCM: Start failed" << std::endl;
+        return;
+    }
+
+    if (!globalComponentManagerProxy->AddProcess(ProcessName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "ReconnectGCM: AddProcess failed" << std::endl;
+        return;
+    }
+}
+#endif

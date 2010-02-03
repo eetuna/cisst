@@ -141,8 +141,6 @@ void mtsComponentInterfaceProxyClient::Stop()
     // TODO: gcc says this doesn't exist???
     ComponentInterfaceServerProxy->Shutdown();
 
-    ShutdownSession();
-    
     BaseClientType::Stop();
     
     Sender->Stop();

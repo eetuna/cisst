@@ -340,6 +340,9 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const std::string & endpointInfo, const std::string & communicatorID);
 
+    /*! For testing purposes */
+    void DisconnectGCM();
+    void ReconnectGCM();
 #endif
 };
 

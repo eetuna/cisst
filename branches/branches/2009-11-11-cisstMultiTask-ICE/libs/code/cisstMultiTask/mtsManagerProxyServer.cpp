@@ -122,6 +122,7 @@ bool mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
         return false;
     }
 
+    /*
     // Deactivate object adapter which makes all subsequent requests from clients
     // be ignored.
     Ice::CommunicatorPtr communicator = (*clientProxy)->ice_getCommunicator();
@@ -130,21 +131,21 @@ bool mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
         return false;
     }
     // This might cause ObjectAdapterDeactivatedException at client side.
-    // smmy: this should not be killing a server adapter; instead, it should DISCONNECT
-    // the client.
-    //communicator->shutdown();
-
-    // Remove client from client list
-    if (!BaseServerType::RemoveClientByClientID(clientID)) {
-        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to remove client from client map: " << clientID);
-        return false;
-    }
+    communicator->shutdown();
 
     // Clean up proxy instance and client map
     try {
         communicator->destroy();
     } catch (const ::Ice::Exception & ex) {
         LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to destroy proxy object: " << clientID << ": " << ex);
+        return false;
+    }
+    */
+
+    // Remove client from client list. This will prevent further network 
+    // processings from being executed.
+    if (!BaseServerType::RemoveClientByClientID(clientID)) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to remove client from client map: " << clientID);
         return false;
     }
 
@@ -1025,7 +1026,7 @@ void mtsManagerProxyServer::ManagerServerI::Run()
 #else
     while(IsActiveProxy()) 
     {
-        // Check connections every 1 second
+        // Check connections at every 1 second
         ManagerProxyServer->MonitorConnections();
         osaSleep(1 * cmn_s);
 

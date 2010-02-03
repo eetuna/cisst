@@ -79,7 +79,7 @@ protected:
         with the clientID found or inactive proxy, this method returns NULL. */
     ManagerClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
 
-    /*! Monitor current connections */
+    /*! Monitor all the current connections */
     void MonitorConnections() {
         BaseServerType::Monitor();
     }

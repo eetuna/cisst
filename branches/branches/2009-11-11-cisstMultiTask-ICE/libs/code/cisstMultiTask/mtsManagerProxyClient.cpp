@@ -29,13 +29,18 @@ CMN_IMPLEMENT_SERVICES(mtsManagerProxyClient);
 
 unsigned int mtsManagerProxyClient::InstanceCounter = 0;
 
+mtsManagerProxyClient::~mtsManagerProxyClient()
+{
+    Stop();
+}
+
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
 //-----------------------------------------------------------------------------
 bool mtsManagerProxyClient::Start(mtsManagerLocal * proxyOwner)
 {
     // Initialize Ice object.
-    IceInitialize();
+    BaseClientType::IceInitialize();
 
     if (!InitSuccessFlag) {
         LogError(mtsManagerProxyClient, "ICE proxy initialization failed");
@@ -107,7 +112,7 @@ void mtsManagerProxyClient::Runner(ThreadArguments<mtsManagerLocal> * arguments)
 
     try {
         ProxyClient->SetAsActiveProxy();
-        ProxyClient->StartClient();        
+        ProxyClient->StartClient();
     } catch (const Ice::Exception& e) {
         std::string error("mtsManagerProxyClient: ");
         error += e.what();
@@ -125,30 +130,22 @@ void mtsManagerProxyClient::Runner(ThreadArguments<mtsManagerLocal> * arguments)
 
 void mtsManagerProxyClient::Stop()
 {
+    if (!IsActiveProxy()) return;
+
     LogPrint(mtsManagerProxyClient, "ManagerProxy client ends.");
 
-    //
-    // TODO: Review this method
-    //
-
     // Let a server disconnect this client safely.
-    // TODO: gcc says this doesn't exist???
-    ManagerServerProxy->Shutdown();
+    //ManagerServerProxy->Shutdown();
+    ManagerServerProxy->ice_getConnection()->close(false); // close gracefully
 
-    ShutdownSession();
-    
     BaseClientType::Stop();
-    
-    Sender->Stop();
 }
 
 bool mtsManagerProxyClient::OnServerDisconnect()
 {
-    //
-    // TODO
-    //
+    Stop();
 
-    return false;
+    return true;
 }
 
 void mtsManagerProxyClient::GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStringSet,
@@ -728,6 +725,14 @@ mtsManagerProxyClient::ManagerClientI::ManagerClientI(
 {
 }
 
+mtsManagerProxyClient::ManagerClientI::~ManagerClientI()
+{
+    Stop();
+
+    // Sleep for some time enough for Run() loop to terminate
+    osaSleep(1 * cmn_s);
+}
+
 void mtsManagerProxyClient::ManagerClientI::Start()
 {
     ManagerProxyClient->GetLogger()->trace("mtsManagerProxyClient", "Send thread starts");
@@ -753,10 +758,9 @@ void mtsManagerProxyClient::ManagerClientI::Run()
 #else
     while (this->IsActiveProxy())
     {
-        // TODO: add monitoring
-        //ManagerProxyClient->RunMonitor();
-        //osaSleep(500 * cmn_ms);
-        osaSleep(10 * cmn_ms);
+        // Check connections at every 1 second
+        ManagerProxyClient->MonitorConnection();
+        osaSleep(1 * cmn_s);
     }
 #endif
 }
@@ -765,20 +769,21 @@ void mtsManagerProxyClient::ManagerClientI::Stop()
 {
     if (!ManagerProxyClient->IsActiveProxy()) return;
 
-    // TODO: review the following codes (for thread safety)
+    LogPrint(ManagerClientI, "Stop and destroy callback sender");
+
+    ManagerProxyClient->Deactivate();
+
     IceUtil::ThreadPtr callbackSenderThread;
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        // TODO: change this from active to prepare stop(?)
-        //Runnable = false;
-
         notify();
 
         callbackSenderThread = SenderThreadPtr;
-        SenderThreadPtr = 0; // Resolve cyclic dependency.
+        SenderThreadPtr = 0;
     }
-    callbackSenderThread->getThreadControl().join();
+    //TODO: deadlock??
+    //callbackSenderThread->getThreadControl().join();
 }
 
 //-----------------------------------------------------------------------------
@@ -788,7 +793,7 @@ void mtsManagerProxyClient::ManagerClientI::TestMessageFromServerToClient(
     const std::string & str, const ::Ice::Current & current)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyClient, "<<<<< RECV: TestMessageFromServerToClient");
+    LogPrint(ManagerClientI, "<<<<< RECV: TestMessageFromServerToClient");
 #endif
 
     ManagerProxyClient->ReceiveTestMessageFromServerToClient(str);

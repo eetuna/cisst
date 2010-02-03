@@ -70,6 +70,11 @@ protected:
 
         Sender = new ComponentInterfaceClientI(IceCommunicator, IceLogger, ComponentInterfaceServerProxy, this);
     }
+
+    /*! Remove a proxy object */
+    void RemoveProxy() {
+        Sender->Stop();
+    }
     
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();

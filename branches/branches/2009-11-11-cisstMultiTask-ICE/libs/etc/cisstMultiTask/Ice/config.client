@@ -21,8 +21,8 @@
 # Cisst = Use cisst internal logger (CMN_LOG and CMN_LOG_CLASS)
 # Windows = Use OutputDebugString() API for logging. Works only on Windows
 #
-Logger = Cisst
-#Logger = Windows
+#Logger = Cisst
+Logger = Windows
 
 #
 # MJ: Please do not modify these property settings because these configurations 
@@ -74,7 +74,7 @@ Ice.ThreadPool.Client.SizeMax = 4
 # Disable Active Connection Management (ACM)
 # (reference: http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.4.html)
 #
-Ice.ACM.Client = 0
+Ice.ACM.Client = 300
 
 #
 # Retry interval

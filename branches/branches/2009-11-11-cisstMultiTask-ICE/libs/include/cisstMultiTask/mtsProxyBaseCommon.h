@@ -208,13 +208,6 @@ protected:
     /*! The flag which is true if a proxy is properly initialized */
     bool InitSuccessFlag;
 
-    // TODO: is the following comment correct????
-    /*! Set as true when a session is to be closed.
-        For a client, this is set when a client notifies a server of disconnection.
-        For a server, this is set when a client calls Shutdown() which allows safe
-        and clean termination. */
-    bool IsValidSession;
-
     /*! The worker thread that actually runs a proxy. */
     osaThread WorkerThread;
 
@@ -276,6 +269,13 @@ protected:
         IceLogger = IceCommunicator->getLogger();
     }
 
+    virtual void IceCleanup(void) {
+        IceGUID = "";
+        InitSuccessFlag = false;
+
+        ChangeProxyState(PROXY_FINISHED);
+    }
+
     /*! Return the global unique id of this object. Currently, IceUtil::generateUUID()
         is used to set the id which is guaranteed to be unique across networks by ICE.
         We can also use a combination of IP address (or MAC address), process id,
@@ -294,7 +294,6 @@ public:
         ProxyTypeMember(proxyType),
         ProxyState(PROXY_CONSTRUCTED),
         InitSuccessFlag(false),
-        IsValidSession(true),
         IcePropertyFileName(propertyFileName),
         IceObjectIdentity(objectIdentity),
         IceCommunicator(NULL),
@@ -308,16 +307,13 @@ public:
     /*! Initialize and start the proxy (returns immediately). */
     virtual bool Start(_proxyOwner * proxyOwner) = 0;
     
+    /*! Deactivate this proxy */
+    void Deactivate(void) {
+        ProxyState = PROXY_FINISHING;
+    }
+
     /*! Terminate the proxy. */
     virtual void Stop() = 0;
-
-    //
-    // TODO: graceful termination. do i really need this???
-    //
-    /*! Close a session. */
-    virtual void ShutdownSession() {
-        IsValidSession = false;
-    }
 
     /*! Set proxy owner and this proxy's name */
     virtual void SetProxyOwner(_proxyOwner * proxyOwner, const std::string & suffix = "") {
@@ -358,21 +354,21 @@ public:
 #define LogPrint(_className, _logStream) {\
         std::stringstream ss;\
         ss << #_className << ": ";\
-        ss << _logStream << std::endl;\
+        ss << _logStream;\
         std::string s = ss.str();\
         IceLogger->print(s); }
 
 #define LogWarning(_className, _logStream) {\
         std::stringstream ss;\
         ss << #_className << ": ";\
-        ss << _logStream << std::endl;\
+        ss << _logStream;\
         std::string s = ss.str();\
         IceLogger->warning(s); }
 
 #define LogError(_className, _logStream) {\
         std::stringstream ss;\
         ss << #_className << ": ";\
-        ss << _logStream << std::endl;\
+        ss << _logStream;\
         std::string s = ss.str();\
         IceLogger->error(s); }
 

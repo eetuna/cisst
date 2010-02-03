@@ -48,34 +48,38 @@ protected:
     /*! Start proxy client */
     virtual bool Start(_proxyOwner * proxyOwner) = 0;
 
+    /*! Called when server disconnection is detected */
+    virtual bool OnServerDisconnect() = 0;
+
     /*! Terminate proxy */
     virtual void Stop(void)
     {
-        if (this->ProxyState != BaseType::PROXY_ACTIVE) {
-            return;
-        }
-
-        ChangeProxyState(BaseType::PROXY_FINISHING);
+        IceCleanup();
 
         if (this->IceCommunicator) {
             try {                    
                 this->IceCommunicator->destroy();
+
                 ChangeProxyState(BaseType::PROXY_FINISHED);
+                IceCommunicator = NULL;
+
                 this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up success.");
             } catch (const Ice::Exception& e) {
                 this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up failure.");
                 this->IceLogger->trace("mtsProxyBaseClient", e.what());
+            } catch (const std::string& msg) {
+                this->IceLogger->error("mtsProxyBaseClient: Proxy client clean-up failure.");
+                this->IceLogger->trace("mtsProxyBaseClient", msg.c_str());
+            } catch (const char* msg) {
+                this->IceLogger->error("mtsProxyBaseClient: Proxy client clean-up failure.");
+                this->IceLogger->trace("mtsProxyBaseClient", msg);
             }
         }
     }
 
-    /*! Called when server disconnection is detected */
-    virtual bool OnServerDisconnect() = 0;
-
     //-------------------------------------------------------------------------
     //  Networking: ICE
     //-------------------------------------------------------------------------
-protected:
     /*! ICE Object */
     Ice::ObjectPrx ProxyObject;
 
@@ -86,6 +90,9 @@ protected:
 
     /*! Create ICE proxy client object */
     virtual void CreateProxy() = 0;
+
+    /*! Remove ICE proxy client object */
+    virtual void RemoveProxy() = 0;
 
     /*! Initialize client proxy */
     void IceInitialize(void)
@@ -138,9 +145,28 @@ protected:
         }
     }
 
-    // TODO: for safe/clean termination, should a client call shutdown() first?
-    // TODO: do I need ShutdownSession() in a client proxy as well??
+    /*! Clean up ICE related resources */
+    virtual void IceCleanup(void)
+    {
+        this->InitSuccessFlag = false;
 
+        RemoveProxy();
+
+        BaseType::IceCleanup();
+    }
+
+    virtual void Monitor(void) {
+        try {
+            ProxyObject->ice_ping();
+        } catch (const ::Ice::Exception & ex) {
+            std::stringstream ss;
+            ss << "ProxyBaseClient Monitor: server is disconnected: " << ex;
+            std::string s = ss.str();
+            this->IceLogger->warning(s);
+
+            this->OnServerDisconnect();
+        }
+    }
     ///*! Shutdown the current session for graceful termination */
     //void ShutdownSession(const Ice::Current & current) {
     //    current.adapter->getCommunicator()->shutdown();
