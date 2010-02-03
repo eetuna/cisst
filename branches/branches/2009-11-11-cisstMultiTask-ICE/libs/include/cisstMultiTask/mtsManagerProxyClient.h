@@ -73,11 +73,6 @@ protected:
     /*! Start a send thread and wait for shutdown (blocking call). */
     void StartClient();
 
-    /*! Monitor all the current connections */
-    void MonitorConnection() {
-        BaseClientType::Monitor();
-    }
-
     /*! Called when server disconnection is detected */
     bool OnServerDisconnect();
 

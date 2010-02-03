@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
+#include <cisstMultiTask/mtsManagerLocal.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
@@ -116,11 +117,59 @@ void mtsComponentInterfaceProxyServer::Stop()
 
 bool mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
-    //
-    // TODO: implement this!!! (local resource clean up, logical connection clean up, and so forth)
-    //
+    // Get network proxy client serving the client with the clientID
+    ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
+    if (!clientProxy) {
+        LogError(mtsComponentInterfaceProxyServer, "OnClientDisconnect: no client proxy found with client id: " << clientID);
+        return false;
+    }
 
-    return false;
+    // Remove client from client list. This will prevent further network 
+    // processings from being executed.
+    if (!BaseServerType::RemoveClientByClientID(clientID)) {
+        LogError(mtsComponentInterfaceProxyServer, "OnClientDisconnect: failed to remove client from client map: " << clientID);
+        return false;
+    }
+
+    /*
+    // Deactivate object adapter which makes all subsequent requests from clients
+    // be ignored.
+    Ice::CommunicatorPtr communicator = (*clientProxy)->ice_getCommunicator();
+    if (!communicator) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: invalid communicator: " << clientID);
+        return false;
+    }
+    // This might cause ObjectAdapterDeactivatedException at client side.
+    communicator->shutdown();
+
+    // Clean up proxy instance and client map
+    try {
+        communicator->destroy();
+    } catch (const ::Ice::Exception & ex) {
+        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to destroy proxy object: " << clientID << ": " << ex);
+        return false;
+    }
+    */
+
+    // Remove the process logically
+    //
+    // TODO: Call Disconnect()
+    // TODO: How to figure out which connection should be disconnected? Or,
+    // which components are related to this client?
+    //
+    mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
+    //if (!localManager->Disconnect()) {
+    //}
+    /*
+    if (!ProxyOwner->RemoveProcess(clientID)) {
+        LogError(mtsComponentInterfaceProxyServer, "OnClientDisconnect: failed to remove process: " << clientID);
+        return false;
+    }
+    */
+
+    LogPrint(mtsManagerProxyServer, "OnClientDisconnect: successfully removed process: " << clientID);
+
+    return true;
 }
 
 mtsComponentInterfaceProxyServer::ComponentInterfaceClientProxyType * mtsComponentInterfaceProxyServer::GetNetworkProxyClient(const ClientIDType clientID)
@@ -134,9 +183,6 @@ mtsComponentInterfaceProxyServer::ComponentInterfaceClientProxyType * mtsCompone
     // Check if this network proxy server is active. We don't need to check if
     // a proxy client is still active since any disconnection or inactive proxy
     // has already been detected and taken care of.
-    //
-    // TODO: add client proxy disconnection/inactive client proxy clean-up
-    //
     return (IsActiveProxy() ? clientProxy : NULL);
 }
 
@@ -477,30 +523,9 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Run()
 #else
     while(IsActiveProxy()) 
     {
-        osaSleep(10 * cmn_ms);
-
-        /*
-        if(!clients.empty())
-        {
-            ++num;
-            for(std::set<mtsTaskManagerProxy::TaskManagerClientPrx>::iterator p 
-                = clients.begin(); p != clients.end(); ++p)
-            {
-                try
-                {
-                    std::cout << "server sends: " << num << std::endl;
-                }
-                catch(const IceUtil::Exception& ex)
-                {
-                    std::cerr << "removing client `" << Communicator->identityToString((*p)->ice_getIdentity()) << "':\n"
-                        << ex << std::endl;
-
-                    IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-                    _clients.erase(*p);
-                }
-            }
-        }
-        */
+        // Check all connections at every 1 second
+        ComponentInterfaceProxyServer->MonitorConnections();
+        osaSleep(1 * cmn_s);
     }
 #endif
 }
@@ -513,8 +538,6 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Stop()
     IceUtil::ThreadPtr callbackSenderThread;
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-
-        // TODO: Change proxy state from active to 'prepare to stop(?)'
 
         notify();
 

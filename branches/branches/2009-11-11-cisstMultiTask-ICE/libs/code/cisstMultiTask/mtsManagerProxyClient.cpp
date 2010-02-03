@@ -758,9 +758,8 @@ void mtsManagerProxyClient::ManagerClientI::Run()
 #else
     while (this->IsActiveProxy())
     {
-        // Check connections at every 1 second
-        ManagerProxyClient->MonitorConnection();
-        osaSleep(1 * cmn_s);
+        // NOP
+        osaSleep(10 * cmn_ms);
     }
 #endif
 }

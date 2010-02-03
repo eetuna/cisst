@@ -69,9 +69,6 @@ protected:
     /*! Start a send thread and wait for shutdown (this is a blocking method). */
     void StartServer();
 
-    /*! Event handler for client's disconnect event */
-    bool OnClientDisconnect(const ClientIDType clientID);
-
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsManagerGlobal> * arguments);
 
@@ -83,6 +80,9 @@ protected:
     void MonitorConnections() {
         BaseServerType::Monitor();
     }
+
+    /*! Event handler for client's disconnect event */
+    bool OnClientDisconnect(const ClientIDType clientID);
 
     //-------------------------------------------------------------------------
     //  Event Handlers (Client -> Server)

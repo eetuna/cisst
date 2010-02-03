@@ -108,6 +108,8 @@ void mtsManagerProxyServer::Runner(ThreadArguments<mtsManagerGlobal> * arguments
 
 void mtsManagerProxyServer::Stop()
 {
+    LogPrint(mtsManagerProxyServer, "ManagerProxy server stops.");
+
     BaseServerType::Stop();
 
     Sender->Stop();
@@ -121,26 +123,6 @@ bool mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
         LogError(mtsManagerProxyServer, "OnClientDisconnect: no client proxy found with client id: " << clientID);
         return false;
     }
-
-    /*
-    // Deactivate object adapter which makes all subsequent requests from clients
-    // be ignored.
-    Ice::CommunicatorPtr communicator = (*clientProxy)->ice_getCommunicator();
-    if (!communicator) {
-        LogError(mtsManagerProxyServer, "OnClientDisconnect: invalid communicator: " << clientID);
-        return false;
-    }
-    // This might cause ObjectAdapterDeactivatedException at client side.
-    communicator->shutdown();
-
-    // Clean up proxy instance and client map
-    try {
-        communicator->destroy();
-    } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to destroy proxy object: " << clientID << ": " << ex);
-        return false;
-    }
-    */
 
     // Remove client from client list. This will prevent further network 
     // processings from being executed.
@@ -171,9 +153,6 @@ mtsManagerProxyServer::ManagerClientProxyType * mtsManagerProxyServer::GetNetwor
     // Check if this network proxy server is active. We don't need to check if
     // a proxy client is still active since any disconnection or inactive proxy
     // has already been detected and taken care of.
-    //
-    // TODO: add client proxy disconnection/inactive client proxy clean-up
-    //
     return (IsActiveProxy() ? clientProxy : NULL);
 }
 
@@ -1026,40 +1005,11 @@ void mtsManagerProxyServer::ManagerServerI::Run()
 #else
     while(IsActiveProxy()) 
     {
+        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+
         // Check connections at every 1 second
         ManagerProxyServer->MonitorConnections();
         osaSleep(1 * cmn_s);
-
-        // Testing
-        //if (!a) {
-        //    mtsManagerProxyServer::ConnectionIDType id = ManagerProxyServer->ClientIDMap.begin()->second.ConnectionID;
-        //    std::cout << "Closing connection: " << id << std::endl;
-        //    ManagerProxyServer->CloseClient(id);
-        //    a = true;
-        //}
-        
-        /*
-        if(!clients.empty())
-        {
-            ++num;
-            for(std::set<mtsTaskManagerProxy::TaskManagerClientPrx>::iterator p 
-                = clients.begin(); p != clients.end(); ++p)
-            {
-                try
-                {
-                    std::cout << "server sends: " << num << std::endl;
-                }
-                catch(const IceUtil::Exception& ex)
-                {
-                    std::cerr << "removing client `" << Communicator->identityToString((*p)->ice_getIdentity()) << "':\n"
-                        << ex << std::endl;
-
-                    IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
-                    _clients.erase(*p);
-                }
-            }
-        }
-        */
     }
 #endif
 }

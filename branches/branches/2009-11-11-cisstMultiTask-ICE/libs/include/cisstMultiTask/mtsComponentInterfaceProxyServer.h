@@ -47,11 +47,6 @@ protected:
     typedef IceUtil::Handle<ComponentInterfaceServerI> ComponentInterfaceServerIPtr;
     ComponentInterfaceServerIPtr Sender;
 
-    /*! Get a network proxy client object using clientID. If no network proxy 
-        client with the clientID is not connected or the proxy is inactive,
-        this method returns NULL. */
-    ComponentInterfaceClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
-
     /*! Typedef for per-command argument serializer */
     typedef std::map<CommandIDType, mtsProxySerializer *> PerCommandSerializerMapType;
     PerCommandSerializerMapType PerCommandSerializerMap;
@@ -81,6 +76,16 @@ protected:
 
     /*! Thread runner */
     static void Runner(ThreadArguments<mtsComponentProxy> * arguments);
+
+    /*! Get a network proxy client object using clientID. If no network proxy 
+        client with the clientID is not connected or the proxy is inactive,
+        this method returns NULL. */
+    ComponentInterfaceClientProxyType * GetNetworkProxyClient(const ClientIDType clientID);
+
+    /*! Monitor all the current connections */
+    void MonitorConnections() {
+        BaseServerType::Monitor();
+    }
 
     /*! Event handler for client's disconnect event */
     bool OnClientDisconnect(const ClientIDType clientID);

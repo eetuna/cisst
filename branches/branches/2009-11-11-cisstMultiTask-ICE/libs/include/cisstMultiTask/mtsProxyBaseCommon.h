@@ -269,6 +269,7 @@ protected:
         IceLogger = IceCommunicator->getLogger();
     }
 
+    /*! Ice module clean up */
     virtual void IceCleanup(void) {
         IceGUID = "";
         InitSuccessFlag = false;
@@ -325,10 +326,6 @@ public:
     //-----------------------------------------------------
     //  Getters
     //-----------------------------------------------------
-    inline bool IsInitalized(void) const { 
-        return InitSuccessFlag; 
-    }
-    
     inline const Ice::LoggerPtr GetLogger(void) const {
         return IceLogger; 
     }

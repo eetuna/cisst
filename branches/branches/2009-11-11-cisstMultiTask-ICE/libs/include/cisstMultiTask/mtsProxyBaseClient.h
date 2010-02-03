@@ -59,10 +59,7 @@ protected:
         if (this->IceCommunicator) {
             try {                    
                 this->IceCommunicator->destroy();
-
-                ChangeProxyState(BaseType::PROXY_FINISHED);
                 IceCommunicator = NULL;
-
                 this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up success.");
             } catch (const Ice::Exception& e) {
                 this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up failure.");
@@ -155,18 +152,6 @@ protected:
         BaseType::IceCleanup();
     }
 
-    virtual void Monitor(void) {
-        try {
-            ProxyObject->ice_ping();
-        } catch (const ::Ice::Exception & ex) {
-            std::stringstream ss;
-            ss << "ProxyBaseClient Monitor: server is disconnected: " << ex;
-            std::string s = ss.str();
-            this->IceLogger->warning(s);
-
-            this->OnServerDisconnect();
-        }
-    }
     ///*! Shutdown the current session for graceful termination */
     //void ShutdownSession(const Ice::Current & current) {
     //    current.adapter->getCommunicator()->shutdown();
