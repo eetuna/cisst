@@ -155,7 +155,7 @@ bool mtsComponentInterfaceProxyClient::OnServerDisconnect()
     return false;
 }
 
-bool mtsComponentInterfaceProxyClient::RegisterPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
+bool mtsComponentInterfaceProxyClient::AddPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
 {
     PerEventSerializerMapType::const_iterator it = PerEventSerializerMap.find(commandID);
     if (!serializer || it != PerEventSerializerMap.end()) {

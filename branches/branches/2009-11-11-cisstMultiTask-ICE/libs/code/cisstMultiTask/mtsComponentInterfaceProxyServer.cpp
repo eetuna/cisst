@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsComponentInterfaceProxyServer.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
 CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
@@ -30,6 +31,11 @@ CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyServer);
 std::string mtsComponentInterfaceProxyServer::InterfaceCommunicatorID = "InterfaceCommunicator";
 std::string mtsComponentInterfaceProxyServer::ConnectionIDKey = "InterfaceConnectionID";
 unsigned int mtsComponentInterfaceProxyServer::InstanceCounter = 0;
+
+mtsComponentInterfaceProxyServer::~mtsComponentInterfaceProxyServer()
+{
+    Stop();
+}
 
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
@@ -117,6 +123,8 @@ void mtsComponentInterfaceProxyServer::Stop()
 
 bool mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
+    if (!IsActiveProxy()) return true;
+
     // Get network proxy client serving the client with the clientID
     ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) {
@@ -131,43 +139,35 @@ bool mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType cli
         return false;
     }
 
-    /*
-    // Deactivate object adapter which makes all subsequent requests from clients
-    // be ignored.
-    Ice::CommunicatorPtr communicator = (*clientProxy)->ice_getCommunicator();
-    if (!communicator) {
-        LogError(mtsManagerProxyServer, "OnClientDisconnect: invalid communicator: " << clientID);
+    // Get a set of strings that represent a connection that the network proxy 
+    // client has been serving.
+    ConnectionStringMapType::iterator it = ConnectionStringMap.find(clientID);
+    if (it == ConnectionStringMap.end()) {
+        LogError(mtsComponentInterfaceProxyServer, "OnClientDisconnect: no connection information found: " << clientID);
         return false;
     }
-    // This might cause ObjectAdapterDeactivatedException at client side.
-    communicator->shutdown();
 
-    // Clean up proxy instance and client map
-    try {
-        communicator->destroy();
-    } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to destroy proxy object: " << clientID << ": " << ex);
-        return false;
-    }
-    */
+    ConnectionStrings * element = &it->second;
+    const std::string clientProcessName = element->ClientProcessName;
+    const std::string clientComponentName = element->ClientComponentName;
+    const std::string clientRequiredInterfaceName = element->ClientRequiredInterfaceName;
+    const std::string serverProcessName = element->ServerProcessName;
+    const std::string serverComponentName = element->ServerComponentName;
+    const std::string serverProvidedInterfaceName = element->ServerProvidedInterfaceName;
 
     // Remove the process logically
-    //
-    // TODO: Call Disconnect()
-    // TODO: How to figure out which connection should be disconnected? Or,
-    // which components are related to this client?
-    //
     mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
-    //if (!localManager->Disconnect()) {
-    //}
-    /*
-    if (!ProxyOwner->RemoveProcess(clientID)) {
-        LogError(mtsComponentInterfaceProxyServer, "OnClientDisconnect: failed to remove process: " << clientID);
-        return false;
+    if (!localManager->Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                                  serverProcessName, serverComponentName, serverProvidedInterfaceName))
+    {
+        LogWarning(mtsComponentInterfaceProxyServer, "OnClientDisconnect: failed to disconnect: connection id=" << clientID << ", "
+            << mtsManagerGlobal::GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
+            << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl);
+    } else {
+        LogPrint(mtsManagerProxyServer, "OnClientDisconnect: successfully disconnected: connection id=" << clientID << ", "
+            << mtsManagerGlobal::GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
+            << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl);
     }
-    */
-
-    LogPrint(mtsManagerProxyServer, "OnClientDisconnect: successfully removed process: " << clientID);
 
     return true;
 }
@@ -241,15 +241,32 @@ bool mtsComponentInterfaceProxyServer::ReceiveFetchEventGeneratorProxyPointers(
     return ProxyOwner->GetEventGeneratorProxyPointer(clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
 }
 
-bool mtsComponentInterfaceProxyServer::RegisterPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
+bool mtsComponentInterfaceProxyServer::AddPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
 {
     PerCommandSerializerMapType::const_iterator it = PerCommandSerializerMap.find(commandID);
     if (!serializer || it != PerCommandSerializerMap.end()) {
-        LogError(mtsComponentInterfaceProxyServer, "failed to add per-command serializer" << std::endl);
+        LogError(mtsComponentInterfaceProxyServer, "AddPerCommandSerializer: failed to add per-command serializer" << std::endl);
         return false;
     }
 
     PerCommandSerializerMap[commandID] = serializer;
+
+    return true;
+}
+
+bool mtsComponentInterfaceProxyServer::AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+{
+    ConnectionStringMapType::iterator it = ConnectionStringMap.find(providedInterfaceProxyInstanceID);
+    if (it != ConnectionStringMap.end()) {
+        LogError(mtsComponentInterfaceProxyServer, "AddConnectionInformation: failed to add connection information: " << providedInterfaceProxyInstanceID << std::endl);
+        return false;
+    }
+
+    ConnectionStrings element(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+                              serverProcessName, serverComponentName, serverProvidedInterfaceName);
+    ConnectionStringMap.insert(std::make_pair(providedInterfaceProxyInstanceID, element));
 
     return true;
 }

@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsProxyBaseCommon.h>
 #include <cisstMultiTask/mtsExport.h>
+#include <cisstOSAbstraction/osaMutex.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -183,6 +184,10 @@ protected:
     typedef std::map<ConnectionIDType, ClientInformation> ConnectionIDMapType;
     ConnectionIDMapType ConnectionIDMap;
 
+    /*! Mutex */
+    osaMutex ClientIDMapChange;
+    osaMutex ConnectionIDMapChange;
+
     /*! When a client proxy is connected to this server proxy, add it to client 
         proxy map with a key of connection id */
     bool AddProxyClient(const std::string & clientName, const ClientIDType & clientID, 
@@ -212,8 +217,13 @@ protected:
         client.ConnectionID = connectionID;
         client.ClientProxy = clientProxy;
 
+        ClientIDMapChange.Lock();
         ClientIDMap.insert(std::make_pair(clientID, client));
+        ClientIDMapChange.Unlock();
+
+        ConnectionIDMapChange.Lock();
         ConnectionIDMap.insert(std::make_pair(connectionID, client));
+        ConnectionIDMapChange.Unlock();
 
         return (FindClientByClientID(clientID) && FindClientByConnectionID(connectionID));
     }
@@ -266,8 +276,13 @@ protected:
             return false;
         }
 
+        ConnectionIDMapChange.Lock();
         ConnectionIDMap.erase(it1);
+        ConnectionIDMapChange.Unlock();
+
+        ClientIDMapChange.Lock();
         ClientIDMap.erase(it2);
+        ClientIDMapChange.Unlock();
 
         return true;
     }
@@ -283,8 +298,13 @@ protected:
             return false;
         }
 
+        ClientIDMapChange.Lock();
         ClientIDMap.erase(it1);
+        ClientIDMapChange.Unlock();
+
+        ConnectionIDMapChange.Lock();
         ConnectionIDMap.erase(it2);
+        ConnectionIDMapChange.Unlock();
 
         return true;
     }

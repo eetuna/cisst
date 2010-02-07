@@ -44,8 +44,7 @@ public:
     /* Typedef for the state of connection. See comments on Connect() for details. */
     typedef enum {
         CONNECT_ERROR = 0,
-        CONNECT_LOCAL,
-        CONNECT_REMOTE_BASE
+        CONNECT_ID_BASE
     } CONNECT_ID;
 
     //-------------------------------------------------------------------------
@@ -142,13 +141,12 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const std::string & endpointInfo, const std::string & communicatorID) = 0;
 
-    /*! Fetch access information of a server proxy (i.e., provided interface 
-        proxy) with the complete specification of connection. If all the three
-        strings in arguments are "", fetch the access information without 
-        specifying client interface. This second option is provided because one 
-        proxy server at client side can handle multiple connections and, thus, 
-        it is required to have a way to fetch the access information of a proxy 
-        server without specifying a client interface. */
+    /*! Fetch endpoint information of a server proxy (i.e., provided interface 
+        proxy) with connection information. A server component uses this method
+        to get endpoint information of proxy server so that a proxy client can
+        connect to proxy server. A client component uses this to duplicate the
+        endpoint information when there is a proxy server already running. In
+        the latter case, the first three arguments are given as "". */
     virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,

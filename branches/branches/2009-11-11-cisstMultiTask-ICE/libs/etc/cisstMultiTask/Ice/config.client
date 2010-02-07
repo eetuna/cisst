@@ -25,7 +25,7 @@
 Logger = Windows
 
 #
-# MJ: Please do not modify these property settings because these configurations 
+# MJ: Please do not modify these property settings since these configurations 
 # bring global effects on all ICE proxies.
 #
 
@@ -51,7 +51,7 @@ Ice.Warn.Connections = 1
 # 2 = like 1, but more detailed
 # 3 = like 2, but also trace data transfer
 #
-Ice.Trace.Network = 0
+Ice.Trace.Network = 1
 
 #
 # Timeout in msec

@@ -81,11 +81,11 @@ protected:
     typedef cmnNamedMap<mtsComponentInterfaceProxyClient> RequiredInterfaceNetworkProxyMapType;
     RequiredInterfaceNetworkProxyMapType RequiredInterfaceNetworkProxies;
 
-    /*! Typedef to manage provided interface proxy resources */
+    /*! Typedef to manage provided interface instaces */
     typedef std::map<unsigned int, mtsProvidedInterface *> ProvidedInterfaceProxyInstanceMapType;
     ProvidedInterfaceProxyInstanceMapType ProvidedInterfaceProxyInstanceMap;
 
-    /*! Counter for provided interface proxy instances */
+    /*! Counter for provided interface proxy instances. Unique within a component. */
     unsigned int ProvidedInterfaceProxyInstanceID;
 
     //-------------------------------------------------------------------------
@@ -128,6 +128,12 @@ public:
     virtual ~mtsComponentProxy();
 
     inline void Configure(const std::string & CMN_UNUSED(componentProxyName)) {};
+
+    /*! Register connection information which is used to clean up a logical
+        connection when a network proxy client is detected as disconnected. */
+    bool AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Methods to Manage Interface Proxy

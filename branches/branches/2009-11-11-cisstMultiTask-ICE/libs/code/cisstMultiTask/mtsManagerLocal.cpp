@@ -217,7 +217,7 @@ void mtsManagerLocal::Cleanup(void)
 
     ComponentMap.DeleteAll();
 
-    Kill();
+    __os_exit();
 }
 
 std::vector<std::string> mtsManagerLocal::GetIPAddressList()
@@ -339,11 +339,13 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
         CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component at global component manager: " << componentName << std::endl;
         return false;
     }
-
-    //
-    // TODO: Before removing a component from the map,
-    //       shouldn't it be deactivated, terminated, and cleaned up??
-    //
+    
+    // Get a component to be removed
+    mtsComponent * component = ComponentMap.GetItem(componentName);
+    if (!component) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to get component to be removed: " << componentName << std::endl;
+        return false;
+    }
 
     bool success;
     ComponentMapChange.Lock();
@@ -353,10 +355,16 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
     if (!success) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to removed component: " << componentName << std::endl;
         return false;
+    } else {
+        mtsComponentProxy * componentProxy = dynamic_cast<mtsComponentProxy *>(component);
+        if (componentProxy) {
+            delete componentProxy;
+        } else {
+            delete component;
+        }
+        CMN_LOG_CLASS_RUN_VERBOSE << "RemoveComponent: removed component: " << componentName << std::endl;
     }
     
-    CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: removed component: " << componentName << std::endl;
-
     return true;
 }
 
@@ -634,8 +642,8 @@ bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std
         ProcessName, clientComponentName, clientRequiredInterfaceName,
         ProcessName, serverComponentName, serverProvidedInterfaceName);
 
-    if (connectionID != static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_LOCAL)) {
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: Global Component Manager failed to reserve connection: "
+    if (connectionID == static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR)) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get connection id from the Global Component Manager: "
             << clientComponentName << ":" << clientRequiredInterfaceName << " - "
             << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
         return false;
@@ -643,7 +651,23 @@ bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std
 
     int ret = ConnectLocally(clientComponentName, clientRequiredInterfaceName, 
                              serverComponentName, serverProvidedInterfaceName);
-    return (ret != -1);
+    if (ret == -1) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to establish local connection: "
+            << clientComponentName << ":" << clientRequiredInterfaceName << " - "
+            << serverComponentName << ":" << serverProvidedInterfaceName << std::endl;
+        return false;
+    }
+
+    // Notify the GCM of successful local connection
+    if (!ManagerGlobal->ConnectConfirm(connectionID)) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to notify GCM of this connection" << std::endl;
+
+        if (!Disconnect(clientComponentName, clientRequiredInterfaceName, serverComponentName, serverProvidedInterfaceName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "Connect: clean up error: disconnection failed" << std::endl;
+        }
+    }
+
+    return true;
 }
 
 bool mtsManagerLocal::Connect(
@@ -707,7 +731,7 @@ bool mtsManagerLocal::Connect(
             if (!Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
                             serverProcessName, serverComponentName, serverProvidedInterfaceName))
             {
-                CMN_LOG_CLASS_RUN_ERROR << "Connect: clean up (disconnect failed) error";
+                CMN_LOG_CLASS_RUN_ERROR << "Connect: clean up error: disconnection failed";
             }
             return false;
         }
@@ -1251,11 +1275,6 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
             goto ConnectServerSideInterfaceError;
         }
 
-        //
-        // TODO: If there are more than one endpoints received, try connecting to one by one
-        // until it successfully connects to server.
-        //
-
         // Wait for the required interface proxy client to successfully connect to 
         // provided interface proxy server.
         numTrial = 0;
@@ -1284,7 +1303,6 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
         // Update event handler ID: Set event handlers' IDs in a required interface 
         // proxy at server side as event generators' IDs fetched from a provided
         // interface proxy at client side.
-
         if (!clientComponentProxy->UpdateEventHandlerProxyID(clientComponentName, clientRequiredInterfaceName)) {
             CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: failed to update event handler proxy id" << std::endl;
             goto ConnectServerSideInterfaceError;
@@ -1437,10 +1455,24 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     // becomes active (network proxies are running now and an ICE client 
     // proxy is connected to an ICE server proxy).
     if (!ManagerGlobal->ConnectConfirm(connectionID)) {
-        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to confirm successful connection" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to notify GCM of this connection" << std::endl;
         goto ConnectClientSideInterfaceError;
     }
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Informed global component manager of successful connection: " << connectionID << std::endl;
+
+#if CISST_MTS_HAS_ICE
+    // Register this connection information to a provided interface proxy 
+    // server so that the proxy server can clean up this connection when a
+    // required interface proxy client is detected as disconnected.
+    if (!serverComponentProxy->AddConnectionInformation(providedInterfaceProxyInstanceID,
+            clientProcessName, clientComponentName, clientRequiredInterfaceName,
+            serverProcessName, serverComponentName, serverProvidedInterfaceName))
+    {
+        CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to add connection information" << std::endl;
+        goto ConnectClientSideInterfaceError;
+    }
+
+#endif
 
     return true;
 

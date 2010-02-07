@@ -34,6 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnClassRegister.h>
 #include <cisstCommon/cmnNamedMap.h>
 #include <cisstOSAbstraction/osaMutex.h>
+#include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsManagerLocalInterface.h>
 #include <cisstMultiTask/mtsManagerGlobalInterface.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -67,7 +68,7 @@ protected:
              C2
     */
 
-    /*! Inner class definition to keep information about a connected interface */
+    /*! Data structure to keep information about a connected interface */
     class ConnectedInterfaceInfo {
     protected:
         // Names (IDs)
@@ -112,22 +113,46 @@ protected:
 #endif
     };
 
-    /*! Data structure for two-phase connect */
+    /*! Data structure to keep information about a connection */
     class ConnectionElement {
     public:
         // Name of connect request process
-        std::string RequestProcessName;
-
+        const std::string RequestProcessName;
         // This connection ID
-        unsigned int ConnectionID;
-
+        const unsigned int ConnectionID;
+        // Connection status. False when waiting for a successful establishment,
+        // True if successfully established.
+        bool Connected;
         // Set of strings
-        std::string ClientProcessName;
-        std::string ClientComponentName;
-        std::string ClientRequiredInterfaceName;
-        std::string ServerProcessName;
-        std::string ServerComponentName;
-        std::string ServerProvidedInterfaceName;
+        const std::string ClientProcessName;
+        const std::string ClientComponentName;
+        const std::string ClientRequiredInterfaceName;
+        const std::string ServerProcessName;
+        const std::string ServerComponentName;
+        const std::string ServerProvidedInterfaceName;
+        // Time when this object becomes timed out
+        double TimeoutTime;
+
+        ConnectionElement(const std::string & requestProcessName, const unsigned int connectionID,
+            const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+            const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+            : RequestProcessName(requestProcessName), ConnectionID(connectionID), Connected(false),
+              ClientProcessName(ClientProcessName), ClientComponentName(ClientComponentName), ClientRequiredInterfaceName(ClientRequiredInterfaceName),
+              ServerProcessName(ServerProcessName), ServerComponentName(ServerComponentName), ServerProvidedInterfaceName(ServerProvidedInterfaceName)
+        {
+            const double Timeout = 5.0; // 5 seconds
+
+            // Time when this object is timed out is set as current time plus timeout.
+            TimeoutTime = osaGetTime() + Timeout;
+        }
+
+        /*! Set this connection as established */
+        inline void SetConnected() { Connected = true; }
+
+        /*! Return true if this connection is timed out */
+        inline bool CheckTimeout() const {
+            return (TimeoutTime - osaGetTime() <= 0);
+        }
     };
 
     /*! Connection map: (connected interface name, connected interface information)
@@ -170,6 +195,20 @@ protected:
     typedef cmnNamedMap<ComponentMapType> ProcessMapType;
     ProcessMapType ProcessMap;
 
+    /*! Connection element map: a map of strings that defines a connection
+        key=(connection id), value=(an instance of ConnectionElement)
+        When a local component manager requests estbalishing a connection, an 
+        element is created and added. If a connection is not established before 
+        timeout, the element is removed. When a local component manager notifies
+        that a connection is successfully established, the element is marked 
+        as connected. */
+    typedef std::map<unsigned int, mtsManagerGlobal::ConnectionElement*> ConnectionElementMapType;
+    ConnectionElementMapType ConnectionElementMap;
+
+    /*! Mutex for ConnectionElementMap because several threads possibly access
+        ConnectionElementMap. */
+    osaMutex ConnectionElementMapChange;
+
     /*! Instance of connected local component manager. Note that the global 
         component manager communicates with the only one instance of 
         mtsManagerLocalInterface regardless of connection type (standalone
@@ -198,7 +237,6 @@ protected:
     /*! Set this machine's IP */
     void SetIPAddress();
 
-    // TODO: Do I really need this???
     /*! Get a process object (local component manager object) */
     mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
 
@@ -298,7 +336,7 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
-    //  Public Getters
+    //  Getters
     //-------------------------------------------------------------------------
     /*! Return the name of the global component manager (for mtsProxyBaseCommon.h) */
     inline static std::string GetName() {
@@ -337,6 +375,10 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo, std::string & communicatorID);
+
+    /*! Periodically check connection element map to cancel timed out connection
+        elements. */
+    void ConnectCheckTimeout();
 #endif
 };
 

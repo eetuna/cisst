@@ -47,9 +47,37 @@ protected:
     typedef IceUtil::Handle<ComponentInterfaceServerI> ComponentInterfaceServerIPtr;
     ComponentInterfaceServerIPtr Sender;
 
-    /*! Typedef for per-command argument serializer */
+    /*! Per-command argument serializer */
     typedef std::map<CommandIDType, mtsProxySerializer *> PerCommandSerializerMapType;
     PerCommandSerializerMapType PerCommandSerializerMap;
+
+    /*! Set of strings that represent a connection */
+    class ConnectionStrings {
+    public:
+        // Set of strings
+        const std::string ClientProcessName;
+        const std::string ClientComponentName;
+        const std::string ClientRequiredInterfaceName;
+        const std::string ServerProcessName;
+        const std::string ServerComponentName;
+        const std::string ServerProvidedInterfaceName;
+
+        ConnectionStrings(
+            const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+            const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+            : ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientRequiredInterfaceName(clientRequiredInterfaceName),
+              ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
+        {}
+    };
+
+    /*! Map to fetch a ConnectionStrings instance by client id.
+        key=(client id defined as provided interface instance id)
+        value=(an instance of ConnectionStrings) 
+        
+        This map is used to disconnect currently established connection when a
+        network proxy client is detected as disconnected. */
+    typedef std::map<ClientIDType, ConnectionStrings> ConnectionStringMapType;
+    ConnectionStringMapType ConnectionStringMap;
 
     /*! String key to set an implicit per-proxy context for connection id */
     static std::string ConnectionIDKey;
@@ -117,8 +145,7 @@ public:
         : BaseServerType(adapterName, endpointInfo, communicatorID)
     {}
 
-    ~mtsComponentInterfaceProxyServer()
-    {}
+    ~mtsComponentInterfaceProxyServer();
 
     /*! Entry point to run a proxy. */
     bool Start(mtsComponentProxy * owner);
@@ -127,7 +154,13 @@ public:
     void Stop();
 
     /*! Register per-command (de)serializer */
-    bool RegisterPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer);
+    bool AddPerCommandSerializer(const CommandIDType commandID, mtsProxySerializer * serializer);
+
+    /*! Register connection information which is used to clean up a logical
+        connection when a network proxy client is detected as disconnected. */
+    bool AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
     //  Event Generators (Event Sender) : Server -> Client

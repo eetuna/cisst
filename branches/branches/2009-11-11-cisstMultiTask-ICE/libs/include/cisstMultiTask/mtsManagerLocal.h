@@ -275,11 +275,6 @@ public:
       method should be called before an application quits. */
     void Cleanup(void);
 
-    /*! Do nothing except LINUX RTAI */
-    inline void Kill(void) {
-        __os_exit();
-    }
-
     //-------------------------------------------------------------------------
     //  Getters and Utilities
     //-------------------------------------------------------------------------

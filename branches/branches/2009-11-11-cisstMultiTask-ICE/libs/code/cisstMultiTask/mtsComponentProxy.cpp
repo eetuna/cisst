@@ -36,30 +36,32 @@ mtsComponentProxy::mtsComponentProxy(const std::string & componentProxyName)
 
 mtsComponentProxy::~mtsComponentProxy()
 {
-    // TODO: add clean-up
-    /*
-    // Stop all the provided interface proxies running.
-    ProvidedInterfaceNetworkProxyMapType::MapType::iterator itProvidedProxy = ProvidedInterfaceNetworkProxies.GetMap().begin();
+    // Clean up all internal resources
+
+    // Stop all provided interface proxies running.
+    ProvidedInterfaceNetworkProxyMapType::MapType::const_iterator itProvidedProxy = ProvidedInterfaceNetworkProxies.begin();
     const ProvidedInterfaceNetworkProxyMapType::MapType::const_iterator itProvidedProxyEnd = ProvidedInterfaceNetworkProxies.end();
     for (; itProvidedProxy != itProvidedProxyEnd; ++itProvidedProxy) {
         itProvidedProxy->second->Stop();
     }
+    ProvidedInterfaceNetworkProxies.DeleteAll();
 
     // Stop all required interface proxies running.
-    //RequiredInterfaceNetworkProxyMapType::MapType::iterator it2 =
-    //    RequiredInterfaceNetworkProxies.GetMap().begin();
-    //for (; it2 != RequiredInterfaceNetworkProxies.GetMap().end(); ++it2) {
-    //    it2->second->Stop();
-    //}
-
-    osaSleep(500 * cmn_ms);
-
-    // Deallocation
-    ProvidedInterfaceNetworkProxies.DeleteAll();
+    RequiredInterfaceNetworkProxyMapType::MapType::const_iterator itRequiredProxy = RequiredInterfaceNetworkProxies.begin();
+    const RequiredInterfaceNetworkProxyMapType::MapType::const_iterator itRequiredProxyEnd = RequiredInterfaceNetworkProxies.end();
+    for (; itRequiredProxy != itRequiredProxyEnd; ++itRequiredProxy) {
+        itRequiredProxy->second->Stop();
+    }
     RequiredInterfaceNetworkProxies.DeleteAll();
 
+
+    ProvidedInterfaceProxyInstanceMapType::const_iterator itInstance = ProvidedInterfaceProxyInstanceMap.begin();
+    const ProvidedInterfaceProxyInstanceMapType::const_iterator itInstanceEnd = ProvidedInterfaceProxyInstanceMap.end();
+    for (; itInstance != itInstanceEnd; ++itInstance) {
+        delete itInstance->second;
+    }
+
     FunctionProxyAndEventHandlerProxyMap.DeleteAll();
-    */
 }
 
 //-----------------------------------------------------------------------------
@@ -483,25 +485,30 @@ bool mtsComponentProxy::CreateProvidedInterfaceProxy(const ProvidedInterfaceDesc
 
 bool mtsComponentProxy::RemoveProvidedInterfaceProxy(const std::string & providedInterfaceProxyName)
 {
+    // Get network objects to remove
+    mtsComponentInterfaceProxyServer * serverProxy = ProvidedInterfaceNetworkProxies.GetItem(providedInterfaceProxyName);
+    if (!serverProxy) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: cannot find proxy server: " << providedInterfaceProxyName << std::endl;
+        return false;
+    } else {
+        // Network server deactivation and resource clean up
+        delete serverProxy;
+        ProvidedInterfaceNetworkProxies.RemoveItem(providedInterfaceProxyName);
+    }
+
+    // Get logical objects to remove
     if (!ProvidedInterfaces.FindItem(providedInterfaceProxyName)) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: cannot find provided interface proxy: " << providedInterfaceProxyName << std::endl;
         return false;
     }
-
-    // Get a pointer to the provided interface proxy
     mtsProvidedInterface * providedInterfaceProxy = ProvidedInterfaces.GetItem(providedInterfaceProxyName);
     if (!providedInterfaceProxy) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: This should not happen" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: cannot find provided interface proxy instance: " << providedInterfaceProxyName << std::endl;
         return false;
+    } else {
+        delete providedInterfaceProxy;
+        ProvidedInterfaces.RemoveItem(providedInterfaceProxyName);
     }
-
-    // Remove the provided interface proxy from map
-    if (!ProvidedInterfaces.RemoveItem(providedInterfaceProxyName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveProvidedInterfaceProxy: cannot remove provided interface proxy: " << providedInterfaceProxyName << std::endl;
-        return false;
-    }
-
-    delete providedInterfaceProxy;
 
     CMN_LOG_CLASS_RUN_VERBOSE << "RemoveProvidedInterfaceProxy: removed provided interface proxy: " << providedInterfaceProxyName << std::endl;
 
@@ -1086,4 +1093,19 @@ void mtsComponentProxy::ExtractRequiredInterfaceDescription(
         elementEventWriteHandler.ArgumentPrototypeSerialized = streamBuffer.str();
         requiredInterfaceDescription.EventHandlersWrite.push_back(elementEventWriteHandler);
     }
+}
+
+bool mtsComponentProxy::AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+{
+    mtsComponentInterfaceProxyServer * interfaceProxyServer = ProvidedInterfaceNetworkProxies.GetItem(serverProvidedInterfaceName);
+    if (!interfaceProxyServer) {
+        CMN_LOG_CLASS_RUN_ERROR << "AddConnectionInformation: no interface proxy server found: " << serverProvidedInterfaceName << std::endl;
+        return false;
+    }
+
+    return interfaceProxyServer->AddConnectionInformation(providedInterfaceProxyInstanceID,
+        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }

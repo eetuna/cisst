@@ -28,6 +28,11 @@ std::string mtsManagerProxyServer::ManagerCommunicatorID = "ManagerServerCommuni
 std::string mtsManagerProxyServer::ConnectionIDKey = "ManagerConnectionID";
 unsigned int mtsManagerProxyServer::InstanceCounter = 0;
 
+mtsManagerProxyServer::~mtsManagerProxyServer()
+{
+    Stop();
+}
+
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
 //-----------------------------------------------------------------------------
@@ -117,6 +122,8 @@ void mtsManagerProxyServer::Stop()
 
 bool mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
 {
+    if (!IsActiveProxy()) return true;
+
     // Get network proxy client serving the client with the clientID
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) {
@@ -124,8 +131,8 @@ bool mtsManagerProxyServer::OnClientDisconnect(const ClientIDType clientID)
         return false;
     }
 
-    // Remove client from client list. This will prevent further network 
-    // processings from being executed.
+    // Remove client from client list. This prevents further network processing
+    // requests from being executed.
     if (!BaseServerType::RemoveClientByClientID(clientID)) {
         LogError(mtsManagerProxyServer, "OnClientDisconnect: failed to remove client from client map: " << clientID);
         return false;
@@ -146,7 +153,6 @@ mtsManagerProxyServer::ManagerClientProxyType * mtsManagerProxyServer::GetNetwor
 {
     ManagerClientProxyType * clientProxy = GetClientByClientID(clientID);
     if (!clientProxy) {
-        LogError(mtsManagerProxyServer, "GetNetworkProxyClient: no client proxy connected with client id: " << clientID);
         return NULL;
     }
 
@@ -950,7 +956,7 @@ std::string mtsManagerProxyServer::SendGetProcessName(const std::string & client
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) {
         LogError(mtsManagerProxyServer, "SendGetCurrentInterfaceCount: invalid listenerID (" << clientID << ") or inactive server proxy");
-        return false;
+        return -1;
     }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
@@ -962,7 +968,7 @@ std::string mtsManagerProxyServer::SendGetProcessName(const std::string & client
     } catch (const ::Ice::Exception & ex) {
         LogError(mtsManagerProxyServer, "SendGetCurrentInterfaceCount: network exception: " << ex);
         OnClientDisconnect(clientID);
-        return false;
+        return -1;
     }
 }
 
@@ -1005,8 +1011,10 @@ void mtsManagerProxyServer::ManagerServerI::Run()
 #else
     while(IsActiveProxy()) 
     {
-        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
+        // Check connection element map to cancel timed out connection elements
+        ManagerProxyServer->ConnectCheckTimeout();
 
+        //IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
         // Check connections at every 1 second
         ManagerProxyServer->MonitorConnections();
         osaSleep(1 * cmn_s);

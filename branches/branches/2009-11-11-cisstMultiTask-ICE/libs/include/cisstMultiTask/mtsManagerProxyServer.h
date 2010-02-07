@@ -33,6 +33,8 @@ class CISST_EXPORT mtsManagerProxyServer :
     public mtsProxyBaseServer<mtsManagerGlobal, mtsManagerProxy::ManagerClientPrx, std::string>,
     public mtsManagerLocalInterface
 {
+    friend class mtsManagerGlobal;
+
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     /*! Typedef for client proxy type */
@@ -79,6 +81,11 @@ protected:
     /*! Monitor all the current connections */
     void MonitorConnections() {
         BaseServerType::Monitor();
+    }
+
+    /*! Check connection timeout */
+    void ConnectCheckTimeout() {
+        ProxyOwner->ConnectCheckTimeout();
     }
 
     /*! Event handler for client's disconnect event */
@@ -134,8 +141,7 @@ public:
         : BaseServerType(adapterName, endpointInfo, communicatorID)
     {}
 
-    ~mtsManagerProxyServer()
-    {}
+    ~mtsManagerProxyServer();
 
     /*! Entry point to run a proxy */
     bool Start(mtsManagerGlobal * owner);

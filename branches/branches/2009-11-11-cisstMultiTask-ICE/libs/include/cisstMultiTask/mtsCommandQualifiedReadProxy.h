@@ -67,7 +67,7 @@ public:
         mtsCommandProxyBase::SetCommandID(commandID);
 
         if (NetworkProxyServer) {
-            NetworkProxyServer->RegisterPerCommandSerializer(CommandID, &Serializer);
+            NetworkProxyServer->AddPerCommandSerializer(CommandID, &Serializer);
         }
     }
 

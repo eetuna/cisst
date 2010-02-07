@@ -126,7 +126,7 @@ public:
     void SendTestMessageFromClientToServer(const std::string & str) const;
 
     /*! Register per-command (de)serializer */
-    bool RegisterPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer);
+    bool AddPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer);
 
     /*! Fetch pointers of event generator proxies from a provided interface 
         proxy at server side */
