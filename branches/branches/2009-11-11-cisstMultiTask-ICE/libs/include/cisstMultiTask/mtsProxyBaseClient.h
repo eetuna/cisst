@@ -59,7 +59,7 @@ protected:
         if (this->IceCommunicator) {
             try {                    
                 this->IceCommunicator->destroy();
-                IceCommunicator = NULL;
+                this->IceCommunicator = NULL;
                 this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up success.");
             } catch (const Ice::Exception& e) {
                 this->IceLogger->trace("mtsProxyBaseClient", "Proxy client clean-up failure.");

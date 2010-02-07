@@ -302,6 +302,7 @@ protected:
             const Ice::CommunicatorPtr& communicator, 
             const Ice::LoggerPtr& logger,
             mtsManagerProxyServer * ManagerProxyServer);
+        ~ManagerServerI();
 
         /*! Proxy management */
         void Start();
@@ -319,18 +320,21 @@ protected:
         /*! Test method */
         void TestMessageFromClientToServer(const std::string & str, const ::Ice::Current & current);
 
-        // Add a client proxy. Called when a proxy client connects to server proxy
+        /*! Add a client proxy. Called when a proxy client connects to server proxy */
         bool AddClient(const std::string & processName, const Ice::Identity&, const Ice::Current&);
 
-        // Shutdown this session; prepare shutdown for safe and clean termination.
+        /*! Refresh current connection */
+        void Refresh(const ::Ice::Current&);
+
+        /*! Shutdown this session; prepare shutdown for safe and clean termination */
         void Shutdown(const ::Ice::Current&);
 
-        // Process Management
+        /*! Process Management */
         bool AddProcess(const std::string & processName, const ::Ice::Current & current);
         bool FindProcess(const std::string & processName, const ::Ice::Current &) const;
         bool RemoveProcess(const std::string & processName, const ::Ice::Current & current);
 
-        // Component Management
+        /*! Component Management */
         bool AddComponent(const std::string & processName, const std::string & componentName, const ::Ice::Current & current);
         bool FindComponent(const std::string & processName, const std::string & componentName, const ::Ice::Current &) const;
         bool RemoveComponent(const std::string & processName, const std::string & componentName, const ::Ice::Current & current);
@@ -343,12 +347,12 @@ protected:
         bool FindRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const ::Ice::Current &) const;
         bool RemoveRequiredInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const ::Ice::Current & current);
 
-        // Connection Management
+        /*! Connection Management */
         ::Ice::Int Connect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
         bool ConnectConfirm(::Ice::Int connectionSessionID, const ::Ice::Current & current);
         bool Disconnect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
 
-        // Networking
+        /*! Networking */
         bool SetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo, const std::string & communicatorID, const ::Ice::Current & current);
         bool GetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo, std::string & communicatorID, const ::Ice::Current & current);
         bool InitiateConnect(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);

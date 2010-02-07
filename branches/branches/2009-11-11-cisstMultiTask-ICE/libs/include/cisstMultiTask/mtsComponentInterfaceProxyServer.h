@@ -217,6 +217,7 @@ protected:
             const Ice::CommunicatorPtr& communicator, 
             const Ice::LoggerPtr& logger,
             mtsComponentInterfaceProxyServer * componentInterfaceProxyServer);
+        ~ComponentInterfaceServerI();
 
         /*! Proxy management */
         void Start();
@@ -236,6 +237,9 @@ protected:
 
         /*! Add a client proxy. Called when a proxy client connects to server proxy. */
         bool AddClient(const std::string&, ::Ice::Int, const Ice::Identity&, const Ice::Current&);
+
+        /*! Refresh current connection */
+        void Refresh(const ::Ice::Current&);
 
         /*! Shutdown this session; prepare shutdown for safe and clean termination. */
         void Shutdown(const ::Ice::Current&);

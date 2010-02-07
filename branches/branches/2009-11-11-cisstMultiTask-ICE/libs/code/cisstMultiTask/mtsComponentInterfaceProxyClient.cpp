@@ -131,28 +131,22 @@ void mtsComponentInterfaceProxyClient::Runner(ThreadArguments<mtsComponentProxy>
 
 void mtsComponentInterfaceProxyClient::Stop()
 {
+    if (!IsActiveProxy()) return;
+
     LogPrint(mtsComponentInterfaceProxyClient, "ComponentInterfaceProxy client stops.");
 
-    //
-    // TODO: Review this method
-    //
-
     // Let a server disconnect this client safely.
-    // TODO: gcc says this doesn't exist???
-    ComponentInterfaceServerProxy->Shutdown();
+    //ManagerServerProxy->Shutdown();
+    //ComponentInterfaceServerProxy->ice_getConnection()->close(false); // close gracefully
 
     BaseClientType::Stop();
-    
-    Sender->Stop();
 }
 
 bool mtsComponentInterfaceProxyClient::OnServerDisconnect()
 {
-    //
-    // TODO
-    //
+    Stop();
 
-    return false;
+    return true;
 }
 
 bool mtsComponentInterfaceProxyClient::AddPerEventSerializer(const CommandIDType commandID, mtsProxySerializer * serializer)
@@ -382,8 +376,17 @@ mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::ComponentInterfaceC
     : Communicator(communicator),
       SenderThreadPtr(new SenderThread<ComponentInterfaceClientIPtr>(this)),
       IceLogger(logger),
-      ComponentInterfaceProxyClient(componentInterfaceClient)
+      ComponentInterfaceProxyClient(componentInterfaceClient),
+      Server(server)
 {
+}
+
+mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::~ComponentInterfaceClientI()
+{
+    Stop();
+
+    // Sleep for some time enough for Run() loop to terminate
+    osaSleep(1 * cmn_s);
 }
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Start()
@@ -411,26 +414,36 @@ void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Run()
 #else
     while (this->IsActiveProxy())
     {
-        osaSleep(10 * cmn_ms);
+        osaSleep(5 * cmn_s);
+
+        try {
+            Server->Refresh();
+        } catch (const ::Ice::Exception & ex) {
+            LogPrint(mtsComponentInterfaceProxyClient, "Refresh failed: " << Server->ice_toString() << "\n" << ex);
+            if (ComponentInterfaceProxyClient) {
+                ComponentInterfaceProxyClient->OnServerDisconnect();
+            }
+        }
     }
 #endif
 }
 
 void mtsComponentInterfaceProxyClient::ComponentInterfaceClientI::Stop()
 {
-    if (!ComponentInterfaceProxyClient->IsActiveProxy()) return;
+    if (!IsActiveProxy()) return;
 
-    // TODO: review the following codes (for thread safety)
+    LogPrint(ComponentInterfaceClientI, "Stop and destroy callback sender");
+
+    ComponentInterfaceProxyClient = NULL;
+
     IceUtil::ThreadPtr callbackSenderThread;
     {
         IceUtil::Monitor<IceUtil::Mutex>::Lock lock(*this);
 
-        // TODO: Set proxy state from active to 'prepare stop(?)'
-
         notify();
 
         callbackSenderThread = SenderThreadPtr;
-        SenderThreadPtr = 0; // Resolve cyclic dependency.
+        SenderThreadPtr = 0;
     }
     callbackSenderThread->getThreadControl().join();
 }

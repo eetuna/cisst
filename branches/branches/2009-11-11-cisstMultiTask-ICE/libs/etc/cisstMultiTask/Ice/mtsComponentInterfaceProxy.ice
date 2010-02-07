@@ -161,19 +161,16 @@ module mtsComponentInterfaceProxy
         /*! Methods for testing */
         void TestMessageFromClientToServer(string str);
 
-        //
-        //  Connection Management
-        //
 		/*! Called by a proxy client when it connects to a proxy server */
 		bool AddClient(string connectingProxyName, int providedInterfaceProxyInstanceID, Ice::Identity ident);
+
+        /*! Periodically called not to lose connection */
+        void Refresh();
 
         /*! This is called by a client when it terminates. This allows a server to
             shutdown (or close) connections safely and cleanly. */
         void Shutdown();
 
-        //
-        //  Interface Interaction
-        //
         /*! Fetch pointers of event generator proxies from a provided interface
             proxy at server side. */
         ["cpp:const"] idempotent

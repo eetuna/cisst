@@ -244,7 +244,11 @@ protected:
 
         /*! Getter */
         bool IsActiveProxy() const {
-            return ManagerProxyClient->IsActiveProxy();
+            if (ManagerProxyClient) {
+                return ManagerProxyClient->IsActiveProxy();
+            } else {
+                return false;
+            }
         }
 
         //-------------------------------------------------

@@ -514,6 +514,14 @@ mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ComponentInterfaceS
 {
 }
 
+mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::~ComponentInterfaceServerI()
+{
+    Stop();
+
+    // Sleep for some time enough for Run() loop to terminate
+    osaSleep(1 * cmn_s);
+}
+
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Start()
 {
     ComponentInterfaceProxyServer->GetLogger()->trace("mtsComponentInterfaceProxyServer", "Send thread starts");
@@ -596,6 +604,17 @@ bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::AddClient(
     
     return ComponentInterfaceProxyServer->ReceiveAddClient(connectionID,
         connectingProxyName, (unsigned int) providedInterfaceProxyInstanceID, clientProxy);
+}
+
+void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Refresh(const ::Ice::Current& current)
+{
+    const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: Refresh: " << connectionID);
+#endif
+
+    // TODO: Session refresh
 }
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const ::Ice::Current& current)

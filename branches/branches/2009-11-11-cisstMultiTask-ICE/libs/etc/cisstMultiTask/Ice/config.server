@@ -56,7 +56,7 @@ Ice.Trace.Network = 1
 #
 # Timeout in msec
 #
-Ice.Override.Timeout = 3000
+Ice.Override.Timeout = 10000
 Ice.Override.ConnectTimeout = 3000
 
 #------------------------------------------------------------------------------
@@ -67,5 +67,5 @@ Ice.Override.ConnectTimeout = 3000
 # (reference: http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.10.html
 #  and http://www.zeroc.com/doc/Ice-3.3.1/manual/PropRef.50.7.html)
 #
-Ice.ThreadPool.Server.Size = 2
+Ice.ThreadPool.Server.Size = 4
 Ice.ThreadPool.Server.SizeMax = 4

@@ -335,6 +335,7 @@ bool mtsManagerLocal::RemoveComponent(mtsComponent * component)
 bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
 {
     // Notify the global component manager of the removal of this component
+
     if (!ManagerGlobal->RemoveComponent(ProcessName, componentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to remove component at global component manager: " << componentName << std::endl;
         return false;
@@ -1284,10 +1285,10 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
                 break;
             }
 
-            // Wait for 1 second
+            // Wait for some time
             CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: connecting to server proxy... "
                 << numTrial << " / " << maxTrial << std::endl;
-            osaSleep(1.0 * cmn_s);
+            osaSleep(200 * cmn_ms);
         }
 
         // If this client proxy didn't connect to server proxy

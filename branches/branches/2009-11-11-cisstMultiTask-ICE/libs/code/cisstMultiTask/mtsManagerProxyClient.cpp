@@ -132,11 +132,11 @@ void mtsManagerProxyClient::Stop()
 {
     if (!IsActiveProxy()) return;
 
-    LogPrint(mtsManagerProxyClient, "ManagerProxy client ends.");
+    LogPrint(mtsManagerProxyClient, "ManagerProxy client stops.");
 
     // Let a server disconnect this client safely.
     //ManagerServerProxy->Shutdown();
-    ManagerServerProxy->ice_getConnection()->close(false); // close gracefully
+    //ManagerServerProxy->ice_getConnection()->close(false); // close gracefully
 
     BaseClientType::Stop();
 }
@@ -758,19 +758,27 @@ void mtsManagerProxyClient::ManagerClientI::Run()
 #else
     while (this->IsActiveProxy())
     {
-        // NOP
-        osaSleep(10 * cmn_ms);
+        osaSleep(5 * cmn_s);
+
+        try {
+            Server->Refresh();
+        } catch (const ::Ice::Exception & ex) {
+            LogPrint(mtsManagerProxyClient, "Refresh failed: " << Server->ice_toString() << "\n" << ex);
+            if (ManagerProxyClient) {
+                ManagerProxyClient->OnServerDisconnect();
+            }
+        }
     }
 #endif
 }
 
 void mtsManagerProxyClient::ManagerClientI::Stop()
 {
-    if (!ManagerProxyClient->IsActiveProxy()) return;
+    if (!IsActiveProxy()) return;
 
     LogPrint(ManagerClientI, "Stop and destroy callback sender");
 
-    ManagerProxyClient->Deactivate();
+    ManagerProxyClient = NULL;
 
     IceUtil::ThreadPtr callbackSenderThread;
     {
@@ -781,8 +789,7 @@ void mtsManagerProxyClient::ManagerClientI::Stop()
         callbackSenderThread = SenderThreadPtr;
         SenderThreadPtr = 0;
     }
-    //TODO: deadlock??
-    //callbackSenderThread->getThreadControl().join();
+    callbackSenderThread->getThreadControl().join();
 }
 
 //-----------------------------------------------------------------------------

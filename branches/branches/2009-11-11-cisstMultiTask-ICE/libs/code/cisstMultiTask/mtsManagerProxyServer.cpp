@@ -748,7 +748,7 @@ bool mtsManagerProxyServer::SendRemoveComponentProxy(const std::string & compone
     try {
         return (*clientProxy)->RemoveComponentProxy(componentProxyName);
     } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyServer, "SendRemoveComponentProxy: network exception: " << ex);
+        LogError(mtsManagerProxyServer, "SendRemoveComponentProxy: " << componentProxyName << ", " << clientID << ": network exception: " << ex);
         OnClientDisconnect(clientID);
         return false;
     }
@@ -985,6 +985,14 @@ mtsManagerProxyServer::ManagerServerI::ManagerServerI(
 {
 }
 
+mtsManagerProxyServer::ManagerServerI::~ManagerServerI()
+{
+    Stop();
+
+    // Sleep for some time enough for Run() loop to terminate
+    osaSleep(1 * cmn_s);
+}
+
 void mtsManagerProxyServer::ManagerServerI::Start()
 {
     ManagerProxyServer->GetLogger()->trace("mtsManagerProxyServer", "Send thread starts");
@@ -1070,6 +1078,19 @@ bool mtsManagerProxyServer::ManagerServerI::AddClient(
         ManagerClientProxyType::uncheckedCast(current.con->createProxy(identity));
     
     return ManagerProxyServer->ReceiveAddClient(connectionID, processName, clientProxy);
+}
+
+void mtsManagerProxyServer::ManagerServerI::Refresh(const ::Ice::Current& current)
+{
+    const ConnectionIDType connectionID = current.ctx.find(mtsManagerProxyServer::GetConnectionIDKey())->second;
+
+#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
+    LogPrint(ManagerServerI, "<<<<< RECV: Refresh: " << connectionID);
+#endif
+
+    //
+    // TODO: Refresh this session
+    //
 }
 
 void mtsManagerProxyServer::ManagerServerI::Shutdown(const ::Ice::Current& current)

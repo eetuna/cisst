@@ -154,12 +154,16 @@ protected:
         /*! Network event handler */
         mtsComponentInterfaceProxyClient * ComponentInterfaceProxyClient;
 
+        /*! Connected server proxy */
+        mtsComponentInterfaceProxy::ComponentInterfaceServerPrx Server;
+
     public:
         ComponentInterfaceClientI(
             const Ice::CommunicatorPtr& communicator,                           
             const Ice::LoggerPtr& logger,
             const mtsComponentInterfaceProxy::ComponentInterfaceServerPrx& server,
             mtsComponentInterfaceProxyClient * ComponentInterfaceClient);
+        ~ComponentInterfaceClientI();
 
         /*! Proxy management */
         void Start();
@@ -168,7 +172,11 @@ protected:
 
         /*! Getter */
         bool IsActiveProxy() const {
-            return ComponentInterfaceProxyClient->IsActiveProxy();
+            if (ComponentInterfaceProxyClient) {
+                return ComponentInterfaceProxyClient->IsActiveProxy();
+            } else {
+                return false;
+            }
         }
 
         //-------------------------------------------------
