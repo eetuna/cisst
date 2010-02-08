@@ -53,6 +53,13 @@ vctMatrixRotation3BaseFromRaw(vctMatrixRotation3Base<vctFixedSizeMatrix<double, 
 template CISST_EXPORT void
 vctMatrixRotation3BaseFromRaw(vctMatrixRotation3Base<vctFixedSizeMatrix<float, 3, 3> > & matrixRotation,
                               const vctQuaternionRotation3Base<vctFixedSizeVector<float, 4> > & quaternionRotation);
+
+template CISST_EXPORT void
+vctMatrixRotation3BaseFromRaw(vctMatrixRotation3Base<vctFixedSizeMatrixRef<double, 3, 3, 4, 1> > & matrixRotation,
+                              const vctQuaternionRotation3Base<vctFixedSizeVector<double, 4> > & quaternionRotation);
+template CISST_EXPORT void
+vctMatrixRotation3BaseFromRaw(vctMatrixRotation3Base<vctFixedSizeMatrixRef<float, 3, 3, 4, 1> > & matrixRotation,
+                              const vctQuaternionRotation3Base<vctFixedSizeVector<float, 4> > & quaternionRotation);
 #endif
 #endif // SWIG
 #endif // DOXYGEN
@@ -129,9 +136,9 @@ public:
       By default the vectors represents the columns of the matrix. If
       the parameter vectorsAreColumns is set to false, the vectors
       provided will be used to set the matrix row by row. */
-    template <int __stride1, class __dataPtrType1,
-              int __stride2, class __dataPtrType2,
-              int __stride3, class __dataPtrType3>
+    template <stride_type __stride1, class __dataPtrType1,
+              stride_type __stride2, class __dataPtrType2,
+              stride_type __stride3, class __dataPtrType3>
     inline ThisType &
     From(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1>& v1,
          const vctFixedSizeConstVectorBase<DIMENSION, __stride2, value_type, __dataPtrType2>& v2,
@@ -232,9 +239,9 @@ public:
       By default the vectors represents the columns of the matrix. If
       the parameter vectorsAreColumns is set to false, the vectors
       provided will be used to set the matrix row by row. */
-    template <int __stride1, class __dataPtrType1,
-              int __stride2, class __dataPtrType2,
-              int __stride3, class __dataPtrType3>
+    template <stride_type __stride1, class __dataPtrType1,
+              stride_type __stride2, class __dataPtrType2,
+              stride_type __stride3, class __dataPtrType3>
     inline ThisType &
     FromNormalized(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1>& v1,
                    const vctFixedSizeConstVectorBase<DIMENSION, __stride2, value_type, __dataPtrType2>& v2,
@@ -332,9 +339,9 @@ public:
       By default the vectors represents the columns of the matrix. If
       the parameter vectorsAreColumns is set to false, the vectors
       provided will be used to set the matrix row by row. */
-    template <int __stride1, class __dataPtrType1,
-              int __stride2, class __dataPtrType2,
-              int __stride3, class __dataPtrType3>
+    template <stride_type __stride1, class __dataPtrType1,
+              stride_type __stride2, class __dataPtrType2,
+              stride_type __stride3, class __dataPtrType3>
     inline ThisType &
     FromRaw(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1>& v1,
             const vctFixedSizeConstVectorBase<DIMENSION, __stride2, value_type, __dataPtrType2>& v2,
@@ -425,7 +432,7 @@ public:
       introduced to allow using results of matrix operations and
       assign them to a rotation matrix.
     */
-    template<int __rowStride, int __colStride, class __dataPtrType>
+    template <stride_type __rowStride, stride_type __colStride, class __dataPtrType>
     inline ThisType &
     FromRaw(const vctFixedSizeMatrixBase<ROWS, COLS, __rowStride, __colStride, value_type, __dataPtrType> & matrix) {
         this->Assign(matrix);
