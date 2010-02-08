@@ -31,8 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 // These two includes are not required to compile this class but are
 // pretty much always needed in conjunction with commands.  To ease
 // the user's life, we include them now.
-#include <cisstCommon/cmnGenericObjectProxy.h>
-
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
 #include <iostream>
@@ -131,10 +130,9 @@ public:
 
     /*! Get the command name.  This method doesn't allow to change the
       command name. */
-    inline const std::string & GetName(void) const {
+    inline const std::string & GetName(void) const {        
         return this->Name;
     }
-
 };
 
 

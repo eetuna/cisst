@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: mtsEventWriteGeneratorProxy.h 75 2009-02-24 16:47:20Z adeguet1 $
 
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
@@ -26,11 +26,11 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#ifndef _mtsMulticastCommandWriteBase_h
-#define _mtsMulticastCommandWriteBase_h
+#ifndef _mtsEventWriteGeneratorProxy_h
+#define _mtsEventWriteGeneratorProxy_h
 
 
-#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
 #include <vector>
 
 // Always include last
@@ -42,33 +42,44 @@ http://www.cisst.org/cisst/license.txt.
   This class contains a vector of two or more command objects.
   The primary use of this class is to send events to all observers.
  */
-class CISST_EXPORT mtsMulticastCommandWriteBase: public mtsCommandWriteBase
+class CISST_EXPORT mtsEventWriteGeneratorProxy: public mtsMulticastCommandWriteBase
 {
 public:
-    typedef mtsCommandWriteBase BaseType;
-    
-protected:
-    std::vector<BaseType *> Commands;
-    
+    typedef mtsMulticastCommandWriteBase BaseType;
+      
 public:
     /*! Default constructor. Does nothing. */
-    mtsMulticastCommandWriteBase(const std::string & name):
+    mtsEventWriteGeneratorProxy(const std::string & name):
         BaseType(name)
     {}
     
     /*! Default destructor. Does nothing. */
-    ~mtsMulticastCommandWriteBase() {}
+    ~mtsEventWriteGeneratorProxy() {}
 
     /*! Add a command to the composite. */
-    virtual void AddCommand(BaseType * command);
+    // virtual void AddCommand(BaseType * command);
     
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) = 0;
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
+        if (this->Commands[0]) {
+            return this->Commands[0]->Execute(argument);
+        }
+    }
+
+    /*! Return a pointer on the argument prototype.  Uses the first
+      command added to find the argument prototype.  If no command is
+      available, return 0 (null pointer) */
+    virtual const mtsGenericObject * GetArgumentPrototype(void) const {
+        if (this->Commands[0]) {
+            return this->Commands[0]->GetArgumentPrototype();
+        }
+        return 0;
+    }
 
     /* documented in base class */
-    virtual void ToStream(std::ostream & outputStream) const;
+    // virtual void ToStream(std::ostream & outputStream) const;
 };
 
 
-#endif // _mtsMulticastCommandWriteBase_h
+#endif // _mtsEventWriteGeneratorProxy_h
 

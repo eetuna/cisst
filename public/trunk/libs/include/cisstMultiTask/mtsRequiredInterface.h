@@ -136,16 +136,23 @@ protected:
     virtual mtsCommandWriteBase * GetEventHandlerWrite(const std::string & eventName) const;
     //@}
     
-    void ConnectTo(mtsDeviceInterface *other) { OtherInterface = other; }
+    void ConnectTo(mtsDeviceInterface * other) {
+        OtherInterface = other;
+    }
     void Disconnect(void);  // this could work if we use function objects rather than ptrs, or have special NOP command object
-    bool BindCommandsAndEvents(void);
 
-    void DisableAllEvents() {
+    /*! Bind command and events.  This method needs to provide a user
+      Id so that GetCommandVoid and GetCommandWrite (queued
+      commands) know which mailbox to use.  The user Id is provided
+      by the provided interface when calling AllocateResources. */ 
+    bool BindCommandsAndEvents(unsigned int userId);
+
+    inline void DisableAllEvents(void) {
         EventHandlersVoid.ForEachVoid(&mtsCommandBase::Disable);
         EventHandlersWrite.ForEachVoid(&mtsCommandBase::Disable);
     }
 
-    void EnableAllEvents() {
+    inline void EnableAllEvents(void) {
         EventHandlersVoid.ForEachVoid(&mtsCommandBase::Enable);
         EventHandlersWrite.ForEachVoid(&mtsCommandBase::Enable);
     }
@@ -155,26 +162,50 @@ protected:
 
     /*! Send a human readable description of the interface. */
     void ToStream(std::ostream & outputStream) const;
-
+    
 protected:
-    template <class _CommandType>
+#ifndef SWIG  // SWIG cannot deal with this
+    template <class _commandType>
     class CommandInfo {
-        _CommandType **cmdPtr;
-        bool isRequired;
+        _commandType **CommandPointer;
+        bool IsRequired;
     public:
-        CommandInfo(_CommandType *&cptr, bool isReq) : cmdPtr(&cptr), isRequired(isReq) {}
+        CommandInfo(_commandType *&commandPointer, bool isReq):
+            CommandPointer(&commandPointer),
+            IsRequired(isReq)
+        {}
+
         ~CommandInfo() {}
-        void Clear() { *cmdPtr = 0; }
-        bool Bind(_CommandType *cmd)
-        {  *cmdPtr = cmd;
-           return cmd || !isRequired;
+        
+        inline void Clear(void) {
+            *CommandPointer = 0;
+        }
+        
+        bool Bind(_commandType *cmd)
+        {  *CommandPointer = cmd;
+           return cmd || !IsRequired;
         }
         void ToStream(std::ostream & outputStream) const
-        {  outputStream << *cmdPtr;
-           if (!isRequired)
-               outputStream << "(OPT)";
+        {
+            outputStream << *CommandPointer;
+            if (!IsRequired) {
+                outputStream << " (optional)";
+            } else {
+                outputStream << " (required)";
+            }
+        }
+        unsigned int GetCommandID(void) const
+        {
+            return (*CommandPointer)->GetCommandID();
+        }
+
+        std::string GetName(void) const
+        {
+            return (*CommandPointer)->GetName();
         }
     };
+    
+#endif // !SWIG
         
     /*! Typedef for a map of name of zero argument command and name of command. */
     typedef cmnNamedMap<CommandInfo<mtsCommandVoidBase> > CommandPointerVoidMapType;
@@ -200,19 +231,32 @@ protected:
 
 public:
 
-    bool AddCommandPointer(const std::string & commandName, mtsCommandVoidBase *& cptr, bool required = true)
-    { return CommandPointersVoid.AddItem(commandName, new CommandInfo<mtsCommandVoidBase>(cptr, required)); }
-    bool AddCommandPointer(const std::string & commandName, mtsCommandReadBase *& cptr, bool required = true)
-    { return CommandPointersRead.AddItem(commandName, new CommandInfo<mtsCommandReadBase>(cptr, required)); }
-    bool AddCommandPointer(const std::string & commandName, mtsCommandWriteBase *& cptr, bool required = true)
-    { return CommandPointersWrite.AddItem(commandName, new CommandInfo<mtsCommandWriteBase>(cptr, required)); }
-    bool AddCommandPointer(const std::string & commandName, mtsCommandQualifiedReadBase *& cptr, bool required = true)
-    { return CommandPointersQualifiedRead.AddItem(commandName, new CommandInfo<mtsCommandQualifiedReadBase>(cptr, required)); }
+    bool AddCommandPointer(const std::string & commandName, mtsCommandVoidBase *& commandPointer, bool required = true)
+    {
+        return CommandPointersVoid.AddItem(commandName, new CommandInfo<mtsCommandVoidBase>(commandPointer, required));
+    }
+
+    bool AddCommandPointer(const std::string & commandName, mtsCommandReadBase *& commandPointer, bool required = true)
+    {
+        return CommandPointersRead.AddItem(commandName, new CommandInfo<mtsCommandReadBase>(commandPointer, required));
+    }
+
+    bool AddCommandPointer(const std::string & commandName, mtsCommandWriteBase *& commandPointer, bool required = true)
+    {
+        return CommandPointersWrite.AddItem(commandName, new CommandInfo<mtsCommandWriteBase>(commandPointer, required));
+    }
+    
+    bool AddCommandPointer(const std::string & commandName, mtsCommandQualifiedReadBase *& commandPointer, bool required = true)
+    {
+        return CommandPointersQualifiedRead.AddItem(commandName, new CommandInfo<mtsCommandQualifiedReadBase>(commandPointer, required));
+    }
 
     // Maybe make this a templated function?
     template <class _FunctionType>
     bool AddFunction(const std::string & commandName, _FunctionType & func, bool required = true)
-    { return func.AddToRequiredInterface(*this, commandName, required); }
+    {
+        return func.AddToRequiredInterface(*this, commandName, required);
+    }
 
     template <class __classType>
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*method)(void),
@@ -228,12 +272,12 @@ public:
     inline mtsCommandWriteBase * AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
                                                       __classType * classInstantiation,
                                                       const std::string & eventName,
-                                                      const __argumentType & argumentModel,
                                                       bool queued = true);
 
 };
 
 
+#ifndef SWIG
 template <class __classType>
 inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (__classType::*method)(void),
                                                                       __classType * classInstantiation,
@@ -250,6 +294,7 @@ inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (__cl
     }
     return EventHandlersVoid.GetItem(eventName);
 }
+
 
 inline mtsCommandVoidBase * mtsRequiredInterface::AddEventHandlerVoid(void (*function)(void),
                                                                       const std::string & eventName,
@@ -271,10 +316,9 @@ template <class __classType, class __argumentType>
 inline mtsCommandWriteBase * mtsRequiredInterface::AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
                                                                         __classType * classInstantiation,
                                                                         const std::string & eventName,
-                                                                        const __argumentType & argumentModel,
                                                                         bool queued) {
-    mtsCommandWriteBase * actualCommand = new mtsCommandWrite<__classType, __argumentType>
-                                          (method, classInstantiation, eventName, argumentModel);
+    mtsCommandWriteBase * actualCommand =
+        new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, eventName, __argumentType());
     if (queued) {
         if (MailBox)
             EventHandlersWrite.AddItem(eventName,  new mtsCommandQueuedWrite<__argumentType>(MailBox, actualCommand, DEFAULT_ARG_BUFFER_LEN));
@@ -285,11 +329,13 @@ inline mtsCommandWriteBase * mtsRequiredInterface::AddEventHandlerWrite(void (__
     }
     return EventHandlersWrite.GetItem(eventName);
 }
+#endif  // !SWIG
+
 
 /*! Stream out operator. */
-template <class _CommandType>
+template <class _commandType>
 inline std::ostream & operator << (std::ostream & output,
-                                   const mtsRequiredInterface::CommandInfo<_CommandType> & req) {
+                                   const mtsRequiredInterface::CommandInfo<_commandType> & req) {
     req.ToStream(output);
     return output;
 }

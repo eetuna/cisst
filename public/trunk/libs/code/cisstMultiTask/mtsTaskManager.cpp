@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Min Yang Jung
   Created on: 2004-04-30
 
   (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
@@ -19,30 +19,51 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
-
 
 CMN_IMPLEMENT_SERVICES(mtsTaskManager);
 
 
 mtsTaskManager::mtsTaskManager():
     TaskMap("Tasks"),
-    DeviceMap("Devices")
+    DeviceMap("Devices"),
+    JGraphSocket(osaSocket::TCP),
+    JGraphSocketConnected(false)
 {
     __os_init();
     TaskMap.SetOwner(*this);
     DeviceMap.SetOwner(*this);
     TimeServer.SetTimeOrigin();
+    // Try to connect to the JGraph application software (Java program).
+    // Note that the JGraph application also sends event messages back via the socket,
+    // though we don't currently read them. To do this, it would be best to implement
+    // the TaskManager as a periodic task.
+    JGraphSocketConnected = JGraphSocket.Connect("127.0.0.1", 4444);
+    if (JGraphSocketConnected) {
+        osaSleep(1.0 * cmn_s);  // need to wait or JGraph server will not start properly
+    } else {
+        CMN_LOG_CLASS_INIT_WARNING << "Failed to connect to JGraph server" << std::endl;
+    }
 }
 
 
-mtsTaskManager::~mtsTaskManager(){
+mtsTaskManager::~mtsTaskManager()
+{
+    // this should remain empty, please use Cleanup instead!
+}
+
+
+void mtsTaskManager::Cleanup(void)
+{
     this->Kill();
+
+    JGraphSocket.Close();
+    JGraphSocketConnected = false;
 }
 
 
@@ -57,6 +78,11 @@ bool mtsTaskManager::AddTask(mtsTask * task) {
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddTask: added task named "
                                    << task->GetName() << std::endl;
+        if (JGraphSocketConnected) {
+            std::string buffer = task->ToGraphFormat();
+            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
+            JGraphSocket.Send(buffer);
+        }
     }
     return result;
 }
@@ -83,6 +109,11 @@ bool mtsTaskManager::AddDevice(mtsDevice * device) {
     if (result) {
         CMN_LOG_CLASS_INIT_VERBOSE << "AddDevice: added device named "
                                    << device->GetName() << std::endl;
+        if (JGraphSocketConnected) {
+            std::string buffer = device->ToGraphFormat();
+            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer;
+            JGraphSocket.Send(buffer);
+        }
     }
     return result;
 }
@@ -101,6 +132,10 @@ std::vector<std::string> mtsTaskManager::GetNamesOfDevices(void) const {
 
 std::vector<std::string> mtsTaskManager::GetNamesOfTasks(void) const {
     return TaskMap.GetNames();
+}
+
+void mtsTaskManager::GetNamesOfTasks(std::vector<std::string> & taskNameContainer) const {
+    TaskMap.GetNames(taskNameContainer);
 }
 
 
@@ -158,14 +193,16 @@ void mtsTaskManager::StartAll(void) {
     for (; taskIterator != taskEndIterator; ++taskIterator) {
         // Check if the task will use the current thread.
         if (taskIterator->second->Thread.GetId() == threadId) {
-            CMN_LOG_CLASS_INIT_WARNING << "StartAll: task " << taskIterator->first << " uses current thread, will start last." << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "StartAll: task \"" << taskIterator->first << "\" uses current thread, will start last." << std::endl;
             if (lastTask != TaskMap.end())
                 CMN_LOG_CLASS_INIT_ERROR << "StartAll: multiple tasks using current thread (only first will be started)." << std::endl;
             else
                 lastTask = taskIterator;
         }
-        else
+        else {
+            CMN_LOG_CLASS_INIT_DEBUG << "StartAll: starting task \"" << taskIterator->first << "\"" << std::endl;
             taskIterator->second->Start();  // If task will not use current thread, start it.
+        }
     }
     // If there is a task that uses the current thread, start it.
     if (lastTask != TaskMap.end())
@@ -259,16 +296,16 @@ void mtsTaskManager::ToStreamDot(std::ostream & outputStream) const {
 }
 
 
-bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string & interfaceRequiredName,
+bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string & requiredInterfaceName,
                              const std::string & resourceTaskName, const std::string & providedInterfaceName)
 {
-    const UserType fullUserName(userTaskName, interfaceRequiredName);
+    const UserType fullUserName(userTaskName, requiredInterfaceName);
     const ResourceType fullResourceName(resourceTaskName, providedInterfaceName);
     const AssociationType association(fullUserName, fullResourceName);
     // check if this connection has already been established
     AssociationSetType::const_iterator associationIterator = AssociationSet.find(association);
     if (associationIterator != AssociationSet.end()) {
-        CMN_LOG_CLASS_INIT_ERROR << "Connect: " << userTaskName << "::" << interfaceRequiredName
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: " << userTaskName << "::" << requiredInterfaceName
                                  << " is already connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
         return false;
     }
@@ -278,22 +315,26 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         return false;
     }
     // check if the user name corresponds to an existing task
-    mtsTask* userTask = TaskMap.GetItem(userTaskName, CMN_LOG_LOD_INIT_ERROR);
+    mtsDevice * userTask = TaskMap.GetItem(userTaskName, CMN_LOG_LOD_INIT_ERROR);
     if (!userTask) {
-        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task named " << userTaskName << std::endl;
-        return false;
+        userTask = DeviceMap.GetItem(userTaskName);
+        if (!userTask) {
+            CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a user task or device named " << userTaskName << std::endl;
+            return false;
+        }
     }
     // check if the resource name corresponds to an existing task or device
     mtsDevice* resourceDevice = DeviceMap.GetItem(resourceTaskName, CMN_LOG_LOD_INIT_DEBUG);
-    if (!resourceDevice)
+
+    if (!resourceDevice) {        
         resourceDevice = TaskMap.GetItem(resourceTaskName, CMN_LOG_LOD_INIT_ERROR);
-    // find the interface pointer from the resource
-    mtsDeviceInterface * resourceInterface;
-    if (resourceDevice)
+    }
+    // find the interface pointer from the local resource first
+    mtsDeviceInterface * resourceInterface = 0;
+    if (resourceDevice) {
+        // Note that a SERVER task has to be able to get resource interface pointer here
+        // (a SERVER task should not reach here).
         resourceInterface = resourceDevice->GetProvidedInterface(providedInterfaceName);
-    else {
-        CMN_LOG_CLASS_INIT_ERROR << "Connect: can not find a task or device named " << resourceTaskName << std::endl;
-        return false;
     }
 
     // check the interface pointer we got
@@ -303,22 +344,28 @@ bool mtsTaskManager::Connect(const std::string & userTaskName, const std::string
         return false;
     }
     // attempt to connect 
-    if (!(userTask->ConnectRequiredInterface(interfaceRequiredName, resourceInterface))) {
-        CMN_LOG_CLASS_INIT_ERROR << "Connect: connection failed, does " << interfaceRequiredName << " exist?" << std::endl;
+    if (!(userTask->ConnectRequiredInterface(requiredInterfaceName, resourceInterface))) {
+        CMN_LOG_CLASS_INIT_ERROR << "Connect: connection failed, does " << requiredInterfaceName << " exist?" << std::endl;
         return false;
     }
 
     // connected, add to the map of connections
     AssociationSet.insert(association);
-    CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << interfaceRequiredName
+    CMN_LOG_CLASS_INIT_VERBOSE << "Connect: " << userTaskName << "::" << requiredInterfaceName
                                << " successfully connected to " << resourceTaskName << "::" << providedInterfaceName << std::endl;
+    if (JGraphSocketConnected) {
+        std::string message = "add edge [" + userTaskName + ", " + resourceTaskName + ", "
+                                           + requiredInterfaceName + ", " + providedInterfaceName + "]\n";
+        CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message;
+        JGraphSocket.Send(message);
+    }
+
     return true;
 }
-
 
 bool mtsTaskManager::Disconnect(const std::string & userTaskName, const std::string & requiredInterfaceName,
-                                const std::string & resourceTaskName, const std::string & providedInterfaceName) {
-    CMN_LOG_CLASS_INIT_ERROR << "Disconnect not implemented!!!" << std::endl;
+                                const std::string & resourceTaskName, const std::string & providedInterfaceName)
+{
+    CMN_LOG_CLASS_RUN_ERROR << "Disconnect not implemented!!!" << std::endl;
     return true;
 }
-

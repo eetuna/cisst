@@ -21,9 +21,12 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsCollectorState.h>
-#include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstOSAbstraction/osaGetTime.h>
+
+#include <cisstCommon/cmnGenericObjectProxy.h>
 #include <cisstCommon/cmnThrow.h>
+#include <cisstOSAbstraction/osaGetTime.h>
+#include <cisstOSAbstraction/osaSleep.h>
+#include <cisstMultiTask/mtsTaskManager.h>
 
 #include <iostream>
 #include <fstream>
@@ -161,7 +164,10 @@ void mtsCollectorState::Run(void)
 {
     mtsCollectorBase::Run();
     
-    if (!IsRunnable) return;
+    if (!IsRunnable) {
+        osaSleep(0.0);
+        return;
+    }
     
     DataCollectionTriggerResetCommand->Execute();
     
@@ -390,14 +396,14 @@ bool mtsCollectorState::FetchStateTableData(const mtsStateTable * table,
 {
     std::ofstream outputStream;
     if (LogFormat == COLLECTOR_LOG_FORMAT_BINARY) {
-        cmnDouble doubleTick;
+        cmnULongLong timeTick;
         outputStream.open(LogFileName.c_str(), std::ios::binary | std::ios::app);
         {            
             unsigned int i;
             for (i = startIndex; i <= endIndex; i += SamplingInterval) {
                 StringStreamBufferForSerialization.str("");
-                doubleTick.Data = TargetStateTable->Ticks[i];
-                Serializer->Serialize(doubleTick);
+                timeTick.Data = TargetStateTable->Ticks[i];
+                Serializer->Serialize(timeTick);
                 outputStream << StringStreamBufferForSerialization.str();
                 
                 for (unsigned int j = 0; j < RegisteredSignalElements.size(); ++j) {

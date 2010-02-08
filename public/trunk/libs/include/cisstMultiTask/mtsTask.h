@@ -44,6 +44,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 
+#include <set>
+#include <map>
+
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
@@ -100,8 +103,12 @@ protected:
     /*! The task state. */
     TaskStateType TaskState;
 
-    /*! Mutex used when changing task states. */
+    /*! Mutex used when changing task states. Do not change this directly, use the 
+        ChangeState method instead. */
     osaMutex StateChange;
+
+    /*! Signal for caller to wait on task state changes. */
+    osaThreadSignal StateChangeSignal;
 
 	/*! The state data table object to store the states of the task. */
 	mtsStateTable StateTable;
@@ -171,6 +178,14 @@ protected:
     virtual void SaveThreadStartData(void * data);
 
     virtual void SetThreadReturnValue(void * returnValue);
+
+    /*********** Methods for changing task state **************************/
+
+    /*! Helper function to change the task state. */
+    void ChangeState(TaskStateType newState);
+
+    /*! Helper function to wait on a state change, with specified timeout in seconds. */
+    bool WaitForState(TaskStateType desiredState, double timeout);
 
 public:
     /********************* Task constructor and destructor *****************/

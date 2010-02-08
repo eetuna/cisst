@@ -45,17 +45,22 @@ http://www.cisst.org/cisst/license.txt.
 
 template <class _argumentType>
 class mtsCommandReadOrWriteBase : public mtsCommandBase {
+
+    friend class mtsMulticastCommandWriteBase;
+
 public:
     typedef mtsCommandBase BaseType;
     typedef _argumentType ArgumentType;
     
     /*! The constructor. Does nothing */
     mtsCommandReadOrWriteBase(void):
-        BaseType()
+        BaseType(),
+        ArgumentPrototype(0)
     {}
 
     mtsCommandReadOrWriteBase(const std::string & name):
-        BaseType(name)
+        BaseType(name),
+        ArgumentPrototype(0)
     {}
 
     /*! The destructor. Does nothing */
@@ -74,18 +79,30 @@ public:
     virtual void ToStream(std::ostream & outputStream) const = 0;
 
     /*! Execute method expects 1 argument. */
-    virtual unsigned int NumberOfArguments(void) const {
+    inline virtual unsigned int NumberOfArguments(void) const {
         return 1;
     }
 
     /*! Return a pointer on the argument prototype */
-    virtual const mtsGenericObject * GetArgumentPrototype(void) const = 0;
+    inline virtual const mtsGenericObject * GetArgumentPrototype(void) const {
+        return this->ArgumentPrototype;
+    }
 
     /*! Return const pointer of class services associated to the
         argument type. */
     inline const cmnClassServicesBase * GetArgumentClassServices(void) const {
         return this->GetArgumentPrototype()->Services();
     }
+
+    
+protected:
+    
+    inline virtual void SetArgumentPrototype(const mtsGenericObject * argumentPrototype) {
+        this->ArgumentPrototype = argumentPrototype;
+    }
+
+    const mtsGenericObject * ArgumentPrototype;
+
 };
 
 

@@ -32,6 +32,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
+#include <cisstMultiTask/mtsConfig.h>
+
 // commands
 class mtsCommandBase;
 
@@ -91,7 +93,6 @@ inline std::string mtsObjectName(const mtsGenericObject * object) {
 // flag for required interfaces lists of commands
 const bool mtsRequired = true;
 const bool mtsOptional = false;
-
 
 #endif  // _mtsForwardDeclarations_h
 

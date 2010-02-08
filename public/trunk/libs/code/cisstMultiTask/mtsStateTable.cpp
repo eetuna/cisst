@@ -75,15 +75,6 @@ mtsStateIndex mtsStateTable::GetIndexReader(void) const {
     return mtsStateIndex(tmp, Ticks[tmp], HistoryLength);
 }
 
-mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const mtsGenericObject &element) const
-{
-    for (unsigned int i = 0; i < StateVectorElements.size(); i++) {
-        if (&element == StateVectorElements[i])
-            return StateVectorAccessors[i];
-    }
-    return 0;
-}
-
 mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const std::string &name) const
 {
     for (unsigned int i = 0; i < StateVectorDataNames.size(); i++) {
@@ -91,6 +82,11 @@ mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const std::string &name)
             return StateVectorAccessors[i];
     }
     return 0;
+}
+
+mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const char *name) const
+{
+    return GetAccessor(std::string(name));
 }
 
 /* All the non-const methods that can be called from writer only */
