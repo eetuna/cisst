@@ -28,6 +28,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnTypeTraits.h>
 #include <cisstCommon/cmnPortability.h>
 
+#include <cisstVector/vctContainerTraits.h>
+
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
@@ -101,7 +103,7 @@ class vctGenericContainerTest
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             goal += (*iter1);
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(resultScalar));
+        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
 
         container2.Zeros();
@@ -114,7 +116,7 @@ class vctGenericContainerTest
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             goal *= (*iter1);
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(resultScalar));
+        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance * container1.size());
 
         container2.SetAll(value_type(1));
@@ -126,7 +128,7 @@ class vctGenericContainerTest
             abs = (*iter1) > 0 ? (*iter1) : -(*iter1);
             goal += abs;
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(resultScalar));
+        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
 
         container2 = value_type(0);
@@ -142,7 +144,7 @@ class vctGenericContainerTest
                 goal = abs;
             }
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(resultScalar));
+        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
         resultScalar = container1.MaxAbsElement();
 
@@ -158,7 +160,7 @@ class vctGenericContainerTest
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             goal += ((*iter1) * (*iter1));
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(resultScalar));
+        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance * goal);
 
         container2.Zeros();
@@ -171,8 +173,8 @@ class vctGenericContainerTest
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             goal += ((*iter1) * (*iter1));
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(norm));
-		CPPUNIT_ASSERT_DOUBLES_EQUAL(sqrt((double)goal), norm, tolerance * goal);
+        CPPUNIT_ASSERT(!cmnTypeTraits<double>::IsNaN(norm));
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(sqrt((double)goal), norm, tolerance * goal);
 
         container2.Zeros();
         CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(0), container2.Norm(), cmnTypeTraits<double>::Tolerance());
@@ -215,7 +217,7 @@ class vctGenericContainerTest
                 goal = abs;
             }
         }
-        CPPUNIT_ASSERT(!CMN_ISNAN(resultScalar));
+        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
         resultScalar = container1.MinAbsElement();
 
