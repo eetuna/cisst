@@ -30,6 +30,7 @@ SET(SOURCE_FILES
     cmnPortability.cpp
     cmnRandomSequence.cpp
     cmnSerializer.cpp
+    cmnStreamRawParser.cpp
     cmnPath.cpp
     cmnPrintf.cpp
     cmnTokenizer.cpp
@@ -64,7 +65,10 @@ SET(HEADER_FILES
     cmnPortability.h
     cmnPrintf.h
     cmnRandomSequence.h
+    cmnRequiresDeepCopy.h
     cmnSerializer.h
+    cmnStreamRawParser.h
+    cmnStrings.h
     cmnPath.h
     cmnThrow.h
     cmnTokenizer.h
@@ -78,5 +82,19 @@ IF(CISST_HAS_XML)
   SET(HEADER_FILES ${HEADER_FILES} cmnXMLPath.h)
 ENDIF(CISST_HAS_XML)
 
+# Qt widgets
+if(CISST_HAS_QT)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  set(SOURCE_FILES
+      ${SOURCE_FILES}
+      cmnLoggerQWidget.cpp)
+  set(HEADER_FILES
+      ${HEADER_FILES}
+      cmnLoggerQWidget.h)
+endif(CISST_HAS_QT)
+
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 
+if(CISST_HAS_QT)
+  target_link_libraries(cisstCommon ${QT_LIBRARIES})
+endif(CISST_HAS_QT)

@@ -26,6 +26,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnClassServices.h>
 
 
+bool cmnGenericObject::ReconstructFrom(const cmnGenericObject & other) {
+    const cmnClassServicesBase * services = this->Services();
+    // test that both objects are of the same type
+    if (services != other.Services()) {
+        return false;
+    }
+    // call destructor on the existing object
+    services->Delete(this);
+    // call copy constructor
+    services->Create(this, other);
+    return true;
+}
+
+
 std::string cmnGenericObject::ToString(void) const {
     std::stringstream outputStream;
     ToStream(outputStream);
@@ -41,6 +55,13 @@ void cmnGenericObject::ToStream(std::ostream & outputStream) const {
 void cmnGenericObject::ToStreamRaw(std::ostream & outputStream, const char CMN_UNUSED(delimiter),
                                    bool CMN_UNUSED(headerOnly), const std::string & CMN_UNUSED(headerPrefix)) const {
     outputStream << Services()->GetName();
+}
+
+
+bool cmnGenericObject::FromStreamRaw(std::istream & CMN_UNUSED(inputStream),
+                                     const char CMN_UNUSED(delimiter))
+{
+    return false;
 }
 
 

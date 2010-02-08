@@ -240,6 +240,9 @@ public:
       method is meaningful. */
     static CISST_EXPORT Type NaN();
 
+    /*! Test if the value is nan. */
+    static CISST_EXPORT bool IsNaN(const Type & value);
+
     /*! Check if this type has a meaningful Not A Number. */
     inline static bool HasNaN(void);
 
@@ -408,6 +411,56 @@ inline bool cmnTypeTraits<unsigned char>::HasNaN() {
     return false;
 }
 
+/* Define IsNaN for some basic types */
+template<>
+inline bool cmnTypeTraits<float>::IsNaN(const float & value) {
+    return CMN_ISNAN(value);
+}
+
+template<>
+inline bool cmnTypeTraits<double>::IsNaN(const double & value) {
+    return CMN_ISNAN(value);
+}
+
+template<>
+inline bool cmnTypeTraits<long>::IsNaN(const long & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<int>::IsNaN(const int & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<short>::IsNaN(const short & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<char>::IsNaN(const char & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<unsigned long>::IsNaN(const unsigned long & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<unsigned int>::IsNaN(const unsigned int & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<unsigned short>::IsNaN(const unsigned short & CMN_UNUSED(value)) {
+    return false;
+}
+
+template<>
+inline bool cmnTypeTraits<unsigned char>::IsNaN(const unsigned char & CMN_UNUSED(value)) {
+    return false;
+}
 
 /* Define limits for some types as inline functions */
 
@@ -691,6 +744,52 @@ inline bool cmnTypeTraits<bool>::MinNegativeValue()
 }
 
 #endif // DOXYGEN
+
+#ifndef SWIG
+/*! Check whether class T is derived from class Base
+    Examples:
+       cmnIsDerivedFrom<double, cmnGenericObject>::YES is false
+       cmnIsDerivedFrom<cmnDouble, cmnGenericObject>::YES is true
+*/
+template <typename T, typename Base>
+class cmnIsDerivedFrom {
+private:
+    typedef char One;
+    typedef struct { char a[2]; } Two;
+    static One Test(Base *obj);
+    static One Test(const Base *obj);
+    static Two Test(...);
+public:
+    enum { YES = sizeof(Test(static_cast<T*>(0))) == sizeof(One)};
+    enum { NO = !YES};
+};
+
+/*! Check whether class T is derived from class templated class Base.
+    This is especially convenient when the template argument to the Base class
+    is not known.
+   
+    Examples:
+       cmnIsDerivedFromTemplated<double, cmnGenericObjectProxy>::YES is false
+       cmnIsDerivedFromTemplated<cmnDouble, cmnGenericObjectProxy>::YES is true
+
+    Note that if you know the template argument to the Base class, you can
+    instead use:
+       cmnIsDerivedFrom<cmnDouble, cmnGenericObjectProxy<double> >::YES
+       
+*/
+template <typename T, template <typename> class Base>
+class cmnIsDerivedFromTemplated {
+private:
+    typedef char One;
+    typedef struct { char a[2]; } Two;
+    template <typename C> static One Test(Base<C> *obj);
+    template <typename C> static One Test(const Base<C> *obj);
+    static Two Test(...);
+public:
+    enum { YES = sizeof(Test(static_cast<T*>(0))) == sizeof(One)};
+    enum { NO = !YES};
+};
+#endif // !SWIG
 
 #endif // _cmnTypeTraits_h
 
