@@ -10,9 +10,7 @@
 
 class appTask: public mtsTaskPeriodic {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
-    volatile bool ExitFlag;
  public:
-    enum {NB_JOINTS = 2};
     typedef mtsDoubleVec PositionJointType;
  protected:
     unsigned long Ticks;
@@ -20,6 +18,10 @@ class appTask: public mtsTaskPeriodic {
     mtsFunctionRead GetPositionJointControlled;
     mtsFunctionRead GetPositionJointObserved;
     mtsFunctionWrite MovePositionJointControlled;
+
+    PositionJointType PositionControlled;
+    PositionJointType PositionObserved;
+    PositionJointType PositionDesired;
 
     // Event handlers
     void HandleMotionFinishedControlled(const PositionJointType &);
@@ -37,8 +39,6 @@ class appTask: public mtsTaskPeriodic {
     void Startup(void);
     void Run(void);
     void Cleanup(void) {};
-
-    inline bool GetExitFlag (void) const { return ExitFlag;}
 
     // callback to close
     static void Close(mtsTask * task);
