@@ -14,8 +14,20 @@
 
 
 # Backward compatibility
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(cisst)
+
+
+# Function to expend a list without repetitions, forces the list to be internal
+FUNCTION(CISST_ADD_TO_INTERNAL list newElements)
+  SET(TEMP_${list} ${${list}} ${${newElements}})
+  IF(TEMP_${list})
+    LIST(REMOVE_DUPLICATES TEMP_${list})
+  ENDIF(TEMP_${list})
+  SET(${list} ${TEMP_${list}} CACHE INTERNAL "CISST Internal variable")
+ENDFUNCTION(CISST_ADD_TO_INTERNAL)
+
+
 
 # Output directories.
 SET(LIBRARY_OUTPUT_PATH ${cisst_BINARY_DIR}/libs/lib)
@@ -31,7 +43,8 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${cisst_SOURCE_DIR}/libs/cmake)
 # Options
 OPTION(BUILD_TESTS "Build tests." OFF)
 OPTION(BUILD_EXAMPLES "Build examples." OFF)
-
+# OPTION(BUILD_UTILITIES "Build utility programs built using cisst." OFF)
+SET(BUILD_UTILITIES OFF)
 
 IF(UNIX)
   OPTION(BUILD_DOC "Build the documentation." OFF)
@@ -53,41 +66,54 @@ ENDIF(CISST_BUILD_SHARED_LIBS)
 # Wrapping with swig for Python and/or Java
 OPTION(CISST_HAS_SWIG_PYTHON "Build the Python wrappers for cisst with Swig." OFF)
 
-IF(CISST_HAS_SWIG_PYTHON)
-  # Find Swig
-  FIND_PACKAGE(SWIG REQUIRED)
-  INCLUDE(${SWIG_USE_FILE})
+if(CISST_HAS_SWIG_PYTHON)
+    # Find Swig
+    set(CISST_SWIG_REQUIRED_VERSION 1.3.36)
+    find_package(SWIG ${CISST_SWIG_REQUIRED_VERSION} REQUIRED)
+    # It looks like version is not yet supported by CMake for SWIG so we are checking manually
+    if(${SWIG_VERSION} VERSION_LESS ${CISST_SWIG_REQUIRED_VERSION})
+        message("SWIG version ${SWIG_VERSION} is to low, cisst requires ${CISST_SWIG_REQUIRED_VERSION}")  
+    else(${SWIG_VERSION} VERSION_LESS ${CISST_SWIG_REQUIRED_VERSION})
+        include(${SWIG_USE_FILE})
+    endif(${SWIG_VERSION} VERSION_LESS ${CISST_SWIG_REQUIRED_VERSION})
 
-  # Check that the main libraries are compiled shared
-  VARIABLE_REQUIRES(CISST_HAS_SWIG_PYTHON REQUIREMENT_MET CISST_BUILD_SHARED_LIBS)
+    # Check that the main libraries are compiled shared
+    variable_requires(CISST_HAS_SWIG_PYTHON REQUIREMENT_MET CISST_BUILD_SHARED_LIBS)
 
-  # Define the include directory for interface files
-  SET(CISST_SWIG_INCLUDE_DIR ${cisst_SOURCE_DIR}/libs/wrapping)
+    # Define the include directory for interface files
+    set(CISST_SWIG_INCLUDE_DIR ${cisst_SOURCE_DIR}/libs/wrapping)
 
-  # Force to use exceptions
-  SET(CMN_THROW_DOES_ABORT OFF CACHE BOOL "cmnThrow uses abort() instead of throw" FORCE)
-  SET(CMN_ASSERT_THROWS_EXCEPTION ON CACHE BOOL "CMN_ASSERT throws an exception instead of abort" FORCE)
+    # Force to use exceptions
+    set(CMN_THROW_DOES_ABORT OFF CACHE BOOL "cmnThrow uses abort() instead of throw" FORCE)
+    set(CMN_ASSERT_THROWS_EXCEPTION ON CACHE BOOL "CMN_ASSERT throws an exception instead of abort" FORCE)
 
-ENDIF(CISST_HAS_SWIG_PYTHON)
+endif(CISST_HAS_SWIG_PYTHON)
 
-IF(CISST_HAS_SWIG_PYTHON)
-  # Find Python
-  FIND_PACKAGE(PythonLibs REQUIRED)
-  # Some older CMake don't define the debug library
-  IF(NOT PYTHON_DEBUG_LIBRARIES)
-    SET(PYTHON_DEBUG_LIBRARIES ${PYTHON_LIBRARIES})
-  ENDIF(NOT PYTHON_DEBUG_LIBRARIES)
-  FIND_PACKAGE(PythonInterp REQUIRED)
-  INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-ENDIF(CISST_HAS_SWIG_PYTHON)
+if(CISST_HAS_SWIG_PYTHON)
+    # Find Python
+    find_package(PythonLibs REQUIRED)
+    # Some older CMake don't define the debug library
+    if(NOT PYTHON_DEBUG_LIBRARIES)
+	set(PYTHON_DEBUG_LIBRARIES ${PYTHON_LIBRARIES})
+    endif(NOT PYTHON_DEBUG_LIBRARIES)
+    find_package(PythonInterp REQUIRED)
+    include_directories(${PYTHON_INCLUDE_PATH})
+    # We also need numpy if we have cisstVector
+    if(BUILD_LIBS_cisstVector)
+	find_package(Numpy REQUIRED)
+	if(PYTHON_NUMPY_FOUND)
+	    include_directories(${PYTHON_NUMPY_INCLUDE_DIR})
+	endif(PYTHON_NUMPY_FOUND)
+    endif(BUILD_LIBS_cisstVector)
+endif(CISST_HAS_SWIG_PYTHON)
 
 
 # Use XML or not
 SET(CISST_HAS_XML OFF CACHE BOOL "Include cmnXMLPath in the version (requires libxml2)")
 IF(CISST_HAS_XML)
   FIND_PACKAGE(LibXml2 REQUIRED)
-  SET(CISST_ADDITIONAL_INCLUDE_DIRECTORIES ${CISST_ADDITIONAL_INCLUDE_DIRECTORIES} ${LIBXML2_INCLUDE_DIR}) 
-  SET(CISST_ADDITIONAL_LIBRARIES ${CISST_ADDITIONAL_LIBRARIES} ${LIBXML2_LIBRARIES})
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_INCLUDE_DIRECTORIES LIBXML2_INCLUDE_DIR)
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LIBRARIES LIBXML2_LIBRARIES)
 ENDIF(CISST_HAS_XML)
 
 
@@ -95,10 +121,17 @@ ENDIF(CISST_HAS_XML)
 OPTION(CISST_HAS_CISSTNETLIB "Use the netlib.org sets of numerical methods in Fortran (provided on cisst.org)." OFF)
 IF(CISST_HAS_CISSTNETLIB)
   FIND_PACKAGE(CisstNetlib)
-  SET(CISST_ADDITIONAL_INCLUDE_DIRECTORIES ${CISST_ADDITIONAL_INCLUDE_DIRECTORIES} ${CISSTNETLIB_INCLUDE_DIR}) 
-  SET(CISST_ADDITIONAL_LIBRARIES ${CISST_ADDITIONAL_LIBRARIES} ${CISSTNETLIB_LIBRARIES})
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_INCLUDE_DIRECTORIES CISSTNETLIB_INCLUDE_DIR)
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LIBRARIES CISSTNETLIB_LIBRARIES)
 ENDIF(CISST_HAS_CISSTNETLIB)
 
+# Support for QT
+# option(CISST_HAS_QT "Is Qt available.  If not, Qt widgets and some examples won't be compiled" OFF)
+set(CISST_HAS_QT OFF)
+if(CISST_HAS_QT)
+  find_package(Qt4 REQUIRED)
+  include(${QT_USE_FILE})
+endif(CISST_HAS_QT)
 
 # Extra link flag if for Apple
 IF(CISST_HAS_CISSTNETLIB AND APPLE AND CISST_BUILD_SHARED_LIBS)
@@ -109,8 +142,8 @@ ENDIF(CISST_HAS_CISSTNETLIB AND APPLE AND CISST_BUILD_SHARED_LIBS)
 OPTION(CISST_HAS_LINUX_RTAI "Use the RTAI real time extensions for Linux." OFF)
 IF(CISST_HAS_LINUX_RTAI)
   FIND_PACKAGE(RTAI)
-  SET(CISST_ADDITIONAL_INCLUDE_DIRECTORIES ${CISST_ADDITIONAL_INCLUDE_DIRECTORIES} ${RTAI_INCLUDE_DIR}) 
-  SET(CISST_ADDITIONAL_LIBRARIES ${CISST_ADDITIONAL_LIBRARIES} ${RTAI_LIBRARIES})
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_INCLUDE_DIRECTORIES RTAI_INCLUDE_DIR)
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LIBRARIES RTAI_LIBRARIES)
 ENDIF(CISST_HAS_LINUX_RTAI)
 
 # Determine if cmnThrow uses "throw" or "abort"
@@ -145,11 +178,14 @@ IF(UNIX)
 ENDIF(UNIX)
 
 
-# Add include directory
+# Add include directories
 SET(CISST_INCLUDE_DIR
     ${cisst_BINARY_DIR}/libs/include
     ${cisst_SOURCE_DIR}/libs/include)
 INCLUDE_DIRECTORIES(${CISST_INCLUDE_DIR} ${CISST_ADDITIONAL_INCLUDE_DIRECTORIES})
+
+# Additional link directories
+LINK_DIRECTORIES(${CISST_ADDITIONAL_LINK_DIRECTORIES})
 
 
 # To have more warnings with gcc
@@ -164,9 +200,10 @@ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 
 # Find native threads
-FIND_PACKAGE(Threads REQUIRED)
-SET(CISST_ADDITIONAL_LIBRARIES ${CISST_ADDITIONAL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-
+IF(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "QNX")
+  FIND_PACKAGE(Threads REQUIRED)
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LIBRARIES CMAKE_THREAD_LIBS_INIT)
+ENDIF(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "QNX")
 
 # Which libraries to build
 SET(CISST_LIBS_STABLE
@@ -184,6 +221,7 @@ SET(CISST_LIBS_UNSTABLE
 #    cisstImage
 #    cisstStereoVision
 #    cisst3DUserInterface
+#    cisstRobot
     )
 
 SET(CISST_LIBS
@@ -201,7 +239,7 @@ ENDFOREACH(lib)
 
 # If OS abstraction is compiled, require dynamic loading libraries
 IF(BUILD_LIBS_cisstOSAbstraction OR BUILD_LIBS_cisstInteractive)
-  SET(CISST_ADDITIONAL_LIBRARIES ${CISST_ADDITIONAL_LIBRARIES} ${CMAKE_DL_LIBS})
+  CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_LIBRARIES CMAKE_DL_LIBS)
 ENDIF(BUILD_LIBS_cisstOSAbstraction OR BUILD_LIBS_cisstInteractive)
 
 # Once all variables have been defined, use cisstMacros
@@ -230,6 +268,10 @@ ENDIF(BUILD_TESTS)
 IF(BUILD_EXAMPLES)
   ADD_SUBDIRECTORY(examples)
 ENDIF(BUILD_EXAMPLES)
+
+IF(BUILD_UTILITIES)
+  ADD_SUBDIRECTORY(utilities)
+ENDIF(BUILD_UTILITIES)
 
 IF(BUILD_DOC)
   ADD_SUBDIRECTORY(doc)
@@ -260,6 +302,7 @@ INSTALL_FILES(/share/cisst/cmake
 
 
 # Configuration file
+SET(CISST_SOURCE_DIR ${cisst_SOURCE_DIR})
 SET(CISST_BINARY_DIR ${cisst_BINARY_DIR})
 CONFIGURE_FILE(${cisst_SOURCE_DIR}/libs/include/cisstConfig.h.in
                ${cisst_BINARY_DIR}/libs/include/cisstConfig.h
@@ -316,7 +359,7 @@ IF(WIN32)
           "${EXECUTABLE_OUTPUT_PATH}" "${EXECUTABLE_OUTPUT_PATH}/${CISST_PATH_CONFIGURATION}"
           "${LIBRARY_OUTPUT_PATH}" "${LIBRARY_OUTPUT_PATH}/${CISST_PATH_CONFIGURATION}")
       
-      # To find tests releated programs and libraries
+      # To find tests programs and libraries
       IF(BUILD_TESTS)
         SET(CISST_PATH_CMAKE_FORMAT
             ${CISST_PATH_CMAKE_FORMAT}
@@ -328,7 +371,7 @@ IF(WIN32)
             "${cisst_BINARY_DIR}/tests/bin" "${cisst_BINARY_DIR}/tests/bin/${CISST_PATH_CONFIGURATION}")
       ENDIF(BUILD_TESTS)
 
-      # To find examples releated programs and libraries
+      # To find examples programs and libraries
       IF(BUILD_EXAMPLES)
         SET(CISST_PATH_CMAKE_FORMAT
             ${CISST_PATH_CMAKE_FORMAT}
@@ -339,6 +382,18 @@ IF(WIN32)
             "${cisst_BINARY_DIR}/examples/lib" "${cisst_BINARY_DIR}/examples/lib/${CISST_PATH_CONFIGURATION}"
             "${cisst_BINARY_DIR}/examples/bin" "${cisst_BINARY_DIR}/examples/bin/${CISST_PATH_CONFIGURATION}")
       ENDIF(BUILD_EXAMPLES)
+
+      # To find utilities programs and libraries
+#       IF(BUILD_UTILITIES)
+#         SET(CISST_PATH_CMAKE_FORMAT
+#             ${CISST_PATH_CMAKE_FORMAT}
+#             "${cisst_BINARY_DIR}/utilities/lib/${CISST_PATH_CONFIGURATION}"
+#             "${cisst_BINARY_DIR}/utilities/bin/${CISST_PATH_CONFIGURATION}")
+#         SET(CISST_PYTHONPATH_CMAKE_FORMAT
+#             ${CISST_PYTHONPATH_CMAKE_FORMAT}
+#             "${cisst_BINARY_DIR}/utilities/lib" "${cisst_BINARY_DIR}/utilities/lib/${CISST_PATH_CONFIGURATION}"
+#             "${cisst_BINARY_DIR}/utilities/bin" "${cisst_BINARY_DIR}/utilities/bin/${CISST_PATH_CONFIGURATION}")
+#       ENDIF(BUILD_UTILITIES)
 
       # Convert to native format to be able to compare 
       FILE(TO_NATIVE_PATH "${CISST_PATH_CMAKE_FORMAT}" CISST_PATH)
