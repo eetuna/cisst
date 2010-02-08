@@ -4,7 +4,8 @@
 /*
   $Id$
 
-  Author(s): Peter Kazanzides
+  Author(s):  Peter Kazanzides
+  Created on: 2009
 
   (C) Copyright 2007-2009 Johns Hopkins University (JHU), All Rights Reserved.
 
@@ -20,104 +21,251 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \file
   \brief Declaration of osaSocket
-  
-  This is an implementation for an unconnected datagram (UDP) socket, with partial support
-  for a connected stream (TCP) socket (specifically, just the client side). 
-  It also supports connected datagram sockets, though there is no real advantage to
-  using them (technical detail: the class uses sendto and recvfrom, rather than send and
-  recv, regardless of whether the socket is connected or not).
+  \ingroup cisstOSAbstraction
 
-  In general, datagrams are sent to the address from which the last datagram was received;
-  the initial destination address is set via a call to SetDestination (or, via a call to
-  Connect, which calls SetDestination). For a UDP client/server application:
+  This is a cross-platform socket library with basic support for UDP (datagram)
+  and TCP (stream) sockets. The BSD socket API is used on Unix-like systems, while
+  the Winsock2 API is used on Windows.
 
-  UDP server initialization:  ssock.AssignPort(server_port);
-  UDP client initialization:  csock.SetDestination(server_ip, server_port);
+  For UDP, both a server and client can be defined and set as follows:
+    \code
+    server.AssignPort(serverPort);
+    client.SetDestination(serverHost, serverPort);
+    \endcode
+  where serverHost could either be the hostname or the IP address of the
+  server. UDP sockets update their destination to the origin of the last message
+  received.
 
-  TCP server initialization:  not supported (need Listen and Accept)
-  TCP client initialization:  csock.Connect(server_ip, server_port);
+  For the TCP case, the client has to additionally call the Connect() method, while
+  the server is created using the osaSocketServer class.
+    \code
+    client.SetDestination(serverIP, serverPort);
+    client.Connect();
+    // or
+    client.Connect(serverIP, serverPort);
+    \endcode
+  The TCP server is defined using osaSocketServer, which calls an overloaded
+  osaSocket constructor upon accepting a connection (see osaSocketServer class).
 
-  Now, messages can be sent/received by calling the Send and Receive methods. Note that
-  it is not necessary for the client to assign a port number, though it is fine for it
-  to do so. For cleanup, the client and server should call the Close method.
-
-  If the socket receives a message from an address that is different from the current
-  destination, the destination is updated. For example, if a socket receives a message
-  from address 192.168.0.1, all subsequent messages are sent to that address.
-
-  \note This is a fairly minimal socket implementation. Currently, the Receive method is
-  non-blocking; it would be nice to have a Receive method that blocks until a message
-  is received. Also, it would be nice to be able to use named IP addresses, rather than
-  just numbers.
-
- */
+  \note Please refer to osAbstractionTutorial/sockets for usage examples.
+  \note Disconnection is detected when a socket attempts to write to another socket and does not received an ACK.
+*/
 
 #ifndef _osaSocket_h
 #define _osaSocket_h
 
+#include <cisstCommon/cmnAssert.h>
 #include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnLogger.h>
+#include <cisstCommon/cmnPortability.h>
 // Always include last
 #include <cisstOSAbstraction/osaExport.h>
 
-class CISST_EXPORT osaSocket : public cmnGenericObject {
+#if (CISST_OS != CISST_WINDOWS)
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define SOCKET int
+#endif
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+//#define OSA_SOCKET_WITH_STREAM
 
-    int connectionFd;
-    enum {INTERNALS_SIZE = 16};
+#ifdef OSA_SOCKET_WITH_STREAM
+// forward declaration
+class osaSocket;
+
+template <class _element, class _trait = std::char_traits<_element> >
+class osaSocketStreambuf: public std::basic_streambuf<_element, _trait>
+{
+public:
+  
+    typedef std::basic_streambuf<_element, _trait> BaseClassType;
+
+    osaSocketStreambuf(osaSocket * socket):
+        Socket(socket)
+    {
+        CMN_ASSERT(this->Socket);
+    }
+
+protected:
+    typedef typename std::basic_streambuf<_element, _trait>::int_type int_type;
+  
+    /*! Override the basic_streambuf sync for the current file
+      output. */
+    virtual int sync(void);
+  
+    /*! Override the basic_streambuf xsputn for the current file
+      output. */
+    virtual std::streamsize xsputn(const _element * s, std::streamsize n);
+
+    /*! Override the basic_streambuf xsgetn for the current file
+      output. */
+    virtual std::streamsize xsgetn(_element * s, std::streamsize n);
+    
+    /*! Override the basic_streambuf overflow. overflow() is called
+      when sputc() discovers it does not have space in the storage
+      buffer. In our case, it's always. See more on it in the
+      basic_streambuf documentation.
+     */
+    virtual int_type overflow(int_type c = _trait::eof());
+  
+private:
+    osaSocket * Socket;
+};
+
+
+
+template <class _element, class _trait>
+int osaSocketStreambuf<_element, _trait>::sync(void)
+{
+    // do nothing, flush on this->socket? 
+    return 0;
+}
+
+
+template <class _element, class _trait>
+std::streamsize
+osaSocketStreambuf<_element, _trait>::xsputn(const _element *s, std::streamsize n)
+{
+    return this->Socket->Send(s, n);
+}
+
+
+template <class _element, class _trait>
+std::streamsize
+osaSocketStreambuf<_element, _trait>::xsgetn(_element * s, std::streamsize n)
+{
+    return this->Socket->Receive(s, n);
+}
+
+
+template <class _element, class _trait>
+typename osaSocketStreambuf<_element, _trait>::int_type 
+osaSocketStreambuf<_element, _trait>::overflow(int_type c)
+{
+    // follow the basic_streambuf standard
+    if (_trait::eq_int_type(_trait::eof(), c))
+        return (_trait::not_eof(c));
+    char cCopy = _trait::to_char_type(c);
+    return this->Socket->Send(&cCopy, 1);
+}
+
+#endif // OSA_SOCKET_WITH_STREAM
+
+class CISST_EXPORT osaSocket: public cmnGenericObject
+#ifdef OSA_SOCKET_WITH_STREAM
+, public std::iostream
+#endif // OSA_SOCKET_WITH_STREAM
+{
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_VERBOSE);
+
+    enum { INTERNALS_SIZE = 16 };
     char Internals[INTERNALS_SIZE];
 
-    /*! Return the size of the actual object used by the OS.  This is
-        used for testing only. */
+    /*! \brief Used for testing
+        \return Size of the actual object used by the OS */
     static unsigned int SizeOfInternals(void);
-    friend class osaSocketTest;
+
+#ifdef OSA_SOCKET_WITH_STREAM
+    osaSocketStreambuf<char> Streambuf;
+#endif // OSA_SOCKET_WITH_STREAM
 
 public:
-    enum SocketType { DATAGRAM, STREAM };
+    enum SocketTypes { UDP, TCP };
 
-    osaSocket(SocketType stype = osaSocket::DATAGRAM);
-    ~osaSocket();
+    /*! \brief Default constructor */
+    osaSocket(SocketTypes type = TCP);
 
-    /*! Set the port for receiving data (only needed for server)
-          \param port the port number */
-    void AssignPort(unsigned short port);
+    /*! \brief Destructor */
+    ~osaSocket(void);
 
-    /*! Set the destination address (used only by UDP clients; for
-          TCP clients, use Connect)
-          \param host the server's IP address (e.g., 192.0.0.1)
-          \param port the server's port number */
-    void SetDestination(const char *host, unsigned short port);
+    /*! \return Socket file descriptor */
+    int GetIdentifier(void) const {
+        return SocketFD;
+    };
 
-    /*! Connect to a server; this is required for stream (TCP) sockets and
-        can be used for datagram (UDP) sockets, though it provides no benefit
-        in that case (use SetDestination instead).
-          \param host the server's IP address (e.g., 192.0.0.1)
-          \param port the server's port number
-          \returns true if the connection was successful */
-    bool Connect(const char *host, unsigned short port);
+    /*! \return IP address of the localhost as a string */
+    // Perhaps this should be outside the class
+    static std::string GetLocalhostIP(void);
 
-    /*! Send a byte array via the socket.
-          \param bufsend Buffer holding bytes to be sent
-          \param msglen Number of bytes to send
-          \returns number of bytes sent (-1 if error) */
-    int Send(const char *bufsend, unsigned int msglen);
+    /*! \brief Sets the port of a UDP server */
+    bool AssignPort(unsigned short port);
 
-    /*! Send a null-terminated string via the socket.
-          \param bufsend Buffer holding string to be sent
-          \returns number of bytes sent (-1 if error) */
-    int SendString(const char *bufsend);
-    int SendString(const std::string &bufsend);
+    /*! \brief Set the destination address for UDP or TCP socket
+        \param host Server's hostname or IP address (e.g. localhost, 127.0.0.1)
+        \param port Server's port number */
+    void SetDestination(const std::string & host, unsigned short port);
 
-    /*! Non-blocking receive. If data is present, returns it in bufrecv.
-          \param bufrecv Buffer to store received data
-          \param maxlen Maximum number of bytes to receive
-          \returns the number of bytes received */
-    int Receive(char *bufrecv, unsigned int maxlen);
+    /*! \brief Connect to the server; required for TCP sockets and should be
+               used after SetDestination()
+        \return true if the connection was successful */
+    bool Connect(void);
 
-    /*! Close the socket */
-    void Close(void);
+    /*! \brief Connect to the server; required for TCP sockets; includes call
+               to SetDestination()
+        \param host Server's hostname or IP address (e.g. localhost, 127.0.0.1)
+        \param port Server's port number
+        \return true if the connection was successful */
+    bool Connect(const std::string & host, unsigned short port);
+ 
+    /*! \brief Send a byte array via the socket
+        \param bufsend Buffer holding bytes to be sent
+        \param msglen Number of bytes to send
+        \param timeoutSec is the longest time we should wait to send something (NA for UDP)
+        \return Number of bytes sent (-1 if error) 
+        \note  Since this is a nonblocking call the socket might not be ready to send right away
+               so a short timeout will help in cases when large amount of data is sent 
+               around. If the socket is not ready within the timeout then the connection will be closed
+    */
+    int Send(const char * bufsend, unsigned int msglen, const double timeoutSec = 0.0 );
+
+    /*! \brief Send a string via the socket
+        \param bufsend String to be sent
+        \return Number of bytes sent (-1 if error) */
+    int Send(const std::string & bufsend) {
+        return Send(bufsend.c_str(), bufsend.length());
+    };
+
+    /*! \brief Receive a byte array via the socket
+        \param bufrecv Buffer to store received data
+        \param maxlen Maximum number of bytes to receive
+        \param timeoutSec Timeout in seconds. (NA for UDP)
+        \return Number of bytes received. 0 if timeout is reached and/or no data is received. */
+    int Receive(char * bufrecv, unsigned int maxlen, const double timeoutSec = 0.0);
+
+    /*! \brief Close the socket 
+        \return False if close fails*/
+    bool Close(void);
+
+    /*! \ brief Connection state (only works for TCP)
+        \return Returns true if the socket thinks it is connected */
+    bool IsConnected(void);
+
+#ifdef OSA_SOCKET_WITH_STREAM
+    /*! Provide a pointer to the stream buffer */
+    virtual std::basic_streambuf<char> * rdbuf(void) {
+        return &Streambuf;
+    }
+#endif // OSA_SOCKET_WITH_STREAM
+
+protected:
+
+    
+    /*! \brief osaSocketServer constructor (for use by osaSocketServer) 
+        \param Void pointer is used to her avoid including WinSock2.h, the pointer is cast to proper socket in cpp file.
+        
+        */
+    osaSocket(void * socketFDPtr);
+
+    /*! \return IP address (as a number) for the given host */
+    unsigned long GetIP(const std::string & host) const;
+
+    SocketTypes SocketType;
+    int SocketFD;
+    bool Connected;
+  
+    friend class osaSocketServer;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(osaSocket);
 
-#endif // _osaSocket_h
+#endif  // _osaSocket_h
