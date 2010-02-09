@@ -46,6 +46,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsConfig.h>
 #include <cisstMultiTask/mtsInterfaceCommon.h>
 
+// Always include last
+#include <cisstMultiTask/mtsExport.h>
+
 class CISST_EXPORT mtsManagerLocalInterface 
 {
 public:
