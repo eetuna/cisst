@@ -239,7 +239,7 @@ public:
     mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
 
     /*! Check if a component exists by its name */
-    const bool FindComponent(const std::string & componentName) const;
+    bool FindComponent(const std::string & componentName) const;
 
     /* Connect two interfaces */
     bool Connect(

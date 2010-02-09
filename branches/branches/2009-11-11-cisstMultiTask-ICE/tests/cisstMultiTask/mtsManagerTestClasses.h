@@ -65,7 +65,7 @@ public:
         argumentOut = argumentIn;
     }
 
-    const int GetValue() const {
+    int GetValue() const {
         return Value.Data;
     }
 };
@@ -93,7 +93,7 @@ public:
         Value.Data = argument.Data;
     }
 
-    const int GetValue() const {
+    int GetValue() const {
         return Value.Data;
     }
 };

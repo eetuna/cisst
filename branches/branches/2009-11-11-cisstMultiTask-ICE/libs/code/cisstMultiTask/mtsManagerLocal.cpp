@@ -465,7 +465,7 @@ mtsDevice CISST_DEPRECATED * mtsManagerLocal::GetDevice(const std::string & devi
     return ComponentMap.GetItem(deviceName);
 }
 
-const bool mtsManagerLocal::FindComponent(const std::string & componentName) const
+bool mtsManagerLocal::FindComponent(const std::string & componentName) const
 {
     return (GetComponent(componentName) != NULL);
 }

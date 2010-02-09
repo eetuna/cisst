@@ -99,7 +99,7 @@ protected:
         const std::string GetProcessName() const   { return ProcessName; }
         const std::string GetComponentName() const { return ComponentName; }
         const std::string GetInterfaceName() const { return InterfaceName; }
-        const bool IsRemoteConnection() const      { return RemoteConnection; }
+        bool IsRemoteConnection() const            { return RemoteConnection; }
 #if CISST_MTS_HAS_ICE
         std::string GetEndpointInfo() const        { return EndpointInfo; }
         std::string GetCommunicatorID() const      { return CommunicatorID; }
@@ -137,8 +137,8 @@ protected:
             const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
             const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
             : RequestProcessName(requestProcessName), ConnectionID(connectionID), Connected(false),
-              ClientProcessName(ClientProcessName), ClientComponentName(ClientComponentName), ClientRequiredInterfaceName(ClientRequiredInterfaceName),
-              ServerProcessName(ServerProcessName), ServerComponentName(ServerComponentName), ServerProvidedInterfaceName(ServerProvidedInterfaceName)
+              ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientRequiredInterfaceName(clientRequiredInterfaceName),
+              ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
         {
             const double Timeout = 5.0; // 5 seconds
 
