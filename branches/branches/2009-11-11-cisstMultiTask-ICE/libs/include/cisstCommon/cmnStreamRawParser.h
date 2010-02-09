@@ -42,12 +42,14 @@ http://www.cisst.org/cisst/license.txt.
      \code
      cmnDouble s;
      vct3 v1, v2;
+     double d;
      \endcode
 
      These variables can be initialized from the following input file (called "test.txt"):
 
      \code
      S 10
+     D 5
      V1 1,2,3
      V2 4,5,6
      \endcode
@@ -59,11 +61,12 @@ http://www.cisst.org/cisst/license.txt.
      Config.AddEntry("S", s);
      Config.AddEntry("V1", v1, ',');
      Config.AddEntry("V2", v2, ',');   
+     Config.AddEntryStreamable("D", d);
      std::ifstream file("test.txt");
      bool success = Config.Parse(file);
      \endcode
 
-     If successful, the variables S, V1, and V2 will be assigned the
+     If successful, the variables S, V1, V2, and D will be assigned the
      values from the file.  Note that the variable names in the code
      do not have to be the same as the string names (in this example,
      the variables names are lower case and the strings are upper case).
@@ -76,6 +79,8 @@ http://www.cisst.org/cisst/license.txt.
 
      Note that the AddEntry method is templated, so that any data type can
      be used, as long as it contains the FromStreamRaw and ToStreamRaw methods.
+     Similarly, the AddEntryStreamable method is templated, so that any data
+     type can be used that defines the stream in (>>) and stream out (<<) operators.
 
      Current limitations:
 
@@ -127,6 +132,30 @@ class CISST_EXPORT cmnStreamRawParser
        }
    };
 
+   template <class _elementType>
+   class EntryStreamable : public EntryBase {
+       _elementType *valuePtr;
+   public:
+       EntryStreamable(const std::string &name, _elementType &data) : EntryBase(name, ' '), valuePtr(&data) {}
+       ~EntryStreamable() {}
+
+       bool Parse(std::istream &inputStream) {
+           if (valid) CMN_LOG_INIT_WARNING << "cmnStreamRawParser: duplicate entry for " << key << std::endl;
+           if (valuePtr)
+               inputStream >> *valuePtr;
+           valid = inputStream.good();
+           return valid;
+       }
+
+       void ToStream(std::ostream & outputStream) const {
+           outputStream << key << " ";
+           if (valuePtr && valid)
+               outputStream << *valuePtr;
+           else
+               outputStream << "(invalid)";
+       }
+   };
+
    // Comparison operator for std::set
    struct KeyListLess: public std::binary_function<const cmnStreamRawParser::EntryBase*, const cmnStreamRawParser::EntryBase*, bool>
    {
@@ -153,6 +182,22 @@ public:
    bool AddEntry(const std::string &name, _elementType &data, char delim = ' ')
    {
        cmnStreamRawParser::EntryBase *newEntry = new Entry<_elementType>(name, data, delim);
+       bool result = KeyList.insert(newEntry).second;
+       if (!result) delete newEntry;  // if not inserted, delete entry
+       return result;
+   }
+
+   /*! Add a {keyword,value} pair to be parsed from the input stream. This method is for
+       data types where the stream operators (<< and >>) can be used; in particular, for
+       primitive C data types (e.g., int, double) and std::string.
+       \param name Variable name (key)
+       \param data Variable to be assigned when input stream is parsed
+       \returns true if successful; false if not (e.g., duplicate entry)
+   */
+   template <class _elementType>
+   bool AddEntryStreamable(const std::string &name, _elementType &data)
+   {
+       cmnStreamRawParser::EntryBase *newEntry = new EntryStreamable<_elementType>(name, data);
        bool result = KeyList.insert(newEntry).second;
        if (!result) delete newEntry;  // if not inserted, delete entry
        return result;

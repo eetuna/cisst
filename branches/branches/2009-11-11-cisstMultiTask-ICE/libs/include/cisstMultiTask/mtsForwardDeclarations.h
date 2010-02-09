@@ -95,7 +95,7 @@ const bool mtsOptional = false;
 
 
 // classes defined when ICE is used
-#ifdef CISST_MTS_HAS_ICE
+#if CISST_MTS_HAS_ICE
 class mtsComponentProxy;
 class mtsProxySerializer;
 class mtsComponentInterfaceProxyServer;

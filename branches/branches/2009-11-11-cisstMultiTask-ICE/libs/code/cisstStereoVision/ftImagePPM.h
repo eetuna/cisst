@@ -18,51 +18,43 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 
+Original code courtesy of Ben Mitchell.
 */
 
 #ifndef _ftImagePPM_h
 #define _ftImagePPM_h
 
-// ftImagePPM is a class designed to read PPM or PGM files
-// for use in the SVL architecture.
-//
-// created by Ben Mitchell
-// adapted from ImageBMP (created by Balazs Vagvolgyi)
-
-#include <string>
-#include <fstream>
-//#include "svlFilterSourceImageFile.h"
-#include <cisstStereoVision/svlFileHandlers.h>
-
-#define IMAGEPPM_MAX_DIMENISION     8192
+#include <cisstStereoVision/svlImageIO.h>
 
 
-class ftImagePPM : public svlImageFile
+class ftImagePPM : public svlImageCodec, public cmnGenericObject
 {
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
 public:
     ftImagePPM();
-    ~ftImagePPM();
-    svlImageFile* GetInstance();
+    virtual ~ftImagePPM();
 
-    int ExtractDimensions(const char * filepath, int & width, int & height);
-    int Open(const char* filepath, svlImageProperties& properties);
-    int ReadAndClose(unsigned char* buffer, unsigned int size);
-    int Create(const char* filepath, svlImageProperties* properties, unsigned char* buffer);
+    virtual int ReadDimensions(const std::string &filename, unsigned int &width, unsigned int &height);
+    virtual int ReadDimensions(std::istream &stream, unsigned int &width, unsigned int &height);
+    virtual int ReadDimensions(const unsigned char *buffer, const size_t buffersize, unsigned int &width, unsigned int &height);
+
+    virtual int Read(svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, bool noresize = false);
+    virtual int Read(svlSampleImageBase &image, const unsigned int videoch, std::istream &stream, bool noresize = false);
+    virtual int Read(svlSampleImageBase &image, const unsigned int videoch, const unsigned char *buffer, const size_t buffersize, bool noresize = false);
+
+    virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, const int compression = -1);
+    virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, std::ostream &stream, const int compression = -1);
+    virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, std::ostream &stream, const std::string &codec, const int compression = -1);
+    virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, unsigned char *buffer, size_t &buffersize, const int compression = -1);
+    virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, unsigned char *buffer, size_t &buffersize, const std::string &codec, const int compression = -1);
 
 protected:
-    std::fstream myfile;
-    std::string magic;
-    unsigned int myrows;
-    unsigned int mycols;
-    unsigned int mycolors;
-    unsigned long mysize;
-
-    bool pgm;
-    unsigned char *tmpBuffer;
-    unsigned char tmpSwapBuffer[12288];
-
-    void Close();
+    unsigned char* ppmBuffer;
+    unsigned int ppmBufferSize;
 };
+
+CMN_DECLARE_SERVICES_INSTANTIATION(ftImagePPM)
 
 #endif // _ftImagePPM_h
 

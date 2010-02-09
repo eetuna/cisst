@@ -23,8 +23,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsDevice.h>
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsVector.h>
 
-#include <QMainWindow>
+#include <QImage>
+#include <QList>
+#include <QPainter>
+#include <QTimer>
 
 #include "ui_devMicronTrackerControllerQWidget.h"
 
@@ -40,19 +44,49 @@ class devMicronTrackerControllerQDevice : public QObject, public mtsDevice
 
     void Configure(const std::string & CMN_UNUSED(filename) = "") {};
 
- protected:
-    void CreateMainWindow(void);
+    void AddToolWidget(QWidget * toolWidget, QPoint * markerLeft, QPoint * markerRight);
 
-    Ui::ControllerWidget ControllerWidget;
+    QWidget * GetWidget(void) {
+        return &CentralWidget;
+    }
+
+ protected:
+    enum { FRAME_WIDTH = 640 };
+    enum { FRAME_HEIGHT = 480 };
+    enum { FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT };
+
+    Ui::devMicronTrackerControllerQWidget ControllerWidget;
     QWidget CentralWidget;
-    QMainWindow MainWindow;
+    QTimer UpdateTimer;
 
     struct {
+        mtsFunctionWrite CalibratePivot;
+        mtsFunctionWrite Capture;
         mtsFunctionWrite Track;
-    } MicronTracker;
+        mtsFunctionRead GetFrameLeft;
+        mtsFunctionRead GetFrameRight;
+
+        mtsUCharVec FrameLeft;
+        mtsUCharVec FrameRight;
+    } MTC;
+
+    QImage FrameLeft;
+    QImage FrameRight;
+    QList<QString> MarkerNames;
+    QList<QPoint *> MarkersLeft;
+    QList<QPoint *> MarkersRight;
+
+    QImage FrameTemp;
+    QPainter PainterTemp;
+    QPoint MarkerTemp;
 
  public slots:
-    void MicronTrackerTrackQSlot(bool value);
+    void UpdateFrameLeftQSlot(void);
+    void UpdateFrameRightQSlot(void);
+    void MTCCalibratePivotQSlot(void);
+    void MTCTrackQSlot(bool value);
+    void CaptureFrameLeftQSlot(bool value);
+    void CaptureFrameRightQSlot(bool value);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(devMicronTrackerControllerQDevice);

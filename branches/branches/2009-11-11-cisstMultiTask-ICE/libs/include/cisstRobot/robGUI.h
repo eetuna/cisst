@@ -1,14 +1,31 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #ifndef _robGUI_h
 #define _robGUI_h
 
-#include <cisstRobot/robMesh.h>
-#include <cisstRobot/robManipulator.h>
-
 #include <GL/glut.h>
-
 #include <vector>
 
-class robGUI {
+#include <cisstRobot/robGeom.h>
+#include <cisstRobot/robManipulator.h>
+#include <cisstRobot/robExport.h>
+
+class CISST_EXPORT robGUI {
 private:
 
   int x, y;           // X, Y positions (top left corner)
@@ -25,7 +42,7 @@ private:
   // compute the camera XYZ coordinates
   vctFixedSizeVector<double,3> CameraPosition() const;
   
-  std::vector<const robMesh*> meshes; // the bodies to be rendered
+  std::vector<const robGeom*> geoms; // the geometries
   
 public:
   
@@ -36,16 +53,18 @@ public:
   robGUI( int argc, char** argv);
   
   //! Insert a body to display
-  static void Insert( const robMesh* mesh );
+  static void Insert( const robGeom* geom );
 
   //! 
-  void Register( const robMesh* mesh );
+  void Register( const robGeom* geom );
 
   //! Draw everything
   void Draw();
   
   //! Process the keboard
   void Keyboard( int k, int x, int y );
+
+  static void Refresh();
 };
 
 #endif

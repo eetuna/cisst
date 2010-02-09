@@ -1,3 +1,20 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include <cisstCommon/cmnLogger.h>
 #include <cisstRobot/robBlenderRn.h>
 
@@ -14,7 +31,7 @@ robBlenderRn::robBlenderRn(double ti,
 			   const vctDynamicVector<double>& yfdd){
 
   if( tf < ti ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": t initial must be less than t final" 
 		      << std::endl;
   }
@@ -22,7 +39,7 @@ robBlenderRn::robBlenderRn(double ti,
   if( yi.size() != yid.size() || yi.size() != yidd.size() ||
       yf.size() != yfd.size() || yf.size() != yfdd.size() || 
       yi.size() != yf.size() ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Vectors must have the same length" 
 		      << std::endl;
   }
@@ -40,7 +57,7 @@ robDomainAttribute robBlenderRn::IsDefinedFor( const robVariables& input ) const
   
   // test the dof are double numbers
   if( !input.IsTimeSet() ){
-    CMN_LOG_RUN_WARNING << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_WARNING << CMN_LOG_DETAILS 
 			<< ": Expected time input" 
 			<< std::endl;
     return UNDEFINED;
@@ -63,7 +80,7 @@ robError robBlenderRn::Evaluate( const robVariables& input,
     robVariables blenderout;
 
     if( blenders[i]->Evaluate( input, blenderout ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to evaluate a blender" 
 			<< std::endl;
       return ERROR;

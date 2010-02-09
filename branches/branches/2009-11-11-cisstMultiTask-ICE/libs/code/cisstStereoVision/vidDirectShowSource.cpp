@@ -34,8 +34,11 @@ static int OleInitCounter = 0;
 /*** CDirectShowSource class *********/
 /*************************************/
 
+CMN_IMPLEMENT_SERVICES(CDirectShowSource)
+
 CDirectShowSource::CDirectShowSource() :
     CVideoCaptureSourceBase(),
+    cmnGenericObject(),
     Initialized(false),
     NumOfStreams(0),
     RunState(false),
@@ -649,9 +652,9 @@ IBaseFilter* CDirectShowSource::GetCaptureFilter(int devid)
                 break;
             }
             counter ++;
+            filtref->Release();
         }
         moniker->Release();
-        filtref->Release();
         filtref = 0;
     }
     enumcat->Release();

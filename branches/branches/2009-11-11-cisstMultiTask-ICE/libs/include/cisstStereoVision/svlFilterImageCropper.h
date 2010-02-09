@@ -28,13 +28,16 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
-class CISST_EXPORT svlFilterImageCropper : public svlFilterBase
+class CISST_EXPORT svlFilterImageCropper : public svlFilterBase, public cmnGenericObject
 {
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
 public:
     svlFilterImageCropper();
     virtual ~svlFilterImageCropper();
 
     void SetRectangle(unsigned int left, unsigned int top, unsigned int right, unsigned int bottom, unsigned int videoch = SVL_LEFT);
+    void SetRectangle(const svlRect & rect, unsigned int videoch = SVL_LEFT);
 
 protected:
     virtual int Initialize(svlSample* inputdata);
@@ -53,6 +56,8 @@ private:
 
     void CheckAndFixRectangle(unsigned int videoch, unsigned int width, unsigned int height);
 };
+
+CMN_DECLARE_SERVICES_INSTANTIATION(svlFilterImageCropper)
 
 #endif // _svlFilterImageCropper_h
 

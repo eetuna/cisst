@@ -37,6 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 /* Put header files here */
 #include "cisstCommon/cisstCommon.i.h"
 #include "cisstVector/cisstVector.i.h"
+#include "cisstOSAbstraction/cisstOSAbstraction.i.h"
 
 #include "cisstMultiTask/mtsCommandBase.h"
 #include "cisstMultiTask/mtsCommandVoidBase.h"
@@ -44,6 +45,9 @@ http://www.cisst.org/cisst/license.txt.
 #include "cisstMultiTask/mtsDevice.h"
 #include "cisstMultiTask/mtsDeviceInterface.h"
 #include "cisstMultiTask/mtsTask.h"
+#include "cisstMultiTask/mtsTaskContinuous.h"
+#include "cisstMultiTask/mtsTaskPeriodic.h"
+#include "cisstMultiTask/mtsTaskFromSignal.h"
 #include "cisstMultiTask/mtsTaskInterface.h"
 #include "cisstMultiTask/mtsRequiredInterface.h"
 #include "cisstMultiTask/mtsTaskManager.h"

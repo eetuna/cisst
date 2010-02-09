@@ -44,10 +44,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
 
-#if CISST_MTS_HAS_ICE
-//#include <cisstMultiTask/mtsDeviceInterfaceProxy.h>
-#endif 
-
 #include <set>
 #include <map>
 
@@ -69,7 +65,6 @@ class CISST_EXPORT mtsTask: public mtsDevice
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsManagerLocal;
-    //friend class mtsCollectorState;
     friend class mtsManagerLocalTest;
 
 public:
@@ -128,7 +123,7 @@ protected:
     bool OverranPeriod;
 
     /*! The data passed to the thread. */
-    void *ThreadStartData;
+    void * ThreadStartData;
 
     /*! The return value for RunInternal. */
     void * ReturnValue;
@@ -137,7 +132,7 @@ protected:
 
 	/*! The member function that is passed as 'start routine' argument for
 	  thread creation. */
-	virtual void *RunInternal(void* argument) = 0;
+	virtual void * RunInternal(void * argument) = 0;
 
     /*! The main part of the Run loop that is the same for all derived classes.
         This should not be overloaded. */
@@ -189,7 +184,7 @@ protected:
     /*! Helper function to change the task state. */
     void ChangeState(TaskStateType newState);
 
-    /*! Helper function to wait on a state change, with specified timeout. */
+    /*! Helper function to wait on a state change, with specified timeout in seconds. */
     bool WaitForState(TaskStateType desiredState, double timeout);
 
 public:
@@ -272,26 +267,35 @@ public:
     inline TaskStateType GetTaskState(void) const { return TaskState; }
 
     /*! Convert tasks state to string representation. */
-    const char *TaskStateName(TaskStateType state) const;
+    const char * TaskStateName(TaskStateType state) const;
 
     /*! Return task state as a string. */
-    inline const char *GetTaskStateName(void) const { return TaskStateName(TaskState); }
+    inline const char * GetTaskStateName(void) const { return TaskStateName(TaskState); }
 
     /*! Return the average period. */
     double GetAveragePeriod(void) const { return StateTable.GetAveragePeriod(); }
 
     /*! Return the name of this state table. */
-    const std::string GetDefaultStateTableName(void) const { return StateTable.GetName(); }
+    inline const std::string GetDefaultStateTableName(void) const {
+        return StateTable.GetName();
+    }
 
     /*! Return the pointer to the default state table or a specific one if a name is provided. */
-    mtsStateTable * GetStateTable(const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME) {
+    mtsStateTable * GetStateTable(const std::string & stateTableName) {
         return this->StateTables.GetItem(stateTableName, CMN_LOG_LOD_INIT_ERROR);
     }
+
+    /*! Add an existing state table to the list of known state tables
+      in this task.  This method will add an interface for the state
+      table using the name "StateTable" +
+      existingStateTable->GetName() unless the caller specifies that
+      no interface should be created. */
+    bool AddStateTable(mtsStateTable * existingStateTable, bool addProvidedInterface = true);
 
     /********************* Methods to manage interfaces *******************/
 	
     /* documented in base class */
-    mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
+    virtual mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
 
     
     /********************* Methods for task synchronization ***************/
@@ -310,113 +314,36 @@ public:
     virtual bool WaitToTerminate(double timeout);
 
     /*! Suspend this task until the Wakeup method is called. */
-    virtual void WaitForWakeup() { Thread.WaitForWakeup(); }
+    inline virtual void WaitForWakeup(void) {
+        Thread.WaitForWakeup();
+    }
 
     /*! Wakeup the task. */
-    virtual void Wakeup() { Thread.Wakeup(); }
+    inline virtual void Wakeup(void) {
+        Thread.Wakeup();
+    }
 
     /********************* Methods for task period and overrun ************/
 	
     /*! Return true if thread is periodic. */
-    virtual bool IsPeriodic(void) const { return false; }
+    inline virtual bool IsPeriodic(void) const {
+        return false;
+    }
 
 	/*! Return true if task overran allocated period. Note that this is not
         restricted to mtsTaskPeriodic.  For example, an mtsTaskFromCallback
         can overrun if a second callback occurs before the first is finished. */
-    virtual bool IsOverranPeriod(void) const { return OverranPeriod; }
+    inline virtual bool IsOverranPeriod(void) const {
+        return OverranPeriod;
+    }
 
 	/*! Reset overran period flag. */
-    virtual void ResetOverranPeriod(void) { OverranPeriod = false; }
+    inline virtual void ResetOverranPeriod(void) {
+        OverranPeriod = false;
+    }
 
     /*! Send a human readable description of the device. */
     void ToStream(std::ostream & outputStream) const;
-
-#if 0 //CISST_MTS_HAS_ICE
-    //-------------------------------------------------------------------------
-    //  Proxy Implementation Using ICE
-    //-------------------------------------------------------------------------
-protected:
-    /*! Task interface communicator ID */
-    const std::string TaskInterfaceCommunicatorID;
-
-    /*! Typedef to manage provided interface proxies of which type is 
-        mtsDeviceInterfaceProxyServer. This map is valid only if this task acts 
-        as a server task (or if this task has provided interfaces). */
-    typedef cmnNamedMap<mtsDeviceInterfaceProxyServer> ProvidedInterfaceProxyMapType;
-    ProvidedInterfaceProxyMapType ProvidedInterfaceProxies;
-
-    /*! Typedef to manage required interface proxies of which type is 
-        mtsDeviceInterfaceProxyClient. This map is valid only if this task acts 
-        as a client task (or if this task has required interfaces). */
-    typedef cmnNamedMap<mtsDeviceInterfaceProxyClient> RequiredInterfaceProxyMapType;
-    RequiredInterfaceProxyMapType RequiredInterfaceProxies;
-
-    /*! Assign a new port number for a new device interface proxy (see mtsProxyBaseCommon.h) */
-    const std::string GetNewPortNumberAsString(const unsigned int id);
-
-public:
-    /*! Run proxies for required interfaces. Only a server task can call this method 
-        because a client task has actual required interfaces while a server task has 
-        actual provided interfaces.
-        Note that all provided interface proxy objects in all tasks are created all at 
-        once because they should act as a server; they have to listen the client's
-        connection. */
-    void RunProvidedInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
-                                   const std::string & serverTaskIP);
-
-    /*! Run proxies for required interfaces. only a server task can call this method 
-        because a client task has actual required interfaces while a server task has 
-        actual provided interfaces.
-        In contrast to RunProvidedInterfaceProxy() method, when this method is called, 
-        only one required interface proxy object is created. Then it connects to the
-        provided interface proxy specified by the two arguments. */
-    void RunRequiredInterfaceProxy(mtsTaskManagerProxyClient * globalTaskManagerProxy,
-                                   const std::string & requiredInterfaceName,
-                                   const std::string & endpointInfo, 
-                                   const std::string & communicatorID);
-
-    /*! Getters */
-    mtsDeviceInterfaceProxyServer * GetProvidedInterfaceProxy(const std::string & providedInterfaceName) const;
-    mtsDeviceInterfaceProxyClient * GetRequiredInterfaceProxy(const std::string & requiredInterfaceName) const;
-
-    //-------------------------------------------
-    //  Send Methods
-    //-------------------------------------------
-    /*! Get the information on the provided interface as a set of string through
-        required interface proxy. */
-    bool SendGetProvidedInterfaceInfo(
-        const std::string & requiredInterfaceProxyName,
-        const std::string & providedInterfaceName,
-        mtsDeviceInterfaceProxy::ProvidedInterfaceInfo & providedInterfaceInfo);
-
-    /*! Create server-side proxy objects. */
-    bool SendCreateClientProxies(
-        const std::string & requiredInterfaceProxyName,
-        const std::string & userTaskName, const std::string & requiredInterfaceName,
-        const std::string & resourceTaskName, const std::string & providedInterfaceName);
-
-    /*! Connect the actual provided interface with the required interface proxy 
-        at server side. */
-    bool SendConnectServerSide(
-        const std::string & requiredInterfaceProxyName,
-        const std::string & userTaskName, const std::string & requiredInterfaceName,
-        const std::string & resourceTaskName, const std::string & providedInterfaceName);
-
-    /*! Update event handler proxy id at server side and enable them if used. 
-        Proxy id is replaced with a pointer to an actual event generator command 
-        object at client side. */
-    bool SendUpdateEventHandlerId(
-        const std::string & requiredInterfaceProxyName,
-        const std::string & serverTaskProxyName,
-        const std::string & clientTaskProxyName);
-
-    /*! Update command id at client side. Command id is replaced with a pointer
-        to a function proxy at server side. */
-    void SendGetCommandId(const std::string & requiredInterfaceName, 
-                          const std::string & serverTaskProxyName,
-                          const std::string & clientTaskProxyName,
-                          const std::string & providedInterfaceName);
-#endif // CISST_MTS_HAS_ICE
 };
 
 

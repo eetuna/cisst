@@ -1,13 +1,29 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #ifndef _robManipulator_h
 #define _robManipulator_h
 
-#include <cisstRobot/robLink.h>
-#include <cisstRobot/robJoint.h>
-#include <cisstRobot/robActuator.h>
-
 #include <string>
 
-class robManipulator{
+#include <cisstRobot/robLink.h>
+#include <cisstRobot/robExport.h>
+
+class CISST_EXPORT robManipulator{
   
 protected:
   
@@ -33,15 +49,11 @@ public:
   double** Js;
   
   //! A tool
-  robLink *tool;
+  robManipulator *tool;
   
   //! A vector of links
   std::vector<robLink> links;
-  //! A vector of joints
-  std::vector<robJoint> joints;
-  //! A vector of actuators
-  std::vector<robActuator*> actuators;
-  
+
   //! Load the kinematics and the dynamics of the robot
   robError LoadRobot( const std::string& linkfile );
   
@@ -71,17 +83,15 @@ public:
      \param q The joints positions
      \param qd The joints velocities
      \param qdd The joints accelerations
-     \param g Gravity vector 
-              (default \$ \begin{bmatrix} 0 & 0 & 9.81 \end{bmatrix}\$)
      \param fext An external force/moment acting on the tool control point
+     \param g The gravity acceleration
   */
   vctDynamicVector<double> 
   RNE( const vctDynamicVector<double>& q,
        const vctDynamicVector<double>& qd,
        const vctDynamicVector<double>& qdd,
-       const vctFixedSizeVector<double,3>& g=vctFixedSizeVector<double,3>(0.0,0.0,9.81),
-       const vctFixedSizeVector<double,6>& fext=vctFixedSizeVector<double,6>(0.0) )
-    const;
+       const vctFixedSizeVector<double,6>& f=vctFixedSizeVector<double,6>(0.0),
+       double g = 9.81 ) const;
   
   //! Coriolis/centrifugal and gravity
   /**
@@ -121,8 +131,7 @@ public:
      \param[input] A A pointer to an NxN matrix
      \param[output] The NxN manipulator inertia matrix
   */
-  void JSinertia(double** A,
-		 const vctDynamicVector<double>& q ) const;
+  void JSinertia(double** A, const vctDynamicVector<double>& q ) const;
 		 
   
   //! Compute the 6x6 manipulator inertia matrix in operation space
@@ -130,54 +139,8 @@ public:
      \param[input] A A pointer to an 6x6 matrix
      \param[output] The 6x6 manipulator inertia matrix in operation space
   */
-  void OSinertia(double Ac[6][6],
-		 const vctDynamicVector<double>& q) const;
-  
-  //! Actuator positions to joint positions
-  /**
-     This is the default behavior for converting actuator positions to 
-     motor positions. This method simply copies the values from the actuators
-     to the joints. You must implement your own behavior (gear ratios, 
-     differential drives) if you need anything more specific.
-     \param dt The time increment to compute joint velocities and accelerations
-  */
-  virtual
-  vctDynamicVector<double> 
-  ActuatorsPos2JointsPos( const vctDynamicVector<double>& q ) const;
-  
-  //! Actuator forces/torques to joint forces/torques
-  /**
-     This is the default behavior for converting actuator forces/torques to 
-     motor forces/torques. This method simply copies the values from the 
-     actuators to the joints. You must implement your own behavior (gear 
-     ratios, differential drives) if you need anything more specific.
-  */
-  virtual 
-  vctDynamicVector<double>
-  ActuatorsFT2JointsFT( const vctDynamicVector<double>& ft ) const;
-  
-  //! Joint positions to actuator positions
-  /**
-     This is the default behavior for converting joint positions to 
-     actuator positions. This method simply copies the values from the 
-     joints to the actuators. You must implement your own behavior (gear 
-     ratios, differential drives) if you need anything more specific.
-  */
-  virtual
-  vctDynamicVector<double>
-  JointsPos2ActuatorsPos( const vctDynamicVector<double>& q ) const;
-  
-  //! Joint forces/torques to actuators forces/torques
-  /**
-     This is the default behavior for converting joint forces/torques to 
-     actuators forces/torques. This method simply copies the values from the 
-     joints to the actuators. You must implement your own behavior (gear 
-     ratios, differential drives) if you need anything more specific.
-  */
-  virtual 
-  vctDynamicVector<double> 
-  JointsFT2ActuatorsFT( const vctDynamicVector<double>& ft ) const;
-  
+  void OSinertia(double Ac[6][6], const vctDynamicVector<double>& q) const;
+    
 public:
   
   //! Manipulator generic constructor
@@ -189,7 +152,6 @@ public:
      \param Rtw0 The offset transformation of the robot base
   */
   robManipulator( const std::string& robotfilename,
-		  const std::string& toolfilename = std::string(),
 		  const vctFrame4x4<double,VCT_ROW_MAJOR>& Rtw0 
 		  = vctFrame4x4<double,VCT_ROW_MAJOR>() );
   

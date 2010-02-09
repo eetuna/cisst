@@ -1,3 +1,20 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include <cisstCommon/cmnLogger.h>
 
 #include <cisstRobot/robTrajectoryManager.h>
@@ -14,14 +31,16 @@
 #include <iostream>
 
 robMapping::robMapping() {}
+
+
 robMapping::robMapping( const robVariables& from, const robVariables& to ){
-  domain = from;
-  codomain = to;
+  domain = from;      // set the mapping domain
+  codomain = to;      // set the mapping codomain
 }
   
 robTrajectoryManager::robTrajectoryManager(robClock* clock, robSource* source){ 
-  this->clock = clock;
-  this->source = source; 
+  this->clock = clock;     // set the clock
+  this->source = source;   // set the input source
 }
 
 void robTrajectoryManager::Clear(){ trajectories.clear(); }
@@ -59,7 +78,7 @@ robError robTrajectoryManager::Insert( robFunction* function,
     
     // the insertion didn't work
     else{ 
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to insert the function" 
 			<< std::endl;
       return ERROR;
@@ -94,7 +113,7 @@ robError robTrajectoryManager::Linear( double qi,                 // initial val
 				       robVariablesMask variables, 
 				       bool sticky ){
   if(clock==NULL){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": No clock is defined" 
 		      << std::endl;
     return ERROR;
@@ -102,7 +121,7 @@ robError robTrajectoryManager::Linear( double qi,                 // initial val
   
   robVariables time;
   if( clock->Read( time ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to query the clock" 
 		      << std::endl;
     return ERROR;
@@ -112,7 +131,7 @@ robError robTrajectoryManager::Linear( double qi,                 // initial val
   double tf = ti + fabs(qf-qi)/fabs(vmax); // final time
 
   if( Linear( ti, qi, tf, qf, variables, sticky ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to create the trajectory"
 		      << std::endl;
     return ERROR;
@@ -128,7 +147,7 @@ robError robTrajectoryManager::Linear( const vctDynamicVector<double>& qi,
 				       bool sticky ){
   // test for vector size
   if( qi.size() != qf.size() ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": vectors must have the same length" 
 		      << std::endl;
     return ERROR;
@@ -137,7 +156,7 @@ robError robTrajectoryManager::Linear( const vctDynamicVector<double>& qi,
   // get the current time
   robVariables time;
   if( clock->Read(time) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to query the clock" 
 		      << std::endl;
     return ERROR;
@@ -152,7 +171,7 @@ robError robTrajectoryManager::Linear( const vctDynamicVector<double>& qi,
   }
 
   if( Linear( ti, qi, tf, qf, variables, sticky ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to create the trajectory" 
 		      << std::endl;
     return ERROR;
@@ -170,7 +189,7 @@ robError robTrajectoryManager::Linear( double ti,
 
   // check that the time make sense
   if( tf < ti ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": t initial must be less than t final" 
 		      << std::endl;
     return ERROR;
@@ -178,7 +197,7 @@ robError robTrajectoryManager::Linear( double ti,
 
   // check that the vector size match
   if( qi.size() != qf.size() ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Vectors must have the same length" 
 		      << std::endl;
     return ERROR;
@@ -188,7 +207,7 @@ robError robTrajectoryManager::Linear( double ti,
   variables &= ( robVariables::JOINTS_POS | robVariables::TRANSLATION );
 
   if( !variables ){ 
-    CMN_LOG_RUN_VERBOSE << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_VERBOSE << CMN_LOG_DETAILS 
 			<< ": No variable!" 
 			<< std::endl;
     return ERROR;
@@ -199,7 +218,7 @@ robError robTrajectoryManager::Linear( double ti,
 
   // insert the linear function as a mapping F:R1->Rn
   if( Insert( linear, robVariables::TIME, variables ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to insert the function" 
 		      << std::endl;
     return ERROR;
@@ -212,7 +231,7 @@ robError robTrajectoryManager::Linear( double ti,
     
     // insert the constant function as a mapping F:R1->Rn
     if( Insert( constant, robVariables::TIME, variables) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to insert the sticky function" 
 			<< std::endl;
       return ERROR;
@@ -229,7 +248,7 @@ robError robTrajectoryManager::Sigmoid( double ti,                // initial tim
 					bool sticky ){
   // check the time make sense
   if( tf < ti ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": t initial must be less than t final" 
 		      << std::endl;
     return ERROR;
@@ -239,7 +258,7 @@ robError robTrajectoryManager::Sigmoid( double ti,                // initial tim
   variables &= ( robVariables::JOINTS_POS | robVariables::TRANSLATION );
 
   if( !variables ){
-    CMN_LOG_RUN_VERBOSE << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_VERBOSE << CMN_LOG_DETAILS 
 			<< ": No variable!" 
 			<< std::endl;
     return ERROR; 
@@ -250,7 +269,7 @@ robError robTrajectoryManager::Sigmoid( double ti,                // initial tim
 
   // insert the linear function as a mapping F:R1->vctDynamicVector<double>
   if( Insert( sigmoid, robVariables::TIME, variables ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to insert the function" 
 		      << std::endl;
     return ERROR;
@@ -263,7 +282,7 @@ robError robTrajectoryManager::Sigmoid( double ti,                // initial tim
     
     // insert the constant function as a mapping F:R1->vctDynamicVector<double>
     if( Insert( constant, robVariables::TIME, variables ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to insert the sticky function" 
 			<< std::endl;
       return ERROR;
@@ -281,7 +300,7 @@ robError robTrajectoryManager::Sigmoid( double ti,
 
   // check that the vector size match
   if( qi.size() != qf.size() ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Vectors must have the same length"
 			<< std::endl;
     return ERROR;
@@ -296,7 +315,7 @@ robError robTrajectoryManager::Sigmoid( double ti,
     while( mask != robVariables::Q9 ){
       if( mask & variables ){
 	if( Sigmoid( ti, qi[i], tf, qf[i], variables & mask, sticky ) == ERROR ){
-	  CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+	  CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			    << ": Failed to create the trajectory" 
 			    << std::endl;
 	  return ERROR;
@@ -319,7 +338,7 @@ robTrajectoryManager::Translation( double ti,
 				   bool sticky ){
   // check the time make sense
   if( tf < ti ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": t initial must be less than t final" 
 		      << std::endl;
     return ERROR;
@@ -329,7 +348,7 @@ robTrajectoryManager::Translation( double ti,
   variables &= robVariables::TRANSLATION;
 
   if( !variables ){ 
-    CMN_LOG_RUN_VERBOSE << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_VERBOSE << CMN_LOG_DETAILS 
 			<< ": No DOF!" 
 			<< std::endl;
     return ERROR;
@@ -339,7 +358,7 @@ robTrajectoryManager::Translation( double ti,
   vctDynamicVector<double> Tf(3, Rtf[0][3], Rtf[1][3], Rtf[2][3] );
 
   if( Linear( ti, Ti, tf, Tf, variables, sticky ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to create the trajectory" 
 		      << std::endl;
     return ERROR;
@@ -356,7 +375,7 @@ robTrajectoryManager::Rotation( double ti,
 				bool sticky ){
   // check the time make sense
   if( tf < ti ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": t initial must be less than t final" 
 		      << std::endl;
     return ERROR;
@@ -366,7 +385,7 @@ robTrajectoryManager::Rotation( double ti,
   variables &= robVariables::ROTATION;
 
   if( !variables ){
-    CMN_LOG_RUN_VERBOSE << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_VERBOSE << CMN_LOG_DETAILS 
 			<< ": No DOF!" 
 			<< std::endl;
     return ERROR;
@@ -377,7 +396,7 @@ robTrajectoryManager::Rotation( double ti,
 
   // insert the linear function as a mapping F:R1->vctDynamicVector<double>
   if( Insert( slerp, robVariables::TIME, variables ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to insert the function" 
 		      << std::endl;
     return ERROR;
@@ -391,7 +410,7 @@ robTrajectoryManager::Rotation( double ti,
     
     // insert the constant function as a mapping F:R1->vctDynamicVector<double>
     if( Insert( constant, robVariables::TIME, variables ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to insert the sticky function" 
 			<< std::endl;
       return ERROR;
@@ -424,7 +443,7 @@ robTrajectoryManager::Linear( const vctFrame4x4<double,VCT_ROW_MAJOR>& Rtwi,
 
   // ensure the clock is there
   if(clock==NULL){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": No clock defined" 
 		      << std::endl;
     return ERROR;
@@ -432,7 +451,7 @@ robTrajectoryManager::Linear( const vctFrame4x4<double,VCT_ROW_MAJOR>& Rtwi,
 
   robVariables time;
   if( clock->Read( time ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to query the clock" 
 		      << std::endl;
     return ERROR;
@@ -461,7 +480,7 @@ robTrajectoryManager::Linear( const vctFrame4x4<double,VCT_ROW_MAJOR>& Rtwi,
 
   // create the motion
   if( Linear( ti, Rtwi, tf, Rtwf, variables, sticky) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to create a trajectory" 
 		      << std::endl;
     return ERROR;
@@ -479,7 +498,7 @@ robTrajectoryManager::Linear( const std::vector< vctFrame4x4<double,VCT_ROW_MAJO
 
   // ensure the clock is there
   if(clock==NULL){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": No clock defined" 
 		      << std::endl;
     return ERROR;
@@ -487,7 +506,7 @@ robTrajectoryManager::Linear( const std::vector< vctFrame4x4<double,VCT_ROW_MAJO
 
   robVariables time;
   if( clock->Read( time ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to query the clock" 
 		      << std::endl;
     return ERROR;
@@ -520,7 +539,7 @@ robTrajectoryManager::Linear( const std::vector< vctFrame4x4<double,VCT_ROW_MAJO
 
     // create the motion
     if( Linear( ti, Rtwi, tf, Rtwf, variables, sticky ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to create the trajectory" 
 			<< std::endl;
       return ERROR;
@@ -539,7 +558,7 @@ robError robTrajectoryManager::TrackSE3( robVariablesMask variables,
   variables &= robVariables::CARTESIAN_POS;
 
   if( !variables ){ 
-    CMN_LOG_RUN_VERBOSE << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_VERBOSE << CMN_LOG_DETAILS 
 			<< ": No DOF!" 
 			<< std::endl;
     return ERROR;
@@ -552,7 +571,7 @@ robError robTrajectoryManager::TrackSE3( robVariablesMask variables,
   if( Insert( track, 
 	      robVariables::TIME | robVariables::CARTESIAN_POS,
 	      variables ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to insert the function" 
 		      << std::endl;
     return ERROR;
@@ -564,7 +583,7 @@ robError robTrajectoryManager::Evaluate( robVariables& output ){
 
   // make sure that the domain is there
   if( clock == NULL ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": No clock defined" 
 		      << std::endl;
     return ERROR;
@@ -572,7 +591,7 @@ robError robTrajectoryManager::Evaluate( robVariables& output ){
 
   robVariables input;
   if( clock->Read( input ) == ERROR ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Failed to query the clock" 
 		      << std::endl;
     return ERROR;
@@ -580,7 +599,7 @@ robError robTrajectoryManager::Evaluate( robVariables& output ){
 
   if( source != NULL ){
     if( source->Read( input ) == ERROR ){
-      CMN_LOG_RUN_WARNING << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_WARNING << CMN_LOG_DETAILS 
 			  << ": Failed to query the source" 
 			  << std::endl;
     }

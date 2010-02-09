@@ -205,28 +205,30 @@ protected:
     typedef std::map<unsigned int, mtsManagerGlobal::ConnectionElement*> ConnectionElementMapType;
     ConnectionElementMapType ConnectionElementMap;
 
-    /*! Mutex for ConnectionElementMap because several threads possibly access
-        ConnectionElementMap. */
-    osaMutex ConnectionElementMapChange;
-
     /*! Instance of connected local component manager. Note that the global 
         component manager communicates with the only one instance of 
         mtsManagerLocalInterface regardless of connection type (standalone
         or network mode) */
     mtsManagerLocalInterface * LocalManagerConnected;
 
-    /*! Connection id to issue a new connection session ID */
-    unsigned int ConnectionID;
-
     /*! IP address of this machine */
     std::string ProcessIP;
 
+    /*! Mutex for ConnectionElementMap because several threads possibly access
+        ConnectionElementMap. */
+    osaMutex ConnectionElementMapChange;
+
+    /*! Connection id to issue a new connection session ID */
+    unsigned int ConnectionID;
+
+#if CISST_MTS_HAS_ICE
     /*! Network proxy server */
     mtsManagerProxyServer * ProxyServer;
 
     /*! Proxy server access information */
     std::string endpointAccessInfo;
     std::string communicatorID;
+#endif
 
     //-------------------------------------------------------------------------
     //  Processing Methods

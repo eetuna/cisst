@@ -233,8 +233,10 @@ public:
 
     /*! Retrieve a component by name. */
     mtsDevice * GetComponent(const std::string & componentName) const;
-    mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
+    mtsTask * GetComponentAsTask(const std::string & componentName) const;
+
     mtsDevice CISST_DEPRECATED * GetDevice(const std::string & deviceName); // For backward compatibility
+    mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
 
     /*! Check if a component exists by its name */
     const bool FindComponent(const std::string & componentName) const;
@@ -339,6 +341,15 @@ public:
     void DisconnectGCM();
     void ReconnectGCM();
 #endif
+
+    //-------------------------------------------------------------------------
+    // Deprecated APIs
+    //-------------------------------------------------------------------------
+    void CISST_DEPRECATED SetServerTaskIP(const std::string) {}
+    void CISST_DEPRECATED SetGlobalTaskManagerIP(const std::string) {}
+
+    typedef enum { TASK_MANAGER_CLIENT, TASK_MANAGER_SERVER } ManagerType;
+    void CISST_DEPRECATED SetTaskManagerType(ManagerType type) {}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerLocal)

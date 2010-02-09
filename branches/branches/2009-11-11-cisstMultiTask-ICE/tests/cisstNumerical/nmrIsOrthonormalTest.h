@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <cisstConfig.h>
 #include <cisstVector/vctRandomFixedSizeMatrix.h>
 #include <cisstVector/vctRandomDynamicMatrix.h>
 

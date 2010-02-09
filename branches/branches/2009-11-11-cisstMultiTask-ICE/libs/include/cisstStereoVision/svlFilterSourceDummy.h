@@ -28,34 +28,35 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
-#define SVL_DMYSRC_DISPARITY_CAP            200
 #define SVL_DMYSRC_DATA_NOT_INITIALIZED     -7000
 
-class CISST_EXPORT svlFilterSourceDummy : public svlFilterSourceBase
+class CISST_EXPORT svlFilterSourceDummy : public svlFilterSourceBase, public cmnGenericObject
 {
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
 public:
+    svlFilterSourceDummy();
     svlFilterSourceDummy(svlStreamType type);
+    svlFilterSourceDummy(const svlSampleImageBase & image);
     virtual ~svlFilterSourceDummy();
 
+    int SetType(svlStreamType type);
+    int SetImage(const svlSampleImageBase & image);
+
     int SetDimensions(unsigned int width, unsigned int height);
-
-    void EnableNoiseImage(bool noise) { Noise = noise; }
-    void SetStereoNoiseDisparity(int disparity);
-
-    int SetImage(unsigned char* buffer, unsigned int size);
-    int SetImage(unsigned char* buffer_left, unsigned int size_left, unsigned char* buffer_right, unsigned int size_right);
+    void EnableNoiseImage(bool noise);
 
 protected:
     virtual int Initialize();
     virtual int ProcessFrame(ProcInfo* procInfo);
 
 private:
+    unsigned int Width;
+    unsigned int Height;
     bool Noise;
-    int Disparity;
-    unsigned char* ImageBuffer[2];
-
-    void Translate(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert);
 };
+
+CMN_DECLARE_SERVICES_INSTANTIATION(svlFilterSourceDummy)
 
 #endif // _svlFilterSourceDummy_h
 

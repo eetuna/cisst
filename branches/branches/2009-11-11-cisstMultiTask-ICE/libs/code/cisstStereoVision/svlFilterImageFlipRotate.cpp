@@ -29,8 +29,11 @@ using namespace std;
 /*** svlFilterImageFlipRotate class ****/
 /***************************************/
 
+CMN_IMPLEMENT_SERVICES(svlFilterImageFlipRotate)
+
 svlFilterImageFlipRotate::svlFilterImageFlipRotate() :
-    svlFilterBase()
+    svlFilterBase(),
+    cmnGenericObject()
 {
     AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
     AddSupportedType(svlTypeImageMono8, svlTypeImageMono8);
@@ -84,7 +87,8 @@ int svlFilterImageFlipRotate::Initialize(svlSample* inputdata)
 
         case svlTypeImageRGBA:
         case svlTypeImageRGBAStereo:
-        case svlTypeDepthMap:
+        case svlTypeImageMonoFloat:
+        case svlTypeImage3DMap:
         case svlTypeInvalid:
         case svlTypeStreamSource:
         case svlTypeStreamSink:
@@ -248,7 +252,8 @@ int svlFilterImageFlipRotate::ProcessFrame(ProcInfo* procInfo, svlSample* inputd
 
             case svlTypeImageRGBA:
             case svlTypeImageRGBAStereo:
-            case svlTypeDepthMap:
+            case svlTypeImageMonoFloat:
+            case svlTypeImage3DMap:
             case svlTypeInvalid:
             case svlTypeStreamSource:
             case svlTypeStreamSink:

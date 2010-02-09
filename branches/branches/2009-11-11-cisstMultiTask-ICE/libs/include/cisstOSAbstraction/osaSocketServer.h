@@ -34,7 +34,7 @@ http://www.cisst.org/cisst/license.txt.
     osaSocket *server;
     do {
         server = socketServer.Accept();
-    } while (server != NULL);
+    } while (server != 0);
     \endcode
 
   \note Please refer to osAbstractionTutorial/sockets for usage examples.
@@ -74,23 +74,12 @@ public:
         \return Pointer to the accepted socket or 0 on failure */
     osaSocket * Accept(void);
 
-    /*! \brief Check if a particular socket is still connected
-        \param socket Pointer to the socket to be checked
-        \return true if connected */
-    bool IsConnected(osaSocket * socket);
-
-    /*! \return A socket to read from or 0 on failure */
-    osaSocket * Select(void);
-
-    /*! \brief Close the socket */
+    /*! \brief Close the listening socket  */
     void Close(void);
 
 protected:
-    /*! \brief Iteratively close all client sockets */
-    void CloseClients(void);
 
-    int SocketFD;
-    std::map<int, osaSocket *> Clients;
+    int ServerSocketFD;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(osaSocketServer);

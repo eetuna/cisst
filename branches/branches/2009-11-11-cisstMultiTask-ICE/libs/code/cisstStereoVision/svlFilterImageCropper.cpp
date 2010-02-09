@@ -29,7 +29,11 @@ using namespace std;
 /*** svlFilterImageCropper class **********/
 /******************************************/
 
-svlFilterImageCropper::svlFilterImageCropper() : svlFilterBase()
+CMN_IMPLEMENT_SERVICES(svlFilterImageCropper)
+
+svlFilterImageCropper::svlFilterImageCropper() :
+    svlFilterBase(),
+    cmnGenericObject()
 {
     AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
     AddSupportedType(svlTypeImageMono8, svlTypeImageMono8);
@@ -37,7 +41,8 @@ svlFilterImageCropper::svlFilterImageCropper() : svlFilterBase()
     AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
     AddSupportedType(svlTypeImageMono8Stereo, svlTypeImageMono8Stereo);
     AddSupportedType(svlTypeImageMono16Stereo, svlTypeImageMono16Stereo);
-    AddSupportedType(svlTypeDepthMap, svlTypeDepthMap);
+    AddSupportedType(svlTypeImageMonoFloat, svlTypeImageMonoFloat);
+    AddSupportedType(svlTypeImage3DMap, svlTypeImage3DMap);
 
     SetLeft[0] = SetLeft[1] = 0;
     SetRight[0] = SetRight[1] = 639;
@@ -57,6 +62,11 @@ void svlFilterImageCropper::SetRectangle(unsigned int left, unsigned int top, un
     SetRight[videoch] = right;
     SetTop[videoch] = top;
     SetBottom[videoch] = bottom;
+}
+
+void svlFilterImageCropper::SetRectangle(const svlRect & rect, unsigned int videoch)
+{
+    SetRectangle(rect.left, rect.top, rect.right, rect.bottom, videoch);
 }
 
 int svlFilterImageCropper::Initialize(svlSample* inputdata)
@@ -163,11 +173,24 @@ int svlFilterImageCropper::Initialize(svlSample* inputdata)
         }
         break;
 
-        case svlTypeDepthMap:
+        case svlTypeImageMonoFloat:
         {
-            svlSampleDepthMap* input = dynamic_cast<svlSampleDepthMap*>(inputdata);
+            svlSampleImageMonoFloat* input = dynamic_cast<svlSampleImageMonoFloat*>(inputdata);
 
-            svlSampleDepthMap* output = new svlSampleDepthMap;
+            svlSampleImageMonoFloat* output = new svlSampleImageMonoFloat;
+            if (output == 0)
+                return SVL_ALLOCATION_ERROR;
+            OutputData = output;
+
+            CheckAndFixRectangle(SVL_LEFT, input->GetWidth(), input->GetHeight());
+            output->SetSize(Right[SVL_LEFT] - Left[SVL_LEFT] + 1, Bottom[SVL_LEFT] - Top[SVL_LEFT] + 1);
+        }
+
+        case svlTypeImage3DMap:
+        {
+            svlSampleImage3DMap* input = dynamic_cast<svlSampleImage3DMap*>(inputdata);
+
+            svlSampleImage3DMap* output = new svlSampleImage3DMap;
             if (output == 0)
                 return SVL_ALLOCATION_ERROR;
             OutputData = output;
@@ -208,10 +231,10 @@ int svlFilterImageCropper::ProcessFrame(ProcInfo* procInfo, svlSample* inputdata
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
-        stride = id->GetWidth(idx) * id->GetDataChannels();
-        width = od->GetWidth(idx) * od->GetDataChannels();
+        stride = id->GetWidth(idx) * id->GetBPP();
+        width = od->GetWidth(idx) * od->GetBPP();
         height = od->GetHeight(idx);
-        input = id->GetUCharPointer(idx) + stride * Top[idx] + Left[idx] * id->GetDataChannels();
+        input = id->GetUCharPointer(idx, Left[idx], Top[idx]);
         output = od->GetUCharPointer(idx);
 
         // copy data
@@ -259,3 +282,4 @@ void svlFilterImageCropper::CheckAndFixRectangle(unsigned int videoch, unsigned 
         Bottom[videoch] = ti;
     }
 }
+

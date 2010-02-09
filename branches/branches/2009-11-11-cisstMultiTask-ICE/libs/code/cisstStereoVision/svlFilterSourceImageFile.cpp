@@ -36,33 +36,33 @@ http://www.cisst.org/cisst/license.txt.
     #define CMN_UNUSED(argument) argument
 #endif
 
-using namespace std;
 
 /***************************************/
 /*** svlFilterSourceImageFile class ****/
 /***************************************/
 
-svlFilterSourceImageFile::svlFilterSourceImageFile(bool stereo) :
+CMN_IMPLEMENT_SERVICES(svlFilterSourceImageFile)
+
+svlFilterSourceImageFile::svlFilterSourceImageFile() :
     svlFilterSourceBase(),
+    cmnGenericObject(),
     NumberOfDigits(0),
     From(0),
     To(0)
 {
-    Stereo = stereo;
-    if (Stereo) {
-        AddSupportedType(svlTypeImageRGBStereo);
-        OutputData = new svlSampleImageRGBStereo;
-    }
-    else {
-        AddSupportedType(svlTypeImageRGB);
-        OutputData = new svlSampleImageRGB;
-    }
+    OutputData = 0;
+}
 
-    for (int i = 0; i < 2; i ++) {
-        ImageFile[i] = 0;
-        FilePathPrefix[i][0] = 0;
-        Extension[i][0] = 0;
-    }
+svlFilterSourceImageFile::svlFilterSourceImageFile(unsigned int channelcount) :
+    svlFilterSourceBase(),
+    cmnGenericObject(),
+    NumberOfDigits(0),
+    From(0),
+    To(0)
+{
+    OutputData = 0;
+
+    SetChannelCount(channelcount);
 }
 
 svlFilterSourceImageFile::~svlFilterSourceImageFile()
@@ -72,83 +72,97 @@ svlFilterSourceImageFile::~svlFilterSourceImageFile()
     if (OutputData) delete OutputData;
 }
 
-int svlFilterSourceImageFile::Initialize()
+int svlFilterSourceImageFile::SetChannelCount(unsigned int channelcount)
 {
-    Release();
+    if (OutputData ||
+        channelcount < 1 || channelcount > 2) return SVL_FAIL;
 
-    if (Stereo) {
-        // creating image file objects
-        ImageFile[SVL_LEFT] = ImageTypeList.GetHandlerInstance(Extension[SVL_LEFT]);
-        ImageFile[SVL_RIGHT] = ImageTypeList.GetHandlerInstance(Extension[SVL_RIGHT]);
-        if (ImageFile[SVL_LEFT] == 0 || ImageFile[SVL_RIGHT] == 0) {
-            Release();
-            return SVL_IFS_EXTENSION_NOT_SUPPORTED;
-        }
-
-        // constructing filename
-        if (NumberOfDigits > 0) {
-            // first file in the sequence
-            FileCounter = From;
-            BuildFilePath(SVL_LEFT, FileCounter);
-            BuildFilePath(SVL_RIGHT, FileCounter);
-        }
-        else {
-            // single file
-            BuildFilePath(SVL_LEFT);
-            BuildFilePath(SVL_RIGHT);
-        }
-
-        // opening first files (in the sequence)
-        ImageProps[SVL_LEFT].Padding = false;
-        ImageProps[SVL_RIGHT].Padding = false;
-        if (ImageFile[SVL_LEFT]->Open(FilePath[SVL_LEFT], ImageProps[SVL_LEFT]) != SVL_OK ||
-            ImageFile[SVL_RIGHT]->Open(FilePath[SVL_RIGHT], ImageProps[SVL_RIGHT]) != SVL_OK) {
-            Release();
-            return SVL_IFS_UNABLE_TO_OPEN;
-        }
-
-        // setting image size
-        svlSampleImageRGBStereo* img = dynamic_cast<svlSampleImageRGBStereo*>(OutputData);
-        img->SetSize(SVL_LEFT, ImageProps[SVL_LEFT].Width, ImageProps[SVL_LEFT].Height);
-        img->SetSize(SVL_RIGHT, ImageProps[SVL_RIGHT].Width, ImageProps[SVL_RIGHT].Height);
+    if (channelcount == 1) {
+        AddSupportedType(svlTypeImageRGB);
+        OutputData = new svlSampleImageRGB;
     }
     else {
+        AddSupportedType(svlTypeImageRGBStereo);
+        OutputData = new svlSampleImageRGBStereo;
+    }
+
+    ImageCodec.SetSize(channelcount);
+    FilePathPrefix.SetSize(channelcount);
+    Extension.SetSize(channelcount);
+    FilePath.SetSize(channelcount);
+    ImageCodec.SetAll(0);
+
+    return SVL_OK;
+}
+
+int svlFilterSourceImageFile::Initialize()
+{
+    if (OutputData == 0) return SVL_FAIL;
+
+    Release();
+
+    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
+    unsigned int videochannels = img->GetVideoChannels();
+    unsigned int w, h;
+
+    for (unsigned int i = 0; i < videochannels; i ++) {
         // checking extensions
         // creating image file objects
-        ImageFile[SVL_LEFT] = ImageTypeList.GetHandlerInstance(Extension[SVL_LEFT]);
-        if (ImageFile[SVL_LEFT] == 0) {
+        ImageCodec[i] = svlImageIO::GetCodec("." + Extension[i]);
+        if (ImageCodec[i] == 0) {
             Release();
-            return SVL_IFS_EXTENSION_NOT_SUPPORTED;
+            return SVL_FAIL;
         }
 
         // constructing filename
         if (NumberOfDigits > 0) {
             // first file in the sequence
             FileCounter = From;
-            BuildFilePath(SVL_LEFT, FileCounter);
+            BuildFilePath(i, FileCounter);
         }
         else {
             // single file
-            BuildFilePath(SVL_LEFT);
+            BuildFilePath(i);
         }
 
         // opening first files (in the sequence)
-        ImageProps[SVL_LEFT].Padding = false;
-        if (ImageFile[SVL_LEFT]->Open(FilePath[SVL_LEFT], ImageProps[SVL_LEFT]) != SVL_OK) {
+        if (ImageCodec[i]->ReadDimensions(FilePath[i], w, h) != SVL_OK) {
             Release();
-            return SVL_IFS_UNABLE_TO_OPEN;
+            return SVL_FAIL;
         }
 
         // setting image size
-        svlSampleImageRGB* img = dynamic_cast<svlSampleImageRGB*>(OutputData);
-        img->SetSize(SVL_LEFT, ImageProps[SVL_LEFT].Width, ImageProps[SVL_LEFT].Height);
+        svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
+        img->SetSize(i, w, h);
     }
 
     return SVL_OK;
 }
 
+int svlFilterSourceImageFile::OnStart(unsigned int CMN_UNUSED(procCount))
+{
+    StopLoop = false;
+    return SVL_OK;
+}
+
 int svlFilterSourceImageFile::ProcessFrame(ProcInfo* procInfo)
 {
+    // Increment file counter
+    if (FrameCounter > 0) {
+        _OnSingleThread(procInfo)
+        {
+            FileCounter ++;
+            if (FileCounter > To) {
+                if (LoopFlag) FileCounter = From;
+                else StopLoop = true;
+            }
+        }
+
+        _SynchronizeThreads(procInfo);
+
+        if (StopLoop) return SVL_STOP_REQUEST;
+    }
+
     // Try to keep TargetFrequency
     _OnSingleThread(procInfo) WaitForTargetTimer();
 
@@ -169,26 +183,8 @@ int svlFilterSourceImageFile::ProcessFrame(ProcInfo* procInfo)
         BuildFilePath(idx, FileCounter);
 
         // opening file
-        ImageProps[idx].Padding = false;
-        if (ImageFile[idx]->Open(FilePath[idx], ImageProps[idx]) != SVL_OK)
-            return SVL_IFS_UNABLE_TO_OPEN;
-
-        // checking image dimensions
-        if (ImageProps[idx].Width != img->GetWidth(idx) ||
-            ImageProps[idx].Height != img->GetHeight(idx))
-            return SVL_IFS_WRONG_IMAGE_SIZE;
-
-        // reading data and closing file
-        if (ImageFile[idx]->ReadAndClose(img->GetUCharPointer(idx), img->GetDataSize(idx)) != SVL_OK)
-            return SVL_IFS_WRONG_IMAGE_DATA_SIZE;
-    }
-
-    _OnSingleThread(procInfo)
-    {
-        if (NumberOfDigits > 0) {
-            FileCounter ++;
-            if (FileCounter > To) FileCounter = From;
-        }
+        if (ImageCodec[idx]->Read(*img, idx, FilePath[idx], true) != SVL_OK)
+            return SVL_FAIL;
     }
 
     return SVL_OK;
@@ -196,44 +192,27 @@ int svlFilterSourceImageFile::ProcessFrame(ProcInfo* procInfo)
 
 int svlFilterSourceImageFile::Release()
 {
-    for (int i = 0; i < 2; i ++) {
-        if (ImageFile[0] != 0) delete ImageFile[0];
-        ImageFile[i] = 0;
+    for (unsigned int i = 0; i < ImageCodec.size(); i ++) {
+        if (ImageCodec[i]) delete ImageCodec[i];
+        ImageCodec[i] = 0;
     }
 
     return SVL_OK;
 }
 
-int svlFilterSourceImageFile::SetFilePath(const char* filepathprefix, const char* extension, int videoch)
+int svlFilterSourceImageFile::SetFilePath(const std::string & filepathprefix, const std::string & extension, int videoch)
 {
+    if (OutputData == 0)
+        return SVL_FAIL;
     if (IsInitialized() == true)
         return SVL_ALREADY_INITIALIZED;
-    if (videoch != SVL_LEFT && videoch != SVL_RIGHT)
-        return SVL_WRONG_CHANNEL;
-    if (!Stereo && videoch == SVL_RIGHT)
-        return SVL_WRONG_CHANNEL;
-    if (filepathprefix == 0 || extension == 0)
-        return SVL_FAIL;
 
-    int len;
+    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
+    unsigned int videochannels = img->GetVideoChannels();
+    if (videoch < 0 || videoch >= static_cast<int>(videochannels)) return SVL_FAIL;
 
-    // checking path prefix length
-    len = static_cast<int>(strlen(filepathprefix));
-    if (len < 1 || len >= SVL_IFS_FILEPATH_LENGTH)
-        return SVL_IFS_INVALID_FILEPATH;
-
-    // storing path prefix
-    memset(FilePathPrefix[videoch], 0, SVL_IFS_FILEPATH_LENGTH);
-    memcpy(FilePathPrefix[videoch], filepathprefix, len);
-
-    // checking extension length
-    len = static_cast<int>(strlen(extension));
-    if (len < 1 || len >= SVL_IFS_EXTENSION_LENGTH)
-        return SVL_IFS_INVALID_FILEPATH;
-
-    // storing extension
-    memset(Extension[videoch], 0, SVL_IFS_FILEPATH_LENGTH);
-    memcpy(Extension[videoch], extension, len);
+    FilePathPrefix[videoch] = filepathprefix;
+    Extension[videoch] = extension;
 
     return SVL_OK;
 }
@@ -252,24 +231,23 @@ int svlFilterSourceImageFile::SetSequence(unsigned int numberofdigits, unsigned 
     return SVL_OK;
 }
 
-void svlFilterSourceImageFile::BuildFilePath(int videoch, unsigned int framecounter)
+int svlFilterSourceImageFile::BuildFilePath(int videoch, unsigned int framecounter)
 {
+    if (OutputData == 0)
+        return SVL_FAIL;
+
+    std::stringstream path;
+
+    path << FilePathPrefix[videoch];
+
     if (NumberOfDigits > 0) {
-        int i, inlen, rmnlen;
-        char innum[10], outnum[10];
-
-        // building number string
-        sprintf(innum, "%d", framecounter);
-        inlen = strlen(innum);
-        rmnlen = NumberOfDigits - inlen;
-        for (i = 0; i < rmnlen; i ++) outnum[i] = '0';
-        for (i = 0; i < inlen; i ++) outnum[i + rmnlen] = innum[i];
-        outnum[i + rmnlen] = 0;
-
-        sprintf(FilePath[videoch], "%s%s.%s", FilePathPrefix[videoch], outnum, Extension[videoch]);
+        path.fill('0');
+        path << std::setw(NumberOfDigits) << framecounter << std::setw(1);
     }
-    else {
-        sprintf(FilePath[videoch], "%s.%s", FilePathPrefix[videoch], Extension[videoch]);
-    }
+
+    path << "." << Extension[videoch];
+    FilePath[videoch] = path.str();
+
+    return SVL_OK;
 }
 

@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Min Yang Jung
+  Author(s):  Ankur Kapoor, Min Yang Jung, Peter Kazanzides
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -27,21 +27,21 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsStateTable_h
 #define _mtsStateTable_h
 
+#include <cisstCommon/cmnGenericObject.h>
+#include <cisstCommon/cmnClassRegisterMacros.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
-#include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsStateArrayBase.h>
 #include <cisstMultiTask/mtsStateArray.h>
 #include <cisstMultiTask/mtsStateIndex.h>
 #include <cisstMultiTask/mtsHistory.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
 
 #include <vector>
 #include <iostream>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
-
-#define MTS_STATE_TABLE_DEFAULT_NAME "StateTable"
 
 // Forward declaration
 class osaTimeServer;
@@ -64,32 +64,70 @@ typedef int mtsStateDataId;
   multiple readers. State Data Table is also refered as Data Table or
   State Table elsewhere in the documentation.
  */
-class CISST_EXPORT mtsStateTable {
+class CISST_EXPORT mtsStateTable: public cmnGenericObject {
+
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsCollectorState;
+    friend class mtsTask;
     friend class mtsTaskTest;
     friend class mtsStateTableTest;
     friend class mtsCollectorBaseTest;
 
-    class DataCollectionInfoStruct {
+ public:
+    /*! Collection is performed by batches, this requires to save
+      the state indices for begin/end. */
+    class IndexRange: public mtsGenericObject
+    {
+        CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
     public:
-        /* True if data collection event can be triggered (false by default). */
-        bool TriggerEnabled;
+        mtsStateIndex First;
+        mtsStateIndex Last;
+    };
 
-        /*! Number of data that are newly generated and are to be fetched by the 
-        data collection tool. */
-        unsigned int NewDataCount;
+    /*! Data structure used for state table data collection.  Stores
+      information related to data collection as well as methods for
+      callbacks */
+    class DataCollectionInfo {
+    public:
+        /*! True if data collection event can be triggered, this state
+          table is currently collecting data (false by default). */
+        bool Collecting;
 
-        /*! If NewDataCount becomes greater than this vaule, an event for data collection
-            is generated. Though this value is redundant in some respect (because
-            EventTriggeringRatio is already defined), this value is kept for the purpose 
-            of efficiency. */
-        unsigned int EventTriggeringLimit;
+        /*! Delay in second before data collection should start.  This
+          is measured in seconds based on the state table Tic and Toc.
+          0 means that there is no defined start time. */
+        double StartTime;
 
-        DataCollectionInfoStruct() : TriggerEnabled(false), NewDataCount(0), EventTriggeringLimit(0)
+        /*! Delay in second before data collection should stop.  This
+          is measured in seconds based on the state table Tic and
+          Toc. 0 means that there is no defined stop time. */
+        double StopTime;
+
+        /*! Range for the batch */
+        mtsStateTable::IndexRange BatchRange;
+
+        /*! Maximum number of elements to collect in one batch. */
+        size_t BatchSize;
+
+        /*! Number of elements to be collected so far. */
+        size_t BatchCounter;
+
+        /*! Function used to trigger event sent to state collector
+          when the data collection is needed.  The payload is the
+          range defined by state indices. */ 
+        mtsFunctionWrite BatchReady;
+
+        /*! Default constructors */ 
+        inline DataCollectionInfo(void):
+            Collecting(false),
+            StartTime(0.0),
+            StopTime(0.0),
+            BatchSize(0),
+            BatchCounter(0)
         {}
 
-        ~DataCollectionInfoStruct() {}
+        inline ~DataCollectionInfo() {}
     };
 
 public:
@@ -105,30 +143,49 @@ public:
     
     template <class _elementType>
     class Accessor : public AccessorBase {
-        typedef _elementType value_type;
-        typedef typename mtsStateTable::Accessor<value_type> ThisType;
+        typedef typename mtsGenericTypes<_elementType>::FinalBaseType value_base_type;
+        typedef typename mtsGenericTypes<_elementType>::FinalType value_type;
+        typedef typename mtsGenericTypes<_elementType>::FinalRefType value_ref_type;
+        typedef typename mtsStateTable::Accessor<_elementType> ThisType;
         const mtsStateArray<value_type> &History;
-        value_type * Current;
+        value_ref_type * Current;
 
     public:
         Accessor(const mtsStateTable & table, mtsStateDataId id, 
-                 const mtsStateArray<value_type> * history, value_type * data):
+                 const mtsStateArray<value_type> * history, value_ref_type * data):
             AccessorBase(table, id), History(*history), Current(data) {}
 
         void ToStream(std::ostream & outputStream, const mtsStateIndex & when) const {
             History.Element(when.Index()).ToStream(outputStream);
         }
         
-        bool Get(const mtsStateIndex & when, value_type & data) const { 
-            data = History.Element(when.Index());
+        bool Get(const mtsStateIndex & when, value_base_type & data) const { 
+            // PK: This could be changed to an assignment (see below), once operator overloading is fixed
+            // data = History.Element(when.Index());
+            mtsGenericTypes<_elementType>::Copy(History.Element(when.Index()), data);
             return Table.ValidateReadIndex(when);
         }
 
-        bool GetLatest(value_type & data) const {
+        bool Get(const mtsStateIndex & when, mtsGenericObject & data) const {
+            value_type* pdata = dynamic_cast<value_type*>(&data);
+            if (pdata) {
+                return Get(when, *pdata);
+            }
+            value_ref_type* pref = dynamic_cast<value_ref_type*>(&data);
+            if (pref) {
+                return Get(when, *pref);
+            }
+            return false;
+        }
+
+        bool GetLatest(value_base_type & data) const {
             return Get(Table.GetIndexReader(), data);
         }
-        
-        void SetCurrent(const value_type & data) {
+        bool GetLatest(mtsGenericObject & data) const {
+            return Get(Table.GetIndexReader(), data);
+        }
+
+        void SetCurrent(const value_base_type & data) {
             *Current = data;
         }
         
@@ -176,7 +233,7 @@ public:
       advance.
       */
     std::vector<mtsGenericObject *> StateVectorElements;
-    
+
 	/*! The columns entries can be accessed by name. This vector
 	  stores the names corresponding to the columns. */
 	std::vector<std::string> StateVectorDataNames;
@@ -211,23 +268,22 @@ public:
     double SumOfPeriods;
 
     /*! The average period over the last HistoryLength samples. */
-    double AvgPeriod;
+    double AveragePeriod;
 
     /*! The name of this state table. */
-    std::string StateTableName;
+    std::string Name;
 
-    /*! Data collection event handler. */
-    mtsCommandVoidBase * DataCollectionEventHandler;
-
-    DataCollectionInfoStruct DataCollectionInfo;
+    /*! Information used for the state table data collection, see also
+      mtsCollectorState. */
+    DataCollectionInfo DataCollection;
 
 	/*! Write specified data. */
-	bool Write(mtsStateDataId id, const mtsGenericObject &obj);
+	bool Write(mtsStateDataId id, const mtsGenericObject & obj);
 
  public:
     /*! Constructor. Constructs a state table with a default
       size of 256 rows. */
-    mtsStateTable(int size = 256, const std::string & stateTableName = MTS_STATE_TABLE_DEFAULT_NAME);
+    mtsStateTable(int size, const std::string & name);
     
     /*! Default destructor. */
     ~mtsStateTable();
@@ -273,7 +329,8 @@ public:
         \returns Pointer to accessor class (0 if not found)
         \note This method is overloaded to accept the element pointer or string name.
     */
-    mtsStateTable::AccessorBase *GetAccessor(const mtsGenericObject &element) const;
+    template<class _elementType>
+    mtsStateTable::AccessorBase *GetAccessor(const _elementType &element) const;
 
     /*! Return pointer to accessor functions for the state data element.
         \param name Name of state data element
@@ -281,6 +338,7 @@ public:
         \note This method is overloaded to accept the element pointer or string name.
     */
     mtsStateTable::AccessorBase *GetAccessor(const std::string &name) const;
+    mtsStateTable::AccessorBase *GetAccessor(const char *name) const;
 
     /*! Get a handle for data to be used by a writer */
     mtsStateIndex GetIndexWriter(void) const;
@@ -295,20 +353,26 @@ public:
     */
     void Advance(void);
 
-    double GetTic(void) const { return Tic.Data; }
-    double GetToc(void) const { return Toc.Data; }
+    inline double GetTic(void) const {
+        return Tic.Data;
+    }
+    inline double GetToc(void) const {
+        return Toc.Data;
+    }
 
     /*! Return the moving average of the measured period (i.e., average of last
       HistoryLength values). */
-    double GetAveragePeriod(void) const { return AvgPeriod; }
+    inline double GetAveragePeriod(void) const {
+        return AveragePeriod;
+    }
 
     /*! For debugging, dumps the current data table to output
       stream. */
-    void ToStream(std::ostream& out) const;
+    void ToStream(std::ostream & out) const;
 
     /*! For debugging, dumps some values of the current data table to
       output stream. */
-    void Debug(std::ostream& out, unsigned int * listColumn, unsigned int number) const;
+    void Debug(std::ostream & out, unsigned int * listColumn, unsigned int number) const;
 
     /*! This method is to dump the state data table in the csv format, 
         allowing easy import into matlab.
@@ -316,10 +380,10 @@ public:
      By default print all rows, if nonZeroOnly == true then print only those rows which have a nonzero Ticks
      value i.e, those rows that have been written to at least once.
      */
-    void CSVWrite(std::ostream& out, bool nonZeroOnly = false);
-    void CSVWrite(std::ostream& out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
+    void CSVWrite(std::ostream & out, bool nonZeroOnly = false);
+    void CSVWrite(std::ostream & out, unsigned int * listColumn, unsigned int number, bool nonZeroOnly = false);
 
-    void CSVWrite(std::ostream& out, mtsGenericObject ** listColumn, unsigned int number, bool nonZeroOnly = false);
+    void CSVWrite(std::ostream & out, mtsGenericObject ** listColumn, unsigned int number, bool nonZeroOnly = false);
     
     /*! A base column index of StateTable for a signal registered by user. */
     static int StateVectorBaseIDForUser;
@@ -333,22 +397,20 @@ public:
     //                          const unsigned int lastFetchIndex);
     
     /*! Return the name of this state table. */
-    const std::string GetName(void) const { return StateTableName; }
-    
-    /*! Enable data collection event trigger. */
-    void ResetDataCollectionTrigger(void) { 
-        DataCollectionInfo.TriggerEnabled = true;
-    }
-    
-    /*! Set an event handler to inform the data collector about the
-      event that data in this state table is populated. */
-    void SetDataCollectionEventHandler(mtsCollectorState * collector);
+    inline const std::string GetName(void) const { return Name; }
     
     /*! Determine a ratio to generate a data collection event. */
-    void SetDataCollectionEventTriggeringRatio(const double eventTriggeringRatio);
-    
-    void GenerateDataCollectionEvent(void);
+    void DataCollectionEventTriggeringRatio(const mtsDouble & eventTriggeringRatio);
+
+    /*! Methods used to control the data collection start/stop */
+    //@{
+    void DataCollectionStart(const mtsDouble & delay);
+    void DataCollectionStop(const mtsDouble & delay);
+    //@}
 };
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsStateTable);
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsStateTable::IndexRange);
 
 
 // overload mtsObjectName to provide the class name
@@ -363,19 +425,31 @@ inline std::string mtsObjectName(const mtsStateTable::Accessor<_elementType> * C
     return "mtsStateTable::Accessor";
 }
 
-
 template <class _elementType>
 mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType * element) {
-    mtsStateArray<_elementType> * elementHistory =
-        new mtsStateArray<_elementType>(*element,
-                                        HistoryLength);
+    typedef typename mtsGenericTypes<_elementType>::FinalType FinalType;
+    typedef typename mtsGenericTypes<_elementType>::FinalRefType FinalRefType;
+    mtsStateArray<FinalType> * elementHistory =
+        new mtsStateArray<FinalType>(*element, HistoryLength);
     StateVector.push_back(elementHistory);
     NumberStateData = StateVector.size();
-    StateVectorElements.push_back(element); 
+    FinalRefType *pdata = mtsGenericTypes<_elementType>::ConditionalWrap(*element);
+    StateVectorElements.push_back(pdata); 
+
     StateVectorDataNames.push_back(name);
-    AccessorBase * accessor = new Accessor<_elementType>(*this, NumberStateData-1, elementHistory, element);
+    AccessorBase * accessor = new Accessor<_elementType>(*this, NumberStateData-1, elementHistory, pdata);
     StateVectorAccessors.push_back(accessor);
     return NumberStateData-1;
+}
+
+template <class _elementType>
+mtsStateTable::AccessorBase *mtsStateTable::GetAccessor(const _elementType &element) const
+{
+    for (unsigned int i = 0; i < StateVectorElements.size(); i++) {
+        if (mtsGenericTypes<_elementType>::IsEqual(element, *StateVectorElements[i]))
+            return StateVectorAccessors[i];
+    }
+    return 0;
 }
 
 #endif // _mtsStateTable_h

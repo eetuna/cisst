@@ -51,9 +51,13 @@ http://www.cisst.org/cisst/license.txt.
 /*** svlFilterSourceVideoFile class ****/
 /***************************************/
 
-svlFilterSourceVideoFile::svlFilterSourceVideoFile(bool stereo) :
+CMN_IMPLEMENT_SERVICES(svlFilterSourceVideoFile)
+
+svlFilterSourceVideoFile::svlFilterSourceVideoFile() :
     svlFilterSourceBase(false),  // manual timestamp management
-    AVIFrequency(-1.0)
+    cmnGenericObject(),
+    AVIFrequency(-1.0),
+    FirstTimestamp(-1.0)
 {
 #if (CISST_OS == CISST_WINDOWS)
     if (VFS_OleInitCounter < 1) {
@@ -62,31 +66,27 @@ svlFilterSourceVideoFile::svlFilterSourceVideoFile(bool stereo) :
     }
 #endif
 
-    if (stereo) {
-        AddSupportedType(svlTypeImageRGBStereo);
-        OutputData = new svlSampleImageRGBStereo;
-    }
-    else {
-        AddSupportedType(svlTypeImageRGB);
-        OutputData = new svlSampleImageRGB;
-    }
+    TargetFrequency = -1.0;
+    OutputData = 0;
+}
 
-    unsigned int videochannels = dynamic_cast<svlSampleImageBase*>(OutputData)->GetVideoChannels();
-    VideoObj.SetSize(videochannels);
-    VideoObj.SetAll(0);
-    VideoFile.SetSize(videochannels);
-    VideoFile.SetAll(0);
-    FilePath.SetSize(videochannels);
-    FilePartCount.SetSize(videochannels);
-    YUVBuffer.SetSize(videochannels);
-    YUVBuffer.SetAll(0);
-    YUVBufferSize.SetSize(videochannels);
-    CompressedBuffer.SetSize(videochannels);
-    CompressedBuffer.SetAll(0);
-    CompressedBufferSize.SetSize(videochannels);
-    FirstTimestamp.SetSize(videochannels);
+svlFilterSourceVideoFile::svlFilterSourceVideoFile(unsigned int channelcount) :
+    svlFilterSourceBase(false),  // manual timestamp management
+    cmnGenericObject(),
+    AVIFrequency(-1.0),
+    FirstTimestamp(-1.0)
+{
+#if (CISST_OS == CISST_WINDOWS)
+    if (VFS_OleInitCounter < 1) {
+        CoInitialize(0);
+        VFS_OleInitCounter = 1;
+    }
+#endif
 
     TargetFrequency = -1.0;
+    OutputData = 0;
+
+    SetChannelCount(channelcount);
 }
 
 svlFilterSourceVideoFile::~svlFilterSourceVideoFile()
@@ -103,8 +103,41 @@ svlFilterSourceVideoFile::~svlFilterSourceVideoFile()
 #endif
 }
 
+int svlFilterSourceVideoFile::SetChannelCount(unsigned int channelcount)
+{
+    if (OutputData) return SVL_FAIL;
+
+    if (channelcount == 1) {
+        AddSupportedType(svlTypeImageRGB);
+        OutputData = new svlSampleImageRGB;
+    }
+    else if (channelcount == 2) {
+        AddSupportedType(svlTypeImageRGBStereo);
+        OutputData = new svlSampleImageRGBStereo;
+    }
+    else return SVL_FAIL;
+
+    VideoObj.SetSize(channelcount);
+    VideoObj.SetAll(0);
+    VideoFile.SetSize(channelcount);
+    VideoFile.SetAll(0);
+    FilePath.SetSize(channelcount);
+    FilePartCount.SetSize(channelcount);
+    YUVBuffer.SetSize(channelcount);
+    YUVBuffer.SetAll(0);
+    YUVBufferSize.SetSize(channelcount);
+    CompressedBuffer.SetSize(channelcount);
+    CompressedBuffer.SetAll(0);
+    CompressedBufferSize.SetSize(channelcount);
+    VideoFrameCounter.SetSize(channelcount);
+
+    return SVL_OK;
+}
+
 int svlFilterSourceVideoFile::Initialize()
 {
+    if (OutputData == 0) return SVL_FAIL;
+
     Release();
 
     svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
@@ -188,7 +221,7 @@ int svlFilterSourceVideoFile::Initialize()
             CompressedBuffer[i] = new unsigned char[CompressedBufferSize[i]];
 
             // Initialize video frame counter
-            VideoFrameCounter = 0;
+            VideoFrameCounter[i] = 0;
 
             opened = true;
 
@@ -231,8 +264,7 @@ int svlFilterSourceVideoFile::ProcessFrame(ProcInfo* procInfo)
     svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
     unsigned int videochannels = img->GetVideoChannels();
     unsigned char* imptr;
-    unsigned int idx, datasize, timestampcount = 0;
-    double timestampsum = 0;
+    unsigned int idx, datasize;
     int ret = SVL_OK;
 
 #if (CISST_SVL_HAS_ZLIB == ON)
@@ -279,20 +311,20 @@ int svlFilterSourceVideoFile::ProcessFrame(ProcInfo* procInfo)
                     break;
                 }
                 if (timestamp < 0.0) break;
-                // Saving timestamp in order to be able to write it into the sample later
-                timestampsum += timestamp;
-                timestampcount ++;
 
-                if (!IsTargetTimerRunning()) {
-                    // Try to keep orignal frame intervals
-                    if (VideoFrameCounter == 0) {
-                        FirstTimestamp[idx] = timestamp;
-                        CVITimer.Reset();
-                        CVITimer.Start();
-                    }
-                    else {
-                        timespan = (timestamp - FirstTimestamp[idx]) - CVITimer.GetElapsedTime();
-                        if (timespan > 0.0) osaSleep(timespan);
+                // Synchronizing all channels to channel #0
+                if (idx == 0) {
+                    if (!IsTargetTimerRunning()) {
+                        // Try to keep orignal frame intervals
+                        if (VideoFrameCounter[idx] == 0) {
+                            FirstTimestamp = timestamp;
+                            CVITimer.Reset();
+                            CVITimer.Start();
+                        }
+                        else {
+                            timespan = (timestamp - FirstTimestamp) - CVITimer.GetElapsedTime();
+                            if (timespan > 0.0) osaSleep(timespan);
+                        }
                     }
                 }
 
@@ -337,13 +369,13 @@ int svlFilterSourceVideoFile::ProcessFrame(ProcInfo* procInfo)
 
             if (eof) {
                 // End of file reached
-                if (VideoFrameCounter > 0) {
+                if (VideoFrameCounter[idx] > 0) {
 
                     // Go back to the beginning of the file, just after the header
                     if (fseek(VideoFile[idx], 27, SEEK_SET) == 0) {
                         // Play again if needed
                         if (!LoopFlag) return SVL_STOP_REQUEST;
-                        VideoFrameCounter = 0;
+                        VideoFrameCounter[idx] = 0;
                         continue;
                     }
                     else {
@@ -360,7 +392,7 @@ int svlFilterSourceVideoFile::ProcessFrame(ProcInfo* procInfo)
                 // Other error, let it fail
             }
 
-            VideoFrameCounter ++;
+            VideoFrameCounter[idx] ++;
 
             break;
         }
@@ -369,8 +401,10 @@ int svlFilterSourceVideoFile::ProcessFrame(ProcInfo* procInfo)
         if (ret == SVL_FAIL) break;
     }
 
+#if (CISST_SVL_HAS_ZLIB == ON)
     // Set timestamp to the one stored in the video file
-    if (timestampcount > 0) OutputData->SetTimestamp(timestampsum / timestampcount);
+    OutputData->SetTimestamp(timestamp);
+#endif
 
     return ret;
 }
@@ -415,6 +449,7 @@ int svlFilterSourceVideoFile::Release()
 
 int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)
 {
+    if (OutputData == 0) return SVL_FAIL;
     if (IsInitialized() == true)
         return SVL_ALREADY_INITIALIZED;
 
@@ -457,6 +492,7 @@ int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)
 
 int svlFilterSourceVideoFile::SetFilePath(const std::string filepath, unsigned int videoch)
 {
+    if (OutputData == 0) return SVL_FAIL;
     if (IsInitialized() == true)
         return SVL_ALREADY_INITIALIZED;
 

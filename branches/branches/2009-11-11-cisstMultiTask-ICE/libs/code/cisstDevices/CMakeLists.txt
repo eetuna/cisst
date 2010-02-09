@@ -17,6 +17,7 @@
 
 # set the library name
 set(LIBRARY cisstDevices)
+set(LIBRARY_INCLUDE_DIR ${cisstLibs_SOURCE_DIR}/include/${LIBRARY})
 
 # make sure all options are set for all devices to OFF
 option(CISST_DEV_HAS_SENSABLEHD "Build Sensable Device using HD library" OFF)
@@ -37,7 +38,6 @@ set(DEPENDENCIES
 
 set(HEADER_FILES
     devNull.h
-    devNDISerial.h
     devSartoriusSerial.h
     devExport.h
     devKeyboard.h
@@ -45,7 +45,6 @@ set(HEADER_FILES
 
 set(SOURCE_FILES
     devNull.cpp
-    devNDISerial.cpp
     devSartoriusSerial.cpp
     devKeyboard.cpp
     )
@@ -104,28 +103,83 @@ if(CISST_DEV_HAS_NOVINTHDL)
       devNovintHDLMasterSlave.h)
 endif(CISST_DEV_HAS_NOVINTHDL)
 
-if(CISST_DEV_HAS_MICRONTRACKER)
-  find_path(MicronTracker_INCLUDE_DIR
-            NAMES MTC.h
-            HINTS "C:/Program Files/Claron Technology/MicronTracker/Dist")
-  find_library(MicronTracker_LIBRARIES
-               NAMES MTC
-               HINTS ${MicronTracker_INCLUDE_DIR}
-               )
-  include_directories(${MicronTracker_INCLUDE_DIR})
+if(CISST_HAS_XML)
   set(SOURCE_FILES
       ${SOURCE_FILES}
-      devMicronTracker.cpp)
+      devNDISerial.cpp)
   set(HEADER_FILES
       ${HEADER_FILES}
-      devMicronTracker.h)
-  set(DEV_ADDITIONAL_INCLUDE_DIR
-      "${DEV_ADDITIONAL_INCLUDE_DIR}"
-      ${MicronTracker_INCLUDE_DIR})
-  set(DEV_ADDITIONAL_LIBRARIES
-      "${DEV_ADDITIONAL_LIBRARIES}"
-      ${MicronTracker_LIBRARIES})
-endif(CISST_DEV_HAS_MICRONTRACKER)
+      devNDISerial.h)
+
+  if(CISST_DEV_HAS_MICRONTRACKER)
+    find_path(MicronTracker_INCLUDE_DIR
+              NAMES MTC.h
+              HINTS "C:/Program Files/Claron Technology/MicronTracker/Dist")
+    find_library(MicronTracker_LIBRARIES
+                 NAMES MTC
+                 HINTS ${MicronTracker_INCLUDE_DIR}
+                 )
+    include_directories(${MicronTracker_INCLUDE_DIR})
+    set(SOURCE_FILES
+        ${SOURCE_FILES}
+        devMicronTracker.cpp)
+    set(HEADER_FILES
+        ${HEADER_FILES}
+        devMicronTracker.h)
+    set(DEV_ADDITIONAL_INCLUDE_DIR
+        "${DEV_ADDITIONAL_INCLUDE_DIR}"
+        ${MicronTracker_INCLUDE_DIR})
+    set(DEV_ADDITIONAL_LIBRARIES
+        "${DEV_ADDITIONAL_LIBRARIES}"
+        ${MicronTracker_LIBRARIES})
+  endif(CISST_DEV_HAS_MICRONTRACKER)
+endif(CISST_HAS_XML)
+
+  MACRO (CISST_QT4_WRAP_UI outfiles )
+    QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
+
+    FOREACH (it ${ui_files})
+      GET_FILENAME_COMPONENT(outfile ${it} NAME_WE)
+      GET_FILENAME_COMPONENT(infile ${it} ABSOLUTE)
+# the only thing we modified ... 
+      SET(outfile ${cisst_BINARY_DIR}/libs/include/cisstDevices/${outfile}.h)
+      ADD_CUSTOM_COMMAND(OUTPUT ${outfile}
+        COMMAND ${QT_UIC_EXECUTABLE}
+        ARGS ${ui_options} -o ${outfile} ${infile}
+        MAIN_DEPENDENCY ${infile})
+      SET(${outfiles} ${${outfiles}} ${outfile})
+    ENDFOREACH (it)
+
+  ENDMACRO (CISST_QT4_WRAP_UI)
+
+# Qt widgets
+if(CISST_HAS_QT)
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  qt4_wrap_cpp(CISST_DEV_NDISERIAL_QDEVICES_GENERATED
+               ${LIBRARY_INCLUDE_DIR}/devNDISerialControllerQDevice.h
+               ${LIBRARY_INCLUDE_DIR}/devNDISerialToolQDevice.h
+               )
+  set(CISST_DEV_NDISERIAL_QWIDGETS_UI
+      devNDISerialControllerQWidget.ui
+      devNDISerialToolQWidget.ui)
+  cisst_qt4_wrap_ui(CISST_DEV_NDISERIAL_QWIDGETS_GENERATED
+                    ${CISST_DEV_NDISERIAL_QWIDGETS_UI}
+                    )
+
+  set(ADDITIONAL_SOURCE_FILES
+      ${ADDITIONAL_SOURCE_FILES}
+      ${CISST_DEV_NDISERIAL_QDEVICES_GENERATED}
+      ${CISST_DEV_NDISERIAL_QWIDGETS_GENERATED})
+  set(SOURCE_FILES
+      ${SOURCE_FILES}
+      devNDISerialControllerQDevice.cpp
+      devNDISerialToolQDevice.cpp)
+  set(HEADER_FILES
+      ${HEADER_FILES}
+      devNDISerialControllerQDevice.h
+      devNDISerialToolQDevice.h)
+
+endif(CISST_HAS_QT)
 
 # Exporting settings to applications that link against cisst
 CISST_ADD_TO_INTERNAL(CISST_ADDITIONAL_PACKAGES DEV_ADDITIONAL_PACKAGES)
@@ -168,3 +222,7 @@ endif(CISST_DEV_HAS_NOVINTHDL)
 if(CISST_DEV_HAS_MICRONTRACKER)
   target_link_libraries(cisstDevices ${MicronTracker_LIBRARIES})
 endif(CISST_DEV_HAS_MICRONTRACKER)
+
+if(CISST_HAS_QT)
+  target_link_libraries(cisstDevices ${QT_LIBRARIES})
+endif(CISST_HAS_QT)

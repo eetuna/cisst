@@ -48,6 +48,7 @@ http://www.cisst.org/cisst/license.txt.
   osaSocket constructor upon accepting a connection (see osaSocketServer class).
 
   \note Please refer to osAbstractionTutorial/sockets for usage examples.
+  \note Disconnection is detected when a socket attempts to write to another socket and does not received an ACK.
 */
 
 #ifndef _osaSocket_h
@@ -60,8 +61,13 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstOSAbstraction/osaExport.h>
 
+#if (CISST_OS != CISST_WINDOWS)
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define SOCKET int
+#endif
 
-#define OSA_SOCKET_WITH_STREAM
+//#define OSA_SOCKET_WITH_STREAM
 
 #ifdef OSA_SOCKET_WITH_STREAM
 // forward declaration
@@ -150,7 +156,7 @@ class CISST_EXPORT osaSocket: public cmnGenericObject
 , public std::iostream
 #endif // OSA_SOCKET_WITH_STREAM
 {
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_VERBOSE);
 
     enum { INTERNALS_SIZE = 16 };
     char Internals[INTERNALS_SIZE];
@@ -168,9 +174,6 @@ public:
 
     /*! \brief Default constructor */
     osaSocket(SocketTypes type = TCP);
-
-    /*! \brief osaSocketServer constructor (for use by osaSocketServer) */
-    osaSocket(int socketFD);
 
     /*! \brief Destructor */
     ~osaSocket(void);
@@ -203,7 +206,7 @@ public:
                used after SetDestination()
         \return true if the connection was successful */
     bool Connect(void);
- 
+
     /*! \brief Connect to the server; required for TCP sockets; includes call
                to SetDestination()
         \param host Server's hostname or IP address (e.g. localhost, 127.0.0.1)
@@ -214,8 +217,13 @@ public:
     /*! \brief Send a byte array via the socket
         \param bufsend Buffer holding bytes to be sent
         \param msglen Number of bytes to send
-        \return Number of bytes sent (-1 if error) */
-    int Send(const char * bufsend, unsigned int msglen);
+        \param timeoutSec is the longest time we should wait to send something (NA for UDP)
+        \return Number of bytes sent (-1 if error) 
+        \note  Since this is a nonblocking call the socket might not be ready to send right away
+               so a short timeout will help in cases when large amount of data is sent 
+               around. If the socket is not ready within the timeout then the connection will be closed
+    */
+    int Send(const char * bufsend, unsigned int msglen, const double timeoutSec = 0.0 );
 
     /*! \brief Send a string via the socket
         \param bufsend String to be sent
@@ -227,11 +235,17 @@ public:
     /*! \brief Receive a byte array via the socket
         \param bufrecv Buffer to store received data
         \param maxlen Maximum number of bytes to receive
-        \return Number of bytes received */
-    int Receive(char * bufrecv, unsigned int maxlen);
+        \param timeoutSec Timeout in seconds. (NA for UDP)
+        \return Number of bytes received. 0 if timeout is reached and/or no data is received. */
+    int Receive(char * bufrecv, unsigned int maxlen, const double timeoutSec = 0.0);
 
-    /*! \brief Close the socket */
-    void Close(void);
+    /*! \brief Close the socket 
+        \return False if close fails*/
+    bool Close(void);
+
+    /*! \ brief Connection state (only works for TCP)
+        \return Returns true if the socket thinks it is connected */
+    bool IsConnected(void);
 
 #ifdef OSA_SOCKET_WITH_STREAM
     /*! Provide a pointer to the stream buffer */
@@ -241,11 +255,22 @@ public:
 #endif // OSA_SOCKET_WITH_STREAM
 
 protected:
+
+    
+    /*! \brief osaSocketServer constructor (for use by osaSocketServer) 
+        \param Void pointer is used to her avoid including WinSock2.h, the pointer is cast to proper socket in cpp file.
+        
+        */
+    osaSocket(void * socketFDPtr);
+
     /*! \return IP address (as a number) for the given host */
     unsigned long GetIP(const std::string & host) const;
 
     SocketTypes SocketType;
     int SocketFD;
+    bool Connected;
+  
+    friend class osaSocketServer;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(osaSocket);

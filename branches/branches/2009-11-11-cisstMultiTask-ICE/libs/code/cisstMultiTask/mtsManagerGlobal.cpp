@@ -19,9 +19,12 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsManagerGlobal.h>
-#include <cisstMultiTask/mtsManagerProxyServer.h>
 #include <cisstOSAbstraction/osaSocket.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
+
+#if CISST_MTS_HAS_ICE
+#include <cisstMultiTask/mtsManagerProxyServer.h>
+#endif // CISST_MTS_HAS_ICE
 
 CMN_IMPLEMENT_SERVICES(mtsManagerGlobal);
 
@@ -92,12 +95,14 @@ bool mtsManagerGlobal::AddProcessObject(mtsManagerLocalInterface * localManagerO
     // If localManagerObject is of type mtsManagerProxyServer, process name can
     // be set without calling mtsManagerLocalInterface::GetProcessName()
     if (isManagerProxyServer) {
+#if CISST_MTS_HAS_ICE
         mtsManagerProxyServer * managerProxyServer = dynamic_cast<mtsManagerProxyServer *>(localManagerObject);
         if (!managerProxyServer) {
             CMN_LOG_CLASS_RUN_ERROR << "AddProcessObject: invalid object type (mtsManagerProxyServer expected)" << std::endl;
             return false;
         }
         processName = managerProxyServer->GetProxyName();
+#endif
     } else {
         processName = localManagerObject->GetProcessName();
     }
@@ -478,6 +483,7 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
     unsigned int thisConnectionID = ConnectionID;
 
     // In case of remote connection
+#if CISST_MTS_HAS_ICE
     if (clientProcessName != serverProcessName) {
         // Term definitions
         // - Server manager: local component manager that manages server components
@@ -579,6 +585,7 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
         //    - if timeouts, call disconnect to break and clean current connection
         //    - if success at both sides, update command id and event handler id
     }
+#endif
 
     InterfaceMapType * interfaceMap;
 
@@ -643,6 +650,7 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
     return thisConnectionID;
 }
 
+#if CISST_MTS_HAS_ICE
 void mtsManagerGlobal::ConnectCheckTimeout()
 {
     if (ConnectionElementMap.empty()) return;
@@ -678,6 +686,7 @@ void mtsManagerGlobal::ConnectCheckTimeout()
 
     ConnectionElementMapChange.Unlock();
 }
+#endif
 
 bool mtsManagerGlobal::ConnectConfirm(unsigned int connectionSessionID)
 {

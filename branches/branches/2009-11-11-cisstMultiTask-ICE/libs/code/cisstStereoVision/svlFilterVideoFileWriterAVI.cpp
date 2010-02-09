@@ -32,8 +32,11 @@ static int VFW_OleInitCounter = 0;
 /*** svlFilterVideoFileWriterAVI class *******/
 /*********************************************/
 
+CMN_IMPLEMENT_SERVICES(svlFilterVideoFileWriterAVI)
+
 svlFilterVideoFileWriterAVI::svlFilterVideoFileWriterAVI() :
     svlFilterBase(),
+    cmnGenericObject(),
     Action(false),
     ActionTime(0.0),
     TargetActionTime(0.0),
@@ -213,6 +216,7 @@ int svlFilterVideoFileWriterAVI::DialogCodec()
     }
 
     CVfWAvi tavi;
+	tavi.SetCompressOptions(reinterpret_cast<AVICOMPRESSOPTIONS*>(CompressOptions)[0]);
     if (tavi.ShowCompressionDialog()) {
         tavi.GetCompressOptions(reinterpret_cast<AVICOMPRESSOPTIONS*>(CompressOptions)[0]);
         tavi.GetCompressorName(EncoderName);

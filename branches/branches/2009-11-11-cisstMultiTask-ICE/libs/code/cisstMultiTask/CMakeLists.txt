@@ -53,6 +53,7 @@ SET(SOURCE_FILES
     mtsTaskContinuous.cpp
     mtsTaskPeriodic.cpp
     mtsTaskFromCallback.cpp
+    mtsTaskFromSignal.cpp
 
     mtsDeviceInterface.cpp
 
@@ -92,6 +93,7 @@ SET(HEADER_FILES
     mtsCommandQueuedWrite.h
     mtsCommandQueuedWriteBase.h
     mtsFunctionReadOrWrite.h
+    mtsEventWriteGeneratorProxy.h
 
     mtsCommandQualifiedRead.h
     mtsCommandQualifiedReadOrWriteBase.h
@@ -117,8 +119,9 @@ SET(HEADER_FILES
     mtsTaskContinuous.h
     mtsTaskPeriodic.h
     mtsTaskFromCallback.h
+    mtsTaskFromSignal.h
     
-    mtsTaskManager.h
+    mtsTaskManager.h    # to be deleted
         
     mtsDeviceInterface.h
     mtsInterfaceCommon.h

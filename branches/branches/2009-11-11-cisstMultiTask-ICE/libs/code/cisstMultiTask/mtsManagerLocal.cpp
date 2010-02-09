@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnThrow.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstOSAbstraction/osaGetTime.h>
+#include <cisstOSAbstraction/osaSocket.h>
 
 #include <cisstMultiTask/mtsConfig.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
@@ -32,7 +33,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskFromCallback.h>
 
 #if CISST_MTS_HAS_ICE
-#include <cisstOSAbstraction/osaSocket.h>
 #include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsManagerProxyClient.h>
 #include <cisstMultiTask/mtsManagerProxyServer.h>
@@ -234,7 +234,7 @@ void mtsManagerLocal::GetIPAddressList(std::vector<std::string> & ipAddresses)
 }
 
 #if !CISST_MTS_HAS_ICE
-static mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & thisProcessName)
+mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & thisProcessName)
 {
     if (!Instance) {
         Instance = new mtsManagerLocal(thisProcessName);
@@ -356,16 +356,13 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
     if (!success) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveComponent: failed to removed component: " << componentName << std::endl;
         return false;
-    } else {
-        mtsComponentProxy * componentProxy = dynamic_cast<mtsComponentProxy *>(component);
-        if (componentProxy) {
-            delete componentProxy;
-        } else {
-            delete component;
-        }
+    }
+    else {
+        delete component;
+
         CMN_LOG_CLASS_RUN_VERBOSE << "RemoveComponent: removed component: " << componentName << std::endl;
     }
-    
+
     return true;
 }
 
@@ -446,16 +443,21 @@ mtsComponent * mtsManagerLocal::GetComponent(const std::string & componentName) 
     return ComponentMap.GetItem(componentName, CMN_LOG_LOD_RUN_ERROR);
 }
 
-mtsTask CISST_DEPRECATED * mtsManagerLocal::GetTask(const std::string & taskName)
+mtsTask * mtsManagerLocal::GetComponentAsTask(const std::string & componentName) const
 {
     mtsTask * componentTask = NULL;
 
-    mtsDevice * component = ComponentMap.GetItem(taskName);
+    mtsDevice * component = ComponentMap.GetItem(componentName);
     if (component) {
         componentTask = dynamic_cast<mtsTask*>(component);
     }
 
     return componentTask;
+}
+
+mtsTask CISST_DEPRECATED * mtsManagerLocal::GetTask(const std::string & taskName)
+{
+    return GetComponentAsTask(taskName);
 }
 
 mtsDevice CISST_DEPRECATED * mtsManagerLocal::GetDevice(const std::string & deviceName)

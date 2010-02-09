@@ -1,3 +1,20 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include <cisstCommon/cmnLogger.h>
 #include <cisstRobot/robConstantRn.h>
 
@@ -6,7 +23,7 @@
 
 robConstantRn::robConstantRn( double y, double x1, double x2 ){
   if( x2 < x1 ){
-    CMN_LOG_RUN_WARNING << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_WARNING << CMN_LOG_DETAILS 
 			<< ": t initial must be less than t final " << std::endl;
   }
   
@@ -35,7 +52,7 @@ robDomainAttribute robConstantRn::IsDefinedFor( const robVariables& input ) cons
     
   // test the dof are double numbers
   if( !input.IsTimeSet() ){
-    CMN_LOG_RUN_WARNING << __PRETTY_FUNCTION__ << ": Expected time input" <<std::endl;
+    CMN_LOG_RUN_WARNING << CMN_LOG_DETAILS << ": Expected time input" <<std::endl;
     return UNDEFINED;
   }
   
@@ -61,7 +78,7 @@ robError robConstantRn::Evaluate( const robVariables& input, robVariables& outpu
 
   // test the dof are double numbers
   if( !input.IsTimeSet() ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ << ": Expected time input" <<std::endl;
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS << ": Expected time input" <<std::endl;
     return ERROR;
   }
   

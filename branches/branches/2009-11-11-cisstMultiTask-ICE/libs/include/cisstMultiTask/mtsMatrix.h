@@ -36,18 +36,16 @@ class mtsMatrix: public mtsGenericObject,
     // declare services, requires dynamic creation
     CMN_DECLARE_SERVICES_EXPORT(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
-    /*! Type of elements. */
-    typedef _elementType value_type;
+    /* defines useful types */
+    VCT_CONTAINER_TRAITS_TYPEDEFS(_elementType);
+    enum {DIMENSION = 2};
+    VCT_NARRAY_TRAITS_TYPEDEFS(DIMENSION);
 
     /*! This type. */
     typedef mtsMatrix<value_type> ThisType;
 
     /*! Type of matrix used to store the elements. */
     typedef vctDynamicMatrix<value_type> MatrixType;
-
-    /*! Types used to define the size of the matrix. */
-    typedef typename MatrixType::size_type size_type;
-    typedef typename MatrixType::nsize_type nsize_type;
 
     /*! Default constructor. */
     inline mtsMatrix(void):
@@ -70,7 +68,8 @@ public:
     /*! Assignment from vector base class.  This operator assign the
       data from one vector to another, it doesn't replace the object
       itself, i.e. it doesn't release and allocate any new memory. */
-    inline ThisType & operator=(const MatrixType & data) {
+    inline ThisType & operator = (const MatrixType & data) {
+        MatrixType::SetSize(data.rows(), data.cols(), data.StorageOrder());
         MatrixType::Assign(data);
         return *this;
     }
@@ -94,12 +93,14 @@ public:
      /*! To stream human readable output */
     virtual  std::string ToString(void) const {
         std::stringstream outputStream;
-         MatrixType::ToStream(outputStream);
+        this->ToStream(outputStream);
         return outputStream.str();
     }
 
     /*! To stream human readable output */
     virtual void ToStream(std::ostream & outputStream) const {
+        mtsGenericObject::ToStream(outputStream);
+        outputStream << std::endl;
         MatrixType::ToStream(outputStream);
     }
 

@@ -31,8 +31,11 @@ using namespace std;
 /*** svlFilterImageRectifier class ********/
 /******************************************/
 
+CMN_IMPLEMENT_SERVICES(svlFilterImageRectifier)
+
 svlFilterImageRectifier::svlFilterImageRectifier() :
     svlFilterBase(),
+    cmnGenericObject(),
     SimpleModeEnabled(false),
     InterpolationEnabled(true)
 {
@@ -73,9 +76,9 @@ int svlFilterImageRectifier::Initialize(svlSample* inputdata)
     // Preparing output sample
     if (OutputData) delete OutputData;
     OutputData = input->GetNewInstance();
-    svlSampleImageBase* output = dynamic_cast<svlSampleImageBase*>(OutputData);
-    output->SetSize(*input);
+    OutputData->SetSize(*input);
 
+    svlSampleImageBase* output = dynamic_cast<svlSampleImageBase*>(OutputData);
     channels = output->GetVideoChannels();
     for (i = 0; i < channels; i ++) {
         memset(output->GetUCharPointer(i), 0, output->GetDataSize(i));
@@ -103,9 +106,9 @@ int svlFilterImageRectifier::ProcessFrame(ProcInfo* procInfo, svlSample* inputda
         if (SimpleModeEnabled) {
             Translate(id->GetUCharPointer(idx),
                       od->GetUCharPointer(idx),
-                      id->GetWidth(idx) * id->GetDataChannels(),
+                      id->GetWidth(idx) * id->GetBPP(),
                       id->GetHeight(idx),
-                      HorizTranslation[idx] * id->GetDataChannels(),
+                      HorizTranslation[idx] * id->GetBPP(),
                       VertTranslation[idx]);
         }
         else {

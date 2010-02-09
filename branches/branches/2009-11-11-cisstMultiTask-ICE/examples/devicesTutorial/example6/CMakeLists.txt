@@ -1,10 +1,7 @@
 #
-#   $Id$
+# $Id$
 #
-#   Author(s):  Ali Uneri
-#   Created on: 2009-10-13
-#
-#   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights Reserved.
+# (C) Copyright 2009 Johns Hopkins University (JHU), All Rights Reserved.
 #
 # --- begin cisst license - do not edit ---
 #
@@ -14,24 +11,8 @@
 #
 # --- end cisst license ---
 
-qt4_wrap_cpp(QT_WRAPPED_CPP
-             devNDISerialControllerQDevice.h
-             devNDISerialToolQDevice.h
-             )
-qt4_wrap_ui(QT_WRAPPED_UI
-            devNDISerialControllerQWidget.ui
-            devNDISerialToolQWidget.ui
-            )
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 add_executable(devicesTutorialExample6
-               ${QT_WRAPPED_CPP}
-               ${QT_WRAPPED_UI}
                main.cpp
-               devNDISerialControllerQDevice.cpp
-               devNDISerialControllerQDevice.h
-               devNDISerialToolQDevice.cpp
-               devNDISerialToolQDevice.h
                )
 
 target_link_libraries(devicesTutorialExample6

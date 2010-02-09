@@ -31,7 +31,11 @@ using namespace std;
 /*** svlFilterImageSampler class *********/
 /******************************************/
 
-svlFilterImageSampler::svlFilterImageSampler() : svlFilterBase()
+CMN_IMPLEMENT_SERVICES(svlFilterImageSampler)
+
+svlFilterImageSampler::svlFilterImageSampler() :
+    svlFilterBase(),
+    cmnGenericObject()
 {
     AddSupportedType(svlTypeImageMono8, svlTypeImageMono8);
     AddSupportedType(svlTypeImageMono8Stereo, svlTypeImageMono8Stereo);
@@ -39,7 +43,7 @@ svlFilterImageSampler::svlFilterImageSampler() : svlFilterBase()
     AddSupportedType(svlTypeImageMono16Stereo, svlTypeImageMono16Stereo);
     AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
     AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
-    AddSupportedType(svlTypeDepthMap, svlTypeDepthMap);
+    AddSupportedType(svlTypeImageMonoFloat, svlTypeImageMonoFloat);
 
     CallbackObj = 0;
     FileHeader[0] = FileHeader[1] = 0;
@@ -68,7 +72,7 @@ int svlFilterImageSampler::Initialize(svlSample* inputdata)
 
     switch (GetInputType()) {
         case svlTypeImageMono16:
-        case svlTypeDepthMap:
+        case svlTypeImageMonoFloat:
             ImageBuffer = new svlSampleImageMono8;
             ImageBuffer->SetSize(*image);
 
@@ -251,6 +255,7 @@ int svlFilterImageSampler::Initialize(svlSample* inputdata)
 
         case svlTypeImageRGBA:
         case svlTypeImageRGBAStereo:
+        case svlTypeImage3DMap:
         case svlTypeInvalid:
         case svlTypeStreamSource:
         case svlTypeStreamSink:
@@ -273,7 +278,7 @@ int svlFilterImageSampler::ProcessFrame(ProcInfo* procInfo, svlSample* inputdata
         svlSampleImageBase* outimage = 0;
 
         switch (GetInputType()) {
-            case svlTypeDepthMap:
+            case svlTypeImageMonoFloat:
                 // Convert float32 values to grayscale8
                 svlConverter::float32toGray8(reinterpret_cast<float*>(inimage->GetUCharPointer()),
                                              ImageBuffer->GetUCharPointer(),
@@ -313,6 +318,7 @@ int svlFilterImageSampler::ProcessFrame(ProcInfo* procInfo, svlSample* inputdata
 
             case svlTypeImageRGBA:
             case svlTypeImageRGBAStereo:
+            case svlTypeImage3DMap:
             case svlTypeInvalid:
             case svlTypeStreamSource:
             case svlTypeStreamSink:

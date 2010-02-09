@@ -65,6 +65,7 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsManagerLocal;
+    friend class mtsComponentProxy;
 
  protected:
 
@@ -74,6 +75,8 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     /*! Default constructor. Protected to prevent creation of a device
       without a name. */
     mtsDevice(void) {}
+
+    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
     
  public:
     
@@ -112,10 +115,8 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
     /*! Add a required interface.  This interface will later on be
       connected to another task and use the provided interface of the
       other task.  The required interface created also contains a list
-      of event handlers to be used as observers.
-      PK: should move this to base class (mtsDevice). */
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
+      of event handlers to be used as observers. */
+    virtual mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
 
     /*! Provide a list of existing required interfaces (by names) */ 
     std::vector<std::string> GetNamesOfRequiredInterfaces(void) const;

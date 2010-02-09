@@ -12,8 +12,6 @@
 # 
 # --- end cisst license ---
 
-option(CISST_HAS_QT "cisst has support for Qt" OFF)
-
 add_subdirectory(example2)
 
 if(CISST_DEV_HAS_SENSABLEHD OR CISST_MTS_HAS_ICE)
@@ -29,13 +27,9 @@ if(CISST_DEV_HAS_OPENIGTLINK)
   add_subdirectory(example4)
 endif(CISST_DEV_HAS_OPENIGTLINK)
 
-if(CISST_HAS_QT)
-  find_package(Qt4 REQUIRED)
-  include(${QT_USE_FILE})
-
+if(CISST_HAS_QT AND CISST_HAS_XML)
   add_subdirectory(example6)
-
   if(CISST_DEV_HAS_MICRONTRACKER)
     add_subdirectory(example7)
   endif(CISST_DEV_HAS_MICRONTRACKER)
-endif(CISST_HAS_QT)
+endif(CISST_HAS_QT AND CISST_HAS_XML)

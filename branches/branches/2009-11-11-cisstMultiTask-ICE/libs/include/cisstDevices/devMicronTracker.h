@@ -24,44 +24,88 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstDevices
 
   \bug Current CMake support is for Windows only.
+  \bug Runtime error when using Markers.ProcessFrame() (only when debugging).
+  \bug CalibratePivot() does not work as intended.
 
+  \todo Refactor the method of obtaining marker projections for the controllerQDevice.
   \todo Check for mtMeasurementHazardCode using Xform3D_HazardCodeGet().
+  \todo Find a suitable State Table size.
+  \todo Sleep to prevent Cameras_GrabFrame() timeout?
+  \todo Verify the need for skipping initial 20 auto-adjustment frames.
+  \todo Move Qt widgets to the libs folder (overlaps with devNDISerial?).
+  \todo Verify the need for the use of MTC() macro.
 */
 
 #ifndef _devMicronTracker_h
 #define _devMicronTracker_h
 
-#include <cisstMultiTask/mtsTaskContinuous.h>
+#include <cisstVector/vctFixedSizeVectorTypes.h>
+#include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstParameterTypes/prmPositionCartesianGet.h>
 #include <cisstDevices/devExport.h>  // always include last
 
 #include <MTC.h>
 
 
-class CISST_EXPORT devMicronTracker : public mtsTaskContinuous
+class CISST_EXPORT devMicronTracker : public mtsTaskPeriodic
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+ protected:
+    class Tool
+    {
+     public:
+        Tool(void);
+        ~Tool(void) {};
+
+        std::string Name;
+        std::string SerialNumber;
+        mtsProvidedInterface * Interface;
+        prmPositionCartesianGet Position;
+        mtsDoubleVec MarkerProjectionLeft;
+        mtsDoubleVec MarkerProjectionRight;
+
+        vct3 TooltipOffset;
+    };
+
  public:
-    devMicronTracker(const std::string & taskName);
+    devMicronTracker(const std::string & taskName, const double period);
     ~devMicronTracker(void) {};
 
-    void Configure(const std::string & CMN_UNUSED(filename) = "") {};
+    void Configure(const std::string & filename = "");
     void Startup(void);
     void Run(void);
     void Cleanup(void);
 
- protected:
-    void ToggleTracking(const mtsBool & track);
-    void Track(void);
+    size_t GetNumberOfTools(void) const {
+        return Tools.size();
+    }
+    std::string GetToolName(const unsigned int index) const;
 
+ protected:
+    Tool * CheckTool(const std::string & serialNumber);
+    Tool * AddTool(const std::string & name, const std::string & serialNumber);
+
+    void ToggleCapturing(const mtsBool & toggle);
+    void ToggleTracking(const mtsBool & toggle);
+    void Track(void);
+    void CalibratePivot(const mtsStdString & toolName);
+
+    typedef cmnNamedMap<Tool> ToolsType;
+    ToolsType Tools;
+    cmnNamedMap<Tool> PortToTool;
+
+    bool IsCapturing;
     bool IsTracking;
 
     mtHandle CurrentCamera;
     mtHandle IdentifyingCamera;
     mtHandle IdentifiedMarkers;
     mtHandle PoseXf;
-    prmPositionCartesianGet Position;
+    mtsDoubleVec MarkerProjectionLeft;
+
+    mtsUCharVec CameraFrameLeft;
+    mtsUCharVec CameraFrameRight;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(devMicronTracker);

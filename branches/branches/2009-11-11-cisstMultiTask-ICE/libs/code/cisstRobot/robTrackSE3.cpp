@@ -1,3 +1,20 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include <cisstCommon/cmnLogger.h>
 
 #include <cisstRobot/robTrackSE3.h>
@@ -154,7 +171,7 @@ robError robTrackSE3::Evaluate( const robVariables& input, robVariables& output 
     t1 = input.time;
     // nothing has been set yet! Rw1, tw1 are empty
     if( numwp == 0 ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Not initialized" 
 			<< std::endl;
       return ERROR;
@@ -187,7 +204,7 @@ robError robTrackSE3::Evaluate(const robVariables& input){
   if( txblender->IsDefinedFor( input ) == DEFINED ){ 
     robVariables dof;
     if( txblender->Evaluate( input, dof ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to evaluate TX blender" << std::endl;
       return ERROR;
     }
@@ -204,7 +221,7 @@ robError robTrackSE3::Evaluate(const robVariables& input){
   if( tyblender->IsDefinedFor( input ) == DEFINED ){ 
     robVariables dof;
     if( tyblender->Evaluate( input, dof ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to evaluate TY blender" << std::endl;
       return ERROR;
     }
@@ -221,7 +238,7 @@ robError robTrackSE3::Evaluate(const robVariables& input){
   if( tzblender->IsDefinedFor( input ) == DEFINED ){ 
     robVariables dof;
     if( tzblender->Evaluate( input, dof ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to evaluate TZ blender" << std::endl;
       return ERROR;
     }
@@ -240,7 +257,7 @@ robError robTrackSE3::Evaluate(const robVariables& input){
     robVariables dof;
 
     if( so3blender->Evaluate( input, dof ) == ERROR ){
-      CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+      CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 			<< ": Failed to evaluate SO3 blender" << std::endl;
       return ERROR;
     }

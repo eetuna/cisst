@@ -1,3 +1,20 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include <cisstRobot/robGUI.h>
 
 #include <iostream>
@@ -47,6 +64,9 @@ void robGUI::Keyboard(int k, int, int){
 
   glutPostRedisplay();
 }
+
+void robGUI::Refresh()
+{ glutPostRedisplay(); }
 
 // compute the camera position
 vctFixedSizeVector<double,3> robGUI::CameraPosition() const {
@@ -117,22 +137,22 @@ void robGUI::Draw(){
   DrawGrid(10,10);
   DrawXYZ();
 
-  for( size_t i=0; i<meshes.size(); i++ ){
-    meshes[i]->Draw();
+  for( size_t i=0; i<geoms.size(); i++ ){
+    geoms[i]->Draw();
   }
 
   glutSwapBuffers();
 }
 
 // insert abody
-void robGUI::Insert( const robMesh* mesh ) {
+void robGUI::Insert( const robGeom* geom ) {
   if( gui != NULL )
-    gui->Register( mesh ); 
+    gui->Register( geom ); 
 }
 
-void robGUI::Register( const robMesh* mesh ){  
-  if( mesh != NULL )
-    meshes.push_back( mesh );
+void robGUI::Register( const robGeom* geom ){  
+  if( geom != NULL )
+    geoms.push_back( geom );
 }
 
 robGUI::robGUI( int argc, char** argv){

@@ -1,3 +1,20 @@
+/*
+
+  Author(s): Simon Leonard
+  Created on: Nov 11 2009
+
+  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include <cisstCommon/cmnLogger.h>
 
 #include <cisstVector/vctMatrixRotation3.h>
@@ -12,7 +29,7 @@ robSLERP::robSLERP( double ti,
 		    double tf, 
 		    const vctFrame4x4<double,VCT_ROW_MAJOR>& Rtf ){
   if( tf < ti ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": t initial must be less than t final" 
 		      << std::endl;
   }
@@ -65,7 +82,7 @@ robSLERP::robSLERP( double ti,
 robDomainAttribute robSLERP::IsDefinedFor( const robVariables& input ) const{
 
   if( !input.IsTimeSet() ){
-    CMN_LOG_RUN_WARNING << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_WARNING << CMN_LOG_DETAILS 
 			<< ": Expected time input" 
 			<< std::endl;
     return UNDEFINED;
@@ -84,7 +101,7 @@ robDomainAttribute robSLERP::IsDefinedFor( const robVariables& input ) const{
 robError robSLERP::Evaluate( const robVariables& input, robVariables& output ){
 
   if( !input.IsTimeSet() ){
-    CMN_LOG_RUN_ERROR << __PRETTY_FUNCTION__ 
+    CMN_LOG_RUN_ERROR << CMN_LOG_DETAILS 
 		      << ": Expected time input" 
 		      << std::endl;
     return ERROR;
