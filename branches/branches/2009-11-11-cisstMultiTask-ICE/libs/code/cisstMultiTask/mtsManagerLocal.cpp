@@ -122,7 +122,7 @@ mtsManagerLocal::mtsManagerLocal(const std::string & globalComponentManagerIP,
     }
     */
 
-    // If process ip is not specified (""), the first ip address detected is used.
+    // If process ip is not specified (""), the first ip address detected is used as this process ip
     if (ProcessIP == "") {
         std::vector<std::string> ipAddresses;
         osaSocket::GetLocalhostIP(ipAddresses);
@@ -141,14 +141,14 @@ mtsManagerLocal::mtsManagerLocal(const std::string & globalComponentManagerIP,
 
     // Generate an endpoint string to connect to the global component manager
     std::stringstream ss;
-    ss << ":default -h " << GlobalComponentManagerIP 
-        << " -p " << mtsProxyBaseCommon<mtsManagerLocal>::GetPortNumberForComponentManager();
+    ss << mtsManagerProxyServer::GetManagerCommunicatorID()
+       << ":default -h " << GlobalComponentManagerIP 
+       << " -p " << mtsManagerProxyServer::GetGCMPortNumberAsString();
 
-    // In network mode, the gobal component manager is assigned as a network
-    // (ICE) proxy client of type mtsManagerProxyClient which transfers 
-    // data to/from the GCM across network.
-    mtsManagerProxyClient * globalComponentManagerProxy = 
-        new mtsManagerProxyClient(ss.str(), mtsManagerProxyServer::GetManagerCommunicatorID());
+    // In network mode, the gobal component manager is a network (ICE) proxy 
+    // client of type mtsManagerProxyClient which transfers data to/from the 
+    // GCM across network.
+    mtsManagerProxyClient * globalComponentManagerProxy = new mtsManagerProxyClient(ss.str());
 
     // Run and connect to the global component manager
     if (!globalComponentManagerProxy->Start(this)) {
@@ -1173,12 +1173,12 @@ void mtsManagerLocal::SetIPAddress()
 bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    const std::string & endpointInfo, const std::string & communicatorID)
+    const std::string & endpointInfo)
 {
     return ManagerGlobal->SetProvidedInterfaceProxyAccessInfo(
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName,
-        endpointInfo, communicatorID);
+        endpointInfo);
 }
 #endif
 
@@ -1248,7 +1248,7 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
         if (ManagerGlobal->GetProvidedInterfaceProxyAccessInfo(
                 clientProcessName, clientComponentName, clientRequiredInterfaceName,
                 serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                serverEndpointInfo, communicatorID))
+                serverEndpointInfo))
         {
             CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: fetched server proxy access information: "
                 << serverEndpointInfo << ", " << communicatorID << std::endl;
@@ -1330,7 +1330,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
 {
-    std::string adapterName, endpointAccessInfo, communicatorId;
+    std::string endpointAccessInfo, communicatorId;
 
     // Get the actual names of components (either a client component or a server
     // component is a proxy object).
@@ -1379,7 +1379,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     if (!serverComponentProxy->FindInterfaceProxyServer(serverProvidedInterfaceName)) {
         if (!UnitTestEnabled || (UnitTestEnabled && UnitTestNetworkProxyEnabled)) {
             if (!serverComponentProxy->CreateInterfaceProxyServer(
-                    serverProvidedInterfaceName, adapterName, endpointAccessInfo, communicatorId))
+                    serverProvidedInterfaceName, endpointAccessInfo, communicatorId))
             {
                 CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to create interface proxy server: "
                     << serverComponentProxy->GetName() << std::endl;
@@ -1394,7 +1394,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     else {
         if (!ManagerGlobal->GetProvidedInterfaceProxyAccessInfo("", "", "",
                 serverProcessName, serverComponentName, serverProvidedInterfaceName,
-                endpointAccessInfo, communicatorId))
+                endpointAccessInfo))
         {
             CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to fecth server proxy access information: "
                 << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl;
@@ -1408,7 +1408,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     if (!SetProvidedInterfaceProxyAccessInfo(
             clientProcessName, clientComponentName, clientRequiredInterfaceName,
             serverProcessName, serverComponentName, serverProvidedInterfaceName,
-            endpointAccessInfo, communicatorId)) 
+            endpointAccessInfo)) 
     {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to set server proxy access information: "
             << serverProvidedInterfaceName << ", " << endpointAccessInfo << std::endl;

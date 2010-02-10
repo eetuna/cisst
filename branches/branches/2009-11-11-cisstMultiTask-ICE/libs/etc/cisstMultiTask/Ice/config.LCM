@@ -1,8 +1,8 @@
 #
-# Component Interface - Proxy Server Property Settings
+# Local Component Manager - Proxy Client Property Settings
 #
 # Author(s):  Min Yang Jung
-# Created on: 2010-01-30
+# Created on: 2010-02-10
 #
 # (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -26,7 +26,7 @@ Logger = Windows
 
 #
 # MJ: Please do not modify these property settings since these configurations 
-# directly affect the way a proxy of type mtsComponentInterfaceProxyServer operates.
+# directly affect the way a proxy of type mtsManagerProxyClient operates.
 #
 
 #------------------------------------------------------------------------------
@@ -60,21 +60,24 @@ Ice.Override.Timeout = 10000
 Ice.Override.ConnectTimeout = 3000
 
 #------------------------------------------------------------------------------
-# Server-specific Properties
+# Client-specific Properties
 #------------------------------------------------------------------------------
 #
 # Thread pool size configuration for nested invocations
 # (reference: http://www.zeroc.com/doc/Ice-3.3.1/manual/Adv_server.33.10.html
 #  and http://www.zeroc.com/doc/Ice-3.3.1/manual/PropRef.50.7.html)
 #
-Ice.ThreadPool.Server.Size = 4
-Ice.ThreadPool.Server.SizeMax = 4
+Ice.ThreadPool.Client.Size = 4
+Ice.ThreadPool.Client.SizeMax = 4
 
 #
-# Default port number that the global component manager uses
-# 
-# This default port number is chosen considering the port number allocation table
-# from the IANA (Internet Assigned Numbers Authority).
-# (See http://www.iana.org/assignments/port-numbers for further details)
+# Disable Active Connection Management (ACM)
+# (reference: http://www.zeroc.com/doc/Ice-3.3.1/manual/Connections.38.4.html)
 #
-GCM.Port = 10705
+Ice.ACM.Client = 60
+
+#
+# Retry interval
+#
+Ice.RetryIntervals = 0 100 200 500
+#Ice.Trace.Retry=2

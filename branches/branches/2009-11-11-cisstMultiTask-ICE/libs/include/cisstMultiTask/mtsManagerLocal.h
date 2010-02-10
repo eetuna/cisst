@@ -334,7 +334,7 @@ public:
     bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const std::string & endpointInfo, const std::string & communicatorID);
+        const std::string & endpointInfo);
 
     /*! For testing purposes */
     void DisconnectGCM();

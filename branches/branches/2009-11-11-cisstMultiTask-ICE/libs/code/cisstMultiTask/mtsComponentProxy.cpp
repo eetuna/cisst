@@ -516,25 +516,20 @@ bool mtsComponentProxy::RemoveProvidedInterfaceProxy(const std::string & provide
 }
 
 bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedInterfaceProxyName,
-                                                   std::string & adapterName, 
                                                    std::string & endpointAccessInfo,
                                                    std::string & communicatorID)
 {
     mtsManagerLocal * managerLocal = mtsManagerLocal::GetInstance();
 
-    const std::string adapterNameBase = "ComponentInterfaceServerAdapter";
-    const std::string endpointInfoBase = "tcp -p ";
-    const std::string portNumber = GetNewPortNumberAsString(ProvidedInterfaceNetworkProxies.size());
-    const std::string endpointInfo = endpointInfoBase + portNumber;
-
-    // Generate parameters to initialize server proxy    
-    adapterName = adapterNameBase + "_" + providedInterfaceProxyName;
-    endpointAccessInfo = ":default -h " + managerLocal->GetIPAddress() + " " + "-p " + portNumber;
+    // Generate parameters to initialize server proxy
+    std::string adapterName("ComponentInterfaceServerAdapter");
+    adapterName += "_";
+    adapterName += providedInterfaceProxyName;
     communicatorID = mtsComponentInterfaceProxyServer::GetInterfaceCommunicatorID();
 
     // Create an instance of mtsComponentInterfaceProxyServer
     mtsComponentInterfaceProxyServer * providedInterfaceProxy =
-        new mtsComponentInterfaceProxyServer(adapterName, endpointInfo, communicatorID);
+        new mtsComponentInterfaceProxyServer(adapterName, communicatorID);
 
     // Add it to provided interface proxy object map
     if (!ProvidedInterfaceNetworkProxies.AddItem(providedInterfaceProxyName, providedInterfaceProxy)) {
@@ -552,6 +547,9 @@ bool mtsComponentProxy::CreateInterfaceProxyServer(const std::string & providedI
     providedInterfaceProxy->GetLogger()->trace(
         "mtsComponentProxy", "provided interface proxy starts: " + providedInterfaceProxyName);
 
+    // Return this server's endpoint information
+    endpointAccessInfo = providedInterfaceProxy->GetEndpointInfo();
+
     return true;
 }
 
@@ -562,7 +560,7 @@ bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredI
 {
     // Create an instance of mtsComponentInterfaceProxyClient
     mtsComponentInterfaceProxyClient * requiredInterfaceProxy = 
-        new mtsComponentInterfaceProxyClient(serverEndpointInfo, communicatorID, providedInterfaceProxyInstanceID);
+        new mtsComponentInterfaceProxyClient(serverEndpointInfo, providedInterfaceProxyInstanceID);
 
     // Add it to required interface proxy object map
     if (!RequiredInterfaceNetworkProxies.AddItem(requiredInterfaceProxyName, requiredInterfaceProxy)) {
@@ -962,16 +960,6 @@ bool mtsComponentProxy::GetEventGeneratorProxyPointer(
 //-------------------------------------------------------------------------
 //  Utilities
 //-------------------------------------------------------------------------
-const std::string mtsComponentProxy::GetNewPortNumberAsString(const unsigned int id) const
-{
-    unsigned int newPortNumber = mtsProxyBaseCommon<mtsComponentProxy>::GetBasePortNumberForComponentInterface() + (id * 5);
-
-    std::stringstream newPortNumberAsString;
-    newPortNumberAsString << newPortNumber;
-
-    return newPortNumberAsString.str();
-}
-
 void mtsComponentProxy::ExtractProvidedInterfaceDescription(
     mtsDeviceInterface * providedInterface, ProvidedInterfaceDescription & providedInterfaceDescription)
 {

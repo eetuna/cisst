@@ -140,7 +140,7 @@ public:
     virtual bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const std::string & endpointInfo, const std::string & communicatorID) = 0;
+        const std::string & endpointInfo) = 0;
 
     /*! Fetch endpoint information of a server proxy (i.e., provided interface 
         proxy) with connection information. A server component uses this method
@@ -151,7 +151,7 @@ public:
     virtual bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        std::string & endpointInfo, std::string & communicatorID) = 0;
+        std::string & endpointInfo) = 0;
 #endif
 };
 

@@ -157,7 +157,6 @@ public:
     //-------------------------------------------------------------------------
     /*! Create a network proxy server which serves a provided interface proxy. */
     bool CreateInterfaceProxyServer(const std::string & providedInterfaceProxyName,
-                                    std::string & adapterName,
                                     std::string & endpointAccessInfo,
                                     std::string & communicatorID);
 
@@ -210,9 +209,6 @@ public:
     //-------------------------------------------------------------------------
     //  Utilities
     //-------------------------------------------------------------------------
-    /*! Return a new port number */
-    const std::string GetNewPortNumberAsString(const unsigned int id) const;
-
     /*! Extract complete information about all commands and event generators in 
         a provided interface. Argument prototypes are fetched with serialization. */
     static void ExtractProvidedInterfaceDescription(mtsDeviceInterface * providedInterface,

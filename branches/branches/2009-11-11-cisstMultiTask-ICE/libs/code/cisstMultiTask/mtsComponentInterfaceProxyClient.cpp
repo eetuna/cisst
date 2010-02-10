@@ -31,6 +31,13 @@ CMN_IMPLEMENT_SERVICES(mtsComponentInterfaceProxyClient);
 
 unsigned int mtsComponentInterfaceProxyClient::InstanceCounter = 0;
 
+mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
+    const std::string & serverEndpointInfo, const unsigned int providedInterfaceProxyInstanceID)
+    : BaseClientType(ICE_PROPERTY_FILE_ROOT"config.client", serverEndpointInfo),
+      ProvidedInterfaceProxyInstanceID(providedInterfaceProxyInstanceID)
+{
+}
+
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
 //-----------------------------------------------------------------------------

@@ -19,6 +19,7 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstMultiTask/mtsConfig.h>
 #include <cisstOSAbstraction/osaSocket.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
 
@@ -987,33 +988,10 @@ bool mtsManagerGlobal::AddConnectedInterface(ConnectionMapType * connectionMap,
 //  Networking
 //-------------------------------------------------------------------------
 #if CISST_MTS_HAS_ICE
-bool mtsManagerGlobal::StartServer(const unsigned int userPortNumber)
+bool mtsManagerGlobal::StartServer()
 {
-    const std::string adapterName = "ManagerServerAdapter";
-    const std::string endpointInfoBase = "tcp -p ";
-
-    // Get port number for global component manager
-    unsigned int portNumber;
-    if (userPortNumber == 0) {
-        portNumber = mtsProxyBaseCommon<mtsManagerGlobal>::GetPortNumberForComponentManager();
-    } else {
-        portNumber = userPortNumber;
-    }
-    std::stringstream ss;
-    ss << portNumber;
-
-    const std::string portNumberString = ss.str();
-    const std::string endpointInfo = endpointInfoBase + portNumberString;
-
-    // Get this machine's IP
-    SetIPAddress();
-
-    // Generate parameters to initialize server proxy    
-    endpointAccessInfo = ":default -h " + ProcessIP + " -p " + portNumberString;
-    communicatorID = mtsManagerProxyServer::GetManagerCommunicatorID();
-
     // Create an instance of mtsComponentInterfaceProxyServer
-    ProxyServer = new mtsManagerProxyServer(adapterName, endpointInfo, communicatorID);
+    ProxyServer = new mtsManagerProxyServer("ManagerServerAdapter", mtsManagerProxyServer::GetManagerCommunicatorID());
 
     // Run proxy server
     if (!ProxyServer->Start(this)) {
@@ -1069,7 +1047,7 @@ void mtsManagerGlobal::SetIPAddress()
 bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    const std::string & endpointInfo, const std::string & communicatorID)
+    const std::string & endpointInfo)
 {
     // Get a connection map of the provided interface at server side.
     ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
@@ -1090,10 +1068,9 @@ bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
     }
 
     // Set server proxy access information
-    connectedInterfaceInfo->SetProxyAccessInfo(endpointInfo, communicatorID);
+    connectedInterfaceInfo->SetProxyAccessInfo(endpointInfo);
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "SetProvidedInterfaceProxyAccessInfo: set proxy access info: "
-            << endpointInfo << ", " << communicatorID << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "SetProvidedInterfaceProxyAccessInfo: set proxy access info: " << endpointInfo << std::endl;
 
     return true;
 }
@@ -1101,7 +1078,7 @@ bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(
 bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-    std::string & endpointInfo, std::string & communicatorID)
+    std::string & endpointInfo)
 {
     // Get a connection map of the provided interface at server side.
     ConnectionMapType * connectionMap = GetConnectionsOfProvidedInterface(
@@ -1138,7 +1115,6 @@ bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
 
     // Get server proxy access information
     endpointInfo = connectedInterfaceInfo->GetEndpointInfo();
-    communicatorID = connectedInterfaceInfo->GetCommunicatorID();
 
     return true;
 }

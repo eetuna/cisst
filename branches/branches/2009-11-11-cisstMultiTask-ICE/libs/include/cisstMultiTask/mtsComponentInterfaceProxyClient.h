@@ -104,14 +104,9 @@ protected:
 
 public:
     /*! Constructor and destructor */
-    mtsComponentInterfaceProxyClient(const std::string & serverEndpointInfo, const std::string & communicatorID,
-                                     const unsigned int providedInterfaceProxyInstanceID)
-        : BaseClientType(serverEndpointInfo, communicatorID),
-          ProvidedInterfaceProxyInstanceID(providedInterfaceProxyInstanceID)
-    {}
-
-    ~mtsComponentInterfaceProxyClient()
-    {}
+    mtsComponentInterfaceProxyClient(const std::string & serverEndpointInfo,
+                                     const unsigned int providedInterfaceProxyInstanceID);
+    ~mtsComponentInterfaceProxyClient() {}
 
     /*! Entry point to run a proxy. */
     bool Start(mtsComponentProxy * proxyOwner);

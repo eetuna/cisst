@@ -140,11 +140,7 @@ protected:
 
 public:
     /*! Constructor and destructor */
-    mtsComponentInterfaceProxyServer(
-        const std::string & adapterName, const std::string & endpointInfo, const std::string & communicatorID)
-        : BaseServerType(adapterName, endpointInfo, communicatorID)
-    {}
-
+    mtsComponentInterfaceProxyServer(const std::string & adapterName, const std::string & communicatorID);
     ~mtsComponentInterfaceProxyServer();
 
     /*! Entry point to run a proxy. */

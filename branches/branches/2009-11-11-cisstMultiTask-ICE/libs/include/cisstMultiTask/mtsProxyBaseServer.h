@@ -91,10 +91,13 @@ protected:
     Ice::ObjectAdapterPtr IceAdapter;
     Ice::ObjectPtr Servant;
 
+    /*! Set as true when using dynamic port allocation (true by default) */
+    bool DynamicPortAllocation;
+
     /*! Endpoint information that clients uses to connect to this server */
     const std::string AdapterName;
-    const std::string EndpointInfo;
     const std::string CommunicatorID;
+    std::string EndpointInfo;
 
     /*! Create ICE servant object */
     virtual Ice::ObjectPtr CreateServant() = 0;
@@ -105,10 +108,23 @@ protected:
         try {
             BaseType::IceInitialize();
 
+            // Determine a port number and generate an endpoint string
+            std::string endpoint(":default");
+            if (!DynamicPortAllocation) {
+                // Fetch a port number from ice property file. Currently, only 
+                // the GCM uses this feature.
+                const std::string portNumber = IceInitData.properties->getProperty("GCM.Port");
+                endpoint += " -p ";
+                endpoint += portNumber;
+            }
+
             // Create an adapter (server-side only)
             // (http://www.zeroc.com/doc/Ice-3.3.1/reference/Ice/ObjectAdapter.html)
             IceAdapter = this->IceCommunicator->
-                createObjectAdapterWithEndpoints(AdapterName, EndpointInfo);
+                createObjectAdapterWithEndpoints(AdapterName, endpoint);
+
+            // Get endpoint information as string (ice_getEndpoints() can be used as well)
+            EndpointInfo = IceAdapter->createProxy(IceCommunicator->stringToIdentity(CommunicatorID))->ice_toString();
 
             // Create a servant
             Servant = CreateServant();
@@ -355,17 +371,28 @@ protected:
     }
 
     /*! Close all the connections with all the clients */
+    // TODO
 
 public:
-    mtsProxyBaseServer(const std::string & adapterName,
-                       const std::string & endpointInfo,
-                       const std::string & communicatorID):
-        BaseType("", "", BaseType::PROXY_SERVER),
-        AdapterName(adapterName),
-        EndpointInfo(endpointInfo),
-        CommunicatorID(communicatorID)        
+    /*! Constructor. If useDynamicPortAllocation is false, a port number is
+        fetched from config.server. Only mtsManagerProxyServer sets it as false.
+        If it is true by default, a port number is randomly chosen by OS. This
+        guarantees there is no overlap among multiple server instances' ports. */
+    mtsProxyBaseServer(const std::string & propertyFileName,
+                       const std::string & adapterName, 
+                       const std::string & communicatorID, 
+                       const bool useDynamicPortAllocation = true)
+                       : BaseType(propertyFileName, BaseType::PROXY_SERVER),
+                         AdapterName(adapterName),
+                         CommunicatorID(communicatorID),
+                         DynamicPortAllocation(useDynamicPortAllocation)
     {}
+
+    /*! Destructor (do nothing) */
     virtual ~mtsProxyBaseServer() {}
+
+    /*! Getter for this server's endpoint information */
+    inline std::string GetEndpointInfo() const { return EndpointInfo; }
 };
 
 #endif // _mtsProxyBaseServer_h

@@ -1,10 +1,10 @@
 #
-# ICE Proxy Client Property Settings
+# Component Interface - Proxy Client Property Settings
 #
 # Author(s):  Min Yang Jung
-# Created on: 2009-01-30
+# Created on: 2010-01-30
 #
-# (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -26,7 +26,7 @@ Logger = Windows
 
 #
 # MJ: Please do not modify these property settings since these configurations 
-# bring global effects on all ICE proxies.
+# directly affect the way a proxy of type mtsComponentInterfaceProxyClient operates.
 #
 
 #------------------------------------------------------------------------------

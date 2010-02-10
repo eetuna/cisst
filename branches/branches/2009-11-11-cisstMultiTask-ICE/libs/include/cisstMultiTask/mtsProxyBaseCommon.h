@@ -50,6 +50,9 @@ typedef ::Ice::Long IceCommandIDType;
 /*! Enable/disable detailed log. This affects all proxy objects. */
 #define ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
 
+/*! Path to Ice property files */
+#define ICE_PROPERTY_FILE_ROOT CISST_SOURCE_ROOT"/libs/etc/cisstMultiTask/Ice/"
+
 //-----------------------------------------------------------------------------
 //  Common Base Class Definitions
 //-----------------------------------------------------------------------------
@@ -228,9 +231,8 @@ protected:
     /*! The name of a property file that configures proxy connection settings. */
     const std::string IcePropertyFileName;
 
-    /*! The identity of an Ice object which can also be set through an Ice property file
-        (not supported yet). */
-    const std::string IceObjectIdentity;
+    /*! Ice initialization data */
+    Ice::InitializationData IceInitData;
 
     /*! The proxy communicator. */
     Ice::CommunicatorPtr IceCommunicator;
@@ -246,26 +248,18 @@ protected:
         ChangeProxyState(PROXY_INITIALIZING);
 
         // Load configuration file to set the properties of ICE proxy server
-        Ice::InitializationData initData;
-        initData.properties = Ice::createProperties();
-
-        std::string iceServerPropertyFile = CISST_SOURCE_ROOT"/libs/etc/cisstMultiTask/Ice/";
-        if (ProxyTypeMember == PROXY_SERVER) {
-            iceServerPropertyFile += "config.server";
-        } else {
-            iceServerPropertyFile += "config.client";
-        }
-        initData.properties->load(iceServerPropertyFile);
+        IceInitData.properties = Ice::createProperties();
+        IceInitData.properties->load(IcePropertyFileName);
 
         // Create a logger
-        const std::string loggerProperty = initData.properties->getProperty("Logger");
+        const std::string loggerProperty = IceInitData.properties->getProperty("Logger");
         if (loggerProperty == "Windows") {
-            initData.logger = new WindowLogger();
+            IceInitData.logger = new WindowLogger();
         } else {
-            initData.logger = new CisstLogger();
+            IceInitData.logger = new CisstLogger();
         }
 
-        IceCommunicator = Ice::initialize(initData);
+        IceCommunicator = Ice::initialize(IceInitData);
         IceLogger = IceCommunicator->getLogger();
     }
 
@@ -289,14 +283,12 @@ protected:
     }
 
 public:
-    mtsProxyBaseCommon(const std::string& propertyFileName,
-                       const std::string& objectIdentity,
-                       const ProxyType& proxyType) :
+    /*! Constructor */
+    mtsProxyBaseCommon(const std::string& propertyFileName, const ProxyType& proxyType) :
         ProxyTypeMember(proxyType),
         ProxyState(PROXY_CONSTRUCTED),
         InitSuccessFlag(false),
         IcePropertyFileName(propertyFileName),
-        IceObjectIdentity(objectIdentity),
         IceCommunicator(NULL),
         IceGUID("")
     {
@@ -339,13 +331,6 @@ public:
     inline std::string GetProxyName() const {
         return ProxyName;
     }
-
-    /*! Return base port numbers that proxy servers use. These numbers are not 
-        yet registered to IANA (Internet Assigned Numbers Authority) as of 
-        January 30th, 2010.
-        (See http://www.iana.org/assignments/port-numbers for further details) */
-    inline static unsigned int GetPortNumberForComponentManager() { return 10705; }
-    inline static unsigned int GetBasePortNumberForComponentInterface() { return 11705; }
 };
 
 #define LogPrint(_className, _logStream) {\

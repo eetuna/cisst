@@ -206,8 +206,8 @@ module mtsManagerProxy
         bool Disconnect(ConnectionStringSet connectionStrings);
 
         // Networking
-        bool SetProvidedInterfaceProxyAccessInfo(ConnectionStringSet connectionStrings, string endpointInfo, string communicatorID);
-        bool GetProvidedInterfaceProxyAccessInfo(ConnectionStringSet connectionStrings, out string endpointInfo, out string communicatorID);
+        bool SetProvidedInterfaceProxyAccessInfo(ConnectionStringSet connectionStrings, string endpointInfo);
+        bool GetProvidedInterfaceProxyAccessInfo(ConnectionStringSet connectionStrings, out string endpointInfo);
         bool InitiateConnect(int connectionID, ConnectionStringSet connectionStrings);
         bool ConnectServerSideInterface(int providedInterfaceProxyInstanceId, ConnectionStringSet connectionStrings);
 

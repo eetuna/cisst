@@ -83,7 +83,6 @@ protected:
     /*! Endpoint information to connect to proxy server. This information is
         feteched from  the global component manager. */
     const std::string EndpointInfo;
-    const std::string CommunicatorID;
 
     /*! Create ICE proxy client object */
     virtual void CreateProxy() = 0;
@@ -98,7 +97,7 @@ protected:
             BaseType::IceInitialize();
 
             // Create a proxy object from stringfied proxy information
-            std::string stringfiedProxy = CommunicatorID + EndpointInfo;
+            std::string stringfiedProxy = EndpointInfo;
             ProxyObject = this->IceCommunicator->stringToProxy(stringfiedProxy);
 
             // If a proxy fails to be created, an exception is thrown.
@@ -159,12 +158,12 @@ protected:
     //}
 
 public:
-    mtsProxyBaseClient(const std::string & endpointInfo, 
-                       const std::string & communicatorID):
-        BaseType("", "", BaseType::PROXY_CLIENT),
-        EndpointInfo(endpointInfo),
-        CommunicatorID(communicatorID)
+    /*! Constructor */
+    mtsProxyBaseClient(const std::string & propertyFileName, const std::string & endpointInfo)
+        : BaseType(propertyFileName, BaseType::PROXY_CLIENT), EndpointInfo(endpointInfo)
     {}
+
+    /*! Destructor (do nothing) */
     virtual ~mtsProxyBaseClient() {}
 };
 

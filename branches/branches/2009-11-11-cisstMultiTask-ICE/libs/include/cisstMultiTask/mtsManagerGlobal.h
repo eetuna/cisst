@@ -80,12 +80,11 @@ protected:
 #if CISST_MTS_HAS_ICE
         // Server proxy access information (sent to client proxy as requested)
         std::string EndpointInfo;
-        std::string CommunicatorID;
 #endif
 
         ConnectedInterfaceInfo() : ProcessName(""), ComponentName(""), InterfaceName(""), RemoteConnection(false)
 #if CISST_MTS_HAS_ICE
-            , EndpointInfo(""), CommunicatorID("")
+            , EndpointInfo("")
 #endif
         {}
 
@@ -102,13 +101,10 @@ protected:
         bool IsRemoteConnection() const            { return RemoteConnection; }
 #if CISST_MTS_HAS_ICE
         std::string GetEndpointInfo() const        { return EndpointInfo; }
-        std::string GetCommunicatorID() const      { return CommunicatorID; }
 
         // Setters
-        void SetProxyAccessInfo(const std::string & endpointInfo, const std::string & communicatorID)
-        {
+        void SetProxyAccessInfo(const std::string & endpointInfo) {
             EndpointInfo = endpointInfo;
-            CommunicatorID = communicatorID;
         }
 #endif
     };
@@ -224,10 +220,6 @@ protected:
 #if CISST_MTS_HAS_ICE
     /*! Network proxy server */
     mtsManagerProxyServer * ProxyServer;
-
-    /*! Proxy server access information */
-    std::string endpointAccessInfo;
-    std::string communicatorID;
 #endif
 
     //-------------------------------------------------------------------------
@@ -364,19 +356,19 @@ public:
     //  Networking
     //-------------------------------------------------------------------------
 #if CISST_MTS_HAS_ICE
-    /*! Start network proxy server. If user port number is not specified, default
-        port 10705 (defined in mtsProxyBaseCommon.h) is used. */
-    bool StartServer(const unsigned int userPortNumber = 0);
+    /*! Start network proxy server. The server's listening port number is
+    fetched from config.server file. (default port number: 10705) */
+    bool StartServer();
 
     bool SetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        const std::string & endpointInfo, const std::string & communicatorID);
+        const std::string & endpointInfo);
 
     bool GetProvidedInterfaceProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
-        std::string & endpointInfo, std::string & communicatorID);
+        std::string & endpointInfo);
 
     /*! Periodically check connection element map to cancel timed out connection
         elements. */
