@@ -471,7 +471,7 @@ int osaSocket::Receive(char * bufrecv, unsigned int maxlen, const double timeout
     return retval;
 }
 
-//! This could be static or external to the osalass
+//! This could be static or external to the osaSocket class
 unsigned long osaSocket::GetIP(const std::string & host) const
 {
     hostent * he = gethostbyname(host.c_str());

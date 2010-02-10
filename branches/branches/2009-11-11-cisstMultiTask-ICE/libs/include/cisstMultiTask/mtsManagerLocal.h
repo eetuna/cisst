@@ -206,9 +206,8 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
 
 #if !CISST_MTS_HAS_ICE
-    /*! Get an instance of local component manager. If process name is not 
-        specified, the default process name "LCM" is used. */
-    static mtsManagerLocal * GetInstance(const std::string & thisProcessName = "");
+    /*! Get an instance of local component manager */
+    static mtsManagerLocal * GetInstance(void);
 #else
     /*! Get an instance of local component manager.
         If process ip is not specified, the first ip address detected is used.

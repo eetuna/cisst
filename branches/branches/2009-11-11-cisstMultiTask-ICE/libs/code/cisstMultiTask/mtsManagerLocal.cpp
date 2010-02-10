@@ -46,9 +46,8 @@ typedef mtsDevice mtsComponent;
 mtsManagerLocal * mtsManagerLocal::Instance;
 
 #if !CISST_MTS_HAS_ICE
-mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName) :
+mtsManagerLocal::mtsManagerLocal()
 //    JGraphSocket(osaSocket::TCP),
-    ProcessName(thisProcessName)
 {
     Initialize();
 
@@ -71,10 +70,10 @@ mtsManagerLocal::mtsManagerLocal(const std::string & thisProcessName) :
     }
     */
 
-    // If process name is not specified (""), the default process name ("LCM") is set.
-    if (thisProcessName == "") {
-        ProcessName = "LCM";
-    }
+    // In standalone moe, process name is set as "LCM" by default since there is
+    // only one instance of local task manager.
+    ProcessName = "LCM";
+
     CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: STANDALONE mode" << std::endl;
 
     // In standalone mode, the global component manager is an instance of 
@@ -234,10 +233,10 @@ void mtsManagerLocal::GetIPAddressList(std::vector<std::string> & ipAddresses)
 }
 
 #if !CISST_MTS_HAS_ICE
-mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & thisProcessName)
+mtsManagerLocal * mtsManagerLocal::GetInstance(void)
 {
     if (!Instance) {
-        Instance = new mtsManagerLocal(thisProcessName);
+        Instance = new mtsManagerLocal();
     }
 
     return Instance;
