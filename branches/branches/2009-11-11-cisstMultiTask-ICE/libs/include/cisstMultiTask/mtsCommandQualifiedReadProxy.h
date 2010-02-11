@@ -79,7 +79,9 @@ public:
 
     /*! The execute method. */
     mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1, mtsGenericObject & argument2) {
-        if (IsDisabled()) mtsCommandBase::DISABLED;
+        if (IsDisabled()) {
+            return mtsCommandBase::DISABLED;
+        }
 
         if (NetworkProxyServer) {
             if (!NetworkProxyServer->SendExecuteCommandQualifiedReadSerialized(ClientID, CommandID, argument1, argument2)) {

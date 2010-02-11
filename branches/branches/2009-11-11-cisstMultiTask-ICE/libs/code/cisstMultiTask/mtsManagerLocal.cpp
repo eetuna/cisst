@@ -1172,6 +1172,11 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
     // at server process.
 
     std::string serverEndpointInfo, communicatorID;
+#if CISST_MTS_HAS_ICE
+    int numTrial = 0;
+    const int maxTrial = 5;
+    mtsComponentProxy * clientComponentProxy = 0;
+#endif // CISST_MTS_HAS_ICE
 
     // Check if this is a server process.
     if (this->ProcessName != serverProcessName) {
@@ -1206,7 +1211,7 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
         CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: the client component is not a proxy: " << clientComponentProxyName << std::endl;
         goto ConnectServerSideInterfaceError;
     }
-    mtsComponentProxy * clientComponentProxy = dynamic_cast<mtsComponentProxy *>(clientComponent);
+    clientComponentProxy = dynamic_cast<mtsComponentProxy *>(clientComponent);
     if (!clientComponentProxy) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectServerSideInterface: client component is not a proxy: " << clientComponent->GetName() << std::endl;
         goto ConnectServerSideInterfaceError;
@@ -1222,8 +1227,6 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
     // failure.
 
     // Fecth proxy server's access information from the GCM
-    int numTrial = 0;
-    const int maxTrial = 5;
     while (++numTrial <= maxTrial) {
         // Try to get server proxy access information
         if (ManagerGlobal->GetProvidedInterfaceProxyAccessInfo(
@@ -1291,7 +1294,7 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
             goto ConnectServerSideInterfaceError;
         }
     }
-#endif
+#endif // CISST_MTS_HAS_ICE
 
     return true;
 
@@ -1304,7 +1307,7 @@ ConnectServerSideInterfaceError:
     }
 
     return false;
-#endif
+#endif // CISST_MTS_HAS_ICE
 }
 
 bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID,
@@ -1333,7 +1336,8 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     }
 
 #if CISST_MTS_HAS_ICE
-    mtsComponent *serverComponent, *clientComponent;
+    mtsComponent * serverComponent, * clientComponent;
+    mtsComponentProxy * serverComponentProxy = 0;
 
     // Get the components
     serverComponent = GetComponent(actualServerComponentName);
@@ -1348,7 +1352,7 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     }
 
     // Downcast to get server component proxy
-    mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
+    serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
     if (!serverComponentProxy) {
         CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: server component is not a proxy object: " << serverComponent->GetName() << std::endl;
         goto ConnectClientSideInterfaceError;

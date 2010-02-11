@@ -170,21 +170,21 @@ protected:
 #endif
 
     /* Internal class for thread arguments */
-    template<class _proxyOwner>
+    template<class __proxyOwner>
     class ThreadArguments {
     public:
         mtsProxyBaseCommon * Proxy;
-        void (*Runner)(ThreadArguments<_proxyOwner> *);
+        void (*Runner)(ThreadArguments<__proxyOwner> *);
     };
 
     /* Internal class for proxy worker */
-    template<class _proxyOwner>
+    template<class __proxyOwner>
     class ProxyWorker {
     public:
         ProxyWorker(void) {}
         virtual ~ProxyWorker(void) {}
 
-        void * Run(ThreadArguments<_proxyOwner> * arguments) {
+        void * Run(ThreadArguments<__proxyOwner> * arguments) {
             arguments->Runner(arguments);
             return 0;
         }

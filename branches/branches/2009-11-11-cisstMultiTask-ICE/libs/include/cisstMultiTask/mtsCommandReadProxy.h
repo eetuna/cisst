@@ -74,7 +74,9 @@ public:
     
     /*! The execute method. */
     virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
-        if (IsDisabled()) mtsCommandBase::DISABLED;
+        if (IsDisabled()) {
+            return mtsCommandBase::DISABLED;
+        }
 
         if (NetworkProxyServer) {
             if (!NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument)) {

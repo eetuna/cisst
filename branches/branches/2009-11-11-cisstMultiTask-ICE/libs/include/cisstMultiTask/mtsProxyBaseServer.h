@@ -41,6 +41,7 @@ class CISST_EXPORT mtsProxyBaseServer : public mtsProxyBaseCommon<_proxyOwner>
 public:
     typedef mtsProxyBaseCommon<_proxyOwner> BaseType;
     typedef _clientProxyType ClientProxyType;
+    typedef mtsProxyBaseServer<_proxyOwner, _clientProxyType, _clientProxyType> ThisType;
 
     /*! Typedef for proxy connection id (defined by ICE). Set as Ice::Identity
         which can be transformed to std::string by identityToString().
@@ -113,7 +114,7 @@ protected:
             if (!DynamicPortAllocation) {
                 // Fetch a port number from ice property file. Currently, only 
                 // the GCM uses this feature.
-                const std::string portNumber = IceInitData.properties->getProperty("GCM.Port");
+                const std::string portNumber = this->IceInitData.properties->getProperty("GCM.Port");
                 endpoint += " -p ";
                 endpoint += portNumber;
             }
@@ -124,7 +125,7 @@ protected:
                 createObjectAdapterWithEndpoints(AdapterName, endpoint);
 
             // Get endpoint information as string (ice_getEndpoints() can be used as well)
-            EndpointInfo = IceAdapter->createProxy(IceCommunicator->stringToIdentity(CommunicatorID))->ice_toString();
+            EndpointInfo = IceAdapter->createProxy(this->IceCommunicator->stringToIdentity(CommunicatorID))->ice_toString();
 
             // Create a servant
             Servant = CreateServant();
@@ -246,7 +247,7 @@ protected:
 
     /*! Return ClientIDType */
     ClientIDType GetClientID(const ConnectionIDType & connectionID) {
-        ConnectionIDMapType::iterator it = ConnectionIDMap.find(connectionID);
+        typename ConnectionIDMapType::iterator it = ConnectionIDMap.find(connectionID);
         if (it == ConnectionIDMap.end()) {
             return 0;
         }
@@ -255,7 +256,7 @@ protected:
 
     /*! Get an ICE proxy object using connection id to send a message to a client */
     ClientProxyType * GetClientByConnectionID(const ConnectionIDType & connectionID) {
-        ConnectionIDMapType::iterator it = ConnectionIDMap.find(connectionID);
+        typename ConnectionIDMapType::iterator it = ConnectionIDMap.find(connectionID);
         if (it == ConnectionIDMap.end()) {
             return NULL;
         }
@@ -264,7 +265,7 @@ protected:
 
     /*! Get an ICE proxy object using client id to send a message to a client */
     ClientProxyType * GetClientByClientID(const ClientIDType & clientID) {
-        ClientIDMapType::iterator it = ClientIDMap.find(clientID);
+        typename ClientIDMapType::iterator it = ClientIDMap.find(clientID);
         if (it == ClientIDMap.end()) {
             return NULL;
         }
@@ -283,11 +284,11 @@ protected:
 
     /*! Remove an ICE proxy object using connection id */
     bool RemoveClientByConnectionID(const ConnectionIDType & connectionID) {
-        ConnectionIDMapType::iterator it1 = ConnectionIDMap.find(connectionID);
+        typename ConnectionIDMapType::iterator it1 = ConnectionIDMap.find(connectionID);
         if (it1 == ConnectionIDMap.end()) {
             return false;
         }
-        ClientIDMapType::iterator it2 = ClientIDMap.find(clientID);
+        typename ClientIDMapType::iterator it2 = ClientIDMap.find(it1->second.ClientID);
         if (it2 == ClientIDMap.end()) {
             return false;
         }
@@ -305,11 +306,11 @@ protected:
 
     /*! Remove an ICE proxy object using client id */
     bool RemoveClientByClientID(const ClientIDType & clientID) {
-        ClientIDMapType::iterator it1 = ClientIDMap.find(clientID);
+        typename ClientIDMapType::iterator it1 = ClientIDMap.find(clientID);
         if (it1 == ClientIDMap.end()) {
             return false;
         }
-        ConnectionIDMapType::iterator it2 = ConnectionIDMap.find(it1->second.ConnectionID);
+        typename ConnectionIDMapType::iterator it2 = ConnectionIDMap.find(it1->second.ConnectionID);
         if (it2 == ConnectionIDMap.end()) {
             return false;
         }
@@ -344,7 +345,7 @@ protected:
     /*! Monitor active connection by heart beat. If a client proxy disconnects or is
         disconnected, the close event is detected here. */
     virtual void Monitor(void) {
-        ConnectionIDMapType::iterator it = ConnectionIDMap.begin();
+        typename ConnectionIDMapType::iterator it = ConnectionIDMap.begin();
         while (it != ConnectionIDMap.end()) {
             try {
                 it->second.ClientProxy->ice_ping();
