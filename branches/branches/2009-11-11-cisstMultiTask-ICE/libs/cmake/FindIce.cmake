@@ -78,7 +78,7 @@ IF( ICE_HOME_INCLUDE_ICE )
     MESSAGE( STATUS "Setting ICE_HOME to ${ICE_HOME}" )
 
     # include and lib dirs are easy
-    SET( ICE_INCLUDE_DIR ${ICE_HOME}/include ${ICE_HOME}/share/ice/slice )
+    SET( ICE_INCLUDE_DIR ${ICE_HOME}/include ${ICE_HOME}/share/slice ${ICE_HOME}/share/ice/slice )
     SET( ICE_LIBRARY_DIR ${ICE_HOME}/lib )
     
     # debian package splits off slice files into a different place
