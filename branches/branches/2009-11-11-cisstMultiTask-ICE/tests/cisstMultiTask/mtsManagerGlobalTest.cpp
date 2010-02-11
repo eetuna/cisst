@@ -40,6 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 
 using namespace std;
 
+/*
 void mtsManagerGlobalTest::setUp()
 {
     mtsManagerTestC1Device * P1C1 = new mtsManagerTestC1Device;
@@ -859,6 +860,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
         CPPUNIT_ASSERT_EQUAL((unsigned int) 0, connectionMap->size());
     }
     */
+/*
 }
 
 void mtsManagerGlobalTest::TestIsAlreadyConnected(void)
@@ -1059,5 +1061,5 @@ void mtsManagerGlobalTest::TestAddConnectedInterface(void)
     // Should release an internal object that AddConnectedInterface() creates dynamically.
     delete connectedInterfaceInfo;
 }
-
+*/
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerGlobalTest);

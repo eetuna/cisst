@@ -101,7 +101,9 @@ public:
     {}
 
     /*! Destructor.  Relies on std::map destructor. */
-    ~cmnNamedMap() {}
+    ~cmnNamedMap() {
+        DeleteAll();
+    }
 
     /*! Set the map owner */
     inline void SetOwner(const cmnGenericObject & owner)
@@ -298,6 +300,8 @@ void cmnNamedMap<_elementType>::ToStream(std::ostream & outputStream) const
 
 template <class _elementType>
 void cmnNamedMap<_elementType>::DeleteAll(void) {
+    if (Map.empty()) return;
+
     typename MapType::iterator iterator = Map.begin();
     const typename MapType::iterator end = Map.end();
     for (;
@@ -305,6 +309,7 @@ void cmnNamedMap<_elementType>::DeleteAll(void) {
          ++iterator) {
         delete iterator->second;
     }
+    Map.clear();
 }
 
 #endif // _cmnNamedMap_h

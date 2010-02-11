@@ -205,6 +205,8 @@ mtsTask::~mtsTask()
         //Should we call the user-supplied Cleanup()?
         CleanupInternal();
     }
+
+    this->StateTables.RemoveItem(StateTable.GetName());
 }
 
 

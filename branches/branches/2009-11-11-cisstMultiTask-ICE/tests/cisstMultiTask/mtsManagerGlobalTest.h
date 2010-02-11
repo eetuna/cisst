@@ -31,6 +31,7 @@ private:
 
     CPPUNIT_TEST_SUITE(mtsManagerGlobalTest);
     {
+        /*
         CPPUNIT_TEST(TestAddProcess);
         CPPUNIT_TEST(TestFindProcess);
         CPPUNIT_TEST(TestGetProcessObject);
@@ -55,11 +56,13 @@ private:
         CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
         CPPUNIT_TEST(TestGetConnectionsOfRequiredInterface);
         CPPUNIT_TEST(TestAddConnectedInterface);
+        */
 
 	}
     CPPUNIT_TEST_SUITE_END();
 
 public:
+    /*
     void setUp();
     void tearDown();
 
@@ -87,4 +90,5 @@ public:
     void TestGetConnectionsOfProvidedInterface(void);
     void TestGetConnectionsOfRequiredInterface(void);
     void TestAddConnectedInterface(void);
+    */
 };

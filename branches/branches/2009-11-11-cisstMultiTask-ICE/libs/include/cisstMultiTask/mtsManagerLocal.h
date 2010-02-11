@@ -71,11 +71,11 @@ private:
     static mtsManagerLocal * Instance;
 
     /*! Flag for unit tests. Enabled only for unit tests and set as false by default */
-    bool UnitTestEnabled;
+    static bool UnitTestEnabled;
 
     /*! Flag to skip network-related processing such as network proxy creation,
         network proxy startup, remote connection, and so on. Set as false by default */
-    bool UnitTestNetworkProxyEnabled;
+    static bool UnitTestNetworkProxyEnabled;
 
 protected:
     /*! Typedef for component map: (component name, component object)
@@ -83,15 +83,8 @@ protected:
     typedef cmnNamedMap<mtsDevice> ComponentMapType;
     ComponentMapType ComponentMap;
 
-    // TODO: time synchronization between tasks (conversion local relative time
-    // into absolute time or vice versa) ???
-
     /*! Time server used by all tasks. */
     osaTimeServer TimeServer;
-
-    // TODO: Determine JGraph should be implemented at LCM as well
-    //osaSocket JGraphSocket;
-    //bool JGraphSocketConnected;
 
     /*! Process name of this local component manager. Should be globally unique 
         across a system. */
@@ -120,7 +113,7 @@ protected:
 
     /*! Protected constructor (singleton) */
 #if !CISST_MTS_HAS_ICE
-    mtsManagerLocal(const std::string & thisProcessName = "");
+    mtsManagerLocal(void);
 #else
     mtsManagerLocal(const std::string & globalComponentManagerIP = "localhost", 
                     const std::string & thisProcessName = "",
@@ -297,8 +290,8 @@ public:
     inline std::string GetIPAddress() const { return ProcessIP; }
 
     /*! Return a list of all IP addresses detected on this machine. */
-    static std::vector<std::string> GetIPAddressList();
-    inline static void GetIPAddressList(std::vector<std::string> & ipAddresses);
+    static std::vector<std::string> GetIPAddressList(void);
+    static void GetIPAddressList(std::vector<std::string> & ipAddresses);
 
     /*! Returns name of this local component manager */
     inline const std::string GetProcessName(const std::string & listenerID = "") {

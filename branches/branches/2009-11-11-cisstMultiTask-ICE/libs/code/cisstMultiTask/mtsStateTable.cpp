@@ -75,6 +75,23 @@ mtsStateTable::mtsStateTable(int size, const std::string & name):
 
 mtsStateTable::~mtsStateTable()
 {
+    std::vector<mtsStateArrayBase *>::iterator itVector = StateVector.begin();
+    const std::vector<mtsStateArrayBase *>::iterator itVectorEnd = StateVector.end();
+    for (; itVector != itVectorEnd; ++itVector) {
+        delete (*itVector);
+    }
+
+    std::vector<mtsGenericObject *>::iterator itVectorElements = StateVectorElements.begin();
+    const std::vector<mtsGenericObject *>::iterator itVectorElementsEnd = StateVectorElements.end();
+    for (; itVectorElements != itVectorElementsEnd; ++itVectorElements) {
+        RemoveStateVectorElement(*itVectorElements);
+    }
+    
+    std::vector<AccessorBase *>::iterator itVectorAccessors = StateVectorAccessors.begin();
+    const std::vector<AccessorBase *>::iterator itVectorAccessorsEnd = StateVectorAccessors.end();
+    for (; itVectorAccessors != itVectorAccessorsEnd; ++itVectorAccessors) {
+        delete (*itVectorAccessors);
+    }
 }
 
 

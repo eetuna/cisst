@@ -21,19 +21,24 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <cisstMultiTask/mtsConfig.h>
 
-class mtsManagerLocalInterface;
+class mtsManagerLocal;
 
 class mtsManagerLocalTest: public CppUnit::TestFixture
 {
 private:
-    mtsManagerLocalInterface *localManager1, *localManager2;
+    mtsManagerLocal *localManager1, *localManager2;
 
     CPPUNIT_TEST_SUITE(mtsManagerLocalTest);
     {
+        CPPUNIT_TEST(TestInitialize);
         CPPUNIT_TEST(TestConstructor);
+        CPPUNIT_TEST(TestCleanup);
+        CPPUNIT_TEST(TestGetIPAddressList);
         CPPUNIT_TEST(TestGetInstance);
         CPPUNIT_TEST(TestAddComponent);
+        /*
         CPPUNIT_TEST(TestRemoveComponent);
         CPPUNIT_TEST(TestGetComponent);
 
@@ -42,7 +47,7 @@ private:
         //CPPUNIT_TEST(TestCreateAll);
         //CPPUNIT_TEST(TestStartAll);
         //CPPUNIT_TEST(TestKillAll);
-        CPPUNIT_TEST(TestCleanup);
+        
         CPPUNIT_TEST(TestGetNamesOfComponents);
         //CPPUNIT_TEST(TestGetNamesOfTasks);
         //CPPUNIT_TEST(TestGetNamesOfDevices);
@@ -52,13 +57,14 @@ private:
         //CPPUNIT_TEST(TestRemoveProvidedInterfaceProxy);
         CPPUNIT_TEST(TestGetProcessName);
 
-        // These are special type of unit tests to check if two components
-        // can bind and run together correctly.
+#if !CISST_MTS_HAS_ICE
+        // Special type of tests to check if two components can bind and run 
+        // together correctly.
         CPPUNIT_TEST(TestLocalCommandsAndEvents);
-        //
-        // TODO: NOT YET!!! (enable this AFTER implementing command id update)
-        //
+#else
         //CPPUNIT_TEST(TestRemoteCommandsAndEvents);
+#endif
+        */
 	}
     CPPUNIT_TEST_SUITE_END();
 
@@ -66,18 +72,23 @@ public:
     void setUp(void);
     void tearDown(void);
 
+    void TestInitialize(void);
     void TestConstructor(void);
+    void TestCleanup(void);
+    void TestGetIPAddressList(void);
     void TestGetInstance(void);
     void TestAddComponent(void);
+    /*
     void TestRemoveComponent(void);
     void TestGetComponent(void);
     void TestConnectDisconnect(void);
     void TestCreateAll(void);
     void TestStartAll(void);
     void TestKillAll(void);
-    void TestCleanup(void);
+    
     void TestGetNamesOfComponents(void);
     void TestGetProcessName(void);
     void TestLocalCommandsAndEvents(void);
     void TestRemoteCommandsAndEvents(void);
+    */
 };

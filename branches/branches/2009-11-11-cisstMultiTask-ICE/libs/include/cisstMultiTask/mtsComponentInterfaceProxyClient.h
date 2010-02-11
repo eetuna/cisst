@@ -106,7 +106,7 @@ public:
     /*! Constructor and destructor */
     mtsComponentInterfaceProxyClient(const std::string & serverEndpointInfo,
                                      const unsigned int providedInterfaceProxyInstanceID);
-    ~mtsComponentInterfaceProxyClient() {}
+    ~mtsComponentInterfaceProxyClient();
 
     /*! Entry point to run a proxy. */
     bool Start(mtsComponentProxy * proxyOwner);

@@ -40,13 +40,18 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerLocal);
 
-/*! Typedef to use 'component' instead of 'device' */
+// Typedef to use 'component' instead of 'device'
 typedef mtsDevice mtsComponent;
 
+// Static variable definition
 mtsManagerLocal * mtsManagerLocal::Instance;
+bool mtsManagerLocal::UnitTestEnabled = false;
+bool mtsManagerLocal::UnitTestNetworkProxyEnabled = false;
+
+#define DEFAULT_PROCESS_NAME "LCM"
 
 #if !CISST_MTS_HAS_ICE
-mtsManagerLocal::mtsManagerLocal()
+mtsManagerLocal::mtsManagerLocal(void)
 //    JGraphSocket(osaSocket::TCP),
 {
     Initialize();
@@ -70,9 +75,9 @@ mtsManagerLocal::mtsManagerLocal()
     }
     */
 
-    // In standalone moe, process name is set as "LCM" by default since there is
-    // only one instance of local task manager.
-    ProcessName = "LCM";
+    // In standalone mode, process name is set as DEFAULT_PROCESS_NAME by 
+    // default since there is only one instance of local task manager.
+    ProcessName = DEFAULT_PROCESS_NAME;
 
     CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: STANDALONE mode" << std::endl;
 
@@ -178,38 +183,16 @@ mtsManagerLocal::~mtsManagerLocal()
 
 void mtsManagerLocal::Initialize(void)
 {
-    // These flags are set externally (from unit test classes) as needed.
-    UnitTestEnabled = false;
-    UnitTestNetworkProxyEnabled = false;
-
     __os_init();
     ComponentMap.SetOwner(*this);
 }
 
 void mtsManagerLocal::Cleanup(void)
 {
-    // TODO: Proxy cleanup
-    /*
-#if CISST_MTS_HAS_ICE    // Clean up resources allocated for proxy objects.
-    if (ProxyGlobalTaskManager) {
-        ProxyGlobalTaskManager->Stop();
-        osaSleep(200 * cmn_ms);
-        delete ProxyGlobalTaskManager;
-    }
-
-    if (ProxyTaskManagerClient) {
-        ProxyTaskManagerClient->Stop();
-        osaSleep(200 * cmn_ms);
-        delete ProxyTaskManagerClient;
-    }
-#endif
-
-    JGraphSocket.Close();
-    JGraphSocketConnected = false;
-    */
+    //JGraphSocket.Close();
+    //JGraphSocketConnected = false;
     
     if (ManagerGlobal) {
-        // TODO: Add proxy (network) clean-up before delete
         delete ManagerGlobal;
         ManagerGlobal = NULL;
     }
@@ -219,7 +202,7 @@ void mtsManagerLocal::Cleanup(void)
     __os_exit();
 }
 
-std::vector<std::string> mtsManagerLocal::GetIPAddressList()
+std::vector<std::string> mtsManagerLocal::GetIPAddressList(void)
 {
     std::vector<std::string> ipAddresses;
     osaSocket::GetLocalhostIP(ipAddresses);
@@ -273,8 +256,7 @@ bool mtsManagerLocal::AddComponent(mtsComponent * component)
     // the global component manager.
     std::vector<std::string> interfaceNames = component->GetNamesOfRequiredInterfaces();
     for (unsigned int i = 0; i < interfaceNames.size(); ++i) {
-        if (!ManagerGlobal->AddRequiredInterface(ProcessName, componentName, interfaceNames[i], false))
-        {
+        if (!ManagerGlobal->AddRequiredInterface(ProcessName, componentName, interfaceNames[i], false)) {
             CMN_LOG_CLASS_RUN_ERROR << "AddComponent: failed to add required interface: " 
                 << componentName << ":" << interfaceNames[i] << std::endl;
             return false;
@@ -283,8 +265,7 @@ bool mtsManagerLocal::AddComponent(mtsComponent * component)
  
     interfaceNames = component->GetNamesOfProvidedInterfaces();
     for (unsigned int i = 0; i < interfaceNames.size(); ++i) {
-        if (!ManagerGlobal->AddProvidedInterface(ProcessName, componentName, interfaceNames[i], false))
-        {
+        if (!ManagerGlobal->AddProvidedInterface(ProcessName, componentName, interfaceNames[i], false)) {
             CMN_LOG_CLASS_RUN_ERROR << "AddComponent: failed to add provided interface: " 
                 << componentName << ":" << interfaceNames[i] << std::endl;
             return false;

@@ -83,6 +83,8 @@ class CISST_EXPORT mtsStateTable: public cmnGenericObject {
     public:
         mtsStateIndex First;
         mtsStateIndex Last;
+
+        ~IndexRange() {}
     };
 
     /*! Data structure used for state table data collection.  Stores
@@ -311,6 +313,9 @@ public:
     template <class _elementType>
     mtsStateDataId NewElement(const std::string & name = "", _elementType * element = 0);
 
+    template <class _elementType>
+    void RemoveStateVectorElement(_elementType * element);
+
     /*! Add an element to the table (alternative to NewElement). */
     template <class _elementType>
     void AddData(_elementType &element, const std::string & name = "") {
@@ -440,6 +445,11 @@ mtsStateDataId mtsStateTable::NewElement(const std::string & name, _elementType 
     AccessorBase * accessor = new Accessor<_elementType>(*this, NumberStateData-1, elementHistory, pdata);
     StateVectorAccessors.push_back(accessor);
     return NumberStateData-1;
+}
+
+template <class _elementType>
+void mtsStateTable::RemoveStateVectorElement(_elementType * element) {
+    mtsGenericTypes<_elementType>::ConditionalFree(element);
 }
 
 template <class _elementType>

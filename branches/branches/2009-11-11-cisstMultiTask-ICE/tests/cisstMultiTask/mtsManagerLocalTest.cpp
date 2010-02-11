@@ -21,9 +21,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #include "mtsManagerLocalTest.h"
 
+#include <cisstMultiTask/mtsConfig.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
-#include <cisstOSAbstraction/osaSleep.h>
+#include <cisstMultiTask/mtsStateTable.h>
+//#include <cisstOSAbstraction/osaSleep.h>
 
 #include "mtsManagerTestClasses.h"
 
@@ -40,12 +42,24 @@ http://www.cisst.org/cisst/license.txt.
 #define P1_OBJ localManager1
 #define P2_OBJ localManager2
 
+#define DEFAULT_PROCESS_NAME "LCM"
+
 using namespace std;
 
 void mtsManagerLocalTest::setUp(void)
 {
-    localManager1 = new mtsManagerLocal(P1, "localhost");
-    localManager2 = new mtsManagerLocal(P2, "localhost");
+    mtsManagerLocal::UnitTestEnabled = true;
+#if !CISST_MTS_HAS_ICE
+    mtsManagerLocal::UnitTestNetworkProxyEnabled = false;
+#else
+    mtsManagerLocal::UnitTestNetworkProxyEnabled = true;
+#endif
+
+    localManager1 = new mtsManagerLocal();
+    localManager2 = new mtsManagerLocal();
+
+    localManager1->ProcessName = P1;
+    localManager2->ProcessName = P2;
 }
 
 void mtsManagerLocalTest::tearDown(void)
@@ -54,47 +68,50 @@ void mtsManagerLocalTest::tearDown(void)
     delete localManager2;
 }
 
-// TODO: Please see some comments for mtsManagerLocal constructor in mtsManagerLocal.h.
-// Need to check a couple of issues (TODOs) there.
+void mtsManagerLocalTest::TestInitialize(void)
+{
+    // Add __os_init() test if needed.
+}
+
 void mtsManagerLocalTest::TestConstructor(void)
 {
-    // In this test, we can assume that the constructor is always called with 
-    // two arguments because users cannot directly call the constructor.
-    // (Singleton implementation: protected constructor)
+    mtsManagerLocal localManager;
+    CPPUNIT_ASSERT_EQUAL(localManager.ProcessName, string(DEFAULT_PROCESS_NAME));
+    CPPUNIT_ASSERT(localManager.ManagerGlobal);
 
-    // Standalone mode 
-    mtsManagerLocal managerLocal1("", "");
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal);
-    CPPUNIT_ASSERT(managerLocal1.ProcessName == "");
-    CPPUNIT_ASSERT(managerLocal1.ProcessIP == "");
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindProcess(""));
+    mtsManagerGlobal * GCM = dynamic_cast<mtsManagerGlobal*>(localManager.ManagerGlobal);
+    CPPUNIT_ASSERT(GCM);
 
-    mtsManagerLocal managerLocal2("localhost", "");
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal);
-    CPPUNIT_ASSERT(managerLocal2.ProcessName == "localhost");
-    CPPUNIT_ASSERT(managerLocal2.ProcessIP == "");
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindProcess("localhost"));
-
-    mtsManagerLocal managerLocal3("", "localhost");
-    CPPUNIT_ASSERT(managerLocal3.ManagerGlobal);
-    CPPUNIT_ASSERT(managerLocal3.ProcessName == "");
-    CPPUNIT_ASSERT(managerLocal3.ProcessIP == "localhost");
-    CPPUNIT_ASSERT(managerLocal3.ManagerGlobal->FindProcess(""));
-
-    // Network mode
-    mtsManagerLocal managerLocal4("ProcessName", "ProcessIP");
-    CPPUNIT_ASSERT(managerLocal4.ManagerGlobal == NULL); // TODO: not yet implemented
-    CPPUNIT_ASSERT(managerLocal4.ProcessName == "ProcessName");
-    CPPUNIT_ASSERT(managerLocal4.ProcessIP == "ProcessIP");
+    CPPUNIT_ASSERT(GCM->FindProcess(localManager.ProcessName));
+    CPPUNIT_ASSERT(GCM->GetProcessObject(localManager.ProcessName) == &localManager);
 }
 
 void mtsManagerLocalTest::TestCleanup(void)
 {
-    mtsManagerLocal managerLocal("", "");
+    mtsManagerLocal managerLocal;
+
     CPPUNIT_ASSERT(managerLocal.ManagerGlobal);
+    mtsManagerTestC1Device * dummy = new mtsManagerTestC1Device;
+    CPPUNIT_ASSERT(managerLocal.ComponentMap.AddItem("dummy", dummy));
+    CPPUNIT_ASSERT(managerLocal.ComponentMap.size() == 1);
 
     managerLocal.Cleanup();
+
     CPPUNIT_ASSERT(managerLocal.ManagerGlobal == NULL);
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 0, managerLocal.ComponentMap.size());
+
+    // Add __os_exit() test if needed.
+}
+
+void mtsManagerLocalTest::TestGetIPAddressList(void)
+{
+    vector<string> ipList1, ipList2;
+    ipList1 = mtsManagerLocal::GetIPAddressList();
+    mtsManagerLocal::GetIPAddressList(ipList2);
+
+    CPPUNIT_ASSERT(ipList1.size() == ipList2.size());
+    for (unsigned int i = 0; i < ipList1.size(); ++i)
+        CPPUNIT_ASSERT(ipList1[i] == ipList2[i]);
 }
 
 void mtsManagerLocalTest::TestGetInstance(void)
@@ -103,83 +120,66 @@ void mtsManagerLocalTest::TestGetInstance(void)
 
     CPPUNIT_ASSERT(managerLocal);
     CPPUNIT_ASSERT(managerLocal->ManagerGlobal);
-    CPPUNIT_ASSERT(mtsManagerLocal::Instance);
-    CPPUNIT_ASSERT(managerLocal->ProcessName == "");
-#if CISST_MTS_HAS_ICE
-    // IP is automatically set so we don't need to check.
-#else
-    CPPUNIT_ASSERT(managerLocal->ProcessIP == "localhost");
-#endif
-    CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(""));
-
-    // Clear current singleton instance. Note that this is done only for unit-test
-    // purpose. This instance should not be touched from the outside.
-    mtsManagerLocal * temp = managerLocal;
-    mtsManagerLocal::Instance = NULL;   // avoid a crash due to duplicate memory release
-    delete temp;
-
-    managerLocal = mtsManagerLocal::GetInstance(P1, "");
-    CPPUNIT_ASSERT(managerLocal);
-    CPPUNIT_ASSERT(managerLocal->ManagerGlobal);
-    CPPUNIT_ASSERT(mtsManagerLocal::Instance);
-    CPPUNIT_ASSERT(managerLocal->ProcessName == P1);
-#if CISST_MTS_HAS_ICE
-    // IP is automatically set so we don't need to check.
-#else
-    CPPUNIT_ASSERT(managerLocal->ProcessIP == "localhost");
-#endif
-    CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(P1));
+    CPPUNIT_ASSERT(managerLocal == mtsManagerLocal::Instance);
+    CPPUNIT_ASSERT(managerLocal->ManagerGlobal->FindProcess(DEFAULT_PROCESS_NAME));
 }
 
 void mtsManagerLocalTest::TestAddComponent(void)
 {
-    //-----------------------------------------------------
+    /*
+    mtsManagerLocal localManager1;
+    const std::string processName = localManager1.ProcessName;
+
     // Test with mtsDevice type components
-    mtsManagerLocal managerLocal1(P1, "");
     mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
 
     // Invalid argument test
-    CPPUNIT_ASSERT(!managerLocal1.AddComponent(NULL));
+    CPPUNIT_ASSERT(!localManager1.AddComponent(NULL));
 
     // Check with the global component manager.    
-    // Should fail if a component to be added has already been registered before
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->AddComponent(P1, C2));
-    CPPUNIT_ASSERT(!managerLocal1.AddComponent(c2Device));
+    // Should fail if a component has already been registered before
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->AddComponent(processName, C2));
+    CPPUNIT_ASSERT(!localManager1.AddComponent(c2Device));
 
-    // Should succeed if a component is added for the first time
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->RemoveComponent(P1, C2));
-    CPPUNIT_ASSERT(managerLocal1.AddComponent(c2Device));
-    CPPUNIT_ASSERT(managerLocal1.ComponentMap.FindItem(C2));
+    // Should succeed if a component is new
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->RemoveComponent(processName, C2));
+    CPPUNIT_ASSERT(localManager1.AddComponent(c2Device));
+    CPPUNIT_ASSERT(localManager1.ComponentMap.FindItem(C2));
     
-    // The C2 has both provided interfaces (p1, p2) and a required interface (r1).
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindRequiredInterface(P1, C2, r1));
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindProvidedInterface(P1, C2, p1));
-    CPPUNIT_ASSERT(managerLocal1.ManagerGlobal->FindProvidedInterface(P1, C2, p2));
+    // Check if all the existing required interfaces and provided interfaces are 
+    // added to the global component manager.
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindRequiredInterface(processName, C2, r1));
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindProvidedInterface(processName, C2, p1));
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindProvidedInterface(processName, C2, p2));
+    */
 
-    //-----------------------------------------------------
-    // Test with mtsDevice type components
-    mtsManagerLocal managerLocal2(P1, "");
+    mtsManagerLocal localManager2;
+    const std::string processName = localManager2.ProcessName;
+
+    // Test with mtsTask type components
     mtsManagerTestC2 * c2Task = new mtsManagerTestC2;
 
     // Invalid argument test
-    CPPUNIT_ASSERT(!managerLocal2.AddComponent(NULL));
+    CPPUNIT_ASSERT(!localManager2.AddComponent(NULL));
 
     // Check with the global component manager.    
     // Should fail if a component to be added has already been registered before
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->AddComponent(P1, C2));
-    CPPUNIT_ASSERT(!managerLocal2.AddComponent(c2Task));
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->AddComponent(processName, C2));
+    CPPUNIT_ASSERT(!localManager2.AddComponent(c2Task));
 
-    // Should succeed if a component is added for the first time
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->RemoveComponent(P1, C2));
-    CPPUNIT_ASSERT(managerLocal2.AddComponent(c2Task));
-    CPPUNIT_ASSERT(managerLocal2.ComponentMap.FindItem(C2));
+    // Should succeed if a component is new
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->RemoveComponent(processName, C2));
+    CPPUNIT_ASSERT(localManager2.AddComponent(c2Task));
+    CPPUNIT_ASSERT(localManager2.ComponentMap.FindItem(C2));
     
-    // The C2 has both provided interfaces (p1, p2) and a required interface (r1).
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindRequiredInterface(P1, C2, r1));
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindProvidedInterface(P1, C2, p1));
-    CPPUNIT_ASSERT(managerLocal2.ManagerGlobal->FindProvidedInterface(P1, C2, p2));
+    // Check if all the existing required interfaces and provided interfaces are 
+    // added to the global component manager.
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindRequiredInterface(processName, C2, r1));
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindProvidedInterface(processName, C2, p1));
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindProvidedInterface(processName, C2, p2));
 }
 
+/*
 void mtsManagerLocalTest::TestRemoveComponent(void)
 {
     //-----------------------------------------------------
@@ -628,5 +628,6 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(valueWrite.Data, P2C3->RequiredInterface1.GetValue());
 }
+*/
 
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerLocalTest);

@@ -38,6 +38,11 @@ mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
 {
 }
 
+mtsComponentInterfaceProxyClient::~mtsComponentInterfaceProxyClient()
+{
+    Stop();
+}
+
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
 //-----------------------------------------------------------------------------
