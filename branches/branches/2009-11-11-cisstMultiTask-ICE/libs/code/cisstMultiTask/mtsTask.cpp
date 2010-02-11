@@ -218,7 +218,7 @@ void mtsTask::Kill(void)
 
     // Generate a data collection event not to lose any data when killing a thread.
     // StateTable.GenerateDataCollectionEvent();
-    std::cerr << "This needs to be fixed, we need to collect whatever is left in the state table" << std::endl;
+    //std::cerr << "This needs to be fixed, we need to collect whatever is left in the state table" << std::endl;
 
     // If the task has only been constructed (i.e., no thread created), then we just enter the FINISHED state directly.
     // Otherwise, we set the state to FINISHING and let the thread (RunInternal) set it to FINISHED.

@@ -202,19 +202,6 @@ void mtsManagerLocal::Cleanup(void)
     __os_exit();
 }
 
-std::vector<std::string> mtsManagerLocal::GetIPAddressList(void)
-{
-    std::vector<std::string> ipAddresses;
-    osaSocket::GetLocalhostIP(ipAddresses);
-
-    return ipAddresses;
-}
-
-void mtsManagerLocal::GetIPAddressList(std::vector<std::string> & ipAddresses)
-{
-    osaSocket::GetLocalhostIP(ipAddresses);
-}
-
 #if !CISST_MTS_HAS_ICE
 mtsManagerLocal * mtsManagerLocal::GetInstance(void)
 {
@@ -356,7 +343,7 @@ std::vector<std::string> CISST_DEPRECATED mtsManagerLocal::GetNamesOfTasks(void)
     mtsComponent * component;
     std::vector<std::string> namesOfTasks;
 
-    ComponentMapType::const_iterator it;
+    ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     for (; it != itEnd; ++it) {
         component = dynamic_cast<mtsTask*>(it->second);
@@ -373,7 +360,7 @@ std::vector<std::string> CISST_DEPRECATED mtsManagerLocal::GetNamesOfDevices(voi
     mtsDevice * component;
     std::vector<std::string> namesOfDevices;
 
-    ComponentMapType::const_iterator it;
+    ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     for (; it != itEnd; ++it) {
         component = dynamic_cast<mtsTask*>(it->second);
@@ -394,7 +381,7 @@ void CISST_DEPRECATED mtsManagerLocal::GetNamesOfDevices(std::vector<std::string
 {
     mtsDevice * component;
 
-    ComponentMapType::const_iterator it;
+    ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     for (; it != itEnd; ++it) {
         component = dynamic_cast<mtsTask*>(it->second);
@@ -408,7 +395,7 @@ void CISST_DEPRECATED mtsManagerLocal::GetNamesOfTasks(std::vector<std::string>&
 {
     mtsDevice * component;
 
-    ComponentMapType::const_iterator it;
+    ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
     for (; it != itEnd; ++it) {
         component = dynamic_cast<mtsTask*>(it->second);
@@ -420,7 +407,7 @@ void CISST_DEPRECATED mtsManagerLocal::GetNamesOfTasks(std::vector<std::string>&
 
 mtsComponent * mtsManagerLocal::GetComponent(const std::string & componentName) const
 {
-    return ComponentMap.GetItem(componentName, CMN_LOG_LOD_RUN_ERROR);
+    return ComponentMap.GetItem(componentName);
 }
 
 mtsTask * mtsManagerLocal::GetComponentAsTask(const std::string & componentName) const
@@ -653,6 +640,20 @@ bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std
     return true;
 }
 
+#if CISST_MTS_HAS_ICE
+std::vector<std::string> mtsManagerLocal::GetIPAddressList(void)
+{
+    std::vector<std::string> ipAddresses;
+    osaSocket::GetLocalhostIP(ipAddresses);
+
+    return ipAddresses;
+}
+
+void mtsManagerLocal::GetIPAddressList(std::vector<std::string> & ipAddresses)
+{
+    osaSocket::GetLocalhostIP(ipAddresses);
+}
+
 bool mtsManagerLocal::Connect(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
@@ -741,6 +742,7 @@ bool mtsManagerLocal::Connect(
 
     return true;
 }
+#endif
 
 int mtsManagerLocal::ConnectLocally(
     const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -851,7 +853,8 @@ bool mtsManagerLocal::Disconnect(const std::string & clientComponentName, const 
     }
 
     //
-    // TODO: LOCAL DISCONNECT!!!
+    // TODO: LOCAL DISCONNECT!!! (e.g. disable all commands and events, and all the other
+    // resource clean-up and disconnection chores)
     //
 
     CMN_LOG_CLASS_RUN_VERBOSE << "Disconnect: successfully disconnected." << std::endl;
@@ -859,6 +862,110 @@ bool mtsManagerLocal::Disconnect(const std::string & clientComponentName, const 
     return true;
 }
 
+void CISST_DEPRECATED mtsManagerLocal::ToStream(std::ostream & outputStream) const
+{
+#if 0
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
+    outputStream << "List of tasks: name and address" << std::endl;
+    for (; taskIterator != taskEndIterator; ++taskIterator) {
+        outputStream << "  Task: " << taskIterator->first << ", address: " << taskIterator->second << std::endl;
+    }
+    DeviceMapType::const_iterator deviceIterator = DeviceMap.begin();
+    const DeviceMapType::const_iterator deviceEndIterator = DeviceMap.end();
+    outputStream << "List of devices: name and address" << std::endl;
+    for (; deviceIterator != deviceEndIterator; ++deviceIterator) {
+        outputStream << "  Device: " << deviceIterator->first << ", adress: " << deviceIterator->second << std::endl;
+    }
+    AssociationSetType::const_iterator associationIterator = AssociationSet.begin();
+    const AssociationSetType::const_iterator associationEndIterator = AssociationSet.end();
+    outputStream << "Associations: task::requiredInterface associated to device/task::requiredInterface" << std::endl;
+    for (; associationIterator != associationEndIterator; ++associationIterator) {
+        outputStream << "  " << associationIterator->first.first << "::" << associationIterator->first.second << std::endl
+                     << "  -> " << associationIterator->second.first << "::" << associationIterator->second.second << std::endl;
+    }
+#endif
+}
+
+void CISST_DEPRECATED mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const
+{
+#if 0
+    std::vector<std::string> providedInterfacesAvailable, requiredInterfacesAvailable;
+    std::vector<std::string>::const_iterator stringIterator;
+    unsigned int clusterNumber = 0;
+    // dot header
+    outputStream << "/* Automatically generated by cisstMultiTask, mtsTaskManager::ToStreamDot.\n"
+                 << "   Use Graphviz utility \"dot\" to generate a graph of tasks/devices interactions. */"
+                 << std::endl;
+    outputStream << "digraph mtsTaskManager {" << std::endl;
+    // create all nodes for tasks
+    TaskMapType::const_iterator taskIterator = TaskMap.begin();
+    const TaskMapType::const_iterator taskEndIterator = TaskMap.end();
+    for (; taskIterator != taskEndIterator; ++taskIterator) {
+        outputStream << "subgraph cluster" << clusterNumber << "{" << std::endl
+                     << "node[style=filled,color=white,shape=box];" << std::endl
+                     << "style=filled;" << std::endl
+                     << "color=lightgrey;" << std::endl; 
+        clusterNumber++;
+        outputStream << taskIterator->first
+                     << " [label=\"Task:\\n" << taskIterator->first << "\"];" << std::endl;
+        providedInterfacesAvailable = taskIterator->second->GetNamesOfProvidedInterfaces();
+        for (stringIterator = providedInterfacesAvailable.begin();
+             stringIterator != providedInterfacesAvailable.end();
+             stringIterator++) {
+            outputStream << taskIterator->first << "providedInterface" << *stringIterator
+                         << " [label=\"Provided interface:\\n" << *stringIterator << "\"];" << std::endl;
+            outputStream << taskIterator->first << "providedInterface" << *stringIterator
+                         << "->" << taskIterator->first << ";" << std::endl;
+        }
+        requiredInterfacesAvailable = taskIterator->second->GetNamesOfRequiredInterfaces();
+        for (stringIterator = requiredInterfacesAvailable.begin();
+             stringIterator != requiredInterfacesAvailable.end();
+             stringIterator++) {
+            outputStream << taskIterator->first << "requiredInterface" << *stringIterator
+                         << " [label=\"Required interface:\\n" << *stringIterator << "\"];" << std::endl;
+            outputStream << taskIterator->first << "->"
+                         << taskIterator->first << "requiredInterface" << *stringIterator << ";" << std::endl;
+        }
+        outputStream << "}" << std::endl;
+    }
+    // create all nodes for devices
+    DeviceMapType::const_iterator deviceIterator = DeviceMap.begin();
+    const DeviceMapType::const_iterator deviceEndIterator = DeviceMap.end();
+    for (; deviceIterator != deviceEndIterator; ++deviceIterator) {
+        outputStream << "subgraph cluster" << clusterNumber << "{" << std::endl
+                     << "node[style=filled,color=white,shape=box];" << std::endl
+                     << "style=filled;" << std::endl
+                     << "color=lightgrey;" << std::endl; 
+        clusterNumber++;
+        outputStream << deviceIterator->first
+                     << " [label=\"Device:\\n" << deviceIterator->first << "\"];" << std::endl;
+        providedInterfacesAvailable = deviceIterator->second->GetNamesOfProvidedInterfaces();
+        for (stringIterator = providedInterfacesAvailable.begin();
+             stringIterator != providedInterfacesAvailable.end();
+             stringIterator++) {
+            outputStream << deviceIterator->first << "providedInterface" << *stringIterator
+                         << " [label=\"Provided interface:\\n" << *stringIterator << "\"];" << std::endl;
+            outputStream << deviceIterator->first << "providedInterface" << *stringIterator
+                         << "->" << deviceIterator->first << ";" << std::endl;
+        }
+        outputStream << "}" << std::endl;
+    }
+    // create edges
+    AssociationSetType::const_iterator associationIterator = AssociationSet.begin();
+    const AssociationSetType::const_iterator associationEndIterator = AssociationSet.end();
+    for (; associationIterator != associationEndIterator; ++associationIterator) {
+        outputStream << associationIterator->first.first << "requiredInterface" << associationIterator->first.second
+                     << "->"
+                     << associationIterator->second.first << "providedInterface" << associationIterator->second.second
+                     << ";" << std::endl;
+    }
+    // end of file
+    outputStream << "}" << std::endl;
+#endif
+}
+
+#if CISST_MTS_HAS_ICE
 bool mtsManagerLocal::Disconnect(
     const std::string & clientProcessName,
     const std::string & clientComponentName,
@@ -885,7 +992,6 @@ bool mtsManagerLocal::Disconnect(
     return true;
 }
 
-#if CISST_MTS_HAS_ICE
 bool mtsManagerLocal::GetProvidedInterfaceDescription(
     const std::string & componentName, const std::string & providedInterfaceName, 
     ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID)
@@ -1138,7 +1244,7 @@ const int mtsManagerLocal::GetCurrentInterfaceCount(const std::string & componen
     return (const int) (numOfProvidedInterfaces + numOfRequiredInterfaces);
 }
 
-void mtsManagerLocal::SetIPAddress()
+void mtsManagerLocal::SetIPAddress(void)
 {
     // Fetch all ip addresses available on this machine.
     std::vector<std::string> ipAddresses;
@@ -1161,15 +1267,14 @@ bool mtsManagerLocal::SetProvidedInterfaceProxyAccessInfo(
         serverProcessName, serverComponentName, serverProvidedInterfaceName,
         endpointInfo);
 }
-#endif
 
 bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID)
 {
     // This method is called only by the GCM to connect two local interfaces
-    // (one is an original interface and the other one is a proxy interface)
-    // at server process.
+    // at server side. In this case, one inteface is an original interface and 
+    // the other one is a proxy interface.
 
     std::string serverEndpointInfo, communicatorID;
 #if CISST_MTS_HAS_ICE
@@ -1202,7 +1307,6 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
 
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectServerSideInterface: established local connection at server process: " << ProcessName << std::endl;
 
-#if CISST_MTS_HAS_ICE
     // Get component proxy object. Note that this process is the server process
     // and the client component is a proxy object, not an original component.
     const std::string clientComponentProxyName = mtsManagerGlobal::GetComponentProxyName(clientProcessName, clientComponentName);
@@ -1294,11 +1398,9 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int providedInte
             goto ConnectServerSideInterfaceError;
         }
     }
-#endif // CISST_MTS_HAS_ICE
 
     return true;
 
-#if CISST_MTS_HAS_ICE
 ConnectServerSideInterfaceError:
     if (!Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
                     serverProcessName, serverComponentName, serverProvidedInterfaceName))
@@ -1307,7 +1409,6 @@ ConnectServerSideInterfaceError:
     }
 
     return false;
-#endif // CISST_MTS_HAS_ICE
 }
 
 bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID,
@@ -1335,7 +1436,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
         return false;
     }
 
-#if CISST_MTS_HAS_ICE
     mtsComponent * serverComponent, * clientComponent;
     mtsComponentProxy * serverComponentProxy = 0;
 
@@ -1401,7 +1501,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     }
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully set server proxy access information: "
         << serverProvidedInterfaceName << ", " << endpointAccessInfo << std::endl;
-#endif
 
     // Make the server process begin connection process via the GCM.
     if (!ManagerGlobal->ConnectServerSideInterface(providedInterfaceProxyInstanceID,
@@ -1414,7 +1513,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: successfully connected server-side interfaces: "
         << clientRequiredInterfaceName << " - " << serverProvidedInterfaceName << std::endl;
 
-#if CISST_MTS_HAS_ICE
     // Now it is guaranteed that two local connections--one at server side
     // and the other one at client side--are successfully established.
     // That is, command IDs and event handler IDs can be updated.
@@ -1436,7 +1534,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     if (UnitTestEnabled && UnitTestNetworkProxyEnabled) {
         osaSleep(3);
     }
-#endif
 
     // Inform the GCM that the connection is successfully established and 
     // becomes active (network proxies are running now and an ICE client 
@@ -1447,7 +1544,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     }
     CMN_LOG_CLASS_RUN_VERBOSE << "ConnectClientSideInterface: Informed global component manager of successful connection: " << connectionID << std::endl;
 
-#if CISST_MTS_HAS_ICE
     // Register this connection information to a provided interface proxy 
     // server so that the proxy server can clean up this connection when a
     // required interface proxy client is detected as disconnected.
@@ -1458,8 +1554,6 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
         CMN_LOG_CLASS_RUN_ERROR << "ConnectClientSideInterface: failed to add connection information" << std::endl;
         goto ConnectClientSideInterfaceError;
     }
-
-#endif
 
     return true;
 
@@ -1473,8 +1567,6 @@ ConnectClientSideInterfaceError:
     return false;
 }
 
-
-#if CISST_MTS_HAS_ICE
 void mtsManagerLocal::DisconnectGCM()
 {
     mtsManagerProxyClient * globalComponentManagerProxy = dynamic_cast<mtsManagerProxyClient*>(ManagerGlobal);

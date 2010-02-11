@@ -1118,7 +1118,6 @@ bool mtsManagerGlobal::GetProvidedInterfaceProxyAccessInfo(
 
     return true;
 }
-#endif
 
 bool mtsManagerGlobal::InitiateConnect(const unsigned int connectionID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -1151,3 +1150,4 @@ bool mtsManagerGlobal::ConnectServerSideInterface(const unsigned int providedInt
         clientProcessName, clientComponentName, clientRequiredInterfaceName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName, serverProcessName);
 }
+#endif

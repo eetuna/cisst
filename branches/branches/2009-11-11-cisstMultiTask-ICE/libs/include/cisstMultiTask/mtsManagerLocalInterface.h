@@ -83,7 +83,6 @@ public:
     /*! Remove a required interface proxy */
     virtual bool RemoveRequiredInterfaceProxy(
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID = "") = 0;
-#endif
 
     //-------------------------------------------------------------------------
     //  Connection Management
@@ -101,6 +100,7 @@ public:
     virtual bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
+#endif
 
     //-------------------------------------------------------------------------
     //  Getters

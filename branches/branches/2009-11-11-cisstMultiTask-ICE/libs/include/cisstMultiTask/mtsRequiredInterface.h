@@ -82,6 +82,7 @@ class CISST_EXPORT mtsRequiredInterface: public cmnGenericObject
     friend class mtsComponentProxy;
     friend class mtsComponentInterfaceProxyClient;
     friend class mtsManagerLocal;
+    friend class mtsManagerLocalTest;
 
 protected:
 

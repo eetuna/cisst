@@ -28,67 +28,91 @@ class mtsManagerLocal;
 class mtsManagerLocalTest: public CppUnit::TestFixture
 {
 private:
-    mtsManagerLocal *localManager1, *localManager2;
+    //mtsManagerLocal *localManager1, *localManager2;
 
     CPPUNIT_TEST_SUITE(mtsManagerLocalTest);
     {
         CPPUNIT_TEST(TestInitialize);
         CPPUNIT_TEST(TestConstructor);
         CPPUNIT_TEST(TestCleanup);
-        CPPUNIT_TEST(TestGetIPAddressList);
-        CPPUNIT_TEST(TestGetInstance);
-        CPPUNIT_TEST(TestAddComponent);
-        /*
-        CPPUNIT_TEST(TestRemoveComponent);
-        CPPUNIT_TEST(TestGetComponent);
-
-        CPPUNIT_TEST(TestConnectDisconnect);
-
-        //CPPUNIT_TEST(TestCreateAll);
-        //CPPUNIT_TEST(TestStartAll);
-        //CPPUNIT_TEST(TestKillAll);
         
+        CPPUNIT_TEST(TestAddComponent);
+        CPPUNIT_TEST(TestFindComponent);
+        CPPUNIT_TEST(TestRemoveComponent);
+        
+        CPPUNIT_TEST(TestGetInstance);
+        CPPUNIT_TEST(TestGetComponent);
         CPPUNIT_TEST(TestGetNamesOfComponents);
-        //CPPUNIT_TEST(TestGetNamesOfTasks);
-        //CPPUNIT_TEST(TestGetNamesOfDevices);
-        //CPPUNIT_TEST(TestCreateRequiredInterfaceProxy);
-        //CPPUNIT_TEST(TestCreateProvidedInterfaceProxy);
-        //CPPUNIT_TEST(TestRemoveRequiredInterfaceProxy);
-        //CPPUNIT_TEST(TestRemoveProvidedInterfaceProxy);
+        CPPUNIT_TEST(TestGetNamesOfTasks);
+        CPPUNIT_TEST(TestGetNamesOfDevices);
+        CPPUNIT_TEST(TestGetTimeServer);
         CPPUNIT_TEST(TestGetProcessName);
 
-#if !CISST_MTS_HAS_ICE
-        // Special type of tests to check if two components can bind and run 
-        // together correctly.
+        CPPUNIT_TEST(TestCreateAll);
+        CPPUNIT_TEST(TestStartAll);
+        CPPUNIT_TEST(TestKillAll);
+
+        CPPUNIT_TEST(TestConnectLocally);
+        CPPUNIT_TEST(TestConnectDisconnect);
+
         CPPUNIT_TEST(TestLocalCommandsAndEvents);
-#else
-        //CPPUNIT_TEST(TestRemoteCommandsAndEvents);
+
+#if CISST_MTS_HAS_ICE
+        CPPUNIT_TEST(TestGetIPAddress);
+        CPPUNIT_TEST(TestGetIPAddressList);
+        CPPUNIT_TEST(TestGetName);
+
+        CPPUNIT_TEST(TestConnectServerSideInterface);
+        CPPUNIT_TEST(TestCreateRequiredInterfaceProxy);
+        CPPUNIT_TEST(TestCreateProvidedInterfaceProxy);
+        CPPUNIT_TEST(TestRemoveRequiredInterfaceProxy);
+        CPPUNIT_TEST(TestRemoveProvidedInterfaceProxy);
+        CPPUNIT_TEST(TestRemoteCommandsAndEvents);
 #endif
-        */
 	}
     CPPUNIT_TEST_SUITE_END();
 
 public:
+    mtsManagerLocalTest();
+
     void setUp(void);
     void tearDown(void);
 
     void TestInitialize(void);
     void TestConstructor(void);
     void TestCleanup(void);
+
+    void TestAddComponent(void);
+    void TestFindComponent(void);
+    void TestRemoveComponent(void);
+    
     void TestGetIPAddressList(void);
     void TestGetInstance(void);
-    void TestAddComponent(void);
-    /*
-    void TestRemoveComponent(void);
     void TestGetComponent(void);
-    void TestConnectDisconnect(void);
+    void TestGetNamesOfComponents(void);
+    void TestGetNamesOfTasks(void);
+    void TestGetNamesOfDevices(void);
+    void TestGetTimeServer(void);
+    void TestGetProcessName(void);
+
     void TestCreateAll(void);
     void TestStartAll(void);
     void TestKillAll(void);
     
-    void TestGetNamesOfComponents(void);
-    void TestGetProcessName(void);
+    void TestConnectLocally(void);
+    void TestConnectDisconnect(void);
     void TestLocalCommandsAndEvents(void);
+
+#if CISST_MTS_HAS_ICE
+    void TestGetIPAddress(void);
+    void TestGetIPAddressList(void);
+    void TestGetName(void);
+
+    void TestConnectServerSideInterface(void);
+    void TestCreateRequiredInterfaceProxy(void);
+    void TestCreateProvidedInterfaceProxy(void);
+    void TestRemoveRequiredInterfaceProxy(void);
+    void TestRemoveProvidedInterfaceProxy(void);
     void TestRemoteCommandsAndEvents(void);
-    */
+#endif
 };

@@ -126,8 +126,10 @@ protected:
     /*! Initialization */
     void Initialize(void);
 
+#if CISST_MTS_HAS_ICE
     /*! Set an IP address of this machine */
-    void SetIPAddress();
+    void SetIPAddress(void);
+#endif
 
     /*! Connect two local interfaces. This method assumes two interfaces are in 
         the same process.
@@ -186,7 +188,6 @@ public:
 
     /*! Returns a total number of interfaces that are running on a component */
     const int GetCurrentInterfaceCount(const std::string & componentName, const std::string & listenerID = "");
-#endif
 
     /*! Connect interfaces at server side */
     bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
@@ -197,6 +198,7 @@ public:
     bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "");
+#endif
 
 #if !CISST_MTS_HAS_ICE
     /*! Get an instance of local component manager */
@@ -238,18 +240,22 @@ public:
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
+#if CISST_MTS_HAS_ICE
     bool Connect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+#endif
 
     /*! Disconnect two interfaces */
     bool Disconnect(
         const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
+#if CISST_MTS_HAS_ICE
     bool Disconnect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+#endif
 
     /*! Create all components. If a component is of type mtsTask, mtsTask::Create()
         is called internally. */
@@ -286,6 +292,12 @@ public:
         return TimeServer;
     }
 
+    /*! Returns name of this local component manager */
+    inline const std::string GetProcessName(const std::string & listenerID = "") {
+        return ProcessName;
+    }
+
+#if CISST_MTS_HAS_ICE
     /*! Return IP address of this process */
     inline std::string GetIPAddress() const { return ProcessIP; }
 
@@ -293,24 +305,18 @@ public:
     static std::vector<std::string> GetIPAddressList(void);
     static void GetIPAddressList(std::vector<std::string> & ipAddresses);
 
-    /*! Returns name of this local component manager */
-    inline const std::string GetProcessName(const std::string & listenerID = "") {
-        return ProcessName;
-    }
-
     /*! Returns name of this local component manager (for mtsProxyBaseCommon.h) */
     inline const std::string GetName() {
         return GetProcessName();
     }
+#endif
 
-    // TODO: do we need this?
     /*! For debugging. Dumps to stream the maps maintained by the manager. */
-    void CISST_DEPRECATED ToStream(std::ostream & outputStream) const {}
+    void CISST_DEPRECATED ToStream(std::ostream & outputStream) const;
 
-    // TODO: do we need this?
     /*! Create a dot file to be used by graphviz to generate a nice
       graph of connections between tasks/interfaces. */
-    void CISST_DEPRECATED ToStreamDot(std::ostream & outputStream) const {}
+    void CISST_DEPRECATED ToStreamDot(std::ostream & outputStream) const;
 
     //-------------------------------------------------------------------------
     //  Networking

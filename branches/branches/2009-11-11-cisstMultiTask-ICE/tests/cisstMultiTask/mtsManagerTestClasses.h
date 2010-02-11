@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask.h>
 #include <cisstCommon/cmnUnits.h>
+#include <cisstOSAbstraction/osaSleep.h>
 
 /*
     Following component definitions are described in the project wiki page.
@@ -108,7 +109,7 @@ class mtsManagerTestC1 : public mtsTaskPeriodic
 public:
     mtsManagerTestRequiredInterface RequiredInterface1, RequiredInterface2;
 
-    mtsManagerTestC1() : mtsTaskPeriodic("C1", 10 * cmn_ms)
+    mtsManagerTestC1() : mtsTaskPeriodic("C1Task", 10 * cmn_ms)
     {
         mtsRequiredInterface * required;
 
@@ -182,7 +183,7 @@ public:
     mtsManagerTestProvidedInterface ProvidedInterface1, ProvidedInterface2;
     mtsManagerTestRequiredInterface RequiredInterface1;
 
-    mtsManagerTestC2() : mtsTaskContinuous("C2")
+    mtsManagerTestC2() : mtsTaskContinuous("C2Task")
     {
         mtsRequiredInterface * required;
         mtsProvidedInterface * provided;
@@ -285,7 +286,7 @@ public:
     // Counters to test Create()
     int CounterCreateCall;
 
-    mtsManagerTestC3() : mtsTaskFromCallback("C3"), CounterCreateCall(0)
+    mtsManagerTestC3() : mtsTaskFromCallback("C3Task"), CounterCreateCall(0)
     {
         mtsRequiredInterface * required;
 

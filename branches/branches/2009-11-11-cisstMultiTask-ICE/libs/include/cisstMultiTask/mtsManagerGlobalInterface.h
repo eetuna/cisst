@@ -117,6 +117,7 @@ public:
     /*! Let a client process initiate connection process. When LCM::Connect()
         is called at server side, the server process internally calls this 
         method to start connection process at client side. */
+#if CISST_MTS_HAS_ICE
     virtual bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
@@ -130,6 +131,7 @@ public:
     virtual bool ConnectServerSideInterface(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+#endif
 
     //-------------------------------------------------------------------------
     //  Networking
