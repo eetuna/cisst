@@ -862,7 +862,7 @@ bool mtsManagerLocal::Disconnect(const std::string & clientComponentName, const 
     return true;
 }
 
-void CISST_DEPRECATED mtsManagerLocal::ToStream(std::ostream & outputStream) const
+void CISST_DEPRECATED mtsManagerLocal::ToStream(std::ostream & CMN_UNUSED(outputStream)) const
 {
 #if 0
     TaskMapType::const_iterator taskIterator = TaskMap.begin();
@@ -887,7 +887,7 @@ void CISST_DEPRECATED mtsManagerLocal::ToStream(std::ostream & outputStream) con
 #endif
 }
 
-void CISST_DEPRECATED mtsManagerLocal::ToStreamDot(std::ostream & outputStream) const
+void CISST_DEPRECATED mtsManagerLocal::ToStreamDot(std::ostream & CMN_UNUSED(outputStream)) const
 {
 #if 0
     std::vector<std::string> providedInterfacesAvailable, requiredInterfacesAvailable;

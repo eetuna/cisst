@@ -169,7 +169,7 @@ public:
         }
     }
 
-    void Configure(const std::string & filename = "") {}
+    void Configure(const std::string & CMN_UNUSED(filename) = "") {}
 };
 
 //-----------------------------------------------------------------------------
@@ -270,7 +270,7 @@ public:
         }
     }
 
-    void Configure(const std::string & filename = "") {}
+    void Configure(const std::string & CMN_UNUSED(filename) = "") {}
 };
 
 //-----------------------------------------------------------------------------
@@ -326,7 +326,7 @@ public:
         }
     }
 
-    void Configure(const std::string & filename = "") {}
+    void Configure(const std::string & CMN_UNUSED(filename) = "") {}
 };
 
 #endif

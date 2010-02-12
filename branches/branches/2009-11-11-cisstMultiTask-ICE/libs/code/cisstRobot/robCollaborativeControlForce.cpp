@@ -96,7 +96,7 @@ robCollaborativeControlForce::robCollaborativeControlForce(double linearGainMast
                                                            double forceLimit,
                                                            ParameterType::ForceModeType forceMode,
                                                            double masterToSlaveScale,
-                                                           double forceFeedbackRatio)
+                                                           double CMN_UNUSED(forceFeedbackRatio))
 {
     ClutchOffset.SetAll(0.0);
     LeftClutchOffset.SetAll(0.0);

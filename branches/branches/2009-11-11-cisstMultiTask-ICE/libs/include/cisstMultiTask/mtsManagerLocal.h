@@ -293,7 +293,7 @@ public:
     }
 
     /*! Returns name of this local component manager */
-    inline const std::string GetProcessName(const std::string & listenerID = "") {
+    inline const std::string GetProcessName(const std::string & CMN_UNUSED(listenerID) = "") {
         return ProcessName;
     }
 
@@ -347,7 +347,7 @@ public:
     void CISST_DEPRECATED SetGlobalTaskManagerIP(const std::string) {}
 
     typedef enum { TASK_MANAGER_CLIENT, TASK_MANAGER_SERVER } ManagerType;
-    void CISST_DEPRECATED SetTaskManagerType(ManagerType type) {}
+    void CISST_DEPRECATED SetTaskManagerType(ManagerType CMN_UNUSED(type)) {}
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerLocal)
