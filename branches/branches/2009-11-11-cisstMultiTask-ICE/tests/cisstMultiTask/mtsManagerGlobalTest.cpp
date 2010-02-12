@@ -23,6 +23,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
+#include <cisstOSAbstraction/osaSleep.h>
+
 #include "mtsManagerTestClasses.h"
 
 #define P1 "P1"
@@ -31,6 +33,10 @@ http://www.cisst.org/cisst/license.txt.
 #define C2 "C2"
 #define C3 "C3"
 #define C4 "C4"
+#define C1Task "C1Task"
+#define C2Task "C2Task"
+#define C3Task "C3Task"
+#define C4Task "C4Task"
 #define p1 "p1"
 #define p2 "p2"
 #define r1 "r1"
@@ -38,49 +44,269 @@ http://www.cisst.org/cisst/license.txt.
 #define P1_OBJ localManager1
 #define P2_OBJ localManager2
 
+#define DEFAULT_PROCESS_NAME "LCM"
+
 using namespace std;
 
-/*
 void mtsManagerGlobalTest::setUp()
 {
+    /*
     mtsManagerTestC1Device * P1C1 = new mtsManagerTestC1Device;
     mtsManagerTestC2Device * P1C2 = new mtsManagerTestC2Device;
     mtsManagerTestC2Device * P2C2 = new mtsManagerTestC2Device;
     mtsManagerTestC3Device * P2C3 = new mtsManagerTestC3Device;
 
-    localManager1 = new mtsManagerLocal(P1, "");
+#if !CISST_MTS_HAS_ICE
+    localManager1 = new mtsManagerLocal();
+    localManager1->AddComponent(P1C1);
+    localManager1->AddComponent(P1C2);
+    localManager1->AddComponent(P2C2);
+    localManager1->AddComponent(P2C3);
+#else
+    localManager1 = new mtsManagerLocal();
     localManager1->AddComponent(P1C1);
     localManager1->AddComponent(P1C2);
 
-    localManager2 = new mtsManagerLocal(P2, "");
+    localManager2 = new mtsManagerLocal();
     localManager2->AddComponent(P2C2);
     localManager2->AddComponent(P2C3);
+#endif
+    */
 }
 
 void mtsManagerGlobalTest::tearDown()
 {
+    /*
     delete localManager1;
+#if CISST_MTS_HAS_ICE
     delete localManager2;
+#endif
+    */
+}
+
+void mtsManagerGlobalTest::TestConstructor(void)
+{
+    mtsManagerGlobal GCM;
+    CPPUNIT_ASSERT_EQUAL(static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ID_BASE), GCM.ConnectionID);
+}
+
+void mtsManagerGlobalTest::TestDestructor(void)
+{
+    TestCleanup();
+}
+
+void mtsManagerGlobalTest::TestConnectedInterfaceInfo(void)
+{
+    mtsManagerGlobal::ConnectedInterfaceInfo info(P1, C1, p1, false);
+
+    CPPUNIT_ASSERT(info.GetProcessName() == P1);
+    CPPUNIT_ASSERT(info.GetComponentName() == C1);
+    CPPUNIT_ASSERT(info.GetInterfaceName() == p1);
+    CPPUNIT_ASSERT(info.IsRemoteConnection() == false);
+#if CISST_MTS_HAS_ICE
+    info.SetProxyAccessInfo("endpointInfo");
+    CPPUNIT_ASSERT(info.GetEndpointinfo() == "endpointInfo");
+#endif
+}
+
+void mtsManagerGlobalTest::TestConnectionElement(void)
+{
+    mtsManagerGlobal::ConnectionElement element(P1, 123, P1, C1, r1, P2, C2, p1);
+    
+    CPPUNIT_ASSERT(element.Connected == false);
+    CPPUNIT_ASSERT(element.RequestProcessName == P1);
+    CPPUNIT_ASSERT(element.ConnectionID == 123);
+    CPPUNIT_ASSERT(element.ClientProcessName == P1);
+    CPPUNIT_ASSERT(element.ClientComponentName == C1);
+    CPPUNIT_ASSERT(element.ClientRequiredInterfaceName == r1);
+    CPPUNIT_ASSERT(element.ServerProcessName == P2);
+    CPPUNIT_ASSERT(element.ServerComponentName == C2);
+    CPPUNIT_ASSERT(element.ServerProvidedInterfaceName == p1);
+
+    element.SetConnected();
+    CPPUNIT_ASSERT(element.Connected == true);
+
+#if CISST_MTS_HAS_ICE
+    CPPUNIT_ASSERT(element.CheckTimeout() == false);
+    const double Timeout = (double) mtsManagerProxyServer::GetGCMConnectTimeout();
+    osaSleep((timeout + 500.0) * cmn_ms);
+    CPPUNIT_ASSERT(element.CheckTimeout() == true);
+#endif
+}
+
+void mtsManagerGlobalTest::TestCleanup(void)
+{
+    mtsManagerGlobal GCM;
+
+    GCM.AddProcess(P1);
+    GCM.AddProcess(P2);
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 2, GCM.ProcessMap.size());
+
+    mtsManagerGlobal::ConnectionElement * element1 = new mtsManagerGlobal::ConnectionElement("", 0, "", "", "", "", "", "");
+    mtsManagerGlobal::ConnectionElement * element2 = new mtsManagerGlobal::ConnectionElement("", 0, "", "", "", "", "", "");
+    GCM.ConnectionElementMap[0] = element1;
+    GCM.ConnectionElementMap[1] = element2;
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 2, GCM.ConnectionElementMap.size());
+
+    GCM.Cleanup();
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 0, GCM.ProcessMap.size());
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 0, GCM.ConnectionElementMap.size());
+}
+
+void mtsManagerGlobalTest::TestGetConnectionsOfProvidedInterface(void)
+{
+    mtsManagerGlobal managerGlobal;
+
+    mtsManagerGlobal::ConnectionMapType * connectionMap; 
+    mtsManagerGlobal::InterfaceMapType * interfaceMap;
+    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
+
+    // 1. Test first type method (with InterfaceMapType argument)
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
+
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
+
+    // Add required interface to establish connection
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
+    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
+
+    // Connect two interfaces
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1));
+
+    // Check if connection information is correct
+    connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap);
+    CPPUNIT_ASSERT(connectionMap);
+    string interfaceUID = managerGlobal.GetInterfaceUID(P2, C3, r1);
+    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C3);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
+
+    // 2. Test second type method (without InterfaceMapType argument)
+    managerGlobal.Cleanup();
+
+   CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
+
+    // Add required interface to establish connection
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
+    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
+
+    // Connect two interfaces
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1));
+
+    // Check if connection information is correct
+    connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1);
+    CPPUNIT_ASSERT(connectionMap);
+    interfaceUID = managerGlobal.GetInterfaceUID(P2, C3, r1);
+    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C3);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
+}
+
+void mtsManagerGlobalTest::TestGetConnectionsOfRequiredInterface(void)
+{
+    mtsManagerGlobal managerGlobal;
+
+    mtsManagerGlobal::ConnectionMapType * connectionMap; 
+    mtsManagerGlobal::InterfaceMapType * interfaceMap;
+    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
+
+    // 1. Test first method (with InterfaceMapType as argument)
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
+
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
+
+    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
+
+    // Add provided interface to establish connection
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
+    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
+
+    // Connect two interfaces
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1));
+
+    // Check if connection information is correct
+    connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap);
+    CPPUNIT_ASSERT(connectionMap);
+    string interfaceUID = managerGlobal.GetInterfaceUID(P2, C2, p1);
+    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C2);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == p1);
+
+    // 2. Test second method (without InterfaceMapType as argument)
+    managerGlobal.Cleanup();
+
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
+    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
+
+    // Add provided interface to establish connection
+    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
+    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
+
+    // Connect two interfaces
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1));
+
+    // Check if connection information is correct
+    connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1);
+    CPPUNIT_ASSERT(connectionMap);
+    interfaceUID = managerGlobal.GetInterfaceUID(P2, C2, p1);
+    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C2);
+    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == p1);
 }
 
 void mtsManagerGlobalTest::TestAddProcess(void)
 {
     mtsManagerGlobal managerGlobal;
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.ProcessMap.FindItem(P1));
     CPPUNIT_ASSERT(managerGlobal.ProcessMap.GetItem(P1) == NULL);
     CPPUNIT_ASSERT_EQUAL((unsigned int) 1, managerGlobal.ProcessMap.size());
 
-    CPPUNIT_ASSERT(!managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(!managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.ProcessMap.FindItem(P1));
     CPPUNIT_ASSERT(managerGlobal.ProcessMap.GetItem(P1) == NULL);
     CPPUNIT_ASSERT_EQUAL((unsigned int) 1, managerGlobal.ProcessMap.size());
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
+#if CISST_MTS_HAS_ICE
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
     CPPUNIT_ASSERT(managerGlobal.ProcessMap.FindItem(P1));
     CPPUNIT_ASSERT(managerGlobal.ProcessMap.FindItem(P2));
     CPPUNIT_ASSERT_EQUAL((unsigned int) 2, managerGlobal.ProcessMap.size());
+#endif
 }
 
 void mtsManagerGlobalTest::TestFindProcess(void)
@@ -88,48 +314,36 @@ void mtsManagerGlobalTest::TestFindProcess(void)
     mtsManagerGlobal managerGlobal;
 
     CPPUNIT_ASSERT(!managerGlobal.FindProcess(P1));
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.FindProcess(P1));
 
     CPPUNIT_ASSERT(managerGlobal.RemoveProcess(P1));
     CPPUNIT_ASSERT(!managerGlobal.FindProcess(P1));
-}
-
-void mtsManagerGlobalTest::TestGetProcessObject(void)
-{
-    mtsManagerGlobal managerGlobal;
-
-    CPPUNIT_ASSERT(!managerGlobal.GetProcessObject(P1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
-    CPPUNIT_ASSERT(P1_OBJ == managerGlobal.GetProcessObject(P1));
 }
 
 void mtsManagerGlobalTest::TestRemoveProcess(void)
 {
     mtsManagerGlobal managerGlobal;
 
-
-    // Case 1. When a process does not have any components
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.FindProcess(P1));
 
     CPPUNIT_ASSERT(managerGlobal.RemoveProcess(P1));
     CPPUNIT_ASSERT(!managerGlobal.FindProcess(P1));
     CPPUNIT_ASSERT_EQUAL((unsigned int) 0, managerGlobal.ProcessMap.size());
-
-    //
-    // TODO: Add tests for cases that a process is removed when the process has
-    // multiple components and multiple interfaces.
-    //
-
-    // Case 2. When processes with components are registered
-
-    // Case 3. When processes with components that have interfaces are registered
-
-    // Case 4. When processes with components that have interfaces that have connection
-    //         with other interfaces are registered
 }
+
+/*
+void mtsManagerGlobalTest::TestGetProcessObject(void)
+{
+    mtsManagerGlobal managerGlobal;
+
+    CPPUNIT_ASSERT(!managerGlobal.GetProcessObject(P1));
+
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
+    CPPUNIT_ASSERT(P1 == managerGlobal.GetProcessObject(P1));
+}
+*/
 
 void mtsManagerGlobalTest::TestAddComponent(void)
 {
@@ -140,7 +354,7 @@ void mtsManagerGlobalTest::TestAddComponent(void)
     CPPUNIT_ASSERT_EQUAL((unsigned int) 0, managerGlobal.ProcessMap.GetMap().size());
 
     // Add a process
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     {
         // Check changes in the process map        
@@ -174,7 +388,7 @@ void mtsManagerGlobalTest::TestFindComponent(void)
 
     CPPUNIT_ASSERT(!managerGlobal.FindComponent(P1, C1));
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(!managerGlobal.FindComponent(P1, C1));
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
@@ -205,7 +419,7 @@ void mtsManagerGlobalTest::TestAddProvidedInterface(void)
     CPPUNIT_ASSERT(!managerGlobal.AddProvidedInterface(P1, C1, p1));
 
     // Test adding a provided interface after adding a component
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P1, C1, p1));
     {
@@ -262,7 +476,7 @@ void mtsManagerGlobalTest::TestAddRequiredInterface(void)
     CPPUNIT_ASSERT(!managerGlobal.AddRequiredInterface(P1, C1, r1));
 
     // Test adding a required interface after adding a component
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r1));
     {
@@ -317,7 +531,7 @@ void mtsManagerGlobalTest::TestFindProvidedInterface(void)
 
     CPPUNIT_ASSERT(!managerGlobal.FindProvidedInterface(P1, C1, p1));
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(!managerGlobal.FindProvidedInterface(P1, C1, p1));
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
@@ -336,7 +550,7 @@ void mtsManagerGlobalTest::TestFindRequiredInterface(void)
 
     CPPUNIT_ASSERT(!managerGlobal.FindRequiredInterface(P1, C1, r1));
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(!managerGlobal.FindRequiredInterface(P1, C1, r1));
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
@@ -359,7 +573,7 @@ void mtsManagerGlobalTest::TestRemoveProvidedInterface(void)
 
     // Test adding a provided interface after adding a component
     CPPUNIT_ASSERT(!managerGlobal.FindProvidedInterface(P1, C1, p1));
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P1, C1, p1));
 
@@ -402,7 +616,7 @@ void mtsManagerGlobalTest::TestRemoveRequiredInterface(void)
 
     // Test adding a provided interface after adding a component
     CPPUNIT_ASSERT(!managerGlobal.FindRequiredInterface(P1, C1, r1));
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r1));
 
@@ -443,29 +657,29 @@ void mtsManagerGlobalTest::TestConnectLocal(void)
     mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
 
     // Test if invalid arguments are handled properly
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r1));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
     CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
 
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
     // Return false if already established connection
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
 
     // Test if connection is established correctly
     // Check required interface's connection information
@@ -495,6 +709,7 @@ void mtsManagerGlobalTest::TestConnectLocal(void)
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
 }
 
+#if CISST_MTS_HAS_ICE
 void mtsManagerGlobalTest::TestConnectRemote(void)
 {
     mtsManagerGlobal managerGlobal;
@@ -506,19 +721,19 @@ void mtsManagerGlobalTest::TestConnectRemote(void)
     mtsManagerTestC2Device * P2C2 = new mtsManagerTestC2Device;
     mtsManagerTestC3Device * P2C3 = new mtsManagerTestC3Device;
 
-    mtsManagerLocalInterface * managerLocal1 = new mtsManagerLocal(P1);
-    mtsManagerLocal * managerLocal1Object = dynamic_cast<mtsManagerLocal*>(managerLocal1);
-    managerLocal1Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal1);
-    managerLocal1Object->AddComponent(P1C1);
-    managerLocal1Object->AddComponent(P1C2);
+    mtsManagerLocalInterface * localManager1 = new mtsManagerLocal(P1);
+    mtsManagerLocal * localManager1Object = dynamic_cast<mtsManagerLocal*>(localManager1);
+    localManager1Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(localManager1);
+    localManager1Object->AddComponent(P1C1);
+    localManager1Object->AddComponent(P1C2);
 
-    mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
-    mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
-    managerLocal2Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal2);
-    managerLocal2Object->AddComponent(P2C2);
-    managerLocal2Object->AddComponent(P2C3);
+    mtsManagerLocalInterface * localManager2 = new mtsManagerLocal(P2);
+    mtsManagerLocal * localManager2Object = dynamic_cast<mtsManagerLocal*>(localManager2);
+    localManager2Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(localManager2);
+    localManager2Object->AddComponent(P2C2);
+    localManager2Object->AddComponent(P2C3);
 
     // Test with various configurations to see if 
     // connection  information are managed correctly
@@ -528,11 +743,11 @@ void mtsManagerGlobalTest::TestConnectRemote(void)
 
     // Establish connections
     // Connection: (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
     // Connection: (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2));
     // Connection: (P1, C2, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C2, r1, P2, C2, p2));
     // Connection: (P2, C3, r1) ~ (P2, C2, p2)
     CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p2));
 
@@ -629,30 +844,30 @@ void mtsManagerGlobalTest::TestDisconnect(void)
     mtsManagerTestC2Device * P2C2 = new mtsManagerTestC2Device;
     mtsManagerTestC3Device * P2C3 = new mtsManagerTestC3Device;
 
-    mtsManagerLocalInterface * managerLocal1 = new mtsManagerLocal(P1);
-    mtsManagerLocal * managerLocal1Object = dynamic_cast<mtsManagerLocal*>(managerLocal1);
-    managerLocal1Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal1);
-    managerLocal1Object->AddComponent(P1C1);
-    managerLocal1Object->AddComponent(P1C2);
+    mtsManagerLocalInterface * localManager1 = new mtsManagerLocal(P1);
+    mtsManagerLocal * localManager1Object = dynamic_cast<mtsManagerLocal*>(localManager1);
+    localManager1Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(localManager1);
+    localManager1Object->AddComponent(P1C1);
+    localManager1Object->AddComponent(P1C2);
 
-    mtsManagerLocalInterface * managerLocal2 = new mtsManagerLocal(P2);
-    mtsManagerLocal * managerLocal2Object = dynamic_cast<mtsManagerLocal*>(managerLocal2);
-    managerLocal2Object->ManagerGlobal = &managerGlobal;
-    managerGlobal.AddProcess(managerLocal2);
-    managerLocal2Object->AddComponent(P2C2);
-    managerLocal2Object->AddComponent(P2C3);
+    mtsManagerLocalInterface * localManager2 = new mtsManagerLocal(P2);
+    mtsManagerLocal * localManager2Object = dynamic_cast<mtsManagerLocal*>(localManager2);
+    localManager2Object->ManagerGlobal = &managerGlobal;
+    managerGlobal.AddProcess(localManager2);
+    localManager2Object->AddComponent(P2C2);
+    localManager2Object->AddComponent(P2C3);
 
     // All the test cases used here are described in the project wiki page.
     // (see https://trac.lcsr.jhu.edu/cisst/wiki/Private/cisstMultiTaskNetwork)
 
     // Establish connections
     // Connection: (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
     // Connection: (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2));
     // Connection: (P1, C2, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C2, r1, P2, C2, p2));
     // Connection: (P2, C3, r1) ~ (P2, C2, p2)
     CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p2));
 
@@ -660,7 +875,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
     mtsManagerGlobal::ConnectionMapType * connectionMap;
 
     // Disconnect (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Disconnect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.DisConnect(P1, P1, C1, r1, P2, C2, p1));
     {
         // Check connection count
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r1);
@@ -672,10 +887,10 @@ void mtsManagerGlobalTest::TestDisconnect(void)
         connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p2);
         CPPUNIT_ASSERT_EQUAL((unsigned int) 3, connectionMap->size());
     }
-    CPPUNIT_ASSERT(!managerGlobal.Disconnect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.DisConnect(P1, P1, C1, r1, P2, C2, p1));
 
     // Disconnect (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Disconnect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.DisConnect(P1, P1, C1, r2, P2, C2, p2));
     {
         // Check connection count
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r1);
@@ -687,10 +902,10 @@ void mtsManagerGlobalTest::TestDisconnect(void)
         connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p2);
         CPPUNIT_ASSERT_EQUAL((unsigned int) 2, connectionMap->size());
     }
-    CPPUNIT_ASSERT(!managerGlobal.Disconnect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(!managerGlobal.DisConnect(P1, P1, C1, r2, P2, C2, p2));
 
     // Disconnect (P1, C2, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Disconnect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.DisConnect(P1, P1, C2, r1, P2, C2, p2));
     {
         // Check connection count
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r1);
@@ -702,7 +917,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
         connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p2);
         CPPUNIT_ASSERT_EQUAL((unsigned int) 1, connectionMap->size());
     }
-    CPPUNIT_ASSERT(!managerGlobal.Disconnect(P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(!managerGlobal.DisConnect(P1, P1, C2, r1, P2, C2, p2));
 
     // Disconnect (P2, C3, r1) ~ (P2, C2, p2)
     CPPUNIT_ASSERT(managerGlobal.Disconnect(P2, C3, r1, P2, C2, p2));
@@ -721,25 +936,25 @@ void mtsManagerGlobalTest::TestDisconnect(void)
 
     /*
     // Prepare components
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r1));
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r2));
 
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
     CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
     CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p2));
 
     // Establish connections
     // (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
     // (P1, C1, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p2));
     // (P1, C1, r2) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r2, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p1));
     // (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2));
 
     mtsManagerGlobal::ConnectionMapType * connectionMap;
     connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r1);
@@ -755,7 +970,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
     mtsManagerGlobal::ConnectedInterfaceInfo * connectionInfo;
 
     // Disconnect P1:C1:r1 - P2:C2:p1
-    managerGlobal.Disconnect(P1, C1, r1, P2, C2, p1);
+    managerGlobal.DisConnect(P1, P1, C1, r1, P2, C2, p1);
     {
         // Check required interface's connection information
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r1);
@@ -785,7 +1000,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
     }
 
     // Disconnect P1:C1:r1 - P2:C2:p2
-    managerGlobal.Disconnect(P1, C1, r1, P2, C2, p2);
+    managerGlobal.DisConnect(P1, P1, C1, r1, P2, C2, p2);
     {
         // Check required interface's connection information
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r1);
@@ -813,7 +1028,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
     }
 
     // Disconnect P1:C1:r2 - P2:C2:p1
-    managerGlobal.Disconnect(P1, C1, r2, P2, C2, p1);
+    managerGlobal.DisConnect(P1, P1, C1, r2, P2, C2, p1);
     {
         // Check required interface's connection information
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r2);
@@ -839,7 +1054,7 @@ void mtsManagerGlobalTest::TestDisconnect(void)
     }
 
     // Disconnect P1:C1:r2 - P2:C2:p2
-    managerGlobal.Disconnect(P1, C1, r2, P2, C2, p2);
+    managerGlobal.DisConnect(P1, P1, C1, r2, P2, C2, p2);
     {
         // Check required interface's connection information
         connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P1, C1, r2);
@@ -860,8 +1075,9 @@ void mtsManagerGlobalTest::TestDisconnect(void)
         CPPUNIT_ASSERT_EQUAL((unsigned int) 0, connectionMap->size());
     }
     */
-/*
 }
+#endif
+
 
 void mtsManagerGlobalTest::TestIsAlreadyConnected(void)
 {
@@ -872,11 +1088,11 @@ void mtsManagerGlobalTest::TestIsAlreadyConnected(void)
     // FindRequiredInterface() and FindProvidedInterface() should be checked first.
 
     // Required interface
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r1));
     // Provided interface
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
     CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
 
@@ -886,7 +1102,7 @@ void mtsManagerGlobalTest::TestIsAlreadyConnected(void)
 
     // Check if this method can detect connection correctly after connection.
     CPPUNIT_ASSERT(!managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1));
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
     CPPUNIT_ASSERT(managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1));
 
     // Check if this method can detect connection correctly after disconnection.
@@ -894,150 +1110,15 @@ void mtsManagerGlobalTest::TestIsAlreadyConnected(void)
     CPPUNIT_ASSERT(!managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1));
 }
 
-void mtsManagerGlobalTest::TestGetConnectionsOfProvidedInterface(void)
-{
-    mtsManagerGlobal managerGlobal;
-
-    mtsManagerGlobal::ConnectionMapType * connectionMap; 
-    mtsManagerGlobal::InterfaceMapType * interfaceMap;
-    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
-
-    // 1. Test first type method (with InterfaceMapType argument)
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
-
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap));
-
-    // Add required interface to establish connection
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
-    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
-
-    // Connect two interfaces
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p1));
-
-    // Check if connection information is correct
-    connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1, &interfaceMap);
-    CPPUNIT_ASSERT(connectionMap);
-    string interfaceUID = managerGlobal.GetInterfaceUID(P2, C3, r1);
-    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C3);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
-
-    // 2. Test second type method (without InterfaceMapType argument)
-    managerGlobal.CleanUp();
-
-   CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1));
-
-    // Add required interface to establish connection
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
-    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
-
-    // Connect two interfaces
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p1));
-
-    // Check if connection information is correct
-    connectionMap = managerGlobal.GetConnectionsOfProvidedInterface(P2, C2, p1);
-    CPPUNIT_ASSERT(connectionMap);
-    interfaceUID = managerGlobal.GetInterfaceUID(P2, C3, r1);
-    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C3);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
-}
-
-void mtsManagerGlobalTest::TestGetConnectionsOfRequiredInterface(void)
-{
-    mtsManagerGlobal managerGlobal;
-
-    mtsManagerGlobal::ConnectionMapType * connectionMap; 
-    mtsManagerGlobal::InterfaceMapType * interfaceMap;
-    mtsManagerGlobal::ConnectedInterfaceInfo * connectedInterfaceInfo;
-
-    // 1. Test first method (with InterfaceMapType as argument)
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
-
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
-
-    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap));
-
-    // Add provided interface to establish connection
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
-    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
-
-    // Connect two interfaces
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p1));
-
-    // Check if connection information is correct
-    connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1, &interfaceMap);
-    CPPUNIT_ASSERT(connectionMap);
-    string interfaceUID = managerGlobal.GetInterfaceUID(P2, C2, p1);
-    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C2);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == p1);
-
-    // 2. Test second method (without InterfaceMapType as argument)
-    managerGlobal.CleanUp();
-
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P2_OBJ));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C3));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
-
-    CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P2, C3, r1));
-    CPPUNIT_ASSERT(NULL == managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1));
-
-    // Add provided interface to establish connection
-    CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
-    CPPUNIT_ASSERT(managerGlobal.AddProvidedInterface(P2, C2, p1));
-
-    // Connect two interfaces
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p1));
-
-    // Check if connection information is correct
-    connectionMap = managerGlobal.GetConnectionsOfRequiredInterface(P2, C3, r1);
-    CPPUNIT_ASSERT(connectionMap);
-    interfaceUID = managerGlobal.GetInterfaceUID(P2, C2, p1);
-    connectedInterfaceInfo = connectionMap->GetItem(interfaceUID);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P2);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C2);
-    CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == p1);
-}
-
 void mtsManagerGlobalTest::TestAddConnectedInterface(void)
 {
     mtsManagerGlobal managerGlobal;
 
     // Test if invalid arguments are handled properly
-    //
     CPPUNIT_ASSERT(!managerGlobal.AddConnectedInterface(NULL, P1, C1, r1));
 
     // Prepare components
-    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1_OBJ));
+    CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
     CPPUNIT_ASSERT(managerGlobal.AddRequiredInterface(P1, C1, r1));
 
@@ -1057,9 +1138,6 @@ void mtsManagerGlobalTest::TestAddConnectedInterface(void)
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetProcessName() == P1);
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetComponentName() == C1);
     CPPUNIT_ASSERT(connectedInterfaceInfo->GetInterfaceName() == r1);
-
-    // Should release an internal object that AddConnectedInterface() creates dynamically.
-    delete connectedInterfaceInfo;
 }
-*/
+
 CPPUNIT_TEST_SUITE_REGISTRATION(mtsManagerGlobalTest);

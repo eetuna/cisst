@@ -36,13 +36,13 @@ mtsManagerGlobal::mtsManagerGlobal() : LocalManagerConnected(0)
 
 mtsManagerGlobal::~mtsManagerGlobal()
 {
-    CleanUp();
+    Cleanup();
 }
 
 //-------------------------------------------------------------------------
 //  Processing Methods
 //-------------------------------------------------------------------------
-bool mtsManagerGlobal::CleanUp(void)
+bool mtsManagerGlobal::Cleanup(void)
 {    
     bool ret = true;
 
@@ -59,6 +59,7 @@ bool mtsManagerGlobal::CleanUp(void)
     for (; itConnection != itConnectionEnd; ++itConnection) {
         delete itConnection->second;
     }
+    ConnectionElementMap.clear();
 
     return ret;
 }
@@ -134,16 +135,6 @@ bool mtsManagerGlobal::FindProcess(const std::string & processName) const
     return ProcessMap.FindItem(processName);
 }
 
-mtsManagerLocalInterface * mtsManagerGlobal::GetProcessObject(const std::string & processName)
-{
-    if (!ProcessMap.FindItem(processName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "GetProcessObject: Can't find registered process: " << processName << std::endl;
-        return false;
-    }
-
-    return LocalManagerConnected;
-}
-
 bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
 {
     if (!FindProcess(processName)) {
@@ -171,6 +162,46 @@ bool mtsManagerGlobal::RemoveProcess(const std::string & processName)
 
     return ret;
 }
+
+mtsManagerLocalInterface * mtsManagerGlobal::GetProcessObject(const std::string & processName)
+{
+    if (!ProcessMap.FindItem(processName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "GetProcessObject: Can't find registered process: " << processName << std::endl;
+        return false;
+    }
+
+    return LocalManagerConnected;
+}
+
+std::vector<std::string> mtsManagerGlobal::GetIPAddress(void) const
+{
+    std::vector<std::string> ipAddresses;
+    osaSocket::GetLocalhostIP(ipAddresses);
+
+    if (ipAddresses.size() == 0) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetIPAddress: No network interface detected." << std::endl;
+    } else {
+        for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
+            CMN_LOG_CLASS_INIT_VERBOSE << "SetIPAddress: This machine's IP: [" << i << "] " << ipAddresses[i] << std::endl;
+        }
+    }
+
+    return ipAddresses;
+}
+
+void mtsManagerGlobal::GetIPAddress(std::vector<std::string> & ipAddresses) const
+{
+    osaSocket::GetLocalhostIP(ipAddresses);
+
+    if (ipAddresses.size() == 0) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetIPAddress: No network interface detected." << std::endl;
+    } else {
+        for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
+            CMN_LOG_CLASS_INIT_VERBOSE << "SetIPAddress: This machine's IP: [" << i << "] " << ipAddresses[i] << std::endl;
+        }
+    }
+}
+
 
 //-------------------------------------------------------------------------
 //  Component Management
@@ -440,6 +471,12 @@ unsigned int mtsManagerGlobal::Connect(const std::string & requestProcessName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     const unsigned int retError = static_cast<unsigned int>(mtsManagerGlobalInterface::CONNECT_ERROR);
+
+    // Check requestProcessName validity
+    if (requestProcessName != clientProcessName && requestProcessName != serverProcessName) {
+        CMN_LOG_CLASS_RUN_ERROR << "Connect: invalid process name: " << requestProcessName << std::endl;
+        return retError;
+    }
 
     // Check if the required interface specified actually exist.
     if (!FindRequiredInterface(clientProcessName, clientComponentName, clientRequiredInterfaceName)) {
@@ -1005,43 +1042,6 @@ bool mtsManagerGlobal::StartServer()
     LocalManagerConnected = ProxyServer;
 
     return true;
-}
-
-//
-// TODO: FIX THIS METHOD
-//
-void mtsManagerGlobal::SetIPAddress()
-{
-    // Fetch all ip addresses available on this machine.
-    std::vector<std::string> ipAddresses;
-    osaSocket::GetLocalhostIP(ipAddresses);
-
-    // If there is only one ip address is detected, set it as this machine's ip address.
-//    if (ipAddresses.size() == 1) {
-        ProcessIP = ipAddresses[0];
-    //} else {
-    //    // If there are more than one ip address detected, wait for an user's input 
-    //    // to decide what to use as an ip address of this machine.
-
-    //    // Print out a list of all IP addresses detected
-    //    std::cout << "\nList of IP addresses detected on this machine: " << std::endl;
-    //    for (unsigned int i = 0; i < ipAddresses.size(); ++i) {
-    //        std::cout << "\t" << i + 1 << ": " << ipAddresses[i] << std::endl;
-    //    }
-
-    //    // Wait for user's input
-    //    char maxChoice = '1' + ipAddresses.size() - 1;
-    //    int choice = 0;
-    //    while (!('1' <= choice && choice <= maxChoice)) {
-    //        std::cout << "\nChoose one to use: ";
-    //        choice = cmnGetChar();
-    //    }
-    //    ProcessIP = ipAddresses[choice - '1'];
-
-    //    std::cout << ProcessIP << std::endl;
-    //}
-
-    CMN_LOG_CLASS_INIT_VERBOSE << "SetIPAddress: This machine's IP address is " << ProcessIP << std::endl;
 }
 
 bool mtsManagerGlobal::SetProvidedInterfaceProxyAccessInfo(

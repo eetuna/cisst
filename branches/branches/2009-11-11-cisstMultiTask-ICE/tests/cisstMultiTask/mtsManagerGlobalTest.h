@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <cisstMultiTask/mtsConfig.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
 
 class mtsManagerGlobalTest: public CppUnit::TestFixture
@@ -31,11 +32,21 @@ private:
 
     CPPUNIT_TEST_SUITE(mtsManagerGlobalTest);
     {
-        /*
+        CPPUNIT_TEST(TestConstructor);
+        CPPUNIT_TEST(TestDestructor);
+        CPPUNIT_TEST(TestCleanup);
+
+        CPPUNIT_TEST(TestConnectedInterfaceInfo);
+        CPPUNIT_TEST(TestConnectionElement);
+
+        CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
+        CPPUNIT_TEST(TestGetConnectionsOfRequiredInterface);
+
         CPPUNIT_TEST(TestAddProcess);
         CPPUNIT_TEST(TestFindProcess);
-        CPPUNIT_TEST(TestGetProcessObject);
         CPPUNIT_TEST(TestRemoveProcess);
+
+        //CPPUNIT_TEST(TestGetProcessObject);
 
         CPPUNIT_TEST(TestAddComponent);
         CPPUNIT_TEST(TestFindComponent);
@@ -50,26 +61,34 @@ private:
         CPPUNIT_TEST(TestRemoveRequiredInterface);
 
         CPPUNIT_TEST(TestConnectLocal);
+#if CISST_MTS_HAS_ICE
         CPPUNIT_TEST(TestConnectRemote);
         CPPUNIT_TEST(TestDisconnect);
+#endif
         CPPUNIT_TEST(TestIsAlreadyConnected);
-        CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
-        CPPUNIT_TEST(TestGetConnectionsOfRequiredInterface);
         CPPUNIT_TEST(TestAddConnectedInterface);
-        */
-
 	}
     CPPUNIT_TEST_SUITE_END();
 
 public:
-    /*
     void setUp();
     void tearDown();
 
+    void TestConstructor(void);
+    void TestDestructor(void);
+    void TestCleanup(void);
+
+    void TestConnectedInterfaceInfo(void);
+    void TestConnectionElement(void);
+
+    void TestGetConnectionsOfProvidedInterface(void);
+    void TestGetConnectionsOfRequiredInterface(void);
+
     void TestAddProcess(void);
     void TestFindProcess(void);
-    void TestGetProcessObject(void);
     void TestRemoveProcess(void);
+
+    //void TestGetProcessObject(void);
 
     void TestAddComponent(void);
     void TestFindComponent(void);
@@ -84,11 +103,10 @@ public:
     void TestRemoveRequiredInterface(void);
 
     void TestConnectLocal(void);
+#if CISST_MTS_HAS_ICE
     void TestConnectRemote(void);
     void TestDisconnect(void);
+#endif
     void TestIsAlreadyConnected(void);
-    void TestGetConnectionsOfProvidedInterface(void);
-    void TestGetConnectionsOfRequiredInterface(void);
     void TestAddConnectedInterface(void);
-    */
 };

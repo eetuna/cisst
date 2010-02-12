@@ -280,6 +280,9 @@ public:
     /*! Returns the port number that the global component manager uses */
     static std::string GetGCMPortNumberAsString();
 
+    /*! Returns connection timeout value (msec) from GCM's configuration file */
+    static int GetGCMConnectTimeout();
+
     //-------------------------------------------------------------------------
     //  Definition by mtsManagerProxy.ice
     //-------------------------------------------------------------------------

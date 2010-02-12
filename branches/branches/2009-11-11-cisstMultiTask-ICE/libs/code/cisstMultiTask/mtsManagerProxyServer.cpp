@@ -47,6 +47,18 @@ std::string mtsManagerProxyServer::GetGCMPortNumberAsString()
     return initData.properties->getProperty("GCM.Port");
 }
 
+int mtsManagerProxyServer::GetGCMConnectTimeout()
+{
+    Ice::InitializationData initData;
+    initData.properties = Ice::createProperties();
+    initData.properties->load(ICE_PROPERTY_FILE_ROOT"config.GCM");
+
+    const std::string connectTimeoutString = 
+        initData.properties->getProperty("Ice.Override.ConnectTimeout");
+    
+    return atoi(connectTimeoutString.c_str());
+}
+
 //-----------------------------------------------------------------------------
 //  Proxy Start-up
 //-----------------------------------------------------------------------------

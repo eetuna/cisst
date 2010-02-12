@@ -126,8 +126,10 @@ protected:
         const std::string ServerProcessName;
         const std::string ServerComponentName;
         const std::string ServerProvidedInterfaceName;
+#if CISST_MTS_HAS_ICE
         // Time when this object becomes timed out
         double TimeoutTime;
+#endif
 
         ConnectionElement(const std::string & requestProcessName, const unsigned int connectionID,
             const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
@@ -136,19 +138,22 @@ protected:
               ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientRequiredInterfaceName(clientRequiredInterfaceName),
               ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
         {
-            const double Timeout = 5.0; // 5 seconds
-
+#if CISST_MTS_HAS_ICE
+            const double Timeout = (double) mtsManagerProxyServer::GetGCMConnectTimeout() / 1000.0;
             // Time when this object is timed out is set as current time plus timeout.
             TimeoutTime = osaGetTime() + Timeout;
+#endif
         }
 
         /*! Set this connection as established */
         inline void SetConnected() { Connected = true; }
 
         /*! Return true if this connection is timed out */
+#if CISST_MTS_HAS_ICE
         inline bool CheckTimeout() const {
             return (TimeoutTime - osaGetTime() <= 0);
         }
+#endif
     };
 
     /*! Connection map: (connected interface name, connected interface information)
@@ -207,9 +212,6 @@ protected:
         or network mode) */
     mtsManagerLocalInterface * LocalManagerConnected;
 
-    /*! IP address of this machine */
-    std::string ProcessIP;
-
     /*! Mutex for ConnectionElementMap because several threads possibly access
         ConnectionElementMap. */
     osaMutex ConnectionElementMapChange;
@@ -226,13 +228,7 @@ protected:
     //  Processing Methods
     //-------------------------------------------------------------------------
     /*! Clean up the internal variables */
-    bool CleanUp(void);
-
-    /*! Set this machine's IP */
-    void SetIPAddress();
-
-    /*! Get a process object (local component manager object) */
-    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
+    bool Cleanup(void);
 
     /*! Get a map containing connection information for a provided interface */
     ConnectionMapType * GetConnectionsOfProvidedInterface(
@@ -335,12 +331,16 @@ public:
     //  Getters
     //-------------------------------------------------------------------------
     /*! Return the name of the global component manager (for mtsProxyBaseCommon.h) */
-    inline static std::string GetName() {
+    inline static std::string GetName(void) {
         return "GlobalComponentManager";
     }
 
     /*! Return IP address of this machine. */
-    inline std::string GetIPAddress() const { return ProcessIP; }
+    std::vector<std::string> GetIPAddress(void) const;
+    void GetIPAddress(std::vector<std::string> & ipAddresses) const;
+
+    /*! Get a process object (local component manager object) */
+    mtsManagerLocalInterface * GetProcessObject(const std::string & processName);
 
     /*! Generate unique id of an interface as string */
     inline static const std::string GetInterfaceUID(
