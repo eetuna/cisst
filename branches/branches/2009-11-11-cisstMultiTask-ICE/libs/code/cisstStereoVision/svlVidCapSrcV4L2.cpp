@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcV4L2.cpp 1057 2010-01-19 21:09:31Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -20,7 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "vidV4L2Source.h"
+#include "svlVidCapSrcV4L2.h"
 
 #include <stdlib.h>
 #include <iostream>
@@ -50,13 +50,13 @@ using namespace std;
 
 
 /*************************************/
-/*** CV4L2Source class ***************/
+/*** svlVidCapSrcV4L2 class **********/
 /*************************************/
 
-CMN_IMPLEMENT_SERVICES(CV4L2Source)
+CMN_IMPLEMENT_SERVICES(svlVidCapSrcV4L2)
 
-CV4L2Source::CV4L2Source() :
-    CVideoCaptureSourceBase(),
+svlVidCapSrcV4L2::svlVidCapSrcV4L2() :
+    svlVidCapSrcBase(),
     cmnGenericObject(),
     NumOfStreams(0),
     Initialized(false),
@@ -77,17 +77,17 @@ CV4L2Source::CV4L2Source() :
 {
 }
 
-CV4L2Source::~CV4L2Source()
+svlVidCapSrcV4L2::~svlVidCapSrcV4L2()
 {
     Release();
 }
 
-svlFilterSourceVideoCapture::PlatformType CV4L2Source::GetPlatformType()
+svlFilterSourceVideoCapture::PlatformType svlVidCapSrcV4L2::GetPlatformType()
 {
     return svlFilterSourceVideoCapture::LinVideo4Linux2;
 }
 
-int CV4L2Source::SetStreamCount(unsigned int numofstreams)
+int svlVidCapSrcV4L2::SetStreamCount(unsigned int numofstreams)
 {
     if (numofstreams < 1) return SVL_FAIL;
 
@@ -95,7 +95,7 @@ int CV4L2Source::SetStreamCount(unsigned int numofstreams)
 
     NumOfStreams = numofstreams;
 
-    CaptureProc = new CV4L2SourceThread*[NumOfStreams];
+    CaptureProc = new svlVidCapSrcV4L2Thread*[NumOfStreams];
     CaptureThread = new osaThread*[NumOfStreams];
     DeviceID = new int[NumOfStreams];
     InputID = new int[NumOfStreams];
@@ -107,7 +107,7 @@ int CV4L2Source::SetStreamCount(unsigned int numofstreams)
     ColorSpace = new int[NumOfStreams];
     FrameBufferSize = new int[NumOfStreams];
     FrameBuffer = new FrameBufferType*[NumOfStreams];
-    OutputBuffer = new svlImageBuffer*[NumOfStreams];
+    OutputBuffer = new svlBufferImage*[NumOfStreams];
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
         CaptureProc[i] = 0;
@@ -128,7 +128,7 @@ int CV4L2Source::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-int CV4L2Source::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
+int svlVidCapSrcV4L2::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     if (deviceinfo == 0 || Initialized) return SVL_FAIL;
 
@@ -224,7 +224,7 @@ int CV4L2Source::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **devicei
     return counter;
 }
 
-int CV4L2Source::Open()
+int svlVidCapSrcV4L2::Open()
 {
     if (NumOfStreams <= 0) return SVL_FAIL;
     if (Initialized) return SVL_OK;
@@ -458,7 +458,7 @@ int CV4L2Source::Open()
         }
 
         // allocate output buffers
-        OutputBuffer[i] = new svlImageBuffer(CapWidth[i], CapHeight[i]);
+        OutputBuffer[i] = new svlBufferImage(CapWidth[i], CapHeight[i]);
     }
 
     Initialized = true;
@@ -469,7 +469,7 @@ labError:
     return SVL_FAIL;
 }
 
-void CV4L2Source::Close()
+void svlVidCapSrcV4L2::Close()
 {
     if (NumOfStreams <= 0) return;
 
@@ -499,7 +499,7 @@ void CV4L2Source::Close()
     }
 }
 
-int CV4L2Source::Start()
+int svlVidCapSrcV4L2::Start()
 {
     if (!Initialized) return SVL_FAIL;
     if (Running) return SVL_OK;
@@ -512,10 +512,10 @@ int CV4L2Source::Start()
 
     Running = true;
     for (i = 0; i < NumOfStreams; i ++) {
-        CaptureProc[i] = new CV4L2SourceThread(i);
+        CaptureProc[i] = new svlVidCapSrcV4L2Thread(i);
         CaptureThread[i] = new osaThread;
-        CaptureThread[i]->Create<CV4L2SourceThread, CV4L2Source*>(CaptureProc[i],
-                                                                  &CV4L2SourceThread::Proc,
+        CaptureThread[i]->Create<svlVidCapSrcV4L2Thread, svlVidCapSrcV4L2*>(CaptureProc[i],
+                                                                  &svlVidCapSrcV4L2Thread::Proc,
                                                                   this);
         if (CaptureProc[i]->WaitForInit() == false) break;
     }
@@ -528,13 +528,13 @@ int CV4L2Source::Start()
     return SVL_FAIL;
 }
 
-svlImageRGB* CV4L2Source::GetLatestFrame(bool waitfornew, unsigned int videoch)
+svlImageRGB* svlVidCapSrcV4L2::GetLatestFrame(bool waitfornew, unsigned int videoch)
 {
     if (videoch >= NumOfStreams || !Initialized) return 0;
     return OutputBuffer[videoch]->Pull(waitfornew);
 }
 
-int CV4L2Source::Stop()
+int svlVidCapSrcV4L2::Stop()
 {
     if (!Initialized) return SVL_FAIL;
 
@@ -555,12 +555,12 @@ int CV4L2Source::Stop()
     return SVL_OK;
 }
 
-bool CV4L2Source::IsRunning()
+bool svlVidCapSrcV4L2::IsRunning()
 {
     return Running;
 }
 
-int CV4L2Source::SetDevice(int devid, int inid, unsigned int videoch)
+int svlVidCapSrcV4L2::SetDevice(int devid, int inid, unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     DeviceID[videoch] = devid;
@@ -568,19 +568,19 @@ int CV4L2Source::SetDevice(int devid, int inid, unsigned int videoch)
     return SVL_OK;
 }
 
-int CV4L2Source::GetWidth(unsigned int videoch)
+int svlVidCapSrcV4L2::GetWidth(unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     return CapWidth[videoch];
 }
 
-int CV4L2Source::GetHeight(unsigned int videoch)
+int svlVidCapSrcV4L2::GetHeight(unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     return CapHeight[videoch];
 }
 
-int CV4L2Source::GetFormatList(unsigned int CMN_UNUSED(deviceid), svlFilterSourceVideoCapture::ImageFormat **formatlist)
+int svlVidCapSrcV4L2::GetFormatList(unsigned int CMN_UNUSED(deviceid), svlFilterSourceVideoCapture::ImageFormat **formatlist)
 {
     if (formatlist == 0) return SVL_FAIL;
 
@@ -595,7 +595,7 @@ int CV4L2Source::GetFormatList(unsigned int CMN_UNUSED(deviceid), svlFilterSourc
     return 1;
 }
 
-int CV4L2Source::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
+int svlVidCapSrcV4L2::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
 
@@ -609,7 +609,7 @@ int CV4L2Source::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, uns
     return SVL_OK;
 }
 
-int CV4L2Source::ReadFrame(unsigned int videoch)
+int svlVidCapSrcV4L2::ReadFrame(unsigned int videoch)
 {
     if (Running == false) return SVL_FAIL;
 
@@ -703,7 +703,7 @@ int CV4L2Source::ReadFrame(unsigned int videoch)
 }
 
 
-void CV4L2Source::Release()
+void svlVidCapSrcV4L2::Release()
 {
 	Close();
 
@@ -739,7 +739,7 @@ void CV4L2Source::Release()
     OutputBuffer = 0;
 }
 
-int CV4L2Source::GetDeviceInputs(int fd, svlFilterSourceVideoCapture::DeviceInfo *deviceinfo)
+int svlVidCapSrcV4L2::GetDeviceInputs(int fd, svlFilterSourceVideoCapture::DeviceInfo *deviceinfo)
 {
     if (fd < 0 || deviceinfo == 0) return SVL_FAIL;
 
@@ -763,7 +763,7 @@ int CV4L2Source::GetDeviceInputs(int fd, svlFilterSourceVideoCapture::DeviceInfo
     return SVL_OK;
 }
 
-void CV4L2Source::HM12_de_macro_y(unsigned char* dst, unsigned char* src, int dstride, const int w, const int h)
+void svlVidCapSrcV4L2::HM12_de_macro_y(unsigned char* dst, unsigned char* src, int dstride, const int w, const int h)
 {
     int i, x, y;
 
@@ -779,7 +779,7 @@ void CV4L2Source::HM12_de_macro_y(unsigned char* dst, unsigned char* src, int ds
     }
 }
 
-void CV4L2Source::HM12_de_macro_uv(unsigned char* dstu, unsigned char* dstv, unsigned char* src, int dstride, const int w, const int h)
+void svlVidCapSrcV4L2::HM12_de_macro_uv(unsigned char* dstu, unsigned char* dstv, unsigned char* src, int dstride, const int w, const int h)
 {
     int i, x, y, idx;
 
@@ -803,7 +803,7 @@ void CV4L2Source::HM12_de_macro_uv(unsigned char* dstu, unsigned char* dstv, uns
     }
 }
 
-void CV4L2Source::YUV420p_to_BGR24(unsigned char* dst, unsigned char* src, int dststride, int srcstride, const int w, const int h)
+void svlVidCapSrcV4L2::YUV420p_to_BGR24(unsigned char* dst, unsigned char* src, int dststride, int srcstride, const int w, const int h)
 {
     int yplsize = srcstride * h;
     int uplsize = yplsize / 4;
@@ -977,10 +977,10 @@ void CV4L2Source::YUV420p_to_BGR24(unsigned char* dst, unsigned char* src, int d
 
 
 /**************************************/
-/*** CV4L2SourceThread class **********/
+/*** svlVidCapSrcV4L2Thread class *****/
 /**************************************/
 
-void* CV4L2SourceThread::Proc(CV4L2Source* baseref)
+void* svlVidCapSrcV4L2Thread::Proc(svlVidCapSrcV4L2* baseref)
 {
     // signal success to main thread
     Error = false;

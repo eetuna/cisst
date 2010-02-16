@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcV4L2.h 1057 2010-01-19 21:09:31Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -20,20 +20,20 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _vidV4L2Source_h
-#define _vidV4L2Source_h
+#ifndef _svlVidCapSrcV4L2_h
+#define _svlVidCapSrcV4L2_h
 
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
-#include "svlImageBuffer.h"
+#include <cisstStereoVision/svlBufferImage.h>
 
 
-class CV4L2SourceThread;
+class svlVidCapSrcV4L2Thread;
 
-class CV4L2Source : public CVideoCaptureSourceBase, public cmnGenericObject
+class svlVidCapSrcV4L2 : public svlVidCapSrcBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-friend class CV4L2SourceThread;
+friend class svlVidCapSrcV4L2Thread;
 
     typedef struct _FrameBufferType {
         void *start;
@@ -41,8 +41,8 @@ friend class CV4L2SourceThread;
     } FrameBufferType;
 
 public:
-    CV4L2Source();
-    ~CV4L2Source();
+    svlVidCapSrcV4L2();
+    ~svlVidCapSrcV4L2();
 
 public:
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
@@ -66,7 +66,7 @@ private:
     bool Initialized;
     bool Running;
 
-    CV4L2SourceThread** CaptureProc;
+    svlVidCapSrcV4L2Thread** CaptureProc;
     osaThread** CaptureThread;
     int* DeviceID;
     int* InputID;
@@ -78,7 +78,7 @@ private:
     int* ColorSpace;
     int* FrameBufferSize;
     FrameBufferType** FrameBuffer;
-    svlImageBuffer** OutputBuffer;
+    svlBufferImage** OutputBuffer;
 
     int ReadFrame(unsigned int videoch);
 
@@ -90,12 +90,12 @@ private:
 };
 
 
-class CV4L2SourceThread
+class svlVidCapSrcV4L2Thread
 {
 public:
-    CV4L2SourceThread(int streamid) { StreamID = streamid; InitSuccess = false; }
-    ~CV4L2SourceThread() {}
-    void* Proc(CV4L2Source* baseref);
+    svlVidCapSrcV4L2Thread(int streamid) { StreamID = streamid; InitSuccess = false; }
+    ~svlVidCapSrcV4L2Thread() {}
+    void* Proc(svlVidCapSrcV4L2* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
     bool IsError() { return Error; }
@@ -107,7 +107,7 @@ private:
     bool InitSuccess;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(CV4L2Source)
+CMN_DECLARE_SERVICES_INSTANTIATION(svlVidCapSrcV4L2)
 
-#endif // _vidV4L2Source_h
+#endif // _svlVidCapSrcV4L2_h
 

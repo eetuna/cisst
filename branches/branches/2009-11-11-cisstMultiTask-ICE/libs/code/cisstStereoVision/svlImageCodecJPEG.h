@@ -20,19 +20,19 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _ftImageJPEG_h
-#define _ftImageJPEG_h
+#ifndef _svlImageCodecJPEG_h
+#define _svlImageCodecJPEG_h
 
 #include <cisstStereoVision/svlImageIO.h>
 
 
-class ftImageJPEG : public svlImageCodec, public cmnGenericObject
+class svlImageCodecJPEG : public svlImageCodecBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-    ftImageJPEG();
-    virtual ~ftImageJPEG();
+    svlImageCodecJPEG();
+    virtual ~svlImageCodecJPEG();
 
     virtual int ReadDimensions(const std::string &filename, unsigned int &width, unsigned int &height);
     virtual int ReadDimensions(std::istream &stream, unsigned int &width, unsigned int &height);
@@ -53,7 +53,7 @@ protected:
     size_t jpegRowBufferSize;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(ftImageJPEG)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlImageCodecJPEG)
 
-#endif // _ftImageJPEG_h
+#endif // _svlImageCodecJPEG_h
 

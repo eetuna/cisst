@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcSVS.cpp 1057 2010-01-19 21:09:31Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -20,17 +20,17 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "vidSVSSource.h"
+#include "svlVidCapSrcSVS.h"
 
 
-/******************************/
-/*** CSVSSource class *********/
-/******************************/
+/*******************************/
+/*** svlVidCapSrcSVS class *****/
+/*******************************/
 
-CMN_IMPLEMENT_SERVICES(CSVSSource)
+CMN_IMPLEMENT_SERVICES(svlVidCapSrcSVS)
 
-CSVSSource::CSVSSource() :
-    CVideoCaptureSourceBase(),
+svlVidCapSrcSVS::svlVidCapSrcSVS() :
+    svlVidCapSrcBase(),
     cmnGenericObject(),
     NumOfStreams(0),
     Running(false),
@@ -43,19 +43,19 @@ CSVSSource::CSVSSource() :
     DeviceID[0] = DeviceID[1] = -1;
 }
 
-CSVSSource::~CSVSSource()
+svlVidCapSrcSVS::~svlVidCapSrcSVS()
 {
     Close();
 
     if (OutputBuffer) delete [] OutputBuffer;
 }
 
-svlFilterSourceVideoCapture::PlatformType CSVSSource::GetPlatformType()
+svlFilterSourceVideoCapture::PlatformType svlVidCapSrcSVS::GetPlatformType()
 {
     return svlFilterSourceVideoCapture::WinSVS;
 }
 
-int CSVSSource::SetStreamCount(unsigned int numofstreams)
+int svlVidCapSrcSVS::SetStreamCount(unsigned int numofstreams)
 {
     // Only stereo streams are supported for the time being
     if (numofstreams < 1 || numofstreams > 2) return SVL_FAIL;
@@ -65,7 +65,7 @@ int CSVSSource::SetStreamCount(unsigned int numofstreams)
     NumOfStreams = numofstreams;
 
     if (OutputBuffer) delete [] OutputBuffer;
-    OutputBuffer = new svlImageBuffer*[NumOfStreams];
+    OutputBuffer = new svlBufferImage*[NumOfStreams];
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
         OutputBuffer[i] = 0;
@@ -74,7 +74,7 @@ int CSVSSource::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-int CSVSSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
+int svlVidCapSrcSVS::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     // Test device availability
     bool available = false;
@@ -116,7 +116,7 @@ int CSVSSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **devicein
     return 2;
 }
 
-int CSVSSource::Open()
+int svlVidCapSrcSVS::Open()
 {
     if (NumOfStreams < 1 || NumOfStreams > 2) return SVL_FAIL;
 
@@ -137,13 +137,13 @@ int CSVSSource::Open()
 
     // Setup buffers
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
-        OutputBuffer[i] = new svlImageBuffer(640, 480);
+        OutputBuffer[i] = new svlBufferImage(640, 480);
     }
 
     return SVL_OK;
 }
 
-void CSVSSource::Close()
+void svlVidCapSrcSVS::Close()
 {
     if (NumOfStreams < 1 || NumOfStreams > 2) return;
 
@@ -164,7 +164,7 @@ void CSVSSource::Close()
     }
 }
 
-int CSVSSource::Start()
+int svlVidCapSrcSVS::Start()
 {
     if (NumOfStreams < 1 || NumOfStreams > 2) return SVL_FAIL;
 
@@ -176,23 +176,23 @@ int CSVSSource::Start()
 
     Running = true;
 
-    CaptureProc = new CSVSSourceThread();
+    CaptureProc = new svlVidCapSrcSVSThread();
     CaptureThread = new osaThread;
-    CaptureThread->Create<CSVSSourceThread, CSVSSource*>(CaptureProc,
-                                                         &CSVSSourceThread::Proc,
+    CaptureThread->Create<svlVidCapSrcSVSThread, svlVidCapSrcSVS*>(CaptureProc,
+                                                         &svlVidCapSrcSVSThread::Proc,
                                                          this);
     if (CaptureProc->WaitForInit() == false) return SVL_FAIL;
 
     return SVL_OK;
 }
 
-svlImageRGB* CSVSSource::GetLatestFrame(bool waitfornew, unsigned int videoch)
+svlImageRGB* svlVidCapSrcSVS::GetLatestFrame(bool waitfornew, unsigned int videoch)
 {
     if (videoch >= NumOfStreams || DeviceID[videoch] < 0) return 0;
     return OutputBuffer[videoch]->Pull(waitfornew);
 }
 
-int CSVSSource::CaptureFrame()
+int svlVidCapSrcSVS::CaptureFrame()
 {
     SVSImage = SVSObj->GetImage(5000);
     if (SVSImage) {
@@ -226,7 +226,7 @@ int CSVSSource::CaptureFrame()
     return SVL_FAIL;
 }
 
-int CSVSSource::Stop()
+int svlVidCapSrcSVS::Stop()
 {
     if (NumOfStreams < 1 || NumOfStreams > 2) return SVL_FAIL;
 
@@ -251,12 +251,12 @@ int CSVSSource::Stop()
     return SVL_FAIL;
 }
 
-bool CSVSSource::IsRunning()
+bool svlVidCapSrcSVS::IsRunning()
 {
     return Running;
 }
 
-int CSVSSource::SetDevice(int devid, int inid, unsigned int videoch)
+int svlVidCapSrcSVS::SetDevice(int devid, int inid, unsigned int videoch)
 {
     if (NumOfStreams < 1 || NumOfStreams > 2) return SVL_FAIL;
 
@@ -276,19 +276,19 @@ int CSVSSource::SetDevice(int devid, int inid, unsigned int videoch)
     return SVL_FAIL;
 }
 
-int CSVSSource::GetWidth(unsigned int videoch)
+int svlVidCapSrcSVS::GetWidth(unsigned int videoch)
 {
     if (videoch < NumOfStreams) return 640;
     return -1;
 }
 
-int CSVSSource::GetHeight(unsigned int videoch)
+int svlVidCapSrcSVS::GetHeight(unsigned int videoch)
 {
     if (videoch < NumOfStreams) return 480;
     return -1;
 }
 
-int CSVSSource::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
+int svlVidCapSrcSVS::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
 {
     if (formatlist == 0) return SVL_FAIL;
 
@@ -303,7 +303,7 @@ int CSVSSource::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture
     return 1;
 }
 
-int CSVSSource::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
+int svlVidCapSrcSVS::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
 
@@ -317,7 +317,7 @@ int CSVSSource::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsi
     return SVL_OK;
 }
 
-void CSVSSource::ConvertRGB32toRGB24(unsigned char* source, unsigned char* dest, const int pixcount)
+void svlVidCapSrcSVS::ConvertRGB32toRGB24(unsigned char* source, unsigned char* dest, const int pixcount)
 {
     unsigned char r, g, b;
     for (int i = 0; i < pixcount; i ++) {
@@ -339,10 +339,10 @@ void CSVSSource::ConvertRGB32toRGB24(unsigned char* source, unsigned char* dest,
 
 
 /**************************************/
-/*** CSVSSourceThread class ***********/
+/*** svlVidCapSrcSVSThread class ******/
 /**************************************/
 
-void* CSVSSourceThread::Proc(CSVSSource* baseref)
+void* svlVidCapSrcSVSThread::Proc(svlVidCapSrcSVS* baseref)
 {
     // signal success to main thread
     Error = false;

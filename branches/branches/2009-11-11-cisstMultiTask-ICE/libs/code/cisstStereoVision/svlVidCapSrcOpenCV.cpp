@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcOpenCV.cpp 1057 2010-01-19 21:09:31Z bvagvol1 $
 
   Author(s):  Balazs Vagvolgyi
   Created on: 2008 
@@ -20,7 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "vidOCVSource.h"
+#include "svlVidCapSrcOpenCV.h"
 
 #ifdef _MSC_VER
     // Quick fix for Visual Studio Intellisense:
@@ -37,13 +37,13 @@ using namespace std;
 
 
 /*************************************/
-/*** COpenCVSource class *************/
+/*** svlVidCapSrcOpenCV class ********/
 /*************************************/
 
-CMN_IMPLEMENT_SERVICES(COpenCVSource)
+CMN_IMPLEMENT_SERVICES(svlVidCapSrcOpenCV)
 
-COpenCVSource::COpenCVSource() :
-    CVideoCaptureSourceBase(),
+svlVidCapSrcOpenCV::svlVidCapSrcOpenCV() :
+    svlVidCapSrcBase(),
     cmnGenericObject(),
     NumOfStreams(0),
     Initialized(false),
@@ -60,7 +60,7 @@ COpenCVSource::COpenCVSource() :
 {
 }
 
-COpenCVSource::~COpenCVSource()
+svlVidCapSrcOpenCV::~svlVidCapSrcOpenCV()
 {
     Release();
     if (OCVDeviceID) delete [] OCVDeviceID;
@@ -68,12 +68,12 @@ COpenCVSource::~COpenCVSource()
     if (OCVHeight) delete [] OCVHeight;
 }
 
-svlFilterSourceVideoCapture::PlatformType COpenCVSource::GetPlatformType()
+svlFilterSourceVideoCapture::PlatformType svlVidCapSrcOpenCV::GetPlatformType()
 {
     return svlFilterSourceVideoCapture::OpenCV;
 }
 
-int COpenCVSource::SetStreamCount(unsigned int numofstreams)
+int svlVidCapSrcOpenCV::SetStreamCount(unsigned int numofstreams)
 {
     if (numofstreams < 1) return SVL_FAIL;
 
@@ -81,10 +81,10 @@ int COpenCVSource::SetStreamCount(unsigned int numofstreams)
 
     NumOfStreams = numofstreams;
 
-    CaptureProc = new COpenCVSourceThread*[NumOfStreams];
+    CaptureProc = new svlVidCapSrcOpenCVThread*[NumOfStreams];
     CaptureThread = new osaThread*[NumOfStreams];
     DeviceID = new int[NumOfStreams];
-    ImageBuffer = new svlImageBuffer*[NumOfStreams];
+    ImageBuffer = new svlBufferImage*[NumOfStreams];
     OCVCapture = new CvCapture*[NumOfStreams];
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
@@ -98,7 +98,7 @@ int COpenCVSource::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-int COpenCVSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
+int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     if (deviceinfo == 0 || Initialized) return SVL_FAIL;
 
@@ -236,7 +236,7 @@ int COpenCVSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **devic
     return OCVNumberOfDevices;
 }
 
-int COpenCVSource::Open()
+int svlVidCapSrcOpenCV::Open()
 {
     if (NumOfStreams <= 0) return SVL_FAIL;
     if (Initialized) return SVL_OK;
@@ -258,7 +258,7 @@ int COpenCVSource::Open()
         if(!frame) goto labError;
 
         // Allocate capture buffers
-        ImageBuffer[i] = new svlImageBuffer(frame->width, frame->height);
+        ImageBuffer[i] = new svlBufferImage(frame->width, frame->height);
     }
 
     Initialized = true;
@@ -269,7 +269,7 @@ labError:
     return SVL_FAIL;
 }
 
-void COpenCVSource::Close()
+void svlVidCapSrcOpenCV::Close()
 {
     if (NumOfStreams <= 0) return;
 
@@ -291,17 +291,17 @@ void COpenCVSource::Close()
     }
 }
 
-int COpenCVSource::Start()
+int svlVidCapSrcOpenCV::Start()
 {
     if (!Initialized) return SVL_FAIL;
     if (Running) return SVL_OK;
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
-        CaptureProc[i] = new COpenCVSourceThread(i);
+        CaptureProc[i] = new svlVidCapSrcOpenCVThread(i);
         CaptureThread[i] = new osaThread;
         Running = true;
-        CaptureThread[i]->Create<COpenCVSourceThread, COpenCVSource*>(CaptureProc[i],
-                                                                      &COpenCVSourceThread::Proc,
+        CaptureThread[i]->Create<svlVidCapSrcOpenCVThread, svlVidCapSrcOpenCV*>(CaptureProc[i],
+                                                                      &svlVidCapSrcOpenCVThread::Proc,
                                                                       this);
         if (CaptureProc[i]->WaitForInit() == false) return SVL_FAIL;
     }
@@ -309,13 +309,13 @@ int COpenCVSource::Start()
     return SVL_OK;
 }
 
-svlImageRGB* COpenCVSource::GetLatestFrame(bool waitfornew, unsigned int videoch)
+svlImageRGB* svlVidCapSrcOpenCV::GetLatestFrame(bool waitfornew, unsigned int videoch)
 {
     if (videoch >= NumOfStreams || !Initialized) return 0;
     return ImageBuffer[videoch]->Pull(waitfornew);
 }
 
-int COpenCVSource::Stop()
+int svlVidCapSrcOpenCV::Stop()
 {
     if (!Running) return SVL_FAIL;
 
@@ -336,12 +336,12 @@ int COpenCVSource::Stop()
     return SVL_OK;
 }
 
-bool COpenCVSource::IsRunning()
+bool svlVidCapSrcOpenCV::IsRunning()
 {
     return Running;
 }
 
-int COpenCVSource::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
+int svlVidCapSrcOpenCV::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     DeviceID[videoch] = devid;
@@ -349,19 +349,19 @@ int COpenCVSource::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int video
     return SVL_OK;
 }
 
-int COpenCVSource::GetWidth(unsigned int videoch)
+int svlVidCapSrcOpenCV::GetWidth(unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     return ImageBuffer[videoch]->GetWidth();
 }
 
-int COpenCVSource::GetHeight(unsigned int videoch)
+int svlVidCapSrcOpenCV::GetHeight(unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     return ImageBuffer[videoch]->GetHeight();
 }
 
-int COpenCVSource::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
+int svlVidCapSrcOpenCV::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
 {
     if (static_cast<int>(deviceid) >= OCVNumberOfDevices || formatlist == 0) return SVL_FAIL;
 
@@ -377,7 +377,7 @@ int COpenCVSource::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapt
     return 1;
 }
 
-int COpenCVSource::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
+int svlVidCapSrcOpenCV::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
 {
     if (DeviceID[videoch] >= OCVNumberOfDevices) return SVL_FAIL;
 
@@ -392,7 +392,7 @@ int COpenCVSource::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, u
     return SVL_OK;
 }
 
-void COpenCVSource::Release()
+void svlVidCapSrcOpenCV::Release()
 {
 	Close();
 
@@ -413,11 +413,11 @@ void COpenCVSource::Release()
 }
 
 
-/**************************************/
-/*** COpenCVSourceThread class ********/
-/**************************************/
+/****************************************/
+/*** svlVidCapSrcOpenCVThread class *****/
+/****************************************/
 
-void* COpenCVSourceThread::Proc(COpenCVSource* baseref)
+void* svlVidCapSrcOpenCVThread::Proc(svlVidCapSrcOpenCV* baseref)
 {
     // signal success to main thread
     Error = false;

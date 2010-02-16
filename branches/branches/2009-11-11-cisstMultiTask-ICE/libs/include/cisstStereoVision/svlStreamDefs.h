@@ -133,7 +133,7 @@ inline bool IsTypeUWord<unsigned short>(unsigned short CMN_UNUSED(val)) { return
 // Stream data structure definitions //
 ///////////////////////////////////////
 
-class CISST_EXPORT svlSample
+class CISST_EXPORT svlSample : public cmnGenericObject
 {
 public:
     svlSample();
@@ -146,6 +146,8 @@ public:
     virtual bool IsInitialized();
     virtual void SerializeRaw(std::ostream & outputStream) const = 0;
     virtual void DeSerializeRaw(std::istream & inputStream) = 0;
+
+public:
     void SetTimestamp(double ts);
     double GetTimestamp() const;
     void SetModified(bool modified);
@@ -191,14 +193,13 @@ public:
 
 
 template <class _ValueType, unsigned int _DataChannels, unsigned int _VideoChannels>
-class CISST_EXPORT svlSampleImageCustom : public svlSampleImageBase, public cmnGenericObject
+class CISST_EXPORT svlSampleImageCustom : public svlSampleImageBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     svlSampleImageCustom() :
         svlSampleImageBase(),
-        cmnGenericObject(),
         OwnData(true)
     {
         for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
@@ -214,7 +215,6 @@ public:
 
     svlSampleImageCustom(bool owndata) :
         svlSampleImageBase(),
-        cmnGenericObject(),
         OwnData(owndata)
     {
         for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
@@ -529,19 +529,19 @@ typedef svlSampleImageCustom<unsigned char,  4, 2>   svlSampleImageRGBAStereo;
 typedef svlSampleImageCustom<float,          1, 1>   svlSampleImageMonoFloat;
 typedef svlSampleImageCustom<float,          3, 1>   svlSampleImage3DMap;
 
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageMono8)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageMono8Stereo)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageMono16)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageMono16Stereo)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageRGB)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageRGBA)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageRGBStereo)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageRGBAStereo)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImageMonoFloat)
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleImage3DMap)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageMono8)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageMono8Stereo)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageMono16)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageMono16Stereo)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageRGB)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageRGBA)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageRGBStereo)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageRGBAStereo)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImageMonoFloat)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleImage3DMap)
 
 
-class CISST_EXPORT svlSampleRigidXform : public svlSample, public cmnGenericObject
+class CISST_EXPORT svlSampleRigidXform : public svlSample
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -562,10 +562,10 @@ public:
     svlRigidXform frame4x4;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSampleRigidXform)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSampleRigidXform)
 
 
-class CISST_EXPORT svlSamplePointCloud : public svlSample, public cmnGenericObject
+class CISST_EXPORT svlSamplePointCloud : public svlSample
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -589,7 +589,7 @@ public:
     svlPointCloud points;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(svlSamplePointCloud)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlSamplePointCloud)
 
 
 //////////////////////////////////////////////

@@ -20,23 +20,23 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _vidMILDevice_h
-#define _vidMILDevice_h
+#ifndef _svlVidCapSrcMIL_h
+#define _svlVidCapSrcMIL_h
 
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
 #include <cisstStereoVision/svlRenderTargets.h>
-#include "svlImageBuffer.h"
+#include <cisstStereoVision/svlBufferImage.h>
 
 #include <mil.h>
 
 
-class CMILDeviceRenderTarget : public svlRenderTargetBase
+class svlVidCapSrcMILRenderTarget : public svlRenderTargetBase
 {
 friend class svlRenderTargets;
 
 protected:
-    CMILDeviceRenderTarget(unsigned int deviceID);
-    ~CMILDeviceRenderTarget();
+    svlVidCapSrcMILRenderTarget(unsigned int deviceID);
+    ~svlVidCapSrcMILRenderTarget();
 
 public:
     bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip);
@@ -59,27 +59,27 @@ private:
 };
 
 
-class CMILDevice : public CVideoCaptureSourceBase, public cmnGenericObject
+class svlVidCapSrcMIL : public svlVidCapSrcBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-friend class CMILDeviceRenderTarget;
+friend class svlVidCapSrcMILRenderTarget;
 
 public:
     typedef struct tagMILCaptureParameters {
         MIL_ID *MilFrames;
-        svlImageBuffer *ImageBuffer;
+        svlBufferImage *ImageBuffer;
         bool OverlayModified;
         MIL_ID *MilOverlayImage;
         unsigned char *MilOverlayBuffer;
     } MILCaptureParameters;
 
 private:
-	CMILDevice();
-	~CMILDevice();
+	svlVidCapSrcMIL();
+	~svlVidCapSrcMIL();
 
 public:
-    static CMILDevice* GetInstance();
+    static svlVidCapSrcMIL* GetInstance();
     void ReleaseAll();
 
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
@@ -116,7 +116,7 @@ private:
     bool OverlaySupported[2];
     int Width[2];
     int Height[2];
-    svlImageBuffer** ImageBuffer;
+    svlBufferImage** ImageBuffer;
 
     int MILNumberOfDevices;
     MIL_ID MilApplication;
@@ -144,7 +144,7 @@ private:
     void MILReleaseApplication();
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(CMILDevice)
+CMN_DECLARE_SERVICES_INSTANTIATION(svlVidCapSrcMIL)
 
-#endif // _vidMILDevice_h
+#endif // _svlVidCapSrcMIL_h
 

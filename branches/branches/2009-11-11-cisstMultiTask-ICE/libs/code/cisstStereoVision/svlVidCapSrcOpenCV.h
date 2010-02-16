@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcOpenCV.h 1185 2010-02-11 02:05:25Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2008 
@@ -20,24 +20,24 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _vidOCVSource_h
-#define _vidOCVSource_h
+#ifndef _svlVidCapSrcOpenCV_h
+#define _svlVidCapSrcOpenCV_h
 
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
-#include "svlImageBuffer.h"
+#include <cisstStereoVision/svlBufferImage.h>
 
 
-class COpenCVSourceThread;
+class svlVidCapSrcOpenCVThread;
 
-class COpenCVSource : public CVideoCaptureSourceBase, public cmnGenericObject
+class svlVidCapSrcOpenCV : public svlVidCapSrcBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-friend class COpenCVSourceThread;
+friend class svlVidCapSrcOpenCVThread;
 
 public:
-	COpenCVSource();
-	~COpenCVSource();
+	svlVidCapSrcOpenCV();
+	~svlVidCapSrcOpenCV();
 
 public:
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
@@ -61,7 +61,7 @@ private:
     bool Initialized;
 	bool Running;
 
-    COpenCVSourceThread** CaptureProc;
+    svlVidCapSrcOpenCVThread** CaptureProc;
     osaThread** CaptureThread;
 	int* DeviceID;
     int* OCVDeviceID;
@@ -69,18 +69,18 @@ private:
     int* OCVWidth;
     int* OCVHeight;
     CvCapture** OCVCapture;
-    svlImageBuffer** ImageBuffer;
+    svlBufferImage** ImageBuffer;
 
     void Release();
 };
 
 
-class COpenCVSourceThread
+class svlVidCapSrcOpenCVThread
 {
 public:
-    COpenCVSourceThread(int streamid) { StreamID = streamid; InitSuccess = false; }
-    ~COpenCVSourceThread() {}
-    void* Proc(COpenCVSource* baseref);
+    svlVidCapSrcOpenCVThread(int streamid) { StreamID = streamid; InitSuccess = false; }
+    ~svlVidCapSrcOpenCVThread() {}
+    void* Proc(svlVidCapSrcOpenCV* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
     bool IsError() { return Error; }
@@ -93,7 +93,7 @@ private:
     IplImage *Frame;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(COpenCVSource)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlVidCapSrcOpenCV)
 
-#endif // _vidOCVSource_h
+#endif // _svlVidCapSrcOpenCV_h
 

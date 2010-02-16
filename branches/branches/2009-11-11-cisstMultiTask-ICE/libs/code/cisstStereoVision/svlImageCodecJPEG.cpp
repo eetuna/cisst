@@ -20,7 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "ftImageJPEG.h"
+#include "svlImageCodecJPEG.h"
 #include <cisstStereoVision/svlStreamDefs.h>
 #include <setjmp.h>
 #include "jpeglib.h"
@@ -176,13 +176,13 @@ void JPEG_term_destination_proc(j_compress_ptr CMN_UNUSED(cinfo))
 
 
 /*************************************/
-/*** ftImageJPEG class ***************/
+/*** svlImageCodecJPEG class *********/
 /*************************************/
 
-CMN_IMPLEMENT_SERVICES(ftImageJPEG)
+CMN_IMPLEMENT_SERVICES(svlImageCodecJPEG)
 
-ftImageJPEG::ftImageJPEG() :
-    svlImageCodec(),
+svlImageCodecJPEG::svlImageCodecJPEG() :
+    svlImageCodecBase(),
     cmnGenericObject(),
     jpegBuffer(0),
     jpegRowBuffer(0),
@@ -192,19 +192,19 @@ ftImageJPEG::ftImageJPEG() :
     ExtensionList = ".jpg;.jpeg;";
 }
 
-ftImageJPEG::~ftImageJPEG()
+svlImageCodecJPEG::~svlImageCodecJPEG()
 {
     if (jpegBuffer) delete [] jpegBuffer;
     if (jpegRowBuffer) delete [] jpegRowBuffer;
 }
 
-int ftImageJPEG::ReadDimensions(const std::string &filename, unsigned int &width, unsigned int &height)
+int svlImageCodecJPEG::ReadDimensions(const std::string &filename, unsigned int &width, unsigned int &height)
 {
     std::ifstream stream(filename.c_str(), std::ios_base::in | std::ios_base::binary);
     return ReadDimensions(stream, width, height);
 }
 
-int ftImageJPEG::ReadDimensions(std::istream &stream, unsigned int &width, unsigned int &height)
+int svlImageCodecJPEG::ReadDimensions(std::istream &stream, unsigned int &width, unsigned int &height)
 {
     // Allocate buffer if not done yet
     if (!jpegBuffer) {
@@ -229,6 +229,9 @@ int ftImageJPEG::ReadDimensions(std::istream &stream, unsigned int &width, unsig
     source_manager.pub.next_input_byte = 0;
     source_manager.pub.bytes_in_buffer = 0;
 
+    width = 0;
+    height = 0;
+
     // Setup error handling: failure without crashing
     jpeg_decompress_struct cinfo;
     JPEG_custom_error_mgr jerr;
@@ -236,7 +239,7 @@ int ftImageJPEG::ReadDimensions(std::istream &stream, unsigned int &width, unsig
     jerr.pub.error_exit = JPEG_error_exit_proc;
     if (setjmp(jerr.setjmp_buffer)) {
         jpeg_destroy_decompress(&cinfo);
-        return SVL_FAIL;
+        return SVL_OK;
     }
 
     // Setup decompression and source manager
@@ -259,7 +262,7 @@ int ftImageJPEG::ReadDimensions(std::istream &stream, unsigned int &width, unsig
     return SVL_OK;
 }
 
-int ftImageJPEG::ReadDimensions(const unsigned char *buffer, const size_t buffersize, unsigned int &width, unsigned int &height)
+int svlImageCodecJPEG::ReadDimensions(const unsigned char *buffer, const size_t buffersize, unsigned int &width, unsigned int &height)
 {
     // Setup source manager to handle input memory buffer
     JPEG_custom_source_mgr source_manager;
@@ -271,6 +274,9 @@ int ftImageJPEG::ReadDimensions(const unsigned char *buffer, const size_t buffer
     source_manager.pub.next_input_byte = buffer;
     source_manager.pub.bytes_in_buffer = buffersize;
 
+    width = 0;
+    height = 0;
+
     // Setup error handling: failure without crashing
     jpeg_decompress_struct cinfo;
     JPEG_custom_error_mgr jerr;
@@ -278,7 +284,7 @@ int ftImageJPEG::ReadDimensions(const unsigned char *buffer, const size_t buffer
     jerr.pub.error_exit = JPEG_error_exit_proc;
     if (setjmp(jerr.setjmp_buffer)) {
         jpeg_destroy_decompress(&cinfo);
-        return SVL_FAIL;
+        return SVL_OK;
     }
 
     // Setup decompression and source manager
@@ -301,13 +307,13 @@ int ftImageJPEG::ReadDimensions(const unsigned char *buffer, const size_t buffer
     return SVL_OK;
 }
 
-int ftImageJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, bool noresize)
+int svlImageCodecJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, bool noresize)
 {
     std::ifstream stream(filename.c_str(), std::ios_base::in | std::ios_base::binary);
     return Read(image, videoch, stream, noresize);
 }
 
-int ftImageJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, std::istream &stream, bool noresize)
+int svlImageCodecJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, std::istream &stream, bool noresize)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
 
@@ -405,7 +411,7 @@ int ftImageJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, std
     return SVL_OK;
 }
 
-int ftImageJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, const unsigned char *buffer, const size_t buffersize, bool noresize)
+int svlImageCodecJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, const unsigned char *buffer, const size_t buffersize, bool noresize)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
     if (!buffer) return SVL_FAIL;
@@ -491,13 +497,13 @@ int ftImageJPEG::Read(svlSampleImageBase &image, const unsigned int videoch, con
     return SVL_OK;
 }
 
-int ftImageJPEG::Write(const svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, const int compression)
+int svlImageCodecJPEG::Write(const svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, const int compression)
 {
     std::ofstream stream(filename.c_str(), std::ios_base::out | std::ios_base::binary);
     return Write(image, videoch, stream, compression);
 }
 
-int ftImageJPEG::Write(const svlSampleImageBase &image, const unsigned int videoch, std::ostream &stream, const int compression)
+int svlImageCodecJPEG::Write(const svlSampleImageBase &image, const unsigned int videoch, std::ostream &stream, const int compression)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
 
@@ -520,7 +526,7 @@ int ftImageJPEG::Write(const svlSampleImageBase &image, const unsigned int video
     return SVL_FAIL;
 }
 
-int ftImageJPEG::Write(const svlSampleImageBase &image, const unsigned int videoch, unsigned char *buffer, size_t &buffersize, const int compression)
+int svlImageCodecJPEG::Write(const svlSampleImageBase &image, const unsigned int videoch, unsigned char *buffer, size_t &buffersize, const int compression)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
     if (!buffer) return SVL_FAIL;
@@ -531,7 +537,7 @@ int ftImageJPEG::Write(const svlSampleImageBase &image, const unsigned int video
     unsigned char *src = const_cast<unsigned char*>(image.GetUCharPointer(videoch));
     unsigned char *buff_bgr;
     JSAMPROW row_pointer[1];
-    int i, offset, quality = (compression >= 0) ? std::min(compression, 100) : JPEG_DEFAULT_QUALITY;
+    int i, offset;
 
     // Allocate row buffer if not done yet
     if (!jpegRowBuffer) {
@@ -570,7 +576,7 @@ int ftImageJPEG::Write(const svlSampleImageBase &image, const unsigned int video
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_RGB;
     jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo, quality, TRUE);
+    jpeg_set_quality(&cinfo, (compression >= 0) ? std::min(compression, 100) : JPEG_DEFAULT_QUALITY, TRUE);
 
     // Proceed with compression
     jpeg_start_compress(&cinfo, TRUE);

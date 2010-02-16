@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcDC1394.h 1057 2010-01-19 21:09:31Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -20,11 +20,11 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _vidDC1394Source_h
-#define _vidDC1394Source_h
+#ifndef _svlVidCapSrcDC1394_h
+#define _svlVidCapSrcDC1394_h
 
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
-#include "svlImageBuffer.h"
+#include <cisstStereoVision/svlBufferImage.h>
 
 
 /*********************************************************************
@@ -179,10 +179,10 @@ typedef enum {
 } dc1394log_t;
 *******************************************/
 
-class svlDC1394Context
+class svlVidCapSrcDC1394Context
 {
 public:
-    static svlDC1394Context* Instance();
+    static svlVidCapSrcDC1394Context* Instance();
 
     dc1394_t* GetContext();
 	int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
@@ -193,8 +193,8 @@ public:
 	unsigned int GetPixelTypeBitSize(svlFilterSourceVideoCapture::PixelType type);
 
 private:
-    svlDC1394Context();
-    ~svlDC1394Context();
+    svlVidCapSrcDC1394Context();
+    ~svlVidCapSrcDC1394Context();
 
     void Enumerate();
     int TestIEEE1394Interface(dc1394camera_t* camera, dc1394operation_mode_t opmode, dc1394speed_t isospeed);
@@ -211,17 +211,17 @@ private:
 };
 
 
-class CDC1394SourceThread;
+class svlVidCapSrcDC1394Thread;
 
-class CDC1394Source : public CVideoCaptureSourceBase, public cmnGenericObject
+class svlVidCapSrcDC1394 : public svlVidCapSrcBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-friend class CDC1394SourceThread;
+friend class svlVidCapSrcDC1394Thread;
 
 public:
-    CDC1394Source();
-	~CDC1394Source();
+    svlVidCapSrcDC1394();
+	~svlVidCapSrcDC1394();
 
 public:
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
@@ -250,7 +250,7 @@ private:
     bool Initialized;
     bool Running;
 
-    CDC1394SourceThread** CaptureProc;
+    svlVidCapSrcDC1394Thread** CaptureProc;
     osaThread** CaptureThread;
 
     int* CameraFileNo;
@@ -270,7 +270,7 @@ private:
     int* Height;
     unsigned int* ColorCoding;
     dc1394video_frame_t** Frame;
-    svlImageBuffer** OutputBuffer;
+    svlBufferImage** OutputBuffer;
 
     int CaptureFrame(unsigned int videoch);
 
@@ -287,12 +287,12 @@ private:
 };
 
 
-class CDC1394SourceThread
+class svlVidCapSrcDC1394Thread
 {
 public:
-    CDC1394SourceThread(int streamid) { StreamID = streamid; InitSuccess = false; }
-    ~CDC1394SourceThread() {}
-    void* Proc(CDC1394Source* baseref);
+    svlVidCapSrcDC1394Thread(int streamid) { StreamID = streamid; InitSuccess = false; }
+    ~svlVidCapSrcDC1394Thread() {}
+    void* Proc(svlVidCapSrcDC1394* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
     bool IsError() { return Error; }
@@ -304,7 +304,7 @@ private:
     bool InitSuccess;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(CDC1394Source)
+CMN_DECLARE_SERVICES_INSTANTIATION(svlVidCapSrcDC1394)
 
-#endif // _vidDC1394Source_h
+#endif // _svlVidCapSrcDC1394_h
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcDirectShow.cpp 1198 2010-02-12 22:54:34Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -20,7 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "vidDirectShowSource.h"
+#include "svlVidCapSrcDirectShow.h"
 
 using namespace std;
 
@@ -31,13 +31,13 @@ static int OleInitCounter = 0;
 
 
 /*************************************/
-/*** CDirectShowSource class *********/
+/*** svlVidCapSrcDirectShow class ****/
 /*************************************/
 
-CMN_IMPLEMENT_SERVICES(CDirectShowSource)
+CMN_IMPLEMENT_SERVICES(svlVidCapSrcDirectShow)
 
-CDirectShowSource::CDirectShowSource() :
-    CVideoCaptureSourceBase(),
+svlVidCapSrcDirectShow::svlVidCapSrcDirectShow() :
+    svlVidCapSrcBase(),
     cmnGenericObject(),
     Initialized(false),
     NumOfStreams(0),
@@ -71,7 +71,7 @@ CDirectShowSource::CDirectShowSource() :
     }
 }
 
-CDirectShowSource::~CDirectShowSource()
+svlVidCapSrcDirectShow::~svlVidCapSrcDirectShow()
 {
     Release();
 
@@ -81,12 +81,12 @@ CDirectShowSource::~CDirectShowSource()
     }
 }
 
-svlFilterSourceVideoCapture::PlatformType CDirectShowSource::GetPlatformType()
+svlFilterSourceVideoCapture::PlatformType svlVidCapSrcDirectShow::GetPlatformType()
 {
     return svlFilterSourceVideoCapture::WinDirectShow;
 }
 
-int CDirectShowSource::SetStreamCount(unsigned int numofstreams)
+int svlVidCapSrcDirectShow::SetStreamCount(unsigned int numofstreams)
 {
     Release();
 
@@ -111,11 +111,11 @@ int CDirectShowSource::SetStreamCount(unsigned int numofstreams)
     pSampleGrabFilter          = new IBaseFilter*[NumOfStreams];
 	pCaptureFilterOut = new IPin*[NumOfStreams];
 	pSampleGrabber    = new ISampleGrabber*[NumOfStreams];
-	pCallBack         = new CDirectShowSourceCB*[NumOfStreams];
+	pCallBack         = new svlVidCapSrcDirectShowCB*[NumOfStreams];
 	pMediaType        = new unsigned char*[NumOfStreams];
 	MediaTypeLength   = new unsigned int[NumOfStreams];
 	PinCategory       = new GUID[NumOfStreams];
-	OutputBuffer      = new svlImageBuffer*[NumOfStreams];
+	OutputBuffer      = new svlBufferImage*[NumOfStreams];
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
         DeviceID[i] = -1;
         InputID[i] = -1;
@@ -139,7 +139,7 @@ int CDirectShowSource::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-void CDirectShowSource::Release()
+void svlVidCapSrcDirectShow::Release()
 {
     if (!Initialized) return;
 
@@ -195,7 +195,7 @@ void CDirectShowSource::Release()
     Initialized = false;
 }
 
-int CDirectShowSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
+int svlVidCapSrcDirectShow::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     if (deviceinfo == 0) return SVL_FAIL;
 
@@ -266,7 +266,7 @@ int CDirectShowSource::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **d
     return counter;
 }
 
-int CDirectShowSource::TestOpen(int devid)
+int svlVidCapSrcDirectShow::TestOpen(int devid)
 {
     TestClose();
 
@@ -298,7 +298,7 @@ labError:
     return SVL_FAIL;
 }
 
-void CDirectShowSource::TestClose()
+void svlVidCapSrcDirectShow::TestClose()
 {
     if (pTestBuilder != 0) {
         pTestBuilder->Release();
@@ -315,7 +315,7 @@ void CDirectShowSource::TestClose()
     }
 }
 
-int CDirectShowSource::Open()
+int svlVidCapSrcDirectShow::Open()
 {
     // Return if already successfully initialized
     if (pGraph) return SVL_OK;
@@ -336,6 +336,7 @@ int CDirectShowSource::Open()
 
     for (i = 0; i < NumOfStreams; i ++) {
 
+        CMN_LOG_CLASS_INIT_VERBOSE << "Open called for stream " << i << endl;
         pCaptureFilter[i] = GetCaptureFilter(DeviceID[i]);
         if (pCaptureFilter[i] == 0) goto labError;
 
@@ -350,7 +351,7 @@ int CDirectShowSource::Open()
             if (pCaptureFilterOut[i] == 0) goto labError;
         }
 
-        if (pMediaType[i] != 0) SetupMediaType(i);
+        if (pMediaType && (pMediaType[i] != 0)) SetupMediaType(i);
     }
 
     if (AssembleGraph() != SVL_OK) goto labError;
@@ -375,7 +376,7 @@ labError:
     return SVL_FAIL;
 }
 
-int CDirectShowSource::AssembleGraph()
+int svlVidCapSrcDirectShow::AssembleGraph()
 {
     if (!Initialized) return SVL_FAIL;
 
@@ -384,6 +385,12 @@ int CDirectShowSource::AssembleGraph()
 	VIDEOINFOHEADER *videoinfo;
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
+
+        FILTER_INFO fInfo;
+        char fName[MAX_FILTER_NAME];
+		pCaptureFilter[i]->QueryFilterInfo(&fInfo);
+        WideCharToMultiByte(CP_ACP, 0, fInfo.achName, -1, fName, MAX_FILTER_NAME, 0, 0);
+        CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph for stream " << i << ": capture device = " << fName << std::endl;
 
         hr = CoCreateInstance(CLSID_AVIDec, 0, CLSCTX_INPROC, IID_IBaseFilter, reinterpret_cast<void**>(&(pAviDecomprFilter[i])));
         if (hr != S_OK) goto labError;
@@ -412,111 +419,178 @@ int CDirectShowSource::AssembleGraph()
         hr = pGraph->AddFilter(pSampleGrabFilter[i], 0);
         if (hr != S_OK) goto labError;
 
-        hr = pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video, pCaptureFilter[i], 0, pAviDecomprFilter[i]);
-        if (hr != S_OK) {
-        // Cannot directly connect Capture Filter to Avi Decompressor Filter
-        // so start searching with brute force for an appropriate intermediate filter
-
-            IFilterMapper2 *mapper;
-            GUID typesarray[2];
-            IEnumMoniker *enumcat;
-            IMoniker *moniker;
-            ULONG fetched;
-
-            // Searching for matching filters
-            hr = CoCreateInstance(CLSID_FilterMapper2, 0, CLSCTX_INPROC, IID_IFilterMapper2, reinterpret_cast<void**>(&mapper));
-            if (hr != S_OK) goto labError;
-
-            typesarray[0] = MEDIATYPE_Video;
-            typesarray[1] = GUID_NULL;
-            hr = mapper->EnumMatchingFilters(&enumcat,
-                                             0,                     // Reserved.
-                                             TRUE,                  // Use exact match?
-                                             MERIT_DO_NOT_USE + 1,  // Minimum merit.
-                                             TRUE,                  // At least one input pin?
-                                             1,                     // Number of major type/subtype pairs for input.
-                                             typesarray,            // Array of major type/subtype pairs for input.
-                                             0,                  // Input medium.
-                                             0,                  // Input pin category.
-                                             FALSE,                 // Must be a renderer?
-                                             TRUE,                  // At least one output pin?
-                                             0,                     // Number of major type/subtype pairs for output.
-                                             0,                  // Array of major type/subtype pairs for output.
-                                             0,                  // Output medium.
-                                             0);                 // Output pin category.
-            if (hr != S_OK) {
-                mapper->Release();
-                goto labError;
+        // Try to directly connect source filter to color space converter, then to sample grabber
+        hr = pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video, pCaptureFilter[i], pColorConvFilter[i], pSampleGrabFilter[i]);
+        if (hr == S_OK || hr == VFW_S_NOPREVIEWPIN) {
+            if (hr == S_OK) {
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected to colour space converter, then to sample grabber." << endl;
             }
+            else {
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected (through a smart tee) to colour space converter, then to sample grabber." << endl;
+            }
+        }
+        else {
+            CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Cannot directly connect to colour space converter, then to sample grabber." << endl;
 
-            // Enumerating the monikers
-            while (enumcat->Next(1, &moniker, &fetched) == S_OK) {
+            // Try connecting source filter to AVI decompressor
+            hr = pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video, pCaptureFilter[i], 0, pAviDecomprFilter[i]);
+            if (hr == S_OK) {
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected to AVI decompressor." << endl;
 
-                // Getting a reference to the enumerated filter
-                hr = moniker->BindToObject(0, 0, IID_IBaseFilter, reinterpret_cast<void**>(&(pIntermediatePreviewFilter[i])));
-                if (hr == S_OK) {
-                    hr = pGraph->AddFilter(pIntermediatePreviewFilter[i], 0);
-                    if (hr == S_OK) {
-                        hr = pGraphBuilder->RenderStream(&(PinCategory[i]),
-                                                         &MEDIATYPE_Video,
-                                                         pCaptureFilter[i],
-                                                         pIntermediatePreviewFilter[i],
-                                                         pAviDecomprFilter[i]);
-                        if (hr == S_OK) {
-                            // FOUND, so exit from the loop
-                            moniker->Release();
-                            break;
+                hr = pGraphBuilder->RenderStream(0, 0, pAviDecomprFilter[i], pColorConvFilter[i], pSampleGrabFilter[i]);
+                if (hr != S_OK) goto labError;
+
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: AVI decompressor connected to colour space converter, then to sample grabber filter." << endl;
+            }
+            else {
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Cannot connect to AVI decompression filter." << endl;
+
+                // Cannot directly connect Capture Filter to Avi Decompressor Filter or Colour conversion filter,
+                // so start searching with brute force for an appropriate intermediate filter
+
+                IFilterMapper2 *mapper = 0;
+                IEnumMoniker *enumcat = 0;
+                IMoniker *moniker = 0;
+                GUID typesarray[2];
+                ULONG fetched;
+
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Searching for intermediate filters." << endl;
+
+                // Searching for matching filters
+                hr = CoCreateInstance(CLSID_FilterMapper2, 0, CLSCTX_INPROC, IID_IFilterMapper2, reinterpret_cast<void**>(&mapper));
+                if (hr != S_OK || !mapper) goto labError;
+
+                typesarray[0] = MEDIATYPE_Video;
+                typesarray[1] = GUID_NULL;
+                hr = mapper->EnumMatchingFilters(&enumcat,
+                                                 0,                     // Reserved.
+                                                 TRUE,                  // Use exact match?
+                                                 MERIT_DO_NOT_USE + 1,  // Minimum merit.
+                                                 TRUE,                  // At least one input pin?
+                                                 1,                     // Number of major type/subtype pairs for input.
+                                                 typesarray,            // Array of major type/subtype pairs for input.
+                                                 0,                     // Input medium.
+                                                 0,                     // Input pin category.
+                                                 FALSE,                 // Must be a renderer?
+                                                 TRUE,                  // At least one output pin?
+                                                 0,                     // Number of major type/subtype pairs for output.
+                                                 0,                     // Array of major type/subtype pairs for output.
+                                                 0,                     // Output medium.
+                                                 0);                    // Output pin category.
+                if (hr != S_OK || !enumcat) {
+                    mapper->Release();
+                    goto labError;
+                }
+
+                // Enumerating the monikers
+                while (enumcat->Next(1, &moniker, &fetched) == S_OK) {
+
+                    // Getting a reference to the enumerated filter
+                    if (moniker->BindToObject(0, 0, IID_IBaseFilter, reinterpret_cast<void**>(&(pIntermediatePreviewFilter[i]))) == S_OK) {
+
+                        if (pGraph->AddFilter(pIntermediatePreviewFilter[i], 0) == S_OK) {
+
+                            // First try to connect to color space converter
+                            if (pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video,
+                                                            pCaptureFilter[i], pIntermediatePreviewFilter[i], pColorConvFilter[i]) == S_OK) {
+                                hr = pGraphBuilder->RenderStream(0, 0,
+                                                                 pColorConvFilter[i], 0, pSampleGrabFilter[i]);
+                                if (hr != S_OK) {
+                                    // Disconnect source and color space renderer from all other filters
+                                    pCaptureFilterOut[i]->Disconnect();
+                                    pGraph->RemoveFilter(pColorConvFilter[i]);
+                                    pGraph->AddFilter(pColorConvFilter[i], 0);
+                                }
+                            }
+                            // Then try to build through AVI decompressor
+                            else if (pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video,
+                                                                 pCaptureFilter[i], pIntermediatePreviewFilter[i], pAviDecomprFilter[i]) == S_OK) {
+                                hr = pGraphBuilder->RenderStream(0, 0,
+                                                                 pAviDecomprFilter[i], pColorConvFilter[i], pSampleGrabFilter[i]);
+                                if (hr != S_OK) {
+                                    // Disconnect source and AVI decompressor from all other filters
+                                    pCaptureFilterOut[i]->Disconnect();
+                                    pGraph->RemoveFilter(pAviDecomprFilter[i]);
+                                    pGraph->AddFilter(pAviDecomprFilter[i], 0);
+                                }
+                            }
+                            // All failed
+                            else {
+                                hr = S_FALSE;
+                            }
+
+                            if (hr == S_OK) {
+
+                                // Display the filter name
+                                stringstream str;
+                                IPropertyBag *pPropBag = NULL;
+                                hr = moniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&pPropBag);
+                                if (hr == S_OK) {
+                                    VARIANT varName;
+                                    VariantInit(&varName);
+                                    hr = pPropBag->Read(L"FriendlyName", &varName, 0);
+                                    if (hr == S_OK)
+                                        str << varName.bstrVal;
+                                    VariantClear(&varName);
+                                    pPropBag->Release();
+                                }
+                                if (hr != S_OK)
+                                    str << "Unknown";
+                                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Using intermediate filter: " << str.str() << endl;
+
+                                // Intermediate filter found, so exit from loop
+                                break;
+                            }
                         }
+
+                        // Mismatch, so remove and release filter
+                        if (pIntermediatePreviewFilter[i] != 0) {
+                            pGraph->RemoveFilter(pIntermediatePreviewFilter[i]);
+                            pIntermediatePreviewFilter[i]->Release();
+                            pIntermediatePreviewFilter[i] = 0;
+                        }
+                    }
+
+                    if (moniker) {
+                        moniker->Release();
+                        moniker = 0;
                     }
                 }
 
-                // Mismatch, so remove and release filter
-                if (pIntermediatePreviewFilter[i] != 0) {
-                    pGraph->RemoveFilter(pIntermediatePreviewFilter[i]);
-                    pIntermediatePreviewFilter[i]->Release();
-                    pIntermediatePreviewFilter[i] = 0;
-                }
+                enumcat->Release();
+                mapper->Release();
 
-                moniker->Release();
+                // No intermediate filter found
+                if (pIntermediatePreviewFilter[i] == 0) goto labError;
             }
-
-            enumcat->Release();
-            mapper->Release();
-
-            // No intermediate filter found
-            if (pIntermediatePreviewFilter[i] == 0) goto labError;
         }
 
-        hr = pGraphBuilder->RenderStream(0, 0, pAviDecomprFilter[i], pColorConvFilter[i], pSampleGrabFilter[i]);
-        if (hr != S_OK) goto labError;
-
-        hr = pCaptureFilterOut[i]->ConnectionMediaType(&mediatype);
-        if (hr != S_OK) goto labError;
-
+        // Get image capture dimensions
+        if (pCaptureFilterOut[i]->ConnectionMediaType(&mediatype) != S_OK) goto labError;
         videoinfo = reinterpret_cast<VIDEOINFOHEADER*>(mediatype.pbFormat);
         CapWidth[i] = videoinfo->bmiHeader.biWidth;
         CapHeight[i] = videoinfo->bmiHeader.biHeight;
         CoTaskMemFree(mediatype.pbFormat);
 
-        OutputBuffer[i] = new svlImageBuffer(CapWidth[i], CapHeight[i]);
-        pCallBack[i] = new CDirectShowSourceCB(OutputBuffer[i]);
-        hr = pSampleGrabber[i]->SetCallback(pCallBack[i], 1);
-        if (hr != S_OK) goto labError;
+        // Setup output buffer and frame callback
+        OutputBuffer[i] = new svlBufferImage(CapWidth[i], CapHeight[i]);
+        pCallBack[i] = new svlVidCapSrcDirectShowCB(OutputBuffer[i]);
+        if (pSampleGrabber[i]->SetCallback(pCallBack[i], 1) != S_OK) goto labError;
 
-        if (EnableRenderer[i] != 0) {
-            hr = pGraphBuilder->RenderStream(0, 0, pSampleGrabFilter[i], 0, 0);
-            if (hr != S_OK) goto labError;
-        }
+        // Add DirectShow video renderer if requested
+        if (EnableRenderer[i] != 0 &&
+            pGraphBuilder->RenderStream(0, 0, pSampleGrabFilter[i], 0, 0) != S_OK) goto labError;
     }
 
     return SVL_OK;
 
 labError:
+    CMN_LOG_CLASS_INIT_ERROR << "AssembleGraph returning error (SVL_FAIL)." << endl;
     DisassembleGraph();
     return SVL_FAIL;
 }
 
-void CDirectShowSource::DisassembleGraph()
+void svlVidCapSrcDirectShow::DisassembleGraph()
 {
     if (!Initialized) return;
 
@@ -564,21 +638,41 @@ void CDirectShowSource::DisassembleGraph()
             pIntermediatePreviewFilter[i] = 0;
         }
     }
+
+    // Get rid of all the leftover inivisible junk,
+    // except the capture filter
+    if (pGraph != 0) EmptyGraph(pGraph, true);
 }
 
-void CDirectShowSource::EmptyGraph(IFilterGraph* graph)
+void svlVidCapSrcDirectShow::EmptyGraph(IFilterGraph* graph, bool keepsources)
 {
     if (!Initialized) return;
 
     if (RunState == false && pGraph != 0) {
-        bool morefilters = true;
+        HRESULT hr;
+        unsigned int i;
+        bool issource, morefilters = true;
         IEnumFilters  *enumfilt;
-        IBaseFilter *filtref;
+        IBaseFilter *filtref, *prevfiltref = 0;
         ULONG fetched;
 
         while (morefilters) {
             if (graph->EnumFilters(&enumfilt) == S_OK) {
-                if (enumfilt->Next(1, &filtref, &fetched) == S_OK) {
+                hr = enumfilt->Next(1, &filtref, &fetched);
+                while (hr == S_OK && keepsources) {
+                    for (issource = false, i = 0; i < NumOfStreams; i ++ ) {
+                        if (filtref == pCaptureFilter[i]) {
+                            issource = true;
+                            break;
+                        }
+                    }
+                    if (!issource) break;
+
+                    // jump over source filters
+                    filtref->Release();
+                    hr = enumfilt->Next(1, &filtref, &fetched);
+                }
+                if (hr == S_OK) {
                     graph->RemoveFilter(filtref);
                     filtref->Release();
                 }
@@ -587,11 +681,14 @@ void CDirectShowSource::EmptyGraph(IFilterGraph* graph)
                 }
                 enumfilt->Release();
             }
+            else {
+                morefilters = false;
+            }
         }
     }
 }
 
-void CDirectShowSource::Close() 
+void svlVidCapSrcDirectShow::Close() 
 {
     if (!Initialized) return;
 
@@ -626,7 +723,7 @@ void CDirectShowSource::Close()
 	}
 }
 
-IBaseFilter* CDirectShowSource::GetCaptureFilter(int devid)
+IBaseFilter* svlVidCapSrcDirectShow::GetCaptureFilter(int devid)
 {
     HRESULT hr;
     IBaseFilter* filtref;
@@ -663,7 +760,7 @@ IBaseFilter* CDirectShowSource::GetCaptureFilter(int devid)
     return filtref;
 }
 
-IPin* CDirectShowSource::EnumeratePin(IBaseFilter* filter, LPCTSTR name, GUID *category)
+IPin* svlVidCapSrcDirectShow::EnumeratePin(IBaseFilter* filter, LPCTSTR name, GUID *category)
 {
     if (filter == 0) return 0;
 
@@ -704,7 +801,7 @@ IPin* CDirectShowSource::EnumeratePin(IBaseFilter* filter, LPCTSTR name, GUID *c
     return pinref;
 }
 
-int CDirectShowSource::GetPinCategory(IPin *pin, GUID *category)
+int svlVidCapSrcDirectShow::GetPinCategory(IPin *pin, GUID *category)
 {
     if (pin == 0 ||
         category == 0) return SVL_FAIL;
@@ -724,19 +821,19 @@ int CDirectShowSource::GetPinCategory(IPin *pin, GUID *category)
     return SVL_OK;
 }
 
-int CDirectShowSource::SetDeviceInput(IBaseFilter *capfilter, int input_id)
+int svlVidCapSrcDirectShow::SetDeviceInput(IBaseFilter *capfilter, int input_id)
 {
     if (capfilter == 0) return SVL_FAIL;
 
     HRESULT hr;
-    CDirectShowInputSelector *crossbar;
+    svlVidCapSrcDirectShowInputSelector *crossbar;
     GUID pincategory;
     IPin *pin;
 
     pincategory = PIN_CATEGORY_ANALOGVIDEOIN;
     pin = EnumeratePin(capfilter, 0, &pincategory);
     if (pin != 0) {
-        crossbar = new CDirectShowInputSelector(pin);
+        crossbar = new svlVidCapSrcDirectShowInputSelector(pin);
         hr = crossbar->SetInputIndex((LONG)input_id);
 
         delete crossbar;
@@ -748,13 +845,13 @@ int CDirectShowSource::SetDeviceInput(IBaseFilter *capfilter, int input_id)
     return SVL_FAIL;
 }
 
-int CDirectShowSource::GetDeviceInputs(IBaseFilter *capfilter, svlFilterSourceVideoCapture::DeviceInfo *deviceinfo)
+int svlVidCapSrcDirectShow::GetDeviceInputs(IBaseFilter *capfilter, svlFilterSourceVideoCapture::DeviceInfo *deviceinfo)
 {
     if (capfilter == 0 ||
         deviceinfo == 0) return SVL_FAIL;
 
     IPin *pin;
-    CDirectShowInputSelector *crossbar;
+    svlVidCapSrcDirectShowInputSelector *crossbar;
     GUID pincategory;
     LONG count;
     std::string name;
@@ -763,7 +860,7 @@ int CDirectShowSource::GetDeviceInputs(IBaseFilter *capfilter, svlFilterSourceVi
     pincategory = PIN_CATEGORY_ANALOGVIDEOIN;
     pin = EnumeratePin(capfilter, 0, &pincategory);
     if (pin != 0) {
-        crossbar = new CDirectShowInputSelector(pin);
+        crossbar = new svlVidCapSrcDirectShowInputSelector(pin);
 
         count = crossbar->GetInputCount();
         if (count > SVL_VCS_ARRAY_LENGTH) count = SVL_VCS_ARRAY_LENGTH;
@@ -798,7 +895,7 @@ int CDirectShowSource::GetDeviceInputs(IBaseFilter *capfilter, svlFilterSourceVi
     return SVL_OK;
 }
 
-int CDirectShowSource::Start() 
+int svlVidCapSrcDirectShow::Start() 
 {
     // Return if already running
     if (RunState) return SVL_OK;
@@ -827,7 +924,7 @@ int CDirectShowSource::Start()
     return SVL_OK;
 }
 
-int CDirectShowSource::Stop() 
+int svlVidCapSrcDirectShow::Stop() 
 {
     if (!Initialized ||
         pGraph == 0) return SVL_FAIL;
@@ -847,14 +944,15 @@ int CDirectShowSource::Stop()
     return SVL_OK;
 }
 
-svlImageRGB* CDirectShowSource::GetLatestFrame(bool waitfornew, unsigned int videoch)
+svlImageRGB* svlVidCapSrcDirectShow::GetLatestFrame(bool waitfornew, unsigned int videoch)
 {
     if (!Initialized || videoch >= NumOfStreams) return 0;
     return OutputBuffer[videoch]->Pull(waitfornew);
 }
 
-int CDirectShowSource::ShowFormatDialog(HWND hwnd, unsigned int videoch)
+int svlVidCapSrcDirectShow::ShowFormatDialog(HWND hwnd, unsigned int videoch)
 {
+    CMN_LOG_CLASS_INIT_VERBOSE << "ShowFormatDialog called for channel " << videoch << endl;
     if (!Initialized ||
         videoch >= NumOfStreams ||
         pCaptureFilterOut[videoch] == 0) return SVL_FAIL;
@@ -888,7 +986,7 @@ int CDirectShowSource::ShowFormatDialog(HWND hwnd, unsigned int videoch)
     return SVL_OK;
 }
 
-int CDirectShowSource::ShowImageDialog(HWND hwnd, unsigned int videoch)
+int svlVidCapSrcDirectShow::ShowImageDialog(HWND hwnd, unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams ||
@@ -917,7 +1015,7 @@ int CDirectShowSource::ShowImageDialog(HWND hwnd, unsigned int videoch)
     return SVL_OK;
 }
 
-int CDirectShowSource::GetMediaType(unsigned char *&mediabuffer, unsigned int &length, unsigned int videoch)
+int svlVidCapSrcDirectShow::GetMediaType(unsigned char *&mediabuffer, unsigned int &length, unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams) return SVL_FAIL;
@@ -935,7 +1033,7 @@ int CDirectShowSource::GetMediaType(unsigned char *&mediabuffer, unsigned int &l
     return SVL_OK;
 }
 
-int CDirectShowSource::SetMediaType(unsigned char *mediabuffer, unsigned int length, unsigned int videoch)
+int svlVidCapSrcDirectShow::SetMediaType(unsigned char *mediabuffer, unsigned int length, unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams) return SVL_FAIL;
@@ -955,7 +1053,7 @@ int CDirectShowSource::SetMediaType(unsigned char *mediabuffer, unsigned int len
     return SVL_OK;
 }
 
-int CDirectShowSource::SetupMediaType(unsigned int videoch)
+int svlVidCapSrcDirectShow::SetupMediaType(unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams ||
@@ -998,7 +1096,7 @@ int CDirectShowSource::SetupMediaType(unsigned int videoch)
     return SVL_FAIL;
 }
 
-int CDirectShowSource::RequestMediaType(unsigned int videoch)
+int svlVidCapSrcDirectShow::RequestMediaType(unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams ||
@@ -1033,7 +1131,7 @@ int CDirectShowSource::RequestMediaType(unsigned int videoch)
     return SVL_OK;
 }
 
-int CDirectShowSource::SetDevice(int devid, int inid, unsigned int videoch)
+int svlVidCapSrcDirectShow::SetDevice(int devid, int inid, unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams ||
@@ -1051,7 +1149,7 @@ int CDirectShowSource::SetDevice(int devid, int inid, unsigned int videoch)
     return SVL_OK;
 }
 
-int CDirectShowSource::SetRendererOnOff(bool render, unsigned int videoch)
+int svlVidCapSrcDirectShow::SetRendererOnOff(bool render, unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams) return SVL_FAIL;
@@ -1062,7 +1160,7 @@ int CDirectShowSource::SetRendererOnOff(bool render, unsigned int videoch)
     return SVL_OK;
 }
 
-int CDirectShowSource::GetWidth(unsigned int videoch)
+int svlVidCapSrcDirectShow::GetWidth(unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams) return SVL_FAIL;
@@ -1070,7 +1168,7 @@ int CDirectShowSource::GetWidth(unsigned int videoch)
     return CapWidth[videoch];
 }
 
-int CDirectShowSource::GetHeight(unsigned int videoch)
+int svlVidCapSrcDirectShow::GetHeight(unsigned int videoch)
 {
     if (!Initialized ||
         videoch >= NumOfStreams) return SVL_FAIL;
@@ -1079,21 +1177,21 @@ int CDirectShowSource::GetHeight(unsigned int videoch)
 }
 
 
-/*************************************/
-/*** CDirectShowSourceCB class *******/
-/*************************************/
+/***************************************/
+/*** svlVidCapSrcDirectShowCB class ****/
+/***************************************/
 
-CDirectShowSourceCB::CDirectShowSourceCB(svlImageBuffer *buffer)
+svlVidCapSrcDirectShowCB::svlVidCapSrcDirectShowCB(svlBufferImage *buffer)
 {
     Buffer = buffer;
 }
 
-STDMETHODIMP CDirectShowSourceCB::SampleCB(double SampleTime, IMediaSample *pSample)
+STDMETHODIMP svlVidCapSrcDirectShowCB::SampleCB(double SampleTime, IMediaSample *pSample)
 {
     return E_NOTIMPL;
 }
 
-STDMETHODIMP CDirectShowSourceCB::BufferCB(double sampletime, unsigned char *buffer, long buffersize)
+STDMETHODIMP svlVidCapSrcDirectShowCB::BufferCB(double sampletime, unsigned char *buffer, long buffersize)
 {
     if (Buffer) Buffer->Push(buffer, buffersize, true);
     return S_OK;

@@ -20,18 +20,19 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _ftImagePNG_h
-#define _ftImagePNG_h
+#ifndef _svlImageCodecPNG_h
+#define _svlImageCodecPNG_h
 
 #include <cisstStereoVision/svlImageIO.h>
 
 
-class ftImagePNG : public svlImageCodec, public cmnGenericObject
+class svlImageCodecPNG : public svlImageCodecBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-    ftImagePNG();
+    svlImageCodecPNG();
+    virtual ~svlImageCodecPNG();
 
     virtual int ReadDimensions(const std::string &filename, unsigned int &width, unsigned int &height);
     virtual int ReadDimensions(std::istream &stream, unsigned int &width, unsigned int &height);
@@ -44,9 +45,15 @@ public:
     virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, const std::string &filename, const int compression = -1);
     virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, std::ostream &stream, const int compression = -1);
     virtual int Write(const svlSampleImageBase &image, const unsigned int videoch, unsigned char *buffer, size_t &buffersize, const int compression = -1);
+
+protected:
+    unsigned char* pngBuffer;
+    unsigned char** pngRows;
+    size_t pngBufferSize;
+    size_t pngRowsSize;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(ftImagePNG)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlImageCodecPNG)
 
-#endif // _ftImagePNG_h
+#endif // _svlImageCodecPNG_h
 

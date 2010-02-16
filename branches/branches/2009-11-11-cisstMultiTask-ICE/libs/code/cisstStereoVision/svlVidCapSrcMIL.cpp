@@ -19,17 +19,17 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "vidMILDevice.h"
+#include "svlVidCapSrcMIL.h"
 #include <cisstOSAbstraction/osaSleep.h>
 
 using namespace std;
 
 
-/*************************************/
-/*** CMILDeviceRenderTarget class ****/
-/*************************************/
+/******************************************/
+/*** svlVidCapSrcMILRenderTarget class ****/
+/******************************************/
 
-CMILDeviceRenderTarget::CMILDeviceRenderTarget(unsigned int deviceID) :
+svlVidCapSrcMILRenderTarget::svlVidCapSrcMILRenderTarget(unsigned int deviceID) :
     svlRenderTargetBase(),
     DeviceID(deviceID),
     Thread(0),
@@ -37,11 +37,11 @@ CMILDeviceRenderTarget::CMILDeviceRenderTarget(unsigned int deviceID) :
     KillThread(false),
     ThreadKilled(true)
 {
-    CMILDevice::GetInstance()->EnableOverlay(deviceID, true);
+    svlVidCapSrcMIL::GetInstance()->EnableOverlay(deviceID, true);
 
     // Start up overlay thread
     Thread = new osaThread;
-    Thread->Create<CMILDeviceRenderTarget, void*>(this, &CMILDeviceRenderTarget::ThreadProc, 0);
+    Thread->Create<svlVidCapSrcMILRenderTarget, void*>(this, &svlVidCapSrcMILRenderTarget::ThreadProc, 0);
     if (ThreadReadySignal.Wait(1.0) && ThreadKilled == false) {
         ThreadReadySignal.Raise();
     }
@@ -51,21 +51,21 @@ CMILDeviceRenderTarget::CMILDeviceRenderTarget(unsigned int deviceID) :
     }
 }
 
-CMILDeviceRenderTarget::~CMILDeviceRenderTarget()
+svlVidCapSrcMILRenderTarget::~svlVidCapSrcMILRenderTarget()
 {
     KillThread = true;
     if (ThreadKilled == false) Thread->Wait();
     delete Thread;
 
-    CMILDevice::GetInstance()->EnableOverlay(DeviceID, false);
+    svlVidCapSrcMIL::GetInstance()->EnableOverlay(DeviceID, false);
 }
 
-bool CMILDeviceRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip)
+bool svlVidCapSrcMILRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip)
 {
     if (DeviceID < 0) return false;
 
     int w, h, b;
-    CMILDevice *device = CMILDevice::GetInstance();
+    svlVidCapSrcMIL *device = svlVidCapSrcMIL::GetInstance();
 
     // Returns immediately if already initialized
     if (!device->MILInitializeDevice(DeviceID,
@@ -89,12 +89,12 @@ bool CMILDeviceRenderTarget::SetImage(unsigned char* buffer, int offsetx, int of
     return true;
 }
 
-unsigned int CMILDeviceRenderTarget::GetWidth()
+unsigned int svlVidCapSrcMILRenderTarget::GetWidth()
 {
     if (DeviceID < 0) return 0;
 
     int w, h, b;
-    CMILDevice *device = CMILDevice::GetInstance();
+    svlVidCapSrcMIL *device = svlVidCapSrcMIL::GetInstance();
     // Returns immediately if already initialized
     if (!device->MILInitializeDevice(DeviceID,
                                      device->CaptureEnabled[DeviceID],
@@ -103,12 +103,12 @@ unsigned int CMILDeviceRenderTarget::GetWidth()
     return w;
 }
 
-unsigned int CMILDeviceRenderTarget::GetHeight()
+unsigned int svlVidCapSrcMILRenderTarget::GetHeight()
 {
     if (DeviceID < 0) return 0;
 
     int w, h, b;
-    CMILDevice *device = CMILDevice::GetInstance();
+    svlVidCapSrcMIL *device = svlVidCapSrcMIL::GetInstance();
     // Returns immediately if already initialized
     if (!device->MILInitializeDevice(DeviceID,
                                      device->CaptureEnabled[DeviceID],
@@ -117,12 +117,12 @@ unsigned int CMILDeviceRenderTarget::GetHeight()
     return h;
 }
 
-void* CMILDeviceRenderTarget::ThreadProc(void* CMN_UNUSED(param))
+void* svlVidCapSrcMILRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 {
     ThreadKilled = false;
     ThreadReadySignal.Raise();
 
-    CMILDevice *device = CMILDevice::GetInstance();
+    svlVidCapSrcMIL *device = svlVidCapSrcMIL::GetInstance();
 
     while (!KillThread) {
         if (NewFrameSignal.Wait(0.5)) {
@@ -138,7 +138,7 @@ void* CMILDeviceRenderTarget::ThreadProc(void* CMN_UNUSED(param))
     return this;
 }
 
-void CMILDeviceRenderTarget::TranslateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip)
+void svlVidCapSrcMILRenderTarget::TranslateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip)
 {
     int abs_h = std::abs(trhoriz);
     int abs_v = std::abs(trvert);
@@ -219,13 +219,13 @@ MIL_INT MFTYPE MILProcessingCallback(MIL_INT HookType, MIL_ID HookId, void MPTYP
 
 
 /*************************************/
-/*** CMILDevice class ****************/
+/*** svlVidCapSrcMIL class ***********/
 /*************************************/
 
-CMN_IMPLEMENT_SERVICES(CMILDevice)
+CMN_IMPLEMENT_SERVICES(svlVidCapSrcMIL)
 
-CMILDevice::CMILDevice() :
-    CVideoCaptureSourceBase(),
+svlVidCapSrcMIL::svlVidCapSrcMIL() :
+    svlVidCapSrcBase(),
     cmnGenericObject(),
     NumOfStreams(0),
     Initialized(false),
@@ -257,18 +257,18 @@ CMILDevice::CMILDevice() :
     MILInitializeApplication();
 }
 
-CMILDevice::~CMILDevice()
+svlVidCapSrcMIL::~svlVidCapSrcMIL()
 {
     ReleaseAll();
 }
 
-CMILDevice* CMILDevice::GetInstance()
+svlVidCapSrcMIL* svlVidCapSrcMIL::GetInstance()
 {
-    static CMILDevice instance;
+    static svlVidCapSrcMIL instance;
     return &instance;
 }
 
-void CMILDevice::ReleaseAll()
+void svlVidCapSrcMIL::ReleaseAll()
 {
     Release();
     MILReleaseDevice(0);
@@ -276,12 +276,12 @@ void CMILDevice::ReleaseAll()
     MILReleaseApplication();
 }
 
-svlFilterSourceVideoCapture::PlatformType CMILDevice::GetPlatformType()
+svlFilterSourceVideoCapture::PlatformType svlVidCapSrcMIL::GetPlatformType()
 {
     return svlFilterSourceVideoCapture::MatroxImaging;
 }
 
-int CMILDevice::SetStreamCount(unsigned int numofstreams)
+int svlVidCapSrcMIL::SetStreamCount(unsigned int numofstreams)
 {
     if (numofstreams < 1) return SVL_FAIL;
 
@@ -290,7 +290,7 @@ int CMILDevice::SetStreamCount(unsigned int numofstreams)
     NumOfStreams = numofstreams;
 
     DeviceID = new int[NumOfStreams];
-    ImageBuffer = new svlImageBuffer*[NumOfStreams];
+    ImageBuffer = new svlBufferImage*[NumOfStreams];
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
         DeviceID[i] = -1;
@@ -300,7 +300,7 @@ int CMILDevice::SetStreamCount(unsigned int numofstreams)
     return SVL_OK;
 }
 
-int CMILDevice::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
+int svlVidCapSrcMIL::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo)
 {
     if (deviceinfo == 0 || Initialized) return SVL_FAIL;
 
@@ -362,7 +362,7 @@ int CMILDevice::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **devicein
     return MILNumberOfDevices;
 }
 
-int CMILDevice::Open()
+int svlVidCapSrcMIL::Open()
 {
     if (NumOfStreams <= 0) return SVL_FAIL;
     if (Initialized) return SVL_OK;
@@ -378,7 +378,7 @@ int CMILDevice::Open()
         if (b != 3) goto labError;
 
         // Allocate capture buffers
-        ImageBuffer[i] = new svlImageBuffer(w, h);
+        ImageBuffer[i] = new svlBufferImage(w, h);
         // Set the pointer in the capture structure that will be accessed in the callback
         MilCaptureParams[DeviceID[i]].ImageBuffer = ImageBuffer[i];
     }
@@ -391,7 +391,7 @@ labError:
     return SVL_FAIL;
 }
 
-void CMILDevice::Close()
+void svlVidCapSrcMIL::Close()
 {
     if (NumOfStreams <= 0) return;
 
@@ -404,32 +404,32 @@ void CMILDevice::Close()
     if (!OverlayEnabled[1]) MILReleaseDevice(1);
 }
 
-int CMILDevice::Start()
+int svlVidCapSrcMIL::Start()
 {
     if (!Initialized) return SVL_FAIL;
     Running = true;
     return SVL_OK;
 }
 
-svlImageRGB* CMILDevice::GetLatestFrame(bool waitfornew, unsigned int videoch)
+svlImageRGB* svlVidCapSrcMIL::GetLatestFrame(bool waitfornew, unsigned int videoch)
 {
     if (videoch >= NumOfStreams || !Initialized) return 0;
     return ImageBuffer[videoch]->Pull(waitfornew);
 }
 
-int CMILDevice::Stop()
+int svlVidCapSrcMIL::Stop()
 {
     if (!Running) return SVL_FAIL;
     Running = false;
     return SVL_OK;
 }
 
-bool CMILDevice::IsRunning()
+bool svlVidCapSrcMIL::IsRunning()
 {
     return Running;
 }
 
-int CMILDevice::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
+int svlVidCapSrcMIL::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     DeviceID[videoch] = devid;
@@ -437,19 +437,19 @@ int CMILDevice::SetDevice(int devid, int CMN_UNUSED(inid), unsigned int videoch)
     return SVL_OK;
 }
 
-int CMILDevice::GetWidth(unsigned int videoch)
+int svlVidCapSrcMIL::GetWidth(unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     return ImageBuffer[videoch]->GetWidth();
 }
 
-int CMILDevice::GetHeight(unsigned int videoch)
+int svlVidCapSrcMIL::GetHeight(unsigned int videoch)
 {
     if (videoch >= NumOfStreams) return SVL_FAIL;
     return ImageBuffer[videoch]->GetHeight();
 }
 
-int CMILDevice::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
+int svlVidCapSrcMIL::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture::ImageFormat **formatlist)
 {
     if (static_cast<int>(deviceid) >= MILNumberOfDevices || formatlist == 0) return SVL_FAIL;
 
@@ -464,7 +464,7 @@ int CMILDevice::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCapture
     return 1;
 }
 
-int CMILDevice::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
+int svlVidCapSrcMIL::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsigned int videoch)
 {
     if (DeviceID[videoch] >= MILNumberOfDevices) return SVL_FAIL;
 
@@ -478,33 +478,33 @@ int CMILDevice::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format, unsi
     return SVL_OK;
 }
 
-bool CMILDevice::IsCaptureSupported(int devid)
+bool svlVidCapSrcMIL::IsCaptureSupported(int devid)
 {
     if (devid < 0 || devid > 1) return false;
     return CaptureSupported[devid];
 }
 
-bool CMILDevice::IsOverlaySupported(int devid)
+bool svlVidCapSrcMIL::IsOverlaySupported(int devid)
 {
     if (devid < 0 || devid > 1) return false;
     return OverlaySupported[devid];
 }
 
-bool CMILDevice::EnableCapture(int devid, bool enable)
+bool svlVidCapSrcMIL::EnableCapture(int devid, bool enable)
 {
     if (devid < 0 || devid > 1) return false;
     if (CaptureSupported[devid]) CaptureEnabled[devid] = enable;
     return CaptureEnabled[devid];
 }
 
-bool CMILDevice::EnableOverlay(int devid, bool enable)
+bool svlVidCapSrcMIL::EnableOverlay(int devid, bool enable)
 {
     if (devid < 0 || devid > 1) return false;
     if (OverlaySupported[devid]) OverlayEnabled[devid] = enable;
     return OverlayEnabled[devid];
 }
 
-void CMILDevice::Release()
+void svlVidCapSrcMIL::Release()
 {
 	Close();
 
@@ -518,14 +518,14 @@ void CMILDevice::Release()
     ImageBuffer = 0;
 }
 
-bool CMILDevice::MILInitializeApplication()
+bool svlVidCapSrcMIL::MILInitializeApplication()
 {
     if (MilApplication == M_NULL) MappAlloc(M_DEFAULT, &MilApplication);
     if (MilApplication == M_NULL) return false;
     return true;
 }
 
-bool CMILDevice::MILInitializeDevice(int device, bool capture, bool overlay, int& width, int& height, int& bands)
+bool svlVidCapSrcMIL::MILInitializeDevice(int device, bool capture, bool overlay, int& width, int& height, int& bands)
 {
     if (device < 0 || device > 1) return false;
 
@@ -637,7 +637,7 @@ labError:
     return false;
 }
 
-bool CMILDevice::MILUploadOverlay(int device)
+bool svlVidCapSrcMIL::MILUploadOverlay(int device)
 {
     if (device < 0 || device > 1) return false;
     if (MilDeviceInitialized[device] && MilOverlayEnabled[device]) {
@@ -654,7 +654,7 @@ bool CMILDevice::MILUploadOverlay(int device)
     return false;
 }
 
-void CMILDevice::MILReleaseDevice(int device)
+void svlVidCapSrcMIL::MILReleaseDevice(int device)
 {
     if (device < 0 || device > 1) return;
 
@@ -705,7 +705,7 @@ void CMILDevice::MILReleaseDevice(int device)
     MilOverlayEnabled[device] = false;
 }
 
-void CMILDevice::MILReleaseApplication()
+void svlVidCapSrcMIL::MILReleaseApplication()
 {
     if (MilApplication != M_NULL) MappFree(MilApplication);
     MilApplication = M_NULL;
@@ -719,7 +719,7 @@ void CMILDevice::MILReleaseApplication()
 
 MIL_INT MFTYPE MILProcessingCallback(MIL_INT CMN_UNUSED(HookType), MIL_ID HookId, void MPTYPE *HookDataPtr)
 {
-	CMILDevice::MILCaptureParameters *milcaptureparams = (CMILDevice::MILCaptureParameters*)HookDataPtr;
+	svlVidCapSrcMIL::MILCaptureParameters *milcaptureparams = (svlVidCapSrcMIL::MILCaptureParameters*)HookDataPtr;
 
     if (milcaptureparams->ImageBuffer) {
         MIL_INT milbufferindex;

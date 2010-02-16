@@ -50,7 +50,7 @@ protected:
     virtual int Release();
 
 private:
-    vctDynamicVector<svlImageCodec*> ImageCodec;
+    vctDynamicVector<svlImageCodecBase*> ImageCodec;
     vctDynamicVector<std::string> FilePathPrefix;
     vctDynamicVector<std::string> Extension;
     vctDynamicVector<std::string> FilePath;
@@ -63,7 +63,7 @@ private:
     int BuildFilePath(int videoch, unsigned int framecounter = 0);
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(svlFilterSourceImageFile)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterSourceImageFile)
 
 #endif // _svlFilterSourceImageFile_h
 

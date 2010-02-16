@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlImageIO_h
 
 #include <cisstVector/vctDynamicMatrixTypes.h>
+#include <cisstOSAbstraction/osaCriticalSection.h>
 #include <string>
 
 // Always include last!
@@ -34,14 +35,14 @@ http://www.cisst.org/cisst/license.txt.
 class svlSampleImageBase;
 
 /*************************************/
-/*** svlImageCodec class *************/
+/*** svlImageCodecBase class *********/
 /*************************************/
 
-class CISST_EXPORT svlImageCodec
+class CISST_EXPORT svlImageCodecBase
 {
 public:
-    svlImageCodec();
-    virtual ~svlImageCodec();
+    svlImageCodecBase();
+    virtual ~svlImageCodecBase();
 
     const std::string& GetExtensions() const;
 
@@ -72,18 +73,27 @@ class CISST_EXPORT svlImageIO
 {
 private:
     typedef vctDynamicVector<cmnClassServicesBase*> _CodecList;
+    typedef vctDynamicVector<svlImageCodecBase*> _CodecCacheList;
+    typedef vctDynamicVector<bool> _CodecCacheUsedList;
     typedef vctDynamicVector<std::string> _ExtensionList;
 
     svlImageIO();
     svlImageIO(const svlImageIO &);
+    static svlImageIO* GetInstance();
 
     _CodecList Codecs;
     _ExtensionList Extensions;
+    vctDynamicVector<_CodecCacheList> CodecCache;
+    vctDynamicVector<_CodecCacheUsedList> CodecCacheUsed;
+    osaCriticalSection CS;
 
 public:
+    ~svlImageIO();
+
     static int GetExtension(const std::string &filename, std::string &extension);
 
-    static svlImageCodec* GetCodec(const std::string &filename);
+    static svlImageCodecBase* GetCodec(const std::string &filename);
+    static void ReleaseCodec(svlImageCodecBase* codec);
 
     static int ReadDimensions(const std::string &filename, unsigned int &width, unsigned int &height);
     static int ReadDimensions(const std::string &codec, std::istream &stream, unsigned int &width, unsigned int &height);

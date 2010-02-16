@@ -21,59 +21,59 @@
  */
 
 #include <cisstStereoVision/svlStreamManager.h>
-#include "vidInitializer.h"
+#include "svlVidCapSrcInitializer.h"
 
 #if (CISST_SVL_HAS_SVS == ON)
-#include "vidSVSSource.h"
+#include "svlVidCapSrcSVS.h"
 #endif // CISST_SVL_HAS_SVS
 
 // See header for details:
 //#if (CISST_SVL_HAS_DIRECTSHOW == ON)
-//#include "vidDirectShowSource.h"
+//#include "svlVidCapSrcDirectShow.h"
 //#endif // CISST_SVL_HAS_DIRECTSHOW
 
 #if (CISST_SVL_HAS_VIDEO4LINUX2 == ON)
-#include "vidV4L2Source.h"
+#include "svlVidCapSrcV4L2.h"
 #endif // CISST_SVL_HAS_VIDEO4LINUX2
 
 #if (CISST_SVL_HAS_DC1394 == ON)
-#include "vidDC1394Source.h"
+#include "svlVidCapSrcDC1394.h"
 #endif // CISST_SVL_HAS_DC1394
 
 #if (CISST_SVL_HAS_OPENCV == ON)
-#include "vidOCVSource.h"
+#include "svlVidCapSrcOpenCV.h"
 #endif // CISST_SVL_HAS_OPENCV
 
 // See header for details:
 //#if (CISST_SVL_HAS_MIL == ON)
-//#include "vidMILDevice.h"
+//#include "svlVidCapSrcMIL.h"
 //#endif // CISST_SVL_HAS_MIL
 
 
 void svlInitializeVideoCapture()
 {
-#ifdef _vidMILDevice_h
-    CMILDevice::GetInstance();
-#endif // _vidMILDevice_h
+#ifdef _svlVidCapSrcMIL_h
+    svlVidCapSrcMIL::GetInstance();
+#endif // _svlVidCapSrcMIL_h
 
-#ifdef _vidDirectShowSource_h
-    delete new CDirectShowSource;
-#endif // _vidDirectShowSource_h
+#ifdef _svlVidCapSrcDirectShow_h
+    delete new svlVidCapSrcDirectShow;
+#endif // _svlVidCapSrcDirectShow_h
 
-#ifdef _vidSVSSource_h
-    delete new CSVSSource;
-#endif // _vidSVSSource_h
+#ifdef _svlVidCapSrcSVS_h
+    delete new svlVidCapSrcSVS;
+#endif // _svlVidCapSrcSVS_h
 
-#ifdef _vidV4L2Source_h
-    delete new CV4L2Source;
-#endif // _vidV4L2Source_h
+#ifdef _svlVidCapSrcV4L2_h
+    delete new svlVidCapSrcV4L2;
+#endif // _svlVidCapSrcV4L2_h
 
-#ifdef _vidOCVSource_h
-    delete new COpenCVSource;
-#endif // _vidOCVSource_h
+#ifdef _svlVidCapSrcOpenCV_h
+    delete new svlVidCapSrcOpenCV;
+#endif // _svlVidCapSrcOpenCV_h
 
-#ifdef _vidDC1394Source_h
-    delete new CDC1394Source;
-#endif // _vidDC1394Source_h
+#ifdef _svlVidCapSrcDC1394_h
+    delete new svlVidCapSrcDC1394;
+#endif // _svlVidCapSrcDC1394_h
 }
 

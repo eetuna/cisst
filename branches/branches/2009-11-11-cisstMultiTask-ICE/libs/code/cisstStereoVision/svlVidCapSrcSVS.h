@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcSVS.h 1057 2010-01-19 21:09:31Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -20,25 +20,25 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#ifndef _vidSVSSource_h
-#define _vidSVSSource_h
+#ifndef _svlVidCapSrcSVS_h
+#define _svlVidCapSrcSVS_h
 
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
-#include "svlImageBuffer.h"
+#include <cisstStereoVision/svlBufferImage.h>
 #include <svsclass.h>
 
 
-class CSVSSourceThread;
+class svlVidCapSrcSVSThread;
 
-class CSVSSource : public CVideoCaptureSourceBase, public cmnGenericObject
+class svlVidCapSrcSVS : public svlVidCapSrcBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-friend class CSVSSourceThread;
+friend class svlVidCapSrcSVSThread;
 
 public:
-    CSVSSource();
-    ~CSVSSource();
+    svlVidCapSrcSVS();
+    ~svlVidCapSrcSVS();
 
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
     int SetStreamCount(unsigned int numofstreams);
@@ -60,24 +60,24 @@ private:
     unsigned int NumOfStreams;
 	bool Running;
 
-    CSVSSourceThread* CaptureProc;
+    svlVidCapSrcSVSThread* CaptureProc;
     osaThread* CaptureThread;
     svsVideoImages* SVSObj;
     svsStereoImage* SVSImage;
 	int DeviceID[2];
-    svlImageBuffer** OutputBuffer;
+    svlBufferImage** OutputBuffer;
 
     int CaptureFrame();
     void ConvertRGB32toRGB24(unsigned char* source, unsigned char* dest, const int pixcount);
 };
 
 
-class CSVSSourceThread
+class svlVidCapSrcSVSThread
 {
 public:
-    CSVSSourceThread() { InitSuccess = false; }
-    ~CSVSSourceThread() {}
-    void* Proc(CSVSSource* baseref);
+    svlVidCapSrcSVSThread() { InitSuccess = false; }
+    ~svlVidCapSrcSVSThread() {}
+    void* Proc(svlVidCapSrcSVS* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
     bool IsError() { return Error; }
@@ -88,7 +88,7 @@ private:
     bool InitSuccess;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(CSVSSource)
+CMN_DECLARE_SERVICES_INSTANTIATION(svlVidCapSrcSVS)
 
-#endif // _vidSVSSource_h
+#endif // _svlVidCapSrcSVS_h
 

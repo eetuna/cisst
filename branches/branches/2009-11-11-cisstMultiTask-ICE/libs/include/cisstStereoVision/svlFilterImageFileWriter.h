@@ -53,7 +53,7 @@ protected:
     virtual int Release();
 
 private:
-    vctDynamicVector<svlImageCodec*> ImageCodec;
+    vctDynamicVector<svlImageCodecBase*> ImageCodec;
     vctDynamicVector<std::string> FilePathPrefix;
     vctDynamicVector<std::string> Extension;
     vctDynamicVector<bool> Disabled;
@@ -64,7 +64,7 @@ private:
     unsigned int CaptureLength;
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(svlFilterImageFileWriter)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterImageFileWriter)
 
 #endif // _svlFilterImageFileWriter_h
 

@@ -28,6 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 /******************************/
 
 svlSample::svlSample() :
+    cmnGenericObject(),
     ModifiedFlag(true),
     EncoderParameter(-1)
 {
@@ -146,8 +147,7 @@ CMN_IMPLEMENT_SERVICES_TEMPLATED(svlSampleImage3DMap)
 CMN_IMPLEMENT_SERVICES(svlSampleRigidXform)
 
 svlSampleRigidXform::svlSampleRigidXform() :
-    svlSample(),
-    cmnGenericObject()
+    svlSample()
 {
 }
 
@@ -205,10 +205,12 @@ unsigned int svlSampleRigidXform::GetDataSize() const
 
 void svlSampleRigidXform::SerializeRaw(std::ostream & outputStream) const
 {
+    cmnSerializeRaw(outputStream, frame4x4);
 }
 
 void svlSampleRigidXform::DeSerializeRaw(std::istream & inputStream)
 {
+    cmnDeSerializeRaw(inputStream, frame4x4);
 }
 
 
@@ -219,8 +221,7 @@ void svlSampleRigidXform::DeSerializeRaw(std::istream & inputStream)
 CMN_IMPLEMENT_SERVICES(svlSamplePointCloud)
 
 svlSamplePointCloud::svlSamplePointCloud() :
-    svlSample(),
-    cmnGenericObject()
+    svlSample()
 {
 }
 
@@ -295,10 +296,12 @@ unsigned int svlSamplePointCloud::GetDataSize() const
 
 void svlSamplePointCloud::SerializeRaw(std::ostream & outputStream) const
 {
+    cmnSerializeRaw(outputStream, points);
 }
 
 void svlSamplePointCloud::DeSerializeRaw(std::istream & inputStream)
 {
+    cmnDeSerializeRaw(inputStream, points);
 }
 
 

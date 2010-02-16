@@ -20,10 +20,14 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include "vidDirectShowInputSelector.h"
+#include "svlVidCapSrcDirectShowInputSelector.h"
 
 
-CDirectShowInputSelector::CDirectShowInputSelector(IPin *pin) :
+/**************************************************/
+/*** svlVidCapSrcDirectShowInputSelector class ****/
+/**************************************************/
+
+svlVidCapSrcDirectShowInputSelector::svlVidCapSrcDirectShowInputSelector(IPin *pin) :
     StartingPin(pin),
     CurrentRoutingIndex(0)
 {
@@ -31,13 +35,13 @@ CDirectShowInputSelector::CDirectShowInputSelector(IPin *pin) :
     BuildRoutingList(pin, &RoutingRoot, 0);
 }
 
-CDirectShowInputSelector::~CDirectShowInputSelector()
+svlVidCapSrcDirectShowInputSelector::~svlVidCapSrcDirectShowInputSelector()
 {
     DestroyRoutingList();
     RoutingList.clear();
 }
 
-bool CDirectShowInputSelector::BuildRoutingList(IPin *startinginputpin, _Routing *routing, int depth)
+bool svlVidCapSrcDirectShowInputSelector::BuildRoutingList(IPin *startinginputpin, _Routing *routing, int depth)
 {
     LONG inputindexrelated, outputindexrelated;
     LONG inputphysicaltype, outputphysicaltype;
@@ -123,7 +127,7 @@ bool CDirectShowInputSelector::BuildRoutingList(IPin *startinginputpin, _Routing
     return true;
 }
 
-bool CDirectShowInputSelector::DestroyRoutingList()
+bool svlVidCapSrcDirectShowInputSelector::DestroyRoutingList()
 {
     int k, depth;
     _Routing *current = 0, *first = 0;
@@ -147,7 +151,7 @@ bool CDirectShowInputSelector::DestroyRoutingList()
     return true;
 }
 
-bool CDirectShowInputSelector::GetCrossbarIPinAtIndex(IAMCrossbar *xbar, int pinindex, bool isinputpin, IPin **pin)
+bool svlVidCapSrcDirectShowInputSelector::GetCrossbarIPinAtIndex(IAMCrossbar *xbar, int pinindex, bool isinputpin, IPin **pin)
 {
     LONG cntinpins, cntoutpins;
     IPin *tpin = 0;
@@ -180,7 +184,7 @@ bool CDirectShowInputSelector::GetCrossbarIPinAtIndex(IAMCrossbar *xbar, int pin
     return *pin ? true : false; 
 }
 
-bool CDirectShowInputSelector::GetCrossbarIndexFromIPin(IAMCrossbar *xbar, LONG *pinindex, bool isinputpin, IPin *pin)
+bool svlVidCapSrcDirectShowInputSelector::GetCrossbarIndexFromIPin(IAMCrossbar *xbar, LONG *pinindex, bool isinputpin, IPin *pin)
 {
     LONG cntinpins, cntoutpins;
     IPin *tpin = 0;
@@ -211,12 +215,12 @@ bool CDirectShowInputSelector::GetCrossbarIndexFromIPin(IAMCrossbar *xbar, LONG 
     return success;
 }
 
-int CDirectShowInputSelector::GetInputCount()
+int svlVidCapSrcDirectShowInputSelector::GetInputCount()
 {
     return (int)RoutingList.size();
 }
 
-int CDirectShowInputSelector::GetInputType(int index)
+int svlVidCapSrcDirectShowInputSelector::GetInputType(int index)
 {
     if (index < 0 || index >= (int)RoutingList.size()) return -1;
 
@@ -228,7 +232,7 @@ int CDirectShowInputSelector::GetInputType(int index)
     return current->InputPhysicalType;
 }
 
-bool CDirectShowInputSelector::GetInputName(int index, std::string & name)
+bool svlVidCapSrcDirectShowInputSelector::GetInputName(int index, std::string & name)
 {
     if (index < 0 || index >= (int)RoutingList.size()) return false;
 
@@ -269,7 +273,7 @@ bool CDirectShowInputSelector::GetInputName(int index, std::string & name)
     return true;
 }
 
-bool CDirectShowInputSelector::SetInputIndex(int index)
+bool svlVidCapSrcDirectShowInputSelector::SetInputIndex(int index)
 {
     if (index < 0 || index >= (int)RoutingList.size()) return false;
 
@@ -290,7 +294,7 @@ bool CDirectShowInputSelector::SetInputIndex(int index)
     return true;
 }
 
-int CDirectShowInputSelector::GetInputIndex()
+int svlVidCapSrcDirectShowInputSelector::GetInputIndex()
 {
     return CurrentRoutingIndex;
 }

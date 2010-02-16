@@ -20,23 +20,23 @@
  
  */
 
-#ifndef _vidInitializer_h
-#define _vidInitializer_h
+#ifndef _svlVidCapSrcInitializer_h
+#define _svlVidCapSrcInitializer_h
 
 // Includes for handling device specific API
 // interactions that cannot otherwise be abstracted
 
 #if (CISST_SVL_HAS_DIRECTSHOW == ON)
-#include "vidDirectShowSource.h"
+#include "svlVidCapSrcDirectShow.h"
 #endif // CISST_SVL_HAS_DIRECTSHOW
 
 #if (CISST_SVL_HAS_MIL == ON)
-#include "vidMILDevice.h"
+#include "svlVidCapSrcMIL.h"
 #endif // CISST_SVL_HAS_MIL
 
 
 void svlInitializeVideoCapture();
 
 
-#endif // _vidInitializer_h
+#endif // _svlVidCapSrcInitializer_h
 

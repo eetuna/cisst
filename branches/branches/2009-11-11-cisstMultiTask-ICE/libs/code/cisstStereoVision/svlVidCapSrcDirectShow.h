@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+  $Id: svlVidCapSrcDirectShow.h 1185 2010-02-11 02:05:25Z bvagvol1 $
   
   Author(s):  Balazs Vagvolgyi
   Created on: 2006 
@@ -22,8 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
-#include "svlImageBuffer.h"
-#include "vidDirectShowInputSelector.h"
+#include <cisstStereoVision/svlBufferImage.h>
+#include "svlVidCapSrcDirectShowInputSelector.h"
 
 
 //////////////////////////////////////////////////////////////
@@ -67,12 +67,12 @@ static const CLSID CLSID_AudioEffects2Category = { 0xcc7bfb45, 0xf175, 0x11d1, {
 #endif
 
 
-#ifndef _vidDirectShowSource_h
-#define _vidDirectShowSource_h
+#ifndef _svlVidCapSrcDirectShow_h
+#define _svlVidCapSrcDirectShow_h
 
-class CDirectShowSource;
+class svlVidCapSrcDirectShow;
 
-class CDirectShowSourceCB : public ISampleGrabberCB
+class svlVidCapSrcDirectShowCB : public ISampleGrabberCB
 {
 public:
 	STDMETHODIMP_(ULONG) AddRef() { return 1; }
@@ -96,20 +96,20 @@ public:
     STDMETHODIMP SampleCB(double SampleTime, IMediaSample *pSample);
     STDMETHODIMP BufferCB(double sampletime, unsigned char *buffer, long buffersize);
 
-    CDirectShowSourceCB(svlImageBuffer *buffer);
+    svlVidCapSrcDirectShowCB(svlBufferImage *buffer);
 
 protected:
-    svlImageBuffer *Buffer;
+    svlBufferImage *Buffer;
 };
 
 
-class CDirectShowSource : public CVideoCaptureSourceBase, public cmnGenericObject
+class svlVidCapSrcDirectShow : public svlVidCapSrcBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-	CDirectShowSource();
-	~CDirectShowSource();
+	svlVidCapSrcDirectShow();
+	~svlVidCapSrcDirectShow();
 
 private:
 	static int CoInitCounter;
@@ -136,17 +136,17 @@ private:
 	IPin **pCaptureFilterOut;
     GUID *PinCategory;
     ISampleGrabber **pSampleGrabber;
-	CDirectShowSourceCB **pCallBack;
+	svlVidCapSrcDirectShowCB **pCallBack;
 	unsigned char **pMediaType;
 	unsigned int *MediaTypeLength;
-    svlImageBuffer **OutputBuffer;
+    svlBufferImage **OutputBuffer;
 
 private:
     void Release();
 
     int AssembleGraph();
 	void DisassembleGraph();
-	void EmptyGraph(IFilterGraph* graph);
+	void EmptyGraph(IFilterGraph* graph, bool keepsources = false);
 
     int TestOpen(int devid);
     void TestClose();
@@ -182,7 +182,7 @@ public:
     int SetRendererOnOff(bool render, unsigned int videoch = 0);
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(CDirectShowSource)
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlVidCapSrcDirectShow)
 
-#endif // _vidDirectShowSource_h
+#endif // _svlVidCapSrcDirectShow_h
 

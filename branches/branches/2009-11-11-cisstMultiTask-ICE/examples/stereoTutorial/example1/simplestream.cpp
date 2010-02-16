@@ -53,10 +53,10 @@ void PrintFilterList()
 
 int main()
 {
-    bool noise = false;
+    bool noise = true;
 
     svlInitialize();
-//    PrintAllRegistered();
+    PrintAllRegistered();
 //    PrintFilterList();
 
     // Creating SVL objects
@@ -78,7 +78,7 @@ int main()
     }
     else {
         svlSampleImageRGB image;
-        svlImageIO::Read(image, 0, "Winter.ppm");
+        svlImageIO::Read(image, 0, "Winter.png");
         video_source.SetImage(image);
     }
 
