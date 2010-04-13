@@ -32,6 +32,7 @@
 #include "svlVideoCodecCVI.h"
 #endif // CISST_SVL_HAS_ZLIB
 
+#include "svlVideoCodecUDP.h"
 
 void svlInitializeVideoCodecs()
 {
@@ -42,5 +43,7 @@ void svlInitializeVideoCodecs()
 #ifdef _svlVideoCodecCVI_h
     delete new svlVideoCodecCVI;
 #endif // _svlVideoCodecCVI_h
+
+    delete new svlVideoCodecUDP;
 }
 

@@ -802,6 +802,8 @@ SET(SOURCE_FILES
     svlImageCodecInitializer.cpp
     svlVideoCodecInitializer.h
     svlVideoCodecInitializer.cpp
+    svlVideoCodecUDP.h
+    svlVideoCodecUDP.cpp
     )
 SET(HEADER_FILES
     ${HEADER_FILES}
