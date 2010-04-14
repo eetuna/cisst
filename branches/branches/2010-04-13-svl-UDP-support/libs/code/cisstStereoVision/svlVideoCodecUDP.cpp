@@ -227,10 +227,11 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
     if (frameNo == 1)
         osaSleep(1.0);
 
-    if (frameNo == 200)
-        exit(1);
+    //if (frameNo == 200)
+    //    exit(1);
 
-    if (frameNo++ == 550) {
+    //if (frameNo++ == 550) {
+    if (frameNo++ == 100) {
         // Generate log file
         std::filebuf fb;
         fb.open("Write.txt", std::ios::out);
@@ -246,8 +247,8 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
         ExperimentResultElementsType::const_iterator it = ExperimentResultElements.begin();
         const ExperimentResultElementsType::const_iterator itEnd = ExperimentResultElements.end();
         for (; it != itEnd; ++it) {
-            os << it->FrameNo << "," << it->FrameSize << "," << it->FPS << "," << it->TimeSerialization 
-               << "," << it->TimeProcessing << std::endl;
+            os << it->FrameNo << "," << it->FrameSize << "," << it->FPS << "," << it->TimeSerialization
+               << "," << it->TimeProcessing << "," << it->Timestamp << std::endl;
         }
         fb.close();
 
@@ -264,6 +265,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
     ExperimentResultElement result;
     result.FrameNo = frameNo;
     result.FPS = 0; // will be updated later
+    result.Timestamp = osaGetTime();
 
     const double ticProcessing = osaGetTime();
 
@@ -470,7 +472,38 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
 
 int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase & image, const unsigned int CMN_UNUSED(videoch), const bool CMN_UNUSED(noresize))
 {
-    const double tic = osaGetTime();
+    // for testing
+    static int frameNo = 0;
+    if (frameNo++ == 100) {
+        // Generate log file
+        std::filebuf fb;
+        fb.open("Read.txt", std::ios::out);
+        std::ostream os(&fb);
+#ifdef USE_COMPRESSION
+        os << "Compression: " << COMPRESSION_ARG << std::endl;
+#else
+        os << "No compression" << std::endl;
+#endif
+        os << "FrameNo,FrameSize,FPS,TimeDeSerialization,TimeProcessing,Timestamp" << std::endl;
+
+        // Put experiment results to log file
+        ExperimentResultElementsType::const_iterator it = ExperimentResultElements.begin();
+        const ExperimentResultElementsType::const_iterator itEnd = ExperimentResultElements.end();
+        for (; it != itEnd; ++it) {
+            os << it->FrameNo << "," << it->FrameSize << "," << it->FPS << "," << it->TimeDeSerialization
+                << "," << it->TimeProcessing << "," << it->Timestamp << std::endl;
+        }
+        fb.close();
+
+        exit(1);
+    }
+
+    ExperimentResultElement result;
+    result.FrameNo = frameNo;
+    result.FPS = 0; // will be updated later
+    result.Timestamp = osaGetTime();
+
+    const double ticProcessing = osaGetTime();
 
     // Receive video stream data via UDP
     double senderTick;
@@ -481,8 +514,12 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
 
     // Deserialize data
 #ifdef USE_CISST_SERIALIZATION
+    const double tic = osaGetTime();
     std::string serializedData(ReceiveBuffer, serializedSize);
     DeSerialize(serializedData, image);
+    const double toc = osaGetTime();
+
+    result.TimeDeSerialization = toc - tic;
 #else
     unsigned char * ptr = image.GetUCharPointer(videoch);
     const unsigned int size = image.GetDataSize(videoch);
@@ -498,11 +535,13 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
     std::cout << "Ch: " << image.GetDataChannels() << std::endl;
 #endif
 
-    double toc = osaGetTime();
+    const double tocProcessing = osaGetTime();
+
+    result.TimeProcessing = tocProcessing - ticProcessing; 
 
     // Track fps and processing overhead
     ++FrameCountPerSecond;
-    StatOverhead->AddSample(toc - tic);
+    StatOverhead->AddSample(tocProcessing - ticProcessing);
     if (LastFPSTick == 0.0) {
         LastFPSTick = osaGetTime();
     } else {
@@ -512,6 +551,8 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
             StatFPS->Print();
             StatOverhead->Print();
             std::cout << std::endl;
+
+            result.FPS = FrameCountPerSecond;
 
             FrameCountPerSecond = 0;
             LastFPSTick = osaGetTime();
@@ -531,6 +572,8 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
             LastDelayTick = osaGetTime();
         }
     }
+
+    ExperimentResultElements.push_back(result);
 
     return SVL_OK;
 }

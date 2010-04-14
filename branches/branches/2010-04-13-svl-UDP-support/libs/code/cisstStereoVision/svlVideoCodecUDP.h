@@ -174,7 +174,9 @@ protected:
         unsigned int FrameSize;
         unsigned int FPS;
         double TimeSerialization;
+        double TimeDeSerialization;
         double TimeProcessing;
+        double Timestamp;
     } ExperimentResultElement;
 
     typedef std::vector<ExperimentResultElement> ExperimentResultElementsType;
