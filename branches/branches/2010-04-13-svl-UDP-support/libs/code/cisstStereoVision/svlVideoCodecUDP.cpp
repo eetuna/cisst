@@ -25,8 +25,19 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
+#include <iostream>
+#include <fstream>
 
 //#define _DEBUG_
+
+#define USE_CISST_SERIALIZATION
+#define USE_COMPRESSION
+#ifdef USE_COMPRESSION
+//#define COMPRESSION_ARG 10
+//#define COMPRESSION_ARG 50
+//#define COMPRESSION_ARG 75
+#define COMPRESSION_ARG 95
+#endif
 
 // Socket support
 #if (CISST_OS == CISST_WINDOWS)
@@ -52,7 +63,7 @@ http://www.cisst.org/cisst/license.txt.
 struct sockaddr_in SendToAddr;
 
 // Receive buffer (TODO: improve this)
-#define RECEIVE_BUFFER_SIZE (5 * 1024 * 1024) // 5 MB
+#define RECEIVE_BUFFER_SIZE (10 * 1024 * 1024) // 20 MB
 char ReceiveBuffer[RECEIVE_BUFFER_SIZE];
 
 /*! Internal buffer for serialization and deserialization. */
@@ -211,10 +222,37 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
 
 int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleImageBase &image, const unsigned int CMN_UNUSED(videoch))
 {
-    //static int a = 0;
-    //if (a++ == 50) {
-    //    exit(1);
-    //}
+    // For testing
+    static int frameNo = 0;
+    if (frameNo == 1)
+        osaSleep(1.0);
+
+    if (frameNo == 200)
+        exit(1);
+
+    if (frameNo++ == 550) {
+        // Generate log file
+        std::filebuf fb;
+        fb.open("Write.txt", std::ios::out);
+        std::ostream os(&fb);
+#ifdef USE_COMPRESSION
+        os << "Compression: " << COMPRESSION_ARG << std::endl;
+#else
+        os << "No compression" << std::endl;
+#endif
+        os << "FrameNo,FrameSize,FPS,TimeSerialization,TimeProcessing" << std::endl;
+
+        // Put experiment results to log file
+        ExperimentResultElementsType::const_iterator it = ExperimentResultElements.begin();
+        const ExperimentResultElementsType::const_iterator itEnd = ExperimentResultElements.end();
+        for (; it != itEnd; ++it) {
+            os << it->FrameNo << "," << it->FrameSize << "," << it->FPS << "," << it->TimeSerialization 
+               << "," << it->TimeProcessing << std::endl;
+        }
+        fb.close();
+
+        exit(1);
+    }
 
     if (SocketSend == 0) {
         if (!CreateSocket(UDP_SENDER)) {
@@ -223,19 +261,39 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
         }
     }
 
-    const double tic = osaGetTime();
+    ExperimentResultElement result;
+    result.FrameNo = frameNo;
+    result.FPS = 0; // will be updated later
 
-    //const unsigned char * ptr = image.GetUCharPointer(videoch);
-    //const unsigned int size = image.GetDataSize(videoch);
+    const double ticProcessing = osaGetTime();
 
     // temporary compression
-    const_cast<svlSampleImageBase&>(image).SetEncoder("jpg", 25);
+#ifdef USE_COMPRESSION
+    //const_cast<svlSampleImageBase&>(image).SetEncoder("jpg", 25);
+    const_cast<svlSampleImageBase&>(image).SetEncoder("jpg", COMPRESSION_ARG);
     //const_cast<svlSampleImageBase&>(image).SetEncoder("png", 9);
+#endif
 
     // Serialize image data
+    unsigned int serializedSize;
+#ifdef USE_CISST_SERIALIZATION
+    const double tic = osaGetTime();
     std::string s;
     Serialize(image, s);
-    const unsigned int serializedSize = s.size();
+    const double toc = osaGetTime();
+
+    serializedSize = s.size();
+    result.FrameSize = serializedSize; //image.GetDataSize();
+    const char * dest = s.c_str();
+    //std::cout << serializedSize << std::endl;
+
+    result.TimeSerialization = toc - tic;
+#else
+    const unsigned char * dest = image.GetUCharPointer(videoch);
+    serializedSize = image.GetDataSize(videoch);
+    
+    result.TimeSerialization = 0.0;
+#endif
 
     // Send video stream data via UDP
     // First, send MSG_HEADER message to let a client know the size of the
@@ -268,7 +326,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
     MSG_PAYLOAD payload;
     payload.FrameSeq = frameSeq;
 
-    const char * dest = s.c_str();
     unsigned int byteSent = 0, n;
     while (byteSent < serializedSize) {
         n = (UNIT_MESSAGE_SIZE > (serializedSize - byteSent) ? (serializedSize - byteSent) : UNIT_MESSAGE_SIZE);
@@ -294,18 +351,21 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
             byteSent += n;
         }
 
-        osaSleep(1 * cmn_ms);
+        osaSleep(0.5 * cmn_ms);
+        //osaSleep(1 * cmn_ms);
         //osaSleep(1 * cmn_s);
     }
 #ifdef _DEBUG_
     printf("Send complete: %u / %u\n", byteSent, serializedSize);
 #endif
 
-    double toc = osaGetTime();
+    const double tocProcessing = osaGetTime();
+
+    result.TimeProcessing = tocProcessing - ticProcessing;
 
     // Track fps and processing overhead
     ++FrameCountPerSecond;
-    StatOverhead->AddSample(toc - tic);
+    StatOverhead->AddSample(tocProcessing - ticProcessing);
     if (LastFPSTick == 0.0) {
         LastFPSTick = osaGetTime();
     } else {
@@ -316,10 +376,14 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
             StatOverhead->Print();
             std::cout << std::endl;
 
+            result.FPS = FrameCountPerSecond;
+
             FrameCountPerSecond = 0;
             LastFPSTick = osaGetTime();
         }
     }
+
+    ExperimentResultElements.push_back(result);
 
     return SVL_OK;
 }
@@ -346,12 +410,16 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     // image size information (width and height)
     double senderTick;
     unsigned int serializedSize;
-    svlSampleImageBase * image;
-    for (int i = 0; i < 60; i++) { // 2 sec (30Hz)
+    unsigned int _width = 0;
+    //svlSampleImageBase * image;
+    //for (int i = 0; i < 1; i++) { // 2 sec (30Hz)
+    int cnt = 0;
+    while (_width == 0) {
         serializedSize = GetOneImage(senderTick);
-        if (serializedSize == 0) {
-            continue;
-        }
+    //    if (serializedSize == 0) {
+    //        continue;
+    //    }
+        std::cout << "serializedSize: " << serializedSize << std::endl;
 
         // Deserialize data
         std::string serializedData(ReceiveBuffer, serializedSize);
@@ -364,21 +432,23 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
         
         width = image->GetWidth();
         height = image->GetHeight();
-        std::cout << "========== Image size: " << width << " x " << height << std::endl;
+        std::cout << "Image size: " << width << " x " << height << std::endl;
+
+        _width = width;
     }
 
     //if (serializedSize == 0) {
     //    return SVL_FAIL;
     //}
 
-    std::cout << "----------------------" << std::endl;
+    //std::cout << "----------------------" << std::endl;
 
-    width = image->GetWidth();
-    height = image->GetHeight();
+    //width = image->GetWidth();
+    //height = image->GetHeight();
     std::cout << "========== Image size: " << width << " x " << height << std::endl;
 
-    exit(1);
-    */
+    //exit(1);
+    //*/
 
     /*  // drop.avi
     width = 256 * 2;
@@ -386,10 +456,11 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     //*/
     /*  // capture.avi
     width = 640 * 2;
-    height = 480;
-    //*/
+    height = 480;riali
+    /*/
     width = 1920 * 2;
     height = 1080;
+    //*/
 
     framerate = -1.0;
     Opened = true;
@@ -399,9 +470,6 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
 
 int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase & image, const unsigned int CMN_UNUSED(videoch), const bool CMN_UNUSED(noresize))
 {
-    //unsigned char * ptr = image.GetUCharPointer(videoch);
-    //const unsigned int size = image.GetDataSize(videoch);
-
     const double tic = osaGetTime();
 
     // Receive video stream data via UDP
@@ -412,8 +480,17 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
     }
 
     // Deserialize data
+#ifdef USE_CISST_SERIALIZATION
     std::string serializedData(ReceiveBuffer, serializedSize);
     DeSerialize(serializedData, image);
+#else
+    unsigned char * ptr = image.GetUCharPointer(videoch);
+    const unsigned int size = image.GetDataSize(videoch);
+    std::cout << "serialized: " << serializedSize << ", size: " << size << std::endl;
+    memcpy(ptr, ReceiveBuffer, serializedSize);
+#endif
+
+    std::cout << serializedSize << std::endl;
 
 #ifdef _DEBUG_
     std::cout << "Successfully deserialized: " << serializedSize << std::endl;
@@ -422,10 +499,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
 #endif
 
     double toc = osaGetTime();
-
-    // Ignore first a couple of tens images for accuracy
-    static int count = 30;
-    if (--count > 0) return SVL_OK;
 
     // Track fps and processing overhead
     ++FrameCountPerSecond;
@@ -494,7 +567,6 @@ void svlVideoCodecUDP::Serialize(const cmnGenericObject & originalObject, std::s
 void svlVideoCodecUDP::DeSerialize(const std::string & serializedObject, cmnGenericObject & originalObject) 
 {
     try {
-        //DeSerializationBuffer.str("__FRAME_MARKER__");
         DeSerializationBuffer.str("");
         DeSerializationBuffer << serializedObject;
         DeSerializer->DeSerialize(originalObject);

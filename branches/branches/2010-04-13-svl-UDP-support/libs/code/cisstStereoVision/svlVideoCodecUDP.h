@@ -93,6 +93,9 @@ protected:
     bool Writing;
     bool Opened;
 
+    /*! Timeserver */
+    osaTimeServer TimeServer;
+
     /* Auxiliary class for statistics */
     class Stat {
     protected:
@@ -165,6 +168,18 @@ protected:
         }
     };
 
+    /*! Structure to contain the experiment results */
+    typedef struct {
+        unsigned int FrameNo;
+        unsigned int FrameSize;
+        unsigned int FPS;
+        double TimeSerialization;
+        double TimeProcessing;
+    } ExperimentResultElement;
+
+    typedef std::vector<ExperimentResultElement> ExperimentResultElementsType;
+    ExperimentResultElementsType ExperimentResultElements;
+
     // FPS
     unsigned int FrameCountPerSecond;
     // Last time when FPS was calculated
@@ -175,8 +190,6 @@ protected:
     Stat * StatFPS;
     Stat * StatOverhead;
     Stat * StatDelay;
-    // Timeserver
-    osaTimeServer TimeServer;
 
     //-------------------------------------------------------------------------
     //  Network (UDP) Support
