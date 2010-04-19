@@ -241,7 +241,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* CMN_UNUSED(procInfo), const svlSampleIm
 #else
         os << "No compression" << std::endl;
 #endif
-        os << "FrameNo,FrameSize,FPS,TimeSerialization,TimeProcessing" << std::endl;
+        os << "FrameNo,FrameSize,FPS,TimeSerialization,TimeProcessing,Timestamp" << std::endl;
 
         // Put experiment results to log file
         ExperimentResultElementsType::const_iterator it = ExperimentResultElements.begin();
@@ -511,6 +511,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
     if (serializedSize == 0) {
         return SVL_FAIL;
     }
+    result.FrameSize = serializedSize;
 
     // Deserialize data
 #ifdef USE_CISST_SERIALIZATION
