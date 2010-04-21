@@ -40,12 +40,10 @@ http://www.cisst.org/cisst/license.txt.
 #define COMPRESSION_ARG 95
 #endif
 
-//#define IMAGE_WIDTH  (1920 * 2)
-//#define IMAGE_HEIGHT 1080
-#define IMAGE_WIDTH  (256*2)
-#define IMAGE_HEIGHT 240
-
-#define PROCESSOR_COUNT 8
+#define IMAGE_WIDTH  (1920 * 2)
+#define IMAGE_HEIGHT 1080
+//#define IMAGE_WIDTH  (256*2)
+//#define IMAGE_HEIGHT 240
 
 // Socket support
 #if (CISST_OS == CISST_WINDOWS)
