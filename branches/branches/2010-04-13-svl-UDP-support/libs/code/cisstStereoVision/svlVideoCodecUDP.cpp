@@ -401,7 +401,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         // - size of serialized cisst class service
         size_t serializedSize = str.size();
 
-        memcpy(&SerializationBuffer[pos], &((unsigned int)serializedSize), sizeof(unsigned int));
+        memcpy(&SerializationBuffer[pos], &serializedSize, sizeof(unsigned int));
         pos += sizeof(unsigned int);
         // - serialize cisst class service
         memcpy(&SerializationBuffer[pos], str.c_str(), str.size());
@@ -576,7 +576,7 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     return SVL_OK;
 }
 
-int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase & image, const unsigned int CMN_UNUSED(videoch), const bool CMN_UNUSED(noresize))
+int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, const unsigned int videoch, const bool CMN_UNUSED(noresize))
 {
     // for testing
     static int frameNo = 0;
@@ -612,7 +612,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* CMN_UNUSED(procInfo), svlSampleImageBase
 
     // Allocate image buffer if not done yet
     if (IMAGE_WIDTH != image.GetWidth(videoch) || IMAGE_HEIGHT != image.GetHeight(videoch)) {
-        if (noresize) return SVL_FAIL;
         image.SetSize(videoch, IMAGE_WIDTH, IMAGE_HEIGHT);
     }
 
