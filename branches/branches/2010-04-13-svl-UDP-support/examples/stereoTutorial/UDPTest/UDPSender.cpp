@@ -39,40 +39,68 @@ using namespace std;
 //  Video Converter  //
 ///////////////////////
 
-int VideoConverter()
+int VideoConverter(int argc, char** argv)
 {
     std::string sourceleft, sourceright, destination;
 
     svlInitialize();
 
     svlStreamManager converter_stream(4);
+    //svlStreamManager converter_stream(1);
     svlFilterSourceVideoFile converter_source(2); // # of source channels
     svlFilterStereoImageJoiner converter_joiner;
     svlFilterVideoFileWriter converter_writer;
 
     // converter_joiner.SetLayout(svlFilterStereoImageJoiner::SideBySide);
 
-    if (converter_source.DialogFilePath(SVL_LEFT) != SVL_OK) {
-        cerr << " -!- No source file has been selected." << endl;
-        return -1;
-    }
-    converter_source.GetFilePath(sourceleft, SVL_LEFT);
+    // Input files
+    if (argc == 4) {
+        if (converter_source.SetFilePath(argv[1], SVL_LEFT) != SVL_OK) {
+            cerr << endl << "Invalid file name: " << argv[1] << endl;
+            exit(1);
+        }
+        converter_source.GetFilePath(sourceleft);
 
-    if (converter_source.DialogFilePath(SVL_RIGHT) != SVL_OK) {
-        cerr << " -!- No source file has been selected." << endl;
-        return -1;
-    }
-    converter_source.GetFilePath(sourceright, SVL_RIGHT);
+        if (converter_source.SetFilePath(argv[2], SVL_RIGHT) != SVL_OK) {
+            cerr << endl << "Invalid file name: " << argv[1] << endl;
+            exit(1);
+        }
+        converter_source.GetFilePath(sourceright);
 
+        if (converter_writer.SetFilePath(argv[3]) != SVL_OK) {
+            cerr << endl << "Invalid file name: " << argv[1] << endl;
+            exit(1);
+        }
+        converter_writer.GetFilePath(destination);
+    } else {
+        if (converter_source.DialogFilePath(SVL_LEFT) != SVL_OK) {
+            cerr << " -!- No source file has been selected." << endl;
+            exit(1);
+        }
+        converter_source.GetFilePath(sourceleft, SVL_LEFT);
+
+        if (converter_source.DialogFilePath(SVL_RIGHT) != SVL_OK) {
+            cerr << " -!- No source file has been selected." << endl;
+            return -1;
+        }
+        converter_source.GetFilePath(sourceright, SVL_RIGHT);
+
+        if (converter_writer.DialogFilePath() != SVL_OK) {
+            cerr << " -!- No destination file has been selected." << endl;
+            return -1;
+        }
+        converter_writer.GetFilePath(destination);
+    }
+
+    cout << "Left source : " << sourceleft << endl;
+    cout << "Right source: " << sourceright << endl;
+    cout << "Target file : " << destination << endl;
+
+    // Set property of source and writer
     converter_source.SetTargetFrequency(30.0); // as fast as possible
     //converter_source.SetLoop(false);
     converter_source.SetLoop(true);
-
-    if (converter_writer.DialogFilePath() != SVL_OK) {
-        cerr << " -!- No destination file has been selected." << endl;
-        return -1;
-    }
-    converter_writer.GetFilePath(destination);
+    
 //    if (converter_writer.DialogFilePath(SVL_RIGHT) != SVL_OK) {
 //        cerr << " -!- No destination file has been selected." << endl;
 //        return -1;
@@ -144,7 +172,7 @@ int main(int argc, char** argv)
     cerr << endl << "stereoTutorialVideoConverter - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl;
 
-    VideoConverter();
+    VideoConverter(argc, argv);
 
     return 1;
 }

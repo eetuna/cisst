@@ -44,7 +44,8 @@ int VideoPlayer(const std::string pathname)
     svlInitialize();
 
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(4);
+    //svlStreamManager viewer_stream(4);
+    svlStreamManager viewer_stream(1);
     svlFilterSourceVideoFile viewer_source(1);
     svlFilterImageWindow viewer_window;
 

@@ -149,11 +149,14 @@ public:
       class of the object must have the virtual method
       <code>SerializeRaw</code> re-defined to properly serialize the
       content of the object.
+      \param serializeObject If true, object content is serialized.
+             If false, only class services is serialized and object
+             content is not serialized
 
       \note As this method relies on cmnSerializeRaw, it might throw
       an exception.
      */
-    void Serialize(const cmnGenericObject & object);
+    void Serialize(const cmnGenericObject & object, const bool serializeObject = true);
 
 
     /*! Serialize the class information if needed.  This method will

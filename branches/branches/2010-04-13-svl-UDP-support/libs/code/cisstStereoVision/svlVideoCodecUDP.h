@@ -71,7 +71,7 @@ public:
 
     int GetBegPos() const { return 0; }
     int GetEndPos() const { return 0; }
-    int GetPos() const    { return 0; }
+    int GetPos() const    { return Pos; }
     int SetPos(const int CMN_UNUSED(pos));
     /*
     int SetCompression(const svlVideoIO::Compression *compression);
@@ -82,7 +82,9 @@ public:
     int DialogCompression() { return SVL_OK; }
 
 protected:
-    typedef enum { UDP_SENDER, UDP_RECEIVER } UDP_TYPE;
+    /*! Typedef for this codec: sender or receiver */
+    typedef enum { UDP_SENDER, UDP_RECEIVER } UDPCodecType;
+    UDPCodecType CodecType;
 
     /*! Variables for image properties */
     unsigned int Width;
@@ -193,6 +195,9 @@ protected:
     Stat * StatOverhead;
     Stat * StatDelay;
 
+    /*! \brief Generate log file and write experiment results into the file */
+    void ReportResults(void);
+
     //-------------------------------------------------------------------------
     //  Network (UDP) Support
     //-------------------------------------------------------------------------
@@ -238,9 +243,11 @@ protected:
     unsigned int CurrentSeq;
 
     /*! Create send/recv sockets and send/receive threads */
-    bool CreateSocket(const UDP_TYPE type);
+    bool CreateSocket(const UDPCodecType type);
     /*! Get one image frame from network */
     unsigned int GetOneImage(double & senderTick);
+    /*! Send one image frame to network */
+    int SendUDP(const unsigned char * serializedImage, const size_t serializedImageSize);
     /*! Cleanup resouces */
     void SocketCleanup(void);
 
@@ -251,7 +258,30 @@ protected:
     cmnSerializer * Serializer;
     cmnDeSerializer * DeSerializer;
 
-    void Serialize(const cmnGenericObject & originalObject, std::string & serializedObject);
+    /*! Support for serialization of subimages using multiple CPU */
+    unsigned int ProcessCount;
+    unsigned char * SerializationBuffer;
+    unsigned int SerializationBufferSize;
+
+    unsigned char* yuvBuffer;
+    unsigned int yuvBufferSize;
+    unsigned char* comprBuffer;
+    unsigned int comprBufferSize;
+    vctDynamicVector<unsigned int> ComprPartOffset;
+    vctDynamicVector<unsigned int> ComprPartSize;
+
+    vctDynamicVector<unsigned int> saveBuffer;
+    unsigned int saveBufferSize;
+    unsigned int SaveBufferUsedSize;
+    unsigned int SaveBufferUsedID;
+
+    vctDynamicVector<unsigned int> SubImageTimeForSerialization;
+    vctDynamicVector<unsigned int> SubImageSerializedSize;
+    //vctDynamicVector<unsigned int> SubImageOffset;
+    //vctDynamicVector<unsigned int> SubImageSize;
+
+    //void Serialize(const cmnGenericObject & originalObject, std::string & serializedObject);
+    //void Serialize(svlProcInfo * procInfo, const svlSampleImageBase &image, const unsigned int videoch, const unsigned int procId);
     void DeSerialize(const std::string & serializedObject, cmnGenericObject & originalObject);
     cmnGenericObject * DeSerialize(const std::string & serializedObject);
 };

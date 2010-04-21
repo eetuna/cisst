@@ -167,14 +167,16 @@ public:
       an exception.
     */
     template <class _elementType>
-    inline void DeSerialize(_elementType & object) {
+    inline void DeSerialize(_elementType & object, const bool serializeObject = true) {
         // get object services
         TypeId typeId;
         cmnDeSerializeRaw(this->InputStream, typeId);
         if (typeId == 0) {
             this->DeSerializeServices();
             // read again to deserialize coming object
-            this->DeSerialize(object);
+            if (serializeObject) {
+                this->DeSerialize(object);
+            }
         } else {
             const const_iterator end = ServicesContainer.end();
             const const_iterator iterator = ServicesContainer.find(typeId);
@@ -185,7 +187,9 @@ public:
                 if (servicesPointerLocal != object.Services()) {
                     CMN_LOG_CLASS_RUN_ERROR << "DeSerialize: Object types don't match" << std::endl;
                 } else {
-                    object.DeSerializeRaw(this->InputStream);
+                    if (serializeObject) {
+                        object.DeSerializeRaw(this->InputStream);
+                    }
                 }
             }
         }

@@ -32,14 +32,16 @@ cmnSerializer::cmnSerializer(std::ostream & outputStream):
 }
 
 
-void cmnSerializer::Serialize(const cmnGenericObject & object) {
+void cmnSerializer::Serialize(const cmnGenericObject & object, const bool serializeObject) {
     // get object services and send information if needed
     const cmnClassServicesBase * servicesPointer = object.Services();
     this->SerializeServices(servicesPointer);
     // serialize the object preceeded by its type Id
     TypeId typeId = reinterpret_cast<TypeId>(servicesPointer);
     cmnSerializeRaw(this->OutputStream, typeId);
-    object.SerializeRaw(this->OutputStream);
+    if (serializeObject) {
+        object.SerializeRaw(this->OutputStream);
+    }
 }
 
 
