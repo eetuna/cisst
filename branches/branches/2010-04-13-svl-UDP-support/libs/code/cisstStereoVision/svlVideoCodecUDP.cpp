@@ -87,8 +87,8 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     Opened(false),
     StatFPS(0), StatOverhead(0), StatDelay(0),
     SerializationBuffer(0), SerializationBufferSize(0), ProcessCount(0),
-    yuvBuffer(0), yuvBufferSize(0), comprBuffer(0), comprBufferSize(0)
-
+    yuvBuffer(0), yuvBufferSize(0), comprBuffer(0), comprBufferSize(0),
+    NetworkEnabled(true)
 {
     SetName("UDP Stream");
     SetExtensionList(".udp;");
@@ -272,6 +272,17 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
     Height = IMAGE_HEIGHT;
     Pos = 0;
 
+    // For testing purposes
+    std::string str("0.udp");
+    size_t found = filename.find(str);
+    if (found != std::string::npos) {
+        NetworkEnabled = false;
+        std::cout << "svlVideoCodecUDP: networking feature is disabled" << std::endl;
+    } else {
+        NetworkEnabled = true;
+        std::cout << "svlVideoCodecUDP: networking feature is enabled" << std::endl;
+    }
+
     return SVL_OK;
 }
 
@@ -446,9 +457,11 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 #endif
         }
 
-        if (SendUDP(SerializationBuffer, pos) == SVL_FAIL) {
-            std::cerr << "svlVideoCodecUDP: failed to send UDP messages" << std::endl;
-            return SVL_FAIL;
+        if (NetworkEnabled) {
+            if (SendUDP(SerializationBuffer, pos) == SVL_FAIL) {
+                std::cerr << "svlVideoCodecUDP: failed to send UDP messages" << std::endl;
+                return SVL_FAIL;
+            }
         }
     }
 
@@ -595,7 +608,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     const double ticProcessing = osaGetTime();
     */
 
-    std::cout << "--------------- " << ++frameNo << std::endl;
+    std::cout << ++frameNo << std::endl;
 
     // Receive video stream data via UDP
     double senderTick;
@@ -1062,7 +1075,7 @@ int svlVideoCodecUDP::SendUDP(const unsigned char * serializedImage, const size_
             byteSent += n;
         }
 
-        osaSleep(0.5 * cmn_ms);
+        //osaSleep(0.5 * cmn_ms);
         //osaSleep(1 * cmn_ms);
         //osaSleep(1 * cmn_s);
     }

@@ -98,6 +98,9 @@ protected:
     /*! Timeserver */
     osaTimeServer TimeServer;
 
+    /*! For testing purposes (see StereoPlayerTest) */
+    bool NetworkEnabled;
+
     /* Auxiliary class for statistics */
     class Stat {
     protected:
