@@ -31,12 +31,20 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <limits> // for statistics
 
+//-------------------------------------------------------------------------
+//  Constant Definitions
+//-------------------------------------------------------------------------
+/*! String to identify header correctly */
 #define DELIMITER_STRING      "JHU_TELESURGERY_RESEARCH"
+/*! Maximum length of the string above */
 #define DELIMITER_STRING_SIZE 28
+/*! Size of unit UDP message */
 #define UNIT_MESSAGE_SIZE     1300
+/*! Maximum number of subimages.  Equal to the number of worker thread(s) and 
+    set by the number of processors available. */
 #define MAX_SUBIMAGE_COUNT    32
-
-// Assume that serialized cisst class service is not bigger than 100 bytes.
+/*! Total length of serialized cisst class service.  Assume that it does not 
+    exceed 100 bytes. */
 #define MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE 100
 
 class svlVideoCodecUDP : public svlVideoCodecBase, public cmnGenericObject
@@ -47,65 +55,53 @@ public:
     svlVideoCodecUDP();
     virtual ~svlVideoCodecUDP();
 
-    // Methods definitions required by the base class (svlVideoIO.h)
+    // Methods required by the base class (svlVideoIO.h)
+    int GetBegPos() const { return 0; }
+    int GetEndPos() const { return 0; }
+    int GetPos() const    { return 0; }
+    int SetPos(const int CMN_UNUSED(pos)) { return SVL_OK; }
+    int SetCompression(const svlVideoIO::Compression * CMN_UNUSED(compression)) { return SVL_OK; }
+    int DialogCompression() { return SVL_OK; }
+
+    int Close();
+
     //-------------------------------------------------------------------------
     //  UDP Sender
     //-------------------------------------------------------------------------
-    /*! Extract receiver ip and port information from the selected .udp file
-        A udp file consists of a pair of ip and port deliminated by a space. */
+    /*! Initialize UDP sender (e.g. create send socket) */
     int Create(const std::string &filename, const unsigned int width, const unsigned int height, const double framerate);
 
-    /*! Serialize SVL image object and send it to receiver(s) over networks */
+    /*! Serialize image object and send it to receiver across networks */
     int Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch);
 
     //-------------------------------------------------------------------------
     //  UDP Receiver
     //-------------------------------------------------------------------------
-    /*! Open client socket to receive stream data and initialize image width and
-        height */
-    int Open(const std::string &filename, unsigned int &width, unsigned int &height, double &framerate);
+    /*! Initialize UDP receiver (e.g. create client socket, determine image size) */
+    int Open(const std::string &filename, unsigned int &width, unsigned int &height, double & framerate);
 
-    /*! Deserialize byte stream image object to generate SVL image object */
+    /*! Deserialize byte stream image object to rebuild original image object */
     int Read(svlProcInfo* procInfo, svlSampleImageBase &image, const unsigned int videoch, const bool noresize = false);
 
-    //-------------------------------------------------------------------------
-    //  Common Methods
-    //-------------------------------------------------------------------------
-    int Close();
-
-    int GetBegPos() const { return 0; }
-    int GetEndPos() const { return 0; }
-    int GetPos() const    { return Pos; }
-    int SetPos(const int CMN_UNUSED(pos));
-    /*
-    int SetCompression(const svlVideoIO::Compression *compression);
-    svlVideoIO::Compression* GetCompression() const;
-    int DialogCompression();
-    */
-    int SetCompression(const svlVideoIO::Compression * CMN_UNUSED(compression)) { return SVL_OK; }
-    int DialogCompression() { return SVL_OK; }
-
 protected:
-    /*! Typedef for this codec: sender or receiver */
+    /*! Typedef for udp codec type */
     typedef enum { UDP_SENDER, UDP_RECEIVER } UDPCodecType;
     UDPCodecType CodecType;
 
     /*! Variables for image properties */
     unsigned int Width;
     unsigned int Height;
-    int BegPos;
-    int EndPos;
-    int Pos;
-    bool Writing;
-    bool Opened;
 
-    /*! Timeserver */
+    /*! Timeserver. Used for timestamping packets */
     osaTimeServer TimeServer;
 
-    /*! For testing purposes (see StereoPlayerTest) */
+    /*! Flag to turn on or off udp message generation.  Used for testing 
+        purposes (see StereoPlayerTest). */
     bool NetworkEnabled;
 
-    /* Auxiliary class for statistics */
+    //-------------------------------------------------------------------------
+    //  Auxiliary class for statistics
+    //-------------------------------------------------------------------------
     class Stat {
     protected:
         std::list<double> History;
@@ -191,53 +187,50 @@ protected:
     typedef std::vector<ExperimentResultElement> ExperimentResultElementsType;
     ExperimentResultElementsType ExperimentResultElements;
 
-    // FPS
+    /*! FPS (Frame-per-second) */
     unsigned int FrameCountPerSecond;
-    // Last time when FPS was calculated
+    /*! Last time when FPS was calculated */
     double LastFPSTick;
-    // Last time when delay was calculated
+    /*! Last time when delay was calculated */
     double LastDelayTick;
-    // Statistic variables
+    /*! Instances of Stat class above */
     Stat * StatFPS;
     Stat * StatOverhead;
     Stat * StatDelay;
 
-    /*! \brief Generate log file and write experiment results into the file */
+    /*! Write experiment results to log file */
     void ReportResults(void);
 
     //-------------------------------------------------------------------------
     //  Network (UDP) Support
     //-------------------------------------------------------------------------
+    /*! Definition of MSG_HEADER message */
     class MSG_HEADER {
     public:
-        // Frame sequence number
+        /*! Frame sequence number */
         unsigned int FrameSeq;
 
-        // Serialized cisst class services
+        /*! Serialized cisst class services */
         char CisstClassService[MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE];
         char CisstClassServiceSize;
 
-        // Total number of subimages
+        /*! Total number of subimages */
         char SubImageCount;
-        // Subimage sizes
+        /*! Subimage sizes */
         unsigned int SubImageSize[MAX_SUBIMAGE_COUNT];
-        // Total size of serialized image (equals to sum of all subimages' sizes)
-        //unsigned int SerializedImageSize;
 
-        // Delimiter to differentiate MSG_HEADER and MSG_BODY (don't edit this field)
+        /*! Delimiter to differentiate MSG_HEADER and MSG_BODY (MJ: don't need 
+            to edit this field) */
         char Delimiter[DELIMITER_STRING_SIZE];
-        // Timestamp right before this message is sent to network
+
+        /*! Timestamp right before this message is sent to network */
         //double Timestamp;
 
-        MSG_HEADER() {
-            FrameSeq = 0;
-
+        /*! Constructor */
+        MSG_HEADER() : FrameSeq(0), CisstClassServiceSize(0), SubImageCount(0)
+        {
             memset(CisstClassService, 0, MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE);
-            CisstClassServiceSize = 0;
-
-            SubImageCount = 0;
             memset(SubImageSize, 0, sizeof(unsigned int) * MAX_SUBIMAGE_COUNT);
-
             memset(Delimiter, 0, DELIMITER_STRING_SIZE);
             strncpy(Delimiter, DELIMITER_STRING, DELIMITER_STRING_SIZE);
         }
@@ -255,19 +248,20 @@ protected:
         }
     };
 
+    /*! Definition of MSG_PAYLOAD message */
     class MSG_PAYLOAD {
     public:
-        // Frame sequence of an image that this payload belongs to
+        /*! Frame sequence of an image that this payload belongs to */
         unsigned int FrameSeq;
-        // Payload size
+        /*! Payload size */
         unsigned short PayloadSize;
-        // Timestamp right before this message is sent to network
-        //double Timestamp;
-        // Fragmented image data (with serialization)
+        /*! Fragmented image data (with serialization) */
         char Payload[UNIT_MESSAGE_SIZE];
+        /*! Timestamp right before this message is sent to network */
+        //double Timestamp;
     };
 
-    /*! UDP socket support */
+    /*! UDP sockets */
     int SocketSend, SocketRecv;
     /*! Frame sequence number this is being transmitted now */
     unsigned int CurrentSeq;
@@ -277,37 +271,33 @@ protected:
     /*! Get one image frame from network */
     unsigned int GetOneImage(double & senderTick);
     /*! Send one image frame to network */
-    //int SendUDP(const unsigned char * serializedImage, const size_t serializedImageSize);
     int SendUDP(void);
     /*! Cleanup resouces */
     void SocketCleanup(void);
 
     //-------------------------------------------------------------------------
-    //  CISST Serialization and Deserialization
+    //  Image Compression and CISST (De)Serialization
     //-------------------------------------------------------------------------
-    /*! Serializer and Deserializer. */
+    /*! CISST Serializer and Deserializer */
     cmnSerializer * Serializer;
     cmnDeSerializer * DeSerializer;
 
-    /*! Support for serialization of subimages using multiple CPU */
+    /*! Parallel serialization using multiple CPU cores */
     unsigned int ProcessCount;
     char * SerializedClassService;
     unsigned int SerializedClassServiceSize;
 
-    unsigned char* yuvBuffer;
-    unsigned int yuvBufferSize;
-    unsigned char* comprBuffer;
-    unsigned int comprBufferSize;
-    vctDynamicVector<unsigned int> ComprPartOffset;
-    vctDynamicVector<unsigned int> ComprPartSize;
+    /*! Temporary buffer and its size */
+    unsigned char* BufferYUV;
+    unsigned char* BufferCompression;
+    unsigned int BufferYUVSize;
+    unsigned int BufferCompressionSize;
 
-    vctDynamicVector<unsigned int> saveBuffer;
-    unsigned int saveBufferSize;
-    unsigned int SaveBufferUsedSize;
-    unsigned int SaveBufferUsedID;
+    /*! Offset and size of subimage */
+    vctDynamicVector<unsigned int> SubImageOffset;
+    vctDynamicVector<unsigned int> SubImageSize;
 
-    //void Serialize(const cmnGenericObject & originalObject, std::string & serializedObject);
-    //void Serialize(svlProcInfo * procInfo, const svlSampleImageBase &image, const unsigned int videoch, const unsigned int procId);
+    /*! Deserialize byte stream image and rebuild original object */
     void DeSerialize(const std::string & serializedObject, cmnGenericObject & originalObject);
     cmnGenericObject * DeSerialize(const std::string & serializedObject);
 };

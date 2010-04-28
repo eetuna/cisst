@@ -83,14 +83,12 @@ CMN_IMPLEMENT_SERVICES(svlVideoCodecUDP)
 svlVideoCodecUDP::svlVideoCodecUDP() :
     svlVideoCodecBase(),
     cmnGenericObject(),
-    Width(0), Height(0), BegPos(-1), EndPos(0), Pos(-1),
+    Width(0), Height(0),
     CurrentSeq(0),
-    Writing(false),
-    Opened(false),
     StatFPS(0), StatOverhead(0), StatDelay(0),
     SerializedClassService(0), SerializedClassServiceSize(0),
     ProcessCount(0),
-    yuvBuffer(0), yuvBufferSize(0), comprBuffer(0), comprBufferSize(0),
+    BufferYUV(0), BufferYUVSize(0), BufferCompression(0), BufferCompressionSize(0),
     NetworkEnabled(true)
 {
     SetName("UDP Stream");
@@ -120,19 +118,19 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     // Allocate compression buffer if not done yet
     unsigned int size = IMAGE_WIDTH * IMAGE_HEIGHT * 3;
     size += size / 100 + 4096;
-    comprBuffer = new unsigned char[size];
-    comprBufferSize = size;
+    BufferCompression = new unsigned char[size];
+    BufferCompressionSize = size;
 
     // Allocate YUV buffer if not done yet
     size = IMAGE_WIDTH * IMAGE_HEIGHT * 2;
-    if (!yuvBuffer) {
-        yuvBuffer = new unsigned char[size];
-        yuvBufferSize = size;
+    if (!BufferYUV) {
+        BufferYUV = new unsigned char[size];
+        BufferYUVSize = size;
     }
-    else if (yuvBuffer && yuvBufferSize < size) {
-        delete [] yuvBuffer;
-        yuvBuffer = new unsigned char[size];
-        yuvBufferSize = size;
+    else if (BufferYUV && BufferYUVSize < size) {
+        delete [] BufferYUV;
+        BufferYUV = new unsigned char[size];
+        BufferYUVSize = size;
     }
 }
 
@@ -144,8 +142,8 @@ svlVideoCodecUDP::~svlVideoCodecUDP()
     if (DeSerializer) delete DeSerializer;
     if (SerializedClassService) delete [] SerializedClassService;
 
-    if (yuvBuffer) delete [] yuvBuffer;
-    if (comprBuffer) delete [] comprBuffer;
+    if (BufferYUV) delete [] BufferYUV;
+    if (BufferCompression) delete [] BufferCompression;
 
     if (StatFPS) delete StatFPS;
     if (StatDelay) delete StatDelay;
@@ -249,7 +247,7 @@ void svlVideoCodecUDP::SocketCleanup(void)
 
 int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int width, const unsigned int height, const double CMN_UNUSED(framerate))
 {
-    if (Opened || width < 1 || height < 1) return SVL_FAIL;
+    if (width < 1 || height < 1) return SVL_FAIL;
 
     // Create send socket if it's not created yet
     if (SocketSend == 0) {
@@ -265,7 +263,6 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
 
     Width = IMAGE_WIDTH;
     Height = IMAGE_HEIGHT;
-    Pos = 0;
 
     // For testing purposes
     std::string str("0.udp");
@@ -304,17 +301,22 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     // Initialize multi-threaded image serialization
     //
     // Remember total number of subimages
-    ProcessCount = procInfo->count;
+    if (ProcessCount == 0) {
+        ProcessCount = procInfo->count;
+    }
+
+    _OnSingleThread(procInfo)
+    {
+        if (frameNo++ == 0) {
+            std::cout << "svlVideoCodecUDP: processor count: " << ProcessCount << std::endl;
+            SubImageOffset.SetSize(procInfo->count);
+            SubImageSize.SetSize(procInfo->count);
+        }
+    }
+
     const unsigned int procId = procInfo->id;
     bool err = false;
 
-    if (frameNo == 1) {
-        if (procInfo->id == 0) {
-            std::cout << "svlVideoCodecUDP: processor count: " << ProcessCount << std::endl;
-            ComprPartOffset.SetSize(procInfo->count);
-            ComprPartSize.SetSize(procInfo->count);
-        }
-    }
     
     _SynchronizeThreads(procInfo);
 
@@ -359,24 +361,24 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     while (1) {
         // Compute part size and offset
         size = Height / proccount + 1;
-        comprsize = comprBufferSize / proccount;
+        comprsize = BufferCompressionSize / proccount;
         start = procid * size;
         if (start >= Height) break;
         end = start + size;
         if (end > Height) end = Height;
         offset = start * Width;
         size = Width * (end - start);
-        ComprPartOffset[procid] = procid * comprsize;
+        SubImageOffset[procid] = procid * comprsize;
 
         // Convert RGB to YUV422 planar format
-        svlConverter::RGB24toYUV422P(const_cast<unsigned char*>(image.GetUCharPointer(videoch)) + offset * 3, yuvBuffer + offset * 2, size);
+        svlConverter::RGB24toYUV422P(const_cast<unsigned char*>(image.GetUCharPointer(videoch)) + offset * 3, BufferYUV + offset * 2, size);
 
         // Compress part
-        if (compress2(comprBuffer + ComprPartOffset[procid], &comprsize, yuvBuffer + offset * 2, size * 2, compr) != Z_OK) {
+        if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, BufferYUV + offset * 2, size * 2, compr) != Z_OK) {
             err = true;
             break;
         }
-        ComprPartSize[procid] = comprsize;
+        SubImageSize[procid] = comprsize;
 
         break;
     }
@@ -454,10 +456,8 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     return SVL_OK;
 }
 
-int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, unsigned int &height, double &framerate)
+int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, unsigned int &height, double & CMN_UNUSED(framerate))
 {
-    if (Opened) return SVL_FAIL;
-
     if (SocketRecv == 0) {
         // Create sockets
         if (!CreateSocket(UDP_RECEIVER)) {
@@ -469,7 +469,32 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     // TODO: Parse filename
     //std::cout << "Open called with file: " << filename << std::endl;
 
+    /*
     std::cout << "Waiting for the first frame to get image information..." << std::endl;
+
+    double senderTick;
+    unsigned int serializedSize = GetOneImage(senderTick);
+    if (serializedSize == 0) {
+        std::cout << "svlVideoCodecUDP: failed to read serialized image from socket" << std::endl;
+        return SVL_FAIL;
+    }
+
+    // Deserialize cisst class service information
+    const std::string serializedString(SerializedClassService, SerializedClassServiceSize);
+    cmnGenericObject * deserializedObject = 0;
+    try {
+        DeSerializationStreamBuffer.str("");
+        DeSerializationStreamBuffer << serializedString;
+        deserializedObject = DeSerializer->DeSerialize();
+    }  catch (std::runtime_error e) {
+        std::cerr << "svlVideoCodecUDP: DeSerialization failed: " << e.what() << std::endl;
+        return 0;
+    }
+
+    //cmnGenericObject * object = DeSerialize(SerializedClassService, false);
+    svlSampleImageBase * image = dynamic_cast<svlSampleImageBase *>(deserializedObject);
+    std::cout << "width: " << image->GetWidth() << ", height: " << image->GetHeight() << std::endl;
+    exit(1);
 
     /*
     // Wait for one complete image to be transferred. If it arrives, extract 
@@ -529,10 +554,6 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     height = IMAGE_HEIGHT;
     //*/
 
-    Pos = 0;
-    framerate = -1.0;
-    Opened = true;
-
     return SVL_OK;
 }
 
@@ -588,23 +609,23 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
 
     offset = pos = 0;
     for (i = 0; i < ProcessCount; ++i) {
-        compressedpartsize = ComprPartSize[i];
-        //memcpy(comprBuffer, ReceiveBuffer + pos, compressedpartsize);
+        compressedpartsize = SubImageSize[i];
+        //memcpy(BufferCompression, ReceiveBuffer + pos, compressedpartsize);
 #ifdef _DEBUG_
         std::cout << "[" << i << "] size: " << compressedpartsize << std::endl;
 #endif
 
         // Decompress frame part
-        longsize = yuvBufferSize - offset;
-        //if (uncompress(yuvBuffer + offset, &longsize, comprBuffer, compressedpartsize) != Z_OK) {
-        if (uncompress(yuvBuffer + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
+        longsize = BufferYUVSize - offset;
+        //if (uncompress(BufferYUV + offset, &longsize, BufferCompression, compressedpartsize) != Z_OK) {
+        if (uncompress(BufferYUV + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
             std::cout << "ERROR: Uncompress failed" << std::endl;
             exit(1);
             return SVL_FAIL;
         }
 
         // Convert YUV422 planar to RGB format
-        svlConverter::YUV422PtoRGB24(yuvBuffer + offset, img + offset * 3 / 2, longsize >> 1);
+        svlConverter::YUV422PtoRGB24(BufferYUV + offset, img + offset * 3 / 2, longsize >> 1);
 
         offset += longsize;
         pos += compressedpartsize;
@@ -679,104 +700,21 @@ int svlVideoCodecUDP::Close()
 
     //std::cout << "Close called" << std::endl;
 
-    Pos = -1;
-
     return SVL_OK;
 }
 
-int svlVideoCodecUDP::SetPos(const int CMN_UNUSED(pos))
-{
-    std::cout << "SetPos called" << std::endl;
-
-    return SVL_OK;
-}
-
-#if 0
-void svlVideoCodecUDP::Serialize(const cmnGenericObject & originalObject, std::string & serializedObject) 
-{
-    try {
-        SerializationStreamBuffer.str("");
-        Serializer->Serialize(originalObject);
-        serializedObject = SerializationStreamBuffer.str();
-    } catch (std::runtime_error e) {
-        std::cerr << "Serialization failed: " << originalObject.ToString() << std::endl;
-        std::cerr << e.what() << std::endl;
-        serializedObject = "";
-    }
-}
-
-void svlVideoCodecUDP::Serialize(svlProcInfo * procInfo, const svlSampleImageBase &image, const unsigned int videoch, const unsigned int procId)
-{
-    // Get offset and size of subimage that this thread should serialize
-    
-#if 0
-    // Size of original image
-    const size_t totalSize = image.GetDataSize(videoch);
-#ifdef _DEBUG_
-    std::cout << "svlVideoCodecUDP: Serialize: [" << procId << "/" << ProcessCount << "] total size: " << totalSize << std::endl;
-#endif
-    // size of a subimage
-    const size_t subImageSize = totalSize / ProcessCount;
-    // buffer chunk size
-    const size_t bufferChunkSize = SerializedClassServiceSize / ProcessCount;
-
-    // src image start offset
-    const size_t srcStartOffset = procId * subImageSize;
-    // src image end offset
-    const size_t srcEndOffset = srcStartOffset + subImageSize;
-    // dest buffer start offset
-    size_t destStartOffset = procId * bufferChunkSize;
-    size_t destStartOffsetCurrent = destStartOffset;
-
-    // Only the first subimage contains serialized class service information.
-    _OnSingleThread(procInfo) {
-        // Do cisst serialization (refer to cmnSerializer::Serialize())
-        Serializer->Serialize(image, false);
-        // Copy serialized stream (class service information) into buffer chunk
-        std::string str = SerializationStreamBuffer.str();
-        memcpy(&SerializedClassService[destStartOffsetCurrent], str.c_str(), str.size());
-        destStartOffsetCurrent += str.size();
-        // Do svlStream serialization (refer to svlSampleImageCustom<>::SerializeRaw())
-        std::string codec;
-        int compression;
-        image.GetEncoder(codec, compression);
-
-        svlStreamType type = image.GetType();
-        double timestamp = image.GetTimestamp();
-
-        memcpy(&SerializedClassService[destStartOffset], &type, sizeof(type));
-        destStartOffsetCurrent += sizeof(type);
-        memcpy(&SerializedClassService[destStartOffset], &timestamp, sizeof(timestamp));
-        destStartOffsetCurrent += sizeof(timestamp);
-        memcpy(&SerializedClassService[destStartOffset], codec.c_str(), codec.size());
-        destStartOffsetCurrent += codec.size();
-    }
-
-    // Serialize subimage content based on procId
-    const size_t usedSize = destStartOffsetCurrent - destStartOffset;
-    /*
-    if (SVL_OK != svlImageIO::Write(
-        image, videoch, codec, &SerializedClassService[destStartOffsetCurrent], bufferChunkSize - usedSize, compression))
-    {
-        cmnThrow("svlVideoCodecUDP: Serialize error occured with svlImageIO::Write");
-    }
-    */
-#endif
-}
-#endif
-
-void svlVideoCodecUDP::DeSerialize(const std::string & serializedObject, cmnGenericObject & originalObject) 
+void svlVideoCodecUDP::DeSerialize(const std::string & serializedObject, cmnGenericObject & originalObject)
 {
     try {
         DeSerializationStreamBuffer.str("");
         DeSerializationStreamBuffer << serializedObject;
         DeSerializer->DeSerialize(originalObject);
     }  catch (std::runtime_error e) {
-        std::cerr << "DeSerialization failed: " << e.what() << std::endl;
+        std::cerr << "svlVideoCodecUDP: DeSerialization failed: " << e.what() << std::endl;
     }
 }
 
-cmnGenericObject * svlVideoCodecUDP::DeSerialize(const std::string & serializedObject) 
+cmnGenericObject * svlVideoCodecUDP::DeSerialize(const std::string & serializedObject)
 {
     cmnGenericObject * deserializedObject = 0;
     try {
@@ -784,7 +722,7 @@ cmnGenericObject * svlVideoCodecUDP::DeSerialize(const std::string & serializedO
         DeSerializationStreamBuffer << serializedObject;
         deserializedObject = DeSerializer->DeSerialize();
     }  catch (std::runtime_error e) {
-        std::cerr << "DeSerialization failed: " << e.what() << std::endl;
+        std::cerr << "svlVideoCodecUDP: DeSerialization failed: " << e.what() << std::endl;
         return 0;
     }
 
@@ -867,12 +805,12 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
                 memcpy(SerializedClassService, header->CisstClassService, SerializedClassServiceSize);
                 // Subimages
                 ProcessCount = header->SubImageCount;
-                ComprPartSize.SetSize(ProcessCount);
+                SubImageSize.SetSize(ProcessCount);
                 for (unsigned int i = 0; i < ProcessCount; ++i) {
-                    ComprPartSize[i] = header->SubImageSize[i];
+                    SubImageSize[i] = header->SubImageSize[i];
                 }
 
-                serializedSize = ComprPartSize.SumOfElements();
+                serializedSize = SubImageSize.SumOfElements();
                 if (serializedSize == 0) {
                     std::cout << "svlVideoCodecUDP: incorrect serialized image size" << std::endl;
                     return 0;
@@ -997,7 +935,7 @@ int svlVideoCodecUDP::SendUDP(void)
     // 1300-byte UDP messages.
 
     // Get total size of all serialized subimages
-    const unsigned int totalSubImageSize = ComprPartSize.SumOfElements();
+    const unsigned int totalSubImageSize = SubImageSize.SumOfElements();
 
     // Build MSG_HEADER
     static unsigned int frameSeq = 0;
@@ -1008,7 +946,7 @@ int svlVideoCodecUDP::SendUDP(void)
     memcpy(header.CisstClassService, SerializedClassService, SerializedClassServiceSize);
     header.SubImageCount = ProcessCount;
     for (unsigned int i = 0; i < ProcessCount; ++i) {
-        header.SubImageSize[i] = ComprPartSize[i];
+        header.SubImageSize[i] = SubImageSize[i];
     }
 
     int ret = sendto(SocketSend, (const char*) &header, sizeof(header), 0, (struct sockaddr *) &SendToAddr, sizeof(SendToAddr));
@@ -1028,13 +966,13 @@ int svlVideoCodecUDP::SendUDP(void)
     payload.FrameSeq = frameSeq;
 
     unsigned int byteSent = 0, totalByteSent = 0, n;
-    unsigned char * subImagePtr = comprBuffer;
+    unsigned char * subImagePtr = BufferCompression;
     for (size_t i = 0; i < ProcessCount; ++i) {
         byteSent = 0;
-        subImagePtr = comprBuffer + ComprPartOffset[i];
+        subImagePtr = BufferCompression + SubImageOffset[i];
 
-        while (byteSent < ComprPartSize[i]) {
-            n = (UNIT_MESSAGE_SIZE > (ComprPartSize[i] - byteSent) ? (ComprPartSize[i] - byteSent) : UNIT_MESSAGE_SIZE);
+        while (byteSent < SubImageSize[i]) {
+            n = (UNIT_MESSAGE_SIZE > (SubImageSize[i] - byteSent) ? (SubImageSize[i] - byteSent) : UNIT_MESSAGE_SIZE);
 
             memcpy(payload.Payload, reinterpret_cast<const char*>(subImagePtr + byteSent), n);
             payload.PayloadSize = n;
@@ -1042,7 +980,7 @@ int svlVideoCodecUDP::SendUDP(void)
             ret = sendto(SocketSend, (const char *)&payload, sizeof(payload), 0, (struct sockaddr *) &SendToAddr, sizeof(SendToAddr));
             if (ret < 0) {
                 std::cerr << "svlVideoCodecUDP: failed to send UDP message: " 
-                    << byteSent << " / " << ComprPartSize[i] << ", errono: ";
+                    << byteSent << " / " << SubImageSize[i] << ", errono: ";
 #if (CISST_OS == CISST_WINDOWS)
                 std::cerr << WSAGetLastError() << std::endl;
 #else
@@ -1052,7 +990,7 @@ int svlVideoCodecUDP::SendUDP(void)
             } else {
                 byteSent += n;
 #ifdef _DEBUG_
-                printf("Sent (%u) : %u / %u\n", ret, byteSent, ComprPartSize[i]);
+                printf("Sent (%u) : %u / %u\n", ret, byteSent, SubImageSize[i]);
 #endif
             }
 
@@ -1063,84 +1001,9 @@ int svlVideoCodecUDP::SendUDP(void)
     }
     
 #ifdef _DEBUG_
-    printf("Send complete: %u / %u\n", totalByteSent, ComprPartSize.SumOfElements());
+    printf("Send complete: %u / %u\n", totalByteSent, SubImageSize.SumOfElements());
 #endif
 
     return sizeof(header) + totalByteSent;
 }
 
-/*
-int svlVideoCodecUDP::SetCompression(const svlVideoIO::Compression *compression)
-{
-    //if (Opened || !compression || compression->size < sizeof(svlVideoIO::Compression)) return SVL_FAIL;
-    if (!compression || compression->size < sizeof(svlVideoIO::Compression)) return SVL_FAIL;
-
-    std::string extensionlist(GetExtensions());
-    std::string extension(compression->extension);
-    extension += ";";
-    if (extensionlist.find(extension) == std::string::npos) {
-        // Codec parameters do not match this codec
-        return SVL_FAIL;
-    }
-
-    svlVideoIO::ReleaseCompression(Codec);
-    Codec = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[sizeof(svlVideoIO::Compression)]);
-
-    std::string name("UDP Stream");
-    memset(&(Codec->extension[0]), 0, 16);
-    memset(&(Codec->name[0]), 0, 64);
-    memcpy(&(Codec->name[0]), name.c_str(), std::min(static_cast<int>(name.length()), 63));
-    Codec->size = sizeof(svlVideoIO::Compression);
-    Codec->supports_timestamps = true;
-    Codec->datasize = 1;
-    if (compression->data[0] <= 9) Codec->data[0] = compression->data[0];
-    else Codec->data[0] = 4;
-
-    return SVL_OK;
-}
-
-/*
-int svlVideoCodecUDP::DialogCompression()
-{
-    // TODO: Check this
-    return SVL_OK;
-
-    if (Opened) return SVL_FAIL;
-
-    std::cout << std::endl << " # Enter compression level [0-99]: ";
-    int level;
-    std::cin >> level;
-    if (level < 0) level = 0;
-    else if (level > 99) level = 99;
-    std::cout << level << std::endl;
-
-    svlVideoIO::ReleaseCompression(Codec);
-    Codec = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[sizeof(svlVideoIO::Compression)]);
-
-    std::string name("JPEG Compression");
-    memset(&(Codec->extension[0]), 0, 16);
-    memcpy(&(Codec->extension[0]), ".udp", 4);
-    memset(&(Codec->name[0]), 0, 64);
-    memcpy(&(Codec->name[0]), name.c_str(), std::min(static_cast<int>(name.length()), 63));
-    Codec->size = sizeof(svlVideoIO::Compression);
-    Codec->supports_timestamps = true;
-    Codec->datasize = 1;
-    Codec->data[0] = static_cast<unsigned char>(level);
-
-	return SVL_OK;
-}
-
-svlVideoIO::Compression* svlVideoCodecUDP::GetCompression() const
-{
-    // TODO: Check this
-    return SVL_OK;
-
-    if (!Codec) return 0;
-    // Make a copy and return the pointer to it
-    // The caller will need to release it by calling the
-    // svlVideoIO::ReleaseCompression() method
-    svlVideoIO::Compression* compression = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[Codec->size]);
-    memcpy(compression, Codec, Codec->size);
-    return compression;
-}
-//*/
