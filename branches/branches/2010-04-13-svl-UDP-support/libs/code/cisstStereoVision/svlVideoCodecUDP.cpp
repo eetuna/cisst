@@ -40,10 +40,12 @@ http://www.cisst.org/cisst/license.txt.
 #define COMPRESSION_ARG 95
 #endif
 
-#define IMAGE_WIDTH  (1920 * 2)
-#define IMAGE_HEIGHT 1080
-//#define IMAGE_WIDTH  (256*2)
-//#define IMAGE_HEIGHT 240
+//#define IMAGE_WIDTH  (1920 * 2)
+//#define IMAGE_HEIGHT 1080
+#define IMAGE_WIDTH  (256*2)
+#define IMAGE_HEIGHT 240
+
+#define SERIALIZED_CLASS_SERVICE_MAX_SIZE 1000
 
 // Socket support
 #if (CISST_OS == CISST_WINDOWS)
@@ -86,7 +88,8 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     Writing(false),
     Opened(false),
     StatFPS(0), StatOverhead(0), StatDelay(0),
-    SerializationBuffer(0), SerializationBufferSize(0), ProcessCount(0),
+    SerializedClassService(0), SerializedClassServiceSize(0),
+    ProcessCount(0),
     yuvBuffer(0), yuvBufferSize(0), comprBuffer(0), comprBufferSize(0),
     NetworkEnabled(true)
 {
@@ -139,7 +142,7 @@ svlVideoCodecUDP::~svlVideoCodecUDP()
 
     if (Serializer) delete Serializer;
     if (DeSerializer) delete DeSerializer;
-    if (SerializationBuffer) delete [] SerializationBuffer;
+    if (SerializedClassService) delete [] SerializedClassService;
 
     if (yuvBuffer) delete [] yuvBuffer;
     if (comprBuffer) delete [] comprBuffer;
@@ -260,14 +263,6 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
     std::string ip(filename);
     std::cout << "svlVideoCodecUDP: selected file: " << filename << std::endl;
 
-    // Allocate serialization buffer
-    if (!SerializationBuffer) {
-        const unsigned int size = IMAGE_WIDTH * IMAGE_HEIGHT * 2;
-        SerializationBuffer = new unsigned char[size];
-        SerializationBufferSize = size;
-        std::cout << "svlVideoCodecUDP: size of buffer for serialization: " << SerializationBufferSize << std::endl;
-    }
-
     Width = IMAGE_WIDTH;
     Height = IMAGE_HEIGHT;
     Pos = 0;
@@ -300,9 +295,9 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         */
 
         // The first frame takes longer to process(?)
-        if (++frameNo == 1) {
-            osaSleep(1.0);
-        }
+        //if (++frameNo == 1) {
+        //    osaSleep(1.0);
+        //}
     }
 
     //
@@ -318,9 +313,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             std::cout << "svlVideoCodecUDP: processor count: " << ProcessCount << std::endl;
             ComprPartOffset.SetSize(procInfo->count);
             ComprPartSize.SetSize(procInfo->count);
-
-            SubImageTimeForSerialization.SetSize(ProcessCount);
-            SubImageSerializedSize.SetSize(ProcessCount);
         }
     }
     
@@ -405,60 +397,17 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         Serializer->Serialize(image, false);
 
         // Serialize cisst class service information
-        size_t pos = 0;
         const std::string str = SerializationStreamBuffer.str();
-        // - size of serialized cisst class service
-        size_t serializedSize = str.size();
-
-        memcpy(&SerializationBuffer[pos], &serializedSize, sizeof(unsigned int));
-        pos += sizeof(unsigned int);
-        // - serialize cisst class service
-        memcpy(&SerializationBuffer[pos], str.c_str(), str.size());
-        pos += str.size();
-#ifdef _DEBUG_
-        std::cout << "Serialized class service size : " << serializedSize << std::endl;
-#endif
-
-        // Do svlStream serialization (refer to svlSampleImageCustom<>::SerializeRaw())
-        /*
-        std::string codec;
-        int compression;
-        image.GetEncoder(codec, compression);
-
-        svlStreamType type = image.GetType();
-        double timestamp = image.GetTimestamp();
-
-        // Serialize stream type
-        memcpy(&SerializationBuffer[pos], &type, sizeof(type));
-        pos += sizeof(type);
-        // Serialize timestamp
-        memcpy(&SerializationBuffer[pos], &timestamp, sizeof(timestamp));
-        pos += sizeof(timestamp);
-        // Serialize codec information
-        memcpy(&SerializationBuffer[pos], codec.c_str(), codec.size());
-        pos += codec.size();
-        */
-        // Serialize processor count
-        memcpy(&SerializationBuffer[pos], &ProcessCount, sizeof(ProcessCount));
-        pos += sizeof(ProcessCount);
-#ifdef _DEBUG_
-        std::cout << "Processor count : " << ProcessCount << std::endl;
-#endif
-
-        for (size_t i = 0; i < ProcessCount; ++i) {
-            // Serialize subimage size
-            memcpy(&SerializationBuffer[pos], &ComprPartSize[i], sizeof(unsigned int));
-            pos += sizeof(unsigned int);
-            // Serialize subimage itself
-            memcpy(&SerializationBuffer[pos], comprBuffer + ComprPartOffset[i], ComprPartSize[i]);
-            pos += ComprPartSize[i];
-#ifdef _DEBUG_
-            std::cout << "[" << i << "] size: " << ComprPartSize[i] << ", offset: " << ComprPartOffset[i] << std::endl;
-#endif
+        // Allocate serialization buffer
+        SerializedClassServiceSize = static_cast<unsigned int>(str.size());
+        if (!SerializedClassService) {
+            SerializedClassService = new char[SerializedClassServiceSize];
+            std::cout << "svlVideoCodecUDP: size of serialized cisst class service: " << SerializedClassServiceSize << std::endl;
         }
+        memcpy(SerializedClassService, str.c_str(), str.size());
 
         if (NetworkEnabled) {
-            if (SendUDP(SerializationBuffer, pos) == SVL_FAIL) {
+            if (SendUDP() == SVL_FAIL) {
                 std::cerr << "svlVideoCodecUDP: failed to send UDP messages" << std::endl;
                 return SVL_FAIL;
             }
@@ -627,51 +576,28 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     }
 
     // Deserialize cisst class service information
-    size_t pos = 0;
-    unsigned int serializedCisstServiceSize = 0;
-    // - Serialize size of serialized cisst class service
-    memcpy(&serializedCisstServiceSize, ReceiveBuffer + pos, sizeof(unsigned int));
-    pos += sizeof(unsigned int);
-#ifdef _DEBUG_
-    std::cout << "Serialized class service size : " << serializedCisstServiceSize << std::endl;
-#endif
-    // - Deserialize cisst class service
     DeSerializationStreamBuffer.str("");
-    DeSerializationStreamBuffer.write(ReceiveBuffer + pos, serializedCisstServiceSize);
+    DeSerializationStreamBuffer.write(SerializedClassService, SerializedClassServiceSize);
     DeSerializer->DeSerialize(image, false);
-    pos += serializedCisstServiceSize;
 
-    // Do svlStream deserialization (refer to svlSampleImageCustom<>::DeSerializeRaw())
-    // - Deserialize processor count (i.e., total number of subimages)
-    unsigned int processorCount = 0;
-    memcpy(&processorCount, ReceiveBuffer + pos, sizeof(unsigned int));
-    pos += sizeof(unsigned int);
-#ifdef _DEBUG_
-    std::cout << "Processor count : " << processorCount << std::endl;
-#endif
-
-    // - Image itself
+    // Rebuild image frame
     unsigned char* img = image.GetUCharPointer(videoch);
-    unsigned int i, compressedpartsize, offset;
+    unsigned int i, compressedpartsize, offset, pos;
     unsigned long longsize;
     int ret = SVL_FAIL;
 
-    offset = 0;
-    for (i = 0; i < processorCount; ++i) {
-        // Deserialize subimage size
-        memcpy(&compressedpartsize, ReceiveBuffer + pos, sizeof(unsigned int));
-        pos += sizeof(unsigned int);
-        //if (compressedpartsize == 0 || compressedpartsize > comprBufferSize) return SVL_FAIL;
-        // Deserialize subimage itself
-        memcpy(comprBuffer, ReceiveBuffer + pos, compressedpartsize);
-        pos += compressedpartsize;
+    offset = pos = 0;
+    for (i = 0; i < ProcessCount; ++i) {
+        compressedpartsize = ComprPartSize[i];
+        //memcpy(comprBuffer, ReceiveBuffer + pos, compressedpartsize);
 #ifdef _DEBUG_
         std::cout << "[" << i << "] size: " << compressedpartsize << std::endl;
 #endif
 
         // Decompress frame part
         longsize = yuvBufferSize - offset;
-        if (uncompress(yuvBuffer + offset, &longsize, comprBuffer, compressedpartsize) != Z_OK) {
+        //if (uncompress(yuvBuffer + offset, &longsize, comprBuffer, compressedpartsize) != Z_OK) {
+        if (uncompress(yuvBuffer + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
             std::cout << "ERROR: Uncompress failed" << std::endl;
             exit(1);
             return SVL_FAIL;
@@ -681,6 +607,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
         svlConverter::YUV422PtoRGB24(yuvBuffer + offset, img + offset * 3 / 2, longsize >> 1);
 
         offset += longsize;
+        pos += compressedpartsize;
     }
 
     return SVL_OK;
@@ -791,7 +718,7 @@ void svlVideoCodecUDP::Serialize(svlProcInfo * procInfo, const svlSampleImageBas
     // size of a subimage
     const size_t subImageSize = totalSize / ProcessCount;
     // buffer chunk size
-    const size_t bufferChunkSize = SerializationBufferSize / ProcessCount;
+    const size_t bufferChunkSize = SerializedClassServiceSize / ProcessCount;
 
     // src image start offset
     const size_t srcStartOffset = procId * subImageSize;
@@ -807,7 +734,7 @@ void svlVideoCodecUDP::Serialize(svlProcInfo * procInfo, const svlSampleImageBas
         Serializer->Serialize(image, false);
         // Copy serialized stream (class service information) into buffer chunk
         std::string str = SerializationStreamBuffer.str();
-        memcpy(&SerializationBuffer[destStartOffsetCurrent], str.c_str(), str.size());
+        memcpy(&SerializedClassService[destStartOffsetCurrent], str.c_str(), str.size());
         destStartOffsetCurrent += str.size();
         // Do svlStream serialization (refer to svlSampleImageCustom<>::SerializeRaw())
         std::string codec;
@@ -817,11 +744,11 @@ void svlVideoCodecUDP::Serialize(svlProcInfo * procInfo, const svlSampleImageBas
         svlStreamType type = image.GetType();
         double timestamp = image.GetTimestamp();
 
-        memcpy(&SerializationBuffer[destStartOffset], &type, sizeof(type));
+        memcpy(&SerializedClassService[destStartOffset], &type, sizeof(type));
         destStartOffsetCurrent += sizeof(type);
-        memcpy(&SerializationBuffer[destStartOffset], &timestamp, sizeof(timestamp));
+        memcpy(&SerializedClassService[destStartOffset], &timestamp, sizeof(timestamp));
         destStartOffsetCurrent += sizeof(timestamp);
-        memcpy(&SerializationBuffer[destStartOffset], codec.c_str(), codec.size());
+        memcpy(&SerializedClassService[destStartOffset], codec.c_str(), codec.size());
         destStartOffsetCurrent += codec.size();
     }
 
@@ -829,7 +756,7 @@ void svlVideoCodecUDP::Serialize(svlProcInfo * procInfo, const svlSampleImageBas
     const size_t usedSize = destStartOffsetCurrent - destStartOffset;
     /*
     if (SVL_OK != svlImageIO::Write(
-        image, videoch, codec, &SerializationBuffer[destStartOffsetCurrent], bufferChunkSize - usedSize, compression))
+        image, videoch, codec, &SerializedClassService[destStartOffsetCurrent], bufferChunkSize - usedSize, compression))
     {
         cmnThrow("svlVideoCodecUDP: Serialize error occured with svlImageIO::Write");
     }
@@ -923,33 +850,79 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
             //
             // Check message size
             if (byteRecv == sizeof(MSG_HEADER)) {
-                // Check content to make sure this is MSG_HEADER
+                // Check delimiter to make sure this is correct header
                 MSG_HEADER * header = (MSG_HEADER*) buf;
+                if (strncmp(DELIMITER_STRING, header->Delimiter, DELIMITER_STRING_SIZE) != 0) {
+                    std::cout << "svlVideoCodecUDP: invalid header delimiter" << std::endl;
+                    return 0;
+                }
+
+                // Frame sequence number
+                CurrentSeq = header->FrameSeq;
+                // Cisst class service
+                SerializedClassServiceSize = header->CisstClassServiceSize;
+                if (!SerializedClassService) {
+                    SerializedClassService = new char[SerializedClassServiceSize];
+                }
+                memcpy(SerializedClassService, header->CisstClassService, SerializedClassServiceSize);
+                // Subimages
+                ProcessCount = header->SubImageCount;
+                ComprPartSize.SetSize(ProcessCount);
+                for (unsigned int i = 0; i < ProcessCount; ++i) {
+                    ComprPartSize[i] = header->SubImageSize[i];
+                }
+
+                serializedSize = ComprPartSize.SumOfElements();
+                if (serializedSize == 0) {
+                    std::cout << "svlVideoCodecUDP: incorrect serialized image size" << std::endl;
+                    return 0;
+                }
+
 #ifdef _DEBUG_
                 header->Print();
 #endif
-                if (strncmp(DELIMITER_STRING, header->Delimiter, DELIMITER_STRING_SIZE) == 0) {
-                    CurrentSeq = header->FrameSeq;
-#ifdef _DEBUG_
-                    std::cout << "sequence number: " << CurrentSeq << std::endl;
-#endif
-                    serializedSize = header->SerializedSize;
-
-#ifdef _DEBUG_
-                    std::cout << "serialized size: " << serializedSize << " bytes" << std::endl;
-#endif
-
-                    if (serializedSize == 0) {
-                        return 0;
-                    }
-
-                    continue;
-                }
+                continue;
             }
 
             //
             // Get payload
             //
+            payload = reinterpret_cast<MSG_PAYLOAD *>(buf);
+            if (CurrentSeq == 0) {
+                continue;
+            }
+
+            // Incorrect frame has arrived.  Then, drop this frame.
+            if (CurrentSeq != payload->FrameSeq) {
+                std::cout << "svlVideoCodecUDP: frame with incorrect sequence number arrived: expected ("
+                    << CurrentSeq << ") actual (" << payload->FrameSeq << ")" << std::endl;
+                // TODO: Check if this is OK
+                //CurrentSeq = 0;
+                //totalByteRecv = 0;
+
+                // drop all data received until now
+                //totalByteRecv = 0;
+                // start new image frame
+                // waiting for header
+                continue;
+            }
+
+            // Copy payload into receive buffer
+            memcpy(ReceiveBuffer + totalByteRecv, payload->Payload, payload->PayloadSize);
+            totalByteRecv += payload->PayloadSize;
+#ifdef _DEBUG_
+            std::cout << totalByteRecv << " / " << serializedSize << std::endl;
+#endif
+
+            if (totalByteRecv >= serializedSize) {
+                // now receiver has received all the data to rebuild an original
+                // image through deserialization.
+                received = true;
+
+                return serializedSize;
+            }
+
+            /*
             payload = reinterpret_cast<MSG_PAYLOAD *>(buf);
             if (CurrentSeq != 0) {
                 if (payload->FrameSeq != CurrentSeq) {
@@ -957,12 +930,11 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
                     CurrentSeq = 0;
                     totalByteRecv = 0;
                     continue;
-                    /*
+                    
                     // drop all data received until now
-                    totalByteRecv = 0;
+                    //totalByteRecv = 0;
                     // start new image frame
                     // waiting for header
-                    */
                 } else {
                     memcpy(ReceiveBuffer + totalByteRecv, payload->Payload, payload->PayloadSize);
                     totalByteRecv += payload->PayloadSize;
@@ -973,12 +945,12 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
                         // now receiver has received all the data to rebuild an
                         // original image by deserialization.
                         received = true;
-                        senderTick = payload->Timestamp;
 
                         return serializedSize;
                     }
                 }
             }
+            */
         }
     }
 
@@ -1017,20 +989,27 @@ void svlVideoCodecUDP::ReportResults(void)
     fb.close();
 }
 
-int svlVideoCodecUDP::SendUDP(const unsigned char * serializedImage, const size_t serializedImageSize)
+int svlVideoCodecUDP::SendUDP(void)
 {
-    // Send video stream data via UDP
-    // First, send MSG_HEADER message to let a client know the size of the
-    // frame. Then, send serialized image data with fragmentation of size
-    // 1300 bytes (predefined but tunnable value).
+    // Send serialized video stream data via UDP.
+    // First, send MSG_HEADER message to let a client know the comprehensive
+    // information about the frame.  Then, send serialized image data using
+    // 1300-byte UDP messages.
 
-    // Send MSG_HEADER message
+    // Get total size of all serialized subimages
+    const unsigned int totalSubImageSize = ComprPartSize.SumOfElements();
+
+    // Build MSG_HEADER
     static unsigned int frameSeq = 0;
 
     MSG_HEADER header;
     header.FrameSeq = ++frameSeq;
-    header.SerializedSize = serializedImageSize;
-    header.Timestamp = osaGetTime();
+    header.CisstClassServiceSize = SerializedClassServiceSize;
+    memcpy(header.CisstClassService, SerializedClassService, SerializedClassServiceSize);
+    header.SubImageCount = ProcessCount;
+    for (unsigned int i = 0; i < ProcessCount; ++i) {
+        header.SubImageSize[i] = ComprPartSize[i];
+    }
 
     int ret = sendto(SocketSend, (const char*) &header, sizeof(header), 0, (struct sockaddr *) &SendToAddr, sizeof(SendToAddr));
     if (ret != sizeof(header)) {
@@ -1042,48 +1021,52 @@ int svlVideoCodecUDP::SendUDP(const unsigned char * serializedImage, const size_
         std::cout << "Sent MSG_HEADER" << std::endl;
         header.Print();
     }
-    //std::cout << "######## " << sizeof(MSG_HEADER) << ", " << sizeof(MSG_PAYLOAD) << std::endl;
 #endif
-
 
     // Send image data
     MSG_PAYLOAD payload;
     payload.FrameSeq = frameSeq;
 
-    unsigned int byteSent = 0, n;
-    while (byteSent < serializedImageSize) {
-        n = (UNIT_MESSAGE_SIZE > (serializedImageSize - byteSent) ? (serializedImageSize - byteSent) : UNIT_MESSAGE_SIZE);
-        
-        memcpy(payload.Payload, reinterpret_cast<const char*>(serializedImage + byteSent), n);
-        payload.PayloadSize = n;
-        payload.Timestamp = osaGetTime();
+    unsigned int byteSent = 0, totalByteSent = 0, n;
+    unsigned char * subImagePtr = comprBuffer;
+    for (size_t i = 0; i < ProcessCount; ++i) {
+        byteSent = 0;
+        subImagePtr = comprBuffer + ComprPartOffset[i];
 
-        ret = sendto(SocketSend, (const char *)&payload, sizeof(payload), 0, (struct sockaddr *) &SendToAddr, sizeof(SendToAddr));
-        if (ret < 0) {
-            std::cerr << "svlVideoCodecUDP: failed to send UDP message: " 
-                << byteSent << " / " << serializedImageSize << ", errono: ";
+        while (byteSent < ComprPartSize[i]) {
+            n = (UNIT_MESSAGE_SIZE > (ComprPartSize[i] - byteSent) ? (ComprPartSize[i] - byteSent) : UNIT_MESSAGE_SIZE);
+
+            memcpy(payload.Payload, reinterpret_cast<const char*>(subImagePtr + byteSent), n);
+            payload.PayloadSize = n;
+
+            ret = sendto(SocketSend, (const char *)&payload, sizeof(payload), 0, (struct sockaddr *) &SendToAddr, sizeof(SendToAddr));
+            if (ret < 0) {
+                std::cerr << "svlVideoCodecUDP: failed to send UDP message: " 
+                    << byteSent << " / " << ComprPartSize[i] << ", errono: ";
 #if (CISST_OS == CISST_WINDOWS)
-            std::cerr << WSAGetLastError() << std::endl;
+                std::cerr << WSAGetLastError() << std::endl;
 #else
-            std::cerr << strerror(errno) << std::endl;
+                std::cerr << strerror(errno) << std::endl;
 #endif
-            break;
-        } else {
+                break;
+            } else {
+                byteSent += n;
 #ifdef _DEBUG_
-            printf("Sent (%u) : %u / %u\n", ret, byteSent, serializedImageSize);
+                printf("Sent (%u) : %u / %u\n", ret, byteSent, ComprPartSize[i]);
 #endif
-            byteSent += n;
+            }
+
+            osaSleep(0.5 * cmn_ms);
         }
-
-        //osaSleep(0.5 * cmn_ms);
-        //osaSleep(1 * cmn_ms);
-        //osaSleep(1 * cmn_s);
+        
+        totalByteSent += byteSent;
     }
+    
 #ifdef _DEBUG_
-    printf("Send complete: %u / %u\n", byteSent, serializedImageSize);
+    printf("Send complete: %u / %u\n", totalByteSent, ComprPartSize.SumOfElements());
 #endif
 
-    return serializedImageSize;
+    return sizeof(header) + totalByteSent;
 }
 
 /*

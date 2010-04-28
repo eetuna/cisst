@@ -34,6 +34,10 @@ http://www.cisst.org/cisst/license.txt.
 #define DELIMITER_STRING      "JHU_TELESURGERY_RESEARCH"
 #define DELIMITER_STRING_SIZE 28
 #define UNIT_MESSAGE_SIZE     1300
+#define MAX_SUBIMAGE_COUNT    32
+
+// Assume that serialized cisst class service is not bigger than 100 bytes.
+#define MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE 100
 
 class svlVideoCodecUDP : public svlVideoCodecBase, public cmnGenericObject
 {
@@ -208,23 +212,46 @@ protected:
     public:
         // Frame sequence number
         unsigned int FrameSeq;
-        // Total size (in bytes) of serialized image data
-        unsigned int SerializedSize;
+
+        // Serialized cisst class services
+        char CisstClassService[MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE];
+        char CisstClassServiceSize;
+
+        // Total number of subimages
+        char SubImageCount;
+        // Subimage sizes
+        unsigned int SubImageSize[MAX_SUBIMAGE_COUNT];
+        // Total size of serialized image (equals to sum of all subimages' sizes)
+        //unsigned int SerializedImageSize;
+
         // Delimiter to differentiate MSG_HEADER and MSG_BODY (don't edit this field)
         char Delimiter[DELIMITER_STRING_SIZE];
         // Timestamp right before this message is sent to network
-        double Timestamp;
+        //double Timestamp;
 
         MSG_HEADER() {
+            FrameSeq = 0;
+
+            memset(CisstClassService, 0, MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE);
+            CisstClassServiceSize = 0;
+
+            SubImageCount = 0;
+            memset(SubImageSize, 0, sizeof(unsigned int) * MAX_SUBIMAGE_COUNT);
+
             memset(Delimiter, 0, DELIMITER_STRING_SIZE);
             strncpy(Delimiter, DELIMITER_STRING, DELIMITER_STRING_SIZE);
-            SerializedSize = 0;
         }
 
         void Print(void) {
-            std::cout << "HEADER.FrameSeq       = " << FrameSeq << std::endl;
-            std::cout << "HEADER.SerializedSize = " << SerializedSize << std::endl;
-            std::cout << "HEADER.Delimiter      = " << Delimiter << std::endl;
+            std::cout << "HEADER.FrameSeq         = " << FrameSeq << std::endl;
+            std::cout << "HEADER.ClassServiceSize = " << (int) CisstClassServiceSize << std::endl;
+            std::cout << "HEADER.SubImageCount    = " << (int) SubImageCount << std::endl;
+            std::cout << "HEADER.SubImageSize     = ";
+            for (int i = 0; i < SubImageCount; ++i) {
+                std::cout << SubImageSize[i] << " ";
+            }
+            std::cout << std::endl;
+            std::cout << "HEADER.Delimiter        = " << Delimiter << std::endl;
         }
     };
 
@@ -233,9 +260,9 @@ protected:
         // Frame sequence of an image that this payload belongs to
         unsigned int FrameSeq;
         // Payload size
-        unsigned int PayloadSize;
+        unsigned short PayloadSize;
         // Timestamp right before this message is sent to network
-        double Timestamp;
+        //double Timestamp;
         // Fragmented image data (with serialization)
         char Payload[UNIT_MESSAGE_SIZE];
     };
@@ -250,7 +277,8 @@ protected:
     /*! Get one image frame from network */
     unsigned int GetOneImage(double & senderTick);
     /*! Send one image frame to network */
-    int SendUDP(const unsigned char * serializedImage, const size_t serializedImageSize);
+    //int SendUDP(const unsigned char * serializedImage, const size_t serializedImageSize);
+    int SendUDP(void);
     /*! Cleanup resouces */
     void SocketCleanup(void);
 
@@ -263,8 +291,8 @@ protected:
 
     /*! Support for serialization of subimages using multiple CPU */
     unsigned int ProcessCount;
-    unsigned char * SerializationBuffer;
-    unsigned int SerializationBufferSize;
+    char * SerializedClassService;
+    unsigned int SerializedClassServiceSize;
 
     unsigned char* yuvBuffer;
     unsigned int yuvBufferSize;
@@ -277,11 +305,6 @@ protected:
     unsigned int saveBufferSize;
     unsigned int SaveBufferUsedSize;
     unsigned int SaveBufferUsedID;
-
-    vctDynamicVector<unsigned int> SubImageTimeForSerialization;
-    vctDynamicVector<unsigned int> SubImageSerializedSize;
-    //vctDynamicVector<unsigned int> SubImageOffset;
-    //vctDynamicVector<unsigned int> SubImageSize;
 
     //void Serialize(const cmnGenericObject & originalObject, std::string & serializedObject);
     //void Serialize(svlProcInfo * procInfo, const svlSampleImageBase &image, const unsigned int videoch, const unsigned int procId);
