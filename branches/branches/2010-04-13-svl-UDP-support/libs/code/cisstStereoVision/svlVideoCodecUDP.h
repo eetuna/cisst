@@ -214,6 +214,10 @@ protected:
         char CisstClassService[MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE];
         char CisstClassServiceSize;
 
+        /*! Image size */
+        unsigned short Width;
+        unsigned short Height;
+
         /*! Total number of subimages */
         char SubImageCount;
         /*! Subimage sizes */

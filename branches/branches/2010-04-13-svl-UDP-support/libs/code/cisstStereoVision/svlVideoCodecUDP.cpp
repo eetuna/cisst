@@ -33,17 +33,15 @@ http://www.cisst.org/cisst/license.txt.
 //#define _DEBUG_
 
 #define USE_COMPRESSION
+
 #ifdef USE_COMPRESSION
-//#define COMPRESSION_ARG 10
-//#define COMPRESSION_ARG 50
-//#define COMPRESSION_ARG 75
 #define COMPRESSION_ARG 95
 #endif
 
-//#define IMAGE_WIDTH  (1920 * 2)
-//#define IMAGE_HEIGHT 1080
-#define IMAGE_WIDTH  (256*2)
-#define IMAGE_HEIGHT 240
+#define IMAGE_WIDTH  (1920 * 2)
+#define IMAGE_HEIGHT 1080
+//#define IMAGE_WIDTH  (256*2)
+//#define IMAGE_HEIGHT 240
 
 #define SERIALIZED_CLASS_SERVICE_MAX_SIZE 1000
 
@@ -261,8 +259,10 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
     std::string ip(filename);
     std::cout << "svlVideoCodecUDP: selected file: " << filename << std::endl;
 
-    Width = IMAGE_WIDTH;
-    Height = IMAGE_HEIGHT;
+    // Set image width and height
+    Width = width;
+    Height = height;
+    std::cout << "svlVideoCodecUDP: image width: " << Width << ", height: " << Height << std::endl;
 
     // For testing purposes
     std::string str("0.udp");
@@ -281,21 +281,14 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
 int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch)
 {
     static int frameNo = 0;
+    /*
     if (procInfo->id == 0) {
-        // For testing
-        /*
-        if (frameNo++ >= 3) {
-            ReportResults();
-            //exit(1);
-            return SVL_FAIL;
-        }
-        */
-
         // The first frame takes longer to process(?)
         //if (++frameNo == 1) {
         //    osaSleep(1.0);
         //}
     }
+    */
 
     //
     // Initialize multi-threaded image serialization
@@ -307,11 +300,15 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
     _OnSingleThread(procInfo)
     {
-        if (frameNo++ == 0) {
+        if (frameNo == 0) {
             std::cout << "svlVideoCodecUDP: processor count: " << ProcessCount << std::endl;
             SubImageOffset.SetSize(procInfo->count);
             SubImageSize.SetSize(procInfo->count);
+        } else if (frameNo == 1) {
+            // It takes time for UDP receiver to initialze (e.g. shows up output window)
+            osaSleep(1.0);
         }
+        frameNo++;
     }
 
     const unsigned int procId = procInfo->id;
@@ -398,6 +395,23 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         SerializationStreamBuffer.str("");
         Serializer->Serialize(image, false);
 
+        /* TODO: add these information???
+    virtual void SerializeRaw(std::ostream & outputStream) const
+    {
+        std::string codec;
+        int compression;
+        GetEncoder(codec, compression);
+        cmnSerializeRaw(outputStream, GetType());
+        cmnSerializeRaw(outputStream, GetTimestamp());
+        cmnSerializeRaw(outputStream, codec);
+        for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
+            if (svlImageIO::Write(*this, vch, codec, outputStream, compression) != SVL_OK) {
+                cmnThrow("svlSampleImageCustom::SerializeRaw(): Error occured with svlImageIO::Write");
+            }
+        }
+    }
+
+    */
         // Serialize cisst class service information
         const std::string str = SerializationStreamBuffer.str();
         // Allocate serialization buffer
@@ -409,6 +423,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         memcpy(SerializedClassService, str.c_str(), str.size());
 
         if (NetworkEnabled) {
+            std::cerr << "svlVideoCodecUDP: Sending frame no: " << frameNo << "\r";
             if (SendUDP() == SVL_FAIL) {
                 std::cerr << "svlVideoCodecUDP: failed to send UDP messages" << std::endl;
                 return SVL_FAIL;
@@ -468,7 +483,7 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
 
     // TODO: Parse filename
     //std::cout << "Open called with file: " << filename << std::endl;
-
+    
     /*
     std::cout << "Waiting for the first frame to get image information..." << std::endl;
 
@@ -479,80 +494,15 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
         return SVL_FAIL;
     }
 
-    // Deserialize cisst class service information
-    const std::string serializedString(SerializedClassService, SerializedClassServiceSize);
-    cmnGenericObject * deserializedObject = 0;
-    try {
-        DeSerializationStreamBuffer.str("");
-        DeSerializationStreamBuffer << serializedString;
-        deserializedObject = DeSerializer->DeSerialize();
-    }  catch (std::runtime_error e) {
-        std::cerr << "svlVideoCodecUDP: DeSerialization failed: " << e.what() << std::endl;
-        return 0;
-    }
-
-    //cmnGenericObject * object = DeSerialize(SerializedClassService, false);
-    svlSampleImageBase * image = dynamic_cast<svlSampleImageBase *>(deserializedObject);
-    std::cout << "width: " << image->GetWidth() << ", height: " << image->GetHeight() << std::endl;
-    exit(1);
-
-    /*
-    // Wait for one complete image to be transferred. If it arrives, extract 
-    // image size information (width and height)
-    double senderTick;
-    unsigned int serializedSize;
-    unsigned int _width = 0;
-    //svlSampleImageBase * image;
-    //for (int i = 0; i < 1; i++) { // 2 sec (30Hz)
-    int cnt = 0;
-    while (_width == 0) {
-        serializedSize = GetOneImage(senderTick);
-    //    if (serializedSize == 0) {
-    //        continue;
-    //    }
-        std::cout << "serializedSize: " << serializedSize << std::endl;
-
-        // Deserialize data
-        std::string serializedData(ReceiveBuffer, serializedSize);
-        cmnGenericObject * object = DeSerialize(serializedData);
-        //object->Services()->TypeInfoPointer()->name
-        svlSampleImageBase * image = dynamic_cast<svlSampleImageBase *>(object);//(object->Services()->Create());
-        if (!image) {
-            std::cout << "ERROR: NULL" << std::endl;
-            exit(1);
-        }
-        
-        width = image->GetWidth();
-        height = image->GetHeight();
-        std::cout << "Image size: " << width << " x " << height << std::endl;
-
-        _width = width;
-    }
-
-    //if (serializedSize == 0) {
-    //    return SVL_FAIL;
-    //}
-
-    //std::cout << "----------------------" << std::endl;
-
-    //width = image->GetWidth();
-    //height = image->GetHeight();
-    std::cout << "========== Image size: " << width << " x " << height << std::endl;
-
-    //exit(1);
+    // Set (return) image width and height
+    width = Width;
+    height = Height;
     //*/
 
-    /*  // drop.avi
-    width = 256 * 2;
-    height = 240;
-    //*/
-    /*  // capture.avi
-    width = 640 * 2;
-    height = 480;riali
-    /*/
     width = IMAGE_WIDTH;
     height = IMAGE_HEIGHT;
-    //*/
+
+    printf("width: %u, height: %u\n", width, height);
 
     return SVL_OK;
 }
@@ -578,7 +528,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     const double ticProcessing = osaGetTime();
     */
 
-    std::cout << ++frameNo << std::endl;
+    std::cout << "svlVideoCodecUDP: Received frame no: " << ++frameNo << "\r";
 
     // Receive video stream data via UDP
     double senderTick;
@@ -600,6 +550,8 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     DeSerializationStreamBuffer.str("");
     DeSerializationStreamBuffer.write(SerializedClassService, SerializedClassServiceSize);
     DeSerializer->DeSerialize(image, false);
+    //cmnGenericObject * object = DeSerializer->DeSerialize(false);
+    //svlSampleImageBase * image2 = dynamic_cast<svlSampleImageBase *>(object);
 
     // Rebuild image frame
     unsigned char* img = image.GetUCharPointer(videoch);
@@ -803,6 +755,12 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
                     SerializedClassService = new char[SerializedClassServiceSize];
                 }
                 memcpy(SerializedClassService, header->CisstClassService, SerializedClassServiceSize);
+                // Set image width and height
+                if (Width == 0) {
+                    Width = header->Width;
+                    Height = header->Height;
+                    std::cout << "svlVideoCodecUDP: Set image width: " << Width << ", height: " << Height << std::endl;
+                }
                 // Subimages
                 ProcessCount = header->SubImageCount;
                 SubImageSize.SetSize(ProcessCount);
@@ -944,6 +902,8 @@ int svlVideoCodecUDP::SendUDP(void)
     header.FrameSeq = ++frameSeq;
     header.CisstClassServiceSize = SerializedClassServiceSize;
     memcpy(header.CisstClassService, SerializedClassService, SerializedClassServiceSize);
+    header.Width = Width;
+    header.Height = Height;
     header.SubImageCount = ProcessCount;
     for (unsigned int i = 0; i < ProcessCount; ++i) {
         header.SubImageSize[i] = SubImageSize[i];
@@ -994,7 +954,7 @@ int svlVideoCodecUDP::SendUDP(void)
 #endif
             }
 
-            osaSleep(0.5 * cmn_ms);
+            osaSleep(1 * cmn_ms);
         }
         
         totalByteSent += byteSent;

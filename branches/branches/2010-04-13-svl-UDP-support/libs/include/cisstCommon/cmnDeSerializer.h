@@ -152,7 +152,7 @@ public:
       \note As this method relies on cmnDeSerializeRaw, it might throw
       an exception.
     */
-    cmnGenericObject * DeSerialize(void);
+    cmnGenericObject * DeSerialize(const bool serializeObject = true);
 
 
     /*! De-serialize an object from the input stream.  This method
