@@ -188,8 +188,7 @@ mtsCommandWriteBase* mtsTaskInterface::AddCommandWrite(mtsCommandWriteBase *comm
     if (command) {
         if (CommandsWrite.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
             // Create with no mailbox and 0 size argument queue.
-            //mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandQueuedWriteGeneric(0, command, 0);
-            mtsCommandQueuedWriteBase * queuedCommand = 0;  // PK TEMP
+            mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandQueuedWriteGeneric(0, command, 0);
             if (queuedCommand) {
                 if (CommandsQueuedWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                     return queuedCommand;

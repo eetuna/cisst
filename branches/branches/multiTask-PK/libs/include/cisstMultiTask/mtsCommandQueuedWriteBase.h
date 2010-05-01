@@ -100,14 +100,16 @@ public:
   mtsCommandQueuedWriteGeneric is used to create a generic event
   observer (combined with mtsMulticastCommandWriteBase) that can
   accept any payload (derived from mtsGenericObject). */
-class CISST_EXPORT mtsCommandQueuedWriteGenericBase: public mtsCommandWriteBase 
+// PK: It is now derived from mtsCommandQueuedWriteBase, and so should be moved to mtsCommandQueuedWrite.h, perhaps as a
+// specialization of class mtsCommandQueuedWrite.
+class CISST_EXPORT mtsCommandQueuedWriteGenericBase: public mtsCommandQueuedWriteBase 
 {
  protected:
-    typedef mtsCommandWriteBase BaseType;
+    typedef mtsCommandQueuedWriteBase BaseType;
     typedef mtsCommandQueuedWriteGenericBase ThisType;
 
-    mtsMailBox * MailBox;
-    mtsCommandWriteBase * ActualCommand;
+    //mtsMailBox * MailBox;
+    //mtsCommandWriteBase * ActualCommand;
 
     size_t ArgumentQueueSize; // size used for queue
     mtsQueueGeneric ArgumentsQueue;
@@ -130,9 +132,7 @@ public:
       used.  This is useful when the queued command is added to a
       multicast command. */
     inline mtsCommandQueuedWriteGenericBase(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size):
-        BaseType(actualCommand->GetName()),
-        MailBox(mailBox),
-        ActualCommand(actualCommand),
+        BaseType(mailBox, actualCommand),
         ArgumentQueueSize(size),
         ArgumentsQueue()
     {
@@ -194,14 +194,11 @@ public:
     }
 
 
+    // PK: does not properly handle ProxyRef objects
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
         if (this->IsEnabled()) {
-            const mtsGenericObject * argumentTyped = dynamic_cast<const mtsGenericObject *>(&argument);
-            if (!argumentTyped) {
-                return mtsCommandBase::BAD_INPUT;
-            }
             // Now, copy the argument to the local storage.
-            if (ArgumentsQueue.Put(*argumentTyped)) {
+            if (ArgumentsQueue.Put(argument)) {
                 if (MailBox->Write(this)) {
                     return mtsCommandBase::DEV_OK;
                 } else {
