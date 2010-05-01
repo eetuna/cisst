@@ -100,14 +100,14 @@ public:
   mtsCommandQueuedWriteGeneric is used to create a generic event
   observer (combined with mtsMulticastCommandWriteBase) that can
   accept any payload (derived from mtsGenericObject). */
-class CISST_EXPORT mtsCommandQueuedWriteGenericBase: public mtsCommandWriteGenericBase 
+class CISST_EXPORT mtsCommandQueuedWriteGenericBase: public mtsCommandWriteBase 
 {
  protected:
-    typedef mtsCommandWriteGenericBase BaseType;
+    typedef mtsCommandWriteBase BaseType;
     typedef mtsCommandQueuedWriteGenericBase ThisType;
 
     mtsMailBox * MailBox;
-    mtsCommandWriteGenericBase * ActualCommand;
+    mtsCommandWriteBase * ActualCommand;
 
     size_t ArgumentQueueSize; // size used for queue
     mtsQueueGeneric ArgumentsQueue;
@@ -129,7 +129,7 @@ public:
       potentially occur later, i.e. when SetArgumentPrototype is
       used.  This is useful when the queued command is added to a
       multicast command. */
-    inline mtsCommandQueuedWriteGenericBase(mtsMailBox * mailBox, mtsCommandWriteGenericBase * actualCommand, size_t size):
+    inline mtsCommandQueuedWriteGenericBase(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size):
         BaseType(actualCommand->GetName()),
         MailBox(mailBox),
         ActualCommand(actualCommand),
@@ -153,7 +153,7 @@ public:
     }
 
 
-    inline virtual mtsCommandWriteGenericBase * GetActualCommand(void) {
+    inline virtual mtsCommandWriteBase * GetActualCommand(void) {
         return ActualCommand;
     }
 

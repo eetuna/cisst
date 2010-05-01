@@ -188,10 +188,10 @@ public:
 
 
 template <class _classType>
-class mtsCommandWriteGeneric: public mtsCommandWriteGenericBase {
+class mtsCommandWriteGeneric: public mtsCommandWriteBase {
 
 public:
-    typedef mtsCommandWriteGenericBase BaseType;
+    typedef mtsCommandWriteBase BaseType;
 
     /*! Typedef for the specific interface. */
     typedef _classType ClassType;

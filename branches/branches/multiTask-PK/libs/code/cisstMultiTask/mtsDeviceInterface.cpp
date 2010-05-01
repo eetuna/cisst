@@ -208,20 +208,6 @@ bool mtsDeviceInterface::AddObserver(const std::string & eventName, mtsCommandWr
 }
 
 
-bool mtsDeviceInterface::AddObserver(const std::string & eventName, mtsCommandWriteGenericBase * handler)
-{
-    mtsMulticastCommandWriteBase * multicastCommand = EventWriteGenerators.GetItem(eventName);
-    if (multicastCommand) {
-        // should probably check for duplicates (have AddCommand return bool?)
-        multicastCommand->AddCommand(handler);
-        return true;
-    } else {
-        CMN_LOG_CLASS_INIT_ERROR << "AddObserver (write): cannot find event named \"" << eventName << "\"" << std::endl;
-        return false;
-    }
-}
-
-
 unsigned int mtsDeviceInterface::AllocateResources(const std::string & userName)
 {
     // no queued commands in this interface, we just keep track of the
