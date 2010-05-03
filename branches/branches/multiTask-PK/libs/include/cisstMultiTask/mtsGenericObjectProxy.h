@@ -34,8 +34,103 @@ http://www.cisst.org/cisst/license.txt.
 
 
 // Forward declarations
+template <class _elementType> class mtsGenericObjectProxyBase;
 template <class _elementType> class mtsGenericObjectProxy;
 template <class _elementType> class mtsGenericObjectProxyRef;
+
+// Class services specialization for proxy objects.  We assume that we always want dynamic creation.
+template <typename _elementType>
+class cmnClassServicesForProxy: public cmnClassServicesBase {
+    typedef mtsGenericObjectProxy<_elementType> value_type;
+    typedef mtsGenericObjectProxyBase<_elementType> value_basetype;
+ public:
+    /*! Type of the base class, i.e. cmnClassServicesBase. */
+    typedef cmnClassServicesBase BaseType;
+
+    /* documented in base class */
+    typedef BaseType::LogLoDType LogLoDType;
+
+    /*!  Constructor. Sets the name of the class and the Level of Detail
+      setting for the class.
+
+      \param className The name to be associated with the class.
+      \param typeInfo Type information as defined by typeid() (see
+      C++ RTTI)
+      \param lod The Log Level of Detail setting to be used with this class.
+    */
+    cmnClassServicesForProxy(const std::string & className, const std::type_info * typeInfo, LogLoDType lod = CMN_LOG_LOD_RUN_ERROR):
+        BaseType(className, typeInfo, lod)
+    {}
+
+    /* documented in base class */
+    virtual cmnGenericObject * Create(void) const {
+        return new value_type;
+    }
+
+    /* documented in base class */
+    virtual cmnGenericObject * CreateArray(size_t size) const {
+        return new value_type[size];
+    }
+
+    /* documented in base class */
+    virtual cmnGenericObject * Create(const cmnGenericObject & other) const {
+        const value_type * otherPointer = dynamic_cast<const value_type *>(&other);
+        if (otherPointer) {
+            return new value_type(*otherPointer);
+        } else {
+            return 0;
+        }
+    }
+
+    /* documented in base class */
+    virtual bool Create(cmnGenericObject * existing, const cmnGenericObject & other) const {
+        // PK: Special handling for proxy objects:  use ProxyBase instead
+        const value_basetype * otherPointer = dynamic_cast<const value_basetype *>(&other);
+        if (otherPointer) {
+            new(existing) value_type(otherPointer->GetData());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /* documented in base class */
+    virtual bool Delete(cmnGenericObject * existing) const {
+        value_type * existingPointer = dynamic_cast<value_type *>(existing);
+        if (existingPointer) {
+            existingPointer->~value_type();
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
+
+// PK TEMP HACK
+#define MTS_IMPLEMENT_SERVICES_PROXY(className)    \
+template<> \
+cmnClassServicesBase * className::ClassServices(void) \
+{ \
+    static cmnClassServicesBase * classServices = cmnClassServicesInstantiate<className>(); \
+    return classServices; \
+} \
+template<> \
+cmnClassServicesBase * className::ClassServicesPointer = className::ClassServices(); \
+template<> \
+const cmnClassServicesBase * className::Services(void) const \
+{ \
+   return this->ClassServices(); \
+} \
+template<> \
+cmnClassServicesBase * cmnClassServicesInstantiate<className>(void) \
+{ \
+    static cmnClassServicesForProxy<className::value_type> classServices(#className, \
+                                                                         &typeid(className), \
+                                                                         static_cast<cmnLogLoD>(className::InitialLoD)); \
+    return static_cast<cmnClassServicesBase *>(&classServices); \
+} \
+static cmnClassServicesBase * className##ClassServicesPointer = className::ClassServices();
+
 
 /*!  Proxy class used to create a simple mtsGenericObject, i.e. data
   object with a registered type, dynamic creation, serialization and
