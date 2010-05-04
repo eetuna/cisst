@@ -38,8 +38,8 @@ http://www.cisst.org/cisst/license.txt.
 #define COMPRESSION_ARG 95
 #endif
 
-#define IMAGE_WIDTH  (1920 * 2)
-#define IMAGE_HEIGHT 1080
+//#define IMAGE_WIDTH  (1920 * 2)
+//#define IMAGE_HEIGHT 1080
 //#define IMAGE_WIDTH  (256*2)
 //#define IMAGE_HEIGHT 240
 
@@ -59,6 +59,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <errno.h>
 #include <string.h>  // for memset
 #endif
+
+//
+// 1. buffer creation -> appropriately
+// 2. full seriailization: timestamp, codec name, ... (svlStreamDefs.h)
+//
 
 /*! Network support */
 //#define UDP_RECEIVER_IP   "127.0.0.1"
@@ -112,24 +117,6 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     FrameCountPerSecond = 0;
     LastFPSTick = 0.0;
     LastDelayTick = 0.0;
-
-    // Allocate compression buffer if not done yet
-    unsigned int size = IMAGE_WIDTH * IMAGE_HEIGHT * 3;
-    size += size / 100 + 4096;
-    BufferCompression = new unsigned char[size];
-    BufferCompressionSize = size;
-
-    // Allocate YUV buffer if not done yet
-    size = IMAGE_WIDTH * IMAGE_HEIGHT * 2;
-    if (!BufferYUV) {
-        BufferYUV = new unsigned char[size];
-        BufferYUVSize = size;
-    }
-    else if (BufferYUV && BufferYUVSize < size) {
-        delete [] BufferYUV;
-        BufferYUV = new unsigned char[size];
-        BufferYUVSize = size;
-    }
 }
 
 svlVideoCodecUDP::~svlVideoCodecUDP()
@@ -273,6 +260,31 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
     } else {
         NetworkEnabled = true;
         std::cout << "svlVideoCodecUDP: networking feature is enabled" << std::endl;
+    }
+
+    // Allocate YUV buffer if not done yet
+    unsigned int size = Width * Height * 2;
+    if (!BufferYUV) {
+        BufferYUV = new unsigned char[size];
+        BufferYUVSize = size;
+    }
+    else if (BufferYUV && BufferYUVSize < size) {
+        delete [] BufferYUV;
+        BufferYUV = new unsigned char[size];
+        BufferYUVSize = size;
+    }
+
+    // Allocate compression buffer if not done yet
+    size = Width * Height * 3;
+    size += size / 100 + 4096;
+    if (!BufferCompression) {
+        BufferCompression = new unsigned char[size];
+        BufferCompressionSize = size;
+    }
+    else if (BufferCompression && BufferCompressionSize < size) {
+        delete [] BufferCompression;
+        BufferCompression = new unsigned char[size];
+        BufferCompressionSize = size;
     }
 
     return SVL_OK;
@@ -423,7 +435,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         memcpy(SerializedClassService, str.c_str(), str.size());
 
         if (NetworkEnabled) {
-            std::cerr << "svlVideoCodecUDP: Sending frame no: " << frameNo << "\r";
+            //std::cerr << "svlVideoCodecUDP: Sending frame no: " << frameNo << std::endl;
             if (SendUDP() == SVL_FAIL) {
                 std::cerr << "svlVideoCodecUDP: failed to send UDP messages" << std::endl;
                 return SVL_FAIL;
@@ -484,7 +496,7 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     // TODO: Parse filename
     //std::cout << "Open called with file: " << filename << std::endl;
     
-    /*
+    //*
     std::cout << "Waiting for the first frame to get image information..." << std::endl;
 
     double senderTick;
@@ -499,10 +511,29 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     height = Height;
     //*/
 
-    width = IMAGE_WIDTH;
-    height = IMAGE_HEIGHT;
+    // Allocate YUV buffer if not done yet
+    unsigned int size = Width * Height * 2;
+    if (!BufferYUV) {
+        BufferYUV = new unsigned char[size];
+        BufferYUVSize = size;
+    } else if (BufferYUV && BufferYUVSize < size) {
+        delete [] BufferYUV;
+        BufferYUV = new unsigned char[size];
+        BufferYUVSize = size;
+    }
 
-    printf("width: %u, height: %u\n", width, height);
+    // Allocate compression buffer if not done yet
+    size = BufferYUVSize + BufferYUVSize / 100 + 4096;
+    if (!BufferCompression) {
+        BufferCompression = new unsigned char[size];
+        BufferCompressionSize = size;
+    } else if (BufferCompression && BufferCompressionSize < size) {
+        delete [] BufferCompression;
+        BufferCompression = new unsigned char[size];
+        BufferCompressionSize = size;
+    }
+
+    std::cout << "svlVideoCodecUDP: width: " << width << ", height: " << height << std::endl;
 
     return SVL_OK;
 }
@@ -542,8 +573,8 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     if (procInfo && procInfo->id != 0) return SVL_OK;
 
     // Allocate image buffer if not done yet
-    if (IMAGE_WIDTH != image.GetWidth(videoch) || IMAGE_HEIGHT != image.GetHeight(videoch)) {
-        image.SetSize(videoch, IMAGE_WIDTH, IMAGE_HEIGHT);
+    if (Width != image.GetWidth(videoch) || Height != image.GetHeight(videoch)) {
+        image.SetSize(videoch, Width, Height);
     }
 
     // Deserialize cisst class service information
@@ -954,7 +985,11 @@ int svlVideoCodecUDP::SendUDP(void)
 #endif
             }
 
-            osaSleep(1 * cmn_ms);
+            //static int count = 0;
+            //if (count++ == 10) {
+                osaSleep(0.5 * cmn_ms);
+            //    count = 0;
+            //}
         }
         
         totalByteSent += byteSent;
