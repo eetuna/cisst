@@ -370,7 +370,7 @@ mtsCommandWriteBase * mtsTaskInterface::AddCommandWriteState(const mtsStateTable
     mtsCommandWriteBase * writeCommand = 0;
     AccessorType * stateAccessor = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
     if (stateAccessor) {
-        writeCommand = AddCommandWrite<AccessorType, FinalBaseType>
+        writeCommand = mtsDeviceInterface::AddCommandWrite<AccessorType, FinalBaseType>
             (&AccessorType::SetCurrent, stateAccessor, commandName, FinalType(stateData));
     } else {
         CMN_LOG_CLASS_INIT_ERROR << "AddCommandWriteState: invalid parameter for command " << commandName << std::endl;
