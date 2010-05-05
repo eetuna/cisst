@@ -288,12 +288,13 @@ int StereoVideoPlayerUDP(int argc, char** argv, unsigned int numThread, bool ena
     cout << "Serialization       : " << "enabled" << endl;
     cout << "Networking          : " << (enableNetwork ? "enabled" : "disabled") << endl;
 
-    std::string sourceleft, sourceright, destination;
+    //std::string sourceleft, sourceright, destination;
 
     svlInitialize();
 
     svlStreamManager converter_stream(numThread);
-    svlFilterSourceVideoFile converter_source(2); // # of source channels
+    // svlFilterSourceVideoFile converter_source(2); // # of source channels
+    svlFilterSourceVideoCapture converter_source(2);
     svlFilterStereoImageJoiner converter_joiner;
     svlFilterVideoFileWriter converter_writer;
 
@@ -302,7 +303,8 @@ int StereoVideoPlayerUDP(int argc, char** argv, unsigned int numThread, bool ena
     viewer_fps.ShowFramerate = true;
 
     // Input files
-    destination = (enableNetwork ? "d:\\1.udp" : "d:\\0.udp");
+    /*
+    destination = (enableNetwork ? "1.udp" : "0.udp");
     if (argc == 4) {
         if (converter_source.SetFilePath(argv[2], SVL_LEFT) != SVL_OK) {
             cerr << endl << "Invalid file name: " << argv[2] << endl;
@@ -344,25 +346,45 @@ int StereoVideoPlayerUDP(int argc, char** argv, unsigned int numThread, bool ena
     cout << "Left source : " << sourceleft << endl;
     cout << "Right source: " << sourceright << endl;
     cout << "Target file : " << destination << endl;
+    */
+    if (converter_writer.SetFilePath(enableNetwork ? "1.udp" : "0.udp") != SVL_OK) {
+        cout << "error: set file path " << endl;
+        exit(1);
+    }
+    if (converter_source.LoadSettings("stereodevice.dat") != SVL_OK) {
+        cout << endl;
+        converter_source.DialogSetup(SVL_LEFT);
+        converter_source.DialogSetup(SVL_RIGHT);
+    }
 
     // Set property of source and writer
-    converter_source.SetTargetFrequency(30.0); // as fast as possible
-    converter_source.SetLoop(true);
+    //converter_source.SetTargetFrequency(30.0); // as fast as possible
+    //converter_source.SetLoop(true);
     
     std::string encoderleft, encoderright;
     converter_writer.GetCodecName(encoderleft, SVL_LEFT);
     converter_writer.GetCodecName(encoderright, SVL_RIGHT);
 
     // chain filters to pipeline
-    converter_stream.Trunk().Append(&converter_source);
-    converter_stream.Trunk().Append(&converter_joiner);
-    converter_stream.Trunk().Append(&converter_writer);
-    converter_stream.Trunk().Append(&viewer_fps);
-
-    cerr << "Converting: '" << sourceleft << "' and '" << sourceright << "' to '" << destination <<"' using codec: '" << encoderleft << "'" << endl;
+   if (converter_stream.Trunk().Append(&converter_source) != SVL_OK) {
+        cerr << "Error append source" << endl;
+    }
+    if (converter_stream.Trunk().Append(&converter_joiner) != SVL_OK) {
+        cerr << "Error append joiner" << endl;
+    }
+    if (converter_stream.Trunk().Append(&converter_writer) != SVL_OK) {
+        cerr << "Error append writer" << endl;
+    }
+    if (converter_stream.Trunk().Append(&viewer_fps) != SVL_OK) {
+        cerr << "Error append fps" << endl;
+    }
+    //cerr << "Converting: '" << sourceleft << "' and '" << sourceright << "' to '" << destination <<"' using codec: '" << encoderleft << "'" << endl;
 
     // initialize and start stream
-    if (converter_stream.Start() != SVL_OK) goto labError;
+    if (converter_stream.Start() != SVL_OK) {
+        cerr << "Failed to start stream" << endl;
+        exit(1);
+    }
 
     do {
         //cerr << " > Frames processed: " << converter_source.GetFrameCounter() << "     \r";
@@ -382,6 +404,7 @@ int StereoVideoPlayerUDP(int argc, char** argv, unsigned int numThread, bool ena
     converter_stream.RemoveAll();
 
 labError:
+    cerr << "Error" << endl;
     return 0;
 }
 
@@ -397,10 +420,10 @@ int main(int argc, char** argv)
     cout << "    2    Stereovideo without serialization" << endl;
     cout << "    3    Stereovideo with serialization, single thread, networking disabled" << endl;
     cout << "    4    Stereovideo with serialization, 4 threads,     networking disabled" << endl;
-    cout << "    5    Stereovideo with serialization, 16 threads,    networking disabled" << endl;
+    cout << "    5    Stereovideo with serialization, 8 threads,     networking disabled" << endl;
     cout << "    6    Stereovideo with serialization, single thread, networking enabled" << endl;
     cout << "    7    Stereovideo with serialization, 4 threads,     networking enabled" << endl;
-    cout << "    8    Stereovideo with serialization, 16 threads,    networking enabled" << endl;
+    cout << "    8    Stereovideo with serialization, 8 threads,     networking enabled" << endl;
 
     int mode;
     if (argc == 1) {
@@ -436,9 +459,9 @@ int main(int argc, char** argv)
             StereoVideoPlayerUDP(argc, argv, 4, false);
             break;
 
-            // Stereovideo with serialization, 16 threads,    networking disabled
+            // Stereovideo with serialization, 8 threads,    networking disabled
         case 5:
-            StereoVideoPlayerUDP(argc, argv, 16, false);
+            StereoVideoPlayerUDP(argc, argv, 8, false);
             break;
 
             // Stereovideo with serialization, single thread, networking enabled
@@ -451,9 +474,9 @@ int main(int argc, char** argv)
             StereoVideoPlayerUDP(argc, argv, 4, true);
             break;
 
-            // Stereovideo with serialization, 16 threads,    networking enabled
+            // Stereovideo with serialization, 8 threads,    networking enabled
         case 8:
-            StereoVideoPlayerUDP(argc, argv, 16, true);
+            StereoVideoPlayerUDP(argc, argv, 8, true);
             break;
 
         default:
