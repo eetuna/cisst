@@ -31,25 +31,25 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <limits> // for statistics
 
-//-------------------------------------------------------------------------
-//  Constant Definitions
-//-------------------------------------------------------------------------
-/*! String to identify header correctly */
-#define DELIMITER_STRING      "JHU_TELESURGERY_RESEARCH"
-/*! Maximum length of the string above */
-#define DELIMITER_STRING_SIZE 28
-/*! Size of unit UDP message */
-#define UNIT_MESSAGE_SIZE     1300
-/*! Maximum number of subimages.  Equal to the number of worker thread(s) and 
-    set by the number of processors available. */
-#define MAX_SUBIMAGE_COUNT    32
-/*! Total length of serialized cisst class service.  Assume that it does not 
-    exceed 100 bytes. */
-#define MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE 100
-
 class svlVideoCodecUDP : public svlVideoCodecBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+protected:
+    /*! Typedef for udp codec type */
+    typedef enum { UDP_SENDER, UDP_RECEIVER } UDPCodecType;
+    UDPCodecType CodecType;
+
+    /*! Variables for image properties */
+    unsigned int Width;
+    unsigned int Height;
+
+    /*! Timeserver. Used for timestamping packets */
+    osaTimeServer TimeServer;
+
+    /*! Flag to turn on or off udp message generation.  Used for testing 
+        purposes (see StereoPlayerTest). */
+    bool NetworkEnabled;
 
 public:
     svlVideoCodecUDP();
@@ -84,21 +84,6 @@ public:
     int Read(svlProcInfo* procInfo, svlSampleImageBase &image, const unsigned int videoch, const bool noresize = false);
 
 protected:
-    /*! Typedef for udp codec type */
-    typedef enum { UDP_SENDER, UDP_RECEIVER } UDPCodecType;
-    UDPCodecType CodecType;
-
-    /*! Variables for image properties */
-    unsigned int Width;
-    unsigned int Height;
-
-    /*! Timeserver. Used for timestamping packets */
-    osaTimeServer TimeServer;
-
-    /*! Flag to turn on or off udp message generation.  Used for testing 
-        purposes (see StereoPlayerTest). */
-    bool NetworkEnabled;
-
     //-------------------------------------------------------------------------
     //  Auxiliary class for statistics
     //-------------------------------------------------------------------------
@@ -173,33 +158,10 @@ protected:
         }
     };
 
-    /*! Structure to contain the experiment results */
-    typedef struct {
-        unsigned int FrameNo;
-        unsigned int FrameSize;
-        unsigned int FPS;
-        double TimeSerialization;
-        double TimeDeSerialization;
-        double TimeProcessing;
-        double Timestamp;
-    } ExperimentResultElement;
-
-    typedef std::vector<ExperimentResultElement> ExperimentResultElementsType;
-    ExperimentResultElementsType ExperimentResultElements;
-
     /*! FPS (Frame-per-second) */
-    unsigned int FrameCountPerSecond;
+    //unsigned int FrameCountPerSecond;
     /*! Last time when FPS was calculated */
-    double LastFPSTick;
-    /*! Last time when delay was calculated */
-    double LastDelayTick;
-    /*! Instances of Stat class above */
-    Stat * StatFPS;
-    Stat * StatOverhead;
-    Stat * StatDelay;
-
-    /*! Write experiment results to log file */
-    void ReportResults(void);
+    //double LastFPSTick;
 
     //-------------------------------------------------------------------------
     //  Network (UDP) Support
@@ -207,6 +169,20 @@ protected:
     /*! Definition of MSG_HEADER message */
     class MSG_HEADER {
     public:
+        /*! String to identify header correctly */
+#define DELIMITER_STRING      "JHU_TELESURGERY_RESEARCH"
+        
+        /*! Maximum length of the string above */
+#define DELIMITER_STRING_SIZE 28
+
+        /*! Maximum number of subimages.  Equal to the number of worker thread(s) 
+            and set by the number of processors available. */
+#define MAX_SUBIMAGE_COUNT 32
+        
+        /*! Total length of serialized cisst class service.  Assume that it does not 
+            exceed 100 bytes. */
+#define MAX_SERIALIZED_CISST_CLASS_SERVICE_SIZE 100
+        
         /*! Frame sequence number */
         unsigned int FrameSeq;
 
@@ -255,6 +231,9 @@ protected:
     /*! Definition of MSG_PAYLOAD message */
     class MSG_PAYLOAD {
     public:
+        /*! Size of payload in one UDP message */
+#define UNIT_MESSAGE_SIZE 1300
+
         /*! Frame sequence of an image that this payload belongs to */
         unsigned int FrameSeq;
         /*! Payload size */
@@ -267,15 +246,16 @@ protected:
 
     /*! UDP sockets */
     int SocketSend, SocketRecv;
-    /*! Frame sequence number this is being transmitted now */
+    /*! Frame sequence number being transmitted now */
     unsigned int CurrentSeq;
 
-    /*! Create send/recv sockets and send/receive threads */
+    /*! Create send/recv sockets */
     bool CreateSocket(const UDPCodecType type);
     /*! Get one image frame from network */
     unsigned int GetOneImage(double & senderTick);
     /*! Send one image frame to network */
     int SendUDP(void);
+
     /*! Cleanup resouces */
     void SocketCleanup(void);
 

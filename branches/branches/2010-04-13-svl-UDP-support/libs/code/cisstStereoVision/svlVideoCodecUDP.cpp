@@ -34,15 +34,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #define USE_COMPRESSION
 
-#ifdef USE_COMPRESSION
-#define COMPRESSION_ARG 95
-#endif
-
-//#define IMAGE_WIDTH  (1920 * 2)
-//#define IMAGE_HEIGHT 1080
-//#define IMAGE_WIDTH  (256*2)
-//#define IMAGE_HEIGHT 240
-
 #define SERIALIZED_CLASS_SERVICE_MAX_SIZE 1000
 
 // Socket support
@@ -60,24 +51,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <string.h>  // for memset
 #endif
 
-//
-// 1. buffer creation -> appropriately
-// 2. full seriailization: timestamp, codec name, ... (svlStreamDefs.h)
-//
-
+//-------------------------------------------------------------------------
+//  Constant Definitions
+//-------------------------------------------------------------------------
 /*! Network support */
-//#define UDP_RECEIVER_IP   "127.0.0.1"
-//#define UDP_RECEIVER_IP   "thin3.compsci.jhu.edu"
 #define UDP_RECEIVER_IP   "lcsr-minyang.compscidhcp.jhu.edu"
 #define UDP_RECV_PORT 20705
 
 struct sockaddr_in SendToAddr;
 
-// Receive buffer (TODO: improve this)
+// Receive buffer
 #define RECEIVE_BUFFER_SIZE (10 * 1024 * 1024) // 20 MB
 char ReceiveBuffer[RECEIVE_BUFFER_SIZE];
 
-/*! Internal buffer for serialization and deserialization. */
+// Internal buffer for serialization and deserialization
 std::stringstream SerializationStreamBuffer;
 std::stringstream DeSerializationStreamBuffer;
 
@@ -88,7 +75,6 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     cmnGenericObject(),
     Width(0), Height(0),
     CurrentSeq(0),
-    StatFPS(0), StatOverhead(0), StatDelay(0),
     SerializedClassService(0), SerializedClassServiceSize(0),
     ProcessCount(0),
     BufferYUV(0), BufferYUVSize(0), BufferCompression(0), BufferCompressionSize(0),
@@ -112,11 +98,6 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     // Initialize CISST serializer and deserializer
     Serializer = new cmnSerializer(SerializationStreamBuffer);
     DeSerializer = new cmnDeSerializer(DeSerializationStreamBuffer);
-
-    // For statistics
-    FrameCountPerSecond = 0;
-    LastFPSTick = 0.0;
-    LastDelayTick = 0.0;
 }
 
 svlVideoCodecUDP::~svlVideoCodecUDP()
@@ -129,10 +110,6 @@ svlVideoCodecUDP::~svlVideoCodecUDP()
 
     if (BufferYUV) delete [] BufferYUV;
     if (BufferCompression) delete [] BufferCompression;
-
-    if (StatFPS) delete StatFPS;
-    if (StatDelay) delete StatDelay;
-    if (StatOverhead) delete StatOverhead;
 }
 
 // Create a pair of UDP sockets (client/server)
@@ -161,11 +138,6 @@ bool svlVideoCodecUDP::CreateSocket(const UDPCodecType type)
         }
 
         std::cout << "svlVideoCodecUDP: receive socket is created." << std::endl;
-
-        // For statistics
-        StatFPS = new Stat("FPS", 10);
-        StatDelay = new Stat("Network Delay", 1000);
-        StatOverhead = new Stat("Overhead", 1000);
 
         return true;
     }
@@ -196,10 +168,6 @@ bool svlVideoCodecUDP::CreateSocket(const UDPCodecType type)
 
         std::cout << "svlVideoCodecUDP: send socket is created (dest: " 
             << UDP_RECEIVER_IP << ":" << UDP_RECV_PORT << std::endl;
-
-        // For statistics
-        StatFPS = new Stat("FPS-Sender", 10);
-        StatOverhead = new Stat("Processing Delay", 1000);
 
         return true;
     }
@@ -293,25 +261,14 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
 int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch)
 {
     static int frameNo = 0;
-    /*
-    if (procInfo->id == 0) {
-        // The first frame takes longer to process(?)
-        //if (++frameNo == 1) {
-        //    osaSleep(1.0);
-        //}
-    }
-    */
-
-    //
-    // Initialize multi-threaded image serialization
-    //
-    // Remember total number of subimages
-    if (ProcessCount == 0) {
-        ProcessCount = procInfo->count;
-    }
 
     _OnSingleThread(procInfo)
     {
+        // Remember total number of subimages
+        if (ProcessCount == 0) {
+            ProcessCount = procInfo->count;
+        }
+
         if (frameNo == 0) {
             std::cout << "svlVideoCodecUDP: processor count: " << ProcessCount << std::endl;
             SubImageOffset.SetSize(procInfo->count);
@@ -320,53 +277,26 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             // It takes time for UDP receiver to initialze (e.g. shows up output window)
             osaSleep(1.0);
         }
+
         frameNo++;
     }
 
     const unsigned int procId = procInfo->id;
     bool err = false;
-
     
     _SynchronizeThreads(procInfo);
 
-    /*
-    ExperimentResultElement result;
-    result.FrameNo = frameNo;
-    result.FPS = 0; // will be updated later
-    result.Timestamp = osaGetTime();
-
-    const double ticProcessing = osaGetTime();
-    */
-
-    // temporary compression. 
-    // TODO: Need to fix this
-//#ifdef USE_COMPRESSION
-//    const_cast<svlSampleImageBase&>(image).SetEncoder("jpg", COMPRESSION_ARG);
-//#endif
-
-    // Serialize image data
-    /*
-    unsigned int serializedSize;
-    const double tic = osaGetTime();
-    std::string s;
-    Serialize(image, s);
-    const double toc = osaGetTime();
-
-    serializedSize = s.size();
-    result.FrameSize = serializedSize; //image.GetDataSize();
-    const char * dest = s.c_str();
-    //std::cout << serializedSize << std::endl;
-
-    result.TimeSerialization = toc - tic;
-    */
+    // temporary compression
+    //const_cast<svlSampleImageBase&>(image).SetEncoder("jpg", 95);
 
     const unsigned int procid = procInfo->id;
     const unsigned int proccount = procInfo->count;
     unsigned int start, end, size, offset;
     unsigned long comprsize;
-    int compr = 9;//Codec->data[0];
+    // Set zlib compression rate
+    int compr = 3;//Codec->data[0];
 
-    // Multithreaded compression phase
+    // Parallelized(multi-threaded) compression
     while (1) {
         // Compute part size and offset
         size = Height / proccount + 1;
@@ -407,23 +337,24 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         SerializationStreamBuffer.str("");
         Serializer->Serialize(image, false);
 
-        /* TODO: add these information???
-    virtual void SerializeRaw(std::ostream & outputStream) const
-    {
-        std::string codec;
-        int compression;
-        GetEncoder(codec, compression);
-        cmnSerializeRaw(outputStream, GetType());
-        cmnSerializeRaw(outputStream, GetTimestamp());
-        cmnSerializeRaw(outputStream, codec);
-        for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
-            if (svlImageIO::Write(*this, vch, codec, outputStream, compression) != SVL_OK) {
-                cmnThrow("svlSampleImageCustom::SerializeRaw(): Error occured with svlImageIO::Write");
-            }
-        }
-    }
+        /* TODO: serialize these information as well
 
-    */
+            virtual void SerializeRaw(std::ostream & outputStream) const
+            {
+                std::string codec;
+                int compression;
+                GetEncoder(codec, compression);
+                cmnSerializeRaw(outputStream, GetType());
+                cmnSerializeRaw(outputStream, GetTimestamp());
+                cmnSerializeRaw(outputStream, codec);
+                for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
+                    if (svlImageIO::Write(*this, vch, codec, outputStream, compression) != SVL_OK) {
+                        cmnThrow("svlSampleImageCustom::SerializeRaw(): Error occured with svlImageIO::Write");
+                    }
+                }
+            }
+        */
+
         // Serialize cisst class service information
         const std::string str = SerializationStreamBuffer.str();
         // Allocate serialization buffer
@@ -443,43 +374,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         }
     }
 
-    /*
-    serializedSize = s.size();
-    result.FrameSize = serializedSize; //image.GetDataSize();
-    const char * dest = s.c_str();
-    //std::cout << serializedSize << std::endl;
-
-    result.TimeSerialization = toc - tic;
-
-    // SEND MSG TO NETWORK
-
-    const double tocProcessing = osaGetTime();
-
-    result.TimeProcessing = tocProcessing - ticProcessing;
-
-    // Track fps and processing overhead
-    ++FrameCountPerSecond;
-    StatOverhead->AddSample(tocProcessing - ticProcessing);
-    if (LastFPSTick == 0.0) {
-        LastFPSTick = osaGetTime();
-    } else {
-        if (osaGetTime() - LastFPSTick > 1.0 * cmn_s) {
-            StatFPS->AddSample(FrameCountPerSecond);
-
-            StatFPS->Print();
-            StatOverhead->Print();
-            std::cout << std::endl;
-
-            result.FPS = FrameCountPerSecond;
-
-            FrameCountPerSecond = 0;
-            LastFPSTick = osaGetTime();
-        }
-    }
-
-    ExperimentResultElements.push_back(result);
-    */
-
     return SVL_OK;
 }
 
@@ -496,7 +390,6 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     // TODO: Parse filename
     //std::cout << "Open called with file: " << filename << std::endl;
     
-    //*
     std::cout << "Waiting for the first frame to get image information..." << std::endl;
 
     double senderTick;
@@ -509,7 +402,6 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     // Set (return) image width and height
     width = Width;
     height = Height;
-    //*/
 
     // Allocate YUV buffer if not done yet
     unsigned int size = Width * Height * 2;
@@ -542,22 +434,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
 {
     // for testing
     static int frameNo = 0;
-    /*
-    //if (frameNo++ == 100) {
-    if (frameNo++ == 3) {
-        ReportResults();
-        exit(1);
-    }
-    */
-
-    /*
-    ExperimentResultElement result;
-    result.FrameNo = frameNo;
-    result.FPS = 0; // will be updated later
-    result.Timestamp = osaGetTime();
-
-    const double ticProcessing = osaGetTime();
-    */
 
     std::cout << "svlVideoCodecUDP: Received frame no: " << ++frameNo << "\r";
 
@@ -567,7 +443,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     if (serializedSize == 0) {
         return SVL_FAIL;
     }
-    //result.FrameSize = serializedSize;
 
     // Uses only a single thread
     if (procInfo && procInfo->id != 0) return SVL_OK;
@@ -581,8 +456,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     DeSerializationStreamBuffer.str("");
     DeSerializationStreamBuffer.write(SerializedClassService, SerializedClassServiceSize);
     DeSerializer->DeSerialize(image, false);
-    //cmnGenericObject * object = DeSerializer->DeSerialize(false);
-    //svlSampleImageBase * image2 = dynamic_cast<svlSampleImageBase *>(object);
 
     // Rebuild image frame
     unsigned char* img = image.GetUCharPointer(videoch);
@@ -593,14 +466,12 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     offset = pos = 0;
     for (i = 0; i < ProcessCount; ++i) {
         compressedpartsize = SubImageSize[i];
-        //memcpy(BufferCompression, ReceiveBuffer + pos, compressedpartsize);
 #ifdef _DEBUG_
         std::cout << "[" << i << "] size: " << compressedpartsize << std::endl;
 #endif
 
         // Decompress frame part
         longsize = BufferYUVSize - offset;
-        //if (uncompress(BufferYUV + offset, &longsize, BufferCompression, compressedpartsize) != Z_OK) {
         if (uncompress(BufferYUV + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
             std::cout << "ERROR: Uncompress failed" << std::endl;
             exit(1);
@@ -615,73 +486,11 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     }
 
     return SVL_OK;
-
-    /*
-    // Deserialize data
-    const double tic = osaGetTime();
-    std::string serializedData(ReceiveBuffer, serializedSize);
-    DeSerialize(serializedData, image);
-    const double toc = osaGetTime();
-
-    result.TimeDeSerialization = toc - tic;
-
-    std::cout << serializedSize << std::endl;
-
-#ifdef _DEBUG_
-    std::cout << "Successfully deserialized: " << serializedSize << std::endl;
-    std::cout << "Size: " << image.GetWidth() << " x " << image.GetHeight() << std::endl;
-    std::cout << "Ch: " << image.GetDataChannels() << std::endl;
-#endif
-
-    const double tocProcessing = osaGetTime();
-
-    result.TimeProcessing = tocProcessing - ticProcessing; 
-
-    // Track fps and processing overhead
-    ++FrameCountPerSecond;
-    StatOverhead->AddSample(tocProcessing - ticProcessing);
-    if (LastFPSTick == 0.0) {
-        LastFPSTick = osaGetTime();
-    } else {
-        if (osaGetTime() - LastFPSTick > 1.0 * cmn_s) {
-            StatFPS->AddSample(FrameCountPerSecond);
-
-            StatFPS->Print();
-            StatOverhead->Print();
-            std::cout << std::endl;
-
-            result.FPS = FrameCountPerSecond;
-
-            FrameCountPerSecond = 0;
-            LastFPSTick = osaGetTime();
-        }
-    }
-
-    // Delay update
-    double delay = osaGetTime() - senderTick;
-    StatDelay->AddSample(delay);
-    if (LastDelayTick == 0.0) {
-        LastDelayTick = osaGetTime();
-    } else {
-        if (osaGetTime() - LastDelayTick > 1.0 * cmn_s) {
-            StatDelay->Print();
-            std::cout << std::endl;
-
-            LastDelayTick = osaGetTime();
-        }
-    }
-
-    ExperimentResultElements.push_back(result);
-    */
-
-    return SVL_OK;
 }
 
 int svlVideoCodecUDP::Close()
 {
     SocketCleanup();
-
-    //std::cout << "Close called" << std::endl;
 
     return SVL_OK;
 }
@@ -848,72 +657,10 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
 
                 return serializedSize;
             }
-
-            /*
-            payload = reinterpret_cast<MSG_PAYLOAD *>(buf);
-            if (CurrentSeq != 0) {
-                if (payload->FrameSeq != CurrentSeq) {
-                    // TODO: Check if this is OK
-                    CurrentSeq = 0;
-                    totalByteRecv = 0;
-                    continue;
-                    
-                    // drop all data received until now
-                    //totalByteRecv = 0;
-                    // start new image frame
-                    // waiting for header
-                } else {
-                    memcpy(ReceiveBuffer + totalByteRecv, payload->Payload, payload->PayloadSize);
-                    totalByteRecv += payload->PayloadSize;
-                    
-                    //std::cout << "READ: " << byteRecv << ", " << payload->PayloadSize << ", " << totalByteRecv << " / " << serializedSize << std::endl;
-
-                    if (totalByteRecv >= serializedSize) {
-                        // now receiver has received all the data to rebuild an
-                        // original image by deserialization.
-                        received = true;
-
-                        return serializedSize;
-                    }
-                }
-            }
-            */
         }
     }
 
     return serializedSize;
-}
-
-void svlVideoCodecUDP::ReportResults(void)
-{
-    std::filebuf fb;
-    char fileName[20];
-
-    sprintf(fileName, (CodecType == UDP_SENDER ? "result_write.txt" : "result_read.txt"));
-
-    fb.open(fileName, std::ios::out);
-    std::ostream os(&fb);
-#ifdef USE_COMPRESSION
-    os << "Compression: " << COMPRESSION_ARG << std::endl;
-#else
-    os << "No compression" << std::endl;
-#endif
-    os << "FrameNo,FrameSize,FPS,TimeSerialization,TimeProcessing,Timestamp" << std::endl;
-
-    // Put experiment results to log file
-    ExperimentResultElementsType::const_iterator it = ExperimentResultElements.begin();
-    const ExperimentResultElementsType::const_iterator itEnd = ExperimentResultElements.end();
-    for (; it != itEnd; ++it) {
-        os << it->FrameNo << "," << it->FrameSize << "," << it->FPS << ",";
-        if (CodecType == UDP_SENDER) {
-            os << it->TimeSerialization;
-        } else {
-            os << it->TimeDeSerialization;
-        }
-        os << "," << it->TimeProcessing << "," << it->Timestamp << std::endl;
-    }
-        
-    fb.close();
 }
 
 int svlVideoCodecUDP::SendUDP(void)

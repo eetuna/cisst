@@ -45,8 +45,8 @@ int VideoConverter(int argc, char** argv)
 
     svlInitialize();
 
-    svlStreamManager converter_stream(16);
-    //svlStreamManager converter_stream(2);
+    //svlStreamManager converter_stream(16);
+    svlStreamManager converter_stream(2);
     svlFilterSourceVideoFile converter_source(2); // # of source channels
     svlFilterStereoImageJoiner converter_joiner;
     svlFilterVideoFileWriter converter_writer;
