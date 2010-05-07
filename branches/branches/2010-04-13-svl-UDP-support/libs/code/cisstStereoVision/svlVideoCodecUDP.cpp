@@ -32,9 +32,8 @@ http://www.cisst.org/cisst/license.txt.
 
 //#define _DEBUG_
 
-#define USE_COMPRESSION
-
-#define SERIALIZED_CLASS_SERVICE_MAX_SIZE 1000
+// Compression level
+const unsigned int ZLibCompressionLevel = 3;
 
 // Socket support
 #if (CISST_OS == CISST_WINDOWS)
@@ -54,9 +53,9 @@ http://www.cisst.org/cisst/license.txt.
 //-------------------------------------------------------------------------
 //  Constant Definitions
 //-------------------------------------------------------------------------
-/*! Network support */
-#define UDP_RECEIVER_IP   "lcsr-minyang.compscidhcp.jhu.edu"
-#define UDP_RECV_PORT 20705
+// Network support
+#define UDP_RECEIVER_IP "lcsr-minyang.compscidhcp.jhu.edu"
+#define UDP_RECV_PORT   20705
 
 struct sockaddr_in SendToAddr;
 
@@ -294,7 +293,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     unsigned int start, end, size, offset;
     unsigned long comprsize;
     // Set zlib compression rate
-    int compr = 3;//Codec->data[0];
+    int compr = ZLibCompressionLevel;//Codec->data[0];
 
     // Parallelized(multi-threaded) compression
     while (1) {
