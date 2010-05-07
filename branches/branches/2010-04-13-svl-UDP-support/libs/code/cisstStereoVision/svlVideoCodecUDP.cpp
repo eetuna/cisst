@@ -50,6 +50,13 @@ const unsigned int ZLibCompressionLevel = 3;
 #include <string.h>  // for memset
 #endif
 
+// For testing purpose
+#define TEMPORAL_DIFF
+#ifdef TEMPORAL_DIFF
+static char * imagePrev = NULL;
+static char * imageDiff = NULL;
+#endif
+
 //-------------------------------------------------------------------------
 //  Constant Definitions
 //-------------------------------------------------------------------------
@@ -109,6 +116,11 @@ svlVideoCodecUDP::~svlVideoCodecUDP()
 
     if (BufferYUV) delete [] BufferYUV;
     if (BufferCompression) delete [] BufferCompression;
+
+#ifdef TEMPORAL_DIFF
+    if (imagePrev) delete [] imagePrev;
+    if (imageDiff) delete [] imageDiff;
+#endif
 }
 
 // Create a pair of UDP sockets (client/server)
@@ -260,7 +272,13 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
 int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch)
 {
     static int frameNo = 0;
-
+    
+    const unsigned int procId = procInfo->id;
+    const unsigned int imageWidth = image.GetWidth();
+    const unsigned int imageHeight = image.GetHeight();
+    const unsigned char * imageCurr = image.GetUCharPointer();
+    bool err = false;
+    
     _OnSingleThread(procInfo)
     {
         // Remember total number of subimages
@@ -272,17 +290,46 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             std::cout << "svlVideoCodecUDP: processor count: " << ProcessCount << std::endl;
             SubImageOffset.SetSize(procInfo->count);
             SubImageSize.SetSize(procInfo->count);
+
+#ifdef TEMPORAL_DIFF
+            const unsigned int imageSize = image.GetDataSize();
+            std::cout << "svlVideoCodecUDP: buffered image size: " << imageSize << "(" 
+                << imageWidth << "x" << imageHeight << ")" << std::endl;
+            imagePrev = new char[imageSize];
+            imageDiff = new char[imageSize];
+
+            memset(imagePrev, 0, imageSize);
+
+            // Sender:
+            // 2. When a new image comes in, do diff and update previous image buffer
+            // 3. Compress diff-ed image instead of the new image
+
+            // Receiver:
+            // 1. Create temporal image buffer
+            // 2. When a new image comes in, update previous image buffer
+            // 3. Recover original image after deserialization
+#endif
         } else if (frameNo == 1) {
             // It takes time for UDP receiver to initialze (e.g. shows up output window)
             osaSleep(1.0);
         }
 
+        // Get temporal image difference
+#ifdef TEMPORAL_DIFF
+        /*  TODO: Continue implementing after getting the idea of how svlImage is stored in memory.
+        int idx = 0;
+        for (int x = 0; x < imageWidth; ++x) {
+            for (int y = 0; y < imageHeight; ++y) {
+                idx = x + y * imageWidth;
+                imageDiff[idx] = imageCurr[idx] - imagePrev[idx];
+            }
+        }
+        */
+#endif
+
         frameNo++;
     }
 
-    const unsigned int procId = procInfo->id;
-    bool err = false;
-    
     _SynchronizeThreads(procInfo);
 
     // temporary compression
