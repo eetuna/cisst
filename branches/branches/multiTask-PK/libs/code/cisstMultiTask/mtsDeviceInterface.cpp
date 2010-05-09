@@ -30,13 +30,15 @@ mtsDeviceInterface::mtsDeviceInterface(const std::string & interfaceName,
     Device(device),
     Registered(false),
     UserCounter(0),
+    // PK: should all maps take ownership (second parameter true)?
+    // Or, should we change the default in cmnNamedMap?
     CommandsVoid("CommandsVoid"),
     CommandsRead("CommandsRead"),
     CommandsWrite("CommandsWrite"),
     CommandsQualifiedRead("CommandsQualifiedRead"),
     EventVoidGenerators("EventVoidGenerators"),
     EventWriteGenerators("EventWriteGenerators"),
-    CommandsInternal("CommandsInternal")
+    CommandsInternal("CommandsInternal", true)
 {
     CommandsVoid.SetOwner(*this);
     CommandsRead.SetOwner(*this);
@@ -250,6 +252,12 @@ mtsCommandWriteBase* mtsDeviceInterface::AddCommandWrite(mtsCommandWriteBase *co
                                  << command->GetName() << "\"" << std::endl;
     }
     return command;
+}
+
+mtsCommandWriteBase* mtsDeviceInterface::AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command)
+{
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: only valid for tasks" << std::endl;
+    return 0;
 }
 
 void mtsDeviceInterface::ToStream(std::ostream & outputStream) const

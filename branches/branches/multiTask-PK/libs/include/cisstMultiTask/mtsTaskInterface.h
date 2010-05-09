@@ -183,14 +183,8 @@ private:
     /*! Override AddCommandWrite to automatically queue the write commands */
     mtsCommandWriteBase* AddCommandWrite(mtsCommandWriteBase *command);
 
-#ifndef SWIG
-    template <class __classType, class __argumentType, class __filteredType>
-    inline mtsCommandWriteBase * AddCommandFilteredWrite(void (__classType::*premethod)(const __argumentType &, __filteredType &) const,
-                                                         void (__classType::*method)(const __filteredType &),
-                                                         __classType * classInstantiation, const std::string & commandName,
-                                                         const __argumentType & argumentPrototype = CMN_DEFAULT_TEMPLATED_CONSTRUCTOR(__argumentType),
-                                                         const __filteredType & filteredPrototype = CMN_DEFAULT_TEMPLATED_CONSTRUCTOR(__filteredType));
-#endif
+    /*! Override AddCommandFilteredWrite to automatically queue the write commands */
+    mtsCommandWriteBase* AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command);
 
     /*! Adds command objects to read from the state table. Note that
       there are two command objects: a 'read' command to get the
@@ -218,65 +212,6 @@ private:
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskInterface)
 typedef mtsTaskInterface::ThreadResources mtsTaskInterfaceThreadResources;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskInterfaceThreadResources)
-
-
-
-#ifndef SWIG
-// PK TODO:  Fix AddCommandFilteredWrite
-template <class __classType, class __argumentType, class __filteredType>
-inline mtsCommandWriteBase * mtsTaskInterface::AddCommandFilteredWrite(void (__classType::*premethod)(const __argumentType &, __filteredType &) const,
-                                                                       void (__classType::*method)(const __filteredType &),
-                                                               __classType * classInstantiation, const std::string & commandName,
-                                                               const __argumentType & argumentPrototype, const __filteredType & filteredPrototype) {
-
-    std::string commandNameFilter(commandName+"Filter");
-    mtsCommandQualifiedReadBase * filter = new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
-        (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype);
-    if (!CommandsInternal.AddItem(commandNameFilter, filter, CMN_LOG_LOD_INIT_ERROR)) {
-        CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add filter \""
-                                 << commandName << "\"" << std::endl;
-        return 0;
-    }
-    // The mtsCommandWrite is called commandName because that name will be used by mtsCommandFilteredQueuedWrite.
-    //  For clarity, we store it in the internal map under the name commandName+"Write".
-    mtsCommandWriteBase * command = new mtsCommandWrite<__classType, __filteredType>
-        (method, classInstantiation, commandName, filteredPrototype);
-    if (!CommandsInternal.AddItem(commandName+"Write", command, CMN_LOG_LOD_INIT_ERROR)) {
-        delete filter;
-        CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add command \""
-                                 << commandName << "\"" << std::endl;
-        return 0;
-    }
-    mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandFilteredQueuedWrite<__argumentType, __filteredType>(filter, command);
-    if (CommandsQueuedWrite.AddItem(commandName, queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
-        return queuedCommand;
-    } else {
-        delete filter;
-        delete command;
-        delete queuedCommand;
-        CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add queued command \""
-                                 << commandName << "\"" << std::endl;
-        return 0;
-    }
-}
-
-
-template <class __classType, class __argumentType, class __filteredType>
-mtsCommandWriteBase * mtsDeviceInterface::AddCommandFilteredWrite(void (__classType::*premethod)(const __argumentType &, __filteredType &) const,
-                                                                  void (__classType::*method)(const __filteredType &),
-                                                                  __classType * classInstantiation, const std::string & commandName,
-                                                                  const __argumentType & argumentPrototype,
-                                                                  const __filteredType & filteredPrototype)
-{
-    mtsTaskInterface * taskInterface = dynamic_cast<mtsTaskInterface *>(this);
-    if (taskInterface) {
-        return taskInterface->AddCommandFilteredWrite(premethod, method, classInstantiation, commandName, argumentPrototype, filteredPrototype);
-    } else {
-        CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: only valid for tasks" << std::endl;
-        return 0;
-    }
-}
-#endif
 
 template <class _elementType>
 mtsCommandReadBase * mtsDeviceInterface::AddCommandReadState(const mtsStateTable & stateTable,

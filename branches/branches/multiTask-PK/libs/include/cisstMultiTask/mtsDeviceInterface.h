@@ -365,7 +365,13 @@ public:
                                                          void (__classType::*method)(const __filteredType &),
                                                          __classType * classInstantiation, const std::string & commandName,
                                                          const __argumentType & argumentPrototype,
-                                                         const __filteredType & filteredPrototype);
+                                                         const __filteredType & filteredPrototype) {
+        std::string commandNameFilter(commandName+"Filter");
+        return AddCommandFilteredWrite(
+               new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
+                                          (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype),
+               new mtsCommandWrite<__classType, __filteredType>(method, classInstantiation, commandName, filteredPrototype));
+    }
 
     template <class __classType, class __argumentType, class __filteredType>
     inline mtsCommandWriteBase * AddCommandFilteredWrite(void (__classType::*premethod)(const __argumentType &, __filteredType &) const,
@@ -394,10 +400,16 @@ public:
                                                          void (__classType::*method)(const __filteredType &),
                                                          __classType * classInstantiation, const std::string & commandName,
                                                          const __argumentType & argumentPrototype = CMN_DEFAULT_TEMPLATED_CONSTRUCTOR(__argumentType),
-                                                         const __filteredType & filteredPrototype = CMN_DEFAULT_TEMPLATED_CONSTRUCTOR(__filteredType));
+                                                         const __filteredType & filteredPrototype = CMN_DEFAULT_TEMPLATED_CONSTRUCTOR(__filteredType)) {
+        return AddCommandFilteredWrite(
+               new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
+                                          (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype);
+               new mtsCommandWrite<__classType, __filteredType>(method, classInstantiation, commandName, filteredPrototype));
+    }
 #endif
 
     virtual mtsCommandWriteBase* AddCommandWrite(mtsCommandWriteBase *command);
+    virtual mtsCommandWriteBase* AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command);
 
 #endif // SWIG
 

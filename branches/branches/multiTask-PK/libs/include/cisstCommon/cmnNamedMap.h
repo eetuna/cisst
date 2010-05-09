@@ -74,6 +74,7 @@ protected:
       on its data when necessary.  The default is true, i.e. the map
       destructor will attempt to delete its objects (as does
       std::map). */
+    // PK: Comment is wrong -- default is currently false
     bool TakesOwnership;
 
     /*! Name of the map, mostly for logging purposes. */

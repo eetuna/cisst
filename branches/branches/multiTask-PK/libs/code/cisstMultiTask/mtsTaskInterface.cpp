@@ -218,6 +218,36 @@ mtsCommandWriteBase* mtsTaskInterface::AddCommandWrite(mtsCommandWriteBase *comm
     }
 }
 
+mtsCommandWriteBase* mtsTaskInterface::AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command)
+{
+    if (filter && command) {
+        if (!CommandsInternal.AddItem(filter->GetName(), filter, CMN_LOG_LOD_INIT_ERROR)) {
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add filter \""
+                                     << command->GetName() << "\"" << std::endl;
+            return 0;
+        }
+        // The mtsCommandWrite is called commandName because that name will be used by mtsCommandFilteredQueuedWrite.
+        //  For clarity, we store it in the internal map under the name commandName+"Write".
+        if (!CommandsInternal.AddItem(command->GetName()+"Write", command, CMN_LOG_LOD_INIT_ERROR)) {
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add command \""
+                                     << command->GetName() << "\"" << std::endl;
+            return 0;
+        }
+        mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandFilteredQueuedWrite(filter, command);
+        if (CommandsQueuedWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
+            return queuedCommand;
+        } else {
+            delete filter;
+            delete command;
+            delete queuedCommand;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add queued command \""
+                                     << command->GetName() << "\"" << std::endl;
+            return 0;
+        }
+    }
+    return 0;
+}
+
 unsigned int mtsTaskInterface::AllocateResources(const std::string & userName)
 {
     // keep track of threads using this and create a thread resource
