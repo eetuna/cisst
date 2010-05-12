@@ -31,6 +31,9 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <limits> // for statistics
 
+// Turn on image compression by pixel-by-pixel value difference
+#define TEMPORAL_DIFF
+
 class svlVideoCodecUDP : public svlVideoCodecBase, public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
@@ -87,6 +90,7 @@ protected:
     //-------------------------------------------------------------------------
     //  Auxiliary class for statistics
     //-------------------------------------------------------------------------
+    /*
     class Stat {
     protected:
         std::list<double> History;
@@ -157,6 +161,7 @@ protected:
                 << GetMin() << ", max " << GetMax() << std::endl;
         }
     };
+    */
 
     /*! FPS (Frame-per-second) */
     //unsigned int FrameCountPerSecond;
@@ -236,6 +241,10 @@ protected:
 
         /*! Frame sequence of an image that this payload belongs to */
         unsigned int FrameSeq;
+#ifdef TEMPORAL_DIFF
+        /*! Payload type: 0 for image data, 1 for diff sign data */
+        char PayloadType;
+#endif
         /*! Payload size */
         unsigned short PayloadSize;
         /*! Fragmented image data (with serialization) */
@@ -243,6 +252,10 @@ protected:
         /*! Timestamp right before this message is sent to network */
         //double Timestamp;
     };
+
+#ifdef TEMPORAL_DIFF
+    enum { PAYLOAD_IMAGE, PAYLOAD_SIGN };
+#endif
 
     /*! UDP sockets */
     int SocketSend, SocketRecv;
@@ -284,6 +297,12 @@ protected:
     /*! Deserialize byte stream image and rebuild original object */
     void DeSerialize(const std::string & serializedObject, cmnGenericObject & originalObject);
     cmnGenericObject * DeSerialize(const std::string & serializedObject);
+
+    /*! Create internal buffers to process image frames */
+#ifdef TEMPORAL_DIFF
+    unsigned int ImageDiffSignArraySize;
+    void CreateImageBuffers(const unsigned int imageBufferSize);
+#endif
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlVideoCodecUDP)

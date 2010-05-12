@@ -378,7 +378,13 @@ int main(int argc, char** argv)
         enableNetwork = (atoi(argv[3]) == 0 ? false : true);
 
         StereoVideoPlayerUDP(argc, argv, numThread, enableNetwork, useLiveStream);
-    }
+	} else {
+		useLiveStream = false;
+        numThread = 1;
+        enableNetwork = false;
+
+        StereoVideoPlayerUDP(argc, argv, numThread, enableNetwork, useLiveStream);
+	}
     
     return 1;
 }
