@@ -169,9 +169,6 @@ int main(int argc, char** argv)
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
 
-    cerr << endl << "stereoTutorialVideoConverter - cisstStereoVision example by Balazs Vagvolgyi" << endl;
-    cerr << "See http://www.cisst.org/cisst for details." << endl;
-
     VideoConverter(argc, argv);
 
     return 1;

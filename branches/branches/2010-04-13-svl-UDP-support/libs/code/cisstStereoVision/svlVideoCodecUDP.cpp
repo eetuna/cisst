@@ -301,15 +301,14 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     static int frameNo = 0;
 
     // for test
-    //if (frameNo > 2) {
-    //    exit(1);
-    //}
+    if (frameNo > 5) {
+        return SVL_FAIL;
+    }
     
     const unsigned int procId = procInfo->id;
 	bool err = false;
 
-	unsigned char * imageCurrent = const_cast<unsigned char *>(image.GetUCharPointer());
-    const unsigned int imageWidth = image.GetWidth();
+	const unsigned int imageWidth = image.GetWidth();
     const unsigned int imageHeight = image.GetHeight();
 	const unsigned int imageBufferSize = image.GetDataSize(); // 3 channels (R,G,B)
 
@@ -341,7 +340,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             osaSleep(1.0);
         }
 
-        // Get temporal image difference
+        // Initialization before getting interframe difference
 #ifdef TEMPORAL_DIFF
         memset(imageDiffSign, 0, ImageDiffSignArraySize);
 
@@ -350,38 +349,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             memset(imagePrev, 0, imageBufferSize);
         }
 #endif
-
-        int idxSign = 0, count = 0, diff;
-		for (unsigned int i = 0; i < imageBufferSize; ++i) {
-            diff = imageCurrent[i] - imagePrev[i];
-
-            /* aaaaaaaaaaaaa
-            if (100 <= i && i <= 104) {
-                printf("[%d-%d] prev: %03d, curr: %03d, diff: %03d ", frameNo, i, imagePrev[i], imageCurrent[i], diff);
-            }
-            */
-
-            // Populate array of image difference sign
-            if (diff > 0) {
-                imageDiffSign[idxSign] |= 0 << count;
-            } else {
-                imageDiffSign[idxSign] |= 1 << count;
-            }
-            // Update difference image
-            imageDiff[i] = abs(diff);
-
-            /* aaaaaaaaaaaaa
-            if (100 <= i && i <= 104) {
-                printf("(%d)\n", imageDiff[i]);
-            }
-            */
-
-            // Update index
-            if (++count == 8) {
-                count = 0;
-                idxSign++;
-            }
-		}
 #endif
 
         frameNo++;
@@ -393,14 +360,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     const unsigned int proccount = procInfo->count;
     unsigned int start, end, size, offset;
     unsigned long comprsize;
-    // Set zlib compression rate
-    int compr = ZLibCompressionLevel;//Codec->data[0];
-	unsigned char * imageToBeCompressed;
-#ifdef TEMPORAL_DIFF
-	imageToBeCompressed = imageDiff;
-#else
-	imageToBeCompressed = imageCurrent;
-#endif
+	unsigned char * imageToBeCompressed = const_cast<unsigned char *>(image.GetUCharPointer());
 
     // Parallelized(multi-threaded) compression
     while (1) {
@@ -418,8 +378,48 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         // Convert RGB to YUV422 planar format
 		svlConverter::RGB24toYUV422P(imageToBeCompressed + offset * 3, BufferYUV + offset * 2, size);
 
+#ifdef TEMPORAL_DIFF
+        // Get interframe image difference in YUV space
+        int idxSign = (offset * 2) / 8, count = 0, diff;
+        unsigned int endIdx = offset * 2 + size * 2;
+
+        for (unsigned int i = offset * 2; i < endIdx; ++i) {
+            diff = BufferYUV[i] - imagePrev[i];
+
+            //if (100 <= i && i <= 104) {
+            //    printf("[%d] %d, %d, %d\n", frameNo, imagePrev[i], BufferYUV[i], diff);
+            //}
+
+            // Populate array of image difference sign
+            if (diff > 0) {
+                imageDiffSign[idxSign] |= 0 << count;
+            } else {
+                imageDiffSign[idxSign] |= 1 << count;
+            }
+
+            // Update difference image
+            imageDiff[i] = abs(diff);
+            // Update previous image
+            //imagePrev[i] = BufferYUV[i];
+            imagePrev[i] += diff;
+
+            // Update index
+            if (++count == 8) {
+                count = 0;
+                idxSign++;
+            }
+		}
+#endif
+
         // Compress part
-        if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, BufferYUV + offset * 2, size * 2, compr) != Z_OK) {
+        if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, 
+#ifdef TEMPORAL_DIFF
+                      imageDiff + offset * 2, size * 2, 
+#else 
+                      BufferYUV + offset * 2, size * 2, 
+#endif
+                      ZLibCompressionLevel) != Z_OK) 
+        {
             err = true;
             break;
         }
@@ -480,11 +480,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         }
     }
 
-#ifdef TEMPORAL_DIFF
-    // Update previous image
-    memcpy(imagePrev, imageCurrent, imageBufferSize);
-#endif
-
     return SVL_OK;
 }
 
@@ -514,7 +509,6 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     const unsigned int imageBufferSize = Width * Height * 3;
     CreateImageBuffers(imageBufferSize);
 #endif
-
 
     // Set (return) image width and height
     width = Width;
@@ -570,17 +564,21 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
         }
 
         // Convert YUV422 planar to RGB format
-        svlConverter::YUV422PtoRGB24(BufferYUV + offset, imagePrev + offset * 3 / 2, longsize >> 1);
+        //svlConverter::YUV422PtoRGB24(BufferYUV + offset, imagePrev + offset * 3 / 2, longsize >> 1);
+
+        for (int k = 100; k <= 104; k++) {
+            if (100 <= k && k <= 104) {
+                printf("[%d] %d, %d, %d\n", 0, imagePrev[k], BufferYUV[k], BufferYUV[k] - imagePrev[k]);
+            }
+        }
+
 
         offset += longsize;
         pos += compressedpartsize;
     }
 
-    /* aaaaaaaaaaaa
-    for (int i = 0; i < 5; i++) {
-        printf("[0-%d] prev: %03d (%d)\n", i, imagePrev[i], ReceiveBufferSign[i]);
-    }
-    */
+    // Set first image in YUV space
+    memcpy(imagePrev, BufferYUV, BufferYUVSize);
 #endif
 
     return SVL_OK;
@@ -615,11 +613,19 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
 
     // Rebuild original image frame
     unsigned char * img = image.GetUCharPointer(videoch);
-    const unsigned int imageBufferSize = image.GetDataSize();
+    const unsigned int imageBufferSize = image.GetDataSize();//Width * Height * 2;
 
     unsigned int i, compressedpartsize, offset, pos;
     unsigned long longsize;
     int ret = SVL_FAIL;
+
+#ifdef TEMPORAL_DIFF
+#ifdef FRAME_RESET
+    if (frameNo % ResetFrameCount == 0) {
+        memset(imagePrev, 0, imageBufferSize);
+    }
+#endif
+#endif
 
     offset = pos = 0;
     for (i = 0; i < ProcessCount; ++i) {
@@ -631,11 +637,49 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
         // Decompress frame part
         longsize = BufferYUVSize - offset;
         if (uncompress(BufferYUV + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
-        //if (uncompress(img + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
             std::cout << "ERROR: Uncompress failed" << std::endl;
             exit(1);
             return SVL_FAIL;
         }
+
+#ifdef TEMPORAL_DIFF
+        // Recover current image based on rgb value difference and its sign
+        int idxSign = offset / 8, count = 0, t;
+        bool negative = false;
+
+        //for (unsigned int i = pos; i < pos + compressedpartsize; ++i) {
+        for (unsigned int j = offset; j < offset + longsize; ++j) {
+            if (count == 0) {
+                t = ReceiveBufferSign[idxSign];
+            }
+            negative = ((t & (1 << count)) > 0 ? true : false);
+
+            //unsigned int diff;
+            //if (100 <= j && j <= 104) {
+            //    diff = abs(imagePrev[j] - BufferYUV[j]);
+            //    printf("[%d] %d, ", frameNo, imagePrev[j]);
+            //}
+
+            // Rebuild current frame
+            if (negative) {
+                BufferYUV[j] = imagePrev[j] - BufferYUV[j];
+            } else {
+                BufferYUV[j] = imagePrev[j] + BufferYUV[j];
+            }
+
+            //if (100 <= j && j <= 104) {
+            //    printf("%d, %d\n", BufferYUV[j], diff);
+            //}
+
+            // Update previous image
+            imagePrev[j] = BufferYUV[j];
+
+            if (++count == 8) {
+                count = 0;
+                idxSign++;
+            }
+        }
+#endif
 
         // Convert YUV422 planar to RGB format
         svlConverter::YUV422PtoRGB24(BufferYUV + offset, img + offset * 3 / 2, longsize >> 1);
@@ -644,6 +688,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
         pos += compressedpartsize;
     }
 
+    /*
 #ifdef TEMPORAL_DIFF
     // Recover current image based on rgb value difference and its sign
     int idxSign = 0, count = 0, t;
@@ -662,20 +707,19 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
         }
         negative = ((t & (1 << count)) > 0 ? true : false);
 
-        /* aaaaaaaaaaaaaaaaaa
-        if (100 <= i && i <= 104) {
-            printf("[%d-%d] prev: %03d, curr: ", frameNo, i, imagePrev[i]);
+        // aaaaaaaaaaaaaaaaaa
+        //if (100 <= i && i <= 104) {
+        //    printf("[%d-%d] prev: %03d, curr: ", frameNo, i, imagePrev[i]);
 
-            unsigned char aaaaa = 0;
-            value = img[i];
-            if (negative) {
-                aaaaa = imagePrev[i] - value;
-            } else {
-                aaaaa = imagePrev[i] + value;
-            }
-            printf("%03d, diff: %03d (%d)\n", aaaaa, img[i], negative);
-        }
-        */
+        //    unsigned char aaaaa = 0;
+        //    value = img[i];
+        //    if (negative) {
+        //        aaaaa = imagePrev[i] - value;
+        //    } else {
+        //        aaaaa = imagePrev[i] + value;
+        //    }
+        //    printf("%03d, diff: %03d (%d)\n", aaaaa, img[i], negative);
+        //}
 
         // Rebuild current frame
         value = img[i];
@@ -694,6 +738,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     // Update previous image
     memcpy(imagePrev, img, imageBufferSize);
 #endif
+    */
 
     return SVL_OK;
 }

@@ -138,13 +138,6 @@ int main(int argc, char** argv)
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
 
-    cerr << endl << "stereoTutorialVideoPlayer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
-    cerr << "See http://www.cisst.org/cisst for details." << endl << endl;
-    cerr << "Command line format:" << endl;
-    cerr << "     stereoTutorialVideoPlayer [pathname-optional]" << endl;
-    cerr << "Example:" << endl;
-    cerr << "     stereoTutorialVideoPlayer video.cvi" << endl;
-
     if (argc > 1) VideoPlayer(argv[1]);
     else VideoPlayer("");
 
