@@ -109,7 +109,7 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
     /*! Typedef for a map of internally-generated commands (only used for garbage collection). */
     typedef cmnNamedMap<mtsCommandBase> CommandInternalMapType;
 
- protected:
+protected:
 
     /*! A string identifying the 'Name' of the interface. */
     std::string Name;
@@ -228,15 +228,6 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
 public:
 
     virtual void Cleanup(void) {};
-
-    //****************************************************************************************************************************
-    // The virtual methods that add the commands to the internal maps. Note that these methods can be overridden in derived classes.
-    // For example, mtsTaskInterface overrides AddCommandVoid and AddCommandWrite to queue these commands to achieve thread-safety.
-    virtual mtsCommandVoidBase* AddCommandVoid(mtsCommandVoidBase *command);
-    virtual mtsCommandReadBase* AddCommandRead(mtsCommandReadBase *command);
-    virtual mtsCommandWriteBase* AddCommandWrite(mtsCommandWriteBase *command);
-    virtual mtsCommandWriteBase* AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command);
-    virtual mtsCommandQualifiedReadBase* AddCommandQualifiedRead(mtsCommandQualifiedReadBase *command);
 
 #ifndef SWIG // SWIG cannot parse some of this
     //****************************************************************************************************************************
@@ -380,6 +371,16 @@ public:
     void ToStream(std::ostream & outputStream) const;
 
 protected:
+
+    //****************************************************************************************************************************
+    // The virtual methods that add the commands to the internal maps. Note that these methods can be overridden in derived classes.
+    // For example, mtsTaskInterface overrides AddCommandVoid and AddCommandWrite to queue these commands to achieve thread-safety.
+    // These could be moved to the public interface, if needed.
+    virtual mtsCommandVoidBase* AddCommandVoid(mtsCommandVoidBase *command);
+    virtual mtsCommandReadBase* AddCommandRead(mtsCommandReadBase *command);
+    virtual mtsCommandWriteBase* AddCommandWrite(mtsCommandWriteBase *command);
+    virtual mtsCommandWriteBase* AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command);
+    virtual mtsCommandQualifiedReadBase* AddCommandQualifiedRead(mtsCommandQualifiedReadBase *command);
 
     bool AddEvent(const std::string & commandName, mtsMulticastCommandVoid * generator);
     bool AddEvent(const std::string & commandName, mtsMulticastCommandWriteBase * generator);

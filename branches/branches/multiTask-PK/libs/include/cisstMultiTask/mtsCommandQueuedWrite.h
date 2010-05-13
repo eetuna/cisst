@@ -188,7 +188,7 @@ public:
       potentially occur later, i.e. when SetArgumentPrototype is
       used.  This is useful when the queued command is added to a
       multicast command. */
-    inline mtsCommandQueuedWriteGeneric(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size);
+    mtsCommandQueuedWriteGeneric(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size);
 
 
     /*! Destructor */

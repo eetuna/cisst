@@ -49,7 +49,13 @@ http://www.cisst.org/cisst/license.txt.
 
   The main difference between a task interface and a device
   interface is that the former uses queues for Void and Write
-  commands in order to maintain thread safety.
+  commands in order to maintain thread safety. Furthermore, a separate
+  queue is allocated for each client that connects to this interface --
+  this ensures that each queue has only a single writer (the client)
+  and a single reader (this task), so thread-safety can be achieved
+  without relying on potentially blocking mutexes. This is implemented
+  by the internal ThreadResources class, which provides a separate "instance"
+  of the provided interface to the client task.
 
 */
 class CISST_EXPORT mtsTaskInterface: public mtsDeviceInterface {
@@ -167,6 +173,8 @@ private:
 
     mtsCommandWriteBase * GetCommandWrite(const std::string & commandName,
                                           unsigned int userId) const;
+
+protected:
 
     /*! Override AddCommandVoid to automatically queue the void commands */
     mtsCommandVoidBase* AddCommandVoid(mtsCommandVoidBase *command);

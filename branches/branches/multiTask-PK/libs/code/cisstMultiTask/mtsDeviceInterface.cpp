@@ -270,7 +270,7 @@ mtsCommandWriteBase* mtsDeviceInterface::AddCommandWrite(mtsCommandWriteBase *co
     return command;
 }
 
-mtsCommandWriteBase* mtsDeviceInterface::AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command)
+mtsCommandWriteBase* mtsDeviceInterface::AddCommandFilteredWrite(mtsCommandQualifiedReadBase *, mtsCommandWriteBase *)
 {
     CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: only valid for tasks" << std::endl;
     return 0;
