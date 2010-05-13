@@ -427,10 +427,10 @@ public:
         const FinalRefType *p2 = dynamic_cast<const FinalRefType *>(&obj2);
         return (p2?(&obj1 == &p2->rData):false); }
     static void ConditionalFree(const FinalRefType *obj) { delete obj;}
-    static mtsGenericObject* ConditionalCreate(const T &, const std::string &) 
+    static mtsGenericObject* ConditionalCreate(const T &arg, const std::string &) 
     {
-        //return new FinalType(arg);
-        return dynamic_cast<mtsGenericObject*>(FinalType::ClassServices()->Create());
+        return new FinalType(arg);
+        //return dynamic_cast<mtsGenericObject*>(FinalType::ClassServices()->Create());
     }
 
     static T* CastArg(mtsGenericObject &arg) {
@@ -470,9 +470,7 @@ public:
                                << typeid(T).name() << "\", got \"" 
                                << arg.Services()->TypeInfoPointer()->name() << "\")" << std::endl;
         }
-        //return new FinalType(arg);
-        // PK: Following may not correctly handle dynamically sizeable types
-        return dynamic_cast<mtsGenericObject*>(FinalType::ClassServices()->Create()); 
+        return new FinalType(arg);
     }
 
     static T* CastArg(mtsGenericObject &arg) { return dynamic_cast<T * >(&arg); }
