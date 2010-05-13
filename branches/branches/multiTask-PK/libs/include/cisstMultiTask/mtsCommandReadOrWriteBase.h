@@ -47,7 +47,7 @@ template <class _argumentType>
 class mtsCommandReadOrWriteBase : public mtsCommandBase {
 
     friend class mtsMulticastCommandWriteBase;
-    friend class mtsCommandQueuedWriteGenericBase; // PK TEMP
+    friend class mtsCommandQueuedWriteGeneric;
 
 public:
     typedef mtsCommandBase BaseType;

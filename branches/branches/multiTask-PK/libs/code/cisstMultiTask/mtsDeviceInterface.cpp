@@ -30,14 +30,14 @@ mtsDeviceInterface::mtsDeviceInterface(const std::string & interfaceName,
     Device(device),
     Registered(false),
     UserCounter(0),
-    // PK: should all maps take ownership (second parameter true)?
-    // Or, should we change the default in cmnNamedMap?
-    CommandsVoid("CommandsVoid"),
-    CommandsRead("CommandsRead"),
-    CommandsWrite("CommandsWrite"),
-    CommandsQualifiedRead("CommandsQualifiedRead"),
-    EventVoidGenerators("EventVoidGenerators"),
-    EventWriteGenerators("EventWriteGenerators"),
+    // Maps take ownership of command objects that are added, so that
+    // cmnNamedMap methods RemoveItem and DeleteAll free allocated memory.
+    CommandsVoid("CommandsVoid", true),
+    CommandsRead("CommandsRead", true),
+    CommandsWrite("CommandsWrite", true),
+    CommandsQualifiedRead("CommandsQualifiedRead", true),
+    EventVoidGenerators("EventVoidGenerators", true),
+    EventWriteGenerators("EventWriteGenerators", true),
     CommandsInternal("CommandsInternal", true)
 {
     CommandsVoid.SetOwner(*this);
@@ -238,6 +238,22 @@ mtsCommandVoidBase* mtsDeviceInterface::AddCommandVoid(mtsCommandVoidBase *comma
     return command;
 }
 
+mtsCommandReadBase* mtsDeviceInterface::AddCommandRead(mtsCommandReadBase *command)
+{
+    if (command) {
+        if (!CommandsRead.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
+            delete command;
+            command = 0;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead: unable to add command \""
+                                     << command->GetName() << "\"" << std::endl;
+        }
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead: unable to create command \""
+                                 << command->GetName() << "\"" << std::endl;
+    }
+    return command;
+}
+
 mtsCommandWriteBase* mtsDeviceInterface::AddCommandWrite(mtsCommandWriteBase *command)
 {
     if (command) {
@@ -258,6 +274,22 @@ mtsCommandWriteBase* mtsDeviceInterface::AddCommandFilteredWrite(mtsCommandQuali
 {
     CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: only valid for tasks" << std::endl;
     return 0;
+}
+
+mtsCommandQualifiedReadBase* mtsDeviceInterface::AddCommandQualifiedRead(mtsCommandQualifiedReadBase *command)
+{
+    if (command) {
+        if (!CommandsQualifiedRead.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
+            delete command;
+            command = 0;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandQualifiedRead: unable to add command \""
+                                     << command->GetName() << "\"" << std::endl;
+        }
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddCommandQualifiedRead: unable to create command \""
+                                 << command->GetName() << "\"" << std::endl;
+    }
+    return command;
 }
 
 void mtsDeviceInterface::ToStream(std::ostream & outputStream) const

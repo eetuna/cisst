@@ -150,72 +150,40 @@ mtsCommandWriteBase * mtsTaskInterface::GetCommandWrite(const std::string & comm
 
 mtsCommandVoidBase* mtsTaskInterface::AddCommandVoid(mtsCommandVoidBase *command)
 {
+    mtsCommandQueuedVoidBase * queuedCommand = 0;
+    // Call base class AddCommandVoid to add to CommandsVoid map.
+    command = mtsDeviceInterface::AddCommandVoid(command);
     if (command) {
-        if (CommandsVoid.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
-            mtsCommandQueuedVoidBase * queuedCommand = new mtsCommandQueuedVoid(0, command);
-            if (queuedCommand) {
-                if (CommandsQueuedVoid.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
-                    return queuedCommand;
-                } else {
-                    delete command;
-                    delete queuedCommand;
-                    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add queued command \""
-                                             << command->GetName() << "\"" << std::endl;
-                    return 0;
-                }
-            } else {
-                delete command;
-                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create queued command \""
-                                         << command->GetName() << "\"" << std::endl;
-                return 0;
-            }
-        } else {
-            delete command;
-            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+        queuedCommand = new mtsCommandQueuedVoid(0, command);
+        if (!CommandsQueuedVoid.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
+            CommandsVoid.RemoveItem(command->GetName(), CMN_LOG_LOD_INIT_ERROR);
+            delete queuedCommand;
+            queuedCommand = 0;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add queued command \""
                                      << command->GetName() << "\"" << std::endl;
-            return 0;
         }
-    } else {
-        CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to create command \""
-                                 << command->GetName() << "\"" << std::endl;
-        return 0;
     }
+    return queuedCommand;
 }
 
 
 mtsCommandWriteBase* mtsTaskInterface::AddCommandWrite(mtsCommandWriteBase *command)
 {
+    mtsCommandQueuedWriteBase * queuedCommand = 0;
+    // Call base class AddCommandWrite to add to CommandsWrite map.
+    command = mtsDeviceInterface::AddCommandWrite(command);
     if (command) {
-        if (CommandsWrite.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
-            // Create with no mailbox and 0 size argument queue.
-            mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandQueuedWriteGeneric(0, command, 0);
-            if (queuedCommand) {
-                if (CommandsQueuedWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
-                    return queuedCommand;
-                } else {
-                    delete command;
-                    delete queuedCommand;
-                    CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add command \""
-                                             << command->GetName() << "\"" << std::endl;
-                    return 0;
-                }
-            } else {
-                delete command;
-                CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to create queued command \""
-                                         << command->GetName() << "\"" << std::endl;
-                return 0;
-            }
-        } else {
-            delete command;
-            CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add command \""
+        // Create with no mailbox and 0 size argument queue.
+        queuedCommand = new mtsCommandQueuedWriteGeneric(0, command, 0);
+        if (!CommandsQueuedWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
+            CommandsVoid.RemoveItem(command->GetName(), CMN_LOG_LOD_INIT_ERROR);
+            delete queuedCommand;
+            queuedCommand = 0;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add queued command \""
                                      << command->GetName() << "\"" << std::endl;
-            return 0;
         }
-    } else {
-        CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to create command \""
-                                 << command->GetName() << "\"" << std::endl;
-        return 0;
     }
+    return queuedCommand;
 }
 
 mtsCommandWriteBase* mtsTaskInterface::AddCommandFilteredWrite(mtsCommandQualifiedReadBase *filter, mtsCommandWriteBase *command)
@@ -231,14 +199,15 @@ mtsCommandWriteBase* mtsTaskInterface::AddCommandFilteredWrite(mtsCommandQualifi
         if (!CommandsInternal.AddItem(command->GetName()+"Write", command, CMN_LOG_LOD_INIT_ERROR)) {
             CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add command \""
                                      << command->GetName() << "\"" << std::endl;
+            CommandsInternal.RemoveItem(filter->GetName(), CMN_LOG_LOD_INIT_ERROR);
             return 0;
         }
         mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandFilteredQueuedWrite(filter, command);
         if (CommandsQueuedWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
             return queuedCommand;
         } else {
-            delete filter;
-            delete command;
+            CommandsInternal.RemoveItem(filter->GetName(), CMN_LOG_LOD_INIT_ERROR);
+            CommandsInternal.RemoveItem(command->GetName(), CMN_LOG_LOD_INIT_ERROR);
             delete queuedCommand;
             CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add queued command \""
                                      << command->GetName() << "\"" << std::endl;
