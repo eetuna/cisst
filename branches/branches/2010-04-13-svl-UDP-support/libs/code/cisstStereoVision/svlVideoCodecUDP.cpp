@@ -84,6 +84,11 @@ char ReceiveBuffer[RECEIVE_BUFFER_SIZE];
 char ReceiveBufferSign[RECEIVE_BUFFER_SIZE];
 #endif
 
+#define FRAME_RESET
+#ifdef FRAME_RESET
+const unsigned int ResetFrameCount = 30;
+#endif
+
 // Internal buffer for serialization and deserialization
 std::stringstream SerializationStreamBuffer;
 std::stringstream DeSerializationStreamBuffer;
@@ -336,44 +341,25 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             osaSleep(1.0);
         }
 
-        ///////// aaaaaaaaaaaa
-        /*
-        if (frameNo == 0) {
-            imageCurrent[0] = 0;
-            imageCurrent[1] = 128;
-            imageCurrent[2] = 255;
-            imageCurrent[3] = 128;
-            imageCurrent[4] = 0;
-        } else if (frameNo == 1) {
-            imageCurrent[0] = 128;
-            imageCurrent[1] = 255;
-            imageCurrent[2] = 128;
-            imageCurrent[3] = 0;
-            imageCurrent[4] = 255;
-        } else if (frameNo == 2) {
-            imageCurrent[0] = 255;
-            imageCurrent[1] = 128;
-            imageCurrent[2] = 0;
-            imageCurrent[3] = 255;
-            imageCurrent[4] = 0;
-        }
-        */
-
         // Get temporal image difference
 #ifdef TEMPORAL_DIFF
         memset(imageDiffSign, 0, ImageDiffSignArraySize);
-        //if (frameNo % 10 == 0) {
-        //    memset(imagePrev, 0, imageBufferSize);
-        //}
+
+#ifdef FRAME_RESET
+        if (frameNo % ResetFrameCount == 0) {
+            memset(imagePrev, 0, imageBufferSize);
+        }
+#endif
 
         int idxSign = 0, count = 0, diff;
 		for (unsigned int i = 0; i < imageBufferSize; ++i) {
             diff = imageCurrent[i] - imagePrev[i];
 
-            // aaaaaaaaaaaa
+            /* aaaaaaaaaaaaa
             if (100 <= i && i <= 104) {
                 printf("[%d-%d] prev: %03d, curr: %03d, diff: %03d ", frameNo, i, imagePrev[i], imageCurrent[i], diff);
             }
+            */
 
             // Populate array of image difference sign
             if (diff > 0) {
@@ -384,10 +370,11 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             // Update difference image
             imageDiff[i] = abs(diff);
 
-            // aaaaaaaaaaaaaaaa
+            /* aaaaaaaaaaaaa
             if (100 <= i && i <= 104) {
                 printf("(%d)\n", imageDiff[i]);
             }
+            */
 
             // Update index
             if (++count == 8) {
@@ -401,9 +388,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     }
 
     _SynchronizeThreads(procInfo);
-
-    // temporary compression
-    //const_cast<svlSampleImageBase&>(image).SetEncoder("jpg", 95);
 
     const unsigned int procid = procInfo->id;
     const unsigned int proccount = procInfo->count;
@@ -436,7 +420,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
         // Compress part
         if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, BufferYUV + offset * 2, size * 2, compr) != Z_OK) {
-        //if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, imageToBeCompressed + offset * 2, size * 2, compr) != Z_OK) {
             err = true;
             break;
         }
@@ -593,10 +576,11 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
         pos += compressedpartsize;
     }
 
-    // aaaaaaaaaaaa
+    /* aaaaaaaaaaaa
     for (int i = 0; i < 5; i++) {
         printf("[0-%d] prev: %03d (%d)\n", i, imagePrev[i], ReceiveBufferSign[i]);
     }
+    */
 #endif
 
     return SVL_OK;
@@ -666,9 +650,11 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     bool negative = false;
     unsigned char value;
 
-    //if (frameNo % 10 == 0) {
-    //    memset(imagePrev, 0, imageBufferSize);
-    //}
+#ifdef FRAME_RESET
+    if (frameNo % ResetFrameCount == 0) {
+        memset(imagePrev, 0, imageBufferSize);
+    }
+#endif
 
     for (unsigned int i = 0; i < imageBufferSize; ++i) {
         if (count == 0) {
@@ -676,7 +662,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
         }
         negative = ((t & (1 << count)) > 0 ? true : false);
 
-        // aaaaaaaaaaaaaaaaaa
+        /* aaaaaaaaaaaaaaaaaa
         if (100 <= i && i <= 104) {
             printf("[%d-%d] prev: %03d, curr: ", frameNo, i, imagePrev[i]);
 
@@ -689,6 +675,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
             }
             printf("%03d, diff: %03d (%d)\n", aaaaa, img[i], negative);
         }
+        */
 
         // Rebuild current frame
         value = img[i];
