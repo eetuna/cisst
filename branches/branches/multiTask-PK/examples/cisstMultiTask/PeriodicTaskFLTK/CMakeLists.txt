@@ -29,4 +29,9 @@ ADD_EXECUTABLE(cisstMultiTaskPeriodicTaskFLTK
                )
 
 # link with the cisst libraries
-CISST_REQUIRES("cisstMultiTaskPeriodicTaskFLTK" "cisstCommon;cisstOSAbstraction;cisstMultiTask")
+cisst_target_link_libraries(cisstMultiTaskPeriodicTaskFLTK
+                            cisstCommon
+                            cisstVector
+                            cisstVectorFLTK
+                            cisstOSAbstraction
+                            cisstMultiTask)
