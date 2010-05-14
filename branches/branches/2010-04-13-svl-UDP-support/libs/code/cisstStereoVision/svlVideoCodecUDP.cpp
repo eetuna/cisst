@@ -26,8 +26,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstStereoVision/svlConverters.h>
 #include <cisstStereoVision/svlStreamManager.h>
-#include <iostream>
-#include <fstream>
 #include "zlib.h" // for zlib compression
 
 //#define _DEBUG_
@@ -50,11 +48,22 @@ const unsigned int ZLibCompressionLevel = 3;
 #include <string.h>  // for memset
 #endif
 
-// For testing purpose
+// Enable/disable interframe difference
 #ifdef TEMPORAL_DIFF
 static unsigned char * imagePrev = 0;
 static unsigned char * imageDiff = 0;
 static unsigned char * imageDiffSign = 0;
+#endif
+
+// Enable profiling code
+#define PROFILE_WRITE
+#ifdef PROFILE_WRITE
+#include <iostream>
+#include <fstream>
+static double * ticYUV = 0;
+static double * ticZlib = 0;
+static double * tocYUV = 0;
+static double * tocZlib = 0;
 #endif
 
 // Experiments
@@ -147,6 +156,13 @@ svlVideoCodecUDP::~svlVideoCodecUDP()
     if (imagePrev) delete [] imagePrev;
     if (imageDiff) delete [] imageDiff;
     if (imageDiffSign) delete [] imageDiffSign;
+#endif
+
+#ifdef PROFILE_WRITE
+    if (ticYUV) delete [] ticYUV;
+    if (ticZlib) delete [] ticZlib;
+    if (tocYUV) delete [] tocYUV;
+    if (tocZlib) delete [] tocZlib;
 #endif
 }
 
@@ -298,12 +314,17 @@ int svlVideoCodecUDP::Create(const std::string &filename, const unsigned int wid
 
 int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch)
 {
+#ifdef PROFILE_WRITE
+    const double ticWrite = osaGetTime();
+    const unsigned int sizeOriginalImage = image.GetDataSize();
+#endif
+
     static int frameNo = 0;
 
     // for test
-    if (frameNo > 5) {
-        return SVL_FAIL;
-    }
+    //if (frameNo > 5) {
+    //    return SVL_FAIL;
+    //}
     
     const unsigned int procId = procInfo->id;
 	bool err = false;
@@ -314,6 +335,20 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
     _OnSingleThread(procInfo)
     {
+#ifdef PROFILE_WRITE
+        if (ticYUV == 0) {
+            ticYUV  = new double[procInfo->count];
+            ticZlib = new double[procInfo->count];
+            tocYUV  = new double[procInfo->count];
+            tocZlib = new double[procInfo->count];
+        } else {
+            memset(ticYUV,  0, sizeof(double) * procInfo->count);
+            memset(ticZlib, 0, sizeof(double) * procInfo->count);
+            memset(tocYUV,  0, sizeof(double) * procInfo->count);
+            memset(tocZlib, 0, sizeof(double) * procInfo->count);
+        }
+#endif
+
         // Remember total number of subimages
         if (ProcessCount == 0) {
             ProcessCount = procInfo->count;
@@ -329,11 +364,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 				<< imageWidth << "x" << imageHeight << ")" << std::endl;
 			
             CreateImageBuffers(imageBufferSize);
-
-            // Receiver:
-            // 1. Create temporal image buffer
-            // 2. When a new image comes in, update previous image buffer
-            // 3. Recover original image after deserialization
 #endif
         } else if (frameNo == 1) {
             // It takes time for UDP receiver to initialze (e.g. shows up output window)
@@ -376,7 +406,13 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         SubImageOffset[procid] = procid * comprsize;
 
         // Convert RGB to YUV422 planar format
+#ifdef PROFILE_WRITE
+        ticYUV[procid] = osaGetTime();
+#endif
 		svlConverter::RGB24toYUV422P(imageToBeCompressed + offset * 3, BufferYUV + offset * 2, size);
+#ifdef PROFILE_WRITE
+        tocYUV[procid] = osaGetTime();
+#endif
 
 #ifdef TEMPORAL_DIFF
         // Get interframe image difference in YUV space
@@ -412,6 +448,9 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 #endif
 
         // Compress part
+#ifdef PROFILE_WRITE
+        ticZlib[procid] = osaGetTime();
+#endif
         if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, 
 #ifdef TEMPORAL_DIFF
                       imageDiff + offset * 2, size * 2, 
@@ -423,6 +462,9 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             err = true;
             break;
         }
+#ifdef PROFILE_WRITE
+        tocZlib[procid] = osaGetTime();
+#endif
         SubImageSize[procid] = comprsize;
 
         break;
@@ -479,6 +521,30 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             }
         }
     }
+
+#ifdef PROFILE_WRITE
+    const double tocWrite = osaGetTime();
+    const unsigned int sizeCompressedImage = SubImageSize.SumOfElements();
+    const unsigned int sizeSignArray = ImageDiffSignArraySize;
+
+    char filename[100] = "";
+    sprintf(filename, "profile.txt", ticWrite);
+    std::ofstream logfile(filename, std::ios_base::app);
+    logfile
+        // file size
+        << sizeOriginalImage << "," << sizeCompressedImage << "," << sizeSignArray << ","
+        // compression ratio
+        << (double)sizeCompressedImage / (double) sizeOriginalImage * 100.0 << ","
+        // compression ratio considering sign array together
+        << (double)(sizeCompressedImage + sizeSignArray) / (double) sizeOriginalImage * 100.0 << ","
+        // time to execute Write()
+        << tocWrite - ticWrite << ","
+        // time for RGB-to-YUV conversion
+        << tocYUV[procid] - ticYUV[procid] << ","
+        // time for Zlib compression
+        << tocZlib[procid] - ticZlib[procid] << std::endl;
+    logfile.close();
+#endif
 
     return SVL_OK;
 }
@@ -1032,7 +1098,7 @@ int svlVideoCodecUDP::SendUDP(void)
 
             //static int count = 0;
             //if (count++ == 10) {
-                osaSleep(0.5 * cmn_ms);
+                osaSleep(0.1 * cmn_ms);
             //    count = 0;
             //}
         }
