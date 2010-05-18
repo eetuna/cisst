@@ -50,6 +50,8 @@ public:
     unsigned int GetHeight(unsigned int videoch = 0);
 
 private:
+    svlSampleImage* OutputImage;
+
     int StreamID;
     ui3BehaviorBase* ParentBehavior;
 

@@ -102,7 +102,7 @@ public:
     /*!
      Should be implemented in a thread-safe way
     */
-    virtual void SetImage(svlSampleImageBase* image, unsigned int channel = 0);
+    virtual void SetImage(svlSampleImage* image, unsigned int channel = 0);
 };
 
 

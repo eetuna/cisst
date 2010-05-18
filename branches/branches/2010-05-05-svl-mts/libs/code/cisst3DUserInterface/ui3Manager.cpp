@@ -738,7 +738,7 @@ void ui3Manager::OnStreamSample(svlSample* sample, int streamindex)
         // Check if there are any renderers waiting for this stream (there can be more than one)
         for (unsigned int i = 0; i < Renderers.size(); i ++) {
             if (Renderers[i] && Renderers[i]->streamindex == streamindex && Renderers[i]->imageplane) {
-                Renderers[i]->imageplane->SetImage(dynamic_cast<svlSampleImageBase*>(sample), Renderers[i]->streamchannel);
+                Renderers[i]->imageplane->SetImage(dynamic_cast<svlSampleImage*>(sample), Renderers[i]->streamchannel);
             }
         }
     }

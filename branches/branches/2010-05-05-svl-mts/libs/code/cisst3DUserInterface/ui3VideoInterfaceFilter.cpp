@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 
 ui3VideoInterfaceFilter::ui3VideoInterfaceFilter(svlStreamType streamtype, int streamid, ui3BehaviorBase* behavior) :
     svlFilterBase(),
+    OutputImage(0),
     StreamID(streamid),
     ParentBehavior(behavior)
 {
@@ -43,12 +44,14 @@ ui3VideoInterfaceFilter::~ui3VideoInterfaceFilter()
 int ui3VideoInterfaceFilter::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
     syncOutput = syncInput;
+    OutputImage = dynamic_cast<svlSampleImage*>(syncOutput);
     return SVL_OK;
 }
 
 int ui3VideoInterfaceFilter::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    syncOutput = OutputImage;
+    syncOutput = syncInput;
+    OutputImage = dynamic_cast<svlSampleImage*>(syncOutput);
     _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
     // for now, ui3BehaviorBase::OnStreamSample remains single threaded for the
@@ -62,12 +65,13 @@ int ui3VideoInterfaceFilter::Process(svlProcInfo* procInfo, svlSample* syncInput
 
 unsigned int ui3VideoInterfaceFilter::GetWidth(unsigned int videoch)
 {
-    if (!syncOutput || !syncOutput->IsImage()) return 0;
-    return dynamic_cast<svlSampleImageBase*>(syncOutput)->GetWidth(videoch);
+    if (!OutputImage) return 0;
+    return OutputImage->GetWidth(videoch);
 }
 
 unsigned int ui3VideoInterfaceFilter::GetHeight(unsigned int videoch)
 {
-    if (!syncOutput || !syncOutput->IsImage()) return 0;
-    return dynamic_cast<svlSampleImageBase*>(syncOutput)->GetHeight(videoch);
+    if (!OutputImage) return 0;
+    return OutputImage->GetHeight(videoch);
 }
+
