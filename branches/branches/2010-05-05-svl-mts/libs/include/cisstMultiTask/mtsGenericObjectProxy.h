@@ -34,8 +34,104 @@ http://www.cisst.org/cisst/license.txt.
 
 
 // Forward declarations
+template <class _elementType> class mtsGenericObjectProxyBase;
 template <class _elementType> class mtsGenericObjectProxy;
 template <class _elementType> class mtsGenericObjectProxyRef;
+
+// Class services specialization for proxy objects.  We assume that we always want dynamic creation.
+// The specialization is that if the dynamic_cast to the Proxy type fails, we also try to dynamic_cast
+// to the ProxyRef type.
+template <typename _elementType>
+class cmnConditionalObjectFactory<CMN_DYNAMIC_CREATION, mtsGenericObjectProxy<_elementType> > {
+public:
+    typedef mtsGenericObjectProxy<_elementType> value_type;
+    typedef mtsGenericObjectProxyRef<_elementType> value_reftype;
+    typedef value_type * pointer;
+    typedef cmnGenericObject * generic_pointer;
+
+    inline static cmnGenericObject * Create(void) {
+        return new value_type;
+    }
+
+    inline static cmnGenericObject * Create(const cmnGenericObject & other) {
+        const value_type * otherPointer = dynamic_cast<const value_type *>(&other);
+        if (otherPointer)
+            return new value_type(*otherPointer);
+        const value_reftype * otherRefPointer = dynamic_cast<const value_reftype *>(&other);
+        if (otherRefPointer)
+            return new value_type(otherRefPointer->GetData());
+        return 0;
+    }
+
+    inline static bool Create(cmnGenericObject * existing, const cmnGenericObject & other) {
+        const value_type * otherPointer = dynamic_cast<const value_type *>(&other);
+        if (otherPointer) {
+            new(existing) value_type(*otherPointer);
+            return true;
+        }
+        const value_reftype * otherRefPointer = dynamic_cast<const value_reftype *>(&other);
+        if (otherRefPointer) {
+            new(existing) value_type(otherRefPointer->GetData());
+            return true;
+        }
+        return false;
+    }
+
+    inline static cmnGenericObject * CreateArray(size_t size) {
+        return new value_type[size];
+    }
+    
+    inline static cmnGenericObject * CreateArray(size_t size, const cmnGenericObject & other) {
+        const value_type * otherPointer = dynamic_cast<const value_type *>(&other);
+        pointer data, dummy;
+        size_t index;
+        if (otherPointer) {
+            data = static_cast<pointer>(::operator new(sizeof(value_type) * size));
+            for (index = 0; index < size; index++) {
+                dummy = new(&(data[index])) value_type(*otherPointer); // placement new with copy constructor
+            }
+            return data;
+        }
+        const value_reftype * otherRefPointer = dynamic_cast<const value_reftype *>(&other);
+        if (otherRefPointer) {
+            data = static_cast<pointer>(::operator new(sizeof(value_type) * size));
+            for (index = 0; index < size; index++) {
+                dummy = new(&(data[index])) value_type(otherRefPointer->GetData()); // placement new with copy constructor
+            }
+            return data;
+        }
+        return 0;
+    }
+
+    inline static bool DeleteArray(generic_pointer & data, size_t & size) {
+        pointer typedData = dynamic_cast<pointer>(data);
+        if (typedData) {
+            size_t index;
+            for (index = 0; index < size; index++) {
+                typedData[index].~value_type();
+            }
+            delete typedData;
+            data = 0;
+            size = 0;
+            return true;
+        }
+        return false;
+    }
+
+    inline static bool Delete(cmnGenericObject * existing) {
+        value_type * existingPointer = dynamic_cast<value_type *>(existing);
+        if (existingPointer) {
+            existingPointer->~value_type();
+            return true;
+        }
+        const value_reftype * existingRefPointer = dynamic_cast<const value_reftype *>(existing);
+        if (existingRefPointer) {
+            existingRefPointer->~value_reftype();
+            return true;
+        }
+        return false;
+    }
+};
 
 /*!  Proxy class used to create a simple mtsGenericObject, i.e. data
   object with a registered type, dynamic creation, serialization and
@@ -168,7 +264,9 @@ public:
 
     /*! Default constructor.  The data member is initialized using its
         default constructor. */
-    inline mtsGenericObjectProxy(void) : BaseType(), Data()
+    inline mtsGenericObjectProxy(void):
+        BaseType(),
+        Data()
     {}
 
     /*! Copy constructor. */
@@ -370,10 +468,9 @@ public:
         const FinalRefType *p2 = dynamic_cast<const FinalRefType *>(&obj2);
         return (p2?(&obj1 == &p2->rData):false); }
     static void ConditionalFree(const FinalRefType *obj) { delete obj;}
-    static mtsGenericObject* ConditionalCreate(const T &, const std::string &) 
+    static mtsGenericObject* ConditionalCreate(const T &arg, const std::string &) 
     {
-        //return new FinalType(arg);
-        return dynamic_cast<mtsGenericObject*>(FinalType::ClassServices()->Create());
+        return new FinalType(arg);
     }
 
     static T* CastArg(mtsGenericObject &arg) {
@@ -413,9 +510,7 @@ public:
                                << typeid(T).name() << "\", got \"" 
                                << arg.Services()->TypeInfoPointer()->name() << "\")" << std::endl;
         }
-        //return new FinalType(arg);
-        // PK: Following may not correctly handle dynamically sizeable types
-        return dynamic_cast<mtsGenericObject*>(FinalType::ClassServices()->Create()); 
+        return new FinalType(arg);
     }
 
     static T* CastArg(mtsGenericObject &arg) { return dynamic_cast<T * >(&arg); }
@@ -436,7 +531,7 @@ public:
     static mtsGenericObject* ConditionalCreate(const T &arg, const std::string &name) { 
         mtsGenericObject *tmp = impl::ConditionalCreate(arg, name);
         if (!tmp)
-            CMN_LOG_INIT_ERROR << "ConditionalCreate returning NULL for " << name << std::endl;
+            CMN_LOG_INIT_ERROR << "ConditionalCreate returning NULL for " << name << " (maybe you should use CMN_DECLARE_SERVICES with CMN_DYNAMIC_CREATION)" << std::endl;
         return tmp;
     }
 
