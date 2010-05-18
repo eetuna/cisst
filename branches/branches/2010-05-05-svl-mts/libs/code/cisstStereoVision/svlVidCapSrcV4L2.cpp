@@ -21,6 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "svlVidCapSrcV4L2.h"
+#include <cisstOSAbstraction/osaThread.h>
+#include <cisstStereoVision/svlBufferImage.h>
 
 #include <stdlib.h>
 #include <iostream>
@@ -45,8 +47,6 @@ http://www.cisst.org/cisst/license.txt.
 #define MV4LP_CS_UYVY               1
 #define MV4LP_CS_HM12               2
 #define MV4LP_CS_MPEG               -10
-
-using namespace std;
 
 
 /*************************************/

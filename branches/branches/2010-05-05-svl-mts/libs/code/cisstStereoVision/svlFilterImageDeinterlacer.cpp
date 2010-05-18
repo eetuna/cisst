@@ -23,7 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlFilterImageDeinterlacer.h>
 #include "ipDeinterlacing.h"
 
-using namespace std;
 
 /******************************************/
 /*** svlFilterImageDeinterlacer class *****/
@@ -35,37 +34,28 @@ svlFilterImageDeinterlacer::svlFilterImageDeinterlacer() :
     svlFilterBase(),
     cmnGenericObject()
 {
-    AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
-    AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
+    AddInput("input", true);
+    AddInputType("input", svlTypeImageRGB);
+    AddInputType("input", svlTypeImageRGBStereo);
+
+    AddOutput("output", true);
+    SetAutomaticOutputType(true);
+
     MethodToUse = MethodNone;
 }
 
-svlFilterImageDeinterlacer::~svlFilterImageDeinterlacer()
+int svlFilterImageDeinterlacer::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    Release();
-}
-
-int svlFilterImageDeinterlacer::Initialize(svlSample* inputdata)
-{
-    Release();
-
-    OutputData = inputdata;
-
+    syncOutput = syncInput;
     return SVL_OK;
 }
 
-int svlFilterImageDeinterlacer::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterImageDeinterlacer::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    ///////////////////////////////////////////
-    // Check if the input sample has changed //
-      if (!IsNewSample(inputdata))
-          return SVL_ALREADY_PROCESSED;
-    ///////////////////////////////////////////
+    syncOutput = syncInput;
+    _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
-    // Passing the same image for the next filter
-    OutputData = inputdata;
-
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(inputdata);
+    svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncInput);
     unsigned int videochannels = img->GetVideoChannels();
     unsigned int idx;
 
@@ -99,11 +89,6 @@ int svlFilterImageDeinterlacer::ProcessFrame(svlProcInfo* procInfo, svlSample* i
         }
     }
 
-    return SVL_OK;
-}
-
-int svlFilterImageDeinterlacer::Release()
-{
     return SVL_OK;
 }
 

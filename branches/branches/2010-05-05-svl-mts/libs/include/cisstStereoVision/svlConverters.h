@@ -23,11 +23,11 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlConverters_h
 #define _svlConverters_h
 
-#include <cisstStereoVision/svlStreamDefs.h>
+#include <cisstStereoVision/svlTypes.h>
 
 namespace svlConverter
 {
-    void ConvertImage(svlSampleImageBase* inimage, svlSampleImageBase* outimage, int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
+    void ConvertImage(svlSampleImage* inimage, svlSampleImage* outimage, int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
 
     void Gray8toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
     void Gray8toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount);

@@ -37,8 +37,6 @@ http://www.cisst.org/cisst/license.txt.
     #include "svlVidCapSrcMIL.h"
 #endif // CISST_SVL_HAS_MIL
 
-using namespace std;
-
 
 /*************************************/
 /*** svlRenderTargets class **********/

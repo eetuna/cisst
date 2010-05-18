@@ -137,7 +137,21 @@ int svlVideoCodecCVI::Open(const std::string &filename, unsigned int &width, uns
 
 int svlVideoCodecCVI::Create(const std::string &filename, const unsigned int width, const unsigned int height, const double CMN_UNUSED(framerate))
 {
-	if (Opened || !Codec || width < 1 || width > 4096 || height < 1 || height > 4096) return SVL_FAIL;
+	if (Opened || width < 1 || width > 4096 || height < 1 || height > 4096) return SVL_FAIL;
+
+    if (!Codec) {
+        // Set default compression level to 4
+        Codec = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[sizeof(svlVideoIO::Compression)]);
+        std::string name("Multiblock ZLib Compression (YUV422)");
+        memset(&(Codec->extension[0]), 0, 16);
+        memcpy(&(Codec->extension[0]), ".cvi", 4);
+        memset(&(Codec->name[0]), 0, 64);
+        memcpy(&(Codec->name[0]), name.c_str(), std::min(static_cast<int>(name.length()), 63));
+        Codec->size = sizeof(svlVideoIO::Compression);
+        Codec->supports_timestamps = true;
+        Codec->datasize = 1;
+        Codec->data[0] = 4;
+    }
 
     unsigned int size;
 
@@ -263,12 +277,24 @@ int svlVideoCodecCVI::GetPos() const
 
 svlVideoIO::Compression* svlVideoCodecCVI::GetCompression() const
 {
-    if (!Codec) return 0;
-    // Make a copy and return the pointer to it
     // The caller will need to release it by calling the
     // svlVideoIO::ReleaseCompression() method
     svlVideoIO::Compression* compression = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[Codec->size]);
-    memcpy(compression, Codec, Codec->size);
+
+    std::string name("Multiblock ZLib Compression (YUV422)");
+    memset(&(compression->extension[0]), 0, 16);
+    memcpy(&(compression->extension[0]), ".cvi", 4);
+    memset(&(compression->name[0]), 0, 64);
+    memcpy(&(compression->name[0]), name.c_str(), std::min(static_cast<int>(name.length()), 63));
+    compression->size = sizeof(svlVideoIO::Compression);
+    compression->supports_timestamps = true;
+    compression->datasize = 1;
+    if (Codec) compression->data[0] = Codec->data[0];
+    else {
+        // Set default compression level to 4
+        compression->data[0] = 4;
+    }
+
     return compression;
 }
 
@@ -305,9 +331,9 @@ int svlVideoCodecCVI::DialogCompression()
     if (Opened) return SVL_FAIL;
 
     std::cout << std::endl << " # Enter compression level [0-9]: ";
-    int level = cmnGetChar() - '0';
-    if (level < 0) level = 0;
-    else if (level > 9) level = 9;
+    int level = 0;
+    while (level < '0' || level > '9') level = cmnGetChar();
+    level -= '0';
     std::cout << level << std::endl;
 
     svlVideoIO::ReleaseCompression(Codec);
@@ -339,7 +365,7 @@ int svlVideoCodecCVI::SetTimestamp(const double timestamp)
     return SVL_OK;
 }
 
-int svlVideoCodecCVI::Read(svlProcInfo* procInfo, svlSampleImageBase &image, const unsigned int videoch, const bool noresize)
+int svlVideoCodecCVI::Read(svlProcInfo* procInfo, svlSampleImage &image, const unsigned int videoch, const bool noresize)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
     if (!Opened || Writing) return SVL_FAIL;
@@ -426,7 +452,7 @@ int svlVideoCodecCVI::Read(svlProcInfo* procInfo, svlSampleImageBase &image, con
     return ret;
 }
 
-int svlVideoCodecCVI::Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch)
+int svlVideoCodecCVI::Write(svlProcInfo* procInfo, const svlSampleImage &image, const unsigned int videoch)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
     if (!Opened || !Writing) return SVL_FAIL;
@@ -439,7 +465,8 @@ int svlVideoCodecCVI::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
     if (Pos == 0) {
 
-        if (procInfo->id == 0) {
+        _OnSingleThread(procInfo)
+        {
             // Initialize multithreaded processing
             ComprPartOffset.SetSize(procInfo->count);
             ComprPartSize.SetSize(procInfo->count);
@@ -449,11 +476,7 @@ int svlVideoCodecCVI::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         }
 
         // Synchronize threads
-        if (procInfo->count > 1) {
-            if (procInfo->sync->Sync(procInfo->id) != SVL_SYNC_OK) {
-                return SVL_FAIL;
-            }
-        }
+        _SynchronizeThreads(procInfo);
 
         if (err) return SVL_FAIL;
     }
@@ -492,17 +515,13 @@ int svlVideoCodecCVI::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
     }
 
     // Synchronize threads
-    if (procInfo->count > 1) {
-        if (procInfo->sync->Sync(procInfo->id) != SVL_SYNC_OK) {
-            return SVL_FAIL;
-        }
-    }
+    _SynchronizeThreads(procInfo);
 
     if (err) return SVL_FAIL;
 
     // Single threaded data serialization phase
-    if (procInfo->id == 0) {
-
+    _OnSingleThread(procInfo)
+    {
         const unsigned int savebufferid = SaveBufferUsedID ? 0 : 1;
         const double timestamp = image.GetTimestamp();
 

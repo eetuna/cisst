@@ -21,6 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "svlVidCapSrcOpenCV.h"
+#include <cisstOSAbstraction/osaThread.h>
+#include <cisstStereoVision/svlBufferImage.h>
 
 #ifdef _MSC_VER
     // Quick fix for Visual Studio Intellisense:
@@ -32,8 +34,6 @@ http://www.cisst.org/cisst/license.txt.
     #undef CMN_UNUSED
     #define CMN_UNUSED(argument) argument
 #endif
-
-using namespace std;
 
 
 /*************************************/
@@ -106,6 +106,7 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
     int devid[600], width[600], height[600];
     CvCapture *capture;
     IplImage *frame;
+    std::stringstream strstr;
 
     OCVNumberOfDevices = 0;
     for (j = 1; j <= 5; j ++) {
@@ -191,35 +192,38 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
             switch ((OCVDeviceID[i] / 100) * 100) {
                 case CV_CAP_IEEE1394:
 #if (CISST_OS == CISST_WINDOWS)
-                    sprintf(deviceinfo[0][i].name, "CMU IEEE1394 Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "CMU IEEE1394 Device (OpenCV: " << OCVDeviceID[i] << ")";
 #else
-                    sprintf(deviceinfo[0][i].name, "DC1394 Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "DC1394 Device (OpenCV: " << OCVDeviceID[i] << ")";
 #endif
                 break;
 
                 case CV_CAP_STEREO:
-                    sprintf(deviceinfo[0][i].name, "TYZX Stereo Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "TYZX Stereo Device (OpenCV: " << OCVDeviceID[i] << ")";
                 break;
 
                 case CV_CAP_VFW:
 #if (CISST_OS == CISST_WINDOWS)
-                    sprintf(deviceinfo[0][i].name, "Video for Windows Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "Video for Windows Device (OpenCV: " << OCVDeviceID[i] << ")";
 #else
-                    sprintf(deviceinfo[0][i].name, "Video4Linux Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "Video4Linux Device (OpenCV: " << OCVDeviceID[i] << ")";
 #endif
                 break;
 
                 case CV_CAP_MIL:
-                    sprintf(deviceinfo[0][i].name, "Matrox Imaging Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "Matrox Imaging Device (OpenCV: " << OCVDeviceID[i] << ")";
                 break;
 
                 case CV_CAP_QT:
-                    sprintf(deviceinfo[0][i].name, "QuickTime Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "QuickTime Device (OpenCV: " << OCVDeviceID[i] << ")";
                 break;
 
                 default:
-                    sprintf(deviceinfo[0][i].name, "Unknown Device (OpenCV: %d)", OCVDeviceID[i]);
+                    strstr << "Unknown Device (OpenCV: " << OCVDeviceID[i] << ")";
             }
+
+            memset(deviceinfo[0][i].name, 0, SVL_VCS_STRING_LENGTH);
+            memcpy(deviceinfo[0][i].name, strstr.str().c_str(), std::min(static_cast<int>(strstr.str().length()), SVL_VCS_STRING_LENGTH - 1));
 
             // inputs
             deviceinfo[0][i].inputcount = 0;

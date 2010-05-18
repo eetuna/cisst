@@ -23,8 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlFilterStreamTypeConverter.h>
 #include <cisstStereoVision/svlConverters.h>
 
-using namespace std;
-
 
 /*******************************************/
 /*** svlFilterStreamTypeConverter class ****/
@@ -35,33 +33,30 @@ CMN_IMPLEMENT_SERVICES(svlFilterStreamTypeConverter)
 svlFilterStreamTypeConverter::svlFilterStreamTypeConverter() :
     svlFilterBase(),
     cmnGenericObject(),
+    OutputImage(0),
     Scaling(1.0f),
     Mono16ShiftDown(8)
 {
-    OutputData = 0;
 }
 
 svlFilterStreamTypeConverter::svlFilterStreamTypeConverter(svlStreamType inputtype, svlStreamType outputtype) :
     svlFilterBase(),
     cmnGenericObject(),
+    OutputImage(0),
     Scaling(1.0f),
     Mono16ShiftDown(8)
 {
-    OutputData = 0;
-
     SetType(inputtype, outputtype);
 }
 
 svlFilterStreamTypeConverter::~svlFilterStreamTypeConverter()
 {
-    Release();
-
-    if (OutputData) delete OutputData;
+    if (OutputImage) delete OutputImage;
 }
 
 int svlFilterStreamTypeConverter::SetType(svlStreamType inputtype, svlStreamType outputtype)
 {
-    if (OutputData == 0) {
+    if (OutputImage == 0) {
 
         ////////////////////////////////////////////////////
         // Valid input->output mappings are:
@@ -121,10 +116,15 @@ int svlFilterStreamTypeConverter::SetType(svlStreamType inputtype, svlStreamType
             (inputtype == svlTypeImage3DMap        && outputtype == svlTypeImageRGBA)) {
 
             // mapping input type to output type
-            AddSupportedType(inputtype, outputtype);
+            AddInput("input", true);
+            AddInputType("input", inputtype);
+
+            AddOutput("output", true);
+            SetAutomaticOutputType(false);
+            GetOutput()->SetType(outputtype);
 
             // initializing output sample
-            OutputData = svlSample::GetNewFromType(outputtype);
+            OutputImage = dynamic_cast<svlSampleImage*>(svlSample::GetNewFromType(outputtype));
 
             return SVL_OK;
         }
@@ -133,43 +133,34 @@ int svlFilterStreamTypeConverter::SetType(svlStreamType inputtype, svlStreamType
     return SVL_FAIL;
 }
 
-int svlFilterStreamTypeConverter::Initialize(svlSample* inputdata)
+int svlFilterStreamTypeConverter::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    if (OutputData == 0) return SVL_FAIL;
+    if (OutputImage == 0) return SVL_FAIL;
+    syncOutput = OutputImage;
 
-    Release();
-
-    OutputData->SetSize(*inputdata);
+    OutputImage->SetSize(*syncInput);
 
     return SVL_OK;
 }
 
-int svlFilterStreamTypeConverter::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterStreamTypeConverter::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    ///////////////////////////////////////////
-    // Check if the input sample has changed //
-      if (!IsNewSample(inputdata))
-          return SVL_ALREADY_PROCESSED;
-    ///////////////////////////////////////////
+    syncOutput = OutputImage;
+    _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
     int param = 0;
-    svlStreamType inputtype = GetInputType();
+    svlStreamType inputtype = GetInput()->GetType();
     if (inputtype == svlTypeImageMonoFloat ||
         inputtype == svlTypeImage3DMap) param = static_cast<int>(Scaling * 1000.0);
     else
     if (inputtype == svlTypeImageMono16 ||
         inputtype == svlTypeImageMono16Stereo) param = Mono16ShiftDown;
 
-    svlConverter::ConvertImage(dynamic_cast<svlSampleImageBase*>(inputdata),
-                               dynamic_cast<svlSampleImageBase*>(OutputData),
+    svlConverter::ConvertImage(dynamic_cast<svlSampleImage*>(syncInput),
+                               OutputImage,
                                param,
                                procInfo->count, procInfo->id);
 
-    return SVL_OK;
-}
-
-int svlFilterStreamTypeConverter::Release()
-{
     return SVL_OK;
 }
 

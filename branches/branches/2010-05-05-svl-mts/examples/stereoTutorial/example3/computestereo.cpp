@@ -66,8 +66,8 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     svlInitialize();
 
     unsigned int srcwidth, srcheight;
-    char filestr[1024];
     svlCameraGeometry geometry;
+    string filename;
     svlRect roi;
 
 
@@ -91,8 +91,9 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     if (stereo_source.SetFilePath(filepath2, "bmp", SVL_RIGHT) != SVL_OK) goto labError;
     stereo_source.SetTargetFrequency(10.0);
 
-    sprintf(filestr, "%s.bmp", filepath1);
-    svlImageIO::ReadDimensions(filestr, srcwidth, srcheight);
+    filename = filepath1;
+    filename += ".bmp";
+    svlImageIO::ReadDimensions(filename, srcwidth, srcheight);
 
     // setup stereo
     geometry.SetIntrinsics((double)srcwidth, (double)srcwidth,
@@ -128,10 +129,10 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     stereo_converter.SetScaling(255.0f / maxdisparity);
 
     // chain filters to pipeline
-    if (stereo_stream.Trunk().Append(&stereo_source)    != SVL_OK ||
-        stereo_stream.Trunk().Append(&stereo_stereo)    != SVL_OK ||
-        stereo_stream.Trunk().Append(&stereo_converter) != SVL_OK ||
-        stereo_stream.Trunk().Append(&stereo_window)    != SVL_OK) goto labError;
+    stereo_stream.SetSourceFilter(&stereo_source);
+    stereo_source.GetOutput()->Connect(stereo_stereo.GetInput());
+    stereo_stereo.GetOutput()->Connect(stereo_converter.GetInput());
+    stereo_converter.GetOutput()->Connect(stereo_window.GetInput());
 
 
 //////////////////////////////////////////////////////////////
@@ -158,8 +159,6 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     stereo_stream.Stop();
 
 labError:
-    // clean up
-    stereo_stream.RemoveAll();
     return 0;
 }
 

@@ -23,10 +23,11 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlFilterImageDeinterlacer_h
 #define _svlFilterImageDeinterlacer_h
 
-#include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterBase.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
+
 
 class CISST_EXPORT svlFilterImageDeinterlacer : public svlFilterBase, public cmnGenericObject
 {
@@ -43,15 +44,13 @@ class CISST_EXPORT svlFilterImageDeinterlacer : public svlFilterBase, public cmn
 
 public:
     svlFilterImageDeinterlacer();
-    virtual ~svlFilterImageDeinterlacer();
 
     void SetMethod(Method method);
     Method GetMethod();
 
 protected:
-    virtual int Initialize(svlSample* inputdata);
-    virtual int ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata);
-    virtual int Release();
+    virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
+    virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
 
 private:
     Method MethodToUse;

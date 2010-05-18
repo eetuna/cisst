@@ -22,11 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterImageResizer.h>
 
-#include <stdio.h>
-#include <string.h>
-
-using namespace std;
-
 
 /******************************************/
 /*** svlFilterImageResizer class **********/
@@ -36,16 +31,19 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageResizer)
 
 svlFilterImageResizer::svlFilterImageResizer() :
     svlFilterBase(),
-    cmnGenericObject()
+    cmnGenericObject(),
+    OutputImage(0)
 {
-    AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
-    AddSupportedType(svlTypeImageMono8, svlTypeImageMono8);
-    AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
-    AddSupportedType(svlTypeImageMono8Stereo, svlTypeImageMono8Stereo);
+    AddInput("input", true);
+    AddInputType("input", svlTypeImageRGB);
+    AddInputType("input", svlTypeImageMono8);
+    AddInputType("input", svlTypeImageRGBStereo);
+    AddInputType("input", svlTypeImageMono8Stereo);
+//  TO DO:
+//    svlTypeImageMono16 and svlTypeImageMono16Stereo
 
-//  To be added:
-//    AddSupportedType(svlTypeImageMono16, svlTypeImageMono16);
-//    AddSupportedType(svlTypeImageMono16Stereo, svlTypeImageMono16Stereo);
+    AddOutput("output", true);
+    SetAutomaticOutputType(true);
 
     for (unsigned int i = 0; i < 2; i ++) {
         WidthRatio[i] = HeightRatio[i] = 1.0;
@@ -68,6 +66,11 @@ int svlFilterImageResizer::SetOutputSize(unsigned int width, unsigned int height
     return SVL_OK;
 }
 
+void svlFilterImageResizer::SetInterpolation(bool enable)
+{
+    InterpolationEnabled = enable;
+}
+
 int svlFilterImageResizer::SetOutputRatio(double widthratio, double heightratio, unsigned int videoch)
 {
     if (IsInitialized() == true || videoch > 1 || widthratio <= 0.0 || heightratio <= 0.0) return SVL_FAIL;
@@ -78,25 +81,25 @@ int svlFilterImageResizer::SetOutputRatio(double widthratio, double heightratio,
     return SVL_OK;
 }
 
-int svlFilterImageResizer::Initialize(svlSample* inputdata)
+int svlFilterImageResizer::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
     Release();
 
-    switch (GetInputType()) {
+    switch (GetInput()->GetType()) {
         case svlTypeImageRGB:
-            OutputData = new svlSampleImageRGB;
+            OutputImage = new svlSampleImageRGB;
         break;
 
         case svlTypeImageRGBStereo:
-            OutputData = new svlSampleImageRGBStereo;
+            OutputImage = new svlSampleImageRGBStereo;
         break;
 
         case svlTypeImageMono8:
-            OutputData = new svlSampleImageMono8;
+            OutputImage = new svlSampleImageMono8;
         break;
 
         case svlTypeImageMono8Stereo:
-            OutputData = new svlSampleImageMono8Stereo;
+            OutputImage = new svlSampleImageMono8Stereo;
         break;
 
         case svlTypeImageMono16:        // To be added
@@ -111,12 +114,13 @@ int svlFilterImageResizer::Initialize(svlSample* inputdata)
         case svlTypeStreamSource:
         case svlTypeStreamSink:
         case svlTypeImageCustom:
-        case svlTypeRigidXform:
-        case svlTypePointCloud:
+        case svlTypeTransform3D:
+        case svlTypeTargets:
+        case svlTypeText:
         break;
     }
 
-    svlSampleImageBase* inputimage = dynamic_cast<svlSampleImageBase*>(inputdata);
+    svlSampleImage* inputimage = dynamic_cast<svlSampleImage*>(syncInput);
     const unsigned int numofchannels = inputimage->GetVideoChannels();
 
     for (unsigned int i = 0; i < numofchannels; i ++) {
@@ -128,26 +132,24 @@ int svlFilterImageResizer::Initialize(svlSample* inputdata)
             if (Height[i] < 1) Height[i] = 1;
         }
 
-        dynamic_cast<svlSampleImageBase*>(OutputData)->SetSize(i, Width[i], Height[i]);
+        OutputImage->SetSize(i, Width[i], Height[i]);
 
 #if (CISST_SVL_HAS_OPENCV == OFF)
         TempBuffer[i] = new unsigned char[Width[i] * inputimage->GetHeight(i) * inputimage->GetDataChannels()];
 #endif // CISST_SVL_HAS_OPENCV OFF
     }
 
+    syncOutput = OutputImage;
+
     return SVL_OK;
 }
 
-int svlFilterImageResizer::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterImageResizer::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    ///////////////////////////////////////////
-    // Check if the input sample has changed //
-      if (!IsNewSample(inputdata))
-          return SVL_ALREADY_PROCESSED;
-    ///////////////////////////////////////////
+    syncOutput = OutputImage;
+    _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
-    svlSampleImageBase* id = dynamic_cast<svlSampleImageBase*>(inputdata);
-    svlSampleImageBase* od = dynamic_cast<svlSampleImageBase*>(OutputData);
+    svlSampleImage* id = dynamic_cast<svlSampleImage*>(syncInput);
     unsigned int videochannels = id->GetVideoChannels();
     unsigned int idx;
     bool weq, heq;
@@ -158,14 +160,14 @@ int svlFilterImageResizer::ProcessFrame(svlProcInfo* procInfo, svlSample* inputd
         heq = (Height[idx] == id->GetHeight(idx));
 
         if (weq && heq) {
-            memcpy(od->GetUCharPointer(idx), id->GetUCharPointer(idx), id->GetDataSize(idx));
+            memcpy(OutputImage->GetUCharPointer(idx), id->GetUCharPointer(idx), id->GetDataSize(idx));
             return SVL_OK;
         }
 
 #if (CISST_SVL_HAS_OPENCV == ON)
 
-        if (InterpolationEnabled) cvResize(id->IplImageRef(idx), od->IplImageRef(idx), CV_INTER_LINEAR);
-        else cvResize(id->IplImageRef(idx), od->IplImageRef(idx), CV_INTER_NN);
+        if (InterpolationEnabled) cvResize(id->IplImageRef(idx), OutputImage->IplImageRef(idx), CV_INTER_LINEAR);
+        else cvResize(id->IplImageRef(idx), OutputImage->IplImageRef(idx), CV_INTER_NN);
 
 #else // CISST_SVL_HAS_OPENCV
 
@@ -173,52 +175,52 @@ int svlFilterImageResizer::ProcessFrame(svlProcInfo* procInfo, svlSample* inputd
             if (InterpolationEnabled) {
                 if (weq) {
                     ResampleAndInterpolateVRGB24(id->GetUCharPointer(idx), id->GetHeight(idx),
-                                                 od->GetUCharPointer(idx), od->GetHeight(idx),
-                                                 od->GetWidth(idx));
+                                                 OutputImage->GetUCharPointer(idx), OutputImage->GetHeight(idx),
+                                                 OutputImage->GetWidth(idx));
                 }
                 else if (heq) {
                     ResampleAndInterpolateHRGB24(id->GetUCharPointer(idx), id->GetWidth(idx),
-                                                 od->GetUCharPointer(idx), od->GetWidth(idx),
+                                                 OutputImage->GetUCharPointer(idx), OutputImage->GetWidth(idx),
                                                  id->GetHeight(idx));
                 }
                 else {
                     ResampleAndInterpolateHRGB24(id->GetUCharPointer(idx), id->GetWidth(idx),
-                                                 TempBuffer[idx], od->GetWidth(idx),
+                                                 TempBuffer[idx], OutputImage->GetWidth(idx),
                                                  id->GetHeight(idx));
                     ResampleAndInterpolateVRGB24(TempBuffer[idx], id->GetHeight(idx),
-                                                 od->GetUCharPointer(idx), od->GetHeight(idx),
-                                                 od->GetWidth(idx));
+                                                 OutputImage->GetUCharPointer(idx), OutputImage->GetHeight(idx),
+                                                 OutputImage->GetWidth(idx));
                 }
             }
             else {
                 ResampleRGB24(id->GetUCharPointer(idx), id->GetWidth(idx), id->GetHeight(idx),
-                              od->GetUCharPointer(idx), od->GetWidth(idx), od->GetHeight(idx));
+                              OutputImage->GetUCharPointer(idx), OutputImage->GetWidth(idx), OutputImage->GetHeight(idx));
             }
         }
         else { // Mono8
             if (InterpolationEnabled) {
                 if (weq) {
                     ResampleAndInterpolateVMono8(id->GetUCharPointer(idx), id->GetHeight(idx),
-                                                 od->GetUCharPointer(idx), od->GetHeight(idx),
-                                                 od->GetWidth(idx));
+                                                 OutputImage->GetUCharPointer(idx), OutputImage->GetHeight(idx),
+                                                 OutputImage->GetWidth(idx));
                 }
                 else if (heq) {
                     ResampleAndInterpolateHMono8(id->GetUCharPointer(idx), id->GetWidth(idx),
-                                                 od->GetUCharPointer(idx), od->GetWidth(idx),
+                                                 OutputImage->GetUCharPointer(idx), OutputImage->GetWidth(idx),
                                                  id->GetHeight(idx));
                 }
                 else {
                     ResampleAndInterpolateHMono8(id->GetUCharPointer(idx), id->GetWidth(idx),
-                                                 TempBuffer[idx], od->GetWidth(idx),
+                                                 TempBuffer[idx], OutputImage->GetWidth(idx),
                                                  id->GetHeight(idx));
                     ResampleAndInterpolateVMono8(TempBuffer[idx], id->GetHeight(idx),
-                                                 od->GetUCharPointer(idx), od->GetHeight(idx),
-                                                 od->GetWidth(idx));
+                                                 OutputImage->GetUCharPointer(idx), OutputImage->GetHeight(idx),
+                                                 OutputImage->GetWidth(idx));
                 }
             }
             else {
                 ResampleMono8(id->GetUCharPointer(idx), id->GetWidth(idx), id->GetHeight(idx),
-                              od->GetUCharPointer(idx), od->GetWidth(idx), od->GetHeight(idx));
+                              OutputImage->GetUCharPointer(idx), OutputImage->GetWidth(idx), OutputImage->GetHeight(idx));
             }
         }
 
@@ -230,9 +232,9 @@ int svlFilterImageResizer::ProcessFrame(svlProcInfo* procInfo, svlSample* inputd
 
 int svlFilterImageResizer::Release()
 {
-    if (OutputData) {
-        delete OutputData;
-        OutputData = 0;
+    if (OutputImage) {
+        delete OutputImage;
+        OutputImage = 0;
     }
     if (TempBuffer[SVL_LEFT]) {
         delete [] TempBuffer[SVL_LEFT];

@@ -23,10 +23,11 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlFilterImageResizer_h
 #define _svlFilterImageResizer_h
 
-#include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterBase.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
+
 
 class CISST_EXPORT svlFilterImageResizer : public svlFilterBase, public cmnGenericObject
 {
@@ -38,14 +39,16 @@ public:
 
     int SetOutputSize(unsigned int width, unsigned int height, unsigned int videoch = SVL_LEFT);
     int SetOutputRatio(double widthratio, double heightratio, unsigned int videoch = SVL_LEFT);
-    void EnableInterpolation(bool enable = true) { InterpolationEnabled = enable; }
+    void SetInterpolation(bool enable);
 
 protected:
-    virtual int Initialize(svlSample* inputdata);
-    virtual int ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata);
+    virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
+    virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
     virtual int Release();
 
 private:
+    svlSampleImage* OutputImage;
+
     double WidthRatio[2];
     double HeightRatio[2];
     unsigned int Width[2];

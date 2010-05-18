@@ -25,7 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstVector/vctFixedSizeVectorTypes.h>
 #include <cisstVector/vctTransformationTypes.h>
-#include <cisstStereoVision/svlStreamDefs.h>
+#include <cisstStereoVision/svlTypes.h>
 #include <cisst3DUserInterface/ui3VTKForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3VisibleObject.h>
 

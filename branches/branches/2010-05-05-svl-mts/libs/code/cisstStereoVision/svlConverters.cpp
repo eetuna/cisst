@@ -23,15 +23,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlConverters.h>
 
 
-#define MIN3(a, b, c)       (a <= b) ? \
-                                ((a <= c) ? a : c) : \
-                                ((b <= c) ? b : c)
-
-#define MAX3(a, b, c)       (a >= b) ? \
-                                ((a >= c) ? a : c) : \
-                                ((b >= c) ? b : c)
-
-
 void Converter(svlStreamType intype, svlStreamType outtype, unsigned char* inputbuffer, unsigned char* outputbuffer, unsigned int partsize, int param)
 {
     switch (intype) {
@@ -166,13 +157,14 @@ void Converter(svlStreamType intype, svlStreamType outtype, unsigned char* input
         case svlTypeStreamSource:
         case svlTypeStreamSink:
         case svlTypeImageCustom:
-        case svlTypeRigidXform:
-        case svlTypePointCloud:
+        case svlTypeTransform3D:
+        case svlTypeTargets:
+        case svlTypeText:
         break;
     }
 }
 
-void svlConverter::ConvertImage(svlSampleImageBase* inimage, svlSampleImageBase* outimage, int param, unsigned int threads, unsigned int threadid)
+void svlConverter::ConvertImage(svlSampleImage* inimage, svlSampleImage* outimage, int param, unsigned int threads, unsigned int threadid)
 {
     unsigned char *inputbuffer, *outputbuffer;
     unsigned int imgsize, partsize, offset, channels;

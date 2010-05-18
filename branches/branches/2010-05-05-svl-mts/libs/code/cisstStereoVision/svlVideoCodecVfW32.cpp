@@ -355,7 +355,7 @@ int svlVideoCodecVfW32::DialogCompression()
 	return ret;
 }
 
-int svlVideoCodecVfW32::Read(svlProcInfo* procInfo, svlSampleImageBase &image, const unsigned int videoch, const bool noresize)
+int svlVideoCodecVfW32::Read(svlProcInfo* procInfo, svlSampleImage &image, const unsigned int videoch, const bool noresize)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
     if (!Opened || Writing) return SVL_FAIL;
@@ -417,7 +417,7 @@ int svlVideoCodecVfW32::Read(svlProcInfo* procInfo, svlSampleImageBase &image, c
     return SVL_OK;
 }
 
-int svlVideoCodecVfW32::Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch)
+int svlVideoCodecVfW32::Write(svlProcInfo* procInfo, const svlSampleImage &image, const unsigned int videoch)
 {
     if (videoch >= image.GetVideoChannels()) return SVL_FAIL;
     if (!Opened || !Writing) return SVL_FAIL;

@@ -22,11 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include "svlVidCapSrcDirectShow.h"
 
-using namespace std;
-
-#define DS_INIT_TIMEOUT_INTV                500
-#define INITIAL_TOLERANCE_WAIT_LENGTH       100     // [frames]
-
 
 /*************************************/
 /*** svlVidCapSrcDirectShow class ****/
@@ -238,7 +233,7 @@ int svlVidCapSrcDirectShow::GetDeviceList(svlFilterSourceVideoCapture::DeviceInf
 
         // Get capture device inputs
         for (i = 0; i < counter; i ++) {
-            memcpy(deviceinfo[0][i].name, devnames[i], min(static_cast<int>(strlen(devnames[i])), static_cast<int>(SVL_VCS_STRING_LENGTH) - 1));
+            memcpy(deviceinfo[0][i].name, devnames[i], std::min(static_cast<int>(strlen(devnames[i])), static_cast<int>(SVL_VCS_STRING_LENGTH) - 1));
             if (TestOpen(i) == SVL_OK) {
                 deviceinfo[0][i].id = i;
                 deviceinfo[0][i].testok = true;
@@ -325,7 +320,7 @@ int svlVidCapSrcDirectShow::Open()
 
     for (i = 0; i < NumOfStreams; i ++) {
 
-        CMN_LOG_CLASS_INIT_VERBOSE << "Open called for stream " << i << endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Open called for stream " << i << std::endl;
         pCaptureFilter[i] = GetCaptureFilter(DeviceID[i]);
         if (pCaptureFilter[i] == 0) goto labError;
 
@@ -412,27 +407,27 @@ int svlVidCapSrcDirectShow::AssembleGraph()
         hr = pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video, pCaptureFilter[i], pColorConvFilter[i], pSampleGrabFilter[i]);
         if (hr == S_OK || hr == VFW_S_NOPREVIEWPIN) {
             if (hr == S_OK) {
-                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected to colour space converter, then to sample grabber." << endl;
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected to colour space converter, then to sample grabber." << std::endl;
             }
             else {
-                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected (through a smart tee) to colour space converter, then to sample grabber." << endl;
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected (through a smart tee) to colour space converter, then to sample grabber." << std::endl;
             }
         }
         else {
-            CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Cannot directly connect to colour space converter, then to sample grabber." << endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Cannot directly connect to colour space converter, then to sample grabber." << std::endl;
 
             // Try connecting source filter to AVI decompressor
             hr = pGraphBuilder->RenderStream(&(PinCategory[i]), &MEDIATYPE_Video, pCaptureFilter[i], 0, pAviDecomprFilter[i]);
             if (hr == S_OK) {
-                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected to AVI decompressor." << endl;
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Connected to AVI decompressor." << std::endl;
 
                 hr = pGraphBuilder->RenderStream(0, 0, pAviDecomprFilter[i], pColorConvFilter[i], pSampleGrabFilter[i]);
                 if (hr != S_OK) goto labError;
 
-                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: AVI decompressor connected to colour space converter, then to sample grabber filter." << endl;
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: AVI decompressor connected to colour space converter, then to sample grabber filter." << std::endl;
             }
             else {
-                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Cannot connect to AVI decompression filter." << endl;
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Cannot connect to AVI decompression filter." << std::endl;
 
                 // Cannot directly connect Capture Filter to Avi Decompressor Filter or Colour conversion filter,
                 // so start searching with brute force for an appropriate intermediate filter
@@ -443,7 +438,7 @@ int svlVidCapSrcDirectShow::AssembleGraph()
                 GUID typesarray[2];
                 ULONG fetched;
 
-                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Searching for intermediate filters." << endl;
+                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Searching for intermediate filters." << std::endl;
 
                 // Searching for matching filters
                 hr = CoCreateInstance(CLSID_FilterMapper2, 0, CLSCTX_INPROC, IID_IFilterMapper2, reinterpret_cast<void**>(&mapper));
@@ -511,7 +506,7 @@ int svlVidCapSrcDirectShow::AssembleGraph()
                             if (hr == S_OK) {
 
                                 // Display the filter name
-                                stringstream str;
+                                std::stringstream str;
                                 IPropertyBag *pPropBag = NULL;
                                 hr = moniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&pPropBag);
                                 if (hr == S_OK) {
@@ -525,7 +520,7 @@ int svlVidCapSrcDirectShow::AssembleGraph()
                                 }
                                 if (hr != S_OK)
                                     str << "Unknown";
-                                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Using intermediate filter: " << str.str() << endl;
+                                CMN_LOG_CLASS_INIT_VERBOSE << "AssembleGraph: Using intermediate filter: " << str.str() << std::endl;
 
                                 // Intermediate filter found, so exit from loop
                                 break;
@@ -574,7 +569,7 @@ int svlVidCapSrcDirectShow::AssembleGraph()
     return SVL_OK;
 
 labError:
-    CMN_LOG_CLASS_INIT_ERROR << "AssembleGraph returning error (SVL_FAIL)." << endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AssembleGraph returning error (SVL_FAIL)." << std::endl;
     DisassembleGraph();
     return SVL_FAIL;
 }
@@ -941,7 +936,7 @@ svlImageRGB* svlVidCapSrcDirectShow::GetLatestFrame(bool waitfornew, unsigned in
 
 int svlVidCapSrcDirectShow::ShowFormatDialog(HWND hwnd, unsigned int videoch)
 {
-    CMN_LOG_CLASS_INIT_VERBOSE << "ShowFormatDialog called for channel " << videoch << endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "ShowFormatDialog called for channel " << videoch << std::endl;
     if (!Initialized ||
         videoch >= NumOfStreams ||
         pCaptureFilterOut[videoch] == 0) return SVL_FAIL;

@@ -30,94 +30,84 @@ http://www.cisst.org/cisst/license.txt.
 using namespace std;
 
 
-////////////////////////
-//     FPS filter     //
-////////////////////////
-
-class CFPSFilter : public svlFilterBase
+class svlOverlayAsyncOutputProperties : public svlOverlayStaticText
 {
 public:
-    CFPSFilter() :
-        svlFilterBase(),
-        Manager(0),
-        ShowFramerate(true)
-
-    {
-        AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
-    }
+    svlOverlayAsyncOutputProperties();
+    svlOverlayAsyncOutputProperties(unsigned int videoch,
+                                    bool visible,
+                                    svlFilterOutput* output,
+                                    svlRect rect,
+                                    double fontsize,
+                                    svlRGB txtcolor);
+    svlOverlayAsyncOutputProperties(unsigned int videoch,
+                                    bool visible,
+                                    svlFilterOutput* output,
+                                    svlRect rect,
+                                    double fontsize,
+                                    svlRGB txtcolor,
+                                    svlRGB bgcolor);
+    virtual ~svlOverlayAsyncOutputProperties();
 
 protected:
-    int Initialize(svlSample* inputdata)
-    {
-        OutputData = inputdata;
-        return SVL_OK;
-    }
-
-    int ProcessFrame(svlProcInfo* procInfo, svlSample* CMN_UNUSED(inputdata) = 0)
-    {
-        if (!ShowFramerate) return SVL_OK;
-
-        _OnSingleThread(procInfo) {
-            unsigned int framecount = GetFrameCounter();
-            if ((framecount % 30) == 0) {
-#ifdef _WIN32
-                DWORD now;
-                now = ::GetTickCount();
-
-                if (framecount > 0) {
-                    DWORD msec = now - StartMSec;
-                    std::cerr << "\rFrame #: " << framecount << "; "
-                              << std::setprecision(1) << std::fixed << (double)30000 / msec << " fps";
-                    if (Manager) {
-                        std::cerr << " (Buffer: " << Manager->Branch("Recorder").GetBufferUsageRatio() * 100.0
-                                  << "%, Dropped: " << Manager->Branch("Recorder").GetDroppedSampleCount() << ")";
-                    }
-                    std::cerr << "     \r";
-                }
-
-                StartMSec = now;
-#endif // _WIN32
-
-#ifdef __GNUC__
-                timeval now;
-                gettimeofday(&now, 0);
-
-                if (framecount > 0) {
-                    int sec = now.tv_sec - StartSec;
-                    int usec = now.tv_usec - StartUSec;
-                    usec += 1000000 * sec;
-                    std::cerr << "\rFrame #: " << framecount << "; "
-                              << std::setprecision(1) << std::fixed << (double)30000000 / usec << " fps";
-                    if (Manager) {
-                        std::cerr << " (Buffer: " << Manager->Branch("Recorder").GetBufferUsageRatio() * 100.0
-                                  << "%, Dropped: " << Manager->Branch("Recorder").GetDroppedSampleCount() << ")";
-                    }
-                    std::cerr << "     \r";
-                }
-
-                StartSec = now.tv_sec;
-                StartUSec = now.tv_usec;
-#endif // __GNUC__
-            }
-        }
-
-        return SVL_OK;
-    }
-
-public:
-    svlStreamManager* Manager;
-    bool ShowFramerate;
-    bool Recording;
+    virtual void DrawInternal(svlSampleImage* bgimage, svlSample* input);
 
 private:
-#ifdef _WIN32
-    DWORD StartMSec;
-#endif // _WIN32
-#ifdef __GNUC__
-    unsigned int StartSec;
-    unsigned int StartUSec;
-#endif // __GNUC__
+    svlFilterOutput* Output;
 };
+
+
+/*********************************************/
+/*** svlOverlayAsyncOutputProperties class ***/
+/*********************************************/
+
+svlOverlayAsyncOutputProperties::svlOverlayAsyncOutputProperties() :
+    svlOverlayStaticText(),
+    Output(0)
+{
+}
+
+svlOverlayAsyncOutputProperties::svlOverlayAsyncOutputProperties(unsigned int videoch,
+                                                                 bool visible,
+                                                                 svlFilterOutput* output,
+                                                                 svlRect rect,
+                                                                 double fontsize,
+                                                                 svlRGB txtcolor) :
+    svlOverlayStaticText(videoch, visible, "", rect, fontsize, txtcolor),
+    Output(output)
+{
+}
+
+svlOverlayAsyncOutputProperties::svlOverlayAsyncOutputProperties(unsigned int videoch,
+                                                                 bool visible,
+                                                                 svlFilterOutput* output,
+                                                                 svlRect rect,
+                                                                 double fontsize,
+                                                                 svlRGB txtcolor,
+                                                                 svlRGB bgcolor) :
+    svlOverlayStaticText(videoch, visible, "", rect, fontsize, txtcolor, bgcolor),
+    Output(output)
+{
+}
+
+svlOverlayAsyncOutputProperties::~svlOverlayAsyncOutputProperties()
+{
+}
+
+void svlOverlayAsyncOutputProperties::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_UNUSED(input))
+{
+    if (Output) {
+        double usageratio = Output->GetBufferUsageRatio();
+        int dropped = Output->GetDroppedSampleCount();
+
+        std::stringstream strstr;
+        strstr << "Buffer: " << std::fixed << std::setprecision(1) << usageratio * 100.0 << "%, Dropped: " << dropped;
+        SetText(strstr.str());
+    }
+
+    svlOverlayStaticText::DrawInternal(bgimage, 0);
+}
+
 
 
 ///////////////////////////////////
@@ -131,7 +121,7 @@ public:
         svlImageWindowCallbackBase()
         ,ImageWriterFilter(0)
         ,RecorderFilter(0)
-        ,Manager(0)
+        ,SplitterOutput(0)
         ,Recording(false)
     {
     }
@@ -153,14 +143,14 @@ public:
                 case ' ':
                     if (RecorderFilter) {
                         if (Recording) {
-                            ((svlFilterVideoFileWriter*)RecorderFilter)->Pause();
-                            Manager->Branch("Recorder").BlockInput(true);
+                            RecorderFilter->Pause();
+                            SplitterOutput->SetBlock(true);
                             Recording = false;
                             cout << endl << " >>> Recording paused <<<" << endl;
                         }
                         else {
-                            Manager->Branch("Recorder").BlockInput(false);
-                            ((svlFilterVideoFileWriter*)RecorderFilter)->Record(-1);
+                            SplitterOutput->SetBlock(false);
+                            RecorderFilter->Record(-1);
                             Recording = true;
                             cout << endl << " >>> Recording started <<<" << endl;
                         }
@@ -174,8 +164,8 @@ public:
     }
 
     svlFilterImageFileWriter* ImageWriterFilter;
-    svlFilterBase* RecorderFilter;
-    svlStreamManager* Manager;
+    svlFilterVideoFileWriter* RecorderFilter;
+    svlFilterOutput* SplitterOutput;
     bool Recording;
 };
 
@@ -189,14 +179,16 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
     svlInitialize();
 
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(2);
+    svlStreamManager viewer_stream(1);
     svlFilterSourceVideoCapture viewer_source(1);
+    svlFilterSplitter viewer_splitter;
     svlFilterImageResizer viewer_resizer;
     svlFilterImageWindow viewer_window;
+    svlFilterImageOverlay viewer_overlay;
     CViewerWindowCallback viewer_window_cb;
     svlFilterVideoFileWriter viewer_videowriter;
     svlFilterImageFileWriter viewer_imagewriter;
-    CFPSFilter viewer_fps;
+    svlFilterImageWindow viewer_window2;
 
     // setup source
     // Delete "device.dat" to reinitialize input device
@@ -204,6 +196,10 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
         cout << endl;
         viewer_source.DialogSetup();
     }
+
+    // setup splitter
+    viewer_splitter.AddOutput("output2", 8);
+    svlFilterOutput* output = viewer_splitter.GetOutput("output2");
 
     // setup writer
     if (save == true) {
@@ -219,40 +215,60 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
 
     // setup resizer
     if (width > 0 && height > 0) {
-        viewer_resizer.EnableInterpolation(interpolation);
+        viewer_resizer.SetInterpolation(interpolation);
         viewer_resizer.SetOutputSize(width, height);
     }
 
     // setup image window
     if (save == true) {
         viewer_window_cb.RecorderFilter = &viewer_videowriter;
-        viewer_window_cb.Manager = &viewer_stream;
-        viewer_fps.Manager = &viewer_stream;
+        viewer_window_cb.SplitterOutput = output;
     }
     viewer_window_cb.ImageWriterFilter = &viewer_imagewriter;
     viewer_window.SetCallback(&viewer_window_cb);
     viewer_window.SetTitleText("Camera Viewer");
-//    viewer_window.EnableTimestampInTitle();
+    viewer_window.EnableTimestampInTitle();
+
+
+    // Add buffer status overlay
+    svlOverlayAsyncOutputProperties buffer_overlay(SVL_LEFT,
+                                                   true,
+                                                   output,
+                                                   svlRect(4, 4, 225, 20),
+                                                   14.0,
+                                                   svlRGB(255, 255, 255),
+                                                   svlRGB(0, 128, 0));
+    viewer_overlay.AddOverlay(buffer_overlay);
+
+    // Add framerate overlay
+    svlOverlayFramerate fps_overlay(SVL_LEFT,
+                                    true,
+                                    &viewer_window,
+                                    svlRect(4, 24, 47, 40),
+                                    14.0,
+                                    svlRGB(255, 255, 255),
+                                    svlRGB(128, 0, 0));
+    viewer_overlay.AddOverlay(fps_overlay);
+
 
     // chain filters to pipeline
-    if (viewer_stream.Trunk().Append(&viewer_source) != SVL_OK) goto labError;
-    if (viewer_stream.Trunk().Append(&viewer_imagewriter) != SVL_OK) goto labError;
+    viewer_stream.SetSourceFilter(&viewer_source);
+    viewer_source.GetOutput()->Connect(viewer_imagewriter.GetInput());
     if (width > 0 && height > 0) {
-        if (viewer_stream.Trunk().Append(&viewer_resizer) != SVL_OK) goto labError;
+        viewer_imagewriter.GetOutput()->Connect(viewer_resizer.GetInput());
+        viewer_resizer.GetOutput()->Connect(viewer_splitter.GetInput());
     }
-    if (viewer_stream.Trunk().Append(&viewer_window) != SVL_OK) goto labError;
-    if (viewer_stream.Trunk().Append(&viewer_fps) != SVL_OK) goto labError;
+    else {
+        viewer_imagewriter.GetOutput()->Connect(viewer_splitter.GetInput());
+    }
+    viewer_splitter.GetOutput()->Connect(viewer_overlay.GetInput());
+    viewer_overlay.GetOutput()->Connect(viewer_window.GetInput());
 
     if (save == true) {
         // put the recorder on a branch in order to enable buffering
-        if (width > 0 && height > 0) {
-            viewer_stream.CreateBranchAfterFilter(&viewer_resizer, "Recorder", 8, 200); // Buffer size in frames
-        }
-        else {
-            viewer_stream.CreateBranchAfterFilter(&viewer_source, "Recorder", 8, 200); // Buffer size in frames
-        }
-        viewer_stream.Branch("Recorder").BlockInput(true);
-        if (viewer_stream.Branch("Recorder").Append(&viewer_videowriter) != SVL_OK) goto labError;
+        output->SetBlock(true);
+//        output->Connect(viewer_window2.GetInput());
+        output->Connect(viewer_videowriter.GetInput());
     }
 
     cerr << endl << "Starting stream... ";
@@ -281,11 +297,9 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
         switch (ch) {
             case 'i':
                 // Adjust image properties
-                viewer_fps.ShowFramerate = false;
                 cerr << endl << endl;
                 viewer_source.DialogImageProperties();
                 cerr << endl;
-                viewer_fps.ShowFramerate = true;
             break;
 
             default:
@@ -301,9 +315,6 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
 
     // save settings
     viewer_source.SaveSettings("device.dat");
-
-    // destroy pipeline
-    viewer_stream.RemoveAll();
 
 labError:
     return 0;

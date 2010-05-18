@@ -21,6 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "svlVidCapSrcSVS.h"
+#include <cisstOSAbstraction/osaThread.h>
+#include <cisstStereoVision/svlBufferImage.h>
 
 
 /*******************************/
@@ -100,14 +102,18 @@ int svlVidCapSrcSVS::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
     memset(deviceinfo[0], 0, 2 * sizeof(svlFilterSourceVideoCapture::DeviceInfo));
 
     deviceinfo[0][0].id = 0;
-    sprintf(deviceinfo[0][0].name, "Small Vision System - Left");
+    std::string str = "Small Vision System - Left";
+    memset(deviceinfo[0][0].name, 0, SVL_VCS_STRING_LENGTH);
+    memcpy(deviceinfo[0][0].name, str.c_str(), str.length());
     deviceinfo[0][0].activeinput = -1;
     deviceinfo[0][0].inputcount = 0;
     deviceinfo[0][0].platform = svlFilterSourceVideoCapture::WinSVS;
     deviceinfo[0][0].testok = true;
 
     deviceinfo[0][1].id = 1;
-    sprintf(deviceinfo[0][1].name, "Small Vision System - Right");
+    str = "Small Vision System - Right";
+    memset(deviceinfo[0][1].name, 0, SVL_VCS_STRING_LENGTH);
+    memcpy(deviceinfo[0][1].name, str.c_str(), str.length());
     deviceinfo[0][1].activeinput = -1;
     deviceinfo[0][1].inputcount = 0;
     deviceinfo[0][1].platform = svlFilterSourceVideoCapture::WinSVS;

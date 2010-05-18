@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterVideoFileWriter.h>
+#include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstCommon/cmnGetChar.h>
 
 
@@ -41,8 +42,12 @@ svlFilterVideoFileWriter::svlFilterVideoFileWriter() :
     Framerate(30.0),
     CodecsMultithreaded(false)
 {
-    AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
-    AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
+    AddInput("input", true);
+    AddInputType("input", svlTypeImageRGB);
+    AddInputType("input", svlTypeImageRGBStereo);
+
+    AddOutput("output", true);
+    SetAutomaticOutputType(true);
 
     TimeServer = new osaTimeServer;
     TimeServer->SetTimeOrigin();
@@ -59,9 +64,9 @@ svlFilterVideoFileWriter::~svlFilterVideoFileWriter()
     delete TimeServer;
 }
 
-int svlFilterVideoFileWriter::Initialize(svlSample* inputdata)
+int svlFilterVideoFileWriter::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(inputdata);
+    svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncInput);
     if (Codec.size() < img->GetVideoChannels()) return SVL_FAIL;
 
     Release();
@@ -77,7 +82,7 @@ int svlFilterVideoFileWriter::Initialize(svlSample* inputdata)
 
         // Open video file
         if (!Codec[i] ||
-            Codec[i]->SetCompression(CodecParams[i]) != SVL_OK ||
+            (CodecParams[i] && Codec[i]->SetCompression(CodecParams[i]) != SVL_OK) ||
             Codec[i]->Create(FilePath[i], img->GetWidth(i), img->GetHeight(i), Framerate) != SVL_OK) {
 
             Release();
@@ -90,7 +95,7 @@ int svlFilterVideoFileWriter::Initialize(svlSample* inputdata)
     // Initialize video frame counter
     VideoFrameCounter = 0;
 
-    OutputData = inputdata;
+    syncOutput = syncInput;
 
     return SVL_OK;
 }
@@ -104,10 +109,9 @@ int svlFilterVideoFileWriter::OnStart(unsigned int CMN_UNUSED(procCount))
     return SVL_OK;
 }
 
-int svlFilterVideoFileWriter::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterVideoFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    // Passing the same image for the next filter
-    OutputData = inputdata;
+    syncOutput = syncInput;
 
     _OnSingleThread(procInfo) {
         if (Action) {
@@ -119,15 +123,15 @@ int svlFilterVideoFileWriter::ProcessFrame(svlProcInfo* procInfo, svlSample* inp
     _SynchronizeThreads(procInfo);
 
     if (CaptureLength == 0) {
-        if (ActionTime < inputdata->GetTimestamp()) return SVL_OK;
+        if (ActionTime < syncInput->GetTimestamp()) return SVL_OK;
         // Process remaining samples in the buffer when paused
     }
     else {
         // Drop frames when restarted
-        if (ActionTime > inputdata->GetTimestamp()) return SVL_OK;
+        if (ActionTime > syncInput->GetTimestamp()) return SVL_OK;
     }
 
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
+    svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncOutput);
     unsigned int videochannels = img->GetVideoChannels();
     unsigned int idx;
     int ret = SVL_OK;
@@ -295,7 +299,7 @@ int svlFilterVideoFileWriter::SetCodec(const svlVideoIO::Compression *compressio
     }
 
     svlVideoIO::ReleaseCompression(CodecParams[videoch]);
-    CodecParams[videoch] = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[CodecParams[videoch]->size]);
+    CodecParams[videoch] = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[compression->size]);
     memcpy(CodecParams[videoch], compression, compression->size);
     CodecParams[videoch]->size = compression->size;
 

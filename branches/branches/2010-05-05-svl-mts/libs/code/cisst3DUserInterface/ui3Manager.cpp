@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisst3DUserInterface/ui3Manager.h>
 
+#include <cisstOSAbstraction/osaStopwatch.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisst3DUserInterface/ui3VTKRenderer.h>

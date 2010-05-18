@@ -45,22 +45,23 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceVideoFile)
 svlFilterSourceVideoFile::svlFilterSourceVideoFile() :
     svlFilterSourceBase(false),  // manual timestamp management
     cmnGenericObject(),
+    OutputImage(0),
     Framerate(-1.0),
     FirstTimestamp(-1.0)
 {
-    TargetFrequency = -1.0;
-    OutputData = 0;
+    AddOutput("output", true);
+    SetAutomaticOutputType(false);
 }
 
 svlFilterSourceVideoFile::svlFilterSourceVideoFile(unsigned int channelcount) :
     svlFilterSourceBase(false),  // manual timestamp management
     cmnGenericObject(),
+OutputImage(0),
     Framerate(-1.0),
     FirstTimestamp(-1.0)
 {
-    TargetFrequency = -1.0;
-    OutputData = 0;
-
+    AddOutput("output", true);
+    SetAutomaticOutputType(false);
     SetChannelCount(channelcount);
 }
 
@@ -68,20 +69,20 @@ svlFilterSourceVideoFile::~svlFilterSourceVideoFile()
 {
     Release();
 
-    if (OutputData) delete OutputData;
+    if (OutputImage) delete OutputImage;
 }
 
 int svlFilterSourceVideoFile::SetChannelCount(unsigned int channelcount)
 {
-    if (OutputData) return SVL_FAIL;
+    if (OutputImage) return SVL_FAIL;
 
     if (channelcount == 1) {
-        AddSupportedType(svlTypeImageRGB);
-        OutputData = new svlSampleImageRGB;
+        GetOutput()->SetType(svlTypeImageRGB);
+        OutputImage = new svlSampleImageRGB;
     }
     else if (channelcount == 2) {
-        AddSupportedType(svlTypeImageRGBStereo);
-        OutputData = new svlSampleImageRGBStereo;
+        GetOutput()->SetType(svlTypeImageRGBStereo);
+        OutputImage = new svlSampleImageRGBStereo;
     }
     else return SVL_FAIL;
 
@@ -92,18 +93,18 @@ int svlFilterSourceVideoFile::SetChannelCount(unsigned int channelcount)
     return SVL_OK;
 }
 
-int svlFilterSourceVideoFile::Initialize()
+int svlFilterSourceVideoFile::Initialize(svlSample* &syncOutput)
 {
-    if (OutputData == 0) return SVL_FAIL;
+    if (OutputImage == 0) return SVL_FAIL;
+    syncOutput = OutputImage;
 
     Release();
 
-    svlSampleImageBase* image = dynamic_cast<svlSampleImageBase*>(OutputData);
     unsigned int width, height;
     double framerate;
     int ret = SVL_OK;
 
-    for (unsigned int i = 0; i < image->GetVideoChannels(); i ++) {
+    for (unsigned int i = 0; i < OutputImage->GetVideoChannels(); i ++) {
 
         // Get video codec for file extension
         Codec[i] = svlVideoIO::GetCodec(FilePath[i]);
@@ -120,11 +121,11 @@ int svlFilterSourceVideoFile::Initialize()
         }
 
         // Create image sample of matching dimensions
-        image->SetSize(i, width, height);
+        OutputImage->SetSize(i, width, height);
     }
 
     // Initialize timestamp for case of timestamp errors
-    OutputData->SetTimestamp(0.0);
+    OutputImage->SetTimestamp(0.0);
 
     if (ret != SVL_OK) Release();
     return ret;
@@ -138,25 +139,26 @@ int svlFilterSourceVideoFile::OnStart(unsigned int CMN_UNUSED(procCount))
     return SVL_OK;
 }
 
-int svlFilterSourceVideoFile::ProcessFrame(svlProcInfo* procInfo)
+int svlFilterSourceVideoFile::Process(svlProcInfo* procInfo, svlSample* &syncOutput)
 {
+    syncOutput = OutputImage;
+
     // Try to keep TargetFrequency
     _OnSingleThread(procInfo) WaitForTargetTimer();
 
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
-    unsigned int idx, videochannels = img->GetVideoChannels();
+    unsigned int idx, videochannels = OutputImage->GetVideoChannels();
     double timestamp, timespan;
     int ret = SVL_OK;
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
         if (Codec[idx]) {
-            ret = Codec[idx]->Read(0, *img, idx, true);
+            ret = Codec[idx]->Read(0, *OutputImage, idx, true);
             if (ret == SVL_VID_END_REACHED) {
                 if (!LoopFlag) ret = SVL_STOP_REQUEST;
                 else {
                     // Loop around
-                    ret = Codec[idx]->Read(0, *img, idx, true);
+                    ret = Codec[idx]->Read(0, *OutputImage, idx, true);
                 }
             }
             if (ret != SVL_OK) break;
@@ -180,14 +182,14 @@ int svlFilterSourceVideoFile::ProcessFrame(svlProcInfo* procInfo)
                         }
 
                         // Set timestamp to the one stored in the video file
-                        OutputData->SetTimestamp(timestamp);
+                        OutputImage->SetTimestamp(timestamp);
 
                         continue;
                     }
                 }
 
                 // Ask Stream Manager for current timestamp
-                OutputData->SetTimestamp(-1.0);
+                OutputImage->SetTimestamp(-1.0);
             }
         }
     }
@@ -211,12 +213,11 @@ int svlFilterSourceVideoFile::Release()
 
 int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)
 {
-    if (OutputData == 0) return SVL_FAIL;
+    if (OutputImage == 0) return SVL_FAIL;
     if (IsInitialized() == true)
         return SVL_ALREADY_INITIALIZED;
 
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
-    if (videoch >= img->GetVideoChannels()) return SVL_WRONG_CHANNEL;
+    if (videoch >= OutputImage->GetVideoChannels()) return SVL_WRONG_CHANNEL;
 
     std::ostringstream out;
     out << "Open video file [channel #" << videoch << "]";
@@ -227,12 +228,11 @@ int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)
 
 int svlFilterSourceVideoFile::SetFilePath(const std::string &filepath, unsigned int videoch)
 {
-    if (OutputData == 0) return SVL_FAIL;
+    if (OutputImage == 0) return SVL_FAIL;
     if (IsInitialized() == true)
         return SVL_ALREADY_INITIALIZED;
 
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
-    if (videoch >= img->GetVideoChannels()) return SVL_WRONG_CHANNEL;
+    if (videoch >= OutputImage->GetVideoChannels()) return SVL_WRONG_CHANNEL;
 
     FilePath[videoch] = filepath;
 

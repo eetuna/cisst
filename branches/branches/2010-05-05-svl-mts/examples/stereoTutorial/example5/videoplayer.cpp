@@ -39,38 +39,45 @@ using namespace std;
 //  Video Player  //
 ////////////////////
 
-int VideoPlayer(const std::string pathname)
+int VideoPlayer(std::string pathname)
 {
     svlInitialize();
 
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(4);
-    svlFilterSourceVideoFile viewer_source(1);
-    svlFilterImageWindow viewer_window;
+    svlStreamManager filt_stream(1);
+    svlFilterSourceVideoFile filt_source(1);
+    svlFilterImageWindow filt_window;
+    svlFilterImageOverlay filt_overlay;
+
+    // setup overlay
+    svlOverlayFramerate ovrl_fps(0, true, &filt_overlay, svlRect(4, 4, 47, 20),
+                                 14.0, svlRGB(255, 200, 200), svlRGB(32, 32, 32));
+    filt_overlay.AddOverlay(ovrl_fps);
 
     // setup source
     if (pathname.empty()) {
-        viewer_source.DialogFilePath();
+        filt_source.DialogFilePath();
     }
     else {
-        if (viewer_source.SetFilePath(pathname) != SVL_OK) {
+        if (filt_source.SetFilePath(pathname) != SVL_OK) {
             cerr << endl << "Wrong file name... " << endl;
             goto labError;
         }
     }
 
     // setup image window
-    viewer_window.SetTitleText("Video Player");
-    viewer_window.EnableTimestampInTitle();
+    filt_window.SetTitleText("Video Player");
+    filt_window.EnableTimestampInTitle();
 
     // chain filters to pipeline
-    if (viewer_stream.Trunk().Append(&viewer_source) != SVL_OK) goto labError;
-    if (viewer_stream.Trunk().Append(&viewer_window) != SVL_OK) goto labError;
+    filt_stream.SetSourceFilter(&filt_source);
+    filt_source.GetOutput()->Connect(filt_overlay.GetInput());
+    filt_overlay.GetOutput()->Connect(filt_window.GetInput());
 
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (viewer_stream.Start() != SVL_OK) goto labError;
+    if (filt_stream.Start() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 
@@ -89,10 +96,7 @@ int VideoPlayer(const std::string pathname)
     cerr << endl;
 
     // stop stream
-    viewer_stream.Stop();
-
-    // destroy pipeline
-    viewer_stream.RemoveAll();
+    filt_stream.Stop();
 
 labError:
     return 0;

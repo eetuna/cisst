@@ -22,7 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnPortability.h>
 #include <cisstStereoVision/svlVideoIO.h>
-#include <cisstStereoVision/svlStreamDefs.h>
+#include <cisstStereoVision/svlTypes.h>
 
 #if (CISST_OS == CISST_WINDOWS)
     #include "commdlg.h"
@@ -169,11 +169,11 @@ int svlVideoIO::DialogFilePath(bool save, const std::string &title, std::string 
     SetForegroundWindow(GetDesktopWindow());
 
     if (save) {
-        ofn.Flags = OFN_OVERWRITEPROMPT | OFN_ENABLESIZING | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+        ofn.Flags = OFN_OVERWRITEPROMPT | OFN_ENABLESIZING | OFN_NOCHANGEDIR | OFN_HIDEREADONLY;
         ok = GetSaveFileName(&ofn);
     }
     else {
-        ofn.Flags = OFN_ENABLESIZING    | OFN_NOCHANGEDIR  | OFN_FILEMUSTEXIST;
+        ofn.Flags = OFN_ENABLESIZING | OFN_NOCHANGEDIR;
         ok = GetOpenFileName(&ofn);
     }
 
@@ -233,7 +233,6 @@ int svlVideoIO::GetFormatList(std::string &formatlist)
     unsigned int i, j;
 
     for (i = 0; i < codeccount; i ++) {
-        if (i > 0) out << "\n";
         out << instance->Names[i] << " (";
         in.str(instance->Extensions[i]);
 
@@ -248,7 +247,7 @@ int svlVideoIO::GetFormatList(std::string &formatlist)
         }
 
         in.clear();
-        out << ")";
+        out << ")\n";
     }
 
     formatlist.assign(out.str());
@@ -427,6 +426,7 @@ void svlVideoIO::ReleaseCodec(svlVideoCodecBase* codec)
         cachesize = instance->CodecCache[i].size();
         for (j = 0; j < cachesize; j ++) {
             if (codec == instance->CodecCache[i][j]) {
+                codec->Close();
                 instance->CodecCacheUsed[i][j] = false;
 
                 instance->CS.Leave();

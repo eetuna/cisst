@@ -23,7 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlFilterSourceVideoFile_h
 #define _svlFilterSourceVideoFile_h
 
-#include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterSourceBase.h>
 #include <cisstStereoVision/svlVideoIO.h>
 
 // Always include last!
@@ -45,15 +45,15 @@ public:
     int GetFilePath(std::string &filepath, unsigned int videoch = SVL_LEFT) const;
 
 protected:
-    virtual int Initialize();
+    virtual int Initialize(svlSample* &syncOutput);
     virtual int OnStart(unsigned int procCount);
-    virtual int ProcessFrame(svlProcInfo* procInfo);
+    virtual int Process(svlProcInfo* procInfo, svlSample* &syncOutput);
     virtual int Release();
 
 private:
+    svlSampleImage* OutputImage;
     vctDynamicVector<svlVideoCodecBase*> Codec;
     vctDynamicVector<std::string> FilePath;
-
     double Framerate;
     double FirstTimestamp;
     osaStopwatch Timer;

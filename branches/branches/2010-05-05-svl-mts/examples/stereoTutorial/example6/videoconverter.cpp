@@ -31,7 +31,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
 
-
 using namespace std;
 
 
@@ -39,11 +38,11 @@ using namespace std;
 //  Video Converter  //
 ///////////////////////
 
-int VideoConverter(std::string &source, std::string &destination)
+int VideoConverter(std::string &source, std::string &destination, bool loadcodec)
 {
     svlInitialize();
 
-    svlStreamManager converter_stream(4);
+    svlStreamManager converter_stream(8);
     svlFilterSourceVideoFile converter_source(1);
     svlFilterVideoFileWriter converter_writer;
 
@@ -58,8 +57,8 @@ int VideoConverter(std::string &source, std::string &destination)
         converter_source.SetFilePath(source);
     }
 
-    converter_source.SetTargetFrequency(1000.0); // as fast as possible
-    converter_source.SetLoop(false);
+//    converter_source.SetTargetFrequency(1000.0); // as fast as possible
+    converter_source.SetLoop(true);
 
     if (destination.empty()) {
         if (converter_writer.DialogFilePath() != SVL_OK) {
@@ -72,20 +71,28 @@ int VideoConverter(std::string &source, std::string &destination)
         converter_writer.SetFilePath(destination);
     }
 
-    if (converter_writer.LoadCodec("codec.dat") != SVL_OK) {
+    if (loadcodec) {
+        if (converter_writer.LoadCodec("codec.dat") != SVL_OK) {
+            if (converter_writer.DialogCodec() != SVL_OK) {
+                cerr << " -!- Unable to set up compression." << endl;
+                return -1;
+            }
+            converter_writer.SaveCodec("codec.dat");
+        }
+    }
+    else {
         if (converter_writer.DialogCodec() != SVL_OK) {
             cerr << " -!- Unable to set up compression." << endl;
             return -1;
         }
-        converter_writer.SaveCodec("codec.dat");
     }
 
     std::string encoder;
     converter_writer.GetCodecName(encoder);
 
     // chain filters to pipeline
-    converter_stream.Trunk().Append(&converter_source);
-    converter_stream.Trunk().Append(&converter_writer);
+    converter_stream.SetSourceFilter(&converter_source);
+    converter_source.GetOutput()->Connect(converter_writer.GetInput());
 
     cerr << "Converting: '" << source << "' to '" << destination <<"' using codec: '" << encoder << "'" << endl;
 
@@ -106,8 +113,8 @@ int VideoConverter(std::string &source, std::string &destination)
         cerr << " > Conversion done." << endl;
     }
 
-    // destroy pipeline
-    converter_stream.RemoveAll();
+    // release pipeline
+    converter_stream.Release();
 
 labError:
     return 0;
@@ -134,7 +141,7 @@ int main(int argc, char** argv)
         cerr << "     stereoTutorialVideoConverter src.avi dest.cvi" << endl << endl;
     }
 
-    VideoConverter(source, destination);
+    VideoConverter(source, destination, true);
 
     return 1;
 }

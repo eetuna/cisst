@@ -23,10 +23,11 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlFilterStreamTypeConverter_h
 #define _svlFilterStreamTypeConverter_h
 
-#include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterBase.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
+
 
 class CISST_EXPORT svlFilterStreamTypeConverter : public svlFilterBase, public cmnGenericObject
 {
@@ -44,11 +45,12 @@ public:
     unsigned int GetMono16ShiftDown() { return Mono16ShiftDown; }
 
 protected:
-    virtual int Initialize(svlSample* inputdata);
-    virtual int ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata);
-    virtual int Release();
+    virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
+    virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
 
 private:
+    svlSampleImage* OutputImage;
+
     float Scaling;
     unsigned int Mono16ShiftDown;
 };

@@ -26,7 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstStereoVision/svlVideoIO.h>
-#include <cisstStereoVision/svlStreamDefs.h>
+#include <cisstStereoVision/svlTypes.h>
 
 
 class svlVideoCodecCVI : public svlVideoCodecBase, public cmnGenericObject
@@ -52,8 +52,8 @@ public:
     virtual double GetTimestamp() const;
     virtual int SetTimestamp(const double timestamp);
 
-    virtual int Read(svlProcInfo* procInfo, svlSampleImageBase &image, const unsigned int videoch, const bool noresize = false);
-    virtual int Write(svlProcInfo* procInfo, const svlSampleImageBase &image, const unsigned int videoch);
+    virtual int Read(svlProcInfo* procInfo, svlSampleImage &image, const unsigned int videoch, const bool noresize = false);
+    virtual int Write(svlProcInfo* procInfo, const svlSampleImage &image, const unsigned int videoch);
 
 protected:
     const std::string CodecName;

@@ -36,8 +36,21 @@ http://www.cisst.org/cisst/license.txt.
 class svlOleInit
 {
 public:
-    svlOleInit()  { CoInitializeEx(0, COINIT_APARTMENTTHREADED); }
-    ~svlOleInit() { CoUninitialize(); }
+    svlOleInit()
+    {
+        HRESULT result = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+        if (result == S_OK) return;
+        if (result == RPC_E_CHANGED_MODE) {
+            result = CoInitializeEx(0, COINIT_MULTITHREADED);
+            if (result == S_OK) return;
+        }
+        // Cannot initialize OLE/COM library
+    }
+
+    ~svlOleInit()
+    {
+        CoUninitialize();
+    }
 };
 #endif // CISST_WINDOWS
 
@@ -51,6 +64,14 @@ void svlInitialize()
     svlInitializeImageCodecs();
     svlInitializeVideoCodecs();
     svlInitializeVideoCapture();
+
+#ifdef _svlFilterSplitter_h
+    delete new svlFilterSplitter;
+#endif // _svlFilterSplitter_h
+
+#ifdef _svlFilterImageOverlay_h
+    delete new svlFilterImageOverlay;
+#endif // _svlFilterImageOverlay_h
 
 #ifdef _svlFilterSourceDummy_h
     delete new svlFilterSourceDummy;
@@ -88,46 +109,66 @@ void svlInitialize()
     delete new svlFilterImageRectifier;
 #endif // _svlFilterImageRectifier_h
 
-#ifdef _svlFilterUnsharpMask_h
-    delete new svlFilterUnsharpMask;
-#endif // _svlFilterUnsharpMask_h
+#ifdef _svlFilterImageCenterFinder_h
+    delete new svlFilterImageCenterFinder;
+#endif // _svlFilterImageCenterFinder_h
+
+#ifdef _svlFilterImageUnsharpMask_h
+    delete new svlFilterImageUnsharpMask;
+#endif // _svlFilterImageUnsharpMask_h
 
 #ifdef _svlFilterImageSampler_h
     delete new svlFilterImageSampler;
 #endif // _svlFilterImageSampler_h
 
-#ifdef _svlFilterRGBSwapper_h
-    delete new svlFilterRGBSwapper;
-#endif // _svlFilterRGBSwapper_h
+#ifdef _svlFilterImageChannelSwapper_h
+    delete new svlFilterImageChannelSwapper;
+#endif // _svlFilterImageChannelSwapper_h
 
 #ifdef _svlFilterStreamTypeConverter_h
     delete new svlFilterStreamTypeConverter;
 #endif // _svlFilterStreamTypeConverter_h
 
-#ifdef _svlFilterColorSpaceConverter_h
-    delete new svlFilterColorSpaceConverter;
-#endif // _svlFilterColorSpaceConverter_h
+#ifdef _svlFilterImageColorConverter_h
+    delete new svlFilterImageColorConverter;
+#endif // _svlFilterImageColorConverter_h
 
 #ifdef _svlFilterImageCropper_h
     delete new svlFilterImageCropper;
 #endif // _svlFilterImageCropper_h
 
+#ifdef _svlFilterImageTranslation_h
+    delete new svlFilterImageTranslation;
+#endif // _svlFilterImageTranslation_h
+
 #ifdef _svlFilterImageResizer_h
     delete new svlFilterImageResizer;
 #endif // _svlFilterImageResizer_h
 
-#ifdef _svlFilterPointTracker_h
-    delete new svlFilterPointTracker;
-#endif // _svlFilterPointTracker_h
+#ifdef _svlFilterImageZoom_h
+    delete new svlFilterImageZoom;
+#endif // _svlFilterImageZoom_h
+    
+#ifdef _svlFilterImageTracker_h
+    delete new svlFilterImageTracker;
+#endif // _svlFilterImageTracker_h
 
 #ifdef _svlFilterStereoImageJoiner_h
     delete new svlFilterStereoImageJoiner;
 #endif // _svlFilterStereoImageJoiner_h
 
+#ifdef _svlFilterStereoImageSplitter_h
+    delete new svlFilterStereoImageSplitter;
+#endif // _svlFilterStereoImageSplitter_h
+
 #ifdef _svlFilterImageFlipRotate_h
     delete new svlFilterImageFlipRotate;
 #endif // _svlFilterImageFlipRotate_h
 
+#ifdef _svlFilterLightSourceBuddy_h
+    delete new svlFilterLightSourceBuddy;
+#endif // _svlFilterLightSourceBuddy_h
+    
 #ifdef _svlFilterToolTracker_h
     delete new svlFilterToolTracker;
 #endif // _svlFilterToolTracker_h
@@ -143,5 +184,9 @@ void svlInitialize()
 #ifdef _svlFilterImageWindow_h
     delete new svlFilterImageWindow;
 #endif // _svlFilterImageWindow_h
+
+#ifdef _svlFilterImageWindowTargetSelect_h
+    delete new svlFilterImageWindowTargetSelect;
+#endif // _svlFilterImageWindowTargetSelect_h
 }
 

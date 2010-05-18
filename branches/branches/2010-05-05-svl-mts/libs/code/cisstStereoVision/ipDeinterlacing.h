@@ -23,7 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _ipDeinterlacing_h
 #define _ipDeinterlacing_h
 
-#include <cisstStereoVision/svlStreamDefs.h>
+#include <cisstStereoVision/svlTypes.h>
 
 void Blending(unsigned char* buffer, const int width, const int height);
 void Discarding(unsigned char* buffer, const int width, const int height);

@@ -39,41 +39,50 @@ svlFilterDisparityMapToSurface::svlFilterDisparityMapToSurface() :
     PPY(240.0f),
 	DisparityCorrection(0.0f)
 {
-    AddSupportedType(svlTypeImageMonoFloat, svlTypeImage3DMap);
+    AddInput("input", true);
+    AddInputType("input", svlTypeImageMonoFloat);
 
-    OutputData = new svlSampleImage3DMap;
+    AddOutput("output", true);
+    SetAutomaticOutputType(false);
+    GetOutput()->SetType(svlTypeImage3DMap);
+
+    OutputSurface = new svlSampleImage3DMap;
 }
 
 svlFilterDisparityMapToSurface::~svlFilterDisparityMapToSurface()
 {
     Release();
 
-    if (OutputData) delete OutputData;
+    if (OutputSurface) delete OutputSurface;
 }
 
-int svlFilterDisparityMapToSurface::Initialize(svlSample* inputdata)
+int svlFilterDisparityMapToSurface::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    OutputData->SetSize(*inputdata);
+    OutputSurface->SetSize(*syncInput);
 
-    svlSampleImageBase* image = dynamic_cast<svlSampleImageBase*>(inputdata);
+    svlSampleImage* image = dynamic_cast<svlSampleImage*>(syncInput);
 
     ROI.Normalize();
     ROI.Trim(0, image->GetWidth() - 1, 0, image->GetHeight() - 1);
 
+    syncOutput = OutputSurface;
+
     return SVL_OK;
 }
 
-int svlFilterDisparityMapToSurface::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterDisparityMapToSurface::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
+    syncOutput = OutputSurface;
+    _SkipIfAlreadyProcessed(syncInput, syncOutput);
+
     _OnSingleThread(procInfo)
     {
-        svlSampleImage3DMap *outputmap = dynamic_cast<svlSampleImage3DMap*>(OutputData);
-        const unsigned int width = outputmap->GetWidth();
+        const unsigned int width = OutputSurface->GetWidth();
         const unsigned int vertstride = width - ROI.right + ROI.left - 1;
         const unsigned int vertstride3 = vertstride * 3;
         const float bl = BaseLine;
-        float *vectors = outputmap->GetPointer();
-        float *disparities = dynamic_cast<svlSampleImageMonoFloat*>(inputdata)->GetPointer();
+        float *vectors = OutputSurface->GetPointer();
+        float *disparities = dynamic_cast<svlSampleImageMonoFloat*>(syncInput)->GetPointer();
         float fi, fj, disp, ratio;
         unsigned int i, j, l, t, r, b;
 

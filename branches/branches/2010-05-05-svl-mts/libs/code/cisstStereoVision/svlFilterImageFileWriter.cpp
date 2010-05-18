@@ -37,9 +37,13 @@ svlFilterImageFileWriter::svlFilterImageFileWriter() :
     cmnGenericObject(),
     TimestampsEnabled(false)
 {
-    AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
-    AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
-    AddSupportedType(svlTypeImageMonoFloat, svlTypeImageMonoFloat);
+    AddInput("input", true);
+    AddInputType("input", svlTypeImageRGB);
+    AddInputType("input", svlTypeImageRGBStereo);
+    AddInputType("input", svlTypeImageMonoFloat);
+
+    AddOutput("output", true);
+    SetAutomaticOutputType(true);
 
     ImageCodec.SetSize(2);
     FilePathPrefix.SetSize(2);
@@ -59,11 +63,11 @@ svlFilterImageFileWriter::~svlFilterImageFileWriter()
     Release();
 }
 
-int svlFilterImageFileWriter::Initialize(svlSample* inputdata)
+int svlFilterImageFileWriter::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
     Release();
 
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(inputdata);
+    svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncInput);
     unsigned int videochannels = img->GetVideoChannels();
 
     for (unsigned int i = 0; i < videochannels; i ++) {
@@ -76,24 +80,23 @@ int svlFilterImageFileWriter::Initialize(svlSample* inputdata)
         }
     }
 
-    if (inputdata->GetType() == svlTypeImageMonoFloat) {
-        ImageBuffer.SetSize(*inputdata);
+    if (syncInput->GetType() == svlTypeImageMonoFloat) {
+        ImageBuffer.SetSize(*syncInput);
     }
 
-    OutputData = inputdata;
+    syncOutput = syncInput;
 
     return SVL_OK;
 }
 
-int svlFilterImageFileWriter::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterImageFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    // Passing the same image for the next filter
-    OutputData = inputdata;
+    syncOutput = syncInput;
 
     if (CaptureLength == 0) return SVL_OK;
 
-    svlSampleImageBase* tosave = 0;
-    svlSampleImageBase* img = dynamic_cast<svlSampleImageBase*>(OutputData);
+    svlSampleImage* tosave = 0;
+    svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncOutput);
     unsigned int videochannels = img->GetVideoChannels();
     std::stringstream path;
     unsigned int idx;
@@ -117,7 +120,7 @@ int svlFilterImageFileWriter::ProcessFrame(svlProcInfo* procInfo, svlSample* inp
 
         if (TimestampsEnabled) {
             path.precision(3);
-            path << std::fixed << inputdata->GetTimestamp();
+            path << std::fixed << syncInput->GetTimestamp();
         }
         else {
             path.fill('0');

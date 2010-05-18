@@ -23,7 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlFilterDisparityMapToSurface_h
 #define _svlFilterDisparityMapToSurface_h
 
-#include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterBase.h>
 #include <cisstStereoVision/svlCameraGeometry.h>
 
 // Always include last!
@@ -43,11 +43,13 @@ public:
     int SetROI(int left, int top, int right, int bottom);
 
 protected:
-    virtual int Initialize(svlSample* inputdata);
-    virtual int ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata);
+    virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
+    virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
     virtual int Release();
 
 private:
+    svlSampleImage3DMap* OutputSurface;
+
     svlRect ROI;
     float BaseLine;
     float RightCameraPosX;

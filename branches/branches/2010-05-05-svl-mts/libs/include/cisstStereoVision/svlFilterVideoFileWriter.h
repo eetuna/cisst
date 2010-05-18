@@ -23,12 +23,15 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlFilterVideoFileWriter_h
 #define _svlFilterVideoFileWriter_h
 
-#include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterBase.h>
 #include <cisstStereoVision/svlVideoIO.h>
-#include <string>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
+
+
+// Forward declarations
+class osaTimeServer;
 
 
 class CISST_EXPORT svlFilterVideoFileWriter : public svlFilterBase, public cmnGenericObject
@@ -56,9 +59,9 @@ public:
     void Record(int frames = -1);
 
 protected:
-    virtual int Initialize(svlSample* inputdata);
+    virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
     virtual int OnStart(unsigned int procCount);
-    virtual int ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata);
+    virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
     virtual int Release();
 
 private:

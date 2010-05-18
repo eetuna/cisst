@@ -62,53 +62,97 @@ int main()
     // Creating SVL objects
     svlStreamManager stream(2); // number of threads per stream
 
-    svlFilterSourceDummy video_source;
+    svlFilterSourceDummy source;
     svlFilterImageResizer resizer;
     svlFilterImageWindow window;
-    svlFilterUnsharpMask unsharpmask;
+    svlFilterSplitter splitter;
+    svlFilterImageUnsharpMask unsharpmask;
+    svlFilterImageOverlay overlay;
     svlFilterImageWindow window2;
 
     // Setup dummy video source
-    video_source.SetTargetFrequency(10.0);
+    source.SetTargetFrequency(30.0);
 
     if (noise) {
-        video_source.SetType(svlTypeImageRGB);
-        video_source.SetDimensions(320, 240);
-        video_source.EnableNoiseImage(true);
+        source.SetType(svlTypeImageRGB);
+        source.SetDimensions(320, 240);
+        source.EnableNoiseImage(true);
     }
     else {
         svlSampleImageRGB image;
         svlImageIO::Read(image, 0, "Winter.png");
-        video_source.SetImage(image);
+        source.SetImage(image);
     }
 
     // Setup image resizer
     // (Tip: enable OpenCV in CMake for higher performance)
     resizer.SetOutputRatio(0.5, 0.5, SVL_LEFT);
     resizer.SetOutputRatio(0.5, 0.5, SVL_RIGHT);
-    resizer.EnableInterpolation();
+    resizer.SetInterpolation(true);
 
     // Setup window
-    window.SetTitleText("Resizing");
+    window.SetTitleText("Window 1");
 
     // Setup unsharp masking
     // (Tip: enable OpenCV in CMake for higher performance)
     unsharpmask.SetAmount(200);
     unsharpmask.SetRadius(3);
 
+    // Setup overlays
+    // Add image overlay
+    overlay.AddInputImage("image");
+    svlOverlayImage image_overlay(SVL_LEFT,        // background video channel
+                                  true,            // visible
+                                  "image",         // image input name
+                                  SVL_LEFT,        // image input channel
+                                  vctInt2(20, 60), // position
+                                  255);            // alpha (transparency)
+    overlay.AddOverlay(image_overlay);
+
+    // Add static rectangle overlay
+    svlOverlayStaticRect rect_overlay(SVL_LEFT,                  // background video channel
+                                      true,                      // visible
+                                      svlRect(200, 15, 274, 64), // rectangle size and position
+                                      svlRGB(128, 64, 64),       // color
+                                      true);                     // filled
+    overlay.AddOverlay(rect_overlay);
+
+    // Add static text overlay
+    svlOverlayStaticText text_overlay(SVL_LEFT,                   // background video channel
+                                      true,                       // visible
+                                      "1234567890 | gfx",         // static text
+                                      svlRect(50, 130, 200, 146), // bounding rectangle
+                                      14.0,                       // font size
+                                      svlRGB(255, 255, 255),      // text color
+                                      svlRGB(32, 32, 32));        // background color
+    overlay.AddOverlay(text_overlay);
+
+    // Add framerate overlay
+    svlOverlayFramerate fps_overlay(SVL_LEFT,              // background video channel
+                                    true,                  // visible
+                                    &overlay,              // filter
+                                    svlRect(4, 4, 47, 20), // bounding rectangle
+                                    14.0,                  // font size
+                                    svlRGB(255, 200, 200), // text color
+                                    svlRGB(32, 32, 32));   // background color
+    overlay.AddOverlay(fps_overlay);
+
     // Setup branch window
-    window2.SetTitleText("Unsharp Masking");
+    window2.SetTitleText("Window 2");
+
+    // Add new output to splitter
+    splitter.AddOutput("output2");
 
     // Chain filters to trunk
-    if (stream.Trunk().Append(&video_source) != SVL_OK ||
-        stream.Trunk().Append(&resizer)      != SVL_OK ||
-        stream.Trunk().Append(&window)       != SVL_OK) goto labError;
+    stream.SetSourceFilter(&source);
+    source.GetOutput()->Connect(splitter.GetInput());
+    splitter.GetOutput()->Connect(unsharpmask.GetInput());
+    unsharpmask.GetOutput()->Connect(overlay.GetInput());
+    overlay.GetOutput()->Connect(window.GetInput());
 
-    // Adding a branch to the stream right after the source filter
-    stream.CreateBranchAfterFilter(&video_source, "mybranch", 2);
-    // Chain filters to branch
-    if (stream.Branch("mybranch").Append(&unsharpmask) != SVL_OK ||
-        stream.Branch("mybranch").Append(&window2)     != SVL_OK) goto labError;
+    splitter.GetOutput("output2")->Connect(resizer.GetInput());
+    resizer.GetOutput()->Connect(window2.GetInput());
+    window2.GetOutput()->Connect(overlay.GetInput("image"));
 
     cout << "Streaming is just about to start." << endl;
     cout << "Press any key to stop stream..." << endl;
@@ -120,7 +164,7 @@ int main()
     cmnGetChar();
 
     // Safely stopping and deconstructing stream before de-allocation
-    stream.RemoveAll();
+    stream.Release();
 
     cout << "Success... Quitting." << endl;
     return 1;
@@ -130,4 +174,63 @@ labError:
 
     return 1;
 }
+
+/*
+
+
+   1  |**************** BEFORE ****************|                    |**************** AFTER ****************|
+   2
+   3  // Create stream manager                                      // Create stream manager
+   4  //   thread count  -  2                                       //   thread count  -  2
+   5  svlStreamManager      stream(2);                              svlStreamManager      stream(2);
+   6   
+   7  // Create filters                                             // Create filters
+   8  svlFilterSourceDummy  source(svlTypeImageRGB);                svlFilterSourceDummy  source(svlTypeImageRGB);
+   9                                                                svlFilterSplitter     splitter;
+  10  svlFilterImageResizer resizer;                                svlFilterImageResizer resizer;
+  11  svlFilterImageWindow  window;                                 svlFilterImageWindow  window;
+  12  svlFilterImageUnsharpMask  unsharpmask;                            svlFilterImageUnsharpMask  unsharpmask;
+  13  svlFilterImageWindow  window2;                                svlFilterImageWindow  window2;
+  14  
+  15                                                                // Add new output to splitter
+  16                                                                splitter.AddOutput("output2");
+  17  
+  18  // Configure filters                                          // Configure filters
+  19  ...                                                           ...
+  20  
+  21  // Add 'source' filter to the stream                          // Add 'source' filter to the stream
+  22  stream.Trunk().Append(&source);                               stream.SetSourceFilter(&source);
+  23
+  24                                                                // Connect 'splitter' filter after 'source'
+  25                                                                source.GetOutput()->Connect(splitter.GetInput());
+  26
+  27  // Connect filters in a sequence to each other                // Connect filters to each other on the trunk by
+  28  // by appending them to the end of the trunk                  // connecting inputs to outputs
+  29  stream.Trunk().Append(&resizer);                              splitter.GetOutput()->Connect(resizer.GetInput());
+  30  stream.Trunk().Append(&window);                               resizer.GetOutput()->Connect(window.GetInput());
+  31  
+  32  // Create branch after the 'source' filter
+  33  //   branch name  -  "mybranch"
+  34  //   buffer size  -  2 [samples]
+  35  stream.CreateBranchAfterFilter(&source, "mybranch", 2);
+  36  
+  37  // Connect filters in a sequence to each other                // Connect filters to the splitter's second
+  38  // by appending them to the end of the branch                 // output, then connect them to each other
+  39  stream.Branch("mybranch").Append(&unsharpmask);               splitter.GetOutput("output2")->Connect(unsharpmask.GetInput());
+  40  stream.Branch("mybranch").Append(&window2);                   unsharpmask.GetOutput()->Connect(window2.GetInput());
+  41  
+  42  // Initialize stream (optional)                               // Initialize stream (optional)
+  43  stream.Initialize();                                          stream.Initialize();
+  44  
+  45  // Start stream                                               // Start stream
+  46  stream.Start();                                               stream.Start();
+  47  
+  48  // Wait until quit                                            // Wait until quit
+  49  ...                                                           ...
+  50  
+  51  // Safely deconstruct stream                                  // Safely deconstruct stream
+  52  stream.RemoveAll();                                           stream.Release();
+
+*/
+
 

@@ -22,10 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterImageRectifier.h>
 
-#include <stdio.h>
-#include <string.h>
-
-using namespace std;
 
 /******************************************/
 /*** svlFilterImageRectifier class ********/
@@ -36,109 +32,89 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageRectifier)
 svlFilterImageRectifier::svlFilterImageRectifier() :
     svlFilterBase(),
     cmnGenericObject(),
-    SimpleModeEnabled(false),
+    OutputImage(0),
     InterpolationEnabled(true)
 {
-    AddSupportedType(svlTypeImageRGB, svlTypeImageRGB);
-    AddSupportedType(svlTypeImageRGBStereo, svlTypeImageRGBStereo);
+    AddInput("input", true);
+    AddInputType("input", svlTypeImageRGB);
+    AddInputType("input", svlTypeImageRGBStereo);
 
-    for (unsigned int i = 0; i < 64; i ++) {
-        RectifLUT[i] = 0;
-        HorizTranslation[i] = 0;
-        VertTranslation[i] = 0;
-    }
+    AddOutput("output", true);
+    SetAutomaticOutputType(true);
+
+    RectifLUT.SetAll(0);
 }
 
 svlFilterImageRectifier::~svlFilterImageRectifier()
 {
-    Release();
-    for (unsigned int i = 0; i < 64; i ++) ReleaseLUT(RectifLUT[i]);
-    if (OutputData) delete OutputData;
+    for (unsigned int i = 0; i < SVL_MAX_CHANNELS; i ++) ReleaseLUT(RectifLUT[i]);
+    if (OutputImage) delete OutputImage;
 }
 
-int svlFilterImageRectifier::Initialize(svlSample* inputdata)
+int svlFilterImageRectifier::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    svlSampleImageBase* input = dynamic_cast<svlSampleImageBase*>(inputdata);
+    svlSampleImage* input = dynamic_cast<svlSampleImage*>(syncInput);
 
     unsigned int i, channels;
 
-    channels = std::min(static_cast<unsigned int>(64), input->GetVideoChannels());
+    channels = std::min(SVL_MAX_CHANNELS, input->GetVideoChannels());
     for (i = 0; i < channels; i ++) {
         if (RectifLUT[i]) {
-            if (RectifLUT[i]->Width != static_cast<int>(input->GetWidth(i)) ||
-                RectifLUT[i]->Height != static_cast<int>(input->GetHeight(i)))
-                return SVL_RCT_WRONG_LUT_SIZE;
+            if (RectifLUT[i]->Width != input->GetWidth(i) ||
+                RectifLUT[i]->Height != input->GetHeight(i))
+                return SVL_FAIL;
         }
     }
 
-    Release();
-
     // Preparing output sample
-    if (OutputData) delete OutputData;
-    OutputData = input->GetNewInstance();
-    OutputData->SetSize(*input);
+    if (OutputImage) delete OutputImage;
+    OutputImage = dynamic_cast<svlSampleImage*>(input->GetNewInstance());
+    OutputImage->SetSize(*input);
 
-    svlSampleImageBase* output = dynamic_cast<svlSampleImageBase*>(OutputData);
-    channels = output->GetVideoChannels();
+    channels = OutputImage->GetVideoChannels();
     for (i = 0; i < channels; i ++) {
-        memset(output->GetUCharPointer(i), 0, output->GetDataSize(i));
+        memset(OutputImage->GetUCharPointer(i), 0, OutputImage->GetDataSize(i));
     }
+
+    syncOutput = OutputImage;
 
     return SVL_OK;
 }
 
-int svlFilterImageRectifier::ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata)
+int svlFilterImageRectifier::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    ///////////////////////////////////////////
-    // Check if the input sample has changed //
-      if (!IsNewSample(inputdata))
-          return SVL_ALREADY_PROCESSED;
-    ///////////////////////////////////////////
+    syncOutput = OutputImage;
+    _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
-    svlSampleImageBase* id = dynamic_cast<svlSampleImageBase*>(inputdata);
-    svlSampleImageBase* od = dynamic_cast<svlSampleImageBase*>(OutputData);
+    svlSampleImage* id = dynamic_cast<svlSampleImage*>(syncInput);
     unsigned int videochannels = id->GetVideoChannels();
     unsigned int idx;
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
         // Processing
-        if (SimpleModeEnabled) {
-            Translate(id->GetUCharPointer(idx),
-                      od->GetUCharPointer(idx),
-                      id->GetWidth(idx) * id->GetBPP(),
-                      id->GetHeight(idx),
-                      HorizTranslation[idx] * id->GetBPP(),
-                      VertTranslation[idx]);
+        if (RectifLUT[idx]) {
+            Rectify(RectifLUT[idx],
+                    id->GetUCharPointer(idx),
+                    OutputImage->GetUCharPointer(idx),
+                    InterpolationEnabled);
         }
         else {
-            if (RectifLUT[idx]) {
-                Rectify(RectifLUT[idx],
-                        id->GetUCharPointer(idx),
-                        od->GetUCharPointer(idx),
-                        InterpolationEnabled);
-            }
-            else {
-                memcpy(od->GetUCharPointer(idx), id->GetUCharPointer(idx), id->GetDataSize(idx));
-            }
+            memcpy(OutputImage->GetUCharPointer(idx), id->GetUCharPointer(idx), id->GetDataSize(idx));
         }
     }
 
     return SVL_OK;
 }
 
-int svlFilterImageRectifier::Release()
-{
-    return SVL_OK;
-}
-
-int svlFilterImageRectifier::LoadTable(const char* filepath, unsigned int videoch, int exponentlen)
+int svlFilterImageRectifier::LoadTable(const std::string &filepath, unsigned int videoch, int exponentlen)
 {
     if (IsInitialized() == true) return SVL_ALREADY_INITIALIZED;
-    if (videoch >= 64) return SVL_FAIL;
+    if (videoch >= SVL_MAX_CHANNELS) return SVL_FAIL;
 
     ReleaseLUT(RectifLUT[videoch]);
     RectifLUT[videoch] = new RectificationLUT;
+    memset(RectifLUT[videoch], 0, sizeof(RectificationLUT));
 
     int ret = LoadRectificationData(RectifLUT[videoch], filepath, exponentlen);
     if (ret != SVL_OK) {
@@ -148,31 +124,27 @@ int svlFilterImageRectifier::LoadTable(const char* filepath, unsigned int videoc
     return ret;
 }
 
-void svlFilterImageRectifier::EnableSimpleMode(bool enable)
-{
-    SimpleModeEnabled = enable;
-}
-
-int svlFilterImageRectifier::SetSimpleTransform(int horiz_translation, int vert_translation, unsigned int videoch)
-{
-    if (videoch >= 64) return SVL_FAIL;
-
-    HorizTranslation[videoch] = horiz_translation;
-    VertTranslation[videoch] = vert_translation;
-
-    return SVL_OK;
-}
-
 void svlFilterImageRectifier::EnableInterpolation(bool enable)
 {
     InterpolationEnabled = enable;
 }
 
-int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, const char* filepath, int explen)
+int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, const std::string &filepath, int explen)
 {
-    if (rectdata == 0 || filepath == 0) return SVL_FAIL;
+    if (rectdata == 0) return SVL_FAIL;
 
-    memset(rectdata, 0, sizeof(RectificationLUT));
+    std::ifstream file(filepath.c_str(), std::ios_base::in | std::ios_base::binary);
+    if (!file.is_open()) return SVL_FAIL;
+
+    ResetLUT(rectdata);
+
+    double dbl;
+    const unsigned int maxwidth = 1920;
+    const unsigned int maxheight = 1200;
+    const unsigned int size = maxwidth * maxheight;
+    double* dblbuf = new double[size];
+    char* chbuf    = new char[(16 * size) + 1];
+    int valcnt, i;
 
     // lutpos:
     //          1 - width, height
@@ -187,28 +159,21 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
     //         10 - source blending lut 4
     int lutpos = 0;
 
-    FILE* fp;
-    double dbl;
-    unsigned int dblsize = 1920000; // max 1600*1200
-    double* dblbuf = new double[dblsize];
-    int valcnt, i;
-
-    fp = fopen(filepath, "rb");
-    if (fp == NULL) goto labError;
-
     while (lutpos < 10) {
         switch (lutpos) {
             case 0:
-                if (LoadLine(fp, &dbl, 1, explen) < 1) goto labError;
+                if (LoadLine(file, &dbl, chbuf, 1, explen) < 1) goto labError;
                 rectdata->Height = static_cast<int>(dbl);
-                if (LoadLine(fp, &dbl, 1, explen) < 1) goto labError;
+                if (LoadLine(file, &dbl, chbuf, 1, explen) < 1) goto labError;
                 rectdata->Width = static_cast<int>(dbl);
+
+                if (rectdata->Width > maxwidth || rectdata->Height > maxheight) goto labError;
 
                 lutpos ++;
             break;
 
             case 1:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->idxDestSize = valcnt;
                 rectdata->idxDest = new unsigned int[valcnt];
@@ -220,7 +185,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 2:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->idxSrc1Size = valcnt;
                 rectdata->idxSrc1 = new unsigned int[valcnt];
@@ -232,7 +197,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 3:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->idxSrc2Size = valcnt;
                 rectdata->idxSrc2 = new unsigned int[valcnt];
@@ -244,7 +209,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 4:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->idxSrc3Size = valcnt;
                 rectdata->idxSrc3 = new unsigned int[valcnt];
@@ -256,7 +221,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 5:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->idxSrc4Size = valcnt;
                 rectdata->idxSrc4 = new unsigned int[valcnt];
@@ -268,7 +233,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 6:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->blendSrc1Size = valcnt;
                 rectdata->blendSrc1 = new unsigned char[valcnt];
@@ -280,7 +245,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 7:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->blendSrc2Size = valcnt;
                 rectdata->blendSrc2 = new unsigned char[valcnt];
@@ -292,7 +257,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 8:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->blendSrc3Size = valcnt;
                 rectdata->blendSrc3 = new unsigned char[valcnt];
@@ -304,7 +269,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
             break;
 
             case 9:
-                valcnt = LoadLine(fp, dblbuf, dblsize, explen);
+                valcnt = LoadLine(file, dblbuf, chbuf, size, explen);
                 if (valcnt < 1) goto labError;
                 rectdata->blendSrc4Size = valcnt;
                 rectdata->blendSrc4 = new unsigned char[valcnt];
@@ -317,7 +282,7 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
         }
     }
 
-    fclose(fp);
+    file.close();
 
     valcnt = rectdata->idxDestSize;
     if (rectdata->idxSrc1Size != valcnt ||
@@ -343,37 +308,31 @@ int svlFilterImageRectifier::LoadRectificationData(RectificationLUT* rectdata, c
         rectdata->idxSrc4[i] *= 3;
     }
 
+    if (dblbuf) delete [] dblbuf;
+    if (chbuf) delete [] chbuf;
+
     return SVL_OK;
 
 labError:
-    if (fp != NULL) fclose(fp);
+    if (file.is_open()) file.close();
 
-    if (rectdata->idxDest) delete [] rectdata->idxDest;
-    if (rectdata->idxSrc1) delete [] rectdata->idxSrc1;
-    if (rectdata->idxSrc2) delete [] rectdata->idxSrc2;
-    if (rectdata->idxSrc3) delete [] rectdata->idxSrc3;
-    if (rectdata->idxSrc4) delete [] rectdata->idxSrc4;
-    if (rectdata->blendSrc1) delete [] rectdata->blendSrc1;
-    if (rectdata->blendSrc2) delete [] rectdata->blendSrc2;
-    if (rectdata->blendSrc3) delete [] rectdata->blendSrc3;
-    if (rectdata->blendSrc4) delete [] rectdata->blendSrc4;
-    memset(rectdata, 0, sizeof(RectificationLUT));
+    ResetLUT(rectdata);
 
     if (dblbuf) delete [] dblbuf;
+    if (chbuf) delete [] chbuf;
 
     return SVL_FAIL;
 }
 
-int svlFilterImageRectifier::LoadLine(FILE* fp, double* dblbuf, unsigned int dbllen, int explen)
+int svlFilterImageRectifier::LoadLine(std::ifstream &file, double* dblbuf, char* chbuf, unsigned int size, int explen)
 {
-    unsigned int bufsize = (16 * dbllen) + 1; // max line length
+    unsigned int bufsize = (16 * size) + 1; // max text line length
     unsigned int datalen; // actual data size
     unsigned int bufpos = 0;
-    char* buffer = new char[bufsize];
+    unsigned int filepos;
     char* tbuf;
     char ch;
     int ival;
-    long filepos;
     int counter = 0;
     int linebreak = 0;
     double dbl;
@@ -381,14 +340,16 @@ int svlFilterImageRectifier::LoadLine(FILE* fp, double* dblbuf, unsigned int dbl
 	double negexpTens[] = {1.0, 0.0000000001, 0.00000000001, 0.000000000001, 0.000000000001, 0.000000000001, 0.000000000001, 0.000000000001, 0.000000000001, 0.0000000000001, 0.0000000000001};
     double posexp[] = {1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0, 1000000000.0};
 
-    filepos = ftell(fp);
-    datalen = static_cast<unsigned int>(fread(buffer, 1, bufsize, fp));
+    filepos = file.tellg();
+    file.read(chbuf, bufsize);
+    datalen = file.gcount();
+    file.clear();
 
     if (explen == 3) {
         while (datalen > 16 ) {
             bufpos += 2;
 
-            tbuf = buffer + bufpos;
+            tbuf = chbuf + bufpos;
             ch = *tbuf - 48; if (ch < 0 || ch > 9) break;
 
         // ?.xxxxxxxes00x
@@ -460,14 +421,14 @@ int svlFilterImageRectifier::LoadLine(FILE* fp, double* dblbuf, unsigned int dbl
             datalen -= 16;
 
             // if end of line, seek back
-            ch = buffer[bufpos];
+            ch = chbuf[bufpos];
             if (ch == 0x0a) { // LF
-                fseek(fp, filepos + bufpos + 1, SEEK_SET);
+                file.seekg(filepos + bufpos + 1);
                 linebreak = 1;
                 break;
             }
             else if (ch == 0x0d) { // CRLF
-                fseek(fp, filepos + bufpos + 2, SEEK_SET);
+                file.seekg(filepos + bufpos + 2);
                 linebreak = 1;
                 break;
             }
@@ -477,7 +438,7 @@ int svlFilterImageRectifier::LoadLine(FILE* fp, double* dblbuf, unsigned int dbl
         while (datalen > 16 ) {
             bufpos += 3;
 
-            tbuf = buffer + bufpos;
+            tbuf = chbuf + bufpos;
             ch = *tbuf - 48; if (ch < 0 || ch > 9) break;
 
         // ?.xxxxxxxes0x
@@ -555,21 +516,19 @@ int svlFilterImageRectifier::LoadLine(FILE* fp, double* dblbuf, unsigned int dbl
             datalen -= 16;
 
             // if end of line, seek back
-            ch = buffer[bufpos];
+            ch = chbuf[bufpos];
             if (ch == 0x0a) { // LF
-                fseek(fp, filepos + bufpos + 1, SEEK_SET);
+                file.seekg(filepos + bufpos + 1);
                 linebreak = 1;
                 break;
             }
             else if (ch == 0x0d) { // CRLF
-                fseek(fp, filepos + bufpos + 2, SEEK_SET);
+                file.seekg(filepos + bufpos + 2);
                 linebreak = 1;
                 break;
             }
         }
     }
-
-    delete [] buffer;
 
     if (linebreak == 1) return counter;
     return 0;
@@ -584,39 +543,6 @@ void svlFilterImageRectifier::TransposeLUTArray(unsigned int* index, unsigned in
         x = val / height;
         y = val % height;
         index[i] = y * width + x;
-    }
-}
-
-void svlFilterImageRectifier::Translate(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert)
-{
-    int abs_h = abs(trhoriz);
-    int abs_v = abs(trvert);
-
-    if (width <= abs_h || height <= abs_v) {
-        memset(dest, 0, width * height);
-        return;
-    }
-
-    if (trhoriz == 0) {
-        memcpy(dest + max(0, trvert) * width,
-               src + max(0, -trvert) * width,
-               width * (height - abs_v));
-        return;
-    }
-
-    int linecopysize = width - abs_h;
-    int xfrom = max(0, trhoriz);
-    int yfrom = max(0, trvert);
-    int yto = height + min(0, trvert);
-    int copyxoffset = max(0, -trhoriz);
-    int copyyoffset = max(0, -trvert);
-
-    src += width * copyyoffset + copyxoffset;
-    dest += width * yfrom + xfrom;
-    for (int j = yfrom; j < yto; j ++) {
-        memcpy(dest, src, linecopysize);
-        src += width;
-        dest += width;
     }
 }
 
@@ -733,7 +659,7 @@ void svlFilterImageRectifier::Rectify(RectificationLUT* rectdata, unsigned char*
     }
 }
 
-void svlFilterImageRectifier::ReleaseLUT(RectificationLUT* lut)
+void svlFilterImageRectifier::ResetLUT(RectificationLUT* lut)
 {
     if (lut) {
         if (lut->idxDest) delete [] lut->idxDest;
@@ -745,6 +671,14 @@ void svlFilterImageRectifier::ReleaseLUT(RectificationLUT* lut)
         if (lut->blendSrc2) delete [] lut->blendSrc2;
         if (lut->blendSrc3) delete [] lut->blendSrc3;
         if (lut->blendSrc4) delete [] lut->blendSrc4;
+        memset(lut, 0, sizeof(RectificationLUT));
+    }
+}
+
+void svlFilterImageRectifier::ReleaseLUT(RectificationLUT* lut)
+{
+    if (lut) {
+        ResetLUT(lut);
         delete lut;
     }
 }

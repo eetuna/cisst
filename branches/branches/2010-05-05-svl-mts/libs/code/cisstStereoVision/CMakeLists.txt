@@ -27,8 +27,12 @@ SET(DEPENDENCIES
 # all source files
 SET(SOURCE_FILES
   # Public System API
-    svlStreamDefs.cpp
+    svlTypes.cpp
     svlStreamManager.cpp
+    svlFilterBase.cpp
+    svlFilterIO.cpp
+    svlFilterSourceBase.cpp
+    svlStreamProc.cpp
     svlSyncPoint.cpp
     svlSeries.cpp
     svlRenderTargets.cpp
@@ -38,9 +42,15 @@ SET(SOURCE_FILES
     svlVideoIO.cpp
     svlCameraGeometry.cpp
     svlConverters.cpp
+    svlBufferMemory.cpp
+    svlBufferSample.cpp
     svlBufferImage.cpp
+    svlDraw.cpp
+    svlOverlayObjects.cpp
 
   # Filter API
+    svlFilterSplitter.cpp
+    svlFilterImageOverlay.cpp
     svlFilterSourceDummy.cpp
     svlFilterImageDeinterlacer.cpp
     svlFilterSourceVideoCapture.cpp
@@ -52,18 +62,20 @@ SET(SOURCE_FILES
     svlFilterDisparityMapToSurface.cpp
     svlFilterStereoImageOptimizer.cpp
     svlFilterImageRectifier.cpp
-    svlFilterUnsharpMask.cpp
+    svlFilterImageCenterFinder.cpp
+    svlFilterImageUnsharpMask.cpp
     svlFilterImageSampler.cpp
-    svlFilterRGBSwapper.cpp
+    svlFilterImageChannelSwapper.cpp
     svlFilterStreamTypeConverter.cpp
-    svlFilterColorSpaceConverter.cpp
+    svlFilterImageColorConverter.cpp
     svlFilterImageCropper.cpp
+    svlFilterImageTranslation.cpp
     svlFilterImageResizer.cpp
-    svlFilterPointTracker.cpp
+    svlFilterImageTracker.cpp
     svlFilterStereoImageJoiner.cpp
+    svlFilterStereoImageSplitter.cpp
     svlFilterImageFlipRotate.cpp
-    svlFilterCallback.cpp
-    svlFilterBuffer.cpp
+    svlFilterLightSourceBuddy.cpp
 
   # Private System API
     svlImageCodecBMP.h             # private header
@@ -78,14 +90,19 @@ SET(SOURCE_FILES
     svlStereoDPMono.cpp
 
   # Trackers
-    trackers/msbruteforce/svlTrackerMSBruteForce.cpp
+    svlTrackerMSBruteForce.cpp
     )
 
 # all header files
 SET(HEADER_FILES
   # Public System API
-    svlStreamDefs.h
+    svlDefinitions.h
+    svlTypes.h
     svlStreamManager.h
+    svlFilterBase.h
+    svlFilterIO.h
+    svlFilterSourceBase.h
+    svlStreamProc.h
     svlSyncPoint.h
     svlSeries.h
     svlRenderTargets.h
@@ -96,9 +113,15 @@ SET(HEADER_FILES
     svlVideoIO.h
     svlCameraGeometry.h
     svlConverters.h
+    svlBufferMemory.h
+    svlBufferSample.h
     svlBufferImage.h
+    svlDraw.h
+    svlOverlayObjects.h
 
   # Filter API
+    svlFilterSplitter.h
+    svlFilterImageOverlay.h
     svlFilterSourceDummy.h
     svlFilterImageDeinterlacer.h
     svlFilterSourceVideoCapture.h
@@ -110,21 +133,23 @@ SET(HEADER_FILES
     svlFilterDisparityMapToSurface.h
     svlFilterStereoImageOptimizer.h
     svlFilterImageRectifier.h
-    svlFilterUnsharpMask.h
+    svlFilterImageCenterFinder.h
+    svlFilterImageUnsharpMask.h
     svlFilterImageSampler.h
-    svlFilterRGBSwapper.h
+    svlFilterImageChannelSwapper.h
     svlFilterStreamTypeConverter.h
-    svlFilterColorSpaceConverter.h
+    svlFilterImageColorConverter.h
     svlFilterImageCropper.h
+    svlFilterImageTranslation.h
     svlFilterImageResizer.h
-    svlFilterPointTracker.h
+    svlFilterImageTracker.h
     svlFilterStereoImageJoiner.h
+    svlFilterStereoImageSplitter.h
     svlFilterImageFlipRotate.h
-    svlFilterCallback.h
-    svlFilterBuffer.h
+    svlFilterLightSourceBuddy.h
 
   # Trackers
-    trackers/svlTrackerMSBruteForce.h
+    svlTrackerMSBruteForce.h
     )
 
 
@@ -136,18 +161,16 @@ IF(BUILD_LIBS_cisstNumerical AND CISST_HAS_CISSTNETLIB)
         )
     SET(SOURCE_FILES
         ${SOURCE_FILES}
-        # Trackers
-        trackers/cisst/svlTrackerCisst.cpp
-        trackers/cisst/trkCisstWSSD.h      # private header
-        trackers/cisst/trkCisstWSSD.cpp
-        trackers/cisst/trkCisstNCC.h       # private header
-        trackers/cisst/trkCisstNCC.cpp
-        trackers/cisst/trkCisstBase.h      # private header
+        svlTrackerCisst.cpp
+        trackers/cisst/svlTrackerCisstWSSD.h      # private header
+        trackers/cisst/svlTrackerCisstWSSD.cpp
+        trackers/cisst/svlTrackerCisstNCC.h       # private header
+        trackers/cisst/svlTrackerCisstNCC.cpp
+        trackers/cisst/svlTrackerCisstBase.h      # private header
         )
         SET(HEADER_FILES
         ${HEADER_FILES}
-        # Trackers
-        trackers/svlTrackerCisst.h
+        svlTrackerCisst.h
         )
 ENDIF(BUILD_LIBS_cisstNumerical AND CISST_HAS_CISSTNETLIB)
 
@@ -196,13 +219,87 @@ IF(CISST_SVL_HAS_OPENCV OR NOT OpenCV_OPTIONS)
         OpenCV_CXTS_LIBRARY
         OpenCV_HIGHGUI_LIBRARY
         OpenCV_ML_LIBRARY
-       #OpenCV_CVCAM_INCLUDE_DIR
-       #OpenCV_CVCAM_LIBRARY
-       #OpenCV_TRS_LIBRARY
         CACHE INTERNAL "List of OpenCV options"
         )
 
-    FIND_PACKAGE(OpenCV COMPONENTS CV CXCORE CVAUX HIGHGUI)
+    FIND_PACKAGE(OpenCV21 COMPONENTS CV CXCORE CVAUX HIGHGUI)
+    IF(OpenCV21_FOUND)
+        # Copy 'OpenCV21_' variable values to 'OpenCV_' variables
+        SET(OpenCV_FOUND YES)
+        SET(OpenCV_ROOT_DIR                 ${OpenCV21_ROOT_DIR})
+        SET(OpenCV_INCLUDE_DIRS             ${OpenCV21_INCLUDE_DIRS})
+        SET(OpenCV_CV_INCLUDE_DIR           ${OpenCV21_CV_INCLUDE_DIR})
+        SET(OpenCV_CXCORE_INCLUDE_DIR       ${OpenCV21_CXCORE_INCLUDE_DIR})
+        SET(OpenCV_CVAUX_INCLUDE_DIR        ${OpenCV21_CVAUX_INCLUDE_DIR})
+        SET(OpenCV_HIGHGUI_INCLUDE_DIR      ${OpenCV21_HIGHGUI_INCLUDE_DIR})
+        SET(OpenCV_LIBRARIES                ${OpenCV21_LIBRARIES})
+        SET(OpenCV_CV_LIBRARY               ${OpenCV21_CV_LIBRARY})
+        SET(OpenCV_CXCORE_LIBRARY           ${OpenCV21_CXCORE_LIBRARY})
+        SET(OpenCV_CVAUX_LIBRARY            ${OpenCV21_CVAUX_LIBRARY})
+        SET(OpenCV_CVHAARTRAINING_LIBRARY   ${OpenCV21_CVHAARTRAINING_LIBRARY})
+        SET(OpenCV_CXTS_LIBRARY             ${OpenCV21_CXTS_LIBRARY})
+        SET(OpenCV_HIGHGUI_LIBRARY          ${OpenCV21_HIGHGUI_LIBRARY})
+        SET(OpenCV_ML_LIBRARY               ${OpenCV21_ML_LIBRARY})
+    ELSE(OpenCV21_FOUND)
+        FIND_PACKAGE(OpenCV20 COMPONENTS CV CXCORE CVAUX HIGHGUI)
+        IF(OpenCV20_FOUND)
+            # Copy 'OpenCV20_' variable values to 'OpenCV_' variables
+            SET(OpenCV_FOUND YES)
+            SET(OpenCV_ROOT_DIR                 ${OpenCV20_ROOT_DIR})
+            SET(OpenCV_INCLUDE_DIRS             ${OpenCV20_INCLUDE_DIRS})
+            SET(OpenCV_CV_INCLUDE_DIR           ${OpenCV20_CV_INCLUDE_DIR})
+            SET(OpenCV_CXCORE_INCLUDE_DIR       ${OpenCV20_CXCORE_INCLUDE_DIR})
+            SET(OpenCV_CVAUX_INCLUDE_DIR        ${OpenCV20_CVAUX_INCLUDE_DIR})
+            SET(OpenCV_HIGHGUI_INCLUDE_DIR      ${OpenCV20_HIGHGUI_INCLUDE_DIR})
+            SET(OpenCV_LIBRARIES                ${OpenCV20_LIBRARIES})
+            SET(OpenCV_CV_LIBRARY               ${OpenCV20_CV_LIBRARY})
+            SET(OpenCV_CXCORE_LIBRARY           ${OpenCV20_CXCORE_LIBRARY})
+            SET(OpenCV_CVAUX_LIBRARY            ${OpenCV20_CVAUX_LIBRARY})
+            SET(OpenCV_CVHAARTRAINING_LIBRARY   ${OpenCV20_CVHAARTRAINING_LIBRARY})
+            SET(OpenCV_CXTS_LIBRARY             ${OpenCV20_CXTS_LIBRARY})
+            SET(OpenCV_HIGHGUI_LIBRARY          ${OpenCV20_HIGHGUI_LIBRARY})
+            SET(OpenCV_ML_LIBRARY               ${OpenCV20_ML_LIBRARY})
+        ELSE(OpenCV20_FOUND)
+            FIND_PACKAGE(OpenCV COMPONENTS CV CXCORE CVAUX HIGHGUI)
+        ENDIF(OpenCV20_FOUND)
+    ENDIF(OpenCV21_FOUND)
+
+    # Remove 'OpenCV2x_' variables, if any
+    UNSET(OpenCV21_ROOT_DIR CACHE)
+    UNSET(OpenCV21_INCLUDE_DIRS CACHE)
+    UNSET(OpenCV21_CV_INCLUDE_DIR CACHE)
+    UNSET(OpenCV21_CXCORE_INCLUDE_DIR CACHE)
+    UNSET(OpenCV21_CVAUX_INCLUDE_DIR CACHE)
+    UNSET(OpenCV21_CVCAM_INCLUDE_DIR CACHE)
+    UNSET(OpenCV21_HIGHGUI_INCLUDE_DIR CACHE)
+    UNSET(OpenCV21_LIBRARIES CACHE)
+    UNSET(OpenCV21_CV_LIBRARY CACHE)
+    UNSET(OpenCV21_CXCORE_LIBRARY CACHE)
+    UNSET(OpenCV21_CVAUX_LIBRARY CACHE)
+    UNSET(OpenCV21_CVCAM_LIBRARY CACHE)
+    UNSET(OpenCV21_CVHAARTRAINING_LIBRARY CACHE)
+    UNSET(OpenCV21_CXTS_LIBRARY CACHE)
+    UNSET(OpenCV21_HIGHGUI_LIBRARY CACHE)
+    UNSET(OpenCV21_ML_LIBRARY CACHE)
+    UNSET(OpenCV21_TRS_LIBRARY CACHE)
+    UNSET(OpenCV20_ROOT_DIR CACHE)
+    UNSET(OpenCV20_INCLUDE_DIRS CACHE)
+    UNSET(OpenCV20_CV_INCLUDE_DIR CACHE)
+    UNSET(OpenCV20_CXCORE_INCLUDE_DIR CACHE)
+    UNSET(OpenCV20_CVAUX_INCLUDE_DIR CACHE)
+    UNSET(OpenCV20_CVCAM_INCLUDE_DIR CACHE)
+    UNSET(OpenCV20_HIGHGUI_INCLUDE_DIR CACHE)
+    UNSET(OpenCV20_LIBRARIES CACHE)
+    UNSET(OpenCV20_CV_LIBRARY CACHE)
+    UNSET(OpenCV20_CXCORE_LIBRARY CACHE)
+    UNSET(OpenCV20_CVAUX_LIBRARY CACHE)
+    UNSET(OpenCV20_CVCAM_LIBRARY CACHE)
+    UNSET(OpenCV20_CVHAARTRAINING_LIBRARY CACHE)
+    UNSET(OpenCV20_CXTS_LIBRARY CACHE)
+    UNSET(OpenCV20_HIGHGUI_LIBRARY CACHE)
+    UNSET(OpenCV20_ML_LIBRARY CACHE)
+    UNSET(OpenCV20_TRS_LIBRARY CACHE)
+
     IF(OpenCV_FOUND)
         MARK_AS_ADVANCED(FORCE ${OpenCV_OPTIONS})
 
@@ -217,21 +314,28 @@ IF(CISST_SVL_HAS_OPENCV OR NOT OpenCV_OPTIONS)
 
         SET(SOURCE_FILES
             ${SOURCE_FILES}
+            svlFilterImageZoom.cpp
             svlFilterToolTracker.cpp
             svlVidCapSrcOpenCV.h        # private header
             svlVidCapSrcOpenCV.cpp
-            # Trackers
-            trackers/opencv/svlTrackerOpenCV.cpp
-            trackers/opencv/trkOCVColor.h        # private header
-            trackers/opencv/trkOCVColor.cpp
+            svlTrackerOCVMeanShift.cpp
             )
+        IF(UNIX)
+            # OpenCV video file support is weak in Windows
+            SET(SOURCE_FILES
+                ${SOURCE_FILES}
+                svlVideoCodecOpenCV.h       # private header
+                svlVideoCodecOpenCV.cpp
+                )
+        ENDIF(UNIX)
+
         SET(HEADER_FILES
             ${HEADER_FILES}
+            svlFilterImageZoom.h
             svlFilterToolTracker.h
-            # Trackers
-            trackers/svlTrackerOpenCV.h
+            svlTrackerOCVMeanShift.h
             )
-        MESSAGE(STATUS "OpenCV found - Switch to advanced view for details")
+        MESSAGE(STATUS "OpenCV found")
         OPTION(CISST_SVL_HAS_OPENCV "Compile OpenCV extensions" ON)
 
     ELSE(OpenCV_FOUND)
@@ -318,6 +422,8 @@ IF(CISST_SVL_HAS_ZLIB OR NOT ZLIB_OPTIONS)
             ${SOURCE_FILES}
             svlVideoCodecCVI.h              # private header
             svlVideoCodecCVI.cpp
+            svlVideoCodecUDPStream.h        # private header
+            svlVideoCodecUDPStream.cpp
             )
         MESSAGE(STATUS "ZLIB found - Switch to advanced view for details")
         OPTION(CISST_SVL_HAS_ZLIB "Use ZLIB extensions" ON)
@@ -468,10 +574,12 @@ IF(WIN32)
         svlVideoCodecVfW32.h    # private header
         svlVideoCodecVfW32.cpp
         svlFilterImageWindow.cpp
+        svlFilterImageWindowTargetSelect.cpp
         )
     SET(HEADER_FILES
         ${HEADER_FILES}
         svlFilterImageWindow.h
+        svlFilterImageWindowTargetSelect.h
         )
     SET(SVL_ADDITIONAL_LIBRARIES
         "${SVL_ADDITIONAL_LIBRARIES}"
@@ -510,10 +618,12 @@ IF(WIN32)
 
             SET(SOURCE_FILES
                 ${SOURCE_FILES}
-                svlVidCapSrcDirectShowInputSelector.h    # private header
+                svlVidCapSrcDirectShowInputSelector.h       # private header
                 svlVidCapSrcDirectShowInputSelector.cpp
-                svlVidCapSrcDirectShow.h           # private header
+                svlVidCapSrcDirectShow.h                    # private header
                 svlVidCapSrcDirectShow.cpp
+                #svlVideoCodecDirectShow.h                   # private header
+                #svlVideoCodecDirectShow.cpp
                 )
             MESSAGE(STATUS "DirectShow found - Switch to advanced view for details")
             OPTION(CISST_SVL_HAS_DIRECTSHOW "Compile DirectShow extensions" ON)
@@ -734,10 +844,12 @@ IF(UNIX)
                 winX11.h                 # private header
                 winX11.cpp
                 svlFilterImageWindow.cpp
+                svlFilterImageWindowTargetSelect.cpp
                 )
             SET(HEADER_FILES
                 ${HEADER_FILES}
                 svlFilterImageWindow.h
+                svlFilterImageWindowTargetSelect.h
                 )
             MESSAGE(STATUS "X11 found - Switch to advanced view for details")
             OPTION(CISST_SVL_HAS_X11 "Compile X11 extensions" ON)

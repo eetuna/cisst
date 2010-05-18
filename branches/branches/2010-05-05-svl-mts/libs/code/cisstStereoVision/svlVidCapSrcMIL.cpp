@@ -20,9 +20,9 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "svlVidCapSrcMIL.h"
+#include <cisstOSAbstraction/osaThread.h>
+#include <cisstStereoVision/svlBufferImage.h>
 #include <cisstOSAbstraction/osaSleep.h>
-
-using namespace std;
 
 
 /******************************************/
@@ -307,7 +307,7 @@ int svlVidCapSrcMIL::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
     int i, w, h, b;
     bool cap, ovrl;
     int devid[2];
-    string description;
+    std::string description;
 
     MILNumberOfDevices = 0;
 
@@ -340,12 +340,17 @@ int svlVidCapSrcMIL::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
             deviceinfo[0][i].id = devid[i];
 
             // name
-            if (devid[i]) description = "M_DEV1: ";
-            else description = "M_DEV0: ";
+            description = "Matrox Imaging Device (";
+            if (devid[i]) description += "M_DEV1: ";
+            else description += "M_DEV0: ";
             if (CaptureSupported[i] && OverlaySupported[i]) description += "Capture+Overlay";
             else if (CaptureSupported[i]) description += "Capture only";
             else if (OverlaySupported[i]) description += "Overlay only";
-            sprintf(deviceinfo[0][i].name, "Matrox Imaging Device (%s)", description.c_str());
+            description += ")";
+            memset(deviceinfo[0][i].name, 0, SVL_VCS_STRING_LENGTH);
+            memcpy(deviceinfo[0][i].name,
+                   description.c_str(),
+                   std::min(SVL_VCS_STRING_LENGTH - 1, static_cast<int>(description.length())));
 
             // inputs
             deviceinfo[0][i].inputcount = 0;

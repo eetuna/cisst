@@ -53,8 +53,8 @@ private:
     int StreamID;
     ui3BehaviorBase* ParentBehavior;
 
-    int Initialize(svlSample* inputdata);
-    int ProcessFrame(svlProcInfo* procInfo, svlSample* inputdata);
+    int Initialize(svlSample* syncInput, svlSample* &syncOutput);
+    int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
 };
 
 #endif // _ui3VideoInterfaceFilter_h
