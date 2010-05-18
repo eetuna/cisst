@@ -44,6 +44,7 @@ svlVidCapSrcDirectShow::svlVidCapSrcDirectShow() :
 	InputID(0),
 	CapWidth(0),
 	CapHeight(0),
+    CapTopDown(0),
 	EnableRenderer(0),
     pCaptureFilter(0),
     pIntermediatePreviewFilter(0),
@@ -87,6 +88,7 @@ int svlVidCapSrcDirectShow::SetStreamCount(unsigned int numofstreams)
 	InputID        = new int[NumOfStreams];
 	CapWidth       = new int[NumOfStreams];
 	CapHeight      = new int[NumOfStreams];
+	CapTopDown     = new bool[NumOfStreams];
 	EnableRenderer = new int[NumOfStreams];
     pCaptureFilter             = new IBaseFilter*[NumOfStreams];
     pIntermediatePreviewFilter = new IBaseFilter*[NumOfStreams];
@@ -105,6 +107,7 @@ int svlVidCapSrcDirectShow::SetStreamCount(unsigned int numofstreams)
         InputID[i] = -1;
         CapWidth[i] = -1;
         CapHeight[i] = -1;
+        CapTopDown[i] = true;
         EnableRenderer[i] = 0;
         pCaptureFilter[i] = 0;
         pIntermediatePreviewFilter[i] = 0;
@@ -143,6 +146,7 @@ void svlVidCapSrcDirectShow::Release()
 	if (InputID) delete [] InputID;
 	if (CapWidth) delete [] CapWidth;
 	if (CapHeight) delete [] CapHeight;
+	if (CapTopDown) delete [] CapTopDown;
 	if (EnableRenderer) delete [] EnableRenderer;
     if (pCaptureFilter) delete [] pCaptureFilter;
     if (pIntermediatePreviewFilter) delete [] pIntermediatePreviewFilter;
@@ -162,6 +166,7 @@ void svlVidCapSrcDirectShow::Release()
 	InputID = 0;
 	CapWidth = 0;
 	CapHeight = 0;
+	CapTopDown = 0;
 	EnableRenderer = 0;
     pCaptureFilter = 0;
     pIntermediatePreviewFilter = 0;
@@ -553,12 +558,19 @@ int svlVidCapSrcDirectShow::AssembleGraph()
         if (pCaptureFilterOut[i]->ConnectionMediaType(&mediatype) != S_OK) goto labError;
         videoinfo = reinterpret_cast<VIDEOINFOHEADER*>(mediatype.pbFormat);
         CapWidth[i] = videoinfo->bmiHeader.biWidth;
-        CapHeight[i] = videoinfo->bmiHeader.biHeight;
+        if (videoinfo->bmiHeader.biHeight < 0) {
+            CapHeight[i] = -(videoinfo->bmiHeader.biHeight);
+            CapTopDown[i] = false;
+        }
+        else {
+            CapHeight[i] = videoinfo->bmiHeader.biHeight;
+            CapTopDown[i] = true;
+        }
         CoTaskMemFree(mediatype.pbFormat);
 
         // Setup output buffer and frame callback
         OutputBuffer[i] = new svlBufferImage(CapWidth[i], CapHeight[i]);
-        pCallBack[i] = new svlVidCapSrcDirectShowCB(OutputBuffer[i]);
+        pCallBack[i] = new svlVidCapSrcDirectShowCB(OutputBuffer[i], CapTopDown[i]);
         if (pSampleGrabber[i]->SetCallback(pCallBack[i], 1) != S_OK) goto labError;
 
         // Add DirectShow video renderer if requested
@@ -584,6 +596,7 @@ void svlVidCapSrcDirectShow::DisassembleGraph()
 
         CapWidth[i] = -1;
         CapHeight[i] = -1;
+        CapTopDown[i] = true;
 
         if (pGraph != 0) {
             if (pSampleGrabFilter[i] != 0) pGraph->RemoveFilter(pSampleGrabFilter[i]);
@@ -1165,9 +1178,10 @@ int svlVidCapSrcDirectShow::GetHeight(unsigned int videoch)
 /*** svlVidCapSrcDirectShowCB class ****/
 /***************************************/
 
-svlVidCapSrcDirectShowCB::svlVidCapSrcDirectShowCB(svlBufferImage *buffer)
+svlVidCapSrcDirectShowCB::svlVidCapSrcDirectShowCB(svlBufferImage *buffer, bool topdown) :
+    Buffer(buffer),
+    TopDown(topdown)
 {
-    Buffer = buffer;
 }
 
 STDMETHODIMP svlVidCapSrcDirectShowCB::SampleCB(double SampleTime, IMediaSample *pSample)
@@ -1177,7 +1191,7 @@ STDMETHODIMP svlVidCapSrcDirectShowCB::SampleCB(double SampleTime, IMediaSample 
 
 STDMETHODIMP svlVidCapSrcDirectShowCB::BufferCB(double sampletime, unsigned char *buffer, long buffersize)
 {
-    if (Buffer) Buffer->Push(buffer, buffersize, true);
+    if (Buffer) Buffer->Push(buffer, buffersize, TopDown);
     return S_OK;
 }
 

@@ -591,6 +591,7 @@ int svlVidCapSrcV4L2::GetFormatList(unsigned int CMN_UNUSED(deviceid), svlFilter
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
     formatlist[0][0].framerate = 30.0;
+    formatlist[0][0].custom_mode = -1;
 
     return 1;
 }
@@ -605,6 +606,7 @@ int svlVidCapSrcV4L2::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format
     format.rgb_order = true;
     format.yuyv_order = false;
     format.framerate = 30.0;
+    format.custom_mode = -1;
 
     return SVL_OK;
 }

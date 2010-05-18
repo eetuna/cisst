@@ -305,6 +305,7 @@ int svlVidCapSrcSVS::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCa
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
     formatlist[0][0].framerate = 25.0;
+    formatlist[0][0].custom_mode = -1;
 
     return 1;
 }
@@ -319,6 +320,7 @@ int svlVidCapSrcSVS::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format,
     format.rgb_order = true;
     format.yuyv_order = false;
     format.framerate = 25.0;
+    format.custom_mode = -1;
 
     return SVL_OK;
 }

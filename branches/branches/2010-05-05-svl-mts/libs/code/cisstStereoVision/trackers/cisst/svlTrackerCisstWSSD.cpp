@@ -22,6 +22,9 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include "svlTrackerCisstWSSD.h"
+
+// Temporary fix for ambiguous 'real' type declaration in cisstNetlib
+#define real _real
 #include <cisstNumerical/nmrLSqLin.h>
 
 #ifdef _MSC_VER
@@ -218,7 +221,7 @@ void svlTrackerCisstWSSD::pushTemplate_opencv(ImageType &src, IndexType r, Index
 
 //Copy a choosen template to an image (uses opencv)
 void svlTrackerCisstWSSD::getTemplate_opencv(IndexType index, ImageType &dst) {
-	if( index<0 && index >= getNumberOfTemplates() ) {
+	if( index >= getNumberOfTemplates() ) {
 		cmnThrow(std::runtime_error("svlTrackerCisstWSSD getTemplate_opencv function - incorrect index number"));
 	}
 	copyImage_opencv(*allTemplates[index],dst);

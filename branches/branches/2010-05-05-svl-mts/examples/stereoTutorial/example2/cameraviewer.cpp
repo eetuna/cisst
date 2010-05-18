@@ -369,7 +369,7 @@ int main(int argc, char** argv)
     interpolation = false;
     width = -1;
     height = -1;
-    save = true;
+    save = false;
 
     for (i = 1; i <= options; i ++) {
         if (argv[i][0] != '-') continue;

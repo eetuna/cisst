@@ -258,7 +258,7 @@ void svlTrackerCisstNCC::pushTemplate_opencv(ImageType &src, IndexType r, IndexT
 
 //Copy a choosen template to an image (uses opencv)
 void svlTrackerCisstNCC::getTemplate_opencv(IndexType index, ImageType &dst) {
-	if( index<0 && index >= getNumberOfTemplates() ) {
+	if( index >= getNumberOfTemplates() ) {
 		cmnThrow(std::runtime_error("svlTrackerCisstNCC getTemplate_opencv - index invalid"));
 	}
 	copyImage_opencv(*allTemplates[index],dst);
@@ -278,16 +278,16 @@ void svlTrackerCisstNCC::checkRectangleBoundries_opencv(ImageType & src, PointTy
 	} else if (position.X() > 1.0*srcsize.width) { 
 		position.X() = 0;
 	}
-	if(position.Y() < 0)
-		position.Y() = 0;
-	if(position.X() < 0)
-		position.X() = 0;
+//	if(position.Y() < 0)
+//		position.Y() = 0;
+//	if(position.X() < 0)
+//		position.X() = 0;
 }
 //Update the current window position (uses opencv)
 void svlTrackerCisstNCC::updateTrack_opencv(ImageType  & src) {
 	RealType  currentMax = -2; //Note a threoretical minimum of -1 for NCC
 	RealType  nextMax;
-	PointType currentLoc;
+	PointType currentLoc(0, 0);
 	PointType nextLoc;
 	//Make a copy of the input data with ROI selection
 	checkRectangleBoundries_opencv(src,windowSize,windowPosition);

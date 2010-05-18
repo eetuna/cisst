@@ -28,7 +28,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon.h>
 #include <cisstConfig.h>
-#include <cisstNumerical.h>
 
 #include "vctExtraTemplateFunctions.h"
 #include <vector>
