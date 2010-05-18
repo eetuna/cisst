@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 //    source.SetFilePath("test.mpg");
 //    source.SetLoop(false);
 
-    centerfinder.SetCropperFilter(&cropper);
+    centerfinder.SetReceivingFilter(&cropper);
     centerfinder.SetMask(false);
     centerfinder.SetThreshold(15);
     cropper.SetRectangle(0, 0, 400, 400);
