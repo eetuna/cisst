@@ -21,16 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#ifdef _WIN32
-#include <conio.h>
-#endif // _WIN32
-
-#include <iostream>
-#include <string>
-#include <cisstCommon.h>
-#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
-
+#include <cisstCommon/cmnGetChar.h>
 
 using namespace std;
 
@@ -44,59 +36,57 @@ int VideoPlayer(std::string pathname)
     svlInitialize();
 
     // instantiating SVL stream and filters
-    svlStreamManager filt_stream(1);
-    svlFilterSourceVideoFile filt_source(1);
-    svlFilterImageWindow filt_window;
-    svlFilterImageOverlay filt_overlay;
+    svlStreamManager stream(1);
+    svlFilterSourceVideoFile source(1);
+    svlFilterImageOverlay overlay;
+    svlFilterImageWindow window;
 
     // setup overlay
-    svlOverlayFramerate ovrl_fps(0, true, &filt_overlay, svlRect(4, 4, 47, 20),
+    svlOverlayFramerate ovrl_fps(0, true, &overlay, svlRect(4, 4, 47, 20),
                                  14.0, svlRGB(255, 200, 200), svlRGB(32, 32, 32));
-    filt_overlay.AddOverlay(ovrl_fps);
+    overlay.AddOverlay(ovrl_fps);
 
     // setup source
     if (pathname.empty()) {
-        filt_source.DialogFilePath();
+        source.DialogFilePath();
     }
     else {
-        if (filt_source.SetFilePath(pathname) != SVL_OK) {
+        if (source.SetFilePath(pathname) != SVL_OK) {
             cerr << endl << "Wrong file name... " << endl;
             goto labError;
         }
     }
 
     // setup image window
-    filt_window.SetTitleText("Video Player");
-    filt_window.EnableTimestampInTitle();
+    window.SetTitleText("Video Player");
+    window.EnableTimestampInTitle(false);
 
     // chain filters to pipeline
-    filt_stream.SetSourceFilter(&filt_source);
-    filt_source.GetOutput()->Connect(filt_overlay.GetInput());
-    filt_overlay.GetOutput()->Connect(filt_window.GetInput());
+    stream.SetSourceFilter(&source);
+    source.GetOutput()->Connect(overlay.GetInput());
+    overlay.GetOutput()->Connect(window.GetInput());
 
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (filt_stream.Start() != SVL_OK) goto labError;
+    if (stream.Start() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 
     // wait for keyboard input in command window
     int ch;
-
     do {
         cerr << endl << "Keyboard commands:" << endl << endl;
         cerr << "  In command window:" << endl;
         cerr << "    'q'   - Quit" << endl << endl;
 
         ch = cmnGetChar();
-        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
 
     cerr << endl;
 
     // stop stream
-    filt_stream.Stop();
+    stream.Stop();
 
 labError:
     return 0;

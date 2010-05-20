@@ -53,26 +53,8 @@ private:
     double HeightRatio[2];
     unsigned int Width[2];
     unsigned int Height[2];
-    unsigned char *TempBuffer[2];
     bool InterpolationEnabled;
-
-    int ResampleMono8(unsigned char* src, const unsigned int srcwidth, const unsigned int srcheight,
-                      unsigned char* dst, const unsigned int dstwidth, const unsigned int dstheight);
-    int ResampleAndInterpolateHMono8(unsigned char* src, const unsigned int srcwidth,
-                                     unsigned char* dst, const unsigned int dstwidth,
-                                     const unsigned int height);
-    int ResampleAndInterpolateVMono8(unsigned char* src, const unsigned int srcheight,
-                                     unsigned char* dst, const unsigned int dstheight,
-                                     const unsigned int width);
-
-    int ResampleRGB24(unsigned char* src, const unsigned int srcwidth, const unsigned int srcheight,
-                      unsigned char* dst, const unsigned int dstwidth, const unsigned int dstheight);
-    int ResampleAndInterpolateHRGB24(unsigned char* src, const unsigned int srcwidth,
-                                     unsigned char* dst, const unsigned int dstwidth,
-                                     const unsigned int height);
-    int ResampleAndInterpolateVRGB24(unsigned char* src, const unsigned int srcheight,
-                                     unsigned char* dst, const unsigned int dstheight,
-                                     const unsigned int width);
+    vctDynamicVector<unsigned char> Internals[2];
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterImageResizer)

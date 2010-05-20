@@ -21,15 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#ifdef _WIN32
-#include <conio.h>
-#endif // _WIN32
-
-#include <iostream>
-#include <string>
-#include <cisstCommon.h>
-#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
+#include <cisstCommon/cmnGetChar.h>
 
 using namespace std;
 
@@ -162,99 +155,99 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     svlInitialize();
 
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(8);
-    svlFilterSourceVideoCapture viewer_source(2);
-    svlFilterSplitter viewer_splitter;
-    svlFilterImageTranslation viewer_shifter;
-    svlFilterImageResizer viewer_resizer;
-    svlFilterImageWindow viewer_window;
-    svlFilterImageOverlay viewer_overlay;
-    svlFilterStereoImageJoiner viewer_joiner;
-    CViewerWindowCallback viewer_window_cb;
-    svlFilterImageFileWriter viewer_imagewriter;
-    svlFilterVideoFileWriter viewer_videowriter;
+    svlStreamManager stream(8);
+    svlFilterSourceVideoCapture source(2);
+    svlFilterSplitter splitter;
+    svlFilterImageTranslation shifter;
+    svlFilterImageResizer resizer;
+    svlFilterImageWindow window;
+    svlFilterImageOverlay overlay;
+    svlFilterStereoImageJoiner joiner;
+    CViewerWindowCallback window_cb;
+    svlFilterImageFileWriter imagewriter;
+    svlFilterVideoFileWriter videowriter;
 
     // Add framerate overlay
     svlOverlayFramerate fps_overlay(SVL_LEFT,              // background video channel
                                     true,                  // visible
-                                    &viewer_window,        // filter
+                                    &window,        // filter
                                     svlRect(4, 4, 47, 20), // bounding rectangle
                                     14.0,                  // font size
                                     svlRGB(255, 255, 255), // text color
                                     svlRGB(0, 0, 0));      // background color
-    viewer_overlay.AddOverlay(fps_overlay);
+    overlay.AddOverlay(fps_overlay);
 
     // setup source
     // Delete "device.dat" to reinitialize input device
-    if (viewer_source.LoadSettings("stereodevice.dat") != SVL_OK) {
+    if (source.LoadSettings("stereodevice.dat") != SVL_OK) {
         cout << endl;
-        viewer_source.DialogSetup(SVL_LEFT);
-        viewer_source.DialogSetup(SVL_RIGHT);
+        source.DialogSetup(SVL_LEFT);
+        source.DialogSetup(SVL_RIGHT);
     }
 
     // setup splitter
-    viewer_splitter.AddOutput("output2", 8, 200);
-    svlFilterOutput* splitteroutput = viewer_splitter.GetOutput("output2");
+    splitter.AddOutput("output2", 8, 200);
+    svlFilterOutput* splitteroutput = splitter.GetOutput("output2");
 
     // setup video writer
     if (save == true) {
-        viewer_videowriter.DialogFilePath(SVL_LEFT);
-        viewer_videowriter.DialogCodec(SVL_LEFT);
-        viewer_videowriter.DialogFilePath(SVL_RIGHT);
-        viewer_videowriter.DialogCodec(SVL_RIGHT);
-        viewer_videowriter.Pause();
+        videowriter.DialogFilePath(SVL_LEFT);
+        videowriter.DialogCodec(SVL_LEFT);
+        videowriter.DialogFilePath(SVL_RIGHT);
+        videowriter.DialogCodec(SVL_RIGHT);
+        videowriter.Pause();
     }
 
     // setup image writer
-    viewer_imagewriter.SetFilePath("left_", "bmp", SVL_LEFT);
-    viewer_imagewriter.SetFilePath("right_", "bmp", SVL_RIGHT);
-    viewer_imagewriter.EnableTimestamps();
-    viewer_imagewriter.Pause();
+    imagewriter.SetFilePath("left_", "bmp", SVL_LEFT);
+    imagewriter.SetFilePath("right_", "bmp", SVL_RIGHT);
+    imagewriter.EnableTimestamps();
+    imagewriter.Pause();
 
     // setup resizer
     if (width > 0 && height > 0) {
-        viewer_resizer.SetInterpolation(interpolation);
+        resizer.SetInterpolation(interpolation);
 		if (fullscreen == 0) {
-		    viewer_resizer.SetOutputSize(width, height / 2, SVL_LEFT);
-			viewer_resizer.SetOutputSize(width, height / 2, SVL_RIGHT);
+		    resizer.SetOutputSize(width, height / 2, SVL_LEFT);
+			resizer.SetOutputSize(width, height / 2, SVL_RIGHT);
 		}
 		else if (fullscreen == 1) {
-		    viewer_resizer.SetOutputSize(width / 2, height, SVL_LEFT);
-			viewer_resizer.SetOutputSize(width / 2, height, SVL_RIGHT);
+		    resizer.SetOutputSize(width / 2, height, SVL_LEFT);
+			resizer.SetOutputSize(width / 2, height, SVL_RIGHT);
 		}
 		else if (fullscreen == 2) {
-		    viewer_resizer.SetOutputSize(width, height / 2, SVL_LEFT);
-			viewer_resizer.SetOutputSize(width, height / 2, SVL_RIGHT);
-			viewer_joiner.SetLayout(svlLayoutInterlaced);
+		    resizer.SetOutputSize(width, height / 2, SVL_LEFT);
+			resizer.SetOutputSize(width, height / 2, SVL_RIGHT);
+			joiner.SetLayout(svlLayoutInterlaced);
 		}
 		else {
-		    viewer_resizer.SetOutputSize(width, height, SVL_LEFT);
-			viewer_resizer.SetOutputSize(width, height, SVL_RIGHT);
+		    resizer.SetOutputSize(width, height, SVL_LEFT);
+			resizer.SetOutputSize(width, height, SVL_RIGHT);
 		}
     }
 
     // setup image window
-    viewer_window_cb.ImageWriterFilter = &viewer_imagewriter;
-	viewer_window_cb.ImageShifter = &viewer_shifter;
+    window_cb.ImageWriterFilter = &imagewriter;
+	window_cb.ImageShifter = &shifter;
     if (save == true) {
-        viewer_window_cb.VideoWriterFilter = &viewer_videowriter;
-        viewer_window_cb.SplitterOutput = splitteroutput;
+        window_cb.VideoWriterFilter = &videowriter;
+        window_cb.SplitterOutput = splitteroutput;
     }
-    viewer_window.SetCallback(&viewer_window_cb);
-    viewer_window.SetTitleText("Camera Viewer");
-    viewer_window.EnableTimestampInTitle();
+    window.SetCallback(&window_cb);
+    window.SetTitleText("Camera Viewer");
+    window.EnableTimestampInTitle();
 	if (fullscreen >= 0) {
-		viewer_window.SetFullScreen();
+		window.SetFullScreen();
 		if (fullscreen == 0) {
-			viewer_window.SetWindowPosition(offsetx, 0, SVL_LEFT);
-			viewer_window.SetWindowPosition(offsetx, height / 2, SVL_RIGHT);
+			window.SetWindowPosition(offsetx, 0, SVL_LEFT);
+			window.SetWindowPosition(offsetx, height / 2, SVL_RIGHT);
 		}
 		else if (fullscreen == 1) {
-			viewer_window.SetWindowPosition(offsetx, 0, SVL_LEFT);
-			viewer_window.SetWindowPosition(offsetx + width / 2, 0, SVL_RIGHT);
+			window.SetWindowPosition(offsetx, 0, SVL_LEFT);
+			window.SetWindowPosition(offsetx + width / 2, 0, SVL_RIGHT);
 		}
 		else if (fullscreen == 2) {
-			viewer_window.SetWindowPosition(offsetx, 0);
+			window.SetWindowPosition(offsetx, 0);
 		}
 	}
 
@@ -262,53 +255,53 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     svlFilterOutput *output;
 
     // Add source
-    viewer_stream.SetSourceFilter(&viewer_source);
-        output = viewer_source.GetOutput();
+    stream.SetSourceFilter(&source);
+        output = source.GetOutput();
 
     // Add splitter
-    output->Connect(viewer_splitter.GetInput());
-        output = viewer_splitter.GetOutput();
+    output->Connect(splitter.GetInput());
+        output = splitter.GetOutput();
 
     // Add shifter if fullscreen
 	if (fullscreen >= 0) {
-        output->Connect(viewer_shifter.GetInput());
-            output = viewer_shifter.GetOutput();
+        output->Connect(shifter.GetInput());
+            output = shifter.GetOutput();
 	}
 
     // Add resizer if required
     if (width > 0 && height > 0) {
-        output->Connect(viewer_resizer.GetInput());
-            output = viewer_resizer.GetOutput();
+        output->Connect(resizer.GetInput());
+            output = resizer.GetOutput();
     }
 
     // Add joiner if stereo mode = interlaced
 	if (fullscreen == 2) {
-        output->Connect(viewer_joiner.GetInput());
-            output = viewer_joiner.GetOutput();
+        output->Connect(joiner.GetInput());
+            output = joiner.GetOutput();
 	}
 
     // Add image file writer
-    output->Connect(viewer_imagewriter.GetInput());
-        output = viewer_imagewriter.GetOutput();
+    output->Connect(imagewriter.GetInput());
+        output = imagewriter.GetOutput();
 
     // Add overlay
-    output->Connect(viewer_overlay.GetInput());
-        output = viewer_overlay.GetOutput();
+    output->Connect(overlay.GetInput());
+        output = overlay.GetOutput();
 
     // Add window
-    output->Connect(viewer_window.GetInput());
-        output = viewer_window.GetOutput();
+    output->Connect(window.GetInput());
+        output = window.GetOutput();
 
     // If saving enabled, then add video writer on separate branch
     if (save == true) {
         splitteroutput->SetBlock(true);
-        splitteroutput->Connect(viewer_videowriter.GetInput());
+        splitteroutput->Connect(videowriter.GetInput());
     }
 
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (viewer_stream.Start() != SVL_OK) goto labError;
+    if (stream.Start() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 
@@ -333,29 +326,28 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
         switch (ch) {
             case '1':
                 cerr << endl << endl;
-                viewer_source.DialogImageProperties(SVL_LEFT);
+                source.DialogImageProperties(SVL_LEFT);
                 cerr << endl;
             break;
 
             case '2':
                 cerr << endl << endl;
-                viewer_source.DialogImageProperties(SVL_RIGHT);
+                source.DialogImageProperties(SVL_RIGHT);
                 cerr << endl;
             break;
 
             default:
             break;
         }
-        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
 
     cerr << endl;
 
     // stop stream
-    viewer_stream.Stop();
+    stream.Stop();
 
     // save settings
-    viewer_source.SaveSettings("stereodevice.dat");
+    source.SaveSettings("stereodevice.dat");
 
 labError:
     return 0;

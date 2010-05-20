@@ -41,10 +41,13 @@ SET(SOURCE_FILES
     svlImageIO.cpp
     svlVideoIO.cpp
     svlCameraGeometry.cpp
-    svlConverters.cpp
     svlBufferMemory.cpp
     svlBufferSample.cpp
     svlBufferImage.cpp
+    svlConverters.cpp
+    svlImageProcessingHelper.h     # private header
+    svlImageProcessingHelper.cpp
+    svlImageProcessing.cpp
     svlDraw.cpp
     svlOverlayObjects.cpp
 
@@ -82,8 +85,6 @@ SET(SOURCE_FILES
     svlImageCodecBMP.cpp
     svlImageCodecPPM.h             # private header
     svlImageCodecPPM.cpp
-    ipDeinterlacing.h              # private header
-    ipDeinterlacing.cpp
     svlStereoDP.h                  # private header 
     svlStereoDP.cpp
     svlStereoDPMono.h              # private header
@@ -112,10 +113,11 @@ SET(HEADER_FILES
     svlImageIO.h
     svlVideoIO.h
     svlCameraGeometry.h
-    svlConverters.h
     svlBufferMemory.h
     svlBufferSample.h
     svlBufferImage.h
+    svlConverters.h
+    svlImageProcessing.h
     svlDraw.h
     svlOverlayObjects.h
 

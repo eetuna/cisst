@@ -20,8 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include <cisstCommon/cmnGetChar.h>
 #include <cisstStereoVision.h>
+#include <cisstCommon/cmnGetChar.h>
 
 
 ///////////////////////////////
@@ -125,8 +125,8 @@ int main(int argc, char** argv)
     svlFilterVideoFileWriter writer;
 
     // setup source
-    source.DialogFilePath();
-//    source.SetFilePath("test.mpg");
+//    source.DialogFilePath();
+    source.SetFilePath("crop2.avi");
 //    source.SetLoop(false);
 
     centerfinder.SetReceivingFilter(&cropper);

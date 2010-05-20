@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlFilterImageDeinterlacer_h
 
 #include <cisstStereoVision/svlFilterBase.h>
+#include <cisstStereoVision/svlImageProcessing.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
@@ -33,27 +34,18 @@ class CISST_EXPORT svlFilterImageDeinterlacer : public svlFilterBase, public cmn
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-    enum Method
-    {
-        MethodBlending,
-        MethodDiscarding,
-        MethodAdaptiveBlending,
-        MethodAdaptiveDiscarding,
-        MethodNone
-    };
-
 public:
     svlFilterImageDeinterlacer();
 
-    void SetMethod(Method method);
-    Method GetMethod();
+    void SetAlgorithm(svlImageProcessing::DI_Algorithm algorithm);
+    svlImageProcessing::DI_Algorithm GetAlgorithm();
 
 protected:
     virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
     virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
 
 private:
-    Method MethodToUse;
+    svlImageProcessing::DI_Algorithm Algorithm;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterImageDeinterlacer)

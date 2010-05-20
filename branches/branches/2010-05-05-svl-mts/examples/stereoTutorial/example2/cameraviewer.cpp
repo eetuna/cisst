@@ -21,11 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#include <iostream>
-#include <string>
-#include <cisstCommon.h>
-#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
+#include <cisstCommon/cmnGetChar.h>
 
 using namespace std;
 
@@ -179,55 +176,55 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
     svlInitialize();
 
     // instantiating SVL stream and filters
-    svlStreamManager viewer_stream(1);
-    svlFilterSourceVideoCapture viewer_source(1);
-    svlFilterSplitter viewer_splitter;
-    svlFilterImageResizer viewer_resizer;
-    svlFilterImageWindow viewer_window;
-    svlFilterImageOverlay viewer_overlay;
-    CViewerWindowCallback viewer_window_cb;
-    svlFilterVideoFileWriter viewer_videowriter;
-    svlFilterImageFileWriter viewer_imagewriter;
-    svlFilterImageWindow viewer_window2;
+    svlStreamManager stream(1);
+    svlFilterSourceVideoCapture source(1);
+    svlFilterSplitter splitter;
+    svlFilterImageResizer resizer;
+    svlFilterImageWindow window;
+    svlFilterImageOverlay overlay;
+    CViewerWindowCallback window_cb;
+    svlFilterVideoFileWriter videowriter;
+    svlFilterImageFileWriter imagewriter;
+    svlFilterImageWindow window2;
 
     // setup source
     // Delete "device.dat" to reinitialize input device
-    if (viewer_source.LoadSettings("device.dat") != SVL_OK) {
+    if (source.LoadSettings("device.dat") != SVL_OK) {
         cout << endl;
-        viewer_source.DialogSetup();
+        source.DialogSetup();
     }
 
     // setup splitter
-    viewer_splitter.AddOutput("output2", 8);
-    svlFilterOutput* output = viewer_splitter.GetOutput("output2");
+    splitter.AddOutput("output2", 8);
+    svlFilterOutput* output = splitter.GetOutput("output2");
 
     // setup writer
     if (save == true) {
-        viewer_videowriter.DialogFilePath();
-        viewer_videowriter.DialogCodec();
-        viewer_videowriter.Pause();
+        videowriter.DialogFilePath();
+        videowriter.DialogCodec();
+        videowriter.Pause();
     }
 
     // setup image writer
-    viewer_imagewriter.SetFilePath("image_", "bmp");
-    viewer_imagewriter.EnableTimestamps();
-    viewer_imagewriter.Pause();
+    imagewriter.SetFilePath("image_", "bmp");
+    imagewriter.EnableTimestamps();
+    imagewriter.Pause();
 
     // setup resizer
     if (width > 0 && height > 0) {
-        viewer_resizer.SetInterpolation(interpolation);
-        viewer_resizer.SetOutputSize(width, height);
+        resizer.SetInterpolation(interpolation);
+        resizer.SetOutputSize(width, height);
     }
 
     // setup image window
     if (save == true) {
-        viewer_window_cb.RecorderFilter = &viewer_videowriter;
-        viewer_window_cb.SplitterOutput = output;
+        window_cb.RecorderFilter = &videowriter;
+        window_cb.SplitterOutput = output;
     }
-    viewer_window_cb.ImageWriterFilter = &viewer_imagewriter;
-    viewer_window.SetCallback(&viewer_window_cb);
-    viewer_window.SetTitleText("Camera Viewer");
-    viewer_window.EnableTimestampInTitle();
+    window_cb.ImageWriterFilter = &imagewriter;
+    window.SetCallback(&window_cb);
+    window.SetTitleText("Camera Viewer");
+    window.EnableTimestampInTitle();
 
 
     // Add buffer status overlay
@@ -238,43 +235,43 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
                                                    14.0,
                                                    svlRGB(255, 255, 255),
                                                    svlRGB(0, 128, 0));
-    viewer_overlay.AddOverlay(buffer_overlay);
+    overlay.AddOverlay(buffer_overlay);
 
     // Add framerate overlay
     svlOverlayFramerate fps_overlay(SVL_LEFT,
                                     true,
-                                    &viewer_window,
+                                    &window,
                                     svlRect(4, 24, 47, 40),
                                     14.0,
                                     svlRGB(255, 255, 255),
                                     svlRGB(128, 0, 0));
-    viewer_overlay.AddOverlay(fps_overlay);
+    overlay.AddOverlay(fps_overlay);
 
 
     // chain filters to pipeline
-    viewer_stream.SetSourceFilter(&viewer_source);
-    viewer_source.GetOutput()->Connect(viewer_imagewriter.GetInput());
+    stream.SetSourceFilter(&source);
+    source.GetOutput()->Connect(imagewriter.GetInput());
     if (width > 0 && height > 0) {
-        viewer_imagewriter.GetOutput()->Connect(viewer_resizer.GetInput());
-        viewer_resizer.GetOutput()->Connect(viewer_splitter.GetInput());
+        imagewriter.GetOutput()->Connect(resizer.GetInput());
+        resizer.GetOutput()->Connect(splitter.GetInput());
     }
     else {
-        viewer_imagewriter.GetOutput()->Connect(viewer_splitter.GetInput());
+        imagewriter.GetOutput()->Connect(splitter.GetInput());
     }
-    viewer_splitter.GetOutput()->Connect(viewer_overlay.GetInput());
-    viewer_overlay.GetOutput()->Connect(viewer_window.GetInput());
+    splitter.GetOutput()->Connect(overlay.GetInput());
+    overlay.GetOutput()->Connect(window.GetInput());
 
     if (save == true) {
         // put the recorder on a branch in order to enable buffering
         output->SetBlock(true);
-//        output->Connect(viewer_window2.GetInput());
-        output->Connect(viewer_videowriter.GetInput());
+//        output->Connect(window2.GetInput());
+        output->Connect(videowriter.GetInput());
     }
 
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (viewer_stream.Start() != SVL_OK) goto labError;
+    if (stream.Start() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 
@@ -298,23 +295,22 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
             case 'i':
                 // Adjust image properties
                 cerr << endl << endl;
-                viewer_source.DialogImageProperties();
+                source.DialogImageProperties();
                 cerr << endl;
             break;
 
             default:
             break;
         }
-        osaSleep(1.0 * cmn_ms);
     } while (ch != 'q');
 
     cerr << endl;
 
     // stop stream
-    viewer_stream.Stop();
+    stream.Stop();
 
     // save settings
-    viewer_source.SaveSettings("device.dat");
+    source.SaveSettings("device.dat");
 
 labError:
     return 0;

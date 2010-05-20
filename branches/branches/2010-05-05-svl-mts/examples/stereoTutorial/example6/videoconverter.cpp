@@ -21,14 +21,6 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#ifdef _WIN32
-#include <conio.h>
-#endif // _WIN32
-
-#include <iostream>
-#include <string>
-#include <cisstCommon.h>
-#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
 
 using namespace std;
@@ -38,73 +30,73 @@ using namespace std;
 //  Video Converter  //
 ///////////////////////
 
-int VideoConverter(std::string &source, std::string &destination, bool loadcodec)
+int VideoConverter(std::string &src_path, std::string &dst_path, bool loadcodec)
 {
     svlInitialize();
 
-    svlStreamManager converter_stream(8);
-    svlFilterSourceVideoFile converter_source(1);
-    svlFilterVideoFileWriter converter_writer;
+    svlStreamManager stream(8);
+    svlFilterSourceVideoFile source(1);
+    svlFilterVideoFileWriter writer;
 
-    if (source.empty()) {
-        if (converter_source.DialogFilePath() != SVL_OK) {
+    if (src_path.empty()) {
+        if (source.DialogFilePath() != SVL_OK) {
             cerr << " -!- No source file has been selected." << endl;
             return -1;
         }
-        converter_source.GetFilePath(source);
+        source.GetFilePath(src_path);
     }
     else {
-        converter_source.SetFilePath(source);
+        source.SetFilePath(src_path);
     }
 
-//    converter_source.SetTargetFrequency(1000.0); // as fast as possible
-    converter_source.SetLoop(true);
+//    source.SetTargetFrequency(1000.0); // as fast as possible
+    source.SetLoop(true);
 
-    if (destination.empty()) {
-        if (converter_writer.DialogFilePath() != SVL_OK) {
+    if (dst_path.empty()) {
+        if (writer.DialogFilePath() != SVL_OK) {
             cerr << " -!- No destination file has been selected." << endl;
             return -1;
         }
-        converter_writer.GetFilePath(destination);
+        writer.GetFilePath(dst_path);
     }
     else {
-        converter_writer.SetFilePath(destination);
+        writer.SetFilePath(dst_path);
     }
 
     if (loadcodec) {
-        if (converter_writer.LoadCodec("codec.dat") != SVL_OK) {
-            if (converter_writer.DialogCodec() != SVL_OK) {
+        if (writer.LoadCodec("codec.dat") != SVL_OK) {
+            if (writer.DialogCodec() != SVL_OK) {
                 cerr << " -!- Unable to set up compression." << endl;
                 return -1;
             }
-            converter_writer.SaveCodec("codec.dat");
+            writer.SaveCodec("codec.dat");
         }
     }
     else {
-        if (converter_writer.DialogCodec() != SVL_OK) {
+        if (writer.DialogCodec() != SVL_OK) {
             cerr << " -!- Unable to set up compression." << endl;
             return -1;
         }
     }
 
     std::string encoder;
-    converter_writer.GetCodecName(encoder);
+    writer.GetCodecName(encoder);
 
     // chain filters to pipeline
-    converter_stream.SetSourceFilter(&converter_source);
-    converter_source.GetOutput()->Connect(converter_writer.GetInput());
+    stream.SetSourceFilter(&source);
+    source.GetOutput()->Connect(writer.GetInput());
 
-    cerr << "Converting: '" << source << "' to '" << destination <<"' using codec: '" << encoder << "'" << endl;
+    cerr << "Converting: '" << src_path << "' to '" << dst_path <<"' using codec: '" << encoder << "'" << endl;
 
     // initialize and start stream
-    if (converter_stream.Start() != SVL_OK) goto labError;
+    if (stream.Start() != SVL_OK) goto labError;
 
     do {
-        cerr << " > Frames processed: " << converter_source.GetFrameCounter() << "     \r";
-    } while (converter_stream.IsRunning() && converter_stream.WaitForStop(0.5) == SVL_WAIT_TIMEOUT);
-    cerr << " > Frames processed: " << converter_source.GetFrameCounter() << "           " << endl;
+        cerr << " > Frames processed: " << source.GetFrameCounter() << "     \r";
+    } while (stream.IsRunning() && stream.WaitForStop(0.5) == SVL_WAIT_TIMEOUT);
+    cerr << " > Frames processed: " << source.GetFrameCounter() << "           " << endl;
 
-    if (converter_stream.GetStreamStatus() < 0) {
+    if (stream.GetStreamStatus() < 0) {
         // Some error
         cerr << " -!- Error occured during conversion." << endl;
     }
@@ -114,7 +106,7 @@ int VideoConverter(std::string &source, std::string &destination, bool loadcodec
     }
 
     // release pipeline
-    converter_stream.Release();
+    stream.Release();
 
 labError:
     return 0;

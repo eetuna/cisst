@@ -19,7 +19,6 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <iostream>
 #include <cisstStereoVision.h>
 #include <cisstCommon/cmnGetChar.h>
 

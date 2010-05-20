@@ -21,7 +21,6 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterImageDeinterlacer.h>
-#include "ipDeinterlacing.h"
 
 
 /******************************************/
@@ -41,7 +40,7 @@ svlFilterImageDeinterlacer::svlFilterImageDeinterlacer() :
     AddOutput("output", true);
     SetAutomaticOutputType(true);
 
-    MethodToUse = MethodNone;
+    Algorithm = svlImageProcessing::DI_Blending;
 }
 
 int svlFilterImageDeinterlacer::Initialize(svlSample* syncInput, svlSample* &syncOutput)
@@ -61,44 +60,19 @@ int svlFilterImageDeinterlacer::Process(svlProcInfo* procInfo, svlSample* syncIn
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
-        // Processing the input image directly
-        switch (MethodToUse) {
-            case MethodNone:
-                // NOP
-            break;
-
-            case MethodBlending:
-                Blending(img->GetUCharPointer(idx),
-                         static_cast<int>(img->GetWidth(idx)), static_cast<int>(img->GetHeight(idx)));
-            break;
-
-            case MethodDiscarding:
-                Discarding(img->GetUCharPointer(idx),
-                           static_cast<int>(img->GetWidth(idx)), static_cast<int>(img->GetHeight(idx)));
-            break;
-
-            case MethodAdaptiveBlending:
-                AdaptiveBlending(img->GetUCharPointer(idx),
-                                 static_cast<int>(img->GetWidth(idx)), static_cast<int>(img->GetHeight(idx)));
-            break;
-
-            case MethodAdaptiveDiscarding:
-                AdaptiveDiscarding(img->GetUCharPointer(idx),
-                                   static_cast<int>(img->GetWidth(idx)), static_cast<int>(img->GetHeight(idx)));
-            break;
-        }
+        svlImageProcessing::Deinterlace(img, idx, Algorithm);
     }
 
     return SVL_OK;
 }
 
-void svlFilterImageDeinterlacer::SetMethod(svlFilterImageDeinterlacer::Method method)
+void svlFilterImageDeinterlacer::SetAlgorithm(svlImageProcessing::DI_Algorithm algorithm)
 {
-    MethodToUse = method;
+    Algorithm = algorithm;
 }
 
-svlFilterImageDeinterlacer::Method svlFilterImageDeinterlacer::GetMethod()
+svlImageProcessing::DI_Algorithm svlFilterImageDeinterlacer::GetAlgorithm()
 {
-    return MethodToUse;
+    return Algorithm;
 }
 

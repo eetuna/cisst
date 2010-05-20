@@ -39,17 +39,8 @@ In IEEE Computer Society Conference on Computer Vision and Pattern Recognition (
 */
 
 
-#ifdef _WIN32
-#include <conio.h>
-#endif
-
-#include <iostream>
-
-#include <string>
-#include <cisstCommon.h>
-#include <cisstOSAbstraction.h>
 #include <cisstStereoVision.h>
-
+#include <cisstCommon/cmnGetChar.h>
 
 using namespace std;
 
@@ -75,21 +66,20 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
 // instantiating SVL streams and filters
 
     // 3D reconstruction
-    svlStreamManager stereo_stream(2);
-    svlFilterSourceImageFile stereo_source(2);
-    svlFilterComputationalStereo stereo_stereo;
-    svlFilterDisparityMapToSurface stereo_3d;
-    svlFilterStreamTypeConverter stereo_converter(svlTypeImageMonoFloat, svlTypeImageRGB);
-    svlFilterImageWindow stereo_window;
+    svlStreamManager stream(2);
+    svlFilterSourceImageFile source(2);
+    svlFilterComputationalStereo stereo;
+    svlFilterStreamTypeConverter converter(svlTypeImageMonoFloat, svlTypeImageRGB);
+    svlFilterImageWindow window;
 
 
 //////////////////////////////////////////////////////////////
 // creating stereo reconstruction pipeline
 
     // setup source
-    if (stereo_source.SetFilePath(filepath1, "bmp", SVL_LEFT) != SVL_OK) goto labError;
-    if (stereo_source.SetFilePath(filepath2, "bmp", SVL_RIGHT) != SVL_OK) goto labError;
-    stereo_source.SetTargetFrequency(10.0);
+    if (source.SetFilePath(filepath1, "bmp", SVL_LEFT) != SVL_OK) goto labError;
+    if (source.SetFilePath(filepath2, "bmp", SVL_RIGHT) != SVL_OK) goto labError;
+    source.SetTargetFrequency(10.0);
 
     filename = filepath1;
     filename += ".bmp";
@@ -110,29 +100,29 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     geometry.SetExtrinsics(0.0, 0.0, 0.0,
                            10.0, 0.0, 0.0, // baseline = 10.0 mm
                            SVL_RIGHT);
-    stereo_stereo.SetCameraGeometry(geometry);
+    stereo.SetCameraGeometry(geometry);
 
     roi.Assign(5, 5, srcwidth - maxdisparity, srcheight - 5);
-    stereo_stereo.SetROI(roi);
+    stereo.SetROI(roi);
 
-    stereo_stereo.SetCrossCheck(xcheck);
-    stereo_stereo.SetSubpixelPrecision(subpixel_precision);
-    stereo_stereo.SetDisparityRange(mindisparity, maxdisparity);
-    stereo_stereo.SetScalingFactor(0);
-    stereo_stereo.SetBlockSize(blocksize);
-    stereo_stereo.SetQuickSearchRadius(maxdisparity);
-    stereo_stereo.SetSmoothnessFactor(smoothness);
-    stereo_stereo.SetTemporalFiltering(0);
-    stereo_stereo.SetSpatialFiltering(0);
+    stereo.SetCrossCheck(xcheck);
+    stereo.SetSubpixelPrecision(subpixel_precision);
+    stereo.SetDisparityRange(mindisparity, maxdisparity);
+    stereo.SetScalingFactor(0);
+    stereo.SetBlockSize(blocksize);
+    stereo.SetQuickSearchRadius(maxdisparity);
+    stereo.SetSmoothnessFactor(smoothness);
+    stereo.SetTemporalFiltering(0);
+    stereo.SetSpatialFiltering(0);
 
     // setup converter
-    stereo_converter.SetScaling(255.0f / maxdisparity);
+    converter.SetScaling(255.0f / maxdisparity);
 
     // chain filters to pipeline
-    stereo_stream.SetSourceFilter(&stereo_source);
-    stereo_source.GetOutput()->Connect(stereo_stereo.GetInput());
-    stereo_stereo.GetOutput()->Connect(stereo_converter.GetInput());
-    stereo_converter.GetOutput()->Connect(stereo_window.GetInput());
+    stream.SetSourceFilter(&source);
+    source.GetOutput()->Connect(stereo.GetInput());
+    stereo.GetOutput()->Connect(converter.GetInput());
+    converter.GetOutput()->Connect(window.GetInput());
 
 
 //////////////////////////////////////////////////////////////
@@ -141,22 +131,18 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     cerr << "Done" << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (stereo_stream.Start() != SVL_OK) goto labError;
+    if (stream.Start() != SVL_OK) goto labError;
 
     cerr << "Done" << endl << endl << "Keyboard commands:" << endl << endl;
     cerr << "    'q' - Quit" << endl;
 
     int ch;
-
-    do {
-        ch = cmnGetChar();
-        osaSleep(1.0 * cmn_ms);
-    } while (ch != 'q');
+    do ch = cmnGetChar(); while (ch != 'q');
 
     cerr << endl;
 
     // stop stream
-    stereo_stream.Stop();
+    stream.Stop();
 
 labError:
     return 0;
