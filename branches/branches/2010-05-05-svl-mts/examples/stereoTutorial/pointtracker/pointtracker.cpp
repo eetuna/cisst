@@ -119,14 +119,15 @@ int main(int argc, char** argv)
     svlFilterImageCenterFinder centerfinder;
     svlFilterImageCropper cropper;
     svlFilterSplitter splitter;
+    svlFilterImageWindowTargetSelect selector;
     svlFilterImageTracker tracker;
     svlFilterImageOverlay overlay;
     svlFilterImageWindow window;
     svlFilterVideoFileWriter writer;
 
     // setup source
-//    source.DialogFilePath();
-    source.SetFilePath("crop2.avi");
+    source.DialogFilePath();
+//    source.SetFilePath("crop2.avi");
 //    source.SetLoop(false);
 
     centerfinder.SetReceivingFilter(&cropper);
@@ -141,9 +142,12 @@ int main(int argc, char** argv)
 //    tracker.SetFrameSkip(160);
     tracker.SetIterations(1);
     tracker.SetRigidBody(true);
-    tracker.SetRigidBodyConstraints(-0.2, 0.2, 0.9, 1.1);
+    tracker.SetRigidBodyConstraints(-0.4, 0.4, 0.8, 1.2);
     tracker.SetTracker(trackeralgo);
-    tracker.SetROI(svlRect(100, 100, 300, 300));
+//    tracker.SetROI(svlRect(100, 100, 300, 300));
+
+    // setup selector
+    selector.SetMaxTargets(10);
 
     const int radius = 20;
     const int distance = 16;
@@ -165,7 +169,7 @@ int main(int argc, char** argv)
             c ++;
         }
     }
-    tracker.GetInput("targets")->PushSample(&targets);
+//    tracker.GetInput("targets")->PushSample(&targets);
 
     // Setup overlay
     overlay.AddInputTargets("targets");
@@ -175,7 +179,7 @@ int main(int argc, char** argv)
                                       SVL_LEFT,  // overlay video channel
                                       true,      // confidence coloring
                                       false,     // draw crosshairs
-                                      3);        // target size
+                                      4);        // target size
     overlay.AddOverlay(targets_overlay);
 
     svlOverlayStaticPoly poly_overlay;
@@ -223,9 +227,11 @@ int main(int argc, char** argv)
     overlay.GetOutput()->Connect(window.GetInput());
 //    window.GetOutput()->Connect(writer.GetInput());
 
-    splitter.GetOutput("tracker")->Connect(tracker.GetInput());
-    tracker.GetOutput()->Connect(bgtracker.GetInput());
-    bgtracker.GetOutput()->Connect(overlay.GetInput("targets"));
+    splitter.GetOutput("tracker")->Connect(selector.GetInput());
+    selector.GetOutput()->Connect(tracker.GetInput());
+    selector.GetOutput("targets")->Connect(tracker.GetInput("targets"));
+//    tracker.GetOutput()->Connect(bgtracker.GetInput());
+    tracker.GetOutput()->Connect(overlay.GetInput("targets"));
 
     // initialize stream to get source width and height
     stream.Initialize();
