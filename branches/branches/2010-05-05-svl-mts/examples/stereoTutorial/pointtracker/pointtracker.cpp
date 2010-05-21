@@ -50,8 +50,8 @@ int main(int CMN_UNUSED(argc), char** CMN_UNUSED(argv))
     // setup tracker
     svlTrackerMSBruteForce trackeralgo;
     trackeralgo.SetParameters(svlNCC, // metric
-                              20,     // template radius
-                              20,     // search radius
+                              25,     // template radius
+                              25,     // search radius
                               3,      // number of scales
                               0, 0.0);
     tracker.SetMovingAverageSmoothing(0.0);
