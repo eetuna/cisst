@@ -14,9 +14,9 @@
 
 IF(CISST_SVL_HAS_X11 OR WIN32)
 
-    ADD_EXECUTABLE(stereoTutorialCameraViewer cameraviewer.cpp)
+    ADD_EXECUTABLE(svlExCameraViewer cameraviewer.cpp)
 
-    CISST_REQUIRES("stereoTutorialCameraViewer" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+    CISST_REQUIRES("svlExCameraViewer" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
 
 ENDIF(CISST_SVL_HAS_X11 OR WIN32)
 

@@ -13,7 +13,7 @@
 # --- end cisst license ---
 
 
-ADD_EXECUTABLE(stereoTutorialVideoConverter videoconverter.cpp)
+ADD_EXECUTABLE(svlExVideoConverter videoconverter.cpp)
 
-CISST_REQUIRES("stereoTutorialVideoConverter" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+CISST_REQUIRES("svlExVideoConverter" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
 

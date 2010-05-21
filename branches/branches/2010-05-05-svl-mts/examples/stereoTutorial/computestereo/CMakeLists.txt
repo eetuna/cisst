@@ -14,7 +14,7 @@
 
 IF(CISST_SVL_HAS_X11 OR WIN32)
 
-    ADD_EXECUTABLE(stereoTutorialComputeStereo computestereo.cpp)
+    ADD_EXECUTABLE(svlExComputeStereo computestereo.cpp)
 
     # Copy example images to the build tree
     IF(WIN32)
@@ -37,7 +37,7 @@ IF(CISST_SVL_HAS_X11 OR WIN32)
                     ${CMAKE_BINARY_DIR}/examples/bin/venus_r.bmp COPYONLY)
     ENDIF(WIN32)
 
-    CISST_REQUIRES("stereoTutorialComputeStereo" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+    CISST_REQUIRES("svlExComputeStereo" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
 
 ENDIF(CISST_SVL_HAS_X11 OR WIN32)
 

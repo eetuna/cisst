@@ -13,8 +13,8 @@
 # --- end cisst license ---
 
 IF(CISST_SVL_HAS_WEBGUI)
-    ADD_EXECUTABLE(stereoTutorialWebGUI webgui.cpp)
+    ADD_EXECUTABLE(svlWebGUI webgui.cpp)
 
-    CISST_REQUIRES("stereoTutorialWebGUI" "cisstCommon;cisstVector;cisstMultiTask;cisstOSAbstraction;cisstStereoVision")
+    CISST_REQUIRES("svlWebGUI" "cisstCommon;cisstVector;cisstMultiTask;cisstOSAbstraction;cisstStereoVision")
 ENDIF(CISST_SVL_HAS_WEBGUI)
 

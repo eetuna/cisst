@@ -14,8 +14,8 @@
 
 IF(CISST_SVL_HAS_X11 OR WIN32)
 
-    ADD_EXECUTABLE(stereoTutorialVideoPlayer videoplayer.cpp)
+    ADD_EXECUTABLE(svlExVideoPlayer videoplayer.cpp)
 
-    CISST_REQUIRES("stereoTutorialVideoPlayer" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+    CISST_REQUIRES("svlExVideoPlayer" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
 
 ENDIF(CISST_SVL_HAS_X11 OR WIN32)

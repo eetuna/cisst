@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: $
 #
 # (C) Copyright 2006-2008 Johns Hopkins University (JHU), All Rights
 # Reserved.
@@ -12,11 +12,8 @@
 # 
 # --- end cisst license ---
 
-IF(CISST_SVL_HAS_X11 OR WIN32)
 
-    ADD_EXECUTABLE(svlExSimpleStream simplestream.cpp)
+ADD_EXECUTABLE(svlExGridTracker gridtracker.cpp)
 
-    CISST_REQUIRES("svlExSimpleStream" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
-
-ENDIF(CISST_SVL_HAS_X11 OR WIN32)
+CISST_REQUIRES("svlExGridTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
 

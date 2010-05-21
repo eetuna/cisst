@@ -13,7 +13,7 @@
 # --- end cisst license ---
 
 
-ADD_EXECUTABLE(stereoTutorialPointTracker pointtracker.cpp)
+ADD_EXECUTABLE(svlExPointTracker pointtracker.cpp)
 
-CISST_REQUIRES("stereoTutorialPointTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+CISST_REQUIRES("svlExPointTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
 

@@ -91,7 +91,7 @@ void svlFilterImageWindowTargetSelect::SetCallback(svlImageWindowCallbackBase* c
 int svlFilterImageWindowTargetSelect::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
     if (!DisplayImage) DisplayImage = syncInput->GetNewInstance();
-    DisplayImage->CopyOf(*syncInput);
+    DisplayImage->CopyOf(syncInput);
 
     SelectionOffset.SetAll(0);
     SelectedTarget = -1;
@@ -117,7 +117,7 @@ int svlFilterImageWindowTargetSelect::Process(svlProcInfo* procInfo, svlSample* 
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
-        memcpy(winimage->GetUCharPointer(idx), image->GetUCharPointer(idx), image->GetDataSize(idx));
+        winimage->CopyOf(syncInput);
 
         if (maxtargets > 0) {
             position.SetRef(2, maxtargets, Targets.GetPositionPointer(idx));
@@ -140,8 +140,9 @@ int svlFilterImageWindowTargetSelect::Process(svlProcInfo* procInfo, svlSample* 
 
     _SynchronizeThreads(procInfo);
 
-    int ret = svlFilterImageWindow::Process(procInfo, DisplayImage, syncOutput);
-    
+    svlSample* sample = 0;
+    int ret = svlFilterImageWindow::Process(procInfo, DisplayImage, sample);
+
     _OnSingleThread(procInfo)
     {
         if (SendTargets || AlwaysSend) {

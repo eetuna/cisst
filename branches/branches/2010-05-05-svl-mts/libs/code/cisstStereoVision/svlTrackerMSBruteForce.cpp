@@ -196,7 +196,7 @@ int svlTrackerMSBruteForce::Initialize()
         LowerScaleImage->SetSize(Width / 2, Height / 2);
 
         // modify current parameters for multiscale processing + add some margin
-        TemplateRadius = 1;
+        TemplateRadius = std::max(TemplateRadiusRequested / 2, 2u);
         WindowRadius = 1;
     }
     else {
@@ -229,6 +229,7 @@ int svlTrackerMSBruteForce::Initialize()
 void svlTrackerMSBruteForce::ResetTargets()
 {
     TargetsAdded = false;
+    OrigTemplateConf.SetAll(__NO_TMP);
     if (LowerScale) LowerScale->ResetTargets();
 }
 
