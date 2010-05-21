@@ -20,6 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterDisparityMapToSurface.h>
+#include <cisstStereoVision/svlImageProcessing.h>
 
 
 /********************************************/
@@ -30,14 +31,7 @@ CMN_IMPLEMENT_SERVICES(svlFilterDisparityMapToSurface)
 
 svlFilterDisparityMapToSurface::svlFilterDisparityMapToSurface() :
     svlFilterBase(),
-    cmnGenericObject(),
-    ROI(0, 0, 0, 0),
-    BaseLine(10.0f),
-	RightCameraPosX(10.0f),
-    FocalLength(600.0f),
-    PPX(320.0f),
-    PPY(240.0f),
-	DisparityCorrection(0.0f)
+    cmnGenericObject()
 {
     AddInput("input", true);
     AddInputType("input", svlTypeImageMonoFloat);
@@ -45,102 +39,42 @@ svlFilterDisparityMapToSurface::svlFilterDisparityMapToSurface() :
     AddOutput("output", true);
     SetAutomaticOutputType(false);
     GetOutput()->SetType(svlTypeImage3DMap);
-
-    OutputSurface = new svlSampleImage3DMap;
-}
-
-svlFilterDisparityMapToSurface::~svlFilterDisparityMapToSurface()
-{
-    Release();
-
-    if (OutputSurface) delete OutputSurface;
 }
 
 int svlFilterDisparityMapToSurface::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    OutputSurface->SetSize(*syncInput);
+    OutputSurface.SetSize(syncInput);
 
     svlSampleImage* image = dynamic_cast<svlSampleImage*>(syncInput);
 
     ROI.Normalize();
     ROI.Trim(0, image->GetWidth() - 1, 0, image->GetHeight() - 1);
 
-    syncOutput = OutputSurface;
+    syncOutput = &OutputSurface;
 
     return SVL_OK;
 }
 
 int svlFilterDisparityMapToSurface::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    syncOutput = OutputSurface;
+    syncOutput = &OutputSurface;
     _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
     _OnSingleThread(procInfo)
     {
-        const unsigned int width = OutputSurface->GetWidth();
-        const unsigned int vertstride = width - ROI.right + ROI.left - 1;
-        const unsigned int vertstride3 = vertstride * 3;
-        const float bl = BaseLine;
-        float *vectors = OutputSurface->GetPointer();
-        float *disparities = dynamic_cast<svlSampleImageMonoFloat*>(syncInput)->GetPointer();
-        float fi, fj, disp, ratio;
-        unsigned int i, j, l, t, r, b;
-
-        l = ROI.left;
-        t = ROI.top;
-        r = ROI.right;
-        b = ROI.bottom;
-
-        disparities += t * width + l;
-        vectors += (t * width + l) * 3;
-
-        for (j = t; j <= b; j ++) {
-            fj = static_cast<float>(j);
-
-            for (i = l; i <= r; i ++) {
-                fi = static_cast<float>(i);
-
-                disp = (*disparities) - DisparityCorrection; disparities ++;
-                if (disp < 0.01f) disp = 0.01f;
-                ratio = bl / disp;
-
-				// Disparity map corresponds to right camera
-                *vectors = (fi - PPX)  * ratio - RightCameraPosX; vectors ++; // X
-                *vectors = (fj - PPY)  * ratio;					  vectors ++; // Y
-                *vectors = FocalLength * ratio;					  vectors ++; // Z
-            }
-
-            disparities += vertstride;
-            vectors += vertstride3;
-        }
+        svlImageProcessing::DisparityMapToSurface(dynamic_cast<svlSampleImageMonoFloat*>(syncInput),
+                                                  &OutputSurface,
+                                                  Geometry,
+                                                  ROI);
     }
 
-    return SVL_OK;
-}
-
-int svlFilterDisparityMapToSurface::Release()
-{
     return SVL_OK;
 }
 
 int svlFilterDisparityMapToSurface::SetCameraGeometry(const svlCameraGeometry & geometry)
 {
     if (IsInitialized()) return SVL_FAIL;
-    svlCameraGeometry::Intrinsics intrinsics[2];
-    svlCameraGeometry::Extrinsics extrinsics[2];
-    if (geometry.GetIntrinsics(intrinsics[SVL_LEFT],  SVL_LEFT)  != SVL_OK ||
-        geometry.GetIntrinsics(intrinsics[SVL_RIGHT], SVL_RIGHT) != SVL_OK ||
-        geometry.GetExtrinsics(extrinsics[SVL_LEFT],  SVL_LEFT)  != SVL_OK ||
-        geometry.GetExtrinsics(extrinsics[SVL_RIGHT], SVL_RIGHT) != SVL_OK) return SVL_FAIL;
-    if (geometry.IsCameraPairRectified(SVL_LEFT, SVL_RIGHT) != SVL_YES) return SVL_FAIL;
-
-    BaseLine =			  static_cast<float>(extrinsics[SVL_LEFT].T.X() - extrinsics[SVL_RIGHT].T.X());
-	RightCameraPosX =	  static_cast<float>(extrinsics[SVL_RIGHT].T.X());
-    FocalLength =		  static_cast<float>(intrinsics[SVL_RIGHT].fc[0]);
-    PPX =                 static_cast<float>(intrinsics[SVL_RIGHT].cc[0]);
-    PPY =                 static_cast<float>(intrinsics[SVL_RIGHT].cc[1]);
-	DisparityCorrection = static_cast<float>(intrinsics[SVL_LEFT].cc[0]) - PPX;
-
+    Geometry = geometry;
     return SVL_OK;
 }
 

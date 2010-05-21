@@ -36,7 +36,6 @@ class CISST_EXPORT svlFilterDisparityMapToSurface : public svlFilterBase, public
 
 public:
     svlFilterDisparityMapToSurface();
-    virtual ~svlFilterDisparityMapToSurface();
 
     int SetCameraGeometry(const svlCameraGeometry & geometry);
     int SetROI(const svlRect & rect);
@@ -45,18 +44,11 @@ public:
 protected:
     virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
     virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
-    virtual int Release();
 
 private:
-    svlSampleImage3DMap* OutputSurface;
-
+    svlSampleImage3DMap OutputSurface;
+    svlCameraGeometry Geometry;
     svlRect ROI;
-    float BaseLine;
-    float RightCameraPosX;
-    float FocalLength;
-    float PPX;
-    float PPY;
-    float DisparityCorrection;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterDisparityMapToSurface)

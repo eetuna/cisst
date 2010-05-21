@@ -47,9 +47,6 @@ public:
     } Extrinsics;
 
 public:
-    svlCameraGeometry();
-    virtual ~svlCameraGeometry();
-
     friend CISST_EXPORT std::ostream & operator << (std::ostream & stream, const svlCameraGeometry & objref);
 
     void SetIntrinsics(const Intrinsics & intrinsics, const unsigned int cam_id = 0);
@@ -69,9 +66,19 @@ public:
 
     int GetIntrinsics(Intrinsics & intrinsics, const unsigned int cam_id = 0) const;
     Intrinsics GetIntrinsics(const unsigned int cam_id = 0) const;
+    const Intrinsics* GetIntrinsicsPtr(const unsigned int cam_id = 0) const;
+    int GetIntrinsics(double& fcx, double& fcy,
+                      double& ccx, double& ccy,
+                      double& a,
+                      double& kc0, double& kc1, double& kc2, double& kc3, double& kc4,
+                      const unsigned int cam_id = 0);
     int GetExtrinsics(Extrinsics & extrinsics, const unsigned int cam_id = 0) const;
     Extrinsics GetExtrinsics(const unsigned int cam_id = 0) const;
-
+    const Extrinsics* GetExtrinsicsPtr(const unsigned int cam_id = 0) const;
+    int GetExtrinsics(double& om0, double& om1, double& om2,
+                      double& T0, double& T1, double& T2,
+                      const unsigned int cam_id = 0);
+    
     int GetPosition(vctDouble3 & position, const unsigned int cam_id = 0) const;
     int GetAxis(vctDouble3 & axis, const unsigned int cam_id = 0) const;
     int GetViewUp(vctDouble3 & viewup, const unsigned int cam_id = 0) const;

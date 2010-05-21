@@ -29,14 +29,6 @@ http://www.cisst.org/cisst/license.txt.
 /*** svlCameraGeometry class *********/
 /*************************************/
 
-svlCameraGeometry::svlCameraGeometry()
-{
-}
-
-svlCameraGeometry::~svlCameraGeometry()
-{
-}
-
 void svlCameraGeometry::SetIntrinsics(const svlCameraGeometry::Intrinsics & intrinsics, const unsigned int cam_id)
 {
     SetIntrinsics(intrinsics.fc, intrinsics.cc, intrinsics.a, intrinsics.kc, cam_id);
@@ -250,6 +242,34 @@ svlCameraGeometry::Intrinsics svlCameraGeometry::GetIntrinsics(const unsigned in
     return intrinsics;
 }
 
+const svlCameraGeometry::Intrinsics* svlCameraGeometry::GetIntrinsicsPtr(const unsigned int cam_id) const
+{
+    if (cam_id >= IntrinsicParams.size()) return 0;
+    return &(IntrinsicParams[cam_id]);
+}
+
+int svlCameraGeometry::GetIntrinsics(double& fcx, double& fcy,
+                                     double& ccx, double& ccy,
+                                     double& a,
+                                     double& kc0, double& kc1, double& kc2, double& kc3, double& kc4,
+                                     const unsigned int cam_id)
+{
+    if (cam_id >= IntrinsicParams.size()) return SVL_FAIL;
+
+    fcx = IntrinsicParams[cam_id].fc[0];
+    fcy = IntrinsicParams[cam_id].fc[1];
+    ccx = IntrinsicParams[cam_id].cc[0];
+    ccy = IntrinsicParams[cam_id].cc[1];
+    a   = IntrinsicParams[cam_id].a;
+    kc0 = IntrinsicParams[cam_id].kc[0];
+    kc1 = IntrinsicParams[cam_id].kc[1];
+    kc2 = IntrinsicParams[cam_id].kc[2];
+    kc3 = IntrinsicParams[cam_id].kc[3];
+    kc4 = IntrinsicParams[cam_id].kc[4];
+
+    return SVL_OK;
+}
+
 int svlCameraGeometry::GetExtrinsics(svlCameraGeometry::Extrinsics & extrinsics, const unsigned int cam_id) const
 {
     if (cam_id >= ExtrinsicParams.size()) return SVL_FAIL;
@@ -263,6 +283,28 @@ svlCameraGeometry::Extrinsics svlCameraGeometry::GetExtrinsics(const unsigned in
     memset(&extrinsics, 0, sizeof(Extrinsics));
     GetExtrinsics(extrinsics, cam_id);
     return extrinsics;
+}
+
+const svlCameraGeometry::Extrinsics* svlCameraGeometry::GetExtrinsicsPtr(const unsigned int cam_id) const
+{
+    if (cam_id >= ExtrinsicParams.size()) return 0;
+    return &(ExtrinsicParams[cam_id]);
+}
+
+int svlCameraGeometry::GetExtrinsics(double& om0, double& om1, double& om2,
+                                     double& T0, double& T1, double& T2,
+                                     const unsigned int cam_id)
+{
+    if (cam_id >= ExtrinsicParams.size()) return SVL_FAIL;
+
+    om0 = ExtrinsicParams[cam_id].om[0];
+    om1 = ExtrinsicParams[cam_id].om[1];
+    om2 = ExtrinsicParams[cam_id].om[2];
+    T0  = ExtrinsicParams[cam_id].T[0];
+    T1  = ExtrinsicParams[cam_id].T[1];
+    T2  = ExtrinsicParams[cam_id].T[2];
+
+    return SVL_OK;
 }
 
 int svlCameraGeometry::GetPosition(vctDouble3 & position, const unsigned int cam_id) const

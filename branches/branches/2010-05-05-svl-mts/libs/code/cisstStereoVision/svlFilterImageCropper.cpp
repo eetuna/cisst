@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterImageCropper.h>
+#include <cisstStereoVision/svlImageProcessing.h>
 
 
 /******************************************/
@@ -125,60 +126,10 @@ int svlFilterImageCropper::Process(svlProcInfo* procInfo, svlSample* syncInput, 
     svlSampleImage* in_image = dynamic_cast<svlSampleImage*>(syncInput);
     unsigned int videochannels = in_image->GetVideoChannels();
     unsigned int idx;
-    int i, wi, hi, wo, ho, xi, yi, xo, yo, copylen, linecount;
-    unsigned char *in_data, *out_data;
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
-        // Set background to black
-        memset(OutputImage->GetUCharPointer(idx), 0, OutputImage->GetDataSize(idx));
-
-        // Prepare for data copy
-        wi = static_cast<int>(in_image->GetWidth(idx) * in_image->GetBPP());
-        hi = static_cast<int>(in_image->GetHeight(idx));
-        wo = static_cast<int>(OutputImage->GetWidth(idx) * OutputImage->GetBPP());
-        ho = static_cast<int>(OutputImage->GetHeight(idx));
-
-        copylen = wo;
-        linecount = ho;
-        xi = Rectangles[idx].left * in_image->GetBPP();
-        yi = Rectangles[idx].top;
-        xo = yo = 0;
-
-        // If cropping rectangle reaches out on the left
-        if (xi < 0) {
-            copylen += xi;
-            xo -= xi;
-            xi = 0;
-        }
-        // If cropping rectangle reaches out on the right
-        if ((xi + copylen) > wi) {
-            copylen += wi - (xi + copylen);
-        }
-        // If cropping rectangle is outside of the image boundaries
-        if (copylen <= 0) continue;
-
-        // If cropping rectangle reaches out on the top
-        if (yi < 0) {
-            linecount += yi;
-            yo -= yi;
-            yi = 0;
-        }
-        // If cropping rectangle reaches out on the bottom
-        if ((yi + linecount) > hi) {
-            linecount += hi - (yi + linecount);
-        }
-        // If cropping rectangle is outside of the image boundaries
-        if (linecount <= 0) continue;
-
-        in_data = in_image->GetUCharPointer(idx) + (yi * wi) + xi;
-        out_data = OutputImage->GetUCharPointer(idx) + (yo * wo) + xo;
-
-        for (i = 0; i < linecount; i ++) {
-            memcpy(out_data, in_data, copylen);
-            in_data += wi;
-            out_data += wo;
-        }
+        svlImageProcessing::Crop(in_image, idx, OutputImage, idx, Rectangles[idx].left, Rectangles[idx].top);
     }
 
     return SVL_OK;
