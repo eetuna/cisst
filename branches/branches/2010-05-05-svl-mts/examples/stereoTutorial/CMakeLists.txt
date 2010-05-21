@@ -14,11 +14,13 @@
 
 PROJECT(stereoTutorial)
 
-ADD_SUBDIRECTORY(example1)
-ADD_SUBDIRECTORY(example2)
-ADD_SUBDIRECTORY(example3)
-ADD_SUBDIRECTORY(example4)
-ADD_SUBDIRECTORY(example5)
-ADD_SUBDIRECTORY(example6)
-ADD_SUBDIRECTORY(example7)
-#ADD_SUBDIRECTORY(example8)
+ADD_SUBDIRECTORY(simple)
+ADD_SUBDIRECTORY(cameraviewer)
+ADD_SUBDIRECTORY(stereocameraviewer)
+ADD_SUBDIRECTORY(computestereo)
+ADD_SUBDIRECTORY(videoplayer)
+ADD_SUBDIRECTORY(videoconverter)
+ADD_SUBDIRECTORY(pointtracker)
+ADD_SUBDIRECTORY(gridtracker)
+#ADD_SUBDIRECTORY(webgui)
+
