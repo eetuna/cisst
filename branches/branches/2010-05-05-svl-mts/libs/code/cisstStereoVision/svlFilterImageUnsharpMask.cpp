@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageUnsharpMask)
 
 svlFilterImageUnsharpMask::svlFilterImageUnsharpMask() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     Amount(384), // =150%
     Radius(2),

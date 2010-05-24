@@ -32,7 +32,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageFlipRotate)
 
 svlFilterImageFlipRotate::svlFilterImageFlipRotate() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0)
 {
     AddInput("input", true);

@@ -32,7 +32,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageResizer)
 
 svlFilterImageResizer::svlFilterImageResizer() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0)
 {
     AddInput("input", true);

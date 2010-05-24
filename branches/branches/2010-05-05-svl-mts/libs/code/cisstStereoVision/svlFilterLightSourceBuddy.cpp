@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterLightSourceBuddy)
 
 svlFilterLightSourceBuddy::svlFilterLightSourceBuddy() :
     svlFilterBase(),
-    cmnGenericObject(),
     Enabled(true)
 {
     AddInput("input", true);

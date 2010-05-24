@@ -40,6 +40,12 @@ void mtsDevice::Start(void) {
 }
 
 
+void mtsDevice::Configure(const std::string & CMN_UNUSED(filename)) {
+    CMN_LOG_CLASS_INIT_VERBOSE << "Configure: default start method for component \""
+                               << this->GetName() << "\"" << std::endl;
+}
+
+
 std::vector<std::string> mtsDevice::GetNamesOfProvidedInterfaces(void) const {
     return ProvidedInterfaces.GetNames();
 }

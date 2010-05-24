@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlExport.h>
 
 
-class CISST_EXPORT svlFilterSourceVideoFile : public svlFilterSourceBase, public cmnGenericObject
+class CISST_EXPORT svlFilterSourceVideoFile : public svlFilterSourceBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

@@ -46,7 +46,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageTracker)
 
 svlFilterImageTracker::svlFilterImageTracker() :
     svlFilterBase(),
-    cmnGenericObject(),
     VideoChannels(0),
     RigidBody(false),
     ResetFlag(false),

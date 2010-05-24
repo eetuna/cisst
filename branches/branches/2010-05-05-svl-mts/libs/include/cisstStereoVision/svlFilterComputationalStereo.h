@@ -41,7 +41,7 @@ public:
     virtual void Free() = 0;
 };
 
-class CISST_EXPORT svlFilterComputationalStereo : public svlFilterBase, public cmnGenericObject
+class CISST_EXPORT svlFilterComputationalStereo : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

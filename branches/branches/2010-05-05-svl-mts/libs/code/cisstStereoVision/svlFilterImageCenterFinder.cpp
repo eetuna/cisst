@@ -35,7 +35,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageCenterFinder)
 
 svlFilterImageCenterFinder::svlFilterImageCenterFinder() :
     svlFilterBase(),
-    cmnGenericObject(),
     Smoothing(0.0),
     MaskEnabled(false),
     ThresholdLevel(10),

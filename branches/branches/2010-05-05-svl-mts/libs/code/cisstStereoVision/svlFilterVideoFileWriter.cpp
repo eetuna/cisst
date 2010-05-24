@@ -33,7 +33,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterVideoFileWriter)
 
 svlFilterVideoFileWriter::svlFilterVideoFileWriter() :
     svlFilterBase(),
-    cmnGenericObject(),
     Action(false),
     ActionTime(0.0),
     TargetActionTime(0.0),

@@ -33,7 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 class svlImageTracker;
 
 
-class CISST_EXPORT svlFilterImageTracker : public svlFilterBase, public cmnGenericObject
+class CISST_EXPORT svlFilterImageTracker : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

@@ -34,7 +34,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterComputationalStereo)
 
 svlFilterComputationalStereo::svlFilterComputationalStereo() :
     svlFilterBase(),
-    cmnGenericObject(),
     StereoAlgorithm(0),
     XCheckStereoAlgorithm(0),
     XCheckImage(0),

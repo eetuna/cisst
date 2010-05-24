@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageRectifier)
 
 svlFilterImageRectifier::svlFilterImageRectifier() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     InterpolationEnabled(true)
 {

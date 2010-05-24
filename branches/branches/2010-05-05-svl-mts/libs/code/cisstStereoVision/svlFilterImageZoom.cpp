@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageZoom)
 
 svlFilterImageZoom::svlFilterImageZoom() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     InterpolationEnabled(true)
 {

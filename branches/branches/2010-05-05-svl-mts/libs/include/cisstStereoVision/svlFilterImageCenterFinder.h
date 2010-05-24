@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 // Forward declarations
 class svlFilterImageCropper;
 
-class CISST_EXPORT svlFilterImageCenterFinder : public svlFilterBase, public cmnGenericObject
+class CISST_EXPORT svlFilterImageCenterFinder : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

@@ -36,7 +36,7 @@ enum svlColorSpace
     svlColorSpaceYUV
 };
 
-class CISST_EXPORT svlFilterImageColorConverter : public svlFilterBase, public cmnGenericObject
+class CISST_EXPORT svlFilterImageColorConverter : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

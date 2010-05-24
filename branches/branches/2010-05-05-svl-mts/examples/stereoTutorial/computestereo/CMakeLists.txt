@@ -37,7 +37,7 @@ IF(CISST_SVL_HAS_X11 OR WIN32)
                     ${CMAKE_BINARY_DIR}/examples/bin/venus_r.bmp COPYONLY)
     ENDIF(WIN32)
 
-    CISST_REQUIRES("svlExComputeStereo" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+    CISST_REQUIRES("svlExComputeStereo" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstStereoVision")
 
 ENDIF(CISST_SVL_HAS_X11 OR WIN32)
 

@@ -34,7 +34,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageFileWriter)
 
 svlFilterImageFileWriter::svlFilterImageFileWriter() :
     svlFilterBase(),
-    cmnGenericObject(),
     TimestampsEnabled(false)
 {
     AddInput("input", true);

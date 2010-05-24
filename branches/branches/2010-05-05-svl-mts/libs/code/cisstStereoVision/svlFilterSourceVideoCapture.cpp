@@ -48,7 +48,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceVideoCapture)
 
 svlFilterSourceVideoCapture::svlFilterSourceVideoCapture() :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputImage(0),
     EnumeratedDevices(0),
     NumberOfEnumeratedDevices(-1),
@@ -63,7 +62,6 @@ svlFilterSourceVideoCapture::svlFilterSourceVideoCapture() :
 
 svlFilterSourceVideoCapture::svlFilterSourceVideoCapture(unsigned int channelcount) :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputImage(0),
     EnumeratedDevices(0),
     NumberOfEnumeratedDevices(-1),

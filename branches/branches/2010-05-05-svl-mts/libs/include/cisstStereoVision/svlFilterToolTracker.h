@@ -34,7 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 class svlToolTrackerAlgorithmBase;
 
 
-class CISST_EXPORT svlFilterToolTracker : public svlFilterBase, public cmnGenericObject
+class CISST_EXPORT svlFilterToolTracker : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

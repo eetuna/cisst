@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterToolTracker)
 
 svlFilterToolTracker::svlFilterToolTracker() :
     svlFilterBase(),
-    cmnGenericObject(),
     Algorithm(0),
     WarpedImage(0)
 {

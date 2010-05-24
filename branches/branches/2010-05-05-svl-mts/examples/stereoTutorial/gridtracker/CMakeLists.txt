@@ -15,5 +15,5 @@
 
 ADD_EXECUTABLE(svlExGridTracker gridtracker.cpp)
 
-CISST_REQUIRES("svlExGridTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+CISST_REQUIRES("svlExGridTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstStereoVision")
 

@@ -32,7 +32,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterStreamTypeConverter)
 
 svlFilterStreamTypeConverter::svlFilterStreamTypeConverter() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     Scaling(1.0f),
     Mono16ShiftDown(8)
@@ -41,7 +40,6 @@ svlFilterStreamTypeConverter::svlFilterStreamTypeConverter() :
 
 svlFilterStreamTypeConverter::svlFilterStreamTypeConverter(svlStreamType inputtype, svlStreamType outputtype) :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     Scaling(1.0f),
     Mono16ShiftDown(8)

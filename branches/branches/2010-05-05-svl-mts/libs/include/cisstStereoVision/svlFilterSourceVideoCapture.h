@@ -35,7 +35,7 @@ class svlVidCapSrcBase;
 class svlVidCapSrcDialogThread;
 
 
-class CISST_EXPORT svlFilterSourceVideoCapture : public svlFilterSourceBase, public cmnGenericObject
+class CISST_EXPORT svlFilterSourceVideoCapture : public svlFilterSourceBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 

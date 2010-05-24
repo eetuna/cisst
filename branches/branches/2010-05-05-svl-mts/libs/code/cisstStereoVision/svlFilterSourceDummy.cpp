@@ -33,7 +33,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceDummy)
 
 svlFilterSourceDummy::svlFilterSourceDummy() :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputSample(0),
     Width(0),
     Height(0),
@@ -46,7 +45,6 @@ svlFilterSourceDummy::svlFilterSourceDummy() :
 
 svlFilterSourceDummy::svlFilterSourceDummy(svlStreamType type) :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputSample(0),
     Width(0),
     Height(0),
@@ -60,7 +58,6 @@ svlFilterSourceDummy::svlFilterSourceDummy(svlStreamType type) :
 
 svlFilterSourceDummy::svlFilterSourceDummy(const svlSampleImage & image) :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputSample(0),
     Width(0),
     Height(0),

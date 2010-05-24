@@ -30,8 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(svlFilterImageTranslation)
 
 svlFilterImageTranslation::svlFilterImageTranslation() :
-    svlFilterBase(),
-    cmnGenericObject()
+    svlFilterBase()
 {
     AddInput("input", true);
     AddInputType("input", svlTypeImageRGB);

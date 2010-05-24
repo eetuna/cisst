@@ -93,7 +93,7 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
 
     /*! The virtual method so that the interface or tasks can
       configure themselves */
-    virtual void Configure(const std::string & filename = "") = 0;
+    virtual void Configure(const std::string & filename = "");
 
     /*! Virtual method called after components are connected and
       before they get started.  Use to place initialization code. */

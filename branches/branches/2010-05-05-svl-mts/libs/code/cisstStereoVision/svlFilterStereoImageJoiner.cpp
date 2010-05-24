@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterStereoImageJoiner)
 
 svlFilterStereoImageJoiner::svlFilterStereoImageJoiner() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     Layout(svlLayoutSideBySide)
 {

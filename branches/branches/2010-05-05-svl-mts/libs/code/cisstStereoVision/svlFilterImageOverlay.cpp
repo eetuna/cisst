@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageOverlay)
 
 svlFilterImageOverlay::svlFilterImageOverlay() :
     svlFilterBase(),
-    cmnGenericObject(),
     FirstOverlay(0),
     LastOverlay(0)
 {

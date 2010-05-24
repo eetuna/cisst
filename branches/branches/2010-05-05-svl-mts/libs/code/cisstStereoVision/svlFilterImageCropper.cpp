@@ -32,7 +32,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterImageCropper)
 
 svlFilterImageCropper::svlFilterImageCropper() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0)
 {
     AddInput("input", true);

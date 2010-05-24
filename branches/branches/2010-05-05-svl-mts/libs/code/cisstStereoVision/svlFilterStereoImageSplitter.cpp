@@ -31,7 +31,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterStereoImageSplitter)
 
 svlFilterStereoImageSplitter::svlFilterStereoImageSplitter() :
     svlFilterBase(),
-    cmnGenericObject(),
     OutputImage(0),
     Layout(svlLayoutSideBySide)
 {

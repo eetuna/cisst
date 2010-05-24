@@ -15,5 +15,5 @@
 
 ADD_EXECUTABLE(svlExPointTracker pointtracker.cpp)
 
-CISST_REQUIRES("svlExPointTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+CISST_REQUIRES("svlExPointTracker" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstStereoVision")
 

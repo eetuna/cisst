@@ -16,7 +16,7 @@ IF(CISST_SVL_HAS_X11 OR WIN32)
 
     ADD_EXECUTABLE(svlExSimpleStream simplestream.cpp)
 
-    CISST_REQUIRES("svlExSimpleStream" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+    CISST_REQUIRES("svlExSimpleStream" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstStereoVision")
 
 ENDIF(CISST_SVL_HAS_X11 OR WIN32)
 

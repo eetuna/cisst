@@ -44,7 +44,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceVideoFile)
 
 svlFilterSourceVideoFile::svlFilterSourceVideoFile() :
     svlFilterSourceBase(false),  // manual timestamp management
-    cmnGenericObject(),
     OutputImage(0),
     Framerate(-1.0),
     FirstTimestamp(-1.0)
@@ -55,8 +54,7 @@ svlFilterSourceVideoFile::svlFilterSourceVideoFile() :
 
 svlFilterSourceVideoFile::svlFilterSourceVideoFile(unsigned int channelcount) :
     svlFilterSourceBase(false),  // manual timestamp management
-    cmnGenericObject(),
-OutputImage(0),
+    OutputImage(0),
     Framerate(-1.0),
     FirstTimestamp(-1.0)
 {

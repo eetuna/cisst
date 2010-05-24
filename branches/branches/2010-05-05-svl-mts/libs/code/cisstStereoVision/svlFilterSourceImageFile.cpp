@@ -43,7 +43,6 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceImageFile)
 
 svlFilterSourceImageFile::svlFilterSourceImageFile() :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputImage(0),
     NumberOfDigits(0),
     From(0),
@@ -56,7 +55,6 @@ svlFilterSourceImageFile::svlFilterSourceImageFile() :
 
 svlFilterSourceImageFile::svlFilterSourceImageFile(unsigned int channelcount) :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     OutputImage(0),
     NumberOfDigits(0),
     From(0),

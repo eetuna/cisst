@@ -22,6 +22,7 @@ SET(DEPENDENCIES
     cisstCommon
     cisstOSAbstraction
     cisstVector
+    cisstMultiTask
     )
 
 # all source files

@@ -30,6 +30,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlFilterIO.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 
+#include <cisstMultiTask/mtsDevice.h>
+
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
@@ -40,7 +42,7 @@ class svlStreamManager;
 class svlStreamProc;
 
 
-class CISST_EXPORT svlFilterBase
+class CISST_EXPORT svlFilterBase: public mtsComponent
 {
 friend class svlFilterInput;
 friend class svlFilterOutput;

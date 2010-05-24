@@ -15,5 +15,5 @@
 
 ADD_EXECUTABLE(svlExVideoConverter videoconverter.cpp)
 
-CISST_REQUIRES("svlExVideoConverter" "cisstCommon;cisstVector;cisstOSAbstraction;cisstStereoVision")
+CISST_REQUIRES("svlExVideoConverter" "cisstCommon;cisstVector;cisstOSAbstraction;cisstMultiTask;cisstStereoVision")
 
