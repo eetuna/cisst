@@ -27,6 +27,14 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlRenderTargets.h>
 #include <mil.h>
 
+// For backwards compatibility
+#if M_CURRENT_DATAGRAM_VERSION < 900
+    typedef long                        MIL_INT;
+    typedef long                        MIL_INT32;
+    #define M_SELECT_VIDEO_SOURCE       (3210L + M_LOCAL_DISPLAY_CONTROL)
+    #define M_LOCAL_DISPLAY_CONTROL     0L
+#endif
+
 
 class osaThread;
 class svlBufferImage;

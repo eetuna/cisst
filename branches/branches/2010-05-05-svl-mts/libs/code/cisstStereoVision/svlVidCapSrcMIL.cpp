@@ -322,8 +322,8 @@ int svlVidCapSrcMIL::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
             OverlaySupported[MILNumberOfDevices] = ovrl;
             Width[MILNumberOfDevices] = w;
             Height[MILNumberOfDevices] = h;
+            MILNumberOfDevices ++;
         }
-        MILNumberOfDevices ++;
     }
 
     // Allocate memory for device info array
@@ -548,7 +548,7 @@ bool svlVidCapSrcMIL::MILInitializeDevice(int device, bool capture, bool overlay
         MILReleaseDevice(device);
     }
 
-    MsysAlloc(M_SYSTEM_VIO, MilDeviceID[device], M_SETUP, &(MilSystem[device]));
+    MsysAlloc(M_SYSTEM_DEFAULT, MilDeviceID[device], M_SETUP, &(MilSystem[device]));
     if (MilSystem[device] == M_NULL) goto labError;
 
     if (MsysInquire(MilSystem[device], M_DIGITIZER_NUM, M_NULL) == 0) goto labError;
