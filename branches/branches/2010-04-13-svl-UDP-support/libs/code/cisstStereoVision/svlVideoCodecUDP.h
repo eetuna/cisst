@@ -301,7 +301,7 @@ protected:
     /*! Create internal buffers to process image frames */
 #ifdef TEMPORAL_DIFF
     unsigned int ImageDiffSignArraySize;
-    void CreateImageBuffers(const unsigned int imageBufferSize);
+    void CreateImageBuffers(const unsigned int width, const unsigned int height);
 #endif
 };
 

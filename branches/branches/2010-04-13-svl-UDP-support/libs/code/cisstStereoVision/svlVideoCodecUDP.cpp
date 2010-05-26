@@ -331,8 +331,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
 	const unsigned int imageWidth = image.GetWidth();
     const unsigned int imageHeight = image.GetHeight();
-	const unsigned int imageBufferSize = image.GetDataSize(); // 3 channels (R,G,B)
-
+	
     _OnSingleThread(procInfo)
     {
 #ifdef PROFILE_WRITE
@@ -360,10 +359,10 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             SubImageSize.SetSize(procInfo->count);
 
 #ifdef TEMPORAL_DIFF
-			std::cout << "svlVideoCodecUDP: image size: " << imageBufferSize << "(" 
+			std::cout << "svlVideoCodecUDP: image size: " << image.GetDataSize() << "(" 
 				<< imageWidth << "x" << imageHeight << ")" << std::endl;
 			
-            CreateImageBuffers(imageBufferSize);
+            CreateImageBuffers(imageWidth, imageHeight);
 #endif
         } else if (frameNo == 1) {
             // It takes time for UDP receiver to initialze (e.g. shows up output window)
@@ -376,7 +375,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
 #ifdef FRAME_RESET
         if (frameNo % ResetFrameCount == 0) {
-            memset(imagePrev, 0, imageBufferSize);
+            memset(imagePrev, 0, imageWidth * imageHeight * 2);
         }
 #endif
 #endif
@@ -572,8 +571,8 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     }
 
 #ifdef TEMPORAL_DIFF
-    const unsigned int imageBufferSize = Width * Height * 3;
-    CreateImageBuffers(imageBufferSize);
+    //const unsigned int imageBufferSize = Width * Height * 3;
+    CreateImageBuffers(Width, Height);
 #endif
 
     // Set (return) image width and height
@@ -629,16 +628,6 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
             return SVL_FAIL;
         }
 
-        // Convert YUV422 planar to RGB format
-        //svlConverter::YUV422PtoRGB24(BufferYUV + offset, imagePrev + offset * 3 / 2, longsize >> 1);
-
-        for (int k = 100; k <= 104; k++) {
-            if (100 <= k && k <= 104) {
-                printf("[%d] %d, %d, %d\n", 0, imagePrev[k], BufferYUV[k], BufferYUV[k] - imagePrev[k]);
-            }
-        }
-
-
         offset += longsize;
         pos += compressedpartsize;
     }
@@ -655,7 +644,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     // This method runs with a single thread
     if (procInfo && procInfo->id != 0) return SVL_OK;
 
-    // for testing
     static int frameNo = 0;
 
     std::cout << "svlVideoCodecUDP: Received frame no: " << ++frameNo << "\r";
@@ -688,7 +676,7 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
 #ifdef TEMPORAL_DIFF
 #ifdef FRAME_RESET
     if (frameNo % ResetFrameCount == 0) {
-        memset(imagePrev, 0, imageBufferSize);
+        memset(imagePrev, 0, Width * Height * 2);
     }
 #endif
 #endif
@@ -720,22 +708,12 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
             }
             negative = ((t & (1 << count)) > 0 ? true : false);
 
-            //unsigned int diff;
-            //if (100 <= j && j <= 104) {
-            //    diff = abs(imagePrev[j] - BufferYUV[j]);
-            //    printf("[%d] %d, ", frameNo, imagePrev[j]);
-            //}
-
             // Rebuild current frame
             if (negative) {
                 BufferYUV[j] = imagePrev[j] - BufferYUV[j];
             } else {
                 BufferYUV[j] = imagePrev[j] + BufferYUV[j];
             }
-
-            //if (100 <= j && j <= 104) {
-            //    printf("%d, %d\n", BufferYUV[j], diff);
-            //}
 
             // Update previous image
             imagePrev[j] = BufferYUV[j];
@@ -753,58 +731,6 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
         offset += longsize;
         pos += compressedpartsize;
     }
-
-    /*
-#ifdef TEMPORAL_DIFF
-    // Recover current image based on rgb value difference and its sign
-    int idxSign = 0, count = 0, t;
-    bool negative = false;
-    unsigned char value;
-
-#ifdef FRAME_RESET
-    if (frameNo % ResetFrameCount == 0) {
-        memset(imagePrev, 0, imageBufferSize);
-    }
-#endif
-
-    for (unsigned int i = 0; i < imageBufferSize; ++i) {
-        if (count == 0) {
-            t = ReceiveBufferSign[idxSign];
-        }
-        negative = ((t & (1 << count)) > 0 ? true : false);
-
-        // aaaaaaaaaaaaaaaaaa
-        //if (100 <= i && i <= 104) {
-        //    printf("[%d-%d] prev: %03d, curr: ", frameNo, i, imagePrev[i]);
-
-        //    unsigned char aaaaa = 0;
-        //    value = img[i];
-        //    if (negative) {
-        //        aaaaa = imagePrev[i] - value;
-        //    } else {
-        //        aaaaa = imagePrev[i] + value;
-        //    }
-        //    printf("%03d, diff: %03d (%d)\n", aaaaa, img[i], negative);
-        //}
-
-        // Rebuild current frame
-        value = img[i];
-        if (negative) {
-            img[i] = imagePrev[i] - value;
-        } else {
-            img[i] = imagePrev[i] + value;
-        }
-        
-        if (++count == 8) {
-            count = 0;
-            idxSign++;
-        }
-    }
-
-    // Update previous image
-    memcpy(imagePrev, img, imageBufferSize);
-#endif
-    */
 
     return SVL_OK;
 }
@@ -1009,7 +935,8 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
 #ifdef _DEBUG_
                 std::cout << "sign: " << totalByteRecv << " / " << ((Width * Height * 3) / 8 +1 ) << std::endl;
 #endif
-                if (totalByteRecv >= (Width * Height * 3) / 8 + 1) {
+                //if (totalByteRecv >= (Width * Height * 3) / 8 + 1) {
+                if (totalByteRecv >= (Width * Height * 2) / 8 + 1) {
 #ifdef _DEBUG_
                     std::cout << "svlVideoCodecUDP: completed receiving image diff sign data" << std::endl;
 #endif
@@ -1156,7 +1083,7 @@ int svlVideoCodecUDP::SendUDP(void)
 }
 
 #ifdef TEMPORAL_DIFF
-void svlVideoCodecUDP::CreateImageBuffers(const unsigned int imageBufferSize)
+void svlVideoCodecUDP::CreateImageBuffers(const unsigned int width, const unsigned int height)
 {
     if (imagePrev) {
         delete [] imagePrev;
@@ -1168,15 +1095,17 @@ void svlVideoCodecUDP::CreateImageBuffers(const unsigned int imageBufferSize)
         delete [] imageDiffSign;
     }
 
-    imagePrev = new unsigned char[imageBufferSize];
-    imageDiff = new unsigned char[imageBufferSize];
-    imageDiffSign = new unsigned char[imageBufferSize / 8 + 1];
+    const unsigned int bufferSize = width * height * 2; // YUV space
 
-    ImageDiffSignArraySize = imageBufferSize / 8 + 1;
+    imagePrev = new unsigned char[bufferSize];
+    imageDiff = new unsigned char[bufferSize];
+    imageDiffSign = new unsigned char[bufferSize / 8 + 1];
+
+    ImageDiffSignArraySize = bufferSize / 8 + 1;
 
     // initialize previous image buffer
-    memset(imagePrev, 0, imageBufferSize);
-    memset(imageDiff, 0, imageBufferSize);
+    memset(imagePrev, 0, bufferSize);
+    memset(imageDiff, 0, bufferSize);
     memset(imageDiffSign, 0, ImageDiffSignArraySize);
 }
 #endif
