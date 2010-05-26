@@ -204,6 +204,10 @@ ENDIF(BUILD_LIBS_cisstNumerical AND CISST_HAS_CISSTNETLIB)
 #    SET(CISST_SVL_HAS_WEBGUI "ON" CACHE INTERNAL "WebGUI switch")
 #ENDIF(SWIG_FOUND AND CISST_HAS_XML)
 
+IF(WIN32)
+    SET(PROGRAMFILES_DIR "$ENV{SystemDrive}/Program Files")
+    SET(PROGRAMFILES_X86_DIR "$ENV{SystemDrive}/Program Files (x86)")
+ENDIF(WIN32)
 
 # OpenCV
 IF(CISST_SVL_HAS_OPENCV OR NOT OpenCV_OPTIONS)
@@ -516,14 +520,14 @@ IF(CISST_SVL_HAS_MIL OR NOT MIL_OPTIONS)
     SET(MIL_FOUND "NO")
     FIND_PATH(MIL_INCLUDE_DIR mil.h
               "/opt/matrox_imaging/mil/include"
-              "C:/Program Files/Matrox Imaging/Mil/Include"
-              "D:/Program Files/Matrox Imaging/Mil/Include"
+              "${PROGRAMFILES_DIR}/Matrox Imaging/Mil/Include"
+              "${PROGRAMFILES_X86_DIR}/Matrox Imaging/Mil/Include"
               DOC "What is the path where the file mil.h can be found"
               )
     FIND_LIBRARY(MIL_mil_LIBRARY mil
                  "/opt/matrox_imaging/mil/lib"
-                 "C:/Program Files/Matrox Imaging/Mil/LIB"
-                 "D:/Program Files/Matrox Imaging/Mil/LIB"
+                 "${PROGRAMFILES_DIR}/Matrox Imaging/Mil/LIB"
+                 "${PROGRAMFILES_X86_DIR}/Matrox Imaging/Mil/LIB"
                  DOC "Where can the MIL mil library be found"
                  )
     IF(MIL_INCLUDE_DIR)
@@ -625,8 +629,6 @@ IF(WIN32)
                 svlVidCapSrcDirectShowInputSelector.cpp
                 svlVidCapSrcDirectShow.h                    # private header
                 svlVidCapSrcDirectShow.cpp
-                #svlVideoCodecDirectShow.h                   # private header
-                #svlVideoCodecDirectShow.cpp
                 )
             MESSAGE(STATUS "DirectShow found - Switch to advanced view for details")
             OPTION(CISST_SVL_HAS_DIRECTSHOW "Compile DirectShow extensions" ON)
@@ -657,30 +659,30 @@ IF(WIN32)
 
         SET(SVS_FOUND "NO")
         FIND_PATH(SVS_INCLUDE_DIR svs.h
-                  "C:/Program Files/SRI SVS42/src"
-                  "C:/Program Files/SRI International/SVS42/src"
-                  "C:/Program Files/SRI International/SVS41/src"
-                  "D:/Program Files/SRI SVS42/src"
-                  "D:/Program Files/SRI International/SVS42/src"
-                  "D:/Program Files/SRI International/SVS41/src"
+                  "${PROGRAMFILES_DIR}/SRI SVS42/src"
+                  "${PROGRAMFILES_DIR}/SRI International/SVS42/src"
+                  "${PROGRAMFILES_DIR}/SRI International/SVS41/src"
+                  "${PROGRAMFILES_X86_DIR}/SRI SVS42/src"
+                  "${PROGRAMFILES_X86_DIR}/SRI International/SVS42/src"
+                  "${PROGRAMFILES_X86_DIR}/SRI International/SVS41/src"
                   DOC "What is the path where the file svs.h can be found"
                   )
         FIND_LIBRARY(SVS_svs_LIBRARY svs
-                     "C:/Program Files/SRI SVS42/bin"
-                     "C:/Program Files/SRI International/SVS42/bin"
-                     "C:/Program Files/SRI International/SVS41/bin"
-                     "D:/Program Files/SRI SVS42/bin"
-                     "D:/Program Files/SRI International/SVS42/bin"
-                     "D:/Program Files/SRI International/SVS41/bin"
+                     "${PROGRAMFILES_DIR}/SRI SVS42/bin"
+                     "${PROGRAMFILES_DIR}/SRI International/SVS42/bin"
+                     "${PROGRAMFILES_DIR}/SRI International/SVS41/bin"
+                     "${PROGRAMFILES_X86_DIR}/SRI SVS42/bin"
+                     "${PROGRAMFILES_X86_DIR}/SRI International/SVS42/bin"
+                     "${PROGRAMFILES_X86_DIR}/SRI International/SVS41/bin"
                      DOC "Where can the SVS svs library be found"
                      )
         FIND_LIBRARY(SVS_svsgrab_LIBRARY svsgrab
-                     "C:/Program Files/SRI SVS42/bin"
-                     "C:/Program Files/SRI International/SVS42/bin"
-                     "C:/Program Files/SRI International/SVS41/bin"
-                     "D:/Program Files/SRI SVS42/bin"
-                     "D:/Program Files/SRI International/SVS42/bin"
-                     "D:/Program Files/SRI International/SVS41/bin"
+                     "${PROGRAMFILES_DIR}/SRI SVS42/bin"
+                     "${PROGRAMFILES_DIR}/SRI International/SVS42/bin"
+                     "${PROGRAMFILES_DIR}/SRI International/SVS41/bin"
+                     "${PROGRAMFILES_X86_DIR}/SRI SVS42/bin"
+                     "${PROGRAMFILES_X86_DIR}/SRI International/SVS42/bin"
+                     "${PROGRAMFILES_X86_DIR}/SRI International/SVS41/bin"
                      DOC "Where can the SVS svsgrab library be found"
                      )
         IF(SVS_INCLUDE_DIR)

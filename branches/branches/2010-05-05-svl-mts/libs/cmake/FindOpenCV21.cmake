@@ -56,9 +56,9 @@ ENDIF(NOT OpenCV21_FIND_COMPONENTS)
 IF(WIN32)
     SET(OpenCV21_POSSIBLE_ROOT_DIRS
         "$ENV{OpenCV_ROOT_DIR}"
-        "$ENV{SystemDrive}/OpenCV2.1"       # Windows: OpenCV 2.1 default installation dir
-        "$ENV{ProgramFiles}/OpenCV2.1"      # 32 bit ProgramFiles dir on Win32;  64 bit ProgramFiles dir on Win64
-        "$ENV{ProgramFiles(x86)}/OpenCV2.1" # 32 bit ProgramFiles dir on Win64
+        "$ENV{SystemDrive}/OpenCV2.1"                     # Windows: OpenCV 2.1 default installation dir
+        "$ENV{SystemDrive}/Program Files/OpenCV2.1"       # 32 bit ProgramFiles dir on Win32;  64 bit ProgramFiles dir on Win64
+        "$ENV{SystemDrive}/Program Files (x86)/OpenCV2.1" # 32 bit ProgramFiles dir on Win64
         )
 ELSE(WIN32)
     SET(OpenCV21_POSSIBLE_ROOT_DIRS
