@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <limits> // for statistics
 
 // Turn on image compression by pixel-by-pixel value difference
-#define TEMPORAL_DIFF
+#define INTERFRAME_DIFF
 
 class svlVideoCodecUDP : public svlVideoCodecBase, public cmnGenericObject
 {
@@ -241,7 +241,7 @@ protected:
 
         /*! Frame sequence of an image that this payload belongs to */
         unsigned int FrameSeq;
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
         /*! Payload type: 0 for image data, 1 for diff sign data */
         char PayloadType;
 #endif
@@ -253,7 +253,7 @@ protected:
         //double Timestamp;
     };
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     enum { PAYLOAD_IMAGE, PAYLOAD_SIGN };
 #endif
 
@@ -299,7 +299,8 @@ protected:
     cmnGenericObject * DeSerialize(const std::string & serializedObject);
 
     /*! Create internal buffers to process image frames */
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
+    unsigned int ImageBufferSize;
     unsigned int ImageDiffSignArraySize;
     void CreateImageBuffers(const unsigned int width, const unsigned int height);
 #endif

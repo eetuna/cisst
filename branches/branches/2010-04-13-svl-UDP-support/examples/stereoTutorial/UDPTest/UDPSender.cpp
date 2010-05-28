@@ -56,19 +56,19 @@ int VideoConverter(int argc, char** argv)
     // Input files
     if (argc == 4) {
         if (converter_source.SetFilePath(argv[1], SVL_LEFT) != SVL_OK) {
-            cerr << endl << "Invalid file name: " << argv[1] << endl;
+            cerr << endl << "Invalid file name for left source: " << argv[1] << endl;
             exit(1);
         }
-        converter_source.GetFilePath(sourceleft);
+        converter_source.GetFilePath(sourceleft, SVL_LEFT);
 
         if (converter_source.SetFilePath(argv[2], SVL_RIGHT) != SVL_OK) {
-            cerr << endl << "Invalid file name: " << argv[1] << endl;
+            cerr << endl << "Invalid file name for right source: " << argv[2] << endl;
             exit(1);
         }
-        converter_source.GetFilePath(sourceright);
+        converter_source.GetFilePath(sourceright, SVL_RIGHT);
 
         if (converter_writer.SetFilePath(argv[3]) != SVL_OK) {
-            cerr << endl << "Invalid file name: " << argv[1] << endl;
+            cerr << endl << "Invalid file name for output file: " << argv[3] << endl;
             exit(1);
         }
         converter_writer.GetFilePath(destination);

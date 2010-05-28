@@ -49,11 +49,28 @@ const unsigned int ZLibCompressionLevel = 3;
 #endif
 
 // Enable/disable interframe difference
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
 static unsigned char * imagePrev = 0;
 static unsigned char * imageDiff = 0;
 static unsigned char * imageDiffSign = 0;
+
+// Boost image processing performance using CUDA
+#define CUDA_BOOST
+#ifdef CUDA_BOOST
+extern "C" void InitializeCUDA(void);
+extern "C" void CreateDeviceBuffers(unsigned int bufferSize);
+extern "C" void CleanupDeviceBuffers();
+extern "C" void InterFrameDiff(unsigned char * imageCurrent,
+                               unsigned char * imagePrevious,
+                               unsigned char * imageDiff,
+                               unsigned char * imageDiffSign);
+
+static unsigned char * imagePrevCUDA = 0;
+static unsigned char * imageDiffCUDA = 0;
+static unsigned char * imageDiffSignCUDA = 0;
 #endif
+
+#endif // INTERFRAME_DIFF
 
 // Enable profiling code
 #define PROFILE_WRITE
@@ -66,21 +83,12 @@ static double * tocYUV = 0;
 static double * tocZlib = 0;
 #endif
 
-// Experiments
-/*
-#define EXP_CUDA_05092010
-#ifdef EXP_CUDA_05092010
-#include <cuda.h>
-#endif
-
-extern "C" void TestCUDA(int imageWidth, int imageHeight);
-*/
-
 //-------------------------------------------------------------------------
 //  Constant Definitions
 //-------------------------------------------------------------------------
 // Network support
-#define UDP_RECEIVER_IP "lcsr-minyang.compscidhcp.jhu.edu"
+//#define UDP_RECEIVER_IP "lcsr-minyang.compscidhcp.jhu.edu"
+#define UDP_RECEIVER_IP "127.0.0.1"
 #define UDP_RECV_PORT   20705
 
 struct sockaddr_in SendToAddr;
@@ -89,7 +97,7 @@ struct sockaddr_in SendToAddr;
 #define RECEIVE_BUFFER_SIZE (10 * 1024 * 1024) // 20 MB
 char ReceiveBuffer[RECEIVE_BUFFER_SIZE];
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
 char ReceiveBufferSign[RECEIVE_BUFFER_SIZE];
 #endif
 
@@ -112,8 +120,8 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     SerializedClassService(0), SerializedClassServiceSize(0),
     ProcessCount(0),
     BufferYUV(0), BufferYUVSize(0), BufferCompression(0), BufferCompressionSize(0),
-#ifdef TEMPORAL_DIFF
-    ImageDiffSignArraySize(0),
+#ifdef INTERFRAME_DIFF
+    ImageBufferSize(0), ImageDiffSignArraySize(0),
 #endif
     NetworkEnabled(true)
 {
@@ -136,8 +144,12 @@ svlVideoCodecUDP::svlVideoCodecUDP() :
     Serializer = new cmnSerializer(SerializationStreamBuffer);
     DeSerializer = new cmnDeSerializer(DeSerializationStreamBuffer);
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     memset(ReceiveBufferSign, 0, RECEIVE_BUFFER_SIZE);
+
+#ifdef CUDA_BOOST
+    InitializeCUDA();
+#endif
 #endif
 }
 
@@ -152,10 +164,18 @@ svlVideoCodecUDP::~svlVideoCodecUDP()
     if (BufferYUV) delete [] BufferYUV;
     if (BufferCompression) delete [] BufferCompression;
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     if (imagePrev) delete [] imagePrev;
     if (imageDiff) delete [] imageDiff;
     if (imageDiffSign) delete [] imageDiffSign;
+
+#ifdef CUDA_BOOST
+    if (imagePrevCUDA) delete [] imagePrevCUDA;
+    if (imageDiffCUDA) delete [] imageDiffCUDA;
+    if (imageDiffSignCUDA) delete [] imageDiffSignCUDA;
+
+    CleanupDeviceBuffers();
+#endif
 #endif
 
 #ifdef PROFILE_WRITE
@@ -358,7 +378,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
             SubImageOffset.SetSize(procInfo->count);
             SubImageSize.SetSize(procInfo->count);
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
 			std::cout << "svlVideoCodecUDP: image size: " << image.GetDataSize() << "(" 
 				<< imageWidth << "x" << imageHeight << ")" << std::endl;
 			
@@ -370,12 +390,18 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         }
 
         // Initialization before getting interframe difference
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
         memset(imageDiffSign, 0, ImageDiffSignArraySize);
+#ifdef CUDA_BOOST
+        memset(imageDiffSignCUDA, 0, ImageDiffSignArraySize);
+#endif
 
 #ifdef FRAME_RESET
         if (frameNo % ResetFrameCount == 0) {
             memset(imagePrev, 0, imageWidth * imageHeight * 2);
+#ifdef CUDA_BOOST
+            memset(imagePrevCUDA, 0, imageWidth * imageHeight * 2);
+#endif
         }
 #endif
 #endif
@@ -385,12 +411,62 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
     _SynchronizeThreads(procInfo);
 
+#if 1
     const unsigned int procid = procInfo->id;
     const unsigned int proccount = procInfo->count;
     unsigned int start, end, size, offset;
     unsigned long comprsize;
 	unsigned char * imageToBeCompressed = const_cast<unsigned char *>(image.GetUCharPointer());
 
+#ifdef CUDA_BOOST
+    // Three processing steps:
+    // 1. Convert color space from RGB to YUV: CPU
+    // 2. Reduce data size by inter-frame difference: GPU
+    // (3. Reduce data size by L-R difference: GPU => TODO)
+    // 4. Zlib compression: CPU
+
+    // Parallelized(multi-threaded) compression
+    while (1) {
+        // Compute part size and offset
+        size = Height / proccount + 1;
+        comprsize = BufferCompressionSize / proccount;
+        start = procid * size;
+        if (start >= Height) break;
+        end = start + size;
+        if (end > Height) end = Height;
+        offset = start * Width;
+        size = Width * (end - start);
+        SubImageOffset[procid] = procid * comprsize;
+
+        // 1. Convert color space from RGB to YUV: CPU
+        svlConverter::RGB24toYUV422P(imageToBeCompressed + offset * 3, BufferYUV + offset * 2, size);
+
+        // 2. Reduce data size by inter-frame difference: GPU
+        _SynchronizeThreads(procInfo);
+
+        _OnSingleThread(procInfo)
+        {
+            // Initialize sign array
+            memset(imageDiffSignCUDA, 0, ImageDiffSignArraySize);
+
+            InterFrameDiff(BufferYUV, imagePrevCUDA, imageDiffCUDA, imageDiffSignCUDA);
+        }
+
+        _SynchronizeThreads(procInfo);
+
+        // 4. Zlib compression: CPU
+        if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, 
+            imageDiffCUDA + offset * 2, size * 2, 
+            ZLibCompressionLevel) != Z_OK) 
+        {
+            err = true;
+        }
+
+        SubImageSize[procid] = comprsize;
+
+        break;
+    }
+#else // CUDA_BOOST
     // Parallelized(multi-threaded) compression
     while (1) {
         // Compute part size and offset
@@ -413,17 +489,14 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         tocYUV[procid] = osaGetTime();
 #endif
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
         // Get interframe image difference in YUV space
-        int idxSign = (offset * 2) / 8, count = 0, diff;
+        int beginIdx = offset * 2;
+        int idxSign = beginIdx / 8, count = beginIdx % 8, diff;
         unsigned int endIdx = offset * 2 + size * 2;
 
-        for (unsigned int i = offset * 2; i < endIdx; ++i) {
+        for (unsigned int i = beginIdx; i < endIdx; ++i) {
             diff = BufferYUV[i] - imagePrev[i];
-
-            //if (100 <= i && i <= 104) {
-            //    printf("[%d] %d, %d, %d\n", frameNo, imagePrev[i], BufferYUV[i], diff);
-            //}
 
             // Populate array of image difference sign
             if (diff > 0) {
@@ -434,8 +507,6 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
             // Update difference image
             imageDiff[i] = abs(diff);
-            // Update previous image
-            //imagePrev[i] = BufferYUV[i];
             imagePrev[i] += diff;
 
             // Update index
@@ -444,14 +515,14 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
                 idxSign++;
             }
 		}
-#endif
+#endif // INTERFRAME_DIFF
 
         // Compress part
 #ifdef PROFILE_WRITE
         ticZlib[procid] = osaGetTime();
 #endif
         if (compress2(BufferCompression + SubImageOffset[procid], &comprsize, 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
                       imageDiff + offset * 2, size * 2, 
 #else 
                       BufferYUV + offset * 2, size * 2, 
@@ -468,6 +539,165 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
 
         break;
     }
+#endif // CUDA_BOOST
+
+#endif
+
+    // Test code: Correctness test
+#if 0
+    // Three processing steps:
+    // 1. Convert color space from RGB to YUV: CPU
+    // 2. Reduce data size by inter-frame difference: GPU
+    // (3. Reduce data size by L-R difference: GPU => TODO)
+    // 4. Zlib compression: CPU
+    //
+
+    const unsigned int procid = procInfo->id;
+    const unsigned int proccount = procInfo->count;
+    unsigned int start, end, size, offset;
+    unsigned long comprsize;
+    unsigned char * imageToBeCompressed = const_cast<unsigned char *>(image.GetUCharPointer());
+
+    // Initialize sign array element
+    _OnSingleThread(procInfo)
+    {
+        memset(imageDiffSign, 0, ImageDiffSignArraySize);
+    }
+    _SynchronizeThreads(procInfo);
+
+    // Parallelized(multi-threaded) compression
+    while (1) {
+        // Compute part size and offset
+        size = Height / proccount + 1;
+        comprsize = BufferCompressionSize / proccount;
+        start = procid * size;
+        if (start >= Height) break;
+        end = start + size;
+        if (end > Height) end = Height;
+        offset = start * Width;
+        size = Width * (end - start);
+        SubImageOffset[procid] = procid * comprsize;
+
+        // 1. Convert color space from RGB to YUV: CPU
+        svlConverter::RGB24toYUV422P(imageToBeCompressed + offset * 3, BufferYUV + offset * 2, size);
+
+        // Get interframe image difference in YUV space
+        int beginIdx = offset * 2;
+        int idxSign = beginIdx / 8, count = beginIdx % 8, diff;
+        unsigned int endIdx = offset * 2 + size * 2;
+
+        for (unsigned int i = beginIdx; i < endIdx; ++i) {
+            diff = BufferYUV[i] - imagePrev[i];
+
+            // Populate array of image difference sign
+            if (diff > 0) {
+                imageDiffSign[idxSign] |= 0 << count;
+            } else {
+                imageDiffSign[idxSign] |= 1 << count;
+            }
+
+            // Update difference image
+            imageDiff[i] = abs(diff);
+            imagePrev[i] += diff;
+
+            // Update index
+            if (++count == 8) {
+                count = 0;
+                idxSign++;
+            }
+        }
+
+        break;
+    }
+
+    // 2. Reduce data size by inter-frame difference: GPU
+    _SynchronizeThreads(procInfo);
+
+    _OnSingleThread(procInfo)
+    {
+        // Initialize sign array
+        memset(imageDiffSignCUDA, 0, ImageDiffSignArraySize);
+
+        InterFrameDiff(BufferYUV, imagePrevCUDA, imageDiffCUDA, imageDiffSignCUDA);
+    }
+
+    _SynchronizeThreads(procInfo);
+
+    // Check if results from two different methods match exactly
+    _OnSingleThread(procInfo) {
+        int a=0, b=0, c=0;
+        for (int i = 0; i < ImageBufferSize; i++) {
+            if (imagePrev[i] != imagePrevCUDA[i]) {
+                a++;
+            //*
+                if (i == 10) {
+                    printf("prev: ");
+                    for (int j = 0; j < 10; j++) {
+                        printf("%d ", imagePrev[j]);
+                    }
+                    printf("\n");
+
+                    printf("cuda: ");
+                    for (int j = 0; j < 10; j++) {
+                        printf("%d ", imagePrevCUDA[j]);
+                    }
+                    printf("\n");
+                }
+            //*/
+            }
+            if (imageDiff[i] != imageDiffCUDA[i]) {
+                b++;
+
+                //*
+                if (i == 10) {
+                    printf("diff: ");
+                    for (int j = 0; j < 10; j++) {
+                        printf("%d ", imageDiff[j]);
+                    }
+                    printf("\n");
+
+                    printf("cuda: ");
+                    for (int j = 0; j < 10; j++) {
+                        printf("%d ", imageDiffCUDA[j]);
+                    }
+                    printf("\n");
+                }
+                //*/
+            }
+        }
+        //*
+        for (int i = 0; i < ImageDiffSignArraySize; i++) {
+            if (imageDiffSign[i] != imageDiffSignCUDA[i]) {
+                c++;
+
+                if (i == 10) {
+                    printf("sign: ");
+                    for (int j = 0; j < 10; j++) {
+                        printf("%d ", imageDiffSign[j]);
+                    }
+                    printf("\n");
+
+                    printf("cuda: ");
+                    for (int j = 0; j < 10; j++) {
+                        printf("%d ", imageDiffSignCUDA[j]);
+                    }
+                    printf("\n");
+                }
+            }
+        }
+        //*/
+
+        static int count = 0;
+        printf("[%d] (%u) diff count: %d, %d, %d\n", count, ImageBufferSize, a, b, c);
+        if (count++ >= 5) {
+            printf("============ test completed\n");
+            return SVL_FAIL;
+        }
+    }
+
+    return SVL_OK;
+
+#endif
 
     _SynchronizeThreads(procInfo);
 
@@ -521,6 +751,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         }
     }
 
+    /*
 #ifdef PROFILE_WRITE
     const double tocWrite = osaGetTime();
     const unsigned int sizeCompressedImage = SubImageSize.SumOfElements();
@@ -544,6 +775,7 @@ int svlVideoCodecUDP::Write(svlProcInfo* procInfo, const svlSampleImageBase &ima
         << tocZlib[procid] - ticZlib[procid] << std::endl;
     logfile.close();
 #endif
+    */
 
     return SVL_OK;
 }
@@ -570,7 +802,7 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
         return SVL_FAIL;
     }
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     //const unsigned int imageBufferSize = Width * Height * 3;
     CreateImageBuffers(Width, Height);
 #endif
@@ -608,7 +840,7 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
     DeSerializer->DeSerialize(false);
 
     // Rebuild original image frame
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     unsigned int compressedpartsize, offset, pos;
     unsigned long longsize;
     int ret = SVL_FAIL;
@@ -623,8 +855,7 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
         // Decompress frame part
         longsize = BufferYUVSize - offset;
         if (uncompress(BufferYUV + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
-            std::cout << "ERROR: Uncompress failed" << std::endl;
-            exit(1);
+            std::cout << "ERROR2: Uncompress failed" << std::endl;
             return SVL_FAIL;
         }
 
@@ -634,6 +865,9 @@ int svlVideoCodecUDP::Open(const std::string &filename, unsigned int &width, uns
 
     // Set first image in YUV space
     memcpy(imagePrev, BufferYUV, BufferYUVSize);
+#ifdef CUDA_BOOST
+    memcpy(imagePrevCUDA, BufferYUV, BufferYUVSize);
+#endif
 #endif
 
     return SVL_OK;
@@ -673,10 +907,13 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     unsigned long longsize;
     int ret = SVL_FAIL;
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
 #ifdef FRAME_RESET
     if (frameNo % ResetFrameCount == 0) {
         memset(imagePrev, 0, Width * Height * 2);
+#ifdef CUDA_BOOST
+        memset(imagePrevCUDA, 0, Width * Height * 2);
+#endif
     }
 #endif
 #endif
@@ -684,24 +921,19 @@ int svlVideoCodecUDP::Read(svlProcInfo* procInfo, svlSampleImageBase & image, co
     offset = pos = 0;
     for (i = 0; i < ProcessCount; ++i) {
         compressedpartsize = SubImageSize[i];
-#ifdef _DEBUG_
-        std::cout << "[" << i << "] size: " << compressedpartsize << std::endl;
-#endif
 
         // Decompress frame part
         longsize = BufferYUVSize - offset;
         if (uncompress(BufferYUV + offset, &longsize, (const Bytef*) (ReceiveBuffer + pos), compressedpartsize) != Z_OK) {
-            std::cout << "ERROR: Uncompress failed" << std::endl;
-            exit(1);
+            std::cout << "ERROR1: Uncompress failed" << std::endl;
             return SVL_FAIL;
         }
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
         // Recover current image based on rgb value difference and its sign
         int idxSign = offset / 8, count = 0, t;
         bool negative = false;
 
-        //for (unsigned int i = pos; i < pos + compressedpartsize; ++i) {
         for (unsigned int j = offset; j < offset + longsize; ++j) {
             if (count == 0) {
                 t = ReceiveBufferSign[idxSign];
@@ -779,7 +1011,7 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
 
     bool received = false;
     int byteRecv = 0;
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     int payloadType = PAYLOAD_IMAGE;
 #endif
     unsigned int totalByteRecv = 0;
@@ -894,7 +1126,7 @@ unsigned int svlVideoCodecUDP::GetOneImage(double & senderTick)
                 continue;
             }
 
-#ifndef TEMPORAL_DIFF
+#ifndef INTERFRAME_DIFF
             // Copy payload into receive buffer
             memcpy(ReceiveBuffer + totalByteRecv, payload->Payload, payload->PayloadSize);
             totalByteRecv += payload->PayloadSize;
@@ -990,7 +1222,7 @@ int svlVideoCodecUDP::SendUDP(void)
     // Send image data
     MSG_PAYLOAD payload;
     payload.FrameSeq = frameSeq;
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     payload.PayloadType = PAYLOAD_IMAGE;
 #endif
 
@@ -1037,14 +1269,19 @@ int svlVideoCodecUDP::SendUDP(void)
     printf("Send image complete: %u / %u\n", totalByteSent, SubImageSize.SumOfElements());
 #endif
     
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
     // Send sign array
     MSG_PAYLOAD signs;
     signs.FrameSeq = frameSeq;
     signs.PayloadType = PAYLOAD_SIGN;
 
     byteSent = totalByteSent = 0;
+
+#ifndef CUDA_BOOST
     unsigned char * signArrayPtr = imageDiffSign;
+#else
+    unsigned char * signArrayPtr = imageDiffSignCUDA;
+#endif
         
     while (byteSent < ImageDiffSignArraySize) {
         n = ( (UNIT_MESSAGE_SIZE > (ImageDiffSignArraySize - byteSent)) ? (ImageDiffSignArraySize - byteSent) : UNIT_MESSAGE_SIZE);
@@ -1082,7 +1319,7 @@ int svlVideoCodecUDP::SendUDP(void)
     return SVL_OK;
 }
 
-#ifdef TEMPORAL_DIFF
+#ifdef INTERFRAME_DIFF
 void svlVideoCodecUDP::CreateImageBuffers(const unsigned int width, const unsigned int height)
 {
     if (imagePrev) {
@@ -1095,17 +1332,40 @@ void svlVideoCodecUDP::CreateImageBuffers(const unsigned int width, const unsign
         delete [] imageDiffSign;
     }
 
-    const unsigned int bufferSize = width * height * 2; // YUV space
+    ImageBufferSize = width * height * 2; // YUV space
+    ImageDiffSignArraySize = ImageBufferSize / 8 + 1;
 
-    imagePrev = new unsigned char[bufferSize];
-    imageDiff = new unsigned char[bufferSize];
-    imageDiffSign = new unsigned char[bufferSize / 8 + 1];
-
-    ImageDiffSignArraySize = bufferSize / 8 + 1;
+    imagePrev = new unsigned char[ImageBufferSize];
+    imageDiff = new unsigned char[ImageBufferSize];
+    imageDiffSign = new unsigned char[ImageDiffSignArraySize];
 
     // initialize previous image buffer
-    memset(imagePrev, 0, bufferSize);
-    memset(imageDiff, 0, bufferSize);
+    memset(imagePrev, 0, ImageBufferSize);
+    memset(imageDiff, 0, ImageBufferSize);
     memset(imageDiffSign, 0, ImageDiffSignArraySize);
+
+#ifdef CUDA_BOOST
+    if (imagePrevCUDA) {
+        delete [] imagePrevCUDA;
+    }
+    if (imageDiffCUDA) {
+        delete [] imageDiffCUDA;
+    }
+    if (imageDiffSignCUDA) {
+        delete [] imageDiffSignCUDA;
+    }
+
+    // Allocate temporary image buffers on host memory
+    imagePrevCUDA = new unsigned char[ImageBufferSize];
+    imageDiffCUDA = new unsigned char[ImageBufferSize];
+    imageDiffSignCUDA = new unsigned char[ImageDiffSignArraySize];
+
+    // initialize previous image buffer
+    memset(imagePrevCUDA, 0, ImageBufferSize);
+    memset(imageDiffCUDA, 0, ImageBufferSize);
+    memset(imageDiffSignCUDA, 0, ImageDiffSignArraySize);
+
+    CreateDeviceBuffers(ImageBufferSize);
+#endif
 }
 #endif
