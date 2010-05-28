@@ -49,8 +49,8 @@ int VideoConverter(std::string &src_path, std::string &dst_path, bool loadcodec)
         source.SetFilePath(src_path);
     }
 
-//    source.SetTargetFrequency(1000.0); // as fast as possible
-    source.SetLoop(true);
+    source.SetTargetFrequency(1000.0); // as fast as possible
+    source.SetLoop(false);
 
     if (dst_path.empty()) {
         if (writer.DialogFilePath() != SVL_OK) {

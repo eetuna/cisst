@@ -26,13 +26,13 @@
 #include <cisstStereoVision/svlTypes.h>
 #include "svlVideoCodecInitializer.h"
 
-#if (CISST_OS == CISST_WINDOWS)
-#include "svlVideoCodecVfW32.h"
-#else
-    #if (CISST_SVL_HAS_OPENCV == ON)
-    #include "svlVideoCodecOpenCV.h"
-    #endif // CISST_SVL_HAS_OPENCV
-#endif // CISST_WINDOWS
+#if (CISST_SVL_HAS_OPENCV == ON)
+#include "svlVideoCodecOpenCV.h"
+#else // CISST_SVL_HAS_OPENCV
+    #if (CISST_OS == CISST_WINDOWS)
+    #include "svlVideoCodecVfW32.h"
+    #endif // CISST_WINDOWS
+#endif // CISST_SVL_HAS_OPENCV
 
 #if (CISST_SVL_HAS_ZLIB == ON)
 #include "svlVideoCodecCVI.h"

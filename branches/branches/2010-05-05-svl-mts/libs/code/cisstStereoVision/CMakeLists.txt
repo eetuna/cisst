@@ -325,16 +325,10 @@ IF(CISST_SVL_HAS_OPENCV OR NOT OpenCV_OPTIONS)
             svlFilterToolTracker.cpp
             svlVidCapSrcOpenCV.h        # private header
             svlVidCapSrcOpenCV.cpp
+            svlVideoCodecOpenCV.h       # private header
+            svlVideoCodecOpenCV.cpp
             svlTrackerOCVMeanShift.cpp
             )
-        IF(UNIX)
-            # OpenCV video file support is weak in Windows
-            SET(SOURCE_FILES
-                ${SOURCE_FILES}
-                svlVideoCodecOpenCV.h       # private header
-                svlVideoCodecOpenCV.cpp
-                )
-        ENDIF(UNIX)
 
         SET(HEADER_FILES
             ${HEADER_FILES}
@@ -369,10 +363,10 @@ IF(CISST_SVL_HAS_JPEG OR NOT JPEG_OPTIONS)
         CACHE INTERNAL "List of JPEG options"
         )
 
-    IF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR)
+    IF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR AND NOT JPEG_FOUND)
         FIND_PATH(JPEG_INCLUDE_DIR jpeglib.h "${SVL_GNU_INCLUDE_DIR}")
         FIND_FILE(JPEG_LIBRARY jpeg.lib "${SVL_GNU_LIBRARY_DIR}")
-    ENDIF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR)
+    ENDIF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR AND NOT JPEG_FOUND)
 
     FIND_PACKAGE(JPEG)
     IF(JPEG_FOUND)
@@ -393,6 +387,17 @@ IF(CISST_SVL_HAS_JPEG OR NOT JPEG_OPTIONS)
             )
         MESSAGE(STATUS "JPEG found - Switch to advanced view for details")
         OPTION(CISST_SVL_HAS_JPEG "Use JPEG extensions" ON)
+
+        IF(WIN32 AND NOT SVL_GNU_OPTIONS)
+            SET(SVL_GNU_OPTIONS
+                SVL_GNU_INCLUDE_DIR
+                SVL_GNU_LIBRARY_DIR
+                CACHE INTERNAL "List of GNU options"
+                )
+            SET(SVL_GNU_INCLUDE_DIR "${JPEG_INCLUDE_DIR}" CACHE PATH "GNU include directory")
+            GET_FILENAME_COMPONENT(SVL_GNU_LIBRARY_DIR "${JPEG_LIBRARY}" PATH CACHE)
+            MARK_AS_ADVANCED(FORCE SVL_GNU_INCLUDE_DIR SVL_GNU_LIBRARY_DIR)
+        ENDIF(WIN32 AND NOT SVL_GNU_OPTIONS)
 
     ELSE(JPEG_FOUND)
         IF(CISST_SVL_HAS_JPEG)
@@ -418,10 +423,10 @@ IF(CISST_SVL_HAS_ZLIB OR NOT ZLIB_OPTIONS)
         CACHE INTERNAL "List of ZLIB options"
         )
 
-    IF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR)
+    IF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR AND NOT ZLIB_FOUND)
         FIND_PATH(ZLIB_INCLUDE_DIR zlib.h "${SVL_GNU_INCLUDE_DIR}")
         FIND_FILE(ZLIB_LIBRARY zlib.lib "${SVL_GNU_LIBRARY_DIR}")
-    ENDIF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR)
+    ENDIF(SVL_GNU_INCLUDE_DIR AND SVL_GNU_LIBRARY_DIR AND NOT ZLIB_FOUND)
 
     FIND_PACKAGE(ZLIB)
     IF(ZLIB_FOUND)
@@ -444,6 +449,17 @@ IF(CISST_SVL_HAS_ZLIB OR NOT ZLIB_OPTIONS)
             )
         MESSAGE(STATUS "ZLIB found - Switch to advanced view for details")
         OPTION(CISST_SVL_HAS_ZLIB "Use ZLIB extensions" ON)
+
+        IF(WIN32 AND NOT SVL_GNU_OPTIONS)
+            SET(SVL_GNU_OPTIONS
+                SVL_GNU_INCLUDE_DIR
+                SVL_GNU_LIBRARY_DIR
+                CACHE INTERNAL "List of GNU options"
+                )
+            SET(SVL_GNU_INCLUDE_DIR "${ZLIB_INCLUDE_DIR}" CACHE PATH "GNU include directory")
+            GET_FILENAME_COMPONENT(SVL_GNU_LIBRARY_DIR "${ZLIB_LIBRARY}" PATH CACHE)
+            MARK_AS_ADVANCED(FORCE SVL_GNU_INCLUDE_DIR SVL_GNU_LIBRARY_DIR)
+        ENDIF(WIN32 AND NOT SVL_GNU_OPTIONS)
 
     ELSE(ZLIB_FOUND)
         IF(CISST_SVL_HAS_ZLIB)
@@ -744,35 +760,7 @@ IF(WIN32)
         OPTION(CISST_SVL_HAS_SVS "Compile Videre Design (SVS) extensions" OFF)
     ENDIF(CISST_SVL_HAS_SVS OR NOT SVS_OPTIONS)
 
-
     ADD_DEFINITIONS(-DWIN32_LEAN_AND_MEAN)
-
-    IF(NOT SVL_GNU_OPTIONS)
-        # Try to apply JPEG location to other GNU libraries
-        IF(JPEG_FOUND)
-            SET(SVL_GNU_OPTIONS
-                SVL_GNU_INCLUDE_DIR
-                SVL_GNU_LIBRARY_DIR
-                CACHE INTERNAL "List of GNU options"
-                )
-            SET(SVL_GNU_INCLUDE_DIR "${JPEG_INCLUDE_DIR}" CACHE PATH "GNU include directory")
-            GET_FILENAME_COMPONENT(SVL_GNU_LIBRARY_DIR "${JPEG_LIBRARY}" PATH CACHE)
-            MARK_AS_ADVANCED(FORCE SVL_GNU_INCLUDE_DIR SVL_GNU_LIBRARY_DIR)
-        ENDIF(JPEG_FOUND)
-
-        # Try to apply ZLIB location to other GNU libraries
-        IF(ZLIB_FOUND)
-            SET(SVL_GNU_OPTIONS
-                SVL_GNU_INCLUDE_DIR
-                SVL_GNU_LIBRARY_DIR
-                CACHE INTERNAL "List of GNU options"
-                )
-            SET(SVL_GNU_INCLUDE_DIR "${ZLIB_INCLUDE_DIR}" CACHE PATH "GNU include directory")
-            GET_FILENAME_COMPONENT(SVL_GNU_LIBRARY_DIR "${ZLIB_LIBRARY}" PATH CACHE)
-            MARK_AS_ADVANCED(FORCE SVL_GNU_INCLUDE_DIR SVL_GNU_LIBRARY_DIR)
-        ENDIF(ZLIB_FOUND)
-    ENDIF(NOT SVL_GNU_OPTIONS)
-
 
 ELSE(WIN32)
 

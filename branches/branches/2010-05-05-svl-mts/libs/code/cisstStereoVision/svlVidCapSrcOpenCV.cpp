@@ -35,6 +35,14 @@ http://www.cisst.org/cisst/license.txt.
     #define CMN_UNUSED(argument) argument
 #endif
 
+// For compatibility with earlier OpenCV versions
+#ifndef CV_CAP_UNICAP
+    #define CV_CAP_UNICAP   600
+#endif
+#ifndef CV_CAP_DSHOW
+    #define CV_CAP_DSHOW    700
+#endif
+
 
 /*************************************/
 /*** svlVidCapSrcOpenCV class ********/
@@ -103,14 +111,13 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
     if (deviceinfo == 0 || Initialized) return SVL_FAIL;
 
     int i, j, maxdevices;
-    int devid[600], width[600], height[600];
+    int devid[800], width[800], height[800];
     CvCapture *capture;
     IplImage *frame;
-    std::stringstream strstr;
 
     OCVNumberOfDevices = 0;
-    for (j = 1; j <= 5; j ++) {
-    // The first 5 APIs are supported right now
+    for (j = 1; j <= 7; j ++) {
+    // The first 7 APIs are supported right now
 
         // Bug in OpenCV's Mac OS X QuickTime implementation.
         // At the moment only the first device can be used.
@@ -189,6 +196,7 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
             deviceinfo[0][i].id = OCVDeviceID[i];
 
             // name
+            std::stringstream strstr;
             switch ((OCVDeviceID[i] / 100) * 100) {
                 case CV_CAP_IEEE1394:
 #if (CISST_OS == CISST_WINDOWS)
@@ -216,6 +224,14 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
 
                 case CV_CAP_QT:
                     strstr << "QuickTime Device (OpenCV: " << OCVDeviceID[i] << ")";
+                break;
+
+                case CV_CAP_UNICAP:
+                    strstr << "Unicap Device (OpenCV: " << OCVDeviceID[i] << ")";
+                break;
+
+                case CV_CAP_DSHOW:
+                    strstr << "DirectShow Device (OpenCV: " << OCVDeviceID[i] << ")";
                 break;
 
                 default:
