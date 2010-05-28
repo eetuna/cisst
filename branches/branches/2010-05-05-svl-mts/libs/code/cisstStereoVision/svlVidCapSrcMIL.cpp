@@ -380,7 +380,7 @@ int svlVidCapSrcMIL::Open()
 
         // Opening device
         if (!MILInitializeDevice(DeviceID[i], CaptureEnabled[DeviceID[i]], OverlayEnabled[DeviceID[i]], w, h, b)) goto labError;
-        if (b != 3) goto labError;
+        if (b != 1 && b != 3) goto labError;
 
         // Allocate capture buffers
         ImageBuffer[i] = new svlBufferImage(w, h);
