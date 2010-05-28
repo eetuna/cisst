@@ -114,6 +114,7 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
     int devid[800], width[800], height[800];
     CvCapture *capture;
     IplImage *frame;
+    char* imgdata;
 
     OCVNumberOfDevices = 0;
     for (j = 1; j <= 7; j ++) {
@@ -141,6 +142,7 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
         if (j*100 == CV_CAP_IEEE1394) continue;
 #endif // CISST_SVL_HAS_DC1394
 
+        imgdata = 0;
         for (i = 0; i < maxdevices; i ++) {
         // Find cameras
             capture = cvCaptureFromCAM(j * 100 + i);
@@ -153,6 +155,14 @@ int svlVidCapSrcOpenCV::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **
                 cvReleaseCapture(&capture);
                 continue;
             }
+
+            // Check if the capture device have already been initialized
+            if (frame->imageData == imgdata) {
+                cvReleaseCapture(&capture);
+                break;
+            }
+            imgdata = frame->imageData;
+
             width[OCVNumberOfDevices] = frame->width;
             height[OCVNumberOfDevices] = frame->height;
 
