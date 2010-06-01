@@ -26,8 +26,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlFilterImageTracker.h>
 #include <cisstStereoVision/svlSeries.h>
 
+// Always include last!
+#include <cisstStereoVision/svlExport.h>
 
-class svlTrackerMSBruteForce : public svlImageTracker
+
+class CISST_EXPORT svlTrackerMSBruteForce : public svlImageTracker
 {
 public:
     svlTrackerMSBruteForce();

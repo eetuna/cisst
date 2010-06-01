@@ -29,101 +29,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlExport.h>
 
 
-namespace CISST_EXPORT svlDraw
+namespace svlDraw
 {
-    void Pixel(svlSampleImage* image,
-               unsigned int videoch,
-               svlPoint2D pos,
-               svlRGB color);
-
-    void Pixel(svlSampleImage* image,
-               unsigned int videoch,
-               int x,
-               int y,
-               unsigned char r,
-               unsigned char g,
-               unsigned char b);
-
-    void Rectangle(svlSampleImage* image,
-                   unsigned int videoch,
-                   svlRect rect,
-                   svlRGB color,
-                   bool fill = true);
-
-    void Rectangle(svlSampleImage* image,
-                   unsigned int videoch,
-                   int left,
-                   int top,
-                   int right,
-                   int bottom,
-                   unsigned char r,
-                   unsigned char g,
-                   unsigned char b,
-                   bool fill = true);
-
-    void Line(svlSampleImage* image,
-              unsigned int videoch,
-              svlPoint2D from,
-              svlPoint2D to,
-              svlRGB color);
-
-    void Line(svlSampleImage* image,
-              unsigned int videoch,
-              int from_x,
-              int from_y,
-              int to_x,
-              int to_y,
-              unsigned char r,
-              unsigned char g,
-              unsigned char b);
-
-    void Poly(svlSampleImage* image,
-              unsigned int videoch,
-              const vctDynamicVectorRef<svlPoint2D> points,
-              svlRGB color,
-              unsigned int start = 0);
-
-    void Ellipse(svlSampleImage* image,
-                 unsigned int videoch,
-                 svlPoint2D center,
-                 vctInt2 radii,
-                 svlRGB color,
-                 double from_angle = 0.0,
-                 double to_angle = 360.0,
-                 double rotation = 0.0,
-                 int thickness = 1);
-
-    void Crosshair(svlSampleImage* image,
-                   unsigned int videoch,
-                   svlPoint2D pos,
-                   svlRGB color,
-                   unsigned int radius = 5);
-
-    void Crosshair(svlSampleImage* image,
-                   unsigned int videoch,
-                   int x,
-                   int y,
-                   unsigned char r,
-                   unsigned char g,
-                   unsigned char b,
-                   unsigned int radius = 5);
-
-    void Text(svlSampleImage* image,
-              unsigned int videoch,
-              svlPoint2D pos,
-              const std::string & text,
-              double fontsize,
-              svlRGB color);
-
-    void Text(svlSampleImage* image,
-              unsigned int videoch,
-              int x,
-              int y,
-              const std::string & text,
-              double fontsize,
-              unsigned char r,
-              unsigned char g,
-              unsigned char b);
+    void CISST_EXPORT Pixel(svlSampleImage* image, unsigned int videoch, svlPoint2D pos, svlRGB color);
+    void CISST_EXPORT Pixel(svlSampleImage* image, unsigned int videoch, int x, int y, unsigned char r, unsigned char g, unsigned char b);
+    void CISST_EXPORT Rectangle(svlSampleImage* image, unsigned int videoch, svlRect rect, svlRGB color, bool fill = true);
+    void CISST_EXPORT Rectangle(svlSampleImage* image, unsigned int videoch, int left, int top, int right, int bottom, unsigned char r, unsigned char g, unsigned char b, bool fill = true);
+    void CISST_EXPORT Line(svlSampleImage* image, unsigned int videoch, svlPoint2D from, svlPoint2D to, svlRGB color);
+    void CISST_EXPORT Line(svlSampleImage* image, unsigned int videoch, int from_x, int from_y, int to_x, int to_y, unsigned char r, unsigned char g, unsigned char b);
+    void CISST_EXPORT Poly(svlSampleImage* image, unsigned int videoch, const vctDynamicVectorRef<svlPoint2D> points, svlRGB color, unsigned int start = 0);
+    void CISST_EXPORT Ellipse(svlSampleImage* image, unsigned int videoch, svlPoint2D center, vctInt2 radii, svlRGB color, double from_angle = 0.0, double to_angle = 360.0, double rotation = 0.0, int thickness = 1);
+    void CISST_EXPORT Crosshair(svlSampleImage* image, unsigned int videoch, svlPoint2D pos, svlRGB color, unsigned int radius = 5);
+    void CISST_EXPORT Crosshair(svlSampleImage* image, unsigned int videoch, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned int radius = 5);
+    void CISST_EXPORT Text(svlSampleImage* image, unsigned int videoch, svlPoint2D pos, const std::string & text, double fontsize, svlRGB color);
+    void CISST_EXPORT Text(svlSampleImage* image, unsigned int videoch, int x, int y, const std::string & text, double fontsize, unsigned char r, unsigned char g, unsigned char b);
 };
 
 #endif // _svlDraw_h

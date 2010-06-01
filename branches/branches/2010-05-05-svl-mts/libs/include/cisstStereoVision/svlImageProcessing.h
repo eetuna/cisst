@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlExport.h>
 
 
-namespace CISST_EXPORT svlImageProcessing
+namespace svlImageProcessing
 {
     enum DI_Algorithm
     {
@@ -41,11 +41,11 @@ namespace CISST_EXPORT svlImageProcessing
         DI_AdaptiveDiscarding
     };
 
-    int Crop(svlSampleImage* src_img, unsigned int src_videoch, svlSampleImage* dst_img, unsigned int dst_videoch, int left, int top);
-    int Resize(svlSampleImage* src_img, unsigned int src_videoch, svlSampleImage* dst_img, unsigned int dst_videoch, bool interpolation);
-    int Resize(svlSampleImage* src_img, unsigned int src_videoch, svlSampleImage* dst_img, unsigned int dst_videoch, bool interpolation, vctDynamicVector<unsigned char>& internals);
-    int Deinterlace(svlSampleImage* image, unsigned int videoch, DI_Algorithm algorithm);
-    int DisparityMapToSurface(svlSampleImageMonoFloat* disparity_map, svlSampleImage3DMap* mesh_3d, svlCameraGeometry& camera_geometry, svlRect& roi);
+    int CISST_EXPORT Crop(svlSampleImage* src_img, unsigned int src_videoch, svlSampleImage* dst_img, unsigned int dst_videoch, int left, int top);
+    int CISST_EXPORT Resize(svlSampleImage* src_img, unsigned int src_videoch, svlSampleImage* dst_img, unsigned int dst_videoch, bool interpolation);
+    int CISST_EXPORT Resize(svlSampleImage* src_img, unsigned int src_videoch, svlSampleImage* dst_img, unsigned int dst_videoch, bool interpolation, vctDynamicVector<unsigned char>& internals);
+    int CISST_EXPORT Deinterlace(svlSampleImage* image, unsigned int videoch, DI_Algorithm algorithm);
+    int CISST_EXPORT DisparityMapToSurface(svlSampleImageMonoFloat* disparity_map, svlSampleImage3DMap* mesh_3d, svlCameraGeometry& camera_geometry, svlRect& roi);
 };
 
 #endif // _svlImageProcessing_h

@@ -25,8 +25,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterImageTracker.h>
 
+// Always include last!
+#include <cisstStereoVision/svlExport.h>
 
-class svlTrackerCisst : public svlImageTracker
+
+class CISST_EXPORT svlTrackerCisst : public svlImageTracker
 {
 public:
     svlTrackerCisst();
