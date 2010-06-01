@@ -23,6 +23,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsDeviceInterface.h>
 #include <cisstMultiTask/mtsRequiredInterface.h>
 
+template <class _argumentType>
+mtsFunctionReadOrWrite<_argumentType>::~mtsFunctionReadOrWrite()
+{}
+
 // specialize for Read using "mtsGenericObject &"
 template <>
 bool mtsFunctionReadOrWrite<mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
@@ -86,4 +90,3 @@ void mtsFunctionReadOrWrite<_argumentType>::ToStream(std::ostream & outputStream
 // force instantiation
 template class mtsFunctionReadOrWrite<mtsGenericObject>;
 template class mtsFunctionReadOrWrite<const mtsGenericObject>;
-

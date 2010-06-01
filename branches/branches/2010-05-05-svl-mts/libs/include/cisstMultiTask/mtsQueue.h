@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Peter Kazanzides
+  Author(s):  Peter Kazanzides, Anton Deguet
   Created on: 2007-09-05
 
-  (C) Copyright 2007-2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2007-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -56,7 +56,7 @@ protected:
     pointer Sentinel;  // end marker
     size_type Size;
 
-    // private method, can only be used once by construtor.  Doesn't support resize!
+    // private method, can only be used once by constructor.  Doesn't support resize!
     void Allocate(size_type size, const_reference value) {
         this->Size = size;
         if (this->Size > 0) {
@@ -97,7 +97,7 @@ public:
 
 
     /*! Sets the size of the queue (destructive, i.e. won't preserve
-        previously queued elements). */
+      previously queued elements). */
     inline void SetSize(size_type size, const_reference value) {
         delete [] Data;
         this->Allocate(size, value);
@@ -110,7 +110,8 @@ public:
     }
 
 
-    /*! Returns number of slots available in queue. */
+    /*! Returns number of elements available in queue, i.e. the number
+      of slots used. */
     inline size_type GetAvailable(void) const
     {
         int available = Head - Tail;
@@ -123,7 +124,11 @@ public:
 
     /*! Returns true if queue is full. */
     inline bool IsFull(void) const {
-        return this->GetAvailable() >= this->Size;
+        pointer oneAfterHead = this->Head + 1;
+        if (oneAfterHead >= this->Sentinel) {
+            oneAfterHead = this->Data;
+        }
+        return oneAfterHead == this->Tail;
     }
 
 
@@ -143,7 +148,7 @@ public:
     inline const_pointer Put(const typename mtsGenericTypesUnwrap<value_type>::BaseType &newObject)
     {
         pointer newHead = this->Head + 1;
-        // test if end of buffer
+        // test if end of buffer (same as IsFull method)
         if (newHead >= this->Sentinel) {
             newHead = this->Data;
         }
@@ -203,18 +208,24 @@ public:
 
 protected:
     const cmnClassServicesBase * ClassServices;
-    pointer Data;
-    pointer Head;
-    pointer Tail;
-    pointer Sentinel;  // end marker
+    pointer * Data;
+    pointer * Head;
+    pointer * Tail;
+    pointer * Sentinel;  // end marker
     size_type Size;
 
-    // private method, can only be used once by construtor.  Doesn't support resize!
+    // private method, can only be used once by constructor.  Doesn't support resize!
     void Allocate(size_type size, const_reference value) {
         this->Size = size;
         if (this->Size > 0) {
-            this->Data = reinterpret_cast<pointer>(this->ClassServices->CreateArray(this->Size, value));
-            CMN_ASSERT(this->Data);
+            this->Data = new pointer[size];
+            size_t index;
+            for (index = 0; index < size; index++) {
+                cmnGenericObject * genericPointer = this->ClassServices->Create(value);
+                pointer typedPointer = dynamic_cast<pointer>(genericPointer);
+                CMN_ASSERT(typedPointer);
+                this->Data[index] = typedPointer;
+            }
         } else {
             this->Data = 0;
         }
@@ -222,6 +233,15 @@ protected:
         this->Head = this->Data;
         this->Tail = this->Data;
         this->Sentinel = this->Data + this->Size;
+    }
+
+    void Free(void) {
+        size_t index;
+        for (index = 0; index < this->Size; index++) {
+            delete this->Data[index];
+        }
+        delete [] this->Data;
+    
     }
 
 public:
@@ -232,19 +252,18 @@ public:
         Head(0),
         Tail(0),
         Sentinel(0),
-        Size(0)
+        Size(1)
     {}
 
 
     inline mtsQueueGeneric(size_type size, const_reference value) {
         this->ClassServices = value.Services();
-        Allocate(size, value);
+        Allocate(size + 1, value);
     }
 
 
     inline ~mtsQueueGeneric() {
-        cmnGenericObject * genericPointer = reinterpret_cast<cmnGenericObject *>(this->Data);
-        this->ClassServices->DeleteArray(genericPointer, this->Size);
+        this->Free();
     }
 
 
@@ -257,9 +276,7 @@ public:
                                      << this->ClassServices->GetName() << "\", now using \""
                                      << value.Services()->GetName() << "\"" << std::endl;
             }
-            cmnGenericObject * genericPointer = reinterpret_cast<cmnGenericObject *>(this->Data);
-            this->ClassServices->DeleteArray(genericPointer, this->Size);
-            this->Data = reinterpret_cast<pointer>(genericPointer);
+            this->Free();
             if (this->Data != 0) {
                 CMN_LOG_INIT_WARNING << "mtsQueueGeneric::SetSize: failed to delete data array for \""
                                      << this->ClassServices->GetName() << "\"" << std::endl;
@@ -267,17 +284,18 @@ public:
             
         }
         this->ClassServices = value.Services();
-        this->Allocate(size, value);
+        this->Allocate(size + 1, value);
     }
 
 
     /*! Returns size of queue. */
     inline size_type GetSize(void) const {
-        return Size;
+        return (Size - 1);
     }
 
 
-    /*! Returns number of slots available in queue. */
+    /*! Returns number of elements available in queue, i.e. the number
+      of slots used. */
     inline size_type GetAvailable(void) const
     {
         int available = Head - Tail;
@@ -290,7 +308,11 @@ public:
 
     /*! Returns true if queue is full. */
     inline bool IsFull(void) const {
-        return this->GetAvailable() >= this->Size;
+        pointer * oneAfterHead = this->Head + 1;
+        if (oneAfterHead >= this->Sentinel) {
+            oneAfterHead = this->Data;
+        }
+        return oneAfterHead == this->Tail;
     }
 
 
@@ -305,8 +327,8 @@ public:
       \result Pointer to element in queue (use iterator instead?)
     */
     inline const_pointer Put(const_reference newObject) {
-        pointer newHead = this->Head + 1;
-        // test if end of buffer
+        pointer * newHead = this->Head + 1;
+        // test if end of buffer (same as IsFull method)
         if (newHead >= this->Sentinel) {
             newHead = this->Data;
         }
@@ -316,11 +338,11 @@ public:
         }
         // queue new object and move head
         // using in place new to make sure copy constructor is used
-        if (!this->ClassServices->Create(this->Head, newObject)) {
+        if (!this->ClassServices->Create(*(this->Head), newObject)) {
             CMN_LOG_RUN_ERROR << "mtsQueueGeneric::Put failed for " << newObject.Services()->GetName() << std::endl;
         }
         this->Head = newHead;
-        return this->Head;
+        return *(this->Head);
     }
 
 
@@ -332,7 +354,7 @@ public:
         if (this->IsEmpty()) {
             return 0;
         }
-        return this->Tail;
+        return *(this->Tail);
     }
 
 
@@ -343,7 +365,7 @@ public:
         if (this->IsEmpty()) {
             return 0;
         }
-        pointer result = this->Tail;
+        pointer result = *(this->Tail);
         this->Tail++;
         if (this->Tail >= this->Sentinel) {
             this->Tail = this->Data;
