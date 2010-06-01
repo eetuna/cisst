@@ -178,6 +178,7 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
     // instantiating SVL stream and filters
     svlStreamManager stream(1);
     svlFilterSourceVideoCapture source(1);
+    svlFilterImageChannelSwapper rgb_swapper;
     svlFilterSplitter splitter;
     svlFilterImageResizer resizer;
     svlFilterImageWindow window;
@@ -235,7 +236,7 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
                                                    14.0,
                                                    svlRGB(255, 255, 255),
                                                    svlRGB(0, 128, 0));
-    overlay.AddOverlay(buffer_overlay);
+    if (save) overlay.AddOverlay(buffer_overlay);
 
     // Add framerate overlay
     svlOverlayFramerate fps_overlay(SVL_LEFT,
@@ -250,7 +251,12 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
 
     // chain filters to pipeline
     stream.SetSourceFilter(&source);
+#if 1 // RGB input: needs to be converted to BGR
+    source.GetOutput()->Connect(rgb_swapper.GetInput());
+    rgb_swapper.GetOutput()->Connect(imagewriter.GetInput());
+#else // BGR input
     source.GetOutput()->Connect(imagewriter.GetInput());
+#endif
     if (width > 0 && height > 0) {
         imagewriter.GetOutput()->Connect(resizer.GetInput());
         resizer.GetOutput()->Connect(splitter.GetInput());
