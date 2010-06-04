@@ -74,7 +74,7 @@ int main()
 
     if (noise) {
         source.SetType(svlTypeImageRGB);
-        source.SetDimensions(320, 240);
+        source.SetDimensions(640, 480);
         source.EnableNoiseImage(true);
     }
     else {

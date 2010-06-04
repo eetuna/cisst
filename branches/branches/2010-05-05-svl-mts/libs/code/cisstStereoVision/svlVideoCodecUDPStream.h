@@ -78,6 +78,7 @@ protected:
     vctDynamicVector<unsigned int> ComprPartOffset;
     vctDynamicVector<unsigned int> ComprPartSize;
 
+    char* PacketData;
     svlBufferMemory* streamingBuffer;
     unsigned int streamingBufferSize;
     unsigned int StreamingBufferUsedSize;
@@ -98,7 +99,7 @@ protected:
     int CreateServer();
     int CreateClient();
     void CloseSocket();
-    int Send(unsigned char* buffer, unsigned int size);
+    int Send(unsigned char* buffer, unsigned int size, unsigned int& packet_id);
     int Receive(unsigned char* buffer, unsigned int size);
 
     void* SendProc(int param);

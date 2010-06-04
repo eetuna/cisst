@@ -41,11 +41,15 @@ http://www.cisst.org/cisst/license.txt.
     #include <errno.h>
 #endif
 
-//#define _NET_VERBOSE_
-#define PACKET_SIZE     1400u
-#define BROKEN_FRAME    1
-#define MAX_UDP_BURST   8192
-#define UDP_BURST_WAIT  0.0001
+#define _NET_VERBOSE_
+
+#define PACKET_ID_SIZE      4u
+#define PACKET_SIZE         1400u
+#define PACKET_DATA_SIZE    1396u
+
+#define BROKEN_FRAME        1
+#define MAX_UDP_BURST       8192
+#define UDP_BURST_WAIT      0.0001
 
 
 /*************************************/
@@ -73,6 +77,7 @@ svlVideoCodecUDPStream::svlVideoCodecUDPStream() :
     yuvBufferSize(0),
     comprBuffer(0),
     comprBufferSize(0),
+    PacketData(0),
     streamingBuffer(0),
     streamingBufferSize(0)
 {
@@ -81,6 +86,7 @@ svlVideoCodecUDPStream::svlVideoCodecUDPStream() :
     SetMultithreaded(true);
 
     SockAddr = new char[sizeof(sockaddr_in)];
+    PacketData = new char[PACKET_SIZE];
 }
 
 svlVideoCodecUDPStream::~svlVideoCodecUDPStream()
@@ -90,6 +96,7 @@ svlVideoCodecUDPStream::~svlVideoCodecUDPStream()
     if (comprBuffer) delete [] comprBuffer;
     if (streamingBuffer) delete streamingBuffer;
     if (SockAddr) delete [] SockAddr;
+    if (PacketData) delete [] PacketData;
 }
 
 int svlVideoCodecUDPStream::Open(const std::string &filename, unsigned int &width, unsigned int &height, double &framerate)
@@ -130,7 +137,7 @@ int svlVideoCodecUDPStream::Open(const std::string &filename, unsigned int &widt
         buffer = new unsigned char[size];
         yuvBufferSize = size;
         yuvBuffer = buffer;
-        size = yuvBufferSize + yuvBufferSize / 100 + 4096;
+        size = yuvBufferSize + yuvBufferSize / 100 + 4096 + PACKET_ID_SIZE;
         streamingBuffer = new svlBufferMemory(size);
         streamingBufferSize = size;
 
@@ -198,6 +205,7 @@ int svlVideoCodecUDPStream::Create(const std::string &filename, const unsigned i
         }
 
         // Allocate streaming buffers if not done yet
+        size += PACKET_ID_SIZE;
         if (!streamingBuffer) {
             streamingBuffer = new svlBufferMemory(size);
             streamingBufferSize = size;
@@ -379,6 +387,7 @@ int svlVideoCodecUDPStream::Read(svlProcInfo* procInfo, svlSampleImage &image, c
     while (!strmbuf) {
         strmbuf = streamingBuffer->Pull(true, 0.1);
     }
+    strmbuf += PACKET_ID_SIZE; // Skip the work room left before the data for the packet ID
 
     while (1) {
         // file start marker
@@ -470,6 +479,8 @@ int svlVideoCodecUDPStream::Write(svlProcInfo* procInfo, const svlSampleImage &i
     unsigned char* strmbuf = streamingBuffer->GetPushBuffer();
     unsigned long comprsize;
     int compr = Codec->data[0];
+
+    strmbuf += PACKET_ID_SIZE; // Skip the work room left before the data for the packet ID
 
     // Multithreaded compression phase
     while (1) {
@@ -624,25 +635,38 @@ void svlVideoCodecUDPStream::CloseSocket()
 #endif
 }
 
-int svlVideoCodecUDPStream::Send(unsigned char* buffer, unsigned int size)
+int svlVideoCodecUDPStream::Send(unsigned char* buffer, unsigned int size, unsigned int& packet_id)
 {
+    // Incoming picture data starts at 'buffer + PACKET_ID_SIZE'.
+    // The first 'PACKET_ID_SIZE' bytes are there to leave room for the first packet ID.
+
+    unsigned int send_size;
     int ret, udp_load = 0;
 
 #ifdef _NET_VERBOSE_
-    std::cerr << "svlVideoCodecUDPStream::Send - sending frame (" << size << " bytes)" << std::endl;
+    std::cerr << "svlVideoCodecUDPStream::Send - sending frame (" << size << " bytes; packets: " << packet_id << "-";
 #endif
 
     while (size > 0) {
+        // Add packet ID to the beginning of the packet [first 'PACKET_ID_SIZE' bytes]
+        reinterpret_cast<unsigned int*>(buffer)[0] = packet_id ++;
+
+        // Calculate data size to send (including packet ID)
+        send_size = PACKET_ID_SIZE + std::min(size, PACKET_DATA_SIZE);
+
         ret = sendto(Socket,
                      reinterpret_cast<const char*>(buffer),
-                     std::min(size, PACKET_SIZE),
+                     send_size,
                      0,
                      reinterpret_cast<sockaddr*>(SockAddr),
                      sizeof(sockaddr));
 
-        if (ret >= 0) {
-            buffer += ret;
-            size -= ret;
+        if (ret == static_cast<int>(send_size)) {
+            send_size -= PACKET_ID_SIZE;
+
+            // Advance buffer pointer
+            buffer += send_size;
+            size -= send_size;
 
             // UDP load balancing
             udp_load += ret;
@@ -653,12 +677,15 @@ int svlVideoCodecUDPStream::Send(unsigned char* buffer, unsigned int size)
         }
         else {
 #ifdef _NET_VERBOSE_
-            std::cerr << "svlVideoCodecUDPStream::Send - sendto() error" << std::endl;
+            std::cerr << std::endl << "svlVideoCodecUDPStream::Send - sendto() error" << std::endl;
 #endif
             return SVL_FAIL;
         }
     }
 
+#ifdef _NET_VERBOSE_
+    std::cerr << packet_id - 1 << ")" << std::endl;
+#endif
     return SVL_OK;
 }
 
@@ -675,9 +702,9 @@ int svlVideoCodecUDPStream::Receive(unsigned char* buffer, unsigned int size)
 
     if (onlyheader) {
         // The caller requests only the image dimensions
-        // Create temporary packet buffer to receive header
+        // Use temporary packet buffer to receive header
         size = PACKET_SIZE;
-        buffer = new unsigned char[size];
+        buffer = reinterpret_cast<unsigned char*>(PacketData);
     }
 
     while (1) {
@@ -729,7 +756,6 @@ int svlVideoCodecUDPStream::Receive(unsigned char* buffer, unsigned int size)
                         offset += sizeof(unsigned int);
                         ReceivedHeight = reinterpret_cast<unsigned int*>(buffer + offset)[0];
                         // Release temporary packet buffer and return without receiving more data
-                        delete [] buffer;
                         return BROKEN_FRAME;
                     }
 
@@ -752,7 +778,7 @@ int svlVideoCodecUDPStream::Receive(unsigned char* buffer, unsigned int size)
             buffer += ret;
             size += ret;
 
-            if (framesize <= size) {
+            if (framesize == size) {
 #ifdef _NET_VERBOSE_
                 std::cerr << "svlVideoCodecUDPStream::Receive - frame received (" << framesize << ")" << std::endl;
 #endif
@@ -776,8 +802,9 @@ void* svlVideoCodecUDPStream::SendProc(int CMN_UNUSED(param))
         StreamingInitialized = true;
     }
     StreamingInitEvent.Raise();
-    
+
     unsigned char* strmbuf;
+    unsigned int packet_id = 0;
 
     while (!StreamingThreadError && !KillStreamingThread) {
 
@@ -788,7 +815,7 @@ void* svlVideoCodecUDPStream::SendProc(int CMN_UNUSED(param))
         }
 
         // Send frame
-        if (Send(strmbuf, StreamingBufferUsedSize) != SVL_OK) {
+        if (Send(strmbuf, StreamingBufferUsedSize, packet_id) != SVL_OK) {
             StreamingThreadError = true;
             break;
         }

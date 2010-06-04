@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlFilterImageRectifier_h
 
 #include <cisstStereoVision/svlFilterBase.h>
+#include <cisstStereoVision/svlImageProcessing.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
@@ -32,29 +33,6 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT svlFilterImageRectifier : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
-
-    typedef struct _RectificationLUT {
-        unsigned int Width;
-        unsigned int Height;
-        unsigned int* idxDest;
-        int idxDestSize;
-        unsigned int* idxSrc1;
-        int idxSrc1Size;
-        unsigned int* idxSrc2;
-        int idxSrc2Size;
-        unsigned int* idxSrc3;
-        int idxSrc3Size;
-        unsigned int* idxSrc4;
-        int idxSrc4Size;
-        unsigned char* blendSrc1;
-        int blendSrc1Size;
-        unsigned char* blendSrc2;
-        int blendSrc2Size;
-        unsigned char* blendSrc3;
-        int blendSrc3Size;
-        unsigned char* blendSrc4;
-        int blendSrc4Size;
-    } RectificationLUT;
 
 public:
     svlFilterImageRectifier();
@@ -70,15 +48,8 @@ protected:
 private:
     svlSampleImage* OutputImage;
 
-    vctFixedSizeVector<RectificationLUT*, SVL_MAX_CHANNELS>  RectifLUT;
+    vctFixedSizeVector<svlImageProcessing::Internals, SVL_MAX_CHANNELS> Tables;
     bool InterpolationEnabled;
-
-    int LoadRectificationData(RectificationLUT* rectdata, const std::string &filepath, int explen);
-    int LoadLine(std::ifstream &file, double* dblbuf, char* chbuf, unsigned int size, int explen);
-    void TransposeLUTArray(unsigned int* index, unsigned int size, unsigned int width, unsigned int height);
-    void Rectify(RectificationLUT* rectdata, unsigned char* src, unsigned char* dest, bool interpolation = true);
-    void ResetLUT(RectificationLUT* lut);
-    void ReleaseLUT(RectificationLUT* lut);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterImageRectifier)

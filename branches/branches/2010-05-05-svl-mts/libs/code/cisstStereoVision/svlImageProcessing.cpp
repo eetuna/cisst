@@ -340,3 +340,196 @@ int svlImageProcessing::DisparityMapToSurface(svlSampleImageMonoFloat* disparity
     return SVL_OK;
 }
 
+int svlImageProcessing::Rectify(svlSampleImage* src_img, unsigned int src_videoch,
+                                svlSampleImage* dst_img, unsigned int dst_videoch,
+                                const std::string& table_filename,
+                                bool interpolation,
+                                svlImageProcessing::Internals& internals)
+{
+    if (!src_img || !dst_img ||                             // source or destination is zero
+        src_img->GetVideoChannels() <= src_videoch ||       // source has no such video channel
+        dst_img->GetVideoChannels() <= dst_videoch ||       // destination has no such video channel
+        src_img->GetBPP() != 3 || dst_img->GetBPP() != 3) { // pixel type is not RGB
+        return SVL_FAIL;
+    }
+
+    svlImageProcessingHelper::RectificationInternals* table = dynamic_cast<svlImageProcessingHelper::RectificationInternals*>(internals.Get());
+    if (table == 0) {
+        table = new svlImageProcessingHelper::RectificationInternals;
+
+        // Load rectification LUT
+        if (!table->Load(table_filename, 3)) return SVL_FAIL;
+
+        internals.Set(table);
+    }
+
+    if (table->Width != src_img->GetWidth(src_videoch) ||
+        table->Height != src_img->GetHeight(src_videoch)) return SVL_FAIL;
+
+    dst_img->SetSize(dst_videoch, src_img->GetWidth(src_videoch), src_img->GetHeight(src_videoch));
+
+    unsigned char* srcimg = src_img->GetUCharPointer(src_videoch);
+    unsigned char* destimg = dst_img->GetUCharPointer(dst_videoch);
+
+    unsigned char *srcbld1, *srcbld2, *srcbld3, *srcbld4;
+    unsigned int *destidx, *srcidx1, *srcidx2, *srcidx3, *srcidx4;
+    unsigned char *destr, *destg, *destb;
+    unsigned char *srcr, *srcg, *srcb;
+    unsigned int destofs, srcofs;
+    unsigned int resr, resg, resb;
+    unsigned int blnd;
+
+    const unsigned int destlen = table->idxDestSize;
+
+    if (interpolation) {
+        destidx = table->idxDest;
+        srcidx1 = table->idxSrc1;
+        srcidx2 = table->idxSrc2;
+        srcidx3 = table->idxSrc3;
+        srcidx4 = table->idxSrc4;
+        srcbld1 = table->blendSrc1;
+        srcbld2 = table->blendSrc2;
+        srcbld3 = table->blendSrc3;
+        srcbld4 = table->blendSrc4;
+    
+        for (unsigned int i = 0; i < destlen; i ++) {
+
+            // interpolation - 1st source pixel and weight
+            srcofs = *srcidx1;
+            srcr = srcimg + srcofs;
+            srcg = srcr + 1;
+            srcb = srcg + 1;
+
+            blnd = *srcbld1;
+            resr = blnd * (*srcr);
+            resg = blnd * (*srcg);
+            resb = blnd * (*srcb);
+
+            // interpolation - 2nd source pixel and weight
+            srcofs = *srcidx2;
+            srcr = srcimg + srcofs;
+            srcg = srcr + 1;
+            srcb = srcg + 1;
+
+            blnd = *srcbld2;
+            resr += blnd * (*srcr);
+            resg += blnd * (*srcg);
+            resb += blnd * (*srcb);
+
+            // interpolation - 3rd source pixel and weight
+            srcofs = *srcidx3;
+            srcr = srcimg + srcofs;
+            srcg = srcr + 1;
+            srcb = srcg + 1;
+
+            blnd = *srcbld3;
+            resr += blnd * (*srcr);
+            resg += blnd * (*srcg);
+            resb += blnd * (*srcb);
+
+            // interpolation - 4th source pixel and weight
+            srcofs = *srcidx4;
+            srcr = srcimg + srcofs;
+            srcg = srcr + 1;
+            srcb = srcg + 1;
+
+            blnd = *srcbld4;
+            resr += blnd * (*srcr);
+            resg += blnd * (*srcg);
+            resb += blnd * (*srcb);
+
+            // destination pixel
+            destofs = *destidx;
+            destr = destimg + destofs;
+            destg = destr + 1;
+            destb = destg + 1;
+
+            *destr = static_cast<unsigned char>(resr >> 8);
+            *destg = static_cast<unsigned char>(resg >> 8);
+            *destb = static_cast<unsigned char>(resb >> 8);
+
+            destidx ++;
+            srcidx1 ++;
+            srcidx2 ++;
+            srcidx3 ++;
+            srcidx4 ++;
+            srcbld1 ++;
+            srcbld2 ++;
+            srcbld3 ++;
+            srcbld4 ++;
+        }
+    }
+    else {
+        destidx = table->idxDest;
+        srcidx1 = table->idxSrc1;
+        svlRGB *prgb1, *prgb2;
+
+        for (unsigned int i = 0; i < destlen; i ++) {
+            
+            // sampling - 1st source pixel
+            srcofs = *srcidx1;
+            prgb1 = reinterpret_cast<svlRGB*>(srcimg + srcofs);
+
+            // copying value
+            destofs = *destidx;
+            prgb2 = reinterpret_cast<svlRGB*>(destimg + destofs);
+
+            *prgb2 = *prgb1;
+
+            destidx ++;
+            srcidx1 ++;
+        }
+    }
+
+    return SVL_OK;
+}
+
+int svlImageProcessing::Rectify(svlSampleImage* src_img, unsigned int src_videoch,
+                                svlSampleImage* dst_img, unsigned int dst_videoch,
+                                const std::string& table_filename,
+                                bool interpolation)
+{
+    Internals internals;
+    return Rectify(src_img, src_videoch, dst_img, dst_videoch, table_filename, interpolation, internals);
+}
+
+int svlImageProcessing::Rectify(svlSampleImage* src_img, unsigned int src_videoch,
+                                svlSampleImage* dst_img, unsigned int dst_videoch,
+                                bool interpolation,
+                                svlImageProcessing::Internals& internals)
+{
+    return Rectify(src_img, src_videoch, dst_img, dst_videoch, "", interpolation, internals);
+}
+
+
+/*******************************************/
+/*** svlImageProcessing::Internals class ***/
+/*******************************************/
+
+svlImageProcessing::Internals::Internals() :
+    Ptr(0)
+{
+}
+
+svlImageProcessing::Internals::~Internals()
+{
+    Release();
+}
+
+svlImageProcessingInternals* svlImageProcessing::Internals::Get()
+{
+    return Ptr;
+}
+
+void svlImageProcessing::Internals::Set(svlImageProcessingInternals* ib)
+{
+    Release();
+    Ptr = ib;
+}
+
+void svlImageProcessing::Internals::Release()
+{
+    if (Ptr) delete Ptr;
+    Ptr = 0;
+}
+
