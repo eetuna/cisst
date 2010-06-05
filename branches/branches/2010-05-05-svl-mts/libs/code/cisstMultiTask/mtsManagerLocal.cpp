@@ -644,6 +644,7 @@ void mtsManagerLocal::GetDescriptionOfFunction(std::string & description,
     std::string actualFunctionName = functionName.substr(3, functionName.size() - 2);
 
     description = "Resource argument type: ";
+#if 0 // adeguet1 todo fix --- this is using internal values of the interface, this should be done otherwise
     switch (functionType) {
         case 'V':
             {
@@ -708,6 +709,7 @@ void mtsManagerLocal::GetDescriptionOfFunction(std::string & description,
             description = "Failed to get function description";
             return;
     }
+#endif
 }
 
 void mtsManagerLocal::GetDescriptionOfEventHandler(std::string & description,

@@ -20,43 +20,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
-#include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
+
 
 template <class _argumentType>
 mtsFunctionReadOrWrite<_argumentType>::~mtsFunctionReadOrWrite()
 {}
-
-// specialize for Read using "mtsGenericObject &"
-template <>
-bool mtsFunctionReadOrWrite<mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
-{
-    if (interface) {
-        Command = interface->GetCommandRead(commandName);
-    }
-    return interface && (Command != 0);
-}
-
-
-// specialize for Write using "const mtsGenericObject &"
-template <>
-bool mtsFunctionReadOrWrite<const mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
-{
-    if (interface) {
-        Command = interface->GetCommandWrite(commandName);
-    }
-    return interface && (Command != 0);
-}
-
-
-template <class _argumentType>
-bool mtsFunctionReadOrWrite<_argumentType>::AddToRequiredInterface(mtsRequiredInterface & requiredInterface,
-                                                                   const std::string & commandName,
-                                                                   bool isRequired)
-{
-    return requiredInterface.AddCommandPointer(commandName, Command, isRequired);
-}
-
 
 #if 0
 // See also templated member function in class header.

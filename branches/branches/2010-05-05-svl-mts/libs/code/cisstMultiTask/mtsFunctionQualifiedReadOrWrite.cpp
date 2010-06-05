@@ -20,30 +20,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
 #include <cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h>
-#include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
+
 
 template <class _argumentType>
 mtsFunctionQualifiedReadOrWrite<_argumentType>::~mtsFunctionQualifiedReadOrWrite()
 {}
-
-// specialize for Read using "mtsGenericObject &"
-template <>
-bool mtsFunctionQualifiedReadOrWrite<mtsGenericObject>::Bind(const mtsDeviceInterface * interface, const std::string & commandName)
-{
-    if (interface) {
-        Command = interface->GetCommandQualifiedRead(commandName);
-    }
-    return interface && (Command != 0);
-}
-
-
-template <>
-bool mtsFunctionQualifiedReadOrWrite<mtsGenericObject>::AddToRequiredInterface(mtsRequiredInterface & intfc, const std::string & commandName,
-                                bool isRequired)
-{ 
-    return intfc.AddCommandPointer(commandName, Command, isRequired);
-}
 
 
 template <class _argumentType>

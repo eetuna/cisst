@@ -30,8 +30,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
 
-#include <cisstMultiTask/mtsInterfaceCommon.h>
+// #include <cisstMultiTask/mtsInterfaceCommon.h>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -127,11 +128,11 @@ protected:
 
     /*! Get the names of commands required by this interface. */
     //@{
-    virtual std::vector<std::string> GetNamesOfCommandPointers(void) const;
-    virtual std::vector<std::string> GetNamesOfCommandPointersVoid(void) const;
-    virtual std::vector<std::string> GetNamesOfCommandPointersRead(void) const;
-    virtual std::vector<std::string> GetNamesOfCommandPointersWrite(void) const;
-    virtual std::vector<std::string> GetNamesOfCommandPointersQualifiedRead(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctions(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsVoid(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsRead(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsWrite(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsQualifiedRead(void) const;
     //@}
 
     /*! Get the names of event handlers that exist in this interface */
@@ -183,33 +184,32 @@ protected:
     }
 
 protected:
+ public: // adeguet1 todo fix -- this has been added for ostream << operator 
 #ifndef SWIG  // SWIG cannot deal with this
-    template <class _commandType>
-    class CommandInfo {
+    class FunctionInfo
+    {
         // For GCM UI
         friend class mtsManagerLocal;
-
-        _commandType **CommandPointer;
+        friend class mtsRequiredInterface;
+    protected:
+        mtsFunctionBase * FunctionPointer;
         bool IsRequired;
     public:
-        CommandInfo(_commandType *&commandPointer, bool isReq):
-            CommandPointer(&commandPointer),
-            IsRequired(isReq)
+        FunctionInfo(mtsFunctionBase & function, bool isRequired):
+            FunctionPointer(&function),
+            IsRequired(isRequired)
         {}
 
-        ~CommandInfo() {}
+        ~FunctionInfo() {}
 
-        inline void Clear(void) {
-            *CommandPointer = 0;
+        inline void Detach(void) {
+            FunctionPointer->Detach();
+            FunctionPointer = 0;
         }
 
-        bool Bind(_commandType *cmd)
-        {  *CommandPointer = cmd;
-           return cmd || !IsRequired;
-        }
         void ToStream(std::ostream & outputStream) const
         {
-            outputStream << *CommandPointer;
+            outputStream << *FunctionPointer;
             if (!IsRequired) {
                 outputStream << " (optional)";
             } else {
@@ -219,22 +219,21 @@ protected:
     };
 
 #endif // !SWIG
+ protected:
+
+    typedef cmnNamedMap<FunctionInfo> FunctionInfoMapType;
 
     /*! Typedef for a map of name of zero argument command and name of command. */
-    typedef cmnNamedMap<CommandInfo<mtsCommandVoidBase> > CommandPointerVoidMapType;
-    CommandPointerVoidMapType CommandPointersVoid; // Void (command)
+    FunctionInfoMapType FunctionsVoid; // Void (command)
 
     /*! Typedef for a map of name of one argument command and name of command. */
-    typedef cmnNamedMap<CommandInfo<mtsCommandReadBase> > CommandPointerReadMapType;
-    CommandPointerReadMapType CommandPointersRead; // Read (state read)
+    FunctionInfoMapType FunctionsRead; // Read (state read)
 
     /*! Typedef for a map of name of one argument command and name of command. */
-    typedef cmnNamedMap<CommandInfo<mtsCommandWriteBase> > CommandPointerWriteMapType;
-    CommandPointerWriteMapType CommandPointersWrite; // Write (command)
+    FunctionInfoMapType FunctionsWrite; // Write (command)
 
     /*! Typedef for a map of name of two argument command and name of command. */
-    typedef cmnNamedMap<CommandInfo<mtsCommandQualifiedReadBase> > CommandPointerQualifiedReadMapType;
-    CommandPointerQualifiedReadMapType CommandPointersQualifiedRead; // Qualified Read (conversion, read at time index, ...)
+    FunctionInfoMapType FunctionsQualifiedRead; // Qualified Read (conversion, read at time index, ...)
 
     /*! Typedef for a map of event name and event handler (command object). */
     typedef cmnNamedMap<mtsCommandVoidBase> EventHandlerVoidMapType;
@@ -244,32 +243,13 @@ protected:
 
 public:
 
-    bool AddCommandPointer(const std::string & commandName, mtsCommandVoidBase *& commandPointer, bool required = true)
-    {
-        return CommandPointersVoid.AddItem(commandName, new CommandInfo<mtsCommandVoidBase>(commandPointer, required));
-    }
+    bool AddFunction(const std::string & functionName, mtsFunctionVoid & function, bool required = true);
 
-    bool AddCommandPointer(const std::string & commandName, mtsCommandReadBase *& commandPointer, bool required = true)
-    {
-        return CommandPointersRead.AddItem(commandName, new CommandInfo<mtsCommandReadBase>(commandPointer, required));
-    }
+    bool AddFunction(const std::string & functionName, mtsFunctionRead & function, bool required = true);
 
-    bool AddCommandPointer(const std::string & commandName, mtsCommandWriteBase *& commandPointer, bool required = true)
-    {
-        return CommandPointersWrite.AddItem(commandName, new CommandInfo<mtsCommandWriteBase>(commandPointer, required));
-    }
+    bool AddFunction(const std::string & functionName, mtsFunctionWrite & function, bool required = true);
 
-    bool AddCommandPointer(const std::string & commandName, mtsCommandQualifiedReadBase *& commandPointer, bool required = true)
-    {
-        return CommandPointersQualifiedRead.AddItem(commandName, new CommandInfo<mtsCommandQualifiedReadBase>(commandPointer, required));
-    }
-
-    // Maybe make this a templated function?
-    template <class _FunctionType>
-    bool AddFunction(const std::string & commandName, _FunctionType & func, bool required = true)
-    {
-        return func.AddToRequiredInterface(*this, commandName, required);
-    }
+    bool AddFunction(const std::string & functionName, mtsFunctionQualifiedRead & function, bool required = true);
 
     template <class __classType>
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*method)(void),
@@ -372,10 +352,9 @@ inline mtsCommandWriteBase * mtsRequiredInterface::AddEventHandlerWriteGeneric(v
 
 
 /*! Stream out operator. */
-template <class _commandType>
 inline std::ostream & operator << (std::ostream & output,
-                                   const mtsRequiredInterface::CommandInfo<_commandType> & req) {
-    req.ToStream(output);
+                                   const mtsRequiredInterface::FunctionInfo & functionInfo) {
+    functionInfo.ToStream(output);
     return output;
 }
 

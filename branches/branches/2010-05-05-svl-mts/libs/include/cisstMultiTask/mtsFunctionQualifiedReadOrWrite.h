@@ -82,28 +82,22 @@ protected:
       using. */
     mtsFunctionQualifiedReadOrWrite(void): Command(0) {}
 
-    /*! Constructor from an interface and a command name.  Uses
-      Bind internally. */
-    mtsFunctionQualifiedReadOrWrite(const mtsDeviceInterface * associatedInterface, const std::string & commandName) {
-        this->Bind(associatedInterface, commandName);
-    }
-
     /*! Destructor. */
     ~mtsFunctionQualifiedReadOrWrite();
 
-    /*! Return whether function is valid (i.e., command pointer is non-zero) */
-    bool IsValid(void) const { return (Command != 0); }
+    // documented in base class
+    inline bool Detach(void) {
+        if (this->IsValid()) {
+            Command = 0;
+            return true;
+        }
+        return false;
+    }
 
-    /*! Bind the function object to a command.  The method will return
-      false if the interface pointer is null, if the command can not
-      be found in the given interface or if the command pointer is
-      found but is null.
-      \param interface Pointer to an interface whose command is to be
-      queried
-      \param commandName Name of command
-      \result Boolean value, true if success, false otherwise
-    */
-    bool Bind(const mtsDeviceInterface * associatedInterface, const std::string & commandName);
+    // documented in base class
+    inline bool IsValid(void) const {
+        return (this->Command != 0);
+    }
 
     /*! Bind using a command pointer.  This allows to avoid
       querying by name from an interface.
@@ -115,15 +109,6 @@ protected:
         return (command != 0);
     }
 
-    /*! Add the function object to the required interface
-      \param interface Required interface
-      \param commandName Name of command to bind with (string)
-      \param isRequired Whether or not the command is required (false if command is optional)
-      \result Boolean value, true if success, false otherwise
-    */
-    bool AddToRequiredInterface(mtsRequiredInterface & intfc, const std::string & commandName,
-                                bool isRequired = true);
-
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
     mtsCommandBase::ReturnType operator()(const mtsGenericObject & qualifier,
@@ -133,7 +118,7 @@ protected:
     template <class _userType1, class _userType2>
     mtsCommandBase::ReturnType operator()(const _userType1& arg1, _userType2& arg2) const {
         mtsCommandBase::ReturnType ret = Command ?
-            ConditionalWrap<_userType1, _userType2, 
+            ConditionalWrap<_userType1, _userType2,
                             cmnIsDerivedFrom<_userType1, mtsGenericObject>::YES,
                             cmnIsDerivedFrom<_userType1, mtsGenericObject>::YES>::Call(Command, arg1, arg2)
           : mtsCommandBase::NO_INTERFACE;

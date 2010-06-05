@@ -1199,13 +1199,13 @@ void mtsComponentProxy::ExtractRequiredInterfaceDescription(
     cmnSerializer serializer(streamBuffer);
 
     // Extract void functions
-    requiredInterfaceDescription.FunctionVoidNames = requiredInterface->GetNamesOfCommandPointersVoid();
+    requiredInterfaceDescription.FunctionVoidNames = requiredInterface->GetNamesOfFunctionsVoid();
     // Extract write functions
-    requiredInterfaceDescription.FunctionWriteNames = requiredInterface->GetNamesOfCommandPointersWrite();
+    requiredInterfaceDescription.FunctionWriteNames = requiredInterface->GetNamesOfFunctionsWrite();
     // Extract read functions
-    requiredInterfaceDescription.FunctionReadNames = requiredInterface->GetNamesOfCommandPointersRead();
+    requiredInterfaceDescription.FunctionReadNames = requiredInterface->GetNamesOfFunctionsRead();
     // Extract qualified read functions
-    requiredInterfaceDescription.FunctionQualifiedReadNames = requiredInterface->GetNamesOfCommandPointersQualifiedRead();
+    requiredInterfaceDescription.FunctionQualifiedReadNames = requiredInterface->GetNamesOfFunctionsQualifiedRead();
 
     // Extract void event handlers
     CommandVoidElement elementEventVoidHandler;
