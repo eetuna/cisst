@@ -22,8 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCollectorQtComponent.h>
 
 
-mtsCollectorQtComponent::mtsCollectorQtComponent(const std::string & taskName) :
-    mtsDevice(taskName)
+mtsCollectorQtComponent::mtsCollectorQtComponent(const std::string & componentName) :
+    mtsComponent(componentName)
 {
     // create the cisstMultiTask interface with commands and events
     mtsRequiredInterface * requiredInterface = AddRequiredInterface("DataCollection");

@@ -25,8 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(displayQComponent);
 
 
-displayQComponent::displayQComponent(const std::string & taskName) :
-    mtsDevice(taskName)
+displayQComponent::displayQComponent(const std::string & componentName) :
+    mtsComponent(componentName)
 {
     // create the cisstMultiTask interface with commands and events
     mtsRequiredInterface * requiredInterface = AddRequiredInterface("DataGenerator");

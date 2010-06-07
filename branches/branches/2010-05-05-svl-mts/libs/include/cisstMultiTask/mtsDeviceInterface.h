@@ -82,7 +82,7 @@ class CISST_EXPORT mtsDeviceInterface: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-    friend class mtsDevice;
+    //    friend class mtsComponent;
     friend class mtsTask;
     friend class mtsTaskPeriodic;
     friend class mtsManagerLocal;

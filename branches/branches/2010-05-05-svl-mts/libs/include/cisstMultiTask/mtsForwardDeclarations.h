@@ -63,8 +63,8 @@ template <class _argumentType> class mtsMulticastCommandWrite;
 // interfaces and tasks
 class mtsDeviceInterface;
 typedef mtsDeviceInterface mtsProvidedInterface;
-class mtsDevice;
-typedef mtsDevice mtsComponent;
+class mtsComponent;
+typedef mtsComponent mtsDevice;
 class mtsTaskInterface;
 class mtsRequiredInterface;
 class mtsTask;

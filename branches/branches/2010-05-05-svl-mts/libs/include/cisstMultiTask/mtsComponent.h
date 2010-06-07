@@ -20,8 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#ifndef _mtsDevice_h
-#define _mtsDevice_h
+#ifndef _mtsComponent_h
+#define _mtsComponent_h
 
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnGenericObject.h>
@@ -40,27 +40,28 @@ http://www.cisst.org/cisst/license.txt.
 
 /*!
   \file
-  \brief Declaration of mtsDevice
+  \brief Declaration of mtsComponent
  */
 
 
 /*!
   \ingroup cisstMultiTask
 
-  mtsDevice should be used to write wrappers around existing devices
-  or resources.  This class allows to interact with existing devices
-  as one would interact with a task (as in mtsTask and
-  mtsTaskPeriodic).  To do so, the device maintains a list of provided
-  interfaces (of type mtsDeviceInterface) which contains commands.
+  mtsComponent should be used to write wrappers around existing
+  devices or resources.  This class allows to interact with existing
+  devices as one would interact with a task (as in mtsTask and
+  mtsTaskPeriodic).  To do so, the component maintains a list of
+  provided interfaces (of type mtsDeviceInterface) which contains
+  commands.
 
-  The main differences are that the device class doesn't have a thread
-  and is stateless.  Since the device doesn't have any thread, the
-  commands are not queued and the class doesn't add any thread safety
-  mechanism.  The device class doesn't maintain a state as it relies
-  on the underlying device to do so.  It is basically a pass-thru or
-  wrapper.
+  The main differences are that the base component class doesn't have
+  a thread and is stateless.  Since the component doesn't have any
+  thread, the commands are not queued and the class doesn't add any
+  thread safety mechanism.  The component class doesn't maintain a state
+  as it relies on the underlying device to do so.  It is basically a
+  pass-thru or wrapper.
  */
-class CISST_EXPORT mtsDevice: public cmnGenericObject
+class CISST_EXPORT mtsComponent: public cmnGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -69,26 +70,32 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
 
  protected:
 
-    /*! A string identifying the 'Name' of the device. */
+    /*! A string identifying the 'Name' of the component. */
     std::string Name;
 
-    /*! Default constructor. Protected to prevent creation of a device
+    /*! Default constructor. Protected to prevent creation of a component
       without a name. */
-    mtsDevice(void) {}
+    mtsComponent(void) {}
 
     mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
 
  public:
 
     /*! Default constructor. Sets the name. */
-    mtsDevice(const std::string & deviceName);
+    mtsComponent(const std::string & deviceName);
 
     /*! Default destructor. Does nothing. */
-    virtual ~mtsDevice() {}
+    virtual ~mtsComponent() {}
 
-    /*! Returns the name of the device. */
-    virtual std::string GetName(void) const {
-        return Name;
+    /*! Returns the name of the component. */
+    virtual inline std::string GetName(void) const {
+        return this->Name;
+    }
+
+    /*! Set name.  This method is useful to perform dynamic creation
+      using the default constructor and then set the name. */
+    virtual inline void SetName(const std::string & componentName) {
+        this->Name = componentName;
     }
 
     /*! The virtual method so that the interface or tasks can
@@ -99,10 +106,10 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
       before they get started.  Use to place initialization code. */
     virtual void Start(void);
 
-    /*! Method to add an interface to the device.  This method is
+    /*! Method to add an interface to the component.  This method is
       virtual so that mtsTaskBase can redefine it and generate the
       appropriate type of interface, i.e. mtsTaskInterface as opposed
-      to mtsDeviceInterface for mtsDevice. */
+      to mtsDeviceInterface for mtsComponent. */
     virtual mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
 
     /*! Return the list of provided interfaces.  This returns a list
@@ -167,7 +174,7 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
 
  public:
 
-    /*! Send a human readable description of the device. */
+    /*! Send a human readable description of the component. */
     void ToStream(std::ostream & outputStream) const;
 
     /*! Put in format suitable for graph visualization. */
@@ -176,13 +183,13 @@ class CISST_EXPORT mtsDevice: public cmnGenericObject
 
 
 // overload mtsObjectName to retrieve the actual name
-inline std::string mtsObjectName(const mtsDevice * object) {
-    return "mtsDevice: " + object->GetName();
+inline std::string mtsObjectName(const mtsComponent * object) {
+    return "mtsComponent: " + object->GetName();
 }
 
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDevice)
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponent)
 
 
-#endif // _mtsDevice_h
+#endif // _mtsComponent_h
 

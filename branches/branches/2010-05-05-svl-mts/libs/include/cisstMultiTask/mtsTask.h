@@ -39,7 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
-#include <cisstMultiTask/mtsDevice.h>
+#include <cisstMultiTask/mtsComponent.h>
 #include <cisstMultiTask/mtsHistory.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
@@ -57,11 +57,11 @@ http://www.cisst.org/cisst/license.txt.
   This class provides the base for implementing tasks that have
   a thread, a state table to store the state at each 'tick' (increment)
   of the task, and queues to receive messages (commands) from other tasks.
-  It is derived from mtsDevice, so it also contains the provided and required
+  It is derived from mtsComponent, so it also contains the provided and required
   interfaces, with their lists of commands.
 */
 
-class CISST_EXPORT mtsTask: public mtsDevice
+class CISST_EXPORT mtsTask: public mtsComponent
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -69,7 +69,7 @@ class CISST_EXPORT mtsTask: public mtsDevice
     friend class mtsManagerLocalTest;
 
 public:
-    typedef mtsDevice BaseType;
+    typedef mtsComponent BaseType;
 
     /*! The task states:
 
@@ -200,12 +200,12 @@ public:
         \param sizeStateTable The history size of the state table
 
         \note The full string name is maintained in the class member data
-              (in mtsDevice base class).  But, be aware that when a thread and/or
+              (in mtsComponent base class).  But, be aware that when a thread and/or
               thread buddy is created, only the first 6 characters of this name
               are used with the thread or thread buddy.  This is an artifact
               of the 6 character limit imposed by RTAI/Linux.
 
-        \sa mtsDevice, mtsTaskContinuous, mtsTaskPeriodic, mtsTaskFromCallback
+        \sa mtsComponent, mtsTaskContinuous, mtsTaskPeriodic, mtsTaskFromCallback
 	 */
     mtsTask(const std::string & name,
             unsigned int sizeStateTable = 256);
@@ -353,7 +353,7 @@ public:
         OverranPeriod = false;
     }
 
-    /*! Send a human readable description of the device. */
+    // commented in base class
     void ToStream(std::ostream & outputStream) const;
 };
 

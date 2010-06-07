@@ -24,10 +24,10 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(mtsCollectorEvent)
 
 #include <cisstMultiTask/mtsCollectorState.h>
-CMN_IMPLEMENT_SERVICES(mtsCollectorState)
+ CMN_IMPLEMENT_SERVICES(mtsCollectorState)
 
-#include <cisstMultiTask/mtsDevice.h>
-CMN_IMPLEMENT_SERVICES(mtsDevice)
+#include <cisstMultiTask/mtsComponent.h>
+CMN_IMPLEMENT_SERVICES(mtsComponent)
 
 #include <cisstMultiTask/mtsDeviceInterface.h>
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterface)

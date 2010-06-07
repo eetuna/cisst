@@ -30,13 +30,13 @@ set (SOURCE_FILES
      mtsCommandQueuedVoidBase.cpp
      mtsCommandQueuedWriteBase.cpp
 
-     mtsDevice.cpp
 
      mtsMailBox.cpp
      mtsStateIndex.cpp
      mtsStateTable.cpp
      mtsIntervalStatistics.cpp
 
+     mtsComponent.cpp
      mtsTaskInterface.cpp
      mtsRequiredInterface.cpp
      mtsTask.cpp
@@ -95,8 +95,6 @@ set (HEADER_FILES
      mtsExport.h
      mtsForwardDeclarations.h
 
-     mtsDevice.h
-
      mtsQueue.h
      mtsMailBox.h
      mtsStateIndex.h
@@ -107,6 +105,7 @@ set (HEADER_FILES
      mtsStateData.h
      mtsIntervalStatistics.h
 
+     mtsComponent.h
      mtsTaskInterface.h
      mtsRequiredInterface.h
      mtsTask.h

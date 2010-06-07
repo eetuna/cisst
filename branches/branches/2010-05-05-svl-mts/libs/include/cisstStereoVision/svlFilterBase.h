@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlFilterIO.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 
-#include <cisstMultiTask/mtsDevice.h>
+#include <cisstMultiTask/mtsComponent.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>

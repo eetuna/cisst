@@ -21,7 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _displayQComponent_h
 #define _displayQComponent_h
 
-#include <cisstMultiTask/mtsDevice.h>
+#include <cisstMultiTask/mtsComponent.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 
@@ -30,13 +30,13 @@ http://www.cisst.org/cisst/license.txt.
 #include "displayQWidget.h"
 
 
-class displayQComponent : public QObject, public mtsDevice
+class displayQComponent : public QObject, public mtsComponent
 {
     Q_OBJECT;
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
-    displayQComponent(const std::string & taskName);
+    displayQComponent(const std::string & componentName);
     ~displayQComponent(void) {};
 
     void Configure(const std::string & CMN_UNUSED(filename) = "") {};
