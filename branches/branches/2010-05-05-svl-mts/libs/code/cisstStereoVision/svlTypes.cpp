@@ -552,19 +552,39 @@ int svlSampleTargets::GetConfidence(unsigned int targetid, unsigned int channel)
     return GetConfidenceVectorRef(channel).Element(targetid);
 }
 
-void svlSampleTargets::SetPosition(unsigned int targetid, const vctDynamicVector<int> & value, unsigned int channel)
+template<unsigned int _Dimensions>
+void svlSampleTargets::SetPosition(unsigned int targetid, const vctFixedSizeVector<int, _Dimensions>& value, unsigned int channel)
 {
     if (targetid >= Matrix.cols() || Dimensions < 1 || channel >= Channels || value.size() != Dimensions) return;
-    vctDynamicVectorRef<int>(Dimensions, Matrix.Pointer(1 + channel * (1 + Dimensions) + 1, targetid), Matrix.cols()) = value;
+
+    int* ptr = Matrix.Pointer(1 + channel * (1 + _Dimensions) + 1, targetid);
+    const unsigned int stride = Matrix.cols();
+
+    for (unsigned int i = 0; i < _Dimensions; i ++) {
+        *ptr = value[i]; ptr += stride;
+    }
 }
 
-int svlSampleTargets::GetPosition(unsigned int targetid, vctDynamicVector<int> & value, unsigned int channel) const
+template void svlSampleTargets::SetPosition(unsigned int targetid, const vctFixedSizeVector<int, 2>& value, unsigned int channel);
+template void svlSampleTargets::SetPosition(unsigned int targetid, const vctFixedSizeVector<int, 3>& value, unsigned int channel);
+
+template<unsigned int _Dimensions>
+int svlSampleTargets::GetPosition(unsigned int targetid, vctFixedSizeVector<int, _Dimensions>& value, unsigned int channel) const
 {
-    if (targetid >= Matrix.cols() || Dimensions < 1 || channel >= Channels) return SVL_FAIL;
-    if (value.size() != Dimensions) value.SetSize(Dimensions);
-    value = vctDynamicVectorRef<const int>(Dimensions, Matrix.Pointer(1 + channel * (1 + Dimensions) + 1, targetid), Matrix.cols());
+    if (targetid >= Matrix.cols() || Dimensions < 1 || channel >= Channels || value.size() != Dimensions) return SVL_FAIL;
+
+    const int* ptr = Matrix.Pointer(1 + channel * (1 + _Dimensions) + 1, targetid);
+    const unsigned int stride = Matrix.cols();
+    unsigned int offset = 0;
+
+    for (unsigned int i = 0; i < _Dimensions; i ++) {
+        value[i] = ptr[offset]; offset += stride;
+    }
     return SVL_OK;
 }
+
+template int svlSampleTargets::GetPosition(unsigned int targetid, vctFixedSizeVector<int, 2>& value, unsigned int channel) const;
+template int svlSampleTargets::GetPosition(unsigned int targetid, vctFixedSizeVector<int, 3>& value, unsigned int channel) const;
 
 
 /***************************/

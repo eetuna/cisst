@@ -41,6 +41,9 @@ public:
     virtual void SetEnableModify(bool enable);
     virtual void SetAlwaysSendTargets(bool enable);
 
+    virtual void SetTargets(const svlSampleTargets& targets);
+    virtual void GetTargets(svlSampleTargets& targets) const;
+
 protected:
     virtual void SetFullScreen(bool fullscreen = true);
     virtual bool GetFullScreen();
@@ -62,6 +65,7 @@ private:
     bool EnableModify;
     bool ButtonDown;
     int SelectedTarget;
+    int SelectedTargetWindow;
     vctFixedSizeVector<int, 2> SelectionOffset;
     svlSampleTargets Targets;
 };

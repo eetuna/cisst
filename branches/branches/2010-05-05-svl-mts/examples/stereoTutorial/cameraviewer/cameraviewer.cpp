@@ -251,7 +251,7 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
 
     // chain filters to pipeline
     stream.SetSourceFilter(&source);
-#if 1 // RGB input: needs to be converted to BGR
+#if 0 // RGB input: needs to be converted to BGR
     source.GetOutput()->Connect(rgb_swapper.GetInput());
     rgb_swapper.GetOutput()->Connect(imagewriter.GetInput());
 #else // BGR input

@@ -95,11 +95,18 @@ public:
     void Wrld2Cam(const unsigned int cam_id, vctDouble2 & point2D, const vctDouble3 & point3D);
     vctDouble2 Wrld2Cam(const unsigned int cam_id, const vctDouble3 & point3D);
 
-    void Cam2Wrld(vctDouble3 & point3D,
-                  const unsigned int cam_id1, const vctDouble2 & point2D_1,
-                  const unsigned int cam_id2, const vctDouble2 & point2D_2);
-    vctDouble3 Cam2Wrld(const unsigned int cam_id1, const vctDouble2 & point2D_1,
-                        const unsigned int cam_id2, const vctDouble2 & point2D_2);
+    template<class _ValueType>
+    void Cam2Wrld(vctFixedSizeVector<_ValueType, 3>& point3D,
+                  const unsigned int cam_id1,
+                  const vctFixedSizeVector<_ValueType, 2>& point2D_1,
+                  const unsigned int cam_id2,
+                  const vctFixedSizeVector<_ValueType, 2>& point2D_2);
+
+    template<class _ValueType>
+    vctFixedSizeVector<_ValueType, 3> Cam2Wrld(const unsigned int cam_id1,
+                                               const vctFixedSizeVector<_ValueType, 2>& point2D_1,
+                                               const unsigned int cam_id2,
+                                               const vctFixedSizeVector<_ValueType, 2>& point2D_2);
 
     void Empty();
 

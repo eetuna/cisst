@@ -475,20 +475,43 @@ vctDouble2 svlCameraGeometry::Wrld2Cam(const unsigned int CMN_UNUSED(cam_id), co
     return result;
 }
 
-void svlCameraGeometry::Cam2Wrld(vctDouble3 & point3D,
-                                 const unsigned int cam_id1, const vctDouble2 & point2D_1,
-                                 const unsigned int cam_id2, const vctDouble2 & point2D_2)
+template<class _ValueType>
+void svlCameraGeometry::Cam2Wrld(vctFixedSizeVector<_ValueType, 3>& point3D,
+                                 const unsigned int cam_id1,
+                                 const vctFixedSizeVector<_ValueType, 2>& point2D_1,
+                                 const unsigned int cam_id2,
+                                 const vctFixedSizeVector<_ValueType, 2>& point2D_2)
 {
-    point3D = Cam2Wrld(cam_id1, point2D_1, cam_id2, point2D_2);
+    Extrinsics* ex2 = ExtrinsicParams.Pointer(cam_id2);
+    Intrinsics* in2 = IntrinsicParams.Pointer(cam_id2);
+    const _ValueType ppx = static_cast<_ValueType>(in2->cc[0]);
+    _ValueType disp, ratio;
+
+    disp = point2D_1.X() - point2D_2.X() - (static_cast<_ValueType>(IntrinsicParams[cam_id1].cc[0]) - ppx);
+    if (disp < 0.01f) disp = 0.01f;
+    ratio = static_cast<_ValueType>(ExtrinsicParams[cam_id1].T.X() - ex2->T.X()) / disp;
+
+    point3D.X() = ratio * (point2D_1.X() - ppx) - static_cast<_ValueType>(ex2->T.X());
+    point3D.Y() = ratio * (point2D_1.Y()  - static_cast<_ValueType>(in2->cc[1]));
+    point3D.Z() = ratio * static_cast<_ValueType>(in2->fc[0]);
 }
 
-vctDouble3 svlCameraGeometry::Cam2Wrld(const unsigned int CMN_UNUSED(cam_id1), const vctDouble2 & CMN_UNUSED(point2D_1),
-                                       const unsigned int CMN_UNUSED(cam_id2), const vctDouble2 & CMN_UNUSED(point2D_2))
+template void svlCameraGeometry::Cam2Wrld(vctDouble3&, const unsigned int, const vctDouble2&, const unsigned int, const vctDouble2&);
+template void svlCameraGeometry::Cam2Wrld(vctFloat3&, const unsigned int, const vctFloat2&, const unsigned int, const vctFloat2&);
+
+template<class _ValueType>
+vctFixedSizeVector<_ValueType, 3> svlCameraGeometry::Cam2Wrld(const unsigned int cam_id1,
+                                                              const vctFixedSizeVector<_ValueType, 2>& point2D_1,
+                                                              const unsigned int cam_id2,
+                                                              const vctFixedSizeVector<_ValueType, 2>& point2D_2)
 {
-    vctDouble3 result;
-    result.SetAll(0.0);
-    return result;
+    vctFixedSizeVector<_ValueType, 3> point3d;
+    Cam2Wrld<_ValueType>(point3d, cam_id1, point2D_1, cam_id2, point2D_2);
+    return point3d;
 }
+
+template vctDouble3 svlCameraGeometry::Cam2Wrld(const unsigned int, const vctDouble2&, const unsigned int, const vctDouble2&);
+template vctFloat3 svlCameraGeometry::Cam2Wrld(const unsigned int, const vctFloat2&, const unsigned int, const vctFloat2&);
 
 void svlCameraGeometry::Empty()
 {

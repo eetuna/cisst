@@ -286,7 +286,7 @@ int svlImageProcessing::DisparityMapToSurface(svlSampleImageMonoFloat* disparity
     const int mesh_width = mesh_3d->GetWidth();
     const int mesh_height = mesh_3d->GetHeight();
     if (disp_width != mesh_width || disp_height != mesh_height) return SVL_FAIL;
-    
+
     const svlCameraGeometry::Intrinsics* intrinsicsL = camera_geometry.GetIntrinsicsPtr(SVL_LEFT);
     const svlCameraGeometry::Intrinsics* intrinsicsR = camera_geometry.GetIntrinsicsPtr(SVL_RIGHT);
     const svlCameraGeometry::Extrinsics* extrinsicsL = camera_geometry.GetExtrinsicsPtr(SVL_LEFT);

@@ -313,8 +313,10 @@ public:
     unsigned int AddPoint(svlPoint2D point);
     unsigned int AddPoint(int x, int y);
     int SetPoint(unsigned int idx, svlPoint2D point);
+    int SetPoint(unsigned int idx, vctInt2 point);
     int SetPoint(unsigned int idx, int x, int y);
     int GetPoint(unsigned int idx, svlPoint2D & point) const;
+    int GetPoint(unsigned int idx, vctInt2 & point) const;
     int GetPoint(unsigned int idx, int & x, int & y) const;
 
 protected:

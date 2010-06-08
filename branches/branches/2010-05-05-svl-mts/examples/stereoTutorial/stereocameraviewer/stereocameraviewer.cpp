@@ -235,7 +235,6 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     }
     window.SetCallback(&window_cb);
     window.SetTitleText("Camera Viewer");
-    window.EnableTimestampInTitle();
 	if (fullscreen >= 0) {
 		window.SetFullScreen();
 		if (fullscreen == 0) {

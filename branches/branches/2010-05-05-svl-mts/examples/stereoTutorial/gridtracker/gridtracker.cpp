@@ -57,11 +57,7 @@ protected:
 
         _OnSingleThread(procInfo)
         {
-            vctDynamicVector<int> pos1, pos2, pos3, pos4;
-            pos1.SetSize(2);
-            pos2.SetSize(2);
-            pos3.SetSize(2);
-            pos4.SetSize(2);
+            vctInt2 pos1, pos2, pos3, pos4;
 
             unsigned int idx_ul = (GridHeight / 2 - 5) * GridWidth + ((GridWidth / 2) - 5);
             unsigned int idx_ur = (GridHeight / 2 - 5) * GridWidth + ((GridWidth / 2) + 5);
@@ -75,11 +71,11 @@ protected:
                     targets->GetPosition(idx_lr, pos3, 0) == SVL_OK &&
                     targets->GetPosition(idx_ll, pos4, 0) == SVL_OK) {
 
-                    BgPoly->SetPoint(0, pos1[0], pos1[1]);
-                    BgPoly->SetPoint(1, pos2[0], pos2[1]);
-                    BgPoly->SetPoint(2, pos3[0], pos3[1]);
-                    BgPoly->SetPoint(3, pos4[0], pos4[1]);
-                    BgPoly->SetPoint(4, pos1[0], pos1[1]);
+                    BgPoly->SetPoint(0, pos1);
+                    BgPoly->SetPoint(1, pos2);
+                    BgPoly->SetPoint(2, pos3);
+                    BgPoly->SetPoint(3, pos4);
+                    BgPoly->SetPoint(4, pos1);
                 }
             }
         }
@@ -152,10 +148,9 @@ int main(int CMN_UNUSED(argc), char** CMN_UNUSED(argv))
 
     const int targetcount = (radius * 2 + 1) * (radius * 2 + 1);
     svlSampleTargets targets;
-    vctDynamicVector<int> position;
+    vctInt2 position;
     int i, j, c = 0;
 
-    position.SetSize(2);
     targets.SetSize(2, targetcount, 1);
     for (j = -radius; j <= radius; j ++) {
         for (i = -radius; i <= radius; i ++) {

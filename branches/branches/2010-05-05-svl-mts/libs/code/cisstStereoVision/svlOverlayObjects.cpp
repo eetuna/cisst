@@ -818,6 +818,14 @@ int svlOverlayStaticPoly::SetPoint(unsigned int idx, svlPoint2D point)
     return SVL_OK;
 }
 
+int svlOverlayStaticPoly::SetPoint(unsigned int idx, vctInt2 point)
+{
+    if (idx >= Poly.size()) return SVL_FAIL;
+    Poly[idx].x = point.X();
+    Poly[idx].y = point.Y();
+    return SVL_OK;
+}
+
 int svlOverlayStaticPoly::SetPoint(unsigned int idx, int x, int y)
 {
     if (idx >= Poly.size()) return SVL_FAIL;
@@ -830,6 +838,14 @@ int svlOverlayStaticPoly::GetPoint(unsigned int idx, svlPoint2D & point) const
 {
     if (idx >= Poly.size()) return SVL_FAIL;
     point = Poly[idx];
+    return SVL_OK;
+}
+
+int svlOverlayStaticPoly::GetPoint(unsigned int idx, vctInt2 & point) const
+{
+    if (idx >= Poly.size()) return SVL_FAIL;
+    point.X() = Poly[idx].x;
+    point.Y() = Poly[idx].y;
     return SVL_OK;
 }
 
