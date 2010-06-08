@@ -155,22 +155,22 @@ bool mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType cli
     ConnectionStrings * element = &it->second;
     const std::string clientProcessName = element->ClientProcessName;
     const std::string clientComponentName = element->ClientComponentName;
-    const std::string clientRequiredInterfaceName = element->ClientRequiredInterfaceName;
+    const std::string clientInterfaceRequiredName = element->ClientInterfaceRequiredName;
     const std::string serverProcessName = element->ServerProcessName;
     const std::string serverComponentName = element->ServerComponentName;
     const std::string serverProvidedInterfaceName = element->ServerProvidedInterfaceName;
 
     // Remove the process logically
     mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
-    if (!localManager->Disconnect(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+    if (!localManager->Disconnect(clientProcessName, clientComponentName, clientInterfaceRequiredName,
                                   serverProcessName, serverComponentName, serverProvidedInterfaceName))
     {
         LogWarning(mtsComponentInterfaceProxyServer, "OnClientDisconnect: failed to disconnect: connection id=" << clientID << ", "
-            << mtsManagerGlobal::GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
+            << mtsManagerGlobal::GetInterfaceUID(clientProcessName, clientComponentName, clientInterfaceRequiredName) << " - "
             << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl);
     } else {
         LogPrint(mtsManagerProxyServer, "OnClientDisconnect: successfully disconnected: connection id=" << clientID << ", "
-            << mtsManagerGlobal::GetInterfaceUID(clientProcessName, clientComponentName, clientRequiredInterfaceName) << " - "
+            << mtsManagerGlobal::GetInterfaceUID(clientProcessName, clientComponentName, clientInterfaceRequiredName) << " - "
             << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverProvidedInterfaceName) << std::endl);
     }
 
@@ -258,7 +258,7 @@ bool mtsComponentInterfaceProxyServer::AddPerCommandSerializer(const CommandIDTy
 }
 
 bool mtsComponentInterfaceProxyServer::AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
-    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     ConnectionStringMapType::iterator it = ConnectionStringMap.find(providedInterfaceProxyInstanceID);
@@ -267,7 +267,7 @@ bool mtsComponentInterfaceProxyServer::AddConnectionInformation(const unsigned i
         return false;
     }
 
-    ConnectionStrings element(clientProcessName, clientComponentName, clientRequiredInterfaceName,
+    ConnectionStrings element(clientProcessName, clientComponentName, clientInterfaceRequiredName,
                               serverProcessName, serverComponentName, serverProvidedInterfaceName);
     ConnectionStringMap.insert(std::make_pair(providedInterfaceProxyInstanceID, element));
 

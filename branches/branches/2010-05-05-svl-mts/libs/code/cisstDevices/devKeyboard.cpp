@@ -82,9 +82,9 @@ void devKeyboard::AddKeyWriteCommand(char key, const std::string & interfaceName
     keyData->State = initialState;
 
     // add interface
-    mtsRequiredInterface * requiredInterface = this->GetRequiredInterface(interfaceName);
+    mtsInterfaceRequired * requiredInterface = this->GetInterfaceRequired(interfaceName);
     if (!requiredInterface) {
-        requiredInterface = this->AddRequiredInterface(interfaceName);
+        requiredInterface = this->AddInterfaceRequired(interfaceName);
     }
     requiredInterface->AddFunction(commandName, keyData->WriteTrigger);
 }

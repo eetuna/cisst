@@ -93,10 +93,10 @@ public:
     typedef CommandVoidVector  EventHandlerVoidVector;
     typedef CommandWriteVector EventHandlerWriteVector;
 
-    class RequiredInterfaceDescription {
+    class InterfaceRequiredDescription {
     public:
         // Interface name
-        std::string RequiredInterfaceName;
+        std::string InterfaceRequiredName;
 
         // Functions (i.e., command pointers)
         CommandPointerNames FunctionVoidNames;
@@ -114,7 +114,7 @@ public:
 #define TYPEDEF( _class ) typedef mtsInterfaceCommon::_class _class;
 
 TYPEDEF(ProvidedInterfaceDescription);
-TYPEDEF(RequiredInterfaceDescription);
+TYPEDEF(InterfaceRequiredDescription);
 TYPEDEF(CommandVoidElement);
 TYPEDEF(CommandWriteElement);
 TYPEDEF(CommandReadElement);

@@ -18,7 +18,7 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsCollectorQtComponent.h>
 
 
@@ -26,19 +26,19 @@ mtsCollectorQtComponent::mtsCollectorQtComponent(const std::string & componentNa
     mtsComponent(componentName)
 {
     // create the cisstMultiTask interface with commands and events
-    mtsRequiredInterface * requiredInterface = AddRequiredInterface("DataCollection");
-    if (requiredInterface) {
-       requiredInterface->AddFunction("StartCollection", Collection.StartCollection);
-       requiredInterface->AddFunction("StopCollection", Collection.StopCollection);
-       requiredInterface->AddFunction("StartCollectionIn", Collection.StartCollectionIn);
-       requiredInterface->AddFunction("StopCollectionIn", Collection.StopCollectionIn);
-       requiredInterface->AddFunction("SetWorkingDirectory", Collection.SetWorkingDirectory);
-       requiredInterface->AddFunction("SetOutputToDefault", Collection.SetOutputToDefault);
-       requiredInterface->AddEventHandlerVoid(&mtsCollectorQtComponent::CollectionStartedHandler, this,
+    mtsInterfaceRequired * interfaceRequired = AddInterfaceRequired("DataCollection");
+    if (interfaceRequired) {
+       interfaceRequired->AddFunction("StartCollection", Collection.StartCollection);
+       interfaceRequired->AddFunction("StopCollection", Collection.StopCollection);
+       interfaceRequired->AddFunction("StartCollectionIn", Collection.StartCollectionIn);
+       interfaceRequired->AddFunction("StopCollectionIn", Collection.StopCollectionIn);
+       interfaceRequired->AddFunction("SetWorkingDirectory", Collection.SetWorkingDirectory);
+       interfaceRequired->AddFunction("SetOutputToDefault", Collection.SetOutputToDefault);
+       interfaceRequired->AddEventHandlerVoid(&mtsCollectorQtComponent::CollectionStartedHandler, this,
                                               "CollectionStarted", false);
-       requiredInterface->AddEventHandlerWrite(&mtsCollectorQtComponent::CollectionStoppedHandler, this,
+       interfaceRequired->AddEventHandlerWrite(&mtsCollectorQtComponent::CollectionStoppedHandler, this,
                                                "CollectionStopped", false);
-       requiredInterface->AddEventHandlerWrite(&mtsCollectorQtComponent::ProgressHandler, this,
+       interfaceRequired->AddEventHandlerWrite(&mtsCollectorQtComponent::ProgressHandler, this,
                                                "Progress", false);
     }
 }

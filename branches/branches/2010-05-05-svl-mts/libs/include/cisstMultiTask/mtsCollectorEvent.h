@@ -59,15 +59,15 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
       interface and for each provided interface we will need to create
       a required interface.  For this, we use a map of maps. */
     //@{
-    typedef cmnNamedMap<mtsRequiredInterface> RequiredInterfacesMap;
-    typedef cmnNamedMap<RequiredInterfacesMap> ComponentsMap;
+    typedef cmnNamedMap<mtsInterfaceRequired> InterfacesRequiredMap;
+    typedef cmnNamedMap<InterfacesRequiredMap> ComponentsMap;
     ComponentsMap ObservedComponents;
     //@}
 
     /*! Get the required interface associated to a specific connection
       defined by the component and interface.  If the required
       interface doesn't exist yet, a new one is being created. */
-    mtsRequiredInterface * GetRequiredInterfaceFor(const mtsComponent * componentPointer,
+    mtsInterfaceRequired * GetInterfaceRequiredFor(const mtsComponent * componentPointer,
                                                    const mtsProvidedInterface * interfacePointer);
 
     /*! Class holding information for each event void as well as
@@ -95,7 +95,7 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
         std::string ComponentName;
         std::string InterfaceName;
         std::string EventName;
-        mtsRequiredInterface * RequiredInterface;
+        mtsInterfaceRequired * InterfaceRequired;
         const mtsGenericObject * ArgumentPrototype;
         size_t EventId;
         mtsCollectorEvent * Collector;

@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Peter Kazanzides
+  Author(s):  Peter Kazanzides, Anton Deguet
   Created on: 2008-11-13
 
-  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2008-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -18,15 +18,13 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstCommon/cmnSerializer.h>
 
 
-mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mtsMailBox * mailBox) :
-    Name(interfaceName),
+mtsInterfaceRequired::mtsInterfaceRequired(const std::string & interfaceName, mtsMailBox * mailBox) :
+    mtsInterfaceRequiredOrInput(interfaceName),
     MailBox(mailBox),
-    ProvidedInterface(0),
-    Registered(false),
     FunctionsVoid("FunctionsVoid"),
     FunctionsRead("FunctionsRead"),
     FunctionsWrite("FunctionsWrite"),
@@ -43,7 +41,7 @@ mtsRequiredInterface::mtsRequiredInterface(const std::string & interfaceName, mt
 }
 
 
-mtsRequiredInterface::~mtsRequiredInterface()
+mtsInterfaceRequired::~mtsInterfaceRequired()
 {
     FunctionsVoid.DeleteAll();
     FunctionsRead.DeleteAll();
@@ -52,7 +50,7 @@ mtsRequiredInterface::~mtsRequiredInterface()
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfFunctions(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctions(void) const {
     std::vector<std::string> commands = GetNamesOfFunctionsVoid();
     std::vector<std::string> tmp = GetNamesOfFunctionsRead();
     commands.insert(commands.begin(), tmp.begin(), tmp.end());
@@ -66,47 +64,56 @@ std::vector<std::string> mtsRequiredInterface::GetNamesOfFunctions(void) const {
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfFunctionsVoid(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsVoid(void) const {
     return FunctionsVoid.GetNames();
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfFunctionsRead(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsRead(void) const {
     return FunctionsRead.GetNames();
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfFunctionsWrite(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsWrite(void) const {
     return FunctionsWrite.GetNames();
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfFunctionsQualifiedRead(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsQualifiedRead(void) const {
     return FunctionsQualifiedRead.GetNames();
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfEventHandlersVoid(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfEventHandlersVoid(void) const {
     return EventHandlersVoid.GetNames();
 }
 
 
-std::vector<std::string> mtsRequiredInterface::GetNamesOfEventHandlersWrite(void) const {
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfEventHandlersWrite(void) const {
     return EventHandlersWrite.GetNames();
 }
 
 
-mtsCommandVoidBase * mtsRequiredInterface::GetEventHandlerVoid(const std::string & eventName) const {
+mtsCommandVoidBase * mtsInterfaceRequired::GetEventHandlerVoid(const std::string & eventName) const {
     return EventHandlersVoid.GetItem(eventName);
 }
 
 
-mtsCommandWriteBase * mtsRequiredInterface::GetEventHandlerWrite(const std::string & eventName) const {
+mtsCommandWriteBase * mtsInterfaceRequired::GetEventHandlerWrite(const std::string & eventName) const {
     return EventHandlersWrite.GetItem(eventName);
 }
 
 
-void mtsRequiredInterface::Disconnect(void)
+bool mtsInterfaceRequired::ConnectTo(mtsDeviceInterface * interfaceProvided) {
+    this->ProvidedInterface = interfaceProvided;
+    unsigned int newUserId;
+    newUserId = interfaceProvided->AllocateResources(this->GetName());
+    CMN_LOG_CLASS_INIT_VERBOSE << "ConnectInterfaceRequiredOrInput: binding commands and events with user Id \"" << newUserId << "\"" << std::endl;
+    return this->BindCommandsAndEvents(newUserId);
+}
+
+
+bool mtsInterfaceRequired::Disconnect(void)
 {
     // First, do the command pointers.  In the future, it may be better to set the pointers to NOPVoid, NOPRead, etc.,
     // which can be static members of the corresponding command classes.
@@ -128,10 +135,11 @@ void mtsRequiredInterface::Disconnect(void)
     for (iterEventWrite = EventHandlersWrite.begin(); iterEventWrite != EventHandlersWrite.end(); iterEventWrite++)
         ProvidedInterface->RemoveObserver(iterEventWrite->first, iterEventWrite->second);
 #endif
+    return true;
 }
 
 
-bool mtsRequiredInterface::BindCommandsAndEvents(unsigned int userId)
+bool mtsInterfaceRequired::BindCommandsAndEvents(unsigned int userId)
 {
     bool success = true;
     bool result;
@@ -273,7 +281,19 @@ bool mtsRequiredInterface::BindCommandsAndEvents(unsigned int userId)
 }
 
 
-unsigned int mtsRequiredInterface::ProcessMailBoxes(void)
+void mtsInterfaceRequired::DisableAllEvents(void) {
+    EventHandlersVoid.ForEachVoid(&mtsCommandBase::Disable);
+    EventHandlersWrite.ForEachVoid(&mtsCommandBase::Disable);
+}
+
+
+void mtsInterfaceRequired::EnableAllEvents(void) {
+    EventHandlersVoid.ForEachVoid(&mtsCommandBase::Enable);
+    EventHandlersWrite.ForEachVoid(&mtsCommandBase::Enable);
+}
+
+
+unsigned int mtsInterfaceRequired::ProcessMailBoxes(void)
 {
     unsigned int numberOfCommands = 0;
     while (MailBox->ExecuteNext()) {
@@ -283,7 +303,7 @@ unsigned int mtsRequiredInterface::ProcessMailBoxes(void)
 }
 
 
-void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
+void mtsInterfaceRequired::ToStream(std::ostream & outputStream) const
 {
     outputStream << "Required Interface name: " << Name << std::endl;
     FunctionsVoid.ToStream(outputStream);
@@ -295,25 +315,25 @@ void mtsRequiredInterface::ToStream(std::ostream & outputStream) const
 }
 
 
-bool mtsRequiredInterface::AddFunction(const std::string & functionName, mtsFunctionVoid & function, bool required)
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionVoid & function, bool required)
 {
     return FunctionsVoid.AddItem(functionName, new FunctionInfo(function, required));
 }
 
 
-bool mtsRequiredInterface::AddFunction(const std::string & functionName, mtsFunctionRead & function, bool required)
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionRead & function, bool required)
 {
     return FunctionsRead.AddItem(functionName, new FunctionInfo(function, required));
 }
 
 
-bool mtsRequiredInterface::AddFunction(const std::string & functionName, mtsFunctionWrite & function, bool required)
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionWrite & function, bool required)
 {
     return FunctionsWrite.AddItem(functionName, new FunctionInfo(function, required));
 }
 
 
-bool mtsRequiredInterface::AddFunction(const std::string & functionName, mtsFunctionQualifiedRead & function, bool required)
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionQualifiedRead & function, bool required)
 {
     return FunctionsQualifiedRead.AddItem(functionName, new FunctionInfo(function, required));
 }

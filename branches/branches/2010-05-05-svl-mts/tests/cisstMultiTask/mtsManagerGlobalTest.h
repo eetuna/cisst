@@ -40,7 +40,7 @@ private:
         CPPUNIT_TEST(TestConnectionElement);
 
         CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
-        CPPUNIT_TEST(TestGetConnectionsOfRequiredInterface);
+        CPPUNIT_TEST(TestGetConnectionsOfInterfaceRequired);
 
         CPPUNIT_TEST(TestAddProcess);
         CPPUNIT_TEST(TestFindProcess);
@@ -56,9 +56,9 @@ private:
         CPPUNIT_TEST(TestFindProvidedInterface);
         CPPUNIT_TEST(TestRemoveProvidedInterface);
 
-        CPPUNIT_TEST(TestAddRequiredInterface);
-        CPPUNIT_TEST(TestFindRequiredInterface);
-        CPPUNIT_TEST(TestRemoveRequiredInterface);
+        CPPUNIT_TEST(TestAddInterfaceRequired);
+        CPPUNIT_TEST(TestFindInterfaceRequired);
+        CPPUNIT_TEST(TestRemoveInterfaceRequired);
 
         CPPUNIT_TEST(TestConnectLocal);
 #if CISST_MTS_HAS_ICE
@@ -82,7 +82,7 @@ public:
     void TestConnectionElement(void);
 
     void TestGetConnectionsOfProvidedInterface(void);
-    void TestGetConnectionsOfRequiredInterface(void);
+    void TestGetConnectionsOfInterfaceRequired(void);
 
     void TestAddProcess(void);
     void TestFindProcess(void);
@@ -98,9 +98,9 @@ public:
     void TestFindProvidedInterface(void);
     void TestRemoveProvidedInterface(void);
          
-    void TestAddRequiredInterface(void);
-    void TestFindRequiredInterface(void);
-    void TestRemoveRequiredInterface(void);
+    void TestAddInterfaceRequired(void);
+    void TestFindInterfaceRequired(void);
+    void TestRemoveInterfaceRequired(void);
 
     void TestConnectLocal(void);
 #if CISST_MTS_HAS_ICE

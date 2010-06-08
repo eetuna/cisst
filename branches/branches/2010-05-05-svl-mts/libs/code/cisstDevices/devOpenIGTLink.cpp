@@ -68,8 +68,8 @@ devOpenIGTLink::~devOpenIGTLink(void)
 void devOpenIGTLink::Initialize(void)
 {
     // required interfaces
-    mtsRequiredInterface * requiredInterface;
-    requiredInterface = AddRequiredInterface("RequiresPositionCartesian");
+    mtsInterfaceRequired * requiredInterface;
+    requiredInterface = AddInterfaceRequired("RequiresPositionCartesian");
     if (requiredInterface) {
         requiredInterface->AddFunction("GetPositionCartesian", GetPositionCartesian);
     }

@@ -83,7 +83,7 @@ bool ui3Manager::SetupMaM(mtsDevice * mamDevice, const std::string & mamInterfac
 bool ui3Manager::SetupMaM(const std::string & mamDevice, const std::string & mamInterface)
 {
     // add required interface to device to switch on/off master as mouse
-    mtsRequiredInterface * requiredInterface = this->AddRequiredInterface("MaM");
+    mtsInterfaceRequired * requiredInterface = this->AddInterfaceRequired("MaM");
     requiredInterface->AddEventHandlerWrite(&ui3Manager::MaMModeEventHandler, this, "Button");
 
     // connect the left master device to the right master required interface
@@ -201,10 +201,10 @@ bool ui3Manager::AddBehavior(ui3BehaviorBase * behavior,
     behavior->ConfigureMenuBar();
 
     // create a required interface for all behaviors to connect with the manager
-    mtsRequiredInterface * requiredInterface;
+    mtsInterfaceRequired * requiredInterface;
 
     // create a required interface for this behavior to connect with the manager
-    requiredInterface = behavior->AddRequiredInterface("ManagerInterface" + behavior->GetName());
+    requiredInterface = behavior->AddInterfaceRequired("ManagerInterface" + behavior->GetName());
     CMN_ASSERT(requiredInterface);
     requiredInterface->AddEventHandlerWrite(&ui3BehaviorBase::PrimaryMasterButtonCallback,
                                             behavior, "PrimaryMasterButton");
@@ -266,13 +266,13 @@ void ui3Manager::ConnectAll(void)
     // to fix, what if multiple arms have the same role?
     // should we also show arms under their real name?
     // create an interface for all behaviors to access some state information
-    mtsRequiredInterface * requiredInterface;
+    mtsInterfaceRequired * requiredInterface;
     BehaviorList::iterator iterator;
     const BehaviorList::iterator end = this->Behaviors.end();
     for (iterator = this->Behaviors.begin();
          iterator != end;
          iterator++) {
-        requiredInterface = (*iterator)->AddRequiredInterface("ManagerInterface");
+        requiredInterface = (*iterator)->AddInterfaceRequired("ManagerInterface");
         CMN_ASSERT(requiredInterface);
     }
 
@@ -304,7 +304,7 @@ void ui3Manager::ConnectAll(void)
             for (iterator = this->Behaviors.begin();
                  iterator != end;
                  iterator++) {
-                requiredInterface = (*iterator)->GetRequiredInterface("ManagerInterface");
+                requiredInterface = (*iterator)->GetInterfaceRequired("ManagerInterface");
                 CMN_ASSERT(requiredInterface);
                 switch (((*armIterator).second)->Role) {
                 case ui3MasterArm::PRIMARY:

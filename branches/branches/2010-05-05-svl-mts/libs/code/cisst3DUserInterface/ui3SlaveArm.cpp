@@ -54,10 +54,10 @@ bool ui3SlaveArm::SetInput(const std::string & positionDevice, const std::string
     }
 
     // add required interface for master arm to Manager
-    mtsRequiredInterface * requiredInterface;
+    mtsInterfaceRequired * requiredInterface;
 
     // setup master arm required interface 
-    requiredInterface = this->Manager->AddRequiredInterface(this->Name);
+    requiredInterface = this->Manager->AddInterfaceRequired(this->Name);
     if (requiredInterface) {
         // bound the mtsFunction to the command provided by the interface 
         requiredInterface->AddFunction("GetPositionCartesian", this->GetCartesianPositionFunction, mtsRequired);

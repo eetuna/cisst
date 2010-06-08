@@ -18,7 +18,7 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 
 #include "displayQComponent.h"
 
@@ -29,10 +29,10 @@ displayQComponent::displayQComponent(const std::string & componentName) :
     mtsComponent(componentName)
 {
     // create the cisstMultiTask interface with commands and events
-    mtsRequiredInterface * requiredInterface = AddRequiredInterface("DataGenerator");
-    if (requiredInterface) {
-       requiredInterface->AddFunction("GetData", Generator.GetData);
-       requiredInterface->AddFunction("SetAmplitude", Generator.SetAmplitude);
+    mtsInterfaceRequired * interfaceRequired = AddInterfaceRequired("DataGenerator");
+    if (interfaceRequired) {
+       interfaceRequired->AddFunction("GetData", Generator.GetData);
+       interfaceRequired->AddFunction("SetAmplitude", Generator.SetAmplitude);
     }
 
     // connect Qt signals to slots

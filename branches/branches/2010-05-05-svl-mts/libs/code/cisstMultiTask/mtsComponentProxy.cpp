@@ -24,7 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsManagerLocal.h>
 #include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsFunctionReadOrWriteProxy.h>
 #include <cisstMultiTask/mtsFunctionQualifiedReadOrWriteProxy.h>
 
@@ -46,12 +46,12 @@ mtsComponentProxy::~mtsComponentProxy()
     ProvidedInterfaceNetworkProxies.DeleteAll();
 
     // Stop all required interface proxies running.
-    RequiredInterfaceNetworkProxyMapType::MapType::const_iterator itRequiredProxy = RequiredInterfaceNetworkProxies.begin();
-    const RequiredInterfaceNetworkProxyMapType::MapType::const_iterator itRequiredProxyEnd = RequiredInterfaceNetworkProxies.end();
+    InterfaceRequiredNetworkProxyMapType::MapType::const_iterator itRequiredProxy = InterfaceRequiredNetworkProxies.begin();
+    const InterfaceRequiredNetworkProxyMapType::MapType::const_iterator itRequiredProxyEnd = InterfaceRequiredNetworkProxies.end();
     for (; itRequiredProxy != itRequiredProxyEnd; ++itRequiredProxy) {
         itRequiredProxy->second->Stop();
     }
-    RequiredInterfaceNetworkProxies.DeleteAll();
+    InterfaceRequiredNetworkProxies.DeleteAll();
 
 
     ProvidedInterfaceProxyInstanceMapType::const_iterator itInstance = ProvidedInterfaceProxyInstanceMap.begin();
@@ -66,20 +66,20 @@ mtsComponentProxy::~mtsComponentProxy()
 //-----------------------------------------------------------------------------
 //  Methods for Server Components
 //-----------------------------------------------------------------------------
-bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDescription & requiredInterfaceDescription)
+bool mtsComponentProxy::CreateInterfaceRequiredProxy(const InterfaceRequiredDescription & requiredInterfaceDescription)
 {
-    const std::string requiredInterfaceName = requiredInterfaceDescription.RequiredInterfaceName;
+    const std::string requiredInterfaceName = requiredInterfaceDescription.InterfaceRequiredName;
 
     // Check if the interface name is unique
-    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceName);
+    mtsInterfaceRequired * requiredInterface = GetInterfaceRequired(requiredInterfaceName);
     if (requiredInterface) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: can't create required interface proxy: "
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: can't create required interface proxy: "
             << "duplicate name: " << requiredInterfaceName << std::endl;
         return false;
     }
 
     // Create a required interface proxy
-    mtsRequiredInterface * requiredInterfaceProxy = new mtsRequiredInterface(requiredInterfaceName);
+    mtsInterfaceRequired * requiredInterfaceProxy = new mtsInterfaceRequired(requiredInterfaceName);
 
     // Store function proxy pointers and event handler proxy pointers to assign
     // command proxies' id at server side.
@@ -101,7 +101,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         success &= mapElement->FunctionVoidProxyMap.AddItem(namesOfFunctionVoid[i], functionVoidProxy);
         if (!success) {
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add void function proxy: " << namesOfFunctionVoid[i] << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add void function proxy: " << namesOfFunctionVoid[i] << std::endl;
             return false;
         }
     }
@@ -114,7 +114,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         success &= mapElement->FunctionWriteProxyMap.AddItem(namesOfFunctionWrite[i], functionWriteProxy);
         if (!success) {
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add write function proxy: " << namesOfFunctionWrite[i] << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add write function proxy: " << namesOfFunctionWrite[i] << std::endl;
             return false;
         }
     }
@@ -127,7 +127,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         success &= mapElement->FunctionReadProxyMap.AddItem(namesOfFunctionRead[i], functionReadProxy);
         if (!success) {
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add read function proxy: " << namesOfFunctionRead[i] << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add read function proxy: " << namesOfFunctionRead[i] << std::endl;
             return false;
         }
     }
@@ -140,7 +140,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         success &= mapElement->FunctionQualifiedReadProxyMap.AddItem(namesOfFunctionQualifiedRead[i], functionQualifiedReadProxy);
         if (!success) {
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add qualified read function proxy: " << namesOfFunctionQualifiedRead[i] << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add qualified read function proxy: " << namesOfFunctionQualifiedRead[i] << std::endl;
             return false;
         }
     }
@@ -159,7 +159,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         if (!requiredInterfaceProxy->EventHandlersVoid.AddItem(eventName, newEventVoidHandlerProxy)) {
             delete newEventVoidHandlerProxy;
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add void event handler proxy: " << eventName << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add void event handler proxy: " << eventName << std::endl;
             return false;
         }
     }
@@ -176,7 +176,7 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         if (!requiredInterfaceProxy->EventHandlersWrite.AddItem(eventName, newEventWriteHandlerProxy)) {
             delete newEventWriteHandlerProxy;
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add write event handler proxy: " << eventName << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add write event handler proxy: " << eventName << std::endl;
             return false;
         }
 
@@ -186,64 +186,64 @@ bool mtsComponentProxy::CreateRequiredInterfaceProxy(const RequiredInterfaceDesc
         try {
             argumentPrototype = dynamic_cast<mtsGenericObject *>(deserializer.DeSerialize());
         } catch (std::exception e) {
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: write command argument deserialization failed: " << e.what() << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: write command argument deserialization failed: " << e.what() << std::endl;
             argumentPrototype = NULL;
         }
 
         if (!argumentPrototype) {
             delete requiredInterfaceProxy;
-            CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to create event write handler proxy: " << eventName << std::endl;
+            CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to create event write handler proxy: " << eventName << std::endl;
             return false;
         }
         newEventWriteHandlerProxy->SetArgumentPrototype(argumentPrototype);
     }
 
     // Add the required interface proxy to the component
-    if (!AddRequiredInterface(requiredInterfaceName, requiredInterfaceProxy)) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add required interface proxy: " << requiredInterfaceName << std::endl;
+    if (!AddInterfaceRequired(requiredInterfaceName, requiredInterfaceProxy)) {
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add required interface proxy: " << requiredInterfaceName << std::endl;
         delete requiredInterfaceProxy;
         return false;
     }
 
     // Add to function proxy and event handler proxy map
     if (!FunctionProxyAndEventHandlerProxyMap.AddItem(requiredInterfaceName, mapElement)) {
-        CMN_LOG_CLASS_RUN_ERROR << "CreateRequiredInterfaceProxy: failed to add proxy map: " << requiredInterfaceName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceRequiredProxy: failed to add proxy map: " << requiredInterfaceName << std::endl;
         return false;
     }
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "CreateRequiredInterfaceProxy: added required interface proxy: " << requiredInterfaceName << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "CreateInterfaceRequiredProxy: added required interface proxy: " << requiredInterfaceName << std::endl;
 
     return true;
 }
 
-bool mtsComponentProxy::RemoveRequiredInterfaceProxy(const std::string & requiredInterfaceProxyName)
+bool mtsComponentProxy::RemoveInterfaceRequiredProxy(const std::string & requiredInterfaceProxyName)
 {
     // Get network objects to remove
-    mtsComponentInterfaceProxyClient * clientProxy = RequiredInterfaceNetworkProxies.GetItem(requiredInterfaceProxyName);
+    mtsComponentInterfaceProxyClient * clientProxy = InterfaceRequiredNetworkProxies.GetItem(requiredInterfaceProxyName);
     if (!clientProxy) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: cannot find proxy client: " << requiredInterfaceProxyName << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveInterfaceRequiredProxy: cannot find proxy client: " << requiredInterfaceProxyName << std::endl;
         return false;
     } else {
         // Network server deactivation and resource clean up
         delete clientProxy;
-        RequiredInterfaceNetworkProxies.RemoveItem(requiredInterfaceProxyName);
+        InterfaceRequiredNetworkProxies.RemoveItem(requiredInterfaceProxyName);
     }
 
     // Get logical objects to remove
-    if (!RequiredInterfaces.FindItem(requiredInterfaceProxyName)) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: cannot find required interface proxy: " << requiredInterfaceProxyName << std::endl;
+    if (!InterfacesRequired.FindItem(requiredInterfaceProxyName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveInterfaceRequiredProxy: cannot find required interface proxy: " << requiredInterfaceProxyName << std::endl;
         return false;
     }
-    mtsRequiredInterface * requiredInterfaceProxy = RequiredInterfaces.GetItem(requiredInterfaceProxyName);
+    mtsInterfaceRequired * requiredInterfaceProxy = InterfacesRequired.GetItem(requiredInterfaceProxyName);
     if (!requiredInterfaceProxy) {
-        CMN_LOG_CLASS_RUN_ERROR << "RemoveRequiredInterfaceProxy: This should not happen" << std::endl;
+        CMN_LOG_CLASS_RUN_ERROR << "RemoveInterfaceRequiredProxy: This should not happen" << std::endl;
         return false;
     } else {
         delete requiredInterfaceProxy;
-        RequiredInterfaces.RemoveItem(requiredInterfaceProxyName);
+        InterfacesRequired.RemoveItem(requiredInterfaceProxyName);
     }
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "RemoveRequiredInterfaceProxy: removed required interface proxy: " << requiredInterfaceProxyName << std::endl;
+    CMN_LOG_CLASS_RUN_VERBOSE << "RemoveInterfaceRequiredProxy: removed required interface proxy: " << requiredInterfaceProxyName << std::endl;
 
     return true;
 }
@@ -572,7 +572,7 @@ bool mtsComponentProxy::CreateInterfaceProxyClient(const std::string & requiredI
         new mtsComponentInterfaceProxyClient(serverEndpointInfo, providedInterfaceProxyInstanceID);
 
     // Add it to required interface proxy object map
-    if (!RequiredInterfaceNetworkProxies.AddItem(requiredInterfaceProxyName, requiredInterfaceProxy)) {
+    if (!InterfaceRequiredNetworkProxies.AddItem(requiredInterfaceProxyName, requiredInterfaceProxy)) {
         CMN_LOG_CLASS_RUN_ERROR << "CreateInterfaceProxyClient: "
             << "cannot register required interface proxy: " << requiredInterfaceProxyName << std::endl;
         return false;
@@ -600,7 +600,7 @@ bool mtsComponentProxy::IsActiveProxy(const std::string & proxyName, const bool 
         }
         return providedInterfaceProxy->IsActiveProxy();
     } else {
-        mtsComponentInterfaceProxyClient * requiredInterfaceProxy = RequiredInterfaceNetworkProxies.GetItem(proxyName);
+        mtsComponentInterfaceProxyClient * requiredInterfaceProxy = InterfaceRequiredNetworkProxies.GetItem(proxyName);
         if (!requiredInterfaceProxy) {
             CMN_LOG_CLASS_RUN_ERROR << "IsActiveProxy: Cannot find required interface proxy: " << proxyName << std::endl;
             return false;
@@ -615,7 +615,7 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & clientComp
 
     // Get network proxy client connected to the required interface proxy
     // of which name is 'requiredInterfaceName.'
-    mtsComponentInterfaceProxyClient * interfaceProxyClient = RequiredInterfaceNetworkProxies.GetItem(requiredInterfaceName);
+    mtsComponentInterfaceProxyClient * interfaceProxyClient = InterfaceRequiredNetworkProxies.GetItem(requiredInterfaceName);
     if (!interfaceProxyClient) {
         CMN_LOG_CLASS_RUN_ERROR << "UpdateEventHandlerProxyID: no interface proxy client found: " << requiredInterfaceName << std::endl;
         return false;
@@ -633,7 +633,7 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & clientComp
     mtsComponentInterfaceProxy::EventGeneratorProxySequence::const_iterator it;
     mtsComponentInterfaceProxy::EventGeneratorProxySequence::const_iterator itEnd;
 
-    mtsRequiredInterface * requiredInterface = GetRequiredInterface(requiredInterfaceName);
+    mtsInterfaceRequired * requiredInterface = GetInterfaceRequired(requiredInterfaceName);
     if (!requiredInterface) {
         CMN_LOG_CLASS_RUN_ERROR << "UpdateEventHandlerProxyID: no required interface found: " << requiredInterfaceName << std::endl;
         return false;
@@ -684,7 +684,7 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & clientComp
 
 bool mtsComponentProxy::UpdateCommandProxyID(
     const std::string & serverProvidedInterfaceName, const std::string & CMN_UNUSED(clientComponentName),
-    const std::string & clientRequiredInterfaceName, const unsigned int providedInterfaceProxyInstanceID)
+    const std::string & clientInterfaceRequiredName, const unsigned int providedInterfaceProxyInstanceID)
 {
     const unsigned int clientID = providedInterfaceProxyInstanceID;
 
@@ -702,10 +702,10 @@ bool mtsComponentProxy::UpdateCommandProxyID(
     // at server side, which will be used to set command proxies' IDs.
     mtsComponentInterfaceProxy::FunctionProxyPointerSet functionProxyPointers;
     if (!interfaceProxyServer->SendFetchFunctionProxyPointers(
-            providedInterfaceProxyInstanceID, clientRequiredInterfaceName, functionProxyPointers))
+            providedInterfaceProxyInstanceID, clientInterfaceRequiredName, functionProxyPointers))
     {
         CMN_LOG_CLASS_RUN_ERROR << "UpdateCommandProxyID: failed to fetch function proxy pointers: "
-            << clientRequiredInterfaceName << " @ " << providedInterfaceProxyInstanceID << std::endl;
+            << clientInterfaceRequiredName << " @ " << providedInterfaceProxyInstanceID << std::endl;
         return false;
     }
 
@@ -865,7 +865,7 @@ bool mtsComponentProxy::GetFunctionProxyPointers(const std::string & requiredInt
     mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers)
 {
     // Get required interface proxy
-    mtsRequiredInterface * requiredInterfaceProxy = GetRequiredInterface(requiredInterfaceName);
+    mtsInterfaceRequired * requiredInterfaceProxy = GetInterfaceRequired(requiredInterfaceName);
     if (!requiredInterfaceProxy) {
         CMN_LOG_CLASS_RUN_ERROR << "GetFunctionProxyPointers: failed to get required interface proxy: " << requiredInterfaceName << std::endl;
         return false;
@@ -930,7 +930,7 @@ bool mtsComponentProxy::GetEventGeneratorProxyPointer(
         return false;
     }
 
-    mtsRequiredInterface * requiredInterface = clientComponent->GetRequiredInterface(requiredInterfaceName);
+    mtsInterfaceRequired * requiredInterface = clientComponent->GetInterfaceRequired(requiredInterfaceName);
     if (!requiredInterface) {
         CMN_LOG_CLASS_RUN_ERROR << "GetEventGeneratorProxyPointer: no required interface found: " << requiredInterfaceName << std::endl;
         return false;
@@ -1191,8 +1191,8 @@ void mtsComponentProxy::ExtractProvidedInterfaceDescription(
     }
 }
 
-void mtsComponentProxy::ExtractRequiredInterfaceDescription(
-    mtsRequiredInterface * requiredInterface, RequiredInterfaceDescription & requiredInterfaceDescription)
+void mtsComponentProxy::ExtractInterfaceRequiredDescription(
+    mtsInterfaceRequired * requiredInterface, InterfaceRequiredDescription & requiredInterfaceDescription)
 {
     // Serializer initialization
     std::stringstream streamBuffer;
@@ -1209,8 +1209,8 @@ void mtsComponentProxy::ExtractRequiredInterfaceDescription(
 
     // Extract void event handlers
     CommandVoidElement elementEventVoidHandler;
-    mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoid = requiredInterface->EventHandlersVoid.begin();
-    const mtsRequiredInterface::EventHandlerVoidMapType::MapType::const_iterator itVoidEnd = requiredInterface->EventHandlersVoid.end();
+    mtsInterfaceRequired::EventHandlerVoidMapType::MapType::const_iterator itVoid = requiredInterface->EventHandlersVoid.begin();
+    const mtsInterfaceRequired::EventHandlerVoidMapType::MapType::const_iterator itVoidEnd = requiredInterface->EventHandlersVoid.end();
     for (; itVoid != itVoidEnd; ++itVoid) {
         elementEventVoidHandler.Name = itVoid->second->GetName();
         requiredInterfaceDescription.EventHandlersVoid.push_back(elementEventVoidHandler);
@@ -1218,8 +1218,8 @@ void mtsComponentProxy::ExtractRequiredInterfaceDescription(
 
     // Extract write event handlers
     CommandWriteElement elementEventWriteHandler;
-    mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWrite = requiredInterface->EventHandlersWrite.begin();
-    const mtsRequiredInterface::EventHandlerWriteMapType::MapType::const_iterator itWriteEnd = requiredInterface->EventHandlersWrite.end();
+    mtsInterfaceRequired::EventHandlerWriteMapType::MapType::const_iterator itWrite = requiredInterface->EventHandlersWrite.begin();
+    const mtsInterfaceRequired::EventHandlerWriteMapType::MapType::const_iterator itWriteEnd = requiredInterface->EventHandlersWrite.end();
     for (; itWrite != itWriteEnd; ++itWrite) {
         elementEventWriteHandler.Name = itWrite->second->GetName();
         // argument serialization
@@ -1231,7 +1231,7 @@ void mtsComponentProxy::ExtractRequiredInterfaceDescription(
 }
 
 bool mtsComponentProxy::AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
-    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
 {
     mtsComponentInterfaceProxyServer * interfaceProxyServer = ProvidedInterfaceNetworkProxies.GetItem(serverProvidedInterfaceName);
@@ -1241,6 +1241,6 @@ bool mtsComponentProxy::AddConnectionInformation(const unsigned int providedInte
     }
 
     return interfaceProxyServer->AddConnectionInformation(providedInterfaceProxyInstanceID,
-        clientProcessName, clientComponentName, clientRequiredInterfaceName,
+        clientProcessName, clientComponentName, clientInterfaceRequiredName,
         serverProcessName, serverComponentName, serverProvidedInterfaceName);
 }

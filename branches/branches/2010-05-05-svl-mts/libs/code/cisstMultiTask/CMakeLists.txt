@@ -30,22 +30,22 @@ set (SOURCE_FILES
      mtsCommandQueuedVoidBase.cpp
      mtsCommandQueuedWriteBase.cpp
 
-
      mtsMailBox.cpp
      mtsStateIndex.cpp
      mtsStateTable.cpp
      mtsIntervalStatistics.cpp
 
      mtsComponent.cpp
-     mtsTaskInterface.cpp
-     mtsRequiredInterface.cpp
      mtsTask.cpp
      mtsTaskContinuous.cpp
      mtsTaskPeriodic.cpp
      mtsTaskFromCallback.cpp
      mtsTaskFromSignal.cpp
 
+     mtsInterfaceRequired.cpp
+     mtsInterfaceRequiredOrInput.cpp
      mtsDeviceInterface.cpp
+     mtsTaskInterface.cpp
 
      mtsCollectorBase.cpp
      mtsCollectorState.cpp
@@ -106,8 +106,6 @@ set (HEADER_FILES
      mtsIntervalStatistics.h
 
      mtsComponent.h
-     mtsTaskInterface.h
-     mtsRequiredInterface.h
      mtsTask.h
      mtsTaskContinuous.h
      mtsTaskPeriodic.h
@@ -116,8 +114,11 @@ set (HEADER_FILES
 
      mtsTaskManager.h    # to be deleted
 
-     mtsDeviceInterface.h
      mtsInterfaceCommon.h
+     mtsInterfaceRequired.h
+     mtsInterfaceRequiredOrInput.h
+     mtsDeviceInterface.h
+     mtsTaskInterface.h
 
      mtsCollectorBase.h
      mtsCollectorState.h

@@ -124,7 +124,7 @@ protected:
         // Set of strings
         const std::string ClientProcessName;
         const std::string ClientComponentName;
-        const std::string ClientRequiredInterfaceName;
+        const std::string ClientInterfaceRequiredName;
         const std::string ServerProcessName;
         const std::string ServerComponentName;
         const std::string ServerProvidedInterfaceName;
@@ -134,10 +134,10 @@ protected:
 #endif
 
         ConnectionElement(const std::string & requestProcessName, const unsigned int connectionID,
-            const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+            const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
             const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
             : RequestProcessName(requestProcessName), ConnectionID(connectionID), Connected(false),
-              ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientRequiredInterfaceName(clientRequiredInterfaceName),
+              ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientInterfaceRequiredName(clientInterfaceRequiredName),
               ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
         {
 #if CISST_MTS_HAS_ICE
@@ -182,9 +182,9 @@ protected:
         - containers for interface type flag map */
     typedef struct {
         ConnectedInterfaceMapType ProvidedInterfaceMap;
-        ConnectedInterfaceMapType RequiredInterfaceMap;
+        ConnectedInterfaceMapType InterfaceRequiredMap;
         InterfaceTypeMapType ProvidedInterfaceTypeMap;
-        InterfaceTypeMapType RequiredInterfaceTypeMap;
+        InterfaceTypeMapType InterfaceRequiredTypeMap;
     } InterfaceMapType;
 
     /*! Component map: a map of registered components in a process
@@ -247,11 +247,11 @@ protected:
         const std::string & providedInterfaceName) const;
 
     /*! Get a map containing connection information for a required interface */
-    ConnectionMapType * GetConnectionsOfRequiredInterface(
+    ConnectionMapType * GetConnectionsOfInterfaceRequired(
         const std::string & clientProcessName, const std::string & clientComponentName,
         const std::string & requiredInterfaceName, InterfaceMapType ** interfaceMap);
 
-    ConnectionMapType * GetConnectionsOfRequiredInterface(
+    ConnectionMapType * GetConnectionsOfInterfaceRequired(
         const std::string & clientProcessName, const std::string & clientComponentName,
         const std::string & requiredInterfaceName) const;
 
@@ -262,7 +262,7 @@ protected:
 
     /*! Check if two interfaces are connected */
     bool IsAlreadyConnected(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
 public:
@@ -296,43 +296,43 @@ public:
     bool AddProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
 
-    bool AddRequiredInterface(
+    bool AddInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
 
     bool FindProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
 
-    bool FindRequiredInterface(
+    bool FindInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
 
     bool RemoveProvidedInterface(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
-    bool RemoveRequiredInterface(
+    bool RemoveInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     //-------------------------------------------------------------------------
     //  Connection Management
     //-------------------------------------------------------------------------
     int Connect(const std::string & requestProcessName,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         int & userId);
 
     bool ConnectConfirm(unsigned int connectionSessionID);
 
     bool Disconnect(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
 #if CISST_MTS_HAS_ICE
     bool InitiateConnect(const unsigned int connectionID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     bool ConnectServerSideInterfaceRequest(
         const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 #endif
 
@@ -361,9 +361,9 @@ public:
                                       std::vector<std::string>& namesOfProvidedInterfaces);
 
     /*! Get names of all required interfaces in a component */
-    void GetNamesOfRequiredInterfaces(const std::string & processName, 
+    void GetNamesOfInterfacesRequired(const std::string & processName, 
                                       const std::string & componentName, 
-                                      std::vector<std::string>& namesOfRequiredInterfaces);
+                                      std::vector<std::string>& namesOfInterfacesRequired);
 
 #if CISST_MTS_HAS_ICE
     /*! Get names of all commands in a provided interface */
@@ -462,12 +462,12 @@ public:
     bool StopServer();
 
     bool SetProvidedInterfaceProxyAccessInfo(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         const std::string & endpointInfo);
 
     bool GetProvidedInterfaceProxyAccessInfo(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
         std::string & endpointInfo);
 

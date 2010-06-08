@@ -72,10 +72,10 @@ bool ui3MasterArm::SetInput(const std::string & positionDevice, const std::strin
     this->Role = role;
 
     // add required interface for master arm to Manager
-    mtsRequiredInterface * requiredInterface;
+    mtsInterfaceRequired * requiredInterface;
 
     // setup master arm required interface 
-    requiredInterface = this->Manager->AddRequiredInterface(this->Name);
+    requiredInterface = this->Manager->AddInterfaceRequired(this->Name);
     if (requiredInterface) {
         // bound the mtsFunction to the command provided by the interface 
         requiredInterface->AddFunction("GetPositionCartesian", this->GetCartesianPosition, mtsRequired);
@@ -91,7 +91,7 @@ bool ui3MasterArm::SetInput(const std::string & positionDevice, const std::strin
                                         positionDevice, positionInterface);
 
     // setup master select button required interface 
-    requiredInterface = this->Manager->AddRequiredInterface(this->Name + "Button");
+    requiredInterface = this->Manager->AddInterfaceRequired(this->Name + "Button");
     if (requiredInterface) {
         requiredInterface->AddEventHandlerWrite(&ui3MasterArm::ButtonEventHandler, this,
                                                 "Button");
@@ -107,7 +107,7 @@ bool ui3MasterArm::SetInput(const std::string & positionDevice, const std::strin
                                         buttonDevice, buttonInterface);
 
     // setup master clutch button required interface 
-    requiredInterface = this->Manager->AddRequiredInterface(this->Name + "Clutch");
+    requiredInterface = this->Manager->AddInterfaceRequired(this->Name + "Clutch");
     if (requiredInterface) {
         requiredInterface->AddEventHandlerWrite(&ui3MasterArm::ClutchEventHandler, this,
                                                 "Button");

@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnThrow.h>
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 
 #include <iostream>
 #include <fstream>
@@ -146,22 +147,22 @@ void mtsCollectorState::Initialize(void)
     OffsetForNextRead = 0;
 
     // add a required interface to the collector task to communicate with the task containing the state table
-    mtsRequiredInterface * requiredInterface = this->AddRequiredInterface("StateTable");
-    if (requiredInterface) {
+    mtsInterfaceRequired * interfaceRequired = this->AddInterfaceRequired("StateTable");
+    if (interfaceRequired) {
         // functions to stop/start collection
-        requiredInterface->AddFunction("StartCollection", StateTableStartCollection);
-        requiredInterface->AddFunction("StopCollection", StateTableStopCollection);
+        interfaceRequired->AddFunction("StartCollection", StateTableStartCollection);
+        interfaceRequired->AddFunction("StopCollection", StateTableStopCollection);
         // event received when the state table fills up and needs to be collected
-        requiredInterface->AddEventHandlerWrite(&mtsCollectorState::BatchReadyHandler,
+        interfaceRequired->AddEventHandlerWrite(&mtsCollectorState::BatchReadyHandler,
                                                 this,
                                                 "BatchReady");
         // add events for progress, these should not be queued as they
         // are pass-thru events
-        requiredInterface->AddEventHandlerVoid(&mtsCollectorState::CollectionStartedHandler, this,
+        interfaceRequired->AddEventHandlerVoid(&mtsCollectorState::CollectionStartedHandler, this,
                                                "CollectionStarted", false);
-        requiredInterface->AddEventHandlerWrite(&mtsCollectorState::CollectionStoppedHandler, this,
+        interfaceRequired->AddEventHandlerWrite(&mtsCollectorState::CollectionStoppedHandler, this,
                                                 "CollectionStopped", false);
-        requiredInterface->AddEventHandlerWrite(&mtsCollectorState::ProgressHandler, this,
+        interfaceRequired->AddEventHandlerWrite(&mtsCollectorState::ProgressHandler, this,
                                                 "Progress", false);
     } else {
         CMN_LOG_CLASS_INIT_ERROR << "Connect: unable to add required interface to communicate with state table for \""

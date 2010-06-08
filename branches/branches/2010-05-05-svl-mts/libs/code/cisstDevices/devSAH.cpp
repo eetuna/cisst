@@ -24,10 +24,10 @@ devSAH::devSAH( const std::string& taskname,
 
   // Configure the interface
   // The SAH requires the following interface for each finger position
-  //AddRequiredInterface( devSAH::ThumbInterfaceName );
-  AddRequiredInterface( devSAH::FirstInterfaceName );
-  AddRequiredInterface( devSAH::MiddleInterfaceName );
-  AddRequiredInterface( devSAH::RingInterfaceName );
+  //AddInterfaceRequired( devSAH::ThumbInterfaceName );
+  AddInterfaceRequired( devSAH::FirstInterfaceName );
+  AddInterfaceRequired( devSAH::MiddleInterfaceName );
+  AddInterfaceRequired( devSAH::RingInterfaceName );
 
   // Now deal with the hardware
   // copy the port

@@ -77,7 +77,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       without a name. */
     mtsComponent(void) {}
 
-    mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName, mtsRequiredInterface * requiredInterface);
+    mtsInterfaceRequired * AddInterfaceRequired(const std::string & requiredInterfaceName, mtsInterfaceRequired * requiredInterface);
 
  public:
 
@@ -88,15 +88,11 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     virtual ~mtsComponent() {}
 
     /*! Returns the name of the component. */
-    virtual inline std::string GetName(void) const {
-        return this->Name;
-    }
+    const std::string & GetName(void) const;
 
     /*! Set name.  This method is useful to perform dynamic creation
       using the default constructor and then set the name. */
-    virtual inline void SetName(const std::string & componentName) {
-        this->Name = componentName;
-    }
+    void SetName(const std::string & componentName);
 
     /*! The virtual method so that the interface or tasks can
       configure themselves */
@@ -127,26 +123,31 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       connected to another task and use the provided interface of the
       other task.  The required interface created also contains a list
       of event handlers to be used as observers. */
-    virtual mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
+    virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
+    
+    // provided for backward compatibility
+    inline mtsRequiredInterface * CISST_DEPRECATED AddRequiredInterface(const std::string & requiredInterfaceName) {
+        return this->AddInterfaceRequired(requiredInterfaceName);
+    }
 
     /*! Provide a list of existing required interfaces (by names) */
-    std::vector<std::string> GetNamesOfRequiredInterfaces(void) const;
+    std::vector<std::string> GetNamesOfInterfacesRequiredOrInput(void) const;
 
     /*! Get a pointer on the provided interface that has been
       connected to a given required interface (defined by its name).
       This method will return a null pointer if the required interface
       has not been connected.  See mtsTaskManager::Connect. */
-    mtsDeviceInterface * GetProvidedInterfaceFor(const std::string & requiredInterfaceName);
+    const mtsDeviceInterface * GetProvidedInterfaceFor(const std::string & interfaceRequiredName);
+
+    /*! Get the required/input interface */
+    mtsInterfaceRequiredOrInput * GetInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName);
 
     /*! Get the required interface */
-    mtsRequiredInterface * GetRequiredInterface(const std::string & requiredInterfaceName) {
-        return RequiredInterfaces.GetItem(requiredInterfaceName);
-    }
+    mtsInterfaceRequired * GetInterfaceRequired(const std::string & interfaceRequired);
 
     /*! Connect a required interface, used by mtsTaskManager */
-    bool ConnectRequiredInterface(const std::string & requiredInterfaceName,
-                                  mtsDeviceInterface * providedInterface,
-                                  const int userId = 0);
+    bool ConnectInterfaceRequiredOrInput(const std::string & requiredInterfaceName,
+                                         mtsDeviceInterface * providedInterface);
 
  protected:
     /*! Thread Id counter.  Used to count how many "user" tasks are
@@ -168,8 +169,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     /*! Map of required interfaces.  Used to store pointers on all
       required interfaces. */
     //@{
-    typedef cmnNamedMap<mtsRequiredInterface> RequiredInterfacesMapType;
-    RequiredInterfacesMapType RequiredInterfaces;
+    typedef cmnNamedMap<mtsInterfaceRequiredOrInput> InterfacesRequiredOrInputMapType;
+    InterfacesRequiredOrInputMapType InterfacesRequiredOrInput;
     //@}
 
  public:

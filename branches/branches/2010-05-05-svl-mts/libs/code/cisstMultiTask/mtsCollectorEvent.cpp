@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnThrow.h>
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 
 #include <iostream>
 #include <fstream>
@@ -67,7 +68,7 @@ mtsCollectorEvent::CollectorEventWrite::CollectorEventWrite(const std::string & 
     ComponentName(componentName),
     InterfaceName(interfaceName),
     EventName(eventName),
-    RequiredInterface(0),
+    InterfaceRequired(0),
     ArgumentPrototype(0),
     EventId(eventId),
     Collector(collector)
@@ -142,43 +143,43 @@ bool mtsCollectorEvent::CheckCollectingStatus(void)
 }
 
 
-mtsRequiredInterface * mtsCollectorEvent::GetRequiredInterfaceFor(const mtsComponent * componentPointer,
+mtsInterfaceRequired * mtsCollectorEvent::GetInterfaceRequiredFor(const mtsComponent * componentPointer,
                                                                   const mtsProvidedInterface * interfacePointer)
 {
     CMN_ASSERT(componentPointer);
     CMN_ASSERT(interfacePointer);
     // check if this component is already "registered"
-    RequiredInterfacesMap * requiredInterfaces = this->ObservedComponents.GetItem(componentPointer->GetName(), CMN_LOG_LOD_INIT_DEBUG);
-    if (!requiredInterfaces) {
-        CMN_LOG_CLASS_INIT_DEBUG << "GetRequiredInterfaceFor: create required interfaces for component \""
+    InterfacesRequiredMap * interfacesRequired = this->ObservedComponents.GetItem(componentPointer->GetName(), CMN_LOG_LOD_INIT_DEBUG);
+    if (!interfacesRequired) {
+        CMN_LOG_CLASS_INIT_DEBUG << "GetInterfaceRequiredFor: create required interfaces for component \""
                                  << componentPointer->GetName() << "\"" << std::endl;
-        requiredInterfaces = new RequiredInterfacesMap(componentPointer->GetName());
-        requiredInterfaces->SetOwner(*this);
-        this->ObservedComponents.AddItem(componentPointer->GetName(), requiredInterfaces);
+        interfacesRequired = new InterfacesRequiredMap(componentPointer->GetName());
+        interfacesRequired->SetOwner(*this);
+        this->ObservedComponents.AddItem(componentPointer->GetName(), interfacesRequired);
     } else {
-        CMN_LOG_CLASS_INIT_DEBUG << "GetRequiredInterfaceFor: found required interfaces for component \""
+        CMN_LOG_CLASS_INIT_DEBUG << "GetInterfaceRequiredFor: found required interfaces for component \""
                                  << componentPointer->GetName() << "\"" << std::endl;
     }
     // check if the component already has the required interface needed
-    mtsRequiredInterface * requiredInterface = requiredInterfaces->GetItem(interfacePointer->GetName(), CMN_LOG_LOD_INIT_DEBUG);
-    if (!requiredInterface) {
-        CMN_LOG_CLASS_INIT_DEBUG << "GetRequiredInterfaceFor: create required interface to collect events from interface \""
+    mtsInterfaceRequired * interfaceRequired = interfacesRequired->GetItem(interfacePointer->GetName(), CMN_LOG_LOD_INIT_DEBUG);
+    if (!interfaceRequired) {
+        CMN_LOG_CLASS_INIT_DEBUG << "GetInterfaceRequiredFor: create required interface to collect events from interface \""
                                  << interfacePointer->GetName() << "\"" << std::endl;
-        std::string requiredInterfaceName = componentPointer->GetName() + "::" + interfacePointer->GetName();
-        requiredInterface = this->AddRequiredInterface(requiredInterfaceName);
-        if (requiredInterface) {
-            requiredInterfaces->AddItem(interfacePointer->GetName(), requiredInterface);
-            CMN_LOG_CLASS_INIT_DEBUG << "GetRequiredInterfaceFor: created required interface \""
-                                     << requiredInterfaceName << "\"" << std::endl;
+        std::string interfaceRequiredName = componentPointer->GetName() + "::" + interfacePointer->GetName();
+        interfaceRequired = this->AddInterfaceRequired(interfaceRequiredName);
+        if (interfaceRequired) {
+            interfacesRequired->AddItem(interfacePointer->GetName(), interfaceRequired);
+            CMN_LOG_CLASS_INIT_DEBUG << "GetInterfaceRequiredFor: created required interface \""
+                                     << interfaceRequiredName << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS_INIT_ERROR << "GetRequiredInterfaceFor: failed to create required interface \""
-                                     << requiredInterfaceName << "\"" << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "GetInterfaceRequiredFor: failed to create required interface \""
+                                     << interfaceRequiredName << "\"" << std::endl;
         }
     } else {
-        CMN_LOG_CLASS_INIT_DEBUG << "GetRequiredInterfaceFor: found required interface for interface \""
+        CMN_LOG_CLASS_INIT_DEBUG << "GetInterfaceRequiredFor: found required interface for interface \""
                                  << interfacePointer->GetName() << "\"" << std::endl;
     }
-    return requiredInterface;
+    return interfaceRequired;
 }
 
 
@@ -191,8 +192,8 @@ void mtsCollectorEvent::Startup(void)
     const mtsGenericObject * argumentPrototype;
     for (index = 0; index < this->EventsWrite.size(); index++) {
         collectorEvent = this->EventsWrite[index];
-        CMN_ASSERT(collectorEvent->RequiredInterface);
-        eventHandler = collectorEvent->RequiredInterface->GetEventHandlerWrite(collectorEvent->EventName);
+        CMN_ASSERT(collectorEvent->InterfaceRequired);
+        eventHandler = collectorEvent->InterfaceRequired->GetEventHandlerWrite(collectorEvent->EventName);
         CMN_ASSERT(eventHandler);
         argumentPrototype = eventHandler->GetArgumentPrototype();
         CMN_ASSERT(argumentPrototype);
@@ -399,8 +400,8 @@ bool mtsCollectorEvent::AddObservedEventVoid(const mtsComponent * componentPoint
     this->EventsVoid.push_back(collector);
     this->EventCounter++;
     // get the required interface to add an observer
-    mtsRequiredInterface * requiredInterface = GetRequiredInterfaceFor(componentPointer, interfacePointer);
-    requiredInterface->AddEventHandlerVoid(&CollectorEventVoid::EventHandler, collector, eventName);
+    mtsInterfaceRequired * interfaceRequired = GetInterfaceRequiredFor(componentPointer, interfacePointer);
+    interfaceRequired->AddEventHandlerVoid(&CollectorEventVoid::EventHandler, collector, eventName);
     return true;
 }
 
@@ -427,10 +428,10 @@ bool mtsCollectorEvent::AddObservedEventWrite(const mtsComponent * componentPoin
     this->EventsWrite.push_back(collector);
     this->EventCounter++;
     // get the required interface to add an observer
-    mtsRequiredInterface * requiredInterface = GetRequiredInterfaceFor(componentPointer, interfacePointer);
-    requiredInterface->AddEventHandlerWriteGeneric(&CollectorEventWrite::EventHandler, collector, eventName);
+    mtsInterfaceRequired * interfaceRequired = GetInterfaceRequiredFor(componentPointer, interfacePointer);
+    interfaceRequired->AddEventHandlerWriteGeneric(&CollectorEventWrite::EventHandler, collector, eventName);
     // collector needs to have the required interface to find out the argument prototype at Startup
-    collector->RequiredInterface = requiredInterface;
+    collector->InterfaceRequired = interfaceRequired;
     return true;
 }
 
@@ -440,7 +441,7 @@ bool mtsCollectorEvent::Connect(void)
     // iterate all components and interfaces to connect all
     const ComponentsMap::const_iterator endComponents = this->ObservedComponents.end();
     ComponentsMap::const_iterator iterComponents;
-    RequiredInterfacesMap::const_iterator endInterfaces, iterInterfaces;
+    InterfacesRequiredMap::const_iterator endInterfaces, iterInterfaces;
     for (iterComponents = this->ObservedComponents.begin();
          iterComponents != endComponents;
          iterComponents++) {

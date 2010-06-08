@@ -25,6 +25,7 @@
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTask.h>
+#include <cisstMultiTask/mtsInterfaceRequired.h>
 
 #include <iostream>
 
@@ -44,10 +45,10 @@ void mtsTask::StartupInternal(void) {
 
     // Loop through the required interfaces and make sure they are all connected. This extra check is probably not needed.
     bool success = true;
-    RequiredInterfacesMapType::const_iterator requiredIterator = RequiredInterfaces.begin();
-    mtsDeviceInterface * connectedInterface;
+    InterfacesRequiredOrInputMapType::const_iterator requiredIterator = InterfacesRequiredOrInput.begin();
+    const mtsDeviceInterface * connectedInterface;
     for (;
-         requiredIterator != RequiredInterfaces.end();
+         requiredIterator != InterfacesRequiredOrInput.end();
          requiredIterator++) {
         connectedInterface = requiredIterator->second->GetConnectedInterface();
         if (!connectedInterface) {
@@ -98,13 +99,17 @@ unsigned int mtsTask::ProcessMailBoxes(ProvidedInterfacesMapType & interfaces)
 
 
 unsigned int mtsTask::ProcessQueuedEvents(void) {
-    RequiredInterfacesMapType::iterator iterator = RequiredInterfaces.begin();
-    const RequiredInterfacesMapType::iterator end = RequiredInterfaces.end();
+    InterfacesRequiredOrInputMapType::iterator iterator = InterfacesRequiredOrInput.begin();
+    const InterfacesRequiredOrInputMapType::iterator end = InterfacesRequiredOrInput.end();
     unsigned int numberOfEvents = 0;
+    mtsInterfaceRequired * interfaceRequired = 0;
     for (;
          iterator != end;
          iterator++) {
-        numberOfEvents += iterator->second->ProcessMailBoxes();
+        interfaceRequired = dynamic_cast<mtsInterfaceRequired *>(iterator->second);
+        if (interfaceRequired) {
+            numberOfEvents += interfaceRequired->ProcessMailBoxes();
+        }
     }
     return numberOfEvents;
 }
@@ -335,5 +340,5 @@ void mtsTask::ToStream(std::ostream & outputStream) const
     outputStream << "Task name: " << Name << std::endl;
     StateTable.ToStream(outputStream);
     ProvidedInterfaces.ToStream(outputStream);
-    RequiredInterfaces.ToStream(outputStream);
+    InterfacesRequiredOrInput.ToStream(outputStream);
 }

@@ -74,7 +74,7 @@ public:
     virtual ~mtsTaskFromSignal() {}
 
     /* documented in base class */
-    virtual mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName);
+    virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
     virtual mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
 
 };

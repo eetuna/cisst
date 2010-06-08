@@ -64,9 +64,11 @@ template <class _argumentType> class mtsMulticastCommandWrite;
 class mtsDeviceInterface;
 typedef mtsDeviceInterface mtsProvidedInterface;
 class mtsComponent;
-typedef mtsComponent mtsDevice;
+typedef mtsComponent mtsDevice; // for backward compatibility
 class mtsTaskInterface;
-class mtsRequiredInterface;
+class mtsInterfaceRequiredOrInput;
+class mtsInterfaceRequired;
+typedef mtsInterfaceRequired mtsRequiredInterface; // for backward compatibility
 class mtsTask;
 class mtsTaskPeriodic;
 

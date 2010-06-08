@@ -28,7 +28,7 @@ clientQDevice::clientQDevice(const std::string & taskName) :
     EventCounter(0)
 {
     // create the cisstMultiTask interface with commands and events
-    mtsRequiredInterface * required = AddRequiredInterface("Required");
+    mtsInterfaceRequired * required = AddInterfaceRequired("Required");
     if (required) {
         required->AddFunction("Void", Void);
         required->AddFunction("Write", Write);

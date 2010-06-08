@@ -32,8 +32,8 @@ CMN_IMPLEMENT_SERVICES(mtsComponent)
 #include <cisstMultiTask/mtsDeviceInterface.h>
 CMN_IMPLEMENT_SERVICES(mtsDeviceInterface)
 
-#include <cisstMultiTask/mtsRequiredInterface.h>
-CMN_IMPLEMENT_SERVICES(mtsRequiredInterface)
+#include <cisstMultiTask/mtsInterfaceRequired.h>
+CMN_IMPLEMENT_SERVICES(mtsInterfaceRequired)
 
 #include <cisstMultiTask/mtsStateIndex.h>
 CMN_IMPLEMENT_SERVICES(mtsStateIndex)

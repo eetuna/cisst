@@ -57,15 +57,15 @@ protected:
         // Set of strings
         const std::string ClientProcessName;
         const std::string ClientComponentName;
-        const std::string ClientRequiredInterfaceName;
+        const std::string ClientInterfaceRequiredName;
         const std::string ServerProcessName;
         const std::string ServerComponentName;
         const std::string ServerProvidedInterfaceName;
 
         ConnectionStrings(
-            const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+            const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
             const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
-            : ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientRequiredInterfaceName(clientRequiredInterfaceName),
+            : ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientInterfaceRequiredName(clientInterfaceRequiredName),
               ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
         {}
     };
@@ -155,7 +155,7 @@ public:
     /*! Register connection information which is used to clean up a logical
         connection when a network proxy client is detected as disconnected. */
     bool AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientRequiredInterfaceName,
+        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
 
     //-------------------------------------------------------------------------
