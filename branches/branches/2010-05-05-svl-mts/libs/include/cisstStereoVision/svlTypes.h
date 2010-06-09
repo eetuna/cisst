@@ -731,12 +731,10 @@ public:
     int GetFlag(unsigned int targetid) const;
     void SetConfidence(unsigned int targetid, int value, unsigned int channel = 0);
     int GetConfidence(unsigned int targetid, unsigned int channel = 0) const;
-
-    template<unsigned int _Dimensions>
-    void SetPosition(unsigned int targetid, const vctFixedSizeVector<int, _Dimensions>& value, unsigned int channel = 0);
-
-    template<unsigned int _Dimensions>
-    int GetPosition(unsigned int targetid,  vctFixedSizeVector<int, _Dimensions>& value, unsigned int channel = 0) const;
+    void SetPosition(unsigned int targetid, const vctInt2& value, unsigned int channel = 0);
+    void SetPosition(unsigned int targetid, const vctInt3& value, unsigned int channel = 0);
+    int GetPosition(unsigned int targetid, vctInt2& value, unsigned int channel = 0) const;
+    int GetPosition(unsigned int targetid, vctInt3& value, unsigned int channel = 0) const;
 
 protected:
     unsigned int Channels;

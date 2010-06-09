@@ -137,7 +137,7 @@ int svlFilterImageWindowTargetSelect::Process(svlProcInfo* procInfo, svlSample* 
 
             for (i = 0; i < maxtargets; i ++) {
                 if (Targets.GetFlag(i) > 0) {
-                    if (SelectedTargetWindow != idx ||
+                    if (SelectedTargetWindow != static_cast<int>(idx) ||
                         SelectedTarget != static_cast<int>(i)) {
                         r = g = b = 255;
                     }
@@ -177,7 +177,7 @@ void svlFilterImageWindowTargetSelect::OnUserEvent(unsigned int winid, bool asci
             SendTargets = true;
             return;
         }
-        if (EnableModify && SelectedTargetWindow == winid && SelectedTarget >= 0) {
+        if (EnableModify && SelectedTargetWindow == static_cast<int>(winid) && SelectedTarget >= 0) {
             switch (eventid) {
                 case 'd':
                     Targets.SetFlag(SelectedTarget, 0);
@@ -248,7 +248,7 @@ void svlFilterImageWindowTargetSelect::OnUserEvent(unsigned int winid, bool asci
                 GetMousePos(curx, cury);
 
                 if (!ButtonDown) {
-                    if (SelectedTargetWindow == winid && SelectedTarget >= 0) {
+                    if (SelectedTargetWindow == static_cast<int>(winid) && SelectedTarget >= 0) {
                         x = position.Element(0, SelectedTarget) - curx;
                         y = position.Element(1, SelectedTarget) - cury;
                         dist = x*x + y*y;
@@ -277,7 +277,7 @@ void svlFilterImageWindowTargetSelect::OnUserEvent(unsigned int winid, bool asci
                     }
                 }
                 else {
-                    if (SelectedTargetWindow == winid && SelectedTarget >= 0) {
+                    if (SelectedTargetWindow == static_cast<int>(winid) && SelectedTarget >= 0) {
                         Targets.SetFlag(SelectedTarget, 1);
                         confidence.Element(SelectedTarget) = 255;
                         position.Element(0, SelectedTarget) = curx + SelectionOffset[0];

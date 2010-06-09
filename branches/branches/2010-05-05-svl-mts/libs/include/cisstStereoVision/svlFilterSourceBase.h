@@ -51,7 +51,17 @@ public:
     virtual int SetTargetFrequency(double hertz);
     virtual void SetLoop(bool loop = true);
     virtual bool GetLoop();
+/*
+    virtual int SetFramePos(int position);
+    virtual int GetFramePos();
+    virtual int SetFrameRange(int from, int to);
+    virtual int GetFrameRange(int& from, int& to);
 
+    virtual int SetTimePos(double position);
+    virtual double GetTimePos();
+    virtual int SetTimeRange(double from, double to);
+    virtual int GetTimeRange(double& from, double& to);
+*/
 protected:
     virtual int Initialize(svlSample* &syncOutput);
     virtual int OnStart(unsigned int procCount);

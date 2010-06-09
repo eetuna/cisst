@@ -552,39 +552,53 @@ int svlSampleTargets::GetConfidence(unsigned int targetid, unsigned int channel)
     return GetConfidenceVectorRef(channel).Element(targetid);
 }
 
-template<unsigned int _Dimensions>
-void svlSampleTargets::SetPosition(unsigned int targetid, const vctFixedSizeVector<int, _Dimensions>& value, unsigned int channel)
+void svlSampleTargets::SetPosition(unsigned int targetid, const vctInt2& value, unsigned int channel)
 {
-    if (targetid >= Matrix.cols() || Dimensions < 1 || channel >= Channels || value.size() != Dimensions) return;
-
-    int* ptr = Matrix.Pointer(1 + channel * (1 + _Dimensions) + 1, targetid);
-    const unsigned int stride = Matrix.cols();
-
-    for (unsigned int i = 0; i < _Dimensions; i ++) {
-        *ptr = value[i]; ptr += stride;
-    }
+    if (targetid >= Matrix.cols() || Dimensions != 2 || channel >= Channels) return;
+    
+    int* ptr = Matrix.Pointer(2 + channel * 3, targetid);
+    
+    *ptr = value[0]; ptr += Matrix.cols();
+    *ptr = value[1];
 }
 
-template void svlSampleTargets::SetPosition(unsigned int targetid, const vctFixedSizeVector<int, 2>& value, unsigned int channel);
-template void svlSampleTargets::SetPosition(unsigned int targetid, const vctFixedSizeVector<int, 3>& value, unsigned int channel);
-
-template<unsigned int _Dimensions>
-int svlSampleTargets::GetPosition(unsigned int targetid, vctFixedSizeVector<int, _Dimensions>& value, unsigned int channel) const
+void svlSampleTargets::SetPosition(unsigned int targetid, const vctInt3& value, unsigned int channel)
 {
-    if (targetid >= Matrix.cols() || Dimensions < 1 || channel >= Channels || value.size() != Dimensions) return SVL_FAIL;
-
-    const int* ptr = Matrix.Pointer(1 + channel * (1 + _Dimensions) + 1, targetid);
+    if (targetid >= Matrix.cols() || Dimensions != 3 || channel >= Channels) return;
+    
+    int* ptr = Matrix.Pointer(2 + channel * 4, targetid);
     const unsigned int stride = Matrix.cols();
-    unsigned int offset = 0;
+    
+    *ptr = value[0]; ptr += stride;
+    *ptr = value[1]; ptr += stride;
+    *ptr = value[2];
+}
 
-    for (unsigned int i = 0; i < _Dimensions; i ++) {
-        value[i] = ptr[offset]; offset += stride;
-    }
+int svlSampleTargets::GetPosition(unsigned int targetid, vctInt2& value, unsigned int channel) const
+{
+    if (targetid >= Matrix.cols() || Dimensions != 2 || channel >= Channels) return SVL_FAIL;
+    
+    const int* ptr = Matrix.Pointer(2 + channel * 3, targetid);
+    
+    value[0] = ptr[0];
+    value[1] = ptr[Matrix.cols()];
+    
     return SVL_OK;
 }
 
-template int svlSampleTargets::GetPosition(unsigned int targetid, vctFixedSizeVector<int, 2>& value, unsigned int channel) const;
-template int svlSampleTargets::GetPosition(unsigned int targetid, vctFixedSizeVector<int, 3>& value, unsigned int channel) const;
+int svlSampleTargets::GetPosition(unsigned int targetid, vctInt3& value, unsigned int channel) const
+{
+    if (targetid >= Matrix.cols() || Dimensions != 3 || channel >= Channels) return SVL_FAIL;
+    
+    const int* ptr = Matrix.Pointer(2 + channel * 4, targetid);
+    unsigned int stride = Matrix.cols();
+    
+    value[0] = ptr[0];
+    value[1] = ptr[stride]; stride <<= 1;
+    value[2] = ptr[stride];
+    
+    return SVL_OK;
+}
 
 
 /***************************/
