@@ -18,12 +18,12 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include "serverQDevice.h"
+#include "serverQtComponent.h"
 
-CMN_IMPLEMENT_SERVICES(serverQDevice);
+CMN_IMPLEMENT_SERVICES(serverQtComponent);
 
 
-serverQDevice::serverQDevice(const std::string & taskName):
+serverQtComponent::serverQtComponent(const std::string & taskName):
     mtsDevice(taskName),
     VoidCounter(0),
     ReadValue(0),
@@ -32,10 +32,10 @@ serverQDevice::serverQDevice(const std::string & taskName):
     // create the cisstMultiTask interface with commands and events
     mtsProvidedInterface * provided = AddProvidedInterface("Provided");
     if (provided) {
-        provided->AddCommandVoid(&serverQDevice::Void, this, "Void");
-        provided->AddCommandWrite(&serverQDevice::Write, this, "Write");
-        provided->AddCommandRead(&serverQDevice::Read, this, "Read");
-        provided->AddCommandQualifiedRead(&serverQDevice::QualifiedRead, this, "QualifiedRead");
+        provided->AddCommandVoid(&serverQtComponent::Void, this, "Void");
+        provided->AddCommandWrite(&serverQtComponent::Write, this, "Write");
+        provided->AddCommandRead(&serverQtComponent::Read, this, "Read");
+        provided->AddCommandQualifiedRead(&serverQtComponent::QualifiedRead, this, "QualifiedRead");
         provided->AddEventVoid(EventVoid, "EventVoid");
         provided->AddEventWrite(EventWrite, "EventWrite", mtsInt());
     }
@@ -62,50 +62,50 @@ serverQDevice::serverQDevice(const std::string & taskName):
 }
 
 
-void serverQDevice::Void(void)
+void serverQtComponent::Void(void)
 {
     VoidCounter++;
     emit VoidQSignal(VoidCounter);
 }
 
 
-void serverQDevice::Write(const mtsInt & data)
+void serverQtComponent::Write(const mtsInt & data)
 {
     emit WriteQSignal(data.Data);
 }
 
 
-void serverQDevice::Read(mtsInt & placeHolder) const
+void serverQtComponent::Read(mtsInt & placeHolder) const
 {
     placeHolder.Data = ReadValue;
 }
 
 
-void serverQDevice::QualifiedRead(const mtsInt & data, mtsInt & placeHolder) const
+void serverQtComponent::QualifiedRead(const mtsInt & data, mtsInt & placeHolder) const
 {
     placeHolder.Data = data.Data + QualifiedReadValue;
 }
 
 
-void serverQDevice::ReadQSlot(int newValue)
+void serverQtComponent::ReadQSlot(int newValue)
 {
     ReadValue = newValue;
 }
 
 
-void serverQDevice::QualifiedReadQSlot(int newValue)
+void serverQtComponent::QualifiedReadQSlot(int newValue)
 {
     QualifiedReadValue = newValue;
 }
 
 
-void serverQDevice::EventVoidQSlot(void)
+void serverQtComponent::EventVoidQSlot(void)
 {
     EventVoid();
 }
 
 
-void serverQDevice::EventWriteQSlot(int newValue)
+void serverQtComponent::EventWriteQSlot(int newValue)
 {
     mtsInt payload;
     payload.Data = newValue;

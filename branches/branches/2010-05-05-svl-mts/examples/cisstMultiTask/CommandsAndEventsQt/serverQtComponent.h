@@ -18,25 +18,25 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#ifndef _serverQDevice_h
-#define _serverQDevice_h
+#ifndef _serverQtComponent_h
+#define _serverQtComponent_h
 
 #include <cisstMultiTask.h>
 
 #include <QMainWindow>
 #include <QObject>
 
-#include "ui_serverQWidget.h"
+#include "ui_serverQtWidget.h"
 
 
-class serverQDevice: public QObject, public mtsDevice
+class serverQtComponent: public QObject, public mtsDevice
 {
     Q_OBJECT;
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
-    serverQDevice(const std::string & taskName);
-    ~serverQDevice(void) {};
+    serverQtComponent(const std::string & taskName);
+    ~serverQtComponent(void) {};
 
     void Configure(const std::string & CMN_UNUSED(filename)) {};
 
@@ -58,7 +58,7 @@ class serverQDevice: public QObject, public mtsDevice
 
     QMainWindow MainWindow;
     QWidget CentralWidget;
-    Ui::ServerWidget ServerWidget;
+    Ui::serverQtWidget ServerWidget;
 
  signals:
     void VoidQSignal(int voidCounter);
@@ -71,6 +71,6 @@ class serverQDevice: public QObject, public mtsDevice
     void EventWriteQSlot(int newValue);
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(serverQDevice);
+CMN_DECLARE_SERVICES_INSTANTIATION(serverQtComponent);
 
-#endif  // _serverQDevice_h
+#endif  // _serverQtComponent_h

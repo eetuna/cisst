@@ -18,8 +18,8 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#ifndef _displayQComponent_h
-#define _displayQComponent_h
+#ifndef _displayQtComponent_h
+#define _displayQtComponent_h
 
 #include <cisstMultiTask/mtsComponent.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
@@ -27,17 +27,17 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <QObject>
 
-#include "displayQWidget.h"
+#include "displayQtWidget.h"
 
 
-class displayQComponent : public QObject, public mtsComponent
+class displayQtComponent : public QObject, public mtsComponent
 {
     Q_OBJECT;
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
  public:
-    displayQComponent(const std::string & componentName);
-    ~displayQComponent(void) {};
+    displayQtComponent(const std::string & componentName);
+    ~displayQtComponent(void) {};
 
     void Configure(const std::string & CMN_UNUSED(filename) = "") {};
 
@@ -46,7 +46,7 @@ class displayQComponent : public QObject, public mtsComponent
     }
 
  protected:
-    displayQWidget CentralWidget;
+    displayQtWidget CentralWidget;
 
     struct {
        mtsFunctionRead GetData;
@@ -61,6 +61,6 @@ class displayQComponent : public QObject, public mtsComponent
     void SetAmplitudeQSlot(int newValue);
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(displayQComponent);
+CMN_DECLARE_SERVICES_INSTANTIATION(displayQtComponent);
 
-#endif  // _displayQComponent_h
+#endif  // _displayQtComponent_h

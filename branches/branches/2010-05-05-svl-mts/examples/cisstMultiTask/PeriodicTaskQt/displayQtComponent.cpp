@@ -20,12 +20,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 
-#include "displayQComponent.h"
+#include "displayQtComponent.h"
 
-CMN_IMPLEMENT_SERVICES(displayQComponent);
+CMN_IMPLEMENT_SERVICES(displayQtComponent);
 
 
-displayQComponent::displayQComponent(const std::string & componentName) :
+displayQtComponent::displayQtComponent(const std::string & componentName) :
     mtsComponent(componentName)
 {
     // create the cisstMultiTask interface with commands and events
@@ -43,7 +43,7 @@ displayQComponent::displayQComponent(const std::string & componentName) :
 }
 
 
-void displayQComponent::timerEvent(QTimerEvent * CMN_UNUSED(event))
+void displayQtComponent::timerEvent(QTimerEvent * CMN_UNUSED(event))
 {
     Generator.GetData(Data);
     CentralWidget.ValueData->setNum(Data.Data);
@@ -52,7 +52,7 @@ void displayQComponent::timerEvent(QTimerEvent * CMN_UNUSED(event))
 }
 
 
-void displayQComponent::SetAmplitudeQSlot(int newValue)
+void displayQtComponent::SetAmplitudeQSlot(int newValue)
 {
     AmplitudeData.Data = newValue;
     Generator.SetAmplitude(AmplitudeData);

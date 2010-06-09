@@ -18,8 +18,8 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#ifndef _displayQWidget_h
-#define _displayQWidget_h
+#ifndef _displayQtWidget_h
+#define _displayQtWidget_h
 
 #include <QDial>
 #include <QGridLayout>
@@ -28,13 +28,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector/vctPlot2DOpenGLQtWidget.h>
 
 
-class displayQWidget : public QWidget
+class displayQtWidget : public QWidget
 {
     Q_OBJECT;
 
  public:
-    displayQWidget(void);
-    ~displayQWidget(void) {};
+    displayQtWidget(void);
+    ~displayQtWidget(void) {};
 
     QDial * DialAmplitude;
     QGridLayout * CentralLayout;
@@ -46,4 +46,4 @@ class displayQWidget : public QWidget
     QLabel * ValueData;
 };
 
-#endif  // _displayQWidget_h
+#endif  // _displayQtWidget_h

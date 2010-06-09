@@ -18,10 +18,10 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include "displayQWidget.h"
+#include "displayQtWidget.h"
 
 
-displayQWidget::displayQWidget(void)
+displayQtWidget::displayQtWidget(void)
 {
     // create the widgets
     Plot = new vctPlot2DOpenGLQtWidget(this);

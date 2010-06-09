@@ -24,7 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <QApplication>
 
-#include "serverQDevice.h"
+#include "serverQtComponent.h"
 
 
 int main(int argc, char * argv[])
@@ -48,13 +48,13 @@ int main(int argc, char * argv[])
     // set the log level of detail on select tasks
     cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
-    cmnClassRegister::SetLoD("serverQDevice", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoD("serverQtComponent", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create a Qt user interface
     QApplication application(argc, argv);
 
     // create our server task
-    serverQDevice * server = new serverQDevice("Server");
+    serverQtComponent * server = new serverQtComponent("Server");
 
     // Get the TaskManager instance and set operation mode
     // Get the local component manager

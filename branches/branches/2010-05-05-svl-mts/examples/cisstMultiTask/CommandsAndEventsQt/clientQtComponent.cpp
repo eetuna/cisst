@@ -18,12 +18,12 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include "clientQDevice.h"
+#include "clientQtComponent.h"
 
-CMN_IMPLEMENT_SERVICES(clientQDevice);
+CMN_IMPLEMENT_SERVICES(clientQtComponent);
 
 
-clientQDevice::clientQDevice(const std::string & taskName) :
+clientQtComponent::clientQtComponent(const std::string & taskName) :
     mtsDevice(taskName),
     EventCounter(0)
 {
@@ -34,8 +34,8 @@ clientQDevice::clientQDevice(const std::string & taskName) :
         required->AddFunction("Write", Write);
         required->AddFunction("Read", Read);
         required->AddFunction("QualifiedRead", QualifiedRead);
-        required->AddEventHandlerVoid(&clientQDevice::EventVoidHandler, this, "EventVoid");
-        required->AddEventHandlerWrite(&clientQDevice::EventWriteHandler, this, "EventWrite");
+        required->AddEventHandlerVoid(&clientQtComponent::EventVoidHandler, this, "EventVoid");
+        required->AddEventHandlerWrite(&clientQtComponent::EventWriteHandler, this, "EventWrite");
     }
 
     // create the user interface
@@ -66,34 +66,34 @@ clientQDevice::clientQDevice(const std::string & taskName) :
 }
 
 
-void clientQDevice::EventVoidHandler(void)
+void clientQtComponent::EventVoidHandler(void)
 {
     EventCounter = 0;
     emit EventQSignal(EventCounter);
 }
 
 
-void clientQDevice::EventWriteHandler(const mtsInt & value)
+void clientQtComponent::EventWriteHandler(const mtsInt & value)
 {
     EventCounter += value.Data;
     emit EventQSignal(EventCounter);
 }
 
 
-void clientQDevice::VoidQSlot(void)
+void clientQtComponent::VoidQSlot(void)
 {
     Void();
 }
 
 
-void clientQDevice::WriteQSlot(int newValue)
+void clientQtComponent::WriteQSlot(int newValue)
 {
     mtsInt data = newValue;
     Write(data);
 }
 
 
-void clientQDevice::ReadQSlot(void)
+void clientQtComponent::ReadQSlot(void)
 {
     mtsInt data;
     Read(data);
@@ -101,7 +101,7 @@ void clientQDevice::ReadQSlot(void)
 }
 
 
-void clientQDevice::QualifiedReadQSlot(int newValue)
+void clientQtComponent::QualifiedReadQSlot(int newValue)
 {
     mtsInt qualifier, data;
     qualifier.Data = newValue;
