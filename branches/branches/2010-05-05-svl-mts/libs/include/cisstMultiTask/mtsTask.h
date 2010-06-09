@@ -305,7 +305,10 @@ public:
     /********************* Methods to manage interfaces *******************/
 
     /* documented in base class */
-    virtual mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
+    mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
+
+    /* documented in base class */
+    mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
 
 
     /********************* Methods for task synchronization ***************/

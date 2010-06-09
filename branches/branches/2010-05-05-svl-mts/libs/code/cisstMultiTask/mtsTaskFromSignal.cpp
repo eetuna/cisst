@@ -72,31 +72,22 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
 }
 
 
-// this code is pretty much a copy of mtsDevice::AddInterfaceRequired
-// except for the creation of the mailbox with a post cammand queued
-// command. I need to refactor, i.e. create a private
-// AddInterfaceRequired(name, mailbox).
 mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string & interfaceRequiredName) {
+    // create a mailbox with post command queued command
     // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
     mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsTaskInterface::DEFAULT_EVENT_QUEUE_LEN,
                                           this->PostCommandQueuedCommand);
-    mtsInterfaceRequired * interfaceRequired = new mtsInterfaceRequired(interfaceRequiredName, mailBox);
-    if (mailBox && interfaceRequired) {
-        if (InterfacesRequiredOrInput.AddItem(interfaceRequiredName, interfaceRequired)) {
-            return interfaceRequired;
-        }
-        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to add interface \""
-                                 << interfaceRequiredName << "\"" << std::endl;
-        if (interfaceRequired) {
-            delete interfaceRequired;
-        }
-        if (mailBox) {
+    mtsInterfaceRequired * result;
+    if (mailBox) {
+        // try to create and add interface
+        result = this->AddInterfaceRequiredUsingMailbox(interfaceRequiredName, mailBox);
+        if (!result) {
             delete mailBox;
         }
-        return 0;
+        return result;
     }
-    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to create interface or mailbox for \""
-                             << interfaceRequiredName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to create mailbox for \""
+                             << interfaceRequiredName << "\"" << std::endl;    delete mailBox;
     return 0;
 }
 

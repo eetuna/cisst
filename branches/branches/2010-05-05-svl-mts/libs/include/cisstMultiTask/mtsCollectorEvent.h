@@ -101,12 +101,12 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
         mtsCollectorEvent * Collector;
         CollectorEventWrite(const std::string & componentName, const std::string & interfaceName, const std::string & eventName,
                             size_t eventId, mtsCollectorEvent * collector);
-        void EventHandler(const mtsGenericObject * payload);
+        void EventHandler(const mtsGenericObject & payload);
         void PrintHeader(std::ostream & outputStream, const CollectorFileFormat fileFormat);
     };
 
     /*! Save the event information and payload */
-    void SaveEventWrite(const CollectorEventWrite * event, const mtsGenericObject * payload);
+    void SaveEventWrite(const CollectorEventWrite * event, const mtsGenericObject & payload);
 
     /*! Counter used to give a unique Id to each event, starts at 1 */
     size_t EventCounter;

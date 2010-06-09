@@ -287,6 +287,24 @@ bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addProvided
 
 /********************* Methods to manage interfaces *******************/
 
+mtsInterfaceRequired * mtsTask::AddInterfaceRequired(const std::string & interfaceRequiredName) {
+    // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
+    mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsTaskInterface::DEFAULT_EVENT_QUEUE_LEN);
+    mtsInterfaceRequired * result;
+    if (mailBox) {
+        // try to create and add interface
+        result = this->AddInterfaceRequiredUsingMailbox(interfaceRequiredName, mailBox);
+        if (!result) {
+            delete mailBox;
+        }
+        return result;
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to create mailbox for \""
+                             << interfaceRequiredName << "\"" << std::endl;    delete mailBox;
+    return 0;
+}
+
+
 mtsDeviceInterface * mtsTask::AddProvidedInterface(const std::string & newInterfaceName) {
     mtsTaskInterface * newInterface = new mtsTaskInterface(newInterfaceName, this);
     if (newInterface) {

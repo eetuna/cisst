@@ -159,11 +159,11 @@ void mtsCollectorState::Initialize(void)
         // add events for progress, these should not be queued as they
         // are pass-thru events
         interfaceRequired->AddEventHandlerVoid(&mtsCollectorState::CollectionStartedHandler, this,
-                                               "CollectionStarted", false);
+                                               "CollectionStarted", mtsInterfaceRequired::EVENT_NOT_QUEUED);
         interfaceRequired->AddEventHandlerWrite(&mtsCollectorState::CollectionStoppedHandler, this,
-                                                "CollectionStopped", false);
+                                                "CollectionStopped", mtsInterfaceRequired::EVENT_NOT_QUEUED);
         interfaceRequired->AddEventHandlerWrite(&mtsCollectorState::ProgressHandler, this,
-                                                "Progress", false);
+                                                "Progress", mtsInterfaceRequired::EVENT_NOT_QUEUED);
     } else {
         CMN_LOG_CLASS_INIT_ERROR << "Connect: unable to add required interface to communicate with state table for \""
                                  << this->GetName() << "\"" << std::endl;

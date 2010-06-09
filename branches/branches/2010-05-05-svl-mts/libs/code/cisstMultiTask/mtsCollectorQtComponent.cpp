@@ -35,11 +35,11 @@ mtsCollectorQtComponent::mtsCollectorQtComponent(const std::string & componentNa
        interfaceRequired->AddFunction("SetWorkingDirectory", Collection.SetWorkingDirectory);
        interfaceRequired->AddFunction("SetOutputToDefault", Collection.SetOutputToDefault);
        interfaceRequired->AddEventHandlerVoid(&mtsCollectorQtComponent::CollectionStartedHandler, this,
-                                              "CollectionStarted", false);
+                                              "CollectionStarted");
        interfaceRequired->AddEventHandlerWrite(&mtsCollectorQtComponent::CollectionStoppedHandler, this,
-                                               "CollectionStopped", false);
+                                               "CollectionStopped");
        interfaceRequired->AddEventHandlerWrite(&mtsCollectorQtComponent::ProgressHandler, this,
-                                               "Progress", false);
+                                               "Progress");
     }
 }
 

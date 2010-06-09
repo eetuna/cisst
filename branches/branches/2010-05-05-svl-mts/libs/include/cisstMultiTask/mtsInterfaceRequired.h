@@ -93,19 +93,25 @@ protected:
 
     /*! Default constructor. Does nothing, should not be used. */
     mtsInterfaceRequired(void) {}
-    
+
  public:
+    
+    /*! Queuing policy, i.e. what the user would like to do for
+      individual event handlers added using AddEventHandlerVoid or
+      AddEventHandlerWrite. */
+    typedef enum {INTERFACE_DEFAULT, EVENT_QUEUED, EVENT_NOT_QUEUED} EventQueuingPolicy;
+
     /*! Constructor. Sets the name, device pointer, and mailbox for queued events.
-      
+
       \param interfaceName Name of required interface
-      
+
       \param mbox Mailbox to use for queued events (for tasks); set to
                   0 for devices Could use a boolean (useMbox) for last
                   parameter or delete it completely, and decide
                   whether or not to allocate a mailbox based on
                   dynamic type of device.
     */
-    mtsInterfaceRequired(const std::string & interfaceName, mtsMailBox * mailBox = 0);
+    mtsInterfaceRequired(const std::string & interfaceName, mtsMailBox * mailBox);
 
     /*! Default destructor. */
     virtual ~mtsInterfaceRequired();
@@ -154,7 +160,7 @@ protected:
     void ToStream(std::ostream & outputStream) const;
 
 protected:
- public: // adeguet1 todo fix -- this has been added for ostream << operator 
+ public: // adeguet1 todo fix -- this has been added for ostream << operator
 #ifndef SWIG  // SWIG cannot deal with this
     class FunctionInfo
     {
@@ -191,6 +197,15 @@ protected:
 #endif // !SWIG
  protected:
 
+    /*! Utility method to determine is an event handler should be
+      queued or not based on the default policy for the interface
+      and the user requested policy.  This method also generate a
+      warning or error in the log if needed. */
+    bool UseQueueBasedOnInterfacePolicy(bool interfaceHasMailbox,
+                                        EventQueuingPolicy queuingPolicy,
+                                        const std::string & methodName,
+                                        const std::string & eventName);
+
     typedef cmnNamedMap<FunctionInfo> FunctionInfoMapType;
 
     /*! Typedef for a map of name of zero argument command and name of command. */
@@ -225,24 +240,24 @@ public:
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*method)(void),
                                                     __classType * classInstantiation,
                                                     const std::string & eventName,
-                                                    bool queued = true);
+                                                    EventQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
 
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (*function)(void),
                                                     const std::string & eventName,
-                                                    bool queued = true);
+                                                    EventQueuingPolicy = INTERFACE_DEFAULT);
 
     template <class __classType, class __argumentType>
     inline mtsCommandWriteBase * AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
                                                       __classType * classInstantiation,
                                                       const std::string & eventName,
-                                                      bool queued = true);
+                                                      EventQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
 
     // PK: Can we get rid of this?
     template <class __classType>
-    inline mtsCommandWriteBase * AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject *),
+    inline mtsCommandWriteBase * AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject &),
                                                              __classType * classInstantiation,
                                                              const std::string & eventName,
-                                                             bool queued = true);
+                                                             EventQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
 };
 
 
@@ -251,7 +266,9 @@ template <class __classType>
 inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (__classType::*method)(void),
                                                                       __classType * classInstantiation,
                                                                       const std::string & eventName,
-                                                                      bool queued) {
+                                                                      EventQueuingPolicy queuingPolicy)
+{
+    bool queued = this->UseQueueBasedOnInterfacePolicy(this->MailBox, queuingPolicy, "AddEventHandlerVoid", eventName);
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidMethod<__classType>(method, classInstantiation, eventName);
     if (queued) {
         if (MailBox)
@@ -267,7 +284,9 @@ inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (__cl
 
 inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (*function)(void),
                                                                       const std::string & eventName,
-                                                                      bool queued) {
+                                                                      EventQueuingPolicy queuingPolicy)
+{
+    bool queued = this->UseQueueBasedOnInterfacePolicy(this->MailBox, queuingPolicy, "AddEventHandlerVoid", eventName);
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidFunction(function, eventName);
     if (queued) {
         if (MailBox)
@@ -285,7 +304,9 @@ template <class __classType, class __argumentType>
 inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
                                                                         __classType * classInstantiation,
                                                                         const std::string & eventName,
-                                                                        bool queued) {
+                                                                        EventQueuingPolicy queuingPolicy)
+{
+    bool queued = this->UseQueueBasedOnInterfacePolicy(this->MailBox, queuingPolicy, "AddEventHandlerWrite", eventName);
     mtsCommandWriteBase * actualCommand =
         new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, eventName, __argumentType());
     if (queued) {
@@ -301,10 +322,12 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__
 
 
 template <class __classType>
-inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject *),
-                                                                                      __classType * classInstantiation,
-                                                                                      const std::string & eventName,
-                                                                                      bool queued) {
+inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject &),
+                                                                               __classType * classInstantiation,
+                                                                               const std::string & eventName,
+                                                                               EventQueuingPolicy queuingPolicy)
+{
+    bool queued = this->UseQueueBasedOnInterfacePolicy(this->MailBox, queuingPolicy, "AddEventHandlerWriteGeneric", eventName);
     mtsCommandWriteBase * actualCommand =
         new mtsCommandWriteGeneric<__classType>(method, classInstantiation, eventName, 0);
     if (queued) {

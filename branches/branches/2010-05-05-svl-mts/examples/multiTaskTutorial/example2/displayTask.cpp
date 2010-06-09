@@ -20,7 +20,7 @@ displayTask::displayTask(const std::string taskName, double period):
         // create an event handler associated to the output port.  false
         // means not queued.
         required->AddEventHandlerWrite(&displayTask::HandleTrigger, this,
-                                       "TriggerEvent", false);
+                                       "TriggerEvent", mtsInterfaceRequired::EVENT_NOT_QUEUED);
     }
     required = AddRequiredInterface("Clock");
     if (required) {

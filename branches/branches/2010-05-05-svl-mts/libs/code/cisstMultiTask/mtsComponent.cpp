@@ -102,18 +102,17 @@ mtsInterfaceRequired * mtsComponent::GetInterfaceRequired(const std::string & in
 }
 
 
-//#if 0 // adeguet1, is this needed, dangerous now when using mtsTaskFromSignal ...
-mtsInterfaceRequired * mtsComponent::AddInterfaceRequired(const std::string & interfaceRequiredName,
-                                                          mtsInterfaceRequired * interfaceRequired) {
+mtsInterfaceRequired * mtsComponent::AddInterfaceRequiredExisting(const std::string & interfaceRequiredName,
+                                                                  mtsInterfaceRequired * interfaceRequired) {
     return InterfacesRequiredOrInput.AddItem(interfaceRequiredName, interfaceRequired) ? interfaceRequired : 0;
 }
-//#endif
 
-mtsInterfaceRequired * mtsComponent::AddInterfaceRequired(const std::string & interfaceRequiredName) {
-    // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
-    mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsTaskInterface::DEFAULT_EVENT_QUEUE_LEN);
+
+mtsInterfaceRequired * mtsComponent::AddInterfaceRequiredUsingMailbox(const std::string & interfaceRequiredName,
+                                                                      mtsMailBox * mailBox)
+{
     mtsInterfaceRequired * interfaceRequired = new mtsInterfaceRequired(interfaceRequiredName, mailBox);
-    if (mailBox && interfaceRequired) {
+    if (interfaceRequired) {
         if (InterfacesRequiredOrInput.AddItem(interfaceRequiredName, interfaceRequired)) {
             return interfaceRequired;
         }
@@ -122,14 +121,17 @@ mtsInterfaceRequired * mtsComponent::AddInterfaceRequired(const std::string & in
         if (interfaceRequired) {
             delete interfaceRequired;
         }
-        if (mailBox) {
-            delete mailBox;
-        }
-        return 0;
+    } else {
+        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to create interface for \""
+                                 << interfaceRequiredName << "\"" << std::endl;
     }
-    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to create interface or mailbox for \""
-                             << interfaceRequiredName << "\"" << std::endl;
     return 0;
+}
+
+
+mtsInterfaceRequired * mtsComponent::AddInterfaceRequired(const std::string & interfaceRequiredName) {
+    // by default, no mailbox for base component, events are not queued
+    return this->AddInterfaceRequiredUsingMailbox(interfaceRequiredName, 0);
 }
 
 

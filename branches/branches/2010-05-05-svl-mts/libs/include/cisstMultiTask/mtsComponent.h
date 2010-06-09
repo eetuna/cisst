@@ -77,7 +77,20 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       without a name. */
     mtsComponent(void) {}
 
-    mtsInterfaceRequired * AddInterfaceRequired(const std::string & requiredInterfaceName, mtsInterfaceRequired * requiredInterface);
+    /*! Add an already existing interface required to the interface,
+      the user must pay attention to mailbox (or lack of) used to
+      create the required interface.  By default, mtsComponent uses a
+      required interface without mailbox (i.e. doesn't queue), mtsTask
+      uses an interface with a mailbox and mtsTaskFromSignal uses an
+      interface with a mailbox with a post command queued command. */
+    mtsInterfaceRequired * AddInterfaceRequiredExisting(const std::string & interfaceRequiredName,
+                                                        mtsInterfaceRequired * interfaceRequired);
+
+    /*! Create and add a required interface with an existing mailbox.
+      If the creation or addition failed (name already exists), the
+      caller must make sure he/she deletes the unused mailbox. */
+    mtsInterfaceRequired * AddInterfaceRequiredUsingMailbox(const std::string & interfaceRequiredName,
+                                                            mtsMailBox * mailBox);
 
  public:
 

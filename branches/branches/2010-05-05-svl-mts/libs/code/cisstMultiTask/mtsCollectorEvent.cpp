@@ -54,7 +54,8 @@ void mtsCollectorEvent::CollectorEventVoid::EventHandler(void)
 
 void mtsCollectorEvent::CollectorEventVoid::PrintHeader(std::ostream & outputStream, const CollectorFileFormat fileFormat)
 {
-    outputStream << "# Id: " << this->EventId
+    outputStream << "# TimeEventReceived" << this->Collector->Delimiter
+                 << " Id: " << this->EventId
                  << " Event void: \"" << this->ComponentName << "::" << this->InterfaceName << "::" << this->EventName << "\""
                  << std::endl;
 }
@@ -76,7 +77,7 @@ mtsCollectorEvent::CollectorEventWrite::CollectorEventWrite(const std::string & 
 }
 
 
-void mtsCollectorEvent::CollectorEventWrite::EventHandler(const mtsGenericObject * payload)
+void mtsCollectorEvent::CollectorEventWrite::EventHandler(const mtsGenericObject & payload)
 {
     this->Collector->SaveEventWrite(this, payload);
 }
@@ -85,10 +86,11 @@ void mtsCollectorEvent::CollectorEventWrite::EventHandler(const mtsGenericObject
 void mtsCollectorEvent::CollectorEventWrite::PrintHeader(std::ostream & outputStream, const CollectorFileFormat fileFormat)
 {
     CMN_ASSERT(this->ArgumentPrototype);
-    outputStream << "# Id: " << this->EventId
+    outputStream << "# TimeEventReceived" << this->Collector->Delimiter
+                 << " Id: " << this->EventId
                  << " Event write: \"" << this->ComponentName << "::" << this->InterfaceName << "::" << this->EventName
-                 << "(" << this->ArgumentPrototype->Services()->GetName() << ")\", ";
-    this->ArgumentPrototype->ToStreamRaw(outputStream, ',', true);
+                 << "(" << this->ArgumentPrototype->Services()->GetName() << ")\"" << this->Collector->Delimiter;
+    this->ArgumentPrototype->ToStreamRaw(outputStream, this->Collector->Delimiter, true);
     outputStream << std::endl;
 }
 
@@ -481,14 +483,14 @@ void mtsCollectorEvent::SaveEventVoid(const CollectorEventVoid * event)
             this->PrintHeader(this->FileFormat);
         }
         *(this->OutputStream) << mtsTaskManager::GetInstance()->GetTimeServer().GetRelativeTime()
-            << this->Delimiter << event->EventId << std::endl;
+                              << this->Delimiter << event->EventId << std::endl;
         this->SampleCounter++;
         this->SampleCounterForEvent++;
     }
 }
 
 
-void mtsCollectorEvent::SaveEventWrite(const CollectorEventWrite * event, const mtsGenericObject * payload)
+void mtsCollectorEvent::SaveEventWrite(const CollectorEventWrite * event, const mtsGenericObject & payload)
 {
     // check if collection is turned on
     if (this->CheckCollectingStatus()) {
@@ -497,8 +499,8 @@ void mtsCollectorEvent::SaveEventWrite(const CollectorEventWrite * event, const 
             this->PrintHeader(this->FileFormat);
         }
         *(this->OutputStream) << mtsTaskManager::GetInstance()->GetTimeServer().GetRelativeTime()
-            << this->Delimiter << event->EventId << this->Delimiter;
-        payload->ToStreamRaw(*(this->OutputStream), this->Delimiter);
+                              << this->Delimiter << event->EventId << this->Delimiter;
+        payload.ToStreamRaw(*(this->OutputStream), this->Delimiter);
         *(this->OutputStream) << std::endl;
         this->SampleCounter++;
         this->SampleCounterForEvent++;

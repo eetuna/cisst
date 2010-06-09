@@ -34,8 +34,8 @@ clientQDevice::clientQDevice(const std::string & taskName) :
         required->AddFunction("Write", Write);
         required->AddFunction("Read", Read);
         required->AddFunction("QualifiedRead", QualifiedRead);
-        required->AddEventHandlerVoid(&clientQDevice::EventVoidHandler, this, "EventVoid", false);
-        required->AddEventHandlerWrite(&clientQDevice::EventWriteHandler, this, "EventWrite", false);
+        required->AddEventHandlerVoid(&clientQDevice::EventVoidHandler, this, "EventVoid");
+        required->AddEventHandlerWrite(&clientQDevice::EventWriteHandler, this, "EventWrite");
     }
 
     // create the user interface
