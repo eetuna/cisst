@@ -139,7 +139,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
     
     // provided for backward compatibility
-    inline mtsRequiredInterface * CISST_DEPRECATED AddRequiredInterface(const std::string & requiredInterfaceName) {
+    inline CISST_DEPRECATED mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName) {
         return this->AddInterfaceRequired(requiredInterfaceName);
     }
 
