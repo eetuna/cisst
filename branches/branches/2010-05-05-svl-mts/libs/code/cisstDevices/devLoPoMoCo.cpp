@@ -27,7 +27,7 @@
 CMN_IMPLEMENT_SERVICES(devLoPoMoCo);
 
 devLoPoMoCo::devLoPoMoCo(const std::string& deviceName, unsigned int numberOfBoards) :
-    mtsDevice(deviceName) {
+    mtsComponent(deviceName) {
     this->numberOfBoards = numberOfBoards;
     numberOfAxes = NB_AXIS * numberOfBoards;
 

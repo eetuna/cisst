@@ -28,7 +28,7 @@ CMN_IMPLEMENT_SERVICES(devNDISerialToolQDevice);
 
 
 devNDISerialToolQDevice::devNDISerialToolQDevice(const std::string & taskName) :
-    mtsDevice(taskName)
+    mtsComponent(taskName)
 {
     ToolWidget.setupUi(&CentralWidget);
     ToolWidget.ToolGroup->setTitle(QString::fromStdString(taskName));

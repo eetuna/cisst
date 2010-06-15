@@ -25,7 +25,7 @@ CMN_IMPLEMENT_SERVICES(devNDISerialControllerQDevice);
 
 
 devNDISerialControllerQDevice::devNDISerialControllerQDevice(const std::string & taskName) :
-    mtsDevice(taskName)
+    mtsComponent(taskName)
 {
     ControllerWidget.setupUi(&CentralWidget);
     CentralWidget.setWindowTitle(QString::fromStdString(taskName));
