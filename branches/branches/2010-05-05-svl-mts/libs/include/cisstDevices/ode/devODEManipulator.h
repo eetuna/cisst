@@ -18,6 +18,10 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _devODEManipulator_h
 #define _devODEManipulator_h
 
+#include <vector>
+
+#include <cisstRobot/robManipulator.h>
+
 #include <cisstDevices/manipulators/devManipulator.h>
 
 #include <cisstDevices/ode/devODEBody.h>
@@ -26,37 +30,25 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstDevices/devExport.h>
 
-class CISST_EXPORT devODEManipulator : public devManipulator {
+class CISST_EXPORT devODEManipulator : 
+  public devManipulator,
+  public robManipulator {
+
+ public:
+
+  typedef std::vector< devODEBody::State > State;
 
  protected:
 
   std::vector<devODEJoint*> joints;
+  std::vector<devODEBody*>  bodies;
 
   vctDynamicVector<double> qinit;
 
-  //! Set the joint forces or torques
-  /**
-     This sets the force/torque value of each joint. This task will be applied
-     at each iteration of the world task. This method does NOT apply the FT 
-     values to each joint.
-   */
-  void SetForcesTorques( const vctDynamicVector<double>& ft);
+  void Insert( devODEBody* body );
+  void Insert( devODEJoint* joint );
 
-  //! Return the joints positions
-  /**
-     Query each ODE joint for their positions and add the initial offset to 
-     them
-     \return A vector of joints positions
-  */
-  vctDynamicVector<double> GetJointsPositions() const ;
-
-  //! Return the joints velocities
-  /**
-     Query each ODE joint for their velocities
-     \return A vector of joints velocities
-  */
-  vctDynamicVector<double> GetJointsVelocities() const ;
-
+  devODEBody* base;
 
  public: 
 
@@ -81,14 +73,42 @@ class CISST_EXPORT devODEManipulator : public devManipulator {
 		     double period,
 		     devODEWorld& world,
 		     const std::string& manfile,
-		     const vctDynamicVector<double> qinit,
 		     const vctFrame4x4<double>& Rtw0,
+		     const vctDynamicVector<double> qinit,
 		     const std::vector<std::string>& geomfiles );
 
   ~devODEManipulator(){}
 
+  //! Return the joints positions
+  /**
+     Query each ODE joint for their positions and add the initial offset to 
+     them
+     \return A vector of joints positions
+  */
+  vctDynamicVector<double> GetJointsPositions() const ;
+
+  //! Return the joints velocities
+  /**
+     Query each ODE joint for their velocities
+     \return A vector of joints velocities
+  */
+  vctDynamicVector<double> GetJointsVelocities() const ;
+
+  //! Set the joint forces or torques
+  /**
+     This sets the force/torque value of each joint. This task will be applied
+     at each iteration of the world task. This method does NOT apply the FT 
+     values to each joint.
+   */
+  void SetForcesTorques( const vctDynamicVector<double>& ft);
+
   vctDynamicVector<double> Read();
   void Write( const vctDynamicVector<double>& ft );
+
+  devODEManipulator::State GetState( ) const;
+  void SetState( const devODEManipulator::State& state );
+
+  dBodyID BaseID() const;
 
 };
 

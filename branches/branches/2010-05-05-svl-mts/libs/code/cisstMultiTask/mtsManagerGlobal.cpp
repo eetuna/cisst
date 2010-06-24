@@ -29,11 +29,14 @@ http://www.cisst.org/cisst/license.txt.
 #endif // CISST_MTS_HAS_ICE
 
 
-mtsManagerGlobal::mtsManagerGlobal() : LocalManagerConnected(0), ConnectionID(0)
+mtsManagerGlobal::mtsManagerGlobal() : 
+    ProcessMap("ProcessMap"),
+    LocalManagerConnected(0), ConnectionID(0)
 #if CISST_MTS_HAS_ICE
     , ProxyServer(0)
 #endif
 {
+    ProcessMap.SetOwner(*this);
 }
 
 mtsManagerGlobal::~mtsManagerGlobal()
@@ -751,7 +754,7 @@ void mtsManagerGlobal::ConnectCheckTimeout()
         element = it->second;
 
         // Skip timeout check if connection has been already established.
-        if (element->Connected) {
+        if (element->IsConnected()) {
             ++it;
             continue;
         }
@@ -762,7 +765,7 @@ void mtsManagerGlobal::ConnectCheckTimeout()
             continue;
         }
 
-        CMN_LOG_CLASS_RUN_VERBOSE << "ConnectCheckTimeout: Disconnect due to timeout: Connection session id: " << element->ConnectionID << std::endl;
+        CMN_LOG_CLASS_RUN_VERBOSE << "ConnectCheckTimeout: Disconnect due to timeout: Connection session id: " << element->GetConnectionID() << std::endl;
         CMN_LOG_CLASS_RUN_VERBOSE << "ConnectCheckTimeout: Remove an element: "
             << GetInterfaceUID(element->ClientProcessName, element->ClientComponentName, element->ClientInterfaceRequiredName) << " - "
             << GetInterfaceUID(element->ServerProcessName, element->ServerComponentName, element->ServerProvidedInterfaceName) << std::endl;
@@ -1389,3 +1392,27 @@ bool mtsManagerGlobal::ConnectServerSideInterfaceRequest(
         serverProcessName, serverComponentName, serverProvidedInterfaceName, serverProcessName);
 }
 #endif
+
+void mtsManagerGlobal::GetListOfConnections(std::vector<ConnectionStrings> & list) const
+{
+    ConnectionStrings connection;
+
+    ConnectionElementMapType::const_iterator it = ConnectionElementMap.begin();
+    const ConnectionElementMapType::const_iterator itEnd = ConnectionElementMap.end();
+
+    for (; it != itEnd; ++it) {
+        // Check if this connection has been successfully established
+        if (!it->second->IsConnected()) {
+            continue;
+        }
+
+        connection.ClientProcessName           = it->second->ClientProcessName;
+        connection.ClientComponentName         = it->second->ClientComponentName;
+        connection.ClientInterfaceRequiredName = it->second->ClientInterfaceRequiredName;
+        connection.ServerProcessName           = it->second->ServerProcessName;
+        connection.ServerComponentName         = it->second->ServerComponentName;
+        connection.ServerProvidedInterfaceName = it->second->ServerProvidedInterfaceName;
+
+        list.push_back(connection);
+    }
+}

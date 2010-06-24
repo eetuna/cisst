@@ -15,30 +15,28 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstRobot/robManipulator.h>
 #include <cisstDevices/ode/devODEManipulator.h>
-
-//CMN_IMPLEMENT_SERVICES( devODEManipulator );
 
 devODEManipulator::devODEManipulator( const std::string& devname,
 				      double period,
-				      const vctDynamicVector<double>& qinit ) :
+				      const vctDynamicVector<double>& qinit ):
 
   devManipulator( devname, period, qinit.size() ),
-  qinit( qinit ){}
+  robManipulator( "", vctFrame4x4<double>() ),
+  qinit( qinit ),
+  base( NULL ){}
 
 devODEManipulator::devODEManipulator(const std::string& devname,
 				     double period,
 				     devODEWorld& world,
 				     const std::string& robotfilename,
-				     const vctDynamicVector<double> qinit,
 				     const vctFrame4x4<double>& Rtw0,
+				     const vctDynamicVector<double> qinit,
 				     const std::vector<std::string>& geomfiles):
   devManipulator( devname, period, qinit.size() ),
-  qinit( qinit ){
-
-  // Create a temporary manipulator
-  robManipulator manipulator( robotfilename, Rtw0 );
+  robManipulator( robotfilename, Rtw0 ),
+  qinit( qinit ),
+  base( NULL ){
 
   //! Create a new space for the manipulator
   dSpaceID spaceid = dSimpleSpaceCreate( world.SpaceID() );
@@ -46,50 +44,50 @@ devODEManipulator::devODEManipulator(const std::string& devname,
   // Initialize the links
 
   // a temporary vector to hold pointers to bodies
-  std::vector<devODEBody*> links;
+  //std::vector<devODEBody*> bodies;
 
-  for( size_t i=0; i<manipulator.links.size(); i++ ){
+  for( size_t i=0; i<links.size(); i++ ){
 
     // obtain the position and orientation of the ith link 
-    vctFrame4x4<double> Rtwi = manipulator.ForwardKinematics( qinit, i+1 );
+    vctFrame4x4<double> Rtwi = ForwardKinematics( qinit, i+1 );
 
     // create and initialize the ith link
-    devODEBody* link;
-    link = new devODEBody( world.WorldID(),                         // world
+    devODEBody* body;
+    body = new devODEBody( world.WorldID(),                         // world
 			   spaceid,                                 // space
 			   Rtwi,                                    // pos+ori
-			   manipulator.links[i].Mass(),             // m   
-			   manipulator.links[i].CenterOfMass(),     // com
-			   manipulator.links[i].MomentOfInertiaAtCOM(),  // I  
+			   links[i].Mass(),                         // m   
+			   links[i].CenterOfMass(),                 // com
+			   links[i].MomentOfInertiaAtCOM(),         // I  
 			   geomfiles[i] );
 
-    world.Insert( link );
-    links.push_back( link );
+    world.Insert( body );
+    bodies.push_back( body );
   }
 
   // Initialize the joints
   dBodyID b1 = 0;                                // ID of initial proximal link
   vctFixedSizeVector<double,3> z(0.0, 0.0, 1.0); // the local Z axis
 
-  for( size_t i=0; i<manipulator.links.size(); i++ ){
+  for( size_t i=0; i<links.size(); i++ ){
 
     // obtain the ID of the distal link 
-    dBodyID b2 = links[i]->BodyID();
+    dBodyID b2 = bodies[i]->BodyID();
     
     // obtain the position and orientation of the ith link
-    vctFrame4x4<double> Rtwi = manipulator.ForwardKinematics( qinit, i );
+    vctFrame4x4<double> Rtwi = ForwardKinematics( qinit, i );
     
     vctFixedSizeVector<double,3> anchor = Rtwi.Translation();
     vctFixedSizeVector<double,3> axis = Rtwi.Rotation() * z;
 
     int type = dJointTypeHinge;
-    if( manipulator.links[i].GetType() == robLink::SLIDER )
+    if( links[i].GetType() == robLink::SLIDER )
       { type = dJointTypeSlider; }
 
     // This is a bit tricky. The min must be greater than -pi and the max must
     // be less than pi. Otherwise it really screw things up
-    double qmin = manipulator.links[i].PositionMin();
-    double qmax = manipulator.links[i].PositionMax();
+    double qmin = links[i].PositionMin();
+    double qmax = links[i].PositionMax();
 
     devODEJoint* joint;
     joint =  new devODEJoint( world.WorldID(),     // the world ID
@@ -107,6 +105,17 @@ devODEManipulator::devODEManipulator(const std::string& devname,
   }
 }
 
+dBodyID devODEManipulator::BaseID() const {
+  if( base == NULL ) return NULL;
+  else               return base->BodyID();
+}
+
+void devODEManipulator::Insert( devODEBody* body )
+{ bodies.push_back( body ); }
+
+void devODEManipulator::Insert( devODEJoint* joint )
+{ joints.push_back( joint ); }
+
 vctDynamicVector<double> devODEManipulator::Read()
 { return GetJointsPositions(); }
 
@@ -117,7 +126,6 @@ vctDynamicVector<double> devODEManipulator::GetJointsPositions() const {
   vctDynamicVector<double> q( joints.size(), 0.0 );
   for(size_t i=0; i<joints.size(); i++)
     { q[i] =  joints[i]->GetPosition(); }
-  //std::cout << q << std::endl;
   return q + qinit;
 }
 
@@ -128,8 +136,61 @@ vctDynamicVector<double> devODEManipulator::GetJointsVelocities() const {
   return qd;
 }
 
+
 void devODEManipulator::SetForcesTorques( const vctDynamicVector<double>& ft) {
-  //std::cout << "ft " << ft << std::endl;
   for(size_t i=0; i<joints.size(); i++ )
     { joints[i]->SetForceTorque( ft[i] ); }
 }
+
+devODEManipulator::State devODEManipulator::GetState() const {
+
+  devODEManipulator::State state;
+  
+  for( size_t i=0; i<joints.size(); i++ ){
+    
+    dBodyID bid = joints[i]->GetDistalBody();
+
+    devODEBody::State si;
+
+    const dReal* R = dBodyGetRotation( bid );
+    const dReal* t = dBodyGetPosition( bid );
+    const dReal* v = dBodyGetLinearVel( bid );
+    const dReal* w = dBodyGetAngularVel( bid );
+
+    si.R = vctMatrixRotation3<double> ( R[0], R[1],  R[2], // R[3], 
+					R[4], R[5],  R[6], // R[7], 
+					R[8], R[9], R[10], // R[11], 
+					VCT_NORMALIZE );
+    si.t = vctFixedSizeVector<double,3>( t[0], t[1], t[2] );
+    si.v = vctFixedSizeVector<double,3>( v[0], v[1], v[2] );
+    si.w = vctFixedSizeVector<double,3>( w[0], w[1], w[2] );
+
+    state.push_back( si );
+
+  }
+
+  return state;
+
+}
+
+
+void devODEManipulator::SetState( const devODEManipulator::State& state ){
+
+  for( size_t i=0; i<state.size(); i++ ){
+    
+    dBodyID bid = joints[i]->GetDistalBody();
+
+    dMatrix3 R = { state[i].R[0][0], state[i].R[0][1],  state[i].R[0][2], 0.0,
+		   state[i].R[1][0], state[i].R[1][1],  state[i].R[1][2], 0.0,
+		   state[i].R[2][0], state[i].R[2][1],  state[i].R[2][2], 0.0 };
+
+    dBodySetRotation( bid, R );
+    dBodySetPosition( bid, state[i].t[0], state[i].t[1], state[i].t[2] );
+    dBodySetLinearVel(  bid, state[i].v[0], state[i].v[1], state[i].v[2] );
+    dBodySetAngularVel( bid, state[i].w[0], state[i].w[1], state[i].w[2] );
+
+  }
+
+}
+
+

@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 unsigned int mtsManagerProxyClient::InstanceCounter = 0;
 
 mtsManagerProxyClient::mtsManagerProxyClient(const std::string & serverEndpointInfo)
-    : BaseClientType(ICE_PROPERTY_FILE_ROOT"config.LCM", serverEndpointInfo)
+    : BaseClientType("config.LCM", serverEndpointInfo)
 {
     ProxyName = "ManagerProxyClient";
 }
@@ -312,6 +312,11 @@ bool mtsManagerProxyClient::ConnectServerSideInterfaceRequest(
                            serverProcessName, serverComponentName, serverProvidedInterfaceName);
 
     return SendConnectServerSideInterfaceRequest(connectionID, thisProvidedInterfaceProxyInstanceID, connectionStringSet);
+}
+
+void mtsManagerProxyClient::GetListOfConnections(std::vector<ConnectionStrings> & list) const
+{
+    // TODO: implement this if needed (MJUNG)
 }
 
 //-------------------------------------------------------------------------
