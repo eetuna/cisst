@@ -141,8 +141,8 @@ void mtsManagerLocalTest::TestAddComponent(void)
     // Check if all the existing required interfaces and provided interfaces are 
     // added to the global component manager.
     CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindInterfaceRequired(DEFAULT_PROCESS_NAME, C2, r1));
-    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindProvidedInterface(DEFAULT_PROCESS_NAME, C2, p1));
-    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindProvidedInterface(DEFAULT_PROCESS_NAME, C2, p2));
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindInterfaceProvided(DEFAULT_PROCESS_NAME, C2, p1));
+    CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindInterfaceProvided(DEFAULT_PROCESS_NAME, C2, p2));
 
     mtsManagerLocal localManager2;
 
@@ -165,8 +165,8 @@ void mtsManagerLocalTest::TestAddComponent(void)
     // Check if all the existing required interfaces and provided interfaces are 
     // added to the global component manager.
     CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindInterfaceRequired(DEFAULT_PROCESS_NAME, C2Task, r1));
-    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindProvidedInterface(DEFAULT_PROCESS_NAME, C2Task, p1));
-    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindProvidedInterface(DEFAULT_PROCESS_NAME, C2Task, p2));
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindInterfaceProvided(DEFAULT_PROCESS_NAME, C2Task, p1));
+    CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindInterfaceProvided(DEFAULT_PROCESS_NAME, C2Task, p2));
 }
 
 void mtsManagerLocalTest::TestFindComponent(void)
@@ -233,8 +233,8 @@ void mtsManagerLocalTest::TestRegisterInterfaces(void)
     
     // Check initial values of GCM
     CPPUNIT_ASSERT(!globalManager->FindInterfaceRequired("LCM", componentName, "r1"));
-    CPPUNIT_ASSERT(!globalManager->FindProvidedInterface("LCM", componentName, "p1"));
-    CPPUNIT_ASSERT(!globalManager->FindProvidedInterface("LCM", componentName, "p2"));
+    CPPUNIT_ASSERT(!globalManager->FindInterfaceProvided("LCM", componentName, "p1"));
+    CPPUNIT_ASSERT(!globalManager->FindInterfaceProvided("LCM", componentName, "p2"));
     // This should fail because no component is registered yet
     CPPUNIT_ASSERT(!localManager.RegisterInterfaces(component));
 
@@ -243,25 +243,25 @@ void mtsManagerLocalTest::TestRegisterInterfaces(void)
 
     // Check updated values of GCM
     CPPUNIT_ASSERT(globalManager->FindInterfaceRequired("LCM", componentName, "r1"));
-    CPPUNIT_ASSERT(globalManager->FindProvidedInterface("LCM", componentName, "p1"));
-    CPPUNIT_ASSERT(globalManager->FindProvidedInterface("LCM", componentName, "p2"));
+    CPPUNIT_ASSERT(globalManager->FindInterfaceProvided("LCM", componentName, "p1"));
+    CPPUNIT_ASSERT(globalManager->FindInterfaceProvided("LCM", componentName, "p2"));
 
     // Now, create a new required and provided interface which have not been added.
-    mtsRequiredInterface * requiredInterface = component->AddInterfaceRequired("newRequiredInterface");
+    mtsInterfaceRequired * requiredInterface = component->AddInterfaceRequired("newRequiredInterface");
     CPPUNIT_ASSERT(requiredInterface);
-    mtsProvidedInterface * providedInterface = component->AddProvidedInterface("newProvidedInterface");
+    mtsInterfaceProvided * providedInterface = component->AddInterfaceProvided("newProvidedInterface");
     CPPUNIT_ASSERT(providedInterface);
 
     // Check initial values of GCM
     CPPUNIT_ASSERT(!globalManager->FindInterfaceRequired("LCM", componentName, requiredInterface->GetName()));
-    CPPUNIT_ASSERT(!globalManager->FindProvidedInterface("LCM", componentName, providedInterface->GetName()));
+    CPPUNIT_ASSERT(!globalManager->FindInterfaceProvided("LCM", componentName, providedInterface->GetName()));
 
     // Register the new interfaces
     CPPUNIT_ASSERT(localManager.RegisterInterfaces(component));
 
     // Check updated values of GCM
     CPPUNIT_ASSERT(globalManager->FindInterfaceRequired("LCM", componentName, requiredInterface->GetName()));
-    CPPUNIT_ASSERT(globalManager->FindProvidedInterface("LCM", componentName, providedInterface->GetName()));
+    CPPUNIT_ASSERT(globalManager->FindInterfaceProvided("LCM", componentName, providedInterface->GetName()));
 }
 
 void mtsManagerLocalTest::TestGetComponent(void)
@@ -549,9 +549,9 @@ void mtsManagerLocalTest::TestConnectLocally(void)
 
     CPPUNIT_ASSERT_EQUAL(FAIL, localManager.ConnectLocally(client->GetName(), "", server->GetName(), p1));
 
-    CPPUNIT_ASSERT(client->GetInterfaceRequired(r1)->ProvidedInterface == NULL);
+    CPPUNIT_ASSERT(client->GetInterfaceRequired(r1)->InterfaceProvidedOrOutput == 0);
     CPPUNIT_ASSERT_EQUAL(SUCCESS, localManager.ConnectLocally(client->GetName(), r1, server->GetName(), p1));
-    CPPUNIT_ASSERT(client->GetInterfaceRequired(r1)->ProvidedInterface == server->GetProvidedInterface(p1));
+    CPPUNIT_ASSERT(client->GetInterfaceRequired(r1)->InterfaceProvidedOrOutput == server->GetInterfaceProvided(p1));
 }
 
 #if CISST_MTS_HAS_ICE
@@ -578,7 +578,7 @@ void mtsManagerLocalTest::TestCreateInterfaceRequiredProxy(void)
 {
 }
 
-void mtsManagerLocalTest::TestCreateProvidedInterfaceProxy(void)
+void mtsManagerLocalTest::TestCreateInterfaceProvidedProxy(void)
 {
 }
 
@@ -586,7 +586,7 @@ void mtsManagerLocalTest::TestRemoveInterfaceRequiredProxy(void)
 {
 }
 
-void mtsManagerLocalTest::TestRemoveProvidedInterfaceProxy(void)
+void mtsManagerLocalTest::TestRemoveInterfaceProvidedProxy(void)
 {
 }
 
@@ -682,15 +682,15 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
 
     // Check initial values
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided2.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test void command
     P2C3->InterfaceRequired1.CommandVoid();
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(0,  P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(0,  P2C2->InterfaceProvided2.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test write command
@@ -698,8 +698,8 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     valueWrite.Data = 2;
     P2C3->InterfaceRequired1.CommandWrite(valueWrite);
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->InterfaceProvided2.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test read command
@@ -708,8 +708,8 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     P2C3->InterfaceRequired1.CommandRead(valueRead);
     CPPUNIT_ASSERT_EQUAL(valueWrite.Data, valueRead.Data);
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->InterfaceProvided2.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
 
     // Test qualified read command
@@ -717,20 +717,20 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     valueRead.Data = 0;
     P2C3->InterfaceRequired1.CommandQualifiedRead(valueWrite, valueRead);
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
 
     // Test void event
-    P2C2->ProvidedInterface2.EventVoid();
+    P2C2->InterfaceProvided2.EventVoid();
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     CPPUNIT_ASSERT_EQUAL(0, P2C3->InterfaceRequired1.GetValue());
 
     // Test write event
     valueWrite.Data = 4;
-    P2C2->ProvidedInterface2.EventWrite(valueWrite);
+    P2C2->InterfaceProvided2.EventWrite(valueWrite);
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     CPPUNIT_ASSERT_EQUAL(valueWrite.Data, P2C3->InterfaceRequired1.GetValue());
 }
 
@@ -769,15 +769,15 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
 
     // Check initial values
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface2.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided2.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test void command
     P2C3->InterfaceRequired1.CommandVoid();
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(0,  P2C2->ProvidedInterface2.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(0,  P2C2->InterfaceProvided2.GetValue());
     //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test write command
@@ -785,8 +785,8 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     //valueWrite.Data = 2;
     //P2C3->InterfaceRequired1.CommandWrite(valueWrite);
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->InterfaceProvided2.GetValue());
     //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     //// Test read command
@@ -795,8 +795,8 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     //P2C3->InterfaceRequired1.CommandRead(valueRead);
     //CPPUNIT_ASSERT_EQUAL(valueWrite.Data, valueRead.Data);
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->ProvidedInterface2.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->InterfaceProvided2.GetValue());
     //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
 
     //// Test qualified read command
@@ -804,20 +804,20 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     //valueRead.Data = 0;
     //P2C3->InterfaceRequired1.CommandQualifiedRead(valueWrite, valueRead);
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
 
     //// Test void event
-    //P2C2->ProvidedInterface2.EventVoid();
+    //P2C2->InterfaceProvided2.EventVoid();
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(0, P2C3->InterfaceRequired1.GetValue());
 
     //// Test write event
     //valueWrite.Data = 4;
-    //P2C2->ProvidedInterface2.EventWrite(valueWrite);
+    //P2C2->InterfaceProvided2.EventWrite(valueWrite);
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->ProvidedInterface1.GetValue());
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(valueWrite.Data, P2C3->InterfaceRequired1.GetValue());
 }
 */

@@ -16,7 +16,7 @@
 osaMutex userInterface::Mutex;
 
 userInterface::userInterface(const std::string & robotName,
-                             mtsDeviceInterface * interfacePointer):
+                             mtsInterfaceProvided * interfacePointer):
     Ticks(0),
     Name(robotName),
     CloseRequested(false)
@@ -33,15 +33,8 @@ userInterface::userInterface(const std::string & robotName,
     Robot.AddEventHandlerWrite(&userInterface::CallBackFinished, this,
                                "MotionFinished");
 
-    // tell task or device that this thread will use it, will create a
-    // mailbox if needed.  if this method is not called, call to
-    // GetCommandXyz will likely fail
-    unsigned int userId;
-    userId = interfacePointer->AllocateResources("UserDefinedInterfaceExample6");
-
     // -2- Connect to the device/task that provides the required resources
     Robot.ConnectTo(interfacePointer);
-    Robot.BindCommandsAndEvents(userId);
 
     // -3- Setup the user interface
     Window = new Fl_Double_Window(500, 400, Name.c_str());

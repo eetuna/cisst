@@ -154,7 +154,7 @@ bool mtsManagerProxyClient::OnServerDisconnect()
 
 void mtsManagerProxyClient::GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStringSet,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
     const std::string & requestProcessName)
 {
     connectionStringSet.ClientProcessName = clientProcessName;
@@ -162,7 +162,7 @@ void mtsManagerProxyClient::GetConnectionStringSet(mtsManagerProxy::ConnectionSt
     connectionStringSet.ClientInterfaceRequiredName = clientInterfaceRequiredName;
     connectionStringSet.ServerProcessName = serverProcessName;
     connectionStringSet.ServerComponentName = serverComponentName;
-    connectionStringSet.ServerProvidedInterfaceName = serverProvidedInterfaceName;
+    connectionStringSet.ServerInterfaceProvidedName = serverInterfaceProvidedName;
     connectionStringSet.RequestProcessName = requestProcessName;
 }
 
@@ -200,9 +200,9 @@ bool mtsManagerProxyClient::RemoveComponent(const std::string & processName, con
     return SendRemoveComponent(processName, componentName);
 }
 
-bool mtsManagerProxyClient::AddProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
+bool mtsManagerProxyClient::AddInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
 {
-    return SendAddProvidedInterface(processName, componentName, interfaceName, isProxyInterface);
+    return SendAddInterfaceProvided(processName, componentName, interfaceName, isProxyInterface);
 }
 
 bool mtsManagerProxyClient::AddInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
@@ -210,9 +210,9 @@ bool mtsManagerProxyClient::AddInterfaceRequired(const std::string & processName
     return SendAddInterfaceRequired(processName, componentName, interfaceName, isProxyInterface);
 }
 
-bool mtsManagerProxyClient::FindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
+bool mtsManagerProxyClient::FindInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
 {
-    return const_cast<mtsManagerProxyClient*>(this)->SendFindProvidedInterface(processName, componentName, interfaceName);
+    return const_cast<mtsManagerProxyClient*>(this)->SendFindInterfaceProvided(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyClient::FindInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
@@ -220,9 +220,9 @@ bool mtsManagerProxyClient::FindInterfaceRequired(const std::string & processNam
     return const_cast<mtsManagerProxyClient*>(this)->SendFindInterfaceRequired(processName, componentName, interfaceName);
 }
 
-bool mtsManagerProxyClient::RemoveProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerProxyClient::RemoveInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return SendRemoveProvidedInterface(processName, componentName, interfaceName);
+    return SendRemoveInterfaceProvided(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyClient::RemoveInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
@@ -232,13 +232,13 @@ bool mtsManagerProxyClient::RemoveInterfaceRequired(const std::string & processN
 
 int mtsManagerProxyClient::Connect(const std::string & requestProcessName,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
     int & userId)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
                            clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName,
+                           serverProcessName, serverComponentName, serverInterfaceProvidedName,
                            requestProcessName);
 
     return SendConnect(connectionStringSet, userId);
@@ -251,50 +251,50 @@ bool mtsManagerProxyClient::ConnectConfirm(unsigned int connectionSessionID)
 
 bool mtsManagerProxyClient::Disconnect(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
                            clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
+                           serverProcessName, serverComponentName, serverInterfaceProvidedName);
 
     return SendDisconnect(connectionStringSet);
 }
 
-bool mtsManagerProxyClient::SetProvidedInterfaceProxyAccessInfo(
+bool mtsManagerProxyClient::SetInterfaceProvidedProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
     const std::string & endpointInfo)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
                            clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
+                           serverProcessName, serverComponentName, serverInterfaceProvidedName);
 
-    return SendSetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo);
+    return SendSetInterfaceProvidedProxyAccessInfo(connectionStringSet, endpointInfo);
 }
 
-bool mtsManagerProxyClient::GetProvidedInterfaceProxyAccessInfo(
+bool mtsManagerProxyClient::GetInterfaceProvidedProxyAccessInfo(
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
     std::string & endpointInfo)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
                            clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
+                           serverProcessName, serverComponentName, serverInterfaceProvidedName);
 
-    return SendGetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo);
+    return SendGetInterfaceProvidedProxyAccessInfo(connectionStringSet, endpointInfo);
 }
 
 bool mtsManagerProxyClient::InitiateConnect(const unsigned int connectionID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
                            clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
+                           serverProcessName, serverComponentName, serverInterfaceProvidedName);
 
     return SendInitiateConnect(connectionID, connectionStringSet);
 }
@@ -302,16 +302,16 @@ bool mtsManagerProxyClient::InitiateConnect(const unsigned int connectionID,
 bool mtsManagerProxyClient::ConnectServerSideInterfaceRequest(
     const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
-    ::Ice::Int thisProvidedInterfaceProxyInstanceID = providedInterfaceProxyInstanceID;
+    ::Ice::Int thisInterfaceProvidedProxyInstanceID = providedInterfaceProxyInstanceID;
 
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
                            clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                           serverProcessName, serverComponentName, serverProvidedInterfaceName);
+                           serverProcessName, serverComponentName, serverInterfaceProvidedName);
 
-    return SendConnectServerSideInterfaceRequest(connectionID, thisProvidedInterfaceProxyInstanceID, connectionStringSet);
+    return SendConnectServerSideInterfaceRequest(connectionID, thisInterfaceProvidedProxyInstanceID, connectionStringSet);
 }
 
 void mtsManagerProxyClient::GetListOfConnections(std::vector<ConnectionStrings> & list) const
@@ -337,13 +337,13 @@ bool mtsManagerProxyClient::ReceiveRemoveComponentProxy(const ::std::string & co
     return ProxyOwner->RemoveComponentProxy(componentProxyName);
 }
 
-bool mtsManagerProxyClient::ReceiveCreateProvidedInterfaceProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription)
+bool mtsManagerProxyClient::ReceiveCreateInterfaceProvidedProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription)
 {
-    // Convert providedInterfaceDescription into an object of type mtsInterfaceCommon::ProvidedInterfaceDescription
-    ProvidedInterfaceDescription convertedDescription;
-    mtsManagerProxyServer::ConvertProvidedInterfaceDescription(providedInterfaceDescription, convertedDescription);
+    // Convert providedInterfaceDescription into an object of type mtsInterfaceCommon::InterfaceProvidedDescription
+    InterfaceProvidedDescription convertedDescription;
+    mtsManagerProxyServer::ConvertInterfaceProvidedDescription(providedInterfaceDescription, convertedDescription);
 
-    return ProxyOwner->CreateProvidedInterfaceProxy(serverComponentProxyName, convertedDescription);
+    return ProxyOwner->CreateInterfaceProvidedProxy(serverComponentProxyName, convertedDescription);
 }
 
 bool mtsManagerProxyClient::ReceiveCreateInterfaceRequiredProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription)
@@ -355,9 +355,9 @@ bool mtsManagerProxyClient::ReceiveCreateInterfaceRequiredProxy(const std::strin
     return ProxyOwner->CreateInterfaceRequiredProxy(clientComponentProxyName, convertedDescription);
 }
 
-bool mtsManagerProxyClient::ReceiveRemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName)
+bool mtsManagerProxyClient::ReceiveRemoveInterfaceProvidedProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName)
 {
-    return ProxyOwner->RemoveProvidedInterfaceProxy(clientComponentProxyName, providedInterfaceProxyName);
+    return ProxyOwner->RemoveInterfaceProvidedProxy(clientComponentProxyName, providedInterfaceProxyName);
 }
 
 bool mtsManagerProxyClient::ReceiveRemoveInterfaceRequiredProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName)
@@ -369,32 +369,32 @@ bool mtsManagerProxyClient::ReceiveConnectServerSideInterface(const int userId, 
 {
     return ProxyOwner->ConnectServerSideInterface(userId, providedInterfaceProxyInstanceID,
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientInterfaceRequiredName,
-        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerInterfaceProvidedName);
 }
 
 bool mtsManagerProxyClient::ReceiveConnectClientSideInterface(const unsigned int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
     return ProxyOwner->ConnectClientSideInterface(connectionID,
         connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientInterfaceRequiredName,
-        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerProvidedInterfaceName);
+        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerInterfaceProvidedName);
 }
 
-bool mtsManagerProxyClient::ReceivePreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+bool mtsManagerProxyClient::ReceivePreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
-    return ProxyOwner->PreAllocateResources(userName, serverProcessName, serverComponentName, serverProvidedInterfaceName);
+    return ProxyOwner->PreAllocateResources(userName, serverProcessName, serverComponentName, serverInterfaceProvidedName);
 }
 
-bool mtsManagerProxyClient::ReceiveGetProvidedInterfaceDescription(const unsigned int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription)
+bool mtsManagerProxyClient::ReceiveGetInterfaceProvidedDescription(const unsigned int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription)
 {
-    ProvidedInterfaceDescription src;
+    InterfaceProvidedDescription src;
 
-    if (!ProxyOwner->GetProvidedInterfaceDescription(userId, serverComponentName, providedInterfaceName, src)) {
-        LogError(mtsManagerProxyClient, "ReceiveGetProvidedInterfaceDescription() failed");
+    if (!ProxyOwner->GetInterfaceProvidedDescription(userId, serverComponentName, providedInterfaceName, src)) {
+        LogError(mtsManagerProxyClient, "ReceiveGetInterfaceProvidedDescription() failed");
         return false;
     }
 
-    // Convert mtsInterfaceCommon::ProvidedInterfaceDescription to mtsManagerProxy::ProvidedInterfaceDescription
-    mtsManagerProxyServer::ConstructProvidedInterfaceDescriptionFrom(src, providedInterfaceDescription);
+    // Convert mtsInterfaceCommon::InterfaceProvidedDescription to mtsManagerProxy::InterfaceProvidedDescription
+    mtsManagerProxyServer::ConstructInterfaceProvidedDescriptionFrom(src, providedInterfaceDescription);
 
     return userId;
 }
@@ -580,46 +580,46 @@ bool mtsManagerProxyClient::SendRemoveComponent(const std::string & processName,
     }
 }
 
-bool mtsManagerProxyClient::SendAddProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface)
+bool mtsManagerProxyClient::SendAddInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendAddProvidedInterface: " << processName << ", " << componentName << ", " << interfaceName << ", " << isProxyInterface);
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendAddInterfaceProvided: " << processName << ", " << componentName << ", " << interfaceName << ", " << isProxyInterface);
 #endif
 
     try {
-        return ManagerServerProxy->AddProvidedInterface(processName, componentName, interfaceName, isProxyInterface);
+        return ManagerServerProxy->AddInterfaceProvided(processName, componentName, interfaceName, isProxyInterface);
     } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyClient, "SendAddProvidedInterface: network exception: " << ex);
+        LogError(mtsManagerProxyClient, "SendAddInterfaceProvided: network exception: " << ex);
         OnServerDisconnect();
         return false;
     }
 }
 
-bool mtsManagerProxyClient::SendFindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerProxyClient::SendFindInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendFindProvidedInterface: " << processName << ", " << componentName << ", " << interfaceName);
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendFindInterfaceProvided: " << processName << ", " << componentName << ", " << interfaceName);
 #endif
 
     try {
-        return ManagerServerProxy->FindProvidedInterface(processName, componentName, interfaceName);
+        return ManagerServerProxy->FindInterfaceProvided(processName, componentName, interfaceName);
     } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyClient, "SendFindProvidedInterface: network exception: " << ex);
+        LogError(mtsManagerProxyClient, "SendFindInterfaceProvided: network exception: " << ex);
         OnServerDisconnect();
         return false;
     }
 }
 
-bool mtsManagerProxyClient::SendRemoveProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerProxyClient::SendRemoveInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendRemoveProvidedInterface: " << processName << ", " << componentName << ", " << interfaceName);
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendRemoveInterfaceProvided: " << processName << ", " << componentName << ", " << interfaceName);
 #endif
 
     try {
-        return ManagerServerProxy->RemoveProvidedInterface(processName, componentName, interfaceName);
+        return ManagerServerProxy->RemoveInterfaceProvided(processName, componentName, interfaceName);
     } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyClient, "SendRemoveProvidedInterface: network exception: " << ex);
+        LogError(mtsManagerProxyClient, "SendRemoveInterfaceProvided: network exception: " << ex);
         OnServerDisconnect();
         return false;
     }
@@ -715,31 +715,31 @@ bool mtsManagerProxyClient::SendDisconnect(const ::mtsManagerProxy::ConnectionSt
     }
 }
 
-bool mtsManagerProxyClient::SendSetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo)
+bool mtsManagerProxyClient::SendSetInterfaceProvidedProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendSetProvidedInterfaceProxyAccessInfo: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName << ", " << endpointInfo);
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendSetInterfaceProvidedProxyAccessInfo: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName << ", " << endpointInfo);
 #endif
 
     try {
-        return ManagerServerProxy->SetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo);
+        return ManagerServerProxy->SetInterfaceProvidedProxyAccessInfo(connectionStringSet, endpointInfo);
     } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyClient, "SendSetProvidedInterfaceProxyAccessInfo: network exception: " << ex);
+        LogError(mtsManagerProxyClient, "SendSetInterfaceProvidedProxyAccessInfo: network exception: " << ex);
         OnServerDisconnect();
         return false;
     }
 }
 
-bool mtsManagerProxyClient::SendGetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo)
+bool mtsManagerProxyClient::SendGetInterfaceProvidedProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo)
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendGetProvidedInterfaceProxyAccessInfo: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
+    LogPrint(mtsManagerProxyClient, ">>>>> SEND: SendGetInterfaceProvidedProxyAccessInfo: " << connectionStringSet.ClientProcessName << ", " << connectionStringSet.ServerProcessName);
 #endif
 
     try {
-        return ManagerServerProxy->GetProvidedInterfaceProxyAccessInfo(connectionStringSet, endpointInfo);
+        return ManagerServerProxy->GetInterfaceProvidedProxyAccessInfo(connectionStringSet, endpointInfo);
     } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyClient, "SendGetProvidedInterfaceProxyAccessInfo: network exception: " << ex);
+        LogError(mtsManagerProxyClient, "SendGetInterfaceProvidedProxyAccessInfo: network exception: " << ex);
         OnServerDisconnect();
         return false;
     }
@@ -889,13 +889,13 @@ bool mtsManagerProxyClient::ManagerClientI::RemoveComponentProxy(const std::stri
     return ManagerProxyClient->ReceiveRemoveComponentProxy(componentProxyName);
 }
 
-bool mtsManagerProxyClient::ManagerClientI::CreateProvidedInterfaceProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription, const ::Ice::Current & CMN_UNUSED(current))
+bool mtsManagerProxyClient::ManagerClientI::CreateInterfaceProvidedProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription, const ::Ice::Current & CMN_UNUSED(current))
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: CreateProvidedInterfaceProxy: " << serverComponentProxyName << ", " << providedInterfaceDescription.ProvidedInterfaceName);
+    LogPrint(ManagerClientI, "<<<<< RECV: CreateInterfaceProvidedProxy: " << serverComponentProxyName << ", " << providedInterfaceDescription.InterfaceProvidedName);
 #endif
 
-    return ManagerProxyClient->ReceiveCreateProvidedInterfaceProxy(serverComponentProxyName, providedInterfaceDescription);
+    return ManagerProxyClient->ReceiveCreateInterfaceProvidedProxy(serverComponentProxyName, providedInterfaceDescription);
 }
 
 bool mtsManagerProxyClient::ManagerClientI::CreateInterfaceRequiredProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription, const ::Ice::Current & CMN_UNUSED(current))
@@ -907,13 +907,13 @@ bool mtsManagerProxyClient::ManagerClientI::CreateInterfaceRequiredProxy(const s
     return ManagerProxyClient->ReceiveCreateInterfaceRequiredProxy(clientComponentProxyName, requiredInterfaceDescription);
 }
 
-bool mtsManagerProxyClient::ManagerClientI::RemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const ::Ice::Current & CMN_UNUSED(current))
+bool mtsManagerProxyClient::ManagerClientI::RemoveInterfaceProvidedProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const ::Ice::Current & CMN_UNUSED(current))
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: RemoveProvidedInterfaceProxy: " << clientComponentProxyName << ", " << providedInterfaceProxyName);
+    LogPrint(ManagerClientI, "<<<<< RECV: RemoveInterfaceProvidedProxy: " << clientComponentProxyName << ", " << providedInterfaceProxyName);
 #endif
 
-    return ManagerProxyClient->ReceiveRemoveProvidedInterfaceProxy(clientComponentProxyName, providedInterfaceProxyName);
+    return ManagerProxyClient->ReceiveRemoveInterfaceProvidedProxy(clientComponentProxyName, providedInterfaceProxyName);
 }
 
 bool mtsManagerProxyClient::ManagerClientI::RemoveInterfaceRequiredProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const ::Ice::Current & CMN_UNUSED(current))
@@ -943,22 +943,22 @@ bool mtsManagerProxyClient::ManagerClientI::ConnectClientSideInterface(::Ice::In
     return ManagerProxyClient->ReceiveConnectClientSideInterface(connectionID, connectionStringSet);
 }
 
-int mtsManagerProxyClient::ManagerClientI::PreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const ::Ice::Current & CMN_UNUSED(current))
+int mtsManagerProxyClient::ManagerClientI::PreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName, const ::Ice::Current & CMN_UNUSED(current))
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: PreAllocateResources: " << userName << ", " << serverProcessName << ":" << serverComponentName << ":" << serverProvidedInterfaceName);
+    LogPrint(ManagerClientI, "<<<<< RECV: PreAllocateResources: " << userName << ", " << serverProcessName << ":" << serverComponentName << ":" << serverInterfaceProvidedName);
 #endif
 
-    return ManagerProxyClient->ReceivePreAllocateResources(userName, serverProcessName, serverComponentName, serverProvidedInterfaceName);
+    return ManagerProxyClient->ReceivePreAllocateResources(userName, serverProcessName, serverComponentName, serverInterfaceProvidedName);
 }
 
-bool mtsManagerProxyClient::ManagerClientI::GetProvidedInterfaceDescription(::Ice::Int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription, const ::Ice::Current & CMN_UNUSED(current)) const
+bool mtsManagerProxyClient::ManagerClientI::GetInterfaceProvidedDescription(::Ice::Int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription, const ::Ice::Current & CMN_UNUSED(current)) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: GetProvidedInterfaceDescription: " << userId << ", " << serverComponentName << ":" << providedInterfaceName);
+    LogPrint(ManagerClientI, "<<<<< RECV: GetInterfaceProvidedDescription: " << userId << ", " << serverComponentName << ":" << providedInterfaceName);
 #endif
 
-    return ManagerProxyClient->ReceiveGetProvidedInterfaceDescription(userId, serverComponentName, providedInterfaceName, providedInterfaceDescription);
+    return ManagerProxyClient->ReceiveGetInterfaceProvidedDescription(userId, serverComponentName, providedInterfaceName, providedInterfaceDescription);
 }
 
 bool mtsManagerProxyClient::ManagerClientI::GetInterfaceRequiredDescription(const std::string & componentName, const std::string & requiredInterfaceName, ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription, const ::Ice::Current & CMN_UNUSED(current)) const

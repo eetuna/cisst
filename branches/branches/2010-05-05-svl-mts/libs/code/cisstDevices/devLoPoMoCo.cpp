@@ -52,7 +52,7 @@ devLoPoMoCo::devLoPoMoCo(const std::string& deviceName, unsigned int numberOfBoa
 	NegativeIntercept.SetSize(numberOfAxes);
 	VoltageToCounts.SetSize(numberOfAxes);
 
-    mtsProvidedInterface * provided = AddProvidedInterface("WriteInterface"); 
+    mtsInterfaceProvided * provided = AddInterfaceProvided("WriteInterface"); 
     if(provided) { 
         //void commands, no parameters 
         provided->AddCommandVoid(&devLoPoMoCo::LatchEncoders, this, "LatchEncoders");

@@ -42,10 +42,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsComponent.h>
 #include <cisstMultiTask/mtsHistory.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsTaskInterface.h>
-
-#include <set>
-#include <map>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -149,18 +145,18 @@ protected:
     /********************* Methods to process queues  *********************/
 
     /*! Process all messages in mailboxes. Returns number of commands processed. */
-    virtual unsigned int ProcessMailBoxes(ProvidedInterfacesMapType & interfaces);
+    size_t ProcessMailBoxes(InterfacesProvidedListType & interfaces);
 
     /*! Process all queued commands. Returns number of events processed.
         These are the commands provided by all interfaces of the task. */
-    inline unsigned int ProcessQueuedCommands(void)
-        { return ProcessMailBoxes(ProvidedInterfaces); }
-
+    inline size_t ProcessQueuedCommands(void) {
+        return this->ProcessMailBoxes(InterfacesProvided);
+    }
 
     /*! Process all queued events. Returns number of events processed.
         These are the commands queued following events currently observed
         via the required interfaces. */
-    unsigned int ProcessQueuedEvents(void);
+    size_t ProcessQueuedEvents(void);
 
     /**************** Methods for managing task timing ********************/
 
@@ -300,7 +296,7 @@ public:
       By default, all state tables added will advance at each call of
       the Run method.  To avoid the automatic advance, use the method
       mtsStateTable::SetAutomaticAdvance(false). */
-    bool AddStateTable(mtsStateTable * existingStateTable, bool addProvidedInterface = true);
+    bool AddStateTable(mtsStateTable * existingStateTable, bool addInterfaceProvided = true);
 
     /********************* Methods to manage interfaces *******************/
 
@@ -308,7 +304,7 @@ public:
     mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
 
     /* documented in base class */
-    mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
+    mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName);
 
 
     /********************* Methods for task synchronization ***************/

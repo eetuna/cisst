@@ -211,8 +211,8 @@ bool ui3Manager::AddBehavior(ui3BehaviorBase * behavior,
     requiredInterface->AddEventHandlerWrite(&ui3BehaviorBase::SecondaryMasterButtonCallback,
                                             behavior, "SecondaryMasterButton");
     std::string interfaceName("BehaviorInterface" + behavior->GetName());
-    mtsProvidedInterface * providedInterface;
-    providedInterface = this->AddProvidedInterface(interfaceName);
+    mtsInterfaceProvided * providedInterface;
+    providedInterface = this->AddInterfaceProvided(interfaceName);
     behavior->PrimaryMasterButtonEvent.Bind(providedInterface->AddEventWrite("PrimaryMasterButton", prmEventButton()));
     behavior->SecondaryMasterButtonEvent.Bind(providedInterface->AddEventWrite("SecondaryMasterButton", prmEventButton()));
 
@@ -276,8 +276,8 @@ void ui3Manager::ConnectAll(void)
         CMN_ASSERT(requiredInterface);
     }
 
-    mtsProvidedInterface * behaviorsInterface = 
-        this->AddProvidedInterface("BehaviorsInterface");
+    mtsInterfaceProvided * behaviorsInterface = 
+        this->AddInterfaceProvided("BehaviorsInterface");
     if (behaviorsInterface) {
         MasterArmList::iterator armIterator;
         const MasterArmList::iterator armEnd = this->MasterArms.end();

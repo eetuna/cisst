@@ -32,7 +32,7 @@ unsigned int mtsComponentInterfaceProxyClient::InstanceCounter = 0;
 mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
     const std::string & serverEndpointInfo, const unsigned int providedInterfaceProxyInstanceID)
     : BaseClientType("config.client", serverEndpointInfo),
-      ProvidedInterfaceProxyInstanceID(providedInterfaceProxyInstanceID)
+      InterfaceProvidedProxyInstanceID(providedInterfaceProxyInstanceID)
 {
     ProxyName = "ComponentInterfaceProxyServer";
 }
@@ -79,7 +79,7 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     SetProxyOwner(proxyOwner, thisProcessName);
 
     // Connect to server proxy by adding this ICE proxy client to server
-    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) ProvidedInterfaceProxyInstanceID, ident)) {
+    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) InterfaceProvidedProxyInstanceID, ident)) {
         LogError(mtsComponentInterfaceProxyClient, "AddClient() failed: duplicate proxy name or identity");
         return false;
     }

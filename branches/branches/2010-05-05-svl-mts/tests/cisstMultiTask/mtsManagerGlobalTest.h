@@ -39,7 +39,7 @@ private:
         CPPUNIT_TEST(TestConnectedInterfaceInfo);
         CPPUNIT_TEST(TestConnectionElement);
 
-        CPPUNIT_TEST(TestGetConnectionsOfProvidedInterface);
+        CPPUNIT_TEST(TestGetConnectionsOfInterfaceProvided);
         CPPUNIT_TEST(TestGetConnectionsOfInterfaceRequired);
 
         CPPUNIT_TEST(TestAddProcess);
@@ -52,9 +52,9 @@ private:
         CPPUNIT_TEST(TestFindComponent);
         CPPUNIT_TEST(TestRemoveComponent);
 
-        CPPUNIT_TEST(TestAddProvidedInterface);
-        CPPUNIT_TEST(TestFindProvidedInterface);
-        CPPUNIT_TEST(TestRemoveProvidedInterface);
+        CPPUNIT_TEST(TestAddInterfaceProvided);
+        CPPUNIT_TEST(TestFindInterfaceProvided);
+        CPPUNIT_TEST(TestRemoveInterfaceProvided);
 
         CPPUNIT_TEST(TestAddInterfaceRequired);
         CPPUNIT_TEST(TestFindInterfaceRequired);
@@ -81,7 +81,7 @@ public:
     void TestConnectedInterfaceInfo(void);
     void TestConnectionElement(void);
 
-    void TestGetConnectionsOfProvidedInterface(void);
+    void TestGetConnectionsOfInterfaceProvided(void);
     void TestGetConnectionsOfInterfaceRequired(void);
 
     void TestAddProcess(void);
@@ -94,9 +94,9 @@ public:
     void TestFindComponent(void);
     void TestRemoveComponent(void);
 
-    void TestAddProvidedInterface(void);
-    void TestFindProvidedInterface(void);
-    void TestRemoveProvidedInterface(void);
+    void TestAddInterfaceProvided(void);
+    void TestFindInterfaceProvided(void);
+    void TestRemoveInterfaceProvided(void);
          
     void TestAddInterfaceRequired(void);
     void TestFindInterfaceRequired(void);

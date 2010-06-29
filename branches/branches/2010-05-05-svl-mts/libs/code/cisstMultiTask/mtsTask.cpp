@@ -24,8 +24,10 @@
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstOSAbstraction/osaGetTime.h>
+
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
+#include <cisstMultiTask/mtsInterfaceProvided.h>
 
 #include <iostream>
 
@@ -46,14 +48,15 @@ void mtsTask::StartupInternal(void) {
     // Loop through the required interfaces and make sure they are all connected. This extra check is probably not needed.
     bool success = true;
     InterfacesRequiredOrInputMapType::const_iterator requiredIterator = InterfacesRequiredOrInput.begin();
-    const mtsDeviceInterface * connectedInterface;
+    const mtsInterfaceProvidedOrOutput * connectedInterface;
     for (;
          requiredIterator != InterfacesRequiredOrInput.end();
          requiredIterator++) {
         connectedInterface = requiredIterator->second->GetConnectedInterface();
         if (!connectedInterface) {
-            CMN_LOG_CLASS_INIT_WARNING << "StartupInternal: void pointer to required interface \""
-                                       << this->GetName() << ":" << requiredIterator->first << "\" (required not connected to provided)" << std::endl;
+            CMN_LOG_CLASS_INIT_WARNING << "StartupInternal: void pointer to required/input interface \""
+                                       << this->GetName() << ":" << requiredIterator->first
+                                       << "\" (required/input not connected to provided/output)" << std::endl;
             success = false;
         }
     }
@@ -72,7 +75,7 @@ void mtsTask::CleanupInternal() {
     // Call user-supplied cleanup function
     this->Cleanup();
     // Perform Cleanup on all interfaces provided
-    ProvidedInterfaces.ForEachVoid(&mtsDeviceInterface::Cleanup);
+    InterfacesProvidedOrOutput.ForEachVoid(&mtsInterfaceProvidedOrOutput::Cleanup);
     ChangeState(FINISHED);
     CMN_LOG_CLASS_INIT_VERBOSE << "Done base class CleanupInternal " << this->GetName() << std::endl;
 }
@@ -84,32 +87,28 @@ void mtsTask::CleanupInternal() {
 // all commands in a mailbox are executed before moving on the next mailbox.  The final
 // implementation will probably look at timestamps.  We may also want to pass in a
 // parameter (enum) to set the mailbox processing policy.
-unsigned int mtsTask::ProcessMailBoxes(ProvidedInterfacesMapType & interfaces)
+size_t mtsTask::ProcessMailBoxes(InterfacesProvidedListType & interfaces)
 {
-    unsigned int numberOfCommands = 0;
-    ProvidedInterfacesMapType::iterator iterator = interfaces.begin();
-    const ProvidedInterfacesMapType::iterator end = interfaces.end();
+    size_t numberOfCommands = 0;
+    InterfacesProvidedListType::iterator iterator = interfaces.begin();
+    const InterfacesProvidedListType::iterator end = interfaces.end();
     for (;
          iterator != end;
          ++iterator) {
-        numberOfCommands += iterator->second->ProcessMailBoxes();
+        numberOfCommands += (*iterator)->ProcessMailBoxes();
     }
     return numberOfCommands;
 }
 
 
-unsigned int mtsTask::ProcessQueuedEvents(void) {
-    InterfacesRequiredOrInputMapType::iterator iterator = InterfacesRequiredOrInput.begin();
-    const InterfacesRequiredOrInputMapType::iterator end = InterfacesRequiredOrInput.end();
-    unsigned int numberOfEvents = 0;
-    mtsInterfaceRequired * interfaceRequired = 0;
+size_t mtsTask::ProcessQueuedEvents(void) {
+    InterfacesRequiredListType::iterator iterator = InterfacesRequired.begin();
+    const InterfacesRequiredListType::iterator end = InterfacesRequired.end();
+    size_t numberOfEvents = 0;
     for (;
          iterator != end;
-         iterator++) {
-        interfaceRequired = dynamic_cast<mtsInterfaceRequired *>(iterator->second);
-        if (interfaceRequired) {
-            numberOfEvents += interfaceRequired->ProcessMailBoxes();
-        }
+         iterator++) { 
+        numberOfEvents += (*iterator)->ProcessMailBoxes();
     }
     return numberOfEvents;
 }
@@ -246,7 +245,7 @@ const char * mtsTask::TaskStateName(TaskStateType state) const
 }
 
 
-bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addProvidedInterface) {
+bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addInterfaceProvided) {
     const std::string tableName = existingStateTable->GetName();
     const std::string interfaceName = "StateTable" + tableName;
     if (!this->StateTables.AddItem(tableName,
@@ -256,8 +255,8 @@ bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addProvided
                                  << "\" to task \"" << this->GetName() << "\"" << std::endl;
         return false;
     }
-    if (addProvidedInterface) {
-        mtsProvidedInterface * providedInterface = this->AddProvidedInterface(interfaceName);
+    if (addInterfaceProvided) {
+        mtsInterfaceProvided * providedInterface = this->AddInterfaceProvided(interfaceName);
         if (!providedInterface) {
             CMN_LOG_CLASS_INIT_ERROR << "AddStateTable: can no add provided interface \"" << interfaceName
                                      << "\" to task \"" << this->GetName() << "\"" << std::endl;
@@ -289,7 +288,7 @@ bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addProvided
 
 mtsInterfaceRequired * mtsTask::AddInterfaceRequired(const std::string & interfaceRequiredName) {
     // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
-    mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsTaskInterface::DEFAULT_EVENT_QUEUE_LEN);
+    mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsInterfaceRequired::DEFAULT_EVENT_QUEUE_LEN);
     mtsInterfaceRequired * result;
     if (mailBox) {
         // try to create and add interface
@@ -305,19 +304,21 @@ mtsInterfaceRequired * mtsTask::AddInterfaceRequired(const std::string & interfa
 }
 
 
-mtsDeviceInterface * mtsTask::AddProvidedInterface(const std::string & newInterfaceName) {
-    mtsTaskInterface * newInterface = new mtsTaskInterface(newInterfaceName, this);
-    if (newInterface) {
-        if (ProvidedInterfaces.AddItem(newInterfaceName, newInterface)) {
-            return newInterface;
+mtsInterfaceProvided * mtsTask::AddInterfaceProvided(const std::string & interfaceProvidedName) {
+    mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
+                                                                        mtsInterfaceProvided::COMMANDS_SHOULD_BE_QUEUED);
+    if (interfaceProvided) {
+        if (InterfacesProvidedOrOutput.AddItem(interfaceProvidedName, interfaceProvided)) {
+            InterfacesProvided.push_back(interfaceProvided);
+            return interfaceProvided;
         }
-        CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: task " << this->GetName() << " unable to add interface \""
-                                 << newInterfaceName << "\"" << std::endl;
-        delete newInterface;
+        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceProvided: task " << this->GetName() << " unable to add interface \""
+                                 << interfaceProvidedName << "\"" << std::endl;
+        delete interfaceProvided;
         return 0;
     }
-    CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: task " << this->GetName() << " unable to create interface \""
-                             << newInterfaceName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceProvided: task " << this->GetName() << " unable to create interface \""
+                             << interfaceProvidedName << "\"" << std::endl;
     return 0;
 }
 
@@ -357,6 +358,6 @@ void mtsTask::ToStream(std::ostream & outputStream) const
 {
     outputStream << "Task name: " << Name << std::endl;
     StateTable.ToStream(outputStream);
-    ProvidedInterfaces.ToStream(outputStream);
+    InterfacesProvidedOrOutput.ToStream(outputStream);
     InterfacesRequiredOrInput.ToStream(outputStream);
 }

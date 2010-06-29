@@ -132,7 +132,7 @@ protected:
         const std::string ClientInterfaceRequiredName;
         const std::string ServerProcessName;
         const std::string ServerComponentName;
-        const std::string ServerProvidedInterfaceName;
+        const std::string ServerInterfaceProvidedName;
 #if CISST_MTS_HAS_ICE
         // Time when this object becomes timed out
         double TimeoutTime;
@@ -140,10 +140,10 @@ protected:
 
         ConnectionElement(const std::string & requestProcessName, const unsigned int connectionID,
             const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-            const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+            const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
             : ConnectionID(connectionID), Connected(false), RequestProcessName(requestProcessName),
               ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientInterfaceRequiredName(clientInterfaceRequiredName),
-              ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
+              ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerInterfaceProvidedName(serverInterfaceProvidedName)
         {
 #if CISST_MTS_HAS_ICE
             //const double Timeout = (double) mtsManagerProxyServer::GetGCMConnectTimeout() / 1000.0;
@@ -198,9 +198,9 @@ protected:
         - containers for connection map
         - containers for interface type flag map */
     typedef struct {
-        ConnectedInterfaceMapType ProvidedInterfaceMap;
+        ConnectedInterfaceMapType InterfaceProvidedMap;
         ConnectedInterfaceMapType InterfaceRequiredMap;
-        InterfaceTypeMapType ProvidedInterfaceTypeMap;
+        InterfaceTypeMapType InterfaceProvidedTypeMap;
         InterfaceTypeMapType InterfaceRequiredTypeMap;
     } InterfaceMapType;
 
@@ -240,7 +240,7 @@ protected:
 
     /*! Typedef to get user id using connection id.  User id is set by provided
         interface's AllocatedResources()
-        (see mtsManagerLocal::GetProvidedInterfaceDescription() for details). */
+        (see mtsManagerLocal::GetInterfaceProvidedDescription() for details). */
     typedef std::map<unsigned int, int> UserIDMapType;
     UserIDMapType UserIDMap;
 
@@ -256,10 +256,10 @@ protected:
     bool Cleanup(void);
 
     /*! Get a map containing connection information for a provided interface */
-    ConnectionMapType * GetConnectionsOfProvidedInterface(
+    ConnectionMapType * GetConnectionsOfInterfaceProvided(
         const std::string & serverProcessName, const std::string & serverComponentName,
         const std::string & providedInterfaceName, InterfaceMapType ** interfaceMap);
-    ConnectionMapType * GetConnectionsOfProvidedInterface(
+    ConnectionMapType * GetConnectionsOfInterfaceProvided(
         const std::string & serverProcessName, const std::string & serverComponentName,
         const std::string & providedInterfaceName) const;
 
@@ -280,7 +280,7 @@ protected:
     /*! Check if two interfaces are connected */
     bool IsAlreadyConnected(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
 public:
     /*! Constructor and destructor */
@@ -310,19 +310,19 @@ public:
     //-------------------------------------------------------------------------
     //  Interface Management
     //-------------------------------------------------------------------------
-    bool AddProvidedInterface(
+    bool AddInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
 
     bool AddInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
 
-    bool FindProvidedInterface(
+    bool FindInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
 
     bool FindInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
 
-    bool RemoveProvidedInterface(
+    bool RemoveInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     bool RemoveInterfaceRequired(
@@ -333,24 +333,24 @@ public:
     //-------------------------------------------------------------------------
     int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         int & userId);
 
     bool ConnectConfirm(unsigned int connectionSessionID);
 
     bool Disconnect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
 #if CISST_MTS_HAS_ICE
     bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
     bool ConnectServerSideInterfaceRequest(
         const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 #endif
 
     void GetListOfConnections(std::vector<ConnectionStrings> & list) const;
@@ -375,9 +375,9 @@ public:
                               std::vector<std::string>& namesOfComponents);
 
     /*! Get names of all provided interfaces in a component */
-    void GetNamesOfProvidedInterfaces(const std::string & processName, 
+    void GetNamesOfInterfacesProvided(const std::string & processName, 
                                       const std::string & componentName, 
-                                      std::vector<std::string>& namesOfProvidedInterfaces);
+                                      std::vector<std::string>& namesOfInterfacesProvided);
 
     /*! Get names of all required interfaces in a component */
     void GetNamesOfInterfacesRequired(const std::string & processName, 
@@ -480,14 +480,14 @@ public:
     /*! Stop network proxy server */
     bool StopServer();
 
-    bool SetProvidedInterfaceProxyAccessInfo(
+    bool SetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & endpointInfo);
 
-    bool GetProvidedInterfaceProxyAccessInfo(
+    bool GetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         std::string & endpointInfo);
 
     /*! Periodically check connection element map to cancel timed out connection

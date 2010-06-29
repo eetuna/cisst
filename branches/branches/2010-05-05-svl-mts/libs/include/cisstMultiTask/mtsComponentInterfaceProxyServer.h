@@ -60,13 +60,13 @@ protected:
         const std::string ClientInterfaceRequiredName;
         const std::string ServerProcessName;
         const std::string ServerComponentName;
-        const std::string ServerProvidedInterfaceName;
+        const std::string ServerInterfaceProvidedName;
 
         ConnectionStrings(
             const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-            const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName)
+            const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
             : ClientProcessName(clientProcessName), ClientComponentName(clientComponentName), ClientInterfaceRequiredName(clientInterfaceRequiredName),
-              ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerProvidedInterfaceName(serverProvidedInterfaceName)
+              ServerProcessName(serverProcessName), ServerComponentName(serverComponentName), ServerInterfaceProvidedName(serverInterfaceProvidedName)
         {}
     };
 
@@ -156,7 +156,7 @@ public:
         connection when a network proxy client is detected as disconnected. */
     bool AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
     //-------------------------------------------------------------------------
     //  Event Generators (Event Sender) : Server -> Client

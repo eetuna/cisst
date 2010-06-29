@@ -86,7 +86,7 @@ public:
         \param componentName Name of component 
         \param interfaceName Name of provided interface to be added
         \param isProxyInterface True if interface added is a proxy interface */
-    virtual bool AddProvidedInterface(
+    virtual bool AddInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface) = 0;
 
     /*! \brief Register required interface. Can be called at run-time.
@@ -101,7 +101,7 @@ public:
         \param processName Name of process 
         \param componentName Name of component 
         \param interfaceName Name of provided interface */
-    virtual bool FindProvidedInterface(
+    virtual bool FindInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const = 0;
 
     /*! \brief Find required interface using process name, component name, and interface name
@@ -115,7 +115,7 @@ public:
         \param processName Name of process 
         \param componentName Name of component 
         \param interfaceName Name of provided interface to be removed */
-    virtual bool RemoveProvidedInterface(
+    virtual bool RemoveInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) = 0;
 
     /*! \brief Remove required interface. Can be called at run-time.
@@ -135,7 +135,7 @@ public:
         \param clientInterfaceRequiredName Name of client's required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of server's provided interface
+        \param serverInterfaceProvidedName Name of server's provided interface
         \param userId User Id that provided interface allocates for this connection.
                 -1 if error occurs, zero if successful in standalone configuration,
                 non-zero positive value if successful in networked configuration
@@ -145,7 +145,7 @@ public:
                 -1 if error occurs, zero or positive value if success */
     virtual int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         int & userId) = 0;
 
     /*! \brief Confirm that connection has been successfully established.
@@ -159,11 +159,11 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \return True if success, false otherwise */
     virtual bool Disconnect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) = 0;
 
 #if CISST_MTS_HAS_ICE
     /*! \brief Initiate connection process
@@ -173,7 +173,7 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \return True if success, false otherwise
         \note Let a client process initiate connection process. When 
               mtsLocalManager::Connect() is called at server side, the server 
@@ -181,7 +181,7 @@ public:
               initiate connection process. */
     virtual bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) = 0;
 
     /*! \brief Request the global component manager to connect interfaces at 
                server side
@@ -195,12 +195,12 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \return True if success, false otherwise */
     virtual bool ConnectServerSideInterfaceRequest(
         const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName) = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) = 0;
 #endif
 
     /*! Typedef for structure to represent a connection by a set of strings */
@@ -210,7 +210,7 @@ public:
         std::string ClientInterfaceRequiredName;
         std::string ServerProcessName;
         std::string ServerComponentName;
-        std::string ServerProvidedInterfaceName;
+        std::string ServerInterfaceProvidedName;
     } ConnectionStrings;
 
     /*! Get a list of all active connections represented by a set of strings */
@@ -226,14 +226,14 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \param endpointInfo Endpoint access information
         \return True if success, false otherwise
         \note Required interfaceproxy uses this information to connect to 
               provided interface proxy across networks. */
-    virtual bool SetProvidedInterfaceProxyAccessInfo(
+    virtual bool SetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & endpointInfo) = 0;
 
     /*! \brief Get provided interface proxy's access information
@@ -242,7 +242,7 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \param endpointInfo Endpoint access information to be populated
         \return True if success, false otherwise
         \note If there is no provided interface proxy running in the client
@@ -250,9 +250,9 @@ public:
               If the proy has already been created before, client's required 
               interface can be not specified.  In this case, the first three 
               arguments are given as "". */
-    virtual bool GetProvidedInterfaceProxyAccessInfo(
+    virtual bool GetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         std::string & endpointInfo) = 0;
 #endif
 };

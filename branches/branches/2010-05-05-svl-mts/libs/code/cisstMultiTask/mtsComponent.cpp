@@ -21,15 +21,15 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsComponent.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
-#include <cisstMultiTask/mtsTaskInterface.h>
+#include <cisstMultiTask/mtsInterfaceProvided.h>
 
 
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),
-    ProvidedInterfaces("ProvidedInterfaces"),
+    InterfacesProvidedOrOutput("InterfacesProvided"),
     InterfacesRequiredOrInput("InterfacesRequiredOrInput")
 {
-    ProvidedInterfaces.SetOwner(*this);
+    InterfacesProvidedOrOutput.SetOwner(*this);
     InterfacesRequiredOrInput.SetOwner(*this);
 }
 
@@ -60,51 +60,85 @@ void mtsComponent::Configure(const std::string & CMN_UNUSED(filename))
 }
 
 
-std::vector<std::string> mtsComponent::GetNamesOfProvidedInterfaces(void) const
+std::vector<std::string> mtsComponent::GetNamesOfInterfacesProvidedOrOutput(void) const
 {
-    return ProvidedInterfaces.GetNames();
+    return InterfacesProvidedOrOutput.GetNames();
 }
 
 
-mtsDeviceInterface * mtsComponent::AddProvidedInterface(const std::string & newInterfaceName)
+std::vector<std::string> mtsComponent::GetNamesOfInterfacesProvided(void) const
 {
-    mtsDeviceInterface * newInterface = new mtsDeviceInterface(newInterfaceName, this);
-    if (newInterface) {
-        if (ProvidedInterfaces.AddItem(newInterfaceName, newInterface, CMN_LOG_LOD_INIT_ERROR)) {
-            return newInterface;
+    std::vector<std::string> names;
+    InterfacesProvidedListType::const_iterator iterator = InterfacesProvided.begin();
+    const InterfacesProvidedListType::const_iterator end = InterfacesProvided.end();
+    for (;
+         iterator != end;
+         ++iterator) {
+        names.push_back((*iterator)->GetName());
+    }
+    return names;
+}
+
+
+mtsInterfaceProvided * mtsComponent::AddInterfaceProvided(const std::string & interfaceProvidedName)
+{
+    mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
+                                                                        mtsInterfaceProvided::COMMANDS_SHOULD_NOT_BE_QUEUED);
+    if (interfaceProvided) {
+        if (InterfacesProvidedOrOutput.AddItem(interfaceProvidedName, interfaceProvided, CMN_LOG_LOD_INIT_ERROR)) {
+            InterfacesProvided.push_back(interfaceProvided);
+            return interfaceProvided;
         }
-        CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: unable to add interface \""
-                                 << newInterfaceName << "\"" << std::endl;
-        delete newInterface;
+        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceProvided: unable to add interface \""
+                                 << interfaceProvidedName << "\"" << std::endl;
+        delete interfaceProvided;
         return 0;
     }
-    CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: unable to create interface \""
-                             << newInterfaceName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceProvided: unable to create interface \""
+                             << interfaceProvidedName << "\"" << std::endl;
     return 0;
 }
 
 
-mtsDeviceInterface * mtsComponent::GetProvidedInterface(const std::string & interfaceName) const
+mtsInterfaceProvidedOrOutput *
+mtsComponent::GetInterfaceProvidedOrOutput(const std::string & interfaceProvidedOrOutputName)
 {
-    return ProvidedInterfaces.GetItem(interfaceName, CMN_LOG_LOD_INIT_ERROR);
+    return InterfacesProvidedOrOutput.GetItem(interfaceProvidedOrOutputName,
+                                              CMN_LOG_LOD_INIT_ERROR);
 }
 
 
-mtsInterfaceRequiredOrInput * mtsComponent::GetInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName)
+mtsInterfaceProvided *
+mtsComponent::GetInterfaceProvided(const std::string & interfaceProvidedName) const
 {
-    return InterfacesRequiredOrInput.GetItem(interfaceRequiredOrInputName);
+    return dynamic_cast<mtsInterfaceProvided *>(InterfacesProvidedOrOutput.GetItem(interfaceProvidedName,
+                                                                                   CMN_LOG_LOD_INIT_ERROR));
 }
 
 
-mtsInterfaceRequired * mtsComponent::GetInterfaceRequired(const std::string & interfaceRequiredName)
+mtsInterfaceRequiredOrInput *
+mtsComponent::GetInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName)
 {
-    return dynamic_cast<mtsInterfaceRequired *>(InterfacesRequiredOrInput.GetItem(interfaceRequiredName));
+    return InterfacesRequiredOrInput.GetItem(interfaceRequiredOrInputName,
+                                             CMN_LOG_LOD_INIT_ERROR);
+}
+
+
+mtsInterfaceRequired *
+mtsComponent::GetInterfaceRequired(const std::string & interfaceRequiredName)
+{
+    return dynamic_cast<mtsInterfaceRequired *>(InterfacesRequiredOrInput.GetItem(interfaceRequiredName,
+                                                                                  CMN_LOG_LOD_INIT_ERROR));
 }
 
 
 mtsInterfaceRequired * mtsComponent::AddInterfaceRequiredExisting(const std::string & interfaceRequiredName,
                                                                   mtsInterfaceRequired * interfaceRequired) {
-    return InterfacesRequiredOrInput.AddItem(interfaceRequiredName, interfaceRequired) ? interfaceRequired : 0;
+    if (InterfacesRequiredOrInput.AddItem(interfaceRequiredName, interfaceRequired)) {
+        InterfacesRequired.push_back(interfaceRequired);
+        return interfaceRequired;
+    }
+    return 0;
 }
 
 
@@ -114,6 +148,7 @@ mtsInterfaceRequired * mtsComponent::AddInterfaceRequiredUsingMailbox(const std:
     mtsInterfaceRequired * interfaceRequired = new mtsInterfaceRequired(interfaceRequiredName, mailBox);
     if (interfaceRequired) {
         if (InterfacesRequiredOrInput.AddItem(interfaceRequiredName, interfaceRequired)) {
+            InterfacesRequired.push_back(interfaceRequired);
             return interfaceRequired;
         }
         CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to add interface \""
@@ -140,30 +175,32 @@ std::vector<std::string> mtsComponent::GetNamesOfInterfacesRequiredOrInput(void)
 }
 
 
-const mtsDeviceInterface * mtsComponent::GetProvidedInterfaceFor(const std::string & interfaceRequiredName) {
+const mtsInterfaceProvidedOrOutput * mtsComponent::GetInterfaceProvidedOrOutputFor(const std::string & interfaceRequiredOrInputName) {
     mtsInterfaceRequiredOrInput * interfaceRequiredOrInput =
-        InterfacesRequiredOrInput.GetItem(interfaceRequiredName, CMN_LOG_LOD_INIT_WARNING);
+        InterfacesRequiredOrInput.GetItem(interfaceRequiredOrInputName, CMN_LOG_LOD_INIT_WARNING);
     return interfaceRequiredOrInput ? interfaceRequiredOrInput->GetConnectedInterface() : 0;
 }
 
 
 bool mtsComponent::ConnectInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName,
-                                                   mtsDeviceInterface * providedInterface)
+                                                   mtsInterfaceProvidedOrOutput * interfaceProvidedOrOutput)
 {
     mtsInterfaceRequiredOrInput * interfaceRequiredOrInput =
         InterfacesRequiredOrInput.GetItem(interfaceRequiredOrInputName, CMN_LOG_LOD_INIT_ERROR);
     if (interfaceRequiredOrInput) {
-        if (interfaceRequiredOrInput->ConnectTo(providedInterface)) {
+        if (interfaceRequiredOrInput->ConnectTo(interfaceProvidedOrOutput)) {
             CMN_LOG_CLASS_INIT_VERBOSE << "ConnectInterfaceRequiredOrInput: component \""
                                        << this->GetName()
                                        << "\" required/input interface \"" << interfaceRequiredOrInputName
-                                       << "\" successfully connected to provided/output interface \"" << providedInterface->GetName() << "\"" << std::endl;
+                                       << "\" successfully connected to provided/output interface \""
+                                       << interfaceProvidedOrOutput->GetName() << "\"" << std::endl;
             return true;
         } else {
             CMN_LOG_CLASS_INIT_ERROR << "ConnectInterfaceRequiredOrInput: component \""
                                      << this->GetName()
                                      << "\" required/input interface \"" << interfaceRequiredOrInputName
-                                     << "\" failt to connect to provided/output interface \"" << providedInterface->GetName() << "\"" << std::endl;
+                                     << "\" failed to connect to provided/output interface \""
+                                     << interfaceProvidedOrOutput->GetName() << "\"" << std::endl;
         }
     } else {
         CMN_LOG_CLASS_INIT_ERROR << "ConnectInterfaceRequiredOrInput: component \""
@@ -178,8 +215,10 @@ bool mtsComponent::ConnectInterfaceRequiredOrInput(const std::string & interface
 void mtsComponent::ToStream(std::ostream & outputStream) const
 {
     outputStream << "Component name: " << Name << std::endl;
-    ProvidedInterfaces.ToStream(outputStream);
+    InterfacesProvidedOrOutput.ToStream(outputStream);
+    InterfacesRequiredOrInput.ToStream(outputStream);
 }
+
 
 std::string mtsComponent::ToGraphFormat(void) const
 {
@@ -193,11 +232,11 @@ std::string mtsComponent::ToGraphFormat(void) const
             buffer += ",";
     }
     buffer += "],[";
-    ProvidedInterfacesMapType::const_iterator provit = ProvidedInterfaces.begin();
-    while (provit != ProvidedInterfaces.end()) {
+    InterfacesProvidedOrOutputMapType::const_iterator provit = InterfacesProvidedOrOutput.begin();
+    while (provit != InterfacesProvidedOrOutput.end()) {
         buffer += provit->first;
         provit++;
-        if (provit != ProvidedInterfaces.end())
+        if (provit != InterfacesProvidedOrOutput.end())
             buffer += ",";
     }
     buffer += "]]\n";

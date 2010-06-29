@@ -51,7 +51,8 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
     /*! Utility methods to check availibility of components, interfaces and events */
     //@{
     mtsComponent * CheckComponent(const std::string & componentName) const;
-    mtsProvidedInterface * CheckInterface(const mtsComponent * componentPointer, const std::string & interfaceName) const;
+    mtsInterfaceProvided * CheckInterface(const mtsComponent * componentPointer,
+                                          const std::string & interfaceName) const;
     //@}
 
     /*! We need to keep a list of components the event collector will
@@ -68,7 +69,7 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
       defined by the component and interface.  If the required
       interface doesn't exist yet, a new one is being created. */
     mtsInterfaceRequired * GetInterfaceRequiredFor(const mtsComponent * componentPointer,
-                                                   const mtsProvidedInterface * interfacePointer);
+                                                   const mtsInterfaceProvided * interfacePointer);
 
     /*! Class holding information for each event void as well as
       callback method */
@@ -172,7 +173,7 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
       interface (all events).  This methods assumes that both pointers
       are valid. */
     bool AddObservedInterface(const mtsComponent * componentPointer,
-                              const mtsProvidedInterface * interfacePointer);
+                              const mtsInterfaceProvided * interfacePointer);
 
  public:
     /*! Tells the collector to collect all events coming from a given
@@ -191,10 +192,10 @@ class CISST_EXPORT mtsCollectorEvent : public mtsCollectorBase
       event.  These methods assumes that all pointers are valid. */
     //@{
     bool AddObservedEventVoid(const mtsComponent * componentPointer,
-                              const mtsProvidedInterface * interfacePointer,
+                              const mtsInterfaceProvided * interfacePointer,
                               const std::string & eventName);
     bool AddObservedEventWrite(const mtsComponent * componentPointer,
-                               const mtsProvidedInterface * interfacePointer,
+                               const mtsInterfaceProvided * interfacePointer,
                                const std::string & eventName);
     //@}
 

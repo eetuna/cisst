@@ -27,7 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
-
+#include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <iostream>
 #include <fstream>
 
@@ -146,7 +146,7 @@ bool mtsCollectorEvent::CheckCollectingStatus(void)
 
 
 mtsInterfaceRequired * mtsCollectorEvent::GetInterfaceRequiredFor(const mtsComponent * componentPointer,
-                                                                  const mtsProvidedInterface * interfacePointer)
+                                                                  const mtsInterfaceProvided * interfacePointer)
 {
     CMN_ASSERT(componentPointer);
     CMN_ASSERT(interfacePointer);
@@ -236,11 +236,11 @@ mtsComponent * mtsCollectorEvent::CheckComponent(const std::string & componentNa
 }
 
 
-mtsProvidedInterface * mtsCollectorEvent::CheckInterface(const mtsComponent * componentPointer,
+mtsInterfaceProvided * mtsCollectorEvent::CheckInterface(const mtsComponent * componentPointer,
                                                          const std::string & interfaceName) const
 {
     CMN_ASSERT(componentPointer);
-    mtsProvidedInterface * interfacePointer = componentPointer->GetProvidedInterface(interfaceName);
+    mtsInterfaceProvided * interfacePointer = componentPointer->GetInterfaceProvided(interfaceName);
     if (!interfacePointer) {
         CMN_LOG_CLASS_INIT_ERROR << "interface \"" << interfaceName
                                  << "\" not found in component \"" << componentPointer->GetName()
@@ -275,14 +275,14 @@ bool mtsCollectorEvent::AddObservedComponent(const mtsComponent * componentPoint
     // get all provided interface names
     typedef std::vector<std::string> VectorOfNames;
     typedef VectorOfNames::const_iterator NameIterator;
-    VectorOfNames providedInterfaces = componentPointer->GetNamesOfProvidedInterfaces();
+    VectorOfNames providedInterfaces = componentPointer->GetNamesOfInterfacesProvided();
     const NameIterator end = providedInterfaces.end();
-    mtsDeviceInterface * interfacePointer;
+    mtsInterfaceProvided * interfacePointer;
     NameIterator iterator;
     for (iterator = providedInterfaces.begin();
          iterator != end;
          ++iterator) {
-        interfacePointer = componentPointer->GetProvidedInterface(*iterator);
+        interfacePointer = componentPointer->GetInterfaceProvided(*iterator);
         this->AddObservedInterface(componentPointer, interfacePointer);
     }
     return true;
@@ -298,7 +298,7 @@ bool mtsCollectorEvent::AddObservedInterface(const std::string & componentName,
         return false;
     }
     // check if the interface exists
-    mtsProvidedInterface * interfacePointer = this->CheckInterface(componentPointer, interfaceName);
+    mtsInterfaceProvided * interfacePointer = this->CheckInterface(componentPointer, interfaceName);
     if (!interfacePointer) {
         return false;
     }
@@ -307,7 +307,7 @@ bool mtsCollectorEvent::AddObservedInterface(const std::string & componentName,
 
 
 bool mtsCollectorEvent::AddObservedInterface(const mtsComponent * componentPointer,
-                                             const mtsProvidedInterface * interfacePointer)
+                                             const mtsInterfaceProvided * interfacePointer)
 {
     // check if this task has already been connected
     if (this->ConnectedFlag) {
@@ -354,7 +354,7 @@ bool mtsCollectorEvent::AddObservedEventVoid(const std::string & componentName,
         return false;
     }
     // check if the interface exists
-    mtsProvidedInterface * interfacePointer = this->CheckInterface(componentPointer, interfaceName);
+    mtsInterfaceProvided * interfacePointer = this->CheckInterface(componentPointer, interfaceName);
     if (!interfacePointer) {
         return false;
     }
@@ -372,7 +372,7 @@ bool mtsCollectorEvent::AddObservedEventWrite(const std::string & componentName,
         return false;
     }
     // check if the interface exists
-    mtsProvidedInterface * interfacePointer = this->CheckInterface(componentPointer, interfaceName);
+    mtsInterfaceProvided * interfacePointer = this->CheckInterface(componentPointer, interfaceName);
     if (!interfacePointer) {
         return false;
     }
@@ -381,7 +381,7 @@ bool mtsCollectorEvent::AddObservedEventWrite(const std::string & componentName,
 
 
 bool mtsCollectorEvent::AddObservedEventVoid(const mtsComponent * componentPointer,
-                                             const mtsProvidedInterface * interfacePointer,
+                                             const mtsInterfaceProvided * interfacePointer,
                                              const std::string & eventName)
 {
     // check if this task has already been connected
@@ -409,7 +409,7 @@ bool mtsCollectorEvent::AddObservedEventVoid(const mtsComponent * componentPoint
 
 
 bool mtsCollectorEvent::AddObservedEventWrite(const mtsComponent * componentPointer,
-                                              const mtsProvidedInterface * interfacePointer,
+                                              const mtsInterfaceProvided * interfacePointer,
                                               const std::string & eventName)
 {
     // check if this task has already been connected

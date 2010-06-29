@@ -27,8 +27,12 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnNamedMap.h>
 
 #include <cisstMultiTask/mtsCommandBase.h>
+#include <cisstMultiTask/mtsCommandVoid.h>
+#include <cisstMultiTask/mtsCommandWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
 #include <cisstMultiTask/mtsFunctionQualifiedReadOrWrite.h>
 
 
@@ -85,9 +89,6 @@ class CISST_EXPORT mtsInterfaceRequired: public mtsInterfaceRequiredOrInput
 
 protected:
 
-    // PK: TEMP (copied from mtsTaskInterface.h)
-    enum {DEFAULT_ARG_BUFFER_LEN = 16 };
-
     /*! Mailbox (if supported). */
     mtsMailBox * MailBox;
 
@@ -95,6 +96,9 @@ protected:
     mtsInterfaceRequired(void) {}
 
  public:
+
+    /*! Default size for queues of events */
+    enum {DEFAULT_EVENT_QUEUE_LEN = 16};
     
     /*! Queuing policy, i.e. what the user would like to do for
       individual event handlers added using AddEventHandlerVoid or
@@ -137,24 +141,28 @@ protected:
     virtual mtsCommandWriteBase * GetEventHandlerWrite(const std::string & eventName) const;
     //@}
 
-    inline bool CouldConnectTo(mtsDeviceInterface * CMN_UNUSED(interfaceProvidedOrOutput)) {
+    inline bool CouldConnectTo(mtsInterfaceProvidedOrOutput * CMN_UNUSED(interfaceProvidedOrOutput)) {
         return true;
     }
-    bool ConnectTo(mtsDeviceInterface * interfaceProvidedOrOutput);
+    bool ConnectTo(mtsInterfaceProvidedOrOutput * interfaceProvidedOrOutput);
     bool Disconnect(void);
 
-    /*! Bind command and events.  This method needs to provide a user
+    /*!
+      \todo update documentation
+      Bind command and events.  This method needs to provide a user
       Id so that GetCommandVoid and GetCommandWrite (queued
       commands) know which mailbox to use.  The user Id is provided
       by the provided interface when calling AllocateResources. */
-    bool BindCommandsAndEvents(unsigned int userId);
+ private:
+    bool BindCommandsAndEvents(void);
+ public:
 
     void DisableAllEvents(void);
 
     void EnableAllEvents(void);
 
     /*! Process any queued events. */
-    unsigned int ProcessMailBoxes(void);
+    size_t ProcessMailBoxes(void);
 
     /*! Send a human readable description of the interface. */
     void ToStream(std::ostream & outputStream) const;
@@ -311,7 +319,7 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__
         new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, eventName, __argumentType());
     if (queued) {
         if (MailBox)
-            EventHandlersWrite.AddItem(eventName,  new mtsCommandQueuedWrite<__argumentType>(MailBox, actualCommand, DEFAULT_ARG_BUFFER_LEN));
+            EventHandlersWrite.AddItem(eventName,  new mtsCommandQueuedWrite<__argumentType>(MailBox, actualCommand, DEFAULT_EVENT_QUEUE_LEN));
         else
             CMN_LOG_CLASS_INIT_ERROR << "No mailbox for queued event handler write \"" << eventName << "\"" << std::endl;
     } else {
@@ -332,7 +340,7 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(v
         new mtsCommandWriteGeneric<__classType>(method, classInstantiation, eventName, 0);
     if (queued) {
         if (MailBox) {
-            EventHandlersWrite.AddItem(eventName,  new mtsCommandQueuedWriteGeneric(MailBox, actualCommand, DEFAULT_ARG_BUFFER_LEN));
+            EventHandlersWrite.AddItem(eventName,  new mtsCommandQueuedWriteGeneric(MailBox, actualCommand, DEFAULT_EVENT_QUEUE_LEN));
         } else {
             CMN_LOG_CLASS_INIT_ERROR << "No mailbox for queued event handler write generic \"" << eventName << "\"" << std::endl;
         }

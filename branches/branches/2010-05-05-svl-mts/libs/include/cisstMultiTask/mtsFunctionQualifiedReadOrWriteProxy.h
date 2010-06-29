@@ -43,7 +43,7 @@ public:
     {}
 
     /*! This constructor is not used */
-    mtsFunctionQualifiedReadOrWriteProxy(const mtsDeviceInterface * associatedInterface, const std::string & commandName)
+    mtsFunctionQualifiedReadOrWriteProxy(const mtsInterfaceProvided * associatedInterface, const std::string & commandName)
         : BaseFunctionType(associatedInterface, commandName)
     {}
 

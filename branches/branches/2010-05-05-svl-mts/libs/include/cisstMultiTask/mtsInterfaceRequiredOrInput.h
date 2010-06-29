@@ -56,10 +56,7 @@ protected:
     std::string Name;
 
     /*! Pointer to provided interface that we are connected to. */
-    mtsDeviceInterface * ProvidedInterface;
-
-    /*! Set as true when this interface is registered to the globalcomponent manager */
-    bool Registered;
+    mtsInterfaceProvidedOrOutput * InterfaceProvidedOrOutput;
 
     /*! Default constructor. Does nothing, should not be used. */
     mtsInterfaceRequiredOrInput(void) {}
@@ -76,10 +73,10 @@ protected:
     /*! Returns the name of the interface. */
     const std::string & GetName(void) const;
 
-    const mtsDeviceInterface * GetConnectedInterface(void) const;
+    const mtsInterfaceProvidedOrOutput * GetConnectedInterface(void) const;
 
-    virtual bool CouldConnectTo(mtsDeviceInterface * interfaceProvidedOrOutput) = 0;
-    virtual bool ConnectTo(mtsDeviceInterface * interfaceProvidedOrOutput) = 0;
+    virtual bool CouldConnectTo(mtsInterfaceProvidedOrOutput * interfaceProvidedOrOutput) = 0;
+    virtual bool ConnectTo(mtsInterfaceProvidedOrOutput * interfaceProvidedOrOutput) = 0;
     virtual bool Disconnect(void) = 0;
 
     /*! Bind command and events.  This method needs to provide a user

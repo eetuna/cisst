@@ -20,6 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include "serverQtComponent.h"
 
+#include <cisstMultiTask/mtsInterfaceProvided.h>
+
 CMN_IMPLEMENT_SERVICES(serverQtComponent);
 
 
@@ -30,7 +32,7 @@ serverQtComponent::serverQtComponent(const std::string & taskName):
     QualifiedReadValue(0)
 {
     // create the cisstMultiTask interface with commands and events
-    mtsProvidedInterface * provided = AddProvidedInterface("Provided");
+    mtsInterfaceProvided * provided = AddInterfaceProvided("Provided");
     if (provided) {
         provided->AddCommandVoid(&serverQtComponent::Void, this, "Void");
         provided->AddCommandWrite(&serverQtComponent::Write, this, "Write");

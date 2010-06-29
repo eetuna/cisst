@@ -64,9 +64,9 @@ private:
 
         CPPUNIT_TEST(TestConnectServerSideInterface);
         CPPUNIT_TEST(TestCreateInterfaceRequiredProxy);
-        CPPUNIT_TEST(TestCreateProvidedInterfaceProxy);
+        CPPUNIT_TEST(TestCreateInterfaceProvidedProxy);
         CPPUNIT_TEST(TestRemoveInterfaceRequiredProxy);
-        CPPUNIT_TEST(TestRemoveProvidedInterfaceProxy);
+        CPPUNIT_TEST(TestRemoveInterfaceProvidedProxy);
         CPPUNIT_TEST(TestRemoteCommandsAndEvents);
 #endif
 	}
@@ -109,9 +109,9 @@ public:
 
     void TestConnectServerSideInterface(void);
     void TestCreateInterfaceRequiredProxy(void);
-    void TestCreateProvidedInterfaceProxy(void);
+    void TestCreateInterfaceProvidedProxy(void);
     void TestRemoveInterfaceRequiredProxy(void);
-    void TestRemoveProvidedInterfaceProxy(void);
+    void TestRemoveInterfaceProvidedProxy(void);
     void TestRemoteCommandsAndEvents(void);
 #endif
 };

@@ -75,7 +75,7 @@ public:
 
     /* documented in base class */
     virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
-    virtual mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
+    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName);
 
 };
 

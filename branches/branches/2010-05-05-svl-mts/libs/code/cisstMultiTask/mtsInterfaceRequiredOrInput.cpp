@@ -23,8 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 
 mtsInterfaceRequiredOrInput::mtsInterfaceRequiredOrInput(const std::string & interfaceName):
     Name(interfaceName),
-    ProvidedInterface(0),
-    Registered(false)
+    InterfaceProvidedOrOutput(0)
 {
 }
 
@@ -40,15 +39,6 @@ const std::string & mtsInterfaceRequiredOrInput::GetName(void) const
 }
 
 
-const mtsDeviceInterface * mtsInterfaceRequiredOrInput::GetConnectedInterface(void) const {
-    return this->ProvidedInterface;
-}
-
-
-void mtsInterfaceRequiredOrInput::SetRegistered(void) {
-    this->Registered = true;
-}
-
-bool mtsInterfaceRequiredOrInput::GetRegistered(void) const {
-    return this->Registered;
+const mtsInterfaceProvidedOrOutput * mtsInterfaceRequiredOrInput::GetConnectedInterface(void) const {
+    return this->InterfaceProvidedOrOutput;
 }

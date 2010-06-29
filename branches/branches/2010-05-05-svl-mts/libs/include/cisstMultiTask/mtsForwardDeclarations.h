@@ -61,16 +61,18 @@ class mtsMulticastCommandWriteBase;
 template <class _argumentType> class mtsMulticastCommandWrite;
 
 // interfaces and tasks
-class mtsDeviceInterface;
-typedef mtsDeviceInterface mtsProvidedInterface;
-class mtsComponent;
-typedef mtsComponent mtsDevice; // for backward compatibility
-class mtsTaskInterface;
+class mtsInterfaceProvidedOrOutput;
+class mtsInterfaceProvided;
 class mtsInterfaceRequiredOrInput;
 class mtsInterfaceRequired;
-typedef mtsInterfaceRequired mtsRequiredInterface; // for backward compatibility
+
+class mtsComponent;
+typedef mtsComponent mtsDevice; // for backward compatibility
 class mtsTask;
+class mtsTaskContinuous;
 class mtsTaskPeriodic;
+class mtsTaskFromCallback;
+class mtsTaskFromSignal;
 
 // containers
 class mtsMailBox;

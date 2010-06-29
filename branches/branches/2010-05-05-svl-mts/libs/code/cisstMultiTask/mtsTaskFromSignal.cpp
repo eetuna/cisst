@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstMultiTask/mtsTaskFromSignal.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
+#include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
 
 
@@ -75,7 +76,7 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
 mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string & interfaceRequiredName) {
     // create a mailbox with post command queued command
     // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
-    mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsTaskInterface::DEFAULT_EVENT_QUEUE_LEN,
+    mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsInterfaceRequired::DEFAULT_EVENT_QUEUE_LEN,
                                           this->PostCommandQueuedCommand);
     mtsInterfaceRequired * result;
     if (mailBox) {
@@ -92,18 +93,21 @@ mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string
 }
 
 
-mtsDeviceInterface * mtsTaskFromSignal::AddProvidedInterface(const std::string & newInterfaceName) {
-    mtsTaskInterface * newInterface = new mtsTaskInterface(newInterfaceName, this, this->PostCommandQueuedCommand);
-    if (newInterface) {
-        if (ProvidedInterfaces.AddItem(newInterfaceName, newInterface)) {
-            return newInterface;
+mtsInterfaceProvided * mtsTaskFromSignal::AddInterfaceProvided(const std::string & interfaceProvidedName) {
+    mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
+                                                                        mtsInterfaceProvided::COMMANDS_SHOULD_BE_QUEUED,
+                                                                        this->PostCommandQueuedCommand);
+    if (interfaceProvided) {
+        if (InterfacesProvidedOrOutput.AddItem(interfaceProvidedName, interfaceProvided)) {
+            InterfacesProvided.push_back(interfaceProvided);
+            return interfaceProvided;
         }
-        CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: task \"" << this->GetName() << "\" unable to add interface \""
-                                 << newInterfaceName << "\"" << std::endl;
-        delete newInterface;
+        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceProvided: task \"" << this->GetName() << "\" unable to add interface \""
+                                 << interfaceProvidedName << "\"" << std::endl;
+        delete interfaceProvided;
         return 0;
     }
-    CMN_LOG_CLASS_INIT_ERROR << "AddProvidedInterface: task \"" << this->GetName() << "\" unable to create interface \""
-                             << newInterfaceName << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceProvided: task \"" << this->GetName() << "\" unable to create interface \""
+                             << interfaceProvidedName << "\"" << std::endl;
     return 0;
 }

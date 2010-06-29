@@ -82,7 +82,7 @@ protected:
     /*! Miscellaneous methods */
     void GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStringSet,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & requestProcessName = "");
 
     //-------------------------------------------------------------------------
@@ -93,18 +93,18 @@ protected:
     // Proxy object control (creation and removal)
     bool ReceiveCreateComponentProxy(const std::string & componentProxyName);
     bool ReceiveRemoveComponentProxy(const std::string & componentProxyName);
-    bool ReceiveCreateProvidedInterfaceProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription);
+    bool ReceiveCreateInterfaceProvidedProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription);
     bool ReceiveCreateInterfaceRequiredProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription);
-    bool ReceiveRemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName);
+    bool ReceiveRemoveInterfaceProvidedProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName);
     bool ReceiveRemoveInterfaceRequiredProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName);
 
     // Connection management
     bool ReceiveConnectServerSideInterface(const int userId, const unsigned int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
     bool ReceiveConnectClientSideInterface(const unsigned int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
-    bool ReceivePreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+    bool ReceivePreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
     // Getters
-    bool ReceiveGetProvidedInterfaceDescription(const unsigned int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription);
+    bool ReceiveGetInterfaceProvidedDescription(const unsigned int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription);
     bool ReceiveGetInterfaceRequiredDescription(const std::string & componentName, const std::string & requiredInterfaceName, ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription);
 
     // Getters for component inspector
@@ -151,15 +151,15 @@ public:
     bool RemoveComponent(const std::string & processName, const std::string & componentName);
 
     //  Interface Management
-    bool AddProvidedInterface(
+    bool AddInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface);
     bool AddInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface);
-    bool FindProvidedInterface(
+    bool FindInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
     bool FindInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
-    bool RemoveProvidedInterface(
+    bool RemoveInterfaceProvided(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
     bool RemoveInterfaceRequired(
         const std::string & processName, const std::string & componentName, const std::string & interfaceName);
@@ -167,29 +167,29 @@ public:
     //  Connection Management
     int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         int & userId);
     bool ConnectConfirm(unsigned int connectionSessionID);
     bool Disconnect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
     //  Networking
-    bool SetProvidedInterfaceProxyAccessInfo(
+    bool SetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & endpointInfo);
-    bool GetProvidedInterfaceProxyAccessInfo(
+    bool GetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         std::string & endpointInfo);
     bool InitiateConnect(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
     bool ConnectServerSideInterfaceRequest(
         const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
     void GetListOfConnections(std::vector<ConnectionStrings> & list) const;
 
     //-------------------------------------------------------------------------
@@ -207,9 +207,9 @@ public:
     bool SendFindComponent(const std::string & processName, const std::string & componentName);
     bool SendRemoveComponent(const std::string & processName, const std::string & componentName);
 
-    bool SendAddProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface);
-    bool SendFindProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
-    bool SendRemoveProvidedInterface(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+    bool SendAddInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface);
+    bool SendFindInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+    bool SendRemoveInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
 
     bool SendAddInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName, bool isProxyInterface);
     bool SendFindInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName);
@@ -221,13 +221,13 @@ public:
     bool SendDisconnect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
 
     // Networking
-    bool SendSetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo);
-    bool SendGetProvidedInterfaceProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo);
+    bool SendSetInterfaceProvidedProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const std::string & endpointInfo);
+    bool SendGetInterfaceProvidedProxyAccessInfo(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, std::string & endpointInfo);
     bool SendInitiateConnect(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
     bool SendConnectServerSideInterfaceRequest(const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet);
 
     //-------------------------------------------------------------------------
-    //  Definition by mtsDeviceInterfaceProxy.ice
+    //  Definition by mtsInterfaceProvidedProxy.ice
     //-------------------------------------------------------------------------
 protected:
     class ManagerClientI :
@@ -277,18 +277,18 @@ protected:
         /*! Proxy object control (creation and removal) */
         bool CreateComponentProxy(const std::string & componentProxyName, const ::Ice::Current & current);
         bool RemoveComponentProxy(const std::string & componentProxyName, const ::Ice::Current & current);
-        bool CreateProvidedInterfaceProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription, const ::Ice::Current & current);
+        bool CreateInterfaceProvidedProxy(const std::string & serverComponentProxyName, const ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription, const ::Ice::Current & current);
         bool CreateInterfaceRequiredProxy(const std::string & clientComponentProxyName, const ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription, const ::Ice::Current & current);
-        bool RemoveProvidedInterfaceProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const ::Ice::Current & current);
+        bool RemoveInterfaceProvidedProxy(const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const ::Ice::Current & current);
         bool RemoveInterfaceRequiredProxy(const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const ::Ice::Current & current);
 
         /*! Connection management */
         bool ConnectServerSideInterface(::Ice::Int userId, ::Ice::Int providedInterfaceProxyInstanceID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
         bool ConnectClientSideInterface(::Ice::Int connectionID, const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet, const ::Ice::Current & current);
-        int PreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const ::Ice::Current & current);
+        int PreAllocateResources(const std::string & userName, const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName, const ::Ice::Current & current);
 
         /*! Getters */
-        bool GetProvidedInterfaceDescription(::Ice::Int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::ProvidedInterfaceDescription & providedInterfaceDescription, const ::Ice::Current &) const;
+        bool GetInterfaceProvidedDescription(::Ice::Int userId, const std::string & serverComponentName, const std::string & providedInterfaceName, ::mtsManagerProxy::InterfaceProvidedDescription & providedInterfaceDescription, const ::Ice::Current &) const;
         bool GetInterfaceRequiredDescription(const std::string & componentName, const std::string & requiredInterfaceName, ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription, const ::Ice::Current &) const;
 
         /*! Getters for component inspector */

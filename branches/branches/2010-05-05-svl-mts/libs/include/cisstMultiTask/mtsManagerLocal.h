@@ -159,7 +159,7 @@ protected:
         \param clientComponentName Name of client component
         \param clientInterfaceRequiredName Name of required interface
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \param userId User id allocated for this connection. Valid only in the
                networked configuration. Zero by default.
         \return zero if successful, -1 if error occurs.
@@ -167,7 +167,7 @@ protected:
                this does not work with components in different processes. */
     int ConnectLocally(
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const int userId = 0);
 
     //-------------------------------------------------------------------------
@@ -190,15 +190,10 @@ public:
               automatically removed when removing a component proxy. */
     bool RemoveComponentProxy(const std::string & componentProxyName, const std::string & listenerID = "");
 
-    /*! \brief Create provided interface proxy 
-        \param serverComponentProxyName Name of server component proxy that 
-               has provided interface to be duplicated
-        \param providedInterfaceDescription Full description of provided
-               interface to be duplicated
-        \param listenerID Not used */
-    bool CreateProvidedInterfaceProxy(
+    /*! Create a provided interface proxy using InterfaceProvidedDescription */
+    bool CreateInterfaceProvidedProxy(
         const std::string & serverComponentProxyName,
-        const ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "");
+        const InterfaceProvidedDescription & providedInterfaceDescription, const std::string & listenerID = "");
 
     /* AAAAAAAAAAAAAAAAAAAAAAA */
     /*! \brief Create required interface proxy 
@@ -208,7 +203,7 @@ public:
         const InterfaceRequiredDescription & requiredInterfaceDescription, const std::string & listenerID = "");
 
     /*! Remove a provided interface proxy */
-    bool RemoveProvidedInterfaceProxy(
+    bool RemoveInterfaceProvidedProxy(
         const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const std::string & listenerID = "");
 
     /*! Remove a required interface proxy */
@@ -216,11 +211,11 @@ public:
         const std::string & serverComponentProxyName, const std::string & requiredInterfaceProxyName, const std::string & listenerID = "");
 
     /*! Get information about provided interface */
-    bool GetProvidedInterfaceDescription(
+    bool GetInterfaceProvidedDescription(
         const unsigned int userId,
         const std::string & serverComponentName,
         const std::string & providedInterfaceName,
-        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "");
+        InterfaceProvidedDescription & providedInterfaceDescription, const std::string & listenerID = "");
 
     /*! Extract all the information on a required interface such as function
         objects and event handlers with arguments serialized */
@@ -236,18 +231,18 @@ public:
     bool ConnectServerSideInterface(
         const int userId, const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & listenerID = "");
 
     /*! Connect two local interfaces at client side. */
     bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & listenerID = "");
 
     /*! Pre-allocate provided interface's resources */
     int PreAllocateResources(const std::string & userName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, 
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName, 
         const std::string & listenerID = "");
 #endif
 
@@ -304,14 +299,14 @@ public:
        \param clientComponentName Name of client component
        \param clientInterfaceRequiredName Name of required interface
        \param serverComponentName Name of server component
-       \param serverProvidedInterfaceName Name of provided interface
+       \param serverInterfaceProvidedName Name of provided interface
        \return True if success, false otherwise
        \note If connection is established successfully, this information is
              reported to the global component manager (the local component 
              manager does not keep any connection information). */
     bool Connect(
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
 #if CISST_MTS_HAS_ICE
     /* \brief Connect two remote interfaces
@@ -320,7 +315,7 @@ public:
        \param clientInterfaceRequiredName Name of required interface
        \param serverProcessName Name of server process
        \param serverComponentName Name of server component
-       \param serverProvidedInterfaceName Name of provided interface
+       \param serverInterfaceProvidedName Name of provided interface
        \return True if success, false otherwise
        \note If connection is established successfully, this information is
              reported to the global component manager. Since connection between
@@ -336,18 +331,18 @@ public:
              Connect() method is internally called instead. */
     bool Connect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 #endif
 
     /*! Disconnect two interfaces */
     bool Disconnect(
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
 #if CISST_MTS_HAS_ICE
     bool Disconnect(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName);
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 #endif
 
     /*! Create all components. If a component is of type mtsTask, mtsTask::Create()
@@ -491,9 +486,9 @@ public:
     }
 
     /*! Set endpoint access information */
-    bool SetProvidedInterfaceProxyAccessInfo(
+    bool SetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName,
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & endpointInfo);
 
     /*! For testing purposes */

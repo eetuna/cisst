@@ -29,6 +29,7 @@ set (SOURCE_FILES
 
      mtsCommandQueuedVoidBase.cpp
      mtsCommandQueuedWriteBase.cpp
+     mtsCommandFilteredQueuedWrite.cpp
 
      mtsMailBox.cpp
      mtsStateIndex.cpp
@@ -42,10 +43,10 @@ set (SOURCE_FILES
      mtsTaskFromCallback.cpp
      mtsTaskFromSignal.cpp
 
+     mtsInterfaceProvided.cpp
+     mtsInterfaceProvidedOrOutput.cpp
      mtsInterfaceRequired.cpp
      mtsInterfaceRequiredOrInput.cpp
-     mtsDeviceInterface.cpp
-     mtsTaskInterface.cpp
 
      mtsCollectorBase.cpp
      mtsCollectorState.cpp
@@ -115,10 +116,10 @@ set (HEADER_FILES
      mtsTaskManager.h    # to be deleted
 
      mtsInterfaceCommon.h
+     mtsInterfaceProvided.h
+     mtsInterfaceProvidedOrOutput.h
      mtsInterfaceRequired.h
      mtsInterfaceRequiredOrInput.h
-     mtsDeviceInterface.h
-     mtsTaskInterface.h
 
      mtsCollectorBase.h
      mtsCollectorState.h
@@ -305,4 +306,4 @@ if (CISST_HAS_QT)
 
   target_link_libraries (cisstMultiTaskQt ${QT_LIBRARIES})
 
-endif(CISST_HAS_QT) 
+endif(CISST_HAS_QT)

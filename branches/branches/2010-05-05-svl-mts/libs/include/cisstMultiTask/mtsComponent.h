@@ -51,7 +51,7 @@ http://www.cisst.org/cisst/license.txt.
   devices or resources.  This class allows to interact with existing
   devices as one would interact with a task (as in mtsTask and
   mtsTaskPeriodic).  To do so, the component maintains a list of
-  provided interfaces (of type mtsDeviceInterface) which contains
+  provided interfaces (of type mtsInterfaceProvided) which contains
   commands.
 
   The main differences are that the base component class doesn't have
@@ -92,6 +92,12 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     mtsInterfaceRequired * AddInterfaceRequiredUsingMailbox(const std::string & interfaceRequiredName,
                                                             mtsMailBox * mailBox);
 
+    /*! Create and add a provided interface with an existing mailbox.
+      If the creation or addition failed (name already exists), the
+      caller must make sure he/she deletes the unused mailbox. */
+    mtsInterfaceProvided * AddInterfaceProvidedUsingMailbox(const std::string & interfaceProvidedName,
+                                                            mtsMailBox * mailBox);
+
  public:
 
     /*! Default constructor. Sets the name. */
@@ -117,29 +123,34 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     /*! Method to add an interface to the component.  This method is
       virtual so that mtsTaskBase can redefine it and generate the
-      appropriate type of interface, i.e. mtsTaskInterface as opposed
-      to mtsDeviceInterface for mtsComponent. */
-    virtual mtsDeviceInterface * AddProvidedInterface(const std::string & newInterfaceName);
+      appropriate type of interface, i.e. mtsInterfaceProvided as opposed
+      to mtsInterfaceProvided for mtsComponent. */
+    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & providedInterfaceName);
 
+    // provided for backward compatibility
+    inline CISST_DEPRECATED mtsInterfaceProvided * AddProvidedInterface(const std::string & providedInterfaceName) {
+        return this->AddInterfaceProvided(providedInterfaceName);
+    }
     /*! Return the list of provided interfaces.  This returns a list
       of names.  To retrieve the actual interface, use
-      GetProvidedInterface with the provided interface name. */
-    virtual std::vector<std::string> GetNamesOfProvidedInterfaces(void) const;
+      GetInterfaceProvided with the provided interface name. */
+    std::vector<std::string> GetNamesOfInterfacesProvidedOrOutput(void) const;
+    std::vector<std::string> GetNamesOfInterfacesProvided(void) const;
 
-    /*! Get a pointer on a provided interface defined by its name.
-      This can be used by a "user" task to find out which interfaces
-      are provided and then retrieve commands/events from that
-      interface. */
-    mtsDeviceInterface * GetProvidedInterface(const std::string & interfaceName) const;
+    /*! Get the provided/output interface */
+    mtsInterfaceProvidedOrOutput * GetInterfaceProvidedOrOutput(const std::string & interfaceProvidedOrOutputName);
+
+    /*! Get the provided interface */
+    mtsInterfaceProvided * GetInterfaceProvided(const std::string & interfaceProvidedName) const;
 
     /*! Add a required interface.  This interface will later on be
       connected to another task and use the provided interface of the
       other task.  The required interface created also contains a list
       of event handlers to be used as observers. */
     virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
-    
+
     // provided for backward compatibility
-    inline CISST_DEPRECATED mtsRequiredInterface * AddRequiredInterface(const std::string & requiredInterfaceName) {
+    inline CISST_DEPRECATED mtsInterfaceRequired * AddRequiredInterface(const std::string & requiredInterfaceName) {
         return this->AddInterfaceRequired(requiredInterfaceName);
     }
 
@@ -150,7 +161,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       connected to a given required interface (defined by its name).
       This method will return a null pointer if the required interface
       has not been connected.  See mtsTaskManager::Connect. */
-    const mtsDeviceInterface * GetProvidedInterfaceFor(const std::string & interfaceRequiredName);
+    const mtsInterfaceProvidedOrOutput * GetInterfaceProvidedOrOutputFor(const std::string & interfaceRequiredOrInputName);
 
     /*! Get the required/input interface */
     mtsInterfaceRequiredOrInput * GetInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName);
@@ -159,8 +170,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     mtsInterfaceRequired * GetInterfaceRequired(const std::string & interfaceRequired);
 
     /*! Connect a required interface, used by mtsTaskManager */
-    bool ConnectInterfaceRequiredOrInput(const std::string & requiredInterfaceName,
-                                         mtsDeviceInterface * providedInterface);
+    bool ConnectInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName,
+                                         mtsInterfaceProvidedOrOutput * interfaceProvidedOrOutput);
 
  protected:
     /*! Thread Id counter.  Used to count how many "user" tasks are
@@ -172,18 +183,24 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     ThreadIdCountersType ThreadIdCounters;
     //@}
 
-    /*! Map of provided interfaces.  Used to store pointers on all
-      provided interfaces. */
+    /*! Map of provided and output interfaces.  Used to store pointers
+      on all provided interfaces.  Separate lists of provided and
+      output interfaces are maintained for efficiency. */
     //@{
-    typedef cmnNamedMap<mtsDeviceInterface> ProvidedInterfacesMapType;
-    ProvidedInterfacesMapType ProvidedInterfaces;
+    typedef cmnNamedMap<mtsInterfaceProvidedOrOutput> InterfacesProvidedOrOutputMapType;
+    InterfacesProvidedOrOutputMapType InterfacesProvidedOrOutput;
+    typedef std::list<mtsInterfaceProvided *> InterfacesProvidedListType;
+    InterfacesProvidedListType InterfacesProvided;
     //@}
 
     /*! Map of required interfaces.  Used to store pointers on all
-      required interfaces. */
+      required interfaces.   Separate lists of required and
+      input interfaces are maintained for efficiency. */
     //@{
     typedef cmnNamedMap<mtsInterfaceRequiredOrInput> InterfacesRequiredOrInputMapType;
     InterfacesRequiredOrInputMapType InterfacesRequiredOrInput;
+    typedef std::list<mtsInterfaceRequired *> InterfacesRequiredListType;
+    InterfacesRequiredListType InterfacesRequired;
     //@}
 
  public:

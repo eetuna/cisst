@@ -80,10 +80,10 @@ public:
         manages should be automatically removed when removing a component proxy. */
     virtual bool RemoveComponentProxy(const std::string & componentProxyName, const std::string & listenerID = "") = 0;
 
-    /*! Create a provided interface proxy using ProvidedInterfaceDescription */
-    virtual bool CreateProvidedInterfaceProxy(
+    /*! Create a provided interface proxy using InterfaceProvidedDescription */
+    virtual bool CreateInterfaceProvidedProxy(
         const std::string & serverComponentProxyName,
-        const ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") = 0;
+        const InterfaceProvidedDescription & providedInterfaceDescription, const std::string & listenerID = "") = 0;
 
     /*! Create a required interface proxy using InterfaceRequiredDescription */
     virtual bool CreateInterfaceRequiredProxy(
@@ -93,8 +93,8 @@ public:
     /*! Remove a provided interface proxy.  Because a provided interface can
         have multiple connections with more than one required interface, this
         method removes a provided interface proxy only when a provided interface
-        user counter (mtsDeviceInterface::UserCounter) becomes zero. */
-    virtual bool RemoveProvidedInterfaceProxy(
+        user counter (mtsInterfaceProvidedOrOutput::UserCounter) becomes zero. */
+    virtual bool RemoveInterfaceProvidedProxy(
         const std::string & clientComponentProxyName, const std::string & providedInterfaceProxyName, const std::string & listenerID = "") = 0;
 
     /*! Remove a required interface proxy */
@@ -112,7 +112,7 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \param listenerID Id of local component manager (set as process name) 
                that this method should call. Valid only in networked configuration
         \return True if success, false otherwise 
@@ -121,7 +121,7 @@ public:
     virtual bool ConnectServerSideInterface(
         const int userId, const unsigned int providedInterfaceProxyInstanceID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName, const std::string & listenerID = "") = 0;
 
     /*! \brief Connect interfaces at client side 
         \param connectionID Connection session id issued by the global component
@@ -131,7 +131,7 @@ public:
         \param clientInterfaceRequiredName Name of required interface
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \param listenerID Id of local component manager (set as process name) 
                that this method should call. Valid only in networked configuration
         \return True if success, false otherwise
@@ -143,7 +143,7 @@ public:
               ahead of ConnectServerSideInterface(). */
     virtual bool ConnectClientSideInterface(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName, const std::string & listenerID = "") = 0;
 
     /*! \brief Pre-allocate provided interface's resources
         \param userName Name of user that will use provided interface's resources.
@@ -151,12 +151,12 @@ public:
                component manager's process name.
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
-        \param serverProvidedInterfaceName Name of provided interface
+        \param serverInterfaceProvidedName Name of provided interface
         \param listenerID Id of local component manager (set as process name) 
                that this method should call. Valid only in networked configuration
         \return New user id allocated by server component, -1 if error occurs */
     virtual int PreAllocateResources(const std::string & userName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverProvidedInterfaceName, const std::string & listenerID = "") = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName, const std::string & listenerID = "") = 0;
 #endif
 
     //-------------------------------------------------------------------------
@@ -252,11 +252,11 @@ public:
               requests a new connection. With the networked configuration,
               this method allocates a new user id which will be passed around 
               across networks throughout connection process. */
-    virtual bool GetProvidedInterfaceDescription(
+    virtual bool GetInterfaceProvidedDescription(
         const unsigned int userId,
         const std::string & serverComponentName,
         const std::string & providedInterfaceName,
-        ProvidedInterfaceDescription & providedInterfaceDescription, const std::string & listenerID = "") = 0;
+        InterfaceProvidedDescription & providedInterfaceDescription, const std::string & listenerID = "") = 0;
 
     /*! \brief Extract all information about required interface such as function
                objects and event handlers.  Arguments are serialized, if any.
