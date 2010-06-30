@@ -1202,20 +1202,15 @@ bool mtsManagerLocal::Connect(const std::string & clientComponentName, const std
         return false;
     }
 
-    int userId;
     const int connectionId = ManagerGlobal->Connect(ProcessName,
         ProcessName, clientComponentName, clientInterfaceRequiredName,
-        ProcessName, serverComponentName, serverInterfaceProvidedName,
-        userId);
+        ProcessName, serverComponentName, serverInterfaceProvidedName);
     if (connectionId == -1) {
         CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to get connection id from the Global Component Manager: "
             << clientComponentName << ":" << clientInterfaceRequiredName << " - "
             << serverComponentName << ":" << serverInterfaceProvidedName << std::endl;
         return false;
     }
-
-    // userId has to be always zero for all local connections.
-    CMN_ASSERT(userId == 0);
 
     int ret = ConnectLocally(clientComponentName, clientInterfaceRequiredName,
                              serverComponentName, serverInterfaceProvidedName);

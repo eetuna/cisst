@@ -496,8 +496,7 @@ bool mtsManagerGlobal::RemoveInterfaceRequired(
 //-------------------------------------------------------------------------
 int mtsManagerGlobal::Connect(const std::string & requestProcessName,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
-    int & userId)
+    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
     // Check requestProcessName validity
     if (requestProcessName != clientProcessName && requestProcessName != serverProcessName) {
@@ -551,7 +550,7 @@ int mtsManagerGlobal::Connect(const std::string & requestProcessName,
     // User id is assigned by AllocateResources().  This initial value isn't 
     // changed in the standlone configuration while it's updated as non-zero 
     // positive value in the networked configuration (assuming success).
-    userId = 0;
+    //userId = 0;
 
     // In case of remote connection
 #if CISST_MTS_HAS_ICE

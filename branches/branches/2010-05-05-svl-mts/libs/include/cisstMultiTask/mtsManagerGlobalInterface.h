@@ -140,13 +140,12 @@ public:
                 -1 if error occurs, zero if successful in standalone configuration,
                 non-zero positive value if successful in networked configuration
         \return Connect session id issued by the global component manager.
-                Session id is used to clean up waiting connections (which have 
-                been requested but not yet established) after some timeout.
+                Session id is used to clean up pending connections (which was 
+                requested but not yet established) after timeout.
                 -1 if error occurs, zero or positive value if success */
     virtual int Connect(const std::string & requestProcessName,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
-        int & userId) = 0;
+        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) = 0;
 
     /*! \brief Confirm that connection has been successfully established.
         \param connectionSessionID Connection id
