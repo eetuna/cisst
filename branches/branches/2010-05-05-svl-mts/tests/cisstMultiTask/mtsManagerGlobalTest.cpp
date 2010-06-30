@@ -180,7 +180,7 @@ void mtsManagerGlobalTest::TestGetConnectionsOfInterfaceProvided(void)
 
     // Connect two interfaces
     int userId;
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId) != -1);
 
     // Check if connection information is correct
     connectionMap = managerGlobal.GetConnectionsOfInterfaceProvided(P2, C2, p1, &interfaceMap);
@@ -210,7 +210,7 @@ void mtsManagerGlobalTest::TestGetConnectionsOfInterfaceProvided(void)
     CPPUNIT_ASSERT(managerGlobal.AddInterfaceRequired(P2, C3, r1));
 
     // Connect two interfaces
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId) != -1);
 
     // Check if connection information is correct
     connectionMap = managerGlobal.GetConnectionsOfInterfaceProvided(P2, C2, p1);
@@ -248,7 +248,7 @@ void mtsManagerGlobalTest::TestGetConnectionsOfInterfaceRequired(void)
 
     // Connect two interfaces
     int userId;
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId) != -1);
 
     // Check if connection information is correct
     connectionMap = managerGlobal.GetConnectionsOfInterfaceRequired(P2, C3, r1, &interfaceMap);
@@ -278,7 +278,7 @@ void mtsManagerGlobalTest::TestGetConnectionsOfInterfaceRequired(void)
     CPPUNIT_ASSERT(managerGlobal.AddInterfaceProvided(P2, C2, p1));
 
     // Connect two interfaces
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1, userId) != -1);
 
     // Check if connection information is correct
     connectionMap = managerGlobal.GetConnectionsOfInterfaceRequired(P2, C3, r1);
@@ -658,22 +658,22 @@ void mtsManagerGlobalTest::TestConnectLocal(void)
 
     // Test if invalid arguments are handled properly
     int userId;
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P1, C1));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddInterfaceRequired(P1, C1, r1));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddProcess(P2));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddComponent(P2, C2));
-    CPPUNIT_ASSERT(!managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1, userId) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddInterfaceProvided(P2, C2, p1));
 
@@ -748,13 +748,13 @@ void mtsManagerGlobalTest::TestConnectRemote(void)
 
     // Establish connections
     // Connection: (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1) != -1);
     // Connection: (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2) != -1);
     // Connection: (P1, C2, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C2, r1, P2, C2, p2) != -1);
     // Connection: (P2, C3, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p2) != -1);
 
     // Check if connection information is correct
     mtsManagerGlobal::ConnectionMapType::const_iterator it;
@@ -868,13 +868,13 @@ void mtsManagerGlobalTest::TestDisconnect(void)
 
     // Establish connections
     // Connection: (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1) != -1);
     // Connection: (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2) != -1);
     // Connection: (P1, C2, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C2, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C2, r1, P2, C2, p2) != -1);
     // Connection: (P2, C3, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P2, C3, r1, P2, C2, p2) != -1);
 
     // Check if connection information is correct while disconnecting a connection one by one
     mtsManagerGlobal::ConnectionMapType * connectionMap;
@@ -952,13 +952,13 @@ void mtsManagerGlobalTest::TestDisconnect(void)
 
     // Establish connections
     // (P1, C1, r1) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1) != -1);
     // (P1, C1, r1) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p2) != -1);
     // (P1, C1, r2) ~ (P2, C2, p1)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p1) != -1);
     // (P1, C1, r2) ~ (P2, C2, p2)
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r2, P2, C2, p2) != -1);
 
     mtsManagerGlobal::ConnectionMapType * connectionMap;
     connectionMap = managerGlobal.GetConnectionsOfInterfaceRequired(P1, C1, r1);
@@ -1107,12 +1107,12 @@ void mtsManagerGlobalTest::TestIsAlreadyConnected(void)
     // Check if this method can detect connection correctly after connection.
     CPPUNIT_ASSERT(!managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1));
     /* TODO: Resolve this
-    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1));
-    CPPUNIT_ASSERT(managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1) != -1);
+    CPPUNIT_ASSERT(managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1) != -1);
 
     // Check if this method can detect connection correctly after disconnection.
     managerGlobal.Disconnect(P1, C1, r1, P2, C2, p1);
-    CPPUNIT_ASSERT(!managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1));
+    CPPUNIT_ASSERT(!managerGlobal.IsAlreadyConnected(P1, C1, r1, P2, C2, p1) != -1);
     */
 }
 
