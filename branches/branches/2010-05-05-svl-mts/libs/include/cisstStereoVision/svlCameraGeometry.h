@@ -91,6 +91,7 @@ public:
 
     int SetWorldToCenter();
     int RotateWorldAboutY(double degrees);
+    int RotateWorldAboutZ(double degrees);
 
     void Wrld2Cam(const unsigned int cam_id, vctDouble2 & point2D, const vctDouble3 & point3D);
     vctDouble2 Wrld2Cam(const unsigned int cam_id, const vctDouble3 & point3D);

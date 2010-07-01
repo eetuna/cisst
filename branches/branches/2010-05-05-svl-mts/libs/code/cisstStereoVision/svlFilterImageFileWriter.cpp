@@ -97,7 +97,6 @@ int svlFilterImageFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
     svlSampleImage* tosave = 0;
     svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncOutput);
     unsigned int videochannels = img->GetVideoChannels();
-    std::stringstream path;
     unsigned int idx;
 
     _ParallelLoop(procInfo, idx, videochannels)
@@ -115,6 +114,7 @@ int svlFilterImageFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
             tosave = img;
         }
 
+        std::stringstream path;
         path << FilePathPrefix[idx];
 
         if (TimestampsEnabled) {

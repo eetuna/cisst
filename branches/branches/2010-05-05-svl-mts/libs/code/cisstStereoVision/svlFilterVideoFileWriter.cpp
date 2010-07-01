@@ -140,7 +140,7 @@ int svlFilterVideoFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
         // splitting work between all threads
         for (idx = 0; idx < videochannels; idx ++) {
             // Codec is responsible for thread synchronzation
-            if (Codec[idx]->Write(procInfo, *img, idx) != SVL_OK) ret = SVL_FAIL;
+            if (Codec[idx] && Codec[idx]->Write(procInfo, *img, idx) != SVL_OK) ret = SVL_FAIL;
         }
     }
     else {
@@ -148,7 +148,7 @@ int svlFilterVideoFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
         // each video channel to a single thread
         _ParallelLoop(procInfo, idx, videochannels)
         {
-            if (Codec[idx]->Write(0, *img, idx) != SVL_OK) ret = SVL_FAIL;
+            if (Codec[idx] && Codec[idx]->Write(0, *img, idx) != SVL_OK) ret = SVL_FAIL;
         }
     }
 

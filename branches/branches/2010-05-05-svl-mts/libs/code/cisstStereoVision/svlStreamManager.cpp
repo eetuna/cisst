@@ -61,6 +61,7 @@ svlStreamManager::svlStreamManager(unsigned int threadcount) :
 
 svlStreamManager::~svlStreamManager()
 {
+    Release();
 }
 
 int svlStreamManager::SetSourceFilter(svlFilterSourceBase* source)
@@ -171,6 +172,8 @@ int svlStreamManager::Initialize()
 
 void svlStreamManager::Release()
 {
+    if (!Initialized) return;
+
     Stop();
 
     unsigned int i;
@@ -192,7 +195,7 @@ void svlStreamManager::Release()
         }
     }
 
-    // Initialize the stream, starting from the stream source
+    // Release the stream, starting from the stream source
     svlFilterBase *filter = StreamSource;
     while (filter) {
 

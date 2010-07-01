@@ -375,16 +375,23 @@ svlVideoCodecBase* svlVideoIO::GetCodec(const std::string &filename)
     for (i = 0; i < size; i ++) {
         if (instance->Extensions[i].find(extension) != std::string::npos) {
 
+#if (CISST_OS == CISST_WINDOWS)
+            // Exception for AVI files in Windows:
+            //   Use Video for Windows instead of OpenCV
+            if (extension == ".avi;" &&
+                instance->Names[i].find("FFMPEG") != std::string::npos) continue;
+#endif // (CISST_OS == CISST_WINDOWS)
+
             ///////////////////////////
             // Enter critical section
             instance->CS.Enter();
 
-            // check if we have any unused image handlers in the cache
+            // check if we have any unused video handlers in the cache
             cacheitem = 0;
             cachesize = static_cast<int>(instance->CodecCacheUsed[i].size());
             while (cacheitem < cachesize && instance->CodecCacheUsed[i][cacheitem]) cacheitem ++;
 
-            // if there is no unused image handler in the
+            // if there is no unused video handler in the
             // cache, then increase the size of cache
             if (cacheitem >= cachesize) {
                 cacheitem = cachesize;
