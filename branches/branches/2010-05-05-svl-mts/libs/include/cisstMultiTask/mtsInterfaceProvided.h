@@ -31,8 +31,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaMutex.h>
 
 #include <cisstMultiTask/mtsMailBox.h>
-#include <cisstMultiTask/mtsCommandQueuedVoid.h>
-#include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsCommandFilteredQueuedWrite.h>
 #include <cisstMultiTask/mtsInterfaceProvidedOrOutput.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -122,12 +120,6 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     /*! Typedef for a map of name and two argument commands. */
     typedef cmnNamedMap<mtsCommandQualifiedReadBase> CommandQualifiedReadMapType;
 
-    /*! Typedef for a map of name and zero argument queued commands. */
-    typedef cmnNamedMap<mtsCommandQueuedVoidBase> CommandQueuedVoidMapType;
-
-    /*! Typedef for a map of name and one argument write queued commands. */
-    typedef cmnNamedMap<mtsCommandQueuedWriteBase> CommandQueuedWriteMapType;
-
     /*! Typedef for a map of event name and void event generators. */
     typedef cmnNamedMap<mtsMulticastCommandVoid> EventVoidMapType;
 
@@ -189,9 +181,10 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     template <class __classType>
     inline mtsCommandVoidBase * AddCommandVoid(void (__classType::*method)(void),
                                                __classType * classInstantiation,
-                                               const std::string & commandName)
-    {
-        return this->AddCommandVoid(new mtsCommandVoidMethod<__classType>(method, classInstantiation, commandName));
+                                               const std::string & commandName,
+                                               CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT) {
+        return this->AddCommandVoid(new mtsCommandVoidMethod<__classType>(method, classInstantiation, commandName),
+                                    queuingPolicy);
     }
 
     /*! Add a void command to the provided interface based on a void
@@ -203,8 +196,10 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       \param commandName name as it should appear in the interface
       \returns pointer on the newly created and added command, null pointer (0) if creation or addition failed (name already used) */
     inline mtsCommandVoidBase * AddCommandVoid(void (*function)(void),
-                                               const std::string & commandName) {
-        return this->AddCommandVoid(new mtsCommandVoidFunction(function, commandName));
+                                               const std::string & commandName,
+                                               CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT) {
+        return this->AddCommandVoid(new mtsCommandVoidFunction(function, commandName),
+                                    queuingPolicy);
     }
 
     /*! Add a write command to the provided interface based on a
@@ -223,15 +218,19 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     inline mtsCommandWriteBase * AddCommandWrite(void (__classType::*method)(const __argumentType &),
                                                  __classType * classInstantiation,
                                                  const std::string & commandName,
-                                                 const __argumentType & argumentPrototype) {
-        return this->AddCommandWrite(new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, argumentPrototype));
+                                                 const __argumentType & argumentPrototype,
+                                                 CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT) {
+        return this->AddCommandWrite(new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, argumentPrototype),
+                                     queuingPolicy);
     }
 
     template <class __classType, class __argumentType>
     inline mtsCommandWriteBase * AddCommandWrite(void (__classType::*method)(const __argumentType &),
                                                  __classType * classInstantiation,
-                                                 const std::string & commandName) {
-        return this->AddCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, __argumentType());
+                                                 const std::string & commandName,
+                                                 CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT) {
+        return this->AddCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, __argumentType(),
+                                                                  queuingPolicy);
     }
     //@}
 
@@ -354,36 +353,6 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     //@}
 
 
-
-#if 0 // clone itself
-    inline void CloneCommands(const mtsInterfaceProvided & interfaceProvided) {
-        // clone void commands
-        mtsInterfaceProvided::CommandQueuedVoidMapType::const_iterator iterVoid;
-        iterVoid = interfaceProvided.CommandsQueuedVoid.begin();
-        mtsCommandVoidBase * commandVoid;
-        for (;
-             iterVoid != interfaceProvided.CommandsQueuedVoid.end();
-             iterVoid++) {
-            commandVoid = iterVoid->second->Clone(this->MailBox);
-            CommandsVoid.AddItem(iterVoid->first, commandVoid, CMN_LOG_LOD_INIT_ERROR);
-            CMN_LOG_CLASS_INIT_VERBOSE << "CloneCommands: cloned void command \"" << iterVoid->first
-                                       << "\" for \"" << this->GetName() << "\"" << std::endl;
-        }
-        // clone write commands
-        mtsInterfaceProvided::CommandQueuedWriteMapType::const_iterator iterWrite;
-        iterWrite = interfaceProvided.CommandsQueuedWrite.begin();
-        mtsCommandWriteBase * commandWrite;
-        for (;
-             iterWrite != interfaceProvided.CommandsQueuedWrite.end();
-             iterWrite++) {
-            commandWrite = iterWrite->second->Clone(this->MailBox, DEFAULT_ARG_BUFFER_LEN);
-            CommandsWrite.AddItem(iterWrite->first, commandWrite, CMN_LOG_LOD_INIT_ERROR);
-            CMN_LOG_CLASS_INIT_VERBOSE << "CloneCommands: cloned write command " << iterWrite->first
-                                       << "\" for \"" << this->GetName() << "\"" << std::endl;
-        }
-    }
-#endif
-
     /*!
       \todo documentation outdated
       This method need to called to create a unique Id and queues
@@ -410,6 +379,14 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     mtsInterfaceProvided(mtsInterfaceProvided * interfaceProvided,
                          const std::string & userName,
                          size_t mailBoxSize);
+
+    /*! Utility method to determine if a command should be queued or
+      not based on the default policy for the interface and the user's
+      requested policy.  This method also generates a warning or error
+      in the log if needed. */
+    bool UseQueueBasedOnInterfacePolicy(CommandQueuingPolicy queuingPolicy,
+                                        const std::string & methodName,
+                                        const std::string & commandName);
 
     /*! types and containers to store interfaces cloned for thread safety */
     typedef std::pair<unsigned int, ThisType *> InterfaceProvidedCreatedPairType;
@@ -447,8 +424,6 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     CommandWriteMapType CommandsWrite;
     CommandReadMapType CommandsRead;
     CommandQualifiedReadMapType CommandsQualifiedRead;
-    CommandQueuedVoidMapType CommandsQueuedVoid;
-    CommandQueuedWriteMapType CommandsQueuedWrite;
     EventVoidMapType EventVoidGenerators;
     EventWriteMapType EventWriteGenerators;
     CommandInternalMapType CommandsInternal; // internal commands (not exposed to user)
@@ -462,8 +437,8 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 protected:
 
     mtsMailBox * GetMailBox(void);
-    mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command);
-    mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command);
+    mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command, CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
+    mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command, CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
     mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
     mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter, mtsCommandWriteBase * command);
     mtsCommandQualifiedReadBase * AddCommandQualifiedRead(mtsCommandQualifiedReadBase * command);

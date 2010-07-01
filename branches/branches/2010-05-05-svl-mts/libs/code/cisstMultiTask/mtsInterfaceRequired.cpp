@@ -51,11 +51,11 @@ mtsInterfaceRequired::~mtsInterfaceRequired()
 }
 
 
-bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(bool interfaceHasMailbox,
-                                                          EventQueuingPolicy queuingPolicy,
+bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(EventQueuingPolicy queuingPolicy,
                                                           const std::string & methodName,
                                                           const std::string & eventName)
 {
+    bool interfaceHasMailbox = (this->MailBox != 0);
     if (interfaceHasMailbox) {
         if (queuingPolicy == EVENT_NOT_QUEUED) {
             CMN_LOG_CLASS_INIT_DEBUG << methodName << ": event handler for \"" << eventName

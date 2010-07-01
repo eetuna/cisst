@@ -47,7 +47,7 @@ devNDISerialToolQDevice::devNDISerialToolQDevice(const std::string & taskName) :
 }
 
 
-void devNDISerialToolQDevice::timerEvent(QTimerEvent * event)
+void devNDISerialToolQDevice::timerEvent(QTimerEvent * CMN_UNUSED(event))
 {
     NDI.GetPositionCartesian(NDI.PositionCartesian);
     if (NDI.PositionCartesian.Valid()) {
