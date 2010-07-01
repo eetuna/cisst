@@ -97,7 +97,7 @@ bool mtsCollectorState::SetStateTable(const std::string & taskName,
     TargetTask = dynamic_cast<mtsTask *>(componentPointer);
     if (!this->TargetTask) {
         cmnThrow(std::runtime_error("mtsCollectorState constructor: task \"" + taskName
-                                    + "\" found in task manager seems to be an mtsDevice, not mtsTask therefore it has no state table."));
+                                    + "\" found in task manager seems to be an mtsComponent, not mtsTask therefore it has no state table."));
     }
 
     // this task needs a pointer on the state table to perform a fast copy

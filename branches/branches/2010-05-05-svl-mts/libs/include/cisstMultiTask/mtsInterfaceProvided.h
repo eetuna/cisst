@@ -44,8 +44,9 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  This class implements the provided interface for a device (mtsDevice).
-  It provides services via command objects, which have four signatures:
+  This class implements the provided interface for a component of type 
+  mtsComponent.  It provides services via command objects, which have 
+  four signatures:
 
      Void:           no parameters
      Read:           one non-const parameter
@@ -85,6 +86,11 @@ http://www.cisst.org/cisst/license.txt.
 */
 class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+    // To dynamically create and add command proxies and event proxies
+    friend class mtsComponentProxy;
+    // To get information about event generators in this interface
+    friend class mtsManagerLocal;
 
  public:
     /*! This type */
@@ -151,8 +157,8 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     //@{
     std::vector<std::string> GetNamesOfCommands(void) const;
     std::vector<std::string> GetNamesOfCommandsVoid(void) const;
-    std::vector<std::string> GetNamesOfCommandsRead(void) const;
     std::vector<std::string> GetNamesOfCommandsWrite(void) const;
+    std::vector<std::string> GetNamesOfCommandsRead(void) const;
     std::vector<std::string> GetNamesOfCommandsQualifiedRead(void) const;
     //@}
 

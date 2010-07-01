@@ -401,6 +401,40 @@ bool mtsInterfaceProvided::AddEvent(const std::string & name, mtsMulticastComman
 }
 
 
+std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommands(void) const {
+    std::vector<std::string> commands = GetNamesOfCommandsVoid();
+    std::vector<std::string> tmp = GetNamesOfCommandsRead();
+    commands.insert(commands.begin(), tmp.begin(), tmp.end());
+    tmp.clear();
+    tmp = GetNamesOfCommandsWrite();
+    commands.insert(commands.begin(), tmp.begin(), tmp.end());
+    tmp.clear();
+    tmp = GetNamesOfCommandsQualifiedRead();
+    commands.insert(commands.begin(), tmp.begin(), tmp.end());
+    return commands;
+}
+
+
+std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsVoid(void) const {
+    return CommandsVoid.GetNames();
+}
+
+
+std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsWrite(void) const {
+    return CommandsWrite.GetNames();
+}
+
+
+std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsRead(void) const {
+    return CommandsRead.GetNames();
+}
+
+
+std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsQualifiedRead(void) const {
+    return CommandsQualifiedRead.GetNames();
+}
+
+
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfEventsVoid(void) const {
     return EventVoidGenerators.GetNames();
 }
@@ -418,7 +452,7 @@ mtsCommandVoidBase * mtsInterfaceProvided::GetCommandVoid(const std::string & co
     }
     CMN_LOG_CLASS_INIT_ERROR << "GetCommandVoid: can not retrieve a command from \"factory\" interface \""
                              << this->GetName()
-                             << "\", you must call GetActualInterface to make sure you are using a end-user interface"
+                             << "\", you must call GetEndUserInterface to make sure you are using a end-user interface"
                              << std::endl;
     return 0;
 }
@@ -431,7 +465,7 @@ mtsCommandWriteBase * mtsInterfaceProvided::GetCommandWrite(const std::string & 
     }
     CMN_LOG_CLASS_INIT_ERROR << "GetCommandWrite: can not retrieve a command from \"factory\" interface \""
                              << this->GetName()
-                             << "\", you must call GetActualInterface to make sure you are using a end-user interface"
+                             << "\", you must call GetEndUserInterface to make sure you are using a end-user interface"
                              << std::endl;
     return 0;
 }

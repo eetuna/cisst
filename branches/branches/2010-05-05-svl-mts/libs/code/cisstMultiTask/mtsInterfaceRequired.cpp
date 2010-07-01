@@ -351,6 +351,12 @@ void mtsInterfaceRequired::EnableAllEvents(void) {
 
 size_t mtsInterfaceRequired::ProcessMailBoxes(void)
 {
+    // MJUNG: Currently, one of constructor of mtsInterfaceRequired allows
+    // a null pointer to be passed as the second argument.
+    if (!MailBox) {
+        return 0;
+    }
+
     unsigned int numberOfCommands = 0;
     while (MailBox->ExecuteNext()) {
         numberOfCommands++;

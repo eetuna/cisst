@@ -186,7 +186,7 @@ bool mtsTask::WaitForState(TaskStateType desiredState, double timeout)
 
 mtsTask::mtsTask(const std::string & name,
                  unsigned int sizeStateTable) :
-    mtsDevice(name),
+    mtsComponent(name),
     Thread(),
     TaskState(CONSTRUCTED),
     StateChange(),
@@ -287,7 +287,7 @@ bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addInterfac
 /********************* Methods to manage interfaces *******************/
 
 mtsInterfaceRequired * mtsTask::AddInterfaceRequired(const std::string & interfaceRequiredName) {
-    // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
+    // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsInterfaceProvided)
     mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsInterfaceRequired::DEFAULT_EVENT_QUEUE_LEN);
     mtsInterfaceRequired * result;
     if (mailBox) {

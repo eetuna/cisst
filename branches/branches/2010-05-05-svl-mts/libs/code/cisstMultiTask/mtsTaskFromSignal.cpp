@@ -75,7 +75,7 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
 
 mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string & interfaceRequiredName) {
     // create a mailbox with post command queued command
-    // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsTaskInterface)
+    // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsInterfaceProvided)
     mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsInterfaceRequired::DEFAULT_EVENT_QUEUE_LEN,
                                           this->PostCommandQueuedCommand);
     mtsInterfaceRequired * result;
