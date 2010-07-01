@@ -261,7 +261,7 @@ int svlFilterOutput::Connect(svlFilterInput *input)
         Filter->Initialized || input->Filter->Initialized) return SVL_FAIL;
 
     // Setup output types in the connected filter
-    if (input->Filter->AutoType) {
+    if (input->Trunk && input->Filter->AutoType) {
         // Automatic setup
         if (!input->IsTypeSupported(Type)) return SVL_FAIL;
         svlFilterOutput* output = input->Filter->GetOutput();
