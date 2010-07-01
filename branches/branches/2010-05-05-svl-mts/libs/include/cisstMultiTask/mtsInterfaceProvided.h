@@ -280,7 +280,9 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     /*! Adds command object to write to state table. */
     template <class _elementType>
     mtsCommandWriteBase * AddCommandWriteState(const mtsStateTable & stateTable,
-                                               const _elementType & stateData, const std::string & commandName);
+                                               const _elementType & stateData,
+                                               const std::string & commandName,
+                                               CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
 
     //@{
     template <class __classType, class __argument1Type, class __argument2Type>
@@ -310,16 +312,17 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                                          const __filteredType & filteredPrototype) {
         std::string commandNameFilter(commandName + "Filter");
         return this->AddCommandFilteredWrite(
-               new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
-                                          (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype),
-               new mtsCommandWrite<__classType, __filteredType>(method, classInstantiation, commandName, filteredPrototype));
+                                             new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
+                                             (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype),
+                                             new mtsCommandWrite<__classType, __filteredType>(method, classInstantiation, commandName, filteredPrototype));
     }
 
     template <class __classType, class __argumentType, class __filteredType>
     inline mtsCommandWriteBase * AddCommandFilteredWrite(void (__classType::*premethod)(const __argumentType &, __filteredType &) const,
                                                          void (__classType::*method)(const __filteredType &),
                                                          __classType * classInstantiation, const std::string & commandName) {
-        return this->AddCommandFilteredWrite(premethod, method, classInstantiation, commandName, __argumentType(), __filteredType());
+        return this->AddCommandFilteredWrite(premethod, method, classInstantiation, commandName,
+                                             __argumentType(), __filteredType());
     }
     //@}
 
@@ -437,10 +440,13 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 protected:
 
     mtsMailBox * GetMailBox(void);
-    mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command, CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
-    mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command, CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
+    mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command,
+                                        CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
+    mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command,
+                                          CommandQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
     mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
-    mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter, mtsCommandWriteBase * command);
+    mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
+                                                  mtsCommandWriteBase * command);
     mtsCommandQualifiedReadBase * AddCommandQualifiedRead(mtsCommandQualifiedReadBase * command);
     bool AddEvent(const std::string & commandName, mtsMulticastCommandVoid * generator);
     bool AddEvent(const std::string & commandName, mtsMulticastCommandWriteBase * generator);
@@ -486,19 +492,21 @@ mtsCommandQualifiedReadBase * mtsInterfaceProvided::AddCommandReadHistory(const 
 
 template <class _elementType>
 mtsCommandWriteBase * mtsInterfaceProvided::AddCommandWriteState(const mtsStateTable & stateTable,
-                                                             const _elementType & stateData, const std::string & commandName)
+                                                                 const _elementType & stateData,
+                                                                 const std::string & commandName,
+                                                                 CommandQueuingPolicy queuingPolicy)
 {
     typedef typename mtsGenericTypes<_elementType>::FinalBaseType FinalBaseType;
     typedef typename mtsGenericTypes<_elementType>::FinalType FinalType;
     typedef typename mtsStateTable::Accessor<_elementType> AccessorType;
-    mtsCommandWriteBase * writeCommand = 0;
     AccessorType * stateAccessor = dynamic_cast<AccessorType *>(stateTable.GetAccessor(stateData));
     if (!stateAccessor) {
         CMN_LOG_CLASS_INIT_ERROR << "AddCommandWriteState: invalid accessor for command " << commandName << std::endl;
         return 0;
     }
     return this->AddCommandWrite(new mtsCommandWrite<AccessorType, FinalBaseType>
-                                 (&AccessorType::SetCurrent, stateAccessor, commandName, FinalType(stateData)));
+                                 (&AccessorType::SetCurrent, stateAccessor, commandName, FinalType(stateData)),
+                                 queuingPolicy);
 }
 
 template <class __argumentType>
