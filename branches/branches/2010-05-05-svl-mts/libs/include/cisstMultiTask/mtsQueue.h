@@ -246,7 +246,7 @@ protected:
             delete this->Data[index];
         }
         delete [] this->Data;
-    
+        this->Data = 0;
     }
 
 public:
