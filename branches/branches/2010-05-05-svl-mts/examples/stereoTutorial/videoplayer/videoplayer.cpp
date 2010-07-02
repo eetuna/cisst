@@ -84,8 +84,8 @@ int VideoPlayer(std::string pathname)
 
     cerr << endl;
 
-    // stop stream
-    stream.Stop();
+    // stop and release stream
+    stream.Release();
 
 labError:
     return 0;

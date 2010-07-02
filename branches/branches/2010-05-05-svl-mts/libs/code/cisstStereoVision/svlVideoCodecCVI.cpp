@@ -38,9 +38,12 @@ svlVideoCodecCVI::svlVideoCodecCVI() :
     svlVideoCodecBase(),
     cmnGenericObject(),
     CodecName("CISST Video"),
-    FileStartMarker("CisstSVLVideo\r\n"),
+    FileStartMarker("CisstSVLVideo\r\n",  // all version strings shall be of equal length
+                    "CisstVid_1.10\r\n"),
     FrameStartMarker("\r\nFrame\r\n"),
+    Version(-1),
     File(0),
+    FrameIndexPointer(0),
     PartCount(0),
     Width(0),
     Height(0),
@@ -86,10 +89,43 @@ int svlVideoCodecCVI::Open(const std::string &filename, unsigned int &width, uns
         // Open file
         File->open(filename.c_str(), std::ios_base::in | std::ios_base::binary);
         if (!File->is_open()) break;
+
         // Read "file start marker"
-        if (File->read(strbuffer, FileStartMarker.length()).fail()) break;
-        strbuffer[FileStartMarker.length()] = 0;
-        if (FileStartMarker.compare(strbuffer) != 0) break;
+        if (File->read(strbuffer, FileStartMarker[0].length()).fail()) break;
+        strbuffer[FileStartMarker[0].length()] = 0;
+        Version = static_cast<int>(FileStartMarker.size()) - 1;
+        while (Version >= 0) {
+            if (FileStartMarker[Version].compare(strbuffer) == 0) break;
+            Version --;
+        }
+        if (Version < 0) break;
+
+        if (Version > 0) {
+            // Read "frame index pointer"
+            if (File->read(reinterpret_cast<char*>(&FrameIndexPointer), sizeof(long long int)).fail() || FrameIndexPointer == 0) break;
+
+            std::streampos pos = File->tellg(); // Store file position
+
+            // Seek to frame index
+            if (File->seekg(FrameIndexPointer).fail()) break;
+
+            // Read the frame ID of the last frame
+            if (File->read(reinterpret_cast<char*>(&EndPos), sizeof(int)).fail() || EndPos < 0) break;
+
+            // Create frame index
+            FrameIndex.SetSize(EndPos + 1);
+            FrameIndex.SetAll(0);
+
+            // Read frame index
+            if (File->read(reinterpret_cast<char*>(FrameIndex.Pointer()),
+                           FrameIndex.size() * sizeof(long long int)).fail()) break;
+
+            File->seekg(pos); // Restore file position
+        }
+        else {
+            EndPos = 0;
+        }
+
         // Read "width"
         if (File->read(reinterpret_cast<char*>(&Width), sizeof(unsigned int)).fail() || Width < 1 || Width > 4096) break;
         // Read "height"
@@ -121,7 +157,7 @@ int svlVideoCodecCVI::Open(const std::string &filename, unsigned int &width, uns
             comprBufferSize = size;
         }
 
-        Pos = BegPos = EndPos = 0;
+        Pos = BegPos = 0;
         width = Width;
         height = Height;
         framerate = -1.0;
@@ -162,8 +198,18 @@ int svlVideoCodecCVI::Create(const std::string &filename, const unsigned int wid
         // Open file
         File->open(filename.c_str(), std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
         if (!File->is_open()) break;
-        // Write "file start marker"
-        if (File->write(FileStartMarker.c_str(), FileStartMarker.length()).fail()) break;
+
+        // Write "file start marker" (always writes the latest version)
+        Version = FileStartMarker.size() - 1;
+        if (File->write(FileStartMarker[Version].c_str(), FileStartMarker[Version].length()).fail()) break;
+
+        // Write "frame index pointer" placeholder (will be filled later)
+        FrameIndexPointer = 0;
+        if (File->write(reinterpret_cast<const char*>(&FrameIndexPointer), sizeof(long long int)).fail()) break;
+
+        // Pre-allocate a large frame index table
+        FrameIndex.SetSize(100000);
+
         // Write "width"
         if (File->write(reinterpret_cast<const char*>(&width), sizeof(unsigned int)).fail()) break;
         // Write "height"
@@ -233,6 +279,8 @@ int svlVideoCodecCVI::Create(const std::string &filename, const unsigned int wid
 
 int svlVideoCodecCVI::Close()
 {
+    int ret = SVL_OK;
+
     if (Opened && Writing) {
 
         // Stop data saving thread
@@ -241,6 +289,40 @@ int svlVideoCodecCVI::Close()
             NewFrameEvent.Raise();
             SaveThread.Wait();
         }
+
+        if (File) {
+            while (1) {
+                // Store current file position
+                FrameIndexPointer = static_cast<long long int>(File->tellg());
+
+                // Write the index of the last frame
+                EndPos --;
+                if (File->write(reinterpret_cast<const char*>(&EndPos), sizeof(int)).fail()) {
+                    ret = SVL_FAIL;
+                    break;
+                }
+
+                // Write frame index
+                if (File->write(reinterpret_cast<const char*>(FrameIndex.Pointer()), (EndPos + 1) * sizeof(long long int)).fail()) {
+                    ret = SVL_FAIL;
+                    break;
+                }
+
+                // Seek back to "frame index pointer"
+                if (File->seekg(FileStartMarker[Version].length()).fail()) {
+                    ret = SVL_FAIL;
+                    break;
+                }
+
+                // Replace the "frame index pointer" placeholder with the real data
+                if (File->write(reinterpret_cast<const char*>(&FrameIndexPointer), sizeof(long long int)).fail()) {
+                    ret = SVL_FAIL;
+                    break;
+                }
+                
+                break;
+            }
+        }
     }
 
     if (File) {
@@ -248,7 +330,11 @@ int svlVideoCodecCVI::Close()
         delete File;
         File = 0;
     }
+    else ret = SVL_FAIL;
 
+    Version = -1;
+    FrameIndexPointer = 0;
+    FrameIndex.SetSize(0);
     Width = 0;
     Height = 0;
     BegPos = -1;
@@ -257,7 +343,7 @@ int svlVideoCodecCVI::Close()
     Writing = false;
     Opened = false;
 
-    return SVL_OK;
+    return ret;
 }
 
 int svlVideoCodecCVI::GetBegPos() const
@@ -273,6 +359,14 @@ int svlVideoCodecCVI::GetEndPos() const
 int svlVideoCodecCVI::GetPos() const
 {
     return Pos;
+}
+
+int svlVideoCodecCVI::SetPos(const int pos)
+{
+    if (Version == 0) return SVL_FAIL;
+    if (pos < 0 || pos > EndPos) return SVL_FAIL;
+    Pos = pos;
+    return SVL_OK;
 }
 
 svlVideoIO::Compression* svlVideoCodecCVI::GetCompression() const
@@ -385,12 +479,23 @@ int svlVideoCodecCVI::Read(svlProcInfo* procInfo, svlSampleImage &image, const u
     char strbuffer[32];
     int ret = SVL_FAIL;
 
-    while (1) {
+    if (Version > 0) {
+        if (Pos > EndPos) {
+            Pos = 0;
+            return SVL_VID_END_REACHED;
+        }
 
+        // Look up the position in the frame index table and move the file pointer
+        if (File->seekg(FrameIndex[Pos]).fail()) return SVL_FAIL;
+    }
+    else {
         if (Pos == 0) {
             // Go to the beginning of the data, just after the header
             if (File->seekg(27).fail()) return SVL_FAIL;
         }
+    }
+    
+    while (1) {
 
         // Read "frame start marker"
         if (File->read(strbuffer, FrameStartMarker.length()).fail()) break;
@@ -428,25 +533,42 @@ int svlVideoCodecCVI::Read(svlProcInfo* procInfo, svlSampleImage &image, const u
         break;
     }
 
-    if (ret != SVL_OK) {
-        // End of file reached
-        if (Pos > 0) {
+    if (Version > 0) {
+        if (ret != SVL_OK) {
+            // Video data ended earlier than expected: error
+            if (Pos > 0) {
 
-            // Clear stream error flags
-            File->clear();
+                // Clear stream error flags
+                File->clear();
 
-            // Set pointer back to the first frame
-            EndPos = Pos;
-            Pos = 0;
+                // Set pointer back to the first frame
+                Pos = 0;
 
-            return SVL_VID_END_REACHED;
-        }
-        else {
-            // If it was the first frame, then file is invalid
+                return SVL_VID_END_REACHED;
+            }
+            else {
+                // If it was the first frame, then file is invalid, let it fail
+            }
         }
     }
     else {
-        // Other error, let it fail
+        if (ret != SVL_OK) {
+            // End of file reached
+            if (Pos > 0) {
+                
+                // Clear stream error flags
+                File->clear();
+                
+                // Set pointer back to the first frame
+                EndPos = Pos;
+                Pos = 0;
+                
+                return SVL_VID_END_REACHED;
+            }
+            else {
+                // If it was the first frame, then file is invalid, let it fail
+            }
+        }
     }
 
     return ret;
@@ -527,6 +649,10 @@ int svlVideoCodecCVI::Write(svlProcInfo* procInfo, const svlSampleImage &image, 
 
         // Wait until the previous write operation is done
         WriteDoneEvent.Wait();
+
+        // Store current file position in frame index table (increase table size if needed)
+        if (FrameIndex.size() <= static_cast<unsigned int>(EndPos)) FrameIndex.resize(FrameIndex.size() + 100000);
+        FrameIndex[EndPos] = static_cast<long long int>(File->tellg());
 
         // Add "frame start marker"
         memcpy(saveBuffer[savebufferid], FrameStartMarker.c_str(), FrameStartMarker.length());

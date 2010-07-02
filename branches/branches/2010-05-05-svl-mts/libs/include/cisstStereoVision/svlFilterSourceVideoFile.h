@@ -44,6 +44,11 @@ public:
     int SetFilePath(const std::string &filepath, unsigned int videoch = SVL_LEFT);
     int GetFilePath(std::string &filepath, unsigned int videoch = SVL_LEFT) const;
 
+    int GetLength(unsigned int videoch = SVL_LEFT) const;
+    int SetPosition(const int position, unsigned int videoch = SVL_LEFT);
+    int GetPosition(unsigned int videoch = SVL_LEFT) const;
+    int SetSegment(const int from_pos, const int to_pos, unsigned int videoch = SVL_LEFT);
+
 protected:
     virtual int Initialize(svlSample* &syncOutput);
     virtual int OnStart(unsigned int procCount);
@@ -56,6 +61,9 @@ private:
     vctDynamicVector<std::string> FilePath;
     double Framerate;
     double FirstTimestamp;
+    int SegmentFrom;
+    int SegmentTo;
+    bool ResetTimer;
     osaStopwatch Timer;
 };
 

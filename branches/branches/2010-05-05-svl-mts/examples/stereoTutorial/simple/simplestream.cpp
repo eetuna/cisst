@@ -116,6 +116,16 @@ int main()
                                       true);                     // filled
     overlay.AddOverlay(rect_overlay);
 
+    // Add static triangle overlay
+    svlOverlayStaticTriangle tri_overlay(SVL_LEFT,            // background video channel
+                                         true,                // visible
+                                         200, 250,            // triangle corners
+                                         350, 231,
+                                         254, 303,
+                                         svlRGB(64, 64, 200), // color
+                                         true);              // filled
+    overlay.AddOverlay(tri_overlay);
+
     // Add static text overlay
     svlOverlayStaticText text_overlay(SVL_LEFT,                   // background video channel
                                       true,                       // visible

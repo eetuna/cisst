@@ -474,6 +474,7 @@ void svlImageProcessingHelper::DeinterlaceAdaptiveDiscarding(unsigned char* buff
 /**************************************************************/
 
 svlImageProcessingHelper::RectificationInternals::RectificationInternals() :
+    svlImageProcessingInternals(),
     Width(0),
     Height(0),
     idxDest(0),

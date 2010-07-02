@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlDraw.h>
+#include "svlDrawHelper.h"
 
 
 /*****************************/
@@ -230,6 +231,35 @@ void svlDraw::Line(svlSampleImage* image,
     }
 }
 
+void svlDraw::Triangle(svlSampleImage* image,
+                       unsigned int videoch,
+                       svlPoint2D corner1,
+                       svlPoint2D corner2,
+                       svlPoint2D corner3,
+                       svlRGB color,
+                       svlDraw::Internals& internals)
+{
+    Triangle(image, videoch, corner1.x, corner1.y, corner2.x, corner2.y, corner3.x, corner3.y, color, internals);
+}
+
+void svlDraw::Triangle(svlSampleImage* image,
+                       unsigned int videoch,
+                       int x1, int y1,
+                       int x2, int y2,
+                       int x3, int y3,
+                       svlRGB color,
+                       svlDraw::Internals& internals)
+{
+    svlDrawHelper::TriangleInternals* triangledrawer = dynamic_cast<svlDrawHelper::TriangleInternals*>(internals.Get());
+    if (triangledrawer == 0) {
+        triangledrawer = new svlDrawHelper::TriangleInternals;
+        internals.Set(triangledrawer);
+    }
+    if (!triangledrawer->SetImage(image, videoch)) return;
+
+    triangledrawer->Draw(x1, y1, x2, y2, x3, y3, color);
+}
+
 void svlDraw::Poly(svlSampleImage* image,
                    unsigned int videoch,
                    const vctDynamicVectorRef<svlPoint2D> points,
@@ -385,5 +415,37 @@ void svlDraw::Text(svlSampleImage* image,
                    unsigned char b)
 {
     Text(image, videoch, svlPoint2D(x, y), text, fontsize, svlRGB(r, g, b));
+}
+
+
+/********************************/
+/*** svlDraw::Internals class ***/
+/********************************/
+
+svlDraw::Internals::Internals() :
+    Ptr(0)
+{
+}
+
+svlDraw::Internals::~Internals()
+{
+    Release();
+}
+
+svlDrawInternals* svlDraw::Internals::Get()
+{
+    return Ptr;
+}
+
+void svlDraw::Internals::Set(svlDrawInternals* ib)
+{
+    Release();
+    Ptr = ib;
+}
+
+void svlDraw::Internals::Release()
+{
+    if (Ptr) delete Ptr;
+    Ptr = 0;
 }
 

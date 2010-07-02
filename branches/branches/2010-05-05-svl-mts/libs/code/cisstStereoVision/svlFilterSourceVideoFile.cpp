@@ -46,7 +46,10 @@ svlFilterSourceVideoFile::svlFilterSourceVideoFile() :
     svlFilterSourceBase(false),  // manual timestamp management
     OutputImage(0),
     Framerate(-1.0),
-    FirstTimestamp(-1.0)
+    FirstTimestamp(-1.0),
+    SegmentFrom(-1),
+    SegmentTo(-1),
+    ResetTimer(false)
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);
@@ -56,7 +59,10 @@ svlFilterSourceVideoFile::svlFilterSourceVideoFile(unsigned int channelcount) :
     svlFilterSourceBase(false),  // manual timestamp management
     OutputImage(0),
     Framerate(-1.0),
-    FirstTimestamp(-1.0)
+    FirstTimestamp(-1.0),
+    SegmentFrom(-1),
+    SegmentTo(-1),
+    ResetTimer(false)
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);
@@ -146,11 +152,21 @@ int svlFilterSourceVideoFile::Process(svlProcInfo* procInfo, svlSample* &syncOut
 
     unsigned int idx, videochannels = OutputImage->GetVideoChannels();
     double timestamp, timespan;
-    int ret = SVL_OK;
+    int pos, ret = SVL_OK;
 
     _ParallelLoop(procInfo, idx, videochannels)
     {
         if (Codec[idx]) {
+
+            if (SegmentFrom >= 0 && SegmentFrom <= SegmentTo) {
+                // Check if position is outside of the playback segment
+                pos = Codec[idx]->GetPos();
+                if (pos < SegmentFrom || pos > SegmentTo) {
+                    Codec[idx]->SetPos(SegmentFrom);
+                    ResetTimer = true;
+                }
+            }
+
             ret = Codec[idx]->Read(0, *OutputImage, idx, true);
             if (ret == SVL_VID_END_REACHED) {
                 if (!LoopFlag) ret = SVL_STOP_REQUEST;
@@ -169,7 +185,7 @@ int svlFilterSourceVideoFile::Process(svlProcInfo* procInfo, svlSample* &syncOut
                     if (timestamp > 0.0) {
 
                         // Try to keep orignal frame intervals
-                        if (Codec[idx]->GetPos() == 1) {
+                        if (ResetTimer || Codec[idx]->GetPos() == 1) {
                             FirstTimestamp = timestamp;
                             Timer.Reset();
                             Timer.Start();
@@ -241,6 +257,34 @@ int svlFilterSourceVideoFile::GetFilePath(std::string &filepath, unsigned int vi
 {
     if (FilePath.size() <= videoch) return SVL_FAIL;
     filepath = FilePath[videoch];
+    return SVL_OK;
+}
+
+int svlFilterSourceVideoFile::GetLength(unsigned int videoch) const
+{
+    if (Codec.size() <= videoch) return SVL_FAIL;
+    return (Codec[videoch]->GetEndPos() + 1);
+}
+
+int svlFilterSourceVideoFile::SetPosition(const int position, unsigned int videoch)
+{
+    if (Codec.size() <= videoch) return SVL_FAIL;
+    Codec[videoch]->SetPos(position);
+    ResetTimer = true;
+    return SVL_OK;
+}
+
+int svlFilterSourceVideoFile::GetPosition(unsigned int videoch) const
+{
+    if (Codec.size() <= videoch) return SVL_FAIL;
+    return Codec[videoch]->GetPos();
+}
+
+int svlFilterSourceVideoFile::SetSegment(const int from_pos, const int to_pos, unsigned int videoch)
+{
+    if (Codec.size() <= videoch) return SVL_FAIL;
+    SegmentFrom = from_pos;
+    SegmentTo = to_pos;
     return SVL_OK;
 }
 

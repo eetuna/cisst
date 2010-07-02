@@ -29,14 +29,33 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlExport.h>
 
 
+// Forward declarations
+class svlDrawInternals;
+
+
 namespace svlDraw
 {
+    class CISST_EXPORT Internals
+    {
+    public:
+        Internals();
+        ~Internals();
+        svlDrawInternals* Get();
+        void Set(svlDrawInternals* ib);
+        void Release();
+    private:
+        svlDrawInternals* Ptr;
+    };
+
+
     void CISST_EXPORT Pixel(svlSampleImage* image, unsigned int videoch, svlPoint2D pos, svlRGB color);
     void CISST_EXPORT Pixel(svlSampleImage* image, unsigned int videoch, int x, int y, unsigned char r, unsigned char g, unsigned char b);
     void CISST_EXPORT Rectangle(svlSampleImage* image, unsigned int videoch, svlRect rect, svlRGB color, bool fill = true);
     void CISST_EXPORT Rectangle(svlSampleImage* image, unsigned int videoch, int left, int top, int right, int bottom, unsigned char r, unsigned char g, unsigned char b, bool fill = true);
     void CISST_EXPORT Line(svlSampleImage* image, unsigned int videoch, svlPoint2D from, svlPoint2D to, svlRGB color);
     void CISST_EXPORT Line(svlSampleImage* image, unsigned int videoch, int from_x, int from_y, int to_x, int to_y, unsigned char r, unsigned char g, unsigned char b);
+    void CISST_EXPORT Triangle(svlSampleImage* image, unsigned int videoch, svlPoint2D corner1, svlPoint2D corner2, svlPoint2D corner3, svlRGB color, svlDraw::Internals& internals);
+    void CISST_EXPORT Triangle(svlSampleImage* image, unsigned int videoch, int x1, int y1, int x2, int y2, int x3, int y3, svlRGB color, svlDraw::Internals& internals);
     void CISST_EXPORT Poly(svlSampleImage* image, unsigned int videoch, const vctDynamicVectorRef<svlPoint2D> points, svlRGB color, unsigned int start = 0);
     void CISST_EXPORT Ellipse(svlSampleImage* image, unsigned int videoch, svlPoint2D center, vctInt2 radii, svlRGB color, double from_angle = 0.0, double to_angle = 360.0, double rotation = 0.0, int thickness = 1);
     void CISST_EXPORT Crosshair(svlSampleImage* image, unsigned int videoch, svlPoint2D pos, svlRGB color, unsigned int radius = 5);

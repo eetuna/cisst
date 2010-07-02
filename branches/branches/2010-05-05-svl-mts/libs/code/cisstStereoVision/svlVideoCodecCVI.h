@@ -44,6 +44,7 @@ public:
     virtual int GetBegPos() const;
     virtual int GetEndPos() const;
     virtual int GetPos() const;
+    virtual int SetPos(const int pos);
 
     virtual svlVideoIO::Compression* GetCompression() const;
     virtual int SetCompression(const svlVideoIO::Compression *compression);
@@ -57,10 +58,12 @@ public:
 
 protected:
     const std::string CodecName;
-    const std::string FileStartMarker;
+    const vctFixedSizeVector<std::string, 2> FileStartMarker;
     const std::string FrameStartMarker;
 
+    int Version;
     std::fstream* File;
+    long long int FrameIndexPointer;
     unsigned int PartCount;
     unsigned int Width;
     unsigned int Height;
@@ -70,6 +73,8 @@ protected:
     bool Opened;
     bool Writing;
     double Timestamp;
+
+    vctDynamicVector<long long int> FrameIndex;
 
     unsigned char* yuvBuffer;
     unsigned int yuvBufferSize;

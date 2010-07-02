@@ -423,4 +423,16 @@ int main(int argc, char** argv)
     cerr << "Quit" << endl;
     return 1;
 }
+/*
+void Func()
+{
+    svlFilterImageResizer resizer;
+
+    svlFilterImageResizer::Config config = resizer.GetConfig();
+
+    config.SetOutputDimensions(320, 240, SVL_LEFT);
+    config.SetInterpolation(true);
+
+}
+*/
 

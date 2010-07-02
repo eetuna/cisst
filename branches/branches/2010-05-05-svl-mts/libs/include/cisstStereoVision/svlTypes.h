@@ -223,6 +223,7 @@ public:
     virtual unsigned int GetBPP() const = 0;
     virtual unsigned int GetWidth(const unsigned int videochannel = 0) const = 0;
     virtual unsigned int GetHeight(const unsigned int videochannel = 0) const = 0;
+    virtual unsigned int GetRowStride(const unsigned int videochannel = 0) const = 0;
     virtual unsigned int GetDataSize(const unsigned int videochannel) const = 0;
 };
 
@@ -527,6 +528,12 @@ public:
     unsigned int GetHeight(const unsigned int videochannel = 0) const
     {
         if (videochannel < _VideoChannels && Image[videochannel]) return Image[videochannel]->height();
+        return 0;
+    }
+
+    unsigned int GetRowStride(const unsigned int videochannel = 0) const
+    {
+        if (videochannel < _VideoChannels && Image[videochannel]) return Image[videochannel]->width();
         return 0;
     }
 

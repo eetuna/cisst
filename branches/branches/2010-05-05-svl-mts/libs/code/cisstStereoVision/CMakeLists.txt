@@ -46,9 +46,11 @@ SET(SOURCE_FILES
     svlBufferSample.cpp
     svlBufferImage.cpp
     svlConverters.cpp
-    svlImageProcessingHelper.h     # private header
+    svlImageProcessingHelper.h    # private header
     svlImageProcessingHelper.cpp
     svlImageProcessing.cpp
+    svlDrawHelper.h               # private header
+    svlDrawHelper.cpp
     svlDraw.cpp
     svlOverlayObjects.cpp
 

@@ -21,7 +21,6 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlOverlayObjects.h>
-#include <cisstStereoVision/svlDraw.h>
 
 
 /****************************/
@@ -734,6 +733,126 @@ bool svlOverlayStaticRect::GetFill() const
 void svlOverlayStaticRect::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_UNUSED(input))
 {
     svlDraw::Rectangle(bgimage, VideoCh, Rect, Color, Fill);
+}
+
+
+/**************************************/
+/*** svlOverlayStaticTriangle class ***/
+/**************************************/
+
+svlOverlayStaticTriangle::svlOverlayStaticTriangle() :
+    svlOverlay(),
+    Color(255, 255, 255),
+    Fill(true)
+{
+    DrawInternals = new svlDraw::Internals;
+}
+
+svlOverlayStaticTriangle::svlOverlayStaticTriangle(unsigned int videoch,
+                                                   bool visible,
+                                                   const svlPoint2D corner1,
+                                                   const svlPoint2D corner2,
+                                                   const svlPoint2D corner3,
+                                                   svlRGB color,
+                                                   bool fill) :
+    svlOverlay(videoch, visible),
+    Corner1(corner1),
+    Corner2(corner2),
+    Corner3(corner3),
+    Color(color),
+    Fill(fill)
+{
+    DrawInternals = new svlDraw::Internals;
+}
+
+svlOverlayStaticTriangle::svlOverlayStaticTriangle(unsigned int videoch,
+                                                   bool visible,
+                                                   const int x1, const int y1,
+                                                   const int x2, const int y2,
+                                                   const int x3, const int y3,
+                                                   svlRGB color,
+                                                   bool fill) :
+    svlOverlay(videoch, visible),
+    Corner1(x1, y1),
+    Corner2(x2, y2),
+    Corner3(x3, y3),
+    Color(color),
+    Fill(fill)
+{
+    DrawInternals = new svlDraw::Internals;
+}
+
+svlOverlayStaticTriangle::~svlOverlayStaticTriangle()
+{
+    delete DrawInternals;
+}
+
+void svlOverlayStaticTriangle::SetCorners(const svlPoint2D corner1,
+                                          const svlPoint2D corner2,
+                                          const svlPoint2D corner3)
+{
+    Corner1 = corner1;
+    Corner2 = corner2;
+    Corner3 = corner3;
+}
+
+void svlOverlayStaticTriangle::SetCorners(const int x1, const int y1,
+                                          const int x2, const int y2,
+                                          const int x3, const int y3)
+{
+    Corner1.Assign(x1, y1);
+    Corner2.Assign(x2, y2);
+    Corner3.Assign(x3, y3);
+}
+
+void svlOverlayStaticTriangle::SetColor(svlRGB color)
+{
+    Color = color;
+}
+
+void svlOverlayStaticTriangle::SetFill(bool fill)
+{
+    Fill = fill;
+}
+
+void svlOverlayStaticTriangle::GetCorners(svlPoint2D& corner1,
+                                          svlPoint2D& corner2,
+                                          svlPoint2D& corner3) const
+{
+    corner1 = Corner1;
+    corner2 = Corner2;
+    corner3 = Corner3;
+}
+
+void svlOverlayStaticTriangle::GetCorners(int& x1, int& y1,
+                                          int& x2, int& y2,
+                                          int& x3, int& y3) const
+{
+    x1 = Corner1.x; y1 = Corner1.y;
+    x2 = Corner2.x; y2 = Corner2.y;
+    x3 = Corner3.x; y3 = Corner3.y;
+}
+
+svlRGB svlOverlayStaticTriangle::GetColor() const
+{
+    return Color;
+}
+
+bool svlOverlayStaticTriangle::GetFill() const
+{
+    return Fill;
+}
+
+void svlOverlayStaticTriangle::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_UNUSED(input))
+{
+    if (Fill) {
+        svlDraw::Triangle(bgimage, VideoCh, Corner1, Corner2, Corner3, Color, DrawInternals[0]);
+    }
+    else {
+        svlDraw::Line(bgimage, VideoCh, Corner1, Corner2, Color);
+        svlDraw::Line(bgimage, VideoCh, Corner2, Corner3, Color);
+        svlDraw::Line(bgimage, VideoCh, Corner3, Corner1, Color);
+    }
 }
 
 

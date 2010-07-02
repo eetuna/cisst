@@ -240,7 +240,7 @@ int svlVideoCodecVfW32::GetPos() const
 
 int svlVideoCodecVfW32::SetPos(const int pos)
 {
-    if (pos < BegPos || pos >= EndPos) return SVL_FAIL;
+    if (pos < 0 || pos >= EndPos) return SVL_FAIL;
     Pos = pos;
     return SVL_OK;
 }
