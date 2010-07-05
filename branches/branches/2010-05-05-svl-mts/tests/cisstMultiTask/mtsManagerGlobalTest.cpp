@@ -179,7 +179,6 @@ void mtsManagerGlobalTest::TestGetConnectionsOfInterfaceProvided(void)
     CPPUNIT_ASSERT(managerGlobal.AddInterfaceRequired(P2, C3, r1));
 
     // Connect two interfaces
-    int userId;
     CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1) != -1);
 
     // Check if connection information is correct
@@ -247,7 +246,6 @@ void mtsManagerGlobalTest::TestGetConnectionsOfInterfaceRequired(void)
     CPPUNIT_ASSERT(managerGlobal.AddInterfaceProvided(P2, C2, p1));
 
     // Connect two interfaces
-    int userId;
     CPPUNIT_ASSERT(managerGlobal.Connect(P2, P2, C3, r1, P2, C2, p1) != -1);
 
     // Check if connection information is correct
@@ -657,7 +655,6 @@ void mtsManagerGlobalTest::TestConnectLocal(void)
     mtsManagerGlobal managerGlobal;
 
     // Test if invalid arguments are handled properly
-    int userId;
     CPPUNIT_ASSERT(managerGlobal.Connect(P1, P1, C1, r1, P2, C2, p1) == -1);
 
     CPPUNIT_ASSERT(managerGlobal.AddProcess(P1));

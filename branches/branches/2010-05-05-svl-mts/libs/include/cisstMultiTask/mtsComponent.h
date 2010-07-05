@@ -143,6 +143,12 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     /*! Get the provided interface */
     mtsInterfaceProvided * GetInterfaceProvided(const std::string & interfaceProvidedName) const;
 
+    /*! Get the total number of provided interfaces */
+    size_t GetNumberOfInterfacesProvided(void) const;
+
+    /*! Remove the provided interface */
+    bool RemoveInterfaceProvided(const std::string & interfaceProvidedName);
+
     /*! Add a required interface.  This interface will later on be
       connected to another task and use the provided interface of the
       other task.  The required interface created also contains a list
@@ -168,6 +174,12 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     /*! Get the required interface */
     mtsInterfaceRequired * GetInterfaceRequired(const std::string & interfaceRequired);
+
+    /*! Get the total number of required interfaces */
+    size_t GetNumberOfInterfacesRequired(void) const;
+
+    /*! Remove the required interface */
+    bool RemoveInterfaceRequired(const std::string & interfaceRequiredName);
 
     /*! Connect a required interface, used by mtsTaskManager */
     bool ConnectInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName,

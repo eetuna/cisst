@@ -122,7 +122,7 @@ void mtsManagerLocalTest::TestAddComponent(void)
 {
     mtsManagerLocal localManager1;
     
-    // Test with mtsDevice type components
+    // Test with mtsComponent type components
     mtsManagerTestC2Device * c2Device = new mtsManagerTestC2Device;
 
     // Invalid argument test
@@ -185,7 +185,7 @@ void mtsManagerLocalTest::TestFindComponent(void)
 
 void mtsManagerLocalTest::TestRemoveComponent(void)
 {
-    // Test with mtsDevice type components
+    // Test with mtsComponent type components
     mtsManagerLocal localManager1;
     mtsManagerTestC1Device * c1Device = new mtsManagerTestC1Device;
     const std::string componentName1 = c1Device->GetName();
@@ -205,7 +205,7 @@ void mtsManagerLocalTest::TestRemoveComponent(void)
     CPPUNIT_ASSERT(localManager1.RemoveComponent(c1Device));
     CPPUNIT_ASSERT(!localManager1.FindComponent(componentName1));
 
-    // Test with mtsDevice type components
+    // Test with mtsComponent type components
     mtsManagerLocal localManager2;
     mtsManagerTestC1 * c1Task = new mtsManagerTestC1;
     const std::string componentName2 = c1Task->GetName();
@@ -536,8 +536,8 @@ void mtsManagerLocalTest::TestConnectLocally(void)
     mtsManagerTestC1Device * client = new mtsManagerTestC1Device;
     mtsManagerTestC2Device * server = new mtsManagerTestC2Device;
 
-#define FAIL -1
-#define SUCCESS 0
+#define FAIL    false
+#define SUCCESS true
     // test with invalid arguments
     CPPUNIT_ASSERT_EQUAL(FAIL, localManager.ConnectLocally("", "", "", ""));
     

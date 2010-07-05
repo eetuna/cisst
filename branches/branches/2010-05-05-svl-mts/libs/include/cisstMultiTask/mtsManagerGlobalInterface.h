@@ -136,9 +136,6 @@ public:
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
         \param serverInterfaceProvidedName Name of server's provided interface
-        \param userId User Id that provided interface allocates for this connection.
-                -1 if error occurs, zero if successful in standalone configuration,
-                non-zero positive value if successful in networked configuration
         \return Connect session id issued by the global component manager.
                 Session id is used to clean up pending connections (which was 
                 requested but not yet established) after timeout.
@@ -186,9 +183,6 @@ public:
                server side
         \param connectionID Connection id issued by GCM's Connect(). Used to
                look up user id for server side connection.
-        \param providedInterfaceProxyInstanceID Instance id of provided 
-               interface proxy. Used to set unique id of proxy client (of type
-               mtsComponentInterfaceProxyClient).
         \param clientProcessName Name of client process
         \param clientComponentName Name of client component
         \param clientInterfaceRequiredName Name of required interface
@@ -196,8 +190,7 @@ public:
         \param serverComponentName Name of server component
         \param serverInterfaceProvidedName Name of provided interface
         \return True if success, false otherwise */
-    virtual bool ConnectServerSideInterfaceRequest(
-        const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
+    virtual bool ConnectServerSideInterfaceRequest(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) = 0;
 #endif
@@ -242,7 +235,7 @@ public:
         \param serverProcessName Name of server process
         \param serverComponentName Name of server component
         \param serverInterfaceProvidedName Name of provided interface
-        \param endpointInfo Endpoint access information to be populated
+        \param endpointInfo [out] Endpoint access information
         \return True if success, false otherwise
         \note If there is no provided interface proxy running in the client
               process, the first three arguments ought to be provided properly.

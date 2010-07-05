@@ -138,12 +138,12 @@ public:
     void Run(void) {}
 };
 
-class mtsManagerTestC1Device : public mtsDevice
+class mtsManagerTestC1Device : public mtsComponent
 {
 public:
     mtsManagerTestInterfaceRequired InterfaceRequired1, InterfaceRequired2;
 
-    mtsManagerTestC1Device() : mtsDevice("C1")
+    mtsManagerTestC1Device() : mtsComponent("C1")
     {
         mtsInterfaceRequired * required;
 
@@ -225,13 +225,13 @@ public:
     void Run(void) {}
 };
 
-class mtsManagerTestC2Device : public mtsDevice
+class mtsManagerTestC2Device : public mtsComponent
 {
 public:
     mtsManagerTestInterfaceProvided InterfaceProvided1, InterfaceProvided2;
     mtsManagerTestInterfaceRequired InterfaceRequired1;
 
-    mtsManagerTestC2Device() : mtsDevice("C2")
+    mtsManagerTestC2Device() : mtsComponent("C2")
     {
         mtsInterfaceRequired * required;
         mtsInterfaceProvided * provided;
@@ -305,12 +305,12 @@ public:
     void Run(void) {}
 };
 
-class mtsManagerTestC3Device : public mtsDevice
+class mtsManagerTestC3Device : public mtsComponent
 {
 public:
     mtsManagerTestInterfaceRequired InterfaceRequired1;
 
-    mtsManagerTestC3Device() : mtsDevice("C3")
+    mtsManagerTestC3Device() : mtsComponent("C3")
     {
         mtsInterfaceRequired * required;
 

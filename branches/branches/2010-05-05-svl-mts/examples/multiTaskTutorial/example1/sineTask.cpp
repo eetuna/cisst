@@ -15,7 +15,7 @@ sineTask::sineTask(const std::string & taskName, double period):
 {
     // add SineData to the StateTable defined in mtsTask
     StateTable.AddData(SineData, "SineData");
-    // add one interface, this will create an mtsTaskInterface
+    // add one interface, this will create an mtsInterfaceProvided
     mtsInterfaceProvided * provided = AddInterfaceProvided("MainInterface");
     if (provided) {
         // add command to access state table values to the interface

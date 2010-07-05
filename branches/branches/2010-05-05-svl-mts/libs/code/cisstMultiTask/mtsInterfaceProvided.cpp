@@ -497,21 +497,33 @@ std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsWrite(void) con
 
 
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsRead(void) const {
+    if (this->OriginalInterface) {
+        return this->OriginalInterface->CommandsRead.GetNames();
+    }
     return CommandsRead.GetNames();
 }
 
 
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsQualifiedRead(void) const {
+    if (this->OriginalInterface) {
+        return this->OriginalInterface->CommandsQualifiedRead.GetNames();
+    }
     return CommandsQualifiedRead.GetNames();
 }
 
 
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfEventsVoid(void) const {
+    if (this->OriginalInterface) {
+        return this->OriginalInterface->EventVoidGenerators.GetNames();
+    }
     return EventVoidGenerators.GetNames();
 }
 
 
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfEventsWrite(void) const {
+    if (this->OriginalInterface) {
+        return this->OriginalInterface->EventWriteGenerators.GetNames();
+    }
     return EventWriteGenerators.GetNames();
 }
 
@@ -555,6 +567,22 @@ mtsCommandQualifiedReadBase * mtsInterfaceProvided::GetCommandQualifiedRead(cons
         return this->OriginalInterface->GetCommandQualifiedRead(commandName);
     }
     return CommandsQualifiedRead.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
+}
+
+
+mtsMulticastCommandVoid * mtsInterfaceProvided::GetEventVoid(const std::string & eventName) const {
+    if (this->OriginalInterface) {
+        return this->OriginalInterface->GetEventVoid(eventName);
+    }
+    return EventVoidGenerators.GetItem(eventName, CMN_LOG_LOD_INIT_ERROR);
+}
+
+
+mtsMulticastCommandWriteBase * mtsInterfaceProvided::GetEventWrite(const std::string & eventName) const {
+    if (this->OriginalInterface) {
+        return this->OriginalInterface->GetEventWrite(eventName);
+    }
+    return EventWriteGenerators.GetItem(eventName, CMN_LOG_LOD_INIT_ERROR);
 }
 
 

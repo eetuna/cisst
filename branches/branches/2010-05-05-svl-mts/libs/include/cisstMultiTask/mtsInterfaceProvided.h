@@ -168,6 +168,12 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
 
+    /*! Find an event based on its name. */
+    //@{
+    mtsMulticastCommandVoid * GetEventVoid(const std::string & eventName) const;
+    mtsMulticastCommandWriteBase * GetEventWrite(const std::string & eventName) const;
+    //@}
+
 
     /*! Add a void command to the provided interface based on a method
       and an object instantiating the method.  This method creates an

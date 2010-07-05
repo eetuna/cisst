@@ -257,19 +257,19 @@ bool mtsComponentInterfaceProxyServer::AddPerCommandSerializer(const CommandIDTy
     return true;
 }
 
-bool mtsComponentInterfaceProxyServer::AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
+bool mtsComponentInterfaceProxyServer::AddConnectionInformation(const unsigned int connectionID,
     const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
     const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
-    ConnectionStringMapType::iterator it = ConnectionStringMap.find(providedInterfaceProxyInstanceID);
+    ConnectionStringMapType::iterator it = ConnectionStringMap.find(connectionID);
     if (it != ConnectionStringMap.end()) {
-        LogError(mtsComponentInterfaceProxyServer, "AddConnectionInformation: failed to add connection information: " << providedInterfaceProxyInstanceID << std::endl);
+        LogError(mtsComponentInterfaceProxyServer, "AddConnectionInformation: failed to add connection information: " << connectionID << std::endl);
         return false;
     }
 
     ConnectionStrings element(clientProcessName, clientComponentName, clientInterfaceRequiredName,
                               serverProcessName, serverComponentName, serverInterfaceProvidedName);
-    ConnectionStringMap.insert(std::make_pair(providedInterfaceProxyInstanceID, element));
+    ConnectionStringMap.insert(std::make_pair(connectionID, element));
 
     return true;
 }
@@ -350,7 +350,7 @@ bool mtsComponentInterfaceProxyServer::SendFetchFunctionProxyPointers(
     }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendFetchFunctionProxyPointers: provided interface proxy instance id: " << clientID);
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendFetchFunctionProxyPointers: client id: " << clientID);
 #endif
 
     try {
@@ -635,18 +635,18 @@ void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::Shutdown(const
 }
 
 bool mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::FetchEventGeneratorProxyPointers(
-    const std::string & requiredInterfaceName, const std::string & providedInterfaceName,
+    const std::string & clientComponentName, const std::string & requiredInterfaceName,
     mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers,
     const ::Ice::Current & current) const
 {
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: FetchEventGeneratorProxyPointers: req.int=" << requiredInterfaceName << ", prv.int=" << providedInterfaceName);
+    LogPrint(ComponentInterfaceServerI, "<<<<< RECV: FetchEventGeneratorProxyPointers: " << clientComponentName << ", " << requiredInterfaceName);
 #endif
 
     const ConnectionIDType connectionID = current.ctx.find(mtsComponentInterfaceProxyServer::ConnectionIDKey)->second;
 
     return ComponentInterfaceProxyServer->ReceiveFetchEventGeneratorProxyPointers(
-        connectionID, requiredInterfaceName, providedInterfaceName, eventGeneratorProxyPointers);
+        connectionID, clientComponentName, requiredInterfaceName, eventGeneratorProxyPointers);
 }
 
 void mtsComponentInterfaceProxyServer::ComponentInterfaceServerI::ExecuteEventVoid(

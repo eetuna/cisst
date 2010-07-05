@@ -30,9 +30,9 @@ http://www.cisst.org/cisst/license.txt.
 unsigned int mtsComponentInterfaceProxyClient::InstanceCounter = 0;
 
 mtsComponentInterfaceProxyClient::mtsComponentInterfaceProxyClient(
-    const std::string & serverEndpointInfo, const unsigned int providedInterfaceProxyInstanceID)
+    const std::string & serverEndpointInfo, const unsigned int connectionID)
     : BaseClientType("config.client", serverEndpointInfo),
-      InterfaceProvidedProxyInstanceID(providedInterfaceProxyInstanceID)
+      ConnectionID(connectionID)
 {
     ProxyName = "ComponentInterfaceProxyServer";
 }
@@ -79,7 +79,7 @@ bool mtsComponentInterfaceProxyClient::Start(mtsComponentProxy * proxyOwner)
     SetProxyOwner(proxyOwner, thisProcessName);
 
     // Connect to server proxy by adding this ICE proxy client to server
-    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) InterfaceProvidedProxyInstanceID, ident)) {
+    if (!ComponentInterfaceServerProxy->AddClient(GetProxyName(), (::Ice::Int) ConnectionID, ident)) {
         LogError(mtsComponentInterfaceProxyClient, "AddClient() failed: duplicate proxy name or identity");
         return false;
     }

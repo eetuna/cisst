@@ -71,7 +71,7 @@ protected:
     };
 
     /*! Map to fetch a ConnectionStrings instance by client id.
-        key=(client id defined as provided interface instance id)
+        key=(client id)
         value=(an instance of ConnectionStrings)
 
         This map is used to disconnect currently established connection when a
@@ -154,7 +154,7 @@ public:
 
     /*! Register connection information which is used to clean up a logical
         connection when a network proxy client is detected as disconnected. */
-    bool AddConnectionInformation(const unsigned int providedInterfaceProxyInstanceID,
+    bool AddConnectionInformation(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 

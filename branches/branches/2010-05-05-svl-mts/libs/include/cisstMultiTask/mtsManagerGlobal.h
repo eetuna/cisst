@@ -241,8 +241,8 @@ protected:
     /*! Typedef to get user id using connection id.  User id is set by provided
         interface's AllocatedResources()
         (see mtsManagerLocal::GetInterfaceProvidedDescription() for details). */
-    typedef std::map<unsigned int, int> UserIDMapType;
-    UserIDMapType UserIDMap;
+    //typedef std::map<unsigned int, int> UserIDMapType;
+    //UserIDMapType UserIDMap;
 
 #if CISST_MTS_HAS_ICE
     /*! Network proxy server */
@@ -346,8 +346,7 @@ public:
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
-    bool ConnectServerSideInterfaceRequest(
-        const unsigned int connectionID, const unsigned int providedInterfaceProxyInstanceID,
+    bool ConnectServerSideInterfaceRequest(const unsigned int connectionID,
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 #endif
@@ -484,6 +483,15 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
         const std::string & endpointInfo);
 
+    /*! \brief Fetch information to access (connect to) network proxy server
+        \param clientProcessName Name of client process
+        \param clientComponentName Name of client component
+        \param clientInterfaceRequiredName Name of required interface
+        \param serverProcessName Name of server process
+        \param serverComponentName Name of server component
+        \param serverInterfaceProvidedName Name of provided interface
+        \param [out] endpointInfo Access information
+        \return True if success, false otherwise */
     bool GetInterfaceProvidedProxyAccessInfo(
         const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,

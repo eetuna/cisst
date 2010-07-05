@@ -16,7 +16,7 @@ serverTask<_dataType>::serverTask(const std::string & taskName, double period):
 {
     // add ServerData to the StateTable defined in mtsTask
     this->StateTable.AddData(ReadValue, "ReadValue");
-    // add one interface, this will create an mtsTaskInterface
+    // add one interface, this will create an mtsInterfaceProvided
     mtsInterfaceProvided * provided = AddInterfaceProvided("Provided");
     if (provided) {
         provided->AddCommandVoid(&serverTask<_dataType>::Void, this, "Void");
