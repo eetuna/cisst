@@ -2026,6 +2026,11 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int connectionID
 
     // Information to access (connect to) network interface proxy server.
     std::string serverEndpointInfo;
+    mtsComponentProxy * clientComponentProxy;
+
+    int numTrial = 0;
+    const int maxTrial = 10;
+    const double sleepTime = 200 * cmn_ms;
 
     // Get component proxy object. Note that this process is a server process
     // and the client component is a proxy, not an original component.
@@ -2035,7 +2040,7 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int connectionID
         CMN_LOG_CLASS_INIT_ERROR << "ConnectServerSideInterface: failed to get client component: " << clientComponentProxyName << std::endl;
         goto ConnectServerSideInterfaceError;
     }
-    mtsComponentProxy * clientComponentProxy = dynamic_cast<mtsComponentProxy *>(clientComponent);
+    clientComponentProxy = dynamic_cast<mtsComponentProxy *>(clientComponent);
     if (!clientComponentProxy) {
         CMN_LOG_CLASS_INIT_ERROR << "ConnectServerSideInterface: client component is not a proxy: " << clientComponentProxyName << std::endl;
         goto ConnectServerSideInterfaceError;
@@ -2050,9 +2055,6 @@ bool mtsManagerLocal::ConnectServerSideInterface(const unsigned int connectionID
     // component manager for five times.  After these trials without success, 
     // this method returns false, resulting in disconnecting and cleaning up the
     // current pending connection.
-    int numTrial = 0;
-    const int maxTrial = 10;
-    const double sleepTime = 200 * cmn_ms;
 
     // Fecth proxy server's access information from the GCM
     while (++numTrial <= maxTrial) {
@@ -2141,6 +2143,8 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     const std::string & CMN_UNUSED(listenerID))
 {
     std::string endpointAccessInfo, communicatorId;
+    mtsComponent *clientComponent, *serverComponent;
+    mtsComponentProxy *serverComponentProxy;
 
     // Get actual names of components (either a client component or a server
     // component should be a proxy object).
@@ -2160,19 +2164,19 @@ bool mtsManagerLocal::ConnectClientSideInterface(const unsigned int connectionID
     CMN_LOG_CLASS_INIT_VERBOSE << "ConnectClientSideInterface: successfully established local connection at client process." << std::endl;
 
     // Get components
-    mtsComponent * serverComponent = GetComponent(actualServerComponentName);
+    serverComponent = GetComponent(actualServerComponentName);
     if (!serverComponent) {
         CMN_LOG_CLASS_INIT_ERROR << "ConnectClientSideInterface: failed to get server component: " << actualServerComponentName << std::endl;
         goto ConnectClientSideInterfaceError;
     }
-    mtsComponent * clientComponent = GetComponent(actualClientComponentName);
+    clientComponent = GetComponent(actualClientComponentName);
     if (!clientComponent) {
         CMN_LOG_CLASS_INIT_ERROR << "ConnectClientSideInterface: failed to get client component: " << actualClientComponentName << std::endl;
         goto ConnectClientSideInterfaceError;
     }
 
     // Downcast to server component proxy
-    mtsComponentProxy * serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
+    serverComponentProxy = dynamic_cast<mtsComponentProxy *>(serverComponent);
     if (!serverComponentProxy) {
         CMN_LOG_CLASS_INIT_ERROR << "ConnectClientSideInterface: server component is not a proxy object: " << serverComponent->GetName() << std::endl;
         goto ConnectClientSideInterfaceError;

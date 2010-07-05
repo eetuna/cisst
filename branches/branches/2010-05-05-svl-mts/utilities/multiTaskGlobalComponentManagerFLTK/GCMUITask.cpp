@@ -158,7 +158,7 @@ void callbackPopupSignalSelectionMenu(Fl_Widget * w, void *userdata)
     const Fl_Menu_Item * m = popupMenus->popup(Fl::event_x(), Fl::event_y(), 0, 0, 0);
     if (m) {
         GCMUITask::SignalSelected * signal = new GCMUITask::SignalSelected;
-        signal->Index = (int) m->user_data();
+        signal->Index = reinterpret_cast<int>(m->user_data());
         signal->ProcessName = processName;
         signal->ComponentName = componentName;
         signal->InterfaceName = interfaceName;
@@ -740,7 +740,7 @@ void GCMUITask::PopulateRequiredInterfaces(const std::string & processName, cons
 
     // Get all names of provided interfaces in the component
     StringVector names;
-    GlobalComponentManager.GetNamesOfRequiredInterfaces(processName, componentName, names);
+    GlobalComponentManager.GetNamesOfInterfaceRequired(processName, componentName, names);
 
     for (StringVector::size_type i = 0; i < names.size(); ++i) {
         AddLineToBrowser(UI.BrowserRequiredInterfaces, names[i].c_str());
