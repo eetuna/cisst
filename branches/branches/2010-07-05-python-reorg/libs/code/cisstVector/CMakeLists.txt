@@ -199,3 +199,10 @@ if (CISST_HAS_OPENGL AND CISST_HAS_FLTK)
                  vctExportFLTK.h)
 
 endif (CISST_HAS_OPENGL AND CISST_HAS_FLTK)
+
+# Python wrappers
+if (CISST_HAS_SWIG_PYTHON)
+  cisst_add_swig_module(MODULE cisstVector
+                        INTERFACE_DIRECTORY ../../include/cisstVector
+			CISST_LIBRARIES cisstCommon cisstVector)
+endif (CISST_HAS_SWIG_PYTHON)

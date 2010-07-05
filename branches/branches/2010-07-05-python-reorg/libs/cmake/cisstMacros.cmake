@@ -228,6 +228,92 @@ endfunction (cisst_target_link_libraries)
 
 
 
+
+
+# The function adds a SWIG module to a CISST-related project by processing the
+# following parameters
+#
+# - MODULE is the prefix of the main .i file
+# - INTERFACE_DIRECTORY is the directory containing the .i file (use relative path from current source dir)
+#
+function (cisst_add_swig_module ...)
+  # debug
+  cisst_cmake_debug ("cisst_add_library called with: ${ARGV}")
+
+  # set all keywords and their values to ""
+  set (FUNCTION_KEYWORDS
+       MODULE INTERFACE_DIRECTORY CISST_LIBRARIES)
+
+  # reset local variables
+  foreach(keyword ${FUNCTION_KEYWORDS})
+    set (${keyword} "")
+  endforeach(keyword)
+
+  # parse input
+  foreach (arg ${ARGV})
+    list (FIND FUNCTION_KEYWORDS ${arg} ARGUMENT_IS_A_KEYWORD)
+    if (${ARGUMENT_IS_A_KEYWORD} GREATER -1)
+      set (CURRENT_PARAMETER ${arg})
+      set (${CURRENT_PARAMETER} "")
+    else (${ARGUMENT_IS_A_KEYWORD} GREATER -1)
+      set (${CURRENT_PARAMETER} ${${CURRENT_PARAMETER}} ${arg})
+    endif (${ARGUMENT_IS_A_KEYWORD} GREATER -1)
+  endforeach (arg)
+
+  # debug
+  foreach (keyword ${FUNCTION_KEYWORDS})
+    cisst_cmake_debug ("cisst_add_library: ${keyword}: ${${keyword}}")
+  endforeach (keyword)
+
+  set (SWIG_INTERFACE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${INTERFACE_DIRECTORY}/${MODULE}.i)
+  cisst_cmake_debug ("cisst_add_swig_module: looking for interface file ${SWIG_INTERFACE_FILE}")
+
+  if (EXISTS ${SWIG_INTERFACE_FILE})
+    # create a directory in build tree
+    file (MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${INTERFACE_DIRECTORY}) 
+    # we are using C++ code
+    set_source_files_properties (${SWIG_INTERFACE_FILE} PROPERTIES CPLUSPLUS ON)
+    # make sure the runtime code is not included
+    set_source_files_properties (${SWIG_INTERFACE_FILE}
+                                 PROPERTIES SWIG_FLAGS "-v;-modern;-fcompact;-fvirtual")
+    set (MODULE_NAME ${MODULE}Python)
+    swig_add_module (${MODULE_NAME} python ${SWIG_INTERFACE_FILE})
+    if (WIN32)
+      set_target_properties (_${MODULE_NAME} PROPERTIES SUFFIX .pyd)
+      set_target_properties (_${MODULE_NAME} PROPERTIES DEBUG_POSTFIX "_d")
+    endif (WIN32)
+    swig_link_libraries (${MODULE_NAME} ${CISST_LIBRARIES}
+                         debug ${PYTHON_DEBUG_LIBRARIES}
+                         optimized ${PYTHON_LIBRARIES})
+
+    # copy the .py file generated to wherever the libraries are
+    add_custom_command (TARGET _${MODULE_NAME}
+                        POST_BUILD
+                        COMMAND ${CMAKE_COMMAND}
+                        ARGS -E copy_if_different
+                                ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}.py
+                                ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/${MODULE_NAME}.py)
+    # create a cisstCommon.py as CMake assumes one should be created
+    # this is a bug that should be fixed in future releases of CMake.
+    add_custom_command (TARGET _${MODULE_NAME}
+                        POST_BUILD
+                        COMMAND ${CMAKE_COMMAND}
+                        ARGS -E copy_if_different
+                                ${CMAKE_CURRENT_BINARY_DIR}/${MODULE_NAME}.py
+                                ${CMAKE_CURRENT_BINARY_DIR}/${MODULE}.py)
+    # install the interface files so that one can %import them
+    install_files (/include
+                   ".i"
+                   ${INTERFACE})
+
+  else (EXISTS ${SWIG_INTERFACE_FILE})
+    message ("Can't file SWIG interface file for ${MODULE}: ${SWIG_INTERFACE_FILE}")
+  endif (EXISTS ${SWIG_INTERFACE_FILE})
+
+endfunction (cisst_add_swig_module)
+
+
+
 # DEPRECATED, USE cisst_add_library INSTEAD
 # The macro adds a library to a CISST-related project by processing the
 # externally defined variables listed below:

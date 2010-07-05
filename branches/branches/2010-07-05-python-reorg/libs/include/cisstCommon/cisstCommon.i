@@ -47,8 +47,15 @@ http://www.cisst.org/cisst/license.txt.
 %include "swigrun.i"
 
 %header %{
-    // Put header files here
-    #include "cisstCommon/cisstCommon.i.h"
+// Put header files here
+#include <cisstCommon/cmnGenericObject.h>
+#include <cisstCommon/cmnGenericObjectProxy.h>
+#include <cisstCommon/cmnObjectRegister.h>
+#include <cisstCommon/cmnClassServicesBase.h>
+#include <cisstCommon/cmnClassRegister.h>
+#include <cisstCommon/cmnTypeTraits.h>
+#include <cisstCommon/cmnCallbackStreambuf.h>
+#include <cisstCommon/cmnPath.h>
 %}
 
 // Generate parameter documentation for IRE

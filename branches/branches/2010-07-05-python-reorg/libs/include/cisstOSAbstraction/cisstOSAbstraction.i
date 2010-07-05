@@ -37,8 +37,10 @@ http://www.cisst.org/cisst/license.txt.
 %import "cisstCommon/cisstCommon.i"
 
 %header %{
-    // Put header files here
-    #include "cisstOSAbstraction/cisstOSAbstraction.i.h"
+// Put header files here
+#include <cisstCommon.h>
+#include <cisstOSAbstraction/osaTimeServer.h>
+#include <cisstOSAbstraction/osaSerialPort.h>
 %}
 
 // Generate parameter documentation for IRE
