@@ -329,6 +329,7 @@ endif(CISST_HAS_QT)
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstDevices
                         INTERFACE_DIRECTORY ../../include/cisstDevices
+			HEADER_FILES cisstParameterTypesPython.h cisstDevices.h
 			CISST_LIBRARIES cisstDevices
                                         cisstParameterTypes
 					cisstMultiTask

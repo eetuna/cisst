@@ -88,5 +88,6 @@ ENDIF("${CMAKE_SYSTEM_NAME}" STREQUAL "QNX")
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstOSAbstraction
                         INTERFACE_DIRECTORY ../../include/cisstOSAbstraction
+			HEADER_FILES cisstCommonPython.h cisstOSAbstraction.h
 			CISST_LIBRARIES cisstCommon cisstOSAbstraction)
 endif (CISST_HAS_SWIG_PYTHON)

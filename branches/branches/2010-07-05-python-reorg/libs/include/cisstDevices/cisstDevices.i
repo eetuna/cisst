@@ -44,12 +44,19 @@ http://www.cisst.org/cisst/license.txt.
     import_array() // numpy initialization
 %}
 
-// use class type to create the correct Python type
-// %apply cmnGenericObject * {mtsGenericObject *};
-
 %header %{
-    // Put header files here
-    #include "cisstDevices/cisstDevices.i.h"
+// Put header files here
+#include "cisstParameterTypesPython.h"
+
+// Wrap devices
+#if CISST_HAS_XML
+#include <cisstDevices/devNDISerial.h>
+    #if CISST_DEV_HAS_MICRONTRACKER
+        #include <cisstDevices/devMicronTracker.h>
+    #endif
+#endif
+
+#include <cisstDevices/devKeyboard.h>
 %}
 
 // Generate parameter documentation for IRE

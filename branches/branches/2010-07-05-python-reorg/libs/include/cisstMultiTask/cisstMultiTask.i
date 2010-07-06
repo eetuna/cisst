@@ -44,8 +44,29 @@ http://www.cisst.org/cisst/license.txt.
 %}
 
 %header %{
-    // Put header files here
-    #include "cisstMultiTask/cisstMultiTask.i.h"
+// Put header files here
+#include <cisstCommonPython.h>
+#include <cisstVectorPython.h>
+#include <cisstOSAbstraction.h>
+
+#include <cisstMultiTask/mtsCommandBase.h>
+#include <cisstMultiTask/mtsCommandVoidBase.h>
+#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsDevice.h>
+#include <cisstMultiTask/mtsDeviceInterface.h>
+#include <cisstMultiTask/mtsTask.h>
+#include <cisstMultiTask/mtsTaskContinuous.h>
+#include <cisstMultiTask/mtsTaskPeriodic.h>
+#include <cisstMultiTask/mtsTaskFromSignal.h>
+#include <cisstMultiTask/mtsTaskInterface.h>
+#include <cisstMultiTask/mtsRequiredInterface.h>
+#include <cisstMultiTask/mtsTaskManager.h>
+#include <cisstMultiTask/mtsStateIndex.h>
+#include <cisstMultiTask/mtsCollectorBase.h>
+#include <cisstMultiTask/mtsCollectorState.h>
+
+#include <cisstMultiTask/mtsVector.h>
+#include <cisstMultiTask/mtsMatrix.h>
 %}
 
 // use class type to create the correct Python type
@@ -69,9 +90,9 @@ http://www.cisst.org/cisst/license.txt.
 %include "cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h"
 
 %template(mtsCommandReadBase) mtsCommandReadOrWriteBase<mtsGenericObject>;
-%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const mtsGenericObject>; 
+%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const mtsGenericObject>;
 %template(mtsCommandQualifiedReadBase) mtsCommandQualifiedReadOrWriteBase<mtsGenericObject>;
-%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject>; 
+%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject>;
 %{
     typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
     typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
@@ -287,10 +308,10 @@ MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsStdString, std::string);
 %enddef
 
 // instantiate for types also instantiated in cisstVector wrappers
-MTS_INSTANTIATE_VECTOR(mtsDoubleVec, double); 
-MTS_INSTANTIATE_VECTOR(mtsIntVec, int); 
-MTS_INSTANTIATE_VECTOR(mtsShortVec, short); 
-MTS_INSTANTIATE_VECTOR(mtsLongVec, long); 
+MTS_INSTANTIATE_VECTOR(mtsDoubleVec, double);
+MTS_INSTANTIATE_VECTOR(mtsIntVec, int);
+MTS_INSTANTIATE_VECTOR(mtsShortVec, short);
+MTS_INSTANTIATE_VECTOR(mtsLongVec, long);
 MTS_INSTANTIATE_VECTOR(mtsUCharVec, unsigned char);
 
 // Wrap mtsMatrix
@@ -319,10 +340,10 @@ MTS_INSTANTIATE_VECTOR(mtsUCharVec, unsigned char);
 %enddef
 
 // instantiate for types also instantiated in cisstVector wrappers
-MTS_INSTANTIATE_MATRIX(mtsDoubleMat, double); 
-MTS_INSTANTIATE_MATRIX(mtsIntMat, int); 
-MTS_INSTANTIATE_MATRIX(mtsShortMat, short); 
-MTS_INSTANTIATE_MATRIX(mtsLongMat, long); 
+MTS_INSTANTIATE_MATRIX(mtsDoubleMat, double);
+MTS_INSTANTIATE_MATRIX(mtsIntMat, int);
+MTS_INSTANTIATE_MATRIX(mtsShortMat, short);
+MTS_INSTANTIATE_MATRIX(mtsLongMat, long);
 
 // Wrap mtsStateIndex
 %include "cisstMultiTask/mtsStateIndex.h"

@@ -27,7 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 %header %{
-    #include <cisstMultiTask/cisstMultiTask.i.h>
+    #include <cisstMultiTaskPython.h>
     #include "mtsPeriodicTaskTest.h"
 %}
 

@@ -43,8 +43,25 @@ http://www.cisst.org/cisst/license.txt.
 %}
 
 %header %{
-    // Put header files here
-    #include "cisstStereoVision/cisstStereoVision.i.h"
+/* Put header files here */
+#include "cisstVectorPython.h"
+
+#include "cisstStereoVision/svlInitializer.h"
+
+#include "cisstStereoVision/svlStreamManager.h"
+
+#include "cisstStereoVision/svlFilterSourceVideoCapture.h"
+#include "cisstStereoVision/svlFilterImageRectifier.h"
+#include "cisstStereoVision/svlFilterSourceVideoFile.h"
+#include "cisstStereoVision/svlFilterSourceBuffer.h"
+#include "cisstStereoVision/svlFilterVideoFileWriter.h"
+
+#include "cisstStereoVision/svlFilterRGBSwapper.h"
+
+#include "cisstStereoVision/svlFilterImageWindow.h"
+
+#include "cisstStereoVision/svlFilterCallback.h"
+#include "cisstStereoVision/svlFilterBuffer.h"
 %}
 
 // Generate parameter documentation for IRE

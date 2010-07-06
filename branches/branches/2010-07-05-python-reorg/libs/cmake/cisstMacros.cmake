@@ -93,7 +93,7 @@ function (cisst_add_library ...)
   set (HEADERS "")
   string (ASCII 35 CISST_STRING_POUND)
   set (LIBRARY_MAIN_HEADER ${${PROJECT_NAME}_BINARY_DIR}/include/${LIBRARY}.h)
-  set (LIBRARY_MAIN_HEADER_TMP ${${PROJECT_NAME}_BINARY_DIR}/include/${LIBRARY}.h.tmp)
+  set (LIBRARY_MAIN_HEADER_TMP ${LIBRARY_MAIN_HEADER}.tmp)
 
   set (FILE_CONTENT "/* This file is generated automatically by CMake, DO NOT EDIT\n")
   set (FILE_CONTENT ${FILE_CONTENT} "   CMake: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}\n")
@@ -233,8 +233,10 @@ endfunction (cisst_target_link_libraries)
 # The function adds a SWIG module to a CISST-related project by processing the
 # following parameters
 #
-# - MODULE is the prefix of the main .i file
+# - MODULE is the prefix of the main .i file.  The module name will be <MODULE>Python
 # - INTERFACE_DIRECTORY is the directory containing the .i file (use relative path from current source dir)
+# - HEADER_FILES headers needed to compile the SWIG module, a header file is created to include them <MODULE>Python.h
+# - CISST_LIBRARIES cisst libraries needed to link the module (can be used for other libraries as long as CMake can find them)
 #
 function (cisst_add_swig_module ...)
   # debug
@@ -242,7 +244,10 @@ function (cisst_add_swig_module ...)
 
   # set all keywords and their values to ""
   set (FUNCTION_KEYWORDS
-       MODULE INTERFACE_DIRECTORY CISST_LIBRARIES)
+       MODULE
+       INTERFACE_DIRECTORY
+       HEADER_FILES
+       CISST_LIBRARIES)
 
   # reset local variables
   foreach(keyword ${FUNCTION_KEYWORDS})
@@ -265,12 +270,39 @@ function (cisst_add_swig_module ...)
     cisst_cmake_debug ("cisst_add_library: ${keyword}: ${${keyword}}")
   endforeach (keyword)
 
+  # interface file
   set (SWIG_INTERFACE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${INTERFACE_DIRECTORY}/${MODULE}.i)
   cisst_cmake_debug ("cisst_add_swig_module: looking for interface file ${SWIG_INTERFACE_FILE}")
 
   if (EXISTS ${SWIG_INTERFACE_FILE})
     # create a directory in build tree
-    file (MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${INTERFACE_DIRECTORY}) 
+    file (MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${INTERFACE_DIRECTORY})
+    # create the header file
+    set (HEADERS "")
+    string (ASCII 35 CISST_STRING_POUND)
+    set (MODULE_MAIN_HEADER ${${PROJECT_NAME}_BINARY_DIR}/include/${MODULE}Python.h)
+    set (MODULE_MAIN_HEADER_TMP ${MODULE_MAIN_HEADER}.tmp)
+
+    set (FILE_CONTENT "/* This file is generated automatically by CMake, DO NOT EDIT\n")
+    set (FILE_CONTENT ${FILE_CONTENT} "   CMake: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}\n")
+    set (FILE_CONTENT ${FILE_CONTENT} "   System: ${CMAKE_SYSTEM}\n")
+    set (FILE_CONTENT ${FILE_CONTENT} "   Source: ${CMAKE_SOURCE_DIR} */\n\n")
+    set (FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}pragma once\n")
+    set (FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}ifndef _${MODULE}Python_h\n")
+    set (FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}define _${MODULE}Python_h\n\n")
+    foreach (file ${HEADER_FILES})
+      set (FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}include <${file}>\n")
+    endforeach (file)
+    set (FILE_CONTENT ${FILE_CONTENT} "\n${CISST_STRING_POUND}endif // _${MODULE}Python_h\n")
+    file (WRITE ${MODULE_MAIN_HEADER_TMP} ${FILE_CONTENT})
+    exec_program (${CMAKE_COMMAND}
+                  ARGS -E copy_if_different
+                  \"${MODULE_MAIN_HEADER_TMP}\"
+                  \"${MODULE_MAIN_HEADER}\")
+    exec_program (${CMAKE_COMMAND}
+                  ARGS -E remove
+                  \"${MODULE_MAIN_HEADER_TMP}\")
+
     # we are using C++ code
     set_source_files_properties (${SWIG_INTERFACE_FILE} PROPERTIES CPLUSPLUS ON)
     # make sure the runtime code is not included

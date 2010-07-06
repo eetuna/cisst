@@ -38,7 +38,7 @@ http://www.cisst.org/cisst/license.txt.
 
 %header %{
 // Put header files here
-#include <cisstCommon.h>
+#include <cisstCommonPython.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstOSAbstraction/osaSerialPort.h>
 %}

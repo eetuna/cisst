@@ -30,10 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 
 %header %{
 // Put header files here
-#include <Python.h>
-#include <arrayobject.h>
-#include <cisstCommon/cmnAssert.h>
-#include <cisstCommon/cmnPortability.h>
+#include <cisstCommonPython.h>
 #include <cisstVector/vctPythonUtilities.h>
 #include <cisstVector/vctFixedSizeConstVectorBase.h>
 #include <cisstVector/vctDynamicConstVectorBase.h>

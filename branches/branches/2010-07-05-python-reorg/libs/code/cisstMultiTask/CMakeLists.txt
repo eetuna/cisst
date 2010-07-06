@@ -311,5 +311,6 @@ endif (CISST_HAS_QT)
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstMultiTask
                         INTERFACE_DIRECTORY ../../include/cisstMultiTask
+			HEADER_FILES cisstVectorPython.h cisstOSAbstractionPython.h cisstMultiTask.h
 			CISST_LIBRARIES cisstMultiTask cisstOSAbstraction cisstVector cisstCommon)
 endif (CISST_HAS_SWIG_PYTHON)
