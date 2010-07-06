@@ -701,7 +701,7 @@ void GCMUITask::PopulateProvidedInterfaces(const std::string & processName, cons
 
     // Get all names of provided interfaces in the component
     StringVector names;
-    GlobalComponentManager.GetNamesOfProvidedInterfaces(processName, componentName, names);
+    GlobalComponentManager.GetNamesOfInterfacesProvided(processName, componentName, names);
 
     for (StringVector::size_type i = 0; i < names.size(); ++i) {
         AddLineToBrowser(UI.BrowserProvidedInterfaces, names[i].c_str());
@@ -740,7 +740,7 @@ void GCMUITask::PopulateRequiredInterfaces(const std::string & processName, cons
 
     // Get all names of provided interfaces in the component
     StringVector names;
-    GlobalComponentManager.GetNamesOfInterfaceRequired(processName, componentName, names);
+    GlobalComponentManager.GetNamesOfInterfacesRequired(processName, componentName, names);
 
     for (StringVector::size_type i = 0; i < names.size(); ++i) {
         AddLineToBrowser(UI.BrowserRequiredInterfaces, names[i].c_str());
