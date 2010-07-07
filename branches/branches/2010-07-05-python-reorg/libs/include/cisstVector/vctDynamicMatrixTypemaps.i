@@ -62,9 +62,9 @@ http://www.cisst.org/cisst/license.txt.
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
-
+    typedef $1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, $1))
         ) {
@@ -78,11 +78,11 @@ http://www.cisst.org/cisst/license.txt.
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
-    const vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    const vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctDynamicMatrix
     $1.ForceAssign(tempContainer);
@@ -106,10 +106,11 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
+    typedef $1_ltype MatrixType;
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-    int type = vctPythonType<$1_ltype::value_type>();
+    int type = vctPythonType<MatrixType::value_type>();
     $result = PyArray_SimpleNew(2, sizes, type);
 
     /*****************************************************************************
@@ -119,11 +120,11 @@ http://www.cisst.org/cisst/license.txt.
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($result, 0);
     const npy_intp size1 = PyArray_DIM($result, 1);
-    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($result));
 
-    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the vctDynamicConstMatrixRef to the temporary container
     tempContainer.Assign($1);
@@ -150,8 +151,9 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
+    typedef $*1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, *($1))
           && vctThrowUnlessIsWritable($input)
@@ -168,14 +170,14 @@ http://www.cisst.org/cisst/license.txt.
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
-    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    const vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Create the vctDynamicMatrix
-    $1 = new $*1_ltype(tempContainer);
+    $1 = new MatrixType(tempContainer);
 }
 
 
@@ -193,10 +195,11 @@ http://www.cisst.org/cisst/license.txt.
      CHECK IF THE CONTAINER HAS BEEN RESIZED
     *************************************************************************/
 
-    const $*1_ltype::size_type input_size0 = PyArray_DIM($input, 0);
-    const $*1_ltype::size_type input_size1 = PyArray_DIM($input, 1);
-    const $*1_ltype::size_type output_size0 = $1->sizes()[0];
-    const $*1_ltype::size_type output_size1 = $1->sizes()[1];
+    typedef $*1_ltype MatrixType;
+    const MatrixType::size_type input_size0 = PyArray_DIM($input, 0);
+    const MatrixType::size_type input_size1 = PyArray_DIM($input, 1);
+    const MatrixType::size_type output_size0 = $1->sizes()[0];
+    const MatrixType::size_type output_size1 = $1->sizes()[1];
 
     if (   input_size0 != output_size0
         || input_size1 != output_size1) {
@@ -220,11 +223,11 @@ http://www.cisst.org/cisst/license.txt.
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
-    vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the temporary container to the vctDynamicMatrix
     tempContainer.Assign(*($1));
@@ -244,13 +247,14 @@ http://www.cisst.org/cisst/license.txt.
        Using: %typemap(out) vctDynamicMatrix &
      */
 
+    typedef $*1_ltype MatrixType;
     // Create new size array and set size
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1->rows();
     sizes[1] = $1->cols();
 
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    int type = vctPythonType<$*1_ltype::value_type>();
+    int type = vctPythonType<MatrixType::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
     $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, $1->Pointer(), $1->StorageOrder() ? NPY_CARRAY : NPY_FARRAY, NULL);
 }
@@ -276,8 +280,9 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $*1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, *($1)))
         ) {
@@ -291,14 +296,14 @@ http://www.cisst.org/cisst/license.txt.
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
-    const vctDynamicMatrixRef<$*1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    const vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Create the vctDynamicMatrix
-    $1 = new $*1_ltype(tempContainer);
+    $1 = new MatrixType(tempContainer);
 }
 
 
@@ -327,13 +332,14 @@ http://www.cisst.org/cisst/license.txt.
        Using: %typemap(out) const vctDynamicMatrix &
      */
 
+    typedef $*1_ltype MatrixType;
     // Create new size array and set size
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1->rows();
     sizes[1] = $1->cols();
 
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    int type = vctPythonType<$*1_ltype::value_type>();
+    int type = vctPythonType<MatrixType::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
     $result = PyArray_NewFromDescr(&PyArray_Type, descr, 2, sizes, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
@@ -360,8 +366,9 @@ http://www.cisst.org/cisst/license.txt.
      IS WRITABLE
     *************************************************************************/
 
+    typedef $1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, $1)
           && vctThrowUnlessIsWritable($input))
@@ -376,9 +383,9 @@ http://www.cisst.org/cisst/license.txt.
 
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size0, size1, stride0, stride1, data);
 }
@@ -398,10 +405,11 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
+    typedef $1_ltype MatrixType;
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
-    int type = vctPythonType<$1_ltype::value_type>();
+    int type = vctPythonType<MatrixType::value_type>();
     $result = PyArray_SimpleNew(2, sizes, type);
 
     /*****************************************************************************
@@ -413,9 +421,9 @@ http://www.cisst.org/cisst/license.txt.
     const npy_intp size1 = $1.cols();
     const npy_intp stride0 = size1;
     const npy_intp stride1 = 1;
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($result));
 
-    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the vctDynamicMatrixRef to the temporary container
     tempContainer.Assign($1);
@@ -442,8 +450,9 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $*1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, *($1)))
         ) {
@@ -457,11 +466,11 @@ http://www.cisst.org/cisst/license.txt.
     // Create the vctDynamicMatrixRef
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
+    $1 = new MatrixType(size0, size1, stride0, stride1, data);
 }
 
 
@@ -504,8 +513,9 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, $1))
         ) {
@@ -520,9 +530,9 @@ http://www.cisst.org/cisst/license.txt.
 
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
     $1.SetRef(size0, size1, stride0, stride1, data);
 }
@@ -543,12 +553,13 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
+    typedef $1_ltype MatrixType;
     npy_intp *sizes = PyDimMem_NEW(2);
     sizes[0] = $1.rows();
     sizes[1] = $1.cols();
 
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    int type = vctPythonType<$1_ltype::value_type>();
+    int type = vctPythonType<MatrixType::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
     $result = PyArray_NewFromDescr(&PyArray_Type, descr,  2, sizes, NULL, NULL, NPY_CARRAY, NULL);
     PyArray_FLAGS($result) &= ~NPY_WRITEABLE;
@@ -560,11 +571,11 @@ http://www.cisst.org/cisst/license.txt.
     // Create a temporary vctDynamicMatrixRef container
     const npy_intp size0 = PyArray_DIM($result, 0);
     const npy_intp size1 = PyArray_DIM($result, 1);
-    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof($1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof($1_ltype::value_type);
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    const npy_intp stride0 = PyArray_STRIDE($result, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($result, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($result));
 
-    vctDynamicMatrixRef<$1_ltype::value_type> tempContainer(size0, size1, stride0, stride1, data);
+    vctDynamicMatrixRef<MatrixType::value_type> tempContainer(size0, size1, stride0, stride1, data);
 
     // Copy the data from the vctDynamicConstMatrixRef to the temporary container
     tempContainer.Assign($1);
@@ -591,8 +602,9 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $*1_ltype MatrixType;
     if (!(   vctThrowUnlessIsPyArray($input)
-          && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
+          && vctThrowUnlessIsSameTypeArray<MatrixType::value_type>($input)
           && vctThrowUnlessDimension2($input)
           && vctThrowUnlessCorrectMatrixSize($input, *($1)))
         ) {
@@ -606,11 +618,11 @@ http://www.cisst.org/cisst/license.txt.
     // Create the vctDynamicConstMatrixRef
     const npy_intp size0 = PyArray_DIM($input, 0);
     const npy_intp size1 = PyArray_DIM($input, 1);
-    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof($*1_ltype::value_type);
-    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof($*1_ltype::value_type);
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const npy_intp stride0 = PyArray_STRIDE($input, 0) / sizeof(MatrixType::value_type);
+    const npy_intp stride1 = PyArray_STRIDE($input, 1) / sizeof(MatrixType::value_type);
+    const MatrixType::pointer data = reinterpret_cast<MatrixType::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(size0, size1, stride0, stride1, data);
+    $1 = new MatrixType(size0, size1, stride0, stride1, data);
 }
 
 

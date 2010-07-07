@@ -59,10 +59,10 @@ http://www.cisst.org/cisst/license.txt.
      CHECK IF THE PYTHON OBJECT (NAMED `$input') THAT WAS PASSED TO THIS TYPE MAP
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS TWO-DIMENSIONAL
     *****************************************************************************/
-
+    typedef $1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            )
         ) {
           return NULL;
@@ -76,21 +76,21 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
-    const vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    const vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the temporary container to the vctDynamicNArray
     $1.SetSize(sizes);
@@ -115,13 +115,14 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    vct::size_type sz = $1_ltype::DIMENSION;
-    const vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes($1.sizes());
+    typedef $1_ltype NArrayType;
+    vct::size_type sz = NArrayType::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes($1.sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
     for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
-    int type = vctPythonType<$1_ltype::value_type>();
+    int type = vctPythonType<NArrayType::value_type>();
     $result = PyArray_SimpleNew(sz, shape, type);
 
     /*****************************************************************************
@@ -130,10 +131,10 @@ http://www.cisst.org/cisst/license.txt.
 
     // Create a temporary vctDynamicNArrayRef container
     // `sizes' defined above, don't need to redefine it
-    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides($1.strides());
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides($1.strides());
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($result));
 
-    vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the vctDynamicConstNArrayRef to the temporary container
     tempContainer.Assign($1);
@@ -160,9 +161,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, IS ONE-DIMENSIONAL, AND IS WRITABLE
     *****************************************************************************/
 
+    typedef $*1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            && vctThrowUnlessIsWritable($input)
            && vctThrowUnlessOwnsData($input)
            && vctThrowUnlessNotReferenced($input))
@@ -178,24 +180,24 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($*1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
-    const vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    const vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Create the vctDynamicNArray
-    $1 = new $*1_ltype(tempContainer);
+    $1 = new NArrayType(tempContainer);
 }
 
 
@@ -213,14 +215,15 @@ http://www.cisst.org/cisst/license.txt.
      CHECK IF THE CONTAINER HAS BEEN RESIZED
     *************************************************************************/
 
+    typedef $*1_ltype NArrayType;
     // input sizes
     npy_intp *_input_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _input_sizesRef(_input_sizes);
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> input_sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _input_sizesRef(_input_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> input_sizes;
     input_sizes.Assign(_input_sizesRef);
 
     // output sizes
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> output_sizes;
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> output_sizes;
     output_sizes.Assign($1->sizes());
 
     if (!input_sizes.Equal(output_sizes)) {
@@ -229,7 +232,7 @@ http://www.cisst.org/cisst/license.txt.
         //  2)  Pass that array to the resizing function given by NumPy API
 
         // create an array of sizes
-        vct::size_type sz = $*1_ltype::DIMENSION;
+        vct::size_type sz = NArrayType::DIMENSION;
         npy_intp *sizes = PyDimMem_NEW(sz);
 
         // set the sizes
@@ -252,22 +255,22 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($*1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
     // temporary container
-    vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the temporary container to the vctDynamicNArray
     tempContainer.Assign(*($1));
@@ -287,16 +290,17 @@ http://www.cisst.org/cisst/license.txt.
        Using: %typemap(out) vctDynamicNArray &
      */
 
+    typedef $*1_ltype NArrayType;
     // Create a new PyArray and set its shape
-    vct::size_type sz = $*1_ltype::DIMENSION;
-    const vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes($1->sizes());
+    vct::size_type sz = NArrayType::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes($1->sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
     for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    int type = vctPythonType<$*1_ltype::value_type>();
+    int type = vctPythonType<NArrayType::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
     $result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, $1->Pointer(), NPY_CARRAY, NULL);
 }
@@ -322,9 +326,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $*1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            )
         ) {
           return NULL;
@@ -338,24 +343,24 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($*1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
-    const vctDynamicNArrayRef<$*1_ltype::value_type, $*1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    const vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Create the vctDynamicNArray
-    $1 = new $*1_ltype(tempContainer);
+    $1 = new NArrayType(tempContainer);
 }
 
 
@@ -384,16 +389,17 @@ http://www.cisst.org/cisst/license.txt.
        Using: %typemap(out) const vctDynamicNArray &
      */
 
+    typedef $*1_ltype NArrayType;
     // Create a new PyArray and set its shape
-    vct::size_type sz = $*1_ltype::DIMENSION;
-    const vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes($1->sizes());
+    vct::size_type sz = NArrayType::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes($1->sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
     for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
     // Look at the NumPy C API to see how these lines work: http://projects.scipy.org/numpy/wiki/NumPyCAPI
-    int type = vctPythonType<$*1_ltype::value_type>();
+    int type = vctPythonType<NArrayType::value_type>();
     PyArray_Descr *descr = PyArray_DescrFromType(type);
     $result = PyArray_NewFromDescr(&PyArray_Type, descr, sz, shape, NULL, $1->Pointer(), NPY_CARRAY_RO, NULL);
 }
@@ -420,9 +426,10 @@ http://www.cisst.org/cisst/license.txt.
      IS WRITABLE
     *************************************************************************/
 
+    typedef $1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            && vctThrowUnlessIsWritable($input)
            )
         ) {
@@ -436,19 +443,19 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
     $1.SetRef(data, sizes, strides);
 }
@@ -468,14 +475,15 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    vct::size_type sz = $1_ltype::DIMENSION;
-    const vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes($1.sizes());
+    typedef $1_ltype NArrayType;
+    vct::size_type sz = NArrayType::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes($1.sizes());
     npy_intp *shape = PyDimMem_NEW(sz);
     for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
-    int type = vctPythonType<$1_ltype::value_type>();
+    int type = vctPythonType<NArrayType::value_type>();
     $result = PyArray_SimpleNew(sz, shape, type);
 
     /*****************************************************************************
@@ -484,10 +492,10 @@ http://www.cisst.org/cisst/license.txt.
 
     // Create a temporary vctDynamicNArrayRef container
     // `sizes' defined above, don't need to redefine it
-    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides($1.strides());
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides($1.strides());
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($result));
 
-    vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the vctDynamicNArrayRef to the temporary container
     tempContainer.Assign($1);
@@ -514,9 +522,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $*1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            )
         ) {
           return NULL;
@@ -530,21 +539,21 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($*1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(data, sizes, strides);
+    $1 = new NArrayType(data, sizes, strides);
 }
 
 
@@ -587,9 +596,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS N-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            )
         ) {
           return NULL;
@@ -603,19 +613,19 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
     $1.SetRef(data, sizes, strides);
 }
@@ -636,15 +646,16 @@ http://www.cisst.org/cisst/license.txt.
      CREATE A NEW PYARRAY OBJECT
     *****************************************************************************/
 
-    vct::size_type sz = $1_ltype::DIMENSION;
-    const vctFixedSizeVector<vct::size_type, $1_ltype::DIMENSION> sizes($1.sizes());
+    typedef $1_ltype NArrayType;
+    vct::size_type sz = NArrayType::DIMENSION;
+    const vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes($1.sizes());
 
     npy_intp *shape = PyDimMem_NEW(sz);
     for (vct::size_type i = 0; i < sz; i++) {
         shape[i] = sizes.at(i);
     }
 
-    int type = vctPythonType<$1_ltype::value_type>();
+    int type = vctPythonType<NArrayType::value_type>();
     $result = PyArray_SimpleNew(sz, shape, type);
     PyArray_FLAGS($result) &= ~NPY_WRITEABLE;
 
@@ -654,10 +665,10 @@ http://www.cisst.org/cisst/license.txt.
 
     // Create a temporary vctDynamicNArrayRef container
     // `sizes' defined above, don't need to redefine it
-    vctFixedSizeVector<vct::stride_type, $1_ltype::DIMENSION> strides($1.strides());
-    const $1_ltype::pointer data = reinterpret_cast<$1_ltype::pointer>(PyArray_DATA($result));
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides($1.strides());
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($result));
 
-    vctDynamicNArrayRef<$1_ltype::value_type, $1_ltype::DIMENSION> tempContainer(data, sizes, strides);
+    vctDynamicNArrayRef<NArrayType::value_type, NArrayType::DIMENSION> tempContainer(data, sizes, strides);
 
     // Copy the data from the vctDynamicConstNArrayRef to the temporary container
     tempContainer.Assign($1);
@@ -684,9 +695,10 @@ http://www.cisst.org/cisst/license.txt.
      IS A PYARRAY, IS OF THE CORRECT DTYPE, AND IS ONE-DIMENSIONAL
     *****************************************************************************/
 
+    typedef $*1_ltype NArrayType;
     if (!( vctThrowUnlessIsPyArray($input)
-           && vctThrowUnlessIsSameTypeArray<$*1_ltype::value_type>($input)
-           && vctThrowUnlessDimensionN<$*1_ltype::DIMENSION>($input)
+           && vctThrowUnlessIsSameTypeArray<NArrayType::value_type>($input)
+           && vctThrowUnlessDimensionN<NArrayType::DIMENSION>($input)
            )
         ) {
           return NULL;
@@ -700,21 +712,21 @@ http://www.cisst.org/cisst/license.txt.
 
     // sizes
     npy_intp *_sizes = PyArray_DIMS($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _sizesRef(_sizes);
-    vctFixedSizeVector<vct::size_type, $*1_ltype::DIMENSION> sizes;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _sizesRef(_sizes);
+    vctFixedSizeVector<vct::size_type, NArrayType::DIMENSION> sizes;
     sizes.Assign(_sizesRef);
 
     // strides
     npy_intp *_strides = PyArray_STRIDES($input);
-    vctFixedSizeConstVectorRef<npy_intp, $*1_ltype::DIMENSION, 1> _stridesRef(_strides);
-    vctFixedSizeVector<vct::stride_type, $*1_ltype::DIMENSION> strides;
+    vctFixedSizeConstVectorRef<npy_intp, NArrayType::DIMENSION, 1> _stridesRef(_strides);
+    vctFixedSizeVector<vct::stride_type, NArrayType::DIMENSION> strides;
     strides.Assign(_stridesRef);
-    strides.Divide(sizeof($*1_ltype::value_type));
+    strides.Divide(sizeof(NArrayType::value_type));
 
     // data pointer
-    const $*1_ltype::pointer data = reinterpret_cast<$*1_ltype::pointer>(PyArray_DATA($input));
+    const NArrayType::pointer data = reinterpret_cast<NArrayType::pointer>(PyArray_DATA($input));
 
-    $1 = new $*1_ltype(data, sizes, strides);
+    $1 = new NArrayType(data, sizes, strides);
 }
 
 

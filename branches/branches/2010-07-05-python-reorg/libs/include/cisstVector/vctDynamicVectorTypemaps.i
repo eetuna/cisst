@@ -611,6 +611,8 @@ http://www.cisst.org/cisst/license.txt.
     delete $1;
 }
 
+
+
 %typecheck(SWIG_TYPECHECK_POINTER) vctDynamicVector & {
     // test that the parameter is an array
     if (!PyArray_Check($input)) {
