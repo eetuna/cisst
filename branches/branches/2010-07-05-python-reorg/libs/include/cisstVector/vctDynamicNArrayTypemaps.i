@@ -749,6 +749,21 @@ http://www.cisst.org/cisst/license.txt.
 }
 
 
+
+%typecheck(SWIG_TYPECHECK_POINTER) vctDynamicNArray & {
+    // test that the parameter is an array
+    if (!PyArray_Check($input)) {
+        $1 = 0;
+        PyErr_Clear();
+    } else {
+        // don't check for dimension, this could cause some problems
+        // with vector vs array of dimension 1 or matrix vs array of
+        // dimension 2.  arrays of dimension 3 or more are fine
+        $1 = 1;
+    }
+}
+
+
 /**************************************************************************
 *                    Applying Typemaps to Other Types
 **************************************************************************/

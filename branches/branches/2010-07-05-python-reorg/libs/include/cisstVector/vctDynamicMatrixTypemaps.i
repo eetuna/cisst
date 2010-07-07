@@ -645,6 +645,23 @@ http://www.cisst.org/cisst/license.txt.
 }
 
 
+
+%typecheck(SWIG_TYPECHECK_POINTER) vctDynamicMatrix & {
+    // test that the parameter is an array
+    if (!PyArray_Check($input)) {
+        $1 = 0;
+        PyErr_Clear();
+    } else {
+        // we should test the dimension as well if we overload for vector and matrix
+        if (PyArray_NDIM($input) != 2) {
+            $1 = 0;
+            PyErr_Clear();
+        } else {
+            $1 = 1;
+        }
+    }
+}
+
 /**************************************************************************
 *                           Applying Typemaps
 **************************************************************************/
