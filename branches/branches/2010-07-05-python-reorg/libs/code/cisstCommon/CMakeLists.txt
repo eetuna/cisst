@@ -104,6 +104,5 @@ endif (CISST_HAS_QT)
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstCommon
                         INTERFACE_DIRECTORY ../../include/cisstCommon
-			HEADER_FILES cisstCommon.h
 			CISST_LIBRARIES cisstCommon)
 endif (CISST_HAS_SWIG_PYTHON)

@@ -44,29 +44,7 @@ http://www.cisst.org/cisst/license.txt.
 %}
 
 %header %{
-// Put header files here
-#include <cisstCommonPython.h>
-#include <cisstVectorPython.h>
-#include <cisstOSAbstraction.h>
-
-#include <cisstMultiTask/mtsCommandBase.h>
-#include <cisstMultiTask/mtsCommandVoidBase.h>
-#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
-#include <cisstMultiTask/mtsDevice.h>
-#include <cisstMultiTask/mtsDeviceInterface.h>
-#include <cisstMultiTask/mtsTask.h>
-#include <cisstMultiTask/mtsTaskContinuous.h>
-#include <cisstMultiTask/mtsTaskPeriodic.h>
-#include <cisstMultiTask/mtsTaskFromSignal.h>
-#include <cisstMultiTask/mtsTaskInterface.h>
-#include <cisstMultiTask/mtsRequiredInterface.h>
-#include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstMultiTask/mtsStateIndex.h>
-#include <cisstMultiTask/mtsCollectorBase.h>
-#include <cisstMultiTask/mtsCollectorState.h>
-
-#include <cisstMultiTask/mtsVector.h>
-#include <cisstMultiTask/mtsMatrix.h>
+#include <cisstMultiTask/mtsPython.h>
 %}
 
 // use class type to create the correct Python type

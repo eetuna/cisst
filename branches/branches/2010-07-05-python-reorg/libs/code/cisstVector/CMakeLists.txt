@@ -203,6 +203,5 @@ endif (CISST_HAS_OPENGL AND CISST_HAS_FLTK)
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstVector
                         INTERFACE_DIRECTORY ../../include/cisstVector
-			HEADER_FILES cisstCommonPython.h cisstVector.h cisstVector/vctPythonUtilities.h
 			CISST_LIBRARIES cisstCommon cisstVector)
 endif (CISST_HAS_SWIG_PYTHON)

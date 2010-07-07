@@ -37,10 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 %import "cisstCommon/cisstCommon.i"
 
 %header %{
-// Put header files here
-#include <cisstCommonPython.h>
-#include <cisstOSAbstraction/osaTimeServer.h>
-#include <cisstOSAbstraction/osaSerialPort.h>
+#include <cisstOSAbstraction/osaPython.h>
 %}
 
 // Generate parameter documentation for IRE

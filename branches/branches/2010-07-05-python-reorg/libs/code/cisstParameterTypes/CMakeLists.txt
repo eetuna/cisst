@@ -93,7 +93,6 @@ CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstParameterTypes
                         INTERFACE_DIRECTORY ../../include/cisstParameterTypes
-			HEADER_FILES cisstMultiTaskPython.h cisstParameterTypes.h
 			CISST_LIBRARIES cisstParameterTypes
                                         cisstMultiTask
 					cisstOSAbstraction

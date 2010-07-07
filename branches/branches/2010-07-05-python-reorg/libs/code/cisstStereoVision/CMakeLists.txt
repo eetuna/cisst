@@ -830,7 +830,6 @@ CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
 if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstStereoVision
                         INTERFACE_DIRECTORY ../../include/cisstStereoVision
-			HEADER_FILES cisstVectorPython.h cisstStereoVision.h
 			CISST_LIBRARIES cisstStereoVision
                                         cisstNumerical
 					cisstOSAbstraction

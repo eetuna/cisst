@@ -7,7 +7,7 @@
   Author(s):	Anton Deguet
   Created on:   2008-01-17
 
-  (C) Copyright 2006-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2006-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -45,18 +45,7 @@ http://www.cisst.org/cisst/license.txt.
 %}
 
 %header %{
-// Put header files here
-#include "cisstParameterTypesPython.h"
-
-// Wrap devices
-#if CISST_HAS_XML
-#include <cisstDevices/devNDISerial.h>
-    #if CISST_DEV_HAS_MICRONTRACKER
-        #include <cisstDevices/devMicronTracker.h>
-    #endif
-#endif
-
-#include <cisstDevices/devKeyboard.h>
+#include <cisstDevices/devPython.h>
 %}
 
 // Generate parameter documentation for IRE

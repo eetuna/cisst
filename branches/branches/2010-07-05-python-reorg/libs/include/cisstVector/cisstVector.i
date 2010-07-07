@@ -29,15 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 %import "cisstCommon/cisstCommon.i"
 
 %header %{
-// Put header files here
-#include <cisstCommonPython.h>
-#include <cisstVector/vctPythonUtilities.h>
-#include <cisstVector/vctFixedSizeConstVectorBase.h>
-#include <cisstVector/vctDynamicConstVectorBase.h>
-#include <cisstVector/vctFixedSizeConstMatrixBase.h>
-#include <cisstVector/vctDynamicConstMatrixBase.h>
-#include <cisstVector/vctDynamicConstNArrayBase.h>
-#include <cisstVector/vctTransformationTypes.h>
+#include <cisstVector/vctPython.h>
 %}
 
 %ignore *::operator[]; // We define __setitem__ and __getitem__

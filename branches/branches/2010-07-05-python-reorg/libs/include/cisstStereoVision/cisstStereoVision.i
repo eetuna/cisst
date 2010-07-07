@@ -7,7 +7,7 @@
   Author(s):	Anton Deguet
   Created on:   2009-01-26
 
-  (C) Copyright 2006-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2006-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -43,25 +43,7 @@ http://www.cisst.org/cisst/license.txt.
 %}
 
 %header %{
-/* Put header files here */
-#include "cisstVectorPython.h"
-
-#include "cisstStereoVision/svlInitializer.h"
-
-#include "cisstStereoVision/svlStreamManager.h"
-
-#include "cisstStereoVision/svlFilterSourceVideoCapture.h"
-#include "cisstStereoVision/svlFilterImageRectifier.h"
-#include "cisstStereoVision/svlFilterSourceVideoFile.h"
-#include "cisstStereoVision/svlFilterSourceBuffer.h"
-#include "cisstStereoVision/svlFilterVideoFileWriter.h"
-
-#include "cisstStereoVision/svlFilterRGBSwapper.h"
-
-#include "cisstStereoVision/svlFilterImageWindow.h"
-
-#include "cisstStereoVision/svlFilterCallback.h"
-#include "cisstStereoVision/svlFilterBuffer.h"
+#include <cisstStereoVision/svlPython.h>
 %}
 
 // Generate parameter documentation for IRE
@@ -125,7 +107,7 @@ PyObject* convert_vctDynamicMatrixRef_to_PyObject(vctDynamicMatrixRef<__ValueTyp
 
     // Copy the data from the vctDynamicMatrixRef to the temporary container
     tempContainer.Assign(matrix_in);
-    
+
     return result;
 }
 
@@ -138,20 +120,20 @@ static int PythonCallBack(void * imgdata, void *callbackdata)
    PyObject *func = 0, *arglist = 0;
    PyObject *result = 0;
    int    dres = 0;
-   
+
    PyObject *pythonImage = 0;
-   vctDynamicMatrixRef<unsigned char>* image = 0; 
+   vctDynamicMatrixRef<unsigned char>* image = 0;
    image = static_cast<vctDynamicMatrixRef<unsigned char>*>(imgdata);
    //pythonImage = SWIG_NewPointerObj(SWIG_as_voidptr(image), SWIGTYPE_vctDynamicMatrixRef, SWIG_POINTER_NEW | 0 );
    pythonImage = convert_vctDynamicMatrixRef_to_PyObject(*image); //manual hack - should be using typemaps
-   
+
    try{
 	   func = (PyObject *) callbackdata;             // Get Python function
-	   
+
 	   arglist = Py_BuildValue("(O)",pythonImage);             // Build argument list
-	   
+
 	   //arglist = Py_BuildValue("i",1);
-	   
+
 	   if(func && arglist){
 		   result = PyEval_CallObject(func,arglist);     // Call Python
 		   Py_DECREF(arglist);                           // Trash arglist
@@ -196,7 +178,7 @@ static int PythonCallBack(void * imgdata, void *callbackdata)
         PixelUnknown = 8,
         PixelTypeCount
     } PixelType;
-    
+
     typedef enum _PatternType {
         PatternRGGB    = 0,
         PatternGBRG    = 1,
@@ -205,7 +187,7 @@ static int PythonCallBack(void * imgdata, void *callbackdata)
         PatternUnknown = 4,
         PatternTypeCount
     } PatternType;
-    
+
 %}
 
 
