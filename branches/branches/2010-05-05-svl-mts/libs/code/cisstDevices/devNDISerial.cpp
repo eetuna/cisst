@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
     #include <cisstNumerical/nmrLSSolver.h>
 #endif
 #include <cisstDevices/devNDISerial.h>
+#include <cisstMultiTask/mtsInterfaceProvided.h>
 
 CMN_IMPLEMENT_SERVICES(devNDISerial);
 
