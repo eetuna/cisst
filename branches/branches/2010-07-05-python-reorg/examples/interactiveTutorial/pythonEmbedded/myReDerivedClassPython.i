@@ -23,8 +23,8 @@ http://www.cisst.org/cisst/license.txt.
 %module myReDerivedClassPython
 
 %header %{
-    #include "cisstCommon/cisstCommon.i.h"
-    #include "cisstVector/cisstVector.i.h"
+    #include "cisstCommon/cmnPython.h"
+    #include "cisstVector/vctPython.h"
     #include "myReDerivedClass.h"
 %}
 

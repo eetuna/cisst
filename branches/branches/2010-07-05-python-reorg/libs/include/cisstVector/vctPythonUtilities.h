@@ -27,8 +27,8 @@ http://www.cisst.org/cisst/license.txt.
    (e.g. vctDynamicMatrixRotation3.h).
 
    For any wrapper using %import "cisstVector.i", the file
-   cisstVector.i.h should be included in the %header %{ ... %} section
-   of the interface file. */
+   cisstVector/vctPython.h should be included in the %header %{ ... %}
+   section of the interface file. */
 
 
 #ifndef _cisstVector_i_h

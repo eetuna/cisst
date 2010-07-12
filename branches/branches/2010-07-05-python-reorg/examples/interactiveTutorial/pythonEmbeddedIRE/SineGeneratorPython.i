@@ -25,7 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 %mutable;
 
 %header %{
-    #include "cisstCommon/cisstCommon.i.h"
+    #include "cisstCommon/cmnPython.h"
     #include "SineGenerator.h"
 %}
 

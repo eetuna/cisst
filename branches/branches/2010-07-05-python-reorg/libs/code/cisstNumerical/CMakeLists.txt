@@ -94,3 +94,11 @@ ENDIF(CISST_HAS_CISSTNETLIB)
 
 
 CISST_ADD_LIBRARY_TO_PROJECT(cisstLibs)
+
+
+# Python wrappers
+if (CISST_HAS_SWIG_PYTHON)
+  cisst_add_swig_module(MODULE cisstNumerical
+                        INTERFACE_DIRECTORY ../../include/cisstNumerical
+			CISST_LIBRARIES cisstCommon cisstVector cisstNumerical)
+endif (CISST_HAS_SWIG_PYTHON)

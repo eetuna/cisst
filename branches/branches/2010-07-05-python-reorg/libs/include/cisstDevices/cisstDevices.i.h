@@ -5,9 +5,9 @@
   $Id$
 
   Author(s):  Anton Deguet
-  Created on: 2005-08-14
+  Created on: 2010-07-12
 
-  (C) Copyright 2005-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -20,23 +20,15 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-%module cisstNumericalPython
+// This file is provided to help transition.  Put in place in
+// July 2010, should be removed at one point.
 
-%include <std_string.i>
-%include <std_except.i>
+#pragma once
 
-%import "cisstCommon/cisstCommon.i"
-%import "cisstVector/cisstVector.i"
+#ifndef _cisstDevices_i_h
+#define _cisstDevices_i_h
 
-%header %{
-#include <cisstNumerical/nmrPython.h>
-%}
+#error "Deprecated file, you should use #include <cisstDevices/devPython.h> intead"
 
-// Generate parameter documentation for IRE
-%feature("autodoc", "1");
+#endif // _cisstDevices_i_h
 
-%include "cisstNumerical/nmrNetlib.h"
-
-#if CISST_HAS_CISSTNETLIB
-%include "cisstNumerical/nmrSVD.i"
-#endif

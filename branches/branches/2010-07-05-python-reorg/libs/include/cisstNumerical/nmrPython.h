@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Anton Deguet
-  Created on: 2005-08-14
+  Author(s):	Anton Deguet
+  Created on:	2010-07-12
 
-  (C) Copyright 2005-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -20,23 +20,23 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-%module cisstNumericalPython
 
-%include <std_string.i>
-%include <std_except.i>
+/*!
+  \file
+  \brief Header files from cisstNumerical required to compile the SWIG generated Python wrappers
+ */
+#pragma once
 
-%import "cisstCommon/cisstCommon.i"
-%import "cisstVector/cisstVector.i"
+#ifndef _nmrPython_h
+#define _ntmPython_h
 
-%header %{
-#include <cisstNumerical/nmrPython.h>
-%}
+#include <cisstCommon/cmnPython.h>
+#include <cisstVector/vctPython.h>
 
-// Generate parameter documentation for IRE
-%feature("autodoc", "1");
-
-%include "cisstNumerical/nmrNetlib.h"
+#include <cisstNumerical/nmrNetlib.h>
 
 #if CISST_HAS_CISSTNETLIB
-%include "cisstNumerical/nmrSVD.i"
+#include <cisstNumerical/nmrSVD.h>
 #endif
+ 
+#endif // _nmrPython_h
