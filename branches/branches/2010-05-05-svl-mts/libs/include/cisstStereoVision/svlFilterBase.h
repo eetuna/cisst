@@ -42,7 +42,7 @@ class svlStreamManager;
 class svlStreamProc;
 
 
-class CISST_EXPORT svlFilterBase: public mtsComponent
+class CISST_EXPORT svlFilterBase : public mtsComponent
 {
 friend class svlFilterInput;
 friend class svlFilterOutput;

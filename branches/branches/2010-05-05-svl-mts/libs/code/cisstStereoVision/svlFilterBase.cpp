@@ -40,7 +40,7 @@ http://www.cisst.org/cisst/license.txt.
 /*************************************/
 
 svlFilterBase::svlFilterBase() :
-    mtsDevice(),
+    mtsComponent(),
     FrameCounter(0),
     Initialized(false),
     Running(false),

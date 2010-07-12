@@ -61,6 +61,7 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
     svlSyncPoint *sync = baseref->SyncPoint;
     unsigned int counter = 0;
     osaTimeServer* timeserver = 0;
+    double timestamp;
     int status = SVL_OK;
 
     // Initializing thread info structure
@@ -127,6 +128,10 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
                 if (input->Trunk) filter = input->Filter;
                 // If connected input is not trunk
                 else if (ThreadID == 0 && outputsample) input->Buffer->Push(outputsample);
+                // Store timestamps on both the filter input and the filter output
+                timestamp = outputsample->GetTimestamp();
+                output->Timestamp = timestamp;
+                input->Timestamp = timestamp;
             }
         }
 
@@ -178,6 +183,10 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
                     if (input->Trunk) filter = input->Filter;
                     // If connected input is not trunk
                     else if (ThreadID == 0 && outputsample) input->Buffer->Push(outputsample);
+                    // Store timestamps on both the filter input and the filter output
+                    timestamp = outputsample->GetTimestamp();
+                    output->Timestamp = timestamp;
+                    input->Timestamp = timestamp;
                 }
             }
         }

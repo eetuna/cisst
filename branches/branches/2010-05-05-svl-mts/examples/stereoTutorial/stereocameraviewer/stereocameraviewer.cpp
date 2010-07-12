@@ -348,6 +348,9 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     // save settings
     source.SaveSettings("stereodevice.dat");
 
+    // release stream
+    stream.Release();
+    
 labError:
     return 0;
 }

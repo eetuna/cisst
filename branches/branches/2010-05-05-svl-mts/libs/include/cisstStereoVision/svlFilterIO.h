@@ -66,6 +66,8 @@ public:
     int PushSample(const svlSample* sample);
     svlSample* PullSample(bool waitfornew, double timeout = 5.0);
 
+    double GetTimestamp();
+
 private:
     svlFilterBase* Filter;
     const bool Trunk;
@@ -77,6 +79,8 @@ private:
     svlStreamType Type;
 
     svlBufferSample* Buffer;
+
+    double Timestamp;
 };
 
 
@@ -111,6 +115,8 @@ public:
     void SetupSample(svlSample* sample);
     void PushSample(const svlSample* sample);
 
+    double GetTimestamp();
+
 private:
     svlFilterBase* Filter;
     const bool Trunk;
@@ -125,6 +131,8 @@ private:
     bool Blocked;
     svlStreamManager* Stream;
     svlStreamBranchSource* BranchSource;
+
+    double Timestamp;
 };
 
 #endif // _svlFilterIO_h

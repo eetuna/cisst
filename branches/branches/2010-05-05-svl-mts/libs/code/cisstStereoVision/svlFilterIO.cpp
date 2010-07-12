@@ -38,7 +38,8 @@ svlFilterInput::svlFilterInput(svlFilterBase* filter, bool trunk, const std::str
     Connection(0),
     ConnectedFilter(0),
     Type(svlTypeInvalid),
-    Buffer(0)
+    Buffer(0),
+    Timestamp(-1.0)
 {
 }
 
@@ -127,6 +128,9 @@ int svlFilterInput::PushSample(const svlSample* sample)
 
     if (!Buffer) Buffer = new svlBufferSample(Type);
 
+    // Store timestamp
+    Timestamp = sample->GetTimestamp();
+
     return Buffer->Push(sample);
 }
 
@@ -134,6 +138,11 @@ svlSample* svlFilterInput::PullSample(bool waitfornew, double timeout)
 {
     if (!Filter || !Filter->IsInitialized() || !Buffer) return 0;
     return Buffer->Pull(waitfornew, timeout);
+}
+
+double svlFilterInput::GetTimestamp()
+{
+    return Timestamp;
 }
 
 
@@ -153,7 +162,8 @@ svlFilterOutput::svlFilterOutput(svlFilterBase* filter, bool trunk, const std::s
     BufferSize(3),
     Blocked(false),
     Stream(0),
-    BranchSource(0)
+    BranchSource(0),
+    Timestamp(-1.0)
 {
 }
 
@@ -326,6 +336,14 @@ void svlFilterOutput::PushSample(const svlSample* sample)
 
         if (Connection->Trunk) BranchSource->PushSample(sample);
         else if (Connection->Buffer) Connection->Buffer->Push(sample);
+
+        // Store timestamp
+        Timestamp = sample->GetTimestamp();
     }
+}
+
+double svlFilterOutput::GetTimestamp()
+{
+    return Timestamp;
 }
 

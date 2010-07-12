@@ -34,9 +34,9 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceDummy)
 svlFilterSourceDummy::svlFilterSourceDummy() :
     svlFilterSourceBase(),
     OutputSample(0),
-    Width(0),
-    Height(0),
-    Noise(false)
+    Width(320),
+    Height(240),
+    Noise(true)
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);
@@ -46,9 +46,9 @@ svlFilterSourceDummy::svlFilterSourceDummy() :
 svlFilterSourceDummy::svlFilterSourceDummy(svlStreamType type) :
     svlFilterSourceBase(),
     OutputSample(0),
-    Width(0),
-    Height(0),
-    Noise(false)
+    Width(320),
+    Height(240),
+    Noise(true)
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);
@@ -59,9 +59,9 @@ svlFilterSourceDummy::svlFilterSourceDummy(svlStreamType type) :
 svlFilterSourceDummy::svlFilterSourceDummy(const svlSampleImage & image) :
     svlFilterSourceBase(),
     OutputSample(0),
-    Width(0),
-    Height(0),
-    Noise(false)
+    Width(320),
+    Height(240),
+    Noise(true)
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);

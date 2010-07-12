@@ -418,5 +418,32 @@ private:
 };
 
 
+class CISST_EXPORT svlOverlayTimestamp : public svlOverlayStaticText
+{
+public:
+    svlOverlayTimestamp();
+    svlOverlayTimestamp(unsigned int videoch,
+                        bool visible,
+                        svlFilterBase* filter,
+                        svlRect rect,
+                        double fontsize,
+                        svlRGB txtcolor);
+    svlOverlayTimestamp(unsigned int videoch,
+                        bool visible,
+                        svlFilterBase* filter,
+                        svlRect rect,
+                        double fontsize,
+                        svlRGB txtcolor,
+                        svlRGB bgcolor);
+    virtual ~svlOverlayTimestamp();
+
+protected:
+    virtual void DrawInternal(svlSampleImage* bgimage, svlSample* input);
+
+private:
+    svlFilterBase* Filter;
+};
+
+
 #endif // _svlOverlayObjects_h
 

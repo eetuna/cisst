@@ -1084,3 +1084,61 @@ void svlOverlayFramerate::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_U
     svlOverlayStaticText::DrawInternal(bgimage, 0);
 }
 
+
+/*********************************/
+/*** svlOverlayTimestamp class ***/
+/*********************************/
+
+svlOverlayTimestamp::svlOverlayTimestamp() :
+    svlOverlayStaticText(),
+    Filter(0)
+{
+}
+
+svlOverlayTimestamp::svlOverlayTimestamp(unsigned int videoch,
+                                         bool visible,
+                                         svlFilterBase* filter,
+                                         svlRect rect,
+                                         double fontsize,
+                                         svlRGB txtcolor) :
+    svlOverlayStaticText(videoch, visible, "", rect, fontsize, txtcolor),
+    Filter(filter)
+{
+}
+
+svlOverlayTimestamp::svlOverlayTimestamp(unsigned int videoch,
+                                         bool visible,
+                                         svlFilterBase* filter,
+                                         svlRect rect,
+                                         double fontsize,
+                                         svlRGB txtcolor,
+                                         svlRGB bgcolor) :
+    svlOverlayStaticText(videoch, visible, "", rect, fontsize, txtcolor, bgcolor),
+    Filter(filter)
+{
+}
+
+svlOverlayTimestamp::~svlOverlayTimestamp()
+{
+}
+
+void svlOverlayTimestamp::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_UNUSED(input))
+{
+    if (Filter) {
+
+        double timestamp = -1.0;
+        svlFilterInput* input = Filter->GetInput();
+        if (input) timestamp = input->GetTimestamp();
+        else {
+            svlFilterOutput* output = Filter->GetOutput();
+            if (output) timestamp = output->GetTimestamp();
+        }
+
+        std::stringstream strstr;
+        strstr << std::fixed << std::setprecision(3) << timestamp;
+        SetText(strstr.str());
+    }
+
+    svlOverlayStaticText::DrawInternal(bgimage, 0);
+}
+

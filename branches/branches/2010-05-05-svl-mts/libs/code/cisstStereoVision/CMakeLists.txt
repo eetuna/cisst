@@ -29,6 +29,7 @@ SET(DEPENDENCIES
 SET(SOURCE_FILES
   # Public System API
     svlTypes.cpp
+    svlFile.cpp
     svlStreamManager.cpp
     svlFilterBase.cpp
     svlFilterIO.cpp
@@ -102,6 +103,7 @@ SET(HEADER_FILES
   # Public System API
     svlDefinitions.h
     svlTypes.h
+    svlFile.h
     svlStreamManager.h
     svlFilterBase.h
     svlFilterIO.h

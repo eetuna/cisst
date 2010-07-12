@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision.h>
 #include <cisstCommon/cmnGetChar.h>
 
+
 using namespace std;
 
 
@@ -318,6 +319,9 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
     // save settings
     source.SaveSettings("device.dat");
 
+    // release stream
+    stream.Release();
+
 labError:
     return 0;
 }
@@ -423,16 +427,4 @@ int main(int argc, char** argv)
     cerr << "Quit" << endl;
     return 1;
 }
-/*
-void Func()
-{
-    svlFilterImageResizer resizer;
-
-    svlFilterImageResizer::Config config = resizer.GetConfig();
-
-    config.SetOutputDimensions(320, 240, SVL_LEFT);
-    config.SetInterpolation(true);
-
-}
-*/
 
