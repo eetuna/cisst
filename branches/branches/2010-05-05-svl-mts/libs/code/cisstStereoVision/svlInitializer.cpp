@@ -32,26 +32,38 @@ http://www.cisst.org/cisst/license.txt.
 // COM is used by video capture devices
 // and AVI file handlers.
 #if (CISST_OS == CISST_WINDOWS)
-#define _WIN32_DCOM
-class svlOleInit
-{
-public:
-    svlOleInit()
+  #if (_MSC_VER > 1400)
+  // MSVC 2008 or later
+    #define _WIN32_DCOM
+    class svlOleInit
     {
-        HRESULT result = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
-        if (result == S_OK) return;
-        if (result == RPC_E_CHANGED_MODE) {
-            result = CoInitializeEx(0, COINIT_MULTITHREADED);
+    public:
+        svlOleInit()
+        {
+            HRESULT result = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
             if (result == S_OK) return;
+            if (result == RPC_E_CHANGED_MODE) {
+                result = CoInitializeEx(0, COINIT_MULTITHREADED);
+                if (result == S_OK) return;
+            }
+            // Cannot initialize OLE/COM library
         }
-        // Cannot initialize OLE/COM library
-    }
 
-    ~svlOleInit()
+        ~svlOleInit()
+        {
+            CoUninitialize();
+        }
+    };
+  #else
+  // MSVC 2005 or earlier
+    #include "Objbase.h"
+    class svlOleInit
     {
-        CoUninitialize();
-    }
-};
+    public:
+        svlOleInit() { CoInitialize(0); }
+        ~svlOleInit() { CoUninitialize(); }
+    };
+  #endif // MSVC 2008 or higher
 #endif // CISST_WINDOWS
 
 
