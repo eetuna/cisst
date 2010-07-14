@@ -51,13 +51,13 @@ mtsInterfaceRequired::~mtsInterfaceRequired()
 }
 
 
-bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(EventQueuingPolicy queuingPolicy,
+bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(mtsEventQueuingPolicy queuingPolicy,
                                                           const std::string & methodName,
                                                           const std::string & eventName)
 {
     bool interfaceHasMailbox = (this->MailBox != 0);
     if (interfaceHasMailbox) {
-        if (queuingPolicy == EVENT_NOT_QUEUED) {
+        if (queuingPolicy == MTS_EVENT_NOT_QUEUED) {
             CMN_LOG_CLASS_INIT_DEBUG << methodName << ": event handler for \"" << eventName
                                      << "\" will not be queued while the corresponding required interface \""
                                      << this->GetName() << "\" uses queued event handlers by default." << std::endl;
@@ -66,7 +66,7 @@ bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(EventQueuingPolicy que
             return true;
         }
     } else {
-        if (queuingPolicy == EVENT_QUEUED) {
+        if (queuingPolicy == MTS_EVENT_QUEUED) {
             CMN_LOG_CLASS_INIT_ERROR  << methodName << ": event handler for \"" << eventName
                                       << "\" has been added as queued while the corresponding required interface \""
                                       << this->GetName() << "\" has been created without a mailbox." << std::endl;

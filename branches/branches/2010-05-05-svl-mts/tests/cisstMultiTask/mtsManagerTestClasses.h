@@ -130,8 +130,8 @@ public:
             required->AddFunction("Write", InterfaceRequired2.CommandWrite);
             required->AddFunction("Read", InterfaceRequired2.CommandRead);
             required->AddFunction("QualifiedRead", InterfaceRequired2.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired2, "EventVoid", mtsInterfaceRequired::EVENT_NOT_QUEUED);
-            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired2, "EventWrite", mtsInterfaceRequired::EVENT_NOT_QUEUED);
+            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired2, "EventVoid", MTS_EVENT_NOT_QUEUED);
+            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired2, "EventWrite", MTS_EVENT_NOT_QUEUED);
         }
     }
 
@@ -217,8 +217,8 @@ public:
             required->AddFunction("Write", InterfaceRequired1.CommandWrite);
             required->AddFunction("Read", InterfaceRequired1.CommandRead);
             required->AddFunction("QualifiedRead", InterfaceRequired1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", mtsInterfaceRequired::EVENT_NOT_QUEUED);
-            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", mtsInterfaceRequired::EVENT_NOT_QUEUED);
+            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", MTS_EVENT_NOT_QUEUED);
+            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", MTS_EVENT_NOT_QUEUED);
         }
     }
 
@@ -265,8 +265,8 @@ public:
             required->AddFunction("Write", InterfaceRequired1.CommandWrite);
             required->AddFunction("Read", InterfaceRequired1.CommandRead);
             required->AddFunction("QualifiedRead", InterfaceRequired1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", mtsInterfaceRequired::EVENT_NOT_QUEUED);
-            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", mtsInterfaceRequired::EVENT_NOT_QUEUED);
+            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", MTS_EVENT_NOT_QUEUED);
+            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", MTS_EVENT_NOT_QUEUED);
         }
     }
 
@@ -297,8 +297,8 @@ public:
             required->AddFunction("Write", InterfaceRequired1.CommandWrite);
             required->AddFunction("Read", InterfaceRequired1.CommandRead);
             required->AddFunction("QualifiedRead", InterfaceRequired1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", mtsInterfaceRequired::EVENT_NOT_QUEUED);
-            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", mtsInterfaceRequired::EVENT_NOT_QUEUED);
+            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", MTS_EVENT_NOT_QUEUED);
+            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", MTS_EVENT_NOT_QUEUED);
         }
     }
 
@@ -321,8 +321,8 @@ public:
             required->AddFunction("Write", InterfaceRequired1.CommandWrite);
             required->AddFunction("Read", InterfaceRequired1.CommandRead);
             required->AddFunction("QualifiedRead", InterfaceRequired1.CommandQualifiedRead);
-            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", mtsInterfaceRequired::EVENT_NOT_QUEUED);
-            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", mtsInterfaceRequired::EVENT_NOT_QUEUED);
+            required->AddEventHandlerVoid(&mtsManagerTestInterfaceRequired::EventVoidHandler, &InterfaceRequired1, "EventVoid", MTS_EVENT_NOT_QUEUED);
+            required->AddEventHandlerWrite(&mtsManagerTestInterfaceRequired::EventWriteHandler, &InterfaceRequired1, "EventWrite", MTS_EVENT_NOT_QUEUED);
         }
     }
 

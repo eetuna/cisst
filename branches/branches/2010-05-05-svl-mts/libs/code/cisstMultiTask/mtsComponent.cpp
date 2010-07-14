@@ -80,10 +80,19 @@ std::vector<std::string> mtsComponent::GetNamesOfInterfacesProvided(void) const
 }
 
 
-mtsInterfaceProvided * mtsComponent::AddInterfaceProvided(const std::string & interfaceProvidedName)
+mtsInterfaceProvided * mtsComponent::AddInterfaceProvided(const std::string & interfaceProvidedName,
+                                                          mtsInterfaceQueuingPolicy queuingPolicy)
 {
-    mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
-                                                                        mtsInterfaceProvided::COMMANDS_SHOULD_NOT_BE_QUEUED);
+    mtsInterfaceProvided * interfaceProvided;
+    if ((queuingPolicy == MTS_COMPONENT_POLICY)
+        || (queuingPolicy == MTS_COMMANDS_SHOULD_NOT_BE_QUEUED)) {
+        interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this, MTS_COMMANDS_SHOULD_NOT_BE_QUEUED);
+    } else {
+        CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceProvided: adding provided interface \"" << interfaceProvidedName
+                                   << "\" with policy MTS_COMMANDS_SHOULD_BE_QUEUED to component \""
+                                   << this->GetName() << "\", make sure you call ProcessQueuedCommands to empty the queues" << std::endl;
+        interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this, MTS_COMMANDS_SHOULD_BE_QUEUED);
+    }
     if (interfaceProvided) {
         if (InterfacesProvidedOrOutput.AddItem(interfaceProvidedName, interfaceProvided, CMN_LOG_LOD_INIT_ERROR)) {
             InterfacesProvided.push_back(interfaceProvided);
@@ -131,14 +140,14 @@ bool mtsComponent::RemoveInterfaceProvided(const std::string & interfaceProvided
         return false;
     }
 
-    // MJUNG: right now we don't consider the "safe disconnection" issue as 
+    // MJUNG: right now we don't consider the "safe disconnection" issue as
     // follows (not complete) but have to deal with them in the future.
     //
-    // \todo Need to remove (clean up as well) all provided interface 
+    // \todo Need to remove (clean up as well) all provided interface
     // instances which were created by this interface.
     //
-    // \todo Need to add clean-up codes before deleting interface object 
-    // itself through "safe disconnection" mechanism. Otherwise, a connected 
+    // \todo Need to add clean-up codes before deleting interface object
+    // itself through "safe disconnection" mechanism. Otherwise, a connected
     // required interface might try to use provided interface's resource which
     // are already deallocated and invalidated.
     // The "safe disconection" mechanism should include (at least)
@@ -148,7 +157,7 @@ bool mtsComponent::RemoveInterfaceProvided(const std::string & interfaceProvided
     // - To disconnect the connection that the provided interface was related to
     // - To deallocate provided interface and instances that it generated
     // Things to consider:
-    // - Thread-safety issue between caller thread and main thread (main thread 
+    // - Thread-safety issue between caller thread and main thread (main thread
     //   uses component's inner structure(s) to process commands and events)
     // - Safe clean-up to avoid run-time crash
 
@@ -329,6 +338,37 @@ bool mtsComponent::ConnectInterfaceRequiredOrInput(const std::string & interface
                                  << interfaceRequiredOrInputName << "\"" << std::endl;
     }
     return false;
+}
+
+
+// Execute all commands in the mailbox.  This is just a temporary implementation, where
+// all commands in a mailbox are executed before moving on the next mailbox.  The final
+// implementation will probably look at timestamps.  We may also want to pass in a
+// parameter (enum) to set the mailbox processing policy.
+size_t mtsComponent::ProcessMailBoxes(InterfacesProvidedListType & interfaces)
+{
+    size_t numberOfCommands = 0;
+    InterfacesProvidedListType::iterator iterator = interfaces.begin();
+    const InterfacesProvidedListType::iterator end = interfaces.end();
+    for (;
+         iterator != end;
+         ++iterator) {
+        numberOfCommands += (*iterator)->ProcessMailBoxes();
+    }
+    return numberOfCommands;
+}
+
+
+size_t mtsComponent::ProcessQueuedEvents(void) {
+    InterfacesRequiredListType::iterator iterator = InterfacesRequired.begin();
+    const InterfacesRequiredListType::iterator end = InterfacesRequired.end();
+    size_t numberOfEvents = 0;
+    for (;
+         iterator != end;
+         iterator++) {
+        numberOfEvents += (*iterator)->ProcessMailBoxes();
+    }
+    return numberOfEvents;
 }
 
 

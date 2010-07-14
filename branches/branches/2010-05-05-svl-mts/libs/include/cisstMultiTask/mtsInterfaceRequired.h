@@ -100,11 +100,6 @@ protected:
     /*! Default size for queues of events */
     enum {DEFAULT_EVENT_QUEUE_LEN = 16};
     
-    /*! Queuing policy, i.e. what the user would like to do for
-      individual event handlers added using AddEventHandlerVoid or
-      AddEventHandlerWrite. */
-    typedef enum {INTERFACE_DEFAULT, EVENT_QUEUED, EVENT_NOT_QUEUED} EventQueuingPolicy;
-
     /*! Constructor. Sets the name, device pointer, and mailbox for queued events.
 
       \param interfaceName Name of required interface
@@ -209,7 +204,7 @@ protected:
       queued or not based on the default policy for the interface and
       the user's requested policy.  This method also generates a
       warning or error in the log if needed. */
-    bool UseQueueBasedOnInterfacePolicy(EventQueuingPolicy queuingPolicy,
+    bool UseQueueBasedOnInterfacePolicy(mtsEventQueuingPolicy queuingPolicy,
                                         const std::string & methodName,
                                         const std::string & eventName);
 
@@ -247,24 +242,24 @@ public:
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*method)(void),
                                                     __classType * classInstantiation,
                                                     const std::string & eventName,
-                                                    EventQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
+                                                    mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY);
 
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (*function)(void),
                                                     const std::string & eventName,
-                                                    EventQueuingPolicy = INTERFACE_DEFAULT);
+                                                    mtsEventQueuingPolicy = MTS_INTERFACE_EVENT_POLICY);
 
     template <class __classType, class __argumentType>
     inline mtsCommandWriteBase * AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
                                                       __classType * classInstantiation,
                                                       const std::string & eventName,
-                                                      EventQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
+                                                      mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY);
 
     // PK: Can we get rid of this?
     template <class __classType>
     inline mtsCommandWriteBase * AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject &),
                                                              __classType * classInstantiation,
                                                              const std::string & eventName,
-                                                             EventQueuingPolicy queuingPolicy = INTERFACE_DEFAULT);
+                                                             mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY);
 };
 
 
@@ -273,7 +268,7 @@ template <class __classType>
 inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (__classType::*method)(void),
                                                                       __classType * classInstantiation,
                                                                       const std::string & eventName,
-                                                                      EventQueuingPolicy queuingPolicy)
+                                                                      mtsEventQueuingPolicy queuingPolicy)
 {
     bool queued = this->UseQueueBasedOnInterfacePolicy(queuingPolicy, "AddEventHandlerVoid", eventName);
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidMethod<__classType>(method, classInstantiation, eventName);
@@ -291,7 +286,7 @@ inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (__cl
 
 inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (*function)(void),
                                                                       const std::string & eventName,
-                                                                      EventQueuingPolicy queuingPolicy)
+                                                                      mtsEventQueuingPolicy queuingPolicy)
 {
     bool queued = this->UseQueueBasedOnInterfacePolicy(queuingPolicy, "AddEventHandlerVoid", eventName);
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidFunction(function, eventName);
@@ -311,7 +306,7 @@ template <class __classType, class __argumentType>
 inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
                                                                         __classType * classInstantiation,
                                                                         const std::string & eventName,
-                                                                        EventQueuingPolicy queuingPolicy)
+                                                                        mtsEventQueuingPolicy queuingPolicy)
 {
     bool queued = this->UseQueueBasedOnInterfacePolicy(queuingPolicy, "AddEventHandlerWrite", eventName);
     mtsCommandWriteBase * actualCommand =
@@ -332,7 +327,7 @@ template <class __classType>
 inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject &),
                                                                                __classType * classInstantiation,
                                                                                const std::string & eventName,
-                                                                               EventQueuingPolicy queuingPolicy)
+                                                                               mtsEventQueuingPolicy queuingPolicy)
 {
     bool queued = this->UseQueueBasedOnInterfacePolicy(queuingPolicy, "AddEventHandlerWriteGeneric", eventName);
     mtsCommandWriteBase * actualCommand =

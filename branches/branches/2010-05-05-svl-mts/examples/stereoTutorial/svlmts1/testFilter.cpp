@@ -38,7 +38,7 @@ svlFilterTest::svlFilterTest() :
     StateTable(3, "StateTable")
 {
     StateTable.AddData(Settings, "Settings");
-    mtsInterfaceProvided* provided= AddInterfaceProvided("Settings");
+    mtsInterfaceProvided * provided = AddInterfaceProvided("Settings", MTS_COMMANDS_SHOULD_BE_QUEUED);
     if (provided) {
         provided->AddCommandReadState(StateTable, Settings, "Get");
         provided->AddCommandWrite(&svlFilterTest::SetConfig, this, "Set");
@@ -91,6 +91,7 @@ int svlFilterTest::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSampl
 
     _OnSingleThread(procInfo)
     {
+        ProcessQueuedCommands();
         std::stringstream strstr;
         strstr << Settings.Data;
         svlDraw::Text(dynamic_cast<svlSampleImageRGB*>(syncInput),

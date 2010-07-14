@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 mtsInterfaceProvided::mtsInterfaceProvided(const std::string & name, mtsComponent * component,
-                                           InterfaceQueuingPolicy queuingPolicy, mtsCommandVoidBase * postCommandQueuedCommand):
+                                           mtsInterfaceQueuingPolicy queuingPolicy, mtsCommandVoidBase * postCommandQueuedCommand):
     BaseType(name, component),
     MailBox(0),
     QueuingPolicy(queuingPolicy),
@@ -48,18 +48,23 @@ mtsInterfaceProvided::mtsInterfaceProvided(const std::string & name, mtsComponen
     PostCommandQueuedCommand(postCommandQueuedCommand),
     Mutex()
 {
+    // make sure queuing policy is set
+    if (queuingPolicy == MTS_COMPONENT_POLICY) {
+        CMN_LOG_CLASS_INIT_ERROR << "constructor: interface queuing policy has not been set correctly for component \""
+                                 << name << "\"" << std::endl;
+    }
     // by default, if queuing is required we assume this is not an end
     // user interface but a factory.  this setting can only be changed
     // by the factory interface using the private method SetAsEndUser.
-    if (queuingPolicy == COMMANDS_SHOULD_BE_QUEUED) {
+    if (queuingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED) {
         EndUserInterface = false;
     } else {
         EndUserInterface = true;
     }
     // consistency check
-    if (postCommandQueuedCommand && (queuingPolicy == COMMANDS_SHOULD_NOT_BE_QUEUED)) {
-        CMN_LOG_CLASS_INIT_ERROR << "constructor: a post command queued command has been provided while queuing is turned off"
-                                 << std::endl;
+    if (postCommandQueuedCommand && (queuingPolicy == MTS_COMMANDS_SHOULD_NOT_BE_QUEUED)) {
+        CMN_LOG_CLASS_INIT_ERROR << "constructor: a post command queued command has been provided while queuing is turned off for component \""
+                                 << name << "\"" << std::endl;
     }
     // set owner for all maps (to make logs more readable)
     CommandsVoid.SetOwner(*this);
@@ -78,7 +83,7 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
                                            size_t mailBoxSize):
     BaseType(originalInterface->GetName() + "For" + userName,
              originalInterface->Component),
-    QueuingPolicy(COMMANDS_SHOULD_BE_QUEUED),
+    QueuingPolicy(MTS_COMMANDS_SHOULD_BE_QUEUED),
     OriginalInterface(originalInterface),
     EndUserInterface(true),
     UserCounter(0),
@@ -159,7 +164,7 @@ mtsInterfaceProvided::~mtsInterfaceProvided() {
 
 
 void mtsInterfaceProvided::Cleanup() {
-    std::cerr << "Need to cleanup all create interfaces ..." << std::endl;
+    CMN_LOG_CLASS_INIT_ERROR << "Cleanup: need to cleanup all created interfaces ... (not implemented yet)" << std::endl;
 #if 0 // adeguet1, adv
     InterfacesProvidedCreatedType::iterator op;
     for (op = QueuedCommands.begin(); op != QueuedCommands.end(); op++) {
@@ -218,43 +223,43 @@ mtsMailBox * mtsInterfaceProvided::GetMailBox(void)
 }
 
 
-bool mtsInterfaceProvided::UseQueueBasedOnInterfacePolicy(CommandQueuingPolicy queuingPolicy,
+bool mtsInterfaceProvided::UseQueueBasedOnInterfacePolicy(mtsCommandQueuingPolicy queuingPolicy,
                                                           const std::string & methodName,
                                                           const std::string & commandName)
 {
-    if (queuingPolicy == INTERFACE_DEFAULT) {
-        if (this->QueuingPolicy == COMMANDS_SHOULD_BE_QUEUED) {
+    if (queuingPolicy == MTS_INTERFACE_COMMAND_POLICY) {
+        if (this->QueuingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED) {
             return true;
         } else {
             return false;
         }
     }
-    if (queuingPolicy == COMMAND_NOT_QUEUED) {
+    if (queuingPolicy == MTS_COMMAND_NOT_QUEUED) {
         // send warning if queuing is "disabled"
-        if (this->QueuingPolicy == COMMANDS_SHOULD_BE_QUEUED) {
+        if (this->QueuingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED) {
             CMN_LOG_CLASS_INIT_WARNING << methodName << ": adding non queued void command \""
                                        << commandName << "\" to provided interface \""
                                        << this->GetName()
-                                       << "\" which has beed created with policy COMMANDS_SHOULD_BE_QUEUED, thread safety has to be provided by the underlying method"
+                                       << "\" which has beed created with policy MTS_COMMANDS_SHOULD_BE_QUEUED, thread safety has to be provided by the underlying method"
                                        << std::endl;
         } else {
             // send message to tell explicit queuing policy is useless
             CMN_LOG_CLASS_INIT_DEBUG << methodName << ": adding non queued void command \""
                                      << commandName << "\" to provided interface \""
                                      << this->GetName()
-                                     << "\" which has beed created with policy COMMANDS_SHOULD_NOT_BE_QUEUED, this is the default therefore there is no need to explicitely define the queuing policy"
+                                     << "\" which has beed created with policy MTS_COMMANDS_SHOULD_NOT_BE_QUEUED, this is the default therefore there is no need to explicitely define the queuing policy"
                                      << std::endl;
         }
         return false;
     }
-    if (queuingPolicy == COMMAND_QUEUED) {
+    if (queuingPolicy == MTS_COMMAND_QUEUED) {
         // send error if the interface has no mailbox, can not queue
-        if (this->QueuingPolicy == COMMANDS_SHOULD_BE_QUEUED) {
+        if (this->QueuingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED) {
             // send message to tell explicit queuing policy is useless
             CMN_LOG_CLASS_INIT_DEBUG << methodName << ": adding queued void command \""
                                      << commandName << "\" to provided interface \""
                                      << this->GetName()
-                                     << "\" which has beed created with policy COMMANDS_SHOULD_BE_QUEUED, this is the default therefore there is no need to explicitely define the queuing policy"
+                                     << "\" which has beed created with policy MTS_COMMANDS_SHOULD_BE_QUEUED, this is the default therefore there is no need to explicitely define the queuing policy"
                                      << std::endl;
             return true;
         } else {
@@ -262,7 +267,7 @@ bool mtsInterfaceProvided::UseQueueBasedOnInterfacePolicy(CommandQueuingPolicy q
             CMN_LOG_CLASS_INIT_ERROR << methodName << ": adding queued void command \""
                                      << commandName << "\" to provided interface \""
                                      << this->GetName()
-                                     << "\" which has beed created with policy COMMANDS_SHOULD_NOT_BE_QUEUED is not possible.  The command will NOT be queued"
+                                     << "\" which has beed created with policy MTS_COMMANDS_SHOULD_NOT_BE_QUEUED is not possible.  The command will NOT be queued"
                                      << std::endl;
             return false;
         }
@@ -272,7 +277,7 @@ bool mtsInterfaceProvided::UseQueueBasedOnInterfacePolicy(CommandQueuingPolicy q
 }
 
 
-mtsCommandVoidBase * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoidBase * command, CommandQueuingPolicy queuingPolicy)
+mtsCommandVoidBase * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoidBase * command, mtsCommandQueuingPolicy queuingPolicy)
 {
     // check that the input is valid
     if (command) {
@@ -303,7 +308,7 @@ mtsCommandVoidBase * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoidBase * c
 }
 
 
-mtsCommandWriteBase * mtsInterfaceProvided::AddCommandWrite(mtsCommandWriteBase * command, CommandQueuingPolicy queuingPolicy)
+mtsCommandWriteBase * mtsInterfaceProvided::AddCommandWrite(mtsCommandWriteBase * command, mtsCommandQueuingPolicy queuingPolicy)
 {
     // check that the input is valid
     if (command) {

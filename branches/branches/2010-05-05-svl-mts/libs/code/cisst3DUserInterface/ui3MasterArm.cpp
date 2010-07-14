@@ -91,7 +91,7 @@ bool ui3MasterArm::SetInput(const std::string & positionDevice, const std::strin
                                         positionDevice, positionInterface);
 
     // setup master select button required interface 
-    requiredInterface = this->Manager->AddRequiredInterface(this->Name + "Select");
+    requiredInterface = this->Manager->AddInterfaceRequired(this->Name + "Select");
     if (requiredInterface) {
         requiredInterface->AddEventHandlerWrite(&ui3MasterArm::ButtonEventHandler, this,
                                                 "Button");

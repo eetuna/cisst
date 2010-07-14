@@ -93,10 +93,23 @@ mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string
 }
 
 
-mtsInterfaceProvided * mtsTaskFromSignal::AddInterfaceProvided(const std::string & interfaceProvidedName) {
-    mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
-                                                                        mtsInterfaceProvided::COMMANDS_SHOULD_BE_QUEUED,
-                                                                        this->PostCommandQueuedCommand);
+mtsInterfaceProvided * mtsTaskFromSignal::AddInterfaceProvided(const std::string & interfaceProvidedName,
+                                                               mtsInterfaceQueuingPolicy queuingPolicy)
+{
+    mtsInterfaceProvided * interfaceProvided;
+    if ((queuingPolicy == MTS_COMPONENT_POLICY)
+        || (queuingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED)) {
+        interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
+                                                     MTS_COMMANDS_SHOULD_BE_QUEUED,
+                                                     this->PostCommandQueuedCommand);
+    } else {
+        CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceProvided: adding provided interface \"" << interfaceProvidedName
+                                   << "\" with policy MTS_COMMANDS_SHOULD_NOT_BE_QUEUED to task \""
+                                   << this->GetName() << "\". This bypasses built-ins thread safety mechanisms, make sure your commands are thread safe.  "
+                                   << "Furthermore, the thread will not wake up since the post queued command will not be executed. "
+                                   << std::endl;
+        interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this, MTS_COMMANDS_SHOULD_NOT_BE_QUEUED);
+    }
     if (interfaceProvided) {
         if (InterfacesProvidedOrOutput.AddItem(interfaceProvidedName, interfaceProvided)) {
             InterfacesProvided.push_back(interfaceProvided);

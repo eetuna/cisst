@@ -75,7 +75,8 @@ public:
 
     /* documented in base class */
     virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
-    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName);
+    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName,
+                                                        mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
 
 };
 

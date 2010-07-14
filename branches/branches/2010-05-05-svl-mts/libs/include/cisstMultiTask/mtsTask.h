@@ -142,22 +142,6 @@ protected:
 	  does some cleanup work. */
 	virtual void CleanupInternal(void);
 
-    /********************* Methods to process queues  *********************/
-
-    /*! Process all messages in mailboxes. Returns number of commands processed. */
-    size_t ProcessMailBoxes(InterfacesProvidedListType & interfaces);
-
-    /*! Process all queued commands. Returns number of events processed.
-        These are the commands provided by all interfaces of the task. */
-    inline size_t ProcessQueuedCommands(void) {
-        return this->ProcessMailBoxes(InterfacesProvided);
-    }
-
-    /*! Process all queued events. Returns number of events processed.
-        These are the commands queued following events currently observed
-        via the required interfaces. */
-    size_t ProcessQueuedEvents(void);
-
     /**************** Methods for managing task timing ********************/
 
     /*! Delay the task by the specified amount. This is a protected member
@@ -304,7 +288,8 @@ public:
     mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName);
 
     /* documented in base class */
-    mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName);
+    mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName,
+                                                mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
 
 
     /********************* Methods for task synchronization ***************/

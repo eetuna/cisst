@@ -36,7 +36,7 @@
 CMN_IMPLEMENT_SERVICES(displayTask);
 
 displayTask::displayTask(const std::string & taskName, double period):
-    mtsTaskPeriodic(taskName, period, false, 5000)
+    mtsTaskPeriodic(taskName, period, false, 50)
 {
     mtsInterfaceRequired* required;
 

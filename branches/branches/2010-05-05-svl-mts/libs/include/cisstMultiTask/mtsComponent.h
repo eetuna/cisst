@@ -125,7 +125,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       virtual so that mtsTaskBase can redefine it and generate the
       appropriate type of interface, i.e. mtsInterfaceProvided as opposed
       to mtsInterfaceProvided for mtsComponent. */
-    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & providedInterfaceName);
+    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & providedInterfaceName,
+                                                        mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
 
     // provided for backward compatibility
     inline CISST_DEPRECATED mtsInterfaceProvided * AddProvidedInterface(const std::string & providedInterfaceName) {
@@ -186,6 +187,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
                                          mtsInterfaceProvidedOrOutput * interfaceProvidedOrOutput);
 
  protected:
+
     /*! Thread Id counter.  Used to count how many "user" tasks are
       connected from a single thread.  In most cases the count
       should be one. */
@@ -214,6 +216,20 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     typedef std::list<mtsInterfaceRequired *> InterfacesRequiredListType;
     InterfacesRequiredListType InterfacesRequired;
     //@}
+
+    /*! Process all messages in mailboxes. Returns number of commands processed. */
+    size_t ProcessMailBoxes(InterfacesProvidedListType & interfaces);
+
+    /*! Process all queued commands. Returns number of events processed.
+      These are the commands provided by all interfaces of the task. */
+    inline size_t ProcessQueuedCommands(void) {
+        return this->ProcessMailBoxes(InterfacesProvided);
+    }
+
+    /*! Process all queued events. Returns number of events processed.
+      These are the commands queued following events currently observed
+      via the required interfaces. */
+    size_t ProcessQueuedEvents(void);
 
  public:
 

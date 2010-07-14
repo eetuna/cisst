@@ -71,6 +71,7 @@ void mtsTask::StartupInternal(void) {
     CMN_LOG_CLASS_INIT_VERBOSE << "Ending StartupInternal for " << this->GetName() << std::endl;
 }
 
+
 void mtsTask::CleanupInternal() {
     // Call user-supplied cleanup function
     this->Cleanup();
@@ -78,39 +79,6 @@ void mtsTask::CleanupInternal() {
     InterfacesProvidedOrOutput.ForEachVoid(&mtsInterfaceProvidedOrOutput::Cleanup);
     ChangeState(FINISHED);
     CMN_LOG_CLASS_INIT_VERBOSE << "Done base class CleanupInternal " << this->GetName() << std::endl;
-}
-
-
-/********************* Methods to process queues  *********************/
-
-// Execute all commands in the mailbox.  This is just a temporary implementation, where
-// all commands in a mailbox are executed before moving on the next mailbox.  The final
-// implementation will probably look at timestamps.  We may also want to pass in a
-// parameter (enum) to set the mailbox processing policy.
-size_t mtsTask::ProcessMailBoxes(InterfacesProvidedListType & interfaces)
-{
-    size_t numberOfCommands = 0;
-    InterfacesProvidedListType::iterator iterator = interfaces.begin();
-    const InterfacesProvidedListType::iterator end = interfaces.end();
-    for (;
-         iterator != end;
-         ++iterator) {
-        numberOfCommands += (*iterator)->ProcessMailBoxes();
-    }
-    return numberOfCommands;
-}
-
-
-size_t mtsTask::ProcessQueuedEvents(void) {
-    InterfacesRequiredListType::iterator iterator = InterfacesRequired.begin();
-    const InterfacesRequiredListType::iterator end = InterfacesRequired.end();
-    size_t numberOfEvents = 0;
-    for (;
-         iterator != end;
-         iterator++) { 
-        numberOfEvents += (*iterator)->ProcessMailBoxes();
-    }
-    return numberOfEvents;
 }
 
 
@@ -304,9 +272,20 @@ mtsInterfaceRequired * mtsTask::AddInterfaceRequired(const std::string & interfa
 }
 
 
-mtsInterfaceProvided * mtsTask::AddInterfaceProvided(const std::string & interfaceProvidedName) {
-    mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
-                                                                        mtsInterfaceProvided::COMMANDS_SHOULD_BE_QUEUED);
+mtsInterfaceProvided * mtsTask::AddInterfaceProvided(const std::string & interfaceProvidedName,
+                                                     mtsInterfaceQueuingPolicy queuingPolicy)
+{
+    mtsInterfaceProvided * interfaceProvided;
+    if ((queuingPolicy == MTS_COMPONENT_POLICY)
+        || (queuingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED)) {
+        interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this, MTS_COMMANDS_SHOULD_BE_QUEUED);
+    } else {
+        CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceProvided: adding provided interface \"" << interfaceProvidedName
+                                   << "\" with policy MTS_COMMANDS_SHOULD_NOT_BE_QUEUED to task \""
+                                   << this->GetName() << "\". This bypasses built-ins thread safety mechanisms, make sure your commands are thread safe"
+                                   << std::endl;
+        interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this, MTS_COMMANDS_SHOULD_NOT_BE_QUEUED);
+    }
     if (interfaceProvided) {
         if (InterfacesProvidedOrOutput.AddItem(interfaceProvidedName, interfaceProvided)) {
             InterfacesProvided.push_back(interfaceProvided);
