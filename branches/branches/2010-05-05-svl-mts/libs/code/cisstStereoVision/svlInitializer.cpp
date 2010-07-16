@@ -20,9 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include <cisstCommon/cmnPortability.h>
 #include <cisstStereoVision.h>
-#include <cisstStereoVision/svlInitializer.h>
 #include "svlImageCodecInitializer.h"
 #include "svlVideoCodecInitializer.h"
 #include "svlVidCapSrcInitializer.h"

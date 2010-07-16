@@ -296,16 +296,18 @@ int svlStreamManager::Start()
         CS = new osaCriticalSection;
     }
 
+    StopThread = false;
+    StreamStatus = SVL_STREAM_RUNNING;
+
+    // Initialize media control events
+    if (StreamSource->PlayCounter != 0) StreamSource->PauseAtFrameID = -1;
+    else StreamSource->PauseAtFrameID = 0;
+
     for (i = 0; i < ThreadCount; i ++) {
         // Starting multi thread processing
         StreamProcInstance[i] = new svlStreamProc(ThreadCount, i);
         StreamProcThread[i] = new osaThread;
-
-        StopThread = false;
-        StreamStatus = SVL_STREAM_RUNNING;
-        StreamProcThread[i]->Create<svlStreamProc, svlStreamManager*>(StreamProcInstance[i],
-                                                                                      &svlStreamProc::Proc,
-                                                                                      this);
+        StreamProcThread[i]->Create<svlStreamProc, svlStreamManager*>(StreamProcInstance[i], &svlStreamProc::Proc, this);
     }
 
     // Start all filter outputs recursively, if any

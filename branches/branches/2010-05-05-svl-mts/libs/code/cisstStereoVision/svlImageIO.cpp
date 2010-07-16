@@ -20,8 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
+#include <cisstStereoVision/svlDefinitions.h>
 #include <cisstStereoVision/svlImageIO.h>
-#include <cisstStereoVision/svlTypes.h>
 #include "svlImageCodecInitializer.h"
 
 

@@ -170,5 +170,85 @@ http://www.cisst.org/cisst/license.txt.
 #define SVL_OCV_FONT_SCALE                   16.0
 
 
+//////////////////////////////
+// Stream type enumerations //
+//////////////////////////////
+
+enum svlStreamType
+{
+     svlTypeInvalid           // Default in base class
+    ,svlTypeStreamSource      // Capture sources have an input connector of this type
+    ,svlTypeStreamSink        // Render filters may have an output connector of this type
+    ,svlTypeImageRGB          // Single RGB image
+    ,svlTypeImageRGBA         // Single RGBA image
+    ,svlTypeImageRGBStereo    // Dual RGB image
+    ,svlTypeImageRGBAStereo   // Dual RGBA image
+    ,svlTypeImageMono8        // Single Grayscale image (8bpp)
+    ,svlTypeImageMono8Stereo  // Dual Grayscale image (8bpp)
+    ,svlTypeImageMono16       // Single Grayscale image (16bpp)
+    ,svlTypeImageMono16Stereo // Dual Grayscale image (16bpp)
+    ,svlTypeImageMonoFloat    // Single float image (32bpp)
+    ,svlTypeImage3DMap        // Three floats per pixel for storing 3D coordinates
+    ,svlTypeImageCustom       // Custom, un-enumerated image format
+    ,svlTypeTransform3D       // 3D transformation
+    ,svlTypeTargets           // Vector of N dimensional points
+    ,svlTypeText              // Textual data
+};
+
+
+////////////////////////////////
+// Stereo layout enumerations //
+////////////////////////////////
+
+enum svlStereoLayout
+{
+     svlLayoutInterlaced
+    ,svlLayoutInterlacedRL
+    ,svlLayoutSideBySide
+    ,svlLayoutSideBySideRL
+};
+
+
+/////////////////////////////////////////
+// Kernel matching metric enumerations //
+/////////////////////////////////////////
+
+enum svlErrorMetric
+{
+     svlSAD
+    ,svlSSD
+    ,svlWSSD
+    ,svlNCC
+};
+
+
+//////////////////////////////
+// Color space enumerations //
+//////////////////////////////
+
+enum svlColorSpace
+{
+    svlColorSpaceRGB,
+    svlColorSpaceHSV,
+    svlColorSpaceHSL,
+    svlColorSpaceYUV
+};
+
+
+/////////////////////////////
+// Pixel type enumerations //
+/////////////////////////////
+
+enum svlPixelType
+{
+    svlPixelMono8,
+    svlPixelMono16,
+    svlPixelRGB,
+    svlPixelRGBA,
+    svlPixelMonoFloat,
+    svlPixel3DFloat,
+    svlPixelUnknown
+};
+
 #endif // _svlDefinitions_h
 

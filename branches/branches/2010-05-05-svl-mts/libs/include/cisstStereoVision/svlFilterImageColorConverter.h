@@ -28,13 +28,6 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
-enum svlColorSpace
-{
-    svlColorSpaceRGB,
-    svlColorSpaceHSV,
-    svlColorSpaceHSL,
-    svlColorSpaceYUV
-};
 
 class CISST_EXPORT svlFilterImageColorConverter : public svlFilterBase
 {

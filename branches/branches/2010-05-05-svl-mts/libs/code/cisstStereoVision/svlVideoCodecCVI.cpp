@@ -27,6 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include "zlib.h"
 
+//#define READ_CORRUPT_V11_FILE
+
 
 /*************************************/
 /*** svlVideoCodecCVI class **********/
@@ -104,23 +106,27 @@ int svlVideoCodecCVI::Open(const std::string &filename, unsigned int &width, uns
             // Read "frame index pointer"
             if (File->read(reinterpret_cast<char*>(&FrameIndexPointer), sizeof(long long int)).fail() || FrameIndexPointer == 0) break;
 
+#ifdef READ_CORRUPT_V11_FILE
+            Version = 0;
+#else
             std::streampos pos = File->tellg(); // Store file position
-
+            
             // Seek to frame index
             if (File->seekg(FrameIndexPointer).fail()) break;
-
+            
             // Read the frame ID of the last frame
             if (File->read(reinterpret_cast<char*>(&EndPos), sizeof(int)).fail() || EndPos < 0) break;
-
+            
             // Create frame index
             FrameIndex.SetSize(EndPos + 1);
             FrameIndex.SetAll(0);
-
+            
             // Read frame index
             if (File->read(reinterpret_cast<char*>(FrameIndex.Pointer()),
                            FrameIndex.size() * sizeof(long long int)).fail()) break;
-
+            
             File->seekg(pos); // Restore file position
+#endif
         }
         else {
             EndPos = 0;
@@ -491,10 +497,14 @@ int svlVideoCodecCVI::Read(svlProcInfo* procInfo, svlSampleImage &image, const u
     else {
         if (Pos == 0) {
             // Go to the beginning of the data, just after the header
+#ifdef READ_CORRUPT_V11_FILE
+            if (File->seekg(35).fail()) return SVL_FAIL;
+#else
             if (File->seekg(27).fail()) return SVL_FAIL;
+#endif
         }
     }
-    
+
     while (1) {
 
         // Read "frame start marker"

@@ -87,12 +87,13 @@ protected:
     virtual int OnStart(unsigned int procCount);
     virtual int Process(svlProcInfo* procInfo, svlSample* &syncOutput);
     virtual int Release();
+    virtual void OnResetTimer();
 
 private:
     svlSampleImage* OutputImage;
     vctDynamicVector<svlVideoCodecBase*> Codec;
-    double FirstTimestamp;
     bool ResetTimer;
+    double FirstTimestamp;
     osaStopwatch Timer;
 
 protected:

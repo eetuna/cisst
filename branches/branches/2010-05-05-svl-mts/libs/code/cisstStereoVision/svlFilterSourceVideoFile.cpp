@@ -48,7 +48,6 @@ svlFilterSourceVideoFile::svlFilterSourceVideoFile() :
     svlFilterSourceBase(false),  // manual timestamp management
     OutputImage(0),
     FirstTimestamp(-1.0),
-    ResetTimer(false),
     StateTable(3, "StateTable")
 {
     // Add provided interface for settings management
@@ -79,7 +78,6 @@ svlFilterSourceVideoFile::svlFilterSourceVideoFile(unsigned int channelcount) :
     svlFilterSourceBase(false),  // manual timestamp management
     OutputImage(0),
     FirstTimestamp(-1.0),
-    ResetTimer(false),
     StateTable(3, "StateTable")
 {
     // Add provided interface for settings management
@@ -173,7 +171,7 @@ void svlFilterSourceVideoFile::confSet(const mtsGenericObjectProxy<Config>& data
     if (data.Data.Channels < 0) return;
 
     SetChannelCount(static_cast<unsigned int>(data.Data.Channels));
-    for (unsigned int i = 0; i < data.Data.Channels; i ++) {
+    for (int i = 0; i < data.Data.Channels; i ++) {
         SetFilePath(data.Data.FilePath[i], i);
         SetPosition(data.Data.Position[i], i);
         SetRange(data.Data.Range[i], i);
@@ -348,6 +346,7 @@ int svlFilterSourceVideoFile::Process(svlProcInfo* procInfo, svlSample* &syncOut
                             FirstTimestamp = timestamp;
                             Timer.Reset();
                             Timer.Start();
+                            ResetTimer = false;
                         }
                         else {
                             timespan = (timestamp - FirstTimestamp) - Timer.GetElapsedTime();
@@ -382,6 +381,11 @@ int svlFilterSourceVideoFile::Release()
     Settings.Data.Framerate = -1.0;
 
     return SVL_OK;
+}
+
+void svlFilterSourceVideoFile::OnResetTimer()
+{
+    ResetTimer = true;
 }
 
 int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)

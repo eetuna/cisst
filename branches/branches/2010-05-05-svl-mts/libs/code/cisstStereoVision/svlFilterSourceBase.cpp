@@ -46,7 +46,9 @@ svlFilterSourceBase::svlFilterSourceBase() :
     LoopFlag(true),
     AutoTimestamp(true),
     TargetStartTime(0.0),
-    TargetFrameTime(0.0)
+    TargetFrameTime(0.0),
+    PlaybackFrameOffset(0),
+    PlayCounter(-1)
 {
 }
 
@@ -56,7 +58,9 @@ svlFilterSourceBase::svlFilterSourceBase(bool autotimestamps) :
     LoopFlag(true),
     AutoTimestamp(autotimestamps),
     TargetStartTime(0.0),
-    TargetFrameTime(0.0)
+    TargetFrameTime(0.0),
+    PlaybackFrameOffset(0),
+    PlayCounter(-1)
 {
 }
 
@@ -85,6 +89,27 @@ bool svlFilterSourceBase::GetLoop()
     return LoopFlag;
 }
 
+void svlFilterSourceBase::Pause()
+{
+    Play(0);
+}
+
+void svlFilterSourceBase::Play()
+{
+    Play(-1);
+}
+
+void svlFilterSourceBase::Play(const int frames)
+{
+    PlayCounter = frames;
+
+    if (frames != 0) {
+        OnResetTimer();
+        // Reset target timer
+        if (TargetTimer.IsRunning()) PlaybackFrameOffset = FrameCounter;
+    }
+}
+
 int svlFilterSourceBase::Initialize(svlSample* &CMN_UNUSED(syncOutput))
 {
     return SVL_OK;
@@ -104,6 +129,11 @@ void svlFilterSourceBase::OnStop()
 int svlFilterSourceBase::Release()
 {
     return SVL_OK;
+}
+
+void svlFilterSourceBase::OnResetTimer()
+{
+    // Default implementation does nothing
 }
 
 int svlFilterSourceBase::RestartTargetTimer()
@@ -129,9 +159,10 @@ int svlFilterSourceBase::StopTargetTimer()
 int svlFilterSourceBase::WaitForTargetTimer()
 {
     if (TargetTimer.IsRunning()) {
-        if (FrameCounter > 0) {
+        if (FrameCounter == 0) FrameCounter = PlaybackFrameOffset;
+        if (FrameCounter > PlaybackFrameOffset) {
             double time = TargetTimer.GetElapsedTime();
-            double t1 = TargetFrameTime * FrameCounter;
+            double t1 = TargetFrameTime * (FrameCounter - PlaybackFrameOffset);
             double t2 = time - TargetStartTime;
             if (t1 > t2) osaSleep(t1 - t2);
         }

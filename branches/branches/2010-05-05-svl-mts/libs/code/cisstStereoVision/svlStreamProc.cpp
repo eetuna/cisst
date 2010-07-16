@@ -54,7 +54,7 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
 {
     svlSample *inputsample, *outputsample;
     svlFilterBase *filter, *prevfilter;
-    svlFilterSourceBase *source;
+    svlFilterSourceBase* source = baseref->StreamSource;
     svlFilterOutput* output;
     svlFilterInput* input;
     svlProcInfo info;
@@ -81,9 +81,38 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
     }
 
     while (baseref->StopThread == false) {
-        source = baseref->StreamSource;
         source->FrameCounter = counter;
         outputsample = 0;
+
+    ///////////////////////////////////////
+    // Handle stream control (pause/play)
+
+        if (source->PauseAtFrameID == static_cast<int>(counter)) {
+            if (ThreadID == 0) {
+                // Wait until playback resumed or stream stopped
+                while (source->PlayCounter == 0 && baseref->StopThread == false) {
+                    osaSleep(0.1); // check 10 times a second
+                }
+                if (baseref->StopThread) break;
+            }
+
+            if (ThreadCount > 1) {
+            // Execute only if multi-threaded - BEGIN
+
+                // Synchronization point, wait for other threads
+                if (sync->Sync(ThreadID) != SVL_SYNC_OK) break;
+
+            // Execute only if multi-threaded - END
+            }
+        }
+
+        if (ThreadID == 0) {
+            if (source->PlayCounter > 0) source->PlayCounter --;
+            if (source->PlayCounter == 0) {
+                // Pause when the next frame arrives
+                source->PauseAtFrameID = static_cast<int>(counter) + 1;
+            }
+        }
 
     ////////////////////////////////////
     // Starting from the stream source
@@ -105,7 +134,7 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
         if (ThreadCount > 1) {
         // Execute only if multi-threaded - BEGIN
 
-            // Synchronization point, wait for other thread
+            // Synchronization point, wait for other threads
             if (sync->Sync(ThreadID) != SVL_SYNC_OK) break;
 
         // Execute only if multi-threaded - END
@@ -154,7 +183,7 @@ void* svlStreamProc::Proc(svlStreamManager* baseref)
             if (ThreadCount > 1) {
             // Execute only if multi-threaded - BEGIN
 
-                // Synchronization point, wait for other thread
+                // Synchronization point, wait for other threads
                 if (sync->Sync(ThreadID) != SVL_SYNC_OK) break;
 
             // Execute only if multi-threaded - END

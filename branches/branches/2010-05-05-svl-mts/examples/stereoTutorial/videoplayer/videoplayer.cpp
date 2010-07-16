@@ -72,14 +72,35 @@ int VideoPlayer(std::string pathname)
 
     cerr << "Done" << endl;
 
+    cerr << endl << "Keyboard commands:" << endl << endl;
+    cerr << "  In command window:" << endl;
+    cerr << "    'p'   - Pause/Resume playback" << endl;
+    cerr << "    'q'   - Quit" << endl << endl;
+    
     // wait for keyboard input in command window
     int ch;
-    do {
-        cerr << endl << "Keyboard commands:" << endl << endl;
-        cerr << "  In command window:" << endl;
-        cerr << "    'q'   - Quit" << endl << endl;
+    bool paused;
+    paused = false;
 
+    do {
         ch = cmnGetChar();
+        
+        switch (ch) {
+            case 'p':
+                if (paused) {
+                    // Resume playback
+                    source.Play();
+                    paused = false;
+                    cerr << "Playback resumed..." << endl;
+                }
+                else {
+                    // Pause source
+                    source.Pause();
+                    paused = true;
+                    cerr << "Playback paused..." << endl;
+                }
+            break;
+        }
     } while (ch != 'q');
 
     cerr << endl;

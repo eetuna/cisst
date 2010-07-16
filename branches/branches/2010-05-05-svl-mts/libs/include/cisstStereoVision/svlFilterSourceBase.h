@@ -51,24 +51,20 @@ public:
     virtual int SetTargetFrequency(double hertz);
     virtual void SetLoop(bool loop = true);
     virtual bool GetLoop();
-/*
-    virtual int SetFramePos(int position);
-    virtual int GetFramePos();
-    virtual int SetFrameRange(int from, int to);
-    virtual int GetFrameRange(int& from, int& to);
 
-    virtual int SetTimePos(double position);
-    virtual double GetTimePos();
-    virtual int SetTimeRange(double from, double to);
-    virtual int GetTimeRange(double& from, double& to);
-*/
+    void Pause();
+    void Play();
+    void Play(const int frames);
+
 protected:
     virtual int Initialize(svlSample* &syncOutput);
     virtual int OnStart(unsigned int procCount);
     virtual int Process(svlProcInfo* procInfo, svlSample* &syncOutput) = 0;
     virtual void OnStop();
     virtual int Release();
+    virtual void OnResetTimer();
 
+    void ResetTargetTimer();
     int RestartTargetTimer();
     int StopTargetTimer();
     int WaitForTargetTimer();
@@ -91,6 +87,10 @@ private:
     osaStopwatch TargetTimer;
     double TargetStartTime;
     double TargetFrameTime;
+    unsigned int PlaybackFrameOffset;
+
+    int PlayCounter;
+    int PauseAtFrameID;
 };
 
 

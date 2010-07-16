@@ -23,8 +23,8 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlImageIO_h
 #define _svlImageIO_h
 
-#include <cisstVector/vctDynamicMatrixTypes.h>
 #include <cisstOSAbstraction/osaCriticalSection.h>
+#include <cisstVector/vctDynamicVector.h>
 #include <string>
 
 // Always include last!
@@ -33,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 
 // Forward declarations
 class svlSampleImage;
+class cmnClassServicesBase;
 
 /*************************************/
 /*** svlImageCodecBase class *********/

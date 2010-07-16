@@ -130,12 +130,10 @@ public:
         if (ascii) {
             switch (eventid) {
                 case 's':
-                {
                     if (ImageWriterFilter) {
                         ImageWriterFilter->Record(1);
                         cout << endl << " >>> Snapshot saved <<<" << endl;
                     }
-                }
                 break;
 
                 case ' ':
@@ -284,18 +282,22 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
 
     // wait for keyboard input in command window
     int ch;
+    bool paused;
+
+    paused = false;
+
+    cerr << endl << "Keyboard commands:" << endl << endl;
+    cerr << "  In image window:" << endl;
+    if (save == true) {
+        cerr << "    SPACE - Video recorder control: Record/Pause" << endl;
+    }
+    cerr << "    's'   - Take image snapshot" << endl;
+    cerr << "  In command window:" << endl;
+    cerr << "    'i'   - Adjust image properties" << endl;
+    cerr << "    'p'   - Pause/Resume capture" << endl;
+    cerr << "    'q'   - Quit" << endl << endl;
 
     do {
-        cerr << endl << "Keyboard commands:" << endl << endl;
-        cerr << "  In image window:" << endl;
-        if (save == true) {
-            cerr << "    SPACE - Video recorder control: Record/Pause" << endl;
-        }
-        cerr << "    's'   - Take image snapshot" << endl;
-        cerr << "  In command window:" << endl;
-        cerr << "    'i'   - Adjust image properties" << endl;
-        cerr << "    'q'   - Quit" << endl << endl;
-
         ch = cmnGetChar();
 
         switch (ch) {
@@ -303,9 +305,24 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
                 // Adjust image properties
                 cerr << endl << endl;
                 source.DialogImageProperties();
-                cerr << endl;
+                cerr << endl << endl;
             break;
 
+            case 'p':
+                if (paused) {
+                    // Resume playback
+                    source.Play();
+                    paused = false;
+                    cerr << "Capture resumed..." << endl;
+                }
+                else {
+                    // Pause source
+                    source.Pause();
+                    paused = true;
+                    cerr << "Capture paused..." << endl;
+                }
+            break;
+                
             default:
             break;
         }

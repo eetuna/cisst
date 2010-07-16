@@ -27,7 +27,11 @@ http://www.cisst.org/cisst/license.txt.
 
 namespace svlConverter
 {
-    void ConvertImage(svlSampleImage* inimage, svlSampleImage* outimage, int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
+    int ConvertImage(const svlSampleImage* inimage, svlSampleImage* outimage,
+                     int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
+    int ConvertImage(const svlSampleImage* inimage, const unsigned int inchannel,
+                     svlSampleImage* outimage, const unsigned int outchannel,
+                     int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
 
     void Gray8toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
     void Gray8toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
@@ -57,6 +61,8 @@ namespace svlConverter
     void RGB24toHSL24(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool ch1 = true, bool ch2 = true, bool ch3 = true);
     void RGB24toHSL24P(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool ch1 = true, bool ch2 = true, bool ch3 = true);
     void RGBA32toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
+    void RGBA32toGray8(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool accurate = false, bool bgr = false);
+    void RGBA32toGray16(unsigned char* input, unsigned short* output, const unsigned int pixelcount, bool accurate = false, bool bgr = false);
     void YUV444toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool ch1 = true, bool ch2 = true, bool ch3 = true);
     void YUV444PtoRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool ch1 = true, bool ch2 = true, bool ch3 = true);
     void YUV422toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool ch1 = true, bool ch2 = true, bool ch3 = true);
