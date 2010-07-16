@@ -574,9 +574,9 @@ void svlConverter::RGB24toYUV444(unsigned char* input, unsigned char* output, co
         v >>= 13;
         if (v > 240) v = 240;
 
-        if (ch1) { *output = static_cast<unsigned char>(y); } output ++;
-        if (ch2) { *output = static_cast<unsigned char>(u); } output ++;
-        if (ch3) { *output = static_cast<unsigned char>(v); } output ++;
+        if (ch1) { *output = static_cast<unsigned char>(y); } else { *output = 0; } output ++;
+        if (ch2) { *output = static_cast<unsigned char>(u); } else { *output = 0; } output ++;
+        if (ch3) { *output = static_cast<unsigned char>(v); } else { *output = 0; } output ++;
     }
 }
 
@@ -607,9 +607,9 @@ void svlConverter::RGB24toYUV444P(unsigned char* input, unsigned char* output, c
         v >>= 13;
         if (v > 240) v = 240;
 
-        if (ch1) { *outy = static_cast<unsigned char>(y); outy ++; }
-        if (ch2) { *outu = static_cast<unsigned char>(u); outu ++; }
-        if (ch3) { *outv = static_cast<unsigned char>(v); outv ++; }
+        if (ch1) { *outy = static_cast<unsigned char>(y); } else { *outy = 0; } outy ++;
+        if (ch2) { *outu = static_cast<unsigned char>(u); } else { *outu = 0; } outu ++;
+        if (ch3) { *outv = static_cast<unsigned char>(v); } else { *outv = 0; } outv ++;
     }
 }
 
@@ -657,14 +657,10 @@ void svlConverter::BGR24toYUV422(unsigned char* input, unsigned char* output, co
         v2 >>= 13;
         if (v2 > 240) v2 = 240;
 
-        if (ch1) *output = static_cast<unsigned char>(y1);
-        output ++;
-        if (ch2) *output = static_cast<unsigned char>((u1 + u2) >> 1);
-        output ++;
-        if (ch1) *output = static_cast<unsigned char>(y2);
-        output ++;
-        if (ch3) *output = static_cast<unsigned char>((v1 + v2) >> 1);
-        output ++;
+        if (ch1) { *output = static_cast<unsigned char>(y1); }             else { *output = 0; } output ++;
+        if (ch2) { *output = static_cast<unsigned char>((u1 + u2) >> 1); } else { *output = 0; } output ++;
+        if (ch1) { *output = static_cast<unsigned char>(y2); }             else { *output = 0; } output ++;
+        if (ch3) { *output = static_cast<unsigned char>((v1 + v2) >> 1); } else { *output = 0; } output ++;
     }
 }
 
@@ -712,14 +708,10 @@ void svlConverter::RGB24toYUV422(unsigned char* input, unsigned char* output, co
         v2 >>= 13;
         if (v2 > 240) v2 = 240;
 
-        if (ch1) *output = static_cast<unsigned char>(y1);
-        output ++;
-        if (ch2) *output = static_cast<unsigned char>((u1 + u2) >> 1);
-        output ++;
-        if (ch1) *output = static_cast<unsigned char>(y2);
-        output ++;
-        if (ch3) *output = static_cast<unsigned char>((v1 + v2) >> 1);
-        output ++;
+        if (ch1) { *output = static_cast<unsigned char>(y1); }             else { *output = 0; } output ++;
+        if (ch2) { *output = static_cast<unsigned char>((u1 + u2) >> 1); } else { *output = 0; } output ++;
+        if (ch1) { *output = static_cast<unsigned char>(y2); }             else { *output = 0; } output ++;
+        if (ch3) { *output = static_cast<unsigned char>((v1 + v2) >> 1); } else { *output = 0; } output ++;
     }
 }
 
@@ -772,8 +764,10 @@ void svlConverter::RGB24toYUV422P(unsigned char* input, unsigned char* output, c
 
         if (ch1) { *outy = static_cast<unsigned char>(y1); outy ++;
                    *outy = static_cast<unsigned char>(y2); outy ++; }
-        if (ch2) { *outu = static_cast<unsigned char>((u1 + u2) >> 1); outu ++; }
-        if (ch3) { *outv = static_cast<unsigned char>((v1 + v2) >> 1); outv ++; }
+        else     { *outy = 0;  outy ++; 
+                   *outy = 0;  outy ++; }
+        if (ch2) { *outu = static_cast<unsigned char>((u1 + u2) >> 1); outu ++; } else { *outu = 0; }
+        if (ch3) { *outv = static_cast<unsigned char>((v1 + v2) >> 1); outv ++; } else { *outv = 0; }
     }
 }
 
