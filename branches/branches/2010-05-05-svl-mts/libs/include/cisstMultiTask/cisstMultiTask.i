@@ -168,38 +168,39 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
     }
 }
 
-// Wrap tasks and devices
-%include "cisstMultiTask/mtsDevice.h"
-%extend mtsDevice {
+// Wrap tasks and components
+%include "cisstMultiTask/mtsComponent.h"
+%extend mtsComponent {
     %pythoncode {
         def UpdateFromC(self):
-            interfaces = mtsDevice.GetNamesOfProvidedInterfaces(self)
+            interfaces = mtsComponent.GetNamesOfInterfacesProvided(self)
             for interface in interfaces:
                 interfaceNoSpace = interface.replace(' ', '')
-                self.__dict__[interfaceNoSpace] = mtsDevice.GetProvidedInterface(self, interface)
-                userId = self.__dict__[interfaceNoSpace].AllocateResources('Python')
-                self.__dict__[interfaceNoSpace].UpdateFromC(userId)
+                self.__dict__[interfaceNoSpace] = mtsComponent.GetInterfaceProvided(self, interface)
+                self.__dict__[interfaceNoSpace].UpdateFromC()
     }
 }
 
-%include "cisstMultiTask/mtsDeviceInterface.h"
-%extend mtsDeviceInterface {
+%include "cisstMultiTask/mtsInterfaceProvidedOrOutput.h"
+%include "cisstMultiTask/mtsInterfaceProvided.h"
+%extend mtsInterfaceProvided {
     %pythoncode {
-        def UpdateFromC(self, userId):
-            commands = mtsDeviceInterface.GetNamesOfCommandsVoid(self)
+        def UpdateFromC(self):
+            interfaceCopy = mtsInterfaceProvided.GetEndUserInterface(self, mtsInterfaceProvided.GetName(self))
+            commands = mtsInterfaceProvided.GetNamesOfCommandsVoid(interfaceCopy)
             for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandVoid(self, command, userId)
-            commands = mtsDeviceInterface.GetNamesOfCommandsWrite(self)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandVoid(interfaceCopy, command)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsWrite(interfaceCopy)
             for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandWrite(self, command, userId)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandWrite(interfaceCopy, command)
                 self.__dict__[command].UpdateFromC()
-            commands = mtsDeviceInterface.GetNamesOfCommandsQualifiedRead(self)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsQualifiedRead(interfaceCopy)
             for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandQualifiedRead(self, command)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandQualifiedRead(interfaceCopy, command)
                 self.__dict__[command].UpdateFromC()
-            commands = mtsDeviceInterface.GetNamesOfCommandsRead(self)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsRead(interfaceCopy)
             for command in commands:
-                self.__dict__[command] = mtsDeviceInterface.GetCommandRead(self, command)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandRead(interfaceCopy, command)
                 self.__dict__[command].UpdateFromC()
     }
 }
@@ -208,9 +209,9 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 %include "cisstMultiTask/mtsTaskContinuous.h"
 %include "cisstMultiTask/mtsTaskPeriodic.h"
 %include "cisstMultiTask/mtsTaskFromSignal.h"
-%include "cisstMultiTask/mtsTaskInterface.h"
 
-%include "cisstMultiTask/mtsRequiredInterface.h"
+%include "cisstMultiTask/mtsInterfaceRequiredOrInput.h"
+%include "cisstMultiTask/mtsInterfaceRequired.h"
 
 %include "cisstMultiTask/mtsManagerLocal.h"
 %extend mtsManagerLocal {

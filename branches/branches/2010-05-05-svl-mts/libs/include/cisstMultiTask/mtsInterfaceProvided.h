@@ -166,7 +166,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     mtsMulticastCommandWriteBase * GetEventWrite(const std::string & eventName) const;
     //@}
 
-
+#ifndef SWIG
     /*! Add a void command to the provided interface based on a method
       and an object instantiating the method.  This method creates an
       mtsCommandVoid object and then calls the AddCommandVoid virtual
@@ -323,7 +323,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                              __argumentType(), __filteredType());
     }
     //@}
-
+#endif // SWIG
 
     /*! Add events to the interface.  This method creates the
       multicast command used to trigger all the observers for the

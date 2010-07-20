@@ -84,13 +84,6 @@ protected:
       commands) know which mailbox to use.  The user Id is provided
       by the provided interface when calling AllocateResources. */
     // bool BindCommandsAndEvents(unsigned int userId);
-
-    /*! Getter and setter for 'Registered' flag */
-    //@{
-    void SetRegistered(void);
-    bool GetRegistered(void) const;
-    //@}
-
 };
 
 
