@@ -24,6 +24,7 @@
 #define _displayTask_h
 
 #include <cisstMultiTask.h>
+#include <cisstStereoVision/svlFilterSourceVideoFile.h>
 #include "testFilter.h"
 
 
@@ -44,13 +45,14 @@ protected:
         mtsFunctionWrite SetFramerate;
         mtsFunctionWrite SetLoop;
     } SourceConfig;
+    svlFilterSourceVideoFile::Config SourceState;
 
     // Test filter commands & state
     struct {
        mtsFunctionRead  Get;
        mtsFunctionWrite Set;
-    } FilterConfig;
-    svlFilterTest::Config FilterState;
+    } FilterParams;
+    svlFilterTest::Parameters FilterState;
 
 public:
     // see sineTask.h documentation

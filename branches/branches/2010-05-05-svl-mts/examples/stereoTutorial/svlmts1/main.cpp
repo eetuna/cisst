@@ -73,7 +73,7 @@ int main(void)
 
     // connect the task with the component, task.RequiresInterface -> component.ProvidesInterface
     taskManager->Connect("DISP", "SourceConfig", "SRC", "Settings");
-    taskManager->Connect("DISP", "FilterConfig", "FILT", "Settings");
+    taskManager->Connect("DISP", "FilterParams", "FILT", "Parameters");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();

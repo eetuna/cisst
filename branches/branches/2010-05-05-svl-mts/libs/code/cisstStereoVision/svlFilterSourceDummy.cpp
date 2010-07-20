@@ -40,7 +40,7 @@ svlFilterSourceDummy::svlFilterSourceDummy() :
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);
-    TargetFrequency = 30.0;
+    SetTargetFrequency(30.0);
 }
 
 svlFilterSourceDummy::svlFilterSourceDummy(svlStreamType type) :
@@ -53,7 +53,7 @@ svlFilterSourceDummy::svlFilterSourceDummy(svlStreamType type) :
     AddOutput("output", true);
     SetAutomaticOutputType(false);
     SetType(type);
-    TargetFrequency = 30.0;
+    SetTargetFrequency(30.0);
 }
 
 svlFilterSourceDummy::svlFilterSourceDummy(const svlSampleImage & image) :
@@ -66,7 +66,7 @@ svlFilterSourceDummy::svlFilterSourceDummy(const svlSampleImage & image) :
     AddOutput("output", true);
     SetAutomaticOutputType(false);
     SetImage(image);
-    TargetFrequency = 30.0;
+    SetTargetFrequency(30.0);
 }
 
 svlFilterSourceDummy::~svlFilterSourceDummy()
@@ -155,7 +155,7 @@ int svlFilterSourceDummy::Process(svlProcInfo* procInfo, svlSample* &syncOutput)
 {
     syncOutput = OutputSample;
 
-    // Try to keep TargetFrequency
+    // Try to keep target frequency
     _OnSingleThread(procInfo) WaitForTargetTimer();
 
     if (Noise) {

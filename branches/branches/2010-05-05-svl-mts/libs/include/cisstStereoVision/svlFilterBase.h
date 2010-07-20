@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <map>
 
+#include <cisstMultiTask/mtsStateTable.h>
 #include <cisstStereoVision/svlTypes.h>
 #include <cisstStereoVision/svlFilterIO.h>
 #include <cisstStereoVision/svlSyncPoint.h>
@@ -67,6 +68,7 @@ public:
 
 protected:
     unsigned int FrameCounter;
+    mtsStateTable StateTable;
 
     svlFilterInput* AddInput(const std::string &inputname, bool trunk = true);
     svlFilterOutput* AddOutput(const std::string &outputname, bool trunk = true);

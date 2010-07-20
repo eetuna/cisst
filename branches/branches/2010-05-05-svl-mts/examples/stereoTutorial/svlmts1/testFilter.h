@@ -35,7 +35,7 @@ class svlFilterTest : public svlFilterBase
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-    struct Config
+    struct Parameters
     {
         double DblValue1;
         double DblValue2;
@@ -43,13 +43,14 @@ public:
         int IntValue2;
         bool BoolValue;
 
-        friend std::ostream & operator << (std::ostream & stream, const Config & objref);
+        friend std::ostream & operator << (std::ostream & stream, const Parameters & objref);
     };
-    void SetConfig(const mtsGenericObjectProxy<Config>& data);
+    void SetParameters(const mtsGenericObjectProxy<Parameters>& data);
+
+    void CreateInterfaces();
 
 public:
     svlFilterTest();
-    virtual ~svlFilterTest();
 
     void SetParam1(unsigned int value1, unsigned int value2);
     void SetParam2(double value1, double value2);
@@ -60,12 +61,11 @@ protected:
     virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
 
 protected:
-    mtsStateTable StateTable;
-    mtsGenericObjectProxy<Config> Settings;
+    mtsGenericObjectProxy<Parameters> Params;
 };
 
-typedef mtsGenericObjectProxy<svlFilterTest::Config> svlFilterTestConfigProxy;
-CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterTestConfigProxy);
+typedef mtsGenericObjectProxy<svlFilterTest::Parameters> svlFilterTestParametersProxy;
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterTestParametersProxy);
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterTest)
 
 #endif // _testFilter_h

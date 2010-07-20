@@ -42,6 +42,7 @@ http://www.cisst.org/cisst/license.txt.
 svlFilterBase::svlFilterBase() :
     mtsComponent(),
     FrameCounter(0),
+    StateTable(3, "StateTable"),
     Initialized(false),
     Running(false),
     PrevInputTimestamp(-1.0),

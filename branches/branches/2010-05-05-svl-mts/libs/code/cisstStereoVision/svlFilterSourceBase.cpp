@@ -36,14 +36,29 @@ http://www.cisst.org/cisst/license.txt.
 #endif
 
 
+/***********************************************/
+/*** svlFilterSourceBase::SourceConfig class ***/
+/***********************************************/
+
+svlFilterSourceBase::SourceConfig::SourceConfig() :
+    Framerate(-1.0),
+    Loop(true)
+{
+}
+
+svlFilterSourceBase::SourceConfig::SourceConfig(const svlFilterSourceBase::SourceConfig& config)
+{
+    Framerate = config.Framerate;
+    Loop      = config.Loop;
+}
+
+
 /*************************************/
 /*** svlFilterSourceBase class *******/
 /*************************************/
 
 svlFilterSourceBase::svlFilterSourceBase() :
     svlFilterBase(),
-    TargetFrequency(-1.0),
-    LoopFlag(true),
     AutoTimestamp(true),
     TargetStartTime(0.0),
     TargetFrameTime(0.0),
@@ -54,8 +69,6 @@ svlFilterSourceBase::svlFilterSourceBase() :
 
 svlFilterSourceBase::svlFilterSourceBase(bool autotimestamps) :
     svlFilterBase(),
-    TargetFrequency(-1.0),
-    LoopFlag(true),
     AutoTimestamp(autotimestamps),
     TargetStartTime(0.0),
     TargetFrameTime(0.0),
@@ -68,25 +81,34 @@ svlFilterSourceBase::~svlFilterSourceBase()
 {
 }
 
-double svlFilterSourceBase::GetTargetFrequency()
+void svlFilterSourceBase::confSetFramerate(const mtsDouble& framerate)
 {
-    return TargetFrequency;
+    SetTargetFrequency(framerate);
 }
 
-int svlFilterSourceBase::SetTargetFrequency(double hertz)
+void svlFilterSourceBase::confSetLoop(const mtsBool& loop)
 {
-    TargetFrequency = hertz;
-    return SVL_OK;
+    SetLoop(loop);
+}
+
+void svlFilterSourceBase::SetTargetFrequency(double hertz)
+{
+    SourceSettings.Framerate = hertz;
+}
+
+double svlFilterSourceBase::GetTargetFrequency() const
+{
+    return SourceSettings.Framerate;
 }
 
 void svlFilterSourceBase::SetLoop(bool loop)
 {
-    LoopFlag = loop;
+    SourceSettings.Loop = loop;
 }
 
-bool svlFilterSourceBase::GetLoop()
+bool svlFilterSourceBase::GetLoop() const
 {
-    return LoopFlag;
+    return SourceSettings.Loop;
 }
 
 void svlFilterSourceBase::Pause()
@@ -115,22 +137,6 @@ int svlFilterSourceBase::Initialize(svlSample* &CMN_UNUSED(syncOutput))
     return SVL_OK;
 }
 
-int svlFilterSourceBase::OnStart(unsigned int CMN_UNUSED(procCount))
-{
-    RestartTargetTimer();
-    return SVL_OK;
-}
-
-void svlFilterSourceBase::OnStop()
-{
-    StopTargetTimer();
-}
-
-int svlFilterSourceBase::Release()
-{
-    return SVL_OK;
-}
-
 void svlFilterSourceBase::OnResetTimer()
 {
     // Default implementation does nothing
@@ -138,8 +144,8 @@ void svlFilterSourceBase::OnResetTimer()
 
 int svlFilterSourceBase::RestartTargetTimer()
 {
-    if (TargetFrequency >= 0.1) {
-        TargetFrameTime = 1.0 / TargetFrequency;
+    if (SourceSettings.Framerate >= 0.1) {
+        TargetFrameTime = 1.0 / SourceSettings.Framerate;
         TargetTimer.Reset();
         TargetTimer.Start();
         return SVL_OK;
@@ -179,14 +185,35 @@ bool svlFilterSourceBase::IsTargetTimerRunning()
     return TargetTimer.IsRunning();
 }
 
+int svlFilterSourceBase::UpdateTypes(svlFilterInput & CMN_UNUSED(input), svlStreamType CMN_UNUSED(type))
+{
+    return SVL_FAIL;
+}
+
 int svlFilterSourceBase::Initialize(svlSample* CMN_UNUSED(syncInput), svlSample* &syncOutput)
 {
     return Initialize(syncOutput);
 }
 
+int svlFilterSourceBase::OnStart(unsigned int CMN_UNUSED(procCount))
+{
+    RestartTargetTimer();
+    return SVL_OK;
+}
+
 int svlFilterSourceBase::Process(svlProcInfo* procInfo, svlSample* CMN_UNUSED(syncInput), svlSample* &syncOutput)
 {
     return Process(procInfo, syncOutput);
+}
+
+void svlFilterSourceBase::OnStop()
+{
+    StopTargetTimer();
+}
+
+int svlFilterSourceBase::Release()
+{
+    return SVL_OK;
 }
 
 int svlFilterSourceBase::AddInput(const std::string & CMN_UNUSED(inputname), bool CMN_UNUSED(trunk))
@@ -197,23 +224,5 @@ int svlFilterSourceBase::AddInput(const std::string & CMN_UNUSED(inputname), boo
 int svlFilterSourceBase::AddInputType(const std::string & CMN_UNUSED(inputname), svlStreamType CMN_UNUSED(type))
 {
     return SVL_FAIL;
-}
-
-int svlFilterSourceBase::UpdateTypes(svlFilterInput & CMN_UNUSED(input), svlStreamType CMN_UNUSED(type))
-{
-    return SVL_FAIL;
-}
-
-
-/******************************************/
-/*** svlFilterSourceImageBase class *******/
-/******************************************/
-
-svlFilterSourceImageBase::svlFilterSourceImageBase() : svlFilterSourceBase()
-{
-}
-
-svlFilterSourceImageBase::svlFilterSourceImageBase(bool autotimestamps) : svlFilterSourceBase(autotimestamps)
-{
 }
 

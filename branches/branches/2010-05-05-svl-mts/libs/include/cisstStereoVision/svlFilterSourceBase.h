@@ -43,14 +43,28 @@ friend class svlStreamManager;
 friend class svlStreamProc;
 
 public:
+    class SourceConfig
+    {
+    public:
+        SourceConfig();
+        SourceConfig(const SourceConfig& config);
+
+        double Framerate;
+        bool Loop;
+    };
+
+    virtual void confSetFramerate(const mtsDouble& framerate);
+    virtual void confSetLoop(const mtsBool& loop);
+
+public:
     svlFilterSourceBase();
     svlFilterSourceBase(bool autotimestamps);
     virtual ~svlFilterSourceBase();
 
-    virtual double GetTargetFrequency();
-    virtual int SetTargetFrequency(double hertz);
+    virtual void SetTargetFrequency(double hertz);
+    virtual double GetTargetFrequency() const;
     virtual void SetLoop(bool loop = true);
-    virtual bool GetLoop();
+    virtual bool GetLoop() const;
 
     void Pause();
     void Play();
@@ -70,9 +84,6 @@ protected:
     int WaitForTargetTimer();
     bool IsTargetTimerRunning();
 
-    double TargetFrequency;
-    bool LoopFlag;
-
 private:
     // Dispatched to source-specific methods declared above
     int Initialize(svlSample* syncInput, svlSample* &syncOutput);
@@ -91,17 +102,8 @@ private:
 
     int PlayCounter;
     int PauseAtFrameID;
-};
 
-
-class CISST_EXPORT svlFilterSourceImageBase : public svlFilterSourceBase
-{
-public:
-    svlFilterSourceImageBase();
-    svlFilterSourceImageBase(bool autotimestamps);
-
-    virtual int GetWidth(unsigned int videoch = SVL_LEFT) = 0;
-    virtual int GetHeight(unsigned int videoch = SVL_LEFT) = 0;
+    SourceConfig SourceSettings;
 };
 
 #endif // _svlFilterSourceBase_h

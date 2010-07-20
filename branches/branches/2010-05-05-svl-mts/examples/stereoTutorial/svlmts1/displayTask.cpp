@@ -40,10 +40,10 @@ displayTask::displayTask(const std::string & taskName, double period):
 {
     mtsInterfaceRequired* required;
 
-    required = AddInterfaceRequired("FilterConfig");
+    required = AddInterfaceRequired("FilterParams");
     if (required) {
-       required->AddFunction("Get", FilterConfig.Get);
-       required->AddFunction("Set", FilterConfig.Set);
+       required->AddFunction("Get", FilterParams.Get);
+       required->AddFunction("Set", FilterParams.Set);
     }
 
     required = AddInterfaceRequired("SourceConfig");
@@ -90,10 +90,12 @@ void displayTask::Startup(void)
 
 void displayTask::Run(void)
 {
-    FilterConfig.Get(FilterState);
+    FilterParams.Get(FilterState);
     FilterState.IntValue2 --;
-    FilterConfig.Set(FilterState);
+    FilterParams.Set(FilterState);
 
-    CMN_LOG_CLASS_RUN_VERBOSE << "Run : " << this->GetTick() << " - Data: " << FilterState << std::endl;
+    SourceConfig.Get(SourceState);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "Run : " << this->GetTick() << " - Data: " << SourceState << std::endl;
 }
 

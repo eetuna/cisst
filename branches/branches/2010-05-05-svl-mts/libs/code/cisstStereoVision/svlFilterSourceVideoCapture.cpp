@@ -441,14 +441,13 @@ labError:
     return ret;
 }
 
-double svlFilterSourceVideoCapture::GetTargetFrequency()
+void svlFilterSourceVideoCapture::SetTargetFrequency(double CMN_UNUSED(hertz))
 {
-    return -1.0;
 }
 
-int svlFilterSourceVideoCapture::SetTargetFrequency(double CMN_UNUSED(hertz))
+double svlFilterSourceVideoCapture::GetTargetFrequency() const
 {
-    return SVL_FAIL;
+    return -1.0;
 }
 
 int svlFilterSourceVideoCapture::DialogSetup(unsigned int videoch)

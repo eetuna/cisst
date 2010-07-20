@@ -139,8 +139,8 @@ public:
 
     int SetChannelCount(unsigned int channelcount);
 
-    double GetTargetFrequency();
-    int SetTargetFrequency(double hertz);
+    void SetTargetFrequency(double hertz);
+    double GetTargetFrequency() const;
 
     int DialogSetup(unsigned int videoch = SVL_LEFT);
     int DialogDevice();

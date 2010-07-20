@@ -493,6 +493,26 @@ int svlVideoCodecBase::SetPos(const int CMN_UNUSED(pos))
     return SVL_FAIL;
 }
 
+double svlVideoCodecBase::GetBegTime() const
+{
+    return -1.0;
+}
+
+double svlVideoCodecBase::GetEndTime() const
+{
+    return -1.0;
+}
+
+double svlVideoCodecBase::GetTimeAtPos(const int CMN_UNUSED(pos)) const
+{
+    return -1.0;
+}
+
+int svlVideoCodecBase::GetPosAtTime(const double CMN_UNUSED(time)) const
+{
+    return -1;
+}
+
 svlVideoIO::Compression* svlVideoCodecBase::GetCompression() const
 {
     return 0;

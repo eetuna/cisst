@@ -110,6 +110,11 @@ public:
     virtual int GetPos() const = 0;
     virtual int SetPos(const int pos);
 
+    virtual double GetBegTime() const;
+    virtual double GetEndTime() const;
+    virtual double GetTimeAtPos(const int pos) const;
+    virtual int GetPosAtTime(const double time) const;
+
     virtual svlVideoIO::Compression* GetCompression() const;
     virtual int SetCompression(const svlVideoIO::Compression *compression);
     virtual int DialogCompression();

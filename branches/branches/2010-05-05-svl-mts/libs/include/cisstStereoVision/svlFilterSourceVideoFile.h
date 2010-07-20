@@ -38,42 +38,41 @@ class CISST_EXPORT svlFilterSourceVideoFile : public svlFilterSourceBase
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-    class Config
+    class Config : public SourceConfig
     {
     public:
         Config();
-        Config(const Config& config);
+        Config(const Config& objref);
 
         int                           Channels;
         vctDynamicVector<std::string> FilePath;
         vctDynamicVector<int>         Length;
         vctDynamicVector<int>         Position;
         vctDynamicVector<vctInt2>     Range;
-        double                        Framerate;
-        bool                          Loop;
 
         void SetChannels(const int channels);
-        friend std::ostream & operator << (std::ostream & stream, const Config & objref);
+        friend std::ostream & operator << (std::ostream & stream, const Config& objref);
     };
-    void confSet(const mtsGenericObjectProxy<Config>& data);
-    void confSetChannels(const mtsInt& channels);
-    void confSetPathL(const mtsStdString& filepath);
-    void confSetPathR(const mtsStdString& filepath);
-    void confSetPosL(const mtsInt& position);
-    void confSetPosR(const mtsInt& position);
-    void confSetRangeL(const mtsInt2& position);
-    void confSetRangeR(const mtsInt2& position);
-    void confSetFramerate(const mtsDouble& framerate);
-    void confSetLoop(const mtsBool& loop);
+
+    virtual void CreateInterfaces();
+    virtual void confGet(Config& objref) const;
+    virtual void confSet(const Config& objref);
+    virtual void confSetChannels(const int& channels);
+    virtual void confSetPathL(const std::string& filepath);
+    virtual void confSetPathR(const std::string& filepath);
+    virtual void confSetPosL(const int& position);
+    virtual void confSetPosR(const int& position);
+    virtual void confSetRangeL(const vctInt2& position);
+    virtual void confSetRangeR(const vctInt2& position);
 
 public:
     svlFilterSourceVideoFile();
     svlFilterSourceVideoFile(unsigned int channelcount);
     ~svlFilterSourceVideoFile();
 
+    // Configuration methods
     int SetChannelCount(unsigned int channelcount);
     int DialogFilePath(unsigned int videoch = SVL_LEFT);
-
     int SetFilePath(const std::string &filepath, unsigned int videoch = SVL_LEFT);
     int GetFilePath(std::string &filepath, unsigned int videoch = SVL_LEFT) const;
     int SetPosition(const int position, unsigned int videoch = SVL_LEFT);
@@ -81,6 +80,10 @@ public:
     int SetRange(const vctInt2 range, unsigned int videoch = SVL_LEFT);
     int GetRange(vctInt2& range, unsigned int videoch = SVL_LEFT) const;
     int GetLength(unsigned int videoch = SVL_LEFT) const;
+
+    // Run-time methods (available when 'Initialized')
+    int GetPositionAtTime(const double time, unsigned int videoch = SVL_LEFT) const;
+    double GetTimeAtPosition(const int position, unsigned int videoch = SVL_LEFT) const;
 
 protected:
     virtual int Initialize(svlSample* &syncOutput);
@@ -94,15 +97,18 @@ private:
     vctDynamicVector<svlVideoCodecBase*> Codec;
     bool ResetTimer;
     double FirstTimestamp;
+    double NativeFramerate;
     osaStopwatch Timer;
 
 protected:
-    mtsStateTable StateTable;
-    mtsGenericObjectProxy<Config> Settings;
+    Config Settings;
 };
 
-typedef mtsGenericObjectProxy<svlFilterSourceVideoFile::Config> svlFilterSourceVideoFileConfigProxy;
-CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterSourceVideoFileConfigProxy);
+typedef mtsGenericObjectProxy<svlFilterSourceVideoFile::Config> svlFilterSourceVideoFile_Config;
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterSourceVideoFile_Config);
+typedef mtsGenericObjectProxy<vctInt2> svlFilterSourceVideoFile_vctInt2;
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterSourceVideoFile_vctInt2);
+
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterSourceVideoFile)
 
 #endif // _svlFilterSourceVideoFile_h

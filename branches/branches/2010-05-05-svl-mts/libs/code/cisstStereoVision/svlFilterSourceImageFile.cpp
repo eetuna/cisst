@@ -50,7 +50,7 @@ svlFilterSourceImageFile::svlFilterSourceImageFile() :
 {
     AddOutput("output", true);
     SetAutomaticOutputType(false);
-    TargetFrequency = 30.0;
+    SetTargetFrequency(30.0);
 }
 
 svlFilterSourceImageFile::svlFilterSourceImageFile(unsigned int channelcount) :
@@ -63,7 +63,7 @@ svlFilterSourceImageFile::svlFilterSourceImageFile(unsigned int channelcount) :
     AddOutput("output", true);
     SetAutomaticOutputType(false);
     SetChannelCount(channelcount);
-    TargetFrequency = 30.0;
+    SetTargetFrequency(30.0);
 }
 
 svlFilterSourceImageFile::~svlFilterSourceImageFile()
@@ -155,7 +155,7 @@ int svlFilterSourceImageFile::Process(svlProcInfo* procInfo, svlSample* &syncOut
         {
             FileCounter ++;
             if (FileCounter > To) {
-                if (LoopFlag) FileCounter = From;
+                if (GetLoop()) FileCounter = From;
                 else StopLoop = true;
             }
         }
@@ -165,7 +165,7 @@ int svlFilterSourceImageFile::Process(svlProcInfo* procInfo, svlSample* &syncOut
         if (StopLoop) return SVL_STOP_REQUEST;
     }
 
-    // Try to keep TargetFrequency
+    // Try to keep target frequency
     _OnSingleThread(procInfo) WaitForTargetTimer();
 
     ////////////////////////////////////////////
