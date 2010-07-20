@@ -31,41 +31,38 @@ CMN_IMPLEMENT_SERVICES(svlFilterSourceBuffer)
 
 svlFilterSourceBuffer::svlFilterSourceBuffer() :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     Width(0),
     Height(0),
     Buffer(0)
 {
-    OutputData = 0;
+    OutputImage = 0;
     SetType(svlTypeImageRGB);
 }
 
 svlFilterSourceBuffer::svlFilterSourceBuffer(svlStreamType type) :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     Width(0),
     Height(0),
     Buffer(0)
 {
-    OutputData = 0;
+    OutputImage = 0;
     SetType(type);
 }
 
-svlFilterSourceBuffer::svlFilterSourceBuffer(const svlSampleImageBase & image) :
+svlFilterSourceBuffer::svlFilterSourceBuffer(const svlSampleImage & image) :
     svlFilterSourceBase(),
-    cmnGenericObject(),
     Width(0),
     Height(0),
     Buffer(0)
 {
-    OutputData = 0;
+    OutputImage = 0;
     SetImage(image);
 }
 
 svlFilterSourceBuffer::~svlFilterSourceBuffer()
 {
-    if (OutputData) {
-        delete OutputData;
+    if (OutputImage) {
+        delete OutputImage;
     }
 }
 
@@ -78,22 +75,22 @@ int svlFilterSourceBuffer::SetType(svlStreamType type)
     // Other types may be added in the future
     if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo) return SVL_FAIL;
 
-    if (OutputData && OutputData->GetType() != type) {
-        delete OutputData;
-        OutputData = svlSample::GetNewFromType(type);
-    } else if (!OutputData) {
-        OutputData = svlSample::GetNewFromType(type);
+    if (OutputImage && OutputImage->GetType() != type) {
+        delete OutputImage;
+        OutputImage = svlSample::GetNewFromType(type);
+    } else if (!OutputImage) {
+        OutputImage = svlSample::GetNewFromType(type);
     }
 
     if (Width > 0 && Height > 0) {
-        dynamic_cast<svlSampleImageBase*>(OutputData)->SetSize(Width, Height);
+        dynamic_cast<svlSampleImage *>(OutputImage)->SetSize(Width, Height);
     }
-    AddSupportedType(type);
+    SetOutputType("Output", type);
 
     return SVL_OK;
 }
 
-int svlFilterSourceBuffer::SetImage(const svlSampleImageBase & image)
+int svlFilterSourceBuffer::SetImage(const svlSampleImage & image)
 {
     if (IsInitialized() == true) {
         return SVL_ALREADY_INITIALIZED;
@@ -104,15 +101,15 @@ int svlFilterSourceBuffer::SetImage(const svlSampleImageBase & image)
     // Other types may be added in the future
     if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo) return SVL_FAIL;
 
-    if (OutputData && OutputData->GetType() != type) {
-        delete OutputData;
-        OutputData = svlSample::GetNewFromType(type);
-    } else if (!OutputData) {
-        OutputData = svlSample::GetNewFromType(type);
+    if (OutputImage && OutputImage->GetType() != type) {
+        delete OutputImage;
+        OutputImage = svlSample::GetNewFromType(type);
+    } else if (!OutputImage) {
+        OutputImage = svlSample::GetNewFromType(type);
     }
 
-    OutputData->CopyOf(image);
-    AddSupportedType(type);
+    OutputImage->CopyOf(image);
+    SetOutputType("Output", type);
 
     return SVL_OK;
 }
@@ -125,8 +122,8 @@ int svlFilterSourceBuffer::SetDimensions(unsigned int width, unsigned int height
     Width = width;
     Height = height;
 
-    if (OutputData) {
-        dynamic_cast<svlSampleImageBase*>(OutputData)->SetSize(width, height);
+    if (OutputImage) {
+        dynamic_cast<svlSampleImage *>(OutputImage)->SetSize(width, height);
     }
     return SVL_OK;
 }
@@ -139,7 +136,7 @@ int svlFilterSourceBuffer::SetBuffer(svlBufferImage * buffer)
 
 int svlFilterSourceBuffer::Initialize()
 {
-    if (OutputData == 0 || Buffer == 0) {
+    if (OutputImage == 0 || Buffer == 0) {
         return SVL_FAIL;
     }
     srand(static_cast<unsigned int>(time(0)));
@@ -148,7 +145,7 @@ int svlFilterSourceBuffer::Initialize()
 
 int svlFilterSourceBuffer::ProcessFrame(svlProcInfo* procInfo)
 {
-    svlSampleImageBase * outputImage = dynamic_cast<svlSampleImageBase *>(OutputData);
+    svlSampleImage * outputImage = dynamic_cast<svlSampleImage *>(OutputImage);
     svlImageRGB * inputImage;
 
     for (unsigned int ch = 0; ch < outputImage->GetVideoChannels(); ch++) {

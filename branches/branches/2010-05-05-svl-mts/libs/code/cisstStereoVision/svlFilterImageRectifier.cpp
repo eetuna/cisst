@@ -125,4 +125,3 @@ void svlFilterImageRectifier::EnableInterpolation(bool enable)
 {
     InterpolationEnabled = enable;
 }
-

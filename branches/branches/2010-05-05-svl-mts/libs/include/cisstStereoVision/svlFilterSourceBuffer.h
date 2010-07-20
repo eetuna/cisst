@@ -22,6 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlFilterSourceBuffer_h
 
 #include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterSourceBase.h>
+#include <cisstStereoVision/svlSampleImage.h>
 #include <cisstStereoVision/svlBufferImage.h>
 
 // Always include last!
@@ -29,18 +31,18 @@ http://www.cisst.org/cisst/license.txt.
 
 #define SVL_DMYSRC_DATA_NOT_INITIALIZED     -7000
 
-class CISST_EXPORT svlFilterSourceBuffer : public svlFilterSourceBase, public cmnGenericObject
+class CISST_EXPORT svlFilterSourceBuffer : public svlFilterSourceBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
     svlFilterSourceBuffer();
     svlFilterSourceBuffer(svlStreamType type);
-    svlFilterSourceBuffer(const svlSampleImageBase & image);
+    svlFilterSourceBuffer(const svlSampleImage & image);
     virtual ~svlFilterSourceBuffer();
 
     int SetType(svlStreamType type);
-    int SetImage(const svlSampleImageBase & image);
+    int SetImage(const svlSampleImage & image);
     int SetDimensions(unsigned int width, unsigned int height);
     int SetBuffer(svlBufferImage * buffer);
 
@@ -52,6 +54,7 @@ private:
     unsigned int Width;
     unsigned int Height;
     svlBufferImage * Buffer;
+    svlSample * OutputImage;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterSourceBuffer)
