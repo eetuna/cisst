@@ -52,15 +52,12 @@ public:
     int SetSourceFilter(svlFilterSourceBase* source);
     int Initialize(void);
     void Release(void);
-    bool IsInitialized(void);
-    inline void Start(void) {
-        StartInternal();
-    }
-    int StartInternal(void);
+    bool IsInitialized(void) const;
+    int Play(void);
     void Stop(void);
-    bool IsRunning(void);
+    bool IsRunning(void) const;
     int WaitForStop(double timeout = -1.0);
-    int GetStreamStatus(void);
+    int GetStreamStatus(void) const;
 
 private:
     unsigned int ThreadCount;
@@ -76,6 +73,10 @@ private:
     int StreamStatus;
 
     void InternalStop(unsigned int callingthreadID);
+    // wrappers around C++ API used for command pattern
+    void CreateInterfaces(void);
+    void PlayCommand(void);
+    void InitializeCommand(void);
 };
 
 #endif // _svlStreamManager_h

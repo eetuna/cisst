@@ -20,8 +20,8 @@
  
  */
 
-#ifndef _testFilter_h
-#define _testFilter_h
+#ifndef _exampleFilter_h
+#define _exampleFilter_h
 
 #include <cisstStereoVision/svlFilterBase.h>
 #include <cisstMultiTask/mtsStateTable.h>
@@ -30,7 +30,7 @@
 #include <cisstStereoVision/svlExport.h>
 
 
-class svlFilterTest : public svlFilterBase
+class exampleFilter : public svlFilterBase
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -50,7 +50,7 @@ public:
     void CreateInterfaces();
 
 public:
-    svlFilterTest();
+    exampleFilter();
 
     void SetParam1(unsigned int value1, unsigned int value2);
     void SetParam2(double value1, double value2);
@@ -64,9 +64,9 @@ protected:
     mtsGenericObjectProxy<Parameters> Params;
 };
 
-typedef mtsGenericObjectProxy<svlFilterTest::Parameters> svlFilterTestParametersProxy;
-CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterTestParametersProxy);
-CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterTest)
+typedef mtsGenericObjectProxy<exampleFilter::Parameters> exampleFilterParametersProxy;
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(exampleFilterParametersProxy);
+CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(exampleFilter)
 
-#endif // _testFilter_h
+#endif // _exampleFilter_h
 

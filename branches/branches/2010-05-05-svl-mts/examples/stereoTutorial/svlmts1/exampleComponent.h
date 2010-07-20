@@ -20,15 +20,14 @@
  
  */
 
-#ifndef _displayTask_h
-#define _displayTask_h
+#ifndef _exampleComponent_h
+#define _exampleComponent_h
 
 #include <cisstMultiTask.h>
 #include <cisstStereoVision/svlFilterSourceVideoFile.h>
-#include "testFilter.h"
+#include "exampleFilter.h"
 
-
-class displayTask: public mtsTaskPeriodic
+class exampleComponent: public mtsTaskPeriodic
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -52,18 +51,24 @@ protected:
        mtsFunctionRead  Get;
        mtsFunctionWrite Set;
     } FilterParams;
-    svlFilterTest::Parameters FilterState;
+    exampleFilter::Parameters FilterState;
+
+    struct {
+        mtsFunctionVoid Initialize;
+        mtsFunctionVoid Release;
+        mtsFunctionVoid Play;
+    } StreamControl;
 
 public:
     // see sineTask.h documentation
-    displayTask(const std::string & taskName, double period);
-    ~displayTask() {};
+    exampleComponent(const std::string & taskName, double period);
+    ~exampleComponent() {};
     void Startup(void);
     void Run(void);
     void Cleanup(void) {};
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(displayTask);
+CMN_DECLARE_SERVICES_INSTANTIATION(exampleComponent);
 
-#endif // _displayTask_h
+#endif // _exampleComponent_h
 

@@ -167,7 +167,7 @@ int main()
     cout << "Press any key to stop stream..." << endl;
 
     // Initialize and start stream
-    if (stream.StartInternal() != SVL_OK) goto labError;
+    if (stream.Play() != SVL_OK) goto labError;
 
     // Wait for user input
     cmnGetChar();

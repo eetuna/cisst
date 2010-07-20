@@ -20,11 +20,11 @@ INCLUDE_DIRECTORIES(${svlExMultitask1_SOURCE_DIR})
 
 # name the main executable and specifies with source files to use
 ADD_EXECUTABLE(svlExMultitask1
-               testFilter.cpp
-               displayTask.cpp
+               exampleFilter.cpp
+               exampleComponent.cpp
                main.cpp
-               testFilter.h
-               displayTask.h
+               exampleFilter.h
+               exampleComponent.h
 	       )
 
 # link with the cisst libraries

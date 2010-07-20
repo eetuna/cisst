@@ -68,7 +68,7 @@ int VideoPlayer(std::string pathname)
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (stream.StartInternal() != SVL_OK) goto labError;
+    if (stream.Play() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 

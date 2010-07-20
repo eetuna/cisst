@@ -21,7 +21,7 @@
  */
 
 
-#include "displayTask.h"
+#include "exampleComponent.h"
 
 //#define SET_EVERYTHING_TOGETHER
 #ifdef SET_EVERYTHING_TOGETHER
@@ -30,22 +30,22 @@
 
 
 /*************************/
-/*** displayTask class ***/
+/*** exampleComponent class ***/
 /*************************/
 
-CMN_IMPLEMENT_SERVICES(displayTask);
+CMN_IMPLEMENT_SERVICES(exampleComponent);
 
-displayTask::displayTask(const std::string & taskName, double period):
+exampleComponent::exampleComponent(const std::string & taskName, double period):
     mtsTaskPeriodic(taskName, period, false, 50)
 {
-    mtsInterfaceRequired* required;
+    mtsInterfaceRequired * required;
 
     required = AddInterfaceRequired("FilterParams");
     if (required) {
-       required->AddFunction("Get", FilterParams.Get);
-       required->AddFunction("Set", FilterParams.Set);
+        required->AddFunction("Get", FilterParams.Get);
+        required->AddFunction("Set", FilterParams.Set);
     }
-
+    
     required = AddInterfaceRequired("SourceConfig");
     if (required) {
         required->AddFunction("Get",          SourceConfig.Get);
@@ -57,9 +57,16 @@ displayTask::displayTask(const std::string & taskName, double period):
         required->AddFunction("SetFramerate", SourceConfig.SetFramerate);
         required->AddFunction("SetLoop",      SourceConfig.SetLoop);
     }
+
+    required = AddInterfaceRequired("StreamControl");
+    if (required) {
+        required->AddFunction("Initialize", StreamControl.Initialize);
+        required->AddFunction("Release", StreamControl.Release);
+        required->AddFunction("Play", StreamControl.Play);
+    }
 }
 
-void displayTask::Startup(void)
+void exampleComponent::Startup(void)
 {
 #ifdef SET_EVERYTHING_TOGETHER
 
@@ -86,9 +93,13 @@ void displayTask::Startup(void)
     //SourceConfig.SetLoop(true);
 
 #endif
+
+    StreamControl.Release();
+    StreamControl.Initialize();
+    StreamControl.Play();
 }
 
-void displayTask::Run(void)
+void exampleComponent::Run(void)
 {
     FilterParams.Get(FilterState);
     FilterState.IntValue2 --;

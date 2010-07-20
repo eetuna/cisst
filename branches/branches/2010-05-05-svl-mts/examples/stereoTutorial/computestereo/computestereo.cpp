@@ -131,7 +131,7 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     cerr << "Done" << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (stream.StartInternal() != SVL_OK) goto labError;
+    if (stream.Play() != SVL_OK) goto labError;
 
     cerr << "Done" << endl << endl << "Keyboard commands:" << endl << endl;
     cerr << "    'q' - Quit" << endl;

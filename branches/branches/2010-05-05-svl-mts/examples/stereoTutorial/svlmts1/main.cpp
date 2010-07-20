@@ -25,8 +25,8 @@
 #include <cisstMultiTask.h>
 #include <cisstStereoVision.h>
 
-#include "testFilter.h"
-#include "displayTask.h"
+#include "exampleFilter.h"
+#include "exampleComponent.h"
 
 using namespace std;
 
@@ -44,56 +44,48 @@ int main(void)
     svlInitialize();
 
     // create our task
-    const double PeriodDisplay = 50 * cmn_ms; // in milliseconds
+    const double PeriodComponent = 50 * cmn_ms; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 
     // create video stream
     svlStreamManager stream;
     stream.SetName("Stream");
-    // taskManager->AddComponent(&stream);
+    taskManager->AddComponent(&stream);
 
     svlFilterSourceVideoFile stream_source(1);
     stream_source.SetName("StreamSource");
     taskManager->AddComponent(&stream_source);
 
-    svlFilterTest stream_testfilter;
-    stream_testfilter.SetName("TestFilter");
-    taskManager->AddComponent(&stream_testfilter);
+    exampleFilter stream_examplefilter;
+    stream_examplefilter.SetName("ExampleFilter");
+    taskManager->AddComponent(&stream_examplefilter);
 
     svlFilterImageWindow stream_window;
     stream_window.SetName("Window");
     taskManager->AddComponent(&stream_window);
 
-
-    displayTask * displayTaskObject = new displayTask("TestComponent", PeriodDisplay);
-    displayTaskObject->Configure();
+    exampleComponent * exampleComponentObject = new exampleComponent("ExampleComponent", PeriodComponent);
+    exampleComponentObject->Configure();
 
     // add the task and the filter to the task manager
-    taskManager->AddComponent(displayTaskObject);
+    taskManager->AddComponent(exampleComponentObject);
 
     // taskManager->Connect("StreamSource", "input", "Stream", "output");
     stream.SetSourceFilter(&stream_source);
-    taskManager->Connect("TestFilter", "input", "StreamSource", "output");
-    taskManager->Connect("Window", "input", "TestFilter", "output");
+    taskManager->Connect("ExampleFilter", "input", "StreamSource", "output");
+    taskManager->Connect("Window", "input", "ExampleFilter", "output");
 
     // connect the task with thex component, task.RequiresInterface -> component.ProvidesInterface
-    taskManager->Connect("TestComponent", "SourceConfig", "StreamSource", "Settings");
-    taskManager->Connect("TestComponent", "FilterParams", "TestFilter", "Parameters");
+    taskManager->Connect("ExampleComponent", "StreamControl", "Stream", "Control");
+    taskManager->Connect("ExampleComponent", "SourceConfig", "StreamSource", "Settings");
+    taskManager->Connect("ExampleComponent", "FilterParams", "ExampleFilter", "Parameters");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
     // start the periodic Run
     taskManager->StartAll();
 
-    osaSleep(2 * cmn_s);
-    // start video pipeline
-    stream.Start();
-
-
-    // connect filters and start streaming
-    // stream.SetSourceFilter(&stream_source);
-    // stream_source.GetOutput()->Connect(stream_testfilter.GetInput());
-    // stream_testfilter.GetOutput()->Connect(stream_window.GetInput());
+    osaSleep(2.0 * cmn_s);
 
     int ch = 0;
     while (ch != 'q') {
@@ -103,8 +95,6 @@ int main(void)
     // cleanup
     taskManager->KillAll();
     taskManager->Cleanup();
-
-    // stream.Release();
 
     return 0;
 }

@@ -1135,8 +1135,8 @@ void mtsManagerLocal::StartAll(void)
                 it->second->Start();  // If task will not use current thread, start it immediately.
             }
         } else {
-            CMN_LOG_CLASS_INIT_DEBUG << "StartAll: starting device \"" << it->first << "\"" << std::endl;
-            it->second->Start();  // this is a device, it doesn't have a thread
+            CMN_LOG_CLASS_INIT_DEBUG << "StartAll: starting component \"" << it->first << "\"" << std::endl;
+            it->second->Start();  // this is a component, it doesn't have a thread
         }
     }
 

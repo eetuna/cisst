@@ -43,7 +43,7 @@ void mtsTask::DoRunInternal(void)
 }
 
 void mtsTask::StartupInternal(void) {
-    CMN_LOG_CLASS_INIT_VERBOSE << "Starting StartupInternal for " << Name << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "StartupInternal: started for task \"" << this->GetName() << "\"" << std::endl;
 
     // Loop through the required interfaces and make sure they are all connected. This extra check is probably not needed.
     bool success = true;
@@ -66,9 +66,9 @@ void mtsTask::StartupInternal(void) {
         ChangeState(READY);
     }
     else {
-        CMN_LOG_CLASS_INIT_ERROR << "StartupInternal: task " << this->GetName() << " cannot be started." << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "StartupInternal: task \"" << this->GetName() << "\" cannot be started." << std::endl;
     }
-    CMN_LOG_CLASS_INIT_VERBOSE << "Ending StartupInternal for " << this->GetName() << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "StartupInternal: ended for task \"" << this->GetName() << "\"" << std::endl;
 }
 
 
@@ -78,7 +78,7 @@ void mtsTask::CleanupInternal() {
     // Perform Cleanup on all interfaces provided
     InterfacesProvidedOrOutput.ForEachVoid(&mtsInterfaceProvidedOrOutput::Cleanup);
     ChangeState(FINISHED);
-    CMN_LOG_CLASS_INIT_VERBOSE << "Done base class CleanupInternal " << this->GetName() << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "CleanupInternal: ended for task \"" << this->GetName() << "\"" << std::endl;
 }
 
 
@@ -122,12 +122,12 @@ bool mtsTask::WaitForState(TaskStateType desiredState, double timeout)
         return true;
     if (osaGetCurrentThreadId() == Thread.GetId()) {
         // This shouldn't happen
-        CMN_LOG_CLASS_INIT_WARNING << "WaitForState(" << TaskStateName(desiredState) << "): called from self for task "
-                                   << this->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_WARNING << "WaitForState(" << TaskStateName(desiredState) << "): called from self for task \""
+                                   << this->GetName() << "\"" << std::endl;
     }
     else {
-        CMN_LOG_CLASS_INIT_VERBOSE << "WaitForState: waiting for task " << this->GetName() << " to enter state "
-                                   << TaskStateName(desiredState) << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "WaitForState: waiting for task \"" << this->GetName() << "\" to enter state \""
+                                   << TaskStateName(desiredState) << "\"" << std::endl;
         double curTime = osaGetTime();
         double startTime = curTime;
         double endTime = startTime + timeout;
@@ -142,9 +142,9 @@ bool mtsTask::WaitForState(TaskStateType desiredState, double timeout)
             CMN_LOG_CLASS_INIT_VERBOSE << "WaitForState: waited for " << curTime-startTime
                                        << " seconds." << std::endl;
         } else {
-            CMN_LOG_CLASS_INIT_ERROR << "WaitForState: task " << this->GetName()
-                                     << " did not reach state " << TaskStateName(desiredState)
-                                     << ", current state = " << GetTaskStateName() << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "WaitForState: task \"" << this->GetName()
+                                     << "\" did not reach state \"" << TaskStateName(desiredState)
+                                     << "\", current state is \"" << GetTaskStateName() << "\"" << std::endl;
         }
     }
     return (TaskState == desiredState);
@@ -172,7 +172,7 @@ mtsTask::mtsTask(const std::string & name,
 
 mtsTask::~mtsTask()
 {
-    CMN_LOG_CLASS_INIT_VERBOSE << "mtsTask destructor: deleting task " << this->GetName() << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "destructor: deleting task \"" << this->GetName() << "\"" << std::endl;
     if (!IsTerminated()) {
         //It is safe to call CleanupInternal() more than once.
         //Should we call the user-supplied Cleanup()?
@@ -185,7 +185,7 @@ mtsTask::~mtsTask()
 
 void mtsTask::Kill(void)
 {
-    CMN_LOG_CLASS_INIT_VERBOSE << "Kill: " << this->GetName() << ", current state = " << GetTaskStateName() << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Kill: task \"" << this->GetName() << "\", current state \"" << GetTaskStateName() << "\"" << std::endl;
 
     // Kill each state table
     StateTables.ForEachVoid(&mtsStateTable::Kill);
@@ -219,14 +219,14 @@ bool mtsTask::AddStateTable(mtsStateTable * existingStateTable, bool addInterfac
     if (!this->StateTables.AddItem(tableName,
                                    existingStateTable,
                                    CMN_LOG_LOD_INIT_ERROR)) {
-        CMN_LOG_CLASS_INIT_ERROR << "AddStateTable: can not add state table \"" << tableName
+        CMN_LOG_CLASS_INIT_ERROR << "AddStateTable: can't add state table \"" << tableName
                                  << "\" to task \"" << this->GetName() << "\"" << std::endl;
         return false;
     }
     if (addInterfaceProvided) {
         mtsInterfaceProvided * providedInterface = this->AddInterfaceProvided(interfaceName);
         if (!providedInterface) {
-            CMN_LOG_CLASS_INIT_ERROR << "AddStateTable: can no add provided interface \"" << interfaceName
+            CMN_LOG_CLASS_INIT_ERROR << "AddStateTable: can't add provided interface \"" << interfaceName
                                      << "\" to task \"" << this->GetName() << "\"" << std::endl;
             return false;
         }
@@ -267,7 +267,8 @@ mtsInterfaceRequired * mtsTask::AddInterfaceRequired(const std::string & interfa
         return result;
     }
     CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceRequired: unable to create mailbox for \""
-                             << interfaceRequiredName << "\"" << std::endl;    delete mailBox;
+                             << interfaceRequiredName << "\"" << std::endl;
+    delete mailBox;
     return 0;
 }
 
@@ -316,7 +317,7 @@ bool mtsTask::WaitToTerminate(double timeout)
 {
     bool ret = true;
     if (TaskState < FINISHING) {
-        CMN_LOG_CLASS_INIT_WARNING << "WaitToTerminate: not finishing task " << this->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_WARNING << "WaitToTerminate: not finishing task \"" << this->GetName() << "\"" << std::endl;
         ret = false;
     }
     else if (TaskState == FINISHING) {
@@ -325,8 +326,8 @@ bool mtsTask::WaitToTerminate(double timeout)
 
     // If task state is finished, we wait for the thread to be destroyed
     if ((TaskState == FINISHED) && Thread.IsValid()) {
-        CMN_LOG_CLASS_INIT_VERBOSE << "WaitToTerminate: waiting for task " << this->GetName()
-                                   << " thread to exit." << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "WaitToTerminate: waiting for task \"" << this->GetName()
+                                   << "\" thread to exit." << std::endl;
         Thread.Wait();
     }
     return ret;

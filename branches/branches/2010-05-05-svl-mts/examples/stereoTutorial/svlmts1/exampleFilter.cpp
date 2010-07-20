@@ -20,20 +20,20 @@
  
  */
 
-#include "testFilter.h"
+#include "exampleFilter.h"
 
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstStereoVision/svlDraw.h>
 
 
 /***************************/
-/*** svlFilterTest class ***/
+/*** exampleFilter class ***/
 /***************************/
 
-CMN_IMPLEMENT_SERVICES(svlFilterTest)
-CMN_IMPLEMENT_SERVICES_TEMPLATED(svlFilterTestParametersProxy)
+CMN_IMPLEMENT_SERVICES(exampleFilter)
+CMN_IMPLEMENT_SERVICES_TEMPLATED(exampleFilterParametersProxy)
 
-svlFilterTest::svlFilterTest() :
+exampleFilter::exampleFilter() :
     svlFilterBase()
 {
     CreateInterfaces();
@@ -45,56 +45,56 @@ svlFilterTest::svlFilterTest() :
     SetAutomaticOutputType(true);
 }
 
-void svlFilterTest::SetParameters(const mtsGenericObjectProxy<Parameters>& data)
+void exampleFilter::SetParameters(const mtsGenericObjectProxy<Parameters>& data)
 {
     SetParam1(data.Data.IntValue1, data.Data.IntValue2);
     SetParam2(data.Data.DblValue1, data.Data.DblValue2);
     SetParam3(data.Data.BoolValue);
 }
 
-void svlFilterTest::CreateInterfaces()
+void exampleFilter::CreateInterfaces()
 {
     StateTable.AddData(Params, "Parameters");
     mtsInterfaceProvided * provided = AddInterfaceProvided("Parameters", MTS_COMMANDS_SHOULD_BE_QUEUED);
     if (provided) {
         provided->AddCommandReadState(StateTable, Params, "Get");
-        provided->AddCommandWrite(&svlFilterTest::SetParameters, this, "Set");
+        provided->AddCommandWrite(&exampleFilter::SetParameters, this, "Set");
     }
 }
 
-void svlFilterTest::SetParam1(unsigned int value1, unsigned int value2)
+void exampleFilter::SetParam1(unsigned int value1, unsigned int value2)
 {
     Params.Data.IntValue1 = value1;
     Params.Data.IntValue2 = value2;
 }
 
-void svlFilterTest::SetParam2(double value1, double value2)
+void exampleFilter::SetParam2(double value1, double value2)
 {
     Params.Data.DblValue1 = value1;
     Params.Data.DblValue2 = value2;
 }
 
-void svlFilterTest::SetParam3(bool value)
+void exampleFilter::SetParam3(bool value)
 {
     Params.Data.BoolValue = value;
 }
 
-int svlFilterTest::Initialize(svlSample* syncInput, svlSample* &syncOutput)
+int exampleFilter::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
     syncOutput = syncInput;
     return SVL_OK;
 }
 
-int svlFilterTest::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
+int exampleFilter::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
     syncOutput = syncInput;
 
     _OnSingleThread(procInfo)
     {
         ProcessQueuedCommands();
-
         std::stringstream strstr;
         strstr << Params.Data;
+        CMN_LOG_CLASS_RUN_VERBOSE << "Process: " << strstr.str() << std::endl;
         svlDraw::Text(dynamic_cast<svlSampleImageRGB*>(syncInput),
                       0,
                       svlPoint2D(4, 20),
@@ -109,7 +109,7 @@ int svlFilterTest::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSampl
     return SVL_OK;
 }
 
-std::ostream & operator << (std::ostream & stream, const svlFilterTest::Parameters & objref)
+std::ostream & operator << (std::ostream & stream, const exampleFilter::Parameters & objref)
 {
     stream << objref.DblValue1 << ", "
            << objref.DblValue2 << ", "

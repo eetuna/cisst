@@ -33,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaCriticalSection.h>
 
+#include <cisstMultiTask/mtsInterfaceProvided.h>
 
 /*************************************/
 /*** svlStreamManager class **********/
@@ -47,6 +48,7 @@ svlStreamManager::svlStreamManager() :
     Running(false),
     StreamStatus(SVL_STREAM_CREATED)
 {
+    CreateInterfaces();
 }
 
 svlStreamManager::svlStreamManager(unsigned int threadcount) :
@@ -58,6 +60,7 @@ svlStreamManager::svlStreamManager(unsigned int threadcount) :
     Running(false),
     StreamStatus(SVL_STREAM_CREATED)
 {
+    CreateInterfaces();
     // To do: autodetect the number of available processor cores
 }
 
@@ -79,22 +82,34 @@ int svlStreamManager::SetSourceFilter(svlFilterSourceBase* source)
 
 int svlStreamManager::Initialize()
 {
-    if (Initialized) return SVL_ALREADY_INITIALIZED;
+    if (Initialized) {
+        CMN_LOG_CLASS_INIT_WARNING << "Initialize: stream \"" << this->GetName()
+                                   << "\" is already initialized" << std::endl;
+        return SVL_ALREADY_INITIALIZED;
+    }
 
     svlSample *inputsample, *outputsample = 0;
-    svlFilterSourceBase *source = StreamSource;
+    svlFilterSourceBase * source = StreamSource;
     svlFilterBase *prevfilter, *filter;
     mtsComponent::InterfacesOutputListType::iterator iteroutputs;
     svlFilterOutput * output;
     svlFilterInput * input;
     int err;
 
-    if (source == 0) return SVL_NO_SOURCE_IN_LIST;
+    if (source == 0) {
+        CMN_LOG_CLASS_INIT_ERROR << "Initialize: stream \"" << this->GetName()
+                                 << "\" is not associated to any source" << std::endl;
+        return SVL_NO_SOURCE_IN_LIST;
+    }
 
     // Initialize the stream, starting from the stream source
     err = source->Initialize(outputsample);
     if (err != SVL_OK) {
         Release();
+        CMN_LOG_CLASS_INIT_ERROR << "Initialize: stream \"" << this->GetName()
+                                 << "\" failed to initialize source \""
+                                 << source->GetName() << "\"" << std::endl;
+
         return err;
     }
     source->Initialized = true;
@@ -109,6 +124,9 @@ int svlStreamManager::Initialize()
                 err = output->Stream->Initialize();
                 if (err != SVL_OK) {
                     Release();
+                    CMN_LOG_CLASS_INIT_ERROR << "Initialize: stream \"" << this->GetName()
+                                             << "\" failed to initialize stream \""
+                                             << output->Stream->GetName() << "\"" << std::endl;
                     return err;
                 }
             }
@@ -137,11 +155,17 @@ int svlStreamManager::Initialize()
         err = filter->IsDataValid(filter->GetInput()->GetType(), inputsample);
         if (err != SVL_OK) {
             Release();
+            CMN_LOG_CLASS_INIT_ERROR << "Initialize: stream \"" << this->GetName()
+                                     << "\" found invalid data for filter \""
+                                     << output->GetName() << "\"" << std::endl;
             return err;
         }
         err = filter->Initialize(inputsample, outputsample);
         if (err != SVL_OK) {
             Release();
+            CMN_LOG_CLASS_INIT_ERROR << "Initialize: stream \"" << this->GetName()
+                                     << "\" failed to initialize filter \""
+                                     << filter->GetName() << "\"" << std::endl;
             return err;
         }
         filter->Initialized = true;
@@ -176,16 +200,20 @@ int svlStreamManager::Initialize()
     }
 
     Initialized = true;
-
     StreamStatus = SVL_STREAM_INITIALIZED;
 
     return SVL_OK;
 }
 
-void svlStreamManager::Release()
+void svlStreamManager::Release(void)
 {
-    if (!Initialized) return;
+    if (!Initialized) {
+        CMN_LOG_CLASS_INIT_WARNING << "Release: stream \"" << this->GetName()
+                                   << "\" is not initialized, release is not necessary" << std::endl;
+        return;
+    }
 
+    // stop the stream to make sure we are in a consistent state
     Stop();
 
     size_t i;
@@ -213,7 +241,11 @@ void svlStreamManager::Release()
 
         // Release filter
         if (filter->Initialized) {
-            filter->Release();
+            if (!filter->Release()) {
+                CMN_LOG_CLASS_RUN_WARNING << "Release: stream \"" << this->GetName()
+                                          << "\" ran into an error while releasing filter \""
+                                          << filter->GetName() << "\"" << std::endl;
+            }
             filter->Initialized = false;
         }
 
@@ -241,18 +273,22 @@ void svlStreamManager::Release()
     }
 
     Initialized = false;
-
     StreamStatus = SVL_STREAM_RELEASED;
 }
 
-bool svlStreamManager::IsInitialized()
+
+bool svlStreamManager::IsInitialized(void) const
 {
     return Initialized;
 }
 
-int svlStreamManager::StartInternal(void)
+int svlStreamManager::Play(void)
 {
-    if (Running) return SVL_ALREADY_RUNNING;
+    if (Running) {
+        CMN_LOG_CLASS_RUN_WARNING << "Play: stream \"" << this->GetName()
+                                  << "\" already running" << std::endl;
+        return SVL_ALREADY_RUNNING;
+    }
 
     int err;
     size_t i;
@@ -263,17 +299,24 @@ int svlStreamManager::StartInternal(void)
     if (!Initialized) {
         // Try to initialize it if it hasn't been done before
         err = Initialize();
-        if (err != SVL_OK) return err;
+        if (err != SVL_OK) {
+            CMN_LOG_CLASS_RUN_ERROR << "Play: stream \"" << this->GetName()
+                                    << "\" failed to initialize" << std::endl;
+            return err;
+        }
     }
 
     Running = true;
 
     // Call OnStart for all filters in the trunk
-    svlFilterBase *filter = StreamSource;
+    svlFilterBase * filter = StreamSource;
     while (filter) {
         filter->Running = true;
         if (filter->OnStart(ThreadCount) != SVL_OK) {
             Stop();
+            CMN_LOG_CLASS_RUN_ERROR << "Play: filter \"" << filter->GetName()
+                                    << "\" OnStart method failed while starting stream \""
+                                    << this->GetName() << "\"" << std::endl;
             return SVL_FAIL;
         }
 
@@ -338,8 +381,11 @@ int svlStreamManager::StartInternal(void)
             output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
             if (output) {
                 if (!output->IsTrunk() && output->Stream) {
-                    err = output->Stream->StartInternal();
+                    err = output->Stream->Play();
                     if (err != SVL_OK) {
+                        CMN_LOG_CLASS_RUN_ERROR << "Play: stream \"" << output->Stream->GetName()
+                                                << "\" Play method failed while starting stream \""
+                                                << this->GetName() << "\"" << std::endl;
                         Release();
                         return err;
                     }
@@ -358,11 +404,13 @@ int svlStreamManager::StartInternal(void)
         }
     }
 
+    CMN_LOG_CLASS_RUN_VERBOSE << "Play: stream \"" << this->GetName() << "\" started" << std::endl;
     StreamStatus = SVL_STREAM_RUNNING;
     return SVL_OK;
 }
 
-void svlStreamManager::Stop()
+
+void svlStreamManager::Stop(void)
 {
     if (!Running) return;
 
@@ -557,7 +605,7 @@ void svlStreamManager::InternalStop(unsigned int callingthreadID)
     }
 }
 
-bool svlStreamManager::IsRunning()
+bool svlStreamManager::IsRunning(void) const
 {
     return Running;
 }
@@ -573,8 +621,36 @@ int svlStreamManager::WaitForStop(double timeout)
     else return SVL_WAIT_TIMEOUT;
 }
 
-int svlStreamManager::GetStreamStatus()
+int svlStreamManager::GetStreamStatus(void) const
 {
     return StreamStatus;
 }
 
+
+void svlStreamManager::CreateInterfaces(void)
+{
+    mtsInterfaceProvided * interfaceProvided = this->AddInterfaceProvided("Control");
+    if (interfaceProvided) {
+        interfaceProvided->AddCommandVoid(&svlStreamManager::PlayCommand, this, "Play");
+        interfaceProvided->AddCommandVoid(&svlStreamManager::InitializeCommand, this, "Initialize");
+        interfaceProvided->AddCommandVoid(&svlStreamManager::Release, this, "Release");
+    }
+}
+
+
+void svlStreamManager::PlayCommand(void)
+{
+    if (this->Play() != SVL_OK) {
+        CMN_LOG_CLASS_RUN_ERROR << "PlayCommand: error occurred in method \"Play\" for stream \""
+                                << this->GetName() << "\"" << std::endl;
+    }
+}
+
+
+void svlStreamManager::InitializeCommand(void)
+{
+    if (this->Initialize() != SVL_OK) {
+        CMN_LOG_CLASS_RUN_ERROR << "InitializeCommand: error occurred in method \"Initialize\" for stream \""
+                                << this->GetName() << "\"" << std::endl;
+    }
+}
