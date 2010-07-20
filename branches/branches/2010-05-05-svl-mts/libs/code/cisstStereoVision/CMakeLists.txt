@@ -995,8 +995,5 @@ if (CISST_HAS_SWIG_PYTHON)
   cisst_add_swig_module(MODULE cisstStereoVision
                         INTERFACE_DIRECTORY ../../include/cisstStereoVision
 			CISST_LIBRARIES cisstStereoVision
-                                        cisstNumerical
-					cisstOSAbstraction
-					cisstVector
-					cisstCommon)
+                                        ${DEPENDENCIES})
 endif (CISST_HAS_SWIG_PYTHON)
