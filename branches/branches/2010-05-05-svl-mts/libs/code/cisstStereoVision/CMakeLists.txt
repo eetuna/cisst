@@ -29,6 +29,7 @@ SET(DEPENDENCIES
 SET(SOURCE_FILES
   # Public System API
     svlTypes.cpp
+    svlClassServices.cpp
     svlSampleText.cpp
     svlSampleTargets.cpp
     svlSampleTransform3D.cpp
@@ -38,7 +39,8 @@ SET(SOURCE_FILES
     svlFile.cpp
     svlStreamManager.cpp
     svlFilterBase.cpp
-    svlFilterIO.cpp
+    svlFilterInput.cpp
+    svlFilterOutput.cpp
     svlFilterSourceBase.cpp
     svlStreamProc.cpp
     svlSyncPoint.cpp
@@ -108,6 +110,7 @@ SET(SOURCE_FILES
 # all header files
 SET(HEADER_FILES
   # Public System API
+    svlForwardDeclarations.h
     svlDefinitions.h
     svlTypes.h
     svlSampleText.h
@@ -120,7 +123,8 @@ SET(HEADER_FILES
     svlFile.h
     svlStreamManager.h
     svlFilterBase.h
-    svlFilterIO.h
+    svlFilterInput.h
+    svlFilterOutput.h
     svlFilterSourceBase.h
     svlStreamProc.h
     svlSyncPoint.h

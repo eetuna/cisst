@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2006 
+  Created on: 2006
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -20,6 +20,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterComputationalStereo.h>
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 #include "svlStereoDP.h"
 #include "svlStereoDPMono.h"

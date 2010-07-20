@@ -3,21 +3,21 @@
 
 /*
  $Id: $
- 
+
  Author(s):  Balazs Vagvolgyi
  Created on: 2010
- 
+
  (C) Copyright 2006-2010 Johns Hopkins University (JHU), All Rights
  Reserved.
- 
+
  --- begin cisst license - do not edit ---
- 
+
  This software is provided "as is" under an open source license, with
  no warranty.  The complete license can be found in license.txt and
  http://www.cisst.org/cisst/license.txt.
- 
+
  --- end cisst license ---
- 
+
  */
 
 
@@ -99,7 +99,7 @@ public:
 			}
 		}
     }
-    
+
 	bool AdjustmentsEnabled;
 	bool MousePressed;
 	int OffsetX;
@@ -216,11 +216,11 @@ int StereoVideoPlayer(const string& filepath_left, const string& filepath_right,
     // Add window
     output->Connect(window.GetInput());
     output = window.GetOutput();
-    
+
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (stream.Start() != SVL_OK) goto labError;
+    if (stream.StartInternal() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 
@@ -233,15 +233,15 @@ int StereoVideoPlayer(const string& filepath_left, const string& filepath_right,
         cerr << "    'a'   - Enable/disable adjustments" << endl;
         cerr << "  In command window:" << endl;
         cerr << "    'q'   - Quit" << endl << endl;
-        
+
         ch = cmnGetChar();
     } while (ch != 'q');
-    
+
     cerr << endl;
-    
+
     // release stream
     stream.Release();
-    
+
 labError:
     return 0;
 }
@@ -254,10 +254,10 @@ labError:
 int ParseNumber(char* string, unsigned int maxlen)
 {
     if (string == 0 || maxlen == 0) return -1;
-    
+
     int ivalue, j;
     char ch;
-    
+
     // parse number
     j = 0;
     ivalue = 0;
@@ -276,7 +276,7 @@ int ParseNumber(char* string, unsigned int maxlen)
         ch = string[j];
     }
     if (j == 0) ivalue = -1;
-    
+
     return ivalue;
 }
 
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
     cerr << endl << "svlExStereoVideoPlayer - cisstStereoVision example by Balazs Vagvolgyi" << endl;
     cerr << "See http://www.cisst.org/cisst for details." << endl;
     cerr << "Enter 'svlExStereoVideoPlayer -?' for help." << endl;
-    
+
     //////////////////////////////
     // parsing arguments
     int i, options, ivalue, width, height, fullscreen, offsetx;
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
     }
 
     StereoVideoPlayer(file_left, file_right, interpolation, width, height, fullscreen, offsetx);
-    
+
     cerr << "Quit" << endl;
     return 1;
 }

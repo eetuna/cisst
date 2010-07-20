@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2008 
+  Created on: 2008
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterImageFlipRotate.h>
+#include <cisstStereoVision/svlFilterInput.h>
 #include <cisstImage/imgUCharRGB.h>
 
 

@@ -43,10 +43,12 @@ set (SOURCE_FILES
      mtsTaskFromCallback.cpp
      mtsTaskFromSignal.cpp
 
-     mtsInterfaceProvided.cpp
      mtsInterfaceProvidedOrOutput.cpp
-     mtsInterfaceRequired.cpp
+     mtsInterfaceProvided.cpp
+     mtsInterfaceOutput.cpp
      mtsInterfaceRequiredOrInput.cpp
+     mtsInterfaceRequired.cpp
+     mtsInterfaceInput.cpp
 
      mtsCollectorBase.cpp
      mtsCollectorState.cpp
@@ -116,10 +118,12 @@ set (HEADER_FILES
      mtsTaskManager.h    # to be deleted
 
      mtsInterfaceCommon.h
-     mtsInterfaceProvided.h
      mtsInterfaceProvidedOrOutput.h
-     mtsInterfaceRequired.h
+     mtsInterfaceProvided.h
+     mtsInterfaceOutput.h
      mtsInterfaceRequiredOrInput.h
+     mtsInterfaceRequired.h
+     mtsInterfaceInput.h
 
      mtsCollectorBase.h
      mtsCollectorState.h

@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2007 
+  Created on: 2007
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -22,6 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterStreamTypeConverter.h>
 #include <cisstStereoVision/svlConverters.h>
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 
 /*******************************************/

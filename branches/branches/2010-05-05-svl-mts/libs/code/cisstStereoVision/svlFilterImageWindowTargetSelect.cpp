@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterImageWindowTargetSelect.h>
 #include <cisstStereoVision/svlDraw.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 
 /**********************************************/
@@ -110,7 +111,7 @@ int svlFilterImageWindowTargetSelect::Initialize(svlSample* syncInput, svlSample
     ButtonDown = false;
 
     syncOutput = syncInput;
-    
+
     svlFilterImageWindow::SetCallback(this);
     return svlFilterImageWindow::Initialize(DisplayImage, syncOutput);
 }

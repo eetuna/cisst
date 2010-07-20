@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -26,12 +26,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <map>
 
-#include <cisstMultiTask/mtsStateTable.h>
+#include <cisstStereoVision/svlForwardDeclarations.h>
 #include <cisstStereoVision/svlTypes.h>
-#include <cisstStereoVision/svlFilterIO.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 
 #include <cisstMultiTask/mtsComponent.h>
+#include <cisstMultiTask/mtsStateTable.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
@@ -45,24 +45,21 @@ class svlStreamProc;
 
 class CISST_EXPORT svlFilterBase : public mtsComponent
 {
-friend class svlFilterInput;
-friend class svlFilterOutput;
-friend class svlStreamManager;
-friend class svlStreamProc;
-
-    typedef std::map<std::string, svlFilterInput*> _Inputs;
-    typedef std::map<std::string, svlFilterOutput*> _Outputs;
+    friend class svlFilterInput;
+    friend class svlFilterOutput;
+    friend class svlStreamManager;
+    friend class svlStreamProc;
 
 public:
-    svlFilterBase();
+    svlFilterBase(void);
     virtual ~svlFilterBase();
 
-    bool IsInitialized();
-    bool IsRunning();
-    unsigned int GetFrameCounter();
+    bool IsInitialized(void);
+    bool IsRunning(void);
+    unsigned int GetFrameCounter(void);
 
-    svlFilterInput* GetInput();
-    svlFilterOutput* GetOutput();
+    svlFilterInput* GetInput(void);
+    svlFilterOutput* GetOutput(void);
     svlFilterInput* GetInput(const std::string &inputname);
     svlFilterOutput* GetOutput(const std::string &outputname);
 
@@ -70,8 +67,8 @@ protected:
     unsigned int FrameCounter;
     mtsStateTable StateTable;
 
-    svlFilterInput* AddInput(const std::string &inputname, bool trunk = true);
-    svlFilterOutput* AddOutput(const std::string &outputname, bool trunk = true);
+    svlFilterInput * AddInput(const std::string & inputName, bool trunk = true);
+    svlFilterOutput * AddOutput(const std::string & outputName, bool trunk = true);
     int AddInputType(const std::string &inputname, svlStreamType type);
     int SetOutputType(const std::string &outputname, svlStreamType type);
     void SetAutomaticOutputType(bool autotype);
@@ -80,8 +77,8 @@ protected:
     virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput) = 0;
     virtual int OnStart(unsigned int procCount);
     virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput) = 0;
-    virtual void OnStop();
-    virtual int Release();
+    virtual void OnStop(void);
+    virtual int Release(void);
 
     int IsDataValid(svlStreamType type, svlSample* data);
     bool IsNewSample(svlSample* sample);
@@ -91,8 +88,6 @@ private:
     bool Running;
     double PrevInputTimestamp;
     bool AutoType;
-    _Inputs Inputs;
-    _Outputs Outputs;
 };
 
 #endif // _svlFilterBase_h

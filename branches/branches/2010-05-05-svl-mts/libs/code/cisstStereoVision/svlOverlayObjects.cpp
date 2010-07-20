@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -21,7 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlOverlayObjects.h>
-
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 /****************************/
 /*** svlOverlay class *******/
@@ -638,7 +639,7 @@ bool svlOverlayText::IsInputTypeValid(svlStreamType inputtype)
     switch (inputtype) {
         case svlTypeText:
             return true;
-            
+
         case svlTypeImageRGB:
         case svlTypeImageRGBStereo:
         case svlTypeImageMonoFloat:
@@ -657,7 +658,7 @@ bool svlOverlayText::IsInputTypeValid(svlStreamType inputtype)
         case svlTypeTargets:
             break;
     }
-    
+
     return false;
 }
 

@@ -164,8 +164,8 @@ protected:
         }
 
         /*! Set this connection as established */
-        inline void SetConnected(void) { 
-            Connected = true; 
+        inline void SetConnected(void) {
+            Connected = true;
         }
 
         /*! Return true if this connection is timed out */
@@ -198,10 +198,10 @@ protected:
         - containers for connection map
         - containers for interface type flag map */
     typedef struct {
-        ConnectedInterfaceMapType InterfaceProvidedMap;
-        ConnectedInterfaceMapType InterfaceRequiredMap;
-        InterfaceTypeMapType InterfaceProvidedTypeMap;
-        InterfaceTypeMapType InterfaceRequiredTypeMap;
+        ConnectedInterfaceMapType InterfaceProvidedOrOutputMap;
+        ConnectedInterfaceMapType InterfaceRequiredOrInputMap;
+        InterfaceTypeMapType InterfaceProvidedOrOutputTypeMap;
+        InterfaceTypeMapType InterfaceRequiredOrInputTypeMap;
     } InterfaceMapType;
 
     /*! Component map: a map of registered components in a process
@@ -256,31 +256,28 @@ protected:
     bool Cleanup(void);
 
     /*! Get a map containing connection information for a provided interface */
-    ConnectionMapType * GetConnectionsOfInterfaceProvided(
-        const std::string & serverProcessName, const std::string & serverComponentName,
-        const std::string & providedInterfaceName, InterfaceMapType ** interfaceMap);
-    ConnectionMapType * GetConnectionsOfInterfaceProvided(
-        const std::string & serverProcessName, const std::string & serverComponentName,
-        const std::string & providedInterfaceName) const;
+    ConnectionMapType * GetConnectionsOfInterfaceProvidedOrOutput(const std::string & serverProcessName, const std::string & serverComponentName,
+                                                                  const std::string & providedInterfaceName, InterfaceMapType ** interfaceMap);
+    ConnectionMapType * GetConnectionsOfInterfaceProvidedOrOutput(const std::string & serverProcessName, const std::string & serverComponentName,
+                                                                  const std::string & providedInterfaceName) const;
 
     /*! Get a map containing connection information for a required interface */
-    ConnectionMapType * GetConnectionsOfInterfaceRequired(
-        const std::string & clientProcessName, const std::string & clientComponentName,
-        const std::string & requiredInterfaceName, InterfaceMapType ** interfaceMap);
+    ConnectionMapType * GetConnectionsOfInterfaceRequiredOrInput(const std::string & clientProcessName, const std::string & clientComponentName,
+                                                                 const std::string & requiredInterfaceName, InterfaceMapType ** interfaceMap);
 
-    ConnectionMapType * GetConnectionsOfInterfaceRequired(
-        const std::string & clientProcessName, const std::string & clientComponentName,
-        const std::string & requiredInterfaceName) const;
+    ConnectionMapType * GetConnectionsOfInterfaceRequiredOrInput(const std::string & clientProcessName, const std::string & clientComponentName,
+                                                                 const std::string & requiredInterfaceName) const;
 
     /*! Add this interface to connectionMap as connected interface */
     bool AddConnectedInterface(ConnectionMapType * connectionMap,
-        const std::string & processName, const std::string & componentName,
-        const std::string & interfaceName, const bool isRemoteConnection = false);
+                               const std::string & processName, const std::string & componentName,
+                               const std::string & interfaceName, const bool isRemoteConnection = false);
 
     /*! Check if two interfaces are connected */
-    bool IsAlreadyConnected(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+    bool IsAlreadyConnected(const std::string & clientProcessName, const std::string & clientComponentName,
+                            const std::string & clientInterfaceRequiredName,
+                            const std::string & serverProcessName, const std::string & serverComponentName,
+                            const std::string & serverInterfaceProvidedName);
 
 public:
     /*! Constructor and destructor */
@@ -310,23 +307,23 @@ public:
     //-------------------------------------------------------------------------
     //  Interface Management
     //-------------------------------------------------------------------------
-    bool AddInterfaceProvided(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
+    bool AddInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                      const std::string & interfaceName, const bool isProxyInterface = false);
 
-    bool AddInterfaceRequired(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface = false);
+    bool AddInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                     const std::string & interfaceName, const bool isProxyInterface = false);
 
-    bool FindInterfaceProvided(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
+    bool FindInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                       const std::string & interfaceName) const;
 
-    bool FindInterfaceRequired(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName) const;
+    bool FindInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                      const std::string & interfaceName) const;
 
-    bool RemoveInterfaceProvided(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+    bool RemoveInterfaceProvided(const std::string & processName, const std::string & componentName,
+                                 const std::string & interfaceName);
 
-    bool RemoveInterfaceRequired(
-        const std::string & processName, const std::string & componentName, const std::string & interfaceName);
+    bool RemoveInterfaceRequired(const std::string & processName, const std::string & componentName,
+                                 const std::string & interfaceName);
 
     //-------------------------------------------------------------------------
     //  Connection Management
@@ -369,84 +366,84 @@ public:
     void GetNamesOfProcesses(std::vector<std::string>& namesOfProcesses);
 
     /*! Get names of all components in a process */
-    void GetNamesOfComponents(const std::string & processName, 
+    void GetNamesOfComponents(const std::string & processName,
                               std::vector<std::string>& namesOfComponents);
 
     /*! Get names of all provided interfaces in a component */
-    void GetNamesOfInterfacesProvided(const std::string & processName, 
-                                      const std::string & componentName, 
-                                      std::vector<std::string>& namesOfInterfacesProvided);
+    void GetNamesOfInterfacesProvidedOrOutput(const std::string & processName,
+                                              const std::string & componentName,
+                                              std::vector<std::string>& namesOfInterfacesProvided);
 
     /*! Get names of all required interfaces in a component */
-    void GetNamesOfInterfacesRequired(const std::string & processName, 
-                                      const std::string & componentName, 
-                                      std::vector<std::string>& namesOfInterfacesRequired);
+    void GetNamesOfInterfacesRequiredOrInput(const std::string & processName,
+                                             const std::string & componentName,
+                                             std::vector<std::string>& namesOfInterfacesRequired);
 
 #if CISST_MTS_HAS_ICE
     /*! Get names of all commands in a provided interface */
-    void GetNamesOfCommands(const std::string & processName, 
-                            const std::string & componentName, 
-                            const std::string & providedInterfaceName, 
+    void GetNamesOfCommands(const std::string & processName,
+                            const std::string & componentName,
+                            const std::string & providedInterfaceName,
                             std::vector<std::string>& namesOfCommands);
 
     /*! Get names of all event generators in a provided interface */
-    void GetNamesOfEventGenerators(const std::string & processName, 
-                                   const std::string & componentName, 
-                                   const std::string & providedInterfaceName, 
+    void GetNamesOfEventGenerators(const std::string & processName,
+                                   const std::string & componentName,
+                                   const std::string & providedInterfaceName,
                                    std::vector<std::string>& namesOfEventGenerators);
 
     /*! Get names of all functions in a required interface */
-    void GetNamesOfFunctions(const std::string & processName, 
-                             const std::string & componentName, 
-                             const std::string & requiredInterfaceName, 
+    void GetNamesOfFunctions(const std::string & processName,
+                             const std::string & componentName,
+                             const std::string & requiredInterfaceName,
                              std::vector<std::string>& namesOfFunctions);
 
     /*! Get names of all event handlers in a required interface */
-    void GetNamesOfEventHandlers(const std::string & processName, 
-                                 const std::string & componentName, 
-                                 const std::string & requiredInterfaceName, 
+    void GetNamesOfEventHandlers(const std::string & processName,
+                                 const std::string & componentName,
+                                 const std::string & requiredInterfaceName,
                                  std::vector<std::string>& namesOfEventHandlers);
 
     /*! Get description of a command in a provided interface */
-    void GetDescriptionOfCommand(const std::string & processName, 
-                                 const std::string & componentName, 
-                                 const std::string & providedInterfaceName, 
+    void GetDescriptionOfCommand(const std::string & processName,
+                                 const std::string & componentName,
+                                 const std::string & providedInterfaceName,
                                  const std::string & commandName,
                                  std::string & description);
 
     /*! Get description of an event generator in a provided interface */
-    void GetDescriptionOfEventGenerator(const std::string & processName, 
-                                        const std::string & componentName, 
-                                        const std::string & providedInterfaceName, 
+    void GetDescriptionOfEventGenerator(const std::string & processName,
+                                        const std::string & componentName,
+                                        const std::string & providedInterfaceName,
                                         const std::string & eventGeneratorName,
                                         std::string & description);
 
     /*! Get description of a function in a required interface */
-    void GetDescriptionOfFunction(const std::string & processName, 
-                                  const std::string & componentName, 
-                                  const std::string & requiredInterfaceName, 
+    void GetDescriptionOfFunction(const std::string & processName,
+                                  const std::string & componentName,
+                                  const std::string & requiredInterfaceName,
                                   const std::string & functionName,
                                   std::string & description);
 
     /*! Get description of a function in a required  interface */
-    void GetDescriptionOfEventHandler(const std::string & processName, 
-                                      const std::string & componentName, 
-                                      const std::string & requiredInterfaceName, 
+    void GetDescriptionOfEventHandler(const std::string & processName,
+                                      const std::string & componentName,
+                                      const std::string & requiredInterfaceName,
                                       const std::string & eventHandlerName,
                                       std::string & description);
 
     /*! Get parameter information (name, argument count, argument type) */
-    void GetArgumentInformation(const std::string & processName, 
-                                const std::string & componentName, 
-                                const std::string & providedInterfaceName, 
+    void GetArgumentInformation(const std::string & processName,
+                                const std::string & componentName,
+                                const std::string & providedInterfaceName,
                                 const std::string & commandName,
                                 std::string & argumentName,
                                 std::vector<std::string> & argumentParameterNames);
 
     /*! Get current values of read commands */
-    void GetValuesOfCommand(const std::string & processName, 
-                            const std::string & componentName, 
-                            const std::string & providedInterfaceName, 
+    void GetValuesOfCommand(const std::string & processName,
+                            const std::string & componentName,
+                            const std::string & providedInterfaceName,
                             const std::string & commandName,
                             const int scalarIndex,
                             mtsManagerLocalInterface::SetOfValues & values);

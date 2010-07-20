@@ -3,7 +3,7 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2009
 
@@ -21,7 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterToolTracker.h>
-
+#include <cisstStereoVision/svlFilterOutput.h>
 
 /******************************************/
 /*** svlFilterToolTracker class ***********/

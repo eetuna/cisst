@@ -200,22 +200,26 @@ bool mtsManagerProxyClient::RemoveComponent(const std::string & processName, con
     return SendRemoveComponent(processName, componentName);
 }
 
-bool mtsManagerProxyClient::AddInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
+bool mtsManagerProxyClient::AddInterfaceProvided(const std::string & processName, const std::string & componentName,
+                                                 const std::string & interfaceName, const bool isProxyInterface)
 {
     return SendAddInterfaceProvided(processName, componentName, interfaceName, isProxyInterface);
 }
 
-bool mtsManagerProxyClient::AddInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
+bool mtsManagerProxyClient::AddInterfaceRequired(const std::string & processName, const std::string & componentName,
+                                                 const std::string & interfaceName, const bool isProxyInterface)
 {
     return SendAddInterfaceRequired(processName, componentName, interfaceName, isProxyInterface);
 }
 
-bool mtsManagerProxyClient::FindInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
+bool mtsManagerProxyClient::FindInterfaceProvided(const std::string & processName, const std::string & componentName,
+                                                  const std::string & interfaceName) const
 {
     return const_cast<mtsManagerProxyClient*>(this)->SendFindInterfaceProvided(processName, componentName, interfaceName);
 }
 
-bool mtsManagerProxyClient::FindInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
+bool mtsManagerProxyClient::FindInterfaceRequired(const std::string & processName, const std::string & componentName,
+                                                  const std::string & interfaceName) const
 {
     return const_cast<mtsManagerProxyClient*>(this)->SendFindInterfaceRequired(processName, componentName, interfaceName);
 }

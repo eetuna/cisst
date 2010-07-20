@@ -3,7 +3,7 @@
 
 /*
   $Id: svlFilterImageTracker.cpp 1236 2010-02-26 20:38:21Z adeguet1 $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2007
 
@@ -21,6 +21,9 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterImageTracker.h>
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
+
 #include <math.h>
 
 #ifdef _MSC_VER

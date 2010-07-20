@@ -3,7 +3,7 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2009
 
@@ -89,7 +89,7 @@ int VideoConverter(std::string &src_path, std::string &dst_path, bool loadcodec)
     cerr << "Converting: '" << src_path << "' to '" << dst_path <<"' using codec: '" << encoder << "'" << endl;
 
     // initialize and start stream
-    if (stream.Start() != SVL_OK) goto labError;
+    if (stream.StartInternal() != SVL_OK) goto labError;
 
     do {
         cerr << " > Frames processed: " << source.GetFrameCounter() << "     \r";

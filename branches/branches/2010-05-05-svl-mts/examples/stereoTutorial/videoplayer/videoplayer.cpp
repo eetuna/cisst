@@ -3,7 +3,7 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2009
 
@@ -68,7 +68,7 @@ int VideoPlayer(std::string pathname)
     cerr << endl << "Starting stream... ";
 
     // initialize and start stream
-    if (stream.Start() != SVL_OK) goto labError;
+    if (stream.StartInternal() != SVL_OK) goto labError;
 
     cerr << "Done" << endl;
 

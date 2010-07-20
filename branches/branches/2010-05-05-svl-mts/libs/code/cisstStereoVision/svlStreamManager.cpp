@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2006 
+  Created on: 2006
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -21,6 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 #include <cisstStereoVision/svlTypes.h>
 #include <cisstStereoVision/svlSyncPoint.h>
 #include <cisstStereoVision/svlFilterBase.h>
@@ -82,9 +84,9 @@ int svlStreamManager::Initialize()
     svlSample *inputsample, *outputsample = 0;
     svlFilterSourceBase *source = StreamSource;
     svlFilterBase *prevfilter, *filter;
-    svlFilterBase::_Outputs::iterator iteroutputs;
-    svlFilterOutput* output;
-    svlFilterInput* input;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    svlFilterOutput * output;
+    svlFilterInput * input;
     int err;
 
     if (source == 0) return SVL_NO_SOURCE_IN_LIST;
@@ -98,12 +100,17 @@ int svlStreamManager::Initialize()
     source->Initialized = true;
 
     // Initialize non-trunk filter outputs
-    for (iteroutputs = source->Outputs.begin(); iteroutputs != source->Outputs.end(); iteroutputs ++) {
-        if (!iteroutputs->second->IsTrunk() && iteroutputs->second->Stream) {
-            err = iteroutputs->second->Stream->Initialize();
-            if (err != SVL_OK) {
-                Release();
-                return err;
+    for (iteroutputs = source->InterfacesOutput.begin();
+         iteroutputs != source->InterfacesOutput.end();
+         iteroutputs ++) {
+        output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+        if (output) {
+            if (!output->IsTrunk() && output->Stream) {
+                err = output->Stream->Initialize();
+                if (err != SVL_OK) {
+                    Release();
+                    return err;
+                }
             }
         }
     }
@@ -140,12 +147,17 @@ int svlStreamManager::Initialize()
         filter->Initialized = true;
 
         // Initialize non-trunk filter outputs
-        for (iteroutputs = filter->Outputs.begin(); iteroutputs != filter->Outputs.end(); iteroutputs ++) {
-            if (!iteroutputs->second->IsTrunk() && iteroutputs->second->Stream) {
-                err = iteroutputs->second->Stream->Initialize();
-                if (err != SVL_OK) {
-                    Release();
-                    return err;
+        for (iteroutputs = filter->InterfacesOutput.begin();
+             iteroutputs != filter->InterfacesOutput.end();
+             iteroutputs ++) {
+            output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+            if (output) {
+                if (!output->IsTrunk() && output->Stream) {
+                    err = output->Stream->Initialize();
+                    if (err != SVL_OK) {
+                        Release();
+                        return err;
+                    }
                 }
             }
         }
@@ -176,10 +188,10 @@ void svlStreamManager::Release()
 
     Stop();
 
-    unsigned int i;
-    svlFilterBase::_Outputs::iterator iteroutputs;
-    svlFilterOutput* output;
-    svlFilterInput* input;
+    size_t i;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    svlFilterOutput * output;
+    svlFilterInput * input;
 
     // There might be a thread object still open (in case of an internal shutdown)
     for (i = 0; i < StreamProcInstance.size(); i ++) {
@@ -206,9 +218,14 @@ void svlStreamManager::Release()
         }
 
         // Release non-trunk filter outputs
-        for (iteroutputs = filter->Outputs.begin(); iteroutputs != filter->Outputs.end(); iteroutputs ++) {
-            if (!iteroutputs->second->IsTrunk() && iteroutputs->second->Stream) {
-                iteroutputs->second->Stream->Release();
+        for (iteroutputs = filter->InterfacesOutput.begin();
+             iteroutputs != filter->InterfacesOutput.end();
+             iteroutputs ++) {
+            output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+            if (output) {
+                if (!output->IsTrunk() && output->Stream) {
+                    output->Stream->Release();
+                }
             }
         }
 
@@ -233,15 +250,15 @@ bool svlStreamManager::IsInitialized()
     return Initialized;
 }
 
-int svlStreamManager::Start()
+int svlStreamManager::StartInternal(void)
 {
     if (Running) return SVL_ALREADY_RUNNING;
 
     int err;
-    unsigned int i;
-    svlFilterBase::_Outputs::iterator iteroutputs;
-    svlFilterOutput* output;
-    svlFilterInput* input;
+    size_t i;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    svlFilterOutput * output;
+    svlFilterInput * input;
 
     if (!Initialized) {
         // Try to initialize it if it hasn't been done before
@@ -315,12 +332,17 @@ int svlStreamManager::Start()
     while (filter != 0) {
 
         // Start non-trunk filter outputs
-        for (iteroutputs = filter->Outputs.begin(); iteroutputs != filter->Outputs.end(); iteroutputs ++) {
-            if (!iteroutputs->second->IsTrunk() && iteroutputs->second->Stream) {
-                err = iteroutputs->second->Stream->Start();
-                if (err != SVL_OK) {
-                    Release();
-                    return err;
+        for (iteroutputs = filter->InterfacesOutput.begin();
+             iteroutputs != filter->InterfacesOutput.end();
+             iteroutputs ++) {
+            output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+            if (output) {
+                if (!output->IsTrunk() && output->Stream) {
+                    err = output->Stream->StartInternal();
+                    if (err != SVL_OK) {
+                        Release();
+                        return err;
+                    }
                 }
             }
         }
@@ -337,7 +359,6 @@ int svlStreamManager::Start()
     }
 
     StreamStatus = SVL_STREAM_RUNNING;
-
     return SVL_OK;
 }
 
@@ -345,18 +366,23 @@ void svlStreamManager::Stop()
 {
     if (!Running) return;
 
-    svlFilterBase::_Outputs::iterator iteroutputs;
-    svlFilterOutput* output;
-    svlFilterInput* input;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    svlFilterOutput * output;
+    svlFilterInput * input;
 
     // Stop all filter outputs recursively, if any
     svlFilterBase *filter = StreamSource;
     while (filter != 0) {
 
         // Stop non-trunk filter outputs
-        for (iteroutputs = filter->Outputs.begin(); iteroutputs != filter->Outputs.end(); iteroutputs ++) {
-            if (!iteroutputs->second->IsTrunk() && iteroutputs->second->Stream) {
-                iteroutputs->second->Stream->Stop();
+        for (iteroutputs = filter->InterfacesOutput.begin();
+             iteroutputs != filter->InterfacesOutput.end();
+             iteroutputs ++) {
+            output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+            if (output) {
+                if (!output->IsTrunk() && output->Stream) {
+                    output->Stream->Stop();
+                }
             }
         }
 
@@ -391,7 +417,7 @@ void svlStreamManager::Stop()
     StopThread = true;
 
     // Stopping multi thread processing and delete thread objects
-    for (unsigned int i = 0; i < ThreadCount; i ++) {
+    for (size_t i = 0; i < ThreadCount; i ++) {
         if (StreamProcThread[i]) {
             StreamProcThread[i]->Wait();
             delete StreamProcThread[i];
@@ -438,18 +464,21 @@ void svlStreamManager::InternalStop(unsigned int callingthreadID)
 {
     if (!Running) return;
 
-    svlFilterBase::_Outputs::iterator iteroutputs;
-    svlFilterOutput* output;
-    svlFilterInput* input;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    svlFilterOutput * output;
+    svlFilterInput * input;
 
     // Stop all filter outputs recursively, if any
-    svlFilterBase *filter = StreamSource;
+    svlFilterBase * filter = StreamSource;
     while (filter != 0) {
 
         // Stop non-trunk filter outputs
-        for (iteroutputs = filter->Outputs.begin(); iteroutputs != filter->Outputs.end(); iteroutputs ++) {
-            if (!iteroutputs->second->IsTrunk() && iteroutputs->second->Stream) {
-                iteroutputs->second->Stream->Stop();
+        for (iteroutputs = filter->InterfacesOutput.begin();
+             iteroutputs != filter->InterfacesOutput.end();
+             iteroutputs ++) {
+            output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+            if (!output->IsTrunk() && output->Stream) {
+                output->Stream->Stop();
             }
         }
 
@@ -483,7 +512,7 @@ void svlStreamManager::InternalStop(unsigned int callingthreadID)
     StopThread = true;
 
     // Stopping multi thread processing and delete thread objects
-    for (unsigned int i = 0; i < ThreadCount; i ++) {
+    for (size_t i = 0; i < ThreadCount; i ++) {
         if (i != callingthreadID) {
             if (StreamProcThread[i]) {
                 StreamProcThread[i]->Wait();

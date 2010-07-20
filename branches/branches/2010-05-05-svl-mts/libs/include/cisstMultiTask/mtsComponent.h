@@ -98,6 +98,12 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     mtsInterfaceProvided * AddInterfaceProvidedUsingMailbox(const std::string & interfaceProvidedName,
                                                             mtsMailBox * mailBox);
 
+    mtsInterfaceInput * AddInterfaceInputExisting(const std::string & interfaceInputName,
+                                                  mtsInterfaceInput * interfaceInput);
+
+    mtsInterfaceOutput * AddInterfaceOutputExisting(const std::string & interfaceOutputName,
+                                                    mtsInterfaceOutput * interfaceOutput);
+
  public:
 
     /*! Default constructor. Sets the name. */
@@ -121,34 +127,51 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       before they get started.  Use to place initialization code. */
     virtual void Start(void);
 
-    /*! Method to add an interface to the component.  This method is
-      virtual so that mtsTaskBase can redefine it and generate the
-      appropriate type of interface, i.e. mtsInterfaceProvided as opposed
-      to mtsInterfaceProvided for mtsComponent. */
-    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & providedInterfaceName,
+    /*! Method to add a provided interface to the component.  This
+      method is virtual so that mtsTaskBase can redefine it and
+      generate the appropriate type of interface,
+      i.e. mtsInterfaceProvided as opposed to mtsInterfaceProvided for
+      mtsComponent. */
+    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & interfaceProvidedName,
                                                         mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
 
     // provided for backward compatibility
-    inline CISST_DEPRECATED mtsInterfaceProvided * AddProvidedInterface(const std::string & providedInterfaceName) {
-        return this->AddInterfaceProvided(providedInterfaceName);
+    inline CISST_DEPRECATED mtsInterfaceProvided * AddProvidedInterface(const std::string & interfaceProvidedName) {
+        return this->AddInterfaceProvided(interfaceProvidedName);
     }
+
+    /*! Method to add an output interface to the component. */
+    virtual mtsInterfaceOutput * AddInterfaceOutput(const std::string & interfaceOutputName);
+
     /*! Return the list of provided interfaces.  This returns a list
       of names.  To retrieve the actual interface, use
       GetInterfaceProvided with the provided interface name. */
+    //@{
     std::vector<std::string> GetNamesOfInterfacesProvidedOrOutput(void) const;
     std::vector<std::string> GetNamesOfInterfacesProvided(void) const;
+    std::vector<std::string> GetNamesOfInterfacesOutput(void) const;
+    //@}
 
-    /*! Get the provided/output interface */
+    /*! Get a provided or output interface identified by its name */
     mtsInterfaceProvidedOrOutput * GetInterfaceProvidedOrOutput(const std::string & interfaceProvidedOrOutputName);
 
-    /*! Get the provided interface */
+    /*! Get a provided interface identified by its name */
     mtsInterfaceProvided * GetInterfaceProvided(const std::string & interfaceProvidedName) const;
+
+    /*! Get an output interface identified by its name */
+    mtsInterfaceOutput * GetInterfaceOutput(const std::string & interfaceOutputName) const;
 
     /*! Get the total number of provided interfaces */
     size_t GetNumberOfInterfacesProvided(void) const;
 
-    /*! Remove the provided interface */
+    /*! Get the total number of output interfaces */
+    size_t GetNumberOfInterfacesOutput(void) const;
+
+    /*! Remove a provided interface identified by its name */
     bool RemoveInterfaceProvided(const std::string & interfaceProvidedName);
+
+    /*! Remove an output interface identified by its name */
+    bool RemoveInterfaceOutput(const std::string & interfaceOutputName);
 
     /*! Add a required interface.  This interface will later on be
       connected to another task and use the provided interface of the
@@ -161,8 +184,15 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
         return this->AddInterfaceRequired(requiredInterfaceName);
     }
 
+    /*! Add an input interface. */
+    virtual mtsInterfaceInput * AddInterfaceInput(const std::string & interfaceInputName);
+
     /*! Provide a list of existing required interfaces (by names) */
+    //@{
     std::vector<std::string> GetNamesOfInterfacesRequiredOrInput(void) const;
+    std::vector<std::string> GetNamesOfInterfacesRequired(void) const;
+    std::vector<std::string> GetNamesOfInterfacesInput(void) const;
+    //@}
 
     /*! Get a pointer on the provided interface that has been
       connected to a given required interface (defined by its name).
@@ -170,17 +200,26 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       has not been connected.  See mtsTaskManager::Connect. */
     const mtsInterfaceProvidedOrOutput * GetInterfaceProvidedOrOutputFor(const std::string & interfaceRequiredOrInputName);
 
-    /*! Get the required/input interface */
+    /*! Get a required or input interface identified by its name */
     mtsInterfaceRequiredOrInput * GetInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName);
 
-    /*! Get the required interface */
-    mtsInterfaceRequired * GetInterfaceRequired(const std::string & interfaceRequired);
+    /*! Get a required interface identified by its name */
+    mtsInterfaceRequired * GetInterfaceRequired(const std::string & interfaceRequiredName);
+
+    /*! Get an input interface identified by its name */
+    mtsInterfaceInput * GetInterfaceInput(const std::string & interfaceInputName);
 
     /*! Get the total number of required interfaces */
     size_t GetNumberOfInterfacesRequired(void) const;
 
-    /*! Remove the required interface */
+    /*! Get the total number of input interfaces */
+    size_t GetNumberOfInterfacesInput(void) const;
+
+    /*! Remove a required interface identified by its name */
     bool RemoveInterfaceRequired(const std::string & interfaceRequiredName);
+
+    /*! Remove an input interface identified by its name */
+    bool RemoveInterfaceInput(const std::string & interfaceInputName);
 
     /*! Connect a required interface, used by mtsTaskManager */
     bool ConnectInterfaceRequiredOrInput(const std::string & interfaceRequiredOrInputName,
@@ -192,9 +231,11 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       connected from a single thread.  In most cases the count
       should be one. */
     //@{
+#if 0
     typedef std::pair<osaThreadId, unsigned int> ThreadIdCounterPairType;
     typedef std::vector<ThreadIdCounterPairType> ThreadIdCountersType;
     ThreadIdCountersType ThreadIdCounters;
+#endif
     //@}
 
     /*! Map of provided and output interfaces.  Used to store pointers
@@ -205,6 +246,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     InterfacesProvidedOrOutputMapType InterfacesProvidedOrOutput;
     typedef std::list<mtsInterfaceProvided *> InterfacesProvidedListType;
     InterfacesProvidedListType InterfacesProvided;
+    typedef std::list<mtsInterfaceOutput *> InterfacesOutputListType;
+    InterfacesOutputListType InterfacesOutput;
     //@}
 
     /*! Map of required interfaces.  Used to store pointers on all
@@ -215,6 +258,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     InterfacesRequiredOrInputMapType InterfacesRequiredOrInput;
     typedef std::list<mtsInterfaceRequired *> InterfacesRequiredListType;
     InterfacesRequiredListType InterfacesRequired;
+    typedef std::list<mtsInterfaceInput *> InterfacesInputListType;
+    InterfacesInputListType InterfacesInput;
     //@}
 
     /*! Process all messages in mailboxes. Returns number of commands processed. */

@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -24,6 +24,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlStreamManager.h>
 #include <cisstStereoVision/svlFilterSourceBase.h>
 #include <cisstStereoVision/svlStreamBranchSource.h>
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstOSAbstraction/osaSleep.h>
 

@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -21,7 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterStereoImageSplitter.h>
-
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 /******************************************/
 /*** svlFilterStereoImageSplitter class ***/

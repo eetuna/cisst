@@ -3,10 +3,10 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2006
-  
+
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
 
@@ -167,7 +167,7 @@ int main()
     cout << "Press any key to stop stream..." << endl;
 
     // Initialize and start stream
-    if (stream.Start() != SVL_OK) goto labError;
+    if (stream.StartInternal() != SVL_OK) goto labError;
 
     // Wait for user input
     cmnGetChar();
@@ -192,7 +192,7 @@ labError:
    3  // Create stream manager                                      // Create stream manager
    4  //   thread count  -  2                                       //   thread count  -  2
    5  svlStreamManager      stream(2);                              svlStreamManager      stream(2);
-   6   
+   6
    7  // Create filters                                             // Create filters
    8  svlFilterSourceDummy  source(svlTypeImageRGB);                svlFilterSourceDummy  source(svlTypeImageRGB);
    9                                                                svlFilterSplitter     splitter;
@@ -200,13 +200,13 @@ labError:
   11  svlFilterImageWindow  window;                                 svlFilterImageWindow  window;
   12  svlFilterImageUnsharpMask  unsharpmask;                            svlFilterImageUnsharpMask  unsharpmask;
   13  svlFilterImageWindow  window2;                                svlFilterImageWindow  window2;
-  14  
+  14
   15                                                                // Add new output to splitter
   16                                                                splitter.AddOutput("output2");
-  17  
+  17
   18  // Configure filters                                          // Configure filters
   19  ...                                                           ...
-  20  
+  20
   21  // Add 'source' filter to the stream                          // Add 'source' filter to the stream
   22  stream.Trunk().Append(&source);                               stream.SetSourceFilter(&source);
   23
@@ -217,26 +217,26 @@ labError:
   28  // by appending them to the end of the trunk                  // connecting inputs to outputs
   29  stream.Trunk().Append(&resizer);                              splitter.GetOutput()->Connect(resizer.GetInput());
   30  stream.Trunk().Append(&window);                               resizer.GetOutput()->Connect(window.GetInput());
-  31  
+  31
   32  // Create branch after the 'source' filter
   33  //   branch name  -  "mybranch"
   34  //   buffer size  -  2 [samples]
   35  stream.CreateBranchAfterFilter(&source, "mybranch", 2);
-  36  
+  36
   37  // Connect filters in a sequence to each other                // Connect filters to the splitter's second
   38  // by appending them to the end of the branch                 // output, then connect them to each other
   39  stream.Branch("mybranch").Append(&unsharpmask);               splitter.GetOutput("output2")->Connect(unsharpmask.GetInput());
   40  stream.Branch("mybranch").Append(&window2);                   unsharpmask.GetOutput()->Connect(window2.GetInput());
-  41  
+  41
   42  // Initialize stream (optional)                               // Initialize stream (optional)
   43  stream.Initialize();                                          stream.Initialize();
-  44  
+  44
   45  // Start stream                                               // Start stream
   46  stream.Start();                                               stream.Start();
-  47  
+  47
   48  // Wait until quit                                            // Wait until quit
   49  ...                                                           ...
-  50  
+  50
   51  // Safely deconstruct stream                                  // Safely deconstruct stream
   52  stream.RemoveAll();                                           stream.Release();
 

@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -21,7 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterImageOverlay.h>
-
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 /***************************************/
 /*** svlFilterImageOverlay class *******/
@@ -82,14 +83,14 @@ int svlFilterImageOverlay::AddInputTargets(const std::string &name)
 int svlFilterImageOverlay::AddInputText(const std::string &name)
 {
     if (GetInput(name)) return SVL_FAIL;
-    
+
     svlFilterInput* input = svlFilterBase::AddInput(name, false);
     if (!input) return SVL_FAIL;
-    
+
     input->AddType(svlTypeText);
-    
+
     SampleCache[input] = 0;
-    
+
     return SVL_OK;
 }
 

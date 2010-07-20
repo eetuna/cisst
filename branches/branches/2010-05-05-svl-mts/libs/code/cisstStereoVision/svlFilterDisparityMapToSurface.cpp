@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2009 
+  Created on: 2009
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -21,7 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterDisparityMapToSurface.h>
 #include <cisstStereoVision/svlImageProcessing.h>
-
+#include <cisstStereoVision/svlFilterOutput.h>
 
 /********************************************/
 /*** svlFilterDisparityMapToSurface class ***/

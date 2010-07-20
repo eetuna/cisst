@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2006 
+  Created on: 2006
 
   (C) Copyright 2006-2008 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -20,10 +20,13 @@ http://www.cisst.org/cisst/license.txt.
 
 */
 
-#include <cisstCommon.h>
+
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaSleep.h>
+#include <cisstCommon/cmnGetChar.h>
+
 #include "svlVidCapSrcInitializer.h"
 
 #ifdef _MSC_VER
@@ -505,7 +508,7 @@ int svlFilterSourceVideoCapture::DialogDevice()
     std::cin >> deviceid;
     if (deviceid < 0) deviceid = 0;
     if (deviceid >= listsize) deviceid = listsize - 1;
-    
+
     return deviceid;
 }
 
@@ -1049,7 +1052,7 @@ int svlFilterSourceVideoCapture::PrintInputList(int deviceid, bool update)
 {
     if (OutputImage == 0)
         return SVL_FAIL;
-    
+
     DeviceInfo *devices = 0;
     int devicecount = GetDeviceList(&devices, update);
 
@@ -1127,7 +1130,7 @@ int svlFilterSourceVideoCapture::PrintFormatList(unsigned int videoch)
 {
     if (OutputImage == 0)
         return SVL_FAIL;
-    
+
     int i, j;
     ImageFormat *formats = 0;
     int formatcount = GetFormatList(&formats, videoch);
@@ -1166,7 +1169,7 @@ int svlFilterSourceVideoCapture::SelectFormat(unsigned int formatid, unsigned in
 {
     if (OutputImage == 0)
         return SVL_FAIL;
-    
+
     ImageFormat *formats = 0;
     int formatcount = GetFormatList(&formats, videoch);
     int ret = SVL_FAIL;
@@ -1329,7 +1332,7 @@ int svlFilterSourceVideoCapture::SaveSettings(const char* filepath)
 {
     if (OutputImage == 0)
         return SVL_FAIL;
-    
+
     unsigned int writelen;
     int err, devid, intvalue;
     unsigned char emptybuffer[SVL_VCS_STRING_LENGTH];

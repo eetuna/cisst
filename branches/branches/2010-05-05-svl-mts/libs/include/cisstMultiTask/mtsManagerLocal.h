@@ -313,9 +313,8 @@ public:
         \note If connection is established successfully, this information is
               reported to the global component manager (the local component 
               manager does not keep any connection information). */
-    bool Connect(
-        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+    bool Connect(const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+                 const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
 #if CISST_MTS_HAS_ICE
     /*! \brief Connect two remote interfaces
@@ -340,20 +339,21 @@ public:
               the result is the same. 
               If this method is called against two local interfaces, the other 
               Connect() method is internally called instead. */
-    bool Connect(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+    bool Connect(const std::string & clientProcessName, const std::string & clientComponentName,
+                 const std::string & clientInterfaceRequiredName,
+                 const std::string & serverProcessName, const std::string & serverComponentName,
+                 const std::string & serverInterfaceProvidedName);
 #endif
 
     /*! Disconnect two interfaces */
-    bool Disconnect(
-        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+    bool Disconnect(const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+                    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
 #if CISST_MTS_HAS_ICE
-    bool Disconnect(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+    bool Disconnect(const std::string & clientProcessName, const std::string & clientComponentName,
+                    const std::string & clientInterfaceRequiredName,
+                    const std::string & serverProcessName, const std::string & serverComponentName,
+                    const std::string & serverInterfaceProvidedName);
 #endif
 
     //-------------------------------------------------------------------------
@@ -385,12 +385,12 @@ public:
 
     /*! Enumerate all the names of components added */
     std::vector<std::string> GetNamesOfComponents(void) const;
-    std::vector<std::string> /*CISST_DEPRECATED*/ GetNamesOfDevices(void) const;  // For backward compatibility
-    std::vector<std::string> /*CISST_DEPRECATED*/ GetNamesOfTasks(void) const;  // For backward compatibility
+    std::vector<std::string> CISST_DEPRECATED GetNamesOfDevices(void) const;  // For backward compatibility
+    std::vector<std::string> CISST_DEPRECATED GetNamesOfTasks(void) const;  // For backward compatibility
 
     void GetNamesOfComponents(std::vector<std::string>& namesOfComponents) const;
-    void /*CISST_DEPRECATED*/ GetNamesOfDevices(std::vector<std::string>& namesOfDevices) const; // For backward compatibility
-    void /*CISST_DEPRECATED*/ GetNamesOfTasks(std::vector<std::string>& namesOfTasks) const; // For backward compatibility
+    void CISST_DEPRECATED GetNamesOfDevices(std::vector<std::string>& namesOfDevices) const; // For backward compatibility
+    void CISST_DEPRECATED GetNamesOfTasks(std::vector<std::string>& namesOfTasks) const; // For backward compatibility
 
     /*! Return a reference to the time server. */
     inline const osaTimeServer & GetTimeServer(void) const {
@@ -475,14 +475,14 @@ public:
                             const std::string & CMN_UNUSED(listenerID) = "");
 
     /*! Return IP address of this process */
-    inline std::string GetIPAddress() const { return ProcessIP; }
+    inline const std::string & GetIPAddress(void) const { return ProcessIP; }
 
     /*! Return a list of all IP addresses detected on this machine. */
     static std::vector<std::string> GetIPAddressList(void);
     static void GetIPAddressList(std::vector<std::string> & ipAddresses);
 
     /*! Returns name of this local component manager (for mtsProxyBaseCommon.h) */
-    inline const std::string GetName() {
+    inline const std::string & GetName(void) const {
         return GetProcessName();
     }
 #endif
@@ -506,14 +506,15 @@ public:
     }
 
     /*! Set endpoint access information */
-    bool SetInterfaceProvidedProxyAccessInfo(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
-        const std::string & endpointInfo);
+    bool SetInterfaceProvidedProxyAccessInfo(const std::string & clientProcessName, const std::string & clientComponentName,
+                                             const std::string & clientInterfaceRequiredName,
+                                             const std::string & serverProcessName, const std::string & serverComponentName,
+                                             const std::string & serverInterfaceProvidedName,
+                                             const std::string & endpointInfo);
 
     /*! For testing purposes */
-    void DisconnectGCM();
-    void ReconnectGCM();
+    void DisconnectGCM(void);
+    void ReconnectGCM(void);
 #endif
 };
 

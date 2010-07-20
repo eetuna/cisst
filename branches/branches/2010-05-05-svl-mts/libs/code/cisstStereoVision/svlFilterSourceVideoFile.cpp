@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2006 
+  Created on: 2006
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterSourceVideoFile.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
@@ -238,7 +239,11 @@ int svlFilterSourceVideoFile::SetChannelCount(unsigned int channelcount)
 
 int svlFilterSourceVideoFile::Initialize(svlSample* &syncOutput)
 {
-    if (OutputImage == 0) return SVL_FAIL;
+    if (OutputImage == 0) {
+        CMN_LOG_CLASS_INIT_ERROR << "Initialize: filter \"" << this->GetName()
+                                 << "\" failed to initialize because its output is not set" << std::endl; 
+        return SVL_FAIL;
+    }
     syncOutput = OutputImage;
 
     Release();
@@ -253,6 +258,8 @@ int svlFilterSourceVideoFile::Initialize(svlSample* &syncOutput)
         Codec[i] = svlVideoIO::GetCodec(Settings.FilePath[i]);
         // Open video file
         if (!Codec[i] || Codec[i]->Open(Settings.FilePath[i], width, height, framerate) != SVL_OK) {
+            CMN_LOG_CLASS_INIT_ERROR << "Initialize: filter failed to open file \""
+                                     << Settings.FilePath[i] << "\"" << std::endl;
             ret = SVL_FAIL;
             break;
         }
@@ -379,11 +386,23 @@ void svlFilterSourceVideoFile::OnResetTimer()
 
 int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)
 {
-    if (OutputImage == 0) return SVL_FAIL;
-    if (IsInitialized() == true)
+    if (OutputImage == 0) {
+        CMN_LOG_CLASS_INIT_ERROR << "DialogFilePath: filter \"" << this->GetName()
+                                 << "\" failed because its output is not set" << std::endl; 
+        return SVL_FAIL;
+    }
+    if (IsInitialized() == true) {
+        CMN_LOG_CLASS_INIT_ERROR << "DialogFilePath: filter \"" << this->GetName()
+                                 << "\" has already been initialized, can't use DialogFilePath" << std::endl;
         return SVL_ALREADY_INITIALIZED;
+    }
 
-    if (videoch >= OutputImage->GetVideoChannels()) return SVL_WRONG_CHANNEL;
+    if (videoch >= OutputImage->GetVideoChannels()) {
+        CMN_LOG_CLASS_INIT_ERROR << "DialogFilePath: filter \"" << this->GetName()
+                                 << "\" only has " << OutputImage->GetVideoChannels() << " video channels but was called for channel "
+                                 << videoch << std::endl;
+        return SVL_WRONG_CHANNEL;
+    }
 
     std::ostringstream out;
     out << "Open video file [channel #" << videoch << "]";
@@ -394,11 +413,23 @@ int svlFilterSourceVideoFile::DialogFilePath(unsigned int videoch)
 
 int svlFilterSourceVideoFile::SetFilePath(const std::string &filepath, unsigned int videoch)
 {
-    if (OutputImage == 0) return SVL_FAIL;
-    if (IsInitialized() == true)
+    if (OutputImage == 0) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetFilePath: filter \"" << this->GetName()
+                                 << "\" failed because its output is not set" << std::endl; 
+        return SVL_FAIL;
+    }
+    if (IsInitialized() == true) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetFilePath: filter \"" << this->GetName()
+                                 << "\" has already been initialized, can't use DialogFilePath" << std::endl;
         return SVL_ALREADY_INITIALIZED;
+    }
 
-    if (videoch >= OutputImage->GetVideoChannels()) return SVL_WRONG_CHANNEL;
+    if (videoch >= OutputImage->GetVideoChannels()) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetFilePath: filter \"" << this->GetName()
+                                 << "\" only has " << OutputImage->GetVideoChannels() << " video channels but was called for channel "
+                                 << videoch << std::endl;
+        return SVL_WRONG_CHANNEL;
+    }
 
     Settings.FilePath[videoch] = filepath;
 
@@ -458,4 +489,3 @@ double svlFilterSourceVideoFile::GetTimeAtPosition(const int position, unsigned 
     if (Codec.size() <= videoch || !Codec[videoch]) return -1.0;
     return (Codec[videoch]->GetTimeAtPos(position));
 }
-

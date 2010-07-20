@@ -3,9 +3,9 @@
 
 /*
   $Id$
-  
+
   Author(s):  Balazs Vagvolgyi
-  Created on: 2006 
+  Created on: 2006
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlStreamManager_h
 
 #include <cisstVector/vctDynamicVector.h>
+#include <cisstMultiTask/mtsComponent.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
@@ -39,7 +40,7 @@ class osaThread;
 class osaCriticalSection;
 
 
-class CISST_EXPORT svlStreamManager
+class CISST_EXPORT svlStreamManager: public mtsComponent
 {
 friend class svlStreamProc;
 
@@ -49,14 +50,17 @@ public:
     ~svlStreamManager();
 
     int SetSourceFilter(svlFilterSourceBase* source);
-    int Initialize();
-    void Release();
-    bool IsInitialized();
-    int Start();
-    void Stop();
-    bool IsRunning();
+    int Initialize(void);
+    void Release(void);
+    bool IsInitialized(void);
+    inline void Start(void) {
+        StartInternal();
+    }
+    int StartInternal(void);
+    void Stop(void);
+    bool IsRunning(void);
     int WaitForStop(double timeout = -1.0);
-    int GetStreamStatus();
+    int GetStreamStatus(void);
 
 private:
     unsigned int ThreadCount;

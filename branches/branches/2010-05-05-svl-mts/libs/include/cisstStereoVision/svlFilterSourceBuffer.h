@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _svlFilterSourceBuffer_h
 
 #include <cisstStereoVision/svlFilterSourceBase.h>
+#include <cisstStereoVision/svlBufferSample.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>

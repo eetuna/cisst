@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -22,6 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstStereoVision/svlFilterBase.h>
 #include <cisstStereoVision/svlStreamManager.h>
+#include <cisstStereoVision/svlFilterInput.h>
+#include <cisstStereoVision/svlFilterOutput.h>
 
 #ifdef _MSC_VER
     // Quick fix for Visual Studio Intellisense:
@@ -52,11 +54,25 @@ svlFilterBase::svlFilterBase() :
 
 svlFilterBase::~svlFilterBase()
 {
-    for (_Inputs::iterator iterinputs = Inputs.begin(); iterinputs != Inputs.end(); iterinputs ++) {
-        if (iterinputs->second) delete iterinputs->second;
+    svlFilterInput * input;
+    mtsComponent::InterfacesInputListType::iterator iterinputs;
+    for (iterinputs = InterfacesInput.begin();
+         iterinputs != InterfacesInput.end();
+         iterinputs ++) {
+        input = dynamic_cast<svlFilterInput *>(*iterinputs);
+        if (input) {
+            delete input;
+        }
     }
-    for (_Outputs::iterator iteroutputs = Outputs.begin(); iteroutputs != Outputs.end(); iteroutputs ++) {
-        if (iteroutputs->second) delete iteroutputs->second;
+    svlFilterOutput * output;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    for (iteroutputs = InterfacesOutput.begin();
+         iteroutputs != InterfacesOutput.end();
+         iteroutputs ++) {
+        output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+        if (output) {
+            delete output;
+        }
     }
 }
 
@@ -77,74 +93,106 @@ unsigned int svlFilterBase::GetFrameCounter()
 
 svlFilterInput* svlFilterBase::GetInput()
 {
-    for (_Inputs::iterator iterinputs = Inputs.begin(); iterinputs != Inputs.end(); iterinputs ++) {
-        if (iterinputs->second->Trunk) return iterinputs->second;
+    svlFilterInput * input;
+    mtsComponent::InterfacesInputListType::iterator iterinputs;
+    for (iterinputs = InterfacesInput.begin();
+         iterinputs != InterfacesInput.end();
+         iterinputs ++) {
+        input = dynamic_cast<svlFilterInput *>(*iterinputs);
+        if (input->Trunk) {
+            return input;
+        }
     }
     return 0;
 }
 
 svlFilterOutput* svlFilterBase::GetOutput()
 {
-    for (_Outputs::iterator iteroutputs = Outputs.begin(); iteroutputs != Outputs.end(); iteroutputs ++) {
-        if (iteroutputs->second->Trunk) return iteroutputs->second;
+    svlFilterOutput * output;
+    mtsComponent::InterfacesOutputListType::iterator iteroutputs;
+    for (iteroutputs = InterfacesOutput.begin();
+         iteroutputs != InterfacesOutput.end();
+         iteroutputs ++) {
+        output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+        if (output->Trunk) {
+            return output;
+        }
     }
     return 0;
 }
 
 svlFilterInput* svlFilterBase::GetInput(const std::string &inputname)
 {
-    _Inputs::iterator iterinputs = Inputs.find(inputname);
-    if (iterinputs == Inputs.end()) return 0;
-    return iterinputs->second;
+    return dynamic_cast<svlFilterInput *>(GetInterfaceInput(inputname));
 }
 
 svlFilterOutput* svlFilterBase::GetOutput(const std::string &outputname)
 {
-    _Outputs::iterator iteroutputs = Outputs.find(outputname);
-    if (iteroutputs == Outputs.end()) return 0;
-    return iteroutputs->second;
+    return dynamic_cast<svlFilterOutput *>(GetInterfaceOutput(outputname));
 }
 
 svlFilterInput* svlFilterBase::AddInput(const std::string &inputname, bool trunk)
 {
     if (trunk) {
+        svlFilterInput * input;
+        mtsComponent::InterfacesInputListType::const_iterator iterinputs;
         // Check if there is already a trunk input
-        for (_Inputs::iterator iterinputs = Inputs.begin(); iterinputs != Inputs.end(); iterinputs ++) {
-            if (iterinputs->second->Trunk) return 0;
+        for (iterinputs = InterfacesInput.begin();
+             iterinputs != InterfacesInput.end();
+             iterinputs ++) {
+            input = dynamic_cast<svlFilterInput *>(*iterinputs);
+            if (input->Trunk) {
+                CMN_LOG_CLASS_INIT_ERROR << "AddInput: there is already a Trunk input for this filter" << std::endl;
+                return 0;
+            }
         }
     }
 
-    svlFilterInput* input = new svlFilterInput(this, trunk, inputname);
-    Inputs[inputname] = input;
+    svlFilterInput * input = new svlFilterInput(this, trunk, inputname);
+    AddInterfaceInputExisting(inputname, input);
     return input;
 }
 
 svlFilterOutput* svlFilterBase::AddOutput(const std::string &outputname, bool trunk)
 {
     if (trunk) {
+        svlFilterOutput * output;
+        mtsComponent::InterfacesOutputListType::const_iterator iteroutputs;
         // Check if there is already a trunk output
-        for (_Outputs::iterator iteroutputs = Outputs.begin(); iteroutputs != Outputs.end(); iteroutputs ++) {
-            if (iteroutputs->second->Trunk) return 0;
+        for (iteroutputs = InterfacesOutput.begin();
+             iteroutputs != InterfacesOutput.end();
+             iteroutputs ++) {
+            output = dynamic_cast<svlFilterOutput *>(*iteroutputs);
+            if (output->Trunk) {
+                CMN_LOG_CLASS_INIT_ERROR << "AddOutput: there is already a Trunk output for this filter" << std::endl;
+                return 0;
+            }
         }
     }
 
-    svlFilterOutput* output = new svlFilterOutput(this, trunk, outputname);
-    Outputs[outputname] = output;
+    svlFilterOutput * output = new svlFilterOutput(this, trunk, outputname);
+    AddInterfaceOutputExisting(outputname, output);
     return output;
 }
 
 int svlFilterBase::AddInputType(const std::string &inputname, svlStreamType type)
 {
-    _Inputs::iterator iterinputs = Inputs.find(inputname);
-    if (iterinputs == Inputs.end()) return SVL_FAIL;
-    return iterinputs->second->AddType(type);
+    svlFilterInput * input = GetInput(inputname);
+    if (input) {
+        return input->AddType(type);
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "AddInputType: can't find input \"" << inputname << "\"" << std::endl;
+    return SVL_FAIL;
 }
 
 int svlFilterBase::SetOutputType(const std::string &outputname, svlStreamType type)
 {
-    _Outputs::iterator iteroutputs = Outputs.find(outputname);
-    if (iteroutputs == Outputs.end()) return 0;
-    return iteroutputs->second->SetType(type);
+    svlFilterOutput * output = GetOutput(outputname);
+    if (output) {
+        return output->SetType(type);
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "SetOutputType: can't find output \"" << outputname << "\"" << std::endl;
+    return SVL_FAIL;
 }
 
 void svlFilterBase::SetAutomaticOutputType(bool autotype)

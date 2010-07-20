@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-  
+
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -23,17 +23,13 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlOverlayObjects_h
 #define _svlOverlayObjects_h
 
-#include <cisstStereoVision/svlFilterIO.h>
+#include <cisstStereoVision/svlForwardDeclarations.h>
 #include <cisstStereoVision/svlFilterBase.h>
 #include <cisstStereoVision/svlDraw.h>
 #include <cisstOSAbstraction/osaStopwatch.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
-
-
-// Forward declarations
-class svlFilterImageOverlay;
 
 
 class CISST_EXPORT svlOverlay
@@ -63,7 +59,7 @@ protected:
 
 private:
     svlOverlay* Next;
-    svlOverlay* Prev;    
+    svlOverlay* Prev;
 };
 
 
@@ -346,7 +342,7 @@ class CISST_EXPORT svlOverlayStaticPoly : public svlOverlay
 public:
     typedef vctDynamicVector<svlPoint2D> Type;
     typedef vctDynamicVectorRef<svlPoint2D> TypeRef;
-    
+
     svlOverlayStaticPoly();
     svlOverlayStaticPoly(unsigned int videoch,
                          bool visible,
@@ -354,15 +350,15 @@ public:
                          svlRGB color,
                          unsigned int start = 0);
     virtual ~svlOverlayStaticPoly();
-    
+
     void SetPoints(const TypeRef points);
     void SetColor(svlRGB color);
     void SetStart(unsigned int start);
-    
+
     TypeRef GetPoints();
     svlRGB GetColor() const;
     unsigned int GetStart() const;
-    
+
     unsigned int AddPoint(svlPoint2D point);
     unsigned int AddPoint(int x, int y);
     int SetPoint(unsigned int idx, svlPoint2D point);
@@ -371,10 +367,10 @@ public:
     int GetPoint(unsigned int idx, svlPoint2D & point) const;
     int GetPoint(unsigned int idx, vctInt2 & point) const;
     int GetPoint(unsigned int idx, int & x, int & y) const;
-    
+
 protected:
     virtual void DrawInternal(svlSampleImage* bgimage, svlSample* input);
-    
+
 private:
     Type Poly;
     svlRGB Color;

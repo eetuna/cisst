@@ -19,7 +19,6 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include <cisstCommon/cmnExport.h>
 #include <cisstCommon/cmnPortability.h>
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstOSAbstraction/osaThreadBuddy.h>
@@ -623,4 +622,3 @@ bool mtsInterfaceProvided::AddObserver(const std::string & eventName, mtsCommand
         return false;
     }
 }
-
