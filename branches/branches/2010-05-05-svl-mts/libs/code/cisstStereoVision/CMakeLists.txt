@@ -69,7 +69,7 @@ SET(SOURCE_FILES
     svlFilterSourceVideoCapture.cpp
     svlFilterSourceImageFile.cpp
     svlFilterSourceVideoFile.cpp
-# adeguet1, to fix    svlFilterSourceBuffer.cpp
+    svlFilterSourceBuffer.cpp
     svlFilterImageFileWriter.cpp
     svlFilterVideoFileWriter.cpp
     svlFilterComputationalStereo.cpp
@@ -148,7 +148,7 @@ SET(HEADER_FILES
     svlFilterSourceVideoCapture.h
     svlFilterSourceImageFile.h
     svlFilterSourceVideoFile.h
-# adeguet1, to fix    svlFilterSourceBuffer.h
+    svlFilterSourceBuffer.h
     svlFilterImageFileWriter.h
     svlFilterVideoFileWriter.h
     svlFilterComputationalStereo.h

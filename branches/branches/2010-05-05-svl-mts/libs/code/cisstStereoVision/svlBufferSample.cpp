@@ -45,6 +45,11 @@ svlBufferSample::~svlBufferSample()
     delete Buffer[2];
 }
 
+svlStreamType svlBufferSample::GetType() const
+{
+    return Buffer[0]->GetType();
+}
+
 int svlBufferSample::Push(const svlSample* sample)
 {
     int ret = Buffer[Next]->CopyOf(sample);

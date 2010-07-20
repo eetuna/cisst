@@ -37,6 +37,8 @@ public:
     svlBufferSample(svlStreamType type);
     ~svlBufferSample();
 
+    svlStreamType GetType() const;
+
     int Push(const svlSample* sample);
     svlSample* Pull(bool waitfornew, double timeout = 5.0);
 

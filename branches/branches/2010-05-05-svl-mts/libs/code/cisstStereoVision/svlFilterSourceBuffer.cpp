@@ -19,140 +19,70 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlFilterSourceBuffer.h>
-#include <string.h>
-#include "time.h"
 
 
 /*************************************/
-/*** svlFilterSourceBuffer class ******/
+/*** svlFilterSourceBuffer class *****/
 /*************************************/
 
 CMN_IMPLEMENT_SERVICES(svlFilterSourceBuffer)
 
 svlFilterSourceBuffer::svlFilterSourceBuffer() :
     svlFilterSourceBase(),
-    Width(0),
-    Height(0),
-    Buffer(0)
+    OutputSample(0),
+    Buffer(0),
+    Timeout(5.0)
 {
-    OutputImage = 0;
-    SetType(svlTypeImageRGB);
-}
-
-svlFilterSourceBuffer::svlFilterSourceBuffer(svlStreamType type) :
-    svlFilterSourceBase(),
-    Width(0),
-    Height(0),
-    Buffer(0)
-{
-    OutputImage = 0;
-    SetType(type);
-}
-
-svlFilterSourceBuffer::svlFilterSourceBuffer(const svlSampleImage & image) :
-    svlFilterSourceBase(),
-    Width(0),
-    Height(0),
-    Buffer(0)
-{
-    OutputImage = 0;
-    SetImage(image);
+    AddOutput("output", true);
+    SetAutomaticOutputType(false);
 }
 
 svlFilterSourceBuffer::~svlFilterSourceBuffer()
 {
-    if (OutputImage) {
-        delete OutputImage;
-    }
+    if (OutputSample) delete OutputSample;
 }
 
-int svlFilterSourceBuffer::SetType(svlStreamType type)
+int svlFilterSourceBuffer::SetBuffer(svlBufferSample& buffer)
 {
-    if (IsInitialized() == true) {
-        return SVL_ALREADY_INITIALIZED;
-    }
+    if (IsInitialized()) return SVL_FAIL;
 
-    // Other types may be added in the future
-    if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo) return SVL_FAIL;
+    svlStreamType type = buffer.GetType();
+    if (GetOutput()->SetType(type) != SVL_OK) return SVL_FAIL;
 
-    if (OutputImage && OutputImage->GetType() != type) {
-        delete OutputImage;
-        OutputImage = svlSample::GetNewFromType(type);
-    } else if (!OutputImage) {
-        OutputImage = svlSample::GetNewFromType(type);
-    }
-
-    if (Width > 0 && Height > 0) {
-        dynamic_cast<svlSampleImage *>(OutputImage)->SetSize(Width, Height);
-    }
-    SetOutputType("Output", type);
+    if (OutputSample) delete OutputSample;
+    OutputSample = svlSample::GetNewFromType(type);
+    Buffer = &buffer;
 
     return SVL_OK;
 }
 
-int svlFilterSourceBuffer::SetImage(const svlSampleImage & image)
+void svlFilterSourceBuffer::SetTimeout(const double timeout)
 {
-    if (IsInitialized() == true) {
-        return SVL_ALREADY_INITIALIZED;
-    }
+    Timeout = timeout;
+}
 
-    svlStreamType type = image.GetType();
+int svlFilterSourceBuffer::Initialize(svlSample* &syncOutput)
+{
+    if (!OutputSample || !Buffer) return SVL_FAIL;
 
-    // Other types may be added in the future
-    if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo) return SVL_FAIL;
+    svlSample* input = Buffer->Pull(true, Timeout);
+    if (!input || OutputSample->CopyOf(input) != SVL_OK) return SVL_FAIL;
 
-    if (OutputImage && OutputImage->GetType() != type) {
-        delete OutputImage;
-        OutputImage = svlSample::GetNewFromType(type);
-    } else if (!OutputImage) {
-        OutputImage = svlSample::GetNewFromType(type);
-    }
-
-    OutputImage->CopyOf(image);
-    SetOutputType("Output", type);
-
+    syncOutput = OutputSample;
     return SVL_OK;
 }
 
-int svlFilterSourceBuffer::SetDimensions(unsigned int width, unsigned int height)
+int svlFilterSourceBuffer::Process(svlProcInfo* procInfo, svlSample* &syncOutput)
 {
-    if (IsInitialized() == true) {
-        return SVL_ALREADY_INITIALIZED;
-    }
-    Width = width;
-    Height = height;
+    if (!OutputSample || !Buffer) return SVL_FAIL;
 
-    if (OutputImage) {
-        dynamic_cast<svlSampleImage *>(OutputImage)->SetSize(width, height);
+    _OnSingleThread(procInfo)
+    {
+        svlSample* input = Buffer->Pull(true, Timeout);
+        if (!input || OutputSample->CopyOf(input) != SVL_OK) return SVL_FAIL;
     }
+
+    syncOutput = OutputSample;
     return SVL_OK;
 }
 
-int svlFilterSourceBuffer::SetBuffer(svlBufferImage * buffer)
-{
-    Buffer = buffer;
-    return SVL_OK;
-}
-
-int svlFilterSourceBuffer::Initialize()
-{
-    if (OutputImage == 0 || Buffer == 0) {
-        return SVL_FAIL;
-    }
-    srand(static_cast<unsigned int>(time(0)));
-    return SVL_OK;
-}
-
-int svlFilterSourceBuffer::ProcessFrame(svlProcInfo* procInfo)
-{
-    svlSampleImage * outputImage = dynamic_cast<svlSampleImage *>(OutputImage);
-    svlImageRGB * inputImage;
-
-    for (unsigned int ch = 0; ch < outputImage->GetVideoChannels(); ch++) {
-        inputImage = Buffer->Pull(true);
-        if (inputImage != 0) {
-            memcpy(outputImage->GetUCharPointer(ch), inputImage->Pointer(), inputImage->size());
-        }
-    }
-    return SVL_OK;
-}
