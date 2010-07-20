@@ -24,12 +24,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlStreamProc_h
 #define _svlStreamProc_h
 
+#include <cisstOSAbstraction/osaForwardDeclarations.h>
+#include <cisstStereoVision/svlForwardDeclarations.h>
 #include <cisstStereoVision/svlTypes.h>
-
-
-// Forward declarations
-class svlStreamManager;
-class osaTimeServer;
 
 
 class svlStreamProc

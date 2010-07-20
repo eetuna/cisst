@@ -54,6 +54,7 @@ protected:
     exampleFilter::Parameters FilterState;
 
     struct {
+        mtsFunctionWrite SetSourceFilter;
         mtsFunctionVoid Initialize;
         mtsFunctionVoid Release;
         mtsFunctionVoid Play;

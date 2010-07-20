@@ -60,6 +60,7 @@ exampleComponent::exampleComponent(const std::string & taskName, double period):
 
     required = AddInterfaceRequired("StreamControl");
     if (required) {
+        required->AddFunction("SetSourceFilter", StreamControl.SetSourceFilter);
         required->AddFunction("Initialize", StreamControl.Initialize);
         required->AddFunction("Release", StreamControl.Release);
         required->AddFunction("Play", StreamControl.Play);
@@ -94,6 +95,7 @@ void exampleComponent::Startup(void)
 
 #endif
 
+    StreamControl.SetSourceFilter(mtsStdString("StreamSource"));
     StreamControl.Release();
     StreamControl.Initialize();
     StreamControl.Play();

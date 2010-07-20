@@ -49,7 +49,7 @@ public:
     svlStreamManager(unsigned int threadcount);
     ~svlStreamManager();
 
-    int SetSourceFilter(svlFilterSourceBase* source);
+    int SetSourceFilter(svlFilterSourceBase * source);
     int Initialize(void);
     void Release(void);
     bool IsInitialized(void) const;
@@ -77,6 +77,7 @@ private:
     void CreateInterfaces(void);
     void PlayCommand(void);
     void InitializeCommand(void);
+    void SetSourceFilterCommand(const mtsStdString & source);
 };
 
 #endif // _svlStreamManager_h

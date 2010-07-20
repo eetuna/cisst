@@ -43,11 +43,10 @@ int main(void)
 
     svlInitialize();
 
-    // create our task
     const double PeriodComponent = 50 * cmn_ms; // in milliseconds
     mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
 
-    // create video stream
+    // create and add filters and components to the task manager
     svlStreamManager stream;
     stream.SetName("Stream");
     taskManager->AddComponent(&stream);
@@ -64,25 +63,21 @@ int main(void)
     stream_window.SetName("Window");
     taskManager->AddComponent(&stream_window);
 
-    exampleComponent * exampleComponentObject = new exampleComponent("ExampleComponent", PeriodComponent);
-    exampleComponentObject->Configure();
+    exampleComponent exampleComponentObject("ExampleComponent", PeriodComponent);
+    taskManager->AddComponent(&exampleComponentObject);
 
-    // add the task and the filter to the task manager
-    taskManager->AddComponent(exampleComponentObject);
-
-    // taskManager->Connect("StreamSource", "input", "Stream", "output");
-    stream.SetSourceFilter(&stream_source);
+    // connect filters together
     taskManager->Connect("ExampleFilter", "input", "StreamSource", "output");
     taskManager->Connect("Window", "input", "ExampleFilter", "output");
 
-    // connect the task with thex component, task.RequiresInterface -> component.ProvidesInterface
+    // connect components, component.RequiresInterface -> component.ProvidesInterface
     taskManager->Connect("ExampleComponent", "StreamControl", "Stream", "Control");
     taskManager->Connect("ExampleComponent", "SourceConfig", "StreamSource", "Settings");
     taskManager->Connect("ExampleComponent", "FilterParams", "ExampleFilter", "Parameters");
 
     // create the tasks, i.e. find the commands
     taskManager->CreateAll();
-    // start the periodic Run
+    // start all
     taskManager->StartAll();
 
     osaSleep(2.0 * cmn_s);

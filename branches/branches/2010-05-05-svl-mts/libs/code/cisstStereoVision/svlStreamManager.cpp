@@ -315,7 +315,7 @@ int svlStreamManager::Play(void)
         if (filter->OnStart(ThreadCount) != SVL_OK) {
             Stop();
             CMN_LOG_CLASS_RUN_ERROR << "Play: filter \"" << filter->GetName()
-                                    << "\" OnStart method failed while starting stream \""
+                                    << "\" \"OnStart\" method failed while starting stream \""
                                     << this->GetName() << "\"" << std::endl;
             return SVL_FAIL;
         }
@@ -629,8 +629,9 @@ int svlStreamManager::GetStreamStatus(void) const
 
 void svlStreamManager::CreateInterfaces(void)
 {
-    mtsInterfaceProvided * interfaceProvided = this->AddInterfaceProvided("Control");
+    mtsInterfaceProvided * interfaceProvided = this->AddInterfaceProvided("Control", MTS_COMMANDS_SHOULD_NOT_BE_QUEUED);
     if (interfaceProvided) {
+        interfaceProvided->AddCommandWrite(&svlStreamManager::SetSourceFilterCommand, this, "SetSourceFilter");
         interfaceProvided->AddCommandVoid(&svlStreamManager::PlayCommand, this, "Play");
         interfaceProvided->AddCommandVoid(&svlStreamManager::InitializeCommand, this, "Initialize");
         interfaceProvided->AddCommandVoid(&svlStreamManager::Release, this, "Release");
@@ -653,4 +654,27 @@ void svlStreamManager::InitializeCommand(void)
         CMN_LOG_CLASS_RUN_ERROR << "InitializeCommand: error occurred in method \"Initialize\" for stream \""
                                 << this->GetName() << "\"" << std::endl;
     }
+}
+
+
+void svlStreamManager::SetSourceFilterCommand(const mtsStdString & source)
+{
+    // look for the source in the component manager
+    mtsTaskManager * taskManager = mtsTaskManager::GetInstance();
+    mtsComponent * component = taskManager->GetComponent(source);
+    if (!component) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetSourceFilterCommand: stream \"" << this->GetName()
+                                 << "\" can't find component \"" << source << "\"" << std::endl;
+        return;
+    }
+    // make sure this is a source filter
+    svlFilterSourceBase * filter = dynamic_cast<svlFilterSourceBase *>(component);
+    if (!filter) {
+        CMN_LOG_CLASS_INIT_ERROR << "SetSourceFilterCommand: stream \"" << this->GetName()
+                                 << "\" can't use component \"" << source
+                                 << "\" as it doesn't seem to be of type \"svlFilterSourceBase\"" << std::endl;
+        return;
+    }
+    // finally call the SetSourceFilter method
+    SetSourceFilter(filter);
 }
