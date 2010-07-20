@@ -176,7 +176,8 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
             interfaces = mtsComponent.GetNamesOfInterfacesProvided(self)
             for interface in interfaces:
                 interfaceNoSpace = interface.replace(' ', '')
-                self.__dict__[interfaceNoSpace] = mtsComponent.GetInterfaceProvided(self, interface)
+                interfaceFrontEnd = mtsComponent.GetInterfaceProvided(self, interface)
+                self.__dict__[interfaceNoSpace] = mtsInterfaceProvided.GetEndUserInterface(interfaceFrontEnd, 'Python')
                 self.__dict__[interfaceNoSpace].UpdateFromC()
     }
 }
@@ -186,21 +187,20 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 %extend mtsInterfaceProvided {
     %pythoncode {
         def UpdateFromC(self):
-            interfaceCopy = mtsInterfaceProvided.GetEndUserInterface(self, mtsInterfaceProvided.GetName(self))
-            commands = mtsInterfaceProvided.GetNamesOfCommandsVoid(interfaceCopy)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsVoid(self)
             for command in commands:
-                self.__dict__[command] = mtsInterfaceProvided.GetCommandVoid(interfaceCopy, command)
-            commands = mtsInterfaceProvided.GetNamesOfCommandsWrite(interfaceCopy)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandVoid(self, command)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsWrite(self)
             for command in commands:
-                self.__dict__[command] = mtsInterfaceProvided.GetCommandWrite(interfaceCopy, command)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandWrite(self, command)
                 self.__dict__[command].UpdateFromC()
-            commands = mtsInterfaceProvided.GetNamesOfCommandsQualifiedRead(interfaceCopy)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsQualifiedRead(self)
             for command in commands:
-                self.__dict__[command] = mtsInterfaceProvided.GetCommandQualifiedRead(interfaceCopy, command)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandQualifiedRead(self, command)
                 self.__dict__[command].UpdateFromC()
-            commands = mtsInterfaceProvided.GetNamesOfCommandsRead(interfaceCopy)
+            commands = mtsInterfaceProvided.GetNamesOfCommandsRead(self)
             for command in commands:
-                self.__dict__[command] = mtsInterfaceProvided.GetCommandRead(interfaceCopy, command)
+                self.__dict__[command] = mtsInterfaceProvided.GetCommandRead(self, command)
                 self.__dict__[command].UpdateFromC()
     }
 }
