@@ -109,7 +109,7 @@ bool cmnClassRegister::SetLoDForAllClassesInstance(LogLoDType lod) {
 }
 
 
-bool cmnClassRegister::SetLoDForSomeClassesInstance(const std::string & stringToMatch, LogLoDType lod) {
+bool cmnClassRegister::SetLoDForMatchingClassesInstance(const std::string & stringToMatch, LogLoDType lod) {
     iterator iter;
     const iterator end = ServicesContainer.end();
     bool result = false;
@@ -130,7 +130,7 @@ bool cmnClassRegister::SetLoDForSomeClassesInstance(const std::string & stringTo
         }
     }
     if (result) {
-        CMN_LOG_INIT_VERBOSE << "Class cmnClassRegister: SetLoDForSomeClasses: log LoD has been set to \""
+        CMN_LOG_INIT_VERBOSE << "Class cmnClassRegister: SetLoDForMatchingClasses: log LoD has been set to \""
                              << cmnLogLoDString[classServicesPointer->GetLoD()] << "\" for the following classes matching \""
                              << stringToMatch << "\": " << allClasses << std::endl;
     }

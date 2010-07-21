@@ -84,52 +84,52 @@ bool mtsComponentProxy::CreateInterfaceRequiredProxy(const InterfaceRequiredDesc
 
     // Create void function proxies
     const std::vector<std::string> namesOfFunctionVoid = requiredInterfaceDescription.FunctionVoidNames;
-    for (unsigned int i = 0; i < namesOfFunctionVoid.size(); ++i) {
+    for (size_t i = 0; i < namesOfFunctionVoid.size(); ++i) {
         functionVoidProxy = new mtsFunctionVoid();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionVoid[i], *functionVoidProxy);
         success &= mapElement->FunctionVoidProxyMap.AddItem(namesOfFunctionVoid[i], functionVoidProxy);
         if (!success) {
             CMN_ASSERT(RemoveInterfaceRequired(requiredInterfaceName));
-            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add void function proxy: " << namesOfFunctionVoid[i] << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add void function proxy: \"" << namesOfFunctionVoid[i] << "\"" << std::endl;
             return false;
         }
     }
 
     // Create write function proxies
     const std::vector<std::string> namesOfFunctionWrite = requiredInterfaceDescription.FunctionWriteNames;
-    for (unsigned int i = 0; i < namesOfFunctionWrite.size(); ++i) {
+    for (size_t i = 0; i < namesOfFunctionWrite.size(); ++i) {
         functionWriteProxy = new mtsFunctionWriteProxy();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionWrite[i], *functionWriteProxy);
         success &= mapElement->FunctionWriteProxyMap.AddItem(namesOfFunctionWrite[i], functionWriteProxy);
         if (!success) {
             CMN_ASSERT(RemoveInterfaceRequired(requiredInterfaceName));
-            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add write function proxy: " << namesOfFunctionWrite[i] << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add write function proxy: \"" << namesOfFunctionWrite[i] << "\"" << std::endl;
             return false;
         }
     }
 
     // Create read function proxies
     const std::vector<std::string> namesOfFunctionRead = requiredInterfaceDescription.FunctionReadNames;
-    for (unsigned int i = 0; i < namesOfFunctionRead.size(); ++i) {
+    for (size_t i = 0; i < namesOfFunctionRead.size(); ++i) {
         functionReadProxy = new mtsFunctionReadProxy();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionRead[i], *functionReadProxy);
         success &= mapElement->FunctionReadProxyMap.AddItem(namesOfFunctionRead[i], functionReadProxy);
         if (!success) {
             CMN_ASSERT(RemoveInterfaceRequired(requiredInterfaceName));
-            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add read function proxy: " << namesOfFunctionRead[i] << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add read function proxy: \"" << namesOfFunctionRead[i] << "\"" << std::endl;
             return false;
         }
     }
 
     // Create QualifiedRead function proxies
     const std::vector<std::string> namesOfFunctionQualifiedRead = requiredInterfaceDescription.FunctionQualifiedReadNames;
-    for (unsigned int i = 0; i < namesOfFunctionQualifiedRead.size(); ++i) {
+    for (size_t i = 0; i < namesOfFunctionQualifiedRead.size(); ++i) {
         functionQualifiedReadProxy = new mtsFunctionQualifiedReadProxy();
         success = requiredInterfaceProxy->AddFunction(namesOfFunctionQualifiedRead[i], *functionQualifiedReadProxy);
         success &= mapElement->FunctionQualifiedReadProxyMap.AddItem(namesOfFunctionQualifiedRead[i], functionQualifiedReadProxy);
         if (!success) {
             CMN_ASSERT(RemoveInterfaceRequired(requiredInterfaceName));
-            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add qualified read function proxy: " << namesOfFunctionQualifiedRead[i] << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add qualified read function proxy: \"" << namesOfFunctionQualifiedRead[i] << "\"" << std::endl;
             return false;
         }
     }
@@ -142,13 +142,13 @@ bool mtsComponentProxy::CreateInterfaceRequiredProxy(const InterfaceRequiredDesc
 
     // Create void event handler proxy
     mtsCommandVoidProxy * newEventVoidHandlerProxy = NULL;
-    for (unsigned int i = 0; i < requiredInterfaceDescription.EventHandlersVoid.size(); ++i) {
+    for (size_t i = 0; i < requiredInterfaceDescription.EventHandlersVoid.size(); ++i) {
         eventName = requiredInterfaceDescription.EventHandlersVoid[i].Name;
         newEventVoidHandlerProxy = new mtsCommandVoidProxy(eventName);
         if (!requiredInterfaceProxy->EventHandlersVoid.AddItem(eventName, newEventVoidHandlerProxy)) {
             delete newEventVoidHandlerProxy;
             CMN_ASSERT(RemoveInterfaceRequired(requiredInterfaceName));
-            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add void event handler proxy: " << eventName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add void event handler proxy: \"" << eventName << "\"" << std::endl;
             return false;
         }
     }
@@ -159,13 +159,13 @@ bool mtsComponentProxy::CreateInterfaceRequiredProxy(const InterfaceRequiredDesc
 
     mtsCommandWriteProxy * newEventWriteHandlerProxy = NULL;
     mtsGenericObject * argumentPrototype = NULL;
-    for (unsigned int i = 0; i < requiredInterfaceDescription.EventHandlersWrite.size(); ++i) {
+    for (size_t i = 0; i < requiredInterfaceDescription.EventHandlersWrite.size(); ++i) {
         eventName = requiredInterfaceDescription.EventHandlersWrite[i].Name;
         newEventWriteHandlerProxy = new mtsCommandWriteProxy(eventName);
         if (!requiredInterfaceProxy->EventHandlersWrite.AddItem(eventName, newEventWriteHandlerProxy)) {
             delete newEventWriteHandlerProxy;
             CMN_ASSERT(RemoveInterfaceRequired(requiredInterfaceName));
-            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add write event handler proxy: " << eventName << std::endl;
+            CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceRequiredProxy: failed to add write event handler proxy: \"" << eventName << "\""<< std::endl;
             return false;
         }
 

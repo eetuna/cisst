@@ -127,9 +127,9 @@ mtsInterfaceProvided * mtsComponent::AddInterfaceProvided(const std::string & in
 
 mtsInterfaceOutput * mtsComponent::AddInterfaceOutput(const std::string & interfaceOutputName)
 {
-    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceOutput: adding provided interface \"" << interfaceOutputName
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceOutput: adding output interface \"" << interfaceOutputName
                              << "\" to component \"" << this->GetName()
-                             << "\" can not be preformed from mtsComponent, this method must be derived." << std::endl;
+                             << "\" can't be performed from mtsComponent, this method must be derived." << std::endl;
     return 0;
 }
 
@@ -432,9 +432,9 @@ mtsInterfaceRequired * mtsComponent::AddInterfaceRequired(const std::string & in
 
 mtsInterfaceInput * mtsComponent::AddInterfaceInput(const std::string & interfaceInputName)
 {
-    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInput: adding provided interface \"" << interfaceInputName
+    CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInput: adding input interface \"" << interfaceInputName
                              << "\" to component \"" << this->GetName()
-                             << "\" can not be preformed from mtsComponent, this method must be derived." << std::endl;
+                             << "\" can't be performed from mtsComponent, this method must be derived." << std::endl;
     return 0;
 }
 
