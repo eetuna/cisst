@@ -195,12 +195,21 @@ int svlVideoCodecOpenCV::SetPos(const int pos)
 
 svlVideoIO::Compression* svlVideoCodecOpenCV::GetCompression() const
 {
-    if (!Codec) return 0;
-    // Make a copy and return the pointer to it
     // The caller will need to release it by calling the
     // svlVideoIO::ReleaseCompression() method
-    svlVideoIO::Compression* compression = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[Codec->size]);
-    memcpy(compression, Codec, Codec->size);
+    unsigned int size = sizeof(svlVideoIO::Compression);
+    svlVideoIO::Compression* compression = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[size]);
+    
+    std::string name("FFMPEG Codec");
+    memset(&(compression->extension[0]), 0, 16);
+    memcpy(&(compression->extension[0]), ".avi", 4);
+    memset(&(compression->name[0]), 0, 64);
+    memcpy(&(compression->name[0]), name.c_str(), std::min(static_cast<int>(name.length()), 63));
+    compression->size = size;
+    compression->supports_timestamps = false;
+    compression->datasize = 0;
+    compression->data[0] = 0;
+
     return compression;
 }
 

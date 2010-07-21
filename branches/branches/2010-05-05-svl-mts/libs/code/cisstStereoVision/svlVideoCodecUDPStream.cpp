@@ -284,21 +284,19 @@ svlVideoIO::Compression* svlVideoCodecUDPStream::GetCompression() const
 {
     // The caller will need to release it by calling the
     // svlVideoIO::ReleaseCompression() method
-    svlVideoIO::Compression* compression = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[Codec->size]);
-
+    unsigned int size = sizeof(svlVideoIO::Compression);
+    svlVideoIO::Compression* compression = reinterpret_cast<svlVideoIO::Compression*>(new unsigned char[size]);
+    
     std::string name("CISST Video Stream (CVI)");
     memset(&(compression->extension[0]), 0, 16);
-    memcpy(&(compression->extension[0]), ".ncvi", 5);
+    memcpy(&(compression->extension[0]), ".ncvi", 4);
     memset(&(compression->name[0]), 0, 64);
     memcpy(&(compression->name[0]), name.c_str(), std::min(static_cast<int>(name.length()), 63));
-    compression->size = sizeof(svlVideoIO::Compression);
+    compression->size = size;
     compression->supports_timestamps = true;
     compression->datasize = 1;
     if (Codec) compression->data[0] = Codec->data[0];
-    else {
-        // Set default compression level to 4
-        compression->data[0] = 4;
-    }
+    else compression->data[0] = 4; // Set default compression level to 4
 
     return compression;
 }
