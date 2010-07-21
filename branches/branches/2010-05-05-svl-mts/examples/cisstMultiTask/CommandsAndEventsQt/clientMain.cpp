@@ -29,13 +29,17 @@ http://www.cisst.org/cisst/license.txt.
 
 int main(int argc, char * argv[])
 {
-    if (argc != 2) {
+    // set global component manager IP
+    std::string globalComponentManagerIP;
+    if (argc == 1) {
+        std::cerr << "Using default, i.e. 127.0.0.1 to find global component manager" << std::endl;
+        globalComponentManagerIP = "127.0.0.1";
+    } else if (argc == 2) {
+        globalComponentManagerIP = argv[1];
+    } else {
         std::cerr << "Usage: " << argv[0] << " (global component manager IP)" << std::endl;
-        return 1;
+        return -1;
     }
-
-    // Set global component manager IP
-    const std::string globalComponentManagerIP(argv[1]);
 
     // log configuration
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
@@ -46,8 +50,7 @@ int main(int argc, char * argv[])
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
 
     // set the log level of detail on select tasks
-    cmnClassRegister::SetLoD("mtsTaskInterface", CMN_LOG_LOD_VERY_VERBOSE);
-    cmnClassRegister::SetLoD("mtsTaskManager", CMN_LOG_LOD_VERY_VERBOSE);
+    cmnClassRegister::SetLoDForMatchingClasses("mts", CMN_LOG_LOD_VERY_VERBOSE);
     cmnClassRegister::SetLoD("clientQtComponent", CMN_LOG_LOD_VERY_VERBOSE);
 
     // create a Qt user interface
