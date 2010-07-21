@@ -205,84 +205,127 @@ bool mtsInterfaceRequired::BindCommandsAndEvents(void)
     for (iter = FunctionsVoid.begin();
          iter != FunctionsVoid.end();
          iter++) {
-        functionVoid = dynamic_cast<mtsFunctionVoid *>(iter->second->FunctionPointer);
-        result = functionVoid->Bind(interfaceProvided->GetCommandVoid(iter->first));
-        if (!result) {
-            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for void command \""
-                                       << iter->first << "\" (connecting \""
-                                       << this->GetName() << "\" to \""
-                                       << interfaceProvided->GetName() << "\")"<< std::endl;
+        if (!iter->second->FunctionPointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for void command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void command \""
-                                     << iter->first << "\" (connecting \""
-                                     << this->GetName() << "\" to \""
-                                     << interfaceProvided->GetName() << "\")"<< std::endl;
+            functionVoid = dynamic_cast<mtsFunctionVoid *>(iter->second->FunctionPointer);
+            if (!functionVoid) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for void command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            } else {
+                result = functionVoid->Bind(interfaceProvided->GetCommandVoid(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for void command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void command \""
+                                             << iter->first << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
         }
         if (!iter->second->IsRequired) {
             result = true;
         }
         success &= result;
     }
+
     mtsFunctionRead * functionRead;
     for (iter = FunctionsRead.begin();
          iter != FunctionsRead.end();
          iter++) {
-        functionRead = dynamic_cast<mtsFunctionRead *>(iter->second->FunctionPointer);
-        result = functionRead->Bind(interfaceProvided->GetCommandRead(iter->first));
-        if (!result) {
-            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
-                                       << iter->first << "\" (connecting \""
-                                       << this->GetName() << "\" to \""
-                                       << interfaceProvided->GetName() << "\")"<< std::endl;
+        if (!iter->second->FunctionPointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for read command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
-                                     << iter->first  << "\" (connecting \""
-                                     << this->GetName() << "\" to \""
-                                     << interfaceProvided->GetName() << "\")"<< std::endl;
+            functionRead = dynamic_cast<mtsFunctionRead *>(iter->second->FunctionPointer);
+            if (!functionRead) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for read command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            } else {
+                result = functionRead->Bind(interfaceProvided->GetCommandRead(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
+                                             << iter->first  << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
         }
         if (!iter->second->IsRequired) {
             result = true;
         }
         success &= result;
     }
+
     mtsFunctionWrite * functionWrite;
     for (iter = FunctionsWrite.begin();
          iter != FunctionsWrite.end();
          iter++) {
-        functionWrite = dynamic_cast<mtsFunctionWrite *>(iter->second->FunctionPointer);
-        result = functionWrite->Bind(interfaceProvided->GetCommandWrite(iter->first));
-        if (!result) {
-            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for write command \""
-                                       << iter->first << "\" (connecting \""
-                                       << this->GetName() << "\" to \""
-                                       << interfaceProvided->GetName() << "\")"<< std::endl;
+        if (!iter->second->FunctionPointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for write command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write command \""
-                                     << iter->first << "\" (connecting \""
-                                     << this->GetName() << "\" to \""
-                                     << interfaceProvided->GetName() << "\")"<< std::endl;
+            functionWrite = dynamic_cast<mtsFunctionWrite *>(iter->second->FunctionPointer);
+            if (!functionWrite) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for write command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            } else {
+                result = functionWrite->Bind(interfaceProvided->GetCommandWrite(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for write command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write command \""
+                                             << iter->first << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
         }
         if (!iter->second->IsRequired) {
             result = true;
         }
         success &= result;
     }
+
     mtsFunctionQualifiedRead * functionQualifiedRead;
     for (iter = FunctionsQualifiedRead.begin();
          iter != FunctionsQualifiedRead.end();
          iter++) {
-        functionQualifiedRead = dynamic_cast<mtsFunctionQualifiedRead *>(iter->second->FunctionPointer);
-        result = functionQualifiedRead->Bind(interfaceProvided->GetCommandQualifiedRead(iter->first));
-        if (!result) {
-            CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for qualified read command \""
-                                       << iter->first << "\" (connecting \""
-                                       << this->GetName() << "\" to \""
-                                       << interfaceProvided->GetName() << "\")"<< std::endl;
+        if (!iter->second->FunctionPointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for qualified read command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
         } else {
-            CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for qualified read command \""
-                                     << iter->first << "\" (connecting \""
-                                     << this->GetName() << "\" to \""
-                                     << interfaceProvided->GetName() << "\")"<< std::endl;
+            functionQualifiedRead = dynamic_cast<mtsFunctionQualifiedRead *>(iter->second->FunctionPointer);
+            if (!functionQualifiedRead) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for qualified read command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            } else {
+                result = functionQualifiedRead->Bind(interfaceProvided->GetCommandQualifiedRead(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for qualified read command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for qualified read command \""
+                                             << iter->first << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
         }
         if (!iter->second->IsRequired) {
             result = true;
