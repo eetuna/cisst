@@ -470,6 +470,34 @@ std::vector<std::string> mtsComponent::GetNamesOfInterfacesRequiredOrInput(void)
 }
 
 
+std::vector<std::string> mtsComponent::GetNamesOfInterfacesRequired(void) const
+{
+    std::vector<std::string> names;
+    InterfacesRequiredListType::const_iterator iterator = InterfacesRequired.begin();
+    const InterfacesRequiredListType::const_iterator end = InterfacesRequired.end();
+    for (;
+         iterator != end;
+         ++iterator) {
+        names.push_back((*iterator)->GetName());
+    }
+    return names;
+}
+
+
+std::vector<std::string> mtsComponent::GetNamesOfInterfacesInput(void) const
+{
+    std::vector<std::string> names;
+    InterfacesInputListType::const_iterator iterator = InterfacesInput.begin();
+    const InterfacesInputListType::const_iterator end = InterfacesInput.end();
+    for (;
+         iterator != end;
+         ++iterator) {
+        names.push_back((*iterator)->GetName());
+    }
+    return names;
+}
+
+
 const mtsInterfaceProvidedOrOutput * mtsComponent::GetInterfaceProvidedOrOutputFor(const std::string & interfaceRequiredOrInputName) {
     mtsInterfaceRequiredOrInput * interfaceRequiredOrInput =
         InterfacesRequiredOrInput.GetItem(interfaceRequiredOrInputName, CMN_LOG_LOD_INIT_WARNING);
