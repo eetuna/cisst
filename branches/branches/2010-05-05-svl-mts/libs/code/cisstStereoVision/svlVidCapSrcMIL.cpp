@@ -582,8 +582,7 @@ bool svlVidCapSrcMIL::MILInitializeDevice(int device, bool capture, bool overlay
 
         MbufClear(MilDisplayImage[device], 0);
 #if M_MIL_CURRENT_INT_VERSION >= 0x0900
-// #define M_SELECT_VIDEO_SOURCE 3210L
-        MdispControl(MilDisplay[device], 3210L, MilDigitizer[device]);
+        MdispControl(MilDisplay[device], M_SELECT_VIDEO_SOURCE, MilDigitizer[device]);
 #endif
         MdispSelect(MilDisplay[device], MilDisplayImage[device]);
         MdispControl(MilDisplay[device], M_OVERLAY, M_ENABLE);

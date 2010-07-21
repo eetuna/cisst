@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlRenderTargets.h>
+#include <cisstStereoVision/svlConfig.h>
 
 #ifdef _MSC_VER
     // Quick fix for Visual Studio Intellisense:
