@@ -170,19 +170,22 @@ public:
                                        const std::string & interfaceName) const;
     bool FindInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
                                       const std::string & interfaceName) const;
-    bool RemoveInterfaceProvided(const std::string & processName, const std::string & componentName,
-                                 const std::string & interfaceName);
-    bool RemoveInterfaceRequired(const std::string & processName, const std::string & componentName,
-                                 const std::string & interfaceName);
+    bool RemoveInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                         const std::string & interfaceName);
+    bool RemoveInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                        const std::string & interfaceName);
 
     //  Connection Management
     int Connect(const std::string & requestProcessName,
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+                const std::string & clientProcessName, const std::string & clientComponentName,
+                const std::string & clientInterfaceRequiredName,
+                const std::string & serverProcessName, const std::string & serverComponentName,
+                const std::string & serverInterfaceProvidedName);
     bool ConnectConfirm(unsigned int connectionSessionID);
-    bool Disconnect(
-        const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+    bool Disconnect(const std::string & clientProcessName, const std::string & clientComponentName,
+                    const std::string & clientInterfaceRequiredName,
+                    const std::string & serverProcessName, const std::string & serverComponentName,
+                    const std::string & serverInterfaceProvidedName);
 
     //  Networking
     bool SetInterfaceProvidedProxyAccessInfo(

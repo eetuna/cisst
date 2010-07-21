@@ -200,43 +200,45 @@ bool mtsManagerProxyClient::RemoveComponent(const std::string & processName, con
     return SendRemoveComponent(processName, componentName);
 }
 
-bool mtsManagerProxyClient::AddInterfaceProvided(const std::string & processName, const std::string & componentName,
-                                                 const std::string & interfaceName, const bool isProxyInterface)
+bool mtsManagerProxyClient::AddInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                                         const std::string & interfaceName, const bool isProxyInterface)
 {
     return SendAddInterfaceProvided(processName, componentName, interfaceName, isProxyInterface);
 }
 
-bool mtsManagerProxyClient::AddInterfaceRequired(const std::string & processName, const std::string & componentName,
-                                                 const std::string & interfaceName, const bool isProxyInterface)
+bool mtsManagerProxyClient::AddInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                                        const std::string & interfaceName, const bool isProxyInterface)
 {
     return SendAddInterfaceRequired(processName, componentName, interfaceName, isProxyInterface);
 }
 
-bool mtsManagerProxyClient::FindInterfaceProvided(const std::string & processName, const std::string & componentName,
-                                                  const std::string & interfaceName) const
+bool mtsManagerProxyClient::FindInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                                          const std::string & interfaceName) const
 {
     return const_cast<mtsManagerProxyClient*>(this)->SendFindInterfaceProvided(processName, componentName, interfaceName);
 }
 
-bool mtsManagerProxyClient::FindInterfaceRequired(const std::string & processName, const std::string & componentName,
-                                                  const std::string & interfaceName) const
+bool mtsManagerProxyClient::FindInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                                         const std::string & interfaceName) const
 {
     return const_cast<mtsManagerProxyClient*>(this)->SendFindInterfaceRequired(processName, componentName, interfaceName);
 }
 
-bool mtsManagerProxyClient::RemoveInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerProxyClient::RemoveInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                                            const std::string & interfaceName)
 {
     return SendRemoveInterfaceProvided(processName, componentName, interfaceName);
 }
 
-bool mtsManagerProxyClient::RemoveInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerProxyClient::RemoveInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                                           const std::string & interfaceName)
 {
     return SendRemoveInterfaceRequired(processName, componentName, interfaceName);
 }
 
 int mtsManagerProxyClient::Connect(const std::string & requestProcessName,
-    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
+                                   const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+                                   const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,
@@ -252,9 +254,8 @@ bool mtsManagerProxyClient::ConnectConfirm(unsigned int connectionSessionID)
     return SendConnectConfirm(connectionSessionID);
 }
 
-bool mtsManagerProxyClient::Disconnect(
-    const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
+bool mtsManagerProxyClient::Disconnect(const std::string & clientProcessName, const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+                                       const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
 {
     mtsManagerProxy::ConnectionStringSet connectionStringSet;
     GetConnectionStringSet(connectionStringSet,

@@ -147,7 +147,7 @@ public:
     //  Getters
     //-------------------------------------------------------------------------
     /*! Returns a name of this local component manager */
-    virtual const std::string GetProcessName(const std::string & listenerID = "") = 0;
+    virtual const std::string GetProcessName(const std::string & listenerID = "") const = 0;
 
 #if CISST_MTS_HAS_ICE
     /*! Get names of all commands in a provided interface */

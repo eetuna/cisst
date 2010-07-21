@@ -1264,8 +1264,8 @@ bool mtsManagerGlobal::SetInterfaceProvidedProxyAccessInfo(
     const std::string & endpointInfo)
 {
     // Get a connection map of the provided interface at server side.
-    ConnectionMapType * connectionMap = GetConnectionsOfInterfaceProvided(
-        serverProcessName, serverComponentName, serverInterfaceProvidedName);
+    ConnectionMapType * connectionMap =
+        GetConnectionsOfInterfaceProvidedOrOutput(serverProcessName, serverComponentName, serverInterfaceProvidedName);
     if (!connectionMap) {
         CMN_LOG_CLASS_RUN_ERROR << "SetInterfaceProvidedProxyAccessInfo: failed to get connection map: "
             << serverProcessName << ":" << serverComponentName << ":" << serverInterfaceProvidedName << std::endl;
@@ -1295,8 +1295,8 @@ bool mtsManagerGlobal::GetInterfaceProvidedProxyAccessInfo(
     std::string & endpointInfo)
 {
     // Get a connection map of the provided interface at server side.
-    ConnectionMapType * connectionMap = GetConnectionsOfInterfaceProvided(
-        serverProcessName, serverComponentName, serverInterfaceProvidedName);
+    ConnectionMapType * connectionMap =
+        GetConnectionsOfInterfaceProvidedOrOutput(serverProcessName, serverComponentName, serverInterfaceProvidedName);
     if (!connectionMap) {
         CMN_LOG_CLASS_RUN_ERROR << "GetInterfaceProvidedProxyAccessInfo: failed to get connection map: "
             << mtsManagerGlobal::GetInterfaceUID(serverProcessName, serverComponentName, serverInterfaceProvidedName) << std::endl;

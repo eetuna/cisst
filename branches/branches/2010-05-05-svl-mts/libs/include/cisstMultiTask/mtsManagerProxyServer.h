@@ -207,7 +207,7 @@ public:
     bool GetInterfaceRequiredDescription(const std::string & componentName, const std::string & requiredInterfaceName,
         InterfaceRequiredDescription & requiredInterfaceDescription, const std::string & listenerID = "");
 
-    const std::string GetProcessName(const std::string & listenerID = "");
+    const std::string GetProcessName(const std::string & listenerID = "") const;
 
     void GetNamesOfCommands(std::vector<std::string>& namesOfCommands,
                             const std::string & componentName, 

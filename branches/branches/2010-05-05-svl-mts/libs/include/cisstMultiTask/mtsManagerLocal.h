@@ -398,12 +398,12 @@ public:
     }
 
     /*! Returns name of this local component manager */
-    inline const std::string GetProcessName(const std::string & CMN_UNUSED(listenerID) = "") {
+    inline const std::string GetProcessName(const std::string & CMN_UNUSED(listenerID) = "") const {
         return ProcessName;
     }
 
     /*! Returns end user name to access provided interface's resources */
-    const std::string GetEndUserName(void);
+    const std::string GetEndUserName(void) const;
 
 #if CISST_MTS_HAS_ICE
     /*! Get names of all commands in a provided interface */
@@ -482,7 +482,7 @@ public:
     static void GetIPAddressList(std::vector<std::string> & ipAddresses);
 
     /*! Returns name of this local component manager (for mtsProxyBaseCommon.h) */
-    inline const std::string & GetName(void) const {
+    inline const std::string GetName(void) const {
         return GetProcessName();
     }
 #endif

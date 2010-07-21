@@ -598,67 +598,78 @@ bool mtsManagerProxyServer::GetInterfaceRequiredDescription(
     return true;
 }
 
-const std::string mtsManagerProxyServer::GetProcessName(const std::string & listenerID)
+const std::string mtsManagerProxyServer::GetProcessName(const std::string & listenerID) const
 {
-    return SendGetProcessName(listenerID);
+    mtsManagerProxyServer * nonConst = const_cast<mtsManagerProxyServer *>(this);
+    return nonConst->SendGetProcessName(listenerID);
 }
 
 void mtsManagerProxyServer::GetNamesOfCommands(std::vector<std::string>& namesOfCommands,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & listenerID)
+                                               const std::string & componentName, const std::string & providedInterfaceName,
+                                               const std::string & listenerID)
 {
     SendGetNamesOfCommands(namesOfCommands, componentName, providedInterfaceName, listenerID);
 }
 
 void mtsManagerProxyServer::GetNamesOfEventGenerators(std::vector<std::string>& namesOfEventGenerators,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & listenerID)
+                                                      const std::string & componentName, const std::string & providedInterfaceName,
+                                                      const std::string & listenerID)
 {
     SendGetNamesOfEventGenerators(namesOfEventGenerators, componentName, providedInterfaceName, listenerID);
 }
 
 void mtsManagerProxyServer::GetNamesOfFunctions(std::vector<std::string>& namesOfFunctions,
-    const std::string & componentName, const std::string & requiredInterfaceName, const std::string & listenerID)
+                                                const std::string & componentName, const std::string & requiredInterfaceName,
+                                                const std::string & listenerID)
 {
     SendGetNamesOfFunctions(namesOfFunctions, componentName, requiredInterfaceName, listenerID);
 }
 
 void mtsManagerProxyServer::GetNamesOfEventHandlers(std::vector<std::string>& namesOfEventHandlers,
-    const std::string & componentName, const std::string & requiredInterfaceName, const std::string & listenerID)
+                                                    const std::string & componentName, const std::string & requiredInterfaceName,
+                                                    const std::string & listenerID)
 {
     SendGetNamesOfEventHandlers(namesOfEventHandlers, componentName, requiredInterfaceName, listenerID);
 }
 
 void mtsManagerProxyServer::GetDescriptionOfCommand(std::string & description,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const std::string & listenerID)
+                                                    const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName,
+                                                    const std::string & listenerID)
 {
     SendGetDescriptionOfCommand(description, componentName, providedInterfaceName, commandName, listenerID);
 }
 
 void mtsManagerProxyServer::GetDescriptionOfEventGenerator(std::string & description,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & eventGeneratorName, const std::string & listenerID)
+                                                           const std::string & componentName, const std::string & providedInterfaceName, const std::string & eventGeneratorName,
+                                                           const std::string & listenerID)
 {
     SendGetDescriptionOfEventGenerator(description, componentName, providedInterfaceName, eventGeneratorName, listenerID);
 }
 
 void mtsManagerProxyServer::GetDescriptionOfFunction(std::string & description,
-    const std::string & componentName, const std::string & requiredInterfaceName, const std::string & functionName, const std::string & listenerID)
+                                                     const std::string & componentName, const std::string & requiredInterfaceName, const std::string & functionName,
+                                                     const std::string & listenerID)
 {
     SendGetDescriptionOfFunction(description, componentName, requiredInterfaceName, functionName, listenerID);
 }
 
 void mtsManagerProxyServer::GetDescriptionOfEventHandler(std::string & description,
-    const std::string & componentName, const std::string & requiredInterfaceName, const std::string & eventHandlerName, const std::string & listenerID)
+                                                         const std::string & componentName, const std::string & requiredInterfaceName, const std::string & eventHandlerName,
+                                                         const std::string & listenerID)
 {
     SendGetDescriptionOfEventHandler(description, componentName, requiredInterfaceName, eventHandlerName, listenerID);
 }
 
 void mtsManagerProxyServer::GetArgumentInformation(std::string & argumentName, std::vector<std::string> & signalNames,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const std::string & listenerID)
+                                                   const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName,
+                                                   const std::string & listenerID)
 {
     SendGetArgumentInformation(argumentName, signalNames, componentName, providedInterfaceName, commandName, listenerID);
 }
 
 void mtsManagerProxyServer::GetValuesOfCommand(SetOfValues & values,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const int scalarIndex, const std::string & listenerID)
+                                               const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const int scalarIndex,
+                                               const std::string & listenerID)
 {
     SendGetValuesOfCommand(values, componentName, providedInterfaceName, commandName, scalarIndex, listenerID);
 }
@@ -741,39 +752,39 @@ bool mtsManagerProxyServer::ReceiveRemoveComponent(const std::string & processNa
 
 bool mtsManagerProxyServer::ReceiveAddInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
 {
-    return ProxyOwner->AddInterfaceProvided(processName, componentName, interfaceName, isProxyInterface);
+    return ProxyOwner->AddInterfaceProvidedOrOutput(processName, componentName, interfaceName, isProxyInterface);
 }
 
 bool mtsManagerProxyServer::ReceiveFindInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
 {
-    return ProxyOwner->FindInterfaceProvided(processName, componentName, interfaceName);
+    return ProxyOwner->FindInterfaceProvidedOrOutput(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyServer::ReceiveRemoveInterfaceProvided(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return ProxyOwner->RemoveInterfaceProvided(processName, componentName, interfaceName);
+    return ProxyOwner->RemoveInterfaceProvidedOrOutput(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyServer::ReceiveAddInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName, const bool isProxyInterface)
 {
-    return ProxyOwner->AddInterfaceRequired(processName, componentName, interfaceName, isProxyInterface);
+    return ProxyOwner->AddInterfaceRequiredOrInput(processName, componentName, interfaceName, isProxyInterface);
 }
 
 bool mtsManagerProxyServer::ReceiveFindInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName) const
 {
-    return ProxyOwner->FindInterfaceRequired(processName, componentName, interfaceName);
+    return ProxyOwner->FindInterfaceRequiredOrInput(processName, componentName, interfaceName);
 }
 
 bool mtsManagerProxyServer::ReceiveRemoveInterfaceRequired(const std::string & processName, const std::string & componentName, const std::string & interfaceName)
 {
-    return ProxyOwner->RemoveInterfaceRequired(processName, componentName, interfaceName);
+    return ProxyOwner->RemoveInterfaceRequiredOrInput(processName, componentName, interfaceName);
 }
 
 ::Ice::Int mtsManagerProxyServer::ReceiveConnect(const ::mtsManagerProxy::ConnectionStringSet & connectionStringSet)
 {
     return ProxyOwner->Connect(connectionStringSet.RequestProcessName,
-        connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientInterfaceRequiredName,
-        connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerInterfaceProvidedName);
+                               connectionStringSet.ClientProcessName, connectionStringSet.ClientComponentName, connectionStringSet.ClientInterfaceRequiredName,
+                               connectionStringSet.ServerProcessName, connectionStringSet.ServerComponentName, connectionStringSet.ServerInterfaceProvidedName);
 }
 
 bool mtsManagerProxyServer::ReceiveConnectConfirm(::Ice::Int connectionSessionID)
@@ -1035,7 +1046,7 @@ bool mtsManagerProxyServer::SendGetInterfaceProvidedDescription(
 }
 
 bool mtsManagerProxyServer::SendGetInterfaceRequiredDescription(const std::string & componentName,
-    const std::string & requiredInterfaceName, ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription, 
+    const std::string & requiredInterfaceName, ::mtsManagerProxy::InterfaceRequiredDescription & requiredInterfaceDescription,
     const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
@@ -1115,7 +1126,7 @@ void mtsManagerProxyServer::SendGetNamesOfEventHandlers(std::vector<std::string>
     (*clientProxy)->GetNamesOfEventHandlers(componentName, requiredInterfaceName, namesOfEventHandlers);
 }
 
-void mtsManagerProxyServer::SendGetDescriptionOfCommand(std::string & description, const std::string & componentName, 
+void mtsManagerProxyServer::SendGetDescriptionOfCommand(std::string & description, const std::string & componentName,
     const std::string & providedInterfaceName, const std::string & commandName, const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
@@ -1131,7 +1142,7 @@ void mtsManagerProxyServer::SendGetDescriptionOfCommand(std::string & descriptio
     (*clientProxy)->GetDescriptionOfCommand(componentName, providedInterfaceName, commandName, description);
 }
 
-void mtsManagerProxyServer::SendGetDescriptionOfEventGenerator(std::string & description, const std::string & componentName, 
+void mtsManagerProxyServer::SendGetDescriptionOfEventGenerator(std::string & description, const std::string & componentName,
     const std::string & providedInterfaceName, const std::string & eventGeneratorName, const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
@@ -1147,7 +1158,7 @@ void mtsManagerProxyServer::SendGetDescriptionOfEventGenerator(std::string & des
     (*clientProxy)->GetDescriptionOfEventGenerator(componentName, providedInterfaceName, eventGeneratorName, description);
 }
 
-void mtsManagerProxyServer::SendGetDescriptionOfFunction(std::string & description, const std::string & componentName, 
+void mtsManagerProxyServer::SendGetDescriptionOfFunction(std::string & description, const std::string & componentName,
     const std::string & requiredInterfaceName, const std::string & functionName, const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
@@ -1163,7 +1174,7 @@ void mtsManagerProxyServer::SendGetDescriptionOfFunction(std::string & descripti
     (*clientProxy)->GetDescriptionOfFunction(componentName, requiredInterfaceName, functionName, description);
 }
 
-void mtsManagerProxyServer::SendGetDescriptionOfEventHandler(std::string & description, const std::string & componentName, 
+void mtsManagerProxyServer::SendGetDescriptionOfEventHandler(std::string & description, const std::string & componentName,
     const std::string & requiredInterfaceName, const std::string & eventHandlerName, const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
@@ -1195,7 +1206,7 @@ void mtsManagerProxyServer::SendGetArgumentInformation(std::string & argumentNam
     (*clientProxy)->GetArgumentInformation(componentName, providedInterfaceName, commandName, argumentName, signalNames);
 }
 
-void mtsManagerProxyServer::SendGetValuesOfCommand(SetOfValues & values, const std::string & componentName, 
+void mtsManagerProxyServer::SendGetValuesOfCommand(SetOfValues & values, const std::string & componentName,
     const std::string & providedInterfaceName, const std::string & commandName, const int scalarIndex, const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);

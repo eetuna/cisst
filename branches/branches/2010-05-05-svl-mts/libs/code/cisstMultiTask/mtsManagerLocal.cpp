@@ -511,7 +511,7 @@ void mtsManagerLocal::GetNamesOfComponents(std::vector<std::string> & namesOfCom
     ComponentMap.GetNames(namesOfComponents);
 }
 
-const std::string mtsManagerLocal::GetEndUserName(void)
+const std::string mtsManagerLocal::GetEndUserName(void) const
 {
     std::string endUserName(this->ProcessName);
     endUserName += "-LocalManager";
