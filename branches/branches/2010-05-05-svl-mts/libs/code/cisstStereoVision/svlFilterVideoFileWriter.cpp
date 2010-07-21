@@ -207,6 +207,13 @@ int svlFilterVideoFileWriter::SetFilePath(const std::string &filepath, unsigned 
 
     FilePath[videoch] = filepath;
 
+    // Set default comression parameters for video channel
+    svlVideoCodecBase* codec = svlVideoIO::GetCodec(filepath);
+    svlVideoIO::Compression* compression = codec->GetCompression();
+    SetCodec(compression, videoch);
+    svlVideoIO::ReleaseCompression(compression);
+    svlVideoIO::ReleaseCodec(codec);
+
     return SVL_OK;
 }
 
