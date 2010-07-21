@@ -46,7 +46,7 @@ mtsPeriodicTaskTest::mtsPeriodicTaskTest(double periodInSeconds):
         interfaceProvided->AddCommandVoid(&mtsPeriodicTaskTest::ZeroAll, this, "ZeroAll");
     }
     // add a second (empty) interface, this will create an mtsTaskInterface
-    interfaceProvided = AddProvidedInterface("Empty Interface");
+    interfaceProvided = AddInterfaceProvided("Empty Interface");
 }
 
 

@@ -115,15 +115,15 @@ public:
         \param processName Name of process 
         \param componentName Name of component 
         \param interfaceName Name of provided interface to be removed */
-    virtual bool RemoveInterfaceProvided(const std::string & processName, const std::string & componentName,
-                                         const std::string & interfaceName) = 0;
+    virtual bool RemoveInterfaceProvidedOrOutput(const std::string & processName, const std::string & componentName,
+                                                 const std::string & interfaceName) = 0;
 
     /*! \brief Remove required interface. Can be called at run-time.
         \param processName Name of process 
         \param componentName Name of component 
         \param interfaceName Name of required interface to be removed */
-    virtual bool RemoveInterfaceRequired(const std::string & processName, const std::string & componentName,
-                                         const std::string & interfaceName) = 0;
+    virtual bool RemoveInterfaceRequiredOrInput(const std::string & processName, const std::string & componentName,
+                                                const std::string & interfaceName) = 0;
 
     //-------------------------------------------------------------------------
     //  Connection Management

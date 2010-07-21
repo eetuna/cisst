@@ -292,14 +292,14 @@ bool mtsManagerGlobal::RemoveComponent(const std::string & processName, const st
         // Remove all the required interfaces that the process manage.
         it = interfaceMap->InterfaceRequiredOrInputMap.GetMap().begin();
         while (it != interfaceMap->InterfaceRequiredOrInputMap.GetMap().end()) {
-            ret &= RemoveInterfaceRequired(processName, componentName, it->first);
+            ret &= RemoveInterfaceRequiredOrInput(processName, componentName, it->first);
             it = interfaceMap->InterfaceRequiredOrInputMap.GetMap().begin();
         }
 
         // Remove all the provided interfaces that the process manage.
         it = interfaceMap->InterfaceProvidedOrOutputMap.GetMap().begin();
         while (it != interfaceMap->InterfaceProvidedOrOutputMap.GetMap().end()) {
-            ret &= RemoveInterfaceProvided(processName, componentName, it->first);
+            ret &= RemoveInterfaceProvidedOrOutput(processName, componentName, it->first);
             it = interfaceMap->InterfaceProvidedOrOutputMap.GetMap().begin();
         }
 
@@ -415,8 +415,9 @@ bool mtsManagerGlobal::FindInterfaceRequiredOrInput(const std::string & processN
 }
 
 
-bool mtsManagerGlobal::RemoveInterfaceProvided(
-    const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerGlobal::RemoveInterfaceProvidedOrOutput(const std::string & processName,
+                                                       const std::string & componentName,
+                                                       const std::string & interfaceName)
 {
     // Check existence of the process
     if (!ProcessMap.FindItem(processName)) {
@@ -456,8 +457,9 @@ bool mtsManagerGlobal::RemoveInterfaceProvided(
     return ret;
 }
 
-bool mtsManagerGlobal::RemoveInterfaceRequired(
-    const std::string & processName, const std::string & componentName, const std::string & interfaceName)
+bool mtsManagerGlobal::RemoveInterfaceRequiredOrInput(const std::string & processName,
+                                                      const std::string & componentName,
+                                                      const std::string & interfaceName)
 {
     // Check if the process exists
     if (!ProcessMap.FindItem(processName)) {
