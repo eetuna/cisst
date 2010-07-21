@@ -38,6 +38,8 @@ class CISST_EXPORT svlFilterSourceVideoFile : public svlFilterSourceBase
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
+    typedef svlFilterSourceVideoFile ThisType;
+
     class Config : public SourceConfig
     {
     public:
@@ -51,19 +53,19 @@ public:
         vctDynamicVector<vctInt2>     Range;
 
         void SetChannels(const int channels);
-        friend std::ostream & operator << (std::ostream & stream, const Config& objref);
+        friend std::ostream & operator << (std::ostream & stream, const Config & objref);
     };
 
     virtual void CreateInterfaces();
-    virtual void confGet(Config& objref) const;
-    virtual void confSet(const Config& objref);
-    virtual void confSetChannels(const int& channels);
-    virtual void confSetPathL(const std::string& filepath);
-    virtual void confSetPathR(const std::string& filepath);
-    virtual void confSetPosL(const int& position);
-    virtual void confSetPosR(const int& position);
-    virtual void confSetRangeL(const vctInt2& position);
-    virtual void confSetRangeR(const vctInt2& position);
+    virtual void confGet(ThisType::Config & objref) const;
+    virtual void confSet(const ThisType::Config & objref);
+    virtual void confSetChannels(const int & channels);
+    virtual void confSetPathL(const std::string & filepath);
+    virtual void confSetPathR(const std::string & filepath);
+    virtual void confSetPosL(const int & position);
+    virtual void confSetPosR(const int & position);
+    virtual void confSetRangeL(const vctInt2 & position);
+    virtual void confSetRangeR(const vctInt2 & position);
 
 public:
     svlFilterSourceVideoFile();
