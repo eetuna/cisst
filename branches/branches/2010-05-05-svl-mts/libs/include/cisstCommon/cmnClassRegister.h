@@ -143,9 +143,9 @@ class CISST_EXPORT cmnClassRegister {
       \sa SetLoDForAllClasses */
     bool SetLoDForAllClassesInstance(LogLoDType lod);
 
-    /*! Instance specific implementation of SetLoDForSomeClasses.
-      \sa SetLoDForSomeClasses */
-    bool SetLoDForSomeClassesInstance(const std::string & stringToMatch, LogLoDType lod);
+    /*! Instance specific implementation of SetLoDForMatchingClasses.
+      \sa SetLoDForMatchingClasses */
+    bool SetLoDForMatchingClassesInstance(const std::string & stringToMatch, LogLoDType lod);
 
     /*! Instance specific implementation of ToString.
       \sa ToString */
@@ -243,7 +243,7 @@ protected:
     }
 
 
-    /*! The SetLoDForSomeClasses method allows the user to specify the lod
+    /*! The SetLoDForMatchingClasses method allows the user to specify the lod
       for all classes with a name matching a given string.  The string
       matching is case sensitive.
 
@@ -253,8 +253,8 @@ protected:
       \return bool True if there is at least one class LoD was
       modified
     */
-    static inline bool SetLoDForSomeClasses(const std::string & stringToMatch, LogLoDType lod) {
-        return Instance()->SetLoDForSomeClassesInstance(stringToMatch, lod);
+    static inline bool SetLoDForMatchingClasses(const std::string & stringToMatch, LogLoDType lod) {
+        return Instance()->SetLoDForMatchingClassesInstance(stringToMatch, lod);
     }
 
 
