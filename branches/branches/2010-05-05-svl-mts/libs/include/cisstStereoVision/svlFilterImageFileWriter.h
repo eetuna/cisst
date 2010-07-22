@@ -44,8 +44,6 @@ public:
     void EnableTimestamps(bool enable = true);
     void Pause();
     void Record(int frames = -1);
-    void SetDistanceIntensityRatio(float ratio);
-    float GetDistanceIntensityRatio();
 
 protected:
     virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);
@@ -59,8 +57,6 @@ private:
     vctDynamicVector<bool> Disabled;
     vctDynamicVector<int> Compression;
     bool TimestampsEnabled;
-    svlSampleImageRGB ImageBuffer;
-    float DistanceScaling;
     unsigned int CaptureLength;
 };
 

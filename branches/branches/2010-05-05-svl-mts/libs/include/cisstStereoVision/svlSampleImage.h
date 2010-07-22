@@ -28,6 +28,9 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
+// Forward declarations
+class svlSampleMatrix;
+
 
 class CISST_EXPORT svlSampleImage : public svlSample
 {
@@ -64,10 +67,17 @@ public:
     virtual unsigned int GetRowStride(const unsigned int videochannel = 0) const = 0;
     virtual unsigned int GetDataSize(const unsigned int videochannel) const = 0;
 
-    int ConvertFrom(const svlSampleImage* image);
-    int ConvertFrom(const svlSampleImage& image);
-    int ConvertFrom(const svlSampleImage* image, const unsigned int src_channel, const unsigned int dest_channel);
-    int ConvertFrom(const svlSampleImage& image, const unsigned int src_channel, const unsigned int dest_channel);
+    int ImportData(unsigned char* input, const unsigned int size, const int param = 0, const unsigned int videoch = SVL_LEFT);
+    int ImportData(unsigned short* input, const unsigned int size, const int param = 0, const unsigned int videoch = SVL_LEFT);
+    int ImportData(unsigned int* input, const unsigned int size, const int param = 0, const unsigned int videoch = SVL_LEFT);
+    int ImportData(float* input, const unsigned int size, const int param = 0, const unsigned int videoch = SVL_LEFT);
+    int ImportImage(const svlSampleImage* image, const int param = 0);
+    int ImportImage(const svlSampleImage& image, const int param = 0);
+    int ImportImage(const svlSampleImage* image, const unsigned int src_channel, const unsigned int dest_channel, const int param = 0);
+    int ImportImage(const svlSampleImage& image, const unsigned int src_channel, const unsigned int dest_channel, const int param = 0);
+    int ImportMatrix(const svlSampleMatrix* matrix, const int param = 0, const unsigned int videoch = SVL_LEFT);
+    int ImportSample(const svlSample* sample);
+    int ImportSample(const svlSample* sample, const unsigned int videoch);
 };
 
 

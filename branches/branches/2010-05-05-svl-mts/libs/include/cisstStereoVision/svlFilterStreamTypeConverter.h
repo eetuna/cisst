@@ -49,7 +49,7 @@ protected:
     virtual int Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput);
 
 private:
-    svlSampleImage* OutputImage;
+    svlSample* OutputSample;
 
     float Scaling;
     unsigned int Mono16ShiftDown;

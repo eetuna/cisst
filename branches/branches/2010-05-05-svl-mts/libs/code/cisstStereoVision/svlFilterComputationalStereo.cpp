@@ -59,21 +59,21 @@ svlFilterComputationalStereo::svlFilterComputationalStereo() :
 
     AddOutput("output", true);
     SetAutomaticOutputType(false);
-    GetOutput()->SetType(svlTypeImageMonoFloat);
+    GetOutput()->SetType(svlTypeMatrixFloat);
 
-    OutputImage = new svlSampleImageMonoFloat;
+    OutputMatrix = new svlSampleMatrixFloat;
 }
 
 svlFilterComputationalStereo::~svlFilterComputationalStereo()
 {
     Release();
 
-    if (OutputImage) delete OutputImage;
+    if (OutputMatrix) delete OutputMatrix;
 }
 
 int svlFilterComputationalStereo::Initialize(svlSample* syncInput, svlSample* &syncOutput)
 {
-    syncOutput = OutputImage;
+    syncOutput = OutputMatrix;
 
     svlStreamType inputtype = GetInput()->GetType();
     svlSampleImage* stimg = dynamic_cast<svlSampleImage*>(syncInput);
@@ -90,8 +90,8 @@ int svlFilterComputationalStereo::Initialize(svlSample* syncInput, svlSample* &s
         return SVL_STEREO_INPUT_MISMATCH;
 
     // allocate buffers
-    OutputImage->SetSize(w1, h1);
-    memset(OutputImage->GetUCharPointer(), 0, OutputImage->GetDataSize());
+    OutputMatrix->SetSize(w1, h1);
+    memset(OutputMatrix->GetUCharPointer(), 0, OutputMatrix->GetDataSize());
     DisparityBuffer.SetSize(h1, w1);
     SpatialFilterBuffer.SetSize(h1, w1);
 
@@ -199,7 +199,7 @@ int svlFilterComputationalStereo::Initialize(svlSample* syncInput, svlSample* &s
 
 int svlFilterComputationalStereo::Process(svlProcInfo* procInfo, svlSample* syncInput, svlSample* &syncOutput)
 {
-    syncOutput = OutputImage;
+    syncOutput = OutputMatrix;
     _SkipIfAlreadyProcessed(syncInput, syncOutput);
 
     svlSampleImage* stimg = dynamic_cast<svlSampleImage*>(syncInput);
@@ -266,17 +266,17 @@ int svlFilterComputationalStereo::Process(svlProcInfo* procInfo, svlSample* sync
 
         // Store disparity map
         ConvertDisparitiesToFloat(DisparityBuffer.Pointer(),
-                                  OutputImage->GetPointer(),
-                                  static_cast<int>(OutputImage->GetWidth()),
-                                  static_cast<int>(OutputImage->GetHeight()));
+                                  OutputMatrix->GetPointer(),
+                                  static_cast<int>(OutputMatrix->GetCols()),
+                                  static_cast<int>(OutputMatrix->GetRows()));
 
         // Apply spatial filter if enabled
         if (SpatialFilterRadius > 0) ApplySpatialFilter(SpatialFilterRadius,
-                                                        OutputImage->GetPointer(0, ROI.left, ROI.top),
+                                                        OutputMatrix->GetPointer(ROI.left, ROI.top),
                                                         SpatialFilterBuffer.Pointer(ROI.top, ROI.left),
                                                         ROI.right - ROI.left,
                                                         ROI.bottom - ROI.top,
-                                                        static_cast<int>(OutputImage->GetWidth()));
+                                                        static_cast<int>(OutputMatrix->GetCols()));
     }
 
     return SVL_OK;
@@ -515,7 +515,7 @@ void svlFilterComputationalStereo::PerformXCheck()
     }
 }
 
-void svlFilterComputationalStereo::ConvertDisparitiesToFloat(int* input, float* OutputImage, const int width, const int height)
+void svlFilterComputationalStereo::ConvertDisparitiesToFloat(int* input, float* output, const int width, const int height)
 {
     int i, j;
     const float mltplr = 0.25f;
@@ -523,18 +523,18 @@ void svlFilterComputationalStereo::ConvertDisparitiesToFloat(int* input, float* 
     if (SubpixelPrecision) {
         for (j = 0; j < height; j ++) {
             for (i = 0; i < width; i ++) {
-                *OutputImage = mltplr * (*input);
+                *output = mltplr * (*input);
                 input ++;
-                OutputImage ++;
+                output ++;
             }
         }
     }
     else {
         for (j = 0; j < height; j ++) {
             for (i = 0; i < width; i ++) {
-                *OutputImage = static_cast<float>(*input);
+                *output = static_cast<float>(*input);
                 input ++;
-                OutputImage ++;
+                output ++;
             }
         }
     }
@@ -547,7 +547,7 @@ void svlFilterComputationalStereo::ApplySpatialFilter(const int radius,
     int i, j, k, l, divider;
     int xstart, xend, ystart, yend;
     float sum;
-    float *input, *OutputImage;
+    float *input, *output;
 
     for (j = 0; j < mapheight; j ++) {
 
@@ -573,9 +573,9 @@ void svlFilterComputationalStereo::ApplySpatialFilter(const int radius,
         }
 
         // Setting value of first column
-        OutputImage = tempbuffer + j * linestride;
-        *OutputImage = sum / static_cast<float>(divider);
-        OutputImage ++;
+        output = tempbuffer + j * linestride;
+        *output = sum / static_cast<float>(divider);
+        output ++;
 
         // Proceeding on the rest of the line
         for (i = 1; i < mapwidth; i ++) {
@@ -603,18 +603,18 @@ void svlFilterComputationalStereo::ApplySpatialFilter(const int radius,
             }
 
             // Setting value
-            *OutputImage = sum / static_cast<float>(divider);
-            OutputImage ++;
+            *output = sum / static_cast<float>(divider);
+            output ++;
         }
     }
 
     // copy temp buffer back to input buffer
     input = tempbuffer;
-    OutputImage = disparitymap;
+    output = disparitymap;
     for (j = 0; j < mapheight; j ++) {
-        memcpy(OutputImage, input, mapwidth * sizeof(float));
+        memcpy(output, input, mapwidth * sizeof(float));
         input += linestride;
-        OutputImage += linestride;
+        output += linestride;
     }
 }
 

@@ -23,31 +23,13 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlSampleImageCustom_h
 #define _svlSampleImageCustom_h
 
+#include <cisstStereoVision/svlTypeCheckers.h>
 #include <cisstStereoVision/svlSampleImage.h>
+#include <cisstStereoVision/svlSampleMatrix.h>
 #include <cisstStereoVision/svlImageIO.h>
 
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
-
-
-////////////////////////////////////
-// Type checking helper functions //
-////////////////////////////////////
-
-template <class __ValueType>
-static bool IsTypeFloat(__ValueType CMN_UNUSED(val)) { return false; }
-template <>
-inline bool IsTypeFloat<float>(float CMN_UNUSED(val)) { return true; }
-
-template <class __ValueType>
-static bool IsTypeUChar(__ValueType CMN_UNUSED(val)) { return false; }
-template <>
-inline bool IsTypeUChar<unsigned char>(unsigned char CMN_UNUSED(val)) { return true; }
-
-template <class __ValueType>
-static bool IsTypeUWord(__ValueType CMN_UNUSED(val)) { return false; }
-template <>
-inline bool IsTypeUWord<unsigned short>(unsigned short CMN_UNUSED(val)) { return true; }
 
 
 template <class _ValueType, unsigned int _DataChannels, unsigned int _VideoChannels>
@@ -80,9 +62,7 @@ public:
         OwnData(owndata)
     {
         for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
-            if (OwnData) {
-                Image[vch] = new vctDynamicMatrix<_ValueType>;
-            }
+            if (OwnData) Image[vch] = new vctDynamicMatrix<_ValueType>;
             else Image[vch] = 0;
 #if (CISST_SVL_HAS_OPENCV == ON)
             int ocvdepth = GetOCVDepth();
@@ -119,7 +99,7 @@ public:
 
     svlStreamType GetType() const
     {
-        if (IsTypeUChar<_ValueType>(static_cast<_ValueType>(0))) {
+        if (IsTypeUInt8<_ValueType>(static_cast<_ValueType>(0))) {
             if (_DataChannels == 1) {
                 if (_VideoChannels == 1) return svlTypeImageMono8;
                 if (_VideoChannels == 2) return svlTypeImageMono8Stereo;
@@ -133,39 +113,56 @@ public:
                 if (_VideoChannels == 2) return svlTypeImageRGBAStereo;
             }
         }
-        if (IsTypeUWord<_ValueType>(static_cast<_ValueType>(0))) {
+        if (IsTypeUInt16<_ValueType>(static_cast<_ValueType>(0))) {
             if (_DataChannels == 1) {
                 if (_VideoChannels == 1) return svlTypeImageMono16;
                 if (_VideoChannels == 2) return svlTypeImageMono16Stereo;
             }
         }
         if (IsTypeFloat<_ValueType>(static_cast<_ValueType>(0))) {
-            if (_DataChannels == 1 && _VideoChannels == 1) return svlTypeImageMonoFloat;
             if (_DataChannels == 3 && _VideoChannels == 1) return svlTypeImage3DMap;
         }
-        return svlTypeImageCustom;
+        return svlTypeInvalid;
     }
 
     int SetSize(const svlSample* sample)
     {
         const svlSampleImage* sampleimage = dynamic_cast<const svlSampleImage*>(sample);
-        if (sampleimage == 0) return SVL_FAIL;
-        unsigned int samplevideochannels = sampleimage->GetVideoChannels();
-        for (unsigned int vch = 0; vch < _VideoChannels && vch < samplevideochannels; vch ++) {
-            SetSize(vch, sampleimage->GetWidth(vch), sampleimage->GetHeight(vch));
+        if (sampleimage) {
+            unsigned int samplevideochannels = sampleimage->GetVideoChannels();
+            for (unsigned int vch = 0; vch < _VideoChannels && vch < samplevideochannels; vch ++) {
+                SetSize(vch, sampleimage->GetWidth(vch), sampleimage->GetHeight(vch));
+            }
+            return SVL_OK;
         }
-        return SVL_OK;
+        else {
+            const svlSampleMatrix* samplematrix = dynamic_cast<const svlSampleMatrix*>(sample);
+            if (samplematrix) {
+                SetSize(samplematrix->GetCols(), samplematrix->GetRows());
+                return SVL_OK;
+            }
+        }
+        return SVL_FAIL;
     }
     
     int SetSize(const svlSample& sample)
     {
         const svlSampleImage* sampleimage = dynamic_cast<const svlSampleImage*>(&sample);
-        if (sampleimage == 0) return SVL_FAIL;
-        unsigned int samplevideochannels = sampleimage->GetVideoChannels();
-        for (unsigned int vch = 0; vch < _VideoChannels && vch < samplevideochannels; vch ++) {
-            SetSize(vch, sampleimage->GetWidth(vch), sampleimage->GetHeight(vch));
+        if (sampleimage) {
+            unsigned int samplevideochannels = sampleimage->GetVideoChannels();
+            for (unsigned int vch = 0; vch < _VideoChannels && vch < samplevideochannels; vch ++) {
+                SetSize(vch, sampleimage->GetWidth(vch), sampleimage->GetHeight(vch));
+            }
+            return SVL_OK;
         }
-        return SVL_OK;
+        else {
+            const svlSampleMatrix* samplematrix = dynamic_cast<const svlSampleMatrix*>(&sample);
+            if (samplematrix) {
+                SetSize(samplematrix->GetCols(), samplematrix->GetRows());
+                return SVL_OK;
+            }
+        }
+        return SVL_FAIL;
     }
 
     int CopyOf(const svlSample* sample)
@@ -282,16 +279,21 @@ public:
                 return svlPixelMono16;
             break;
 
-            case svlTypeImageMonoFloat:
-                return svlPixelMonoFloat;
-            break;
-
             case svlTypeImage3DMap:
                 return svlPixel3DFloat;
             break;
 
+            case svlTypeMatrixInt8:
+            case svlTypeMatrixInt16:
+            case svlTypeMatrixInt32:
+            case svlTypeMatrixInt64:
+            case svlTypeMatrixUInt8:
+            case svlTypeMatrixUInt16:
+            case svlTypeMatrixUInt32:
+            case svlTypeMatrixUInt64:
+            case svlTypeMatrixFloat:
+            case svlTypeMatrixDouble:
             case svlTypeInvalid:
-            case svlTypeImageCustom:
             case svlTypeStreamSource:
             case svlTypeStreamSink:
             case svlTypeTransform3D:
@@ -480,8 +482,8 @@ private:
 
     int GetOCVDepth()
     {
-        if (IsTypeUChar<_ValueType>(static_cast<_ValueType>(0))) return IPL_DEPTH_8U;
-        if (IsTypeUWord<_ValueType>(static_cast<_ValueType>(0))) return IPL_DEPTH_16U;
+        if (IsTypeUInt8<_ValueType>(static_cast<_ValueType>(0))) return IPL_DEPTH_8U;
+        if (IsTypeUInt16<_ValueType>(static_cast<_ValueType>(0))) return IPL_DEPTH_16U;
         if (IsTypeFloat<_ValueType>(static_cast<_ValueType>(0))) return IPL_DEPTH_32F;
         return -1;
     }

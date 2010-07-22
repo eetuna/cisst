@@ -100,9 +100,17 @@ bool svlStreamBranchSource::IsTypeSupported(svlStreamType type)
         case svlTypeImageMono16Stereo:
         case svlTypeImageRGBA:
         case svlTypeImageRGBAStereo:
-        case svlTypeImageMonoFloat:
+        case svlTypeMatrixInt8:
+        case svlTypeMatrixInt16:
+        case svlTypeMatrixInt32:
+        case svlTypeMatrixInt64:
+        case svlTypeMatrixUInt8:
+        case svlTypeMatrixUInt16:
+        case svlTypeMatrixUInt32:
+        case svlTypeMatrixUInt64:
+        case svlTypeMatrixFloat:
+        case svlTypeMatrixDouble:
         case svlTypeImage3DMap:
-        case svlTypeImageCustom:
         case svlTypeTransform3D:
         case svlTypeTargets:
         case svlTypeText:

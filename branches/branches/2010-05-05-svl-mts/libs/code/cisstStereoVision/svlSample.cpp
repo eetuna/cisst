@@ -58,7 +58,6 @@ svlSample* svlSample::GetNewFromType(svlStreamType type)
         case svlTypeInvalid:           return 0;                              break;
         case svlTypeStreamSource:      return 0;                              break;
         case svlTypeStreamSink:        return 0;                              break;
-        case svlTypeImageCustom:       return 0;                              break;
         case svlTypeImageRGB:          return new svlSampleImageRGB;          break;
         case svlTypeImageRGBA:         return new svlSampleImageRGBA;         break;
         case svlTypeImageRGBStereo:    return new svlSampleImageRGBStereo;    break;
@@ -67,8 +66,17 @@ svlSample* svlSample::GetNewFromType(svlStreamType type)
         case svlTypeImageMono8Stereo:  return new svlSampleImageMono8Stereo;  break;
         case svlTypeImageMono16:       return new svlSampleImageMono16;       break;
         case svlTypeImageMono16Stereo: return new svlSampleImageMono16Stereo; break;
-        case svlTypeImageMonoFloat:    return new svlSampleImageMonoFloat;    break;
         case svlTypeImage3DMap:        return new svlSampleImage3DMap;        break;
+        case svlTypeMatrixInt8:        return new svlSampleMatrixInt8;        break;
+        case svlTypeMatrixInt16:       return new svlSampleMatrixInt16;       break;
+        case svlTypeMatrixInt32:       return new svlSampleMatrixInt32;       break;
+        case svlTypeMatrixInt64:       return new svlSampleMatrixInt64;       break;
+        case svlTypeMatrixUInt8:       return new svlSampleMatrixUInt8;       break;
+        case svlTypeMatrixUInt16:      return new svlSampleMatrixUInt16;      break;
+        case svlTypeMatrixUInt32:      return new svlSampleMatrixUInt32;      break;
+        case svlTypeMatrixUInt64:      return new svlSampleMatrixUInt64;      break;
+        case svlTypeMatrixFloat:       return new svlSampleMatrixFloat;       break;
+        case svlTypeMatrixDouble:      return new svlSampleMatrixDouble;      break;
         case svlTypeTransform3D:       return new svlSampleTransform3D;       break;
         case svlTypeTargets:           return new svlSampleTargets;           break;
         case svlTypeText:              return new svlSampleText;              break;

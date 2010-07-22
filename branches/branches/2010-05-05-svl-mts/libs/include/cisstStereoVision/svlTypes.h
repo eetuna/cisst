@@ -46,6 +46,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlSampleImage.h>
 #include <cisstStereoVision/svlSampleImageCustom.h>
 #include <cisstStereoVision/svlSampleImageTypes.h>
+#include <cisstStereoVision/svlSampleMatrix.h>
+#include <cisstStereoVision/svlSampleMatrixCustom.h>
+#include <cisstStereoVision/svlSampleMatrixTypes.h>
 #include <cisstStereoVision/svlSampleTransform3D.h>
 #include <cisstStereoVision/svlSampleTargets.h>
 #include <cisstStereoVision/svlSampleText.h>

@@ -40,7 +40,6 @@ svlFilterImageSampler::svlFilterImageSampler() :
     AddInputType("input", svlTypeImageMono16Stereo);
     AddInputType("input", svlTypeImageRGB);
     AddInputType("input", svlTypeImageRGBStereo);
-    AddInputType("input", svlTypeImageMonoFloat);
 
     AddOutput("output", true);
     SetAutomaticOutputType(true);
@@ -72,10 +71,6 @@ int svlFilterImageSampler::Initialize(svlSample* syncInput, svlSample* &syncOutp
 
     switch (GetInput()->GetType()) {
         case svlTypeImageMono16:
-        case svlTypeImageMonoFloat:
-            ImageBuffer = new svlSampleImageMono8;
-            ImageBuffer->SetSize(*image);
-
         case svlTypeImageMono8:
             dibhdrsize = sizeof(svlDIBHeader) + 256 * sizeof(svlRGBA);
             ucharptr = new unsigned char[dibhdrsize];
@@ -255,11 +250,20 @@ int svlFilterImageSampler::Initialize(svlSample* syncInput, svlSample* &syncOutp
 
         case svlTypeImageRGBA:
         case svlTypeImageRGBAStereo:
+        case svlTypeMatrixInt8:
+        case svlTypeMatrixInt16:
+        case svlTypeMatrixInt32:
+        case svlTypeMatrixInt64:
+        case svlTypeMatrixUInt8:
+        case svlTypeMatrixUInt16:
+        case svlTypeMatrixUInt32:
+        case svlTypeMatrixUInt64:
+        case svlTypeMatrixFloat:
+        case svlTypeMatrixDouble:
         case svlTypeImage3DMap:
         case svlTypeInvalid:
         case svlTypeStreamSource:
         case svlTypeStreamSink:
-        case svlTypeImageCustom:
         case svlTypeTransform3D:
         case svlTypeTargets:
         case svlTypeText:
@@ -281,15 +285,6 @@ int svlFilterImageSampler::Process(svlProcInfo* procInfo, svlSample* syncInput, 
         svlSampleImage* outimage = 0;
 
         switch (GetInput()->GetType()) {
-            case svlTypeImageMonoFloat:
-                // Convert float32 values to grayscale8
-                svlConverter::float32toGray8(reinterpret_cast<float*>(inimage->GetUCharPointer()),
-                                             ImageBuffer->GetUCharPointer(),
-                                             inimage->GetWidth() * inimage->GetHeight(),
-                                             DistanceScaling);
-                outimage = ImageBuffer;
-            break;
-
             case svlTypeImageMono16:
                 // Convert grayscale16 values to grayscale8
                 svlConverter::Gray16toGray8(reinterpret_cast<unsigned short*>(inimage->GetUCharPointer()),
@@ -321,11 +316,20 @@ int svlFilterImageSampler::Process(svlProcInfo* procInfo, svlSample* syncInput, 
 
             case svlTypeImageRGBA:
             case svlTypeImageRGBAStereo:
+            case svlTypeMatrixInt8:
+            case svlTypeMatrixInt16:
+            case svlTypeMatrixInt32:
+            case svlTypeMatrixInt64:
+            case svlTypeMatrixUInt8:
+            case svlTypeMatrixUInt16:
+            case svlTypeMatrixUInt32:
+            case svlTypeMatrixUInt64:
+            case svlTypeMatrixFloat:
+            case svlTypeMatrixDouble:
             case svlTypeImage3DMap:
             case svlTypeInvalid:
             case svlTypeStreamSource:
             case svlTypeStreamSink:
-            case svlTypeImageCustom:
             case svlTypeTransform3D:
             case svlTypeTargets:
             case svlTypeText:

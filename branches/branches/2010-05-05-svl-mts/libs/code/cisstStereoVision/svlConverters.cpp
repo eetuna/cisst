@@ -82,38 +82,6 @@ int Converter(svlStreamType intype, svlStreamType outtype, unsigned char* inputb
             else return SVL_FAIL;
         break;
 
-        case svlTypeImageMonoFloat:
-            if (outtype == svlTypeImageRGB) {
-                    svlConverter::float32toRGB24(reinterpret_cast<float*>(inputbuffer),
-                                                 outputbuffer,
-                                                 partsize,
-                                                 static_cast<float>(0.001 * param),
-                                                 1);
-            }
-            else if (outtype == svlTypeImageRGBA) {
-                    svlConverter::float32toRGBA32(reinterpret_cast<float*>(inputbuffer),
-                                                  outputbuffer,
-                                                  partsize,
-                                                  static_cast<float>(0.001 * param),
-                                                  1);
-            }
-            else if (outtype == svlTypeImageMono8) {
-                   svlConverter::float32toGray8(reinterpret_cast<float*>(inputbuffer),
-                                                outputbuffer,
-                                                partsize,
-                                                static_cast<float>(0.001 * param),
-                                                1);
-            }
-            else if (outtype == svlTypeImageMono16) {
-                    svlConverter::float32toGray16(reinterpret_cast<float*>(inputbuffer),
-                                                  reinterpret_cast<unsigned short*>(outputbuffer),
-                                                  partsize,
-                                                  static_cast<float>(0.001 * param),
-                                                  1);
-            }
-            else return SVL_FAIL;
-        break;
-
         case svlTypeImage3DMap:
             if (outtype == svlTypeImageRGB) {
                     svlConverter::float32toRGB24(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
@@ -149,13 +117,50 @@ int Converter(svlStreamType intype, svlStreamType outtype, unsigned char* inputb
         case svlTypeInvalid:
         case svlTypeStreamSource:
         case svlTypeStreamSink:
-        case svlTypeImageCustom:
+        case svlTypeMatrixInt8:
+        case svlTypeMatrixInt16:
+        case svlTypeMatrixInt32:
+        case svlTypeMatrixInt64:
+        case svlTypeMatrixUInt8:
+        case svlTypeMatrixUInt16:
+        case svlTypeMatrixUInt32:
+        case svlTypeMatrixUInt64:
+        case svlTypeMatrixFloat:
+        case svlTypeMatrixDouble:
         case svlTypeTransform3D:
         case svlTypeTargets:
         case svlTypeText:
             return SVL_FAIL;
     }
     return SVL_OK;
+}
+
+int svlConverter::ConvertSample(const svlSample* input, svlSample* output, unsigned int threads, unsigned int threadid)
+{
+    if (!input || !output) return SVL_FAIL;
+
+    // If both input and output are images, call 'ConvertImage'
+    const svlSampleImage* inimg  = dynamic_cast<const svlSampleImage*>(input);
+    svlSampleImage* outimg = dynamic_cast<svlSampleImage*>(output);
+    if (inimg && outimg) return ConvertImage(inimg, outimg, 0, threads, threadid);
+
+    // If both input and output are matrices
+    const svlSampleMatrix* inmtrx  = dynamic_cast<const svlSampleMatrix*>(input);
+    svlSampleMatrix* outmtrx = dynamic_cast<svlSampleMatrix*>(output);
+    if (inmtrx && outmtrx) {
+        if (threadid == 0) {
+        // Do conversion on a single thread. This will not
+        // affect performance because of the memory bottleneck
+
+            // don't modify timestamp
+            double timestamp = outmtrx->GetTimestamp();
+            outmtrx->CopyOf(inmtrx);
+            outmtrx->SetTimestamp(timestamp);
+        }
+        return SVL_OK;
+    }
+
+    return SVL_FAIL;
 }
 
 int svlConverter::ConvertImage(const svlSampleImage* inimage, svlSampleImage* outimage, int param, unsigned int threads, unsigned int threadid)
@@ -282,12 +287,52 @@ void svlConverter::Gray32toRGB24(unsigned int* input, unsigned char* output, con
     }
 }
 
+void svlConverter::Gray32toRGBA32(unsigned int* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown)
+{
+    unsigned int uival;
+    unsigned char chval;
+    for (unsigned int i = 0; i < pixelcount; i ++) {
+        uival = (*input) >> shiftdown;
+        if (uival < 256) chval = static_cast<unsigned char>(uival);
+        else chval = 255;
+        *output = chval; output ++;
+        *output = chval; output ++;
+        *output = chval; output ++;
+        *output =  255;  output ++;
+        input ++;
+    }
+}
+
+void svlConverter::Gray32toGray8(unsigned int* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown)
+{
+    unsigned int uival;
+    unsigned char chval;
+    for (unsigned int i = 0; i < pixelcount; i ++) {
+        uival = (*input) >> shiftdown;
+        if (uival < 256) chval = static_cast<unsigned char>(uival);
+        else chval = 255;
+        *output = chval; output ++; input ++;
+    }
+}
+
+void svlConverter::Gray32toGray16(unsigned int* input, unsigned short* output, const unsigned int pixelcount, const unsigned int shiftdown)
+{
+    unsigned int uival;
+    unsigned short shval;
+    for (unsigned int i = 0; i < pixelcount; i ++) {
+        uival = (*input) >> shiftdown;
+        if (uival < 65536) shval = static_cast<unsigned short>(uival);
+        else shval = 65535;
+        *output = shval; output ++; input ++;
+    }
+}
+
 void svlConverter::int32toRGB24(int* input, unsigned char* output, const unsigned int pixelcount, const int maxinputvalue)
 {
     unsigned int i;
     int ival;
     if (maxinputvalue > 0) {
-        int shadingratio = 65280 / maxinputvalue;
+        int shadingratio = (255 << 8) / maxinputvalue;
         for (i = 0; i < pixelcount; i ++) {
             ival = (*input * shadingratio) >> 8; input ++;
             if (ival > 255) ival = 255;
@@ -314,7 +359,7 @@ void svlConverter::int32toRGBA32(int* input, unsigned char* output, const unsign
     unsigned int i;
     int ival;
     if (maxinputvalue > 0) {
-        int shadingratio = 65280 / maxinputvalue;
+        int shadingratio = (255 << 8) / maxinputvalue;
         for (i = 0; i < pixelcount; i ++) {
             ival = (*input * shadingratio) >> 8; input ++;
             if (ival > 255) ival = 255;
@@ -343,7 +388,7 @@ void svlConverter::int32toGray8(int* input, unsigned char* output, const unsigne
     unsigned int i;
     int ival;
     if (maxinputvalue > 0) {
-        int shadingratio = 65280 / maxinputvalue;
+        int shadingratio = (255 << 8) / maxinputvalue;
         for (i = 0; i < pixelcount; i ++) {
             ival = (*input * shadingratio) >> 8; input ++;
             if (ival > 255) ival = 255;
@@ -355,6 +400,29 @@ void svlConverter::int32toGray8(int* input, unsigned char* output, const unsigne
         for (i = 0; i < pixelcount; i ++) {
             ival = *input; input ++;
             if (ival > 255) ival = 255;
+            else if (ival < 0) ival = 0;
+            *output = ival; output ++;
+        }
+    }
+}
+
+void svlConverter::int32toGray16(int* input, unsigned short* output, const unsigned int pixelcount, const int maxinputvalue)
+{
+    unsigned int i;
+    int ival;
+    if (maxinputvalue > 0) {
+        int shadingratio = (65535 << 8) / maxinputvalue;
+        for (i = 0; i < pixelcount; i ++) {
+            ival = (*input * shadingratio) >> 8; input ++;
+            if (ival > 65535) ival = 65535;
+            else if (ival < 0) ival = 0;
+            *output = ival; output ++;
+        }
+    }
+    else {
+        for (i = 0; i < pixelcount; i ++) {
+            ival = *input; input ++;
+            if (ival > 65535) ival = 65535;
             else if (ival < 0) ival = 0;
             *output = ival; output ++;
         }

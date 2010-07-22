@@ -69,7 +69,7 @@ int ComputeStereo(const char* filepath1, const char* filepath2,
     svlStreamManager stream(2);
     svlFilterSourceImageFile source(2);
     svlFilterComputationalStereo stereo;
-    svlFilterStreamTypeConverter converter(svlTypeImageMonoFloat, svlTypeImageRGB);
+    svlFilterStreamTypeConverter converter(svlTypeMatrixFloat, svlTypeImageRGB);
     svlFilterImageWindow window;
 
 

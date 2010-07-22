@@ -43,7 +43,6 @@ svlFilterImageCropper::svlFilterImageCropper() :
     AddInputType("input", svlTypeImageRGBAStereo);
     AddInputType("input", svlTypeImageMono8Stereo);
     AddInputType("input", svlTypeImageMono16Stereo);
-    AddInputType("input", svlTypeImageMonoFloat);
     AddInputType("input", svlTypeImage3DMap);
 
     AddOutput("output", true);

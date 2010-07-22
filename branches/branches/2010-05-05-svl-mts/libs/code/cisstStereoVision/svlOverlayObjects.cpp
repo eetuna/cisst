@@ -3,7 +3,7 @@
 
 /*
   $Id: $
-
+  
   Author(s):  Balazs Vagvolgyi
   Created on: 2010
 
@@ -21,8 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstStereoVision/svlOverlayObjects.h>
-#include <cisstStereoVision/svlFilterInput.h>
-#include <cisstStereoVision/svlFilterOutput.h>
+
 
 /****************************/
 /*** svlOverlay class *******/
@@ -172,29 +171,7 @@ unsigned char svlOverlayImage::GetAlpha() const
 
 bool svlOverlayImage::IsInputTypeValid(svlStreamType inputtype)
 {
-    switch (inputtype) {
-        case svlTypeImageRGB:
-        case svlTypeImageRGBStereo:
-            return true;
-
-        case svlTypeImageMonoFloat:
-        case svlTypeImageMono16:
-        case svlTypeImageMono16Stereo:
-        case svlTypeImageMono8:
-        case svlTypeImageMono8Stereo:
-        case svlTypeImageRGBA:
-        case svlTypeImageRGBAStereo:
-        case svlTypeImage3DMap:
-        case svlTypeInvalid:
-        case svlTypeStreamSource:
-        case svlTypeStreamSink:
-        case svlTypeImageCustom:
-        case svlTypeTransform3D:
-        case svlTypeTargets:
-        case svlTypeText:
-            break;
-    }
-
+    if (inputtype == svlTypeImageRGB || inputtype == svlTypeImageRGBStereo) return true;
     return false;
 }
 
@@ -340,29 +317,7 @@ unsigned int svlOverlayTargets::GetSize() const
 
 bool svlOverlayTargets::IsInputTypeValid(svlStreamType inputtype)
 {
-    switch (inputtype) {
-        case svlTypeTargets:
-            return true;
-
-        case svlTypeImageRGB:
-        case svlTypeImageRGBStereo:
-        case svlTypeImageMonoFloat:
-        case svlTypeImageMono16:
-        case svlTypeImageMono16Stereo:
-        case svlTypeImageMono8:
-        case svlTypeImageMono8Stereo:
-        case svlTypeImageRGBA:
-        case svlTypeImageRGBAStereo:
-        case svlTypeImage3DMap:
-        case svlTypeInvalid:
-        case svlTypeStreamSource:
-        case svlTypeStreamSink:
-        case svlTypeImageCustom:
-        case svlTypeTransform3D:
-        case svlTypeText:
-            break;
-    }
-
+    if (inputtype== svlTypeTargets) return true;
     return false;
 }
 
@@ -636,29 +591,7 @@ svlOverlayText::~svlOverlayText()
 
 bool svlOverlayText::IsInputTypeValid(svlStreamType inputtype)
 {
-    switch (inputtype) {
-        case svlTypeText:
-            return true;
-
-        case svlTypeImageRGB:
-        case svlTypeImageRGBStereo:
-        case svlTypeImageMonoFloat:
-        case svlTypeImageMono16:
-        case svlTypeImageMono16Stereo:
-        case svlTypeImageMono8:
-        case svlTypeImageMono8Stereo:
-        case svlTypeImageRGBA:
-        case svlTypeImageRGBAStereo:
-        case svlTypeImage3DMap:
-        case svlTypeInvalid:
-        case svlTypeStreamSource:
-        case svlTypeStreamSink:
-        case svlTypeImageCustom:
-        case svlTypeTransform3D:
-        case svlTypeTargets:
-            break;
-    }
-
+    if (inputtype == svlTypeText) return true;
     return false;
 }
 

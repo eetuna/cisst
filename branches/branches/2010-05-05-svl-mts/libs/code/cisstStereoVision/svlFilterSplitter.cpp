@@ -42,10 +42,20 @@ svlFilterSplitter::svlFilterSplitter() :
     AddInputType("input", svlTypeImageMono8Stereo);
     AddInputType("input", svlTypeImageMono16);
     AddInputType("input", svlTypeImageMono16Stereo);
-    AddInputType("input", svlTypeImageMonoFloat);
     AddInputType("input", svlTypeImage3DMap);
+    AddInputType("input", svlTypeMatrixInt8);
+    AddInputType("input", svlTypeMatrixInt16);
+    AddInputType("input", svlTypeMatrixInt32);
+    AddInputType("input", svlTypeMatrixInt64);
+    AddInputType("input", svlTypeMatrixUInt8);
+    AddInputType("input", svlTypeMatrixUInt16);
+    AddInputType("input", svlTypeMatrixUInt32);
+    AddInputType("input", svlTypeMatrixUInt64);
+    AddInputType("input", svlTypeMatrixFloat);
+    AddInputType("input", svlTypeMatrixDouble);
     AddInputType("input", svlTypeTransform3D);
     AddInputType("input", svlTypeTargets);
+    AddInputType("input", svlTypeText);
 
     // Add the trunk output by default
     svlFilterBase::AddOutput("output", true);

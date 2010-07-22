@@ -42,9 +42,14 @@ int VideoPlayer(std::string pathname)
     svlFilterImageWindow window;
 
     // setup overlay
-    svlOverlayFramerate ovrl_fps(0, true, &overlay, svlRect(4, 4, 47, 20),
-                                 14.0, svlRGB(255, 200, 200), svlRGB(32, 32, 32));
+    svlOverlayFramerate ovrl_fps(0, true, &overlay, svlRect(4, 24, 49, 41),
+                                 15.0, svlRGB(255, 200, 200), svlRGB(32, 32, 32));
     overlay.AddOverlay(ovrl_fps);
+
+    // Add timestamp overlay
+    svlOverlayTimestamp ts_overlay(0, true, &window, svlRect(4, 4, 134, 21),
+                                   15.0, svlRGB(255, 200, 200), svlRGB(32, 32, 32));
+    overlay.AddOverlay(ts_overlay);
 
     // setup source
     if (pathname.empty()) {

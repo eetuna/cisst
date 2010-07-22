@@ -33,7 +33,7 @@ svlFilterDisparityMapToSurface::svlFilterDisparityMapToSurface() :
     svlFilterBase()
 {
     AddInput("input", true);
-    AddInputType("input", svlTypeImageMonoFloat);
+    AddInputType("input", svlTypeMatrixFloat);
 
     AddOutput("output", true);
     SetAutomaticOutputType(false);
@@ -44,10 +44,10 @@ int svlFilterDisparityMapToSurface::Initialize(svlSample* syncInput, svlSample* 
 {
     OutputSurface.SetSize(syncInput);
 
-    svlSampleImage* image = dynamic_cast<svlSampleImage*>(syncInput);
+    svlSampleMatrixFloat* matrix = dynamic_cast<svlSampleMatrixFloat*>(syncInput);
 
     ROI.Normalize();
-    ROI.Trim(0, image->GetWidth() - 1, 0, image->GetHeight() - 1);
+    ROI.Trim(0, matrix->GetCols() - 1, 0, matrix->GetRows() - 1);
 
     syncOutput = &OutputSurface;
 
@@ -61,7 +61,7 @@ int svlFilterDisparityMapToSurface::Process(svlProcInfo* procInfo, svlSample* sy
 
     _OnSingleThread(procInfo)
     {
-        svlImageProcessing::DisparityMapToSurface(dynamic_cast<svlSampleImageMonoFloat*>(syncInput),
+        svlImageProcessing::DisparityMapToSurface(dynamic_cast<svlSampleMatrixFloat*>(syncInput),
                                                   &OutputSurface,
                                                   Geometry,
                                                   ROI);

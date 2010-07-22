@@ -62,18 +62,26 @@ int svlFilterImageUnsharpMask::Initialize(svlSample* syncInput, svlSample* &sync
             OutputImage = new svlSampleImageRGBStereo;
         break;
 
-        case svlTypeImageRGBA:
-        case svlTypeImageRGBAStereo:
         case svlTypeInvalid:
         case svlTypeStreamSource:
         case svlTypeStreamSink:
+        case svlTypeImageRGBA:
+        case svlTypeImageRGBAStereo:
         case svlTypeImageMono8:
         case svlTypeImageMono8Stereo:
         case svlTypeImageMono16:
         case svlTypeImageMono16Stereo:
-        case svlTypeImageCustom:
-        case svlTypeImageMonoFloat:
         case svlTypeImage3DMap:
+        case svlTypeMatrixInt8:
+        case svlTypeMatrixInt16:
+        case svlTypeMatrixInt32:
+        case svlTypeMatrixInt64:
+        case svlTypeMatrixUInt8:
+        case svlTypeMatrixUInt16:
+        case svlTypeMatrixUInt32:
+        case svlTypeMatrixUInt64:
+        case svlTypeMatrixFloat:
+        case svlTypeMatrixDouble:
         case svlTypeTransform3D:
         case svlTypeTargets:
         case svlTypeText:

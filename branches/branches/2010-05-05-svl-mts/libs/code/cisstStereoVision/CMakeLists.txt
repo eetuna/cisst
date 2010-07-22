@@ -33,6 +33,8 @@ SET(SOURCE_FILES
     svlSampleText.cpp
     svlSampleTargets.cpp
     svlSampleTransform3D.cpp
+    svlSampleMatrixTypes.cpp
+    svlSampleMatrix.cpp
     svlSampleImageTypes.cpp
     svlSampleImage.cpp
     svlSample.cpp
@@ -113,9 +115,13 @@ SET(HEADER_FILES
     svlForwardDeclarations.h
     svlDefinitions.h
     svlTypes.h
+    svlTypeCheckers.h
     svlSampleText.h
     svlSampleTargets.h
     svlSampleTransform3D.h
+    svlSampleMatrixTypes.h
+    svlSampleMatrixCustom.h
+    svlSampleMatrix.h
     svlSampleImageTypes.h
     svlSampleImageCustom.h
     svlSampleImage.h

@@ -274,15 +274,15 @@ int svlImageProcessing::Deinterlace(svlSampleImage* image, unsigned int videoch,
     return SVL_OK;
 }
 
-int svlImageProcessing::DisparityMapToSurface(svlSampleImageMonoFloat* disparity_map,
+int svlImageProcessing::DisparityMapToSurface(svlSampleMatrixFloat* disparity_map,
                                               svlSampleImage3DMap* mesh_3d,
                                               svlCameraGeometry& camera_geometry,
                                               svlRect& roi)
 {
     if (!disparity_map || !mesh_3d) return SVL_FAIL;
 
-    const int disp_width = disparity_map->GetWidth();
-    const int disp_height = disparity_map->GetHeight();
+    const int disp_width = disparity_map->GetCols();
+    const int disp_height = disparity_map->GetRows();
     const int mesh_width = mesh_3d->GetWidth();
     const int mesh_height = mesh_3d->GetHeight();
     if (disp_width != mesh_width || disp_height != mesh_height) return SVL_FAIL;

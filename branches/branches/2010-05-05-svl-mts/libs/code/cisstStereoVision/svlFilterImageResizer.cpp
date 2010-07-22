@@ -101,12 +101,20 @@ int svlFilterImageResizer::Initialize(svlSample* syncInput, svlSample* &syncOutp
         // Other types may be added in the future
         case svlTypeImageRGBA:
         case svlTypeImageRGBAStereo:
-        case svlTypeImageMonoFloat:
+        case svlTypeMatrixInt8:
+        case svlTypeMatrixInt16:
+        case svlTypeMatrixInt32:
+        case svlTypeMatrixInt64:
+        case svlTypeMatrixUInt8:
+        case svlTypeMatrixUInt16:
+        case svlTypeMatrixUInt32:
+        case svlTypeMatrixUInt64:
+        case svlTypeMatrixFloat:
+        case svlTypeMatrixDouble:
         case svlTypeImage3DMap:
         case svlTypeInvalid:
         case svlTypeStreamSource:
         case svlTypeStreamSink:
-        case svlTypeImageCustom:
         case svlTypeTransform3D:
         case svlTypeTargets:
         case svlTypeText:

@@ -39,7 +39,6 @@ svlFilterImageFileWriter::svlFilterImageFileWriter() :
     AddInput("input", true);
     AddInputType("input", svlTypeImageRGB);
     AddInputType("input", svlTypeImageRGBStereo);
-    AddInputType("input", svlTypeImageMonoFloat);
 
     AddOutput("output", true);
     SetAutomaticOutputType(true);
@@ -52,7 +51,6 @@ svlFilterImageFileWriter::svlFilterImageFileWriter() :
     ImageCodec.SetAll(0);
     Disabled.SetAll(false);
 
-    DistanceScaling = 1.0f;
     // Continuous saving by default
     CaptureLength = -1;
 }
@@ -79,10 +77,6 @@ int svlFilterImageFileWriter::Initialize(svlSample* syncInput, svlSample* &syncO
         }
     }
 
-    if (syncInput->GetType() == svlTypeImageMonoFloat) {
-        ImageBuffer.SetSize(*syncInput);
-    }
-
     syncOutput = syncInput;
 
     return SVL_OK;
@@ -94,7 +88,6 @@ int svlFilterImageFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
 
     if (CaptureLength == 0) return SVL_OK;
 
-    svlSampleImage* tosave = 0;
     svlSampleImage* img = dynamic_cast<svlSampleImage*>(syncOutput);
     unsigned int videochannels = img->GetVideoChannels();
     unsigned int idx;
@@ -102,17 +95,6 @@ int svlFilterImageFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
     _ParallelLoop(procInfo, idx, videochannels)
     {
         if (Disabled[idx]) continue;
-
-        if (img->GetType() == svlTypeImageMonoFloat) {
-            svlConverter::float32toRGB24(reinterpret_cast<float*>(img->GetUCharPointer(idx)),
-                                         ImageBuffer.GetUCharPointer(idx),
-                                         img->GetWidth(idx) * img->GetHeight(idx),
-                                         DistanceScaling);
-            tosave = &ImageBuffer;
-        }
-        else {
-            tosave = img;
-        }
 
         std::stringstream path;
         path << FilePathPrefix[idx];
@@ -128,7 +110,7 @@ int svlFilterImageFileWriter::Process(svlProcInfo* procInfo, svlSample* syncInpu
 
         path << "." << Extension[idx];
 
-        if (ImageCodec[idx]->Write(*tosave, idx, path.str(), Compression[idx]) != SVL_OK) return SVL_FAIL;
+        if (ImageCodec[idx]->Write(*img, idx, path.str(), Compression[idx]) != SVL_OK) return SVL_FAIL;
     }
 
     _SynchronizeThreads(procInfo);
@@ -206,15 +188,5 @@ void svlFilterImageFileWriter::Pause()
 void svlFilterImageFileWriter::Record(int frames)
 {
     CaptureLength = frames;
-}
-
-void svlFilterImageFileWriter::SetDistanceIntensityRatio(float ratio)
-{
-    DistanceScaling = ratio;
-}
-
-float svlFilterImageFileWriter::GetDistanceIntensityRatio()
-{
-    return DistanceScaling;
 }
 

@@ -27,6 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 
 namespace svlConverter
 {
+    int ConvertSample(const svlSample* inimage, svlSample* outimage,
+                      unsigned int threads = 1, unsigned int threadid = 0);
     int ConvertImage(const svlSampleImage* inimage, svlSampleImage* outimage,
                      int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
     int ConvertImage(const svlSampleImage* inimage, const unsigned int inchannel,
@@ -40,9 +42,13 @@ namespace svlConverter
     void Gray16toRGBA32(unsigned short* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown = 0);
     void Gray16toGray8(unsigned short* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown = 0);
     void Gray32toRGB24(unsigned int* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown = 0);
+    void Gray32toRGBA32(unsigned int* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown = 0);
+    void Gray32toGray8(unsigned int* input, unsigned char* output, const unsigned int pixelcount, const unsigned int shiftdown = 0);
+    void Gray32toGray16(unsigned int* input, unsigned short* output, const unsigned int pixelcount, const unsigned int shiftdown = 0);
     void int32toRGB24(int* input, unsigned char* output, const unsigned int pixelcount, const int maxinputvalue = -1);
     void int32toRGBA32(int* input, unsigned char* output, const unsigned int pixelcount, const int maxinputvalue = -1);
     void int32toGray8(int* input, unsigned char* output, const unsigned int pixelcount, const int maxinputvalue = -1);
+    void int32toGray16(int* input, unsigned short* output, const unsigned int pixelcount, const int maxinputvalue = -1);
     void float32toRGB24(float* input, unsigned char* output, const unsigned int pixelcount, const float scalingratio = 1.0f, const int elementstride = 1);
     void float32toRGBA32(float* input, unsigned char* output, const unsigned int pixelcount, const float scalingratio = 1.0f, const int elementstride = 1);
     void float32toGray8(float* input, unsigned char* output, const unsigned int pixelcount, const float scalingratio = 1.0f, const int elementstride = 1);

@@ -88,7 +88,7 @@ protected:
     virtual int Release();
 
 private:
-    svlSampleImageMonoFloat* OutputImage;
+    svlSampleMatrixFloat* OutputMatrix;
 
     svlComputationalStereoMethodBase* StereoAlgorithm;
     svlComputationalStereoMethodBase* XCheckStereoAlgorithm;
