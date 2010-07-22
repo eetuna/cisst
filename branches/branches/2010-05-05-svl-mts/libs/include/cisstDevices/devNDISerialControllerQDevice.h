@@ -22,7 +22,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _devNDISerialControllerQDevice_h
 
 #include <cisstMultiTask/mtsComponent.h>
-#include <cisstMultiTask/mtsFunctionReadOrWrite.h>
+#include <cisstMultiTask/mtsFunctionRead.h>
+#include <cisstMultiTask/mtsFunctionWrite.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstDevices/devNDISerialControllerQWidget.h>
 #include <cisstDevices/devExport.h>  // always include last
