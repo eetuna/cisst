@@ -24,8 +24,9 @@ set (SOURCE_FILES
      mtsMulticastCommandWriteBase.cpp
 
      mtsFunctionVoid.cpp
-     mtsFunctionReadOrWrite.cpp
-     mtsFunctionQualifiedReadOrWrite.cpp
+     mtsFunctionRead.cpp
+     mtsFunctionWrite.cpp
+     mtsFunctionQualifiedRead.cpp
 
      mtsCommandQueuedVoidBase.cpp
      mtsCommandQueuedWriteBase.cpp
@@ -88,12 +89,13 @@ set (HEADER_FILES
      mtsCommandQueuedWrite.h
      mtsCommandQueuedWriteBase.h
      mtsCommandFilteredQueuedWrite.h
-     mtsFunctionReadOrWrite.h
+     mtsFunctionRead.h
+     mtsFunctionWrite.h
      mtsEventWriteGeneratorProxy.h
 
      mtsCommandQualifiedRead.h
      mtsCommandQualifiedReadOrWriteBase.h
-     mtsFunctionQualifiedReadOrWrite.h
+     mtsFunctionQualifiedRead.h
 
      mtsExport.h
      mtsForwardDeclarations.h
@@ -169,8 +171,9 @@ if(CISST_MTS_HAS_ICE)
       mtsCommandWriteProxy.h
       mtsCommandReadProxy.h
       mtsCommandQualifiedReadProxy.h
-      mtsFunctionReadOrWriteProxy.h
-      mtsFunctionQualifiedReadOrWriteProxy.h
+      mtsFunctionReadProxy.h
+      mtsFunctionWriteProxy.h
+      mtsFunctionQualifiedReadProxy.h
       mtsMulticastCommandWriteProxy.h
       )
 

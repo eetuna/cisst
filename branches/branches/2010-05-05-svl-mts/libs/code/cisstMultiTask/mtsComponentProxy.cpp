@@ -25,8 +25,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsManagerLocal.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
-#include <cisstMultiTask/mtsFunctionReadOrWriteProxy.h>
-#include <cisstMultiTask/mtsFunctionQualifiedReadOrWriteProxy.h>
+#include <cisstMultiTask/mtsFunctionReadProxy.h>
+#include <cisstMultiTask/mtsFunctionWriteProxy.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadProxy.h>
 
 mtsComponentProxy::mtsComponentProxy(const std::string & componentProxyName)
 : mtsComponent(componentProxyName)

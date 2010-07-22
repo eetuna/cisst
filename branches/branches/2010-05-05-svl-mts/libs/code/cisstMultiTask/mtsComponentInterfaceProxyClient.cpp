@@ -22,8 +22,9 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsComponentProxy.h>
 #include <cisstMultiTask/mtsComponentInterfaceProxyClient.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsFunctionReadOrWriteProxy.h>
-#include <cisstMultiTask/mtsFunctionQualifiedReadOrWriteProxy.h>
+#include <cisstMultiTask/mtsFunctionReadProxy.h>
+#include <cisstMultiTask/mtsFunctionWriteProxy.h>
+#include <cisstMultiTask/mtsFunctionQualifiedReadProxy.h>
 
 #include <cisstOSAbstraction/osaSleep.h>
 

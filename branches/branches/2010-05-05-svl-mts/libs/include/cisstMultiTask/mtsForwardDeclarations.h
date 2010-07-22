@@ -60,14 +60,15 @@ template <class _argumentBaseType> class mtsCommandReadOrWriteBase;
 typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
 typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
 
-template <class _argumentType> class mtsFunctionReadOrWrite;
+class mtsFunctionRead;
+class mtsFunctionWrite;
 
 // two arguments commands
 template <class _argument2BaseType> class mtsCommandQualifiedReadOrWriteBase;
 typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
 typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
 
-template <class _argumentType> class mtsFunctionQualifiedReadOrWrite;
+class mtsFunctionQualifiedRead;
 
 // multicast commands
 class mtsMulticastCommandWriteBase;
