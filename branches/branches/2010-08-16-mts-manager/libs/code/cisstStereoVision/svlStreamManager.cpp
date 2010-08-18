@@ -217,7 +217,7 @@ int svlStreamManager::Initialize(void)
 
     Initialized = true;
     StreamStatus = SVL_STREAM_INITIALIZED;
-
+    CMN_LOG_CLASS_INIT_DEBUG << "Initialize: stream \"" << this->GetName() << "\" initialized" << std::endl;
     return SVL_OK;
 }
 

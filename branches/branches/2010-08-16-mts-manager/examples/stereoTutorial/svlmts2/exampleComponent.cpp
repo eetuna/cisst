@@ -78,9 +78,7 @@ void exampleComponent::CreateVideo(void)
     newComponent.ComponentName = "Window";
     Manager.CreateComponent(newComponent);
 
-    // connect to the remote stream manager to connect it to the
-    // source.  Later revisions should allow to connect the stream
-    // manager to the source unsing mtsComponent::Interface::Connect
+    // connect this application to the remote stream manager
     mtsDescriptionConnection connection;
     connection.Server.ProcessName = "svlExMultitask2Video";
     connection.Server.ComponentName = "Stream";
@@ -89,9 +87,10 @@ void exampleComponent::CreateVideo(void)
     connection.Client.ComponentName = this->GetName();
     connection.Client.InterfaceName =  "StreamControl";
     Manager.Connect(connection);
-    osaSleep(1.0 * cmn_s);
+    osaSleep(5 * cmn_s);
+    StreamControl.SetSourceFilter(mtsStdString("Source"));
 
-    // connect to source and window control
+    // connect this application to source and window settings
     connection.Server.ProcessName = "svlExMultitask2Video";
     connection.Server.ComponentName = "Source";
     connection.Server.InterfaceName = "Settings";
@@ -99,6 +98,10 @@ void exampleComponent::CreateVideo(void)
     connection.Client.ComponentName = this->GetName();
     connection.Client.InterfaceName =  "SourceSettings";
     Manager.Connect(connection);
+    osaSleep(5 * cmn_s);
+    SourceSettings.SetLoop(true);
+    SourceSettings.SetChannels(mtsInt(1));
+    SourceSettings.SetFilename(mtsStdString("crop2.avi"));
 
     connection.Server.ProcessName = "svlExMultitask2Video";
     connection.Server.ComponentName = "Window";
@@ -107,8 +110,11 @@ void exampleComponent::CreateVideo(void)
     connection.Client.ComponentName = this->GetName();
     connection.Client.InterfaceName =  "WindowSettings";
     Manager.Connect(connection);
+    osaSleep(5 * cmn_s);
+    WindowSettings.SetTitle(mtsStdString("Image window"));
+    WindowSettings.SetPosition(vctInt2(20, 20));
 
-    // connect filters together
+    // connect remote filters together
     connection.Server.ProcessName = "svlExMultitask2Video";
     connection.Server.ComponentName = "Source";
     connection.Server.InterfaceName = "output";
@@ -116,22 +122,12 @@ void exampleComponent::CreateVideo(void)
     connection.Client.ComponentName = "Window";
     connection.Client.InterfaceName = "input";
     Manager.Connect(connection);
-
-    // configure remote stream manager
-    StreamControl.SetSourceFilter(mtsStdString("Source"));
 }
 
 
 void exampleComponent::StartVideo(void)
 {
     CMN_LOG_CLASS_RUN_VERBOSE << "StartVideo" << std::endl;
-
-    SourceSettings.SetLoop(true);
-    SourceSettings.SetChannels(mtsInt(1));
-    SourceSettings.SetFilename(mtsStdString("crop2.avi"));
-
-    WindowSettings.SetTitle(mtsStdString("Image window"));
-    WindowSettings.SetPosition(vctInt2(20, 20));
 
     StreamControl.Initialize();
     StreamControl.Play();
