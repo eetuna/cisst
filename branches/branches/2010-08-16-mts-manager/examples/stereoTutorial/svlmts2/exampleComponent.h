@@ -25,6 +25,7 @@
 
 
 #include <cisstMultiTask.h>
+#include <cisstStereoVision.h>
 
 
 class exampleComponent: public mtsTaskFromSignal
@@ -46,8 +47,12 @@ protected:
 
     struct {
         mtsFunctionWrite CreateComponent;
+        mtsFunctionWrite Connect;
     } Manager;
 
+    IReqStreamManager StreamControl;
+    IReqFilterSourceVideoFile SourceSettings;
+    IReqFilterImageWindow WindowSettings;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(exampleComponent);

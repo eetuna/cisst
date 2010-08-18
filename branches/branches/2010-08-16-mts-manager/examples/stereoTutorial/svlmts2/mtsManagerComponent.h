@@ -36,30 +36,83 @@ class mtsDescriptionNewComponent: public mtsGenericObject
     inline void ToStream(std::ostream & outputStream) const {
         mtsGenericObject::ToStream(outputStream);
         outputStream << std::endl
-		     << "Process: " << this->ProcessName
-		     << " Class: " << this->ClassName
-		     << " Name: " << this->ComponentName << std::endl;
+                     << "Process: " << this->ProcessName
+                     << " Class: " << this->ClassName
+                     << " Name: " << this->ComponentName << std::endl;
     }
 
     inline void SerializeRaw(std::ostream & outputStream) const
     {
         mtsGenericObject::SerializeRaw(outputStream);
-	cmnSerializeRaw(outputStream, this->ProcessName);
-	cmnSerializeRaw(outputStream, this->ClassName);
-	cmnSerializeRaw(outputStream, this->ComponentName);
+        cmnSerializeRaw(outputStream, this->ProcessName);
+        cmnSerializeRaw(outputStream, this->ClassName);
+        cmnSerializeRaw(outputStream, this->ComponentName);
     }
 
     inline void DeSerializeRaw(std::istream & inputStream)
     {
         mtsGenericObject::DeSerializeRaw(inputStream);
-	cmnDeSerializeRaw(inputStream, this->ProcessName);
-	cmnDeSerializeRaw(inputStream, this->ClassName);
-	cmnDeSerializeRaw(inputStream, this->ComponentName);
+        cmnDeSerializeRaw(inputStream, this->ProcessName);
+        cmnDeSerializeRaw(inputStream, this->ClassName);
+        cmnDeSerializeRaw(inputStream, this->ComponentName);
     }
 
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionNewComponent);
+
+
+
+class mtsDescriptionConnection: public mtsGenericObject
+{
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+ public:
+    struct FullInterface {
+        std::string ProcessName;
+        std::string ComponentName;
+        std::string InterfaceName;
+    };
+
+    FullInterface Client;
+    FullInterface Server;
+
+    inline void ToStream(std::ostream & outputStream) const {
+        mtsGenericObject::ToStream(outputStream);
+        outputStream << std::endl
+                     << "Client process: " << this->Client.ProcessName
+                     << ", component: " << this->Client.ComponentName
+                     << ", interface: " << this->Client.InterfaceName << std::endl
+                     << "Server process: " << this->Server.ProcessName
+                     << ", component: " << this->Server.ComponentName
+                     << ", interface: " << this->Server.InterfaceName << std::endl;
+    }
+
+    inline void SerializeRaw(std::ostream & outputStream) const
+    {
+        mtsGenericObject::SerializeRaw(outputStream);
+        cmnSerializeRaw(outputStream, this->Client.ProcessName);
+        cmnSerializeRaw(outputStream, this->Client.ComponentName);
+        cmnSerializeRaw(outputStream, this->Client.InterfaceName);
+        cmnSerializeRaw(outputStream, this->Server.ProcessName);
+        cmnSerializeRaw(outputStream, this->Server.ComponentName);
+        cmnSerializeRaw(outputStream, this->Server.InterfaceName);
+    }
+    
+    inline void DeSerializeRaw(std::istream & inputStream)
+    {
+        mtsGenericObject::DeSerializeRaw(inputStream);
+        cmnDeSerializeRaw(inputStream, this->Client.ProcessName);
+        cmnDeSerializeRaw(inputStream, this->Client.ComponentName);
+        cmnDeSerializeRaw(inputStream, this->Client.InterfaceName);
+        cmnDeSerializeRaw(inputStream, this->Server.ProcessName);
+        cmnDeSerializeRaw(inputStream, this->Server.ComponentName);
+        cmnDeSerializeRaw(inputStream, this->Server.InterfaceName);
+    }
+    
+};
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnection);
+
 
 class mtsManagerComponent: public mtsTaskFromSignal
 {
@@ -78,15 +131,19 @@ public:
     void ConnectToRemoteManager(const std::string & processName);
 
 protected:
+
     // added to interface for components to create local or remote
     void CreateComponent(const mtsDescriptionNewComponent & component);
+    void Connect(const mtsDescriptionConnection & connection);
 
     // added to interface for managers to create local
     void CreateComponentLocally(const mtsDescriptionNewComponent & component);
+    void ConnectLocally(const mtsDescriptionConnection & connection);
     
     struct OtherManager {
-	mtsFunctionWrite CreateComponent;
-	mtsInterfaceRequired * RequiredInterface; // might be useful?
+        mtsFunctionWrite CreateComponent;
+        mtsFunctionWrite Connect;
+        mtsInterfaceRequired * RequiredInterface; // might be useful?
     };
 
     cmnNamedMap<OtherManager> OtherManagers;
