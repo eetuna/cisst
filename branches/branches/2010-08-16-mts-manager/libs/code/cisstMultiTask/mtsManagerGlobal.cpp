@@ -267,11 +267,13 @@ mtsManagerLocalInterface * mtsManagerGlobal::GetProcessObject(const std::string 
         return false;
     }
 
+#if CISST_MTS_HAS_ICE
     if (LocalManager) {
         if (LocalManager->GetProcessName() == processName) {
             return LocalManager;
         }
     }
+#endif
 
     return LocalManagerConnected;
 }
