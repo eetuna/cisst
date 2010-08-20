@@ -48,7 +48,8 @@ osaMutex mtsManagerLocal::ConfigurationChange;
 bool mtsManagerLocal::UnitTestEnabled = false;
 bool mtsManagerLocal::UnitTestNetworkProxyEnabled = false;
 
-#define DEFAULT_PROCESS_NAME "LCM"
+const std::string ProcessNameOfLCMDefault = "LCM";
+const std::string ProcessNameOfLCMinGCM = "LCM-in-GCM";
 
 mtsManagerLocal::mtsManagerLocal(void)
 {
@@ -58,9 +59,9 @@ mtsManagerLocal::mtsManagerLocal(void)
         TimeServer.SetTimeOrigin();
     }
 
-    // In standalone mode, process name is set as DEFAULT_PROCESS_NAME by
+    // In standalone mode, process name is set as ProcessNameOfLCMDefault by
     // default since there is only one instance of local task manager.
-    ProcessName = DEFAULT_PROCESS_NAME;
+    ProcessName = ProcessNameOfLCMDefault;
 
     CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: STANDALONE mode" << std::endl;
 
@@ -80,9 +81,33 @@ mtsManagerLocal::mtsManagerLocal(void)
     }
 
     ManagerGlobal = globalManager;
+
+    Configuration = LCM_CONFIG_STANDALONE;
 }
 
 #if CISST_MTS_HAS_ICE
+mtsManagerLocal::mtsManagerLocal(mtsManagerGlobal & globalComponentManager)
+{
+    Initialize();
+
+    if (!UnitTestEnabled) {
+        TimeServer.SetTimeOrigin();
+    }
+
+    ProcessName = ProcessNameOfLCMinGCM;
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "Local component manager: NETWORK mode with GCM" << std::endl;
+
+    // Register process object to the global component manager
+    if (!globalComponentManager.AddProcessObject(this)) {
+        cmnThrow(std::runtime_error("Failed to register process object to the global component manager"));
+    }
+
+    ManagerGlobal = &globalComponentManager;
+
+    Configuration = LCM_CONFIG_NETWORKED_WITH_GCM;
+}
+
 mtsManagerLocal::mtsManagerLocal(const std::string & globalComponentManagerIP,
                                  const std::string & thisProcessName,
                                  const std::string & thisProcessIP)
@@ -103,6 +128,8 @@ mtsManagerLocal::mtsManagerLocal(const std::string & globalComponentManagerIP,
 
     // Set this machine's IP
     SetIPAddress();
+
+    Configuration = LCM_CONFIG_NETWORKED;
 }
 
 bool mtsManagerLocal::CreateProxy(void)
@@ -166,7 +193,9 @@ mtsManagerLocal::~mtsManagerLocal()
     // If ManagerGlobal is not NULL, it means Cleanup() has not been called
     // before. Thus, it needs to be called here for safe and clean termination.
     if (ManagerGlobal) {
-        Cleanup();
+        if (Configuration == LCM_CONFIG_NETWORKED) {
+            Cleanup();
+        }
     }
 }
 
@@ -333,6 +362,14 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
 
     mtsManagerLocal::ConfigurationChange.Unlock();
 
+    return Instance;
+}
+
+mtsManagerLocal * mtsManagerLocal::GetInstance(mtsManagerGlobal & globalComponentManager)
+{
+    if (!Instance) {
+        Instance = new mtsManagerLocal(globalComponentManager);
+    }
     return Instance;
 }
 #endif
@@ -1246,6 +1283,11 @@ std::vector<std::string> mtsManagerLocal::GetIPAddressList(void)
 void mtsManagerLocal::GetIPAddressList(std::vector<std::string> & ipAddresses)
 {
     osaSocket::GetLocalhostIP(ipAddresses);
+}
+
+const std::string & mtsManagerLocal::GetProcessNameOfLCMinGCM(void)
+{
+    return ProcessNameOfLCMinGCM;
 }
 
 bool mtsManagerLocal::Connect(

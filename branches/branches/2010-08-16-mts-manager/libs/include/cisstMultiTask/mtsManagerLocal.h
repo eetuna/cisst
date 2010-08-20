@@ -88,6 +88,19 @@ private:
         network proxy creation/setup or remote connection (false by default) */
     static bool UnitTestNetworkProxyEnabled;
 
+    /*! Typedef for local component manager's configuration */
+    typedef enum {
+        // Standalone mode: supports only local components/connections
+        LCM_CONFIG_STANDALONE,
+        // Networked mode: supports both local and remote components/connections
+        LCM_CONFIG_NETWORKED,
+        // Networked mode with global component manager: basically identical to 
+        // LCM_CONFIG_NETWORKED configuration except that LCM runs with the 
+        // global component manager on a same process.
+        LCM_CONFIG_NETWORKED_WITH_GCM
+    } ConfigurationType;
+    ConfigurationType Configuration;
+
 protected:
     /*! Typedef for component map: key is component name, value is component
         object */
@@ -133,6 +146,7 @@ protected:
     mtsManagerLocal(const std::string & globalComponentManagerIP,
                     const std::string & thisProcessName,
                     const std::string & thisProcessIP);
+    mtsManagerLocal(mtsManagerGlobal & globalComponentManager);
 #endif
 
     /*! Destructor. Includes OS-specific cleanup. */
@@ -381,6 +395,8 @@ public:
                                          const std::string & thisProcessName = "",
                                          const std::string & thisProcessIP = "");
 
+    static mtsManagerLocal * GetInstance(mtsManagerGlobal & globalComponentManager);
+
 #endif
 
     /*! Enumerate all the names of components added */
@@ -485,6 +501,10 @@ public:
     inline const std::string GetName(void) const {
         return GetProcessName();
     }
+
+    /*! Returns name of local component manager running with the global component
+        manager */
+    static const std::string & GetProcessNameOfLCMinGCM(void);
 #endif
 
     /*! For debugging. Dumps to stream the maps maintained by the manager. */
