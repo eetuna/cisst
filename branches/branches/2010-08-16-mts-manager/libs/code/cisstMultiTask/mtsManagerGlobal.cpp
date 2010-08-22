@@ -1411,7 +1411,10 @@ void mtsManagerGlobal::GetNamesOfCommands(const std::string & processName,
                                           std::vector<std::string>& namesOfCommands) const
 {
     if (LocalManager) {
-        LocalManager->GetNamesOfCommands(namesOfCommands, componentName, providedInterfaceName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetNamesOfCommands(namesOfCommands, componentName, providedInterfaceName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1425,7 +1428,10 @@ void mtsManagerGlobal::GetNamesOfEventGenerators(const std::string & processName
                                                  std::vector<std::string>& namesOfEventGenerators) const
 {
     if (LocalManager) {
-        LocalManager->GetNamesOfEventGenerators(namesOfEventGenerators, componentName, providedInterfaceName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetNamesOfEventGenerators(namesOfEventGenerators, componentName, providedInterfaceName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1439,7 +1445,10 @@ void mtsManagerGlobal::GetNamesOfFunctions(const std::string & processName,
                                            std::vector<std::string>& namesOfFunctions) const
 {
     if (LocalManager) {
-        LocalManager->GetNamesOfFunctions(namesOfFunctions, componentName, requiredInterfaceName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetNamesOfFunctions(namesOfFunctions, componentName, requiredInterfaceName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1453,7 +1462,10 @@ void mtsManagerGlobal::GetNamesOfEventHandlers(const std::string & processName,
                                                std::vector<std::string>& namesOfEventHandlers) const
 {
     if (LocalManager) {
-        LocalManager->GetNamesOfEventHandlers(namesOfEventHandlers, componentName, requiredInterfaceName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetNamesOfEventHandlers(namesOfEventHandlers, componentName, requiredInterfaceName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1468,7 +1480,10 @@ void mtsManagerGlobal::GetDescriptionOfCommand(const std::string & processName,
                                                std::string & description) const
 {
     if (LocalManager) {
-        LocalManager->GetDescriptionOfCommand(description, componentName, providedInterfaceName, commandName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetDescriptionOfCommand(description, componentName, providedInterfaceName, commandName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1483,7 +1498,10 @@ void mtsManagerGlobal::GetDescriptionOfEventGenerator(const std::string & proces
                                                       std::string & description) const
 {
     if (LocalManager) {
-        LocalManager->GetDescriptionOfEventGenerator(description, componentName, providedInterfaceName, eventGeneratorName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetDescriptionOfEventGenerator(description, componentName, providedInterfaceName, eventGeneratorName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1498,7 +1516,10 @@ void mtsManagerGlobal::GetDescriptionOfFunction(const std::string & processName,
                                                 std::string & description) const
 {
     if (LocalManager) {
-        LocalManager->GetDescriptionOfFunction(description, componentName, requiredInterfaceName, functionName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetDescriptionOfFunction(description, componentName, requiredInterfaceName, functionName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1513,7 +1534,10 @@ void mtsManagerGlobal::GetDescriptionOfEventHandler(const std::string & processN
                                                     std::string & description) const
 {
     if (LocalManager) {
-        LocalManager->GetDescriptionOfEventHandler(description, componentName, requiredInterfaceName, eventHandlerName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetDescriptionOfEventHandler(description, componentName, requiredInterfaceName, eventHandlerName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1529,7 +1553,10 @@ void mtsManagerGlobal::GetArgumentInformation(const std::string & processName,
                                               std::vector<std::string> & signalNames) const
 {
     if (LocalManager) {
-        LocalManager->GetArgumentInformation(argumentName, signalNames, componentName, providedInterfaceName, commandName, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetArgumentInformation(argumentName, signalNames, componentName, providedInterfaceName, commandName, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
@@ -1545,7 +1572,10 @@ void mtsManagerGlobal::GetValuesOfCommand(const std::string & processName,
                                           mtsManagerLocalInterface::SetOfValues & values) const
 {
     if (LocalManager) {
-        LocalManager->GetValuesOfCommand(values, componentName, providedInterfaceName, commandName, scalarIndex, processName);
+        if (LocalManager->GetProcessName() == processName) {
+            LocalManager->GetValuesOfCommand(values, componentName, providedInterfaceName, commandName, scalarIndex, processName);
+            return;
+        }
     }
 
     if (LocalManagerConnected) {
