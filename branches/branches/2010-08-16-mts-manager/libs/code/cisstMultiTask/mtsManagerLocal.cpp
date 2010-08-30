@@ -34,6 +34,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskFromCallback.h>
 #include <cisstMultiTask/mtsTaskFromSignal.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
+#include <cisstMultiTask/mtsManagerComponentClient.h>
+#include <cisstMultiTask/mtsManagerComponentServer.h>
 
 #if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsComponentProxy.h>
@@ -80,9 +82,28 @@ mtsManagerLocal::mtsManagerLocal(void)
         cmnThrow(std::runtime_error("Failed to register process object to the global component manager"));
     }
 
+    // Automatically add internal manager component when the LCM is initialized.
+    if (!AddManagerComponent(ProcessName)) {
+        cmnThrow(std::runtime_error("Failed to add internal manager component"));
+    }
+
     ManagerGlobal = globalManager;
 
     Configuration = LCM_CONFIG_STANDALONE;
+}
+
+bool mtsManagerLocal::AddManagerComponent(const std::string & processName)
+{
+    /* TODO
+    std::string managerComponentName = processName;
+    // MJ: how should we prevent users from using the same component name for
+    // user-defined components? (should we?)
+    managerComponentName += "-MNG-COMP";
+
+    mtsManagerComponent * managerComponent = new mtsManagerComponent(managerComponentName);
+    return AddComponent(managerComponent);
+    */
+    return true;
 }
 
 #if CISST_MTS_HAS_ICE
@@ -102,8 +123,12 @@ mtsManagerLocal::mtsManagerLocal(mtsManagerGlobal & globalComponentManager)
     if (!globalComponentManager.AddProcessObject(this)) {
         cmnThrow(std::runtime_error("Failed to register process object to the global component manager"));
     }
-
     ManagerGlobal = &globalComponentManager;
+
+    // Automatically add internal manager component when the LCM is initialized.
+    if (!AddManagerComponent(ProcessName)) {
+        cmnThrow(std::runtime_error("Failed to add internal manager component"));
+    }
 
     Configuration = LCM_CONFIG_NETWORKED_WITH_GCM;
 }
@@ -128,6 +153,11 @@ mtsManagerLocal::mtsManagerLocal(const std::string & globalComponentManagerIP,
 
     // Set this machine's IP
     SetIPAddress();
+
+    // Automatically add internal manager component when the LCM is initialized.
+    if (!AddManagerComponent(ProcessName)) {
+        cmnThrow(std::runtime_error("Failed to add internal manager component"));
+    }
 
     Configuration = LCM_CONFIG_NETWORKED;
 }
@@ -292,7 +322,14 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
         // Transfer component information
         ComponentMapType::const_iterator it = Instance->ComponentMap.begin();
         const ComponentMapType::const_iterator itEnd = Instance->ComponentMap.end();
+        std::string managerComponentName = Instance->GetProcessName();
+        // TODO: smmy
+        //managerComponentName += "-MNG-COMP";
         for (; it != itEnd; ++it) {
+            // Do not trasnfer internal manager component
+            if (it->second->GetName() == managerComponentName) {
+                continue;
+            }
             if (!newInstance->AddComponent(it->second)) {
                 CMN_LOG_INIT_ERROR << "Class mtsManagerLocal: Reconfiguration: failed to trasnfer component while reconfiguring LCM: "
                                    << it->second->GetName() << std::endl;

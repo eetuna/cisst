@@ -155,6 +155,9 @@ protected:
     /*! Initialization */
     void Initialize(void);
 
+    /*! Add an internal manager component automatically when LCM is initialized */
+    bool AddManagerComponent(const std::string & processName);
+
 #if CISST_MTS_HAS_ICE
     /*! \brief Set IP address of this machine */
     void SetIPAddress(void);

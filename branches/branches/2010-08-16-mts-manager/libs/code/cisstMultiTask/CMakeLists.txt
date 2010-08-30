@@ -57,6 +57,9 @@ set (SOURCE_FILES
 
      mtsManagerLocal.cpp
      mtsManagerGlobal.cpp
+     mtsManagerComponentBase.cpp
+     mtsManagerComponentServer.cpp
+     mtsManagerComponentClient.cpp
      )
 
 # all header files
@@ -135,6 +138,9 @@ set (HEADER_FILES
      mtsManagerLocal.h
      mtsManagerGlobalInterface.h
      mtsManagerGlobal.h
+     mtsManagerComponentBase.h
+     mtsManagerComponentServer.h
+     mtsManagerComponentClient.h
 
      mtsHistory.h
      )
