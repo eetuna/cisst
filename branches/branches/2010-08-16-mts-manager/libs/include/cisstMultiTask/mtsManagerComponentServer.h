@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: 
+  $Id: mtsManagerComponentServer.h 1726 2010-08-30 05:07:54Z mjung5 $
 
   Author(s):  Min Yang Jung
   Created on: 2010-08-29
@@ -42,17 +42,32 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsManagerComponentBase.h>
 
+class mtsManagerGlobal;
+
 class mtsManagerComponentServer : public mtsManagerComponentBase
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+protected:
+    /*! Global component manager instance to directly use the services it 
+        provides */
+    mtsManagerGlobal * GCM;
+
+    /*! Getters for GCM service provider */
+    void GetNamesOfProcesses(mtsStdStringVec & stdStringVec) const;
+
 public:
-    mtsManagerComponentServer();
+    mtsManagerComponentServer(mtsManagerGlobal * gcm);
     ~mtsManagerComponentServer();
 
     void Startup(void);
     void Run(void);
     void Cleanup(void);
+
+    /*! Name of this component which is globally unique */
+    static std::string NameOfManagerComponentServer;
+    /*! Name of provided interface that provides services */
+    static std::string NameOfInterfaceProvided;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentServer);

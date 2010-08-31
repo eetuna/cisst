@@ -139,6 +139,12 @@ protected:
           different process or a different host. */      
     mtsManagerGlobalInterface * ManagerGlobal;
 
+    /*! Manager component instances (for direct access) */
+    struct {
+        mtsManagerComponentClient * Client;
+        mtsManagerComponentServer * Server;
+    } ManagerComponent;
+
     /*! Protected constructor (singleton) */
     mtsManagerLocal(void);
 
@@ -155,8 +161,16 @@ protected:
     /*! Initialization */
     void Initialize(void);
 
-    /*! Add an internal manager component automatically when LCM is initialized */
-    bool AddManagerComponent(const std::string & processName);
+    /*! \brief Add an internal manager component automatically when LCM is 
+               initialized 
+        \param processName Name of this process (or this LCM) 
+        \param isServer True to create manager component server, false to create 
+               manager component client.  Note that this argument should be true 
+               only when LCM runs with GCM in the same process. */
+    bool AddManagerComponent(const std::string & processName, const bool isServer = false);
+
+    /*! \brief Connect manager component client to manager component server */
+    bool ConnectManagerComponent(void);
 
 #if CISST_MTS_HAS_ICE
     /*! \brief Set IP address of this machine */
@@ -376,6 +390,11 @@ public:
     //-------------------------------------------------------------------------
     //  Getters and Utilities
     //-------------------------------------------------------------------------
+    /*! Default name of local component manager */
+    static std::string ProcessNameOfLCMDefault;
+    /*! Name of local component manager running with the global component manager */
+    static std::string ProcessNameOfLCMWithGCM;
+
 #if !CISST_MTS_HAS_ICE
     /*! Get a singleton object of local component manager */
     static mtsManagerLocal * GetInstance(void);
@@ -504,10 +523,6 @@ public:
     inline const std::string GetName(void) const {
         return GetProcessName();
     }
-
-    /*! Returns name of local component manager running with the global component
-        manager */
-    static const std::string & GetProcessNameOfLCMinGCM(void);
 #endif
 
     /*! For debugging. Dumps to stream the maps maintained by the manager. */

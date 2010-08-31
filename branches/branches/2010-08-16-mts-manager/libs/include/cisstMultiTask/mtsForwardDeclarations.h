@@ -136,5 +136,8 @@ class mtsManagerLocalInterface;
 class mtsManagerGlobal;
 class mtsManagerGlobalInterface;
 
+class mtsManagerComponentClient;
+class mtsManagerComponentServer;
+
 #endif  // _mtsForwardDeclarations_h
 

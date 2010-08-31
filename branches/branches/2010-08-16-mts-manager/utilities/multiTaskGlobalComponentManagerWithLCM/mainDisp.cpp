@@ -63,7 +63,7 @@ int main(int argc, char * argv[])
 
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     if (!taskManager->Connect("ProcessDisp", "DISP", "DataGenerator", 
-        mtsManagerLocal::GetProcessNameOfLCMinGCM(), "SIN", "MainInterface"))
+                              mtsManagerLocal::ProcessNameOfLCMWithGCM, "SIN", "MainInterface"))
     {
         CMN_LOG_INIT_ERROR << "Failed to connect" << std::endl;
         return 1;

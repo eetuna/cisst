@@ -50,6 +50,7 @@ int main(int argc, char * argv[])
     cmnClassRegister::SetLoDForAllClasses(CMN_LOG_LOD_VERY_VERBOSE);
 
     mtsComponentManager * componentManager = mtsComponentManager::GetInstance(globalComponentManagerIP, "svlExMultitask2Application");
+#if 0
     mtsManagerComponent * managerComponent = new mtsManagerComponent("Manager");
     componentManager->AddComponent(managerComponent);
     managerComponent->ConnectToRemoteManager("svlExMultitask2Video");
@@ -59,6 +60,7 @@ int main(int argc, char * argv[])
 
     componentManager->Connect(exampleComponentObject->GetName(), "ToManager",
                               managerComponent->GetName(), "ForComponents");
+#endif
 
     devKeyboard * keyboard = new devKeyboard;
     keyboard->SetQuitKey('q');

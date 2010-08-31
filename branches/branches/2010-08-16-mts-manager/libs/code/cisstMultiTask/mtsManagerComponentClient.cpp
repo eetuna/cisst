@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: 
+  $Id: mtsManagerComponentClient.cpp 1726 2010-08-30 05:07:54Z mjung5 $
 
   Author(s):  Min Yang Jung
   Created on: 2010-08-29
@@ -25,18 +25,29 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerComponentClient);
 
-mtsManagerComponentClient::mtsManagerComponentClient(const std::string & processName)
-    : mtsManagerComponentBase("MNGR-COMP-" + processName)
-{
-    UseSeparateLogFileDefault();
+std::string mtsManagerComponentClient::NameOfInterfaceRequired = "GCMServiceInterfaceRequired";
 
-    //
-    // TODO: add interface(s)
-    //
+mtsManagerComponentClient::mtsManagerComponentClient(const std::string & componentName)
+    : mtsManagerComponentBase(componentName)
+{
+    mtsInterfaceRequired * required = 
+        AddInterfaceRequired(mtsManagerComponentClient::NameOfInterfaceRequired);
+    if (required) {
+        required->AddFunction("GetNamesOfProcesses", GetNamesOfProcesses);
+    } else {
+        std::string err("Failed to add required interface: ");
+        err += mtsManagerComponentClient::NameOfInterfaceRequired;
+        cmnThrow(std::runtime_error(err));
+    }
 }
 
 mtsManagerComponentClient::~mtsManagerComponentClient()
 {
+}
+
+void mtsManagerComponentClient::Startup(void)
+{
+   CMN_LOG_CLASS_INIT_VERBOSE << "Manager component CLIENT starts" << std::endl;
 }
 
 void mtsManagerComponentClient::Run(void)
@@ -46,4 +57,17 @@ void mtsManagerComponentClient::Run(void)
 
 void mtsManagerComponentClient::Cleanup(void)
 {
+}
+
+void mtsManagerComponentClient::Test(void)
+{
+    mtsStdStringVec vec;
+    GetNamesOfProcesses(vec);
+
+    static int cnt = 0;
+    std::cout << ++cnt << ") size: " << vec.size() << std::endl;
+
+    for (unsigned int i = 0; i < vec.size(); ++i) {
+        std::cout << "\t" << vec(i) << std::endl;
+    }
 }
