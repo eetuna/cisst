@@ -3,10 +3,10 @@
 
 /*
   $Id$
-  
+
   Author(s):  Min Yang Jung
   Created on: 2009-11-17
-  
+
   (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
@@ -87,7 +87,7 @@ void mtsManagerLocalTest::TestCleanup(void)
     mtsManagerTestDevice1 * dummy = new mtsManagerTestDevice1;
     CPPUNIT_ASSERT(managerLocal.ComponentMap.AddItem("dummy", dummy));
     CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(1), managerLocal.ComponentMap.size());
-    
+
     managerLocal.Cleanup();
 
     CPPUNIT_ASSERT(managerLocal.ManagerGlobal == 0);
@@ -109,14 +109,14 @@ void mtsManagerLocalTest::TestGetInstance(void)
 void mtsManagerLocalTest::TestAddComponent(void)
 {
     mtsManagerLocal localManager1;
-    
+
     // Test with mtsComponent type components
     mtsManagerTestDevice2 * device2 = new mtsManagerTestDevice2;
 
     // Invalid argument test
     CPPUNIT_ASSERT(!localManager1.AddComponent(NULL));
 
-    // Check with the global component manager.    
+    // Check with the global component manager.
     // Should fail if a component has already been registered before
     CPPUNIT_ASSERT(localManager1.ManagerGlobal->AddComponent(DEFAULT_PROCESS_NAME, device2->GetName()));
     CPPUNIT_ASSERT(!localManager1.AddComponent(device2));
@@ -125,8 +125,8 @@ void mtsManagerLocalTest::TestAddComponent(void)
     CPPUNIT_ASSERT(localManager1.ManagerGlobal->RemoveComponent(DEFAULT_PROCESS_NAME, device2->GetName()));
     CPPUNIT_ASSERT(localManager1.AddComponent(device2));
     CPPUNIT_ASSERT(localManager1.ComponentMap.FindItem(device2->GetName()));
-    
-    // Check if all the existing required interfaces and provided interfaces are 
+
+    // Check if all the existing required interfaces and provided interfaces are
     // added to the global component manager.
     CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindInterfaceRequiredOrInput(DEFAULT_PROCESS_NAME, device2->GetName(), "r1"));
     CPPUNIT_ASSERT(localManager1.ManagerGlobal->FindInterfaceProvidedOrOutput(DEFAULT_PROCESS_NAME, device2->GetName(), "p1"));
@@ -140,7 +140,7 @@ void mtsManagerLocalTest::TestAddComponent(void)
     // Invalid argument test
     CPPUNIT_ASSERT(!localManager2.AddComponent(NULL));
 
-    // Check with the global component manager.    
+    // Check with the global component manager.
     // Should fail if a component to be added has already been registered before
     CPPUNIT_ASSERT(localManager2.ManagerGlobal->AddComponent(DEFAULT_PROCESS_NAME, continuous1->GetName()));
     CPPUNIT_ASSERT(!localManager2.AddComponent(continuous1));
@@ -149,8 +149,8 @@ void mtsManagerLocalTest::TestAddComponent(void)
     CPPUNIT_ASSERT(localManager2.ManagerGlobal->RemoveComponent(DEFAULT_PROCESS_NAME, continuous1->GetName()));
     CPPUNIT_ASSERT(localManager2.AddComponent(continuous1));
     CPPUNIT_ASSERT(localManager2.ComponentMap.FindItem(continuous1->GetName()));
-    
-    // Check if all the existing required interfaces and provided interfaces are 
+
+    // Check if all the existing required interfaces and provided interfaces are
     // added to the global component manager.
     CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindInterfaceRequiredOrInput(DEFAULT_PROCESS_NAME, continuous1->GetName(), "r1"));
     CPPUNIT_ASSERT(localManager2.ManagerGlobal->FindInterfaceProvidedOrOutput(DEFAULT_PROCESS_NAME, continuous1->GetName(), "p1"));
@@ -218,7 +218,7 @@ void mtsManagerLocalTest::TestRegisterInterfaces(void)
 
     mtsManagerTestDevice2 * component = new mtsManagerTestDevice2;
     const std::string componentName = component->GetName();
-    
+
     // Check initial values of GCM
     CPPUNIT_ASSERT(!globalManager->FindInterfaceRequiredOrInput("LCM", componentName, "r1"));
     CPPUNIT_ASSERT(!globalManager->FindInterfaceProvidedOrOutput("LCM", componentName, "p1"));
@@ -383,15 +383,18 @@ void mtsManagerLocalTest::TestStates(void)
     mtsManagerTestContinuous1 * continuous1 = new mtsManagerTestContinuous1;
     mtsManagerTestFromCallback1 * fromCallback1 = new mtsManagerTestFromCallback1;
     mtsManagerTestCallbackTrigger * callbackTrigger = new mtsManagerTestCallbackTrigger(fromCallback1);
+    mtsManagerTestFromSignal1 * fromSignal1 = new mtsManagerTestFromSignal1;
     mtsManagerTestDevice2 * device2 = new mtsManagerTestDevice2;
 
     CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, periodic1->GetTaskState());
     CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, continuous1->GetTaskState());
     CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, fromCallback1->GetTaskState());
+    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, fromSignal1->GetTaskState());
 
     CPPUNIT_ASSERT(localManager.AddComponent(periodic1));
     CPPUNIT_ASSERT(localManager.AddComponent(continuous1));
     CPPUNIT_ASSERT(localManager.AddComponent(fromCallback1));
+    CPPUNIT_ASSERT(localManager.AddComponent(fromSignal1));
     CPPUNIT_ASSERT(localManager.AddComponent(device2));
 
     // Establish connections between the three components of mtsTask type
@@ -399,21 +402,25 @@ void mtsManagerLocalTest::TestStates(void)
     CPPUNIT_ASSERT(localManager.Connect(periodic1->GetName(), "r2", continuous1->GetName(), "p2"));
     CPPUNIT_ASSERT(localManager.Connect(continuous1->GetName(), "r1", device2->GetName(), "p1"));
     CPPUNIT_ASSERT(localManager.Connect(fromCallback1->GetName(), "r1", continuous1->GetName(), "p2"));
+    CPPUNIT_ASSERT(localManager.Connect(fromSignal1->GetName(), "r1", continuous1->GetName(), "p2"));
     CPPUNIT_ASSERT(localManager.Connect(device2->GetName(), "r1", continuous1->GetName(), "p2"));
-    
+
     localManager.CreateAll();
-    CPPUNIT_ASSERT((mtsTask::INITIALIZING == periodic1->GetTaskState())
-                   || (mtsTask::READY == periodic1->GetTaskState()));
-    CPPUNIT_ASSERT((mtsTask::INITIALIZING == continuous1->GetTaskState())
-                   || (mtsTask::READY == continuous1->GetTaskState()));
-    CPPUNIT_ASSERT((mtsTask::INITIALIZING == fromCallback1->GetTaskState())
-                   || (mtsTask::READY == fromCallback1->GetTaskState()));
+    CPPUNIT_ASSERT((periodic1->GetTaskState() == mtsTask::INITIALIZING) ||
+                   (periodic1->GetTaskState() == mtsTask::READY));
+    CPPUNIT_ASSERT((continuous1->GetTaskState() == mtsTask::INITIALIZING) ||
+                   (continuous1->GetTaskState() == mtsTask::READY));
+    CPPUNIT_ASSERT((fromCallback1->GetTaskState() == mtsTask::INITIALIZING) || 
+                   (fromCallback1->GetTaskState() == mtsTask::READY));
+    CPPUNIT_ASSERT((fromSignal1->GetTaskState() == mtsTask::INITIALIZING) ||
+                   (fromSignal1->GetTaskState() == mtsTask::READY));
 
     // let all tasks get initialized
     osaSleep(1.0 * cmn_s);
     CPPUNIT_ASSERT_EQUAL(mtsTask::READY, periodic1->GetTaskState());
     CPPUNIT_ASSERT_EQUAL(mtsTask::READY, continuous1->GetTaskState());
     CPPUNIT_ASSERT_EQUAL(mtsTask::READY, fromCallback1->GetTaskState());
+    CPPUNIT_ASSERT_EQUAL(mtsTask::READY, fromSignal1->GetTaskState());
 
     localManager.StartAll();
     // let all tasks start
@@ -423,24 +430,28 @@ void mtsManagerLocalTest::TestStates(void)
     CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, fromCallback1->GetTaskState());
 
     localManager.KillAll();
-    CPPUNIT_ASSERT(periodic1->GetTaskState() == mtsTask::FINISHING || 
+    CPPUNIT_ASSERT(periodic1->GetTaskState() == mtsTask::FINISHING ||
                    periodic1->GetTaskState() == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(continuous1->GetTaskState() == mtsTask::FINISHING || 
+    CPPUNIT_ASSERT(continuous1->GetTaskState() == mtsTask::FINISHING ||
                    continuous1->GetTaskState() == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(fromCallback1->GetTaskState() == mtsTask::FINISHING || 
+    CPPUNIT_ASSERT(fromCallback1->GetTaskState() == mtsTask::FINISHING ||
                    fromCallback1->GetTaskState() == mtsTask::FINISHED);
+    CPPUNIT_ASSERT(fromSignal1->GetTaskState() == mtsTask::FINISHING ||
+                   fromSignal1->GetTaskState() == mtsTask::FINISHED);
 
     // let all tasks stop
     osaSleep(1.0 * cmn_s);
     CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, periodic1->GetTaskState());
     CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, continuous1->GetTaskState());
     CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, fromCallback1->GetTaskState());
+    CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, fromSignal1->GetTaskState());
 
     delete periodic1;
     delete continuous1;
     callbackTrigger->Stop();
     delete callbackTrigger;
     delete fromCallback1;
+    delete fromSignal1;
     delete device2;
 }
 
@@ -494,7 +505,7 @@ void mtsManagerLocalTest::TestConnectLocally(void)
 #define SUCCESS true
     // test with invalid arguments
     CPPUNIT_ASSERT_EQUAL(FAIL, localManager.ConnectLocally("", "", "", ""));
-    
+
     CPPUNIT_ASSERT(localManager.AddComponent(client));
     CPPUNIT_ASSERT_EQUAL(FAIL, localManager.ConnectLocally(client->GetName(), "", "", ""));
 
@@ -619,7 +630,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     // Connection should be established correctly regardless whoever calls Connect() method.
     CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C1, r1, P2, C2, p1));
     CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C1, r2, P2, C2, p2));
-    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C2, r1, P2, C2, p2));    
+    CPPUNIT_ASSERT(managerLocal2Object->Connect(P1, C2, r1, P2, C2, p2));
 */
 
 void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
@@ -630,8 +641,8 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     mtsManagerTestDevice3 * P2C3 = new mtsManagerTestDevice3;
     CPPUNIT_ASSERT(localManager.AddComponent(P2C2));
     CPPUNIT_ASSERT(localManager.AddComponent(P2C3));
-    
-    // Connect two interfaces (establish local connection) and test if commands 
+
+    // Connect two interfaces (establish local connection) and test if commands
     // and events work correctly.
     CPPUNIT_ASSERT(localManager.Connect(P2C3->GetName(), "r1", P2C2->GetName(), "p2"));
 
@@ -665,7 +676,7 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->InterfaceProvided2.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test qualified read command
     valueWrite.Data = 3;
@@ -673,7 +684,7 @@ void mtsManagerLocalTest::TestLocalCommandsAndEvents(void)
     P2C3->InterfaceRequired1.CommandQualifiedRead(valueWrite, valueRead);
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
     CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
-    CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
+    CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     // Test void event
     P2C2->InterfaceProvided2.EventVoid();
@@ -752,7 +763,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  P2C2->InterfaceProvided2.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     //// Test qualified read command
     //valueWrite.Data = 3;
@@ -760,7 +771,7 @@ void mtsManagerLocalTest::TestRemoteCommandsAndEvents(void)
     //P2C3->InterfaceRequired1.CommandQualifiedRead(valueWrite, valueRead);
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceRequired1.GetValue());
     //CPPUNIT_ASSERT_EQUAL(-1, P2C2->InterfaceProvided1.GetValue());
-    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());    
+    //CPPUNIT_ASSERT_EQUAL(-1, P2C3->InterfaceRequired1.GetValue());
 
     //// Test void event
     //P2C2->InterfaceProvided2.EventVoid();

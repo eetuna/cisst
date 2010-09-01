@@ -3,10 +3,10 @@
 
 /*
   $Id$
-  
+
   Author(s):  Min Yang Jung
   Created on: 2009-11-17
-  
+
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
@@ -28,19 +28,18 @@ class mtsManagerLocal;
 class mtsManagerLocalTest: public CppUnit::TestFixture
 {
 private:
-    //mtsManagerLocal *localManager1, *localManager2;
 
     CPPUNIT_TEST_SUITE(mtsManagerLocalTest);
     {
         CPPUNIT_TEST(TestInitialize);
         CPPUNIT_TEST(TestConstructor);
         CPPUNIT_TEST(TestCleanup);
-        
+
         CPPUNIT_TEST(TestAddComponent);
         CPPUNIT_TEST(TestFindComponent);
         CPPUNIT_TEST(TestRemoveComponent);
         CPPUNIT_TEST(TestRegisterInterfaces);
-        
+
         CPPUNIT_TEST(TestGetInstance);
         CPPUNIT_TEST(TestGetComponent);
         CPPUNIT_TEST(TestGetNamesOfComponents);
@@ -67,7 +66,7 @@ private:
         CPPUNIT_TEST(TestRemoveInterfaceProvidedProxy);
         CPPUNIT_TEST(TestRemoteCommandsAndEvents);
 #endif
-	}
+    }
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -84,7 +83,7 @@ public:
     void TestFindComponent(void);
     void TestRemoveComponent(void);
     void TestRegisterInterfaces(void);
-    
+
     void TestGetInstance(void);
     void TestGetComponent(void);
     void TestGetNamesOfComponents(void);
@@ -94,7 +93,7 @@ public:
     void TestGetProcessName(void);
 
     void TestStates(void);
-    
+
     void TestConnectLocally(void);
     void TestConnectDisconnect(void);
     void TestLocalCommandsAndEvents(void);
