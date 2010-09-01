@@ -39,16 +39,13 @@ void mtsStateTable::IndexRange::ToStreamRaw(std::ostream & outputStream, const c
 }
 
 
-int mtsStateTable::StateVectorBaseIDForUser;
-
 mtsStateTable::mtsStateTable(size_t size, const std::string & name):
     HistoryLength(size),
-    NumberStateData(0),
     IndexWriter(0),
     IndexReader(0),
     AutomaticAdvanceFlag(true),
-    StateVector(NumberStateData),
-    StateVectorDataNames(NumberStateData),
+    StateVector(0),
+    StateVectorDataNames(0),
     Ticks(size, mtsStateIndex::TimeTicksType(0)),
     Tic(0.0),
     Toc(0.0),
@@ -81,11 +78,6 @@ mtsStateTable::mtsStateTable(size_t size, const std::string & name):
 
     // Add statistics
     NewElement("PeriodStatistics", &PeriodStats);
-
-    // Currently there are four signals maintained internally at StateTable.
-    // : "Toc", "Tic", "Period", "PeriodStatistics". So the value of StateVectorBaseIDForUser is
-    // set to 4.
-    StateVectorBaseIDForUser = StateVector.size();
 }
 
 mtsStateTable::~mtsStateTable()
