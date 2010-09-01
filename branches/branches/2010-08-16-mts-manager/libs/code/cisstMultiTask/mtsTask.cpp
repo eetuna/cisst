@@ -163,6 +163,7 @@ mtsTask::mtsTask(const std::string & name,
     mtsComponent(name),
     Thread(),
     TaskState(CONSTRUCTED),
+    InitializationDelay(3.0 * cmn_s), // if this value is modified, update documentation in header file
     StateChange(),
     StateChangeSignal(),
     StateTable(sizeStateTable, "StateTable"),
@@ -348,4 +349,10 @@ void mtsTask::ToStream(std::ostream & outputStream) const
     StateTable.ToStream(outputStream);
     InterfacesProvidedOrOutput.ToStream(outputStream);
     InterfacesRequiredOrInput.ToStream(outputStream);
+}
+
+
+void mtsTask::SetInitializationDelay(double delay)
+{
+    this->InitializationDelay = delay;
 }

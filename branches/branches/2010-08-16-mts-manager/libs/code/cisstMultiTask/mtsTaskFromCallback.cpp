@@ -75,7 +75,7 @@ void mtsTaskFromCallback::Create(void * CMN_UNUSED(data))
 void mtsTaskFromCallback::Start(void)
 {
     if (TaskState == INITIALIZING)
-        WaitToStart(3.0);
+        WaitToStart(this->InitializationDelay);
     if (TaskState == READY) {
         CMN_LOG_CLASS_INIT_VERBOSE << "Start: starting task " << this->GetName() << std::endl;
         ChangeState(ACTIVE);

@@ -98,6 +98,13 @@ protected:
     /*! The task state. */
     TaskStateType TaskState;
 
+    /*! Delay given for the task to start.  During initialization the
+      task thread will wait for the specified delay (set by default to
+      3 minutes in the constructor).  Increasing this delay can be
+      useful when using mtsTaskFromCallback if the callback might take
+      more than 3 minutes to trigger the task's Run method. */
+    double InitializationDelay;
+
     /*! Mutex used when changing task states. Do not change this directly, use the
         ChangeState method instead. */
     osaMutex StateChange;
@@ -211,6 +218,9 @@ public:
 	/*! Virtual method that gets called when the task/interface needs
 	  to be configured. Should it take XML info?? */
 	virtual void Configure(const std::string & CMN_UNUSED(filename) = "") {}
+
+    /*! Set the initialization delay.  See InitializationDelay. */
+    void SetInitializationDelay(double delay);
 
     /********************* Methods to change task state ******************/
     /* Maybe some or all of these should be pure virtual functions.      */
