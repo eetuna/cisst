@@ -36,6 +36,181 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstVector/vctDynamicCompactLoopEngines.h>
 
 /*!
+  We temporarily define two compilation control flags:
+    * OFRI_NEW_NARRY_LOOP_CONTROL set to 1 uses the loop control mechanism
+      with metaprogramming recursion. Set to 0 it uses the old, iteration-basd
+      mechanism.
+    * CHAR_TARGET set to 1 turns the "current" and "target" pointers in the
+      loop control mechansim to "char *", which may or may not be faster than
+      using native "_elementType *" pointers.  Set to 0, the mechanism uses
+      native pointers.  So far, the native pointers seem slightly faster (for
+      non-compact arrays) than the char pointers.
+
+  Notice the #undef of the flags at the end of this file.  When finalizing the
+  version, reove the both #defines and #undefs.
+*/
+#define OFRI_NEW_NARRY_LOOP_CONTROL 1
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+#  define CHAR_TARGET 0
+#endif
+
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+/*! The vctNArrayLoopControl class wraps the loop control mechanism, which
+  is defined as static methods.  When OFRI_NEW_NARRY_LOOP_CONTROL is 0,
+  equivalent static functions are defined within the scope of
+  vctDynamicNArrayLoopEngines.
+
+  The class is not essential for the functioning of the mechanism.  It is
+  useful for comparing the performance of native vs. char target pointers,
+  as the target type is passed as a template parameter. 
+
+  Notice that when the mechanism is used with input-only targets (as in SoNi,
+  for example) the target type must be a *const* value, as the input object
+  can only provide a const element pointer.
+*/
+template<vct::size_type _dimension, class _targetType>
+class vctNArrayLoopControl
+{
+public:
+    /* define types */
+    typedef vct::size_type size_type;
+    typedef vct::stride_type stride_type;
+    typedef vct::difference_type difference_type;
+    typedef vct::index_type index_type;
+
+    VCT_NARRAY_TRAITS_TYPEDEFS(_dimension);
+
+	typedef _targetType * target_ptr_type;
+	typedef const _targetType * ctarget_ptr_type;
+	typedef vctFixedSizeVector<target_ptr_type, _dimension> target_vec_type;
+
+	/*! Helper function to calculate the initial targets.  Notice that
+     this function uses a return value rather than referenced output,
+     which is how the "old" mechanism worked.
+    */
+    static target_vec_type InitializeTargets(const nsize_type & sizes,
+		const nstride_type & strides, target_ptr_type basePtr)
+    {
+		nstride_type offsets(sizes);
+		offsets.ElementwiseMultiply(strides);
+#if !CHAR_TARGET
+		const stride_type outputElementStrideForCharPtr = (stride_type)( ((target_ptr_type)(0)) + 1 );
+		offsets.Multiply(outputElementStrideForCharPtr);
+#endif
+		offsets.Add( (stride_type)(basePtr) );
+		return target_vec_type(offsets);
+    }
+
+    /*! Helper function to calculate the strides to next dimension. */
+	static nstride_type CalculateDimWrapCharStrides(const nsize_type & sizes, const nstride_type & strides)
+	{
+		nstride_type result(0);
+		nstride_type::ConstSubvector<_dimension-1>::Type suffixStrides(strides.Pointer(1));
+		nstride_type sizesAsStrides(sizes);
+		nstride_type::Subvector<_dimension-1>::Type suffixSizes(sizesAsStrides.Pointer(1));
+		nstride_type::Subvector<_dimension-1>::Type prefixResult(result.Pointer(0));
+		prefixResult.ElementwiseProductOf(suffixSizes, suffixStrides);
+		result.NegationSelf();
+		result.Add(strides);
+
+		return result;
+	}
+
+    /*! Helper function to calculate the pointer offsets to the next dimension. */
+    inline static nstride_type CalculateOTND(const nstride_type & stnd)
+    {
+		nstride_type result(0);
+		int i = _dimension-1;
+		stride_type curOfs = 0;
+		for (; i >= 0; --i)
+		{
+			curOfs += stnd[i];
+			result[i] = curOfs;
+		}
+		return result;
+	}
+
+    /*! Helper function to synchronize the given nArray's current pointer
+      with the master nArray's current pointer. */
+    inline static ctarget_ptr_type SyncCurrentPointer(ctarget_ptr_type currentPointer,
+		const nstride_type & otnd, difference_type numberOfWrappedDimensions)
+    {
+		if (numberOfWrappedDimensions < _dimension)
+			return currentPointer + otnd[_dimension - numberOfWrappedDimensions - 1];
+		return currentPointer;
+    }
+
+    /*! Helper function to increment the current pointer and any necessary
+      target pointers. */
+	// Consider the following structure.
+	//
+	// initial target setup :    // performed before engine loop is begun, outside of this function
+	//       currPtr = base;
+	//       for each k
+	//           target[k] = currPtr + size[k] * stride[k];  // This should be invariant after every dimension wrap.  See InitializeTargets(...)
+	//           stnd[k] = stride[k-1] - size[k] * stride[k];   // This is constant through the run.  See CalculateDimWrapCharStrides(...)
+	//
+	// wrap(nw)  :      // nw is the number of dimensions wrapped
+	//       currPtr += sum_{i =(d-nw)}^{d-1}( stnd[i] );  // obsolete if currPtr already determined; see below
+	//       for k = (d-nw) to (d-1)
+	//           target[k] = currPtr + size[k] * stride[k];
+	//
+	// check_wrap :     // this updates currentPtr (see above) and finds out nw (number of wrapped dimensions)
+	//       k = d-1;
+	//       nw = 0;
+	//       currPtr += stride[k];
+	//       while (currPtr == target[k]) {
+	//           currPtr += stnd[k];
+	//           --k;
+	//           ++nw;
+	//       }
+	//       return nw;
+	//
+	// NOTE:  The invariant condition above and the initialization of stnd leads to
+	//       size[k] * stride[k] = stride[k-1] - stnd[k];
+	// We take advantage of this as we update the targets.
+	//
+	// Below is a "recursive" implementation of the check_wrap operation, combined with target update
+	template<int _depth>
+	inline static dimension_type IncrementPointers(
+		target_vec_type & targets, target_ptr_type & currentPointer,
+		const nstride_type & strides, const nstride_type & stnd)
+	{
+		enum {index = _depth - 1};
+		currentPointer += stnd[index];
+		if (currentPointer != targets[index])
+			return _dimension - _depth;
+		dimension_type numberOfWrappedDimensions =
+			IncrementPointers<_depth-1>(targets, currentPointer, strides, stnd);
+		targets[index] = currentPointer + strides[index-1] - stnd[index-1];
+		return numberOfWrappedDimensions;
+	}
+
+	template<>
+	inline static dimension_type IncrementPointers<1>(
+		target_vec_type & targets, target_ptr_type & currentPointer,
+		const nstride_type & strides, const nstride_type & stnd)
+	{
+		enum {index = 0};
+		currentPointer += stnd[index];
+		if (currentPointer != targets[index])
+			return _dimension - 1;
+		return _dimension;
+	}
+
+	template<>
+	inline static dimension_type IncrementPointers<0>(
+		target_vec_type & targets, target_ptr_type & currentPointer,
+		const nstride_type & strides, const nstride_type & stnd)
+	{
+		return 0;
+	}
+
+};
+#endif  // OFRI_NEW_NARRY_LOOP_CONTROL
+
+
+/*!
   \brief Container class for the dynamic nArray engines.
 
   \sa SoNi SoNiNi SoNiSi NoNiNi NoNiSi NoSiNi NioSi NioNi NoNi Nio NioSiNi MinAndMax
@@ -59,7 +234,7 @@ public:
         cmnThrow(std::runtime_error("vctDynamicNArrayLoopEngines: Sizes of nArrays don't match"));
     }
 
-
+#if !OFRI_NEW_NARRY_LOOP_CONTROL
     /*! Helper function to calculate the strides to next dimension. */
     inline static void CalculateSTND(nstride_type & stnd,
                                      const nsize_type & sizes,
@@ -221,7 +396,7 @@ public:
         } while (targetsIter != targets_rbeg);
         return numberOfWrappedDimensions;
     }
-
+#endif  // !OFRI_NEW_NARRY_LOOP_CONTROL
 
     template <class _incrementalOperationType, class _elementOperationType>
     class SoNi
@@ -243,7 +418,42 @@ public:
             if (inputOwner.IsCompact()) {
                 return vctDynamicCompactLoopEngines::SoCi<_incrementalOperationType, _elementOperationType>::Run(inputOwner);
             } else {
-                // declare all variables used for inputOwner
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				// declare all variables used for inputOwner
+                const nsize_type & inputSizes = inputOwner.sizes();
+                const nstride_type & inputStrides = inputOwner.strides();
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef const char inputTargetType;
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef const InputNArrayType::value_type inputTargetType;
+				const nstride_type inputCharStrides(inputStrides);
+#  endif
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+				typedef typename inputLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+				inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+                target_vec_type inputTargets =
+					inputLoopControl::InitializeTargets(inputSizes, inputCharStrides, inputPointer);
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOwner.dimension();
+
+                OutputType incrementalResult = _incrementalOperationType::NeutralElement();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    incrementalResult =
+                        _incrementalOperationType::Operate(incrementalResult,
+                            _elementOperationType::Operate(* reinterpret_cast<InputPointerType>(inputPointer) ) );
+
+                    numberOfWrappedDimensions =
+						inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputStrides, inputSTND);
+                }
+                return incrementalResult;
+#else
+				// declare all variables used for inputOwner
                 const nsize_type & inputSizes = inputOwner.sizes();
                 const nstride_type & inputStrides = inputOwner.strides();
                 nstride_type inputSTND;
@@ -267,6 +477,7 @@ public:
                         IncrementPointers(inputTargets, inputPointer, inputStrides, inputSTND);
                 }
                 return incrementalResult;
+#endif
             }
         }   // Run method
     };  // SoNi class
@@ -309,7 +520,55 @@ public:
                 && (input1Owner.strides() == input2Owner.strides())) {
                 return vctDynamicCompactLoopEngines::SoCiCi<_incrementalOperationType, _elementOperationType>::Run(input1Owner, input2Owner);
             } else {
-                // otherwise
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type input1ElementStrideForCharPtr = (stride_type)( ((typename Input1NArrayType::value_type *)(0)) + 1 );
+				const stride_type input2ElementStrideForCharPtr = (stride_type)( ((typename Input2NArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef const char input1TargetType;
+				typedef const char input2TargetType;
+				const nstride_type input1CharStrides(input1Strides * input1ElementStrideForCharPtr);
+				const nstride_type input2CharStrides(input2Strides * input2ElementStrideForCharPtr);
+#  else
+				typedef const Input1NArrayType::value_type input1TargetType;
+				typedef const Input2NArrayType::value_type input2TargetType;
+				const nstride_type input1CharStrides(input1Strides);
+				const nstride_type input2CharStrides(input2Strides);
+#endif
+
+				typedef vctNArrayLoopControl<_dimension, input1TargetType> input1LoopControl;
+				typedef typename input1LoopControl::target_vec_type target_vec_type;
+
+                // declare all variables used for input1Owner
+                const nstride_type input1STND = input1LoopControl::CalculateDimWrapCharStrides(input1Sizes, input1CharStrides);
+				const input1TargetType * input1Pointer = reinterpret_cast<const input1TargetType *>(input1Owner.Pointer());
+                target_vec_type input1Targets =
+					input1LoopControl::InitializeTargets(input1Sizes, input1CharStrides, input1Pointer);
+
+                // declare all variables used for input2Owner
+				typedef vctNArrayLoopControl<_dimension, input2TargetType> input2LoopControl;
+                const nstride_type input2STND = input2LoopControl::CalculateDimWrapCharStrides(input2Sizes, input2CharStrides);
+                const nstride_type input2OTND = input2LoopControl::CalculateOTND(input2STND);
+				const input2TargetType * input2Pointer = reinterpret_cast<const input2TargetType *>(input2Owner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = input1Owner.dimension();
+
+                OutputType incrementalResult = _incrementalOperationType::NeutralElement();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    incrementalResult =
+                        _incrementalOperationType::Operate(
+						    incrementalResult, _elementOperationType::Operate(
+							    *reinterpret_cast<Input1PointerType>(input1Pointer),
+								*reinterpret_cast<Input2PointerType>(input2Pointer) ) );
+
+                    numberOfWrappedDimensions =
+                        input1LoopControl::IncrementPointers<_dimension>(input1Targets, input1Pointer, input1Strides, input1STND);
+
+                    input2Pointer = input2LoopControl::SyncCurrentPointer(input2Pointer, input2OTND, numberOfWrappedDimensions);
+                }
+                return incrementalResult;
+#else
                 // declare all variables used for input1Owner
                 nstride_type input1STND;
                 vctFixedSizeVector<Input1PointerType, _dimension> input1Targets;
@@ -341,6 +600,7 @@ public:
                     SyncCurrentPointer(input2Pointer, input2OTND, numberOfWrappedDimensions);
                 }
                 return incrementalResult;
+#endif
             }
         }   // Run method
     };  // SoNiNi class
@@ -367,6 +627,42 @@ public:
             if (inputOwner.IsCompact()) {
                 return vctDynamicCompactLoopEngines::SoCiSi<_incrementalOperationType, _elementOperationType>::Run(inputOwner, inputScalar);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+                // declare all variables used for inputOwner
+                const nsize_type & inputSizes = inputOwner.sizes();
+                const nstride_type & inputStrides = inputOwner.strides();
+
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef const char inputTargetType;
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef const InputNArrayType::value_type inputTargetType;
+				const nstride_type inputCharStrides(inputStrides);
+#endif
+
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+				typedef typename inputLoopControl::target_vec_type target_vec_type;
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+				inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+                target_vec_type inputTargets =
+					inputLoopControl::InitializeTargets(inputSizes, inputCharStrides, inputPointer);
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOwner.dimension();
+
+                OutputType incrementalResult = _incrementalOperationType::NeutralElement();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    incrementalResult =
+                        _incrementalOperationType::Operate(incrementalResult,
+						_elementOperationType::Operate(*reinterpret_cast<const inputTargetType *>(inputPointer), inputScalar) );
+
+                    numberOfWrappedDimensions =
+                        inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputStrides, inputSTND);
+                }
+                return incrementalResult;
+#else
                 // declare all variables used for inputOwner
                 const nsize_type & inputSizes = inputOwner.sizes();
                 const nstride_type & inputStrides = inputOwner.strides();
@@ -391,6 +687,7 @@ public:
                         IncrementPointers(inputTargets, inputPointer, inputStrides, inputSTND);
                 }
                 return incrementalResult;
+#endif
             }
         }   // Run method
     };  // SoNiSi class
@@ -441,7 +738,62 @@ public:
                 && (outputOwner.strides() == input2Owner.strides())) {
                 vctDynamicCompactLoopEngines::CoCiCi<_elementOperationType>::Run(outputOwner, input1Owner, input2Owner);
             } else {
-                // otherwise
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type outputElementStrideForCharPtr = (stride_type)( ((typename OutputNArrayType::value_type *)(0)) + 1 );
+				const stride_type input1ElementStrideForCharPtr = (stride_type)( ((typename Input1NArrayType::value_type *)(0)) + 1 );
+				const stride_type input2ElementStrideForCharPtr = (stride_type)( ((typename Input2NArrayType::value_type *)(0)) + 1 );
+
+#  if CHAR_TARGET
+				typedef char outputTargetType;
+				typedef char input1TargetType;
+				typedef char input2TargetType;
+				const nstride_type outputCharStrides(outputStrides * outputElementStrideForCharPtr);
+				const nstride_type input1CharStrides(input1Strides * input1ElementStrideForCharPtr);
+				const nstride_type input2CharStrides(input2Strides * input2ElementStrideForCharPtr);
+#  else
+				typedef OutputNArrayType::value_type outputTargetType;
+				typedef Input1NArrayType::value_type input1TargetType;
+				typedef Input2NArrayType::value_type input2TargetType;
+				const nstride_type outputCharStrides(outputStrides);
+				const nstride_type input1CharStrides(input1Strides);
+				const nstride_type input2CharStrides(input2Strides);
+#endif
+
+                // declare all variables used for outputOwner
+				typedef vctNArrayLoopControl<_dimension, outputTargetType> outputLoopControl;
+				typedef typename outputLoopControl::target_vec_type target_vec_type1;
+                const nstride_type outputSTND = outputLoopControl::CalculateDimWrapCharStrides(outputSizes, outputCharStrides);
+                outputTargetType * outputPointer = reinterpret_cast<outputTargetType *>(outputOwner.Pointer());
+				target_vec_type1 outputTargets =
+					outputLoopControl::InitializeTargets(outputSizes, outputCharStrides, outputPointer);
+
+                // declare all variables used for input1Owner
+				typedef vctNArrayLoopControl<_dimension, input1TargetType> input1LoopControl;
+				const nstride_type input1STND = input1LoopControl::CalculateDimWrapCharStrides(input1Sizes, input1CharStrides);
+                const nstride_type input1OTND = input1LoopControl::CalculateOTND(input1STND);
+				const input1TargetType * input1Pointer = reinterpret_cast<const input1TargetType *>(input1Owner.Pointer());
+
+                // declare all variables used for input2Owner
+				typedef vctNArrayLoopControl<_dimension, input2TargetType> input2LoopControl;
+				const nstride_type input2STND = input2LoopControl::CalculateDimWrapCharStrides(input2Sizes, input2CharStrides);
+                const nstride_type input2OTND = input2LoopControl::CalculateOTND(input2STND);
+				const input2TargetType * input2Pointer = reinterpret_cast<const input2TargetType *>(input2Owner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = outputOwner.dimension();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    *reinterpret_cast<OutputPointerType>(outputPointer) =
+						_elementOperationType::Operate(*reinterpret_cast<Input1PointerType>(input1Pointer),
+						*reinterpret_cast<Input2PointerType>(input2Pointer));
+
+                    numberOfWrappedDimensions =
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputStrides, outputSTND);
+
+					input1Pointer = input1LoopControl::SyncCurrentPointer(input1Pointer, input1OTND, numberOfWrappedDimensions);
+					input2Pointer = input2LoopControl::SyncCurrentPointer(input2Pointer, input2OTND, numberOfWrappedDimensions);
+                }
+#else
                 // declare all variables used for outputOwner
                 nstride_type outputSTND;
                 vctFixedSizeVector<OutputConstPointerType, _dimension> outputTargets;
@@ -476,7 +828,8 @@ public:
 
                     SyncCurrentPointer(input1Pointer, input1OTND, numberOfWrappedDimensions);
                     SyncCurrentPointer(input2Pointer, input2OTND, numberOfWrappedDimensions);
-                }
+				}
+#endif
             }
         }   // Run method
     };  // NoNiNi class
@@ -519,6 +872,51 @@ public:
                 && (outputOwner.strides() == inputOwner.strides())) {
                 vctDynamicCompactLoopEngines::CoCiSi<_elementOperationType>::Run(outputOwner, inputOwner, inputScalar);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type outputElementStrideForCharPtr = (stride_type)( ((typename OutputNArrayType::value_type *)(0)) + 1 );
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char outputTargetType;
+				typedef char inputTargetType;
+				const nstride_type outputCharStrides(outputStrides * outputElementStrideForCharPtr);
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef OutputNArrayType::value_type outputTargetType;
+				typedef InputNArrayType::value_type inputTargetType;
+				const nstride_type outputCharStrides(outputStrides);
+				const nstride_type inputCharStrides(inputStrides);
+#endif
+
+                // declare all variables used for outputOwner
+				typedef vctNArrayLoopControl<_dimension, outputTargetType> outputLoopControl;
+				typedef typename outputLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type outputSTND = outputLoopControl::CalculateDimWrapCharStrides(outputSizes, outputCharStrides);
+                outputTargetType * outputPointer = reinterpret_cast<outputTargetType *>(outputOwner.Pointer());
+
+				target_vec_type outputTargets =
+					outputLoopControl::InitializeTargets(outputSizes, outputCharStrides, outputPointer);
+
+                // declare all variables used for inputOwner
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+                const nstride_type inputOTND = inputLoopControl::CalculateOTND(inputSTND);
+				const inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = outputOwner.dimension();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    *reinterpret_cast<OutputPointerType>(outputPointer) =
+						_elementOperationType::Operate(*reinterpret_cast<InputPointerType>(inputPointer), inputScalar);
+
+                    numberOfWrappedDimensions =
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputStrides, outputSTND);
+
+					inputPointer = inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
+                }
+#else
                 // otherwise
                 // declare all variables used for outputOwner
                 nstride_type outputSTND;
@@ -546,6 +944,7 @@ public:
 
                     SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
+#endif
             }
         }   // Run method
     };  // NoNiSi class
@@ -588,6 +987,51 @@ public:
                 && (outputOwner.strides() == inputOwner.strides())) {
                 vctDynamicCompactLoopEngines::CoSiCi<_elementOperationType>::Run(outputOwner, inputScalar, inputOwner);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type outputElementStrideForCharPtr = (stride_type)( ((typename OutputNArrayType::value_type *)(0)) + 1 );
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char outputTargetType;
+				typedef char inputTargetType;
+				const nstride_type outputCharStrides(outputStrides * outputElementStrideForCharPtr);
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef OutputNArrayType::value_type outputTargetType;
+				typedef InputNArrayType::value_type inputTargetType;
+				const nstride_type outputCharStrides(outputStrides);
+				const nstride_type inputCharStrides(inputStrides);
+#endif
+
+                // declare all variables used for outputOwner
+				typedef vctNArrayLoopControl<_dimension, outputTargetType> outputLoopControl;
+				typedef typename outputLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type outputSTND = outputLoopControl::CalculateDimWrapCharStrides(outputSizes, outputCharStrides);
+                outputTargetType * outputPointer = reinterpret_cast<outputTargetType *>(outputOwner.Pointer());
+
+				target_vec_type outputTargets =
+					outputLoopControl::InitializeTargets(outputSizes, outputCharStrides, outputPointer);
+
+                // declare all variables used for inputOwner
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+                const nstride_type inputOTND = inputLoopControl::CalculateOTND(inputSTND);
+				const inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = outputOwner.dimension();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    *reinterpret_cast<OutputPointerType>(outputPointer) =
+						_elementOperationType::Operate(inputScalar, *reinterpret_cast<InputPointerType>(inputPointer));
+
+                    numberOfWrappedDimensions =
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputStrides, outputSTND);
+
+					inputPointer = inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
+                }
+#else
                 // otherwise
                 // declare all variables used for outputNArray
                 nstride_type outputSTND;
@@ -615,6 +1059,7 @@ public:
 
                     SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
+#endif
             }
         }   // Run method
     };  // NoSiNi class
@@ -640,6 +1085,37 @@ public:
             if (inputOutputOwner.IsCompact()) {
                 vctDynamicCompactLoopEngines::CioSi<_elementOperationType>::Run(inputOutputOwner, inputScalar);
             } else {
+                const nsize_type & inputOutputSizes = inputOutputOwner.sizes();
+                const nstride_type & inputOutputStrides = inputOutputOwner.strides();
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type inOutElementStrideForCharPtr = (stride_type)( ((typename InputOutputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char inOutTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides * inOutElementStrideForCharPtr);
+#  else
+				typedef InputOutputNArrayType::value_type inOutTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides);
+#endif
+				typedef vctNArrayLoopControl<_dimension, inOutTargetType> inOutLoopControl;
+				typedef typename inOutLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type inOutSTND = inOutLoopControl::CalculateDimWrapCharStrides(inputOutputSizes, inOutCharStrides);
+                inOutTargetType * inputOutputPointer = reinterpret_cast<inOutTargetType *>(inputOutputOwner.Pointer());
+
+				target_vec_type inOutTargets =
+					inOutLoopControl::InitializeTargets(inputOutputSizes, inOutCharStrides, inputOutputPointer);
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOutputOwner.dimension();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    _elementOperationType::Operate(
+						*reinterpret_cast<InputOutputPointerType>(inputOutputPointer), inputScalar);
+
+                    numberOfWrappedDimensions =
+						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inputOutputPointer, inputOutputStrides, inOutSTND);
+                }
+#else
                 // declare all variables used for inputOwner
                 const nsize_type & inputOutputSizes = inputOutputOwner.sizes();
                 const nstride_type & inputOutputStrides = inputOutputOwner.strides();
@@ -659,6 +1135,7 @@ public:
                     numberOfWrappedDimensions =
                         IncrementPointers(inputOutputTargets, inputOutputPointer, inputOutputStrides, inputOutputSTND);
                 }
+#endif
             }
         }   // Run method
     };  // NioSi class
@@ -700,6 +1177,49 @@ public:
                 && (inputOutputOwner.strides() == inputOwner.strides())) {
                 vctDynamicCompactLoopEngines::CioCi<_elementOperationType>::Run(inputOutputOwner, inputOwner);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type inOutElementStrideForCharPtr = (stride_type)( ((typename InputOutputNArrayType::value_type *)(0)) + 1 );
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char inOutTargetType;
+				typedef char inputTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides * inOutElementStrideForCharPtr);
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef InputOutputNArrayType::value_type inOutTargetType;
+				typedef InputNArrayType::value_type inputTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides);
+				const nstride_type inputCharStrides(inputStrides);
+#  endif
+				typedef vctNArrayLoopControl<_dimension, inOutTargetType> inOutLoopControl;
+				typedef typename inOutLoopControl::target_vec_type target_vec_type1;
+
+				const nstride_type inOutSTND = inOutLoopControl::CalculateDimWrapCharStrides(inputOutputSizes, inOutCharStrides);
+                inOutTargetType * inOutPointer = reinterpret_cast<inOutTargetType *>(inputOutputOwner.Pointer());
+
+				target_vec_type1 inOutTargets =
+					inOutLoopControl::InitializeTargets(inputOutputSizes, inOutCharStrides, inOutPointer);
+
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+                const nstride_type inputOTND = inputLoopControl::CalculateOTND(inputSTND);
+				const inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOutputOwner.dimension();
+
+                while (numberOfWrappedDimensions < maxWrappedDimensions) {
+                    _elementOperationType::Operate(
+						*(reinterpret_cast<InputOutputPointerType>(inOutPointer)),
+						*(reinterpret_cast<InputPointerType>(inputPointer)) );
+
+                    numberOfWrappedDimensions =
+						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inOutPointer, inOutCharStrides, inOutSTND);
+					inputPointer = 
+						inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
+                }
+#else
                 // otherwise
                 // declare all variables used for inputOutputOwner
                 nstride_type inputOutputSTND;
@@ -727,6 +1247,7 @@ public:
 
                     SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
+#endif
             }
         }   // Run method
     };  // NioNi class
@@ -761,14 +1282,57 @@ public:
             }
 
             // if compact and same strides
-            const nstride_type & outputStrides = outputOwner.strides();
-            const nstride_type & inputStrides = inputOwner.strides();
-
+			const nstride_type & outputStrides = outputOwner.strides();
+			const nstride_type & inputStrides = inputOwner.strides();
             if (outputOwner.IsCompact() && inputOwner.IsCompact()
                 && (outputOwner.strides() == inputOwner.strides())) {
                 vctDynamicCompactLoopEngines::CoCi<_elementOperationType>::Run(outputOwner, inputOwner);
             } else {
-                // otherwise
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type outputElementStrideForCharPtr = (stride_type)( ((typename OutputNArrayType::value_type *)(0)) + 1 );
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char outputTargetType;
+				typedef char inputTargetType;
+				const nstride_type outputCharStrides(outputStrides * outputElementStrideForCharPtr);
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef OutputNArrayType::value_type outputTargetType;
+				typedef InputNArrayType::value_type inputTargetType;
+				const nstride_type outputCharStrides(outputStrides);
+				const nstride_type inputCharStrides(inputStrides);
+#endif
+                // declare all variables used for outputNArray
+				typedef vctNArrayLoopControl<_dimension, outputTargetType> outputLoopControl;
+				typedef typename outputLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type outputSTND = outputLoopControl::CalculateDimWrapCharStrides(outputSizes, outputCharStrides);
+                outputTargetType * outputPointer = reinterpret_cast<outputTargetType *>(outputOwner.Pointer());
+
+				target_vec_type outputTargets =
+					outputLoopControl::InitializeTargets(outputSizes, outputCharStrides, outputPointer);
+
+
+                // declare all variables used for inputNArray
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+                const nstride_type inputOTND = inputLoopControl::CalculateOTND(inputSTND);
+				const inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = outputOwner.dimension();
+
+                while (numberOfWrappedDimensions < maxWrappedDimensions) {
+                    *(reinterpret_cast<OutputPointerType>(outputPointer)) =
+						_elementOperationType::Operate( *(reinterpret_cast<InputPointerType>(inputPointer)) );
+
+                    numberOfWrappedDimensions =
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputCharStrides, outputSTND);
+					inputPointer =
+						inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
+                }
+#else
                 // declare all variables used for outputNArray
                 nstride_type outputSTND;
                 vctFixedSizeVector<OutputConstPointerType, _dimension> outputTargets;
@@ -795,10 +1359,10 @@ public:
 
                     SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
+#endif
             }
         }   // Run method
     };  // NoNi class
-
 
     template <class _elementOperationType>
     class Nio
@@ -815,14 +1379,44 @@ public:
             // retrieve owners
             InputOutputOwnerType & inputOutputOwner = inputOutputNArray.Owner();
 
-            // if compact and same strides
-            const nstride_type & inputOutputStrides = inputOutputOwner.strides();
-
+            // if compact
             if (inputOutputOwner.IsCompact()) {
                 vctDynamicCompactLoopEngines::Cio<_elementOperationType>::Run(inputOutputOwner);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+                const nsize_type & inputOutputSizes = inputOutputOwner.sizes();
+                const nstride_type & inputOutputStrides = inputOutputOwner.strides();
+				const stride_type inOutElementStrideForCharPtr = (stride_type)( ((typename InputOutputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char inOutTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides * inOutElementStrideForCharPtr);
+#  else
+				typedef InputOutputNArrayType::value_type inOutTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides);
+#endif
+				typedef vctNArrayLoopControl<_dimension, inOutTargetType> inOutLoopControl;
+				typedef typename inOutLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type inOutSTND = inOutLoopControl::CalculateDimWrapCharStrides(inputOutputSizes, inOutCharStrides);
+                inOutTargetType * inputOutputPointer = reinterpret_cast<inOutTargetType *>(inputOutputOwner.Pointer());
+
+				target_vec_type inOutTargets =
+					inOutLoopControl::InitializeTargets(inputOutputSizes, inOutCharStrides, inputOutputPointer);
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOutputOwner.dimension();
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    _elementOperationType::Operate(
+						*reinterpret_cast<InputOutputPointerType>(inputOutputPointer));
+
+                    numberOfWrappedDimensions =
+						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inputOutputPointer, inputOutputStrides, inOutSTND);
+                }
+#else
                 // otherwise
                 const nsize_type & inputOutputSizes = inputOutputOwner.sizes();
+                const nstride_type & inputOutputStrides = inputOutputOwner.strides();
                 nstride_type inputOutputSTND;
                 vctFixedSizeVector<InputOutputConstPointerType, _dimension> inputOutputTargets;
                 InputOutputPointerType inputOutputPointer = inputOutputOwner.Pointer();
@@ -839,10 +1433,10 @@ public:
                     numberOfWrappedDimensions =
                         IncrementPointers(inputOutputTargets, inputOutputPointer, inputOutputStrides, inputOutputSTND);
                 }
+#endif
             }
         }   // Run method
     };  // Nio class
-
 
     template <class _inputOutputElementOperationType, class _scalarNArrayElementOperationType>
     class NioSiNi
@@ -881,6 +1475,49 @@ public:
                 && (inputOutputOwner.strides() == inputOwner.strides())) {
                 vctDynamicCompactLoopEngines::CioSiCi<_inputOutputElementOperationType, _scalarNArrayElementOperationType>::Run(inputOutputOwner, inputScalar, inputOwner);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+				const stride_type inOutElementStrideForCharPtr = (stride_type)( ((typename InputOutputNArrayType::value_type *)(0)) + 1 );
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef char inOutTargetType;
+				typedef char inputTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides * inOutElementStrideForCharPtr);
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef InputOutputNArrayType::value_type inOutTargetType;
+				typedef InputNArrayType::value_type inputTargetType;
+				const nstride_type inOutCharStrides(inputOutputStrides);
+				const nstride_type inputCharStrides(inputStrides);
+#  endif
+				typedef vctNArrayLoopControl<_dimension, inOutTargetType> inOutLoopControl;
+				typedef typename inOutLoopControl::target_vec_type target_vec_type1;
+
+				const nstride_type inOutSTND = inOutLoopControl::CalculateDimWrapCharStrides(inputOutputSizes, inOutCharStrides);
+                inOutTargetType * inOutPointer = reinterpret_cast<inOutTargetType *>(inputOutputOwner.Pointer());
+
+				target_vec_type1 inOutTargets =
+					inOutLoopControl::InitializeTargets(inputOutputSizes, inOutCharStrides, inOutPointer);
+
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+                const nstride_type inputOTND = inputLoopControl::CalculateOTND(inputSTND);
+				const inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOutputOwner.dimension();
+
+                while (numberOfWrappedDimensions < maxWrappedDimensions) {
+                    _inputOutputElementOperationType::Operate(
+						*reinterpret_cast<InputOutputPointerType>(inOutPointer),
+						_scalarNArrayElementOperationType::Operate(inputScalar, *reinterpret_cast<InputPointerType>(inputPointer)) );
+
+                    numberOfWrappedDimensions =
+						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inOutPointer, inOutCharStrides, inOutSTND);
+					inputPointer = 
+						inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
+                }
+#else
                 // otherwise
                 // declare all variables used for inputOutputNArray
                 nstride_type inputOutputSTND;
@@ -909,6 +1546,7 @@ public:
 
                     SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
+#endif
             }
         }   // Run method
 
@@ -939,6 +1577,46 @@ public:
             if (inputOwner.IsCompact()) {
                 vctDynamicCompactLoopEngines::MinAndMax::Run(inputOwner, minValue, maxValue);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+                const nsize_type & inputSizes = inputOwner.sizes();
+                const nstride_type & inputStrides = inputOwner.strides();
+				const stride_type inputElementStrideForCharPtr = (stride_type)( ((typename InputNArrayType::value_type *)(0)) + 1 );
+#  if CHAR_TARGET
+				typedef const char inputTargetType;
+				const nstride_type inputCharStrides(inputStrides * inputElementStrideForCharPtr);
+#  else
+				typedef const InputNArrayType::value_type inputTargetType;
+				const nstride_type inputCharStrides(inputStrides);
+#  endif
+				typedef vctNArrayLoopControl<_dimension, inputTargetType> inputLoopControl;
+				typedef typename inputLoopControl::target_vec_type target_vec_type;
+
+				const nstride_type inputSTND = inputLoopControl::CalculateDimWrapCharStrides(inputSizes, inputCharStrides);
+				inputTargetType * inputPointer = reinterpret_cast<const inputTargetType *>(inputOwner.Pointer());
+                target_vec_type inputTargets =
+					inputLoopControl::InitializeTargets(inputSizes, inputCharStrides, inputPointer);
+
+                dimension_type numberOfWrappedDimensions = 0;
+                const dimension_type maxWrappedDimensions = inputOwner.dimension();
+
+                value_type minElement, maxElement, inputElement;
+                minElement = maxElement = *reinterpret_cast<InputPointerType>(inputPointer);
+
+                while (numberOfWrappedDimensions != maxWrappedDimensions) {
+                    inputElement = *inputPointer;
+
+                    if (inputElement < minElement) {
+                        minElement = inputElement;
+                    } else if (inputElement > maxElement) {
+                        maxElement = inputElement;
+                    }
+
+                    numberOfWrappedDimensions =
+						inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputStrides, inputSTND);
+                }
+                minValue = minElement;
+                maxValue = maxElement;
+#else
                 // otherwise
                 const nsize_type & inputSizes = inputOwner.sizes();
                 const nstride_type & inputStrides = inputOwner.strides();
@@ -968,6 +1646,7 @@ public:
                 }
                 minValue = minElement;
                 maxValue = maxElement;
+#endif
             }
         }   // Run method
     };  // MinAndMax class
@@ -975,6 +1654,13 @@ public:
 
 };  // vctDynamicNArrayLoopEngines
 
+#ifndef OFRI_NEW_NARRY_LOOP_CONTROL
+#error Remove #undef directives at the end of vctDynamicNArrayLoopEngines.h
+#endif
+#if OFRI_NEW_NARRY_LOOP_CONTROL
+#undef CHAR_TARGET
+#endif
+#undef OFRI_NEW_NARRY_LOOP_CONTROL
 
 #endif  // _vctDynamicNArrayLoopEngines_h
 
