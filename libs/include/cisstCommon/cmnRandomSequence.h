@@ -405,11 +405,22 @@ public:
     }
 
     /*! Fill the given array with a random permutation of the numbers 0..length */
-    void ExtractRandomPermutation(const size_t length, unsigned int * array);
+    template<typename _valueType>
+    void ExtractRandomPermutation(const size_t length, _valueType * array)
+    {
+        size_t i;
+        for (i = 0; i < length; ++i)
+            array[i] = static_cast<_valueType>(i);
 
-    /*! Fill the given array with a random permutation of the numbers 0..length */
-    void ExtractRandomPermutation(const size_t length, unsigned long int * array);
-
+        size_t next;
+        _valueType tmp;
+        for (i = 0; i < length; ++i) {
+            ExtractRandomValue(i, length, next);
+            tmp = array[i];
+            array[i] = array[next];
+            array[next] = tmp;
+        }
+    }
 
 private:
     /*! The randomization seed to start the random sequence
