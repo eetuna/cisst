@@ -116,8 +116,10 @@ class vctGenericContainerTest
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             goal *= (*iter1);
         }
-        CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance * container1.size());
+        if (cmnTypeTraits<value_type>::IsNaN(resultScalar) || cmnTypeTraits<value_type>::IsNaN(goal))
+            CPPUNIT_ASSERT(cmnTypeTraits<value_type>::IsNaN(resultScalar) && cmnTypeTraits<value_type>::IsNaN(goal));
+        else
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance * container1.size());
 
         container2.SetAll(value_type(1));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(1), container2.ProductOfElements(), tolerance);
