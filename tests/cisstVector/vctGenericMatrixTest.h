@@ -364,7 +364,7 @@ public:
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(matrix3[rowIndex][colIndex], sum, tolerance * common);
             }
         }
-        
+
         matrix3 = matrix1 * matrix2;
         for (rowIndex = 0; rowIndex < rows; rowIndex++) {
             for (colIndex = 0; colIndex < cols; colIndex++) {
@@ -377,10 +377,12 @@ public:
         }
 
         // Outer product
-        matrix3.OuterProductOf(matrix1.Column(0), matrix2.Row(0));
-        for (rowIndex = 0; rowIndex < matrix3.rows(); ++rowIndex) {
-            for (colIndex = 0; colIndex < matrix3.cols(); ++colIndex) {
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(matrix3[rowIndex][colIndex], matrix1[rowIndex][0] * matrix2[0][colIndex], tolerance);
+        if ( (matrix1.cols() > 0) && (matrix2.rows() > 0) ) {
+            matrix3.OuterProductOf(matrix1.Column(0), matrix2.Row(0));
+            for (rowIndex = 0; rowIndex < matrix3.rows(); ++rowIndex) {
+                for (colIndex = 0; colIndex < matrix3.cols(); ++colIndex) {
+                    CPPUNIT_ASSERT_DOUBLES_EQUAL(matrix3[rowIndex][colIndex], matrix1[rowIndex][0] * matrix2[0][colIndex], tolerance);
+                }
             }
         }
     }
