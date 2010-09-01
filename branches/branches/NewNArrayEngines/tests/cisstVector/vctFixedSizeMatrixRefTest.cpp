@@ -181,21 +181,55 @@ void vctFixedSizeMatrixRefTest::TestProductOperations(void) {
     // result size
     enum {ROWS = 4, COLS = 5, COMSIZE = 7};
     typedef _elementType value_type;
-    vctFixedSizeMatrix<value_type, ROWS, COMSIZE> matrix1;
-    vctFixedSizeMatrix<value_type, COMSIZE, COLS> matrix2;
-    vctFixedSizeMatrix<value_type, ROWS, COLS> matrix3;
+    vctFixedSizeMatrix<value_type, 2*ROWS, 2*COMSIZE> matrix1Space;
+    vctFixedSizeMatrix<value_type, 2*COMSIZE, 2*COLS> matrix2Space;
+    vctFixedSizeMatrix<value_type, 2*ROWS, 2*COLS> matrix3Space;
+    vctFixedSizeMatrixRef<value_type, ROWS, COMSIZE, 2*2*COMSIZE, 2> matrix1(matrix1Space.Pointer(0, 0));
+    vctFixedSizeMatrixRef<value_type, COMSIZE, COLS, 2*COLS, 1> matrix2(matrix2Space.Pointer(COMSIZE, COLS));
+    vctFixedSizeMatrixRef<value_type, ROWS, COLS, 2*COLS, 2> matrix3(matrix3Space.Pointer(0, 1));
     vctFixedSizeVector<value_type, COMSIZE> vector1;
     vctFixedSizeVector<value_type, ROWS> vector2;
     
     vctRandom(matrix1, value_type(-10), value_type(10));
     vctRandom(matrix2, value_type(-10), value_type(10));
     vctRandom(vector1, value_type(-10), value_type(10));
+    vctRandom(vector2, value_type(-10), value_type(10));
 
     vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
     vctGenericMatrixTest::TestMatrixVectorProductOperations(matrix1, vector1, vector2);
-
-    vctRandom(vector2, value_type(-10), value_type(10));
     vctGenericMatrixTest::TestVectorMatrixProductOperations(matrix1, vector2, vector1);
+
+    // Test zero-size matrix product.  This cannot use vctGenericMatrixTest, because
+    // its methods try to instantiate a zero-size product object, and fail to compile.
+    // most of the following tests should do nothing.
+    vctFixedSizeMatrixRef<value_type, 0, COMSIZE, 2*COMSIZE, 1> matrix6(matrix1Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, COMSIZE, COLS, 2*COLS, 1> matrix7(matrix2Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, 0, COLS, 2*COLS, 1> matrix8(matrix3Space.Pointer(0,0));
+    vctRandom(matrix6, value_type(-10), value_type(10));
+    vctRandom(matrix7, value_type(-10), value_type(10));
+    matrix8.ProductOf(matrix6, matrix7);
+
+    vctFixedSizeMatrixRef<value_type, ROWS, COMSIZE, 2*COMSIZE, 1> matrix9(matrix1Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, COMSIZE, 0, 2*COLS, 1> matrix10(matrix2Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, ROWS, 0, 2*COLS, 1> matrix11(matrix3Space.Pointer(0,0));
+    vctRandom(matrix9, value_type(-10), value_type(10));
+    vctRandom(matrix10, value_type(-10), value_type(10));
+    matrix11.ProductOf(matrix9, matrix10);
+
+    vctFixedSizeMatrixRef<value_type, 0, COMSIZE, 2*COMSIZE, 1> matrix12(matrix1Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, COMSIZE, 0, 2*COLS, 1> matrix13(matrix2Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, 0, 0, 2*COLS, 1> matrix14(matrix3Space.Pointer(0,0));
+    vctRandom(matrix12, value_type(-10), value_type(10));
+    vctRandom(matrix13, value_type(-10), value_type(10));
+    matrix14.ProductOf(matrix12, matrix13);
+
+    vctFixedSizeMatrixRef<value_type, ROWS, 0, 2*COMSIZE, 1> matrix15(matrix1Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, 0, COLS, 2*COLS, 1> matrix16(matrix2Space.Pointer(0,0));
+    vctFixedSizeMatrixRef<value_type, ROWS, COLS, 2*COLS, 1> matrix17(matrix3Space.Pointer(0,0));
+    vctRandom(matrix15, value_type(-10), value_type(10));
+    vctRandom(matrix16, value_type(-10), value_type(10));
+    matrix17.ProductOf(matrix15, matrix16);
+    CPPUNIT_ASSERT( !vctAny(matrix17) );
 }
 
 void vctFixedSizeMatrixRefTest::TestProductOperationsDouble(void) {
