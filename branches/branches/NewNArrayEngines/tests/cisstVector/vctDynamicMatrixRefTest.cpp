@@ -211,21 +211,50 @@ void vctDynamicMatrixRefTest::TestProductOperations(void) {
     // result size
     enum {ROWS = 4, COLS = 5, COMSIZE = 7};
     typedef _elementType value_type;
-    vctDynamicMatrix<value_type> matrix1(ROWS, COMSIZE);
-    vctDynamicMatrix<value_type> matrix2(COMSIZE, COLS);
-    vctDynamicMatrix<value_type> matrix3(ROWS, COLS);
+    typedef vctDynamicMatrix<value_type> space_type;
+    typedef typename space_type::Submatrix::Type work_type;
+    space_type matrix1Space(2*ROWS, 2*COMSIZE);
+    space_type matrix2Space(2*COMSIZE, 2*COLS);
+    space_type matrix3Space(2*ROWS, 2*COLS);
+    work_type matrix1(ROWS, COMSIZE, 2*matrix1Space.row_stride(), 2*matrix1Space.col_stride(), matrix1Space.Pointer(0,0));
+    work_type matrix2(COMSIZE, COLS, matrix2Space.row_stride(), matrix2Space.col_stride(), matrix2Space.Pointer(0,0));
+    work_type matrix3(ROWS, COLS, matrix3Space.row_stride(), 2*matrix3Space.col_stride(), matrix3Space.Pointer(0,1));
     vctDynamicVector<value_type> vector1(COMSIZE);
     vctDynamicVector<value_type> vector2(ROWS);
     
     vctRandom(matrix1, value_type(-10), value_type(10));
     vctRandom(matrix2, value_type(-10), value_type(10));
     vctRandom(vector1, value_type(-10), value_type(10));
+    vctRandom(vector2, value_type(-10), value_type(10));
 
     vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
-    vctGenericMatrixTest::TestMatrixVectorProductOperations(matrix1, vector1, vector2);
-
-    vctRandom(vector2, value_type(-10), value_type(10));
+    vctGenericMatrixTest::TestMatrixVectorProductOperations(matrix1, vector1, vector2);    
     vctGenericMatrixTest::TestVectorMatrixProductOperations(matrix1, vector2, vector1);
+
+    matrix1.SetRef(matrix1Space, 0, 0, COMSIZE, COMSIZE);
+    matrix2.SetRef(matrix2Space, COMSIZE, matrix2Space.cols() - COMSIZE, COMSIZE, COMSIZE);
+    vctGenericMatrixTest::TestMatrixMatrixProductExceptions(matrix1, matrix2);
+
+    // Test zero-size matrix product
+    matrix1.SetRef(matrix1Space, 0, 0, 0, COMSIZE);
+    matrix2.SetRef(matrix2Space, 0, 0, COMSIZE, COLS);
+    matrix3.SetRef(matrix3Space, 0, 0, 0, COLS);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
+
+    matrix1.SetRef(matrix1Space, 0, 0, ROWS, COMSIZE);
+    matrix2.SetRef(matrix2Space, 0, 0, COMSIZE, 0);
+    matrix3.SetRef(matrix3Space, 0, 0, ROWS, 0);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
+
+    matrix1.SetRef(matrix1Space, 0, 0, 0, COMSIZE);
+    matrix2.SetRef(matrix2Space, 0, 0, COMSIZE, 0);
+    matrix3.SetRef(matrix3Space, 0, 0, 0, 0);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
+
+    matrix1.SetRef(matrix1Space, 0, 0, ROWS, 0);
+    matrix2.SetRef(matrix2Space, 0, 0, 0, COLS);
+    matrix3.SetRef(matrix3Space, 0, 0, ROWS, COLS);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
 }
 
 void vctDynamicMatrixRefTest::TestProductOperationsDouble(void) {
