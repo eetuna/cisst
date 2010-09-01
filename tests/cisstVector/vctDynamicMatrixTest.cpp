@@ -461,16 +461,32 @@ void vctDynamicMatrixTest::TestProductOperations(void) {
     vctRandom(matrix1, value_type(-10), value_type(10));
     vctRandom(matrix2, value_type(-10), value_type(10));
     vctRandom(vector1, value_type(-10), value_type(10));
+    vctRandom(vector2, value_type(-10), value_type(10));
 
     vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
     vctGenericMatrixTest::TestMatrixVectorProductOperations(matrix1, vector1, vector2);
-    
-    vctRandom(vector2, value_type(-10), value_type(10));
     vctGenericMatrixTest::TestVectorMatrixProductOperations(matrix1, vector2, vector1);
 
-    matrix1.SetSize(COMSIZE, COMSIZE);
-    matrix2.SetSize(COMSIZE, COMSIZE);
-    vctGenericMatrixTest::TestMatrixMatrixProductExceptions(matrix1, matrix2);
+    // Test zero-size matrix product
+    matrix1.SetSize(0, COMSIZE);
+    matrix2.SetSize(COMSIZE, COLS);
+    matrix3.SetSize(0, COLS);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
+
+    matrix1.SetSize(ROWS, COMSIZE);
+    matrix2.SetSize(COMSIZE, 0);
+    matrix3.SetSize(ROWS, 0);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
+
+    matrix1.SetSize(0, COMSIZE);
+    matrix2.SetSize(COMSIZE, 0);
+    matrix3.SetSize(0, 0);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
+
+    matrix1.SetSize(ROWS, 0);
+    matrix2.SetSize(0, COLS);
+    matrix3.SetSize(ROWS, COLS);
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
 }
 
 void vctDynamicMatrixTest::TestProductOperationsDouble(void) {
