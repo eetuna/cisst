@@ -74,10 +74,13 @@ public:
     virtual ~mtsTaskFromSignal() {}
 
     /* documented in base class */
-    virtual mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName,
-                                                        mtsRequiredType required = MTS_REQUIRED);
-    virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName,
-                                                        mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
+	void Kill(void);
+
+    mtsInterfaceRequired * AddInterfaceRequired(const std::string & interfaceRequiredName,
+                                                mtsRequiredType required = MTS_REQUIRED);
+
+    mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName,
+                                                mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
 
 };
 

@@ -73,6 +73,15 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
 }
 
 
+void mtsTaskFromSignal::Kill(void)
+{
+    CMN_LOG_CLASS_INIT_VERBOSE << "Kill: task \"" << this->GetName() << "\", current state \"" << GetTaskStateName() << "\"" << std::endl;
+    mtsTask::Kill();
+    // only difference is that we need to wake up the thread to make sure it processes the request
+    this->Thread.Wakeup();
+}
+
+
 mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string & interfaceRequiredName,
                                                                mtsRequiredType required)
 {
