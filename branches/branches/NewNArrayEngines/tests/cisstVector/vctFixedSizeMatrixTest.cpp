@@ -333,16 +333,47 @@ void vctFixedSizeMatrixTest::TestProductOperations(void) {
     vctRandom(matrix1, value_type(-10), value_type(10));
     vctRandom(matrix2, value_type(-10), value_type(10));
     vctRandom(vector1, value_type(-10), value_type(10));
+    vctRandom(vector2, value_type(-10), value_type(10));
 
     vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix1, matrix2, matrix3);
     vctGenericMatrixTest::TestMatrixVectorProductOperations(matrix1, vector1, vector2);
-    
-    vctRandom(vector2, value_type(-10), value_type(10));
     vctGenericMatrixTest::TestVectorMatrixProductOperations(matrix1, vector2, vector1);
 
     vctFixedSizeMatrix<value_type, COMSIZE, COMSIZE> matrix4;
     vctFixedSizeMatrix<value_type, COMSIZE, COMSIZE> matrix5;
     vctGenericMatrixTest::TestMatrixMatrixProductExceptions(matrix4, matrix5);
+
+    // Fixed zero-size matrices cannot be compiled, and so
+    // the following tests are excluded.
+#if 0
+    vctFixedSizeMatrix<value_type, 0, COMSIZE> matrix6;
+    vctFixedSizeMatrix<value_type, COMSIZE, COLS> matrix7;
+    vctFixedSizeMatrix<value_type, 0, COLS> matrix8;
+    vctRandom(matrix6, value_type(-10), value_type(10));
+    vctRandom(matrix7, value_type(-10), value_type(10));
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix6, matrix7, matrix8);
+
+    vctFixedSizeMatrix<value_type, ROWS, COMSIZE> matrix9;
+    vctFixedSizeMatrix<value_type, COMSIZE, 0> matrix10;
+    vctFixedSizeMatrix<value_type, ROWS, 0> matrix11;
+    vctRandom(matrix9, value_type(-10), value_type(10));
+    vctRandom(matrix10, value_type(-10), value_type(10));
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix9, matrix10, matrix11);
+
+    vctFixedSizeMatrix<value_type, 0, COMSIZE> matrix12;
+    vctFixedSizeMatrix<value_type, COMSIZE, 0> matrix13;
+    vctFixedSizeMatrix<value_type, 0, 0> matrix14;
+    vctRandom(matrix12, value_type(-10), value_type(10));
+    vctRandom(matrix13, value_type(-10), value_type(10));
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix12, matrix13, matrix14);
+
+    vctFixedSizeMatrix<value_type, ROWS, 0> matrix15;
+    vctFixedSizeMatrix<value_type, 0, COLS> matrix16;
+    vctFixedSizeMatrix<value_type, ROWS, COLS> matrix17;
+    vctRandom(matrix15, value_type(-10), value_type(10));
+    vctRandom(matrix16, value_type(-10), value_type(10));
+    vctGenericMatrixTest::TestMatrixMatrixProductOperations(matrix15, matrix16, matrix17);
+#endif
 }
 
 void vctFixedSizeMatrixTest::TestProductOperationsDouble(void) {
