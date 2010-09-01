@@ -56,7 +56,6 @@ public:
     void Run(void);
     void Cleanup(void);
 
-    /*! 
     /*! Name of required interface that uses services */
     static std::string NameOfInterfaceRequired;
 
