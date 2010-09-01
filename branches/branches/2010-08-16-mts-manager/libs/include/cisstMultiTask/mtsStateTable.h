@@ -403,8 +403,8 @@ public:
     /*! Advance if automatic advance is set and does nothing otherwise. */
     void AdvanceIfAutomatic(void);
 
-    /*! Kill, called when the task is being stopped.  Used for cleanup. */
-    void Kill(void);
+    /*! Cleanup called when the task is being stopped. */
+    void Cleanup(void);
 
     inline double GetTic(void) const {
         return this->Tic.Data;

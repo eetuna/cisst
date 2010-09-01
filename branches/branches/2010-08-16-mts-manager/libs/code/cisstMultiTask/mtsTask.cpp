@@ -81,8 +81,13 @@ void mtsTask::StartupInternal(void) {
 void mtsTask::CleanupInternal() {
     // Call user-supplied cleanup function
     this->Cleanup();
+
+    // Kill each state table
+    StateTables.ForEachVoid(&mtsStateTable::Cleanup);
+
     // Perform Cleanup on all interfaces provided
     InterfacesProvidedOrOutput.ForEachVoid(&mtsInterfaceProvidedOrOutput::Cleanup);
+
     ChangeState(FINISHED);
     CMN_LOG_CLASS_INIT_VERBOSE << "CleanupInternal: ended for task \"" << this->GetName() << "\"" << std::endl;
 }
@@ -193,9 +198,6 @@ mtsTask::~mtsTask()
 void mtsTask::Kill(void)
 {
     CMN_LOG_CLASS_INIT_VERBOSE << "Kill: task \"" << this->GetName() << "\", current state \"" << GetTaskStateName() << "\"" << std::endl;
-
-    // Kill each state table
-    StateTables.ForEachVoid(&mtsStateTable::Kill);
 
     // If the task has only been constructed (i.e., no thread created), then we just enter the FINISHED state directly.
     // Otherwise, we set the state to FINISHING and let the thread (RunInternal) set it to FINISHED.
