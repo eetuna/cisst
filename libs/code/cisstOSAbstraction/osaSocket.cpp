@@ -382,8 +382,8 @@ int osaSocket::Receive(char * bufrecv, unsigned int maxlen, const double timeout
     FD_ZERO(&readfds);
     FD_SET(SocketFD, &readfds);
 
-    long second = floor (timeoutSec);
-    long usec = floor ( (timeoutSec - second) *1e6);
+    long second = static_cast<long>(floor (timeoutSec));
+    long usec = static_cast<long>(floor ( (timeoutSec - second) *1e6));
     timeval timeout = { second , usec };
 
     /* Notes for QNX from the QNX library reference (Min)
@@ -534,9 +534,8 @@ bool osaSocket::IsConnected(void) {
     FD_SET(SocketFD, &readfds);
     FD_SET(SocketFD, &writefds);
 
-    double timeoutSec = 0.000;
-    long second = floor (timeoutSec);
-    long usec = floor ( (timeoutSec - second) *1e6);
+    long second = 0;
+    long usec = 0;
     timeval timeout = { second , usec };
 
     retval = select(SocketFD + 1, &readfds, &writefds, NULL, &timeout);
