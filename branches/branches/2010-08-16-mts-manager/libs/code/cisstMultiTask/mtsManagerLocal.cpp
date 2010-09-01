@@ -573,12 +573,10 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
         CMN_LOG_CLASS_INIT_ERROR << "RemoveComponent: failed to removed component: " << componentName << std::endl;
         return false;
     }
-    else {
-        delete component;
-
+    else {        
         CMN_LOG_CLASS_INIT_VERBOSE << "RemoveComponent: removed component: " << componentName << std::endl;
+        delete component; // component is now deleted, be careful, componentName might be using its data member Name
     }
-
     return true;
 }
 
