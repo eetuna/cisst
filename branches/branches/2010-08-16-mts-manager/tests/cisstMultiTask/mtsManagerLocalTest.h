@@ -49,9 +49,7 @@ private:
         CPPUNIT_TEST(TestGetTimeServer);
         CPPUNIT_TEST(TestGetProcessName);
 
-        CPPUNIT_TEST(TestCreateAll);
-        CPPUNIT_TEST(TestStartAll);
-        CPPUNIT_TEST(TestKillAll);
+        CPPUNIT_TEST(TestStates);
 
         CPPUNIT_TEST(TestConnectLocally);
         CPPUNIT_TEST(TestConnectDisconnect);
@@ -95,9 +93,7 @@ public:
     void TestGetTimeServer(void);
     void TestGetProcessName(void);
 
-    void TestCreateAll(void);
-    void TestStartAll(void);
-    void TestKillAll(void);
+    void TestStates(void);
     
     void TestConnectLocally(void);
     void TestConnectDisconnect(void);

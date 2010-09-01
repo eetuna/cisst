@@ -3,10 +3,10 @@
 
 /*
   $Id$
-  
+
   Author(s):  Min Yang Jung
   Created on: 2009-12-08
-  
+
   (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
   Reserved.
 
@@ -50,7 +50,7 @@ public:
         Value.Data = -1;   // initial value = -1;
     }
 
-    void CommandVoid(void) { 
+    void CommandVoid(void) {
         Value.Data = 0;
     }
 
@@ -100,16 +100,16 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-//  C1: (P1:C1:r1 - P2:C2:p1), (P1:C1:r2 - P2:C2:p2)
-//  - provided interface: none 
+//  Periodic1: (P1:Periodic1:r1 - P2:Continuous1:p1), (P1:Periodic1:r2 - P2:Continuous1:p2)
+//  - provided interface: none
 //  - required interface: r1, r2
 //-----------------------------------------------------------------------------
-class mtsManagerTestC1 : public mtsTaskPeriodic
+class mtsManagerTestPeriodic1 : public mtsTaskPeriodic
 {
 public:
     mtsManagerTestInterfaceRequired InterfaceRequired1, InterfaceRequired2;
 
-    mtsManagerTestC1() : mtsTaskPeriodic("C1Task", 10 * cmn_ms)
+    mtsManagerTestPeriodic1() : mtsTaskPeriodic("Periodic1Task", 10 * cmn_ms)
     {
         mtsInterfaceRequired * required;
 
@@ -138,12 +138,12 @@ public:
     void Run(void) {}
 };
 
-class mtsManagerTestC1Device : public mtsComponent
+class mtsManagerTestDevice1 : public mtsComponent
 {
 public:
     mtsManagerTestInterfaceRequired InterfaceRequired1, InterfaceRequired2;
 
-    mtsManagerTestC1Device() : mtsComponent("C1")
+    mtsManagerTestDevice1() : mtsComponent("Device1")
     {
         mtsInterfaceRequired * required;
 
@@ -173,17 +173,17 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-//  C2: (P1:C2:r1 - P2:C2:p2)
+//  Continuous1: (P1:Continuous1:r1 - P2:Continuous1:p2)
 //  - provided interface: p1, p2
 //  - required interface: r1
 //-----------------------------------------------------------------------------
-class mtsManagerTestC2 : public mtsTaskContinuous
+class mtsManagerTestContinuous1 : public mtsTaskContinuous
 {
 public:
     mtsManagerTestInterfaceProvided InterfaceProvided1, InterfaceProvided2;
     mtsManagerTestInterfaceRequired InterfaceRequired1;
 
-    mtsManagerTestC2() : mtsTaskContinuous("C2Task")
+    mtsManagerTestContinuous1() : mtsTaskContinuous("Continuous1Task")
     {
         mtsInterfaceRequired * required;
         mtsInterfaceProvided * provided;
@@ -193,7 +193,7 @@ public:
         if (provided) {
             provided->AddCommandVoid(&mtsManagerTestInterfaceProvided::CommandVoid, &InterfaceProvided1, "Void");
             provided->AddCommandWrite(&mtsManagerTestInterfaceProvided::CommandWrite, &InterfaceProvided1, "Write");
-            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided1, "Read");            
+            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided1, "Read");
             provided->AddCommandQualifiedRead(&mtsManagerTestInterfaceProvided::CommandQualifiedRead, &InterfaceProvided1, "QualifiedRead");
             provided->AddEventVoid(InterfaceProvided1.EventVoid, "EventVoid");
             provided->AddEventWrite(InterfaceProvided1.EventWrite, "EventWrite", mtsInt(-1));
@@ -204,7 +204,7 @@ public:
         if (provided) {
             provided->AddCommandVoid(&mtsManagerTestInterfaceProvided::CommandVoid, &InterfaceProvided2, "Void");
             provided->AddCommandWrite(&mtsManagerTestInterfaceProvided::CommandWrite, &InterfaceProvided2, "Write");
-            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided2, "Read");            
+            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided2, "Read");
             provided->AddCommandQualifiedRead(&mtsManagerTestInterfaceProvided::CommandQualifiedRead, &InterfaceProvided2, "QualifiedRead");
             provided->AddEventVoid(InterfaceProvided2.EventVoid, "EventVoid");
             provided->AddEventWrite(InterfaceProvided2.EventWrite, "EventWrite", mtsInt(-1));
@@ -222,16 +222,18 @@ public:
         }
     }
 
-    void Run(void) {}
+    void Run(void) {
+        osaSleep(1.0 * cmn_ms);
+    }
 };
 
-class mtsManagerTestC2Device : public mtsComponent
+class mtsManagerTestDevice2 : public mtsComponent
 {
 public:
     mtsManagerTestInterfaceProvided InterfaceProvided1, InterfaceProvided2;
     mtsManagerTestInterfaceRequired InterfaceRequired1;
 
-    mtsManagerTestC2Device() : mtsComponent("C2")
+    mtsManagerTestDevice2() : mtsComponent("Device2")
     {
         mtsInterfaceRequired * required;
         mtsInterfaceProvided * provided;
@@ -241,7 +243,7 @@ public:
         if (provided) {
             provided->AddCommandVoid(&mtsManagerTestInterfaceProvided::CommandVoid, &InterfaceProvided1, "Void");
             provided->AddCommandWrite(&mtsManagerTestInterfaceProvided::CommandWrite, &InterfaceProvided1, "Write");
-            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided1, "Read");            
+            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided1, "Read");
             provided->AddCommandQualifiedRead(&mtsManagerTestInterfaceProvided::CommandQualifiedRead, &InterfaceProvided1, "QualifiedRead");
             provided->AddEventVoid(InterfaceProvided1.EventVoid, "EventVoid");
             provided->AddEventWrite(InterfaceProvided1.EventWrite, "EventWrite", mtsInt(-1));
@@ -252,7 +254,7 @@ public:
         if (provided) {
             provided->AddCommandVoid(&mtsManagerTestInterfaceProvided::CommandVoid, &InterfaceProvided2, "Void");
             provided->AddCommandWrite(&mtsManagerTestInterfaceProvided::CommandWrite, &InterfaceProvided2, "Write");
-            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided2, "Read");            
+            provided->AddCommandRead(&mtsManagerTestInterfaceProvided::CommandRead, &InterfaceProvided2, "Read");
             provided->AddCommandQualifiedRead(&mtsManagerTestInterfaceProvided::CommandQualifiedRead, &InterfaceProvided2, "QualifiedRead");
             provided->AddEventVoid(InterfaceProvided2.EventVoid, "EventVoid");
             provided->AddEventWrite(InterfaceProvided2.EventWrite, "EventWrite", mtsInt(-1));
@@ -274,11 +276,11 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-//  C3: (P2:C3:r1 - P2:C2:p2)
+//  FromCallback1: (P2:FromCallback1:r1 - P2:C2:p2)
 //  - provided interface: none
 //  - required interface: r1
 //-----------------------------------------------------------------------------
-class mtsManagerTestC3 : public mtsTaskFromCallback
+class mtsManagerTestFromCallback1 : public mtsTaskFromCallback
 {
 public:
     mtsManagerTestInterfaceRequired InterfaceRequired1;
@@ -286,7 +288,7 @@ public:
     // Counters to test Create()
     int CounterCreateCall;
 
-    mtsManagerTestC3() : mtsTaskFromCallback("C3Task"), CounterCreateCall(0)
+    mtsManagerTestFromCallback1() : mtsTaskFromCallback("FromCallback1Task"), CounterCreateCall(0)
     {
         mtsInterfaceRequired * required;
 
@@ -305,12 +307,47 @@ public:
     void Run(void) {}
 };
 
-class mtsManagerTestC3Device : public mtsComponent
+
+class mtsManagerTestCallbackTrigger
+{
+    osaThread Thread;
+    mtsTaskFromCallback * Task;
+    bool Running;
+public:
+    mtsManagerTestCallbackTrigger(mtsTaskFromCallback * task):
+        Task(task),
+        Running(true)
+    {
+        Thread.Create<mtsManagerTestCallbackTrigger, int>(this, &mtsManagerTestCallbackTrigger::Run,
+                                                          0, "TstCb");
+    }
+
+    ~mtsManagerTestCallbackTrigger() {
+        Thread.Wait();
+    }
+
+    void Stop(void) {
+        this->Running = false;
+    }
+
+    void * Run(int CMN_UNUSED(data)) {
+        while (this->Running) {
+            Task->DoCallback(0);
+            osaSleep(1.0 * cmn_ms);
+        }
+        // stop the thread
+        osaCurrentThreadYield();
+        return 0;
+    }
+};
+
+
+class mtsManagerTestDevice3 : public mtsComponent
 {
 public:
     mtsManagerTestInterfaceRequired InterfaceRequired1;
 
-    mtsManagerTestC3Device() : mtsComponent("C3")
+    mtsManagerTestDevice3() : mtsComponent("Device3")
     {
         mtsInterfaceRequired * required;
 
