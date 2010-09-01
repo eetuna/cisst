@@ -61,7 +61,6 @@ class CISST_EXPORT mtsTask: public mtsComponent
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
     friend class mtsManagerLocal;
-    friend class mtsManagerLocalTest;
 
 public:
     typedef mtsComponent BaseType;
@@ -244,7 +243,9 @@ public:
 	inline bool IsEndTask(void) const { return (TaskState >= FINISHING); }
 
     /*! Return task state. */
-    inline TaskStateType GetTaskState(void) const { return TaskState; }
+    inline TaskStateType GetTaskState(void) const {
+        return TaskState;
+    }
 
     /*! Convert tasks state to string representation. */
     const char * TaskStateName(TaskStateType state) const;
