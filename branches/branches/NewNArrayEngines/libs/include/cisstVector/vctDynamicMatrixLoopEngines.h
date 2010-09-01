@@ -54,6 +54,12 @@ public:
         cmnThrow(std::runtime_error("vctDynamicMatrixLoopEngines: Output base pointer is same as one of input base pointers."));
     }
 
+	/*! Helper function to throw an exception whenever a matrix
+      argument has a null data pointer and nonzero size */
+    inline static void ThrowNullPointerException(void) throw(std::runtime_error) {
+        cmnThrow(std::runtime_error("vctDynamicMatrixLoopEngines: Argument of non-zero size has null data pointer."));
+    }
+
 
     /*! Perform elementwise operation between matrices of identical
       size and element type.  The operation semantics is
@@ -825,8 +831,13 @@ public:
             typename Input1MatrixType::ConstRowRefType input1Row;
             typename Input2MatrixType::ConstColumnRefType input2Col;
 
-            if ((outputPointer == input1Pointer) ||
-                (outputPointer == input2Pointer)) {
+            if ((outputPointer == 0) && (outputMatrix.size() != 0))
+            {
+                ThrowNullPointerException();
+            }
+
+            if ( ((outputPointer == input1Pointer) || (outputPointer == input2Pointer)) && (outputPointer != 0) )
+            {
                 ThrowSharedPointersException();
             }
 
