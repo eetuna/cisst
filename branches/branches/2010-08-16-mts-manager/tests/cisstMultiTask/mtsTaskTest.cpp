@@ -21,7 +21,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnUnits.h>
 #include <cisstMultiTask/mtsStateTable.h>
-//#include <cisstMultiTask/mtsTaskManager.h>
 
 #include "mtsTaskTest.h"
 

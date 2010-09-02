@@ -53,7 +53,8 @@ private:
         CPPUNIT_TEST(TestConnectLocally);
         CPPUNIT_TEST(TestConnectDisconnect);
 
-        CPPUNIT_TEST(TestLocalCommandsAndEvents);
+        CPPUNIT_TEST(TestLocalCommandsAndEventsDeviceToDevice);
+        CPPUNIT_TEST(TestLocalCommandsAndEventsPeriodicToPeriodicBlocking);
 
 #if CISST_MTS_HAS_ICE
         CPPUNIT_TEST(TestGetIPAddressList);
@@ -96,7 +97,8 @@ public:
 
     void TestConnectLocally(void);
     void TestConnectDisconnect(void);
-    void TestLocalCommandsAndEvents(void);
+    void TestLocalCommandsAndEventsDeviceToDevice(void);
+    void TestLocalCommandsAndEventsPeriodicToPeriodicBlocking(void);
 
 #if CISST_MTS_HAS_ICE
     void TestGetIPAddressList(void);
