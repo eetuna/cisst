@@ -262,6 +262,9 @@ protected:
     osaSocket JGraphSocket;
     bool JGraphSocketConnected;
 
+    osaSocket UDrawSocket;
+    bool UDrawSocketConnected;
+
     //-------------------------------------------------------------------------
     //  Processing Methods
     //-------------------------------------------------------------------------
@@ -323,6 +326,7 @@ public:
     bool RemoveComponent(const std::string & processName, const std::string & componentName);
 
     std::string GetComponentInGraphFormat(const std::string & processName, const std::string & componentName) const;
+    std::string GetComponentInUDrawGraphFormat(const std::string & processName, const std::string & componentName) const;
 
     bool IsProxyComponent(const std::string & componentName) const;
 

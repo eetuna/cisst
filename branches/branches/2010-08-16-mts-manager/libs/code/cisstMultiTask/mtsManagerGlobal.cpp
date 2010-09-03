@@ -39,6 +39,8 @@ mtsManagerGlobal::mtsManagerGlobal() :
 #endif
     , JGraphSocket(osaSocket::TCP)
     , JGraphSocketConnected(false)
+    , UDrawSocket(osaSocket::TCP)
+    , UDrawSocketConnected(false)
 {
     ProcessMap.SetOwner(*this);
 
@@ -58,7 +60,23 @@ bool mtsManagerGlobal::ConnectToTaskViewer(const std::string &ipAddress, unsigne
     // the Global Component Manager as a periodic task.
     CMN_LOG_CLASS_INIT_WARNING << "Attempting to connect to TaskViewer" << std::endl;
     JGraphSocketConnected = JGraphSocket.Connect(ipAddress, port);
-    if (JGraphSocketConnected) {
+    // PK TEMP: if JGraphSocketConnected is false, try to connect to UDrawGraph on port 2554
+    // (Note: default UDrawGraph port is 2542, but this may be a target for hackers).
+    if (!JGraphSocketConnected) {
+        UDrawSocketConnected = UDrawSocket.Connect(ipAddress, 2554);
+        // wait for initial OK
+        if (UDrawSocketConnected) {
+            char response[80];
+            if (UDrawSocket.Receive(response, sizeof(response), 3.0)) {
+                CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph): " << response << std::endl;
+                UDrawSocket.Send("graph(new([]))\n");
+                if (UDrawSocket.Receive(response, sizeof(response), 1.0))
+                   CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph), new: " << response << std::endl;
+            }
+        }
+    }
+
+    if (JGraphSocketConnected || UDrawSocketConnected) {
         osaSleep(1.0 * cmn_s);  // need to wait or JGraph server will not start properly
         // Now, send all existing components and connections
         std::vector<std::string> processList;
@@ -71,10 +89,22 @@ bool mtsManagerGlobal::ConnectToTaskViewer(const std::string &ipAddress, unsigne
             for (j = 0; j < componentList.size(); j++) {
                 // Ignore proxy components
                 if (!IsProxyComponent(componentList[j])) {
-                    std::string message = GetComponentInGraphFormat(processList[i], componentList[j]);
-                    if (message != "") {
-                        CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
-                        JGraphSocket.Send(message);
+                    if (JGraphSocketConnected) {
+                        std::string message = GetComponentInGraphFormat(processList[i], componentList[j]);
+                        if (message != "") {
+                            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
+                            JGraphSocket.Send(message);
+                        }
+                    }
+                    if (UDrawSocketConnected) {
+                        std::string message = GetComponentInUDrawGraphFormat(processList[i], componentList[j]);
+                        if (message != "") {
+                            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
+                            UDrawSocket.Send(message);
+                            char response[80];
+                            if (UDrawSocket.Receive(response, sizeof(response), 1.0))
+                                CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph): " << response << std::endl;
+                        }
                     }
                 }
             }
@@ -82,14 +112,16 @@ bool mtsManagerGlobal::ConnectToTaskViewer(const std::string &ipAddress, unsigne
         std::vector<ConnectionStrings> connectionList;
         GetListOfConnections(connectionList);
         for (i = 0; i < connectionList.size(); i++) {
-            std::string message = GetConnectionInGraphFormat(connectionList[i]);
-            CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
-            JGraphSocket.Send(message);
+            if (JGraphSocketConnected) {
+                std::string message = GetConnectionInGraphFormat(connectionList[i]);
+                CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
+                JGraphSocket.Send(message);
+            }
         }
     } else {
         CMN_LOG_CLASS_INIT_WARNING << "Failed to connect to JGraph server" << std::endl;
     }
-    return JGraphSocketConnected;
+    return JGraphSocketConnected || UDrawSocketConnected;
 }
 
 //-------------------------------------------------------------------------
@@ -101,6 +133,9 @@ bool mtsManagerGlobal::Cleanup(void)
 
     JGraphSocket.Close();
     JGraphSocketConnected = false;
+
+    UDrawSocket.Close();
+    UDrawSocketConnected = false;
 
     // Remove all processes safely
     ProcessMapType::iterator itProcess = ProcessMap.begin();
@@ -328,12 +363,22 @@ bool mtsManagerGlobal::AddComponent(const std::string & processName, const std::
 
     // PK TEMP: special handling if componentName ends with "-END"
     if (componentName.find("-END", componentName.length()-4) != std::string::npos) {
+        std::string componentNameOnly = componentName.substr(0, componentName.length()-4);
         if (JGraphSocketConnected) {
-            std::string componentNameOnly = componentName.substr(0, componentName.length()-4);
             std::string buffer = GetComponentInGraphFormat(processName, componentNameOnly);
             if (buffer != "") {
                 CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
                 JGraphSocket.Send(buffer);
+            }
+        }
+        if (UDrawSocketConnected) {
+            std::string buffer = GetComponentInUDrawGraphFormat(processName, componentNameOnly);
+            if (buffer != "") {
+                CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << buffer << std::endl;
+                UDrawSocket.Send(buffer);
+                char response[80];
+                if (UDrawSocket.Receive(response, sizeof(response), 1.0))
+                    CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph): " << response << std::endl;
             }
         }
         return true;
@@ -431,6 +476,24 @@ std::string mtsManagerGlobal::GetComponentInGraphFormat(const std::string &proce
             buffer += ",";
     }
     buffer += "]]\n";
+    return buffer;
+}
+
+std::string mtsManagerGlobal::GetComponentInUDrawGraphFormat(const std::string &processName,
+                                                             const std::string &componentName) const
+{
+    std::vector<std::string> requiredList;
+    std::vector<std::string> providedList;
+    GetNamesOfInterfacesRequiredOrInput(processName, componentName, requiredList);
+    GetNamesOfInterfacesProvidedOrOutput(processName, componentName, providedList);
+    // For now, ignore components that don't have any interfaces
+    if ((requiredList.size() == 0) && (providedList.size() == 0))
+        return "";
+    std::string buffer("graph(update([new_node(\"");
+    buffer.append(processName + ":" + componentName);
+    buffer.append("\",\"B\",[a(\"OBJECT\",\""); 
+    buffer.append(processName + ":" + componentName);
+    buffer.append("\")])],[]))\n");
     return buffer;
 }
 
@@ -1025,6 +1088,21 @@ int mtsManagerGlobal::Connect(const std::string & requestProcessName,
                                            + serverInterfaceProvidedNameActual + "]\n";
         CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
         JGraphSocket.Send(message);
+    }
+    if (UDrawSocketConnected) {
+        char response[80];
+        std::string message("graph(update([],[new_edge(\"");
+        sprintf(response, "%d", thisConnectionID);
+        message.append(response);
+        message.append("\", \"C\", [], \"");
+        message.append(clientProcessName + ":" + clientComponentNameActual);
+        message.append("\", \"");
+        message.append(serverProcessName + ":" + serverComponentNameActual);
+        message.append("\")]))\n");
+        CMN_LOG_CLASS_INIT_VERBOSE << "Sending " << message << std::endl;
+        UDrawSocket.Send(message);
+        if (UDrawSocket.Receive(response, sizeof(response), 1.0))
+            CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph): " << response << std::endl;
     }
     // Increase counter for next connection id
     ++ConnectionID;
