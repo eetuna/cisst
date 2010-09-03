@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Min Yang Jung
+  Author(s):  Min Yang Jung, Anton Deguet
   Created on: 2009-11-17
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2009-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -53,9 +53,6 @@ private:
         CPPUNIT_TEST(TestConnectLocally);
         CPPUNIT_TEST(TestConnectDisconnect);
 
-        CPPUNIT_TEST(TestLocalCommandsAndEventsDeviceToDevice);
-        CPPUNIT_TEST(TestLocalCommandsAndEventsPeriodicToPeriodicBlocking);
-
 #if CISST_MTS_HAS_ICE
         CPPUNIT_TEST(TestGetIPAddressList);
         CPPUNIT_TEST(TestGetName);
@@ -65,7 +62,6 @@ private:
         CPPUNIT_TEST(TestCreateInterfaceProvidedProxy);
         CPPUNIT_TEST(TestRemoveInterfaceRequiredProxy);
         CPPUNIT_TEST(TestRemoveInterfaceProvidedProxy);
-        CPPUNIT_TEST(TestRemoteCommandsAndEvents);
 #endif
     }
     CPPUNIT_TEST_SUITE_END();
@@ -97,8 +93,6 @@ public:
 
     void TestConnectLocally(void);
     void TestConnectDisconnect(void);
-    void TestLocalCommandsAndEventsDeviceToDevice(void);
-    void TestLocalCommandsAndEventsPeriodicToPeriodicBlocking(void);
 
 #if CISST_MTS_HAS_ICE
     void TestGetIPAddressList(void);
@@ -109,6 +103,5 @@ public:
     void TestCreateInterfaceProvidedProxy(void);
     void TestRemoveInterfaceRequiredProxy(void);
     void TestRemoveInterfaceProvidedProxy(void);
-    void TestRemoteCommandsAndEvents(void);
 #endif
 };
