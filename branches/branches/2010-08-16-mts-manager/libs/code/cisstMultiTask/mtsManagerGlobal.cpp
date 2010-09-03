@@ -492,6 +492,8 @@ std::string mtsManagerGlobal::GetComponentInUDrawGraphFormat(const std::string &
     std::string buffer("graph(update([new_node(\"");
     buffer.append(processName + ":" + componentName);
     buffer.append("\",\"B\",[a(\"OBJECT\",\""); 
+    buffer.append(componentName);
+    buffer.append("\"), a(\"INFO\", \"");
     buffer.append(processName + ":" + componentName);
     buffer.append("\")])],[]))\n");
     return buffer;
@@ -1094,7 +1096,11 @@ int mtsManagerGlobal::Connect(const std::string & requestProcessName,
         std::string message("graph(update([],[new_edge(\"");
         sprintf(response, "%d", thisConnectionID);
         message.append(response);
-        message.append("\", \"C\", [], \"");
+        message.append("\", \"C\", [a(\"OBJECT\", \"");
+        message.append(response);
+        message.append("\"), a(\"INFO\", \"");
+        message.append(clientInterfaceRequiredNameActual + "<->" + serverInterfaceProvidedNameActual);
+        message.append("\")], \"");
         message.append(clientProcessName + ":" + clientComponentNameActual);
         message.append("\", \"");
         message.append(serverProcessName + ":" + serverComponentNameActual);
