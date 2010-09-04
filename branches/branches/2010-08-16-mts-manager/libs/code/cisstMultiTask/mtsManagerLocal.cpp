@@ -426,11 +426,11 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
         case LCM_CONFIG_STANDALONE:
             // Check if both manager component client and server have been created
             if (!ManagerComponent.Client) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component client is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "Manager component client (standalone) is not initialized" << std::endl;
                 return false;
             }
             if (!ManagerComponent.Server) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component server is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "Manager component server (standalone) is not initialized" << std::endl;
                 return false;
             }
             if (!Connect(ManagerComponent.Client->GetName(),
@@ -450,7 +450,7 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
         case LCM_CONFIG_NETWORKED:
             // Check if manager component client has been created
             if (!ManagerComponent.Client) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component client is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "Manager component client (networked) is not initialized" << std::endl;
                 return false;
             }
             if (!Connect(this->ProcessName,
@@ -472,7 +472,7 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
         case LCM_CONFIG_NETWORKED_WITH_GCM:
             // Check if manager component server has been created
             if (!ManagerComponent.Server) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component server is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "Manager component server (networked) is not initialized" << std::endl;
                 return false;
             }
 
@@ -1275,6 +1275,11 @@ bool mtsManagerLocal::FindComponent(const std::string & componentName) const
 void mtsManagerLocal::CreateAll(void)
 {
     // Automatically add internal manager component when the LCM is initialized.
+    if (Configuration == LCM_CONFIG_STANDALONE || Configuration == LCM_CONFIG_NETWORKED_WITH_GCM) {
+        if (!AddManagerComponent(GetProcessName(), true)) {
+            cmnThrow(std::runtime_error("Failed to add internal manager component server"));
+        }
+    }
     if (Configuration == LCM_CONFIG_STANDALONE || Configuration == LCM_CONFIG_NETWORKED) {
         if (!AddManagerComponent(GetProcessName())) {
             cmnThrow(std::runtime_error("Failed to add internal manager component client"));
@@ -1289,10 +1294,6 @@ void mtsManagerLocal::CreateAll(void)
         // connect InterfaceInternal.Required - InterfaceComponent.Provided
         if (!ConnectToManagerComponentClient()) {
             cmnThrow(std::runtime_error("Failed to connect user components to manager component client"));
-        }
-    } else if (Configuration == LCM_CONFIG_STANDALONE || Configuration == LCM_CONFIG_NETWORKED_WITH_GCM) {
-        if (!AddManagerComponent(GetProcessName(), true)) {
-            cmnThrow(std::runtime_error("Failed to add internal manager component server"));
         }
     }
 
