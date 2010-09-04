@@ -22,7 +22,8 @@ set (EXECUTABLE_OUTPUT_PATH ${cisstUtilities_BINARY_DIR}/bin)
 set (CISST_UTILITIES 
      multiTaskGlobalComponentManager
      multiTaskGlobalComponentManagerFLTK
-     multiTaskGlobalComponentManagerWithLCM)
+     #multiTaskGlobalComponentManagerWithLCM)
+     multiTaskGlobalComponentManagerEx)
 
 # Which utilities to build
 foreach (utility ${CISST_UTILITIES})
@@ -38,8 +39,11 @@ variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerFLTK REQUIREMEN
 variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerFLTK REQUIREMENT_MET CISST_MTS_HAS_ICE)
 variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerFLTK REQUIREMENT_MET CISST_HAS_FLTK)
 
-variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerWithLCM REQUIREMENT_MET BUILD_LIBS_cisstMultiTask)
-variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerWithLCM REQUIREMENT_MET CISST_MTS_HAS_ICE)
+#variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerWithLCM REQUIREMENT_MET BUILD_LIBS_cisstMultiTask)
+#variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerWithLCM REQUIREMENT_MET CISST_MTS_HAS_ICE)
+
+variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerEx REQUIREMENT_MET BUILD_LIBS_cisstMultiTask)
+variable_requires(BUILD_UTILITIES_multiTaskGlobalComponentManagerEx REQUIREMENT_MET CISST_MTS_HAS_ICE)
 
 # Create targets for each utility
 foreach (utility ${CISST_UTILITIES})

@@ -48,6 +48,36 @@ protected:
     /*! Get a list of all processes running in the system */
     mtsFunctionRead GetNamesOfProcesses;
 
+    /*! Functions for InterfaceComponent's required interface.  Since one 
+        manager component client needs to be able to handle multiple user 
+        components, we keep a list of function objects using named map with 
+        (key = component name, value = function object set instance) */
+    typedef struct {
+        mtsFunctionVoid ComponentStart;
+        mtsFunctionVoid ComponentStop;
+        mtsFunctionVoid ComponentResume;
+    } InterfaceComponentFunctionType;
+
+    typedef cmnNamedMap<InterfaceComponentFunctionType> InterfaceComponentFunctionMapType;
+    InterfaceComponentFunctionMapType InterfaceComponentFunctionMap;
+
+    /*! Functions for InterfaceLCM's required interface */
+    typedef struct {
+        // Dynamic component management
+        mtsFunctionWrite ComponentCreate;
+        mtsFunctionWrite ComponentConnect;
+        // Getters
+        mtsFunctionRead          GetNamesOfProcesses;
+        mtsFunctionQualifiedRead GetNamesOfComponents; // in: process name, out: components' names
+        mtsFunctionQualifiedRead GetNamesOfInterfaces; // in: process name, out: interfaces' names
+        mtsFunctionRead          GetListOfConnections;
+    } InterfaceLCMFunctionType;
+
+    InterfaceLCMFunctionType InterfaceLCMFunction;
+
+    /*! Create new component and add it to LCM */
+    bool CreateAndAddNewComponent(const std::string & className, const std::string & componentName);
+
 public:
     mtsManagerComponentClient(const std::string & componentName);
     ~mtsManagerComponentClient();
@@ -56,10 +86,34 @@ public:
     void Run(void);
     void Cleanup(void);
 
-    /*! Name of required interface that uses services */
-    static std::string NameOfInterfaceRequired;
+    bool AddInterfaceLCM(void);
+    bool AddInterfaceComponent(void);
 
-    void Test(void);
+    /*! Create a new set of function objects, add InterfaceComponent's required
+        interface to this component, and connect it to InterfaceInternal's
+        provided interface */
+    bool CreateInterfaceComponentFunctionSet(const std::string & clientComponentName);
+
+    /*! Commands for InterfaceLCM's provided interface */
+    void InterfaceLCMCommands_ComponentCreate(const mtsDescriptionComponent & arg);
+    void InterfaceLCMCommands_ComponentConnect(const mtsDescriptionConnection & arg);
+
+    /*! Commands for InterfaceComponent's provided interface */
+    void InterfaceComponentCommands_ComponentCreate(const mtsDescriptionComponent & arg);
+    void InterfaceComponentCommands_ComponentConnect(const mtsDescriptionConnection & arg);
+    void InterfaceComponentCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
+    void InterfaceComponentCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
+    void InterfaceComponentCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const;
+    void InterfaceComponentCommands_GetListOfConnections(mtsStdStringVec & list) const;
+
+    /*! Name of internal interfaces */
+    static std::string NameOfInterfaceComponentProvided;
+    static std::string NameOfInterfaceComponentRequired;
+    static std::string NameOfInterfaceLCMProvided;
+    static std::string NameOfInterfaceLCMRequired;
+
+    /*! Returns name of manager component client */
+    static std::string GetNameOfManagerComponentClient(const std::string & processName);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentClient);

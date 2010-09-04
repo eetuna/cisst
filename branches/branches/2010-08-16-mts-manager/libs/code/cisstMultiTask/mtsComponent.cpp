@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
+  Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -24,8 +24,30 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceOutput.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsInterfaceInput.h>
+#include <cisstMultiTask/mtsManagerComponentBase.h>
 
 #include <cisstOSAbstraction/osaGetTime.h>
+
+std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
+std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
+
+// utility function
+void ConvertVectorStringType(const mtsStdStringVec & mtsVec, std::vector<std::string> & stdVec)
+{
+    // MJ: is there better way to do this?
+    for (size_t i = 0; i < mtsVec.size(); ++i) {
+        stdVec.push_back(mtsVec(i));
+    }
+}
+
+void ConvertVectorStringType(const std::vector<std::string> & stdVec, mtsStdStringVec & mtsVec)
+{
+    // MJ: is there better way to do this?
+    mtsVec.SetSize(stdVec.size());
+    for (size_t i = 0; i < stdVec.size(); ++i) {
+        mtsVec(i) = stdVec[i];
+    }
+}
 
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),
@@ -672,4 +694,194 @@ cmnLogger::StreamBufType * mtsComponent::GetLogMultiplexer(void) const
         return nonConstThis->LoDMultiplexerStreambuf;
     }
     return cmnGenericObject::GetLogMultiplexer();
+}
+
+bool mtsComponent::AddInterfaceInternal(void)
+{
+    // Add required interface
+    std::string interfaceName = mtsComponent::NameOfInterfaceInternalRequired;
+    mtsInterfaceRequired * required = AddInterfaceRequired(interfaceName);
+    if (!required) {
+        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal required interface: " << interfaceName << std::endl;
+        return false;
+    }
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentCreate,
+                          InternalInterfaceFunctions.ComponentCreate);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentConnect,
+                          InternalInterfaceFunctions.ComponentConnect);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfProcesses,
+                          InternalInterfaceFunctions.GetNamesOfProcesses);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfComponents,
+                          InternalInterfaceFunctions.GetNamesOfComponents);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces,
+                          InternalInterfaceFunctions.GetNamesOfInterfaces);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::GetListOfConnections,
+                          InternalInterfaceFunctions.GetListOfConnections);
+
+    // Add provided interface
+    interfaceName = mtsComponent::NameOfInterfaceInternalProvided;
+    mtsInterfaceProvided * provided = AddInterfaceProvided(interfaceName);
+    if (!provided) {
+        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal provided interface: " << interfaceName << std::endl;
+        return false;
+    }
+    provided->AddCommandVoid(&mtsComponent::InterfaceInternalCommands_ComponentStart, 
+                             this, mtsManagerComponentBase::CommandNames::ComponentStart);
+    provided->AddCommandVoid(&mtsComponent::InterfaceInternalCommands_ComponentStop, 
+                             this, mtsManagerComponentBase::CommandNames::ComponentStop);
+    provided->AddCommandVoid(&mtsComponent::InterfaceInternalCommands_ComponentResume, 
+                             this, mtsManagerComponentBase::CommandNames::ComponentResume);
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal interfaces" << std::endl;
+
+    return true;
+}
+
+void mtsComponent::InterfaceInternalCommands_ComponentStart(void)
+{
+    // TODO: implement this method
+}
+
+void mtsComponent::InterfaceInternalCommands_ComponentStop(void)
+{
+    // TODO: implement this method
+}
+
+void mtsComponent::InterfaceInternalCommands_ComponentResume(void)
+{
+    // TODO: implement this method
+}
+
+bool mtsComponent::RequestComponentCreate(
+    const std::string& processName, const std::string & className, const std::string & componentName)
+{
+    if (!InternalInterfaceFunctions.ComponentCreate.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentCreate: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsDescriptionComponent arg;
+    arg.ProcessName   = processName;
+    arg.ClassName     = className;
+    arg.ComponentName = componentName;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentCreate(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentCreate: requested component creation: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentConnect(
+    const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
+{
+    if (!InternalInterfaceFunctions.ComponentConnect.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentConnect: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsDescriptionConnection arg;
+    const std::string thisProcessName = mtsManagerLocal::GetInstance()->GetProcessName();
+    arg.Client.ProcessName   = thisProcessName;
+    arg.Client.ComponentName = clientComponentName;
+    arg.Client.InterfaceName = clientInterfaceRequiredName;
+    arg.Server.ProcessName   = thisProcessName;
+    arg.Server.ComponentName = serverComponentName;
+    arg.Server.InterfaceName = serverInterfaceProvidedName;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentConnect(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentConnect: requested component connection: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentConnect(
+    const std::string & clientProcessName, 
+    const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+    const std::string & serverProcessName, 
+    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
+{
+    if (!InternalInterfaceFunctions.ComponentConnect.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentConnect: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsDescriptionConnection arg;
+    arg.Client.ProcessName   = clientProcessName;
+    arg.Client.ComponentName = clientComponentName;
+    arg.Client.InterfaceName = clientInterfaceRequiredName;
+    arg.Server.ProcessName   = serverProcessName;
+    arg.Server.ComponentName = serverComponentName;
+    arg.Server.InterfaceName = serverInterfaceProvidedName;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentConnect(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentConnect: requested component connection: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses)
+{
+    if (!InternalInterfaceFunctions.GetNamesOfProcesses.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfProcesses: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsStdStringVec names;
+    InternalInterfaceFunctions.GetNamesOfProcesses(names);
+
+    ConvertVectorStringType(names, namesOfProcesses);
+
+    return true;
+}
+
+bool mtsComponent::RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents)
+{
+    if (!InternalInterfaceFunctions.GetNamesOfComponents.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfComponents: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsStdStringVec names;
+    InternalInterfaceFunctions.GetNamesOfComponents(mtsStdString(processName), names);
+
+    ConvertVectorStringType(names, namesOfComponents);
+
+    return true;
+}
+
+bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName, std::vector<std::string> & namesOfInterfaces)
+{
+    if (!InternalInterfaceFunctions.GetNamesOfInterfaces.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfInterfaces: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsStdStringVec names;
+    InternalInterfaceFunctions.GetNamesOfInterfaces(mtsStdString(processName), names);
+
+    ConvertVectorStringType(names, namesOfInterfaces);
+
+    return true;
+}
+
+bool mtsComponent::RequestGetListOfConnections(std::vector<std::string> & listOfConnections)
+{
+    if (!InternalInterfaceFunctions.GetListOfConnections.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestGetListOfConnections: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsStdStringVec list;
+    InternalInterfaceFunctions.GetListOfConnections(list);
+
+    ConvertVectorStringType(list, listOfConnections);
+
+    return true;
 }

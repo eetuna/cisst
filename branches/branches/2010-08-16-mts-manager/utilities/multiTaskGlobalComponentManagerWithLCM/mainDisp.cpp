@@ -47,7 +47,6 @@ int main(int argc, char * argv[])
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
     cmnClassRegister::SetLoD("mtsManagerLocal", CMN_LOG_LOD_VERY_VERBOSE);
-    cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
 
     // Get the TaskManager instance and set operation mode
     mtsManagerLocal * taskManager = mtsManagerLocal::GetInstance(

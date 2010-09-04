@@ -32,8 +32,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsFunctionWrite.h>
+#include <cisstMultiTask/mtsFunctionRead.h>
+#include <cisstMultiTask/mtsFunctionQualifiedRead.h>
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
 #include <cisstMultiTask/mtsMulticastCommandWrite.h>
+#include <cisstMultiTask/mtsParameterTypes.h>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -316,11 +320,55 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       via the required interfaces. */
     size_t ProcessQueuedEvents(void);
 
+    /*! Add internal interfaces */
+    bool AddInterfaceInternal(void);
+
+    /*! Internal functions to use services provided by manager component client */
+    struct {
+        // Dynamic component management
+        mtsFunctionWrite ComponentCreate;
+        mtsFunctionWrite ComponentConnect;
+        // Getters
+        mtsFunctionRead          GetNamesOfProcesses;
+        mtsFunctionQualifiedRead GetNamesOfComponents; // in: process name, out: components' names
+        mtsFunctionQualifiedRead GetNamesOfInterfaces; // in: process name, out: interfaces' names
+        mtsFunctionRead          GetListOfConnections;
+    } InternalInterfaceFunctions;
+
+    /*! Internal commands to process command execution request coming from manager 
+        component client */
+    void InterfaceInternalCommands_ComponentStart(void);
+    void InterfaceInternalCommands_ComponentStop(void);
+    void InterfaceInternalCommands_ComponentResume(void);
+
  public:
 
     /*! Send a human readable description of the component. */
     void ToStream(std::ostream & outputStream) const;
 
+    /*! Wrappers for internal function object */
+    bool RequestComponentCreate(
+        const std::string& processName, const std::string & className, const std::string & componentName);
+
+    bool RequestComponentConnect(
+        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+
+    bool RequestComponentConnect(
+        const std::string & clientProcessName, 
+        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+        const std::string & serverProcessName, 
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+
+    bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses);
+    bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents);
+    bool RequestGetNamesOfInterfaces(const std::string & processName, std::vector<std::string> & namesOfInterfaces);
+    bool RequestGetListOfConnections(std::vector<std::string> & listOfConnections);
+
+    /*! Names of internal interfaces to enable user components to use mts-command
+        pattern for communication with other components */
+    static std::string NameOfInterfaceInternalProvided;
+    static std::string NameOfInterfaceInternalRequired;
 };
 
 

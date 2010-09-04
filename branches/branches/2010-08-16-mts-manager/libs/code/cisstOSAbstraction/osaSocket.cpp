@@ -251,7 +251,7 @@ bool osaSocket::Connect(void)
     int retval = connect(SocketFD, reinterpret_cast<struct sockaddr *>(&SERVER_ADDR), sizeof(SERVER_ADDR));
     if (retval == SOCKET_ERROR) {
         Connected=false;
-        CMN_LOG_CLASS_RUN_ERROR << "Connect: failed to connect" << std::endl;
+        CMN_LOG_CLASS_RUN_WARNING << "Connect: failed to connect" << std::endl;
         return false;
     }
     CMN_LOG_CLASS_INIT_VERBOSE << "Connect: connection established" << std::endl;

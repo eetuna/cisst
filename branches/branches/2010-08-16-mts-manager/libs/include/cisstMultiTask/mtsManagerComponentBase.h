@@ -23,62 +23,106 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsManagerComponentBase_h
 
 #include <cisstMultiTask/mtsTaskFromSignal.h>
-#include <cisstMultiTask/mtsVector.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
+#include <cisstMultiTask/mtsParameterTypes.h>
 
-//-----------------------------------------------------------------------------
-//  Component Description
+/*!
+  \file mtsManagerComponentBase.h
+  \brief Declaration of Base Class for Manager Components
+  \ingroup cisstMultiTask
+
+  In the networked configuration, the communication between the global component
+  manager (GCM) and local component managers (LCMs) is currently done by SLICE.
+  If the cisstMultiTask's command pattern is used instead, users can have more
+  flexible way to interact with the system, such as creating and starting 
+  components dynamically.  To replace SLICE with the cisstMultiTask's command 
+  pattern, we introduce a special type of component, manager component.
+  
+  There are two different typs of it, manager component server and client. The
+  manager component server (MCS) runs in LCM that runs with GCM in the same 
+  process and only one instance of MCS exists in the whole system.  On the 
+  contrary, each LCM has manager component client (MCC) that connects to MCS
+  and thus more than one MCC can exist in a system.  However, LCM can have only
+  one MCC, i.e., one MCC per LCM.
+
+  The cisstMultiTask's command pattern is based on a pair of interfaces that 
+  are connected to each other.  The following diagram shows how interfaces are
+  defined and how interfaces are connected to each other.
+
+  (INTFC = one provided interface + one required interface)
+
+              GCM - LCM - MCS (of type mtsManagerComponentServer)
+                           |
+                         INTFC ("InterfaceGCM")
+                           
+                           :
+                           :
+                         
+                         INTFC ("InterfaceLCM")
+                           |
+                    LCM - MCC (of type mtsManagerComponentClient)
+                           |
+                         INTFC ("InterfaceComponent")
+
+                           :
+                           :
+
+                         INTFC ("InterfaceInternal")
+                           |
+                     User Component
+                with internal interfaces
+  
+
+  There are four internal connections between components in a system.
+
+  1) InterfaceInternal.Required - InterfaceComponent.Provided
+     : Established when mtsManagerLocal::CreateAll() gets called
+       (See mtsManagerLocal::ConnectToManagerComponentClient())
+
+  2) InterfaceLCM.Required - InterfaceGCM.Provided
+     : Established when mtsManagerLocal::CreateAll() gets called
+       (See mtsManagerLocal::ConnectManagerComponentClientToServer())
+
+  3) InterfaceGCM.Required - InterfaceLCM.Provided
+     : When MCC connects to MCS
+       (See mtsManagerComponentServer::CreateInterfaceGCMFunctionSet())
+
+  4) InterfaceComponent.Required - InterfaceInternal.Provided
+     : When user component with internal interfaces connects to MCC
+       (See mtsManagerComponentClient::CreateInterfaceComponentFunctionSet())
+
+  \note Related classes: mtsManagerLocalInterface, mtsManagerGlobalInterface, 
+  mtsManagerGlobal, mtsManagerProxyServer
+*/
+
 //
-class mtsDescriptionComponent: public mtsGenericObject
-{
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
-
-public:
-    std::string ProcessName;
-    std::string ComponentName;
-    std::string ClassName;
-
-    void ToStream(std::ostream & outputStream) const;
-    void SerializeRaw(std::ostream & outputStream) const;
-    void DeSerializeRaw(std::istream & inputStream);
-};
-
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionComponent);
-
-
-//-----------------------------------------------------------------------------
-//  Connection Description
+// MJ: When we support mts blocking command with return value mechanism, all 
+// the commands and functions have to be updated such that they return result
+// values in a blocking way.
 //
-class mtsDescriptionConnection: public mtsGenericObject
-{
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-public:
-    struct FullInterface {
-        std::string ProcessName;
-        std::string ComponentName;
-        std::string InterfaceName;
-    };
-
-    FullInterface Client;
-    FullInterface Server;
-
-    void ToStream(std::ostream & outputStream) const;
-    void SerializeRaw(std::ostream & outputStream) const;
-    void DeSerializeRaw(std::istream & inputStream);
-};
-
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnection);
-
-//-----------------------------------------------------------------------------
-//  Manager Component Base Class
-//
 class mtsManagerComponentBase : public mtsTaskFromSignal
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
+    /*! Command name definitions */
+    class CommandNames {
+    public:
+        // Dynamic component management
+        static std::string ComponentCreate;
+        static std::string ComponentConnect;
+        static std::string ComponentStart;
+        static std::string ComponentStop;
+        static std::string ComponentResume;
+        // Getters
+        static std::string GetNamesOfProcesses;
+        static std::string GetNamesOfComponents;
+        static std::string GetNamesOfInterfaces;
+        static std::string GetListOfConnections;
+    };
+
     mtsManagerComponentBase(const std::string & componentName);
     virtual ~mtsManagerComponentBase();
 
@@ -90,40 +134,3 @@ public:
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentBase);
 
 #endif // _mtsManagerComponentBase_h
-
-/*
-class mtsManagerComponent: public mtsTaskFromSignal
-{
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
-
-public:
-    mtsManagerComponent(const std::string & componentName);
-    ~mtsManagerComponent() {};
-    void Startup(void);
-    void Run(void);
-    void Cleanup(void) {};
-
-    // method to add standardized interface to component to talk to this
-    static void AddInterfaceToManager(mtsComponent * component);
-
-    void ConnectToRemoteManager(const std::string & processName);
-
-protected:
-
-    // added to interface for components to create local or remote
-    void CreateComponent(const mtsDescriptionNewComponent & component);
-    void Connect(const mtsDescriptionConnection & connection);
-
-    // added to interface for managers to create local
-    void CreateComponentLocally(const mtsDescriptionNewComponent & component);
-    void ConnectLocally(const mtsDescriptionConnection & connection);
-    
-    struct OtherManager {
-        mtsFunctionWrite CreateComponent;
-        mtsFunctionWrite Connect;
-        mtsInterfaceRequired * RequiredInterface; // might be useful?
-    };
-
-    cmnNamedMap<OtherManager> OtherManagers;
-};
-*/

@@ -60,6 +60,8 @@ set (SOURCE_FILES
      mtsManagerComponentBase.cpp
      mtsManagerComponentServer.cpp
      mtsManagerComponentClient.cpp
+
+     mtsParameterTypes.cpp
      )
 
 # all header files
@@ -141,6 +143,8 @@ set (HEADER_FILES
      mtsManagerComponentBase.h
      mtsManagerComponentServer.h
      mtsManagerComponentClient.h
+
+     mtsParameterTypes.h
 
      mtsHistory.h
      )

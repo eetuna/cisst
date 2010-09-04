@@ -170,8 +170,19 @@ protected:
                only when LCM runs with GCM in the same process. */
     bool AddManagerComponent(const std::string & processName, const bool isServer = false);
 
-    /*! \brief Connect manager component client to manager component server */
-    bool ConnectManagerComponent(void);
+    /*! \brief Connect manager component client to manager component server
+               (connect InterfaceLCM.Required - InterfaceGCM.Provided)
+               This will make the manager component server dynamically create 
+               a required interface which connects to InterfaceLCM's provided 
+               interface. */
+    bool ConnectManagerComponentClientToServer(void);
+
+    /*! \brief Connect local components which has internal interfaces to the 
+               manager component client (connect InterfaceInternal.Required - 
+               InterfaceComponent.Provided)
+               This allows user components to use  cisstMultiTask's Command 
+               Pattern to communicate with local component manager. */
+    bool ConnectToManagerComponentClient(void);
 
 #if CISST_MTS_HAS_ICE
     /*! \brief Set IP address of this machine */
@@ -195,11 +206,14 @@ protected:
         \param clientInterfaceRequiredName Name of required interface
         \param serverComponentName Name of server component
         \param serverInterfaceProvidedName Name of provided interface
+        \param clientProcessName Name of client process (ignored in standalone
+               configuration, used in networked configuration)
         \return true if successful, false otherwise
         \note  It is assumed that two components are in the same process. */
     bool ConnectLocally(
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
+        const std::string & clientProcessName = "");
 
     //-------------------------------------------------------------------------
     //  Methods required by mtsManagerLocalInterface
@@ -296,41 +310,49 @@ public:
     //-------------------------------------------------------------------------
     //  Component Management
     //-------------------------------------------------------------------------
-    /*! Add a component to this local component manager. */
-    bool AddComponent(mtsComponent * component);
+    /*! \brief Create a component.  Does not add it to the local component manager. */
+    mtsComponent * CreateComponent(const std::string & className, const std::string & componentName);
+
+    /*! \brief Add a component to this local component manager. 
+        \param component Component instance to be added 
+        \param supportInternalInterfaces If yes, internal interfaces are created
+               and embedded to enable communication with manager components.
+               Effective only for user components. */
+    bool AddComponent(mtsComponent * component, const bool supportInternalInterfaces = false);
     bool /*CISST_DEPRECATED*/ AddTask(mtsTask * component); // For backward compatibility
     bool /*CISST_DEPRECATED*/ AddDevice(mtsComponent * component); // For backward compatibility
 
-    /*! Remove a component from this local component manager. */
+    /*! \brief Remove a component from this local component manager. */
     bool RemoveComponent(mtsComponent * component);
     bool RemoveComponent(const std::string & componentName);
 
-    /*! Retrieve a component by name. */
+    /*! \brief Retrieve a component by name. */
     mtsComponent * GetComponent(const std::string & componentName) const;
     mtsTask * GetComponentAsTask(const std::string & componentName) const;
 
     mtsComponent /*CISST_DEPRECATED*/ * GetDevice(const std::string & deviceName); // For backward compatibility
     mtsTask /*CISST_DEPRECATED*/ * GetTask(const std::string & taskName); // For backward compatibility
 
-    /*! Check if a component exists by its name */
+    /*! \brief Check if a component exists by its name */
     bool FindComponent(const std::string & componentName) const;
 
-    /*! Create all components. If a component is of type mtsTask, mtsTask::Create()
-        is called internally. */
+    /*! \brief Create all components. If a component is of type mtsTask, 
+               mtsTask::Create() is called internally. */
     void CreateAll(void);
 
-    /*! Start all components. If a component is of type mtsTask, mtsTask::Start()
-        is called internally. */
+    /*! \brief Start all components. If a component is of type mtsTask, 
+               mtsTask::Start() is called internally. */
     void StartAll(void);
 
-    /*! Stop all components. If a component is of type mtsTask, mtsTask::Kill()
-        is called internally. */
+    /*! \brief Stop all components. If a component is of type mtsTask, 
+               mtsTask::Kill() is called internally. */
     void KillAll(void);
 
-    /*! Cleanup.  Since a local component manager is a singleton, the
-      destructor will be called when the program exits but a library user
-      is not capable of handling the timing. Thus, for safe termination, this
-      method should be called before an application quits. */
+    /*! \brief Cleanup.  Since a local component manager is a singleton, the
+               destructor will be called when the program exits but a library 
+               user is not capable of handling the timing. Thus, for safe 
+               termination, this method should be called before an application 
+               quits. */
     void Cleanup(void);
 
     //-------------------------------------------------------------------------
@@ -393,6 +415,7 @@ public:
     //-------------------------------------------------------------------------
     /*! Default name of local component manager */
     static std::string ProcessNameOfLCMDefault;
+
     /*! Name of local component manager running with the global component manager */
     static std::string ProcessNameOfLCMWithGCM;
 

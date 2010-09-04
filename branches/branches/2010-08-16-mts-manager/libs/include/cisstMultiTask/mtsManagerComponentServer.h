@@ -48,6 +48,8 @@ class mtsManagerComponentServer : public mtsManagerComponentBase
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
+    friend class mtsManagerLocal;
+
 protected:
     /*! Global component manager instance to directly use the services it 
         provides */
@@ -56,18 +58,49 @@ protected:
     /*! Getters for GCM service provider */
     void GetNamesOfProcesses(mtsStdStringVec & stdStringVec) const;
 
-public:
+    /*! Functions.  Since one manager component server needs to be able to
+        handle multiple manager component clients, we keep a list of 
+        function objects using named map with (key = process name, 
+        value = function object set instance) */
+    typedef struct {
+        mtsFunctionWrite ComponentCreate;
+        mtsFunctionWrite ComponentConnect;
+    } InterfaceGCMFunctionType;
+
+    typedef cmnNamedMap<InterfaceGCMFunctionType> InterfaceGCMFunctionMapType;
+    InterfaceGCMFunctionMapType InterfaceGCMFunctionMap;
+
+    /*! Protected constructor to disallow users to create this component */
     mtsManagerComponentServer(mtsManagerGlobal * gcm);
     ~mtsManagerComponentServer();
 
+public:
     void Startup(void);
     void Run(void);
     void Cleanup(void);
 
+    /*! Add InterfaceGCM */
+    bool AddInterfaceGCM(void);
+
+    /*! Create a new set of function objects, add InterfaceGCM's required
+        interface to this component, and connect it to InterfaceLCM's
+        provided interface */
+    bool CreateInterfaceGCMFunctionSet(const std::string & clientProcessName);
+
     /*! Name of this component which is globally unique */
     static std::string NameOfManagerComponentServer;
+
     /*! Name of provided interface that provides services */
-    static std::string NameOfInterfaceProvided;
+    static std::string NameOfInterfaceGCMProvided;
+    static std::string NameOfInterfaceGCMRequired;
+
+    /*! Commands */
+    void InterfaceGCMCommands_ComponentCreate(const mtsDescriptionComponent & arg);
+    void InterfaceGCMCommands_ComponentConnect(const mtsDescriptionConnection & arg);
+    void InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
+    void InterfaceGCMCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
+    void InterfaceGCMCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const;
+    void InterfaceGCMCommands_GetListOfConnections(mtsStdStringVec & list) const;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentServer);
