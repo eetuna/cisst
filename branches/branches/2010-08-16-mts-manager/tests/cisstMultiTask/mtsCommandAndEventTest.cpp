@@ -59,23 +59,67 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
                                            double clientExecutionDelay, double serverExecutionDelay,
                                            double blockingDelay)
 {
+    const double queuingDelay = 10.0 * cmn_ms;
+    const osaTimeServer & timeServer = mtsComponentManager::GetInstance()->GetTimeServer();
+    double startTime, stopTime;
+
     // check initial values
     CPPUNIT_ASSERT_EQUAL(-1, server->InterfaceProvided1.GetValue()); // initial value
     CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // initial value
 
-    // test void command
-    client->InterfaceRequired1.CommandVoid();
-    osaSleep(serverExecutionDelay);
-    CPPUNIT_ASSERT_EQUAL(0,  server->InterfaceProvided1.GetValue()); // reset
-    CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
-
-    // test write command
+    // value we used to make sure commands are processed, default is
+    // -1, void command set to 0
     mtsInt valueWrite;
     valueWrite.Data = 4;
-    client->InterfaceRequired1.CommandWrite(valueWrite);
-    osaSleep(serverExecutionDelay);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
-    CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+
+    // loop over void and write commands to alternate blocking and non
+    // blocking commands
+    unsigned int index;
+    for (index = 0; index < 3; index++) {
+        // test void command non blocking
+        startTime = timeServer.GetRelativeTime();
+        client->InterfaceRequired1.CommandVoid();
+        stopTime = timeServer.GetRelativeTime();
+        CPPUNIT_ASSERT((stopTime - startTime) <= queuingDelay); // make sure execution is fast
+        osaSleep(serverExecutionDelay + blockingDelay); // time to dequeue and let command execute
+        CPPUNIT_ASSERT_EQUAL(0,  server->InterfaceProvided1.GetValue()); // reset
+        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+
+        // test write command
+        startTime = timeServer.GetRelativeTime();
+        client->InterfaceRequired1.CommandWrite(valueWrite);
+        stopTime = timeServer.GetRelativeTime();
+        CPPUNIT_ASSERT((stopTime - startTime) <= queuingDelay); // make sure execution is fast
+        osaSleep(serverExecutionDelay + blockingDelay);  // time to dequeue and let command execute
+        CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
+        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        
+        // test void command blocking
+        if (blockingDelay > 0.0) {
+            startTime = timeServer.GetRelativeTime();
+            client->InterfaceRequired1.CommandVoid.ExecuteBlocking();
+            stopTime = timeServer.GetRelativeTime();
+            CPPUNIT_ASSERT((stopTime - startTime) >= blockingDelay);
+        } else {
+            // no significant delay but result should be garanteed without sleep
+            client->InterfaceRequired1.CommandVoid.ExecuteBlocking();
+        }
+        CPPUNIT_ASSERT_EQUAL(0,  server->InterfaceProvided1.GetValue()); // reset
+        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+
+        // test write command blocking
+        if (blockingDelay > 0.0) {
+            startTime = timeServer.GetRelativeTime();
+            client->InterfaceRequired1.CommandWrite.ExecuteBlocking(valueWrite);
+            stopTime = timeServer.GetRelativeTime();
+            CPPUNIT_ASSERT((stopTime - startTime) >= blockingDelay);
+        } else {
+            // no significant delay but result should be garanteed without sleep
+            client->InterfaceRequired1.CommandWrite.ExecuteBlocking(valueWrite);
+        }
+        CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
+        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+    }
 
     // test read command
     mtsInt valueRead;
@@ -213,6 +257,30 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
     localManager.CreateAll();
     localManager.StartAll();
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
+    localManager.KillAll();
+
+    delete client;
+    delete server;
+}
+
+
+void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking(void)
+{
+    mtsManagerLocal localManager;
+    const double blockingDelay = 1.0 * cmn_s;
+    mtsTestContinuous1 * client = new mtsTestContinuous1("mtsTestContinuous1Client");
+    mtsTestContinuous1 * server = new mtsTestContinuous1("mtsTestContinuous1Server", blockingDelay);
+
+    // these delays are OS dependent, we might need to increase them later
+    const double clientExecutionDelay = 0.1 * cmn_s;
+    const double serverExecutionDelay = 0.1 * cmn_s;
+
+    localManager.AddComponent(client);
+    localManager.AddComponent(server);
+    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
+    localManager.CreateAll();
+    localManager.StartAll();
+    TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
     localManager.KillAll();
 
     delete client;

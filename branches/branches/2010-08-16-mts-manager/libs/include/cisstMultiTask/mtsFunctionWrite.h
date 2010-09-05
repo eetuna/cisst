@@ -88,6 +88,8 @@ public:
       e.g., Command(argument) instead of Command->Execute(argument). */
     mtsCommandBase::ReturnType operator()(const mtsGenericObject & argument) const;
 
+    mtsCommandBase::ReturnType ExecuteBlocking(const mtsGenericObject & argument) const;
+
 	/*! Overloaded operator that accepts different argument types. */
     template <class _userType>
     mtsCommandBase::ReturnType operator()(const _userType & argument) const {

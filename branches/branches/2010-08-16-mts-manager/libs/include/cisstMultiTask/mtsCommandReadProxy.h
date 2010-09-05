@@ -73,7 +73,8 @@ public:
     }
 
     /*! The execute method. */
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument,
+                                               bool CMN_UNUSED(blocking) = true) {
         if (IsDisabled()) {
             return mtsCommandBase::DISABLED;
         }

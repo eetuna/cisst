@@ -48,32 +48,24 @@ class CISST_EXPORT mtsFunctionVoid: public mtsFunctionBase {
     ~mtsFunctionVoid();
 
     // documented in base class
-    inline bool Detach(void) {
-        if (this->IsValid()) {
-            Command = 0;
-            return true;
-        }
-        return false;
-    }
+    bool Detach(void);
 
     // documented in base class
-    inline bool IsValid(void) const {
-        return (this->Command != 0);
-    }
+    bool IsValid(void) const;
 
     /*! Bind using a command pointer.  This allows to avoid
       querying by name from an interface.
       \param command Pointer on an existing command
       \result Boolean value, true if the command pointer is not null.
     */
-    inline bool Bind(CommandType * command) {
-        Command = command;
-        return (command != 0);
-    }
+    bool Bind(CommandType * command);
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command() instead of Command->Execute(). */
-    mtsCommandBase::ReturnType operator()() const;
+    mtsCommandBase::ReturnType operator()(void) const;
+
+    /*! Blocking call */
+    mtsCommandBase::ReturnType ExecuteBlocking(void) const;
 
     /*! Access to underlying command object. */
     mtsCommandVoidBase * GetCommand(void) const { return Command; }

@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQueuedVoidBase_h
 #define _mtsCommandQueuedVoidBase_h
 
+#include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstMultiTask/mtsCommandVoidBase.h>
 #include <cisstMultiTask/mtsMailBox.h>
 
@@ -47,38 +48,29 @@ class CISST_EXPORT mtsCommandQueuedVoidBase: public mtsCommandVoidBase
     mtsMailBox * MailBox;
     /*! Actual command being queued. */
     mtsCommandVoidBase * ActualCommand;
+    /*! Queue of flags to indicate if the command is blocking or
+      not */
+    mtsQueue<bool> BlockingFlagQueue;
+    /*! Thread signal used for blocking */
+    osaThreadSignal ThreadSignal;
 
  private:
     /*! Private copy constructor to prevent copies */
     inline mtsCommandQueuedVoidBase(const ThisType & CMN_UNUSED(other));
 
  public:
-    inline mtsCommandQueuedVoidBase(void):
-        BaseType(),
-        MailBox(0),
-        ActualCommand(0)
-    {}
+    mtsCommandQueuedVoidBase(void);
 
-
-    inline mtsCommandQueuedVoidBase(mtsMailBox * mailBox, mtsCommandVoidBase * actualCommand):
-        BaseType(actualCommand->GetName()),
-        MailBox(mailBox),
-        ActualCommand(actualCommand)
-    {}
-
+    mtsCommandQueuedVoidBase(mtsMailBox * mailBox,
+                             mtsCommandVoidBase * actualCommand,
+                             size_t size);
 
     inline virtual ~mtsCommandQueuedVoidBase() {}
 
 
-    virtual mtsCommandQueuedVoidBase * Clone(mtsMailBox * mailBox) const {
-        return new mtsCommandQueuedVoidBase(mailBox, this->ActualCommand);
-    }
-
+    virtual mtsCommandQueuedVoidBase * Clone(mtsMailBox * mailBox, size_t size) const;
 
     inline virtual void Allocate(unsigned int CMN_UNUSED(size)) {}
-
-
-    virtual void ToStream(std::ostream & out) const;
 
     /*! For a queued command, Execute means queueing the command.
       This method will return mtsCommandBase::DEV_OK if the command
@@ -89,32 +81,17 @@ class CISST_EXPORT mtsCommandQueuedVoidBase: public mtsCommandVoidBase
       Execute() will return mtsCommandBase::MAILBOX_FULL.  This can
       happen if the task receiving the command doesn't process/empty
       its mailboxes fast enough. */
-    virtual mtsCommandBase::ReturnType Execute(void) {
-        if (this->IsEnabled()) {
-            if (!MailBox) {
-                CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoid: Execute: no mailbox for \""
-                                  << this->Name << "\"" << std::endl;
-                return mtsCommandBase::NO_MAILBOX;
-            }
-            if (MailBox->Write(this)) {
-                return mtsCommandBase::DEV_OK;
-            }
-            CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoid: Execute(): Mailbox full for \""
-                              << this->Name << "\"" <<  std::endl;
-            return mtsCommandBase::MAILBOX_FULL;
-        }
-        return mtsCommandBase::DISABLED;
-    }
+    virtual mtsCommandBase::ReturnType Execute(bool blocking = false);
 
+    bool BlockingFlagGet(void);
 
-    inline virtual mtsCommandVoidBase * GetActualCommand(void) {
-        return this->ActualCommand;
-    }
+    void ThreadSignalRaise(void);
 
+    virtual mtsCommandVoidBase * GetActualCommand(void);
 
-    inline virtual const std::string GetMailBoxName(void) const {
-        return this->MailBox ? this->MailBox->GetName() : "NULL";
-    }
+    virtual const std::string GetMailBoxName(void) const;
+
+    void ToStream(std::ostream & outputStream) const;
 };
 
 

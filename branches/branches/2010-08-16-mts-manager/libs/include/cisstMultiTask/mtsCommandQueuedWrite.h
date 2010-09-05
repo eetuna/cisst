@@ -29,6 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQueuedWrite_h
 #define _mtsCommandQueuedWrite_h
 
+#include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstMultiTask/mtsCommandQueuedWriteBase.h>
 
 
@@ -52,6 +53,7 @@ public:
     typedef mtsCommandQueuedWrite<ArgumentType> ThisType;
 
 protected:
+    /*! Queue to store arguments */
     mtsQueue<ArgumentQueueType> ArgumentsQueue;
 
 private:
@@ -67,18 +69,19 @@ public:
 
 
     inline mtsCommandQueuedWrite(mtsCommandWriteBase * actualCommand):
-        BaseType(0, actualCommand),
+        BaseType(0, actualCommand, 0),
         ArgumentsQueue(0, ArgumentQueueType())
     {}
 
 
     inline mtsCommandQueuedWrite(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size):
-        BaseType(mailBox, actualCommand),
+        BaseType(mailBox, actualCommand, size),
         ArgumentsQueue(0, ArgumentQueueType())
     {
         const ArgumentQueueType * argumentPrototype = dynamic_cast<const ArgumentQueueType *>(this->GetArgumentPrototype());
         if (argumentPrototype) {
             ArgumentsQueue.SetSize(size, *argumentPrototype);
+            BlockingFlagQueue.SetSize(size, false);
         } else {
             CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWrite: constructor: can't find argument prototype from actual command."
                                << std::endl;
@@ -106,6 +109,7 @@ public:
             const ArgumentQueueType * argumentPrototype = dynamic_cast<const ArgumentQueueType *>(this->GetArgumentPrototype());
             if (argumentPrototype) {
                 ArgumentsQueue.SetSize(size, *argumentPrototype);
+                BlockingFlagQueue.SetSize(size, false);
             } else {
                 CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWrite: constructor: can't find argument prototype from actual command."
                                    << std::endl;
@@ -114,7 +118,8 @@ public:
     }
 
 
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
+                                               bool blocking) {
         if (this->IsEnabled()) {
             if (!MailBox) {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute: no mailbox for \""
@@ -125,17 +130,22 @@ public:
             if (!argumentTyped) {
                 return mtsCommandBase::BAD_INPUT;
             }
-            // Now, copy the argument to the local storage.
-            if (ArgumentsQueue.Put(*argumentTyped)) {
+            // copy the argument and blocking flag to the local storage.
+            if (ArgumentsQueue.Put(*argumentTyped) &&
+                BlockingFlagQueue.Put(blocking)) {
                 if (MailBox->Write(this)) {
+                    if (blocking) {
+                        this->ThreadSignal.Wait();
+                    }
                     return mtsCommandBase::DEV_OK;
                 } else {
                     CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): mailbox full for \""
                                       << this->Name << "\"" << std::endl;
-                    ArgumentsQueue.Get();  // Pop argument from local storage
+                    ArgumentsQueue.Get();  // pop argument and blocking flag from local storage
+                    BlockingFlagQueue.Get();
                 }
             } else {
-                CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): argumentsQueue full for \""
+                CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): ArgumentsQueue or BlockingFlagQueue full for \""
                                   << this->Name << "\"" << std::endl;
             }
             return mtsCommandBase::MAILBOX_FULL;
@@ -164,13 +174,14 @@ public:
     observer (combined with mtsMulticastCommandWriteBase) that can
     accept any payload (derived from mtsGenericObject). */
 // PK: methods are defined in mtsCommandQueuedWriteBase.cpp
-class CISST_EXPORT mtsCommandQueuedWriteGeneric: public mtsCommandQueuedWriteBase 
+class CISST_EXPORT mtsCommandQueuedWriteGeneric: public mtsCommandQueuedWriteBase
 {
  protected:
     typedef mtsCommandQueuedWriteBase BaseType;
     typedef mtsCommandQueuedWriteGeneric ThisType;
 
     size_t ArgumentQueueSize; // size used for queue
+    /*! Queue to store arguments */
     mtsQueueGeneric ArgumentsQueue;
 
 private:
@@ -206,14 +217,15 @@ public:
     // Allocate should be called when a task calls GetMethodXXX().
     virtual void Allocate(size_t size);
 
-    
+
     inline virtual void SetArgumentPrototype(const mtsGenericObject * argumentPrototype) {
         this->ActualCommand->SetArgumentPrototype(argumentPrototype);
         this->Allocate(this->ArgumentQueueSize);
     }
 
 
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument);
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
+                                               bool blocking = false);
 
 
     /* commented in base class */

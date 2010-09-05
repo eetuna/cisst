@@ -69,12 +69,16 @@ public:
     }
 
     void CommandVoid(void) {
-        osaSleep(ExecutionDelay);
+        if (ExecutionDelay > 0.0) {
+            osaSleep(ExecutionDelay);
+        }
         Value.Data = 0;
     }
 
     void CommandWrite(const mtsInt & argument) {
-        osaSleep(ExecutionDelay);
+        if (ExecutionDelay > 0.0) {
+            osaSleep(ExecutionDelay);
+        }
         Value = argument;
     }
 
@@ -132,8 +136,8 @@ public:
         required->AddFunction("Write", this->CommandWrite);
         required->AddFunction("Read", this->CommandRead);
         required->AddFunction("QualifiedRead", this->CommandQualifiedRead);
-        required->AddEventHandlerVoid(&mtsTestInterfaceRequired::EventVoidHandler, this, "EventVoid", MTS_EVENT_NOT_QUEUED);
-        required->AddEventHandlerWrite(&mtsTestInterfaceRequired::EventWriteHandler, this, "EventWrite", MTS_EVENT_NOT_QUEUED);
+        required->AddEventHandlerVoid(&mtsTestInterfaceRequired::EventVoidHandler, this, "EventVoid");
+        required->AddEventHandlerWrite(&mtsTestInterfaceRequired::EventWriteHandler, this, "EventWrite");
     }
 };
 
@@ -153,20 +157,19 @@ public:
         mtsTaskPeriodic(name, 1.0 * cmn_ms),
         InterfaceProvided1(executionDelay)
     {
+        UseSeparateLogFile(name + "-log.txt");
+
         mtsInterfaceProvided * provided;
-        // Define provided interface: p1
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
 
         mtsInterfaceRequired * required;
-        // Define required interface: r1
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);
         }
-        // Define required interface: r2
         required = AddInterfaceRequired("r2", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired2.PopulateExistingInterface(required);
@@ -190,20 +193,19 @@ public:
         mtsComponent(name),
         InterfaceProvided1(executionDelay)
     {
+        UseSeparateLogFile(name + "-log.txt");
+
         mtsInterfaceProvided * provided;
-        // Define provided interface: p1
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
 
         mtsInterfaceRequired * required;
-        // Define required interface: r1
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);
         }
-        // Define required interface: r2
         required = AddInterfaceRequired("r2", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired2.PopulateExistingInterface(required);
@@ -230,22 +232,19 @@ public:
         InterfaceProvided1(executionDelay),
         InterfaceProvided2(executionDelay)
     {
-        mtsInterfaceRequired * required;
-        mtsInterfaceProvided * provided;
+        UseSeparateLogFile(name + "-log.txt");
 
-        // Define provided interface: p1
+        mtsInterfaceProvided * provided;
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
-
-        // Define provided interface: p2
         provided = AddInterfaceProvided("p2");
         if (provided) {
             InterfaceProvided2.PopulateExistingInterface(provided);
         }
 
-        // Define required interface: r1
+        mtsInterfaceRequired * required;
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);
@@ -272,21 +271,19 @@ public:
         InterfaceProvided1(executionDelay),
         InterfaceProvided2(executionDelay)
     {
+        UseSeparateLogFile(name + "-log.txt");
 
         mtsInterfaceProvided * provided;
-        // Define provided interface: p1
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
-        // Define provided interface: p2
         provided = AddInterfaceProvided("p2");
         if (provided) {
             InterfaceProvided2.PopulateExistingInterface(provided);
         }
 
         mtsInterfaceRequired * required;
-        // Define required interface: r1
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);
@@ -316,15 +313,15 @@ public:
         InterfaceProvided1(executionDelay),
         CounterCreateCall(0)
     {
+        UseSeparateLogFile(name + "-log.txt");
+
         mtsInterfaceProvided * provided;
-        // Define provided interface: p1
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
 
         mtsInterfaceRequired * required;
-        // Define required interface: r1
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);
@@ -349,7 +346,7 @@ public:
         Running(true)
     {
         Thread.Create<mtsTestCallbackTrigger, int>(this, &mtsTestCallbackTrigger::Run,
-                                                          0, "TstCb");
+                                                   0, "TstCb");
     }
 
     ~mtsTestCallbackTrigger() {
@@ -383,15 +380,15 @@ public:
         mtsComponent(name),
         InterfaceProvided1(executionDelay)
     {
+        UseSeparateLogFile(name + "-log.txt");
+
         mtsInterfaceProvided * provided;
-        // Define provided interface: p1
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
 
         mtsInterfaceRequired * required;
-        // Define required interface: r1
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);
@@ -413,15 +410,15 @@ public:
         mtsTaskFromSignal(name),
         InterfaceProvided1(executionDelay)
     {
+        UseSeparateLogFile(name + "-log.txt");
+
         mtsInterfaceProvided * provided;
-        // Define provided interface: p1
         provided = AddInterfaceProvided("p1");
         if (provided) {
             InterfaceProvided1.PopulateExistingInterface(provided);
         }
 
         mtsInterfaceRequired * required;
-        // Define required interface: r1
         required = AddInterfaceRequired("r1", MTS_OPTIONAL);
         if (required) {
             InterfaceRequired1.PopulateExistingInterface(required);

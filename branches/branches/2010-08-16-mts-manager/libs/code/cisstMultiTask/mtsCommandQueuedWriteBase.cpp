@@ -35,10 +35,22 @@ void mtsCommandQueuedWriteBase::ToStream(std::ostream & outputStream) const {
 }
 
 
+bool mtsCommandQueuedWriteBase::BlockingFlagGet(void)
+{
+    return *(this->BlockingFlagQueue.Get());
+}
+
+
+void mtsCommandQueuedWriteBase::ThreadSignalRaise(void)
+{
+    this->ThreadSignal.Raise();
+}
+
+
 mtsCommandQueuedWriteGeneric::mtsCommandQueuedWriteGeneric(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size):
-        BaseType(mailBox, actualCommand),
-        ArgumentQueueSize(size),
-        ArgumentsQueue()
+    BaseType(mailBox, actualCommand, size),
+    ArgumentQueueSize(size),
+    ArgumentsQueue()
 {
     if (this->ActualCommand) {
         this->SetArgumentPrototype(ActualCommand->GetArgumentPrototype());
@@ -46,6 +58,7 @@ mtsCommandQueuedWriteGeneric::mtsCommandQueuedWriteGeneric(mtsMailBox * mailBox,
     const mtsGenericObject * argumentPrototype = dynamic_cast<const mtsGenericObject *>(this->GetArgumentPrototype());
     if (argumentPrototype) {
         ArgumentsQueue.SetSize(size, *argumentPrototype);
+        BlockingFlagQueue.SetSize(size, false);
     } else {
         CMN_LOG_INIT_DEBUG << "Class mtsCommandQueuedWriteGeneric: constructor: can't find argument prototype from actual command \""
                            << this->GetName() << "\"" << std::endl;
@@ -63,8 +76,9 @@ void mtsCommandQueuedWriteGeneric::Allocate(size_t size)
         const mtsGenericObject * argumentPrototype = dynamic_cast<const mtsGenericObject *>(this->GetArgumentPrototype());
         if (argumentPrototype) {
             CMN_LOG_INIT_DEBUG << "Class mtsCommandQueuedWriteGeneric: Allocate: resizing argument queue to " << size
-                               << " with \"" << argumentPrototype->Services()->GetName() << "\"" << std::endl; 
+                               << " with \"" << argumentPrototype->Services()->GetName() << "\"" << std::endl;
             ArgumentsQueue.SetSize(size, *argumentPrototype);
+            BlockingFlagQueue.SetSize(size, false);
         } else {
             CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWriteGeneric: Allocate: can't find argument prototype from actual command \""
                                << this->GetName() << "\"" << std::endl;
@@ -72,8 +86,9 @@ void mtsCommandQueuedWriteGeneric::Allocate(size_t size)
      }
 }
 
-    
-mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGenericObject & argument)
+
+mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGenericObject & argument,
+                                                                 bool blocking)
 {
     if (this->IsEnabled()) {
         if (!MailBox) {
@@ -81,17 +96,21 @@ mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGeneri
                               << this->Name << "\"" << std::endl;
             return mtsCommandBase::NO_MAILBOX;
         }
-        // Now, copy the argument to the local storage.
-        if (ArgumentsQueue.Put(argument)) {
+        // copy the argument and blocking flag to the local storage.
+        if (ArgumentsQueue.Put(argument) &&
+            BlockingFlagQueue.Put(blocking)) {
             if (MailBox->Write(this)) {
+                if (blocking) {
+                    this->ThreadSignal.Wait();
+                }
                 return mtsCommandBase::DEV_OK;
             } else {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWriteGeneric: Execute: mailbox full for \""
                                   << this->Name << "\"" << std::endl;
-                ArgumentsQueue.Get();  // Pop argument from local storage
-            }
+                ArgumentsQueue.Get();  // pop argument and blocking flag from local storage
+                BlockingFlagQueue.Get();}
         } else {
-            CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWriteGeneric: Execute: ArgumentsQueue full for \""
+            CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWriteGeneric: Execute: ArgumentsQueue or BlockingFlagQueue full for \""
                               << this->Name << "\"" << std::endl;
         }
         return mtsCommandBase::MAILBOX_FULL;

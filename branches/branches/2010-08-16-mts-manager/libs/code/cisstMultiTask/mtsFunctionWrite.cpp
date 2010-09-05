@@ -51,6 +51,11 @@ mtsCommandBase::ReturnType mtsFunctionWrite::operator()(const mtsGenericObject &
 }
 
 
+mtsCommandBase::ReturnType mtsFunctionWrite::ExecuteBlocking(const mtsGenericObject & argument) const {
+    return Command ? Command->Execute(argument, true) : mtsCommandBase::NO_INTERFACE;
+}
+
+
 mtsCommandReadOrWriteBase<const mtsGenericObject> * mtsFunctionWrite::GetCommand(void) const {
     return Command;
 }

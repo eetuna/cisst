@@ -68,7 +68,8 @@ public:
     }
 
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
+                                               bool CMN_UNUSED(blocking) = false) {
         // cast argument first
         const ArgumentFinalType * data = dynamic_cast< const ArgumentFinalType * >(&argument);
         if (data == 0) {

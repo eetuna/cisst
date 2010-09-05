@@ -29,7 +29,7 @@ void mtsMulticastCommandVoid::AddCommand(BaseType * command) {
 }
 
 
-mtsCommandBase::ReturnType mtsMulticastCommandVoid::Execute(void) {
+mtsCommandBase::ReturnType mtsMulticastCommandVoid::Execute(bool CMN_UNUSED(blocking)) {
     int result = static_cast<int>(mtsCommandBase::DEV_OK);
     for (unsigned int i = 0; i < Commands.size(); i++) {
         result =

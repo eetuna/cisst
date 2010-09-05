@@ -73,7 +73,7 @@ public:
       \param obj The data passed to the operation method
 
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute(_argumentType & argument) = 0;
+    virtual BaseType::ReturnType Execute(_argumentType & argument, bool blocking = false) = 0;
 
     /*! For debugging. Generate a human readable output for the
       command object */

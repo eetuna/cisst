@@ -26,9 +26,41 @@ mtsFunctionVoid::~mtsFunctionVoid()
 {}
 
 
-mtsCommandBase::ReturnType mtsFunctionVoid::operator()() const
+bool mtsFunctionVoid::Detach(void)
+{
+    if (this->IsValid()) {
+        this->Command = 0;
+        return true;
+    }
+    return false;
+}
+
+
+bool mtsFunctionVoid::IsValid(void) const
+{
+    return (this->Command != 0);
+}
+
+
+bool mtsFunctionVoid::Bind(CommandType * command)
+{
+    if (this->Command) {
+        CMN_LOG_INIT_WARNING << "Class mtsFunctionVoid: Bind called on already bound function:" << this << std::endl;
+    }
+    this->Command = command;
+    return (command != 0);
+}
+
+
+mtsCommandBase::ReturnType mtsFunctionVoid::operator()(void) const
 {
     return Command ? Command->Execute() : mtsCommandBase::NO_INTERFACE;
+}
+
+
+mtsCommandBase::ReturnType mtsFunctionVoid::ExecuteBlocking(void) const
+{
+    return Command ? Command->Execute(true) : mtsCommandBase::NO_INTERFACE;
 }
 
 

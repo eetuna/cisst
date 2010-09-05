@@ -75,17 +75,26 @@ bool mtsMailBox::ExecuteNext(void)
        commandVoid = dynamic_cast<mtsCommandQueuedVoidBase *>(*command);
        CMN_ASSERT(commandVoid);
        commandVoid->GetActualCommand()->Execute();
+       if (commandVoid->BlockingFlagGet()) {
+           commandVoid->ThreadSignalRaise();
+       }
        break;
    case 1:
        commandWrite = dynamic_cast<mtsCommandQueuedWriteBase *>(*command);
        if (commandWrite) {
            commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()));
            commandWrite->ArgumentGet();  // Remove from parameter queue
+           if (commandWrite->BlockingFlagGet()) {
+               commandWrite->ThreadSignalRaise();
+           }
        } else {
            commandWriteGeneric = dynamic_cast<mtsCommandQueuedWriteGeneric *>(*command);
            CMN_ASSERT(commandWriteGeneric);
            commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()));
            commandWriteGeneric->ArgumentGet();  // Remove from parameter queue
+           if (commandWriteGeneric->BlockingFlagGet()) {
+               commandWriteGeneric->ThreadSignalRaise();
+           }
        }
        break;
    default:

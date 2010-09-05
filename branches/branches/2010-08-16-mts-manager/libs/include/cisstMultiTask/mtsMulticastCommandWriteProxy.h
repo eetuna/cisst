@@ -53,7 +53,8 @@ protected:
 
 public:
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) {
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
+                                               bool CMN_UNUSED(blocking) = false) {
         unsigned int index;
         for (index = 0; index < Commands.size(); ++index) {
             Commands[index]->Execute(argument);

@@ -121,7 +121,7 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
          iterVoid++) {
         commandQueuedVoid = dynamic_cast<mtsCommandQueuedVoidBase *>(iterVoid->second);
         if (commandQueuedVoid) {
-            commandVoid = commandQueuedVoid->Clone(this->MailBox);
+            commandVoid = commandQueuedVoid->Clone(this->MailBox, mailBoxSize);
             CMN_LOG_CLASS_INIT_VERBOSE << "factory constructor: cloned queued void command \"" << iterVoid->first
                                        << "\" for \"" << this->GetName() << "\"" << std::endl;
         } else {
@@ -291,7 +291,7 @@ mtsCommandVoidBase * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoidBase * c
             return command;
         } else {
             // create with no mailbox
-            mtsCommandQueuedVoidBase * queuedCommand = new mtsCommandQueuedVoid(0, command);
+            mtsCommandQueuedVoidBase * queuedCommand = new mtsCommandQueuedVoid(0, command, 0);
             if (!CommandsVoid.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                 delete queuedCommand;
                 queuedCommand = 0;

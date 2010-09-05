@@ -76,8 +76,14 @@ public:
     }
 
     /*! Direct execute can be used for mtsMulticastCommandWrite. */
-    inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument) {
+    inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument,
+                                              bool blocking = false) {
         if (IsDisabled()) return mtsCommandBase::DISABLED;
+
+        // todo fix urgent
+        if (blocking) {
+            cmnThrow("Oops, mtsCommandWriteProxy::Execute, blocking commands are not supported over the network yet, Min?");
+        }
 
         if (NetworkProxyServer) {
             // Command write execution: client (request) -> server (execution)

@@ -55,7 +55,7 @@ public:
     /*! The execute method. Abstract method to be implemented by derived
       classes to run the actual operation on the receiver
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute(void) = 0;
+    virtual BaseType::ReturnType Execute(bool blocking = false) = 0;
 
     /* documented in base class */
     virtual void ToStream(std::ostream &out) const = 0;

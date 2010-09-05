@@ -42,6 +42,8 @@ private:
         CPPUNIT_TEST(TestLocalFromCallbackFromCallback);
         CPPUNIT_TEST(TestLocalFromSignalFromSignal);
 
+        CPPUNIT_TEST(TestLocalContinuousContinuousBlocking);
+
 #if CISST_MTS_HAS_ICE
         //        CPPUNIT_TEST(TestRemoteDeviceDevice);
 #endif
@@ -63,6 +65,8 @@ public:
     void TestLocalContinuousContinuous(void);
     void TestLocalFromCallbackFromCallback(void);
     void TestLocalFromSignalFromSignal(void);
+
+    void TestLocalContinuousContinuousBlocking(void);
 
 #if CISST_MTS_HAS_ICE
     void TestRemoteDeviceDevice(void);

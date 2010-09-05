@@ -54,8 +54,13 @@ public:
     ~mtsCommandVoidProxy() {}
 
     /*! Execute void command */
-    mtsCommandBase::ReturnType Execute() {
+    mtsCommandBase::ReturnType Execute(bool blocking = false) {
         if (IsDisabled()) return mtsCommandBase::DISABLED;
+
+        // todo fix urgent
+        if (blocking) {
+            cmnThrow("Oops, mtsCommandVoidProxy::Execute, blocking commands are not supported over the network yet, Min?");
+        }
 
         if (NetworkProxyServer) {
             // Command void execution: client (request) -> server (execution)

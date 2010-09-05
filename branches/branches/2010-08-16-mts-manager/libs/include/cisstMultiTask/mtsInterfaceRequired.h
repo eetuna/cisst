@@ -276,7 +276,7 @@ inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (__cl
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidMethod<__classType>(method, classInstantiation, eventName);
     if (queued) {
         if (MailBox)
-            EventHandlersVoid.AddItem(eventName, new mtsCommandQueuedVoid(MailBox, actualCommand));
+            EventHandlersVoid.AddItem(eventName, new mtsCommandQueuedVoid(MailBox, actualCommand, DEFAULT_EVENT_QUEUE_LEN));
         else
             CMN_LOG_CLASS_INIT_ERROR << "No mailbox for queued event handler void \"" << eventName << "\"" << std::endl;
     } else {
@@ -294,7 +294,7 @@ inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (*fun
     mtsCommandVoidBase * actualCommand = new mtsCommandVoidFunction(function, eventName);
     if (queued) {
         if (MailBox)
-            EventHandlersVoid.AddItem(eventName, new mtsCommandQueuedVoid(MailBox, actualCommand));
+            EventHandlersVoid.AddItem(eventName, new mtsCommandQueuedVoid(MailBox, actualCommand, DEFAULT_EVENT_QUEUE_LEN));
         else
             CMN_LOG_CLASS_INIT_ERROR << "No mailbox for queued event handler void (func) \"" << eventName << "\"" << std::endl;
     } else {

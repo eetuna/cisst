@@ -39,18 +39,26 @@ protected:
     mtsMailBox * MailBox;
     mtsCommandWriteBase * ActualCommand;
 
+    /*! Queue of flags to indicate if the command is blocking or
+      not */
+    mtsQueue<bool> BlockingFlagQueue;
+    /*! Thread signal used for blocking */
+    osaThreadSignal ThreadSignal;
+
 private:
     inline mtsCommandQueuedWriteBase(void):
         BaseType("??"),
         MailBox(0),
-        ActualCommand(0)
+        ActualCommand(0),
+        BlockingFlagQueue(0, false)
     {}
 
 public:
-    inline mtsCommandQueuedWriteBase(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand):
+    inline mtsCommandQueuedWriteBase(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size):
         BaseType(actualCommand->GetName()),
         MailBox(mailBox),
-        ActualCommand(actualCommand)
+        ActualCommand(actualCommand),
+        BlockingFlagQueue(size, false)
     {
         this->SetArgumentPrototype(ActualCommand->GetArgumentPrototype());
     }
@@ -74,7 +82,8 @@ public:
     virtual void Allocate(size_t size) = 0;
 
 
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument) = 0;
+    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
+                                               bool blocking = false) = 0;
 
 
     virtual const mtsGenericObject * ArgumentPeek(void) const = 0;
@@ -82,13 +91,14 @@ public:
 
     virtual mtsGenericObject * ArgumentGet(void) = 0;
 
+    bool BlockingFlagGet(void);
+
+    void ThreadSignalRaise(void);
+
 
     inline virtual const std::string GetMailBoxName(void) const {
         return this->MailBox ? this->MailBox->GetName() : "NULL";
     }
 };
 
-
-
 #endif // _mtsCommandQueuedWrite_h
-
