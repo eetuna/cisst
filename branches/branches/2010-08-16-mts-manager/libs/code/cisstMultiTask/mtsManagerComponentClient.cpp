@@ -23,6 +23,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstOSAbstraction/osaGetTime.h>
+#include <cisstOSAbstraction/osaSleep.h>
+#include <cisstCommon/cmnUnits.h>
 
 CMN_IMPLEMENT_SERVICES(mtsManagerComponentClient);
 
@@ -69,14 +71,16 @@ bool mtsManagerComponentClient::CreateAndAddNewComponent(const std::string & cla
     // Try to create component as requested
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
 
-    mtsComponent * newComponent = LCM->CreateComponent(className, componentName);
+    mtsComponent * newComponent = LCM->CreateComponentDynamically(className, componentName);
     if (!newComponent) {
         CMN_LOG_CLASS_RUN_ERROR << "CreateAndAddNewComponent: failed to create component: " 
             << "\"" << componentName << "\" of type \"" << className << "\"" << std::endl;
         return false;
     }
 
-    if (!LCM->AddComponent(newComponent)) {
+    // In oder to dynamically control the running status of this component (e.g.
+    // start, stop, resume), internal interfaces are embedded.
+    if (!LCM->AddComponent(newComponent, true)) {
         CMN_LOG_CLASS_RUN_ERROR << "CreateAndAddNewComponent: failed to add component: "
             << "\"" << componentName << "\" of type \"" << className << "\"" << std::endl;
         return false;
@@ -93,8 +97,8 @@ bool mtsManagerComponentClient::AddInterfaceComponent(void)
     // InterfaceComponent's required interface is not create here but is created
     // when a user component with internal interfaces connects to the manager 
     // component client.  
-    // See mtsManagerComponentClient::CreateInterfaceComponentFunctionSet()
-    // for the creation of required interfaces.
+    // See mtsManagerComponentClient::AddNewClientComponent() for the dynamic 
+    // creation of required interfaces.
 
     // Add provided interface to which InterfaceInternal's required interface connects.
     std::string interfaceName = mtsManagerComponentClient::NameOfInterfaceComponentProvided;
@@ -108,6 +112,12 @@ bool mtsManagerComponentClient::AddInterfaceComponent(void)
                               this, mtsManagerComponentBase::CommandNames::ComponentCreate);
     provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceComponentCommands_ComponentConnect,
                               this, mtsManagerComponentBase::CommandNames::ComponentConnect);
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceComponentCommands_ComponentStart,
+                              this, mtsManagerComponentBase::CommandNames::ComponentStart);
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceComponentCommands_ComponentStop,
+                              this, mtsManagerComponentBase::CommandNames::ComponentStop);
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceComponentCommands_ComponentResume,
+                              this, mtsManagerComponentBase::CommandNames::ComponentResume);
     provided->AddCommandRead(&mtsManagerComponentClient::InterfaceComponentCommands_GetNamesOfProcesses,
                               this, mtsManagerComponentBase::CommandNames::GetNamesOfProcesses);
     provided->AddCommandQualifiedRead(&mtsManagerComponentClient::InterfaceComponentCommands_GetNamesOfComponents,
@@ -135,6 +145,12 @@ bool mtsManagerComponentClient::AddInterfaceLCM(void)
                           InterfaceLCMFunction.ComponentCreate);
     required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentConnect,
                           InterfaceLCMFunction.ComponentConnect);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStart,
+                          InterfaceLCMFunction.ComponentStart);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStop,
+                          InterfaceLCMFunction.ComponentStop);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
+                          InterfaceLCMFunction.ComponentResume);
     required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfProcesses,
                           InterfaceLCMFunction.GetNamesOfProcesses);
     required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfComponents,
@@ -153,19 +169,24 @@ bool mtsManagerComponentClient::AddInterfaceLCM(void)
     }
     provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentCreate,
                              this, mtsManagerComponentBase::CommandNames::ComponentCreate);
-    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentConnect, 
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentConnect,
                              this, mtsManagerComponentBase::CommandNames::ComponentConnect);
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentStart,
+                             this, mtsManagerComponentBase::CommandNames::ComponentStart);
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentStop,
+                             this, mtsManagerComponentBase::CommandNames::ComponentStop);
+    provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentResume,
+                             this, mtsManagerComponentBase::CommandNames::ComponentResume);
 
     CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceLCM: successfully added \"LCM\" interfaces" << std::endl;
 
     return true;
 }
 
-bool mtsManagerComponentClient::CreateInterfaceComponentFunctionSet(const std::string & clientComponentName)
+bool mtsManagerComponentClient::AddNewClientComponent(const std::string & clientComponentName)
 {
     if (InterfaceComponentFunctionMap.FindItem(clientComponentName)) {
-        CMN_LOG_CLASS_INIT_VERBOSE << "CreateInterfaceComponentFunctionSet: component is already known: " 
-                                   << clientComponentName << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "AddNewClientComponent: component is already known: " << clientComponentName << std::endl;
         return true;
     }
 
@@ -177,31 +198,32 @@ bool mtsManagerComponentClient::CreateInterfaceComponentFunctionSet(const std::s
     interfaceName += clientComponentName;
     mtsInterfaceRequired * required = AddInterfaceRequired(interfaceName);
     if (!required) {
-        CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceComponentFunctionSet: failed to create \"Component\" required interface: " << interfaceName << std::endl;
+        CMN_LOG_CLASS_INIT_ERROR << "AddNewClientComponent: failed to create \"Component\" required interface: " << interfaceName << std::endl;
         return false;
     }
-    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStart,
-                          newFunctionSet->ComponentStart);
     required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStop,
                           newFunctionSet->ComponentStop);
     required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
                           newFunctionSet->ComponentResume);
 
-    // Add a required interface (InterfaceComponent's required interface) to connect
-    // to the provided interface (InterfaceInternal's provided interface) of the 
-    // connecting component.
+    // Remember a required interface (InterfaceComponent's required interface) 
+    // to connect it to the provided interface (InterfaceInternals's provided 
+    // interface).
     if (!InterfaceComponentFunctionMap.AddItem(clientComponentName, newFunctionSet)) {
-        CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceComponentFunctionSet: failed to add \"Component\" required interface: " 
+        CMN_LOG_CLASS_INIT_ERROR << "AddNewClientComponent: failed to add \"Component\" required interface: " 
             << "\"" << clientComponentName << "\", " << interfaceName << std::endl;
         return false;
     }
 
+    // Add a required interface (InterfaceComponent's required interface) to connect
+    // to the provided interface (InterfaceInternal's provided interface) of the 
+    // connecting component.
     // Connect InterfaceGCM's required interface to InterfaceLCM's provided interface
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
     if (!LCM->Connect(this->GetName(), interfaceName,
                       clientComponentName, mtsComponent::NameOfInterfaceInternalProvided))
     {
-        CMN_LOG_CLASS_INIT_ERROR << "CreateInterfaceComponentFunctionSet: failed to connect: " 
+        CMN_LOG_CLASS_INIT_ERROR << "AddNewClientComponent: failed to connect: " 
             << this->GetName() << ":" << interfaceName
             << " - "
             << clientComponentName << ":" << mtsComponent::NameOfInterfaceInternalProvided
@@ -209,30 +231,33 @@ bool mtsManagerComponentClient::CreateInterfaceComponentFunctionSet(const std::s
         return false;
     }
 
-    CMN_LOG_CLASS_INIT_VERBOSE << "CreateInterfaceComponentFunctionSet: creation and connection success" << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "AddNewClientComponent: creation and connection success" << std::endl;
 
     return true;
 }
 
 void mtsManagerComponentClient::InterfaceComponentCommands_ComponentCreate(const mtsDescriptionComponent & arg)
 {
-    mtsManagerLocal * thisLCM = mtsManagerLocal::GetInstance();
-    if (thisLCM->GetProcessName() == arg.ProcessName) {
-        if (!CreateAndAddNewComponent(arg.ClassName, arg.ProcessName)) {
-            CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentCreate: failed to create component dynamically" << std::endl;
-            // MJ TEMP
-            cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentCreate: failed to execute \"ComponentCreate\""));
-        }
-        return;
-    }
-
     if (!InterfaceLCMFunction.ComponentCreate.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentCreate: invalid function - has not been bound to command" << std::endl;
         // MJ TEMP
         cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentCreate: failed to execute \"Component Create\""));
     }
 
-    InterfaceLCMFunction.ComponentCreate(arg);
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    if (LCM->GetProcessName() == arg.ProcessName) {
+        // Check if the component specified exists
+        if (!LCM->GetComponent(arg.ComponentName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentCreate: no component found on the same process: " << arg << std::endl;
+            // MJ TEMP
+            cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentCreate: failed to execute \"Component Create\""));
+        }
+
+        InterfaceLCMCommands_ComponentCreate(arg);
+        return;
+    } else {
+        InterfaceLCMFunction.ComponentCreate(arg);
+    }
 }
 
 void mtsManagerComponentClient::InterfaceComponentCommands_ComponentConnect(const mtsDescriptionConnection & arg)
@@ -243,7 +268,86 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentConnect(cons
         cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentConnect: failed to execute \"Component Connect\""));
     }
 
-    InterfaceLCMFunction.ComponentConnect(arg);
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    const std::string nameOfThisLCM = LCM->GetProcessName();
+    if (nameOfThisLCM == arg.Client.ProcessName && nameOfThisLCM == arg.Server.ProcessName) {
+        InterfaceLCMCommands_ComponentConnect(arg);
+        return;
+    } else {
+        InterfaceLCMFunction.ComponentConnect(arg);
+    }
+}
+
+void mtsManagerComponentClient::InterfaceComponentCommands_ComponentStart(const mtsComponentStatusControl & arg)
+{
+    if (!InterfaceLCMFunction.ComponentStart.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentStart: invalid function - has not been bound to command" << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentStart: failed to execute \"Component Start\""));
+    }
+
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    if (LCM->GetProcessName() == arg.ProcessName) {
+        // Check if the component specified exists
+        if (!LCM->GetComponent(arg.ComponentName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentStart: no component found on the same process: " << arg << std::endl;
+            // MJ TEMP
+            cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentStart: failed to execute \"Component Start\""));
+        }
+
+        InterfaceLCMCommands_ComponentStart(arg);
+        return;
+    } else {
+        InterfaceLCMFunction.ComponentStart(arg);
+    }
+}
+
+void mtsManagerComponentClient::InterfaceComponentCommands_ComponentStop(const mtsComponentStatusControl & arg)
+{
+    if (!InterfaceLCMFunction.ComponentStop.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentStop: invalid function - has not been bound to command" << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentStop: failed to execute \"Component Stop\""));
+    }
+
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    if (LCM->GetProcessName() == arg.ProcessName) {
+        // Check if the component specified exists
+        if (!LCM->GetComponent(arg.ComponentName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentStop: no component found on the same process: " << arg << std::endl;
+            // MJ TEMP
+            cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentStop: failed to execute \"Component Stop\""));
+        }
+
+        InterfaceLCMCommands_ComponentStop(arg);
+        return;
+    } else {
+        InterfaceLCMFunction.ComponentStop(arg);
+    }
+}
+
+void mtsManagerComponentClient::InterfaceComponentCommands_ComponentResume(const mtsComponentStatusControl & arg)
+{
+    if (!InterfaceLCMFunction.ComponentResume.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentResume: invalid function - has not been bound to command" << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentResume: failed to execute \"Component Resume\""));
+    }
+
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    if (LCM->GetProcessName() == arg.ProcessName) {
+        // Check if the component specified exists
+        if (!LCM->GetComponent(arg.ComponentName)) {
+            CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentResume: no component found on the same process: " << arg << std::endl;
+            // MJ TEMP
+            cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentResume: failed to execute \"Component Resume\""));
+        }
+
+        InterfaceLCMCommands_ComponentResume(arg);
+        return;
+    } else {
+        InterfaceLCMFunction.ComponentResume(arg);
+    }
 }
 
 void mtsManagerComponentClient::InterfaceComponentCommands_GetNamesOfProcesses(mtsStdStringVec & names) const
@@ -292,10 +396,26 @@ void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(
 
 void mtsManagerComponentClient::InterfaceLCMCommands_ComponentCreate(const mtsDescriptionComponent & arg)
 {
+    // Steps to create a component dynamically :
+    // 1.  Create a component
+    // 2.  Add the created component to the local component manager
+    // 3.  Add internal interfaces to the component (InterfaceInternal).  This 
+    //     includes connecting InterfaceComponent's required interface to
+    //     InterfaceInternal's provided interface (see 
+    //     mtsManagerComponentClient::AddNewClientComponent() method)
     if (!CreateAndAddNewComponent(arg.ClassName, arg.ComponentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentCreate: invalid function - has not been bound to command" << std::endl;
         // MJ TEMP
         cmnThrow(std::runtime_error("InterfaceLCMCommands_ComponentCreate: failed to execute \"ComponentCreate\""));
+    }
+
+    // 4.  Connect the InterfaceInternal's required interface to 
+    //     InterfaceComponent's provided interface.
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    if (!LCM->ConnectToManagerComponentClient(arg.ComponentName)) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentCreate: failed to connect component to manager component client" << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceLCMCommands_ComponentCreate: failed to connect component to manager component client"));
     }
 
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceLCMCommands_ComponentCreate: successfully created new component: " << arg << std::endl;
@@ -304,7 +424,7 @@ void mtsManagerComponentClient::InterfaceLCMCommands_ComponentCreate(const mtsDe
 void mtsManagerComponentClient::InterfaceLCMCommands_ComponentConnect(const mtsDescriptionConnection & arg)
 {
     // Try to connect interfaces as requested
-    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance()->GetInstance();
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
 
 #if CISST_MTS_HAS_ICE
     if (!LCM->Connect(arg.Client.ProcessName, arg.Client.ComponentName, arg.Client.InterfaceName,
@@ -321,3 +441,65 @@ void mtsManagerComponentClient::InterfaceLCMCommands_ComponentConnect(const mtsD
 
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceLCMCommands_ComponentConnect: successfully connected: " << arg << std::endl;
 }
+
+void mtsManagerComponentClient::InterfaceLCMCommands_ComponentStart(const mtsComponentStatusControl & arg)
+{
+    // Create internal thread (if needed)
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    mtsComponent * component = LCM->GetComponent(arg.ComponentName);
+    if (!component) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentStart - no component found: "
+            << arg.ComponentName << std::endl;
+        return;
+    }
+    
+    // Wait for internal thread to be created
+    osaSleep(arg.DelayInSecond);
+
+    // Start an internal thread (if needed)
+    LCM->CreateInternalThread(component);
+
+    // Start the component
+    component->Start();
+}
+
+void mtsManagerComponentClient::InterfaceLCMCommands_ComponentStop(const mtsComponentStatusControl & arg)
+{
+    // Get a set of function objects that are bound to the InterfaceLCM's provided
+    // interface.
+    InterfaceComponentFunctionType * functionSet = InterfaceComponentFunctionMap.GetItem(arg.ComponentName);
+    if (!functionSet) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentStop: failed to get function set: " << arg << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceLCMCommands_ComponentStop: failed to execute \"Component Stop\""));
+    }
+    if (!functionSet->ComponentStop.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentStop: invalid function - has not been bound to command: " << arg << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceLCMCommands_ComponentStop: failed to execute \"Component Stop\""));
+    }
+
+    // MJ: This Component Stop command could be executed through local component 
+    // manager but it is not thread safe.  For thread-safe stop/resume, we
+    // use the cisstMultiTask's thread-safe command pattern instead.
+    functionSet->ComponentStop(arg);
+}
+
+void mtsManagerComponentClient::InterfaceLCMCommands_ComponentResume(const mtsComponentStatusControl & arg)
+{
+    // Create internal thread (if needed)
+    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    mtsComponent * component = LCM->GetComponent(arg.ComponentName);
+    if (!component) {
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentStart - no component found: "
+            << arg.ComponentName << std::endl;
+        return;
+    }
+    
+    // Wait for internal thread to be created
+    osaSleep(arg.DelayInSecond);
+
+    // Resume (Start) the component
+    component->Start();
+}
+

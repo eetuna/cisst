@@ -258,6 +258,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
  protected:
 
+
     /*! Flag to keep track of separate log file use */
     bool UseSeparateLogFileFlag;
     
@@ -328,6 +329,9 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
         // Dynamic component management
         mtsFunctionWrite ComponentCreate;
         mtsFunctionWrite ComponentConnect;
+        mtsFunctionWrite ComponentStart;
+        mtsFunctionWrite ComponentStop;
+        mtsFunctionWrite ComponentResume;
         // Getters
         mtsFunctionRead          GetNamesOfProcesses;
         mtsFunctionQualifiedRead GetNamesOfComponents; // in: process name, out: components' names
@@ -337,9 +341,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     /*! Internal commands to process command execution request coming from manager 
         component client */
-    void InterfaceInternalCommands_ComponentStart(void);
-    void InterfaceInternalCommands_ComponentStop(void);
-    void InterfaceInternalCommands_ComponentResume(void);
+    void InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg);
+    void InterfaceInternalCommands_ComponentResume(const mtsComponentStatusControl & arg);
 
  public:
 
@@ -359,6 +362,15 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, 
         const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+
+    bool RequestComponentStart(const std::string& processName, const std::string & componentName, 
+                               const double delayInSecond = 0.0);
+
+    bool RequestComponentStop(const std::string& processName, const std::string & componentName,
+                              const double delayInSecond = 0.0);
+
+    bool RequestComponentResume(const std::string& processName, const std::string & componentName,
+                                const double delayInSecond = 0.0);
 
     bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses);
     bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents);

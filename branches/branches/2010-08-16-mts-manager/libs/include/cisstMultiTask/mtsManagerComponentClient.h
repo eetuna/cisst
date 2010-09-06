@@ -53,9 +53,8 @@ protected:
         components, we keep a list of function objects using named map with 
         (key = component name, value = function object set instance) */
     typedef struct {
-        mtsFunctionVoid ComponentStart;
-        mtsFunctionVoid ComponentStop;
-        mtsFunctionVoid ComponentResume;
+        mtsFunctionWrite ComponentStop;
+        mtsFunctionWrite ComponentResume;
     } InterfaceComponentFunctionType;
 
     typedef cmnNamedMap<InterfaceComponentFunctionType> InterfaceComponentFunctionMapType;
@@ -66,6 +65,9 @@ protected:
         // Dynamic component management
         mtsFunctionWrite ComponentCreate;
         mtsFunctionWrite ComponentConnect;
+        mtsFunctionWrite ComponentStart;
+        mtsFunctionWrite ComponentStop;
+        mtsFunctionWrite ComponentResume;
         // Getters
         mtsFunctionRead          GetNamesOfProcesses;
         mtsFunctionQualifiedRead GetNamesOfComponents; // in: process name, out: components' names
@@ -89,18 +91,24 @@ public:
     bool AddInterfaceLCM(void);
     bool AddInterfaceComponent(void);
 
-    /*! Create a new set of function objects, add InterfaceComponent's required
-        interface to this component, and connect it to InterfaceInternal's
-        provided interface */
-    bool CreateInterfaceComponentFunctionSet(const std::string & clientComponentName);
+    /*! Create a new set of function objects, add a new instance of 
+        InterfaceComponent's required interface to this component, and connect 
+        it to InterfaceInternal's provided interface */
+    bool AddNewClientComponent(const std::string & clientComponentName);
 
     /*! Commands for InterfaceLCM's provided interface */
     void InterfaceLCMCommands_ComponentCreate(const mtsDescriptionComponent & arg);
     void InterfaceLCMCommands_ComponentConnect(const mtsDescriptionConnection & arg);
+    void InterfaceLCMCommands_ComponentStart(const mtsComponentStatusControl & arg);
+    void InterfaceLCMCommands_ComponentStop(const mtsComponentStatusControl & arg);
+    void InterfaceLCMCommands_ComponentResume(const mtsComponentStatusControl & arg);
 
     /*! Commands for InterfaceComponent's provided interface */
     void InterfaceComponentCommands_ComponentCreate(const mtsDescriptionComponent & arg);
     void InterfaceComponentCommands_ComponentConnect(const mtsDescriptionConnection & arg);
+    void InterfaceComponentCommands_ComponentStart(const mtsComponentStatusControl & arg);
+    void InterfaceComponentCommands_ComponentStop(const mtsComponentStatusControl & arg);
+    void InterfaceComponentCommands_ComponentResume(const mtsComponentStatusControl & arg);
     void InterfaceComponentCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const;

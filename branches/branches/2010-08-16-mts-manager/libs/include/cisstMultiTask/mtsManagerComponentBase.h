@@ -78,7 +78,7 @@ http://www.cisst.org/cisst/license.txt.
 
   1) InterfaceInternal.Required - InterfaceComponent.Provided
      : Established when mtsManagerLocal::CreateAll() gets called
-       (See mtsManagerLocal::ConnectToManagerComponentClient())
+       (See mtsManagerLocal::ConnectAllToManagerComponentClient())
 
   2) InterfaceLCM.Required - InterfaceGCM.Provided
      : Established when mtsManagerLocal::CreateAll() gets called
@@ -86,11 +86,11 @@ http://www.cisst.org/cisst/license.txt.
 
   3) InterfaceGCM.Required - InterfaceLCM.Provided
      : When MCC connects to MCS
-       (See mtsManagerComponentServer::CreateInterfaceGCMFunctionSet())
+       (See mtsManagerComponentServer::AddNewClientProcess())
 
   4) InterfaceComponent.Required - InterfaceInternal.Provided
      : When user component with internal interfaces connects to MCC
-       (See mtsManagerComponentClient::CreateInterfaceComponentFunctionSet())
+       (See mtsManagerComponentClient::AddNewClientComponent())
 
   \note Related classes: mtsManagerLocalInterface, mtsManagerGlobalInterface, 
   mtsManagerGlobal, mtsManagerProxyServer

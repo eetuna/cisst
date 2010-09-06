@@ -26,7 +26,15 @@ http://www.cisst.org/cisst/license.txt.
 
 class CounterOddComponent : public mtsTaskPeriodic {
 
-    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+protected:
+    int CounterMine;
+
+    void AddInterface(void);
+
+    mtsFunctionRead GetPeerCounter;
+    void ReturnMyCounter(mtsInt & myCounter) const;
 
 public:
     CounterOddComponent();
@@ -34,9 +42,14 @@ public:
     ~CounterOddComponent() {};
 
     void Configure(const std::string & CMN_UNUSED(filename)) {};
-    void Startup(void) {};
+    void Startup(void);
     void Run(void);
     void Cleanup(void) {};
+
+    static std::string NameCounterOddInterfaceProvided;
+    static std::string NameCounterOddInterfaceRequired;
+    static std::string NameGetPeerCounter;
+    static std::string NameReturnMyCounter;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(CounterOddComponent);

@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnConstants.h>
 #include <cisstOSAbstraction/osaGetTime.h>
+#include <cisstOSAbstraction/osaSleep.h>
 
 #include "ManagerComponent.h"
 
@@ -29,6 +30,11 @@ const std::string CounterOddComponentType  = "CounterOddComponent";
 const std::string CounterOddComponentName  = "CounterOddComponentObject";
 const std::string CounterEvenComponentType = "CounterEvenComponent";
 const std::string CounterEvenComponentName = "CounterEvenComponentObject";
+
+const std::string NameCounterOddInterfaceProvided = "CounterOddInterfaceProvided";
+const std::string NameCounterOddInterfaceRequired = "CounterOddInterfaceRequired";
+const std::string NameCounterEvenInterfaceProvided = "CounterEvenInterfaceProvided";
+const std::string NameCounterEvenInterfaceRequired = "CounterEvenInterfaceRequired";
 
 CMN_IMPLEMENT_SERVICES(ManagerComponent);
 
@@ -44,7 +50,7 @@ void ManagerComponent::Run(void)
     static double lastTick = 0;
     static int count = 0;
 
-#if 1
+#if 0
     std::vector<std::string> processes, components, interfaces, connections;
     if (osaGetTime() - lastTick > 5.0) {
         std::cout << "==================================== Processes" << std::endl;
@@ -86,37 +92,119 @@ void ManagerComponent::Run(void)
     }
 #endif
 
-#if 0
-    std::cout << ".... (" << count++ << ") ............" << std::endl;
+#if 1
+    std::cout << "....... " << count++ << std::endl;
 
-    if (count == 10) {
-        std::cout << std::endl << std::endl << "Creating ODD counter across network: ";
+    if (count == 5) {
+        //
+        // Create the two components: odd counter and even counter
+        //
+        std::cout << std::endl << "Creating counter components across network....." << std::endl;
+
+        std::cout << "> " << PeerProcessName << ", " << CounterOddComponentType << ", " << CounterOddComponentName << ": ";
         if (!RequestComponentCreate(PeerProcessName, CounterOddComponentType, CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
+
+        std::cout << "> " << PeerProcessName << ", " << CounterEvenComponentType << ", " << CounterEvenComponentName << ": ";
+        if (!RequestComponentCreate(PeerProcessName, CounterEvenComponentType, CounterEvenComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        // MJ: needs to be replaced with blocking command with return value
+        std::cout << std::endl << "Wait for 5 seconds for \"Component Connect\"...." << std::endl;
+        osaSleep(5.0);
+
+        //
+        // Connect the two components
+        //
+        std::cout << std::endl << "Connecting counter components across network....." << std::endl;
+        std::cout << "> Connection 1: ";
+        if (!RequestComponentConnect(PeerProcessName, CounterOddComponentName, NameCounterOddInterfaceRequired, 
+                                     PeerProcessName, CounterEvenComponentName, NameCounterEvenInterfaceProvided))
+        {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        std::cout << "> Connection 2: ";
+        if (!RequestComponentConnect(PeerProcessName, CounterEvenComponentName, NameCounterEvenInterfaceRequired,
+                                     PeerProcessName, CounterOddComponentName, NameCounterOddInterfaceProvided))
+        {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        // MJ: needs to be replaced with blocking command with return value
+        std::cout << std::endl << "Wait for 5 seconds for \"Component Start\"...." << std::endl;
+        osaSleep(5.0);
+
+        //
+        // Start the two components
+        //
+        std::cout << std::endl << "Starting counter components across network....." << std::endl;
+        std::cout << "> " << PeerProcessName << "." << CounterOddComponentName << ": ";
+        if (!RequestComponentStart(PeerProcessName, CounterOddComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        std::cout << "> " << PeerProcessName << "." << CounterEvenComponentName << ": ";
+        if (!RequestComponentStart(PeerProcessName, CounterEvenComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        std::cout << std::endl << "Wait for 5 seconds for \"Component Stop\"...." << std::endl;
+        osaSleep(5.0);
+
+        //
+        // Stop the two components
+        //
+        std::cout << std::endl << "Stopping counter components across network....." << std::endl;
+        std::cout << "> " << PeerProcessName << "." << CounterOddComponentName << ": ";
+        if (!RequestComponentStop(PeerProcessName, CounterOddComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        std::cout << "> " << PeerProcessName << "." << CounterEvenComponentName << ": ";
+        if (!RequestComponentStop(PeerProcessName, CounterEvenComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        std::cout << std::endl << "Wait for 5 seconds for \"Component Resume\"...." << std::endl;
+        osaSleep(5.0);
+
+        //
+        // Resume the two components
+        //
+        std::cout << std::endl << "Resuming counter components across network....." << std::endl;
+        std::cout << "> " << PeerProcessName << "." << CounterOddComponentName << ": ";
+        if (!RequestComponentResume(PeerProcessName, CounterOddComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
+
+        std::cout << "> " << PeerProcessName << "." << CounterEvenComponentName << ": ";
+        if (!RequestComponentResume(PeerProcessName, CounterEvenComponentName)) {
+            std::cout << "failure" << std::endl;
+        } else {
+            std::cout << "success" << std::endl;
+        }
     }
-
-    //if (count == 15) {
-    //    std::cout << std::endl << std::endl << "Creating EVEN counter across network: ";
-    //    if (!RequestComponentCreate(PeerProcessName, CounterEvenComponentType, CounterEvenComponentName)) {
-    //        std::cout << "failure" << std::endl;
-    //    } else {
-    //        std::cout << "success" << std::endl;
-    //    }
-    //}
-
-    //if (count == 20) {
-    //    std::cout << std::cout << std::cout << "Connecting the two counters across network: ";
-    //    if (!RequestComponentConnect(PeerProcessName, CounterOddComponentName, "InterfaceRequiredOdd",
-    //                                PeerProcessName, CounterEvenComponentName, "InterfaceProvidedEven"))
-    //    {
-    //        std::cout << "failure" << std::endl;
-    //    } else {
-    //        std::cout << "success" << std::endl;
-    //    }
-    //}
 #endif
 }
 

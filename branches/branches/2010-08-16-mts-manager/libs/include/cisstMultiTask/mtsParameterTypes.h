@@ -68,4 +68,30 @@ public:
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnection);
 
+//-----------------------------------------------------------------------------
+//  Component Status Control
+//
+class mtsComponentStatusControl : public mtsGenericObject
+{
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+public:
+    typedef enum { 
+        COMPONENT_START = 0, 
+        COMPONENT_STOP, 
+        COMPONENT_RESUME 
+    } ComponentStatusCommand;
+
+    std::string ProcessName;
+    std::string ComponentName;
+    double      DelayInSecond;
+    ComponentStatusCommand Command;
+
+    void ToStream(std::ostream & outputStream) const;
+    void SerializeRaw(std::ostream & outputStream) const;
+    void DeSerializeRaw(std::istream & inputStream);
+};
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentStatusControl);
+
 #endif // _mtsParameterTypes_h

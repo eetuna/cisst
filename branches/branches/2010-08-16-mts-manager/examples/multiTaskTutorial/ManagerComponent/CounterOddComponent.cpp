@@ -23,28 +23,79 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaGetTime.h>
 
 #include "CounterOddComponent.h"
+#include "CounterEvenComponent.h"
+
+std::string CounterOddComponent::NameCounterOddInterfaceProvided = "CounterOddInterfaceProvided";
+std::string CounterOddComponent::NameCounterOddInterfaceRequired = "CounterOddInterfaceRequired";
+std::string CounterOddComponent::NameGetPeerCounter  = "GetPeerCounter";
+std::string CounterOddComponent::NameReturnMyCounter = "ReturnMyCounter";
 
 CMN_IMPLEMENT_SERVICES(CounterOddComponent);
 
-CounterOddComponent::CounterOddComponent() : 
-    mtsTaskPeriodic("CounterOddObject", 1 * cmn_s, false, 1000)
+CounterOddComponent::CounterOddComponent()
+    : mtsTaskPeriodic("CounterOddObject", 1 * cmn_s, false, 1000), 
+      CounterMine(-1)
 {
+    UseSeparateLogFileDefault();
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "Started" << std::endl;
+
+    AddInterface();
 }
 
-CounterOddComponent::CounterOddComponent(const std::string & componentName, double period):
-    mtsTaskPeriodic(componentName, period, false, 1000)
+CounterOddComponent::CounterOddComponent(const std::string & componentName, double period)
+    : mtsTaskPeriodic(componentName, period, false, 1000), 
+      CounterMine(-1)
 {
+    AddInterface();
+}
+
+void CounterOddComponent::AddInterface(void)
+{
+    mtsInterfaceRequired * required = AddInterfaceRequired(NameCounterOddInterfaceRequired);
+    if (!required) {
+        cmnThrow("CounterOddComponent - failed to create required interface");
+    } else {
+        required->AddFunction(CounterEvenComponent::NameReturnMyCounter, this->GetPeerCounter);
+    }
+
+    mtsInterfaceProvided * provided = AddInterfaceProvided(NameCounterOddInterfaceProvided);
+    if (!provided) {
+        cmnThrow("CounterOddComponent - failed to create provided interface");
+    } else {
+        provided->AddCommandRead(&CounterOddComponent::ReturnMyCounter, 
+                                this, CounterOddComponent::NameReturnMyCounter);
+    }
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "Interface created" << std::endl;
+}
+
+void CounterOddComponent::Startup(void)
+{
+    CounterMine = 1;
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "Startup called" << std::endl;
 }
 
 void CounterOddComponent::Run(void) 
 {
     ProcessQueuedCommands();
 
-    static unsigned int counter = 0;
+    CounterMine += 2;
 
-    if (counter++ % 2 == 1) {
-        std::cout << this->GetName() << ") " << counter << std::endl;
-        std::flush(std::cout);
+    std::cout << this->GetName() << " : " << CounterMine;
+
+    if (!GetPeerCounter.IsValid()) {
+        std::cout << "Skipped fetching peer counter: function has not been bound to command" << std::endl;
+        return;
     }
+
+    mtsInt peerCounter;
+    GetPeerCounter(peerCounter);
+    std::cout << ", Peer: " << peerCounter.Data << std::endl;
 }
 
+void CounterOddComponent::ReturnMyCounter(mtsInt & myCounter) const
+{
+    myCounter = CounterMine;
+}

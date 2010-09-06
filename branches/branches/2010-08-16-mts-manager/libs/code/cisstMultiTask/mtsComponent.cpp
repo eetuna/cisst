@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsManagerComponentBase.h>
 
 #include <cisstOSAbstraction/osaGetTime.h>
+#include <cisstOSAbstraction/osaSleep.h>
 
 std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
 std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
@@ -709,6 +710,12 @@ bool mtsComponent::AddInterfaceInternal(void)
                           InternalInterfaceFunctions.ComponentCreate);
     required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentConnect,
                           InternalInterfaceFunctions.ComponentConnect);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStart,
+                          InternalInterfaceFunctions.ComponentStart);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStop,
+                          InternalInterfaceFunctions.ComponentStop);
+    required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
+                          InternalInterfaceFunctions.ComponentResume);
     required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfProcesses,
                           InternalInterfaceFunctions.GetNamesOfProcesses);
     required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfComponents,
@@ -725,11 +732,9 @@ bool mtsComponent::AddInterfaceInternal(void)
         CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal provided interface: " << interfaceName << std::endl;
         return false;
     }
-    provided->AddCommandVoid(&mtsComponent::InterfaceInternalCommands_ComponentStart, 
-                             this, mtsManagerComponentBase::CommandNames::ComponentStart);
-    provided->AddCommandVoid(&mtsComponent::InterfaceInternalCommands_ComponentStop, 
+    provided->AddCommandWrite(&mtsComponent::InterfaceInternalCommands_ComponentStop,
                              this, mtsManagerComponentBase::CommandNames::ComponentStop);
-    provided->AddCommandVoid(&mtsComponent::InterfaceInternalCommands_ComponentResume, 
+    provided->AddCommandWrite(&mtsComponent::InterfaceInternalCommands_ComponentResume,
                              this, mtsManagerComponentBase::CommandNames::ComponentResume);
 
     CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal interfaces" << std::endl;
@@ -737,19 +742,56 @@ bool mtsComponent::AddInterfaceInternal(void)
     return true;
 }
 
-void mtsComponent::InterfaceInternalCommands_ComponentStart(void)
+void mtsComponent::InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg)
 {
-    // TODO: implement this method
+    // MJ: How to implement "Stopping device-type component which might be already running"?
+    // 
+    // Possible solutions might be:
+    // - For device-type component: disable all commands and functions in all 
+    //   interfaces of this component.
+    // - For task-type component: call Suspend()
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentStop: stopping component: " << GetName() << std::endl;
+
+    // Stop device-type component
+    mtsTask * task = dynamic_cast<mtsTask *>(this);
+    if (!task) {
+        // TODO: implement stopping a device-type component
+        cmnThrow("InterfaceInternalCommands_ComponentStop: TODO - implement this function");
+        return;
+    } 
+    // Stop task-type component
+    else {
+        task->Suspend();
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentStart: stopped component:  " << GetName() << std::endl;
 }
 
-void mtsComponent::InterfaceInternalCommands_ComponentStop(void)
+void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentStatusControl & arg)
 {
-    // TODO: implement this method
-}
+    // MJ: How to implement "Resuming device-type component which might be already running"?
+    // 
+    // Possible solutions might be:
+    // - For device-type component: enable all commands and functions in all 
+    //   interfaces of this component.
+    // - For task-type component: call Start()
 
-void mtsComponent::InterfaceInternalCommands_ComponentResume(void)
-{
-    // TODO: implement this method
+    CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentResume: resuming component: " << GetName() << std::endl;
+
+    // Stop device-type component
+    mtsTask * task = dynamic_cast<mtsTask *>(this);
+    if (!task) {
+        // TODO: implement stopping a device-type component
+        cmnThrow("InterfaceInternalCommands_ComponentResume: TODO - implement this function");
+        return;
+    } 
+    // Stop task-type component
+    else {
+        task->Start();
+    }
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentResume: resumed component:  " << GetName() << std::endl;
 }
 
 bool mtsComponent::RequestComponentCreate(
@@ -822,6 +864,72 @@ bool mtsComponent::RequestComponentConnect(
     InternalInterfaceFunctions.ComponentConnect(arg);
 
     CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentConnect: requested component connection: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentStart(const std::string& processName, const std::string & componentName,
+                                         const double delayInSecond)
+{
+    if (!InternalInterfaceFunctions.ComponentStart.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStart: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsComponentStatusControl arg;
+    arg.ProcessName = processName;
+    arg.ComponentName = componentName;
+    arg.DelayInSecond = delayInSecond;
+    arg.Command = mtsComponentStatusControl::COMPONENT_START;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentStart(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentStart: requested component start: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentStop(const std::string& processName, const std::string & componentName,
+                                        const double delayInSecond)
+{
+    if (!InternalInterfaceFunctions.ComponentStop.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStop: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsComponentStatusControl arg;
+    arg.ProcessName = processName;
+    arg.ComponentName = componentName;
+    arg.DelayInSecond = delayInSecond;
+    arg.Command = mtsComponentStatusControl::COMPONENT_STOP;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentStop(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentStop: requested component stop: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentResume(const std::string& processName, const std::string & componentName,
+                                          const double delayInSecond)
+{
+    if (!InternalInterfaceFunctions.ComponentResume.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentResume: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsComponentStatusControl arg;
+    arg.ProcessName = processName;
+    arg.ComponentName = componentName;
+    arg.DelayInSecond = delayInSecond;
+    arg.Command = mtsComponentStatusControl::COMPONENT_RESUME;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentResume(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentResume: requested component resume: " << arg << std::endl;
 
     return true;
 }

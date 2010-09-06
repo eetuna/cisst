@@ -90,3 +90,43 @@ void mtsDescriptionConnection::DeSerializeRaw(std::istream & inputStream)
     cmnDeSerializeRaw(inputStream, this->Server.ComponentName);
     cmnDeSerializeRaw(inputStream, this->Server.InterfaceName);
 }
+
+//-----------------------------------------------------------------------------
+//  Component Status Control
+//
+CMN_IMPLEMENT_SERVICES(mtsComponentStatusControl);
+
+void mtsComponentStatusControl::ToStream(std::ostream & outputStream) const
+{
+    mtsGenericObject::ToStream(outputStream);
+    outputStream << std::endl
+                 << "Process: " << this->ProcessName
+                 << ", component: " << this->ComponentName
+                 << ", delay: " << this->DelayInSecond
+                 << ", command: ";
+     switch (Command) {
+         case COMPONENT_START:  outputStream << "START" << std::endl; break;
+         case COMPONENT_STOP:   outputStream << "STOP" << std::endl; break;
+         case COMPONENT_RESUME: outputStream << "RESUME" << std::endl; break;
+         default:
+             outputStream << "(INVALID)" << std::endl;
+     }
+}
+
+void mtsComponentStatusControl::SerializeRaw(std::ostream & outputStream) const
+{
+    mtsGenericObject::SerializeRaw(outputStream);
+    cmnSerializeRaw(outputStream, ProcessName);
+    cmnSerializeRaw(outputStream, ComponentName);
+    cmnSerializeRaw(outputStream, DelayInSecond);
+    cmnSerializeRaw(outputStream, static_cast<int>(Command));
+}
+
+void mtsComponentStatusControl::DeSerializeRaw(std::istream & inputStream)
+{
+    mtsGenericObject::DeSerializeRaw(inputStream);
+    cmnDeSerializeRaw(inputStream, ProcessName);
+    cmnDeSerializeRaw(inputStream, ComponentName);
+    cmnDeSerializeRaw(inputStream, DelayInSecond);
+    cmnDeSerializeRaw(inputStream, static_cast<ComponentStatusCommand>(Command));
+}

@@ -706,11 +706,13 @@ int mtsManagerGlobal::Connect(const std::string & requestProcessName,
     std::ostream_iterator< std::string > output(allOptions, " ");
     bool interfacesSwapped = false;
 
+    // MJ: commented out this policy to allow the 3rd process can initiate a connection
+    // between two different processes.
     // Check requestProcessName validity
-    if (requestProcessName != clientProcessName && requestProcessName != serverProcessName) {
-        CMN_LOG_CLASS_INIT_ERROR << "Connect: invalid process is requesting connection: " << requestProcessName << std::endl;
-        return -1;
-    }
+    //if (requestProcessName != clientProcessName && requestProcessName != serverProcessName) {
+    //    CMN_LOG_CLASS_INIT_ERROR << "Connect: invalid process is requesting connection: " << requestProcessName << std::endl;
+    //    return -1;
+    //}
 
     // Check if the required interface specified actually exist.
     if (!FindInterfaceRequiredOrInput(clientProcessName, clientComponentName, clientInterfaceRequiredName)) {

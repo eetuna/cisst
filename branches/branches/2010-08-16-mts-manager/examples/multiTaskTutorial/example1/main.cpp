@@ -52,8 +52,16 @@ int main(void)
     taskManager->StartAll();
 
     // wait until the close button of the UI is pressed
+    int cnt = 0;
     while (!displayTaskObject->IsTerminated()) {
-        osaSleep(100.0 * cmn_ms); // sleep to save CPU
+        if (cnt++ == 3) {
+            std::cout << "################### SUSPEND" << std::endl;
+            sineTaskObject->Suspend();
+        } else if (cnt == 8) {
+            std::cout << "################### RESUME" << std::endl;
+            sineTaskObject->Start();
+        }
+        osaSleep(1 * cmn_s); // sleep to save CPU
     }
     // cleanup
     taskManager->KillAll();

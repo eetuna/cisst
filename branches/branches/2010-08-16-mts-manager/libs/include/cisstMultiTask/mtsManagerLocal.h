@@ -75,6 +75,8 @@ class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface
     // for internal access to manage proxy objects
     friend class mtsManagerGlobal;
     friend class mtsManagerProxyClient;
+    // for dynamic creation of a component
+    friend class mtsManagerComponentClient;
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -162,6 +164,10 @@ protected:
     /*! Initialization */
     void Initialize(void);
 
+    /*! \brief Create thread. Does nothing for device-type component,
+               create an internal thread for task-type component. */
+    void CreateInternalThread(mtsComponent * component);
+
     /*! \brief Add an internal manager component automatically when LCM is 
                initialized 
         \param processName Name of this process (or this LCM) 
@@ -177,12 +183,17 @@ protected:
                interface. */
     bool ConnectManagerComponentClientToServer(void);
 
-    /*! \brief Connect local components which has internal interfaces to the 
+    /*! \brief Connect a local component which has internal interfaces to the 
+               manager component client (connect InterfaceInternal.Required - 
+               InterfaceComponent.Provided) */
+    bool ConnectToManagerComponentClient(const std::string & componentName);
+
+    /*! \brief Connect all local components which have internal interfaces to the 
                manager component client (connect InterfaceInternal.Required - 
                InterfaceComponent.Provided)
                This allows user components to use  cisstMultiTask's Command 
                Pattern to communicate with local component manager. */
-    bool ConnectToManagerComponentClient(void);
+    bool ConnectAllToManagerComponentClient(void);
 
 #if CISST_MTS_HAS_ICE
     /*! \brief Set IP address of this machine */
@@ -311,7 +322,7 @@ public:
     //  Component Management
     //-------------------------------------------------------------------------
     /*! \brief Create a component.  Does not add it to the local component manager. */
-    mtsComponent * CreateComponent(const std::string & className, const std::string & componentName);
+    mtsComponent * CreateComponentDynamically(const std::string & className, const std::string & componentName);
 
     /*! \brief Add a component to this local component manager. 
         \param component Component instance to be added 

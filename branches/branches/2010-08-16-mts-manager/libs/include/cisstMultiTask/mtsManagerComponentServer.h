@@ -65,6 +65,9 @@ protected:
     typedef struct {
         mtsFunctionWrite ComponentCreate;
         mtsFunctionWrite ComponentConnect;
+        mtsFunctionWrite ComponentStart;
+        mtsFunctionWrite ComponentStop;
+        mtsFunctionWrite ComponentResume;
     } InterfaceGCMFunctionType;
 
     typedef cmnNamedMap<InterfaceGCMFunctionType> InterfaceGCMFunctionMapType;
@@ -85,7 +88,7 @@ public:
     /*! Create a new set of function objects, add InterfaceGCM's required
         interface to this component, and connect it to InterfaceLCM's
         provided interface */
-    bool CreateInterfaceGCMFunctionSet(const std::string & clientProcessName);
+    bool AddNewClientProcess(const std::string & clientProcessName);
 
     /*! Name of this component which is globally unique */
     static std::string NameOfManagerComponentServer;
@@ -97,6 +100,9 @@ public:
     /*! Commands */
     void InterfaceGCMCommands_ComponentCreate(const mtsDescriptionComponent & arg);
     void InterfaceGCMCommands_ComponentConnect(const mtsDescriptionConnection & arg);
+    void InterfaceGCMCommands_ComponentStart(const mtsComponentStatusControl & arg);
+    void InterfaceGCMCommands_ComponentStop(const mtsComponentStatusControl & arg);
+    void InterfaceGCMCommands_ComponentResume(const mtsComponentStatusControl & arg);
     void InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const;
