@@ -749,7 +749,9 @@ void mtsComponent::InterfaceInternalCommands_ComponentStop(const mtsComponentSta
     // Possible solutions might be:
     // - For device-type component: disable all commands and functions in all 
     //   interfaces of this component.
-    // - For task-type component: call Suspend()
+    // - For task-type component: the above + call Suspend()
+    //
+    // The current implementation only can handle task-type component through mtsTask::Suspend()
 
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentStop: stopping component: " << GetName() << std::endl;
 
@@ -775,7 +777,7 @@ void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentS
     // Possible solutions might be:
     // - For device-type component: enable all commands and functions in all 
     //   interfaces of this component.
-    // - For task-type component: call Start()
+    // - For task-type component: the above + call Start()
 
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentResume: resuming component: " << GetName() << std::endl;
 
