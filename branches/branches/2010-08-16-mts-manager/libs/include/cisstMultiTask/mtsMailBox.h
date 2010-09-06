@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsMailBox_h
 #define _mtsMailBox_h
 
+#include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstMultiTask/mtsQueue.h>
 
 // Always include last
@@ -36,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT mtsMailBox
 {
     mtsQueue<mtsCommandBase *> CommandQueue;
-    
+
     /*! Name provided for logs */
     std::string Name;
 
@@ -45,6 +46,9 @@ class CISST_EXPORT mtsMailBox
       mechanism is used by mtsTaskFromSignal to wake up the task's
       thread. */
     mtsCommandVoidBase * PostCommandQueuedCommand;
+
+    /*! Thread signal used for blocking */
+    osaThreadSignal ThreadSignal;
 
 public:
     mtsMailBox(const std::string & name,
@@ -59,8 +63,14 @@ public:
       command has been provided, the command is executed. */
     bool Write(mtsCommandBase * command);
 
+    /*! Wait for thread signal, used by blocking commands just after
+      Write.  ExecuteNext will Raise the thread signal if the queued
+      command was blocking. */
+    void ThreadSignalWait(void);
+
     /*! Execute the oldest command queued. */
     bool ExecuteNext(void);
+
 };
 
 

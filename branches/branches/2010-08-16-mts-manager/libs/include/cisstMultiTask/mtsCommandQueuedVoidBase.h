@@ -27,7 +27,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQueuedVoidBase_h
 #define _mtsCommandQueuedVoidBase_h
 
-#include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstMultiTask/mtsCommandVoidBase.h>
 #include <cisstMultiTask/mtsMailBox.h>
 
@@ -51,8 +50,6 @@ class CISST_EXPORT mtsCommandQueuedVoidBase: public mtsCommandVoidBase
     /*! Queue of flags to indicate if the command is blocking or
       not */
     mtsQueue<bool> BlockingFlagQueue;
-    /*! Thread signal used for blocking */
-    osaThreadSignal ThreadSignal;
 
  private:
     /*! Private copy constructor to prevent copies */
@@ -84,8 +81,6 @@ class CISST_EXPORT mtsCommandQueuedVoidBase: public mtsCommandVoidBase
     virtual mtsCommandBase::ReturnType Execute(bool blocking = false);
 
     bool BlockingFlagGet(void);
-
-    void ThreadSignalRaise(void);
 
     virtual mtsCommandVoidBase * GetActualCommand(void);
 

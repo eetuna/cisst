@@ -41,12 +41,6 @@ bool mtsCommandQueuedWriteBase::BlockingFlagGet(void)
 }
 
 
-void mtsCommandQueuedWriteBase::ThreadSignalRaise(void)
-{
-    this->ThreadSignal.Raise();
-}
-
-
 mtsCommandQueuedWriteGeneric::mtsCommandQueuedWriteGeneric(mtsMailBox * mailBox, mtsCommandWriteBase * actualCommand, size_t size):
     BaseType(mailBox, actualCommand, size),
     ArgumentQueueSize(size),
@@ -101,7 +95,7 @@ mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGeneri
             BlockingFlagQueue.Put(blocking)) {
             if (MailBox->Write(this)) {
                 if (blocking) {
-                    this->ThreadSignal.Wait();
+                    MailBox->ThreadSignalWait();
                 }
                 return mtsCommandBase::DEV_OK;
             } else {

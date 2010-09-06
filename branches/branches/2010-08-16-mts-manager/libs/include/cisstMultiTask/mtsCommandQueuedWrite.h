@@ -29,7 +29,6 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQueuedWrite_h
 #define _mtsCommandQueuedWrite_h
 
-#include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstMultiTask/mtsCommandQueuedWriteBase.h>
 
 
@@ -135,7 +134,7 @@ public:
                 BlockingFlagQueue.Put(blocking)) {
                 if (MailBox->Write(this)) {
                     if (blocking) {
-                        this->ThreadSignal.Wait();
+                        MailBox->ThreadSignalWait();
                     }
                     return mtsCommandBase::DEV_OK;
                 } else {

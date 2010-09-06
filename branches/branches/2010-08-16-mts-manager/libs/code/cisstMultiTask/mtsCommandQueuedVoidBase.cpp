@@ -57,7 +57,7 @@ mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(bool blocking)
         if (BlockingFlagQueue.Put(blocking)) {
             if (MailBox->Write(this)) {
                 if (blocking) {
-                    this->ThreadSignal.Wait();
+                    MailBox->ThreadSignalWait();
                 }
                 return mtsCommandBase::DEV_OK;
             } else {
@@ -85,12 +85,6 @@ mtsCommandVoidBase * mtsCommandQueuedVoidBase::GetActualCommand(void)
 bool mtsCommandQueuedVoidBase::BlockingFlagGet(void)
 {
     return *(this->BlockingFlagQueue.Get());
-}
-
-
-void mtsCommandQueuedVoidBase::ThreadSignalRaise(void)
-{
-    this->ThreadSignal.Raise();
 }
 
 

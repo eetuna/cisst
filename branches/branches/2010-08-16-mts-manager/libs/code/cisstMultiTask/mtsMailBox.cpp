@@ -54,6 +54,12 @@ bool mtsMailBox::Write(mtsCommandBase * command)
 }
 
 
+void mtsMailBox::ThreadSignalWait(void)
+{
+    this->ThreadSignal.Wait();
+}
+
+
 // return false if nothing to execute; true otherwise.
 // NOTE: this will break if exceptions are thrown by the command objects
 // because the commands (and parameters) won't be removed from the queues.
@@ -76,7 +82,7 @@ bool mtsMailBox::ExecuteNext(void)
        CMN_ASSERT(commandVoid);
        commandVoid->GetActualCommand()->Execute();
        if (commandVoid->BlockingFlagGet()) {
-           commandVoid->ThreadSignalRaise();
+           this->ThreadSignal.Raise();
        }
        break;
    case 1:
@@ -85,7 +91,7 @@ bool mtsMailBox::ExecuteNext(void)
            commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()));
            commandWrite->ArgumentGet();  // Remove from parameter queue
            if (commandWrite->BlockingFlagGet()) {
-               commandWrite->ThreadSignalRaise();
+               this->ThreadSignal.Raise();
            }
        } else {
            commandWriteGeneric = dynamic_cast<mtsCommandQueuedWriteGeneric *>(*command);
@@ -93,7 +99,7 @@ bool mtsMailBox::ExecuteNext(void)
            commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()));
            commandWriteGeneric->ArgumentGet();  // Remove from parameter queue
            if (commandWriteGeneric->BlockingFlagGet()) {
-               commandWriteGeneric->ThreadSignalRaise();
+               this->ThreadSignal.Raise();
            }
        }
        break;
