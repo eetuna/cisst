@@ -796,6 +796,26 @@ void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentS
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentResume: resumed component:  " << GetName() << std::endl;
 }
 
+bool mtsComponent::RequestComponentCreate(const std::string & className, const std::string & componentName)
+{
+    if (!InternalInterfaceFunctions.ComponentCreate.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentCreate: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsDescriptionComponent arg;
+    arg.ProcessName   = mtsManagerLocal::GetInstance()->GetProcessName();
+    arg.ClassName     = className;
+    arg.ComponentName = componentName;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentCreate(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentCreate: requested component creation: " << arg << std::endl;
+
+    return true;
+}
+
 bool mtsComponent::RequestComponentCreate(
     const std::string& processName, const std::string & className, const std::string & componentName)
 {
@@ -870,6 +890,27 @@ bool mtsComponent::RequestComponentConnect(
     return true;
 }
 
+bool mtsComponent::RequestComponentStart(const std::string & componentName, const double delayInSecond)
+{
+    if (!InternalInterfaceFunctions.ComponentStart.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStart: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsComponentStatusControl arg;
+    arg.ProcessName   = mtsManagerLocal::GetInstance()->GetProcessName();
+    arg.ComponentName = componentName;
+    arg.DelayInSecond = delayInSecond;
+    arg.Command       = mtsComponentStatusControl::COMPONENT_START;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentStart(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentStart: requested component start: " << arg << std::endl;
+
+    return true;
+}
+
 bool mtsComponent::RequestComponentStart(const std::string& processName, const std::string & componentName,
                                          const double delayInSecond)
 {
@@ -879,15 +920,36 @@ bool mtsComponent::RequestComponentStart(const std::string& processName, const s
     }
 
     mtsComponentStatusControl arg;
-    arg.ProcessName = processName;
+    arg.ProcessName   = processName;
     arg.ComponentName = componentName;
     arg.DelayInSecond = delayInSecond;
-    arg.Command = mtsComponentStatusControl::COMPONENT_START;
+    arg.Command       = mtsComponentStatusControl::COMPONENT_START;
 
     // MJ: TODO: change this with blocking command
     InternalInterfaceFunctions.ComponentStart(arg);
 
     CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentStart: requested component start: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentStop(const std::string & componentName, const double delayInSecond)
+{
+    if (!InternalInterfaceFunctions.ComponentStop.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStop: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsComponentStatusControl arg;
+    arg.ProcessName   = mtsManagerLocal::GetInstance()->GetProcessName();
+    arg.ComponentName = componentName;
+    arg.DelayInSecond = delayInSecond;
+    arg.Command       = mtsComponentStatusControl::COMPONENT_STOP;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentStop(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentStop: requested component stop: " << arg << std::endl;
 
     return true;
 }
@@ -901,15 +963,36 @@ bool mtsComponent::RequestComponentStop(const std::string& processName, const st
     }
 
     mtsComponentStatusControl arg;
-    arg.ProcessName = processName;
+    arg.ProcessName   = processName;
     arg.ComponentName = componentName;
     arg.DelayInSecond = delayInSecond;
-    arg.Command = mtsComponentStatusControl::COMPONENT_STOP;
+    arg.Command       = mtsComponentStatusControl::COMPONENT_STOP;
 
     // MJ: TODO: change this with blocking command
     InternalInterfaceFunctions.ComponentStop(arg);
 
     CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentStop: requested component stop: " << arg << std::endl;
+
+    return true;
+}
+
+bool mtsComponent::RequestComponentResume(const std::string & componentName, const double delayInSecond)
+{
+    if (!InternalInterfaceFunctions.ComponentResume.IsValid()) {
+        CMN_LOG_CLASS_RUN_ERROR << "RequestComponentResume: invalid function - has not been bound to command" << std::endl;
+        return false;
+    }
+
+    mtsComponentStatusControl arg;
+    arg.ProcessName   = mtsManagerLocal::GetInstance()->GetProcessName();
+    arg.ComponentName = componentName;
+    arg.DelayInSecond = delayInSecond;
+    arg.Command       = mtsComponentStatusControl::COMPONENT_RESUME;
+
+    // MJ: TODO: change this with blocking command
+    InternalInterfaceFunctions.ComponentResume(arg);
+
+    CMN_LOG_CLASS_RUN_VERBOSE << "RequestComponentResume: requested component resume: " << arg << std::endl;
 
     return true;
 }
@@ -923,10 +1006,10 @@ bool mtsComponent::RequestComponentResume(const std::string& processName, const 
     }
 
     mtsComponentStatusControl arg;
-    arg.ProcessName = processName;
+    arg.ProcessName   = processName;
     arg.ComponentName = componentName;
     arg.DelayInSecond = delayInSecond;
-    arg.Command = mtsComponentStatusControl::COMPONENT_RESUME;
+    arg.Command       = mtsComponentStatusControl::COMPONENT_RESUME;
 
     // MJ: TODO: change this with blocking command
     InternalInterfaceFunctions.ComponentResume(arg);

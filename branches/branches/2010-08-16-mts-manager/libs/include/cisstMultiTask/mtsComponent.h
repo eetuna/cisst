@@ -350,25 +350,28 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     void ToStream(std::ostream & outputStream) const;
 
     /*! Wrappers for internal function object */
+    bool RequestComponentCreate(const std::string & className, const std::string & componentName);
     bool RequestComponentCreate(
         const std::string& processName, const std::string & className, const std::string & componentName);
 
     bool RequestComponentConnect(
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
-
     bool RequestComponentConnect(
         const std::string & clientProcessName, 
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, 
         const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 
+    bool RequestComponentStart(const std::string & componentName, const double delayInSecond = 0.0);
     bool RequestComponentStart(const std::string& processName, const std::string & componentName, 
                                const double delayInSecond = 0.0);
 
+    bool RequestComponentStop(const std::string & componentName, const double delayInSecond = 0.0);
     bool RequestComponentStop(const std::string& processName, const std::string & componentName,
                               const double delayInSecond = 0.0);
 
+    bool RequestComponentResume(const std::string & componentName, const double delayInSecond = 0.0);
     bool RequestComponentResume(const std::string& processName, const std::string & componentName,
                                 const double delayInSecond = 0.0);
 

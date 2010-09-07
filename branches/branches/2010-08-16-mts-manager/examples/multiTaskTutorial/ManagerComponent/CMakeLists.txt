@@ -16,10 +16,11 @@
 PROJECT(ManagerComponent)
 
 # name the main executable and specifies with source files to use
-#ADD_EXECUTABLE(ManagerComponentLocal mainLocal.cpp)
-
-# link with the cisst libraries
-#CISST_REQUIRES("ManagerComponentLocal" "cisstCommon;cisstOSAbstraction;cisstMultiTask")
+ADD_EXECUTABLE(ManagerComponentLocal mainControllerLocal.cpp
+                                     ManagerComponentLocal.h ManagerComponentLocal.cpp
+                                     CounterOddComponent.h CounterOddComponent.cpp
+                                     CounterEvenComponent.h CounterEvenComponent.cpp)
+CISST_REQUIRES("ManagerComponentLocal" "cisstCommon;cisstOSAbstraction;cisstMultiTask")
 
 # compile network version if ICE is available
 if (CISST_MTS_HAS_ICE)
@@ -34,7 +35,4 @@ if (CISST_MTS_HAS_ICE)
                                          CounterOddComponent.h CounterOddComponent.cpp
                                          CounterEvenComponent.h CounterEvenComponent.cpp)
   CISST_REQUIRES("ManagerComponentCounter" "cisstCommon;cisstOSAbstraction;cisstMultiTask")
-
-else (CISST_MTS_HAS_ICE)
-  message(WARNING " multiTaskTutorial ManagerComponent will be compiled as single process only, client/server version requires CISST_MTS_HAS_ICE")
 endif (CISST_MTS_HAS_ICE)

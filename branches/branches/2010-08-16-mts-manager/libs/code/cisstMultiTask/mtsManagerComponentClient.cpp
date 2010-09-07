@@ -245,14 +245,10 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentCreate(const
     }
 
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
-    if (LCM->GetProcessName() == arg.ProcessName) {
-        // Check if the component specified exists
-        if (!LCM->GetComponent(arg.ComponentName)) {
-            CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentCreate: no component found on the same process: " << arg << std::endl;
-            // MJ TEMP
-            cmnThrow(std::runtime_error("InterfaceComponentCommands_ComponentCreate: failed to execute \"Component Create\""));
-        }
-
+    const std::string nameOfThisLCM = LCM->GetProcessName();
+    if (LCM->GetConfiguration() == mtsManagerLocal::LCM_CONFIG_STANDALONE || 
+        nameOfThisLCM == arg.ProcessName) 
+    {
         InterfaceLCMCommands_ComponentCreate(arg);
         return;
     } else {
@@ -270,7 +266,9 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentConnect(cons
 
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
     const std::string nameOfThisLCM = LCM->GetProcessName();
-    if (nameOfThisLCM == arg.Client.ProcessName && nameOfThisLCM == arg.Server.ProcessName) {
+    if (LCM->GetConfiguration() == mtsManagerLocal::LCM_CONFIG_STANDALONE ||
+        (nameOfThisLCM == arg.Client.ProcessName && nameOfThisLCM == arg.Server.ProcessName))
+    {
         InterfaceLCMCommands_ComponentConnect(arg);
         return;
     } else {
@@ -287,7 +285,10 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentStart(const 
     }
 
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
-    if (LCM->GetProcessName() == arg.ProcessName) {
+    const std::string nameOfThisLCM = LCM->GetProcessName();
+    if (LCM->GetConfiguration() == mtsManagerLocal::LCM_CONFIG_STANDALONE ||
+        nameOfThisLCM == arg.ProcessName) 
+    {
         // Check if the component specified exists
         if (!LCM->GetComponent(arg.ComponentName)) {
             CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentStart: no component found on the same process: " << arg << std::endl;
@@ -311,7 +312,10 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentStop(const m
     }
 
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
-    if (LCM->GetProcessName() == arg.ProcessName) {
+    const std::string nameOfThisLCM = LCM->GetProcessName();
+    if (LCM->GetConfiguration() == mtsManagerLocal::LCM_CONFIG_STANDALONE ||
+        LCM->GetProcessName() == arg.ProcessName) 
+    {
         // Check if the component specified exists
         if (!LCM->GetComponent(arg.ComponentName)) {
             CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentStop: no component found on the same process: " << arg << std::endl;
@@ -335,7 +339,10 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentResume(const
     }
 
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
-    if (LCM->GetProcessName() == arg.ProcessName) {
+    const std::string nameOfThisLCM = LCM->GetProcessName();
+    if (LCM->GetConfiguration() == mtsManagerLocal::LCM_CONFIG_STANDALONE ||
+        LCM->GetProcessName() == arg.ProcessName)
+    {
         // Check if the component specified exists
         if (!LCM->GetComponent(arg.ComponentName)) {
             CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_ComponentResume: no component found on the same process: " << arg << std::endl;
