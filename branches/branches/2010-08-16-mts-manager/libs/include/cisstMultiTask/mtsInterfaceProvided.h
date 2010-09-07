@@ -391,8 +391,10 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 
     /*! types and containers to store interfaces cloned for thread safety */
     typedef std::pair<unsigned int, ThisType *> InterfaceProvidedCreatedPairType;
-    typedef std::vector<InterfaceProvidedCreatedPairType> InterfaceProvidedCreatedVectorType;
-    InterfaceProvidedCreatedVectorType InterfacesProvidedCreated;
+    //typedef std::vector<InterfaceProvidedCreatedPairType> InterfaceProvidedCreatedVectorType;
+    typedef std::list<InterfaceProvidedCreatedPairType> InterfaceProvidedCreatedListType;
+    //InterfaceProvidedCreatedVectorType InterfacesProvidedCreated;
+    InterfaceProvidedCreatedListType InterfacesProvidedCreated;
 
     /*! Mailbox (if supported).  Mailboxes should only be provided for
       end user provided interfaces (if needed).  Factory interfaces

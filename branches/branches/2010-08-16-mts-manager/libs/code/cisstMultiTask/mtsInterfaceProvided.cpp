@@ -185,11 +185,12 @@ size_t mtsInterfaceProvided::ProcessMailBoxes(void)
 {
     if (!this->EndUserInterface) {
         size_t numberOfCommands = 0;
-        InterfaceProvidedCreatedVectorType::iterator iterator = InterfacesProvidedCreated.begin();
-        const InterfaceProvidedCreatedVectorType::iterator end = InterfacesProvidedCreated.end();
+        InterfaceProvidedCreatedListType::iterator iterator = InterfacesProvidedCreated.begin();
+        //const InterfaceProvidedCreatedVectorType::iterator end = InterfacesProvidedCreated.end();
         mtsMailBox * mailBox;
         for (;
-             iterator != end;
+             //iterator != end;
+             iterator != InterfacesProvidedCreated.end();
              ++iterator) {
             mailBox = iterator->second->GetMailBox();
             while (mailBox->ExecuteNext()) {
@@ -419,8 +420,10 @@ mtsInterfaceProvided * mtsInterfaceProvided::GetEndUserInterface(const std::stri
     mtsInterfaceProvided * interfaceProvided = new mtsInterfaceProvided(this,
                                                                         userName,
                                                                         DEFAULT_ARG_BUFFER_LEN);
-    InterfacesProvidedCreated.resize(InterfacesProvidedCreated.size() + 1,
-                                     InterfaceProvidedCreatedPairType(this->UserCounter, interfaceProvided));
+    //InterfacesProvidedCreated.resize(InterfacesProvidedCreated.size() + 1,
+    //                                 InterfaceProvidedCreatedPairType(this->UserCounter, interfaceProvided));
+    InterfacesProvidedCreated.push_back(InterfaceProvidedCreatedPairType(this->UserCounter, interfaceProvided));
+
     return interfaceProvided;
 }
 
