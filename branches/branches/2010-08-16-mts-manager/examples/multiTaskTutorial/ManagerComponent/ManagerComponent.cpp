@@ -50,48 +50,6 @@ void ManagerComponent::Run(void)
     static double lastTick = 0;
     static int count = 0;
 
-#if 0
-    std::vector<std::string> processes, components, interfaces, connections;
-    if (osaGetTime() - lastTick > 5.0) {
-        std::cout << "==================================== Processes" << std::endl;
-        if (RequestGetNamesOfProcesses(processes)) {
-            for (size_t i = 0; i < processes.size(); ++i) {
-                std::cout << processes[i] << std::endl;
-            }
-        }
-        
-        std::cout << "==================================== Components" << std::endl;
-        for (size_t i = 0; i < processes.size(); ++i) {
-            if (RequestGetNamesOfComponents(processes[i], components)) {
-                for (size_t j = 0; j < components.size(); ++j) {
-                    std::cout << processes[i] << " - " << components[j] << std::endl;
-                }
-            }
-        }
-
-        std::cout << "==================================== Interfaces" << std::endl;
-        for (size_t i = 0; i < processes.size(); ++i) {
-            if (RequestGetNamesOfInterfaces(processes[i], interfaces)) {
-                for (size_t j = 0; j < interfaces.size(); ++j) {
-                    std::cout << interfaces[j] << std::endl;
-                }
-            }
-        }
-
-        std::cout << "==================================== Connections" << std::endl;
-        if (RequestGetListOfConnections(connections)) {
-            for (size_t i = 0; i < connections.size(); ++i) {
-                std::cout << connections[i] << std::endl;
-            }
-        }
-
-        std::cout << std::endl << std::endl;
-        std::flush(std::cout);
-
-        lastTick = osaGetTime();
-    }
-#endif
-
 #if 1
     std::cout << "....... " << count++ << std::endl;
 
