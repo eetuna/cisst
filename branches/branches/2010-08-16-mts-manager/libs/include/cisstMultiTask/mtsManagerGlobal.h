@@ -374,9 +374,9 @@ public:
         const std::string & serverProcessName, const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
 #endif
 
-    void GetListOfConnections(std::vector<ConnectionStrings> & list) const;
+    void GetListOfConnections(std::vector<mtsDescriptionConnection> & list) const;
 
-    std::string GetConnectionInGraphFormat(const ConnectionStrings &connection) const;
+    std::string GetConnectionInGraphFormat(const mtsDescriptionConnection &connection) const;
 
     //-------------------------------------------------------------------------
     //  Getters

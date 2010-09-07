@@ -320,41 +320,41 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
     //
     {
         // Get current connection information
-        std::vector<mtsManagerGlobal::ConnectionStrings> list;
+        std::vector<mtsDescriptionConnection> list;
         currentGCM->GetListOfConnections(list);
 
         // Register all the connections established to the new GCM
         mtsManagerGlobalInterface * newGCM = newInstance->ManagerGlobal;
 
         int connectionId;
-        std::vector<mtsManagerGlobal::ConnectionStrings>::const_iterator it = list.begin();
-        const std::vector<mtsManagerGlobal::ConnectionStrings>::const_iterator itEnd = list.end();
+        std::vector<mtsDescriptionConnection>::const_iterator it = list.begin();
+        const std::vector<mtsDescriptionConnection>::const_iterator itEnd = list.end();
         for (; it != itEnd; ++it) {
             connectionId = newGCM->Connect(thisProcessName,
-                thisProcessName, it->ClientComponentName, it->ClientInterfaceRequiredName,
-                thisProcessName, it->ServerComponentName, it->ServerInterfaceProvidedName);
+                thisProcessName, it->Client.ComponentName, it->Client.InterfaceName,
+                thisProcessName, it->Server.ComponentName, it->Server.InterfaceName);
             if (connectionId == -1) {
                 CMN_LOG_INIT_ERROR << "Class mtsManagerLocal: Reconfiguration: failed to transfer previous connection: "
-                                   << thisProcessName << ":" << it->ClientComponentName << ":" << it->ClientInterfaceRequiredName << "-"
-                                   << thisProcessName << ":" << it->ServerComponentName << ":" << it->ServerInterfaceProvidedName << std::endl;
+                                   << thisProcessName << ":" << it->Client.ComponentName << ":" << it->Client.InterfaceName << "-"
+                                   << thisProcessName << ":" << it->Server.ComponentName << ":" << it->Server.InterfaceName << std::endl;
             } else {
                 // Notify the GCM of successful local connection (although nothing actually needs to happen).
                 if (!newGCM->ConnectConfirm(connectionId)) {
                     CMN_LOG_INIT_ERROR << "Class mtsManagerLocal: Reconfiguration: failed to notify GCM of connection: "
-                                       << it->ClientComponentName << ":" << it->ClientInterfaceRequiredName << "-"
-                                       << it->ServerComponentName << ":" << it->ServerInterfaceProvidedName << std::endl;
+                                       << it->Client.ComponentName << ":" << it->Client.InterfaceName << "-"
+                                       << it->Server.ComponentName << ":" << it->Server.InterfaceName << std::endl;
 
-                    if (!newInstance->Disconnect(it->ClientComponentName, it->ClientInterfaceRequiredName,
-                                                 it->ServerComponentName, it->ServerInterfaceProvidedName))
+                    if (!newInstance->Disconnect(it->Client.ComponentName, it->Client.InterfaceName,
+                                                 it->Server.ComponentName, it->Server.InterfaceName))
                     {
                         CMN_LOG_INIT_ERROR << "Class mtsManagerLocal: Reconfiguration: clean up error: disconnection failed: "
-                                           << it->ClientComponentName << ":" << it->ClientInterfaceRequiredName << "-"
-                                           << it->ServerComponentName << ":" << it->ServerInterfaceProvidedName << std::endl;
+                                           << it->Client.ComponentName << ":" << it->Client.InterfaceName << "-"
+                                           << it->Server.ComponentName << ":" << it->Server.InterfaceName << std::endl;
                     }
                 }
                 CMN_LOG_INIT_VERBOSE << "Class mtsManagerLocal: Reconfiguration: Successfully transferred previous connection: "
-                                     << thisProcessName << ":" << it->ClientComponentName << ":" << it->ClientInterfaceRequiredName << "-"
-                                     << thisProcessName << ":" << it->ServerComponentName << ":" << it->ServerInterfaceProvidedName << std::endl;
+                                     << thisProcessName << ":" << it->Client.ComponentName << ":" << it->Client.InterfaceName << "-"
+                                     << thisProcessName << ":" << it->Server.ComponentName << ":" << it->Server.InterfaceName << std::endl;
             }
         }
     }

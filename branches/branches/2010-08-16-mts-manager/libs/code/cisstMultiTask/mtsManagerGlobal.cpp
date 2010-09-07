@@ -109,7 +109,7 @@ bool mtsManagerGlobal::ConnectToTaskViewer(const std::string &ipAddress, unsigne
                 }
             }
         }
-        std::vector<ConnectionStrings> connectionList;
+        std::vector<mtsDescriptionConnection> connectionList;
         GetListOfConnections(connectionList);
         for (i = 0; i < connectionList.size(); i++) {
             if (JGraphSocketConnected) {
@@ -1826,9 +1826,9 @@ bool mtsManagerGlobal::ConnectServerSideInterfaceRequest(const unsigned int conn
 }
 #endif
 
-void mtsManagerGlobal::GetListOfConnections(std::vector<ConnectionStrings> & list) const
+void mtsManagerGlobal::GetListOfConnections(std::vector<mtsDescriptionConnection> & list) const
 {
-    ConnectionStrings connection;
+    mtsDescriptionConnection connection;
 
     ConnectionElementMapType::const_iterator it = ConnectionElementMap.begin();
     const ConnectionElementMapType::const_iterator itEnd = ConnectionElementMap.end();
@@ -1839,22 +1839,22 @@ void mtsManagerGlobal::GetListOfConnections(std::vector<ConnectionStrings> & lis
             continue;
         }
 
-        connection.ClientProcessName           = it->second->ClientProcessName;
-        connection.ClientComponentName         = it->second->ClientComponentName;
-        connection.ClientInterfaceRequiredName = it->second->ClientInterfaceRequiredName;
-        connection.ServerProcessName           = it->second->ServerProcessName;
-        connection.ServerComponentName         = it->second->ServerComponentName;
-        connection.ServerInterfaceProvidedName = it->second->ServerInterfaceProvidedName;
+        connection.Client.ProcessName   = it->second->ClientProcessName;
+        connection.Client.ComponentName = it->second->ClientComponentName;
+        connection.Client.InterfaceName = it->second->ClientInterfaceRequiredName;
+        connection.Server.ProcessName   = it->second->ServerProcessName;
+        connection.Server.ComponentName = it->second->ServerComponentName;
+        connection.Server.InterfaceName = it->second->ServerInterfaceProvidedName;
 
         list.push_back(connection);
     }
 }
 
-std::string mtsManagerGlobal::GetConnectionInGraphFormat(const ConnectionStrings &connection) const
+std::string mtsManagerGlobal::GetConnectionInGraphFormat(const mtsDescriptionConnection &connection) const
 {
-    std::string buffer = "add edge [" + connection.ClientProcessName + ":" + connection.ClientComponentName + ", "
-                                      + connection.ServerProcessName + ":" + connection.ServerComponentName + ", "
-                                      + connection.ClientInterfaceRequiredName + ", "
-                                      + connection.ServerInterfaceProvidedName + "]\n";
+    std::string buffer = "add edge [" + connection.Client.ProcessName + ":" + connection.Client.ComponentName + ", "
+                                      + connection.Server.ProcessName + ":" + connection.Server.ComponentName + ", "
+                                      + connection.Client.InterfaceName + ", "
+                                      + connection.Server.InterfaceName + "]\n";
     return buffer;
 }

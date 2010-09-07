@@ -118,6 +118,22 @@ void mtsDescriptionInterface::DeSerializeRaw(std::istream & inputStream)
 //
 CMN_IMPLEMENT_SERVICES(mtsDescriptionConnection);
 
+mtsDescriptionConnection::mtsDescriptionConnection(
+    const std::string & clientProcessName,
+    const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+    const std::string & serverProcessName, 
+    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName,
+    const int connectionId)
+{
+    Client.ProcessName   = clientProcessName;
+    Client.ComponentName = clientComponentName;
+    Client.InterfaceName = clientInterfaceRequiredName;
+    Server.ProcessName   = serverProcessName;
+    Server.ComponentName = serverComponentName;
+    Server.InterfaceName = serverInterfaceProvidedName;
+    ConnectionID         = connectionId;
+}
+
 void mtsDescriptionConnection::ToStream(std::ostream & outputStream) const
 {
     mtsGenericObject::ToStream(outputStream);

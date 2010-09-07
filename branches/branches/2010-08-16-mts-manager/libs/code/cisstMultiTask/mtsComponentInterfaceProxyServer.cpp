@@ -152,13 +152,13 @@ bool mtsComponentInterfaceProxyServer::OnClientDisconnect(const ClientIDType cli
         return false;
     }
 
-    ConnectionStrings * element = &it->second;
-    const std::string clientProcessName = element->ClientProcessName;
-    const std::string clientComponentName = element->ClientComponentName;
-    const std::string clientInterfaceRequiredName = element->ClientInterfaceRequiredName;
-    const std::string serverProcessName = element->ServerProcessName;
-    const std::string serverComponentName = element->ServerComponentName;
-    const std::string serverInterfaceProvidedName = element->ServerInterfaceProvidedName;
+    mtsDescriptionConnection * element = &it->second;
+    const std::string clientProcessName = element->Client.ProcessName;
+    const std::string clientComponentName = element->Client.ComponentName;
+    const std::string clientInterfaceRequiredName = element->Client.InterfaceName;
+    const std::string serverProcessName = element->Server.ProcessName;
+    const std::string serverComponentName = element->Server.ComponentName;
+    const std::string serverInterfaceProvidedName = element->Server.InterfaceName;
 
     // Remove the process logically
     mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
@@ -267,9 +267,12 @@ bool mtsComponentInterfaceProxyServer::AddConnectionInformation(const unsigned i
         return false;
     }
 
-    ConnectionStrings element(clientProcessName, clientComponentName, clientInterfaceRequiredName,
-                              serverProcessName, serverComponentName, serverInterfaceProvidedName);
-    ConnectionStringMap.insert(std::make_pair(connectionID, element));
+    mtsDescriptionConnection connection(
+        clientProcessName, clientComponentName, clientInterfaceRequiredName,
+        serverProcessName, serverComponentName, serverInterfaceProvidedName,
+        connectionID);
+
+    ConnectionStringMap.insert(std::make_pair(connectionID, connection));
 
     return true;
 }

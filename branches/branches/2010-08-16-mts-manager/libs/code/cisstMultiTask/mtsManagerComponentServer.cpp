@@ -346,64 +346,19 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const 
     mtsParameterTypes::ConvertVectorStringType(interfaceNames, interfaces.InterfaceProvidedNames);
 }
 
-/*
-void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const
-{
-    std::vector<std::string> componentNames, interfaceNames, _names;
-    GCM->GetNamesOfComponents(processName, componentNames);
-
-    std::string interfaceName;
-    for (size_t i = 0; i < componentNames.size(); ++i) {
-        // Extract names of provided interfaces
-        interfaceNames.clear();
-        GCM->GetNamesOfInterfacesProvidedOrOutput(processName, componentNames[i], interfaceNames);
-
-        for (size_t j = 0; j < interfaceNames.size(); ++j) {
-            interfaceName = processName;
-            interfaceName += ".";
-            interfaceName += componentNames[i];
-            interfaceName += ".";
-            interfaceName += "(Prv)";
-            interfaceName += interfaceNames[j];
-
-            _names.push_back(interfaceName);
-        }
-        // Extract names of required interfaces
-        interfaceNames.clear();
-        GCM->GetNamesOfInterfacesRequiredOrInput(processName, componentNames[i], interfaceNames);
-
-        for (size_t j = 0; j < interfaceNames.size(); ++j) {
-            interfaceName = processName;
-            interfaceName += ".";
-            interfaceName += componentNames[i];
-            interfaceName += ".";
-            interfaceName += "(Req)";
-            interfaceName += interfaceNames[j];
-
-            _names.push_back(interfaceName);
-        }
-    }
-
-    names.SetSize(_names.size());
-    for (size_t i = 0; i < names.size(); ++i) {
-        names(i) = _names[i];
-    }
-}
-*/
-
 void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(mtsStdStringVec & list) const
 {
-    std::vector<mtsManagerGlobalInterface::ConnectionStrings> _list;
+    std::vector<mtsDescriptionConnection> _list;
     GCM->GetListOfConnections(_list);
 
     std::string connection;
     list.SetSize(_list.size());
     for (size_t i = 0; i < list.size(); ++i) {
-        connection = mtsManagerGlobal::GetInterfaceUID(_list[i].ClientProcessName,
-            _list[i].ClientComponentName, _list[i].ClientInterfaceRequiredName);
+        connection = mtsManagerGlobal::GetInterfaceUID(_list[i].Client.ProcessName,
+            _list[i].Client.ComponentName, _list[i].Client.InterfaceName);
         connection += " - ";
-        connection += mtsManagerGlobal::GetInterfaceUID(_list[i].ServerProcessName,
-            _list[i].ServerComponentName, _list[i].ServerInterfaceProvidedName);
+        connection += mtsManagerGlobal::GetInterfaceUID(_list[i].Server.ProcessName,
+            _list[i].Server.ComponentName, _list[i].Server.InterfaceName);
         list(i) = connection;
     }
 }
