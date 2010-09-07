@@ -50,6 +50,61 @@ void ManagerComponentLocal::Run(void)
     static double lastTick = 0;
     static int count = 0;
 
+#if 1
+    if (++count == 2) {
+        std::vector<std::string> processes, components, interfacesRequired, interfacesProvided, connections;
+        if (osaGetTime() - lastTick > 5.0) {
+            std::cout << "==================================== Processes" << std::endl;
+            if (RequestGetNamesOfProcesses(processes)) {
+                for (size_t i = 0; i < processes.size(); ++i) {
+                    std::cout << processes[i] << std::endl;
+                }
+            }
+
+            std::cout << std::endl << "==================================== Components" << std::endl;
+            for (size_t i = 0; i < processes.size(); ++i) {
+                if (RequestGetNamesOfComponents(processes[i], components)) {
+                    for (size_t j = 0; j < components.size(); ++j) {
+                        std::cout << processes[i] << " - " << components[j] << std::endl;
+                    }
+                }
+            }
+
+            std::cout << std::endl << "==================================== Interfaces" << std::endl;
+            for (size_t i = 0; i < processes.size(); ++i) {
+                for (size_t j = 0; j < components.size(); ++j) {
+                    std::cout << processes[i] << "." << components[j] << std::endl;
+                    std::cout << "\tRequired: " << std::endl;
+                    if (RequestGetNamesOfInterfaces(processes[i], components[j], interfacesRequired, interfacesProvided)) {
+                        for (size_t k = 0; k < interfacesRequired.size(); ++k) {
+                            std::cout << "\t\t" << interfacesRequired[k] << std::endl;
+                        }
+                        std::cout << std::endl;
+                        std::cout << "\tProvided: " << std::endl;
+                        for (size_t k = 0; k < interfacesProvided.size(); ++k) {
+                            std::cout << "\t\t" << interfacesProvided[k] << std::endl;
+                        }
+                        std::cout << std::endl;
+                    }
+                }
+            }
+
+            std::cout << std::endl << "==================================== Connections" << std::endl;
+            if (RequestGetListOfConnections(connections)) {
+                for (size_t i = 0; i < connections.size(); ++i) {
+                    std::cout << connections[i] << std::endl;
+                }
+            }
+
+            std::cout << std::endl << std::endl;
+            std::flush(std::cout);
+
+            lastTick = osaGetTime();
+        }
+    }
+#endif
+
+#if 0
     if (++count == 5) {
         //
         // Create the two components: odd counter and even counter
@@ -160,4 +215,5 @@ void ManagerComponentLocal::Run(void)
             std::cout << "success" << std::endl;
         }
     }
+#endif
 }

@@ -377,7 +377,10 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses);
     bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents);
-    bool RequestGetNamesOfInterfaces(const std::string & processName, std::vector<std::string> & namesOfInterfaces);
+    bool RequestGetNamesOfInterfaces(const std::string & processName, 
+                                     const std::string & componentName,
+                                     std::vector<std::string> & namesOfInterfacesRequired,
+                                     std::vector<std::string> & namesOfInterfacesProvided);
     bool RequestGetListOfConnections(std::vector<std::string> & listOfConnections);
 
     /*! Names of internal interfaces to enable user components to use mts-command

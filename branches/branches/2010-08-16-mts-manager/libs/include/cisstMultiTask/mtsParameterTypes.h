@@ -23,6 +23,14 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsParameterTypes_h
 
 #include <cisstMultiTask/mtsGenericObject.h>
+#include <cisstMultiTask/mtsVector.h> // for mtsDescriptionInterface::mtsStdStringVec
+
+// Nominal class to provide utility functions
+class mtsParameterTypes {
+public:
+    static void ConvertVectorStringType(const mtsStdStringVec & mtsVec, std::vector<std::string> & stdVec);
+    static void ConvertVectorStringType(const std::vector<std::string> & stdVec, mtsStdStringVec & mtsVec);
+};
 
 //-----------------------------------------------------------------------------
 //  Component Description
@@ -42,6 +50,27 @@ public:
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionComponent);
+
+
+//-----------------------------------------------------------------------------
+//  Interface Description
+//
+class mtsDescriptionInterface: public mtsGenericObject
+{
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+public:
+    std::string ProcessName;
+    std::string ComponentName;
+    mtsStdStringVec InterfaceRequiredNames;
+    mtsStdStringVec InterfaceProvidedNames;
+
+    void ToStream(std::ostream & outputStream) const;
+    void SerializeRaw(std::ostream & outputStream) const;
+    void DeSerializeRaw(std::istream & inputStream);
+};
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionInterface);
 
 
 //-----------------------------------------------------------------------------
@@ -68,6 +97,7 @@ public:
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnection);
+
 
 //-----------------------------------------------------------------------------
 //  Component Status Control

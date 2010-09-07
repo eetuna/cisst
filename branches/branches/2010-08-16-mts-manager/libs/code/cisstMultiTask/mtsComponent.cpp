@@ -32,24 +32,6 @@ http://www.cisst.org/cisst/license.txt.
 std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
 std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
 
-// utility function
-void ConvertVectorStringType(const mtsStdStringVec & mtsVec, std::vector<std::string> & stdVec)
-{
-    // MJ: is there better way to do this?
-    for (size_t i = 0; i < mtsVec.size(); ++i) {
-        stdVec.push_back(mtsVec(i));
-    }
-}
-
-void ConvertVectorStringType(const std::vector<std::string> & stdVec, mtsStdStringVec & mtsVec)
-{
-    // MJ: is there better way to do this?
-    mtsVec.SetSize(stdVec.size());
-    for (size_t i = 0; i < stdVec.size(); ++i) {
-        mtsVec(i) = stdVec[i];
-    }
-}
-
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),
     UseSeparateLogFileFlag(false),
@@ -1031,7 +1013,7 @@ bool mtsComponent::RequestGetNamesOfProcesses(std::vector<std::string> & namesOf
     mtsStdStringVec names;
     InternalInterfaceFunctions.GetNamesOfProcesses(names);
 
-    ConvertVectorStringType(names, namesOfProcesses);
+    mtsParameterTypes::ConvertVectorStringType(names, namesOfProcesses);
 
     return true;
 }
@@ -1046,22 +1028,33 @@ bool mtsComponent::RequestGetNamesOfComponents(const std::string & processName, 
     mtsStdStringVec names;
     InternalInterfaceFunctions.GetNamesOfComponents(mtsStdString(processName), names);
 
-    ConvertVectorStringType(names, namesOfComponents);
+    mtsParameterTypes::ConvertVectorStringType(names, namesOfComponents);
 
     return true;
 }
 
-bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName, std::vector<std::string> & namesOfInterfaces)
+bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName, 
+                                               const std::string & componentName,
+                                               std::vector<std::string> & namesOfInterfacesRequired,
+                                               std::vector<std::string> & namesOfInterfacesProvided)
 {
     if (!InternalInterfaceFunctions.GetNamesOfInterfaces.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfInterfaces: invalid function - has not been bound to command" << std::endl;
         return false;
     }
 
-    mtsStdStringVec names;
-    InternalInterfaceFunctions.GetNamesOfInterfaces(mtsStdString(processName), names);
+    // input arg
+    mtsDescriptionComponent argIn;
+    argIn.ProcessName   = processName;
+    argIn.ComponentName = componentName;
 
-    ConvertVectorStringType(names, namesOfInterfaces);
+    // output arg
+    mtsDescriptionInterface argOut;
+
+    InternalInterfaceFunctions.GetNamesOfInterfaces(argIn, argOut);
+
+    mtsParameterTypes::ConvertVectorStringType(argOut.InterfaceRequiredNames, namesOfInterfacesRequired);
+    mtsParameterTypes::ConvertVectorStringType(argOut.InterfaceProvidedNames, namesOfInterfacesProvided);
 
     return true;
 }
@@ -1076,7 +1069,7 @@ bool mtsComponent::RequestGetListOfConnections(std::vector<std::string> & listOf
     mtsStdStringVec list;
     InternalInterfaceFunctions.GetListOfConnections(list);
 
-    ConvertVectorStringType(list, listOfConnections);
+    mtsParameterTypes::ConvertVectorStringType(list, listOfConnections);
 
     return true;
 }

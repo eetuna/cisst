@@ -333,6 +333,20 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfComponents(const 
     }
 }
 
+void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const
+{
+    std::vector<std::string> interfaceNames;
+
+    // Get a list of required interfaces
+    GCM->GetNamesOfInterfacesRequiredOrInput(component.ProcessName, component.ComponentName, interfaceNames);
+    mtsParameterTypes::ConvertVectorStringType(interfaceNames, interfaces.InterfaceRequiredNames);
+
+    // Get a list of provided interfaces
+    GCM->GetNamesOfInterfacesProvidedOrOutput(component.ProcessName, component.ComponentName, interfaceNames);
+    mtsParameterTypes::ConvertVectorStringType(interfaceNames, interfaces.InterfaceProvidedNames);
+}
+
+/*
 void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const
 {
     std::vector<std::string> componentNames, interfaceNames, _names;
@@ -375,6 +389,7 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const 
         names(i) = _names[i];
     }
 }
+*/
 
 void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(mtsStdStringVec & list) const
 {

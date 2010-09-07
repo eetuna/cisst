@@ -109,9 +109,10 @@ public:
     void InterfaceComponentCommands_ComponentStart(const mtsComponentStatusControl & arg);
     void InterfaceComponentCommands_ComponentStop(const mtsComponentStatusControl & arg);
     void InterfaceComponentCommands_ComponentResume(const mtsComponentStatusControl & arg);
+
     void InterfaceComponentCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
-    void InterfaceComponentCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const;
+    void InterfaceComponentCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const;
     void InterfaceComponentCommands_GetListOfConnections(mtsStdStringVec & list) const;
 
     /*! Name of internal interfaces */

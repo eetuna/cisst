@@ -105,7 +105,7 @@ public:
     void InterfaceGCMCommands_ComponentResume(const mtsComponentStatusControl & arg);
     void InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
-    void InterfaceGCMCommands_GetNamesOfInterfaces(const mtsStdString & processName, mtsStdStringVec & names) const;
+    void InterfaceGCMCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const;
     void InterfaceGCMCommands_GetListOfConnections(mtsStdStringVec & list) const;
 };
 
