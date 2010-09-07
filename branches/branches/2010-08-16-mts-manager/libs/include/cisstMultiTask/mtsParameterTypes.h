@@ -60,6 +60,7 @@ public:
 
     FullInterface Client;
     FullInterface Server;
+    int ConnectionID;
 
     void ToStream(std::ostream & outputStream) const;
     void SerializeRaw(std::ostream & outputStream) const;

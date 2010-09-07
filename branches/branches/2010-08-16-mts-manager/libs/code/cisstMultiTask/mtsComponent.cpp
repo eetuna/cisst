@@ -854,6 +854,7 @@ bool mtsComponent::RequestComponentConnect(
     arg.Server.ProcessName   = thisProcessName;
     arg.Server.ComponentName = serverComponentName;
     arg.Server.InterfaceName = serverInterfaceProvidedName;
+    arg.ConnectionID = -1;  // not yet assigned
 
     // MJ: TODO: change this with blocking command
     InternalInterfaceFunctions.ComponentConnect(arg);
@@ -881,6 +882,7 @@ bool mtsComponent::RequestComponentConnect(
     arg.Server.ProcessName   = serverProcessName;
     arg.Server.ComponentName = serverComponentName;
     arg.Server.InterfaceName = serverInterfaceProvidedName;
+    arg.ConnectionID = -1;  // not yet assigned
 
     // MJ: TODO: change this with blocking command
     InternalInterfaceFunctions.ComponentConnect(arg);

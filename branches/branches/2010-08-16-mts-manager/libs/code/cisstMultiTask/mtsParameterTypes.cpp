@@ -78,6 +78,7 @@ void mtsDescriptionConnection::SerializeRaw(std::ostream & outputStream) const
     cmnSerializeRaw(outputStream, this->Server.ProcessName);
     cmnSerializeRaw(outputStream, this->Server.ComponentName);
     cmnSerializeRaw(outputStream, this->Server.InterfaceName);
+    cmnSerializeRaw(outputStream, this->ConnectionID);
 }
 
 void mtsDescriptionConnection::DeSerializeRaw(std::istream & inputStream)
@@ -89,6 +90,7 @@ void mtsDescriptionConnection::DeSerializeRaw(std::istream & inputStream)
     cmnDeSerializeRaw(inputStream, this->Server.ProcessName);
     cmnDeSerializeRaw(inputStream, this->Server.ComponentName);
     cmnDeSerializeRaw(inputStream, this->Server.InterfaceName);
+    cmnDeSerializeRaw(inputStream, this->ConnectionID);
 }
 
 //-----------------------------------------------------------------------------
