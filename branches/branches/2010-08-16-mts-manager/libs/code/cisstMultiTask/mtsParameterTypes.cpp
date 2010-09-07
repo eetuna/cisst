@@ -128,5 +128,7 @@ void mtsComponentStatusControl::DeSerializeRaw(std::istream & inputStream)
     cmnDeSerializeRaw(inputStream, ProcessName);
     cmnDeSerializeRaw(inputStream, ComponentName);
     cmnDeSerializeRaw(inputStream, DelayInSecond);
-    cmnDeSerializeRaw(inputStream, static_cast<ComponentStatusCommand>(Command));
+    int command;
+    cmnDeSerializeRaw(inputStream, command);
+    Command = static_cast<ComponentStatusCommand>(command);
 }
