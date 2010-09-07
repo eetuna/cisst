@@ -381,7 +381,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
                                      const std::string & componentName,
                                      std::vector<std::string> & namesOfInterfacesRequired,
                                      std::vector<std::string> & namesOfInterfacesProvided);
-    bool RequestGetListOfConnections(std::vector<std::string> & listOfConnections);
+    bool RequestGetListOfConnections(mtsDescriptionConnectionVec & listOfConnections);
 
     /*! Names of internal interfaces to enable user components to use mts-command
         pattern for communication with other components */

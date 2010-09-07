@@ -106,6 +106,8 @@ public:
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnection);
 
+typedef mtsVector<mtsDescriptionConnection> mtsDescriptionConnectionVec;
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnectionVec);
 
 //-----------------------------------------------------------------------------
 //  Component Status Control

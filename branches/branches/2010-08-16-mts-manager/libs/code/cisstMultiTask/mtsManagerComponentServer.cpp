@@ -346,19 +346,15 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const 
     mtsParameterTypes::ConvertVectorStringType(interfaceNames, interfaces.InterfaceProvidedNames);
 }
 
-void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(mtsStdStringVec & list) const
+void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const
 {
     std::vector<mtsDescriptionConnection> _list;
     GCM->GetListOfConnections(_list);
 
     std::string connection;
-    list.SetSize(_list.size());
-    for (size_t i = 0; i < list.size(); ++i) {
-        connection = mtsManagerGlobal::GetInterfaceUID(_list[i].Client.ProcessName,
-            _list[i].Client.ComponentName, _list[i].Client.InterfaceName);
-        connection += " - ";
-        connection += mtsManagerGlobal::GetInterfaceUID(_list[i].Server.ProcessName,
-            _list[i].Server.ComponentName, _list[i].Server.InterfaceName);
-        list(i) = connection;
+    listOfConnections.SetSize(_list.size());
+
+    for (size_t i = 0; i < listOfConnections.size(); ++i) {
+        listOfConnections(i) = _list[i];
     }
 }

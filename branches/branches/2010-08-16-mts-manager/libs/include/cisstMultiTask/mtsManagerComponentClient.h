@@ -113,7 +113,7 @@ public:
     void InterfaceComponentCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const;
-    void InterfaceComponentCommands_GetListOfConnections(mtsStdStringVec & list) const;
+    void InterfaceComponentCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const;
 
     /*! Name of internal interfaces */
     static std::string NameOfInterfaceComponentProvided;

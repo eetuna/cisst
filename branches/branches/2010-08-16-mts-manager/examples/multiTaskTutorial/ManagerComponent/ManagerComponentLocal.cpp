@@ -52,7 +52,7 @@ void ManagerComponentLocal::Run(void)
 
 #if 1
     if (++count == 2) {
-        std::vector<std::string> processes, components, interfacesRequired, interfacesProvided, connections;
+        std::vector<std::string> processes, components, interfacesRequired, interfacesProvided;
         if (osaGetTime() - lastTick > 5.0) {
             std::cout << "==================================== Processes" << std::endl;
             if (RequestGetNamesOfProcesses(processes)) {
@@ -90,6 +90,7 @@ void ManagerComponentLocal::Run(void)
             }
 
             std::cout << std::endl << "==================================== Connections" << std::endl;
+            mtsDescriptionConnectionVec connections;
             if (RequestGetListOfConnections(connections)) {
                 for (size_t i = 0; i < connections.size(); ++i) {
                     std::cout << connections[i] << std::endl;

@@ -391,7 +391,7 @@ void mtsManagerComponentClient::InterfaceComponentCommands_GetNamesOfInterfaces(
     InterfaceLCMFunction.GetNamesOfInterfaces(component, interfaces);
 }
 
-void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(mtsStdStringVec & list) const
+void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const
 {
     if (!InterfaceLCMFunction.GetListOfConnections.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_GetListOfConnections: invalid function - has not been bound to command" << std::endl;
@@ -399,7 +399,7 @@ void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(
         cmnThrow(std::runtime_error("InterfaceComponentCommands_GetListOfConnections: failed to execute \"GetListOfConnections\""));
     }
 
-    InterfaceLCMFunction.GetListOfConnections(list);
+    InterfaceLCMFunction.GetListOfConnections(listOfConnections);
 }
 
 void mtsManagerComponentClient::InterfaceLCMCommands_ComponentCreate(const mtsDescriptionComponent & arg)

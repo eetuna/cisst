@@ -20,6 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsParameterTypes.h>
+#include <cisstMultiTask/mtsManagerGlobal.h>
 
 // Utility functions
 void mtsParameterTypes::ConvertVectorStringType(const mtsStdStringVec & mtsVec, std::vector<std::string> & stdVec)
@@ -136,14 +137,12 @@ mtsDescriptionConnection::mtsDescriptionConnection(
 
 void mtsDescriptionConnection::ToStream(std::ostream & outputStream) const
 {
-    mtsGenericObject::ToStream(outputStream);
-    outputStream << std::endl
-                 << "Client process: " << this->Client.ProcessName
-                 << ", component: " << this->Client.ComponentName
-                 << ", interface: " << this->Client.InterfaceName << std::endl
-                 << "Server process: " << this->Server.ProcessName
-                 << ", component: " << this->Server.ComponentName
-                 << ", interface: " << this->Server.InterfaceName << std::endl;
+    //mtsGenericObject::ToStream(outputStream);
+
+    outputStream << "(" << ConnectionID << ") "
+                 << mtsManagerGlobal::GetInterfaceUID(Client.ProcessName, Client.ComponentName, Client.InterfaceName)
+                 << " - "
+                 << mtsManagerGlobal::GetInterfaceUID(Server.ProcessName, Server.ComponentName, Server.InterfaceName);
 }
 
 void mtsDescriptionConnection::SerializeRaw(std::ostream & outputStream) const
@@ -169,6 +168,8 @@ void mtsDescriptionConnection::DeSerializeRaw(std::istream & inputStream)
     cmnDeSerializeRaw(inputStream, this->Server.InterfaceName);
     cmnDeSerializeRaw(inputStream, this->ConnectionID);
 }
+
+CMN_IMPLEMENT_SERVICES_TEMPLATED(mtsDescriptionConnectionVec);
 
 //-----------------------------------------------------------------------------
 //  Component Status Control

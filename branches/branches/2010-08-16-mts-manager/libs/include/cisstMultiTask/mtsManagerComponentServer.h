@@ -106,7 +106,7 @@ public:
     void InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const;
-    void InterfaceGCMCommands_GetListOfConnections(mtsStdStringVec & list) const;
+    void InterfaceGCMCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentServer);

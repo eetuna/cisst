@@ -1059,17 +1059,14 @@ bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName,
     return true;
 }
 
-bool mtsComponent::RequestGetListOfConnections(std::vector<std::string> & listOfConnections)
+bool mtsComponent::RequestGetListOfConnections(mtsDescriptionConnectionVec & listOfConnections)
 {
     if (!InternalInterfaceFunctions.GetListOfConnections.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetListOfConnections: invalid function - has not been bound to command" << std::endl;
         return false;
     }
 
-    mtsStdStringVec list;
-    InternalInterfaceFunctions.GetListOfConnections(list);
-
-    mtsParameterTypes::ConvertVectorStringType(list, listOfConnections);
+    InternalInterfaceFunctions.GetListOfConnections(listOfConnections);
 
     return true;
 }

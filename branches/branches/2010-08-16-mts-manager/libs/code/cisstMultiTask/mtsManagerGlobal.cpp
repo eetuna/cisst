@@ -1845,6 +1845,7 @@ void mtsManagerGlobal::GetListOfConnections(std::vector<mtsDescriptionConnection
         connection.Server.ProcessName   = it->second->ServerProcessName;
         connection.Server.ComponentName = it->second->ServerComponentName;
         connection.Server.InterfaceName = it->second->ServerInterfaceProvidedName;
+        connection.ConnectionID         = it->first;
 
         list.push_back(connection);
     }
