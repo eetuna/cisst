@@ -32,6 +32,9 @@ http://www.cisst.org/cisst/license.txt.
 std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
 std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
 
+std::string mtsComponent::EventNames::AddComponent = mtsManagerComponentBase::EventNames::AddComponent;
+std::string mtsComponent::EventNames::AddConnection = mtsManagerComponentBase::EventNames::AddConnection;
+
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),
     UseSeparateLogFileFlag(false),
@@ -1059,7 +1062,7 @@ bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName,
     return true;
 }
 
-bool mtsComponent::RequestGetListOfConnections(mtsDescriptionConnectionVec & listOfConnections)
+bool mtsComponent::RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections)
 {
     if (!InternalInterfaceFunctions.GetListOfConnections.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetListOfConnections: invalid function - has not been bound to command" << std::endl;

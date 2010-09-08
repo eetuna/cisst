@@ -39,6 +39,7 @@ mtsManagerComponentServer::mtsManagerComponentServer(mtsManagerGlobal * gcm)
     if (instanceCount != 0) {
         cmnThrow(std::runtime_error("Error in creating manager component server: it's already created"));
     }
+    gcm->SetMCS(this);
 }
 
 mtsManagerComponentServer::~mtsManagerComponentServer()
@@ -111,6 +112,11 @@ bool mtsManagerComponentServer::AddInterfaceGCM(void)
                               this, mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces);
     provided->AddCommandRead(&mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections,
                               this, mtsManagerComponentBase::CommandNames::GetListOfConnections);
+
+    provided->AddEventWrite(this->InterfaceGCMEvents_AddComponent,
+                            mtsManagerComponentBase::EventNames::AddComponent, mtsDescriptionComponent());
+    provided->AddEventWrite(this->InterfaceGCMEvents_AddConnection,
+                            mtsManagerComponentBase::EventNames::AddConnection, mtsDescriptionConnection());
 
     CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceGCM: successfully added \"GCM\" interfaces" << std::endl;
 
@@ -346,15 +352,18 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfInterfaces(const 
     mtsParameterTypes::ConvertVectorStringType(interfaceNames, interfaces.InterfaceProvidedNames);
 }
 
-void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const
+void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(std::vector <mtsDescriptionConnection> & listOfConnections) const
 {
-    std::vector<mtsDescriptionConnection> _list;
-    GCM->GetListOfConnections(_list);
-
-    std::string connection;
-    listOfConnections.SetSize(_list.size());
-
-    for (size_t i = 0; i < listOfConnections.size(); ++i) {
-        listOfConnections(i) = _list[i];
-    }
+    GCM->GetListOfConnections(listOfConnections);
 }
+
+void mtsManagerComponentServer::AddComponentEvent(const mtsDescriptionComponent &component)
+{
+    InterfaceGCMEvents_AddComponent(component);
+}
+
+void mtsManagerComponentServer::AddConnectionEvent(const mtsDescriptionConnection &connection)
+{
+    InterfaceGCMEvents_AddConnection(connection);
+}
+

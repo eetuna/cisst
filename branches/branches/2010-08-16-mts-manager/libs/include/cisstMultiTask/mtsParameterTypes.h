@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsParameterTypes_h
 
 #include <cisstMultiTask/mtsGenericObject.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsVector.h> // for mtsDescriptionInterface::mtsStdStringVec
 
 // Nominal class to provide utility functions
@@ -106,8 +107,21 @@ public:
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnection);
 
-typedef mtsVector<mtsDescriptionConnection> mtsDescriptionConnectionVec;
+typedef mtsGenericObjectProxy<std::vector<mtsDescriptionConnection> > mtsDescriptionConnectionVec;
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionConnectionVec);
+
+// Define stream out operator for std::vector<mtsDescriptionConnection>
+inline std::ostream & operator << (std::ostream & output,
+                            const std::vector<mtsDescriptionConnection> & object) {
+    output << "[";
+    for (size_t i = 0; i < object.size(); i++) {
+        object[i].ToStream(output);
+        output << ", ";
+    }
+    output << "]";
+    return output;
+}
+
 
 //-----------------------------------------------------------------------------
 //  Component Status Control

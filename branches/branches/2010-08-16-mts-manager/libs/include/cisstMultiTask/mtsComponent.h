@@ -339,6 +339,11 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
         mtsFunctionRead          GetListOfConnections;
     } InternalInterfaceFunctions;
 
+    struct EventNames {
+        static std::string AddComponent;
+        static std::string AddConnection;
+    };
+
     /*! Internal commands to process command execution request coming from manager 
         component client */
     void InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg);
@@ -381,7 +386,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
                                      const std::string & componentName,
                                      std::vector<std::string> & namesOfInterfacesRequired,
                                      std::vector<std::string> & namesOfInterfacesProvided);
-    bool RequestGetListOfConnections(mtsDescriptionConnectionVec & listOfConnections);
+    bool RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections);
 
     /*! Names of internal interfaces to enable user components to use mts-command
         pattern for communication with other components */

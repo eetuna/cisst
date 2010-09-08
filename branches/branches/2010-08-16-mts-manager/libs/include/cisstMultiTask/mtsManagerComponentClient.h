@@ -75,6 +75,10 @@ protected:
         mtsFunctionRead          GetListOfConnections;
     } InterfaceLCMFunctionType;
 
+    // Event handlers for InterfaceLCM's required interface
+    void HandleAddComponentEvent(const mtsDescriptionComponent &component);
+    void HandleAddConnectionEvent(const mtsDescriptionConnection &component);
+
     InterfaceLCMFunctionType InterfaceLCMFunction;
 
     /*! Create new component and add it to LCM */
@@ -113,7 +117,11 @@ public:
     void InterfaceComponentCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
     void InterfaceComponentCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const;
-    void InterfaceComponentCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const;
+    void InterfaceComponentCommands_GetListOfConnections(std::vector <mtsDescriptionConnection> & listOfConnections) const;
+
+    /*! Event generators for InterfaceLCM's provided interface */
+    mtsFunctionWrite InterfaceComponentEvents_AddComponent;
+    mtsFunctionWrite InterfaceComponentEvents_AddConnection;
 
     /*! Name of internal interfaces */
     static std::string NameOfInterfaceComponentProvided;

@@ -36,6 +36,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsManagerComponentClient.h>
 #include <cisstMultiTask/mtsManagerComponentServer.h>
+#include <cisstMultiTask/mtsTaskViewer.h>
 
 #if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsComponentProxy.h>
@@ -405,6 +406,7 @@ bool mtsManagerLocal::AddManagerComponent(const std::string & processName, const
             return false;
         }
         mtsManagerComponentServer * managerComponentServer = new mtsManagerComponentServer(gcm);
+        gcm->SetMCS(managerComponentServer);
 
         CMN_LOG_CLASS_INIT_VERBOSE << "AddManagerComponent: Manager component server is created: " << managerComponentServer->GetName() << std::endl;
 
@@ -623,7 +625,7 @@ bool mtsManagerLocal::AddComponent(mtsComponent * component, const bool supportI
     // User(generic) component
     else {
         if (supportInternalInterfaces) {
-            // Add a pair of interfaces which is hidden to users in oder to connect to 
+            // Add a pair of interfaces which is hidden to users in order to connect to 
             // manager component client.  This enables user components to use cisstMultiTask's
             // command pattern to communicate with the system.
             if (!component->AddInterfaceInternal()) {
@@ -1343,12 +1345,21 @@ void mtsManagerLocal::CreateInternalThread(mtsComponent * component)
 void mtsManagerLocal::CreateAll(void)
 {
     // Automatically add internal manager component when the LCM is initialized.
-    if (Configuration == LCM_CONFIG_STANDALONE || Configuration == LCM_CONFIG_NETWORKED_WITH_GCM) {
+    if ((Configuration == LCM_CONFIG_STANDALONE) || (Configuration == LCM_CONFIG_NETWORKED_WITH_GCM)) {
         if (!AddManagerComponent(GetProcessName(), true)) {
             cmnThrow(std::runtime_error("Failed to add internal manager component server"));
         }
+        if (Configuration == LCM_CONFIG_STANDALONE) {
+            // Add TaskViewer in standalone configuration. In networked configuration, we assume
+            // that the TaskViewer will be in a separate process.
+            mtsTaskViewer *taskViewer = new mtsTaskViewer("TaskViewer", 1.0*cmn_s);
+            CMN_LOG_CLASS_INIT_VERBOSE << "CreateAll: Creating TaskViewer" << std::endl;
+            // Call AddComponent with 'true' to get internal interface to component manager
+            if (!AddComponent(taskViewer, true))
+                CMN_LOG_CLASS_INIT_ERROR << "CreateAll: failed to add TaskViewer component" << std::endl;
+        }
     }
-    if (Configuration == LCM_CONFIG_STANDALONE || Configuration == LCM_CONFIG_NETWORKED) {
+    if ((Configuration == LCM_CONFIG_STANDALONE) || (Configuration == LCM_CONFIG_NETWORKED)) {
         if (!AddManagerComponent(GetProcessName())) {
             cmnThrow(std::runtime_error("Failed to add internal manager component client"));
         }

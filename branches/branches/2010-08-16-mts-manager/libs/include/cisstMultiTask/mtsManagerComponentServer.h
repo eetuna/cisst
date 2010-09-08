@@ -106,7 +106,16 @@ public:
     void InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfComponents(const mtsStdString & processName, mtsStdStringVec & names) const;
     void InterfaceGCMCommands_GetNamesOfInterfaces(const mtsDescriptionComponent & component, mtsDescriptionInterface & interfaces) const;
-    void InterfaceGCMCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const;
+    void InterfaceGCMCommands_GetListOfConnections(std::vector <mtsDescriptionConnection> & listOfConnections) const;
+
+    /*! Event generators */
+    mtsFunctionWrite InterfaceGCMEvents_AddComponent;
+    mtsFunctionWrite InterfaceGCMEvents_AddConnection;
+
+    // Methods for use by mtsManagerGlobal (Global Component Manager, GCM).
+    // These just cause an event to be generated on the Manager Component provided interface.
+    void AddComponentEvent(const mtsDescriptionComponent &component);
+    void AddConnectionEvent(const mtsDescriptionConnection &connection);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentServer);

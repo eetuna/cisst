@@ -94,7 +94,7 @@ bool mtsManagerComponentClient::CreateAndAddNewComponent(const std::string & cla
 
 bool mtsManagerComponentClient::AddInterfaceComponent(void)
 {
-    // InterfaceComponent's required interface is not create here but is created
+    // InterfaceComponent's required interface is not created here but is created
     // when a user component with internal interfaces connects to the manager 
     // component client.  
     // See mtsManagerComponentClient::AddNewClientComponent() for the dynamic 
@@ -126,6 +126,10 @@ bool mtsManagerComponentClient::AddInterfaceComponent(void)
                               this, mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces);
     provided->AddCommandRead(&mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections,
                               this, mtsManagerComponentBase::CommandNames::GetListOfConnections);
+    provided->AddEventWrite(this->InterfaceComponentEvents_AddComponent, 
+                            mtsManagerComponentBase::EventNames::AddComponent, mtsDescriptionComponent());
+    provided->AddEventWrite(this->InterfaceComponentEvents_AddConnection,
+                            mtsManagerComponentBase::EventNames::AddConnection, mtsDescriptionConnection());
     
     CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceComponent: successfully added \"Component\" interfaces" << std::endl;
 
@@ -159,6 +163,12 @@ bool mtsManagerComponentClient::AddInterfaceLCM(void)
                           InterfaceLCMFunction.GetNamesOfInterfaces);
     required->AddFunction(mtsManagerComponentBase::CommandNames::GetListOfConnections,
                           InterfaceLCMFunction.GetListOfConnections);
+    // It is not necessary to queue the events because we are just passing them along (it would not
+    // hurt to queue them, either).
+    required->AddEventHandlerWrite(&mtsManagerComponentClient::HandleAddComponentEvent, this, 
+                                   mtsManagerComponentBase::EventNames::AddComponent, MTS_EVENT_NOT_QUEUED);
+    required->AddEventHandlerWrite(&mtsManagerComponentClient::HandleAddConnectionEvent, this, 
+                                   mtsManagerComponentBase::EventNames::AddConnection, MTS_EVENT_NOT_QUEUED);
 
     // Add provided interface
     interfaceName = mtsManagerComponentClient::NameOfInterfaceLCMProvided;
@@ -177,7 +187,6 @@ bool mtsManagerComponentClient::AddInterfaceLCM(void)
                              this, mtsManagerComponentBase::CommandNames::ComponentStop);
     provided->AddCommandWrite(&mtsManagerComponentClient::InterfaceLCMCommands_ComponentResume,
                              this, mtsManagerComponentBase::CommandNames::ComponentResume);
-
     CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceLCM: successfully added \"LCM\" interfaces" << std::endl;
 
     return true;
@@ -391,7 +400,7 @@ void mtsManagerComponentClient::InterfaceComponentCommands_GetNamesOfInterfaces(
     InterfaceLCMFunction.GetNamesOfInterfaces(component, interfaces);
 }
 
-void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(mtsDescriptionConnectionVec & listOfConnections) const
+void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(std::vector <mtsDescriptionConnection> & listOfConnections) const
 {
     if (!InterfaceLCMFunction.GetListOfConnections.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceComponentCommands_GetListOfConnections: invalid function - has not been bound to command" << std::endl;
@@ -511,3 +520,16 @@ void mtsManagerComponentClient::InterfaceLCMCommands_ComponentResume(const mtsCo
     component->Start();
 }
 
+void mtsManagerComponentClient::HandleAddComponentEvent(const mtsDescriptionComponent &component)
+{
+    CMN_LOG_INIT_VERBOSE << "MCC AddComponent event, component = " << component << std::endl;
+    // Generate event to connected components
+    InterfaceComponentEvents_AddComponent(component);
+}
+
+void mtsManagerComponentClient::HandleAddConnectionEvent(const mtsDescriptionConnection &connection)
+{
+    CMN_LOG_INIT_VERBOSE << "MCC AddConnection event, connection = " << connection << std::endl;
+    // Generate event to connected components
+    InterfaceComponentEvents_AddConnection(connection);
+}

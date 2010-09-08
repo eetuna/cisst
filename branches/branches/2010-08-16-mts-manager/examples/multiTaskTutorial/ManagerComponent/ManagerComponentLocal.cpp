@@ -90,7 +90,7 @@ void ManagerComponentLocal::Run(void)
             }
 
             std::cout << std::endl << "==================================== Connections" << std::endl;
-            mtsDescriptionConnectionVec connections;
+			std::vector<mtsDescriptionConnection> connections;
             if (RequestGetListOfConnections(connections)) {
                 for (size_t i = 0; i < connections.size(); ++i) {
                     std::cout << connections[i] << std::endl;

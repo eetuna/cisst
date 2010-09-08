@@ -122,6 +122,13 @@ public:
         static std::string GetNamesOfInterfaces;
         static std::string GetListOfConnections;
     };
+    /*! Event name definitions */
+    class EventNames {
+    public:
+        // Events
+        static std::string AddComponent;
+        static std::string AddConnection;
+    };
 
     mtsManagerComponentBase(const std::string & componentName);
     virtual ~mtsManagerComponentBase();
