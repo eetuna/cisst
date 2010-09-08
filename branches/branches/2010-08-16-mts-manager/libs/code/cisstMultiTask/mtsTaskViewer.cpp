@@ -61,15 +61,20 @@ void mtsTaskViewer::Run(void)
 {
     if (!UDrawSocketConnected) {
        ConnectToUDrawGraph();
-       CMN_LOG_CLASS_INIT_VERBOSE << "Run: Sending all info" << std::endl;
-       SendAllInfo();
+       if (UDrawSocketConnected) {
+           CMN_LOG_CLASS_INIT_VERBOSE << "Run: Sending all info" << std::endl;
+           SendAllInfo();
+       }
     }
 #if 0
     // Could also periodically check for connection to JGraph-based program.
-    if (!JGrahSocketConnected)
+    if (!JGrahSocketConnected) {
        ConnectToJGraph();
-       CMN_LOG_CLASS_INIT_VERBOSE << "Run: Sending all info" << std::endl;
-       SendAllInfo();
+       if (JGraphSocketConnected) {
+           CMN_LOG_CLASS_INIT_VERBOSE << "Run: Sending all info" << std::endl;
+           SendAllInfo();
+       }
+    }
 #endif
     ProcessQueuedCommands();
     ProcessQueuedEvents();

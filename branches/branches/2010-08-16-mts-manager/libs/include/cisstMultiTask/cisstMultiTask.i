@@ -261,6 +261,11 @@ MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsULong, unsigned long);
 MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsBool, bool);
 MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsStdString, std::string);
 
+%include "cisstMultiTask/mtsParameterTypes.h"
+//PK TEMP: following does not work
+//typedef std::vector<mtsDescriptionConnection> mtsDescriptionConnectionStdVec;
+//MTS_GENERIC_OBJECT_PROXY_INSTANTIATE(mtsDescriptionConnectionVec, mtsDescriptionConnectionStdVec);
+
 // Wrap mtsVector
 %import "cisstMultiTask/mtsVector.h"
 

@@ -26,17 +26,22 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsVector.h> // for mtsDescriptionInterface::mtsStdStringVec
 
+// Always include last!
+#include <cisstMultiTask/mtsExport.h>
+
+#ifndef SWIG
 // Nominal class to provide utility functions
 class mtsParameterTypes {
 public:
     static void ConvertVectorStringType(const mtsStdStringVec & mtsVec, std::vector<std::string> & stdVec);
     static void ConvertVectorStringType(const std::vector<std::string> & stdVec, mtsStdStringVec & mtsVec);
 };
+#endif
 
 //-----------------------------------------------------------------------------
 //  Component Description
 //
-class mtsDescriptionComponent: public mtsGenericObject
+class CISST_EXPORT mtsDescriptionComponent: public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -56,7 +61,7 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionComponent);
 //-----------------------------------------------------------------------------
 //  Interface Description
 //
-class mtsDescriptionInterface: public mtsGenericObject
+class CISST_EXPORT mtsDescriptionInterface: public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -77,11 +82,12 @@ CMN_DECLARE_SERVICES_INSTANTIATION(mtsDescriptionInterface);
 //-----------------------------------------------------------------------------
 //  Connection Description
 //
-class mtsDescriptionConnection: public mtsGenericObject
+class CISST_EXPORT mtsDescriptionConnection: public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
+#ifndef SWIG
     struct FullInterface {
         std::string ProcessName;
         std::string ComponentName;
@@ -91,6 +97,7 @@ public:
     FullInterface Client;
     FullInterface Server;
     int ConnectionID;
+#endif
 
     mtsDescriptionConnection() : ConnectionID(-1) {}
     mtsDescriptionConnection(
@@ -126,7 +133,7 @@ inline std::ostream & operator << (std::ostream & output,
 //-----------------------------------------------------------------------------
 //  Component Status Control
 //
-class mtsComponentStatusControl : public mtsGenericObject
+class CISST_EXPORT mtsComponentStatusControl : public mtsGenericObject
 {
     CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
