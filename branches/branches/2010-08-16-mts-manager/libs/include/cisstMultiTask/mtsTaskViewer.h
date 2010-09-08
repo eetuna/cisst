@@ -32,7 +32,10 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsParameterTypes.h>
 
-class mtsTaskViewer : public mtsTaskPeriodic
+// Always include last!
+#include <cisstMultiTask/mtsExport.h>
+
+class CISST_EXPORT mtsTaskViewer : public mtsTaskPeriodic
 {
    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
