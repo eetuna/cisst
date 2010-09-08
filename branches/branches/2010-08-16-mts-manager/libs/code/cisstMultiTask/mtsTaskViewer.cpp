@@ -173,6 +173,9 @@ bool mtsTaskViewer::ConnectToUDrawGraph(const std::string &ipAddress, unsigned s
         char response[256];
         if (UDrawSocket.Receive(response, sizeof(response), 3.0)) {
             CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph): " << response << std::endl;
+            UDrawSocket.Send("drag_and_drop(dragging_on)\n");
+            if (UDrawSocket.Receive(response, sizeof(response), 1.0))
+               CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph), drag_and_drop: " << response << std::endl;
             UDrawSocket.Send("graph(new([]))\n");
             if (UDrawSocket.Receive(response, sizeof(response), 1.0))
                CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph), new: " << response << std::endl;
@@ -211,18 +214,21 @@ void mtsTaskViewer::SendAllInfo(void)
         for (i = 0; i < connectionList.size(); i++)
             this->AddConnection(connectionList[i]);
     }
+    if (UDrawSocketConnected) {
+        char response[256];
+        UDrawSocket.Send("menu(layout(improve_all))\n");
+        if (UDrawSocket.Receive(response, sizeof(response), 3.0))
+           CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph), improve_all: " << response << std::endl;
+    }
 }
 
 std::string mtsTaskViewer::GetComponentInGraphFormat(const std::string &processName,
                                                      const std::string &componentName) const
 {
-// PK TEMP
-#if 0
     size_t i;
     std::vector<std::string> requiredList;
     std::vector<std::string> providedList;
-    GetNamesOfInterfacesRequiredOrInput(processName, componentName, requiredList);
-    GetNamesOfInterfacesProvidedOrOutput(processName, componentName, providedList);
+    RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
     // For now, ignore components that don't have any interfaces
     if ((requiredList.size() == 0) && (providedList.size() == 0))
         return "";
@@ -240,23 +246,17 @@ std::string mtsTaskViewer::GetComponentInGraphFormat(const std::string &processN
             buffer += ",";
     }
     buffer += "]]\n";
-#else
-    std::string buffer;
-    buffer = "add taska [[" + processName + ":" + componentName + "],[],[]]\n";
-#endif
     return buffer;
 }
 
 std::string mtsTaskViewer::GetComponentInUDrawGraphFormat(const std::string &processName,
                                                           const std::string &componentName) const
 {
-// PK TEMP
 #if 0
+    // Enable this to ignore components that don't have any interfaces
     std::vector<std::string> requiredList;
     std::vector<std::string> providedList;
-    GetNamesOfInterfacesRequiredOrInput(processName, componentName, requiredList);
-    GetNamesOfInterfacesProvidedOrOutput(processName, componentName, providedList);
-    // For now, ignore components that don't have any interfaces
+    RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
     if ((requiredList.size() == 0) && (providedList.size() == 0))
         return "";
 #endif
