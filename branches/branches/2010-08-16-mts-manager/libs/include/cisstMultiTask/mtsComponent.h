@@ -355,38 +355,38 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     void ToStream(std::ostream & outputStream) const;
 
     /*! Wrappers for internal function object */
-    bool RequestComponentCreate(const std::string & className, const std::string & componentName);
+    bool RequestComponentCreate(const std::string & className, const std::string & componentName) const;
     bool RequestComponentCreate(
-        const std::string& processName, const std::string & className, const std::string & componentName);
+        const std::string& processName, const std::string & className, const std::string & componentName) const;
 
     bool RequestComponentConnect(
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
     bool RequestComponentConnect(
         const std::string & clientProcessName, 
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverProcessName, 
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName);
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
 
-    bool RequestComponentStart(const std::string & componentName, const double delayInSecond = 0.0);
+    bool RequestComponentStart(const std::string & componentName, const double delayInSecond = 0.0) const;
     bool RequestComponentStart(const std::string& processName, const std::string & componentName, 
-                               const double delayInSecond = 0.0);
+                               const double delayInSecond = 0.0) const;
 
-    bool RequestComponentStop(const std::string & componentName, const double delayInSecond = 0.0);
+    bool RequestComponentStop(const std::string & componentName, const double delayInSecond = 0.0) const;
     bool RequestComponentStop(const std::string& processName, const std::string & componentName,
-                              const double delayInSecond = 0.0);
+                              const double delayInSecond = 0.0) const;
 
-    bool RequestComponentResume(const std::string & componentName, const double delayInSecond = 0.0);
+    bool RequestComponentResume(const std::string & componentName, const double delayInSecond = 0.0) const;
     bool RequestComponentResume(const std::string& processName, const std::string & componentName,
-                                const double delayInSecond = 0.0);
+                                const double delayInSecond = 0.0) const;
 
-    bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses);
-    bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents);
+    bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses) const;
+    bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents) const;
     bool RequestGetNamesOfInterfaces(const std::string & processName, 
                                      const std::string & componentName,
                                      std::vector<std::string> & namesOfInterfacesRequired,
-                                     std::vector<std::string> & namesOfInterfacesProvided);
-    bool RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections);
+                                     std::vector<std::string> & namesOfInterfacesProvided) const;
+    bool RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections) const;
 
     /*! Names of internal interfaces to enable user components to use mts-command
         pattern for communication with other components */

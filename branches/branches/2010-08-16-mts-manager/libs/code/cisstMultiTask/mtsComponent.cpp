@@ -781,7 +781,7 @@ void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentS
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentResume: resumed component:  " << GetName() << std::endl;
 }
 
-bool mtsComponent::RequestComponentCreate(const std::string & className, const std::string & componentName)
+bool mtsComponent::RequestComponentCreate(const std::string & className, const std::string & componentName) const
 {
     if (!InternalInterfaceFunctions.ComponentCreate.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentCreate: invalid function - has not been bound to command" << std::endl;
@@ -802,7 +802,7 @@ bool mtsComponent::RequestComponentCreate(const std::string & className, const s
 }
 
 bool mtsComponent::RequestComponentCreate(
-    const std::string& processName, const std::string & className, const std::string & componentName)
+    const std::string& processName, const std::string & className, const std::string & componentName) const
 {
     if (!InternalInterfaceFunctions.ComponentCreate.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentCreate: invalid function - has not been bound to command" << std::endl;
@@ -824,7 +824,7 @@ bool mtsComponent::RequestComponentCreate(
 
 bool mtsComponent::RequestComponentConnect(
     const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
+    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const
 {
     if (!InternalInterfaceFunctions.ComponentConnect.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentConnect: invalid function - has not been bound to command" << std::endl;
@@ -853,7 +853,7 @@ bool mtsComponent::RequestComponentConnect(
     const std::string & clientProcessName, 
     const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
     const std::string & serverProcessName, 
-    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName)
+    const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const
 {
     if (!InternalInterfaceFunctions.ComponentConnect.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentConnect: invalid function - has not been bound to command" << std::endl;
@@ -877,7 +877,7 @@ bool mtsComponent::RequestComponentConnect(
     return true;
 }
 
-bool mtsComponent::RequestComponentStart(const std::string & componentName, const double delayInSecond)
+bool mtsComponent::RequestComponentStart(const std::string & componentName, const double delayInSecond) const
 {
     if (!InternalInterfaceFunctions.ComponentStart.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStart: invalid function - has not been bound to command" << std::endl;
@@ -899,7 +899,7 @@ bool mtsComponent::RequestComponentStart(const std::string & componentName, cons
 }
 
 bool mtsComponent::RequestComponentStart(const std::string& processName, const std::string & componentName,
-                                         const double delayInSecond)
+                                         const double delayInSecond) const
 {
     if (!InternalInterfaceFunctions.ComponentStart.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStart: invalid function - has not been bound to command" << std::endl;
@@ -920,7 +920,7 @@ bool mtsComponent::RequestComponentStart(const std::string& processName, const s
     return true;
 }
 
-bool mtsComponent::RequestComponentStop(const std::string & componentName, const double delayInSecond)
+bool mtsComponent::RequestComponentStop(const std::string & componentName, const double delayInSecond) const
 {
     if (!InternalInterfaceFunctions.ComponentStop.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStop: invalid function - has not been bound to command" << std::endl;
@@ -942,7 +942,7 @@ bool mtsComponent::RequestComponentStop(const std::string & componentName, const
 }
 
 bool mtsComponent::RequestComponentStop(const std::string& processName, const std::string & componentName,
-                                        const double delayInSecond)
+                                        const double delayInSecond) const
 {
     if (!InternalInterfaceFunctions.ComponentStop.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentStop: invalid function - has not been bound to command" << std::endl;
@@ -963,7 +963,7 @@ bool mtsComponent::RequestComponentStop(const std::string& processName, const st
     return true;
 }
 
-bool mtsComponent::RequestComponentResume(const std::string & componentName, const double delayInSecond)
+bool mtsComponent::RequestComponentResume(const std::string & componentName, const double delayInSecond) const
 {
     if (!InternalInterfaceFunctions.ComponentResume.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentResume: invalid function - has not been bound to command" << std::endl;
@@ -985,7 +985,7 @@ bool mtsComponent::RequestComponentResume(const std::string & componentName, con
 }
 
 bool mtsComponent::RequestComponentResume(const std::string& processName, const std::string & componentName,
-                                          const double delayInSecond)
+                                          const double delayInSecond) const
 {
     if (!InternalInterfaceFunctions.ComponentResume.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestComponentResume: invalid function - has not been bound to command" << std::endl;
@@ -1006,7 +1006,7 @@ bool mtsComponent::RequestComponentResume(const std::string& processName, const 
     return true;
 }
 
-bool mtsComponent::RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses)
+bool mtsComponent::RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses) const
 {
     if (!InternalInterfaceFunctions.GetNamesOfProcesses.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfProcesses: invalid function - has not been bound to command" << std::endl;
@@ -1021,7 +1021,7 @@ bool mtsComponent::RequestGetNamesOfProcesses(std::vector<std::string> & namesOf
     return true;
 }
 
-bool mtsComponent::RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents)
+bool mtsComponent::RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents) const
 {
     if (!InternalInterfaceFunctions.GetNamesOfComponents.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfComponents: invalid function - has not been bound to command" << std::endl;
@@ -1039,7 +1039,7 @@ bool mtsComponent::RequestGetNamesOfComponents(const std::string & processName, 
 bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName, 
                                                const std::string & componentName,
                                                std::vector<std::string> & namesOfInterfacesRequired,
-                                               std::vector<std::string> & namesOfInterfacesProvided)
+                                               std::vector<std::string> & namesOfInterfacesProvided) const
 {
     if (!InternalInterfaceFunctions.GetNamesOfInterfaces.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetNamesOfInterfaces: invalid function - has not been bound to command" << std::endl;
@@ -1062,7 +1062,7 @@ bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName,
     return true;
 }
 
-bool mtsComponent::RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections)
+bool mtsComponent::RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections) const
 {
     if (!InternalInterfaceFunctions.GetListOfConnections.IsValid()) {
         CMN_LOG_CLASS_RUN_ERROR << "RequestGetListOfConnections: invalid function - has not been bound to command" << std::endl;
