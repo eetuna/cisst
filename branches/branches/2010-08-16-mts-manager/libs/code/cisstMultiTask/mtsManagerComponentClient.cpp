@@ -33,7 +33,7 @@ std::string mtsManagerComponentClient::NameOfInterfaceComponentRequired = "Inter
 std::string mtsManagerComponentClient::NameOfInterfaceLCMProvided       = "InterfaceLCMProvided";
 std::string mtsManagerComponentClient::NameOfInterfaceLCMRequired       = "InterfaceLCMRequired";
 
-const std::string SuffixManagerComponentClient = "_MNGR_COMP";
+const std::string SuffixManagerComponentClient = "_MNGR-COMP-CLIENT";
 
 mtsManagerComponentClient::mtsManagerComponentClient(const std::string & componentName)
     : mtsManagerComponentBase(componentName)
@@ -228,7 +228,7 @@ bool mtsManagerComponentClient::AddNewClientComponent(const std::string & client
     // to the provided interface (InterfaceInternal's provided interface) of the 
     // connecting component.
     // Connect InterfaceGCM's required interface to InterfaceLCM's provided interface
-    mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+    mtsManagerLocal * LCM = mtsManagerLocal::GetSafeInstance();
     if (!LCM->Connect(this->GetName(), interfaceName,
                       clientComponentName, mtsComponent::NameOfInterfaceInternalProvided))
     {

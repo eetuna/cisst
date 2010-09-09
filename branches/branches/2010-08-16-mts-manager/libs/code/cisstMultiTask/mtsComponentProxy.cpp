@@ -848,7 +848,7 @@ bool mtsComponentProxy::GetEventGeneratorProxyPointer(
     const std::string & clientComponentName, const std::string & requiredInterfaceName,
     mtsComponentInterfaceProxy::EventGeneratorProxyPointerSet & eventGeneratorProxyPointers)
 {
-    mtsManagerLocal * localManager = mtsManagerLocal::GetInstance();
+    mtsManagerLocal * localManager = mtsManagerLocal::GetSafeInstance();
     mtsComponent * clientComponent = localManager->GetComponent(clientComponentName);
     if (!clientComponent) {
         CMN_LOG_CLASS_INIT_ERROR << "GetEventGeneratorProxyPointer: no client component found: " << clientComponentName << std::endl;

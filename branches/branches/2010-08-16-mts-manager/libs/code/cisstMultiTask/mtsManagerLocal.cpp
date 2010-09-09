@@ -46,6 +46,7 @@ http://www.cisst.org/cisst/license.txt.
 
 // Static variable definition
 mtsManagerLocal * mtsManagerLocal::Instance;
+mtsManagerLocal * mtsManagerLocal::InstanceReconfiguration;
 osaMutex mtsManagerLocal::ConfigurationChange;
 
 bool mtsManagerLocal::UnitTestEnabled = false;
@@ -197,6 +198,7 @@ void mtsManagerLocal::Initialize(void)
     __os_init();
     ComponentMap.SetOwner(*this);
 
+    InstanceReconfiguration = 0;
     ManagerComponent.Client = 0;
     ManagerComponent.Server = 0;
 
@@ -227,6 +229,16 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(void)
     return Instance;
 }
 #else
+mtsManagerLocal * mtsManagerLocal::GetSafeInstance(void)
+{
+    mtsManagerLocal * instance = mtsManagerLocal::InstanceReconfiguration;
+    if (!instance) {
+        instance = mtsManagerLocal::GetInstance();
+    }
+
+    return instance;
+}
+
 mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalComponentManagerIP,
                                                const std::string & thisProcessName,
                                                const std::string & thisProcessIP)
@@ -288,15 +300,16 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
     // Transfer all internal data--i.e., components and connections--from current
     // LCM to new LCM.
     //
-    {
-        // Transfer component information
+    {   // Transfer component information
         ComponentMapType::const_iterator it = Instance->ComponentMap.begin();
         const ComponentMapType::const_iterator itEnd = Instance->ComponentMap.end();
         const std::string managerComponentName = 
             mtsManagerComponentClient::GetNameOfManagerComponentClient(Instance->GetProcessName());
         for (; it != itEnd; ++it) {
-            // Do not trasnfer manager component client
-            if (it->second->GetName() == managerComponentName) {
+            // Do not trasnfer manager components (both client and server).  They will be created
+            // again by CreateManagerComponents() later.
+            if (it->second->GetName() == managerComponentName ||
+                it->second->GetName() == mtsManagerComponentServer::NameOfManagerComponentServer) {
                 continue;
             }
             if (!newInstance->AddComponent(it->second)) {
@@ -316,10 +329,8 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
         }
     }
 
-    //
-    // Transfer connection information
-    //
-    {
+    {   // Transfer connection information
+
         // Get current connection information
         std::vector<mtsDescriptionConnection> list;
         currentGCM->GetListOfConnections(list);
@@ -327,17 +338,44 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
         // Register all the connections established to the new GCM
         mtsManagerGlobalInterface * newGCM = newInstance->ManagerGlobal;
 
+        bool managerComponentInvolvedConnection;
         int connectionId;
         std::vector<mtsDescriptionConnection>::const_iterator it = list.begin();
         const std::vector<mtsDescriptionConnection>::const_iterator itEnd = list.end();
         for (; it != itEnd; ++it) {
+            // Do not trasnfer connections between manager components. They will be re-established
+            // again by CreateManagerComponents() later.
+            managerComponentInvolvedConnection = false;
+
+#define CHECK_INTERNAL_CONNECTION(_classType, _interfaceType)\
+            if (!managerComponentInvolvedConnection) \
+                managerComponentInvolvedConnection |= (it->Client.InterfaceName == _classType##::NameOf##_interfaceType##Required);\
+            if (!managerComponentInvolvedConnection)\
+                managerComponentInvolvedConnection |= (it->Server.InterfaceName == _classType##::NameOf##_interfaceType##Provided);
+            // Check with InterfaceGCM
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentServer, InterfaceGCM);
+            // Check with InterfaceLCM
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentClient, InterfaceLCM);
+            // Check with InterfaceComponent
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentClient, InterfaceComponent);
+            // Check with InterfaceInternal
+            CHECK_INTERNAL_CONNECTION(mtsComponent, InterfaceInternal);
+
+            // If any internal interface is involved in this connection, don't transfer it to
+            // the new LCM.
+            if (managerComponentInvolvedConnection) {
+                continue;
+            }
+
             connectionId = newGCM->Connect(thisProcessName,
                 thisProcessName, it->Client.ComponentName, it->Client.InterfaceName,
                 thisProcessName, it->Server.ComponentName, it->Server.InterfaceName);
             if (connectionId == -1) {
                 CMN_LOG_INIT_ERROR << "Class mtsManagerLocal: Reconfiguration: failed to transfer previous connection: "
-                                   << thisProcessName << ":" << it->Client.ComponentName << ":" << it->Client.InterfaceName << "-"
-                                   << thisProcessName << ":" << it->Server.ComponentName << ":" << it->Server.InterfaceName << std::endl;
+                    << mtsManagerGlobal::GetInterfaceUID(thisProcessName, it->Client.ComponentName, it->Client.InterfaceName)
+                    << "-"
+                    << mtsManagerGlobal::GetInterfaceUID(thisProcessName, it->Server.ComponentName, it->Server.InterfaceName)
+                    << std::endl;
             } else {
                 // Notify the GCM of successful local connection (although nothing actually needs to happen).
                 if (!newGCM->ConnectConfirm(connectionId)) {
@@ -354,11 +392,27 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
                     }
                 }
                 CMN_LOG_INIT_VERBOSE << "Class mtsManagerLocal: Reconfiguration: Successfully transferred previous connection: "
-                                     << thisProcessName << ":" << it->Client.ComponentName << ":" << it->Client.InterfaceName << "-"
-                                     << thisProcessName << ":" << it->Server.ComponentName << ":" << it->Server.InterfaceName << std::endl;
+                    << mtsManagerGlobal::GetInterfaceUID(thisProcessName, it->Client.ComponentName, it->Client.InterfaceName)
+                    << "-"
+                    << mtsManagerGlobal::GetInterfaceUID(thisProcessName, it->Server.ComponentName, it->Server.InterfaceName)
+                    << std::endl;
             }
         }
     }
+
+    // Create internal manager components
+    InstanceReconfiguration = newInstance;
+    if (!newInstance->CreateManagerComponents()) {
+        CMN_LOG_INIT_ERROR << "Class mtsManagerLocal: Reconfiguration: failed to create internal manager components" << std::endl;
+
+        // Clean up new LCM object
+        delete newInstance;
+        mtsManagerLocal::ConfigurationChange.Unlock();
+
+        // Keep using current LCM
+        return Instance;
+    }
+    InstanceReconfiguration = 0;
 
     // Remove previous LCM instance
     delete Instance;
@@ -428,11 +482,11 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
         case LCM_CONFIG_STANDALONE:
             // Check if both manager component client and server have been created
             if (!ManagerComponent.Client) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component client (standalone) is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: manager component client (standalone) is not initialized" << std::endl;
                 return false;
             }
             if (!ManagerComponent.Server) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component server (standalone) is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: manager component server (standalone) is not initialized" << std::endl;
                 return false;
             }
             if (!Connect(ManagerComponent.Client->GetName(),
@@ -440,7 +494,7 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
                          mtsManagerComponentServer::NameOfManagerComponentServer,
                          mtsManagerComponentServer::NameOfInterfaceGCMProvided))
             {
-                CMN_LOG_CLASS_INIT_ERROR << "Failed to connect: " 
+                CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: failed to connect: " 
                     << ManagerComponent.Client->GetName() << ":" << mtsManagerComponentClient::NameOfInterfaceLCMRequired
                     << " - "
                     << mtsManagerComponentServer::NameOfManagerComponentServer << ":" << mtsManagerComponentServer::NameOfInterfaceGCMProvided
@@ -452,7 +506,7 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
         case LCM_CONFIG_NETWORKED:
             // Check if manager component client has been created
             if (!ManagerComponent.Client) {
-                CMN_LOG_CLASS_INIT_ERROR << "Manager component client (networked) is not initialized" << std::endl;
+                CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: manager component client (networked) is not initialized" << std::endl;
                 return false;
             }
             if (!Connect(this->ProcessName,
@@ -462,10 +516,14 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
                          mtsManagerComponentServer::NameOfManagerComponentServer,
                          mtsManagerComponentServer::NameOfInterfaceGCMProvided))
             {
-                CMN_LOG_CLASS_INIT_ERROR << "Failed to connect: " 
-                    << this->ProcessName << ":" << ManagerComponent.Client->GetName() << ":" << mtsManagerComponentClient::NameOfInterfaceLCMRequired
+                CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: failed to connect: " 
+                    << mtsManagerGlobal::GetInterfaceUID(this->ProcessName, 
+                                                         ManagerComponent.Client->GetName(), 
+                                                         mtsManagerComponentClient::NameOfInterfaceLCMRequired)
                     << " - "
-                    << ProcessNameOfLCMWithGCM << mtsManagerComponentServer::NameOfManagerComponentServer << ":" << mtsManagerComponentServer::NameOfInterfaceGCMProvided
+                    << mtsManagerGlobal::GetInterfaceUID(ProcessNameOfLCMWithGCM, 
+                                                         mtsManagerComponentServer::NameOfManagerComponentServer,
+                                                         mtsManagerComponentServer::NameOfInterfaceGCMProvided)
                     << std::endl;
                 return false;
             }
@@ -1342,38 +1400,56 @@ void mtsManagerLocal::CreateInternalThread(mtsComponent * component)
     }
 }
 
-void mtsManagerLocal::CreateAll(void)
+bool mtsManagerLocal::CreateManagerComponents(void)
 {
     // Automatically add internal manager component when the LCM is initialized.
     if ((Configuration == LCM_CONFIG_STANDALONE) || (Configuration == LCM_CONFIG_NETWORKED_WITH_GCM)) {
         if (!AddManagerComponent(GetProcessName(), true)) {
-            cmnThrow(std::runtime_error("Failed to add internal manager component server"));
+            CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add internal manager component server" << std::endl;
+            return false;
         }
         if (Configuration == LCM_CONFIG_STANDALONE) {
             // Add TaskViewer in standalone configuration. In networked configuration, we assume
             // that the TaskViewer will be in a separate process.
             mtsTaskViewer *taskViewer = new mtsTaskViewer("TaskViewer", 1.0*cmn_s);
-            CMN_LOG_CLASS_INIT_VERBOSE << "CreateAll: Creating TaskViewer" << std::endl;
+            CMN_LOG_CLASS_INIT_VERBOSE << "CreateManagerComponents: Creating TaskViewer" << std::endl;
             // Call AddComponent with 'true' to get internal interface to component manager
-            if (!AddComponent(taskViewer, true))
-                CMN_LOG_CLASS_INIT_ERROR << "CreateAll: failed to add TaskViewer component" << std::endl;
+            if (!AddComponent(taskViewer, true)) {
+                CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add TaskViewer component" << std::endl;
+                return false;
+            }
         }
     }
+
     if ((Configuration == LCM_CONFIG_STANDALONE) || (Configuration == LCM_CONFIG_NETWORKED)) {
         if (!AddManagerComponent(GetProcessName())) {
-            cmnThrow(std::runtime_error("Failed to add internal manager component client"));
+            CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add internal manager component client" << std::endl;
+            return false;
         }
         // Connect manager component client to manager component server, i.e., 
         // connect InterfaceLCM.Required - InterfaceGCM.Provided
         if (!ConnectManagerComponentClientToServer()) {
-            cmnThrow(std::runtime_error("Failed to connect manager component client to server"));
+            CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to connect manager component client to server" << std::endl;
+            return false;
         }
         // Connect local components which has internal interfaces to the manager 
         // component client, i.e., 
         // connect InterfaceInternal.Required - InterfaceComponent.Provided
         if (!ConnectAllToManagerComponentClient()) {
-            cmnThrow(std::runtime_error("Failed to connect user components to manager component client"));
+            CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to connect user components to manager component client" << std::endl;
+            return false;
         }
+    }
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "CreateManagerComponents: Successfully created manager components" << std::endl;
+
+    return true;
+}
+
+void mtsManagerLocal::CreateAll(void)
+{
+    if (!CreateManagerComponents()) {
+        cmnThrow(std::runtime_error("Failed to add internal manager components"));
     }
 
     ComponentMapChange.Lock();
@@ -1673,7 +1749,7 @@ bool mtsManagerLocal::Connect(
             if (!Disconnect(clientProcessName, clientComponentName, clientInterfaceRequiredName,
                             serverProcessName, serverComponentName, serverInterfaceProvidedName))
             {
-                CMN_LOG_CLASS_INIT_ERROR << "Connect: clean up error: disconnection failed";
+                CMN_LOG_CLASS_INIT_ERROR << "Connect: clean up error: disconnection failed" << std::endl;
             }
             return false;
         }
@@ -2280,7 +2356,10 @@ bool mtsManagerLocal::RemoveInterfaceProvidedProxy(
     }
 
     // Remove provided interface proxy only when user counter is zero.
-    if (--interfaceProvidedProxy->UserCounter == 0) {
+    if (interfaceProvidedProxy->UserCounter > 0) {
+        --interfaceProvidedProxy->UserCounter;
+    }
+    if (interfaceProvidedProxy->UserCounter == 0) {
         // Remove provided interface from component proxy.
         if (!clientComponentProxy->RemoveInterfaceProvidedProxy(interfaceProvidedProxyName)) {
             CMN_LOG_CLASS_INIT_ERROR << "RemoveInterfaceProvidedProxy: failed to remove provided interface proxy: " << interfaceProvidedProxyName << std::endl;

@@ -77,6 +77,8 @@ class CISST_EXPORT mtsManagerLocal: public mtsManagerLocalInterface
     friend class mtsManagerProxyClient;
     // for dynamic creation of a component
     friend class mtsManagerComponentClient;
+    // for reconfiguration
+    friend class mtsComponentProxy;
 
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -106,6 +108,11 @@ private:
     static bool UnitTestNetworkProxyEnabled;
 
     ConfigurationType Configuration;
+
+    /*! Temporary singleton object for reconfiguration.  Should not be used
+        except reconfiguration */
+    static mtsManagerLocal * InstanceReconfiguration;
+    static mtsManagerLocal * GetSafeInstance(void);
 
 protected:
     /*! Typedef for component map: key is component name, value is component
@@ -171,8 +178,11 @@ protected:
                create an internal thread for task-type component. */
     void CreateInternalThread(mtsComponent * component);
 
-    /*! \brief Add an internal manager component automatically when LCM is 
-               initialized 
+    /*! \brief Create internal manager components automatically when LCM is 
+               initialized.  */
+    bool CreateManagerComponents(void);
+
+    /*! \brief Add an internal manager component
         \param processName Name of this process (or this LCM) 
         \param isServer True to create manager component server, false to create 
                manager component client.  Note that this argument should be true 
