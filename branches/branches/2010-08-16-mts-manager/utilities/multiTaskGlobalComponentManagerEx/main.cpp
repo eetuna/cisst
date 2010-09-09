@@ -25,8 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstMultiTask/mtsManagerGlobal.h>
-
-#include "sineTask.h"
+#include <cisstMultiTask/mtsManagerLocal.h>
 
 int main(int CMN_UNUSED(argc), char ** CMN_UNUSED(argv))
 {
@@ -34,11 +33,10 @@ int main(int CMN_UNUSED(argc), char ** CMN_UNUSED(argv))
     cmnLogger::SetLoD(CMN_LOG_LOD_VERY_VERBOSE);
     cmnLogger::GetMultiplexer()->AddChannel(std::cout, CMN_LOG_LOD_VERY_VERBOSE);
     // add a log per thread
-    osaThreadedLogFile threadedLog("GlobalComponentManager");
+    osaThreadedLogFile threadedLog("GlobalComponentManagerEx");
     cmnLogger::GetMultiplexer()->AddChannel(threadedLog, CMN_LOG_LOD_VERY_VERBOSE);
     // specify a higher, more verbose log level for these classes
     cmnClassRegister::SetLoD("mtsManagerGlobal", CMN_LOG_LOD_VERY_VERBOSE);
-    cmnClassRegister::SetLoD("sineTask", CMN_LOG_LOD_VERY_VERBOSE);
 
     // Create and start global component manager
     mtsManagerGlobal globalComponentManager;
@@ -57,31 +55,14 @@ int main(int CMN_UNUSED(argc), char ** CMN_UNUSED(argv))
         return 1;
     }
 
-    // Create and configure an instance of Sine Task
-    const double PeriodSine = 1 * cmn_ms; // in milliseconds
-    sineTask * sineTaskObject = new sineTask("SIN", PeriodSine);
-
-    // Add sine task to the LCM that runs with the GCM
-    localManager->AddTask(sineTaskObject);
-
     // create the tasks, i.e. find the commands
     localManager->CreateAll();
     // start the periodic Run
     localManager->StartAll();
 
     while (1) {
-        osaSleep(10 * cmn_ms);
+        osaSleep(100 * cmn_ms);
     }
-
-    /*
-    // cleanup
-    taskManager->KillAll();
-
-    osaSleep(PeriodSine * 2);
-    while (!sineTaskObject->IsTerminated()) osaSleep(PeriodSine);
-
-    taskManager->Cleanup();
-    */
 
     return 0;
 }
