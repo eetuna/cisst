@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     taskManager->StartAll();
 
     // reconfiguration test 4
-#if 1
+#if 0
 #if CISST_MTS_HAS_ICE
     taskManager = mtsTaskManager::GetInstance("localhost", "localMainTest");
 #endif
