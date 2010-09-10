@@ -24,17 +24,18 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 
 // Names of commands
-std::string mtsManagerComponentBase::CommandNames::ComponentCreate  = "ComponentCreate";
-std::string mtsManagerComponentBase::CommandNames::ComponentConnect = "ComponentConnect";
-std::string mtsManagerComponentBase::CommandNames::ComponentStart   = "ComponentStart";
-std::string mtsManagerComponentBase::CommandNames::ComponentStop    = "ComponentStop";
-std::string mtsManagerComponentBase::CommandNames::ComponentResume  = "ComponentResume";
-std::string mtsManagerComponentBase::CommandNames::GetNamesOfProcesses  = "GetNamesOfProcesses";
-std::string mtsManagerComponentBase::CommandNames::GetNamesOfComponents = "GetNamesOfComponents";
-std::string mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces = "GetNamesOfInterfaces";
-std::string mtsManagerComponentBase::CommandNames::GetListOfConnections = "GetListOfConnections";
-std::string mtsManagerComponentBase::EventNames::AddComponent = "AddComponentEvent";
-std::string mtsManagerComponentBase::EventNames::AddConnection = "AddConnectionEvent";
+const std::string mtsManagerComponentBase::CommandNames::ComponentCreate  = "ComponentCreate";
+const std::string mtsManagerComponentBase::CommandNames::ComponentConnect = "ComponentConnect";
+const std::string mtsManagerComponentBase::CommandNames::ComponentStart   = "ComponentStart";
+const std::string mtsManagerComponentBase::CommandNames::ComponentStop    = "ComponentStop";
+const std::string mtsManagerComponentBase::CommandNames::ComponentResume  = "ComponentResume";
+const std::string mtsManagerComponentBase::CommandNames::GetNamesOfProcesses  = "GetNamesOfProcesses";
+const std::string mtsManagerComponentBase::CommandNames::GetNamesOfComponents = "GetNamesOfComponents";
+const std::string mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces = "GetNamesOfInterfaces";
+const std::string mtsManagerComponentBase::CommandNames::GetListOfConnections = "GetListOfConnections";
+const std::string mtsManagerComponentBase::EventNames::AddComponent = "AddComponentEvent";
+const std::string mtsManagerComponentBase::EventNames::AddConnection = "AddConnectionEvent";
+
 CMN_IMPLEMENT_SERVICES(mtsManagerComponentBase);
 
 mtsManagerComponentBase::mtsManagerComponentBase(const std::string & componentName)

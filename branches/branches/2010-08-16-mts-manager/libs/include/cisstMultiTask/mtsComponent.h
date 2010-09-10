@@ -340,8 +340,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     } InternalInterfaceFunctions;
 
     struct EventNames {
-        static std::string AddComponent;
-        static std::string AddConnection;
+        const static std::string AddComponent;
+        const static std::string AddConnection;
     };
 
     /*! Internal commands to process command execution request coming from manager 
@@ -390,8 +390,8 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     /*! Names of internal interfaces to enable user components to use mts-command
         pattern for communication with other components */
-    static std::string NameOfInterfaceInternalProvided;
-    static std::string NameOfInterfaceInternalRequired;
+    const static std::string NameOfInterfaceInternalProvided;
+    const static std::string NameOfInterfaceInternalRequired;
 };
 
 

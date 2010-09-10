@@ -29,11 +29,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
-std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
-std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
+const std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
+const std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
 
-std::string mtsComponent::EventNames::AddComponent = mtsManagerComponentBase::EventNames::AddComponent;
-std::string mtsComponent::EventNames::AddConnection = mtsManagerComponentBase::EventNames::AddConnection;
+const std::string mtsComponent::EventNames::AddComponent = "AddComponentEvent"; // mtsManagerComponentBase::EventNames::AddComponent;
+const std::string mtsComponent::EventNames::AddConnection = "AddConnectionEvent"; // mtsManagerComponentBase::EventNames::AddConnection;
 
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),

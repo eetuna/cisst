@@ -35,18 +35,18 @@ http://www.cisst.org/cisst/license.txt.
   In the networked configuration, the communication between the global component
   manager (GCM) and local component managers (LCMs) is currently done by SLICE.
   If the cisstMultiTask's command pattern is used instead, users can have more
-  flexible way to interact with the system, such as creating and starting 
-  components dynamically.  To replace SLICE with the cisstMultiTask's command 
+  flexible way to interact with the system, such as creating and starting
+  components dynamically.  To replace SLICE with the cisstMultiTask's command
   pattern, we introduce a special type of component, manager component.
-  
+
   There are two different typs of it, manager component server and client. The
-  manager component server (MCS) runs in LCM that runs with GCM in the same 
-  process and only one instance of MCS exists in the whole system.  On the 
+  manager component server (MCS) runs in LCM that runs with GCM in the same
+  process and only one instance of MCS exists in the whole system.  On the
   contrary, each LCM has manager component client (MCC) that connects to MCS
   and thus more than one MCC can exist in a system.  However, LCM can have only
   one MCC, i.e., one MCC per LCM.
 
-  The cisstMultiTask's command pattern is based on a pair of interfaces that 
+  The cisstMultiTask's command pattern is based on a pair of interfaces that
   are connected to each other.  The following diagram shows how interfaces are
   defined and how interfaces are connected to each other.
 
@@ -55,10 +55,10 @@ http://www.cisst.org/cisst/license.txt.
               GCM - LCM - MCS (of type mtsManagerComponentServer)
                            |
                          INTFC ("InterfaceGCM")
-                           
+
                            :
                            :
-                         
+
                          INTFC ("InterfaceLCM")
                            |
                     LCM - MCC (of type mtsManagerComponentClient)
@@ -72,7 +72,7 @@ http://www.cisst.org/cisst/license.txt.
                            |
                      User Component
                 with internal interfaces
-  
+
 
   There are four internal connections between components in a system.
 
@@ -92,12 +92,12 @@ http://www.cisst.org/cisst/license.txt.
      : When user component with internal interfaces connects to MCC
        (See mtsManagerComponentClient::AddNewClientComponent())
 
-  \note Related classes: mtsManagerLocalInterface, mtsManagerGlobalInterface, 
+  \note Related classes: mtsManagerLocalInterface, mtsManagerGlobalInterface,
   mtsManagerGlobal, mtsManagerProxyServer
 */
 
 //
-// MJ: When we support mts blocking command with return value mechanism, all 
+// MJ: When we support mts blocking command with return value mechanism, all
 // the commands and functions have to be updated such that they return result
 // values in a blocking way.
 //
@@ -111,23 +111,23 @@ public:
     class CommandNames {
     public:
         // Dynamic component management
-        static std::string ComponentCreate;
-        static std::string ComponentConnect;
-        static std::string ComponentStart;
-        static std::string ComponentStop;
-        static std::string ComponentResume;
+        const static std::string ComponentCreate;
+        const static std::string ComponentConnect;
+        const static std::string ComponentStart;
+        const static std::string ComponentStop;
+        const static std::string ComponentResume;
         // Getters
-        static std::string GetNamesOfProcesses;
-        static std::string GetNamesOfComponents;
-        static std::string GetNamesOfInterfaces;
-        static std::string GetListOfConnections;
+        const static std::string GetNamesOfProcesses;
+        const static std::string GetNamesOfComponents;
+        const static std::string GetNamesOfInterfaces;
+        const static std::string GetListOfConnections;
     };
     /*! Event name definitions */
     class EventNames {
     public:
         // Events
-        static std::string AddComponent;
-        static std::string AddConnection;
+        const static std::string AddComponent;
+        const static std::string AddConnection;
     };
 
     mtsManagerComponentBase(const std::string & componentName);
