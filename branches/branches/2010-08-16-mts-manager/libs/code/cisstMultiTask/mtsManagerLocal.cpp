@@ -219,16 +219,6 @@ void mtsManagerLocal::Cleanup(void)
     __os_exit();
 }
 
-#if !CISST_MTS_HAS_ICE
-mtsManagerLocal * mtsManagerLocal::GetInstance(void)
-{
-    if (!Instance) {
-        Instance = new mtsManagerLocal;
-    }
-
-    return Instance;
-}
-#else
 mtsManagerLocal * mtsManagerLocal::GetSafeInstance(void)
 {
     mtsManagerLocal * instance = mtsManagerLocal::InstanceReconfiguration;
@@ -239,6 +229,16 @@ mtsManagerLocal * mtsManagerLocal::GetSafeInstance(void)
     return instance;
 }
 
+#if !CISST_MTS_HAS_ICE
+mtsManagerLocal * mtsManagerLocal::GetInstance(void)
+{
+    if (!Instance) {
+        Instance = new mtsManagerLocal;
+    }
+
+    return Instance;
+}
+#else
 mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalComponentManagerIP,
                                                const std::string & thisProcessName,
                                                const std::string & thisProcessIP)
