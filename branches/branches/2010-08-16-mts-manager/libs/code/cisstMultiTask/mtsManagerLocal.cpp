@@ -349,9 +349,9 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
 
 #define CHECK_INTERNAL_CONNECTION(_classType, _interfaceType)\
             if (!managerComponentInvolvedConnection) \
-                managerComponentInvolvedConnection |= (it->Client.InterfaceName == _classType##::NameOf##_interfaceType##Required);\
+                managerComponentInvolvedConnection |= (it->Client.InterfaceName == _classType::NameOf##_interfaceType##Required);\
             if (!managerComponentInvolvedConnection)\
-                managerComponentInvolvedConnection |= (it->Server.InterfaceName == _classType##::NameOf##_interfaceType##Provided);
+                managerComponentInvolvedConnection |= (it->Server.InterfaceName == _classType::NameOf##_interfaceType##Provided);
             // Check with InterfaceGCM
             CHECK_INTERNAL_CONNECTION(mtsManagerComponentServer, InterfaceGCM);
             // Check with InterfaceLCM
