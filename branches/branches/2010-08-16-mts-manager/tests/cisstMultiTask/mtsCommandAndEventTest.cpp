@@ -99,7 +99,9 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             startTime = timeServer.GetRelativeTime();
             client->InterfaceRequired1.CommandVoid.ExecuteBlocking();
             stopTime = timeServer.GetRelativeTime();
-            CPPUNIT_ASSERT((stopTime - startTime) >= blockingDelay);
+            std::stringstream message;
+            message << "Actual: " << (stopTime - startTime) << " >= " << (blockingDelay * 0.9);
+            CPPUNIT_ASSERT_MESSAGE(message.str(), (stopTime - startTime) >= (blockingDelay * 0.9));
         } else {
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.CommandVoid.ExecuteBlocking();
@@ -112,7 +114,9 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             startTime = timeServer.GetRelativeTime();
             client->InterfaceRequired1.CommandWrite.ExecuteBlocking(valueWrite);
             stopTime = timeServer.GetRelativeTime();
-            CPPUNIT_ASSERT((stopTime - startTime) >= blockingDelay);
+            std::stringstream message;
+            message << "Actual: " << (stopTime - startTime) << " >= " << (blockingDelay * 0.9);
+            CPPUNIT_ASSERT_MESSAGE(message.str(), (stopTime - startTime) >= (blockingDelay * 0.9));
         } else {
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.CommandWrite.ExecuteBlocking(valueWrite);
@@ -287,12 +291,102 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
 }
 
 
+void mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking(void)
+{
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
+    const double blockingDelay = 0.5 * cmn_s;
+    mtsTestPeriodic1 * client = new mtsTestPeriodic1("mtsTestPeriodic1Client");
+    mtsTestPeriodic1 * server = new mtsTestPeriodic1("mtsTestPeriodic1Server", blockingDelay);
+
+    // these delays are OS dependent, we might need to increase them later
+    const double clientExecutionDelay = 0.1 * cmn_s;
+    const double serverExecutionDelay = 0.1 * cmn_s;
+
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
+    TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
+
+    delete client;
+    delete server;
+}
+
+
 void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking(void)
 {
     mtsComponentManager * manager = mtsComponentManager::GetInstance();
     const double blockingDelay = 0.5 * cmn_s;
     mtsTestContinuous1 * client = new mtsTestContinuous1("mtsTestContinuous1Client");
     mtsTestContinuous1 * server = new mtsTestContinuous1("mtsTestContinuous1Server", blockingDelay);
+
+    // these delays are OS dependent, we might need to increase them later
+    const double clientExecutionDelay = 0.1 * cmn_s;
+    const double serverExecutionDelay = 0.1 * cmn_s;
+
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
+    TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
+
+    delete client;
+    delete server;
+}
+
+
+void mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking(void)
+{
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
+    const double blockingDelay = 0.5 * cmn_s;
+    mtsTestFromCallback1 * client = new mtsTestFromCallback1("mtsTestFromCallback1Client");
+    mtsTestCallbackTrigger * clientTrigger = new mtsTestCallbackTrigger(client);
+    mtsTestFromCallback1 * server = new mtsTestFromCallback1("mtsTestFromCallback1Server", blockingDelay);
+    mtsTestCallbackTrigger * serverTrigger = new mtsTestCallbackTrigger(server);
+
+    // these delays are OS dependent, we might need to increase them later
+    const double clientExecutionDelay = 0.1 * cmn_s;
+    const double serverExecutionDelay = 0.1 * cmn_s;
+
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
+    TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
+
+    clientTrigger->Stop();
+    delete clientTrigger;
+    delete client;
+    serverTrigger->Stop();
+    delete serverTrigger;
+    delete server;
+}
+
+
+void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking(void)
+{
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
+    const double blockingDelay = 0.5 * cmn_s;
+    mtsTestFromSignal1 * client = new mtsTestFromSignal1("mtsTestFromSignal1Client");
+    mtsTestFromSignal1 * server = new mtsTestFromSignal1("mtsTestFromSignal1Server", blockingDelay);
 
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
