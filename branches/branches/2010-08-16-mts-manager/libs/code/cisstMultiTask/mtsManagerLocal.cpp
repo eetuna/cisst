@@ -769,7 +769,6 @@ bool mtsManagerLocal::RemoveComponent(const std::string & componentName)
     }
     else {        
         CMN_LOG_CLASS_INIT_VERBOSE << "RemoveComponent: removed component: " << componentName << std::endl;
-        delete component; // component is now deleted, be careful, componentName might be using its data member Name
     }
     return true;
 }
@@ -1449,7 +1448,7 @@ bool mtsManagerLocal::CreateManagerComponents(void)
 void mtsManagerLocal::CreateAll(void)
 {
     if (!CreateManagerComponents()) {
-        cmnThrow(std::runtime_error("Failed to add internal manager components"));
+        CMN_LOG_CLASS_INIT_WARNING << "CreateAll: failed to add internal manager components (maybe CreateAll has been called before)" << std::endl;
     }
 
     ComponentMapChange.Lock();
