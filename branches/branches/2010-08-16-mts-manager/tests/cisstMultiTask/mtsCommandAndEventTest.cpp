@@ -152,14 +152,21 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
 
 void mtsCommandAndEventTest::TestLocalDeviceDevice(void)
 {
-    mtsManagerLocal localManager;
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestDevice2 * client = new mtsTestDevice2;
     mtsTestDevice3 * server = new mtsTestDevice3;
     
-    localManager.AddComponent(client);
-    localManager.AddComponent(server);
-    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
     TestExecution(client, server, 0.0, 0.0);
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 
     delete client;
     delete server;
@@ -168,7 +175,7 @@ void mtsCommandAndEventTest::TestLocalDeviceDevice(void)
 
 void mtsCommandAndEventTest::TestLocalPeriodicPeriodic(void)
 {
-    mtsManagerLocal localManager;
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestPeriodic1 * client = new mtsTestPeriodic1("mtsTestPeriodic1Client");
     mtsTestPeriodic1 * server = new mtsTestPeriodic1("mtsTestPeriodic1Server");
 
@@ -176,13 +183,17 @@ void mtsCommandAndEventTest::TestLocalPeriodicPeriodic(void)
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
 
-    localManager.AddComponent(client);
-    localManager.AddComponent(server);
-    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
-    localManager.CreateAll();
-    localManager.StartAll();
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    localManager.KillAll();
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 
     delete client;
     delete server;
@@ -191,7 +202,7 @@ void mtsCommandAndEventTest::TestLocalPeriodicPeriodic(void)
 
 void mtsCommandAndEventTest::TestLocalContinuousContinuous(void)
 {
-    mtsManagerLocal localManager;
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestContinuous1 * client = new mtsTestContinuous1("mtsTestContinuous1Client");
     mtsTestContinuous1 * server = new mtsTestContinuous1("mtsTestContinuous1Server");
 
@@ -199,13 +210,17 @@ void mtsCommandAndEventTest::TestLocalContinuousContinuous(void)
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
 
-    localManager.AddComponent(client);
-    localManager.AddComponent(server);
-    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
-    localManager.CreateAll();
-    localManager.StartAll();
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    localManager.KillAll();
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 
     delete client;
     delete server;
@@ -214,7 +229,7 @@ void mtsCommandAndEventTest::TestLocalContinuousContinuous(void)
 
 void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback(void)
 {
-    mtsManagerLocal localManager;
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestFromCallback1 * client = new mtsTestFromCallback1("mtsTestFromCallback1Client");
     mtsTestCallbackTrigger * clientTrigger = new mtsTestCallbackTrigger(client);
     mtsTestFromCallback1 * server = new mtsTestFromCallback1("mtsTestFromCallback1Server");
@@ -224,13 +239,17 @@ void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback(void)
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
 
-    localManager.AddComponent(client);
-    localManager.AddComponent(server);
-    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
-    localManager.CreateAll();
-    localManager.StartAll();
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    localManager.KillAll();
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 
     clientTrigger->Stop();
     delete clientTrigger;
@@ -243,7 +262,7 @@ void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback(void)
 
 void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
 {
-    mtsManagerLocal localManager;
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestFromSignal1 * client = new mtsTestFromSignal1("mtsTestFromSignal1Client");
     mtsTestFromSignal1 * server = new mtsTestFromSignal1("mtsTestFromSignal1Server");
 
@@ -251,13 +270,17 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
 
-    localManager.AddComponent(client);
-    localManager.AddComponent(server);
-    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
-    localManager.CreateAll();
-    localManager.StartAll();
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    localManager.KillAll();
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 
     delete client;
     delete server;
@@ -266,8 +289,8 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
 
 void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking(void)
 {
-    mtsManagerLocal localManager;
-    const double blockingDelay = 1.0 * cmn_s;
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
+    const double blockingDelay = 0.5 * cmn_s;
     mtsTestContinuous1 * client = new mtsTestContinuous1("mtsTestContinuous1Client");
     mtsTestContinuous1 * server = new mtsTestContinuous1("mtsTestContinuous1Server", blockingDelay);
 
@@ -275,13 +298,17 @@ void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking(void)
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
 
-    localManager.AddComponent(client);
-    localManager.AddComponent(server);
-    localManager.Connect(client->GetName(), "r1", server->GetName(), "p1");
-    localManager.CreateAll();
-    localManager.StartAll();
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    manager->StartAll();
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
-    localManager.KillAll();
+    manager->KillAll();
+    osaSleep(0.1 * cmn_s);
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 
     delete client;
     delete server;
