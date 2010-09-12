@@ -72,6 +72,7 @@ mtsComponent::~mtsComponent()
     if (this->LoDMultiplexerStreambuf) {
         this->LoDMultiplexerStreambuf->RemoveAllChannels();
         delete this->LoDMultiplexerStreambuf;
+        this->LoDMultiplexerStreambuf = 0;
     }
     if (this->LogFile) {
         this->LogFile->close();

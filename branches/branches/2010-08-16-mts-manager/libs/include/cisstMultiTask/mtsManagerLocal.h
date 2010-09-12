@@ -57,6 +57,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsManagerLocal_h
 
 #include <cisstCommon/cmnNamedMap.h>
+#include <cisstCommon/cmnUnits.h>
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstOSAbstraction/osaTimeServer.h>
 #include <cisstOSAbstraction/osaMutex.h>
@@ -362,7 +363,7 @@ public:
 
     /*! \brief Create all components. If a component is of type mtsTask, 
                mtsTask::Create() is called internally. */
-    void CreateAll(void);
+    bool CreateAll(double timeout = 10 * cmn_s);
 
     /*! \brief Start all components. If a component is of type mtsTask, 
                mtsTask::Start() is called internally. */
