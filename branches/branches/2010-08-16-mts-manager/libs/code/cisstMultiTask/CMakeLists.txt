@@ -88,8 +88,9 @@ set (HEADER_FILES
      mtsFunctionVoid.h
 
      mtsCommandRead.h
+     mtsCommandReadBase.h
      mtsCommandWrite.h
-     mtsCommandReadOrWriteBase.h
+     mtsCommandWriteBase.h
      mtsMulticastCommandWrite.h
      mtsMulticastCommandWriteBase.h
      mtsCommandQueuedWrite.h
@@ -100,7 +101,7 @@ set (HEADER_FILES
      mtsEventWriteGeneratorProxy.h
 
      mtsCommandQualifiedRead.h
-     mtsCommandQualifiedReadOrWriteBase.h
+     mtsCommandQualifiedReadBase.h
      mtsFunctionQualifiedRead.h
 
      mtsExport.h

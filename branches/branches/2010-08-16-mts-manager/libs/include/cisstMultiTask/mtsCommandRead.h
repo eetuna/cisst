@@ -7,7 +7,7 @@
   Author(s):  Ankur Kapoor, Peter Kazanzides, Anton Deguet
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsCommandRead_h
 
 
-#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsCommandReadBase.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
 
@@ -181,8 +181,7 @@ public:
       applies the operation on the receiver.
       \param obj The data passed to the operation method
     */
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument,
-                                               bool CMN_UNUSED(blocking) = true) {
+    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
         if (this->IsEnabled())
             return ConditionalCast<cmnIsDerivedFromTemplated<ArgumentType, mtsGenericObjectProxy>::YES
                                   >::CallMethod(ClassInstantiation, Action, ActionOld, argument);

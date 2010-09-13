@@ -6,7 +6,7 @@
 
   Author(s):  Peter Kazanzides, Anton Deguet
 
-  (C) Copyright 2007 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2007-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -19,7 +19,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionRead.h>
-#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsCommandReadBase.h>
 
 
 mtsFunctionRead::~mtsFunctionRead()
@@ -51,7 +51,7 @@ mtsCommandBase::ReturnType mtsFunctionRead::operator()(mtsGenericObject & argume
 }
 
 
-mtsCommandReadOrWriteBase<mtsGenericObject> * mtsFunctionRead::GetCommand(void) const {
+mtsFunctionRead::CommandType * mtsFunctionRead::GetCommand(void) const {
     return Command;
 }
 

@@ -7,7 +7,7 @@
   Author(s):	Anton Deguet
   Created on:	2007-10-07
 
-  (C) Copyright 2007-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2007-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -55,22 +55,21 @@ class mtsCommandBase;
 
 // void commands
 class mtsCommandVoidBase;
-template <class _interfaceType> class mtsCommandVoid;
+template <class _classType> class mtsCommandVoid;
 class mtsFunctionVoid;
 
 // one argument commands
-template <class _argumentBaseType> class mtsCommandReadOrWriteBase;
-typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
-typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
-
+class mtsCommandReadBase;
+template <class _classType, class _argumentType> class mtsCommandRead;
 class mtsFunctionRead;
+
+class mtsCommandWriteBase;
+template <class _classType, class _argumentType> class mtsCommandWrite;
 class mtsFunctionWrite;
 
 // two arguments commands
-template <class _argument2BaseType> class mtsCommandQualifiedReadOrWriteBase;
-typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
-typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
-
+class mtsCommandQualifiedReadBase;
+template <class _classType, class _argument1Type, class _argument2Type> class mtsCommandQualifiedRead;
 class mtsFunctionQualifiedRead;
 
 // multicast commands

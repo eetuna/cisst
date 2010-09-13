@@ -6,7 +6,7 @@
 
   Author(s):  Peter Kazanzides, Anton Deguet
 
-  (C) Copyright 2007-2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2007-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionBase.h>
-#include <cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h>
+#include <cisstMultiTask/mtsCommandQualifiedReadBase.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsFunctionQualifiedRead: public mtsFunctionBase {
 protected:
-    typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> CommandType;
+    typedef mtsCommandQualifiedReadBase CommandType;
     CommandType * Command;
 
     // Portability note:  Visual Studio.NET 2003 did not compile with following (Error C2365), needed to add "a" and "b".
@@ -120,7 +120,7 @@ protected:
     }
 
     /*! Access to underlying command object. */
-    mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> * GetCommand(void) const;
+    CommandType * GetCommand(void) const;
 
     /*! Access to the command argument 1 prototype. */
     const mtsGenericObject * GetArgument1Prototype(void) const;

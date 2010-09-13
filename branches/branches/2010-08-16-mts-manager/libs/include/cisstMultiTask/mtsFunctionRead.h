@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionBase.h>
-#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsCommandReadBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsFunctionRead: public mtsFunctionBase {
 protected:
-    typedef mtsCommandReadOrWriteBase<mtsGenericObject> CommandType;
+    typedef mtsCommandReadBase CommandType;
     CommandType * Command;
 
     template <typename _userType, bool>
@@ -47,18 +47,11 @@ protected:
             mtsGenericObjectProxyRef<_userType> argumentWrapped(argument); 
             return command->Execute(argumentWrapped);
         }
-        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument) {
-            mtsGenericObjectProxyRef<_userType> argumentWrapped(argument);
-            return command->Execute(argumentWrapped);
-        }
     };
     template <typename _userType>
     class ConditionalWrap<_userType, true> {
     public:
         static mtsCommandBase::ReturnType Call(mtsCommandReadBase * command, _userType & argument) {
-            return command->Execute(argument);
-        }
-        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument) {
             return command->Execute(argument);
         }
     };
@@ -98,7 +91,7 @@ public:
     }
 
     /*! Access to underlying command object. */
-    mtsCommandReadOrWriteBase<mtsGenericObject> * GetCommand(void) const;
+    CommandType * GetCommand(void) const;
 
     /*! Access to the command argument prototype. */
     const mtsGenericObject * GetArgumentPrototype(void) const;

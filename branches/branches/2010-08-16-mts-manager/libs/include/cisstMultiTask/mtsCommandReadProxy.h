@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandReadProxy_h
 #define _mtsCommandReadProxy_h
 
-#include <cisstMultiTask/mtsCommandReadOrWriteBase.h>
+#include <cisstMultiTask/mtsCommandReadBase.h>
 #include <cisstMultiTask/mtsCommandProxyBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 
@@ -39,7 +39,7 @@ http://www.cisst.org/cisst/license.txt.
   method is called, the command id with payload is sent to the connected peer
   interface across a network.
 */
-class mtsCommandReadProxy : public mtsCommandReadBase, public mtsCommandProxyBase
+class mtsCommandReadProxy: public mtsCommandReadBase, public mtsCommandProxyBase
 {
     friend class mtsComponentProxy;
 
@@ -73,8 +73,7 @@ public:
     }
 
     /*! The execute method. */
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument,
-                                               bool CMN_UNUSED(blocking) = true) {
+    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
         if (IsDisabled()) {
             return mtsCommandBase::DISABLED;
         }
