@@ -344,8 +344,8 @@ public:
                and embedded to enable communication with manager components.
                Effective only for user components. */
     bool AddComponent(mtsComponent * component, const bool supportInternalInterfaces = false);
-    bool /*CISST_DEPRECATED*/ AddTask(mtsTask * component); // For backward compatibility
-    bool /*CISST_DEPRECATED*/ AddDevice(mtsComponent * component); // For backward compatibility
+    bool CISST_DEPRECATED AddTask(mtsTask * component); // For backward compatibility
+    bool CISST_DEPRECATED AddDevice(mtsComponent * component); // For backward compatibility
 
     /*! \brief Remove a component from this local component manager. */
     bool RemoveComponent(mtsComponent * component);
@@ -355,22 +355,22 @@ public:
     mtsComponent * GetComponent(const std::string & componentName) const;
     mtsTask * GetComponentAsTask(const std::string & componentName) const;
 
-    mtsComponent /*CISST_DEPRECATED*/ * GetDevice(const std::string & deviceName); // For backward compatibility
-    mtsTask /*CISST_DEPRECATED*/ * GetTask(const std::string & taskName); // For backward compatibility
+    mtsComponent CISST_DEPRECATED * GetDevice(const std::string & deviceName); // For backward compatibility
+    mtsTask CISST_DEPRECATED * GetTask(const std::string & taskName); // For backward compatibility
 
     /*! \brief Check if a component exists by its name */
     bool FindComponent(const std::string & componentName) const;
 
     /*! \brief Create all components. If a component is of type mtsTask, 
-               mtsTask::Create() is called internally. */
+      mtsTask::Create() is called internally. */
     bool CreateAll(double timeout = 10 * cmn_s);
 
     /*! \brief Start all components. If a component is of type mtsTask, 
-               mtsTask::Start() is called internally. */
+      mtsTask::Start() is called internally. */
     void StartAll(void);
 
     /*! \brief Stop all components. If a component is of type mtsTask, 
-               mtsTask::Kill() is called internally. */
+      mtsTask::Kill() is called internally. */
     void KillAll(void);
 
     /*! \brief Cleanup.  Since a local component manager is a singleton, the
