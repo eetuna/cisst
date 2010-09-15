@@ -46,17 +46,17 @@ void mtsTaskFromSignal::PostCommandQueuedMethod(void) {
 
 void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
     CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: begin task " << this->GetName() << std::endl;
-    if (TaskState == INITIALIZING) {
+    if (this->State == mtsComponentState::INITIALIZING) {
         this->StartupInternal();
     }
 
-	while ((TaskState == ACTIVE) || (TaskState == READY)) {
-        while (TaskState == READY) {
+	while ((this->State == mtsComponentState::ACTIVE) || (this->State == mtsComponentState::READY)) {
+        while (this->State == mtsComponentState::READY) {
             // Suspend the task until there is a call to Start().
             CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: wait to start task \"" << this->GetName() << "\"" << std::endl;
             WaitForWakeup();
         }
-        if (TaskState == ACTIVE) {
+        if (this->State == mtsComponentState::ACTIVE) {
             DoRunInternal();
             // put the task to sleep until next signal
             CMN_LOG_CLASS_RUN_DEBUG << "RunInternal: about to put thread to sleep for task \"" << this->GetName() << "\"" << std::endl;
@@ -64,7 +64,7 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
         }
     }
 
-    if (TaskState == FINISHING) {
+    if (this->State == mtsComponentState::FINISHING) {
     	CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: end of task \"" << this->GetName() << "\"" << std::endl;
         this->CleanupInternal();
     }
@@ -75,7 +75,7 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
 
 void mtsTaskFromSignal::Kill(void)
 {
-    CMN_LOG_CLASS_INIT_VERBOSE << "Kill: task \"" << this->GetName() << "\", current state \"" << GetTaskStateName() << "\"" << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "Kill: task \"" << this->GetName() << "\", current state \"" << this->State << "\"" << std::endl;
     mtsTask::Kill();
     // only difference is that we need to wake up the thread to make sure it processes the request
     this->Thread.Wakeup();

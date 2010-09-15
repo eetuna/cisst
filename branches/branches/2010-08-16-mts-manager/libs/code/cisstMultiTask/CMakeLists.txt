@@ -38,6 +38,7 @@ set (SOURCE_FILES
      mtsIntervalStatistics.cpp
 
      mtsComponent.cpp
+     mtsComponentState.cpp
      mtsTask.cpp
      mtsTaskContinuous.cpp
      mtsTaskPeriodic.cpp
@@ -118,6 +119,7 @@ set (HEADER_FILES
      mtsIntervalStatistics.h
 
      mtsComponent.h
+     mtsComponentState.h
      mtsTask.h
      mtsTaskContinuous.h
      mtsTaskPeriodic.h

@@ -1477,7 +1477,7 @@ bool mtsManagerLocal::CreateAll(double timeout)
             componentTask = dynamic_cast<mtsTask*>(iterator->second);
             if (componentTask) {
                 timeStartedOne = TimeServer.GetRelativeTime();
-                allCreated = componentTask->WaitForState(mtsTask::READY, timeLeft);
+                allCreated = componentTask->WaitForState(mtsComponentState::READY, timeLeft);
                 if (!allCreated) {
                     CMN_LOG_CLASS_INIT_ERROR << "CreateAll: component \"" << iterator->first << "\" failed to reach state READY" << std::endl;
                 }

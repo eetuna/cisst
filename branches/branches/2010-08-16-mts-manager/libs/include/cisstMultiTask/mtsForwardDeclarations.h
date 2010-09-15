@@ -30,7 +30,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnClassServices.h>
 #include <cisstMultiTask/mtsGenericObject.h>
-//include <cisstMultiTask/mtsGenericObjectProxy.h>
 
 #include <cisstMultiTask/mtsConfig.h>
 

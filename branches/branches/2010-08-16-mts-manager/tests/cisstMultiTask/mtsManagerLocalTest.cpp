@@ -387,10 +387,10 @@ void mtsManagerLocalTest::TestStates(void)
     mtsTestFromSignal1 * fromSignal1 = new mtsTestFromSignal1;
     mtsTestDevice2 * device2 = new mtsTestDevice2;
 
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, periodic1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, continuous1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, fromCallback1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::CONSTRUCTED, fromSignal1->GetTaskState());
+    CPPUNIT_ASSERT(periodic1->GetState() == mtsComponentState::CONSTRUCTED);
+    CPPUNIT_ASSERT(continuous1->GetState() == mtsComponentState::CONSTRUCTED);
+    CPPUNIT_ASSERT(fromCallback1->GetState() == mtsComponentState::CONSTRUCTED);
+    CPPUNIT_ASSERT(fromSignal1->GetState() == mtsComponentState::CONSTRUCTED);
 
     CPPUNIT_ASSERT(localManager.AddComponent(periodic1));
     CPPUNIT_ASSERT(localManager.AddComponent(continuous1));
@@ -407,45 +407,46 @@ void mtsManagerLocalTest::TestStates(void)
     CPPUNIT_ASSERT(localManager.Connect(device2->GetName(), "r1", continuous1->GetName(), "p2"));
 
     localManager.CreateAll();
-    CPPUNIT_ASSERT((periodic1->GetTaskState() == mtsTask::INITIALIZING) ||
-                   (periodic1->GetTaskState() == mtsTask::READY));
-    CPPUNIT_ASSERT((continuous1->GetTaskState() == mtsTask::INITIALIZING) ||
-                   (continuous1->GetTaskState() == mtsTask::READY));
-    CPPUNIT_ASSERT((fromCallback1->GetTaskState() == mtsTask::INITIALIZING) || 
-                   (fromCallback1->GetTaskState() == mtsTask::READY));
-    CPPUNIT_ASSERT((fromSignal1->GetTaskState() == mtsTask::INITIALIZING) ||
-                   (fromSignal1->GetTaskState() == mtsTask::READY));
+    CPPUNIT_ASSERT((periodic1->GetState() == mtsComponentState::INITIALIZING) ||
+                   (periodic1->GetState() == mtsComponentState::READY));
+    CPPUNIT_ASSERT((continuous1->GetState() == mtsComponentState::INITIALIZING) ||
+                   (continuous1->GetState() == mtsComponentState::READY));
+    CPPUNIT_ASSERT((fromCallback1->GetState() == mtsComponentState::INITIALIZING) || 
+                   (fromCallback1->GetState() == mtsComponentState::READY));
+    CPPUNIT_ASSERT((fromSignal1->GetState() == mtsComponentState::INITIALIZING) ||
+                   (fromSignal1->GetState() == mtsComponentState::READY));
 
     // let all tasks get initialized
     osaSleep(maxTimeToChangeState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::READY, periodic1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::READY, continuous1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::READY, fromCallback1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::READY, fromSignal1->GetTaskState());
+    CPPUNIT_ASSERT(periodic1->GetState() == mtsComponentState::READY);
+    CPPUNIT_ASSERT(continuous1->GetState() == mtsComponentState::READY);
+    CPPUNIT_ASSERT(fromCallback1->GetState() == mtsComponentState::READY);
+    CPPUNIT_ASSERT(fromSignal1->GetState() == mtsComponentState::READY);
 
     localManager.StartAll();
     // let all tasks start
     osaSleep(maxTimeToChangeState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, periodic1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, continuous1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::ACTIVE, fromCallback1->GetTaskState());
+    CPPUNIT_ASSERT(periodic1->GetState() == mtsComponentState::ACTIVE);
+    CPPUNIT_ASSERT(continuous1->GetState() == mtsComponentState::ACTIVE);
+    CPPUNIT_ASSERT(fromCallback1->GetState() == mtsComponentState::ACTIVE);
+    CPPUNIT_ASSERT(fromSignal1->GetState() == mtsComponentState::ACTIVE);
 
     localManager.KillAll();
-    CPPUNIT_ASSERT(periodic1->GetTaskState() == mtsTask::FINISHING ||
-                   periodic1->GetTaskState() == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(continuous1->GetTaskState() == mtsTask::FINISHING ||
-                   continuous1->GetTaskState() == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(fromCallback1->GetTaskState() == mtsTask::FINISHING ||
-                   fromCallback1->GetTaskState() == mtsTask::FINISHED);
-    CPPUNIT_ASSERT(fromSignal1->GetTaskState() == mtsTask::FINISHING ||
-                   fromSignal1->GetTaskState() == mtsTask::FINISHED);
+    CPPUNIT_ASSERT(periodic1->GetState() == mtsComponentState::FINISHING ||
+                   periodic1->GetState() == mtsComponentState::FINISHED);
+    CPPUNIT_ASSERT(continuous1->GetState() == mtsComponentState::FINISHING ||
+                   continuous1->GetState() == mtsComponentState::FINISHED);
+    CPPUNIT_ASSERT(fromCallback1->GetState() == mtsComponentState::FINISHING ||
+                   fromCallback1->GetState() == mtsComponentState::FINISHED);
+    CPPUNIT_ASSERT(fromSignal1->GetState() == mtsComponentState::FINISHING ||
+                   fromSignal1->GetState() == mtsComponentState::FINISHED);
 
     // let all tasks stop
     osaSleep(maxTimeToChangeState);
-    CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, periodic1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, continuous1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, fromCallback1->GetTaskState());
-    CPPUNIT_ASSERT_EQUAL(mtsTask::FINISHED, fromSignal1->GetTaskState());
+    CPPUNIT_ASSERT(periodic1->GetState() == mtsComponentState::FINISHED);
+    CPPUNIT_ASSERT(continuous1->GetState() == mtsComponentState::FINISHED);
+    CPPUNIT_ASSERT(fromCallback1->GetState() == mtsComponentState::FINISHED);
+    CPPUNIT_ASSERT(fromSignal1->GetState() == mtsComponentState::FINISHED);
 
     delete periodic1;
     delete continuous1;

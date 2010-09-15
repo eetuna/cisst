@@ -37,6 +37,7 @@ const std::string mtsComponent::EventNames::AddConnection = "AddConnectionEvent"
 
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),
+    State(mtsComponentState::CONSTRUCTED),
     UseSeparateLogFileFlag(false),
     LoDMultiplexerStreambuf(0),
     LogFile(0),
@@ -682,6 +683,47 @@ cmnLogger::StreamBufType * mtsComponent::GetLogMultiplexer(void) const
     }
     return cmnGenericObject::GetLogMultiplexer();
 }
+
+
+bool mtsComponent::IsRunning(void) const
+{
+    return (this->State == mtsComponentState::ACTIVE);
+ }
+
+
+bool mtsComponent::IsStarted(void) const
+{
+    return (this->State >= mtsComponentState::READY);
+}
+
+
+bool mtsComponent::IsTerminated(void) const
+{
+    return (this->State == mtsComponentState::FINISHED);
+}
+
+
+bool mtsComponent::IsEndTask(void) const
+{
+    return (this->State >= mtsComponentState::FINISHING);
+}
+
+
+const mtsComponentState & mtsComponent::GetState(void) const
+{
+    return this->State;
+}
+
+
+bool mtsComponent::WaitForState(mtsComponentState::Enum desiredState, double timeout)
+{
+    if (timeout != 0.0) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "WaitForState: called for component \"" << this->GetName()
+                                   << "\" has no effect for mtsComponent" << std::endl;
+    }
+    return true;
+}
+
 
 bool mtsComponent::AddInterfaceInternal(void)
 {

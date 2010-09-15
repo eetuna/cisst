@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 
 void * mtsTaskPeriodic::RunInternal(void *data)
 {
-    if (TaskState == INITIALIZING) {
+    if (this->State == mtsComponentState::INITIALIZING) {
         SaveThreadStartData(data);
         this->StartupInternal();
         if (CaptureThread) {
@@ -37,8 +37,8 @@ void * mtsTaskPeriodic::RunInternal(void *data)
         }
     }
 
-	while ((TaskState == ACTIVE) || (TaskState == READY)) {
-        if (TaskState == ACTIVE) {
+	while ((this->State == mtsComponentState::ACTIVE) || (this->State == mtsComponentState::READY)) {
+        if (this->State == mtsComponentState::ACTIVE) {
             DoRunInternal();
             if (StateTable.GetToc() - StateTable.GetTic() > Period) OverranPeriod = true;
         }
@@ -65,8 +65,9 @@ void mtsTaskPeriodic::StartupInternal(void) {
 	//ThreadBuddy.LockStack();
 	if (IsHardRealTime) {
         // Might as well wait for loop to start before going hard-real-time
-        while ((TaskState == READY) && !CaptureThread)
+        while ((this->State == mtsComponentState::READY) && !CaptureThread) {
             ThreadBuddy.WaitForRemainingPeriod();
+        }
 		ThreadBuddy.MakeHardRealTime();
 	}
 }
@@ -122,7 +123,7 @@ mtsTaskPeriodic::~mtsTaskPeriodic() {
 
 void mtsTaskPeriodic::Suspend(void)
 {
-    if (TaskState == ACTIVE) {
+    if (this->State == mtsComponentState::ACTIVE) {
         BaseType::Suspend();
         ThreadBuddy.Suspend();
         CMN_LOG_CLASS_RUN_DEBUG << "Suspended task " << Name << std::endl;

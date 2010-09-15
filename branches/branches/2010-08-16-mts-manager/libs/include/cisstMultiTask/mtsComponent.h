@@ -30,8 +30,9 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstOSAbstraction/osaThread.h>
 
-#include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+// #include <cisstMultiTask/mtsCommandBase.h>
+#include <cisstMultiTask/mtsComponentState.h>
 #include <cisstMultiTask/mtsFunctionWrite.h>
 #include <cisstMultiTask/mtsFunctionRead.h>
 #include <cisstMultiTask/mtsFunctionQualifiedRead.h>
@@ -76,6 +77,9 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     /*! A string identifying the 'Name' of the component. */
     std::string Name;
+
+    /*! Component state. */
+    mtsComponentState State;
 
     /*! Default constructor. Protected to prevent creation of a component
       without a name. */
@@ -256,8 +260,30 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       UseSeparateLogFile or UseSeparateLogFileDefault. */
     cmnLogger::StreamBufType * GetLogMultiplexer(void) const;
 
- protected:
+    /********************* Methods to query the task state ****************/
 
+    /*! Return true if task is active. */
+    bool IsRunning(void) const;
+    inline bool CISST_DEPRECATED Running(void) const {
+        return this->IsRunning();
+    }
+
+    /*! Return true if task was started. */
+    bool IsStarted(void) const;
+
+    /*! Return true if task is terminated. */
+    bool IsTerminated(void) const;
+
+    /*! Return true if task is marked for killing. */
+    bool IsEndTask(void) const;
+
+    /*! Return task state. */
+    const mtsComponentState & GetState(void) const;
+
+    /*! Helper function to wait on a state change, with specified timeout in seconds. */
+    virtual bool WaitForState(mtsComponentState::Enum desiredState, double timeout);
+
+ protected:
 
     /*! Flag to keep track of separate log file use */
     bool UseSeparateLogFileFlag;

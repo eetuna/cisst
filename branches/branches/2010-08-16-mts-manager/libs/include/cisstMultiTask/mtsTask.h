@@ -65,38 +65,11 @@ class CISST_EXPORT mtsTask: public mtsComponent
 public:
     typedef mtsComponent BaseType;
 
-    /*! The task states:
-
-        CONSTRUCTED  -- Initial state set by mtsTask constructor.
-        INITIALIZING -- Set by mtsTask::Create.  The task stays in this state until the
-                        thread calls mtsTask::RunInternal, which calls mtsTask::StartupInternal
-                        and the user-supplied mtsTask::Startup. If a new thread is created,
-                        the call to mtsTask::RunInternal happens some time after the call
-                        to mtsTask::Create.
-        READY        -- Set by mtsTask::StartupInternal. This means that the task is ready
-                        to be used (i.e., all interfaces have been initialized). Also,
-                        a task can return to the READY state (from the ACTIVE state) in
-                        response to a call to mtsTask::Suspend.
-        ACTIVE       -- Set by mtsTask::Start.  This is the normal running state, where
-                        the task is calling the user-supplied mtsTask::Run method.
-        FINISHING    -- Set by mtsTask::Kill. If the mtsTask::Run method is currently
-                        executing, it will finish, but no further calls will be made.
-                        The task will then call mtsTask::CleanupInternal, which calls
-                        the user-supplied mtsTask::Cleanup. The state will then be set
-                        to FINISHED.
-        FINISHED     -- The task has finished.
-    */
-
-    enum TaskStateType { CONSTRUCTED, INITIALIZING, READY, ACTIVE, FINISHING, FINISHED };
-
 protected:
     /************************ Protected task data  *********************/
 
 	/*! The OS independent thread object. */
 	osaThread Thread;
-
-    /*! The task state. */
-    TaskStateType TaskState;
 
     /*! Delay given for the task to start.  During initialization the
       task thread will wait for the specified delay (set by default to
@@ -167,11 +140,11 @@ protected:
 
     /*********** Methods for changing task state **************************/
 
-    /*! Helper function to change the task state. */
-    void ChangeState(TaskStateType newState);
+    /* documented in base class */
+    void ChangeState(mtsComponentState::Enum newState);
 
-    /*! Helper function to wait on a state change, with specified timeout in seconds. */
-    bool WaitForState(TaskStateType desiredState, double timeout);
+    /* documented in base class */
+    bool WaitForState(mtsComponentState::Enum desiredState, double timeout);
 
 public:
     /********************* Task constructor and destructor *****************/
@@ -238,30 +211,6 @@ public:
 	/*! End the task */
 	virtual void Kill(void);
 
-    /********************* Methods to query the task state ****************/
-
-	/*! Return true if task is active. */
-    inline bool Running(void) const { return (TaskState == ACTIVE); }
-
-	/*! Return true if task was started. */
-	inline bool IsStarted(void) const { return (TaskState >= READY); }
-
-    /*! Return true if task is terminated. */
-	inline bool IsTerminated(void) const { return (TaskState == FINISHED); }
-
-	/*! Return true if task is marked for killing. */
-	inline bool IsEndTask(void) const { return (TaskState >= FINISHING); }
-
-    /*! Return task state. */
-    inline TaskStateType GetTaskState(void) const {
-        return TaskState;
-    }
-
-    /*! Convert tasks state to string representation. */
-    const char * TaskStateName(TaskStateType state) const;
-
-    /*! Return task state as a string. */
-    inline const char * GetTaskStateName(void) const { return TaskStateName(TaskState); }
 
     /*! Return the average period. */
     double GetAveragePeriod(void) const { return StateTable.GetAveragePeriod(); }
