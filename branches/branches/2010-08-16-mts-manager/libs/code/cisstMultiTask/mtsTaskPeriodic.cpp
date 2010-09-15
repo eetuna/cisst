@@ -7,7 +7,7 @@
   Author(s):  Ankur Kapoor, Peter Kazanzides
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2008 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -37,18 +37,18 @@ void * mtsTaskPeriodic::RunInternal(void *data)
         }
     }
 
-	while ((this->State == mtsComponentState::ACTIVE) || (this->State == mtsComponentState::READY)) {
+    while ((this->State == mtsComponentState::ACTIVE) || (this->State == mtsComponentState::READY)) {
         if (this->State == mtsComponentState::ACTIVE) {
             DoRunInternal();
             if (StateTable.GetToc() - StateTable.GetTic() > Period) OverranPeriod = true;
         }
         // Wait for remaining period also handles thread suspension
         ThreadBuddy.WaitForRemainingPeriod();
-	}
+    }
 
-	CMN_LOG_CLASS_RUN_WARNING << "End of task " << Name << std::endl;
-	CleanupInternal();
-	return this->ReturnValue;
+    CMN_LOG_CLASS_RUN_WARNING << "End of task " << Name << std::endl;
+    CleanupInternal();
+    return this->ReturnValue;
 }
 
 void mtsTaskPeriodic::StartupInternal(void) {
@@ -59,31 +59,31 @@ void mtsTaskPeriodic::StartupInternal(void) {
     // Call base class StartupInternal, which also calls user-supplied Startup.
     BaseType::StartupInternal();
 
-	// allow no more stack allocation. allowing this will
-	// break realtime performance.
-	// lock all pages too
-	//ThreadBuddy.LockStack();
-	if (IsHardRealTime) {
+    // allow no more stack allocation. allowing this will
+    // break realtime performance.
+    // lock all pages too
+    //ThreadBuddy.LockStack();
+    if (IsHardRealTime) {
         // Might as well wait for loop to start before going hard-real-time
         while ((this->State == mtsComponentState::READY) && !CaptureThread) {
             ThreadBuddy.WaitForRemainingPeriod();
         }
-		ThreadBuddy.MakeHardRealTime();
-	}
+        ThreadBuddy.MakeHardRealTime();
+    }
 }
 
 
 void mtsTaskPeriodic::CleanupInternal() {
 
-	if (IsHardRealTime) {
-		ThreadBuddy.MakeSoftRealTime();
-	}
-	ThreadBuddy.UnlockStack();
+    if (IsHardRealTime) {
+        ThreadBuddy.MakeSoftRealTime();
+    }
+    ThreadBuddy.UnlockStack();
 
     //If the task was waiting on a queue, i.e. semaphore, mailbox,
     //etc, it is removed from such a queue and messaging tasks
     //pending on its message queue are unblocked with an error return.
-	ThreadBuddy.Delete();
+    ThreadBuddy.Delete();
 
     BaseType::CleanupInternal();
 }
@@ -100,7 +100,7 @@ mtsTaskPeriodic::mtsTaskPeriodic(const std::string & name, double periodicityInS
                                  bool newThread):
     mtsTaskContinuous(name, sizeStateTable, newThread),
     ThreadBuddy(),
-	Period(periodicityInSeconds),
+    Period(periodicityInSeconds),
     IsHardRealTime(isHardRealTime)
 {
     CMN_ASSERT(Period > 0);

@@ -7,7 +7,7 @@
   Author(s):  Peter Kazanzides
   Created on: 2008-09-18
 
-  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2008-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -43,7 +43,7 @@ void * mtsTaskFromCallback::RunInternal(void * CMN_UNUSED(data)) {
         DoRunInternal();
     }
     if (this->State == mtsComponentState::FINISHING) {
-    	CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: end of task " << this->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: end of task " << this->GetName() << std::endl;
         this->CleanupInternal();
     }
     // Make copy on stack before clearing inRunInternal

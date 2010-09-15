@@ -7,7 +7,7 @@
   Author(s):  Ankur Kapoor, Peter Kazanzides, Min Yang Jung
   Created on: 2004-04-30
 
-  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
   --- begin cisst license - do not edit ---
@@ -127,18 +127,18 @@ void mtsTask::ChangeState(mtsComponentState::Enum newState)
     StateChangeSignal.Raise();
 }
 
-bool mtsTask::WaitForState(mtsComponentState::Enum desiredState, double timeout)
+bool mtsTask::WaitForState(mtsComponentState desiredState, double timeout)
 {
     if (this->State == desiredState) {
         return true;
     }
     if (osaGetCurrentThreadId() == Thread.GetId()) {
         // This shouldn't happen
-        CMN_LOG_CLASS_INIT_WARNING << "WaitForState(" << mtsComponentState::ToString(desiredState) << "): called from self for task \""
+        CMN_LOG_CLASS_INIT_WARNING << "WaitForState(" << desiredState << "): called from self for task \""
                                    << this->GetName() << "\"" << std::endl;
     } else {
         CMN_LOG_CLASS_INIT_VERBOSE << "WaitForState: waiting for task \"" << this->GetName() << "\" to enter state \""
-                                   << mtsComponentState::ToString(desiredState) << "\"" << std::endl;
+                                   << desiredState << "\"" << std::endl;
         double curTime = osaGetTime();
         double startTime = curTime;
         double endTime = startTime + timeout;
@@ -155,7 +155,7 @@ bool mtsTask::WaitForState(mtsComponentState::Enum desiredState, double timeout)
                                        << " seconds." << std::endl;
         } else {
             CMN_LOG_CLASS_INIT_ERROR << "WaitForState: task \"" << this->GetName()
-                                     << "\" did not reach state \"" << mtsComponentState::ToString(desiredState)
+                                     << "\" did not reach state \"" << desiredState
                                      << "\", current state is \"" << this->State << "\"" << std::endl;
         }
     }

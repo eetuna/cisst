@@ -28,6 +28,8 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsComponentState_h
 
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+// Always include last
+#include <cisstMultiTask/mtsExport.h>
 
 /*! The possible component states:
 

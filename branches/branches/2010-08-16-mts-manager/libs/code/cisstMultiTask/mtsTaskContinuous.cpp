@@ -7,7 +7,7 @@
   Author(s):  Peter Kazanzides
   Created on: 2008-09-23
 
-  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights Reserved.
+  (C) Copyright 2008-2010 Johns Hopkins University (JHU), All Rights Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -93,12 +93,12 @@ void mtsTaskContinuous::Create(void *data)
         return;
     }
     if (NewThread) {
-	    CMN_LOG_CLASS_INIT_VERBOSE << "Create: creating thread for task " << this->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Create: creating thread for task " << this->GetName() << std::endl;
         ChangeState(mtsComponentState::INITIALIZING);
-	    Thread.Create<mtsTaskContinuous, void*>(this, &mtsTaskContinuous::RunInternal, data);
+        Thread.Create<mtsTaskContinuous, void*>(this, &mtsTaskContinuous::RunInternal, data);
     }
     else {
-	    CMN_LOG_CLASS_INIT_VERBOSE << "Create: using current thread for task " << this->GetName() << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "Create: using current thread for task " << this->GetName() << std::endl;
         Thread.CreateFromCurrentThread();
         CaptureThread = true;
         ChangeState(mtsComponentState::INITIALIZING);

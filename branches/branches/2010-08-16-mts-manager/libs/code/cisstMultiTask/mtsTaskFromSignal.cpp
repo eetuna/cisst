@@ -50,7 +50,7 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
         this->StartupInternal();
     }
 
-	while ((this->State == mtsComponentState::ACTIVE) || (this->State == mtsComponentState::READY)) {
+    while ((this->State == mtsComponentState::ACTIVE) || (this->State == mtsComponentState::READY)) {
         while (this->State == mtsComponentState::READY) {
             // Suspend the task until there is a call to Start().
             CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: wait to start task \"" << this->GetName() << "\"" << std::endl;
@@ -65,7 +65,7 @@ void * mtsTaskFromSignal::RunInternal(void * CMN_UNUSED(data)) {
     }
 
     if (this->State == mtsComponentState::FINISHING) {
-    	CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: end of task \"" << this->GetName() << "\"" << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "RunInternal: end of task \"" << this->GetName() << "\"" << std::endl;
         this->CleanupInternal();
     }
     void * returnValue = this->ReturnValue;

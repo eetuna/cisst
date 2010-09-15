@@ -83,6 +83,7 @@ class mtsInterfaceRequiredOrInput;
 class mtsInterfaceRequired;
 class mtsInterfaceInput;
 
+class mtsCommandState;
 class mtsComponent;
 typedef mtsComponent mtsDevice; // for backward compatibility
 class mtsTask;

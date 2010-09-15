@@ -1446,12 +1446,53 @@ bool mtsManagerLocal::CreateManagerComponents(void)
 }
 
 
-bool mtsManagerLocal::CreateAll(double timeout)
+bool mtsManagerLocal::WaitForStateAll(mtsComponentState desiredState, double timeout) const
+{
+    // wait for all components to be started if timeout is positive
+    bool allAtState = true;
+    if (timeout > 0.0) {
+        // will iterate on all components
+        ComponentMapType::const_iterator iterator = ComponentMap.begin();
+        const ComponentMapType::const_iterator end = ComponentMap.end();
+        double timeStartedAll = TimeServer.GetRelativeTime();
+        double timeEnd = timeStartedAll + timeout;
+        bool timedOut = false;
+        for (; (iterator != end) and allAtState and not timedOut; ++iterator) {
+            // compute how much time do we have left based on when we started
+            double timeLeft = timeEnd - TimeServer.GetRelativeTime();
+            allAtState = iterator->second->WaitForState(desiredState, timeLeft);
+            if (!allAtState) {
+                CMN_LOG_CLASS_INIT_ERROR << "WaitForStateAll: component \"" << iterator->first << "\" failed to reach state \""
+                                         << desiredState << "\"" << std::endl;
+            }
+            if (TimeServer.GetRelativeTime() > timeEnd) {
+                // looks like we don't have any time left to start the remaining components.
+                timedOut = true;
+                allAtState = false;
+                CMN_LOG_CLASS_INIT_ERROR << "WaitForStateAll: timed out while waiting for state \""
+                                         << desiredState << "\"" << std::endl;
+            }
+        }
+        // report results
+        if (allAtState and not timedOut) {
+            CMN_LOG_CLASS_INIT_VERBOSE << "WaitForStateAll: all components reached state \""
+                                       << desiredState << "\" in " << (TimeServer.GetRelativeTime() - timeStartedAll) << " seconds" << std::endl;
+        } else {
+            CMN_LOG_CLASS_INIT_ERROR << "WaitForStateAll: failed to reached state \""
+                                     << desiredState << "\" for all components" << std::endl;
+        }
+    } else {
+        CMN_LOG_CLASS_INIT_VERBOSE << "WaitForStateAll: called with null timeout (not blocking)" << std::endl;
+    }
+    return allAtState;
+}
+
+
+void mtsManagerLocal::CreateAll(void)
 {
     if (!CreateManagerComponents()) {
         CMN_LOG_CLASS_INIT_WARNING << "CreateAll: failed to add internal manager components (maybe CreateAll has been called before)" << std::endl;
     }
-
     ComponentMapChange.Lock();
     {
         ComponentMapType::const_iterator iterator = ComponentMap.begin();
@@ -1461,38 +1502,6 @@ bool mtsManagerLocal::CreateAll(double timeout)
         }
     }
     ComponentMapChange.Unlock();
-
-    // wait for all components to be started if timeout is positive
-    bool allCreated = true;
-    if (timeout > 0.0) {
-        ComponentMapType::const_iterator iterator = ComponentMap.begin();
-        const ComponentMapType::const_iterator end = ComponentMap.end();
-        mtsTask * componentTask;
-        double timeLeft = timeout;
-        double timeStartedAll = TimeServer.GetRelativeTime();
-        double timeStartedOne;
-        bool timedOut = false;
-        for (; (iterator != end) && allCreated && !timedOut; ++iterator) {
-            // only tasks have states at that point - todo should this change? adeguet1
-            componentTask = dynamic_cast<mtsTask*>(iterator->second);
-            if (componentTask) {
-                timeStartedOne = TimeServer.GetRelativeTime();
-                allCreated = componentTask->WaitForState(mtsComponentState::READY, timeLeft);
-                if (!allCreated) {
-                    CMN_LOG_CLASS_INIT_ERROR << "CreateAll: component \"" << iterator->first << "\" failed to reach state READY" << std::endl;
-                }
-                timeLeft = timeout - (TimeServer.GetRelativeTime() - timeStartedOne);
-                if (timeLeft < 0.0) {
-                    timedOut = true;
-                    CMN_LOG_CLASS_INIT_ERROR << "CreateAll: timed out while waiting for READY xxx" << std::endl;
-                }
-            }
-        }
-        CMN_LOG_CLASS_INIT_VERBOSE << "CreateAll: all components created in " << (TimeServer.GetRelativeTime() - timeStartedAll) << " seconds" << std::endl;
-    } else {
-        CMN_LOG_CLASS_INIT_VERBOSE << "CreateAll: all components to be created (not blocking)" << std::endl;
-    }
-    return allCreated;
 }
 
 

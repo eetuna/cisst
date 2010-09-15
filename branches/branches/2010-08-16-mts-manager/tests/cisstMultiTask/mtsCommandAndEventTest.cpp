@@ -93,7 +93,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         osaSleep(serverExecutionDelay + blockingDelay);  // time to dequeue and let command execute
         CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
         CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
-        
+
         // test void command blocking
         if (blockingDelay > 0.0) {
             startTime = timeServer.GetRelativeTime();
@@ -159,15 +159,17 @@ void mtsCommandAndEventTest::TestLocalDeviceDevice(void)
     mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestDevice2 * client = new mtsTestDevice2;
     mtsTestDevice3 * server = new mtsTestDevice3;
-    
+
     manager->AddComponent(client);
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, 0.0, 0.0);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -191,10 +193,12 @@ void mtsCommandAndEventTest::TestLocalPeriodicPeriodic(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -218,10 +222,12 @@ void mtsCommandAndEventTest::TestLocalContinuousContinuous(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -247,10 +253,12 @@ void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -278,10 +286,12 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -306,10 +316,12 @@ void mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -334,10 +346,12 @@ void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -364,10 +378,12 @@ void mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);
@@ -396,10 +412,12 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking(void)
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
     manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, 1.0 * cmn_s));
     manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, 1.0 * cmn_s));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
     manager->KillAll();
-    osaSleep(0.1 * cmn_s);
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, 1.0 * cmn_s));
     manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
     manager->RemoveComponent(client);
     manager->RemoveComponent(server);

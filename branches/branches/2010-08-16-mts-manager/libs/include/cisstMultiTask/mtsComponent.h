@@ -280,14 +280,14 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     /*! Return task state. */
     const mtsComponentState & GetState(void) const;
 
-    /*! Helper function to wait on a state change, with specified timeout in seconds. */
-    virtual bool WaitForState(mtsComponentState::Enum desiredState, double timeout);
-
  protected:
+
+    /*! Helper function to wait on a state change, with specified timeout in seconds. */
+    virtual bool WaitForState(mtsComponentState desiredState, double timeout);
 
     /*! Flag to keep track of separate log file use */
     bool UseSeparateLogFileFlag;
-    
+
     /*! Pointers on multiplexer used by this component for logging
       purposes.  By default the file "LogFile" is the only output
       stream but a user can add any stream using
@@ -370,7 +370,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
         const static std::string AddConnection;
     };
 
-    /*! Internal commands to process command execution request coming from manager 
+    /*! Internal commands to process command execution request coming from manager
         component client */
     void InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg);
     void InterfaceInternalCommands_ComponentResume(const mtsComponentStatusControl & arg);
@@ -389,13 +389,13 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
         const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
     bool RequestComponentConnect(
-        const std::string & clientProcessName, 
+        const std::string & clientProcessName,
         const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName, 
+        const std::string & serverProcessName,
         const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
 
     bool RequestComponentStart(const std::string & componentName, const double delayInSecond = 0.0) const;
-    bool RequestComponentStart(const std::string& processName, const std::string & componentName, 
+    bool RequestComponentStart(const std::string& processName, const std::string & componentName,
                                const double delayInSecond = 0.0) const;
 
     bool RequestComponentStop(const std::string & componentName, const double delayInSecond = 0.0) const;
@@ -408,7 +408,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses) const;
     bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents) const;
-    bool RequestGetNamesOfInterfaces(const std::string & processName, 
+    bool RequestGetNamesOfInterfaces(const std::string & processName,
                                      const std::string & componentName,
                                      std::vector<std::string> & namesOfInterfacesRequired,
                                      std::vector<std::string> & namesOfInterfacesProvided) const;

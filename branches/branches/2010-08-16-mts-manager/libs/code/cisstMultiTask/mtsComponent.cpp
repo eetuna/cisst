@@ -715,11 +715,11 @@ const mtsComponentState & mtsComponent::GetState(void) const
 }
 
 
-bool mtsComponent::WaitForState(mtsComponentState::Enum desiredState, double timeout)
+bool mtsComponent::WaitForState(mtsComponentState desiredState, double timeout)
 {
     if (timeout != 0.0) {
         CMN_LOG_CLASS_INIT_VERBOSE << "WaitForState: called for component \"" << this->GetName()
-                                   << "\" has no effect for mtsComponent" << std::endl;
+                                   << "\" for state \"" << desiredState << "\" has no effect for mtsComponent" << std::endl;
     }
     return true;
 }
@@ -773,9 +773,9 @@ bool mtsComponent::AddInterfaceInternal(void)
 void mtsComponent::InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg)
 {
     // MJ: How to implement "Stopping device-type component which might be already running"?
-    // 
+    //
     // Possible solutions might be:
-    // - For device-type component: disable all commands and functions in all 
+    // - For device-type component: disable all commands and functions in all
     //   interfaces of this component.
     // - For task-type component: the above + call Suspend()
     //
@@ -789,7 +789,7 @@ void mtsComponent::InterfaceInternalCommands_ComponentStop(const mtsComponentSta
         // TODO: implement stopping a device-type component
         cmnThrow("InterfaceInternalCommands_ComponentStop: TODO - implement this function");
         return;
-    } 
+    }
     // Stop task-type component
     else {
         task->Suspend();
@@ -801,9 +801,9 @@ void mtsComponent::InterfaceInternalCommands_ComponentStop(const mtsComponentSta
 void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentStatusControl & arg)
 {
     // MJ: How to implement "Resuming device-type component which might be already running"?
-    // 
+    //
     // Possible solutions might be:
-    // - For device-type component: enable all commands and functions in all 
+    // - For device-type component: enable all commands and functions in all
     //   interfaces of this component.
     // - For task-type component: the above + call Start()
 
@@ -815,7 +815,7 @@ void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentS
         // TODO: implement stopping a device-type component
         cmnThrow("InterfaceInternalCommands_ComponentResume: TODO - implement this function");
         return;
-    } 
+    }
     // Stop task-type component
     else {
         task->Start();
@@ -893,9 +893,9 @@ bool mtsComponent::RequestComponentConnect(
 }
 
 bool mtsComponent::RequestComponentConnect(
-    const std::string & clientProcessName, 
+    const std::string & clientProcessName,
     const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-    const std::string & serverProcessName, 
+    const std::string & serverProcessName,
     const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const
 {
     if (!InternalInterfaceFunctions.ComponentConnect.IsValid()) {
@@ -1079,7 +1079,7 @@ bool mtsComponent::RequestGetNamesOfComponents(const std::string & processName, 
     return true;
 }
 
-bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName, 
+bool mtsComponent::RequestGetNamesOfInterfaces(const std::string & processName,
                                                const std::string & componentName,
                                                std::vector<std::string> & namesOfInterfacesRequired,
                                                std::vector<std::string> & namesOfInterfacesProvided) const
