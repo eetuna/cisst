@@ -94,10 +94,27 @@ void mtsComponent::SetName(const std::string & componentName)
 }
 
 
+void mtsComponent::Create(void)
+{
+    CMN_LOG_CLASS_INIT_VERBOSE << "Create: default create method for component \""
+                               << this->GetName() << "\"" << std::endl;
+    this->State = mtsComponentState::READY;
+}
+
+
 void mtsComponent::Start(void)
 {
     CMN_LOG_CLASS_INIT_VERBOSE << "Start: default start method for component \""
                                << this->GetName() << "\"" << std::endl;
+    this->State = mtsComponentState::ACTIVE;
+}
+
+
+void mtsComponent::Kill(void)
+{
+    CMN_LOG_CLASS_INIT_VERBOSE << "Kill: default kill method for component \""
+                               << this->GetName() << "\"" << std::endl;
+    this->State = mtsComponentState::FINISHED;
 }
 
 
@@ -249,7 +266,7 @@ bool mtsComponent::RemoveInterfaceProvided(const std::string & interfaceProvided
     // MJUNG: this code is NOT thread safe.
     if (!InterfacesProvidedOrOutput.RemoveItem(interfaceProvidedName)) {
         CMN_LOG_CLASS_RUN_ERROR << "RemoveInterfaceProvided: failed to remove provided interface \""
-                                 << interfaceProvidedName << "\"" << std::endl;
+                                << interfaceProvidedName << "\"" << std::endl;
         return false;
     }
 

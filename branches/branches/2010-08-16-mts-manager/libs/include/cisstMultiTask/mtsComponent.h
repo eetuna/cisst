@@ -139,9 +139,18 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       configure themselves */
     virtual void Configure(const std::string & filename = "");
 
-    /*! Virtual method called after components are connected and
-      before they get started.  Use to place initialization code. */
+    /*! Virtual method to create the components, e.g. for tasks create
+      the required threads.  For other components, place
+      initialization code. */
+    virtual void Create(void);
+
+    /*! Virtual method called after components are connected to start
+        the computations and message processing. */
     virtual void Start(void);
+
+    /*! Virtual method to stop the computations and message
+        processing.  See Start. */
+    virtual void Kill(void);
 
     /*! Method to add a provided interface to the component.  This
       method is virtual so that mtsTaskBase can redefine it and

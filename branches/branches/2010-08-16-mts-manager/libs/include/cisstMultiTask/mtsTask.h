@@ -199,8 +199,8 @@ public:
     /* Maybe some or all of these should be pure virtual functions.      */
 
     /* Create a new thread (if needed). */
-    virtual void Create(void *data) = 0;
-    void Create(void) { Create(0); }
+    virtual void Create(void * data) = 0;
+    inline void Create(void) { Create(0); }
 
     /*! Start or resume execution of the task. */
     virtual void Start(void) = 0;
@@ -209,8 +209,7 @@ public:
     virtual void Suspend(void) = 0;
 
     /*! End the task */
-    virtual void Kill(void);
-
+    void Kill(void);
 
     /*! Return the average period. */
     double GetAveragePeriod(void) const { return StateTable.GetAveragePeriod(); }

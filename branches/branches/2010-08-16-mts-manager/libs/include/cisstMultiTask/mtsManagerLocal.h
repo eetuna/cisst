@@ -176,10 +176,6 @@ protected:
     /*! Initialization */
     void Initialize(void);
 
-    /*! \brief Create thread. Does nothing for device-type component,
-               create an internal thread for task-type component. */
-    void CreateInternalThread(mtsComponent * component);
-
     /*! \brief Create internal manager components automatically when LCM is
                initialized.  */
     bool CreateManagerComponents(void);

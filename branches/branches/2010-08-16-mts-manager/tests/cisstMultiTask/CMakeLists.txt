@@ -25,6 +25,7 @@ cisst_target_link_libraries (cisstMultiTasksTestsLib cisstCommon cisstVector cis
 set (SOURCE_FILES
      mtsCollectorBaseTest.cpp
      mtsCommandAndEventTest.cpp
+     mtsComponentStateTest.cpp
      mtsQueueTest.cpp
      mtsStateTableTest.cpp
      mtsTaskTest.cpp
@@ -41,6 +42,7 @@ set (SOURCE_FILES
 set (HEADER_FILES
      mtsCollectorBaseTest.h
      mtsCommandAndEventTest.h
+     mtsComponentStateTest.h
      mtsQueueTest.h
      mtsStateTableTest.h
      mtsTaskTest.h

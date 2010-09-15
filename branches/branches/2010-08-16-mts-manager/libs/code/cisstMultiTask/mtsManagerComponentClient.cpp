@@ -474,7 +474,7 @@ void mtsManagerComponentClient::InterfaceLCMCommands_ComponentStart(const mtsCom
     osaSleep(arg.DelayInSecond);
 
     // Start an internal thread (if needed)
-    LCM->CreateInternalThread(component);
+    component->Create();
 
     // Start the component
     component->Start();

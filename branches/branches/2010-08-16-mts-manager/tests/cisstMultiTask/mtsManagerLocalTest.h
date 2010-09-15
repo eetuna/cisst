@@ -48,8 +48,6 @@ private:
         CPPUNIT_TEST(TestGetTimeServer);
         CPPUNIT_TEST(TestGetProcessName);
 
-        CPPUNIT_TEST(TestStates);
-
         CPPUNIT_TEST(TestConnectLocally);
         CPPUNIT_TEST(TestConnectDisconnect);
 
@@ -88,8 +86,6 @@ public:
     void TestGetNamesOfDevices(void);
     void TestGetTimeServer(void);
     void TestGetProcessName(void);
-
-    void TestStates(void);
 
     void TestConnectLocally(void);
     void TestConnectDisconnect(void);

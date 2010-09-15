@@ -1357,48 +1357,6 @@ bool mtsManagerLocal::FindComponent(const std::string & componentName) const
     return (GetComponent(componentName) != 0);
 }
 
-void mtsManagerLocal::CreateInternalThread(mtsComponent * component)
-{
-    if (!component) return;
-
-    CMN_LOG_CLASS_INIT_VERBOSE << "CreateInternalThread: creating internal thread for " << component->GetName() << std::endl;
-
-    // Skip components of mtsComponent type
-    mtsTask * componentTask = dynamic_cast<mtsTask*>(component);
-    if (!componentTask) return;
-
-    // Note that the order of dynamic casts matters to properly create a component
-    // depending on its original type (tasks have a multiple inheritance structure).
-
-    // mtsTaskPeriodic type component
-    componentTask = dynamic_cast<mtsTaskPeriodic*>(component);
-    if (componentTask) {
-        componentTask->Create();
-        return;
-    }
-
-    // mtsTaskFromSignal type component
-    componentTask = dynamic_cast<mtsTaskFromSignal*>(component);
-    if (componentTask) {
-        componentTask->Create();
-        return;
-    }
-
-    // mtsTaskContinuous type component
-    componentTask = dynamic_cast<mtsTaskContinuous*>(component);
-    if (componentTask) {
-        componentTask->Create();
-        return;
-    }
-
-    // mtsTaskFromCallback type component
-    componentTask = dynamic_cast<mtsTaskFromCallback*>(component);
-    if (componentTask) {
-        componentTask->Create();
-        return;
-    }
-}
-
 bool mtsManagerLocal::CreateManagerComponents(void)
 {
     // Automatically add internal manager component when the LCM is initialized.
@@ -1498,7 +1456,7 @@ void mtsManagerLocal::CreateAll(void)
         ComponentMapType::const_iterator iterator = ComponentMap.begin();
         const ComponentMapType::const_iterator end = ComponentMap.end();
         for (; iterator != end; ++iterator) {
-            CreateInternalThread(iterator->second);
+            iterator->second->Create();
         }
     }
     ComponentMapChange.Unlock();
@@ -1555,41 +1513,12 @@ void mtsManagerLocal::StartAll(void)
 
 void mtsManagerLocal::KillAll(void)
 {
-    mtsTask *componentTask, *componentTaskTemp;
-
     ComponentMapChange.Lock();
     {
-        ComponentMapType::const_iterator it = ComponentMap.begin();
-        const ComponentMapType::const_iterator itEnd = ComponentMap.end();
-        for (; it != itEnd; ++it) {
-            // mtsTaskPeriodic type component
-            componentTaskTemp = dynamic_cast<mtsTaskPeriodic*>(it->second);
-            if (componentTaskTemp) {
-                componentTask = componentTaskTemp;
-            } else {
-                // mtsTaskFromSignal type component
-                componentTaskTemp = dynamic_cast<mtsTaskFromSignal*>(it->second);
-                if (componentTaskTemp) {
-                    componentTask = componentTaskTemp;
-                } else {
-                    // mtsTaskContinuous type component
-                    componentTaskTemp = dynamic_cast<mtsTaskContinuous*>(it->second);
-                    if (componentTaskTemp) {
-                        componentTask = componentTaskTemp;
-                    } else {
-                        // mtsTaskFromCallback type component
-                        componentTaskTemp = dynamic_cast<mtsTaskFromCallback*>(it->second);
-                        if (componentTaskTemp) {
-                            componentTask = componentTaskTemp;
-                        } else {
-                            componentTask = 0;
-                            CMN_LOG_CLASS_INIT_ERROR << "KillAll: invalid component: unknown mtsTask type" << std::endl;
-                        continue;
-                        }
-                    }
-                }
-            }
-            componentTask->Kill();
+        ComponentMapType::const_iterator iterator = ComponentMap.begin();
+        const ComponentMapType::const_iterator end = ComponentMap.end();
+        for (; iterator != end; ++iterator) {
+            iterator->second->Kill();
         }
     }
     ComponentMapChange.Unlock();
