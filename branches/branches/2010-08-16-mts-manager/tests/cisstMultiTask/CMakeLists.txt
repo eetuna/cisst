@@ -3,15 +3,15 @@
 #
 # CMakeLists for cisstMultiTask tests
 #
-# (C) Copyright 2008-2009 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2008-2010 Johns Hopkins University (JHU), All Rights
 # Reserved.
-# 
+#
 # --- begin cisst license - do not edit ---
-# 
+#
 # This software is provided "as is" under an open source license, with
 # no warranty.  The complete license can be found in license.txt and
 # http://www.cisst.org/cisst/license.txt.
-# 
+#
 # --- end cisst license ---
 
 # test library
@@ -51,15 +51,13 @@ set (HEADER_FILES
      mtsSerializationTest.h
      mtsTestComponents.h
      mtsManagerGlobalTest.h
-     mtsManagerLocalTest.h    
+     mtsManagerLocalTest.h
     )
 
 # Add executable for C++ tests
 add_executable (cisstMultiTaskTests ${SOURCE_FILES} ${HEADER_FILES})
-
 target_link_libraries (cisstMultiTaskTests cisstTestsMain cisstMultiTasksTestsLib)
-
 cisst_target_link_libraries (cisstMultiTaskTests cisstCommon cisstVector cisstOSAbstraction cisstMultiTask)
 
 # To generate a CTest list of tests
-cisst_add_tests (cisstMultiTaskTests)
+cisst_add_test (cisstMultiTaskTests ITERATIONS 1 INSTANCES 1)
