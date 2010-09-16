@@ -425,8 +425,10 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
 
     /*! Names of internal interfaces to enable user components to use mts-command
         pattern for communication with other components */
+#ifndef SWIG
     const static std::string NameOfInterfaceInternalProvided;
     const static std::string NameOfInterfaceInternalRequired;
+#endif // SWIG
 };
 
 

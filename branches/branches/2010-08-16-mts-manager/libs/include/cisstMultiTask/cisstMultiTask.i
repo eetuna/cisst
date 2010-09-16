@@ -64,27 +64,9 @@ http://www.cisst.org/cisst/license.txt.
 // Wrap commands
 %include "cisstMultiTask/mtsCommandBase.h"
 %include "cisstMultiTask/mtsCommandVoidBase.h"
-%include "cisstMultiTask/mtsCommandReadOrWriteBase.h"
-%include "cisstMultiTask/mtsCommandQualifiedReadOrWriteBase.h"
-
-%template(mtsCommandReadBase) mtsCommandReadOrWriteBase<mtsGenericObject>;
-%template(mtsCommandWriteBase) mtsCommandReadOrWriteBase<const mtsGenericObject>;
-%template(mtsCommandQualifiedReadBase) mtsCommandQualifiedReadOrWriteBase<mtsGenericObject>;
-%template(mtsCommandQualifiedWriteBase) mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject>;
-%{
-    typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
-    typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
-    typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
-    typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
-%}
-typedef mtsCommandReadOrWriteBase<mtsGenericObject> mtsCommandReadBase;
-typedef mtsCommandReadOrWriteBase<const mtsGenericObject> mtsCommandWriteBase;
-typedef mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> mtsCommandQualifiedReadBase;
-typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQualifiedWriteBase;
-%types(mtsCommandReadBase *);
-%types(mtsCommandWriteBase *);
-%types(mtsCommandQualifiedReadBase *);
-%types(mtsCommandQualifiedWriteBase *);
+%include "cisstMultiTask/mtsCommandReadBase.h"
+%include "cisstMultiTask/mtsCommandWriteBase.h"
+%include "cisstMultiTask/mtsCommandQualifiedReadBase.h"
 
 // Extend mtsCommandVoid
 %extend mtsCommandVoidBase {
@@ -95,7 +77,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandWrite
-%extend mtsCommandReadOrWriteBase<const mtsGenericObject> {
+%extend mtsCommandWriteBase {
     %pythoncode {
         def UpdateFromC(self):
             try:
@@ -114,7 +96,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandRead
-%extend mtsCommandReadOrWriteBase<mtsGenericObject> {
+%extend mtsCommandReadBase {
     %pythoncode {
         def UpdateFromC(self):
             try:
@@ -141,7 +123,7 @@ typedef mtsCommandQualifiedReadOrWriteBase<const mtsGenericObject> mtsCommandQua
 }
 
 // Extend mtsCommandQualifiedRead
-%extend mtsCommandQualifiedReadOrWriteBase<mtsGenericObject> {
+%extend mtsCommandQualifiedReadBase {
     %pythoncode {
         def UpdateFromC(self):
             try:
