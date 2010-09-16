@@ -1415,7 +1415,7 @@ bool mtsManagerLocal::WaitForStateAll(mtsComponentState desiredState, double tim
         double timeStartedAll = TimeServer.GetRelativeTime();
         double timeEnd = timeStartedAll + timeout;
         bool timedOut = false;
-        for (; (iterator != end) and allAtState and not timedOut; ++iterator) {
+        for (; (iterator != end) && allAtState && !timedOut; ++iterator) {
             // compute how much time do we have left based on when we started
             double timeLeft = timeEnd - TimeServer.GetRelativeTime();
             allAtState = iterator->second->WaitForState(desiredState, timeLeft);
