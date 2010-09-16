@@ -1432,7 +1432,7 @@ bool mtsManagerLocal::WaitForStateAll(mtsComponentState desiredState, double tim
             }
         }
         // report results
-        if (allAtState and not timedOut) {
+        if (allAtState && !timedOut) {
             CMN_LOG_CLASS_INIT_VERBOSE << "WaitForStateAll: all components reached state \""
                                        << desiredState << "\" in " << (TimeServer.GetRelativeTime() - timeStartedAll) << " seconds" << std::endl;
         } else {
