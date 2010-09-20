@@ -212,3 +212,36 @@ void mtsComponentStatusControl::DeSerializeRaw(std::istream & inputStream)
     cmnDeSerializeRaw(inputStream, command);
     Command = static_cast<ComponentStatusCommand>(command);
 }
+
+//-----------------------------------------------------------------------------
+//  Component Status Change Event
+//
+CMN_IMPLEMENT_SERVICES(mtsComponentStateChange);
+
+void mtsComponentStateChange::ToStream(std::ostream & outputStream) const
+{
+    //mtsGenericObject::ToStream(outputStream);
+    outputStream << std::endl
+                 << "Process: " << this->ProcessName
+                 << ", component: " << this->ComponentName
+                 << ", state: " << mtsComponentState::ToString(this->NewState)
+                 << std::endl;
+}
+
+void mtsComponentStateChange::SerializeRaw(std::ostream & outputStream) const
+{
+    mtsGenericObject::SerializeRaw(outputStream);
+    cmnSerializeRaw(outputStream, ProcessName);
+    cmnSerializeRaw(outputStream, ComponentName);
+    cmnSerializeRaw(outputStream, static_cast<int>(NewState));
+}
+
+void mtsComponentStateChange::DeSerializeRaw(std::istream & inputStream)
+{
+    mtsGenericObject::DeSerializeRaw(inputStream);
+    cmnDeSerializeRaw(inputStream, ProcessName);
+    cmnDeSerializeRaw(inputStream, ComponentName);
+    int newState;
+    cmnDeSerializeRaw(inputStream, newState);
+    NewState = static_cast<mtsComponentState::Enum>(newState);
+}

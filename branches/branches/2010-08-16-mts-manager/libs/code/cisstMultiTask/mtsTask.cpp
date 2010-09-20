@@ -125,6 +125,14 @@ void mtsTask::ChangeState(mtsComponentState::Enum newState)
     this->State = newState;
     StateChange.Unlock();
     StateChangeSignal.Raise();
+
+    // Inform the manager component client of the state change
+    mtsInterfaceProvided * interfaceInternalProvided = 
+        GetInterfaceProvided(mtsComponent::NameOfInterfaceInternalProvided);
+    if (interfaceInternalProvided) {
+        mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
+        EventGeneratorChangeState(mtsComponentStateChange(LCM->GetProcessName(), this->GetName(), this->State.GetState()));
+    }
 }
 
 bool mtsTask::WaitForState(mtsComponentState desiredState, double timeout)

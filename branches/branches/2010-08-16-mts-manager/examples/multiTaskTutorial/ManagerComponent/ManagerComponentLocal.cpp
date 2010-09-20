@@ -50,7 +50,7 @@ void ManagerComponentLocal::Run(void)
     static double lastTick = 0;
     static int count = 0;
 
-#if 1
+#if 0
     if (++count == 2) {
         std::vector<std::string> processes, components, interfacesRequired, interfacesProvided;
         if (osaGetTime() - lastTick > 5.0) {
@@ -105,7 +105,7 @@ void ManagerComponentLocal::Run(void)
     }
 #endif
 
-#if 0
+#if 1
     if (++count == 5) {
         //
         // Create the two components: odd counter and even counter

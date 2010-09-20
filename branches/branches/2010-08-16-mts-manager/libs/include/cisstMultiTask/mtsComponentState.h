@@ -94,6 +94,11 @@ class CISST_EXPORT mtsComponentState
     bool operator > (const ThisType & state) const;
     bool operator >= (const ThisType & state) const;
 
+    /*! Getter of current state */
+    Enum GetState(void) {
+        return Value;
+    }
+
  protected:
     /*! Value of this state */
     Enum Value;

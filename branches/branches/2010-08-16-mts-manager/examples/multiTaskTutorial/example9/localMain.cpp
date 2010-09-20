@@ -66,8 +66,8 @@ int main(int argc, char **argv)
 #endif
 #endif
 
-    taskManager->AddTask(client);
-    taskManager->AddTask(server);
+    taskManager->AddComponent(client);
+    taskManager->AddComponent(server);
     // reconfiguration test 2
 #if 0
 #if CISST_MTS_HAS_ICE

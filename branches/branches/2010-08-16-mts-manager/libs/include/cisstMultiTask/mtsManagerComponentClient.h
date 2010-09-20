@@ -79,6 +79,9 @@ protected:
     void HandleAddComponentEvent(const mtsDescriptionComponent &component);
     void HandleAddConnectionEvent(const mtsDescriptionConnection &component);
 
+    // Event handlers for InterfaceComponent's required interface
+    void HandleChangeState(const mtsComponentStateChange & componentStateChange);
+
     InterfaceLCMFunctionType InterfaceLCMFunction;
 
     /*! Create new component and add it to LCM */
@@ -131,6 +134,9 @@ public:
 
     /*! Returns name of manager component client */
     static std::string GetNameOfManagerComponentClient(const std::string & processName);
+    
+    /*! Returns name of InterfaceComponent's required interface */
+    static std::string GetNameOfInterfaceComponentRequired(const std::string & userComponentName);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentClient);

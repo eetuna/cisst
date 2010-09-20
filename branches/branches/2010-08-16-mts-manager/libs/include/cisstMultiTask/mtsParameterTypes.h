@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsGenericObject.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <cisstMultiTask/mtsVector.h> // for mtsDescriptionInterface::mtsStdStringVec
+#include <cisstMultiTask/mtsComponentState.h>
 
 // Always include last!
 #include <cisstMultiTask/mtsExport.h>
@@ -155,5 +156,33 @@ public:
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentStatusControl);
+
+
+//-----------------------------------------------------------------------------
+//  Component Status Change Event
+//
+class CISST_EXPORT mtsComponentStateChange : public mtsGenericObject
+{
+    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+
+public:
+    mtsComponentStateChange() {}
+    mtsComponentStateChange(const std::string & processName, 
+                            const std::string & componentName,
+                            const mtsComponentState::Enum & newState)
+                            : ProcessName(processName),
+                              ComponentName(componentName),
+                              NewState(newState) {}
+
+    std::string ProcessName;
+    std::string ComponentName;
+    mtsComponentState::Enum NewState;
+
+    void ToStream(std::ostream & outputStream) const;
+    void SerializeRaw(std::ostream & outputStream) const;
+    void DeSerializeRaw(std::istream & inputStream);
+};
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentStateChange);
 
 #endif // _mtsParameterTypes_h

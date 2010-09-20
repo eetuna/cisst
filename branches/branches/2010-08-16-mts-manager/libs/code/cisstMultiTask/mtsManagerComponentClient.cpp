@@ -52,6 +52,15 @@ std::string mtsManagerComponentClient::GetNameOfManagerComponentClient(const std
     return name;
 }
 
+std::string mtsManagerComponentClient::GetNameOfInterfaceComponentRequired(const std::string & userComponentName)
+{
+    std::string interfaceName = mtsManagerComponentClient::NameOfInterfaceComponentRequired;
+    interfaceName += "For";
+    interfaceName += userComponentName;
+
+    return interfaceName;
+}
+
 void mtsManagerComponentClient::Startup(void)
 {
    CMN_LOG_CLASS_INIT_VERBOSE << "Manager component CLIENT starts" << std::endl;
@@ -78,9 +87,10 @@ bool mtsManagerComponentClient::CreateAndAddNewComponent(const std::string & cla
         return false;
     }
 
-    // In oder to dynamically control the running status of this component (e.g.
-    // start, stop, resume), internal interfaces are embedded.
-    if (!LCM->AddComponent(newComponent, true)) {
+    // Add new component with supoprt for the dynamic component control
+    // smmy: remove the following line
+    //if (!LCM->AddComponentWithControlService(newComponent)) {
+    if (!LCM->AddComponent(newComponent)) {
         CMN_LOG_CLASS_RUN_ERROR << "CreateAndAddNewComponent: failed to add component: "
             << "\"" << componentName << "\" of type \"" << className << "\"" << std::endl;
         return false;
@@ -202,9 +212,7 @@ bool mtsManagerComponentClient::AddNewClientComponent(const std::string & client
     // Create a new set of function objects
     InterfaceComponentFunctionType * newFunctionSet = new InterfaceComponentFunctionType;
 
-    std::string interfaceName = mtsManagerComponentClient::NameOfInterfaceComponentRequired;
-    interfaceName += "For";
-    interfaceName += clientComponentName;
+    const std::string interfaceName = GetNameOfInterfaceComponentRequired(clientComponentName);
     mtsInterfaceRequired * required = AddInterfaceRequired(interfaceName);
     if (!required) {
         CMN_LOG_CLASS_INIT_ERROR << "AddNewClientComponent: failed to create \"Component\" required interface: " << interfaceName << std::endl;
@@ -214,6 +222,8 @@ bool mtsManagerComponentClient::AddNewClientComponent(const std::string & client
                           newFunctionSet->ComponentStop);
     required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
                           newFunctionSet->ComponentResume);
+    required->AddEventHandlerWrite(&mtsManagerComponentClient::HandleChangeState, this, 
+                                   mtsManagerComponentBase::EventNames::ChangeState, MTS_EVENT_NOT_QUEUED);
 
     // Remember a required interface (InterfaceComponent's required interface) 
     // to connect it to the provided interface (InterfaceInternals's provided 
@@ -224,23 +234,8 @@ bool mtsManagerComponentClient::AddNewClientComponent(const std::string & client
         return false;
     }
 
-    // Add a required interface (InterfaceComponent's required interface) to connect
-    // to the provided interface (InterfaceInternal's provided interface) of the 
-    // connecting component.
-    // Connect InterfaceGCM's required interface to InterfaceLCM's provided interface
-    mtsManagerLocal * LCM = mtsManagerLocal::GetSafeInstance();
-    if (!LCM->Connect(this->GetName(), interfaceName,
-                      clientComponentName, mtsComponent::NameOfInterfaceInternalProvided))
-    {
-        CMN_LOG_CLASS_INIT_ERROR << "AddNewClientComponent: failed to connect: " 
-            << this->GetName() << ":" << interfaceName
-            << " - "
-            << clientComponentName << ":" << mtsComponent::NameOfInterfaceInternalProvided
-            << std::endl;
-        return false;
-    }
-
-    CMN_LOG_CLASS_INIT_VERBOSE << "AddNewClientComponent: creation and connection success" << std::endl;
+    CMN_LOG_CLASS_INIT_VERBOSE << "AddNewClientComponent: successfully added new client component: " 
+        << clientComponentName << std::endl;
 
     return true;
 }
@@ -414,20 +409,27 @@ void mtsManagerComponentClient::InterfaceComponentCommands_GetListOfConnections(
 void mtsManagerComponentClient::InterfaceLCMCommands_ComponentCreate(const mtsDescriptionComponent & arg)
 {
     // Steps to create a component dynamically :
-    // 1.  Create a component
-    // 2.  Add the created component to the local component manager
-    // 3.  Add internal interfaces to the component (InterfaceInternal).  This 
-    //     includes connecting InterfaceComponent's required interface to
-    //     InterfaceInternal's provided interface (see 
-    //     mtsManagerComponentClient::AddNewClientComponent() method)
+    // 1. Create a component
+    // 2. Add the created component to the local component manager
+    // 3. Add internal interfaces to the component (InterfaceInternal).
     if (!CreateAndAddNewComponent(arg.ClassName, arg.ComponentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentCreate: invalid function - has not been bound to command" << std::endl;
         // MJ TEMP
         cmnThrow(std::runtime_error("InterfaceLCMCommands_ComponentCreate: failed to execute \"ComponentCreate\""));
     }
 
-    // 4.  Connect the InterfaceInternal's required interface to 
-    //     InterfaceComponent's provided interface.
+    // 4. Create InterfaceComponent's required interface which connects to 
+    //    InterfaceInternal's provided interface.
+    if (!AddNewClientComponent(arg.ComponentName)) {
+        CMN_LOG_CLASS_INIT_ERROR << "InterfaceLCMCommands_ComponentCreate: "
+            << "failed to add InterfaceComponent's required interface to manager component client: "
+            << "\"" << arg.ComponentName << "\"" << std::endl;
+        // MJ TEMP
+        cmnThrow(std::runtime_error("InterfaceLCMCommands_ComponentCreate: failed to add new client"));
+    }
+
+    // 5. Connect InterfaceInternal's interfaces to InterfaceComponent's
+    //    interfaces.
     mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
     if (!LCM->ConnectToManagerComponentClient(arg.ComponentName)) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceLCMCommands_ComponentCreate: failed to connect component to manager component client" << std::endl;
@@ -532,4 +534,11 @@ void mtsManagerComponentClient::HandleAddConnectionEvent(const mtsDescriptionCon
     CMN_LOG_INIT_VERBOSE << "MCC AddConnection event, connection = " << connection << std::endl;
     // Generate event to connected components
     InterfaceComponentEvents_AddConnection(connection);
+}
+
+void mtsManagerComponentClient::HandleChangeState(const mtsComponentStateChange & componentStateChange)
+{
+    CMN_LOG_CLASS_INIT_VERBOSE << "MCC ChangeState event: " << componentStateChange << std::endl;
+
+    // MJ: TODO: propagate this event to MCS (Manager Component Server)?
 }

@@ -336,13 +336,14 @@ public:
     mtsComponent * CreateComponentDynamically(const std::string & className, const std::string & componentName);
 
     /*! \brief Add a component to this local component manager.
-        \param component Component instance to be added
-        \param supportInternalInterfaces If yes, internal interfaces are created
-               and embedded to enable communication with manager components.
-               Effective only for user components. */
-    bool AddComponent(mtsComponent * component, const bool supportInternalInterfaces = false);
+        \param component Component instance to be added */
+    bool AddComponent(mtsComponent * component);
     bool CISST_DEPRECATED AddTask(mtsTask * component); // For backward compatibility
     bool CISST_DEPRECATED AddDevice(mtsComponent * component); // For backward compatibility
+
+    /*! \brief Add a component to this local component manager and enable support
+               for the dynamic component control */
+    bool AddComponentWithControlService(mtsComponent * component);
 
     /*! \brief Remove a component from this local component manager. */
     bool RemoveComponent(mtsComponent * component);

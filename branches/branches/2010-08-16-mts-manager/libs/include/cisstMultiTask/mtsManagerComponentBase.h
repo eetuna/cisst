@@ -128,6 +128,7 @@ public:
         // Events
         const static std::string AddComponent;
         const static std::string AddConnection;
+        const static std::string ChangeState;
     };
 
     mtsManagerComponentBase(const std::string & componentName);

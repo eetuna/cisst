@@ -356,8 +356,13 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       via the required interfaces. */
     size_t ProcessQueuedEvents(void);
 
-    /*! Add internal interfaces */
-    bool AddInterfaceInternal(void);
+    /*! \brief Add internal interfaces 
+        \param allowDynamicControlRequest True to allow this component to use
+               dynamic component control services through mts command pattern
+               to control other components.  
+               If true, the internal required interface is added to this 
+               component (the internal provided interface is added by default) */
+    bool AddInterfaceInternal(const bool allowDynamicControlRequest = false);
 
     /*! Internal functions to use services provided by manager component client */
     struct {
@@ -377,12 +382,17 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
     struct EventNames {
         const static std::string AddComponent;
         const static std::string AddConnection;
+        const static std::string ChangeState;
     };
 
     /*! Internal commands to process command execution request coming from manager
         component client */
     void InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg);
     void InterfaceInternalCommands_ComponentResume(const mtsComponentStatusControl & arg);
+
+    /*! Event generator to inform the manager component client of the state
+        change of this component */
+    mtsFunctionWrite EventGeneratorChangeState;
 
  public:
 
