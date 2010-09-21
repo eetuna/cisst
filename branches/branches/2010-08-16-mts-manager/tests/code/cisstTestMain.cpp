@@ -149,10 +149,14 @@ int main(int argc, const char *argv[])
     }
 
     CppUnit::TestSuite * allTests = new CppUnit::TestSuite("All Tests");
-    int instanceCounter;
-    for (instanceCounter = 0; instanceCounter < testParameters.GetNumInstances(); ++instanceCounter) {
-        allTests->addTest( InstantiateTests(testParameters.GetTestNames()) );
+    size_t instanceCounter = testParameters.GetNumInstances();
+    if (instanceCounter == 0) {
+        std::cout << "Error, the number of instances must be at least 1" << std::endl;
+        return 1;
     }
+    // add the first instance so we can list all tests
+    allTests->addTest( InstantiateTests(testParameters.GetTestNames()) );
+    --instanceCounter;
 
     if (testParameters.GetTestRunMode() == cisstTestParameters::LIST_TESTS) {
         ListAllTestsInTestSuite(allTests);
@@ -168,6 +172,11 @@ int main(int argc, const char *argv[])
         int testCount = ListAllTestsInTestSuite(allTests);
         std::cout << "-------------------------------- Total " << testCount
                   << " test(s)" << std::endl;
+    }
+
+    // add remaining instance to run the tests
+    for (; instanceCounter > 0; --instanceCounter) {
+        allTests->addTest( InstantiateTests(testParameters.GetTestNames()) );
     }
 
     if (testParameters.GetTestRunMode() == cisstTestParameters::RUN_TESTS ||
