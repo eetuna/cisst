@@ -31,6 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaSocket.h>
 #include <cisstMultiTask/mtsTaskPeriodic.h>
 #include <cisstMultiTask/mtsParameterTypes.h>
+#include <cisstMultiTask/mtsManagerComponentBase.h>
 
 // Always include last!
 #include <cisstMultiTask/mtsExport.h>
@@ -46,6 +47,8 @@ protected:
 
     osaSocket UDrawSocket;
     bool UDrawSocketConnected;
+
+    mtsManagerComponentServices InternalCommands;
 
     bool ConnectToJGraph(const std::string &ipAddress = "localhost", unsigned short port = 4444);
     bool ConnectToUDrawGraph(const std::string &ipAddress = "localhost", unsigned short port = 2554);

@@ -30,13 +30,15 @@ mtsTaskViewer::mtsTaskViewer(const std::string & name, double periodicityInSecon
     JGraphSocket(osaSocket::TCP),
     JGraphSocketConnected(false),
     UDrawSocket(osaSocket::TCP),
-    UDrawSocketConnected(false)
+    UDrawSocketConnected(false),
+    InternalCommands()
 {
     // Extend internal required interface (to Manager Component) to include event handlers
-    mtsInterfaceRequired *required = GetInterfaceRequired(mtsComponent::NameOfInterfaceInternalRequired);
+    mtsInterfaceRequired *required = AddInterfaceRequired(InternalCommands.GetInterfaceName());
     if (required) {
-        required->AddEventHandlerWrite(&mtsTaskViewer::AddComponent, this, mtsComponent::EventNames::AddComponent);
-        required->AddEventHandlerWrite(&mtsTaskViewer::AddConnection, this, mtsComponent::EventNames::AddConnection);
+        InternalCommands.SetInterfaceRequired(required);
+        InternalCommands.AddComponentEventHandler(&mtsTaskViewer::AddComponent, this);
+        InternalCommands.AddConnectionEventHandler(&mtsTaskViewer::AddConnection, this);
     }
 }
 
@@ -196,10 +198,10 @@ void mtsTaskViewer::SendAllInfo(void)
     std::vector<std::string> processList;
     std::vector<std::string> componentList;
     size_t i, j;  // could use iterators instead
-    RequestGetNamesOfProcesses(processList);
+    InternalCommands.RequestGetNamesOfProcesses(processList);
     for (i = 0; i < processList.size(); i++) {
         componentList.clear();
-        RequestGetNamesOfComponents(processList[i], componentList);
+        InternalCommands.RequestGetNamesOfComponents(processList[i], componentList);
         for (j = 0; j < componentList.size(); j++) {
             // Ignore proxy components
             if (!IsProxyComponent(componentList[j])) {
@@ -210,7 +212,7 @@ void mtsTaskViewer::SendAllInfo(void)
             }
         }
         std::vector<mtsDescriptionConnection> connectionList;
-        RequestGetListOfConnections(connectionList);
+        InternalCommands.RequestGetListOfConnections(connectionList);
         for (i = 0; i < connectionList.size(); i++)
             this->AddConnection(connectionList[i]);
     }
@@ -228,7 +230,7 @@ std::string mtsTaskViewer::GetComponentInGraphFormat(const std::string &processN
     size_t i;
     std::vector<std::string> requiredList;
     std::vector<std::string> providedList;
-    RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
+    InternalCommands.RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
     // For now, ignore components that don't have any interfaces
     if ((requiredList.size() == 0) && (providedList.size() == 0))
         return "";
@@ -256,7 +258,7 @@ std::string mtsTaskViewer::GetComponentInUDrawGraphFormat(const std::string &pro
     // Enable this to ignore components that don't have any interfaces
     std::vector<std::string> requiredList;
     std::vector<std::string> providedList;
-    RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
+    InternalCommands.RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
     if ((requiredList.size() == 0) && (providedList.size() == 0))
         return "";
 #endif

@@ -141,4 +141,102 @@ public:
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentBase);
 
+// PK: could be moved to a separate file
+class CISST_EXPORT mtsManagerComponentServices : public cmnGenericObject {
+
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR)
+
+protected:
+
+    mtsInterfaceRequired *required;
+
+    /*! Internal functions to use services provided by manager component client */
+    // Dynamic component management
+    mtsFunctionWrite ComponentCreate;
+    mtsFunctionWrite ComponentConnect;
+    mtsFunctionWrite ComponentStart;
+    mtsFunctionWrite ComponentStop;
+    mtsFunctionWrite ComponentResume;
+    // Getters
+    mtsFunctionRead          GetNamesOfProcesses;
+    mtsFunctionQualifiedRead GetNamesOfComponents; // in: process name, out: components' names
+    mtsFunctionQualifiedRead GetNamesOfInterfaces; // in: process name, out: interfaces' names
+    mtsFunctionRead          GetListOfConnections;
+
+public:
+    mtsManagerComponentServices();
+    ~mtsManagerComponentServices() {}
+
+    std::string GetInterfaceName() const { return mtsComponent::NameOfInterfaceInternalRequired; }
+
+    bool SetInterfaceRequired(mtsInterfaceRequired *req);
+
+    template <class __classType>
+    bool AddComponentEventHandler(void (__classType::*method)(const mtsDescriptionComponent &),
+                                   __classType * classInstantiation,
+                                   mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        if (required) required->AddEventHandlerWrite(method, classInstantiation, 
+                                                     mtsManagerComponentBase::EventNames::AddComponent, queuingPolicy);
+        else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for AddComponentEventHandler" << std::endl;
+        return (required != 0);
+    }
+
+    template <class __classType>
+    bool AddConnectionEventHandler(void (__classType::*method)(const mtsDescriptionConnection &),
+                                   __classType * classInstantiation,
+                                   mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        if (required) required->AddEventHandlerWrite(method, classInstantiation, 
+                                                     mtsManagerComponentBase::EventNames::AddConnection, queuingPolicy);
+        else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for AddConnectionEventHandler" << std::endl;
+        return (required != 0);
+    }
+
+    template <class __classType>
+    bool ChangeStateEventHandler(void (__classType::*method)(const mtsComponentStateChange &),
+                                   __classType * classInstantiation,
+                                   mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        if (required) required->AddEventHandlerWrite(method, classInstantiation, 
+                                                     mtsManagerComponentBase::EventNames::ChangeState, queueingPolicy);
+        else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for ChangeStateEventHandler" << std::endl;
+        return (required != 0);
+    }
+
+    /*! Wrappers for internal function object */
+    bool RequestComponentCreate(const std::string & className, const std::string & componentName) const;
+    bool RequestComponentCreate(
+        const std::string& processName, const std::string & className, const std::string & componentName) const;
+
+    bool RequestComponentConnect(
+        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
+    bool RequestComponentConnect(
+        const std::string & clientProcessName,
+        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
+        const std::string & serverProcessName,
+        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
+
+    bool RequestComponentStart(const std::string & componentName, const double delayInSecond = 0.0) const;
+    bool RequestComponentStart(const std::string& processName, const std::string & componentName,
+                               const double delayInSecond = 0.0) const;
+
+    bool RequestComponentStop(const std::string & componentName, const double delayInSecond = 0.0) const;
+    bool RequestComponentStop(const std::string& processName, const std::string & componentName,
+                              const double delayInSecond = 0.0) const;
+
+    bool RequestComponentResume(const std::string & componentName, const double delayInSecond = 0.0) const;
+    bool RequestComponentResume(const std::string& processName, const std::string & componentName,
+                                const double delayInSecond = 0.0) const;
+
+    bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses) const;
+    bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents) const;
+    bool RequestGetNamesOfInterfaces(const std::string & processName,
+                                     const std::string & componentName,
+                                     std::vector<std::string> & namesOfInterfacesRequired,
+                                     std::vector<std::string> & namesOfInterfacesProvided) const;
+    bool RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections) const;
+
+};
+
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsManagerComponentServices)
+
 #endif // _mtsManagerComponentBase_h

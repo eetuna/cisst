@@ -33,7 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 const std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
 const std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
 
-const std::string mtsComponent::EventNames::AddComponent  = "AddComponentEvent"; // mtsManagerComponentBase::EventNames::AddComponent;
+const std::string mtsComponent::EventNames::AddComponent = "AddComponentEvent"; // mtsManagerComponentBase::EventNames::AddComponent;
 const std::string mtsComponent::EventNames::AddConnection = "AddConnectionEvent"; // mtsManagerComponentBase::EventNames::AddConnection;
 const std::string mtsComponent::EventNames::ChangeState   = "ChangeState"; // mtsManagerComponentBase::EventNames::AddConnection;
 
@@ -752,48 +752,55 @@ bool mtsComponent::AddInterfaceInternal(const bool allowDynamicControlRequest)
     // Add required interface
     std::string interfaceName;
     if (allowDynamicControlRequest) {
+        mtsInterfaceRequired *required = 0;
         interfaceName = mtsComponent::NameOfInterfaceInternalRequired;
-        mtsInterfaceRequired * required = AddInterfaceRequired(interfaceName);
-        if (!required) {
-            CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal required interface: " << interfaceName << std::endl;
-            return false;
+        if (GetInterfaceRequired(interfaceName))
+            CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceInternal: required interface already present" << std::endl;
+        else
+            required = AddInterfaceRequired(interfaceName);
+        if (required) {
+            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentCreate,
+                InternalInterfaceFunctions.ComponentCreate);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentConnect,
+                InternalInterfaceFunctions.ComponentConnect);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStart,
+                InternalInterfaceFunctions.ComponentStart);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStop,
+                InternalInterfaceFunctions.ComponentStop);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
+                InternalInterfaceFunctions.ComponentResume);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfProcesses,
+                InternalInterfaceFunctions.GetNamesOfProcesses);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfComponents,
+                InternalInterfaceFunctions.GetNamesOfComponents);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces,
+                InternalInterfaceFunctions.GetNamesOfInterfaces);
+            required->AddFunction(mtsManagerComponentBase::CommandNames::GetListOfConnections,
+                InternalInterfaceFunctions.GetListOfConnections);
+            CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal required interface" << std::endl;
         }
-        required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentCreate,
-            InternalInterfaceFunctions.ComponentCreate);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentConnect,
-            InternalInterfaceFunctions.ComponentConnect);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStart,
-            InternalInterfaceFunctions.ComponentStart);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStop,
-            InternalInterfaceFunctions.ComponentStop);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
-            InternalInterfaceFunctions.ComponentResume);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfProcesses,
-            InternalInterfaceFunctions.GetNamesOfProcesses);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfComponents,
-            InternalInterfaceFunctions.GetNamesOfComponents);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces,
-            InternalInterfaceFunctions.GetNamesOfInterfaces);
-        required->AddFunction(mtsManagerComponentBase::CommandNames::GetListOfConnections,
-            InternalInterfaceFunctions.GetListOfConnections);
-
-        CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal required interfaces" << std::endl;
+        else
+            CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal required interface: " << interfaceName << std::endl;
     }
 
     // Add provided interface
+    mtsInterfaceProvided *provided = 0;
     interfaceName = mtsComponent::NameOfInterfaceInternalProvided;
-    mtsInterfaceProvided * provided = AddInterfaceProvided(interfaceName);
-    if (!provided) {
-        CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal provided interface: " << interfaceName << std::endl;
-        return false;
+    if (GetInterfaceProvided(interfaceName))
+        CMN_LOG_INIT_WARNING << "AddInterfaceInternal: provided interface already present" << std::endl;
+    else {
+        provided = AddInterfaceProvided(interfaceName);
+        if (provided) {
+            provided->AddCommandWrite(&mtsComponent::InterfaceInternalCommands_ComponentStop,
+                                      this, mtsManagerComponentBase::CommandNames::ComponentStop);
+            provided->AddCommandWrite(&mtsComponent::InterfaceInternalCommands_ComponentResume,
+                                      this, mtsManagerComponentBase::CommandNames::ComponentResume);
+            provided->AddEventWrite(EventGeneratorChangeState, mtsManagerComponentBase::EventNames::ChangeState, mtsComponentStateChange());
+            //CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal provided interface" << std::endl;
+        }
+        else
+            CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal provided interface: " << interfaceName << std::endl;
     }
-    provided->AddCommandWrite(&mtsComponent::InterfaceInternalCommands_ComponentStop,
-                             this, mtsManagerComponentBase::CommandNames::ComponentStop);
-    provided->AddCommandWrite(&mtsComponent::InterfaceInternalCommands_ComponentResume,
-                             this, mtsManagerComponentBase::CommandNames::ComponentResume);
-    provided->AddEventWrite(EventGeneratorChangeState, mtsManagerComponentBase::EventNames::ChangeState, mtsComponentStateChange());
-
-    CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal provided interfaces" << std::endl;
 
     return true;
 }
