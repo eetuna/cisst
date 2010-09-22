@@ -193,10 +193,10 @@ public:
 
     template <class __classType>
     bool ChangeStateEventHandler(void (__classType::*method)(const mtsComponentStateChange &),
-                                   __classType * classInstantiation,
-                                   mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+                                 __classType * classInstantiation,
+                                 mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         if (required) required->AddEventHandlerWrite(method, classInstantiation, 
-                                                     mtsManagerComponentBase::EventNames::ChangeState, queueingPolicy);
+                                                     mtsManagerComponentBase::EventNames::ChangeState, queuingPolicy);
         else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for ChangeStateEventHandler" << std::endl;
         return (required != 0);
     }
