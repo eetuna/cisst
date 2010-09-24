@@ -44,7 +44,7 @@ void mtsComponentStateTest::TestOrder(void)
 
 void mtsComponentStateTest::TestTransitions(void)
 {
-    const double maxTimeToChangeState = 2.0 * cmn_s; // this is an upper limit across OSs, raise it if needed
+    const double maxTimeToChangeState = 3.0 * cmn_s; // this is an upper limit across OSs, raise it if needed
     mtsComponentManager * manager = mtsComponentManager::GetInstance();
     mtsTestPeriodic1 * periodic1 = new mtsTestPeriodic1;
     mtsTestContinuous1 * continuous1 = new mtsTestContinuous1;

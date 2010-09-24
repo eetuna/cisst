@@ -75,6 +75,14 @@ public:
         Value.Data = 0;
     }
 
+    void CommandVoidReturn(mtsBool & positive) {
+        if (ExecutionDelay > 0.0) {
+            osaSleep(ExecutionDelay);
+        }
+        positive = (Value >= 0);
+        Value = -Value;
+    }
+
     void CommandWrite(const mtsInt & argument) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
@@ -96,6 +104,7 @@ public:
 
     void PopulateExistingInterface(mtsInterfaceProvided * provided) {
         provided->AddCommandVoid(&mtsTestInterfaceProvided::CommandVoid, this, "Void");
+        provided->AddCommandVoidReturn(&mtsTestInterfaceProvided::CommandVoidReturn, this, "VoidReturn");
         provided->AddCommandWrite(&mtsTestInterfaceProvided::CommandWrite, this, "Write");
         provided->AddCommandRead(&mtsTestInterfaceProvided::CommandRead, this, "Read");
         provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::CommandQualifiedRead, this, "QualifiedRead");
@@ -110,10 +119,11 @@ private:
     mtsInt Value;
 
 public:
-    mtsFunctionVoid CommandVoid;
-    mtsFunctionWrite CommandWrite;
-    mtsFunctionRead CommandRead;
-    mtsFunctionQualifiedRead CommandQualifiedRead;
+    mtsFunctionVoid FunctionVoid;
+    mtsFunctionVoidReturn FunctionVoidReturn;
+    mtsFunctionWrite FunctionWrite;
+    mtsFunctionRead FunctionRead;
+    mtsFunctionQualifiedRead FunctionQualifiedRead;
 
     mtsTestInterfaceRequired() {
         Value.Data = -1;   // initial value = -1;
@@ -132,10 +142,11 @@ public:
     }
 
     void PopulateExistingInterface(mtsInterfaceRequired * required) {
-        required->AddFunction("Void", this->CommandVoid);
-        required->AddFunction("Write", this->CommandWrite);
-        required->AddFunction("Read", this->CommandRead);
-        required->AddFunction("QualifiedRead", this->CommandQualifiedRead);
+        required->AddFunction("Void", this->FunctionVoid);
+        required->AddFunction("VoidReturn", this->FunctionVoidReturn);
+        required->AddFunction("Write", this->FunctionWrite);
+        required->AddFunction("Read", this->FunctionRead);
+        required->AddFunction("QualifiedRead", this->FunctionQualifiedRead);
         required->AddEventHandlerVoid(&mtsTestInterfaceRequired::EventVoidHandler, this, "EventVoid");
         required->AddEventHandlerWrite(&mtsTestInterfaceRequired::EventWriteHandler, this, "EventWrite");
     }
