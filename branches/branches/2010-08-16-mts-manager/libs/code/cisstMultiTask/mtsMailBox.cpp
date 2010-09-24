@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
+#include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
 
 
 mtsMailBox::mtsMailBox(const std::string & name,
@@ -75,37 +76,52 @@ bool mtsMailBox::ExecuteNext(void)
    mtsCommandQueuedVoidBase * commandVoid;
    mtsCommandQueuedWriteBase * commandWrite;
    mtsCommandQueuedWriteGeneric * commandWriteGeneric;
+   mtsCommandQueuedVoidReturnBase * commandVoidReturn;
 
-   switch ((*command)->NumberOfArguments()) {
-   case 0:
-       commandVoid = dynamic_cast<mtsCommandQueuedVoidBase *>(*command);
-       CMN_ASSERT(commandVoid);
-       commandVoid->GetActualCommand()->Execute();
-       if (commandVoid->BlockingFlagGet()) {
+   if (!(*command)->Returns()) {
+       switch ((*command)->NumberOfArguments()) {
+       case 0:
+           commandVoid = dynamic_cast<mtsCommandQueuedVoidBase *>(*command);
+           CMN_ASSERT(commandVoid);
+           commandVoid->GetActualCommand()->Execute();
+           if (commandVoid->BlockingFlagGet()) {
+               this->ThreadSignal.Raise();
+           }
+           break;
+       case 1:
+           commandWrite = dynamic_cast<mtsCommandQueuedWriteBase *>(*command);
+           if (commandWrite) {
+               commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()));
+               commandWrite->ArgumentGet();  // Remove from parameter queue
+               if (commandWrite->BlockingFlagGet()) {
+                   this->ThreadSignal.Raise();
+               }
+           } else {
+               commandWriteGeneric = dynamic_cast<mtsCommandQueuedWriteGeneric *>(*command);
+               CMN_ASSERT(commandWriteGeneric);
+               commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()));
+               commandWriteGeneric->ArgumentGet();  // Remove from parameter queue
+               if (commandWriteGeneric->BlockingFlagGet()) {
+                   this->ThreadSignal.Raise();
+               }
+           }
+           break;
+       default:
+           CMN_LOG_RUN_ERROR << "Class mtsMailBox: Invalid parameter in ExecuteNext" << std::endl;
+           return false;
+       }
+   } else {
+       switch ((*command)->NumberOfArguments()) {
+       case 0:
+           commandVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturnBase *>(*command);
+           CMN_ASSERT(commandVoidReturn);
+           commandVoidReturn->GetActualCommand()->Execute( *(commandVoidReturn->GetResultPointer()) );
            this->ThreadSignal.Raise();
+           break;
+       default:
+           CMN_LOG_RUN_ERROR << "Class mtsMailBox: Invalid parameter in ExecuteNext" << std::endl;
+           return false;
        }
-       break;
-   case 1:
-       commandWrite = dynamic_cast<mtsCommandQueuedWriteBase *>(*command);
-       if (commandWrite) {
-           commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()));
-           commandWrite->ArgumentGet();  // Remove from parameter queue
-           if (commandWrite->BlockingFlagGet()) {
-               this->ThreadSignal.Raise();
-           }
-       } else {
-           commandWriteGeneric = dynamic_cast<mtsCommandQueuedWriteGeneric *>(*command);
-           CMN_ASSERT(commandWriteGeneric);
-           commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()));
-           commandWriteGeneric->ArgumentGet();  // Remove from parameter queue
-           if (commandWriteGeneric->BlockingFlagGet()) {
-               this->ThreadSignal.Raise();
-           }
-       }
-       break;
-   default:
-       CMN_LOG_RUN_ERROR << "Class mtsMailBox: Invalid parameter in ExecuteNext" << std::endl;
-       return false;
    }
    CommandQueue.Get();  // Remove command from mailbox queue
    return true;

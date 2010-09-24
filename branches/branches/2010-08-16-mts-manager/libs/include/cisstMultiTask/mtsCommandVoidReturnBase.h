@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):  Ankur Kapoor, Anton Deguet
-  Created on: 2004-04-30
+  Author(s): Anton Deguet
+  Created on: 2010-09-16
 
-  (C) Copyright 2004-2009 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -25,8 +25,8 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a base class for a command with no argument
  */
 
-#ifndef _mtsCommandVoidBase_h
-#define _mtsCommandVoidBase_h
+#ifndef _mtsCommandVoidReturnBase_h
+#define _mtsCommandVoidReturnBase_h
 
 #include <cisstMultiTask/mtsCommandBase.h>
 
@@ -38,27 +38,24 @@ http://www.cisst.org/cisst/license.txt.
 
   A base class command object with an execute method that takes no
   arguments.  To be used to contain 0*Methods. */
-class mtsCommandVoidBase: public mtsCommandBase
+class mtsCommandVoidReturnBase: public mtsCommandBase
 {
 public:
     typedef mtsCommandBase BaseType;
 
     /*! The constructor. Does nothing */
-    mtsCommandVoidBase(void): BaseType() {}
+    mtsCommandVoidReturnBase(void): BaseType() {}
 
     /*! Constructor with a name. */
-    mtsCommandVoidBase(const std::string & name): BaseType(name) {}
+    mtsCommandVoidReturnBase(const std::string & name): BaseType(name) {}
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCommandVoidBase() {}
+    virtual ~mtsCommandVoidReturnBase() {}
 
     /*! The execute method. Abstract method to be implemented by derived
       classes to run the actual operation on the receiver
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute(bool blocking = false) = 0;
-
-    /* documented in base class */
-    virtual void ToStream(std::ostream & outputStream) const = 0;
+    virtual BaseType::ReturnType Execute(mtsGenericObject & result) = 0;
 
     /* documented in base class */
     inline size_t NumberOfArguments(void) const {
@@ -67,9 +64,25 @@ public:
 
     /* documented in base class */
     inline bool Returns(void) const {
-        return false;
+        return true;
     }
+
+    /*! Return a pointer on the return prototype */
+    inline virtual const mtsGenericObject * GetReturnPrototype(void) const {
+        return this->ReturnPrototype;
+    }
+
+    /* documented in base class */
+    virtual void ToStream(std::ostream & outputStream) const = 0;
+
+protected:
+    inline virtual void SetReturnPrototype(const mtsGenericObject * returnPrototype) {
+        this->ReturnPrototype = returnPrototype;
+    }
+
+    const mtsGenericObject * ReturnPrototype;
+
 };
 
-#endif // _mtsCommandVoidBase_h
+#endif // _mtsCommandVoidReturnBase_h
 

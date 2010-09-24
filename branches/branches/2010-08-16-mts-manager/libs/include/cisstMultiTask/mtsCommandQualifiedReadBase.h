@@ -69,13 +69,17 @@ public:
       \result Boolean value, true if success, false otherwise */
     virtual BaseType::ReturnType Execute(Argument1Type & argument1, Argument2Type & argument2) = 0;
 
-    /*! For debugging. Generate a human readable output for the
-      command object */
+    /* documented in base class */
     virtual void ToStream(std::ostream & outputStream) const = 0;
 
-    /*! Execute method expects 2 arguments. */
-    virtual unsigned int NumberOfArguments(void) const {
+    /* documented in base class  */
+    inline size_t NumberOfArguments(void) const {
         return 2;
+    }
+
+    /*! documented in base class */
+    inline bool Returns(void) const {
+        return false;
     }
 
     /*! Return a pointer on the argument 1 prototype */

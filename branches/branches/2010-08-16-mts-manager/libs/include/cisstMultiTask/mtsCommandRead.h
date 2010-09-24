@@ -170,7 +170,7 @@ public:
 
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCommandRead() {
+    ~mtsCommandRead() {
         if (this->ArgumentPrototype) {
             delete this->ArgumentPrototype;
         }
@@ -181,15 +181,15 @@ public:
       applies the operation on the receiver.
       \param obj The data passed to the operation method
     */
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
+    mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
         if (this->IsEnabled())
             return ConditionalCast<cmnIsDerivedFromTemplated<ArgumentType, mtsGenericObjectProxy>::YES
                                   >::CallMethod(ClassInstantiation, Action, ActionOld, argument);
         return mtsCommandBase::DISABLED;
     }
 
-    /* commented in base class */
-    virtual void ToStream(std::ostream & outputStream) const {
+    /* documented in base class */
+    void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandRead: ";
         if (this->ClassInstantiation) {
             outputStream << this->Name << "(" << this->GetArgumentPrototype()->Services()->GetName() << "&) using class/object \""

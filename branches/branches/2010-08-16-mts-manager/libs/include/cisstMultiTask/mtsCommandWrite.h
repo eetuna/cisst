@@ -179,7 +179,6 @@ public:
             outputStream << "Not initialized properly";
         }
     }
-
 };
 
 
@@ -259,8 +258,8 @@ public:
       applies the operation on the receiver.
       \param obj The data passed to the operation method
     */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool CMN_UNUSED(blocking) = false) {
+    mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
+                                       bool CMN_UNUSED(blocking) = false) {
         if (this->IsEnabled()) {
             (ClassInstantiation->*Action)(argument);
             return mtsCommandBase::DEV_OK;
@@ -268,8 +267,8 @@ public:
         return mtsCommandBase::DISABLED;
     }
 
-    /* commented in base class */
-    virtual void ToStream(std::ostream & outputStream) const {
+    /* documented in base class */
+    void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandWriteGeneric: ";
         if (this->ClassInstantiation) {
             outputStream << this->Name << "(const mtsGenericObject *) using class/object \""
@@ -279,7 +278,6 @@ public:
             outputStream << "Not initialized properly";
         }
     }
-
 };
 
 

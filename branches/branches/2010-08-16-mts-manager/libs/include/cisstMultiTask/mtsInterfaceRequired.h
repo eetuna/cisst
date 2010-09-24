@@ -31,8 +31,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
-#include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsFunctionQualifiedRead.h>
+
+#include <cisstMultiTask/mtsFunctionBase.h>
 
 
 // Always include last
@@ -121,6 +121,7 @@ protected:
     //@{
     virtual std::vector<std::string> GetNamesOfFunctions(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsVoid(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsVoidReturn(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsRead(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsWrite(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsQualifiedRead(void) const;
@@ -215,6 +216,9 @@ protected:
     /*! Typedef for a map of name of zero argument command and name of command. */
     FunctionInfoMapType FunctionsVoid; // Void (command)
 
+    /*! Typedef for a map of name of zero argument command and name of command. */
+    FunctionInfoMapType FunctionsVoidReturn; // Void return (command)
+
     /*! Typedef for a map of name of one argument command and name of command. */
     FunctionInfoMapType FunctionsRead; // Read (state read)
 
@@ -233,6 +237,8 @@ protected:
 public:
 
     bool AddFunction(const std::string & functionName, mtsFunctionVoid & function, mtsRequiredType required = MTS_REQUIRED);
+
+    bool AddFunction(const std::string & functionName, mtsFunctionVoidReturn & function, mtsRequiredType required = MTS_REQUIRED);
 
     bool AddFunction(const std::string & functionName, mtsFunctionRead & function, mtsRequiredType required = MTS_REQUIRED);
 

@@ -159,7 +159,7 @@ public:
       \param from The data passed to the conversion operation
       \param to The result obtained from the conversion operation
     */
-    virtual mtsCommandBase::ReturnType Execute(bool CMN_UNUSED(blocking) = false) {
+    mtsCommandBase::ReturnType Execute(bool CMN_UNUSED(blocking) = false) {
         if (this->IsEnabled()) {
             (*Action)();
             return mtsCommandBase::DEV_OK;
@@ -168,7 +168,7 @@ public:
         }
     }
 
-    /* commented in base class */
+    /* documented in base class */
     virtual void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandVoidFunction: ";
         if (this->Action) {

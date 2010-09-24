@@ -20,6 +20,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 
+#include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionVoidReturn.h>
+#include <cisstMultiTask/mtsFunctionWrite.h>
+#include <cisstMultiTask/mtsFunctionRead.h>
+#include <cisstMultiTask/mtsFunctionQualifiedRead.h>
+
 #include <cisstCommon/cmnSerializer.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 
@@ -29,6 +35,7 @@ mtsInterfaceRequired::mtsInterfaceRequired(const std::string & interfaceName,
     mtsInterfaceRequiredOrInput(interfaceName, required),
     MailBox(mailBox),
     FunctionsVoid("FunctionsVoid"),
+    FunctionsVoidReturn("FunctionsVoidReturn"),
     FunctionsRead("FunctionsRead"),
     FunctionsWrite("FunctionsWrite"),
     FunctionsQualifiedRead("FunctionsQualifiedRead"),
@@ -36,6 +43,7 @@ mtsInterfaceRequired::mtsInterfaceRequired(const std::string & interfaceName,
     EventHandlersWrite("EventHandlersWrite")
 {
     FunctionsVoid.SetOwner(*this);
+    FunctionsVoidReturn.SetOwner(*this);
     FunctionsRead.SetOwner(*this);
     FunctionsWrite.SetOwner(*this);
     FunctionsQualifiedRead.SetOwner(*this);
@@ -47,6 +55,7 @@ mtsInterfaceRequired::mtsInterfaceRequired(const std::string & interfaceName,
 mtsInterfaceRequired::~mtsInterfaceRequired()
 {
     FunctionsVoid.DeleteAll();
+    FunctionsVoidReturn.DeleteAll();
     FunctionsRead.DeleteAll();
     FunctionsWrite.DeleteAll();
     FunctionsQualifiedRead.DeleteAll();
@@ -82,7 +91,10 @@ bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(mtsEventQueuingPolicy 
 
 std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctions(void) const {
     std::vector<std::string> commands = GetNamesOfFunctionsVoid();
-    std::vector<std::string> tmp = GetNamesOfFunctionsRead();
+    std::vector<std::string> tmp = GetNamesOfFunctionsVoidReturn();
+    commands.insert(commands.begin(), tmp.begin(), tmp.end());
+    tmp.clear();
+    tmp = GetNamesOfFunctionsRead();
     commands.insert(commands.begin(), tmp.begin(), tmp.end());
     tmp.clear();
     tmp = GetNamesOfFunctionsWrite();
@@ -96,6 +108,11 @@ std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctions(void) const {
 
 std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsVoid(void) const {
     return FunctionsVoid.GetNames();
+}
+
+
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsVoidReturn(void) const {
+    return FunctionsVoidReturn.GetNames();
 }
 
 
@@ -176,6 +193,8 @@ bool mtsInterfaceRequired::Disconnect(void)
     FunctionInfoMapType::iterator iter;
     for (iter = FunctionsVoid.begin(); iter != FunctionsVoid.end(); iter++)
         iter->second->Detach();
+    for (iter = FunctionsVoidReturn.begin(); iter != FunctionsVoidReturn.end(); iter++)
+        iter->second->Detach();
     for (iter = FunctionsRead.begin(); iter != FunctionsRead.end(); iter++)
         iter->second->Detach();
     for (iter = FunctionsWrite.begin(); iter != FunctionsWrite.end(); iter++)
@@ -232,6 +251,42 @@ bool mtsInterfaceRequired::BindCommandsAndEvents(void)
                                                << interfaceProvided->GetName() << "\")"<< std::endl;
                 } else {
                     CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void command \""
+                                             << iter->first << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
+        }
+        if (iter->second->Required == MTS_OPTIONAL) {
+            result = true;
+        }
+        success &= result;
+    }
+
+    mtsFunctionVoidReturn * functionVoidReturn;
+    for (iter = FunctionsVoidReturn.begin();
+         iter != FunctionsVoidReturn.end();
+         iter++) {
+        if (!iter->second->FunctionPointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for void with return command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            result = false;
+        } else {
+            functionVoidReturn = dynamic_cast<mtsFunctionVoidReturn *>(iter->second->FunctionPointer);
+            if (!functionVoidReturn) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for void with return command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\" (got \""
+                                         << typeid(iter->second->FunctionPointer).name() << "\")" << std::endl;
+                result = false;
+            } else {
+                result = functionVoidReturn->Bind(interfaceProvided->GetCommandVoidReturn(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for void with return command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for void with return command \""
                                              << iter->first << "\" (connecting \""
                                              << this->GetName() << "\" to \""
                                              << interfaceProvided->GetName() << "\")"<< std::endl;
@@ -443,6 +498,13 @@ bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunc
                                        mtsRequiredType required)
 {
     return FunctionsVoid.AddItem(functionName, new FunctionInfo(function, required));
+}
+
+
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionVoidReturn & function,
+                                       mtsRequiredType required)
+{
+    return FunctionsVoidReturn.AddItem(functionName, new FunctionInfo(function, required));
 }
 
 

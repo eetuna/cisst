@@ -105,7 +105,9 @@ public:
 
     /*! Returns number of arguments (parameters) expected by Execute
       method.  Must be overloaded in derived classes. */
-    virtual unsigned int NumberOfArguments(void) const = 0;
+    virtual size_t NumberOfArguments(void) const = 0;
+
+    virtual bool Returns(void) const = 0;
 
     /*! Set and access the "enable" flag.  This flag is used to
       determine if the command actually uses the provided method or

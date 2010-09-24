@@ -70,13 +70,14 @@ public:
       \result Boolean value, true if success, false otherwise */
     virtual BaseType::ReturnType Execute(const mtsGenericObject & argument, bool blocking = false) = 0;
 
-    /*! For debugging. Generate a human readable output for the
-      command object */
-    virtual void ToStream(std::ostream & outputStream) const = 0;
-
-    /*! Execute method expects 1 argument. */
-    inline virtual unsigned int NumberOfArguments(void) const {
+    /* documented in base class */
+    inline size_t NumberOfArguments(void) const {
         return 1;
+    }
+
+    /* documented in base class */
+    inline bool Returns(void) const {
+        return false;
     }
 
     /*! Return a pointer on the argument prototype */

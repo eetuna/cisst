@@ -24,11 +24,13 @@ set (SOURCE_FILES
      mtsMulticastCommandWriteBase.cpp
 
      mtsFunctionVoid.cpp
+     mtsFunctionVoidReturn.cpp
      mtsFunctionRead.cpp
      mtsFunctionWrite.cpp
      mtsFunctionQualifiedRead.cpp
 
      mtsCommandQueuedVoidBase.cpp
+     mtsCommandQueuedVoidReturnBase.cpp
      mtsCommandQueuedWriteBase.cpp
      mtsCommandFilteredQueuedWrite.cpp
 
@@ -83,10 +85,15 @@ set (HEADER_FILES
 
      mtsCommandVoid.h
      mtsCommandVoidBase.h
+     mtsCommandVoidReturn.h
+     mtsCommandVoidReturnBase.h
      mtsMulticastCommandVoid.h
      mtsCommandQueuedVoid.h
      mtsCommandQueuedVoidBase.h
+     mtsCommandQueuedVoidReturn.h
+     mtsCommandQueuedVoidReturnBase.h
      mtsFunctionVoid.h
+     mtsFunctionVoidReturn.h
 
      mtsCommandRead.h
      mtsCommandReadBase.h

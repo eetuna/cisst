@@ -44,7 +44,6 @@ mtsManagerComponentServer::mtsManagerComponentServer(mtsManagerGlobal * gcm)
 
 mtsManagerComponentServer::~mtsManagerComponentServer()
 {
-    InterfaceGCMFunctionType * set = 0;
     InterfaceGCMFunctionMapType::iterator it = InterfaceGCMFunctionMap.begin();
     const InterfaceGCMFunctionMapType::iterator itEnd = InterfaceGCMFunctionMap.end();
     for (; it != itEnd; ++it) {

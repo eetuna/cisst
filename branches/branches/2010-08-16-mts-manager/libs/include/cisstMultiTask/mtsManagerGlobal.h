@@ -252,8 +252,8 @@ protected:
         executes commands, it checks if it has a local connection to the LCM on 
         the same process and, if yes, it sends the command to the local LCM.  
         If not, it delivers the command to a remote LCM as before. */
-    mtsManagerLocalInterface * LocalManagerConnected;
     mtsManagerLocal * LocalManager;
+    mtsManagerLocalInterface * LocalManagerConnected;
 
     /*! Mutex for ConnectionElementMap because several threads possibly access
         ConnectionElementMap. */

@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaThreadBuddy.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
+#include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 
 #include <iostream>
@@ -38,6 +39,7 @@ mtsInterfaceProvided::mtsInterfaceProvided(const std::string & name, mtsComponen
     OriginalInterface(0),
     UserCounter(0),
     CommandsVoid("CommandsVoid", true),
+    CommandsVoidReturn("CommandsVoidReturn", true),
     CommandsWrite("CommandsWrite", true),
     CommandsRead("CommandsRead", true),
     CommandsQualifiedRead("CommandsQualifiedRead", true),
@@ -67,6 +69,7 @@ mtsInterfaceProvided::mtsInterfaceProvided(const std::string & name, mtsComponen
     }
     // set owner for all maps (to make logs more readable)
     CommandsVoid.SetOwner(*this);
+    CommandsVoidReturn.SetOwner(*this);
     CommandsWrite.SetOwner(*this);
     CommandsRead.SetOwner(*this);
     CommandsQualifiedRead.SetOwner(*this);
@@ -87,6 +90,7 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
     EndUserInterface(true),
     UserCounter(0),
     CommandsVoid("CommandsVoid", true),
+    CommandsVoidReturn("CommandsVoidReturn", true),
     CommandsWrite("CommandsWrite", true),
     CommandsRead("CommandsRead", true),
     CommandsQualifiedRead("CommandsQualifiedRead", true),
@@ -98,6 +102,7 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
 {
     // set owner for all maps (to make logs more readable)
     CommandsVoid.SetOwner(*this);
+    CommandsVoidReturn.SetOwner(*this);
     CommandsWrite.SetOwner(*this);
     CommandsRead.SetOwner(*this);
     CommandsQualifiedRead.SetOwner(*this);
@@ -130,6 +135,27 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
                                        << "\" for \"" << this->GetName() << "\"" << std::endl;
         }
         CommandsVoid.AddItem(iterVoid->first, commandVoid, CMN_LOG_LOD_INIT_ERROR);
+
+    }
+    // clone void return commands
+    CommandVoidReturnMapType::const_iterator iterVoidReturn = originalInterface->CommandsVoidReturn.begin();
+    const CommandVoidReturnMapType::const_iterator endVoidReturn = originalInterface->CommandsVoidReturn.end();
+    mtsCommandVoidReturnBase * commandVoidReturn;
+    mtsCommandQueuedVoidReturnBase * commandQueuedVoidReturn;
+    for (;
+         iterVoidReturn != endVoidReturn;
+         iterVoidReturn++) {
+        commandQueuedVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturnBase *>(iterVoidReturn->second);
+        if (commandQueuedVoidReturn) {
+            commandVoidReturn = commandQueuedVoidReturn->Clone(this->MailBox);
+            CMN_LOG_CLASS_INIT_VERBOSE << "factory constructor: cloned queued void return command \"" << iterVoidReturn->first
+                                       << "\" for \"" << this->GetName() << "\"" << std::endl;
+        } else {
+            commandVoidReturn = iterVoidReturn->second;
+            CMN_LOG_CLASS_INIT_VERBOSE << "factory constructor: using existing pointer on void return command \"" << iterVoidReturn->first
+                                       << "\" for \"" << this->GetName() << "\"" << std::endl;
+        }
+        CommandsVoidReturn.AddItem(iterVoidReturn->first, commandVoidReturn, CMN_LOG_LOD_INIT_ERROR);
 
     }
     // clone write commands
@@ -208,6 +234,7 @@ void mtsInterfaceProvided::ToStream(std::ostream & outputStream) const
 {
     outputStream << "Provided Interface \"" << Name << "\"" << std::endl;
     CommandsVoid.ToStream(outputStream);
+    CommandsVoidReturn.ToStream(outputStream);
     CommandsWrite.ToStream(outputStream);
     CommandsRead.ToStream(outputStream);
     CommandsQualifiedRead.ToStream(outputStream);
@@ -303,6 +330,37 @@ mtsCommandVoidBase * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoidBase * c
         }
     }
     CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: attempt to add undefined command (null pointer) to interface \""
+                             << this->GetName() << "\"" << std::endl;
+    return 0;
+}
+
+
+mtsCommandVoidReturnBase * mtsInterfaceProvided::AddCommandVoidReturn(mtsCommandVoidReturnBase * command, mtsCommandQueuingPolicy queuingPolicy)
+{
+    // check that the input is valid
+    if (command) {
+        // determine if this should be a queued command or not
+        bool queued = this->UseQueueBasedOnInterfacePolicy(queuingPolicy, "AddCommandVoidReturn", command->GetName());
+        if (!queued) {
+            if (!CommandsVoidReturn.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
+                command = 0;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: unable to add command \""
+                                         << command->GetName() << "\"" << std::endl;
+            }
+            return command;
+        } else {
+            // create with no mailbox
+            mtsCommandQueuedVoidReturnBase * queuedCommand = new mtsCommandQueuedVoidReturn(0, command);
+            if (!CommandsVoidReturn.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
+                delete queuedCommand;
+                queuedCommand = 0;
+                CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: unable to add queued command \""
+                                         << command->GetName() << "\"" << std::endl;
+            }
+            return queuedCommand;
+        }
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: attempt to add undefined command (null pointer) to interface \""
                              << this->GetName() << "\"" << std::endl;
     return 0;
 }
@@ -481,7 +539,10 @@ bool mtsInterfaceProvided::AddEvent(const std::string & name, mtsMulticastComman
 
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommands(void) const {
     std::vector<std::string> commands = GetNamesOfCommandsVoid();
-    std::vector<std::string> tmp = GetNamesOfCommandsRead();
+    std::vector<std::string> tmp = GetNamesOfCommandsVoidReturn();
+    commands.insert(commands.begin(), tmp.begin(), tmp.end());
+    tmp.clear();
+    tmp = GetNamesOfCommandsRead();
     commands.insert(commands.begin(), tmp.begin(), tmp.end());
     tmp.clear();
     tmp = GetNamesOfCommandsWrite();
@@ -495,6 +556,11 @@ std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommands(void) const {
 
 std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsVoid(void) const {
     return CommandsVoid.GetNames();
+}
+
+
+std::vector<std::string> mtsInterfaceProvided::GetNamesOfCommandsVoidReturn(void) const {
+    return CommandsVoidReturn.GetNames();
 }
 
 
@@ -535,8 +601,7 @@ std::vector<std::string> mtsInterfaceProvided::GetNamesOfEventsWrite(void) const
 }
 
 
-mtsCommandVoidBase * mtsInterfaceProvided::GetCommandVoid(const std::string & commandName,
-                                                          unsigned int CMN_UNUSED(userId)) const {
+mtsCommandVoidBase * mtsInterfaceProvided::GetCommandVoid(const std::string & commandName) const {
     if (this->EndUserInterface) {
         return CommandsVoid.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
     }
@@ -548,8 +613,19 @@ mtsCommandVoidBase * mtsInterfaceProvided::GetCommandVoid(const std::string & co
 }
 
 
-mtsCommandWriteBase * mtsInterfaceProvided::GetCommandWrite(const std::string & commandName,
-                                                            unsigned int CMN_UNUSED(userId)) const {
+mtsCommandVoidReturnBase * mtsInterfaceProvided::GetCommandVoidReturn(const std::string & commandName) const {
+    if (this->EndUserInterface) {
+        return CommandsVoidReturn.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "GetCommandVoidReturn: can not retrieve a command from \"factory\" interface \""
+                             << this->GetName()
+                             << "\", you must call GetEndUserInterface to make sure you are using a end-user interface"
+                             << std::endl;
+    return 0;
+}
+
+
+mtsCommandWriteBase * mtsInterfaceProvided::GetCommandWrite(const std::string & commandName) const {
     if (this->EndUserInterface) {
         return CommandsWrite.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
     }

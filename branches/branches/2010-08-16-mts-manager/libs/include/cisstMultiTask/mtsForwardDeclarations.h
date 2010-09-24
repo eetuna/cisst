@@ -57,21 +57,27 @@ class mtsCommandVoidBase;
 template <class _classType> class mtsCommandVoid;
 class mtsFunctionVoid;
 
-// one argument commands
+// void commands
+class mtsCommandVoidReturnBase;
+template <class _classType, class _resultType> class mtsCommandVoidReturn;
+class mtsFunctionVoidReturn;
+
+// read commands
 class mtsCommandReadBase;
 template <class _classType, class _argumentType> class mtsCommandRead;
 class mtsFunctionRead;
 
+// write commands
 class mtsCommandWriteBase;
 template <class _classType, class _argumentType> class mtsCommandWrite;
 class mtsFunctionWrite;
 
-// two arguments commands
+// qualified read commands
 class mtsCommandQualifiedReadBase;
 template <class _classType, class _argument1Type, class _argument2Type> class mtsCommandQualifiedRead;
 class mtsFunctionQualifiedRead;
 
-// multicast commands
+// multicast write commands
 class mtsMulticastCommandWriteBase;
 template <class _argumentType> class mtsMulticastCommandWrite;
 

@@ -207,7 +207,6 @@ public:
 
     virtual void ToStream(std::ostream & outputStream) const;
 
-
     inline virtual mtsCommandQueuedWriteGeneric * Clone(mtsMailBox * mailBox, size_t size) const {
         return new mtsCommandQueuedWriteGeneric(mailBox, this->ActualCommand, size);
     }

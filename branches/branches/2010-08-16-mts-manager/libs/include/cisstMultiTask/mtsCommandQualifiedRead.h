@@ -289,18 +289,18 @@ public:
         return mtsCommandBase::DISABLED;
     }
 
-    /* commented in base class */
+    /* documented in base class */
     const mtsGenericObject * GetArgument1Prototype(void) const {
         return Argument1Prototype;
     }
 
-    /* commented in base class */
+    /* documented in base class */
     const mtsGenericObject * GetArgument2Prototype(void) const {
         return Argument2Prototype;
     }
 
-    /* commented in base class */
-    virtual void ToStream(std::ostream & outputStream) const {
+    /* documented in base class */
+    void ToStream(std::ostream & outputStream) const {
         outputStream << "mtsCommandQualifiedRead: ";
         if (this->ClassInstantiation) {
             outputStream << this->Name << "(const "

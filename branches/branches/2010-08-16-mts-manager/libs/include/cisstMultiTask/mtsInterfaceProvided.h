@@ -100,16 +100,19 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     /*! Default length for argument buffers */
     enum {DEFAULT_ARG_BUFFER_LEN = 16};
 
-    /*! Typedef for a map of name and zero argument commands. */
+    /*! Typedef for a map of name and void commands. */
     typedef cmnNamedMap<mtsCommandVoidBase> CommandVoidMapType;
 
-    /*! Typedef for a map of name and one argument write commands. */
+    /*! Typedef for a map of name and void return commands. */
+    typedef cmnNamedMap<mtsCommandVoidReturnBase> CommandVoidReturnMapType;
+
+    /*! Typedef for a map of name and write commands. */
     typedef cmnNamedMap<mtsCommandWriteBase> CommandWriteMapType;
 
-    /*! Typedef for a map of name and one argument read commands. */
+    /*! Typedef for a map of name and read commands. */
     typedef cmnNamedMap<mtsCommandReadBase> CommandReadMapType;
 
-    /*! Typedef for a map of name and two argument commands. */
+    /*! Typedef for a map of name and qualified read commands. */
     typedef cmnNamedMap<mtsCommandQualifiedReadBase> CommandQualifiedReadMapType;
 
     /*! Typedef for a map of event name and void event generators. */
@@ -141,6 +144,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     //@{
     std::vector<std::string> GetNamesOfCommands(void) const;
     std::vector<std::string> GetNamesOfCommandsVoid(void) const;
+    std::vector<std::string> GetNamesOfCommandsVoidReturn(void) const;
     std::vector<std::string> GetNamesOfCommandsWrite(void) const;
     std::vector<std::string> GetNamesOfCommandsRead(void) const;
     std::vector<std::string> GetNamesOfCommandsQualifiedRead(void) const;
@@ -154,9 +158,10 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 
     /*! Find a command based on its name. */
     //@{
-    mtsCommandVoidBase * GetCommandVoid(const std::string & commandName, unsigned int userId = 0) const;
+    mtsCommandVoidBase * GetCommandVoid(const std::string & commandName) const;
+    mtsCommandVoidReturnBase * GetCommandVoidReturn(const std::string & commandName) const;
     mtsCommandReadBase * GetCommandRead(const std::string & commandName) const;
-    mtsCommandWriteBase * GetCommandWrite(const std::string & commandName, unsigned int userId = 0) const;
+    mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
     mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
 
@@ -198,6 +203,15 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                                mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandVoid(new mtsCommandVoidFunction(function, commandName),
                                     queuingPolicy);
+    }
+
+    template <class __classType, class __resultType>
+    inline mtsCommandVoidReturnBase * AddCommandVoidReturn(void (__classType::*method)(__resultType &),
+                                                           __classType * classInstantiation,
+                                                           const std::string & commandName,
+                                                           mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+        return this->AddCommandVoidReturn(new mtsCommandVoidReturn<__classType, __resultType>(method, classInstantiation, commandName, __resultType()),
+                                          queuingPolicy);
     }
 
     /*! Add a write command to the provided interface based on a
@@ -424,6 +438,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 
     /*! Containers of commands */
     CommandVoidMapType CommandsVoid;
+    CommandVoidReturnMapType CommandsVoidReturn;
     CommandWriteMapType CommandsWrite;
     CommandReadMapType CommandsRead;
     CommandQualifiedReadMapType CommandsQualifiedRead;
@@ -438,10 +453,11 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     osaMutex Mutex;
 
 protected:
-
     mtsMailBox * GetMailBox(void);
     mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command,
                                         mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+    mtsCommandVoidReturnBase * AddCommandVoidReturn(mtsCommandVoidReturnBase * command,
+                                                    mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command,
                                           mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
