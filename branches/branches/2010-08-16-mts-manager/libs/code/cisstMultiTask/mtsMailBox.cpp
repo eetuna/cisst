@@ -49,7 +49,7 @@ bool mtsMailBox::Write(mtsCommandBase * command)
     bool result;
     result = (CommandQueue.Put(command) != 0);
     if (this->PostCommandQueuedCommand) {
-        this->PostCommandQueuedCommand->Execute();
+        this->PostCommandQueuedCommand->Execute(MTS_NOT_BLOCKING);
     }
     return result;
 }
@@ -83,25 +83,25 @@ bool mtsMailBox::ExecuteNext(void)
        case 0:
            commandVoid = dynamic_cast<mtsCommandQueuedVoidBase *>(*command);
            CMN_ASSERT(commandVoid);
-           commandVoid->GetActualCommand()->Execute();
-           if (commandVoid->BlockingFlagGet()) {
+           commandVoid->GetActualCommand()->Execute(MTS_NOT_BLOCKING);
+           if (commandVoid->BlockingFlagGet() == MTS_BLOCKING) {
                this->ThreadSignal.Raise();
            }
            break;
        case 1:
            commandWrite = dynamic_cast<mtsCommandQueuedWriteBase *>(*command);
            if (commandWrite) {
-               commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()));
+               commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()), MTS_NOT_BLOCKING);
                commandWrite->ArgumentGet();  // Remove from parameter queue
-               if (commandWrite->BlockingFlagGet()) {
+               if (commandWrite->BlockingFlagGet() == MTS_BLOCKING) {
                    this->ThreadSignal.Raise();
                }
            } else {
                commandWriteGeneric = dynamic_cast<mtsCommandQueuedWriteGeneric *>(*command);
                CMN_ASSERT(commandWriteGeneric);
-               commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()));
+               commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()), MTS_NOT_BLOCKING);
                commandWriteGeneric->ArgumentGet();  // Remove from parameter queue
-               if (commandWriteGeneric->BlockingFlagGet()) {
+               if (commandWriteGeneric->BlockingFlagGet() == MTS_BLOCKING) {
                    this->ThreadSignal.Raise();
                }
            }

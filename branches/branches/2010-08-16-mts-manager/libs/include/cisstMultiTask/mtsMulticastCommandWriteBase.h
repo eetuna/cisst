@@ -64,7 +64,7 @@ public:
 
     /*! Execute all the commands in the composite. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool blocking = false) = 0;
+                                               mtsBlockingType blocking) = 0;
 
     /* documented in base class */
     virtual void ToStream(std::ostream & outputStream) const;

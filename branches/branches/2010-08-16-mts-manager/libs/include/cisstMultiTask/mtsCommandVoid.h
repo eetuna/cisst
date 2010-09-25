@@ -91,7 +91,7 @@ public:
     /*! The execute method. Calling the execute method from the
       invoker applies the operation on the receiver.
     */
-    virtual mtsCommandBase::ReturnType Execute(bool CMN_UNUSED(blocking) = false) {
+    virtual mtsCommandBase::ReturnType Execute(mtsBlockingType CMN_UNUSED(blocking)) {
         if (this->IsEnabled()) {
             (ClassInstantiation->*Action)();
             return mtsCommandBase::DEV_OK;
@@ -159,7 +159,7 @@ public:
       \param from The data passed to the conversion operation
       \param to The result obtained from the conversion operation
     */
-    mtsCommandBase::ReturnType Execute(bool CMN_UNUSED(blocking) = false) {
+    mtsCommandBase::ReturnType Execute(mtsBlockingType CMN_UNUSED(blocking)) {
         if (this->IsEnabled()) {
             (*Action)();
             return mtsCommandBase::DEV_OK;

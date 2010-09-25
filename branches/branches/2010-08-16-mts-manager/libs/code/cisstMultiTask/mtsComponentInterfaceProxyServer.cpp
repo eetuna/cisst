@@ -289,7 +289,7 @@ void mtsComponentInterfaceProxyServer::ReceiveExecuteEventVoid(const CommandIDTy
         return;
     }
 
-    eventVoidGeneratorProxy->Execute();
+    eventVoidGeneratorProxy->Execute(MTS_NOT_BLOCKING);
 }
 
 void mtsComponentInterfaceProxyServer::ReceiveExecuteEventWriteSerialized(const CommandIDType commandID, const std::string & serializedArgument)
@@ -313,7 +313,7 @@ void mtsComponentInterfaceProxyServer::ReceiveExecuteEventWriteSerialized(const 
         return;
     }
 
-    eventWriteGeneratorProxy->Execute(*argument);
+    eventWriteGeneratorProxy->Execute(*argument, MTS_NOT_BLOCKING);
 }
 
 //-------------------------------------------------------------------------

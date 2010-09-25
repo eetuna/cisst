@@ -41,7 +41,7 @@ protected:
 
     /*! Queue of flags to indicate if the command is blocking or
       not */
-    mtsQueue<bool> BlockingFlagQueue;
+    mtsQueue<mtsBlockingType> BlockingFlagQueue;
     /*! Thread signal used for blocking */
     osaThreadSignal ThreadSignal;
 
@@ -50,7 +50,7 @@ private:
         BaseType("??"),
         MailBox(0),
         ActualCommand(0),
-        BlockingFlagQueue(0, false)
+        BlockingFlagQueue(0, MTS_NOT_BLOCKING)
     {}
 
 public:
@@ -58,7 +58,7 @@ public:
         BaseType(actualCommand->GetName()),
         MailBox(mailBox),
         ActualCommand(actualCommand),
-        BlockingFlagQueue(size, false)
+        BlockingFlagQueue(size, MTS_NOT_BLOCKING)
     {
         this->SetArgumentPrototype(ActualCommand->GetArgumentPrototype());
     }
@@ -83,7 +83,7 @@ public:
 
 
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool blocking = false) = 0;
+                                               mtsBlockingType blocking) = 0;
 
 
     virtual const mtsGenericObject * ArgumentPeek(void) const = 0;
@@ -91,7 +91,7 @@ public:
 
     virtual mtsGenericObject * ArgumentGet(void) = 0;
 
-    bool BlockingFlagGet(void);
+    mtsBlockingType BlockingFlagGet(void);
 
     void ThreadSignalRaise(void);
 

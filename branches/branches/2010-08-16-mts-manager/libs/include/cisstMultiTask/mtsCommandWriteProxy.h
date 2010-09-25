@@ -77,11 +77,11 @@ public:
 
     /*! Direct execute can be used for mtsMulticastCommandWrite. */
     inline mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                              bool blocking = false) {
+                                              mtsBlockingType blocking) {
         if (IsDisabled()) return mtsCommandBase::DISABLED;
 
         // todo fix urgent
-        if (blocking) {
+        if (blocking == MTS_BLOCKING) {
             cmnThrow("Oops, mtsCommandWriteProxy::Execute, blocking commands are not supported over the network yet, Min?");
         }
 

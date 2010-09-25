@@ -149,7 +149,7 @@ public:
       \param obj The data passed to the operation method
     */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool CMN_UNUSED(blocking) = false) {
+                                               mtsBlockingType CMN_UNUSED(blocking)) {
         if (this->IsEnabled()) {
             //const ArgumentType * data = dynamic_cast< const ArgumentType * >(&argument);
             return ConditionalCast<cmnIsDerivedFromTemplated<ArgumentType, mtsGenericObjectProxy>::YES
@@ -160,7 +160,7 @@ public:
 
     /*! Direct execute can be used for mtsMulticastCommandWrite */
     inline mtsCommandBase::ReturnType Execute(const ArgumentType & argument,
-                                              bool CMN_UNUSED(blocking) = false) {
+                                              mtsBlockingType CMN_UNUSED(blocking)) {
         if (this->IsEnabled()) {
             (ClassInstantiation->*Action)(argument);
             return mtsCommandBase::DEV_OK;
@@ -259,7 +259,7 @@ public:
       \param obj The data passed to the operation method
     */
     mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                       bool CMN_UNUSED(blocking) = false) {
+                                       mtsBlockingType CMN_UNUSED(blocking)) {
         if (this->IsEnabled()) {
             (ClassInstantiation->*Action)(argument);
             return mtsCommandBase::DEV_OK;

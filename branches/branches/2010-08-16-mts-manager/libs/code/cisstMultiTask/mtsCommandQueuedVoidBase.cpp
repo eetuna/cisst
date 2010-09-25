@@ -36,7 +36,7 @@ mtsCommandQueuedVoidBase::mtsCommandQueuedVoidBase(mtsMailBox * mailBox,
     BaseType(actualCommand->GetName()),
     MailBox(mailBox),
     ActualCommand(actualCommand),
-    BlockingFlagQueue(size, false)
+    BlockingFlagQueue(size, MTS_NOT_BLOCKING)
 {}
 
 
@@ -46,7 +46,7 @@ mtsCommandQueuedVoidBase * mtsCommandQueuedVoidBase::Clone(mtsMailBox * mailBox,
 }
 
 
-mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(bool blocking)
+mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(mtsBlockingType blocking)
 {
     if (this->IsEnabled()) {
         if (!MailBox) {
@@ -56,7 +56,7 @@ mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(bool blocking)
         }
         if (BlockingFlagQueue.Put(blocking)) {
             if (MailBox->Write(this)) {
-                if (blocking) {
+                if (blocking == MTS_BLOCKING) {
                     MailBox->ThreadSignalWait();
                 }
                 return mtsCommandBase::DEV_OK;
@@ -82,7 +82,7 @@ mtsCommandVoidBase * mtsCommandQueuedVoidBase::GetActualCommand(void)
 }
 
 
-bool mtsCommandQueuedVoidBase::BlockingFlagGet(void)
+mtsBlockingType mtsCommandQueuedVoidBase::BlockingFlagGet(void)
 {
     return *(this->BlockingFlagQueue.Get());
 }

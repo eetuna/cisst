@@ -54,10 +54,10 @@ protected:
 public:
     /*! Execute all the commands in the composite. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool CMN_UNUSED(blocking) = false) {
+                                               mtsBlockingType CMN_UNUSED(blocking)) {
         unsigned int index;
         for (index = 0; index < Commands.size(); ++index) {
-            Commands[index]->Execute(argument);
+            Commands[index]->Execute(argument, MTS_NOT_BLOCKING);
         }
         return mtsCommandBase::DEV_OK;
     }

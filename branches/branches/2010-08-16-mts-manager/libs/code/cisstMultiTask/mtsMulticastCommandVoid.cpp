@@ -29,12 +29,12 @@ void mtsMulticastCommandVoid::AddCommand(BaseType * command) {
 }
 
 
-mtsCommandBase::ReturnType mtsMulticastCommandVoid::Execute(bool CMN_UNUSED(blocking)) {
+mtsCommandBase::ReturnType mtsMulticastCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking)) {
     int result = static_cast<int>(mtsCommandBase::DEV_OK);
     for (unsigned int i = 0; i < Commands.size(); i++) {
         result =
             (result << static_cast<int>(mtsCommandBase::RETURN_TYPE_BIT_SIZE))
-            | static_cast<int>(Commands[i]->Execute());
+            | static_cast<int>(Commands[i]->Execute(MTS_NOT_BLOCKING));
     }
     return static_cast<mtsCommandBase::ReturnType>(result);
 }

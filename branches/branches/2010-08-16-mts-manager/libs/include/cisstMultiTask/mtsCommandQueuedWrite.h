@@ -80,7 +80,7 @@ public:
         const ArgumentQueueType * argumentPrototype = dynamic_cast<const ArgumentQueueType *>(this->GetArgumentPrototype());
         if (argumentPrototype) {
             ArgumentsQueue.SetSize(size, *argumentPrototype);
-            BlockingFlagQueue.SetSize(size, false);
+            BlockingFlagQueue.SetSize(size, MTS_NOT_BLOCKING);
         } else {
             CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWrite: constructor: can't find argument prototype from actual command."
                                << std::endl;
@@ -108,7 +108,7 @@ public:
             const ArgumentQueueType * argumentPrototype = dynamic_cast<const ArgumentQueueType *>(this->GetArgumentPrototype());
             if (argumentPrototype) {
                 ArgumentsQueue.SetSize(size, *argumentPrototype);
-                BlockingFlagQueue.SetSize(size, false);
+                BlockingFlagQueue.SetSize(size, MTS_NOT_BLOCKING);
             } else {
                 CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWrite: constructor: can't find argument prototype from actual command."
                                    << std::endl;
@@ -118,7 +118,7 @@ public:
 
 
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool blocking) {
+                                               mtsBlockingType blocking) {
         if (this->IsEnabled()) {
             if (!MailBox) {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute: no mailbox for \""
@@ -133,7 +133,7 @@ public:
             if (ArgumentsQueue.Put(*argumentTyped) &&
                 BlockingFlagQueue.Put(blocking)) {
                 if (MailBox->Write(this)) {
-                    if (blocking) {
+                    if (blocking == MTS_BLOCKING) {
                         MailBox->ThreadSignalWait();
                     }
                     return mtsCommandBase::DEV_OK;
@@ -223,7 +223,7 @@ public:
 
 
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool blocking = false);
+                                               mtsBlockingType blocking);
 
 
     /* commented in base class */

@@ -69,7 +69,7 @@ public:
 
     /*! Execute all the commands in the composite. */
     virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               bool CMN_UNUSED(blocking) = false) {
+                                               mtsBlockingType CMN_UNUSED(blocking)) {
         // cast argument first
         const ArgumentFinalType * data = dynamic_cast< const ArgumentFinalType * >(&argument);
         if (data == 0) {
@@ -79,7 +79,7 @@ public:
         size_t index;
         const size_t commandsSize = Commands.size();
         for (index = 0; index < commandsSize; index++) {
-            Commands[index]->Execute(*data);
+            Commands[index]->Execute(*data, MTS_NOT_BLOCKING);
         }
         return mtsCommandBase::DEV_OK;
     }

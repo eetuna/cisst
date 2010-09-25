@@ -43,16 +43,16 @@ protected:
     template <typename _userType, bool>
     class ConditionalWrap {
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument) {
+        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument, mtsBlockingType blocking) {
             mtsGenericObjectProxyRef<_userType> argumentWrapped(argument);
-            return command->Execute(argumentWrapped);
+            return command->Execute(argumentWrapped, blocking);
         }
     };
     template <typename _userType>
     class ConditionalWrap<_userType, true> {
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument) {
-            return command->Execute(argument);
+        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument, mtsBlockingType blocking) {
+            return command->Execute(argument, blocking);
         }
     };
 
@@ -87,7 +87,15 @@ public:
     template <class _userType>
     mtsCommandBase::ReturnType operator()(const _userType & argument) const {
         mtsCommandBase::ReturnType ret = Command ?
-            ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, argument)
+            ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, argument, MTS_NOT_BLOCKING)
+          : mtsCommandBase::NO_INTERFACE;
+        return ret;
+    }
+
+    template <class _userType>
+    mtsCommandBase::ReturnType ExecuteBlocking(const _userType & argument) const {
+        mtsCommandBase::ReturnType ret = Command ?
+            ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, argument, MTS_BLOCKING)
           : mtsCommandBase::NO_INTERFACE;
         return ret;
     }

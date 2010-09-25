@@ -35,7 +35,7 @@ void mtsCommandQueuedWriteBase::ToStream(std::ostream & outputStream) const {
 }
 
 
-bool mtsCommandQueuedWriteBase::BlockingFlagGet(void)
+mtsBlockingType mtsCommandQueuedWriteBase::BlockingFlagGet(void)
 {
     return *(this->BlockingFlagQueue.Get());
 }
@@ -52,7 +52,7 @@ mtsCommandQueuedWriteGeneric::mtsCommandQueuedWriteGeneric(mtsMailBox * mailBox,
     const mtsGenericObject * argumentPrototype = dynamic_cast<const mtsGenericObject *>(this->GetArgumentPrototype());
     if (argumentPrototype) {
         ArgumentsQueue.SetSize(size, *argumentPrototype);
-        BlockingFlagQueue.SetSize(size, false);
+        BlockingFlagQueue.SetSize(size, MTS_NOT_BLOCKING);
     } else {
         CMN_LOG_INIT_DEBUG << "Class mtsCommandQueuedWriteGeneric: constructor: can't find argument prototype from actual command \""
                            << this->GetName() << "\"" << std::endl;
@@ -72,7 +72,7 @@ void mtsCommandQueuedWriteGeneric::Allocate(size_t size)
             CMN_LOG_INIT_DEBUG << "Class mtsCommandQueuedWriteGeneric: Allocate: resizing argument queue to " << size
                                << " with \"" << argumentPrototype->Services()->GetName() << "\"" << std::endl;
             ArgumentsQueue.SetSize(size, *argumentPrototype);
-            BlockingFlagQueue.SetSize(size, false);
+            BlockingFlagQueue.SetSize(size, MTS_NOT_BLOCKING);
         } else {
             CMN_LOG_INIT_ERROR << "Class mtsCommandQueuedWriteGeneric: Allocate: can't find argument prototype from actual command \""
                                << this->GetName() << "\"" << std::endl;
@@ -82,7 +82,7 @@ void mtsCommandQueuedWriteGeneric::Allocate(size_t size)
 
 
 mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGenericObject & argument,
-                                                                 bool blocking)
+                                                                 mtsBlockingType blocking)
 {
     if (this->IsEnabled()) {
         if (!MailBox) {
@@ -94,7 +94,7 @@ mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGeneri
         if (ArgumentsQueue.Put(argument) &&
             BlockingFlagQueue.Put(blocking)) {
             if (MailBox->Write(this)) {
-                if (blocking) {
+                if (blocking == MTS_BLOCKING) {
                     MailBox->ThreadSignalWait();
                 }
                 return mtsCommandBase::DEV_OK;

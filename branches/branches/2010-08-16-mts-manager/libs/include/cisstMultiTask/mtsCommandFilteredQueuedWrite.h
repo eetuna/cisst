@@ -65,7 +65,7 @@ public:
     /*! Return a pointer on the argument prototype */
     virtual const mtsGenericObject * GetArgumentPrototype(void) const;
 
-    mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument, bool blocking = false);
+    mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument, mtsBlockingType blocking);
 };
 
 

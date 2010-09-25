@@ -49,6 +49,9 @@ typedef enum {MTS_INTERFACE_EVENT_POLICY, MTS_EVENT_QUEUED, MTS_EVENT_NOT_QUEUED
 /*! Type for optional functions and interfaces */
 typedef enum {MTS_OPTIONAL, MTS_REQUIRED} mtsRequiredType;
 
+/*! Type to define is a command is blocking or not */
+typedef enum {MTS_BLOCKING, MTS_NOT_BLOCKING} mtsBlockingType;
+
 // commands
 class mtsCommandBase;
 
