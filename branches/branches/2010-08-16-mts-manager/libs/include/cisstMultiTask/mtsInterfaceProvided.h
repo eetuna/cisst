@@ -130,7 +130,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       commands).  The post command queued command in this case performs
       a wakeup (signal) on the task's thread. */
     mtsInterfaceProvided(const std::string & name, mtsComponent * component,
-                         mtsInterfaceQueuingPolicy queuingPolicy,
+                         mtsInterfaceQueueingPolicy queueingPolicy,
                          mtsCommandVoidBase * postCommandQueuedCommand = 0);
 
     /*! Default Destructor. */
@@ -185,9 +185,9 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     inline mtsCommandVoidBase * AddCommandVoid(void (__classType::*method)(void),
                                                __classType * classInstantiation,
                                                const std::string & commandName,
-                                               mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+                                               mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandVoid(new mtsCommandVoidMethod<__classType>(method, classInstantiation, commandName),
-                                    queuingPolicy);
+                                    queueingPolicy);
     }
 
     /*! Add a void command to the provided interface based on a void
@@ -200,18 +200,18 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       \returns pointer on the newly created and added command, null pointer (0) if creation or addition failed (name already used) */
     inline mtsCommandVoidBase * AddCommandVoid(void (*function)(void),
                                                const std::string & commandName,
-                                               mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+                                               mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandVoid(new mtsCommandVoidFunction(function, commandName),
-                                    queuingPolicy);
+                                    queueingPolicy);
     }
 
     template <class __classType, class __resultType>
     inline mtsCommandVoidReturnBase * AddCommandVoidReturn(void (__classType::*method)(__resultType &),
                                                            __classType * classInstantiation,
                                                            const std::string & commandName,
-                                                           mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+                                                           mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandVoidReturn(new mtsCommandVoidReturn<__classType, __resultType>(method, classInstantiation, commandName, __resultType()),
-                                          queuingPolicy);
+                                          queueingPolicy);
     }
 
     /*! Add a write command to the provided interface based on a
@@ -231,18 +231,18 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                                  __classType * classInstantiation,
                                                  const std::string & commandName,
                                                  const __argumentType & argumentPrototype,
-                                                 mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+                                                 mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandWrite(new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, argumentPrototype),
-                                     queuingPolicy);
+                                     queueingPolicy);
     }
 
     template <class __classType, class __argumentType>
     inline mtsCommandWriteBase * AddCommandWrite(void (__classType::*method)(const __argumentType &),
                                                  __classType * classInstantiation,
                                                  const std::string & commandName,
-                                                 mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+                                                 mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, __argumentType(),
-                                                                  queuingPolicy);
+                                                                  queueingPolicy);
     }
     //@}
 
@@ -294,7 +294,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     mtsCommandWriteBase * AddCommandWriteState(const mtsStateTable & stateTable,
                                                const _elementType & stateData,
                                                const std::string & commandName,
-                                               mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+                                               mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
 
     //@{
     template <class __classType, class __argument1Type, class __argument2Type>
@@ -399,7 +399,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       not based on the default policy for the interface and the user's
       requested policy.  This method also generates a warning or error
       in the log if needed. */
-    bool UseQueueBasedOnInterfacePolicy(mtsCommandQueuingPolicy queuingPolicy,
+    bool UseQueueBasedOnInterfacePolicy(mtsCommandQueueingPolicy queueingPolicy,
                                         const std::string & methodName,
                                         const std::string & commandName);
 
@@ -417,7 +417,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 
     /*! Flag to determine if by default void and write commands are
       queued. */
-    mtsInterfaceQueuingPolicy QueuingPolicy;
+    mtsInterfaceQueueingPolicy QueueingPolicy;
     
     /*! If this interface was created using an existing one, keep a
       pointer on the original one. */
@@ -455,11 +455,11 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 protected:
     mtsMailBox * GetMailBox(void);
     mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command,
-                                        mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+                                        mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandVoidReturnBase * AddCommandVoidReturn(mtsCommandVoidReturnBase * command,
-                                                    mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+                                                    mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command,
-                                          mtsCommandQueuingPolicy queuingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+                                          mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
     mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
                                                   mtsCommandWriteBase * command);
@@ -510,7 +510,7 @@ template <class _elementType>
 mtsCommandWriteBase * mtsInterfaceProvided::AddCommandWriteState(const mtsStateTable & stateTable,
                                                                  const _elementType & stateData,
                                                                  const std::string & commandName,
-                                                                 mtsCommandQueuingPolicy queuingPolicy)
+                                                                 mtsCommandQueueingPolicy queueingPolicy)
 {
     typedef typename mtsGenericTypes<_elementType>::FinalBaseType FinalBaseType;
     typedef typename mtsGenericTypes<_elementType>::FinalType FinalType;
@@ -522,7 +522,7 @@ mtsCommandWriteBase * mtsInterfaceProvided::AddCommandWriteState(const mtsStateT
     }
     return this->AddCommandWrite(new mtsCommandWrite<AccessorType, FinalBaseType>
                                  (&AccessorType::SetCurrent, stateAccessor, commandName, FinalType(stateData)),
-                                 queuingPolicy);
+                                 queueingPolicy);
 }
 
 template <class __argumentType>

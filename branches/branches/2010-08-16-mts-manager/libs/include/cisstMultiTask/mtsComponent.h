@@ -158,7 +158,7 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       i.e. mtsInterfaceProvided as opposed to mtsInterfaceProvided for
       mtsComponent. */
     virtual mtsInterfaceProvided * AddInterfaceProvided(const std::string & interfaceProvidedName,
-                                                        mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
+                                                        mtsInterfaceQueueingPolicy queueingPolicy = MTS_COMPONENT_POLICY);
 
     // provided for backward compatibility
     inline CISST_DEPRECATED mtsInterfaceProvided * AddProvidedInterface(const std::string & interfaceProvidedName) {

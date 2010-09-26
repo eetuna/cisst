@@ -174,9 +174,9 @@ public:
     template <class __classType>
     bool AddComponentEventHandler(void (__classType::*method)(const mtsDescriptionComponent &),
                                    __classType * classInstantiation,
-                                   mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+                                   mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         if (required) required->AddEventHandlerWrite(method, classInstantiation, 
-                                                     mtsManagerComponentBase::EventNames::AddComponent, queuingPolicy);
+                                                     mtsManagerComponentBase::EventNames::AddComponent, queueingPolicy);
         else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for AddComponentEventHandler" << std::endl;
         return (required != 0);
     }
@@ -184,9 +184,9 @@ public:
     template <class __classType>
     bool AddConnectionEventHandler(void (__classType::*method)(const mtsDescriptionConnection &),
                                    __classType * classInstantiation,
-                                   mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+                                   mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         if (required) required->AddEventHandlerWrite(method, classInstantiation, 
-                                                     mtsManagerComponentBase::EventNames::AddConnection, queuingPolicy);
+                                                     mtsManagerComponentBase::EventNames::AddConnection, queueingPolicy);
         else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for AddConnectionEventHandler" << std::endl;
         return (required != 0);
     }
@@ -194,9 +194,9 @@ public:
     template <class __classType>
     bool ChangeStateEventHandler(void (__classType::*method)(const mtsComponentStateChange &),
                                  __classType * classInstantiation,
-                                 mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+                                 mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         if (required) required->AddEventHandlerWrite(method, classInstantiation, 
-                                                     mtsManagerComponentBase::EventNames::ChangeState, queuingPolicy);
+                                                     mtsManagerComponentBase::EventNames::ChangeState, queueingPolicy);
         else CMN_LOG_CLASS_INIT_WARNING << "Required interface not set for ChangeStateEventHandler" << std::endl;
         return (required != 0);
     }

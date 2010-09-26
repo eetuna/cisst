@@ -80,7 +80,7 @@ public:
                                                 mtsRequiredType required = MTS_REQUIRED);
 
     mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName,
-                                                mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
+                                                mtsInterfaceQueueingPolicy queueingPolicy = MTS_COMPONENT_POLICY);
 
 };
 

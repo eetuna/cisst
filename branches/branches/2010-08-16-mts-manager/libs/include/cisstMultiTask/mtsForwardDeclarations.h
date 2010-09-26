@@ -33,18 +33,18 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsConfig.h>
 
-/*! Queuing policy for the interface */
-typedef enum {MTS_COMPONENT_POLICY, MTS_COMMANDS_SHOULD_NOT_BE_QUEUED, MTS_COMMANDS_SHOULD_BE_QUEUED} mtsInterfaceQueuingPolicy;
+/*! Queueing policy for the interface */
+typedef enum {MTS_COMPONENT_POLICY, MTS_COMMANDS_SHOULD_NOT_BE_QUEUED, MTS_COMMANDS_SHOULD_BE_QUEUED} mtsInterfaceQueueingPolicy;
 
-/*! Queuing policy, i.e. what the user would like to do for
+/*! Queueing policy, i.e. what the user would like to do for
   individual commands added using AddCommandVoid or
   AddCommandWrite as well as event handlers */
-typedef enum {MTS_INTERFACE_COMMAND_POLICY, MTS_COMMAND_QUEUED, MTS_COMMAND_NOT_QUEUED} mtsCommandQueuingPolicy;
+typedef enum {MTS_INTERFACE_COMMAND_POLICY, MTS_COMMAND_QUEUED, MTS_COMMAND_NOT_QUEUED} mtsCommandQueueingPolicy;
 
-/*! Queuing policy, i.e. what the user would like to do for
+/*! Queueing policy, i.e. what the user would like to do for
   individual event handlers added using AddEventHandlerVoid or
   AddEventHandlerWrite. */
-typedef enum {MTS_INTERFACE_EVENT_POLICY, MTS_EVENT_QUEUED, MTS_EVENT_NOT_QUEUED} mtsEventQueuingPolicy;
+typedef enum {MTS_INTERFACE_EVENT_POLICY, MTS_EVENT_QUEUED, MTS_EVENT_NOT_QUEUED} mtsEventQueueingPolicy;
 
 /*! Type for optional functions and interfaces */
 typedef enum {MTS_OPTIONAL, MTS_REQUIRED} mtsRequiredType;

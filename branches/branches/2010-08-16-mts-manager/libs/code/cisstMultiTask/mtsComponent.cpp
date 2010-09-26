@@ -162,11 +162,11 @@ std::vector<std::string> mtsComponent::GetNamesOfInterfacesOutput(void) const
 
 
 mtsInterfaceProvided * mtsComponent::AddInterfaceProvided(const std::string & interfaceProvidedName,
-                                                          mtsInterfaceQueuingPolicy queuingPolicy)
+                                                          mtsInterfaceQueueingPolicy queueingPolicy)
 {
     mtsInterfaceProvided * interfaceProvided;
-    if ((queuingPolicy == MTS_COMPONENT_POLICY)
-        || (queuingPolicy == MTS_COMMANDS_SHOULD_NOT_BE_QUEUED)) {
+    if ((queueingPolicy == MTS_COMPONENT_POLICY)
+        || (queueingPolicy == MTS_COMMANDS_SHOULD_NOT_BE_QUEUED)) {
         interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this, MTS_COMMANDS_SHOULD_NOT_BE_QUEUED);
     } else {
         CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceProvided: adding provided interface \"" << interfaceProvidedName

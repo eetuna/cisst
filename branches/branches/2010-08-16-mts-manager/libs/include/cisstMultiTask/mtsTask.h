@@ -249,7 +249,7 @@ public:
 
     /* documented in base class */
     mtsInterfaceProvided * AddInterfaceProvided(const std::string & newInterfaceName,
-                                                mtsInterfaceQueuingPolicy queuingPolicy = MTS_COMPONENT_POLICY);
+                                                mtsInterfaceQueueingPolicy queueingPolicy = MTS_COMPONENT_POLICY);
 
 
     /********************* Methods for task synchronization ***************/
