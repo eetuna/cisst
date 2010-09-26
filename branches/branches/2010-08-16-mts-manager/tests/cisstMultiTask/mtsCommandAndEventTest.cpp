@@ -60,7 +60,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
                                            double clientExecutionDelay, double serverExecutionDelay,
                                            double blockingDelay)
 {
-    const double queuingDelay = 10.0 * cmn_ms;
+    const double queueingDelay = 10.0 * cmn_ms;
     const osaTimeServer & timeServer = mtsComponentManager::GetInstance()->GetTimeServer();
     double startTime, stopTime;
 
@@ -81,7 +81,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         startTime = timeServer.GetRelativeTime();
         client->InterfaceRequired1.FunctionVoid();
         stopTime = timeServer.GetRelativeTime();
-        CPPUNIT_ASSERT((stopTime - startTime) <= queuingDelay); // make sure execution is fast
+        CPPUNIT_ASSERT((stopTime - startTime) <= queueingDelay); // make sure execution is fast
         osaSleep(serverExecutionDelay + blockingDelay); // time to dequeue and let command execute
         CPPUNIT_ASSERT_EQUAL(0,  server->InterfaceProvided1.GetValue()); // reset
         CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
@@ -90,9 +90,18 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         startTime = timeServer.GetRelativeTime();
         client->InterfaceRequired1.FunctionWrite(valueWrite);
         stopTime = timeServer.GetRelativeTime();
-        CPPUNIT_ASSERT((stopTime - startTime) <= queuingDelay); // make sure execution is fast
+        CPPUNIT_ASSERT((stopTime - startTime) <= queueingDelay); // make sure execution is fast
         osaSleep(serverExecutionDelay + blockingDelay);  // time to dequeue and let command execute
         CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
+        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+
+        // test filtered write command
+        startTime = timeServer.GetRelativeTime();
+        client->InterfaceRequired1.FunctionFilteredWrite(valueWrite);
+        stopTime = timeServer.GetRelativeTime();
+        CPPUNIT_ASSERT((stopTime - startTime) <= queueingDelay); // make sure execution is fast
+        osaSleep(serverExecutionDelay + blockingDelay);  // time to dequeue and let command execute
+        CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // set to new value + 1 (filter)
         CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
 
         // test void command blocking
@@ -125,6 +134,21 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
         CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
 
+        // test filtered write command blocking
+        if (blockingDelay > 0.0) {
+            startTime = timeServer.GetRelativeTime();
+            client->InterfaceRequired1.FunctionFilteredWrite.ExecuteBlocking(valueWrite);
+            stopTime = timeServer.GetRelativeTime();
+            std::stringstream message;
+            message << "Actual: " << (stopTime - startTime) << " >= " << (blockingDelay * 0.9);
+            CPPUNIT_ASSERT_MESSAGE(message.str(), (stopTime - startTime) >= (blockingDelay * 0.9));
+        } else {
+            // no significant delay but result should be garanteed without sleep
+            client->InterfaceRequired1.FunctionFilteredWrite.ExecuteBlocking(valueWrite);
+        }
+        CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // set to new value + 1 (filter)
+        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+
         // test void return command (always blocking)
         mtsBool result;
         if (blockingDelay > 0.0) {
@@ -139,7 +163,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             client->InterfaceRequired1.FunctionVoidReturn(result);
         }
         CPPUNIT_ASSERT_EQUAL(result.Data, true); // number was positive
-        CPPUNIT_ASSERT_EQUAL(-valueWrite.Data,  server->InterfaceProvided1.GetValue()); // negated
+        CPPUNIT_ASSERT_EQUAL(-(valueWrite.Data + 1),  server->InterfaceProvided1.GetValue()); // negated
         CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
 
         // call void return again to change sign of value back
@@ -155,7 +179,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             client->InterfaceRequired1.FunctionVoidReturn(result);
         }
         CPPUNIT_ASSERT_EQUAL(result.Data, false); // number was negative
-        CPPUNIT_ASSERT_EQUAL(valueWrite.Data,  server->InterfaceProvided1.GetValue()); // negated back
+        CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1,  server->InterfaceProvided1.GetValue()); // negated back
         CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
 
     }
@@ -164,27 +188,27 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
     mtsInt valueRead;
     valueRead.Data = 0;
     client->InterfaceRequired1.FunctionRead(valueRead);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, valueRead.Data);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, valueRead.Data);
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
     CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
 
     // test qualified read command
     valueRead.Data = 0;
     client->InterfaceRequired1.FunctionQualifiedRead(valueWrite, valueRead);
     CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, valueRead.Data);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
     CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
 
     // test void event
     server->InterfaceProvided1.EventVoid();
     osaSleep(clientExecutionDelay);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
     CPPUNIT_ASSERT_EQUAL(0, client->InterfaceRequired1.GetValue()); // reset by void event
 
     // test write event
     server->InterfaceProvided1.EventWrite(valueWrite);
     osaSleep(clientExecutionDelay);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
     CPPUNIT_ASSERT_EQUAL(valueWrite.Data, client->InterfaceRequired1.GetValue()); // set by write event
 }
 

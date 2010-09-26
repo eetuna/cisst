@@ -103,11 +103,19 @@ public:
     }
 
     void PopulateExistingInterface(mtsInterfaceProvided * provided) {
-        provided->AddCommandVoid(&mtsTestInterfaceProvided::CommandVoid, this, "Void");
-        provided->AddCommandVoidReturn(&mtsTestInterfaceProvided::CommandVoidReturn, this, "VoidReturn");
-        provided->AddCommandWrite(&mtsTestInterfaceProvided::CommandWrite, this, "Write");
-        provided->AddCommandRead(&mtsTestInterfaceProvided::CommandRead, this, "Read");
-        provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::CommandQualifiedRead, this, "QualifiedRead");
+        provided->AddCommandVoid(&mtsTestInterfaceProvided::CommandVoid,
+                                 this, "Void");
+        provided->AddCommandVoidReturn(&mtsTestInterfaceProvided::CommandVoidReturn,
+                                       this, "VoidReturn");
+        provided->AddCommandWrite(&mtsTestInterfaceProvided::CommandWrite,
+                                  this, "Write");
+        provided->AddCommandFilteredWrite(&mtsTestInterfaceProvided::CommandQualifiedRead,
+                                          &mtsTestInterfaceProvided::CommandWrite,
+                                          this, "FilteredWrite");
+        provided->AddCommandRead(&mtsTestInterfaceProvided::CommandRead,
+                                 this, "Read");
+        provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::CommandQualifiedRead,
+                                          this, "QualifiedRead");
         provided->AddEventVoid(this->EventVoid, "EventVoid");
         provided->AddEventWrite(this->EventWrite, "EventWrite", mtsInt(-1));
     }
@@ -122,6 +130,7 @@ public:
     mtsFunctionVoid FunctionVoid;
     mtsFunctionVoidReturn FunctionVoidReturn;
     mtsFunctionWrite FunctionWrite;
+    mtsFunctionWrite FunctionFilteredWrite;
     mtsFunctionRead FunctionRead;
     mtsFunctionQualifiedRead FunctionQualifiedRead;
 
@@ -145,6 +154,7 @@ public:
         required->AddFunction("Void", this->FunctionVoid);
         required->AddFunction("VoidReturn", this->FunctionVoidReturn);
         required->AddFunction("Write", this->FunctionWrite);
+        required->AddFunction("FilteredWrite", this->FunctionFilteredWrite);
         required->AddFunction("Read", this->FunctionRead);
         required->AddFunction("QualifiedRead", this->FunctionQualifiedRead);
         required->AddEventHandlerVoid(&mtsTestInterfaceRequired::EventVoidHandler, this, "EventVoid");
