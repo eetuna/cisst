@@ -68,6 +68,9 @@ public:
       command was blocking. */
     void ThreadSignalWait(void);
 
+    /*! Get the thread signal. Used by event receivers. */
+    osaThreadSignal *GetThreadSignal(void) { return &ThreadSignal; }
+
     /*! Execute the oldest command queued. */
     bool ExecuteNext(void);
 

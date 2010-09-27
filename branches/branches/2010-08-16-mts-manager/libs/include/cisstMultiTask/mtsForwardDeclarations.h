@@ -80,6 +80,11 @@ class mtsCommandQualifiedReadBase;
 template <class _classType, class _argument1Type, class _argument2Type> class mtsCommandQualifiedRead;
 class mtsFunctionQualifiedRead;
 
+// event receivers
+class mtsEventReceiverBase;
+class mtsEventReceiverVoid;
+class mtsEventReceiverWrite;
+
 // multicast write commands
 class mtsMulticastCommandWriteBase;
 template <class _argumentType> class mtsMulticastCommandWrite;

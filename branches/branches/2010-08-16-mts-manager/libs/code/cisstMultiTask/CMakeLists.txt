@@ -29,6 +29,8 @@ set (SOURCE_FILES
      mtsFunctionWrite.cpp
      mtsFunctionQualifiedRead.cpp
 
+     mtsEventReceiver.cpp
+
      mtsCommandQueuedVoidBase.cpp
      mtsCommandQueuedVoidReturnBase.cpp
      mtsCommandQueuedWriteBase.cpp
@@ -111,6 +113,8 @@ set (HEADER_FILES
      mtsCommandQualifiedRead.h
      mtsCommandQualifiedReadBase.h
      mtsFunctionQualifiedRead.h
+
+     mtsEventReceiver.h
 
      mtsExport.h
      mtsForwardDeclarations.h

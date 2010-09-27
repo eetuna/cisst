@@ -32,11 +32,12 @@ mtsEventReceiverBase::~mtsEventReceiverBase()
         delete EventSignal;
 }
 
-void mtsEventReceiverBase::SetRequired(mtsInterfaceRequired *req)
+void mtsEventReceiverBase::SetRequired(const std::string &name, mtsInterfaceRequired *req)
 {
+    Name = name;
     Required = req; 
     EventSignal = 0;
-    if (Required && Required->MailBox)
+    if (Required && (Required->MailBox))
       EventSignal = Required->MailBox->GetThreadSignal();
 }
 
@@ -48,7 +49,7 @@ bool mtsEventReceiverBase::CheckRequired() const
     return (Required != 0);
 }
 
-bool mtsEventReceiverBase::Wait()
+bool mtsEventReceiverBase::WaitCommon()
 {
     if (!EventSignal) {
         CMN_LOG_RUN_WARNING << "mtsEventReceiverBase: Creating local thread signal for event " << Name << std::endl;
@@ -60,10 +61,30 @@ bool mtsEventReceiverBase::Wait()
         CMN_LOG_RUN_WARNING << "mtsEventReceiverBase: already waiting on event " << Name << std::endl;
         return false;
     }
-    Waiting = true;
-    EventSignal->Wait();
-    Waiting = false;
     return true;
+}
+
+bool mtsEventReceiverBase::Wait()
+{
+    bool ret = WaitCommon();
+    if (ret) {
+        Waiting = true;
+        EventSignal->Wait();
+        Waiting = false;
+        ret = true;
+    }
+    return ret;
+}
+
+bool mtsEventReceiverBase::WaitWithTimeout(double timeoutInSec)
+{
+    bool ret = WaitCommon();
+    if (ret) {
+        Waiting = true;
+        ret = EventSignal->Wait(timeoutInSec);
+        Waiting = false;
+    }
+    return ret;
 }
 
 void mtsEventReceiverBase::Detach()
@@ -99,10 +120,15 @@ void mtsEventReceiverVoid::EventHandler(void)
 void mtsEventReceiverVoid::SetHandlerCommand(mtsCommandVoidBase *cmdHandler)
 {
     if (cmdHandler != UserHandler) {
-        if (UserHandler != 0)
+        if ((UserHandler != 0) && (cmdHandler != 0))
             CMN_LOG_INIT_WARNING << "SetHandlerCommand: changing event handler for void event " << GetName() << std::endl;
         UserHandler = cmdHandler;
     }
+}
+
+bool mtsEventReceiverVoid::RemoveHandler(void)
+{
+    return CheckRequired() ? (Required->RemoveEventHandlerVoid(this->GetName())) : false;
 }
 
 void mtsEventReceiverVoid::ToStream(std::ostream & outputStream) const
@@ -133,21 +159,19 @@ void mtsEventReceiverWrite::EventHandler(const mtsGenericObject &arg)
 {
     if (Waiting)
         EventSignal->Raise();
-    if (ArgPtr) {
-        if (!ArgPtr->Services()->Create(ArgPtr, arg)) {
-            CMN_LOG_RUN_ERROR << "mtsEventReceiverWrite: could not copy from " << arg.Services()->GetName()
-                              << " to " << ArgPtr->Services()->GetName() << std::endl;
-        }
+    if (ArgPtr && !ArgPtr->Services()->Create(ArgPtr, arg)) {
+        CMN_LOG_RUN_ERROR << "mtsEventReceiverWrite: could not copy from " << arg.Services()->GetName()
+                          << " to " << ArgPtr->Services()->GetName() << std::endl;
         ArgPtr = 0; // Set this to signal an error
     }      
     if (UserHandler)
-      UserHandler->Execute(arg, MTS_NOT_BLOCKING);
+        UserHandler->Execute(arg, MTS_NOT_BLOCKING);
 }
 
 void mtsEventReceiverWrite::SetHandlerCommand(mtsCommandWriteBase *cmdHandler)
 {
     if (cmdHandler != UserHandler) {
-        if (UserHandler != 0)
+        if ((UserHandler != 0) && (cmdHandler != 0))
             CMN_LOG_INIT_WARNING << "SetHandlerCommand: changing event handler for write event " << GetName() << std::endl;
         UserHandler = cmdHandler;
     }
@@ -162,6 +186,22 @@ bool mtsEventReceiverWrite::Wait(mtsGenericObject &obj)
     if (ArgPtr == 0) ret = false;
     ArgPtr = 0;
     return ret;
+}
+
+// Here, a false return value could mean that the wait failed, or that the wait succeeded but the return value (obj)
+// is invalid.
+bool mtsEventReceiverWrite::WaitWithTimeout(double timeoutInSec, mtsGenericObject &obj)
+{
+    ArgPtr = &obj;
+    bool ret = mtsEventReceiverBase::WaitWithTimeout(timeoutInSec);
+    if (ArgPtr == 0) ret = false;
+    ArgPtr = 0;
+    return ret;
+}
+
+bool mtsEventReceiverWrite::RemoveHandler(void)
+{
+    return CheckRequired() ? (Required->RemoveEventHandlerWrite(this->GetName())) : false;
 }
 
 void mtsEventReceiverWrite::ToStream(std::ostream & outputStream) const

@@ -34,7 +34,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsFunctionBase.h>
 
-
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
@@ -85,6 +84,7 @@ class CISST_EXPORT mtsInterfaceRequired: public mtsInterfaceRequiredOrInput
     friend class mtsComponentInterfaceProxyClient;
     friend class mtsManagerLocal;
     friend class mtsManagerLocalTest;
+    friend class mtsEventReceiverBase;
 
 protected:
 
@@ -168,30 +168,31 @@ protected:
 protected:
  public: // adeguet1 todo fix -- this has been added for ostream << operator
 #ifndef SWIG  // SWIG cannot deal with this
-    class FunctionInfo
+    template <class _PointerType>
+    class FunctionOrReceiverInfo
     {
         // For GCM UI
         friend class mtsManagerLocal;
         friend class mtsInterfaceRequired;
     protected:
-        mtsFunctionBase * FunctionPointer;
+        _PointerType * Pointer;
         mtsRequiredType Required;
     public:
-        FunctionInfo(mtsFunctionBase & function, mtsRequiredType required):
-            FunctionPointer(&function),
+        FunctionOrReceiverInfo(_PointerType & func_or_recv, mtsRequiredType required):
+            Pointer(&func_or_recv),
             Required(required)
         {}
 
-        ~FunctionInfo() {}
+        ~FunctionOrReceiverInfo() {}
 
         inline void Detach(void) {
-            FunctionPointer->Detach();
-            FunctionPointer = 0;
+            Pointer->Detach();
+            Pointer = 0;
         }
 
         void ToStream(std::ostream & outputStream) const
         {
-            outputStream << *FunctionPointer;
+            outputStream << *Pointer;
             if (Required == MTS_OPTIONAL) {
                 outputStream << " (optional)";
             } else {
@@ -199,6 +200,10 @@ protected:
             }
         }
     };
+
+    typedef FunctionOrReceiverInfo<mtsFunctionBase> FunctionInfo;
+    typedef FunctionOrReceiverInfo<mtsEventReceiverVoid> ReceiverVoidInfo;
+    typedef FunctionOrReceiverInfo<mtsEventReceiverWrite> ReceiverWriteInfo;
 
 #endif // !SWIG
  protected:
@@ -210,6 +215,9 @@ protected:
     bool UseQueueBasedOnInterfacePolicy(mtsEventQueueingPolicy queueingPolicy,
                                         const std::string & methodName,
                                         const std::string & eventName);
+
+    bool AddEventHandlerToReceiver(const std::string &eventName, mtsCommandVoidBase *handler) const;
+    bool AddEventHandlerToReceiver(const std::string &eventName, mtsCommandWriteBase *handler) const;
 
     typedef cmnNamedMap<FunctionInfo> FunctionInfoMapType;
 
@@ -228,6 +236,15 @@ protected:
     /*! Typedef for a map of name of two argument command and name of command. */
     FunctionInfoMapType FunctionsQualifiedRead; // Qualified Read (conversion, read at time index, ...)
 
+    typedef cmnNamedMap<ReceiverVoidInfo> EventReceiverVoidMapType;
+    typedef cmnNamedMap<ReceiverWriteInfo> EventReceiverWriteMapType;
+
+    /*! Typedef for a receiver of void events */
+    EventReceiverVoidMapType EventReceiversVoid; // Void (event)
+
+    /*! Typedef for a receiver of write events */
+    EventReceiverWriteMapType EventReceiversWrite; // Write (event)
+
     /*! Typedef for a map of event name and event handler (command object). */
     typedef cmnNamedMap<mtsCommandVoidBase> EventHandlerVoidMapType;
     typedef cmnNamedMap<mtsCommandWriteBase> EventHandlerWriteMapType;
@@ -245,6 +262,10 @@ public:
     bool AddFunction(const std::string & functionName, mtsFunctionWrite & function, mtsRequiredType required = MTS_REQUIRED);
 
     bool AddFunction(const std::string & functionName, mtsFunctionQualifiedRead & function, mtsRequiredType required = MTS_REQUIRED);
+
+    bool AddEventReceiver(const std::string & eventName, mtsEventReceiverVoid & receiver, mtsRequiredType required = MTS_REQUIRED);
+
+    bool AddEventReceiver(const std::string & eventName, mtsEventReceiverWrite & receiver, mtsRequiredType required = MTS_REQUIRED);
 
     template <class __classType>
     inline mtsCommandVoidBase * AddEventHandlerVoid(void (__classType::*method)(void),
@@ -268,6 +289,9 @@ public:
                                                              __classType * classInstantiation,
                                                              const std::string & eventName,
                                                              mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY);
+
+    bool RemoveEventHandlerVoid(const std::string &eventName);
+    bool RemoveEventHandlerWrite(const std::string &eventName);
 };
 
 
@@ -288,7 +312,9 @@ inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (__cl
     } else {
         EventHandlersVoid.AddItem(eventName, actualCommand);
     }
-    return EventHandlersVoid.GetItem(eventName);
+    mtsCommandVoidBase *handler = EventHandlersVoid.GetItem(eventName);
+    AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
+    return handler;
 }
 
 
@@ -306,7 +332,9 @@ inline mtsCommandVoidBase * mtsInterfaceRequired::AddEventHandlerVoid(void (*fun
     } else {
         EventHandlersVoid.AddItem(eventName, actualCommand);
     }
-    return EventHandlersVoid.GetItem(eventName);
+    mtsCommandVoidBase *handler = EventHandlersVoid.GetItem(eventName);
+    AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
+    return  handler;
 }
 
 
@@ -327,7 +355,9 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__
     } else {
         EventHandlersWrite.AddItem(eventName, actualCommand);
     }
-    return EventHandlersWrite.GetItem(eventName);
+    mtsCommandWriteBase *handler = EventHandlersWrite.GetItem(eventName);
+    AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
+    return  handler;
 }
 
 
@@ -341,6 +371,7 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(v
     mtsCommandWriteBase * actualCommand =
         new mtsCommandWriteGeneric<__classType>(method, classInstantiation, eventName, 0);
     if (queued) {
+        // PK: check for MailBox overlaps with code in UseQueueBasedOnInterfacePolicy
         if (MailBox) {
             EventHandlersWrite.AddItem(eventName,  new mtsCommandQueuedWriteGeneric(MailBox, actualCommand, DEFAULT_EVENT_QUEUE_LEN));
         } else {
@@ -349,7 +380,9 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(v
     } else {
         EventHandlersWrite.AddItem(eventName, actualCommand);
     }
-    return EventHandlersWrite.GetItem(eventName);
+    mtsCommandWriteBase *handler = EventHandlersWrite.GetItem(eventName);
+    AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
+    return  handler;
 }
 #endif  // !SWIG
 

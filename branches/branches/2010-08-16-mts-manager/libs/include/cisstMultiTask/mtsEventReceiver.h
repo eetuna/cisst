@@ -22,16 +22,80 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsEventReceiver_h
 #define _mtsEventReceiver_h
 
+/*!
+  \file
+  \brief Declaration of mtsEventReceiverBase, mtsEventReceiverVoid, and mtsEventReceiverWrite
+ */
+
+
+/*!
+  \ingroup cisstMultiTask
+
+  This class implements event receivers for void and write events. The idea is similar to the
+  mtsFunction classes (e.g., mtsFunctionVoid, mtsFunctionRead) -- these event receivers should
+  be added to a required interface and will be bound to the corresponding event generators
+  in the connected provided interface. Then, it is possible for the component to specify an
+  event handler at any time (see SetHandler method), or to wait for the event to occur (see
+  Wait method).
+
+  Previously, it was only possible to add event handlers to a required interface (see
+  mtsInterfaceRequired::AddEventHandlerVoid, mtsInterfaceRequired::AddEventHandlerWrite).
+  For backward compatibility, this design continues to support direct addition of an event
+  handler to a required interface. Thus, the following three blocks of code can all be used
+  to set an event handler:
+
+  \code 
+  mtsInterfaceRequired required;
+
+  // Method 1: Add event handler directly to required interface (no event receiver)
+  required->AddEventHandlerVoid(&MyClass::Handler, this, "EventName");
+
+  // Method 2: Add event handler via event receiver
+  mtsEventReceiverVoid MyReceiver;
+  required->AddEventReceiver(MyReceiver, "EventName");
+  MyReceiver.SetHandler(&MyClass::Handler, this);
+
+  // Method 3: Add event handler and event receiver to required interface
+  //           (although this works, Method 2 is the preferred implementation)
+  mtsEventReceiverVoid MyReceiver;
+  required->AddEventReceiver(MyReceiver, "EventName");
+  required->AddEventHandlerVoid(&MyClass::Handler, this, "EventName");
+  \endcode
+
+  One thing to note about an event receiver is that, by default, it is considered required
+  (i.e., #MTS_REQUIRED) when added to a required interface, whereas event handlers are not.
+
+  There are two main reasons for the introduction of event handlers:
+  -# They allow the component to wait for an event.
+  -# They allow event handlers to be added at any time. Previously, if an event handler was
+     added to a required interface AFTER that interface was connected, it was ignored (i.e.,
+     it was not added as an observer to the event generator in the provided interface).
+
+  The implementation of the event receiver class requires an osaThreadSignal to block the
+  component when the Wait method is called. This design uses the ThreadSignal member of
+  the required interface mailbox, which is present for any component derived from mtsTask.
+  If the required interface does not have a mailbox, the event receiver will create its own
+  instance of osaThreadSignal. This is done to support use of event receivers by low-level
+  components that do not have their own thread of execution (e.g., mtsComponent), as long
+  as the Wait method is only called from a single thread. Note that the Wait method returns
+  a bool; a false return indicates that the Wait failed for some reason (such as being called
+  from more than one thread). An alternate implementation would be to introduce an osaThreadSignal
+  member to mtsComponent and use that instead of the one in the required interface mailbox.
+*/
+
 #include <cisstMultiTask/mtsInterfaceRequired.h>
+// Always include last
+#include <cisstMultiTask/mtsExport.h>
+
 class osaThreadSignal;
 
-// EventReceivers must be added before Bind (add check for InterfaceProvidedOrOutput==0)
+// EventReceivers must be added before Bind (should add check for InterfaceProvidedOrOutput==0)
 // EventHandlers can be added at any time.
 // When Bind called, 
 //    if no EventReceiver, directly add EventHandler
 //    if EventReceiver, set handler in it
 
-class mtsEventReceiverBase {
+class CISST_EXPORT mtsEventReceiverBase {
 protected:
     std::string Name;
     mtsInterfaceRequired *Required;   // Pointer to the required interface
@@ -39,7 +103,8 @@ protected:
     bool Waiting;
     bool OwnEventSignal;   // true if we created our own thread signal
 
-    virtual bool mtsEventReceiverBase::CheckRequired() const;
+    bool CheckRequired() const;
+    bool WaitCommon();
 
 public:
     mtsEventReceiverBase();
@@ -47,12 +112,16 @@ public:
 
     virtual std::string GetName() const { return Name; }
 
-    // Called from mtsInterfaceRequired::AddEventReceiver
-    virtual void SetRequired(mtsInterfaceRequired *req);
+    /*! Called from mtsInterfaceRequired::AddEventReceiver */
+    virtual void SetRequired(const std::string &name, mtsInterfaceRequired *req);
 
-    // wait for event to be issued (could also add timeout).
-    // Returns true if successful, false if failed.
+    /*! Wait for event to be issued.
+        \returns true if successful, false if failed. */
     virtual bool Wait();
+
+    /*! Wait for event to be issued, up to specified timeout.
+        \returns true if successful, false if failed or timeout occurred. */
+    virtual bool WaitWithTimeout(double timeoutInSec);
 
     virtual void Detach();
 
@@ -68,7 +137,7 @@ inline std::ostream & operator << (std::ostream & output,
     return output;
 }
 
-class mtsEventReceiverVoid : public mtsEventReceiverBase {
+class CISST_EXPORT mtsEventReceiverVoid : public mtsEventReceiverBase {
 protected:
     mtsCommandVoidBase *Command;      // Command object for calling EventHandler method
     mtsCommandVoidBase *UserHandler;  // User supplied event handler
@@ -80,31 +149,34 @@ public:
     mtsEventReceiverVoid();
     ~mtsEventReceiverVoid();
 
-    // Called from mtsInterfaceRequired::BindCommandsAndEvents
+    /*! Called from mtsInterfaceRequired::BindCommandsAndEvents */
     mtsCommandVoidBase *GetCommand();
 
-    // Called from mtsInterfaceRequired::AddEventHandlerVoid
+    /*! Called from mtsInterfaceRequired::AddEventHandlerVoid */
     void SetHandlerCommand(mtsCommandVoidBase *cmdHandler);
 
     // Same functionality as mtsInterfaceRequired::AddEventHandlerVoid.
     template <class __classType>
     inline mtsCommandVoidBase * SetHandler(void (__classType::*method)(void),
                                            __classType * classInstantiation,
-                                           mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
-        return CheckRequired() ? (Required->AddEventHandlerVoid(method, classInstantiation, this->GetName(), queuingPolicy)) : 0;
+                                           mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        return CheckRequired() ? (Required->AddEventHandlerVoid(method, classInstantiation, this->GetName(), queueingPolicy)) : 0;
     }
 
 #if 0
     inline mtsCommandVoidBase * SetHandler(void (*function)(void),
-                                                mtsEventQueuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
-        return CheckRequired() ? (Required->AddEventHandlerVoid(function, this->GetName(), queuingPolicy)) : 0;
+                                                mtsEventQueueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        return CheckRequired() ? (Required->AddEventHandlerVoid(function, this->GetName(), queueingPolicy)) : 0;
     }
 #endif
 
+    bool RemoveHandler(void);
+
+    /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 };
 
-class mtsEventReceiverWrite : public mtsEventReceiverBase {
+class CISST_EXPORT mtsEventReceiverWrite : public mtsEventReceiverBase {
 protected:
     mtsCommandWriteBase *Command;      // Command object for calling EventHandler method
     mtsCommandWriteBase *UserHandler;  // User supplied event handler
@@ -117,30 +189,38 @@ public:
     mtsEventReceiverWrite();
     ~mtsEventReceiverWrite();
 
-    // Called from mtsInterfaceRequired::BindCommandsAndEvents
+    /*! Called from mtsInterfaceRequired::BindCommandsAndEvents */
     mtsCommandWriteBase *GetCommand();
 
-    // Called from mtsInterfaceRequired::AddEventHandlerWrite
+    /*! Called from mtsInterfaceRequired::AddEventHandlerWrite */
     void SetHandlerCommand(mtsCommandWriteBase *cmdHandler);
 
     // Same functionality as mtsInterfaceRequired::AddEventHandlerWrite.
     template <class __classType, class __argumentType>
     inline mtsCommandWriteBase * SetHandler(void (__classType::*method)(const __argumentType &),
                                             __classType * classInstantiation,
-                                            mtsEventQueuingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY) {
-        return CheckRequired() ? (Required->AddEventHandlerWrite(method, classInstantiation, this->GetName(), queuingPolicy)) : 0;
+                                            mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        return CheckRequired() ? (Required->AddEventHandlerWrite(method, classInstantiation, this->GetName(), queueingPolicy)) : 0;
     }
 
     // PK: Do we need the "generic" version (AddEventHandlerWriteGeneric)?
 
-    // Wait and return received argument. 
-    // A false return value could mean that the wait failed, or that the wait succeeded but the return value (obj)
-    // is invalid.
-    bool Wait(mtsGenericObject &obj);
+    /*! Wait for event to be issued and return received argument.
+        \returns true if successful, false if failed (including case where wait succeeded but return value obj
+                 is invalid) */
+    virtual bool Wait(mtsGenericObject &obj);
+    virtual bool WaitWithTimeout(double timeoutInSec, mtsGenericObject &obj);
+
+    // Following are needed, at least with Windows VS 2008
+    virtual bool Wait() { return mtsEventReceiverBase::Wait(); }
+    virtual bool WaitWithTimeout(double timeoutInSec) { return mtsEventReceiverBase::WaitWithTimeout(timeoutInSec); }
 
     //PK: might be nice to have this
     //const mtsGenericObject *GetArgumentPrototype() const;
 
+    bool RemoveHandler(void);
+
+    /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 };
 
