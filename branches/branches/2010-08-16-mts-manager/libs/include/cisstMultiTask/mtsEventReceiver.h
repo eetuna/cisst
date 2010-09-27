@@ -205,15 +205,16 @@ public:
 
     // PK: Do we need the "generic" version (AddEventHandlerWriteGeneric)?
 
+
+    // Note that we are using the Wait and WaitWithTimeout member functions from the base class.
+    using mtsEventReceiverBase::Wait;
+    using mtsEventReceiverBase::WaitWithTimeout;
+
     /*! Wait for event to be issued and return received argument.
         \returns true if successful, false if failed (including case where wait succeeded but return value obj
                  is invalid) */
     virtual bool Wait(mtsGenericObject &obj);
     virtual bool WaitWithTimeout(double timeoutInSec, mtsGenericObject &obj);
-
-    // Following are needed, at least with Windows VS 2008
-    virtual bool Wait() { return mtsEventReceiverBase::Wait(); }
-    virtual bool WaitWithTimeout(double timeoutInSec) { return mtsEventReceiverBase::WaitWithTimeout(timeoutInSec); }
 
     //PK: might be nice to have this
     //const mtsGenericObject *GetArgumentPrototype() const;
