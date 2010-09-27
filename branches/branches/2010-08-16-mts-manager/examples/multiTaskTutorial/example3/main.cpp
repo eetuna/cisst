@@ -32,10 +32,10 @@ int main(void)
     appTask * appTaskControl2 = new appTask("ControlRobot2", "Robot2", "Robot1", 100 * cmn_ms);
 
     // add all tasks
-    taskManager->AddTask(robotTask);
-    taskManager->AddTask(monitor);
-    taskManager->AddTask(appTaskControl1);
-    taskManager->AddTask(appTaskControl2);
+    taskManager->AddComponent(robotTask);
+    taskManager->AddComponent(monitor);
+    taskManager->AddComponent(appTaskControl1);
+    taskManager->AddComponent(appTaskControl2);
     // connect: name of user, resource port, name of resource, resource interface
     taskManager->Connect("Monitor", "Robot1",
                          "RobotControl", "Robot1Observer");
@@ -61,7 +61,7 @@ int main(void)
                               robotTask->GetDefaultStateTableName(),
                               mtsCollectorBase::COLLECTOR_FILE_FORMAT_CSV);
     collector->AddSignal(); // all signals
-    taskManager->AddTask(collector);
+    taskManager->AddComponent(collector);
     collector->Connect(); // collector knows what to connect to
 
     taskManager->CreateAll();

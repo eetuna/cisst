@@ -35,8 +35,8 @@ int main(void)
     displayTaskObject->Configure();
 
     // add the tasks to the task manager
-    taskManager->AddTask(sineTaskObject);
-    taskManager->AddTask(displayTaskObject);
+    taskManager->AddComponent(sineTaskObject);
+    taskManager->AddComponent(displayTaskObject);
 
     // connect the tasks, task.RequiresInterface -> task.ProvidesInterface
     taskManager->Connect("DISP", "DataGenerator", "SIN", "MainInterface");
