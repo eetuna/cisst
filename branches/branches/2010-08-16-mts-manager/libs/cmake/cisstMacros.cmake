@@ -93,7 +93,6 @@ function (cisst_add_library ...)
   set (HEADERS "")
   string (ASCII 35 CISST_STRING_POUND)
   set (LIBRARY_MAIN_HEADER ${${PROJECT_NAME}_BINARY_DIR}/include/${LIBRARY}.h)
-  set (LIBRARY_MAIN_HEADER_TMP ${LIBRARY_MAIN_HEADER}.tmp)
 
   set (FILE_CONTENT "/* This file is generated automatically by CMake, DO NOT EDIT\n")
   set (FILE_CONTENT ${FILE_CONTENT} "   CMake: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}\n")
@@ -107,16 +106,7 @@ function (cisst_add_library ...)
     set (FILE_CONTENT ${FILE_CONTENT} "${CISST_STRING_POUND}include <${LIBRARY}/${file}>\n")
   endforeach (file)
   set (FILE_CONTENT ${FILE_CONTENT} "\n${CISST_STRING_POUND}endif // _${LIBRARY}_h\n")
-  file (WRITE ${LIBRARY_MAIN_HEADER_TMP} ${FILE_CONTENT})
-
-  exec_program (${CMAKE_COMMAND}
-                ARGS -E copy_if_different
-                \"${LIBRARY_MAIN_HEADER_TMP}\"
-                \"${LIBRARY_MAIN_HEADER}\")
-
-  exec_program (${CMAKE_COMMAND}
-                ARGS -E remove
-                \"${LIBRARY_MAIN_HEADER_TMP}\")
+  file (WRITE ${LIBRARY_MAIN_HEADER} ${FILE_CONTENT})
 
   # Add the main header to the library, for IDEs
   set (HEADERS ${HEADERS} ${LIBRARY_MAIN_HEADER})
