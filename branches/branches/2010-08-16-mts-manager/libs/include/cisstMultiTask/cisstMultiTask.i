@@ -66,13 +66,13 @@ http://www.cisst.org/cisst/license.txt.
 
 // Wrap commands
 %include "cisstMultiTask/mtsCommandBase.h"
-%include "cisstMultiTask/mtsCommandVoidBase.h"
+%include "cisstMultiTask/mtsCommandVoid.h"
 %include "cisstMultiTask/mtsCommandReadBase.h"
 %include "cisstMultiTask/mtsCommandWriteBase.h"
 %include "cisstMultiTask/mtsCommandQualifiedReadBase.h"
 
 // Extend mtsCommandVoid
-%extend mtsCommandVoidBase {
+%extend mtsCommandVoid {
     %pythoncode {
         def __call__(self):
             return self.Execute(MTS_NOT_BLOCKING)

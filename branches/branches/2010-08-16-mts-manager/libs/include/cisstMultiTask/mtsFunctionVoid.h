@@ -27,8 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsFunctionVoid_h
 #define _mtsFunctionVoid_h
 
+#include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsFunctionBase.h>
-#include <cisstMultiTask/mtsCommandVoidBase.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
 // Always include last
@@ -36,7 +36,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsFunctionVoid: public mtsFunctionBase {
  protected:
-    typedef mtsCommandVoidBase CommandType;
+    typedef mtsCommandVoid CommandType;
     CommandType * Command;
 
  public:
@@ -68,9 +68,9 @@ class CISST_EXPORT mtsFunctionVoid: public mtsFunctionBase {
     mtsCommandBase::ReturnType ExecuteBlocking(void) const;
 
     /*! Access to underlying command object. */
-    mtsCommandVoidBase * GetCommand(void) const { return Command; }
+    mtsCommandVoid * GetCommand(void) const;
 
-    /*! Human readable output to stream. */
+    // documented in base class
     void ToStream(std::ostream & outputStream) const;
 };
 

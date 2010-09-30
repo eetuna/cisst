@@ -28,12 +28,12 @@ http://www.cisst.org/cisst/license.txt.
 mtsTaskFromSignal::mtsTaskFromSignal(const std::string & name,
                                      unsigned int sizeStateTable):
     mtsTaskContinuous(name, sizeStateTable),
-    PostCommandQueuedCommand(0)
+    PostCommandQueuedCallable(0)
 {
-    this->PostCommandQueuedCommand = new mtsCommandVoidMethod<mtsTaskFromSignal>(&mtsTaskFromSignal::PostCommandQueuedMethod,
-                                                                                 this, "Post command queued command");
-    if (!this->PostCommandQueuedCommand) {
-        CMN_LOG_CLASS_INIT_ERROR << "constructor: can't create post command queued command based on method." << std::endl;
+    this->PostCommandQueuedCallable = new mtsCallableVoidMethod<mtsTaskFromSignal>(&mtsTaskFromSignal::PostCommandQueuedMethod,
+                                                                                   this);
+    if (!this->PostCommandQueuedCallable) {
+        CMN_LOG_CLASS_INIT_ERROR << "constructor: can't create post command queued callable based on method." << std::endl;
     }
 }
 
@@ -88,7 +88,7 @@ mtsInterfaceRequired * mtsTaskFromSignal::AddInterfaceRequired(const std::string
     // create a mailbox with post command queued command
     // PK: move DEFAULT_EVENT_QUEUE_LEN somewhere else (not in mtsInterfaceProvided)
     mtsMailBox * mailBox = new mtsMailBox(interfaceRequiredName + "Events", mtsInterfaceRequired::DEFAULT_EVENT_QUEUE_LEN,
-                                          this->PostCommandQueuedCommand);
+                                          this->PostCommandQueuedCallable);
     mtsInterfaceRequired * result;
     if (mailBox) {
         // try to create and add interface
@@ -113,7 +113,7 @@ mtsInterfaceProvided * mtsTaskFromSignal::AddInterfaceProvided(const std::string
         || (queueingPolicy == MTS_COMMANDS_SHOULD_BE_QUEUED)) {
         interfaceProvided = new mtsInterfaceProvided(interfaceProvidedName, this,
                                                      MTS_COMMANDS_SHOULD_BE_QUEUED,
-                                                     this->PostCommandQueuedCommand);
+                                                     this->PostCommandQueuedCallable);
     } else {
         CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceProvided: adding provided interface \"" << interfaceProvidedName
                                    << "\" with policy MTS_COMMANDS_SHOULD_NOT_BE_QUEUED to task \""

@@ -31,6 +31,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaMutex.h>
 
 #include <cisstMultiTask/mtsMailBox.h>
+#include <cisstMultiTask/mtsCallableVoidMethod.h>
+#include <cisstMultiTask/mtsCallableVoidFunction.h>
 #include <cisstMultiTask/mtsCommandFilteredQueuedWrite.h>
 #include <cisstMultiTask/mtsInterfaceProvidedOrOutput.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -101,7 +103,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     enum {DEFAULT_ARG_BUFFER_LEN = 16};
 
     /*! Typedef for a map of name and void commands. */
-    typedef cmnNamedMap<mtsCommandVoidBase> CommandVoidMapType;
+    typedef cmnNamedMap<mtsCommandVoid> CommandVoidMapType;
 
     /*! Typedef for a map of name and void return commands. */
     typedef cmnNamedMap<mtsCommandVoidReturnBase> CommandVoidReturnMapType;
@@ -131,7 +133,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       a wakeup (signal) on the task's thread. */
     mtsInterfaceProvided(const std::string & name, mtsComponent * component,
                          mtsInterfaceQueueingPolicy queueingPolicy,
-                         mtsCommandVoidBase * postCommandQueuedCommand = 0);
+                         mtsCallableVoidBase * postCommandQueuedCallable = 0);
 
     /*! Default Destructor. */
     virtual ~mtsInterfaceProvided();
@@ -158,7 +160,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
 
     /*! Find a command based on its name. */
     //@{
-    mtsCommandVoidBase * GetCommandVoid(const std::string & commandName) const;
+    mtsCommandVoid * GetCommandVoid(const std::string & commandName) const;
     mtsCommandVoidReturnBase * GetCommandVoidReturn(const std::string & commandName) const;
     mtsCommandReadBase * GetCommandRead(const std::string & commandName) const;
     mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
@@ -182,12 +184,11 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       \param commandName name as it should appear in the interface
       \returns pointer on the newly created and added command, null pointer (0) if creation or addition failed (name already used) */
     template <class __classType>
-    inline mtsCommandVoidBase * AddCommandVoid(void (__classType::*method)(void),
-                                               __classType * classInstantiation,
-                                               const std::string & commandName,
-                                               mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
-        return this->AddCommandVoid(new mtsCommandVoidMethod<__classType>(method, classInstantiation, commandName),
-                                    queueingPolicy);
+    inline mtsCommandVoid * AddCommandVoid(void (__classType::*method)(void),
+                                           __classType * classInstantiation,
+                                           const std::string & commandName,
+                                           mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+        return this->AddCommandVoid(new mtsCallableVoidMethod<__classType>(method, classInstantiation), commandName, queueingPolicy);
     }
 
     /*! Add a void command to the provided interface based on a void
@@ -198,11 +199,10 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       \param function void function pointer
       \param commandName name as it should appear in the interface
       \returns pointer on the newly created and added command, null pointer (0) if creation or addition failed (name already used) */
-    inline mtsCommandVoidBase * AddCommandVoid(void (*function)(void),
-                                               const std::string & commandName,
-                                               mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
-        return this->AddCommandVoid(new mtsCommandVoidFunction(function, commandName),
-                                    queueingPolicy);
+    inline mtsCommandVoid * AddCommandVoid(void (*function)(void),
+                                           const std::string & commandName,
+                                           mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+        return this->AddCommandVoid(new mtsCallableVoidFunction(function), commandName, queueingPolicy);
     }
 
     template <class __classType, class __resultType>
@@ -344,7 +344,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       event.  These methods are used to populate the provided
       interface. */
     //@{
-    mtsCommandVoidBase * AddEventVoid(const std::string & eventName);
+    mtsCommandVoid * AddEventVoid(const std::string & eventName);
     bool AddEventVoid(mtsFunctionVoid & eventTrigger, const std::string eventName);
 
     template <class __argumentType>
@@ -363,7 +363,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       \returns true if successful; false otherwise
     */
     //@{
-    bool AddObserver(const std::string & eventName, mtsCommandVoidBase * handler);
+    bool AddObserver(const std::string & eventName, mtsCommandVoid * handler);
     bool AddObserver(const std::string & eventName, mtsCommandWriteBase * handler);
     //@}
 
@@ -447,15 +447,16 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     CommandInternalMapType CommandsInternal; // internal commands (not exposed to user)
 
     /*! Post command queued command */
-    mtsCommandVoidBase * PostCommandQueuedCommand;
+    mtsCallableVoidBase * PostCommandQueuedCallable;
 
     /*! Semaphore used internally */
     osaMutex Mutex;
 
 protected:
     mtsMailBox * GetMailBox(void);
-    mtsCommandVoidBase * AddCommandVoid(mtsCommandVoidBase * command,
-                                        mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+    mtsCommandVoid * AddCommandVoid(mtsCallableVoidBase * callable,
+                                    const std::string & name,
+                                    mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandVoidReturnBase * AddCommandVoidReturn(mtsCommandVoidReturnBase * command,
                                                     mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command,

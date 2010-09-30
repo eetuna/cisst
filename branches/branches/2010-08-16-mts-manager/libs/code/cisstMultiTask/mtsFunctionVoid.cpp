@@ -19,7 +19,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionVoid.h>
-#include <cisstMultiTask/mtsCommandVoidBase.h>
+#include <cisstMultiTask/mtsCommandVoid.h>
 
 
 mtsFunctionVoid::~mtsFunctionVoid()
@@ -61,6 +61,11 @@ mtsCommandBase::ReturnType mtsFunctionVoid::operator()(void) const
 mtsCommandBase::ReturnType mtsFunctionVoid::ExecuteBlocking(void) const
 {
     return Command ? Command->Execute(MTS_BLOCKING) : mtsCommandBase::NO_INTERFACE;
+}
+
+
+mtsCommandVoid * mtsFunctionVoid::GetCommand(void) const {
+    return Command;
 }
 
 

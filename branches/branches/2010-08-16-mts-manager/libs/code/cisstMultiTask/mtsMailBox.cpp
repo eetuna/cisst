@@ -20,6 +20,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnAssert.h>
 #include <cisstMultiTask/mtsMailBox.h>
+#include <cisstMultiTask/mtsCallableVoidBase.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
@@ -27,10 +28,10 @@ http://www.cisst.org/cisst/license.txt.
 
 mtsMailBox::mtsMailBox(const std::string & name,
                        size_t size,
-                       mtsCommandVoidBase * postCommandQueuedCommand):
+                       mtsCallableVoidBase * postCommandQueuedCallable):
     CommandQueue(size, 0),
     Name(name),
-    PostCommandQueuedCommand(postCommandQueuedCommand)
+    PostCommandQueuedCallable(postCommandQueuedCallable)
 {}
 
 
@@ -48,8 +49,8 @@ bool mtsMailBox::Write(mtsCommandBase * command)
 {
     bool result;
     result = (CommandQueue.Put(command) != 0);
-    if (this->PostCommandQueuedCommand) {
-        this->PostCommandQueuedCommand->Execute(MTS_NOT_BLOCKING);
+    if (this->PostCommandQueuedCallable) {
+        this->PostCommandQueuedCallable->Execute();
     }
     return result;
 }
@@ -73,7 +74,7 @@ bool mtsMailBox::ExecuteNext(void)
        return false;
    }
 
-   mtsCommandQueuedVoidBase * commandVoid;
+   mtsCommandQueuedVoid * commandVoid;
    mtsCommandQueuedWriteBase * commandWrite;
    mtsCommandQueuedWriteGeneric * commandWriteGeneric;
    mtsCommandQueuedVoidReturnBase * commandVoidReturn;
@@ -81,9 +82,9 @@ bool mtsMailBox::ExecuteNext(void)
    if (!(*command)->Returns()) {
        switch ((*command)->NumberOfArguments()) {
        case 0:
-           commandVoid = dynamic_cast<mtsCommandQueuedVoidBase *>(*command);
+           commandVoid = dynamic_cast<mtsCommandQueuedVoid *>(*command);
            CMN_ASSERT(commandVoid);
-           commandVoid->GetActualCommand()->Execute(MTS_NOT_BLOCKING);
+           commandVoid->GetCallable()->Execute();
            if (commandVoid->BlockingFlagGet() == MTS_BLOCKING) {
                this->ThreadSignal.Raise();
            }

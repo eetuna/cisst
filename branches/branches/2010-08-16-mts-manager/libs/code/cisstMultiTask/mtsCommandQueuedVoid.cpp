@@ -20,33 +20,33 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#include <cisstMultiTask/mtsCommandQueuedVoidBase.h>
+#include <cisstMultiTask/mtsCommandQueuedVoid.h>
+#include <cisstMultiTask/mtsCallableVoidBase.h>
 
-
-mtsCommandQueuedVoidBase::mtsCommandQueuedVoidBase(void):
+mtsCommandQueuedVoid::mtsCommandQueuedVoid(void):
     BaseType(),
-    MailBox(0),
-    ActualCommand(0)
+    MailBox(0)
 {}
 
 
-mtsCommandQueuedVoidBase::mtsCommandQueuedVoidBase(mtsMailBox * mailBox,
-                                                   mtsCommandVoidBase * actualCommand,
-                                                   size_t size):
-    BaseType(actualCommand->GetName()),
+mtsCommandQueuedVoid::mtsCommandQueuedVoid(mtsCallableVoidBase * callable,
+                                           const std::string & name,
+                                           mtsMailBox * mailBox,
+                                           size_t size):
+    BaseType(callable, name),
     MailBox(mailBox),
-    ActualCommand(actualCommand),
     BlockingFlagQueue(size, MTS_NOT_BLOCKING)
 {}
 
 
-mtsCommandQueuedVoidBase * mtsCommandQueuedVoidBase::Clone(mtsMailBox * mailBox, size_t size) const
+mtsCommandQueuedVoid * mtsCommandQueuedVoid::Clone(mtsMailBox * mailBox, size_t size) const
 {
-    return new mtsCommandQueuedVoidBase(mailBox, this->ActualCommand, size);
+    return new mtsCommandQueuedVoid(this->Callable, this->Name,
+                                    mailBox, size);
 }
 
 
-mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(mtsBlockingType blocking)
+mtsCommandBase::ReturnType mtsCommandQueuedVoid::Execute(mtsBlockingType blocking)
 {
     if (this->IsEnabled()) {
         if (!MailBox) {
@@ -76,25 +76,19 @@ mtsCommandBase::ReturnType mtsCommandQueuedVoidBase::Execute(mtsBlockingType blo
 }
 
 
-mtsCommandVoidBase * mtsCommandQueuedVoidBase::GetActualCommand(void)
-{
-    return this->ActualCommand;
-}
-
-
-mtsBlockingType mtsCommandQueuedVoidBase::BlockingFlagGet(void)
+mtsBlockingType mtsCommandQueuedVoid::BlockingFlagGet(void)
 {
     return *(this->BlockingFlagQueue.Get());
 }
 
 
-const std::string mtsCommandQueuedVoidBase::GetMailBoxName(void) const
+const std::string mtsCommandQueuedVoid::GetMailBoxName(void) const
 {
     return this->MailBox ? this->MailBox->GetName() : "NULL";
 }
 
 
-void mtsCommandQueuedVoidBase::ToStream(std::ostream & outputStream) const
+void mtsCommandQueuedVoid::ToStream(std::ostream & outputStream) const
 {
     outputStream << "mtsCommandQueuedVoid: Mailbox \"";
     if (this->MailBox) {
@@ -102,6 +96,6 @@ void mtsCommandQueuedVoidBase::ToStream(std::ostream & outputStream) const
     } else {
         outputStream << "Undefined";
     }
-    outputStream << "\" for command " << *(this->ActualCommand)
+    outputStream << "\" for command(void) using " << *(this->Callable)
                  << " currently " << (this->IsEnabled() ? "enabled" : "disabled");
 }

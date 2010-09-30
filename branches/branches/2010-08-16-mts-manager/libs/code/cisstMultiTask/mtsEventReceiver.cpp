@@ -102,27 +102,31 @@ mtsEventReceiverVoid::~mtsEventReceiverVoid()
     delete Command;
 }
 
-mtsCommandVoidBase *mtsEventReceiverVoid::GetCommand()
+mtsCommandVoid * mtsEventReceiverVoid::GetCommand(void)
 {
-    if (!Command)
-        Command = new mtsCommandVoidMethod<mtsEventReceiverVoid>(&mtsEventReceiverVoid::EventHandler, this, Name);
+    if (!Command) {
+        Command = new mtsCommandVoid(new mtsCallableVoidMethod<mtsEventReceiverVoid>(&mtsEventReceiverVoid::EventHandler, this), Name);
+    }
     return Command;
 }
 
 void mtsEventReceiverVoid::EventHandler(void)
 {
-    if (Waiting)
+    if (Waiting) {
         EventSignal->Raise();
-    if (UserHandler)
+    }
+    if (UserHandler) {
         UserHandler->Execute(MTS_NOT_BLOCKING);
+    }
 }
 
-void mtsEventReceiverVoid::SetHandlerCommand(mtsCommandVoidBase *cmdHandler)
+void mtsEventReceiverVoid::SetHandlerCommand(mtsCommandVoid * commandHandler)
 {
-    if (cmdHandler != UserHandler) {
-        if ((UserHandler != 0) && (cmdHandler != 0))
-            CMN_LOG_INIT_WARNING << "SetHandlerCommand: changing event handler for void event " << GetName() << std::endl;
-        UserHandler = cmdHandler;
+    if (commandHandler != UserHandler) {
+        if ((UserHandler != 0) && (commandHandler != 0)) {
+            CMN_LOG_INIT_WARNING << "SetHandlerCommand: changing event handler for void event \"" << GetName() << "\"" << std::endl;
+        }
+        UserHandler = commandHandler;
     }
 }
 

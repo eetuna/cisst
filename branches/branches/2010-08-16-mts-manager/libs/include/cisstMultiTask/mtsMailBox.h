@@ -45,7 +45,7 @@ class CISST_EXPORT mtsMailBox
       to be provided when the mail box is constructed.  This
       mechanism is used by mtsTaskFromSignal to wake up the task's
       thread. */
-    mtsCommandVoidBase * PostCommandQueuedCommand;
+    mtsCallableVoidBase * PostCommandQueuedCallable;
 
     /*! Thread signal used for blocking */
     osaThreadSignal ThreadSignal;
@@ -53,7 +53,7 @@ class CISST_EXPORT mtsMailBox
 public:
     mtsMailBox(const std::string & name,
                size_t size,
-               mtsCommandVoidBase * postCommandQueuedCommand = 0);
+               mtsCallableVoidBase * postCommandQueuedCallable = 0);
 
     ~mtsMailBox(void);
 

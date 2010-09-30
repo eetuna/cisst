@@ -22,6 +22,15 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsMulticastCommandVoid.h>
 
 
+mtsMulticastCommandVoid::mtsMulticastCommandVoid(const std::string & name):
+    BaseType(0, name)
+{}
+
+
+mtsMulticastCommandVoid::~mtsMulticastCommandVoid()
+{}
+
+
 void mtsMulticastCommandVoid::AddCommand(BaseType * command) {
     if (command) {
         this->Commands.push_back(command);

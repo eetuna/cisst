@@ -35,7 +35,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaPython.h>
 
 #include <cisstMultiTask/mtsCommandBase.h>
-#include <cisstMultiTask/mtsCommandVoidBase.h>
+#include <cisstMultiTask/mtsCommandVoid.h>
 #include <cisstMultiTask/mtsCommandReadBase.h>
 #include <cisstMultiTask/mtsCommandWriteBase.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>

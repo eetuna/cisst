@@ -31,7 +31,8 @@ set (SOURCE_FILES
 
      mtsEventReceiver.cpp
 
-     mtsCommandQueuedVoidBase.cpp
+     mtsCommandVoid.cpp
+     mtsCommandQueuedVoid.cpp
      mtsCommandQueuedVoidReturnBase.cpp
      mtsCommandQueuedWriteBase.cpp
      mtsCommandFilteredQueuedWrite.cpp
@@ -85,13 +86,14 @@ set (HEADER_FILES
      mtsCommandBase.h
      mtsFunctionBase.h
 
+     mtsCallableVoidBase.h
+     mtsCallableVoidMethod.h
+     mtsCallableVoidFunction.h
      mtsCommandVoid.h
-     mtsCommandVoidBase.h
      mtsCommandVoidReturn.h
      mtsCommandVoidReturnBase.h
      mtsMulticastCommandVoid.h
      mtsCommandQueuedVoid.h
-     mtsCommandQueuedVoidBase.h
      mtsCommandQueuedVoidReturn.h
      mtsCommandQueuedVoidReturnBase.h
      mtsFunctionVoid.h

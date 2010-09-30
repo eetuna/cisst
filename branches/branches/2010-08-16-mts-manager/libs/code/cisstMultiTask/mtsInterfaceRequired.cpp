@@ -93,16 +93,18 @@ bool mtsInterfaceRequired::UseQueueBasedOnInterfacePolicy(mtsEventQueueingPolicy
     }
 }
 
-bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string &eventName, mtsCommandVoidBase *handler) const
+
+bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string & eventName, mtsCommandVoid * handler) const
 {
     bool result = false;
-    ReceiverVoidInfo *receiverInfo = EventReceiversVoid.GetItem(eventName, CMN_LOG_LOD_RUN_VERBOSE);
+    ReceiverVoidInfo * receiverInfo = EventReceiversVoid.GetItem(eventName, CMN_LOG_LOD_RUN_VERBOSE);
     if (receiverInfo) {
         receiverInfo->Pointer->SetHandlerCommand(handler);
         result = true;
     }
     return result;
 }
+
 
 bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string &eventName, mtsCommandWriteBase *handler) const
 {
@@ -114,6 +116,7 @@ bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string &eventNam
     }
     return result;
 }
+
 
 std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctions(void) const {
     std::vector<std::string> commands = GetNamesOfFunctionsVoid();
@@ -167,7 +170,7 @@ std::vector<std::string> mtsInterfaceRequired::GetNamesOfEventHandlersWrite(void
 }
 
 
-mtsCommandVoidBase * mtsInterfaceRequired::GetEventHandlerVoid(const std::string & eventName) const {
+mtsCommandVoid * mtsInterfaceRequired::GetEventHandlerVoid(const std::string & eventName) const {
     return EventHandlersVoid.GetItem(eventName);
 }
 
@@ -482,7 +485,7 @@ bool mtsInterfaceRequired::BindCommandsAndEvents(void)
         }
         success &= result;
     }
-        
+
 
     // Now, do the event handlers
     EventHandlerVoidMapType::iterator iterEventVoid;
@@ -607,11 +610,13 @@ bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunc
     return FunctionsQualifiedRead.AddItem(functionName, new FunctionInfo(function, required));
 }
 
+
 bool mtsInterfaceRequired::AddEventReceiver(const std::string & eventName, mtsEventReceiverVoid & receiver, mtsRequiredType required)
 {
     receiver.SetRequired(eventName, this);
     return EventReceiversVoid.AddItem(eventName, new ReceiverVoidInfo(receiver, required));
 }
+
 
 bool mtsInterfaceRequired::AddEventReceiver(const std::string & eventName, mtsEventReceiverWrite & receiver, mtsRequiredType required)
 {
@@ -619,16 +624,39 @@ bool mtsInterfaceRequired::AddEventReceiver(const std::string & eventName, mtsEv
     return EventReceiversWrite.AddItem(eventName, new ReceiverWriteInfo(receiver, required));
 }
 
+
+mtsCommandVoid * mtsInterfaceRequired::AddEventHandlerVoid(mtsCallableVoidBase * callable,
+                                                           const std::string & eventName,
+                                                           mtsEventQueueingPolicy queueingPolicy)
+{
+    CMN_ASSERT(callable);
+    bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddEventHandlerVoid", eventName);
+    if (queued) {
+        if (MailBox) {
+            EventHandlersVoid.AddItem(eventName, new mtsCommandQueuedVoid(callable, eventName, MailBox, DEFAULT_EVENT_QUEUE_LEN));
+        } else {
+            CMN_LOG_CLASS_INIT_ERROR << "No mailbox for queued event handler void \"" << eventName << "\"" << std::endl;
+        }
+    } else {
+        EventHandlersVoid.AddItem(eventName, new mtsCommandVoid(callable, eventName));
+    }
+    mtsCommandVoid * handler = EventHandlersVoid.GetItem(eventName);
+    AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
+    return handler;
+}
+
+
 bool mtsInterfaceRequired::RemoveEventHandlerVoid(const std::string &eventName)
 {
-    mtsCommandVoidBase *handler = 0;
+    mtsCommandVoid * handler = 0;
     AddEventHandlerToReceiver(eventName, handler);
     return EventHandlersVoid.RemoveItem(eventName, CMN_LOG_LOD_RUN_WARNING);
 }
 
+
 bool mtsInterfaceRequired::RemoveEventHandlerWrite(const std::string &eventName)
 {
-    mtsCommandWriteBase *handler = 0;
+    mtsCommandWriteBase * handler = 0;
     AddEventHandlerToReceiver(eventName, handler);
     return EventHandlersWrite.RemoveItem(eventName, CMN_LOG_LOD_RUN_WARNING);
 }

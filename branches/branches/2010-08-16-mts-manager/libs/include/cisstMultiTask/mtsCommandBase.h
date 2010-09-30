@@ -141,10 +141,10 @@ public:
 /*! Stream out operator for all classes derived from mtsCommandBase.
   This operator uses the ToStream method so that the output can be
   different for each derived class. */
-inline std::ostream & operator << (std::ostream & output,
+inline std::ostream & operator << (std::ostream & outputStream,
                                    const mtsCommandBase & command) {
-    command.ToStream(output);
-    return output;
+    command.ToStream(outputStream);
+    return outputStream;
 }
 
 

@@ -139,8 +139,8 @@ inline std::ostream & operator << (std::ostream & output,
 
 class CISST_EXPORT mtsEventReceiverVoid : public mtsEventReceiverBase {
 protected:
-    mtsCommandVoidBase *Command;      // Command object for calling EventHandler method
-    mtsCommandVoidBase *UserHandler;  // User supplied event handler
+    mtsCommandVoid * Command;      // Command object for calling EventHandler method
+    mtsCommandVoid * UserHandler;  // User supplied event handler
 
     // This one always gets added non-queued
     void EventHandler(void);
@@ -150,25 +150,23 @@ public:
     ~mtsEventReceiverVoid();
 
     /*! Called from mtsInterfaceRequired::BindCommandsAndEvents */
-    mtsCommandVoidBase *GetCommand();
+    mtsCommandVoid * GetCommand(void);
 
     /*! Called from mtsInterfaceRequired::AddEventHandlerVoid */
-    void SetHandlerCommand(mtsCommandVoidBase *cmdHandler);
+    void SetHandlerCommand(mtsCommandVoid * commandHandler);
 
     // Same functionality as mtsInterfaceRequired::AddEventHandlerVoid.
     template <class __classType>
-    inline mtsCommandVoidBase * SetHandler(void (__classType::*method)(void),
-                                           __classType * classInstantiation,
-                                           mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+    inline mtsCommandVoid * SetHandler(void (__classType::*method)(void),
+                                       __classType * classInstantiation,
+                                       mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         return CheckRequired() ? (Required->AddEventHandlerVoid(method, classInstantiation, this->GetName(), queueingPolicy)) : 0;
     }
 
-#if 0
-    inline mtsCommandVoidBase * SetHandler(void (*function)(void),
-                                                mtsEventQueueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+    inline mtsCommandVoid * SetHandler(void (*function)(void),
+                                       mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         return CheckRequired() ? (Required->AddEventHandlerVoid(function, this->GetName(), queueingPolicy)) : 0;
     }
-#endif
 
     bool RemoveHandler(void);
 
@@ -193,7 +191,7 @@ public:
     mtsCommandWriteBase *GetCommand();
 
     /*! Called from mtsInterfaceRequired::AddEventHandlerWrite */
-    void SetHandlerCommand(mtsCommandWriteBase *cmdHandler);
+    void SetHandlerCommand(mtsCommandWriteBase * commandHandler);
 
     // Same functionality as mtsInterfaceRequired::AddEventHandlerWrite.
     template <class __classType, class __argumentType>
