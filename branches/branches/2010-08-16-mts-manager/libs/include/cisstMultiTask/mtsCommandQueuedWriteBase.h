@@ -42,8 +42,6 @@ protected:
     /*! Queue of flags to indicate if the command is blocking or
       not */
     mtsQueue<mtsBlockingType> BlockingFlagQueue;
-    /*! Thread signal used for blocking */
-    osaThreadSignal ThreadSignal;
 
 private:
     inline mtsCommandQueuedWriteBase(void):
@@ -92,9 +90,6 @@ public:
     virtual mtsGenericObject * ArgumentGet(void) = 0;
 
     mtsBlockingType BlockingFlagGet(void);
-
-    void ThreadSignalRaise(void);
-
 
     inline virtual const std::string GetMailBoxName(void) const {
         return this->MailBox ? this->MailBox->GetName() : "NULL";
