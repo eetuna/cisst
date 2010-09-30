@@ -115,7 +115,7 @@ http://www.cisst.org/cisst/license.txt.
                 argument = self.ArgumentType(self.GetArgumentPrototype())
             except Exception:
                 argument = self.GetArgumentPrototype()
-                self.Execute(argument)
+            self.Execute(argument)
             # If argument has a GetDataCopy method, we assume it is derived from
             # mtsGenericObjectProxy (%extend is used to add this method).
             if hasattr(argument,"GetDataCopy"):
