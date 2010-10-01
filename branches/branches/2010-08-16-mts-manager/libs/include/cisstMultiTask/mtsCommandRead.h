@@ -77,11 +77,16 @@ protected:
         static mtsCommandBase::ReturnType CallMethod(ClassType *ClassInst, ActionType Action, ActionTypeOld ActionOld, mtsGenericObject &argument)
         {
             ArgumentType * data = mtsGenericTypes<ArgumentType>::CastArg(argument);
-            if (data == 0)
+            if (data == 0) {
+                CMN_LOG_INIT_ERROR << "Read CallMethod (default case) could not cast from " << typeid(argument).name()
+                                   << " to " << typeid(ArgumentType).name() << std::endl;
                 return mtsCommandBase::BAD_INPUT;
+            }
             if (Action) {
-                if (!(ClassInst->*Action)(*data))
+                if (!(ClassInst->*Action)(*data)) {
+                    CMN_LOG_INIT_ERROR << "Read CallMethod failed, arg not derived from mtsGenericObjectProxy" << std::endl;
                     return mtsCommandBase::COMMAND_FAILED;
+                }
             }
             else if (ActionOld)
                 (ClassInst->*ActionOld)(*data);
@@ -100,8 +105,10 @@ protected:
             ArgumentType *data = dynamic_cast<ArgumentType *>(&argument);
             if (data) {
                 if (Action) {
-                    if (!(ClassInst->*Action)(*data))
+                    if (!(ClassInst->*Action)(*data)) {
+                        CMN_LOG_INIT_ERROR << "Read CallMethod failed, arg derived from mtsGenericObjectProxy" << std::endl;
                         return mtsCommandBase::COMMAND_FAILED;
+                    }
                 }
                 else if (ActionOld)
                     (ClassInst->*ActionOld)(*data);
@@ -118,8 +125,10 @@ protected:
             // Now, make the call using the temporary
             ArgumentType temp;
             if (Action) {
-                if (!(ClassInst->*Action)(temp))
+                if (!(ClassInst->*Action)(temp)) {
+                    CMN_LOG_INIT_ERROR << "Read CallMethod failed, temp arg derived from mtsGenericObjectProxy" << std::endl;
                     return mtsCommandBase::COMMAND_FAILED;
+                }
             }
             else if (ActionOld)
                 (ClassInst->*ActionOld)(temp);
