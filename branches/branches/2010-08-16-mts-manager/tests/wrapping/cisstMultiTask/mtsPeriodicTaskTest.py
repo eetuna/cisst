@@ -60,7 +60,7 @@ class PeriodicTaskTest(unittest.TestCase):
         self.failUnless(isinstance(proto, cisstMultiTask.mtsDouble))
         # command ZeroAll(void)
         self.failUnless(periodicTask.MainInterface.__dict__.has_key("ZeroAll"))
-        self.failUnless(isinstance(periodicTask.MainInterface.ZeroAll, cisstMultiTask.mtsCommandVoidBase))
+        self.failUnless(isinstance(periodicTask.MainInterface.ZeroAll, cisstMultiTask.mtsCommandVoid))
         # command GetDouble(mtsDouble)
         self.failUnless(periodicTask.MainInterface.__dict__.has_key("GetDouble"))
         self.failUnless(isinstance(periodicTask.MainInterface.GetDouble, cisstMultiTask.mtsCommandReadBase))
