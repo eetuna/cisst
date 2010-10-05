@@ -1075,7 +1075,7 @@ void mtsManagerLocal::GetDescriptionOfCommand(std::string & description,
     switch (commandType) {
         case 'V':
             {
-                mtsCommandVoidBase * command = interfaceProvided->GetCommandVoid(actualCommandName);
+                mtsCommandVoid * command = interfaceProvided->GetCommandVoid(actualCommandName);
                 if (!command) {
                     description = "No void command found for ";
                     description += actualCommandName;
@@ -1146,7 +1146,7 @@ void mtsManagerLocal::GetDescriptionOfEventGenerator(std::string & description,
     switch (eventGeneratorType) {
         case 'V':
             {
-                mtsCommandVoidBase * eventGenerator = interfaceProvided->EventVoidGenerators.GetItem(actualEventGeneratorName);
+                mtsCommandVoid * eventGenerator = interfaceProvided->EventVoidGenerators.GetItem(actualEventGeneratorName);
                 if (!eventGenerator) {
                     description = "No void event generator found";
                     return;
@@ -1275,7 +1275,7 @@ void mtsManagerLocal::GetDescriptionOfEventHandler(std::string & description,
     switch (eventHandlerType) {
         case 'V':
             {
-                mtsCommandVoidBase * command = requiredInterface->EventHandlersVoid.GetItem(actualEventHandlerName);
+                mtsCommandVoid * command = requiredInterface->EventHandlersVoid.GetItem(actualEventHandlerName);
                 if (!command) {
                     description = "No void event handler found";
                     return;

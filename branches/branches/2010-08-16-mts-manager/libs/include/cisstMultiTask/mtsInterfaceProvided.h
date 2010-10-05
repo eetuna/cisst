@@ -457,6 +457,8 @@ protected:
     mtsCommandVoid * AddCommandVoid(mtsCallableVoidBase * callable,
                                     const std::string & name,
                                     mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+    mtsCommandVoid * AddCommandVoid(mtsCommandVoid * command);
+
     mtsCommandVoidReturnBase * AddCommandVoidReturn(mtsCommandVoidReturnBase * command,
                                                     mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
     mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command,

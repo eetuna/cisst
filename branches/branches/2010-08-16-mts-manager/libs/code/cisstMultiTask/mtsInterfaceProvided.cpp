@@ -338,6 +338,22 @@ mtsCommandVoid * mtsInterfaceProvided::AddCommandVoid(mtsCallableVoidBase * call
 }
 
 
+mtsCommandVoid * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoid * command)
+{
+    // check that the input is valid
+    if (command) {
+        if (!CommandsVoid.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
+                                     << command->GetName() << "\"" << std::endl;
+        }
+        return command;
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: attempt to add undefined command (null command pointer) to interface \""
+                             << this->GetName() << "\"" << std::endl;
+    return 0;
+}
+
+
 mtsCommandVoidReturnBase * mtsInterfaceProvided::AddCommandVoidReturn(mtsCommandVoidReturnBase * command, mtsCommandQueueingPolicy queueingPolicy)
 {
     // check that the input is valid

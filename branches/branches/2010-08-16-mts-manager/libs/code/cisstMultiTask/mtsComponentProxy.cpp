@@ -598,7 +598,7 @@ bool mtsComponentProxy::UpdateEventHandlerProxyID(const std::string & clientComp
     mtsComponentInterfaceProxy::EventGeneratorProxySequence::const_iterator itEnd;
 
     // Update event void handlers
-    mtsCommandVoidBase * eventHandlerVoidBase;
+    mtsCommandVoid * eventHandlerVoidBase;
     mtsCommandVoidProxy * eventHandlerVoid;
     it = eventGeneratorProxyPointers.EventGeneratorVoidProxies.begin();
     itEnd = eventGeneratorProxyPointers.EventGeneratorVoidProxies.end();
@@ -926,7 +926,7 @@ void mtsComponentProxy::ExtractInterfaceProvidedDescription(
     // queued container is updated for both queued and non-queued commands.
 
     // Extract void commands
-    mtsCommandVoidBase * voidCommand;
+    mtsCommandVoid * voidCommand;
     CommandVoidElement elementCommandVoid;
     const std::vector<std::string> namesOfVoidCommand = endUserInterface->GetNamesOfCommandsVoid();
     for (size_t i = 0; i < namesOfVoidCommand.size(); ++i) {
