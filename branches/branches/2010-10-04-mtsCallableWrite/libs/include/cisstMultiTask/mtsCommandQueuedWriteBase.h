@@ -27,6 +27,9 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQueuedWriteBase_h
 #define _mtsCommandQueuedWriteBase_h
 
+#if 0 
+
+
 #include <cisstMultiTask/mtsCommandWriteBase.h>
 #include <cisstMultiTask/mtsMailBox.h>
 
@@ -97,3 +100,5 @@ public:
 };
 
 #endif // _mtsCommandQueuedWrite_h
+
+#endif // 0

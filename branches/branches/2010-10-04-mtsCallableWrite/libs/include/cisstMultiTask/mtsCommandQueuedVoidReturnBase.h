@@ -75,7 +75,7 @@ public:
 
     virtual mtsCommandQueuedVoidReturnBase * Clone(mtsMailBox* mailBox) const = 0;
 
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & result) = 0;
+    virtual mtsExecutionResult Execute(mtsGenericObject & result) = 0;
 
     void ThreadSignalRaise(void);
 

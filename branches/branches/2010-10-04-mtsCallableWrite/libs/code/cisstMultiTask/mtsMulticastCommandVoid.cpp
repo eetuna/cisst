@@ -38,14 +38,14 @@ void mtsMulticastCommandVoid::AddCommand(BaseType * command) {
 }
 
 
-mtsCommandBase::ReturnType mtsMulticastCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking)) {
-    int result = static_cast<int>(mtsCommandBase::DEV_OK);
-    for (unsigned int i = 0; i < Commands.size(); i++) {
+mtsExecutionResult mtsMulticastCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking)) {
+    int result = static_cast<int>(mtsExecutionResult::DEV_OK);
+    for (size_t i = 0; i < Commands.size(); i++) {
         result =
-            (result << static_cast<int>(mtsCommandBase::RETURN_TYPE_BIT_SIZE))
-            | static_cast<int>(Commands[i]->Execute(MTS_NOT_BLOCKING));
+            (result << static_cast<int>(mtsExecutionResult::RETURN_TYPE_BIT_SIZE))
+            | static_cast<int>((Commands[i]->Execute(MTS_NOT_BLOCKING).GetResult()));
     }
-    return static_cast<mtsCommandBase::ReturnType>(result);
+    return static_cast<mtsExecutionResult::Enum>(result);
 }
 
 
@@ -53,7 +53,7 @@ void mtsMulticastCommandVoid::ToStream(std::ostream & outputStream) const {
     outputStream << "mtsMulticastCommandVoid: " << this->Name;
     if (Commands.size() != 0) {
         outputStream << "\n  Registered observers:" << std::endl;
-        for (unsigned int i = 0; i < Commands.size(); i++) {
+        for (size_t i = 0; i < Commands.size(); i++) {
             outputStream << "  . CallBack [" << i << "]: " << *(Commands[i]);
         }
     } else {

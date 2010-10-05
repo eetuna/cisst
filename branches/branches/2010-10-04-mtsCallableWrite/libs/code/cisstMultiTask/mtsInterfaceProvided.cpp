@@ -161,12 +161,12 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
     // clone write commands
     CommandWriteMapType::const_iterator iterWrite = originalInterface->CommandsWrite.begin();
     const CommandWriteMapType::const_iterator endWrite = originalInterface->CommandsWrite.end();
-    mtsCommandWriteBase * commandWrite;
-    mtsCommandQueuedWriteBase * commandQueuedWrite;
+    mtsCommandWrite * commandWrite;
+    mtsCommandQueuedWrite * commandQueuedWrite;
     for (;
          iterWrite != endWrite;
          iterWrite++) {
-        commandQueuedWrite = dynamic_cast<mtsCommandQueuedWriteBase *>(iterWrite->second);
+        commandQueuedWrite = dynamic_cast<mtsCommandQueuedWrite *>(iterWrite->second);
         if (commandQueuedWrite) {
             commandWrite = commandQueuedWrite->Clone(this->MailBox, mailBoxSize);
             CMN_LOG_CLASS_INIT_VERBOSE << "constructor: cloned queued write command " << iterWrite->first
@@ -316,8 +316,9 @@ mtsCommandVoid * mtsInterfaceProvided::AddCommandVoid(mtsCallableVoidBase * call
             mtsCommandVoid * command = new mtsCommandVoid(callable, name); 
             if (!CommandsVoid.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
                 delete command;
+                command = 0;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
-                                         << command->GetName() << "\"" << std::endl;
+                                         << name << "\"" << std::endl;
             }
             return command;
         } else {
@@ -327,7 +328,7 @@ mtsCommandVoid * mtsInterfaceProvided::AddCommandVoid(mtsCallableVoidBase * call
                 delete queuedCommand;
                 queuedCommand = 0;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add queued command \""
-                                         << queuedCommand->GetName() << "\"" << std::endl;
+                                         << name << "\"" << std::endl;
             }
             return queuedCommand;
         }
@@ -369,27 +370,32 @@ mtsCommandVoidReturnBase * mtsInterfaceProvided::AddCommandVoidReturn(mtsCommand
 }
 
 
-mtsCommandWriteBase * mtsInterfaceProvided::AddCommandWrite(mtsCommandWriteBase * command, mtsCommandQueueingPolicy queueingPolicy)
+mtsCommandWrite * mtsInterfaceProvided::AddCommandWrite(mtsCallableWriteBase * callable,
+                                                        const std::string & name,
+                                                        const mtsGenericObject * argumentPrototype,
+                                                        mtsCommandQueueingPolicy queueingPolicy)
 {
     // check that the input is valid
-    if (command) {
+    if (callable) {
         // determine if this should be a queued command or not
-        bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandWrite", command->GetName());
+        bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandWrite", name);
         if (!queued) {
-            if (!CommandsWrite.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
+            mtsCommandWrite * command = new mtsCommandWrite(callable, name, argumentPrototype);
+            if (!CommandsWrite.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
+                delete command;
                 command = 0;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add command \""
-                                         << command->GetName() << "\"" << std::endl;
+                                         << name << "\"" << std::endl;
             }
             return command;
         } else {
             // create with no mailbox
-            mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandQueuedWriteGeneric(0, command, 0);
-            if (!CommandsWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
+            mtsCommandQueuedWrite * queuedCommand = new mtsCommandQueuedWrite(callable, name, argumentPrototype, 0, 0);
+            if (!CommandsWrite.AddItem(name, queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                 delete queuedCommand;
                 queuedCommand = 0;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandWrite: unable to add queued command \""
-                                         << command->GetName() << "\"" << std::endl;
+                                         << name << "\"" << std::endl;
             }
             return queuedCommand;
         }
@@ -431,9 +437,9 @@ mtsCommandQualifiedReadBase * mtsInterfaceProvided::AddCommandQualifiedRead(mtsC
     return command;
 }
 
-
-mtsCommandWriteBase* mtsInterfaceProvided::AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
-                                                                   mtsCommandWriteBase * command)
+#if 0
+mtsCommandWrite * mtsInterfaceProvided::AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
+                                                                mtsCommandWrite * command)
 {
     if (filter && command) {
         if (!CommandsInternal.AddItem(filter->GetName(), filter, CMN_LOG_LOD_INIT_ERROR)) {
@@ -449,7 +455,7 @@ mtsCommandWriteBase* mtsInterfaceProvided::AddCommandFilteredWrite(mtsCommandQua
             CommandsInternal.RemoveItem(filter->GetName(), CMN_LOG_LOD_INIT_ERROR);
             return 0;
         }
-        mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandFilteredQueuedWrite(filter, command);
+        mtsCommandQueuedWrite * queuedCommand = new mtsCommandFilteredQueuedWrite(filter, command);
         if (CommandsWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
             return queuedCommand;
         } else {
@@ -463,7 +469,7 @@ mtsCommandWriteBase* mtsInterfaceProvided::AddCommandFilteredWrite(mtsCommandQua
     }
     return 0;
 }
-
+#endif
 
 mtsInterfaceProvided * mtsInterfaceProvided::GetEndUserInterface(const std::string & userName)
 {
@@ -529,7 +535,7 @@ bool mtsInterfaceProvided::AddEvent(const std::string & name, mtsMulticastComman
 }
 
 
-bool mtsInterfaceProvided::AddEvent(const std::string & name, mtsMulticastCommandWriteBase * generator)
+bool mtsInterfaceProvided::AddEvent(const std::string & name, mtsMulticastCommandWrite * generator)
 {
     if (EventVoidGenerators.GetItem(name, CMN_LOG_LOD_NOT_USED)) {
         // Is this check really needed?
@@ -628,7 +634,7 @@ mtsCommandVoidReturnBase * mtsInterfaceProvided::GetCommandVoidReturn(const std:
 }
 
 
-mtsCommandWriteBase * mtsInterfaceProvided::GetCommandWrite(const std::string & commandName) const {
+mtsCommandWrite * mtsInterfaceProvided::GetCommandWrite(const std::string & commandName) const {
     if (this->EndUserInterface) {
         return CommandsWrite.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
     }
@@ -664,7 +670,7 @@ mtsMulticastCommandVoid * mtsInterfaceProvided::GetEventVoid(const std::string &
 }
 
 
-mtsMulticastCommandWriteBase * mtsInterfaceProvided::GetEventWrite(const std::string & eventName) const {
+mtsMulticastCommandWrite * mtsInterfaceProvided::GetEventWrite(const std::string & eventName) const {
     if (this->OriginalInterface) {
         return this->OriginalInterface->GetEventWrite(eventName);
     }
@@ -689,12 +695,12 @@ bool mtsInterfaceProvided::AddObserver(const std::string & eventName, mtsCommand
 }
 
 
-bool mtsInterfaceProvided::AddObserver(const std::string & eventName, mtsCommandWriteBase * handler)
+bool mtsInterfaceProvided::AddObserver(const std::string & eventName, mtsCommandWrite * handler)
 {
     if (this->OriginalInterface) {
         return this->OriginalInterface->AddObserver(eventName, handler);
     }
-    mtsMulticastCommandWriteBase * multicastCommand = EventWriteGenerators.GetItem(eventName);
+    mtsMulticastCommandWrite * multicastCommand = EventWriteGenerators.GetItem(eventName);
     if (multicastCommand) {
         // should probably check for duplicates (have AddCommand return bool?)
         multicastCommand->AddCommand(handler);

@@ -45,13 +45,19 @@ mtsCommandVoid::~mtsCommandVoid()
 {}
 
 
-mtsCommandBase::ReturnType mtsCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking))
+mtsExecutionResult mtsCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking))
 {
     if (this->IsEnabled()) {
         this->Callable->Execute();
-        return mtsCommandBase::DEV_OK;
+        return mtsExecutionResult::DEV_OK;
     }
-    return mtsCommandBase::DISABLED;
+    return mtsExecutionResult::DISABLED;
+}
+
+
+mtsCallableVoidBase * mtsCommandVoid::GetCallable(void) const
+{
+    return this->Callable;
 }
 
 
@@ -64,12 +70,6 @@ void mtsCommandVoid::ToStream(std::ostream & outputStream) const
     } else {
         outputStream << "not associated to a callable object";
     }
-}
-
-
-mtsCallableVoidBase * mtsCommandVoid::GetCallable(void) const
-{
-    return this->Callable;
 }
 
 

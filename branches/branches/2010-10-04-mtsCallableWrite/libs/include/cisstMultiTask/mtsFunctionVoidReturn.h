@@ -63,7 +63,7 @@ class CISST_EXPORT mtsFunctionVoidReturn: public mtsFunctionBase {
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command() instead of Command->Execute(). */
-    mtsCommandBase::ReturnType operator()(mtsGenericObject & result) const;
+    mtsExecutionResult operator()(mtsGenericObject & result) const;
 
     /*! Access to underlying command object. */
     CommandType * GetCommand(void) const;

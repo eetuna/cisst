@@ -89,13 +89,14 @@ public:
     virtual ~mtsCallableVoidMethod() {}
 
     /* documented in base class */
-    inline void Execute(void) {
+    inline mtsExecutionResult Execute(void) {
         (ClassInstantiation->*Action)();
+        return mtsExecutionResult::DEV_OK;
     }
 
     /* documented in base class */
     inline void ToStream(std::ostream & outputStream) const {
-        outputStream << "method based callable object using class/object \""
+        outputStream << "method based callable void object using class/object \""
                      << mtsObjectName(this->ClassInstantiation) << "\"";
     }
 };

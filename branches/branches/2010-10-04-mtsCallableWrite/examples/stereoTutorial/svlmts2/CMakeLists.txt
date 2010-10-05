@@ -17,8 +17,8 @@ project (svlExMultitask2)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library (svlExMultitask2Lib
-             mtsManagerComponent.h
-	     mtsManagerComponent.cpp
+             # mtsManagerComponent.h
+	     # mtsManagerComponent.cpp
              exampleFilter.h
              exampleFilter.cpp
              exampleComponent.h

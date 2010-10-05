@@ -21,7 +21,7 @@
  */
 
 #include "exampleComponent.h"
-#include "mtsManagerComponent.h"
+// '#include "mtsManagerComponent.h"
 
 #include <cisstOSAbstraction/osaSleep.h>
 

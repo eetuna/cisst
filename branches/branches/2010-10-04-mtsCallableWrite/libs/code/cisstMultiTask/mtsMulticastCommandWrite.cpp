@@ -20,11 +20,11 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
-#include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
-#include <cisstMultiTask/mtsCommandWrite.h>
+#include <cisstMultiTask/mtsMulticastCommandWrite.h>
 
-#if 0
-void mtsMulticastCommandWriteBase::AddCommand(BaseType * command) {
+
+void mtsMulticastCommandWrite::AddCommand(BaseType * command)
+{
     if (command) {
         // check if the command already has an argument prototype
         if (command->GetArgumentPrototype()) {
@@ -48,7 +48,7 @@ void mtsMulticastCommandWriteBase::AddCommand(BaseType * command) {
 }
 
 
-void mtsMulticastCommandWriteBase::ToStream(std::ostream & outputStream) const {
+void mtsMulticastCommandWrite::ToStream(std::ostream & outputStream) const {
     outputStream << "mtsMulticastCommandWrite: \"" << this->Name << "\"";
     if (Commands.size() != 0) {
         outputStream << "\n  Registered observers:" << std::endl;
@@ -60,5 +60,3 @@ void mtsMulticastCommandWriteBase::ToStream(std::ostream & outputStream) const {
         outputStream << " with no registered observers";
     }
 }
-
-#endif

@@ -27,10 +27,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnNamedMap.h>
 
 #include <cisstMultiTask/mtsCommandBase.h>
-
 #include <cisstMultiTask/mtsCallableVoidMethod.h>
 #include <cisstMultiTask/mtsCallableVoidFunction.h>
 #include <cisstMultiTask/mtsCommandVoid.h>
+
+#include <cisstMultiTask/mtsCallableWriteMethod.h>
 #include <cisstMultiTask/mtsCommandWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
@@ -139,7 +140,7 @@ protected:
     /*! Find an event handler based on its name. */
     //@{
     virtual mtsCommandVoid * GetEventHandlerVoid(const std::string & eventName) const;
-    virtual mtsCommandWriteBase * GetEventHandlerWrite(const std::string & eventName) const;
+    virtual mtsCommandWrite * GetEventHandlerWrite(const std::string & eventName) const;
     //@}
 
     inline bool CouldConnectTo(mtsInterfaceProvidedOrOutput * CMN_UNUSED(interfaceProvidedOrOutput)) {
@@ -220,7 +221,7 @@ protected:
                                         const std::string & eventName);
 
     bool AddEventHandlerToReceiver(const std::string & eventName, mtsCommandVoid * handler) const;
-    bool AddEventHandlerToReceiver(const std::string & eventName, mtsCommandWriteBase * handler) const;
+    bool AddEventHandlerToReceiver(const std::string & eventName, mtsCommandWrite * handler) const;
 
     typedef cmnNamedMap<FunctionInfo> FunctionInfoMapType;
 
@@ -250,7 +251,7 @@ protected:
 
     /*! Typedef for a map of event name and event handler (command object). */
     typedef cmnNamedMap<mtsCommandVoid> EventHandlerVoidMapType;
-    typedef cmnNamedMap<mtsCommandWriteBase> EventHandlerWriteMapType;
+    typedef cmnNamedMap<mtsCommandWrite> EventHandlerWriteMapType;
     EventHandlerVoidMapType EventHandlersVoid;
     EventHandlerWriteMapType EventHandlersWrite;
 
@@ -289,33 +290,42 @@ public:
         return this->AddEventHandlerVoid(callable, eventName, queueingPolicy);
     }
 
+    mtsCommandWrite * AddEventHandlerWrite(mtsCallableWriteBase * callable,
+                                           const std::string & eventName,
+                                           mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY);
+
     template <class __classType, class __argumentType>
-    inline mtsCommandWriteBase * AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
-                                                      __classType * classInstantiation,
-                                                      const std::string & eventName,
-                                                      mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY);
+    inline mtsCommandWrite * AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
+                                                  __classType * classInstantiation,
+                                                  const std::string & eventName,
+                                                  mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+        mtsCallableWriteBase * callable = new mtsCallableWriteMethod<__classType, __argumentType>(method, classInstantiation);
+        return this->AddEventHandlerWrite(callable, eventName, queueingPolicy);
+    }
 
     // PK: Can we get rid of this?
+#if 0  // adeguet1, trying to get rid of this
     template <class __classType>
     inline mtsCommandWriteBase * AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject &),
                                                              __classType * classInstantiation,
                                                              const std::string & eventName,
                                                              mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY);
-
-    bool RemoveEventHandlerVoid(const std::string &eventName);
-    bool RemoveEventHandlerWrite(const std::string &eventName);
+#endif
+    bool RemoveEventHandlerVoid(const std::string & eventName);
+    bool RemoveEventHandlerWrite(const std::string & eventName);
 };
 
 
 #ifndef SWIG
+#if 0
 template <class __classType, class __argumentType>
-inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
-                                                                        __classType * classInstantiation,
-                                                                        const std::string & eventName,
-                                                                        mtsEventQueueingPolicy queueingPolicy)
+inline mtsCommandWrite * mtsInterfaceRequired::AddEventHandlerWrite(void (__classType::*method)(const __argumentType &),
+                                                                    __classType * classInstantiation,
+                                                                    const std::string & eventName,
+                                                                    mtsEventQueueingPolicy queueingPolicy)
 {
     bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddEventHandlerWrite", eventName);
-    mtsCommandWriteBase * actualCommand =
+    mtsCommandWrite * actualCommand =
         new mtsCommandWrite<__classType, __argumentType>(method, classInstantiation, eventName, __argumentType());
     if (queued) {
         if (MailBox)
@@ -329,8 +339,9 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWrite(void (__
     AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
     return  handler;
 }
+#endif
 
-
+#if 0 // really trying to get rid of this
 template <class __classType>
 inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(void (__classType::*method)(const mtsGenericObject &),
                                                                                __classType * classInstantiation,
@@ -354,6 +365,8 @@ inline mtsCommandWriteBase * mtsInterfaceRequired::AddEventHandlerWriteGeneric(v
     AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
     return  handler;
 }
+#endif
+
 #endif  // !SWIG
 
 

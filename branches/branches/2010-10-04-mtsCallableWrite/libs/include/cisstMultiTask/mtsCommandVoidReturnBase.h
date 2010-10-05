@@ -55,7 +55,7 @@ public:
     /*! The execute method. Abstract method to be implemented by derived
       classes to run the actual operation on the receiver
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute(mtsGenericObject & result) = 0;
+    virtual mtsExecutionResult Execute(mtsGenericObject & result) = 0;
 
     /* documented in base class */
     inline size_t NumberOfArguments(void) const {

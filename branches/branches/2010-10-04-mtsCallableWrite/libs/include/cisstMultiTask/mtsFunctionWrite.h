@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionBase.h>
-#include <cisstMultiTask/mtsCommandWriteBase.h>
+#include <cisstMultiTask/mtsCommandWrite.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
@@ -37,13 +37,13 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsFunctionWrite: public mtsFunctionBase {
 protected:
-    typedef mtsCommandWriteBase CommandType;
+    typedef mtsCommandWrite CommandType;
     CommandType * Command;
 
     template <typename _userType, bool>
     class ConditionalWrap {
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument, mtsBlockingType blocking) {
+        static mtsExecutionResult Call(mtsCommandWrite * command, const _userType & argument, mtsBlockingType blocking) {
             mtsGenericObjectProxyRef<_userType> argumentWrapped(argument);
             return command->Execute(argumentWrapped, blocking);
         }
@@ -51,7 +51,7 @@ protected:
     template <typename _userType>
     class ConditionalWrap<_userType, true> {
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandWriteBase * command, const _userType & argument, mtsBlockingType blocking) {
+        static mtsExecutionResult Call(mtsCommandWrite * command, const _userType & argument, mtsBlockingType blocking) {
             return command->Execute(argument, blocking);
         }
     };
@@ -79,25 +79,25 @@ public:
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
-    mtsCommandBase::ReturnType operator()(const mtsGenericObject & argument) const;
+    mtsExecutionResult operator()(const mtsGenericObject & argument) const;
 
-    mtsCommandBase::ReturnType ExecuteBlocking(const mtsGenericObject & argument) const;
+    mtsExecutionResult ExecuteBlocking(const mtsGenericObject & argument) const;
 
 	/*! Overloaded operator that accepts different argument types. */
     template <class _userType>
-    mtsCommandBase::ReturnType operator()(const _userType & argument) const {
-        mtsCommandBase::ReturnType ret = Command ?
+    mtsExecutionResult operator()(const _userType & argument) const {
+        mtsExecutionResult result = Command ?
             ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, argument, MTS_NOT_BLOCKING)
-          : mtsCommandBase::NO_INTERFACE;
-        return ret;
+          : mtsExecutionResult::NO_INTERFACE;
+        return result;
     }
 
     template <class _userType>
-    mtsCommandBase::ReturnType ExecuteBlocking(const _userType & argument) const {
-        mtsCommandBase::ReturnType ret = Command ?
+    mtsExecutionResult ExecuteBlocking(const _userType & argument) const {
+        mtsExecutionResult result = Command ?
             ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, argument, MTS_BLOCKING)
-          : mtsCommandBase::NO_INTERFACE;
-        return ret;
+          : mtsExecutionResult::NO_INTERFACE;
+        return result;
     }
 
     /*! Access to underlying command object. */

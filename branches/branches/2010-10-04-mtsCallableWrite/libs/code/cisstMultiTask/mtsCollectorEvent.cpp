@@ -190,7 +190,7 @@ void mtsCollectorEvent::Startup(void)
     CMN_LOG_CLASS_INIT_DEBUG << "Startup() for collector \"" << this->GetName() << "\"" << std::endl;
     size_t index;
     CollectorEventWrite * collectorEvent;
-    mtsCommandWriteBase * eventHandler;
+    mtsCommandWrite * eventHandler;
     const mtsGenericObject * argumentPrototype;
     for (index = 0; index < this->EventsWrite.size(); index++) {
         collectorEvent = this->EventsWrite[index];
@@ -431,7 +431,7 @@ bool mtsCollectorEvent::AddObservedEventWrite(const mtsComponent * componentPoin
     this->EventCounter++;
     // get the required interface to add an observer
     mtsInterfaceRequired * interfaceRequired = GetInterfaceRequiredFor(componentPointer, interfacePointer);
-    interfaceRequired->AddEventHandlerWriteGeneric(&CollectorEventWrite::EventHandler, collector, eventName);
+    interfaceRequired->AddEventHandlerWrite(&CollectorEventWrite::EventHandler, collector, eventName);
     // collector needs to have the required interface to find out the argument prototype at Startup
     collector->InterfaceRequired = interfaceRequired;
     return true;

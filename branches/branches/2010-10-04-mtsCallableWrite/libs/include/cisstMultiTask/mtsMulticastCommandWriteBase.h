@@ -36,6 +36,7 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
 
+#if 0
 /*!
   \ingroup cisstMultiTask
 
@@ -73,3 +74,4 @@ public:
 
 #endif // _mtsMulticastCommandWriteBase_h
 
+#endif // 0

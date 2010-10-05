@@ -28,10 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandBase_h
 #define _mtsCommandBase_h
 
-// These two includes are not required to compile this class but are
-// pretty much always needed in conjunction with commands.  To ease
-// the user's life, we include them now.
-//include <cisstMultiTask/mtsGenericObjectProxy.h>
+#include <cisstMultiTask/mtsExecutionResult.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
 #include <iostream>
@@ -58,6 +55,7 @@ protected:
     bool EnableFlag;
 
 public:
+#if 0
     /* use to bitshift and or for return value of a composite
        would limit the number of composite interfaces to 31 for
        an int return value
@@ -76,6 +74,7 @@ public:
         DISABLED = 17,
         COMMAND_FAILED = 18  // Read or QualifiedRead returned 'false'
     };
+#endif
 
     /*! The constructor. Does nothing */
     inline mtsCommandBase(void):

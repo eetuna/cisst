@@ -71,25 +71,25 @@ public:
     }
 
 
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & result)
+    virtual mtsExecutionResult Execute(mtsGenericObject & result)
     {
         if (this->IsEnabled()) {
             if (!MailBox) {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoidReturn: Execute: no mailbox for \""
                                   << this->Name << "\"" << std::endl;
-                return mtsCommandBase::NO_MAILBOX;
+                return mtsExecutionResult::NO_MAILBOX;
             }
             // preserve address of result and wait to be dequeued
             ResultPointer = &result;
             if (!MailBox->Write(this)) {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoidReturn: Execute: mailbox full for \""
                                   << this->Name << "\"" <<  std::endl;
-                return mtsCommandBase::MAILBOX_FULL;
+                return mtsExecutionResult::MAILBOX_FULL;
             }
             MailBox->ThreadSignalWait();
-            return mtsCommandBase::DEV_OK;
+            return mtsExecutionResult::DEV_OK;
         }
-        return mtsCommandBase::DISABLED;
+        return mtsExecutionResult::DISABLED;
     }
 
 

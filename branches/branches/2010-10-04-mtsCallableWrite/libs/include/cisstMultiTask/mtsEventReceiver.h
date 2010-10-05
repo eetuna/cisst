@@ -176,28 +176,28 @@ public:
 
 class CISST_EXPORT mtsEventReceiverWrite : public mtsEventReceiverBase {
 protected:
-    mtsCommandWriteBase *Command;      // Command object for calling EventHandler method
-    mtsCommandWriteBase *UserHandler;  // User supplied event handler
-    mtsGenericObject *ArgPtr;
+    mtsCommandWrite * Command;      // Command object for calling EventHandler method
+    mtsCommandWrite * UserHandler;  // User supplied event handler
+    mtsGenericObject * ArgPtr;
 
     // This one always gets added non-queued
-    void EventHandler(const mtsGenericObject &arg);
+    void EventHandler(const mtsGenericObject & argument);
 
 public:
     mtsEventReceiverWrite();
     ~mtsEventReceiverWrite();
 
     /*! Called from mtsInterfaceRequired::BindCommandsAndEvents */
-    mtsCommandWriteBase *GetCommand();
+    mtsCommandWrite * GetCommand(void);
 
     /*! Called from mtsInterfaceRequired::AddEventHandlerWrite */
-    void SetHandlerCommand(mtsCommandWriteBase * commandHandler);
+    void SetHandlerCommand(mtsCommandWrite * commandHandler);
 
     // Same functionality as mtsInterfaceRequired::AddEventHandlerWrite.
     template <class __classType, class __argumentType>
-    inline mtsCommandWriteBase * SetHandler(void (__classType::*method)(const __argumentType &),
-                                            __classType * classInstantiation,
-                                            mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
+    inline mtsCommandWrite * SetHandler(void (__classType::*method)(const __argumentType &),
+                                        __classType * classInstantiation,
+                                        mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY) {
         return CheckRequired() ? (Required->AddEventHandlerWrite(method, classInstantiation, this->GetName(), queueingPolicy)) : 0;
     }
 
@@ -211,8 +211,8 @@ public:
     /*! Wait for event to be issued and return received argument.
         \returns true if successful, false if failed (including case where wait succeeded but return value obj
                  is invalid) */
-    virtual bool Wait(mtsGenericObject &obj);
-    virtual bool WaitWithTimeout(double timeoutInSec, mtsGenericObject &obj);
+    virtual bool Wait(mtsGenericObject & payload);
+    virtual bool WaitWithTimeout(double timeoutInSec, mtsGenericObject & payload);
 
     //PK: might be nice to have this
     //const mtsGenericObject *GetArgumentPrototype() const;

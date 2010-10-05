@@ -19,9 +19,10 @@ set (SOURCE_FILES
      mtsClassServices.cpp
 
      mtsGenericObject.cpp
+     mtsExecutionResult.cpp
 
      mtsMulticastCommandVoid.cpp
-     mtsMulticastCommandWriteBase.cpp
+     mtsMulticastCommandWrite.cpp
 
      mtsFunctionVoid.cpp
      mtsFunctionVoidReturn.cpp
@@ -29,12 +30,13 @@ set (SOURCE_FILES
      mtsFunctionWrite.cpp
      mtsFunctionQualifiedRead.cpp
 
-     mtsEventReceiver.cpp
+     # mtsEventReceiver.cpp
 
      mtsCommandVoid.cpp
      mtsCommandQueuedVoid.cpp
      mtsCommandQueuedVoidReturnBase.cpp
-     mtsCommandQueuedWriteBase.cpp
+     mtsCommandWrite.cpp
+     mtsCommandQueuedWrite.cpp
      mtsCommandFilteredQueuedWrite.cpp
 
      mtsMailBox.cpp
@@ -83,6 +85,7 @@ set (HEADER_FILES
      mtsMatrix.h
      mtsTransformationTypes.h
 
+     mtsExecutionResult.h
      mtsCommandBase.h
      mtsFunctionBase.h
 
@@ -102,21 +105,20 @@ set (HEADER_FILES
      mtsCommandRead.h
      mtsCommandReadBase.h
      mtsCommandWrite.h
-     mtsCommandWriteBase.h
+#     mtsCommandWriteBase.h
      mtsMulticastCommandWrite.h
-     mtsMulticastCommandWriteBase.h
+#      mtsMulticastCommandWriteBase.h
      mtsCommandQueuedWrite.h
-     mtsCommandQueuedWriteBase.h
+#     mtsCommandQueuedWriteBase.h
      mtsCommandFilteredQueuedWrite.h
      mtsFunctionRead.h
      mtsFunctionWrite.h
-     mtsEventWriteGeneratorProxy.h
 
      mtsCommandQualifiedRead.h
      mtsCommandQualifiedReadBase.h
      mtsFunctionQualifiedRead.h
 
-     mtsEventReceiver.h
+     # mtsEventReceiver.h
 
      mtsExport.h
      mtsForwardDeclarations.h
@@ -199,6 +201,8 @@ if(CISST_MTS_HAS_ICE)
       mtsCommandWriteProxy.h
       mtsCommandReadProxy.h
       mtsCommandQualifiedReadProxy.h
+
+      mtsEventWriteGeneratorProxy.h
       mtsFunctionReadProxy.h
       mtsFunctionWriteProxy.h
       mtsFunctionQualifiedReadProxy.h

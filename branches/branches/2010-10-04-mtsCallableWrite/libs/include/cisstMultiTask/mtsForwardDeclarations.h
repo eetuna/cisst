@@ -75,9 +75,14 @@ class mtsCommandReadBase;
 template <class _classType, class _argumentType> class mtsCommandRead;
 class mtsFunctionRead;
 
+// write callable
+class mtsCallableWriteBase;
+template <class _classType, class _argumentType> class mtsCallableWriteMethod;
+template <class _argumentType> class mtsCallableWriteFunction;
+
 // write commands
-class mtsCommandWriteBase;
-template <class _classType, class _argumentType> class mtsCommandWrite;
+class mtsCommandWrite;
+class mtsCommandQueuedWrite;
 class mtsFunctionWrite;
 
 // qualified read commands
@@ -91,8 +96,7 @@ class mtsEventReceiverVoid;
 class mtsEventReceiverWrite;
 
 // multicast write commands
-class mtsMulticastCommandWriteBase;
-template <class _argumentType> class mtsMulticastCommandWrite;
+class mtsMulticastCommandWrite;
 
 // interfaces and tasks
 class mtsInterfaceProvidedOrOutput;

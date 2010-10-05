@@ -45,6 +45,7 @@ class CISST_EXPORT mtsCommandQueuedVoid: public mtsCommandVoid
  protected:
     /*! Mailbox used to queue the commands */
     mtsMailBox * MailBox;
+
     /*! Queue of flags to indicate if the command is blocking or
       not */
     mtsQueue<mtsBlockingType> BlockingFlagQueue;
@@ -77,7 +78,7 @@ class CISST_EXPORT mtsCommandQueuedVoid: public mtsCommandVoid
       Execute() will return mtsCommandBase::MAILBOX_FULL.  This can
       happen if the task receiving the command doesn't process/empty
       its mailboxes fast enough. */
-    mtsCommandBase::ReturnType Execute(mtsBlockingType blocking);
+    mtsExecutionResult Execute(mtsBlockingType blocking);
 
     mtsBlockingType BlockingFlagGet(void);
 

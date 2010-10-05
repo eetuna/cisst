@@ -28,6 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandWriteBase_h
 #define _mtsCommandWriteBase_h
 
+#if 0 
 
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <iostream>
@@ -104,3 +105,4 @@ protected:
 
 #endif // _mtsCommandWriteBase_h
 
+#endif // 0

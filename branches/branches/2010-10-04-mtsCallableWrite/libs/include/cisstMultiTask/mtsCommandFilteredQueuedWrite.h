@@ -34,15 +34,15 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
  */
 
-class mtsCommandFilteredQueuedWrite: public mtsCommandQueuedWriteGeneric
+class mtsCommandFilteredQueuedWrite: public mtsCommandQueuedWrite
 {
 public:
-    typedef mtsCommandQueuedWriteGeneric  BaseType;
+    typedef mtsCommandQueuedWrite BaseType;
     typedef mtsCommandFilteredQueuedWrite ThisType;
 
 protected:
     mtsCommandQualifiedReadBase * ActualFilter;
-    mtsGenericObject *filterOutput;
+    mtsGenericObject * filterOutput;
 
 private:
     /*! Private copy constructor to prevent copies */
@@ -50,12 +50,10 @@ private:
 
 public:
 
-    mtsCommandFilteredQueuedWrite(mtsCommandQualifiedReadBase * actualFilter,
-                                  mtsCommandWriteBase * actualCommand);
+    mtsCommandFilteredQueuedWrite(mtsCommandQualifiedReadBase * actualFilter);
 
     mtsCommandFilteredQueuedWrite(mtsMailBox * mailBox,
                                   mtsCommandQualifiedReadBase * actualFilter,
-                                  mtsCommandWriteBase * actualCommand,
                                   size_t size);
 
     virtual ~mtsCommandFilteredQueuedWrite();
@@ -65,7 +63,7 @@ public:
     /*! Return a pointer on the argument prototype */
     virtual const mtsGenericObject * GetArgumentPrototype(void) const;
 
-    mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument, mtsBlockingType blocking);
+    mtsExecutionResult Execute(const mtsGenericObject & argument, mtsBlockingType blocking);
 };
 
 

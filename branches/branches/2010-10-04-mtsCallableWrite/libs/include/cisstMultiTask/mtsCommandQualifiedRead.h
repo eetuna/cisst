@@ -87,23 +87,24 @@ protected:
         //        type (i.e., a straight dynamic cast should work).
         // Both of these cases are properly handled by mtsGenericTypes::CastArg.
     public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType *ClassInst, ActionType Action, ActionTypeOld ActionOld,
-                                                     const mtsGenericObject &argument1, mtsGenericObject &argument2)
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, ActionTypeOld actionOld,
+                                             const mtsGenericObject & argument1, mtsGenericObject & argument2)
         {
             const Argument1Type * data1 = mtsGenericTypes<Argument1Type>::CastArg(argument1);
-            if (data1 == 0)
-                return mtsCommandBase::BAD_INPUT;
+            if (data1 == 0) {
+                return mtsExecutionResult::BAD_INPUT;
+            }
             Argument2Type * data2 = mtsGenericTypes<Argument2Type>::CastArg(argument2);
             if (data2 == 0) {
-                return mtsCommandBase::BAD_INPUT;
+                return mtsExecutionResult::BAD_INPUT;
             }
-            if (Action) {
-                if (!(ClassInst->*Action)(*data1, *data2))
-                    return mtsCommandBase::COMMAND_FAILED;
+            if (action) {
+                if (!(classInstantiation->*action)(*data1, *data2))
+                    return mtsExecutionResult::COMMAND_FAILED;
+            } else if (actionOld) {
+                (classInstantiation->*actionOld)(*data1, *data2);
             }
-            else if (ActionOld)
-                (ClassInst->*ActionOld)(*data1, *data2);
-            return mtsCommandBase::DEV_OK;
+            return mtsExecutionResult::DEV_OK;
         }
     };
     template<typename dummy>
@@ -112,35 +113,35 @@ protected:
         // In this case, we accept a Proxy or ProxyRef for argument1. If a Proxy Ref, then we need to copy to a
         // temporary object before calling the method.
     public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType *ClassInst, ActionType Action, ActionTypeOld ActionOld,
-                                                     const mtsGenericObject &argument1,  mtsGenericObject &argument2)
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, ActionTypeOld actionOld,
+                                             const mtsGenericObject & argument1,  mtsGenericObject & argument2)
         {
             // First, check if a Proxy object was passed.
             Argument1Type temp1;  // in case needed
-            const Argument1Type *data1 = dynamic_cast<const Argument1Type *>(&argument1);
+            const Argument1Type * data1 = dynamic_cast<const Argument1Type *>(&argument1);
             // If it isn't a Proxy, maybe it is a ProxyRef
             if (!data1) {
                 typedef typename Argument1Type::RefType Argument1RefType;
-                const Argument1RefType *data1ref = dynamic_cast<const Argument1RefType *>(&argument1);
+                const Argument1RefType * data1ref = dynamic_cast<const Argument1RefType *>(&argument1);
                 if (!data1ref) {
                     CMN_LOG_INIT_ERROR << "Qualified Read CallMethod could not cast arg1 from " << typeid(argument1).name()
                                        << " to const " << typeid(Argument1RefType).name() << std::endl;
-                    return mtsCommandBase::BAD_INPUT;
+                    return mtsExecutionResult::BAD_INPUT;
                 }
                 temp1 = *data1ref;
                 data1 = &temp1;
             }
             Argument2Type * data2 = mtsGenericTypes<Argument2Type>::CastArg(argument2);
             if (data2 == 0) {
-                return mtsCommandBase::BAD_INPUT;
+                return mtsExecutionResult::BAD_INPUT;
             }
-            if (Action) {
-                if (!(ClassInst->*Action)(*data1, *data2))
-                    return mtsCommandBase::COMMAND_FAILED;
+            if (action) {
+                if (!(classInstantiation->*action)(*data1, *data2))
+                    return mtsExecutionResult::COMMAND_FAILED;
+            } else if (actionOld) {
+                (classInstantiation->*actionOld)(*data1, *data2);
             }
-            else if (ActionOld)
-                (ClassInst->*ActionOld)(*data1, *data2);
-            return mtsCommandBase::DEV_OK;
+            return mtsExecutionResult::DEV_OK;
         }
     };
     template<typename dummy>
@@ -149,37 +150,38 @@ protected:
         // In this case, we accept a Proxy or ProxyRef for argument2. If a Proxy Ref, then we need to copy to a
         // temporary object before calling the method.
     public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType *ClassInst, ActionType Action, ActionTypeOld ActionOld,
-                                                     const mtsGenericObject &argument1,  mtsGenericObject &argument2)
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, ActionTypeOld actionOld,
+                                             const mtsGenericObject & argument1,  mtsGenericObject & argument2)
         {
             const Argument1Type * data1 = mtsGenericTypes<Argument1Type>::CastArg(argument1);
             if (data1 == 0) {
-                return mtsCommandBase::BAD_INPUT;
+                return mtsExecutionResult::BAD_INPUT;
             }
             // First, check if a Proxy object was passed.
             Argument2Type temp2;  // in case needed
-            Argument2Type *data2 = dynamic_cast<Argument2Type *>(&argument2);
+            Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
             // If it isn't a Proxy, maybe it is a ProxyRef
             typedef typename Argument2Type::RefType Argument2RefType;
-            Argument2RefType *data2ref = 0;
+            Argument2RefType * data2ref = 0;
             if (!data2) {
                 data2ref = dynamic_cast<Argument2RefType *>(&argument2);
                 if (!data2ref) {
                     CMN_LOG_INIT_ERROR << "Qualified Read CallMethod could not cast arg2 from " << typeid(argument2).name()
                                        << " to const " << typeid(Argument2RefType).name() << std::endl;
-                    return mtsCommandBase::BAD_INPUT;
+                    return mtsExecutionResult::BAD_INPUT;
                 }
                 data2 = &temp2;
             }
-            if (Action) {
-                if (!(ClassInst->*Action)(*data1, *data2))
-                    return mtsCommandBase::COMMAND_FAILED;
+            if (action) {
+                if (!(classInstantiation->*action)(*data1, *data2))
+                    return mtsExecutionResult::COMMAND_FAILED;
+            } else if (actionOld) {
+                (classInstantiation->*actionOld)(*data1, *data2);
             }
-            else if (ActionOld)
-                (ClassInst->*ActionOld)(*data1, *data2);
-            if (data2ref)
+            if (data2ref) {
                 *data2ref = *data2;
-            return mtsCommandBase::DEV_OK;
+            }
+            return mtsExecutionResult::DEV_OK;
         }
     };
     template<typename dummy>
@@ -187,49 +189,50 @@ protected:
         // Specialization: Argument1Type and Argument2Type are both derived from mtsGenericObjectProxy.
         // In this case, we need to accept a Proxy or ProxyRef for either.
     public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType *ClassInst, ActionType Action, ActionTypeOld ActionOld, 
-                                                     const mtsGenericObject &argument1, mtsGenericObject &argument2)
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, ActionTypeOld actionOld, 
+                                             const mtsGenericObject & argument1, mtsGenericObject & argument2)
         {
             // First, check if a Proxy object was passed.
             Argument1Type temp1;  // in case needed
-            const Argument1Type *data1 = dynamic_cast<const Argument1Type *>(&argument1);
+            const Argument1Type * data1 = dynamic_cast<const Argument1Type *>(&argument1);
             // If it isn't a Proxy, maybe it is a ProxyRef
             if (!data1) {
                 typedef typename Argument1Type::RefType Argument1RefType;
-                const Argument1RefType *data1ref = dynamic_cast<const Argument1RefType *>(&argument1);
+                const Argument1RefType * data1ref = dynamic_cast<const Argument1RefType *>(&argument1);
                 if (!data1ref) {
                     CMN_LOG_INIT_ERROR << "Qualified Read CallMethod could not cast arg1 from " << typeid(argument1).name()
                                        << " to const " << typeid(Argument1RefType).name() << std::endl;
-                    return mtsCommandBase::BAD_INPUT;
+                    return mtsExecutionResult::BAD_INPUT;
                 }
                 temp1 = *data1ref;
                 data1 = &temp1;
             }
             // First, check if a Proxy object was passed.
             Argument2Type temp2;  // in case needed
-            Argument2Type *data2 = dynamic_cast<Argument2Type *>(&argument2);
+            Argument2Type * data2 = dynamic_cast<Argument2Type *>(&argument2);
             // If it isn't a Proxy, maybe it is a ProxyRef
             typedef typename Argument2Type::RefType Argument2RefType;
-            Argument2RefType *data2ref = 0;
+            Argument2RefType * data2ref = 0;
             if (!data2) {
                 data2ref = dynamic_cast<Argument2RefType *>(&argument2);
                 if (!data2ref) {
                     CMN_LOG_INIT_ERROR << "Qualified Read CallMethod could not cast arg2 from " << typeid(argument2).name()
                                        << " to const " << typeid(Argument2RefType).name() << std::endl;
-                    return mtsCommandBase::BAD_INPUT;
+                    return mtsExecutionResult::BAD_INPUT;
                 }
                 data2 = &temp2;
             }
-            if (Action) {
-                if (!(ClassInst->*Action)(*data1, *data2))
-                    return mtsCommandBase::COMMAND_FAILED;
+            if (action) {
+                if (!(classInstantiation->*action)(*data1, *data2))
+                    return mtsExecutionResult::COMMAND_FAILED;
+            } else if (actionOld) {
+                (classInstantiation->*actionOld)(*data1, *data2);
             }
-            else if (ActionOld)
-                (ClassInst->*ActionOld)(*data1, *data2);
             // Finally, copy the data to the argument
-            if (data2ref)
+            if (data2ref) {
                 *data2ref = temp2;
-            return mtsCommandBase::DEV_OK;
+            }
+            return mtsExecutionResult::DEV_OK;
         }
     };
 
@@ -251,8 +254,6 @@ public:
         ActionOld(0),
         ClassInstantiation(classInstantiation)
     {
-        //this->Argument1Prototype = dynamic_cast<mtsGenericObject*>(argument1Prototype.Services()->Create());
-        //this->Argument2Prototype = dynamic_cast<mtsGenericObject*>(argument2Prototype.Services()->Create());
         this->Argument1Prototype = mtsGenericTypes<Argument1Type>::ConditionalCreate(argument1Prototype, name);
         this->Argument2Prototype = mtsGenericTypes<Argument2Type>::ConditionalCreate(argument2Prototype, name);
     }
@@ -280,13 +281,14 @@ public:
       applies the operation on the receiver.
       \param obj The data passed to the operation method
     */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument1,
-                                               mtsGenericObject & argument2) {
-        if (this->IsEnabled())
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument1,
+                                       mtsGenericObject & argument2) {
+        if (this->IsEnabled()) {
             return ConditionalCast<cmnIsDerivedFromTemplated<Argument1Type, mtsGenericObjectProxy>::YES,
                                    cmnIsDerivedFromTemplated<Argument2Type, mtsGenericObjectProxy>::YES
                                   >::CallMethod(ClassInstantiation, Action, ActionOld, argument1, argument2);
-        return mtsCommandBase::DISABLED;
+        }
+        return mtsExecutionResult::DISABLED;
     }
 
     /* documented in base class */

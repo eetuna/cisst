@@ -30,7 +30,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsMulticastCommandWrite_h
 
 
-#include <cisstMultiTask/mtsMulticastCommandWriteBase.h>
+#include <cisstMultiTask/mtsCommandWrite.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 #include <vector>
 
@@ -43,22 +43,22 @@ http://www.cisst.org/cisst/license.txt.
   This class contains a vector of two or more command objects.
   The primary use of this class is to send events to all observers.
  */
-template <class _argumentType>
-class mtsMulticastCommandWrite: public mtsMulticastCommandWriteBase
+class mtsMulticastCommandWrite: public mtsCommandWrite
 {
 public:
-    typedef mtsMulticastCommandWriteBase BaseType;
-    typedef _argumentType ArgumentType;   // does not need to derive from mtsGenericObject
-    typedef typename mtsGenericTypes<ArgumentType>::FinalBaseType ArgumentFinalType;  // derived from mtsGenericObject
+    typedef mtsCommandWrite BaseType;
+
+protected:
+    std::vector<BaseType *> Commands;
+
+    //    typedef typename mtsGenericTypes<ArgumentType>::FinalBaseType ArgumentFinalType;  // derived from mtsGenericObject
 
 public:
     /*! Default constructor. Does nothing. */
-    mtsMulticastCommandWrite(const std::string & name, const ArgumentType & argumentPrototype):
-        BaseType(name)
-    {
-        //this->ArgumentPrototype = new ArgumentType(argumentPrototype);
-        this->ArgumentPrototype = mtsGenericTypes<ArgumentType>::ConditionalCreate(argumentPrototype, name);
-    }
+    template <class __argumentType>
+    mtsMulticastCommandWrite(const std::string & name, const __argumentType & argumentPrototype):
+        BaseType(0, name, argumentPrototype)
+    {}
 
     /*! Default destructor. Does nothing. */
     ~mtsMulticastCommandWrite() {
@@ -67,9 +67,13 @@ public:
         }
     }
 
+    /*! Add a command to the composite. */
+    void AddCommand(BaseType * command);
+
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               mtsBlockingType CMN_UNUSED(blocking)) {
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                       mtsBlockingType CMN_UNUSED(blocking)) {
+#if 0 // needs to be fixed
         // cast argument first
         const ArgumentFinalType * data = dynamic_cast< const ArgumentFinalType * >(&argument);
         if (data == 0) {
@@ -81,10 +85,19 @@ public:
         for (index = 0; index < commandsSize; index++) {
             Commands[index]->Execute(*data, MTS_NOT_BLOCKING);
         }
-        return mtsCommandBase::DEV_OK;
+#else
+        size_t index;
+        const size_t commandsSize = Commands.size();
+        for (index = 0; index < commandsSize; index++) {
+            Commands[index]->Execute(argument, MTS_NOT_BLOCKING);
+        }
+#endif
+        return mtsExecutionResult::DEV_OK;
     }
+
+    /* documented in base class */
+    void ToStream(std::ostream & outputStream) const;
 };
 
 
 #endif // _mtsMulticastCommandWrite_h
-

@@ -106,10 +106,10 @@ bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string & eventNa
 }
 
 
-bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string &eventName, mtsCommandWriteBase *handler) const
+bool mtsInterfaceRequired::AddEventHandlerToReceiver(const std::string & eventName, mtsCommandWrite * handler) const
 {
     bool result = false;
-    ReceiverWriteInfo *receiverInfo = EventReceiversWrite.GetItem(eventName, CMN_LOG_LOD_INIT_WARNING);
+    ReceiverWriteInfo * receiverInfo = EventReceiversWrite.GetItem(eventName, CMN_LOG_LOD_INIT_WARNING);
     if (receiverInfo) {
         receiverInfo->Pointer->SetHandlerCommand(handler);
         result = true;
@@ -175,7 +175,7 @@ mtsCommandVoid * mtsInterfaceRequired::GetEventHandlerVoid(const std::string & e
 }
 
 
-mtsCommandWriteBase * mtsInterfaceRequired::GetEventHandlerWrite(const std::string & eventName) const {
+mtsCommandWrite * mtsInterfaceRequired::GetEventHandlerWrite(const std::string & eventName) const {
     return EventHandlersWrite.GetItem(eventName);
 }
 
@@ -646,6 +646,27 @@ mtsCommandVoid * mtsInterfaceRequired::AddEventHandlerVoid(mtsCallableVoidBase *
 }
 
 
+mtsCommandWrite * mtsInterfaceRequired::AddEventHandlerWrite(mtsCallableWriteBase * callable,
+                                                             const std::string & eventName,
+                                                             mtsEventQueueingPolicy queueingPolicy)
+{
+    CMN_ASSERT(callable);
+    bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddEventHandlerWrite", eventName);
+    if (queued) {
+        if (MailBox) {
+            EventHandlersWrite.AddItem(eventName, new mtsCommandQueuedWrite(callable, eventName, 0, MailBox, DEFAULT_EVENT_QUEUE_LEN));
+        } else {
+            CMN_LOG_CLASS_INIT_ERROR << "No mailbox for queued event handler void \"" << eventName << "\"" << std::endl;
+        }
+    } else {
+        EventHandlersWrite.AddItem(eventName, new mtsCommandWrite(callable, eventName, 0));
+    }
+    mtsCommandWrite * handler = EventHandlersWrite.GetItem(eventName);
+    AddEventHandlerToReceiver(eventName, handler);  // does nothing if event receiver does not exist
+    return handler;
+}
+
+
 bool mtsInterfaceRequired::RemoveEventHandlerVoid(const std::string &eventName)
 {
     mtsCommandVoid * handler = 0;
@@ -656,7 +677,7 @@ bool mtsInterfaceRequired::RemoveEventHandlerVoid(const std::string &eventName)
 
 bool mtsInterfaceRequired::RemoveEventHandlerWrite(const std::string &eventName)
 {
-    mtsCommandWriteBase * handler = 0;
+    mtsCommandWrite * handler = 0;
     AddEventHandlerToReceiver(eventName, handler);
     return EventHandlersWrite.RemoveItem(eventName, CMN_LOG_LOD_RUN_WARNING);
 }

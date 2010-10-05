@@ -75,13 +75,13 @@ protected:
     class ConditionalCast {
         // Default case: ReturnType not derived from mtsGenericObjectProxy
     public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType * instance, ActionType method, mtsGenericObject & result) {
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, mtsGenericObject & result) {
             ReturnType * resultCasted = mtsGenericTypes<ReturnType>::CastArg(result);
             if (resultCasted == 0) {
-                return mtsCommandBase::BAD_INPUT;
+                return mtsExecutionResult::BAD_INPUT;
             }
-            (instance->*method)(*resultCasted);
-            return mtsCommandBase::DEV_OK;
+            (classInstantiation->*action)(*resultCasted);
+            return mtsExecutionResult::DEV_OK;
         }
     };
 
@@ -90,12 +90,12 @@ protected:
         // Specialization: ReturnType is derived from mtsGenericObjectProxy (and thus also from mtsGenericObject)
         // In this case, we may need to create a temporary Proxy object.
     public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType * instance, ActionType method, mtsGenericObject & result) {
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, mtsGenericObject & result) {
             // First, check if a Proxy object was passed.
             ReturnType * resultCasted = dynamic_cast<ReturnType *>(&result);
             if (resultCasted) {
-                (instance->*method)(*resultCasted);
-                return mtsCommandBase::DEV_OK;
+                (classInstantiation->*action)(*resultCasted);
+                return mtsExecutionResult::DEV_OK;
             }
             // If it isn't a Proxy, maybe it is a ProxyRef
             typedef typename ReturnType::RefType ReturnRefType;
@@ -103,14 +103,14 @@ protected:
             if (!dataRef) {
                 CMN_LOG_INIT_ERROR << "mtsCommandVoidReturn: CallMethod could not cast from " << typeid(result).name()
                                    << " to " << typeid(ReturnRefType).name() << std::endl;
-                return mtsCommandBase::BAD_INPUT;
+                return mtsExecutionResult::BAD_INPUT;
             }
             // Now, make the call using the temporary
             ReturnType temp;
-            (instance->*method)(temp);
+            (classInstantiation->*action)(temp);
             // Finally, copy the data to the return
             *dataRef = temp;
-            return mtsCommandBase::DEV_OK;
+            return mtsExecutionResult::DEV_OK;
         }
     };
 
@@ -142,12 +142,12 @@ public:
     /*! The execute method. Calling the execute method from the
       invoker applies the operation on the receiver.
     */
-    mtsCommandBase::ReturnType Execute(mtsGenericObject & result) {
+    mtsExecutionResult Execute(mtsGenericObject & result) {
         if (this->IsEnabled()) {
             return ConditionalCast<cmnIsDerivedFromTemplated<ReturnType, mtsGenericObjectProxy>::YES
                                   >::CallMethod(ClassInstantiation, Action, result);
         }
-        return mtsCommandBase::DISABLED;
+        return mtsExecutionResult::DISABLED;
     }
 
     /* documented in base class */

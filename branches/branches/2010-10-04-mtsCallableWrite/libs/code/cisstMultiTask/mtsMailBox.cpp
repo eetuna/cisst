@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnAssert.h>
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCallableVoidBase.h>
+#include <cisstMultiTask/mtsCallableWriteBase.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
@@ -75,8 +76,8 @@ bool mtsMailBox::ExecuteNext(void)
    }
 
    mtsCommandQueuedVoid * commandVoid;
-   mtsCommandQueuedWriteBase * commandWrite;
-   mtsCommandQueuedWriteGeneric * commandWriteGeneric;
+   mtsCommandQueuedWrite * commandWrite;
+   //   mtsCommandQueuedWriteGeneric * commandWriteGeneric;
    mtsCommandQueuedVoidReturnBase * commandVoidReturn;
 
    if (!(*command)->Returns()) {
@@ -90,14 +91,15 @@ bool mtsMailBox::ExecuteNext(void)
            }
            break;
        case 1:
-           commandWrite = dynamic_cast<mtsCommandQueuedWriteBase *>(*command);
+           commandWrite = dynamic_cast<mtsCommandQueuedWrite *>(*command);
            if (commandWrite) {
-               commandWrite->GetActualCommand()->Execute(*(commandWrite->ArgumentPeek()), MTS_NOT_BLOCKING);
+               commandWrite->GetCallable()->Execute(*(commandWrite->ArgumentPeek()));
                commandWrite->ArgumentGet();  // Remove from parameter queue
                if (commandWrite->BlockingFlagGet() == MTS_BLOCKING) {
                    this->ThreadSignal.Raise();
                }
            } else {
+               #if 0
                commandWriteGeneric = dynamic_cast<mtsCommandQueuedWriteGeneric *>(*command);
                CMN_ASSERT(commandWriteGeneric);
                commandWriteGeneric->GetActualCommand()->Execute(*(commandWriteGeneric->ArgumentPeek()), MTS_NOT_BLOCKING);
@@ -105,6 +107,7 @@ bool mtsMailBox::ExecuteNext(void)
                if (commandWriteGeneric->BlockingFlagGet() == MTS_BLOCKING) {
                    this->ThreadSignal.Raise();
                }
+               #endif
            }
            break;
        default:

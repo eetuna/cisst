@@ -19,6 +19,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include <cisstMultiTask/mtsEventReceiver.h>
+#include <cisstMultiTask/mtsCallableWriteMethod.h>
 #include <cisstOSAbstraction/osaThreadSignal.h>
 
 //************************************* mtsEventReceiverBase ***************************************************
@@ -152,32 +153,39 @@ mtsEventReceiverWrite::~mtsEventReceiverWrite()
     delete Command;
 }
 
-mtsCommandWriteBase *mtsEventReceiverWrite::GetCommand()
+mtsCommandWrite * mtsEventReceiverWrite::GetCommand(void)
 {
-    if (!Command)
-        Command = new mtsCommandWriteGeneric<mtsEventReceiverWrite>(&mtsEventReceiverWrite::EventHandler, this, Name, 0);
+    if (!Command) {
+        Command = new mtsCommandWrite(new mtsCallableWriteMethod<mtsEventReceiverWrite, mtsGenericObject>(&mtsEventReceiverWrite::EventHandler, this),
+                                      Name);
+    }
     return Command;
 }
 
-void mtsEventReceiverWrite::EventHandler(const mtsGenericObject &arg)
+
+void mtsEventReceiverWrite::EventHandler(const mtsGenericObject & arg)
 {
-    if (Waiting)
+    if (Waiting) {
         EventSignal->Raise();
+    }
     if (ArgPtr && !ArgPtr->Services()->Create(ArgPtr, arg)) {
         CMN_LOG_RUN_ERROR << "mtsEventReceiverWrite: could not copy from " << arg.Services()->GetName()
                           << " to " << ArgPtr->Services()->GetName() << std::endl;
         ArgPtr = 0; // Set this to signal an error
     }      
-    if (UserHandler)
+    if (UserHandler) {
         UserHandler->Execute(arg, MTS_NOT_BLOCKING);
+    }
 }
 
-void mtsEventReceiverWrite::SetHandlerCommand(mtsCommandWriteBase *cmdHandler)
+
+void mtsEventReceiverWrite::SetHandlerCommand(mtsCommandWrite * commandHandler)
 {
-    if (cmdHandler != UserHandler) {
-        if ((UserHandler != 0) && (cmdHandler != 0))
-            CMN_LOG_INIT_WARNING << "SetHandlerCommand: changing event handler for write event " << GetName() << std::endl;
-        UserHandler = cmdHandler;
+    if (commandHandler != UserHandler) {
+        if ((UserHandler != 0) && (commandHandler != 0)) {
+            CMN_LOG_INIT_WARNING << "SetHandlerCommand: changing event handler for write event \"" << GetName() << "\"" << std::endl;
+        }
+        UserHandler = commandHandler;
     }
 }
 

@@ -46,33 +46,33 @@ mtsCommandQueuedVoid * mtsCommandQueuedVoid::Clone(mtsMailBox * mailBox, size_t 
 }
 
 
-mtsCommandBase::ReturnType mtsCommandQueuedVoid::Execute(mtsBlockingType blocking)
+mtsExecutionResult mtsCommandQueuedVoid::Execute(mtsBlockingType blocking)
 {
     if (this->IsEnabled()) {
         if (!MailBox) {
             CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoid: Execute: no mailbox for \""
                               << this->Name << "\"" << std::endl;
-            return mtsCommandBase::NO_MAILBOX;
+            return mtsExecutionResult::NO_MAILBOX;
         }
         if (BlockingFlagQueue.Put(blocking)) {
             if (MailBox->Write(this)) {
                 if (blocking == MTS_BLOCKING) {
                     MailBox->ThreadSignalWait();
                 }
-                return mtsCommandBase::DEV_OK;
+                return mtsExecutionResult::DEV_OK;
             } else {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoid: Execute: Mailbox full for \""
                                   << this->Name << "\"" <<  std::endl;
                 BlockingFlagQueue.Get(); // pop blocking flag from local storage
-                return mtsCommandBase::MAILBOX_FULL;
+                return mtsExecutionResult::MAILBOX_FULL;
             }
         } else {
             CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoid: Execute: BlockingFlagQueue full for \""
                               << this->Name << "\"" << std::endl;
         }
-        return mtsCommandBase::MAILBOX_FULL;
+        return mtsExecutionResult::MAILBOX_FULL;
     }
-    return mtsCommandBase::DISABLED;
+    return mtsExecutionResult::DISABLED;
 }
 
 
@@ -84,18 +84,14 @@ mtsBlockingType mtsCommandQueuedVoid::BlockingFlagGet(void)
 
 const std::string mtsCommandQueuedVoid::GetMailBoxName(void) const
 {
-    return this->MailBox ? this->MailBox->GetName() : "NULL";
+    return this->MailBox ? this->MailBox->GetName() : "null pointer";
 }
 
 
 void mtsCommandQueuedVoid::ToStream(std::ostream & outputStream) const
 {
-    outputStream << "mtsCommandQueuedVoid: Mailbox \"";
-    if (this->MailBox) {
-        outputStream << this->MailBox->GetName();
-    } else {
-        outputStream << "Undefined";
-    }
-    outputStream << "\" for command(void) using " << *(this->Callable)
+    outputStream << "mtsCommandQueuedVoid: Mailbox \""
+                 << this->GetMailBoxName()
+                 << "\" for command (void) using " << *(this->Callable)
                  << " currently " << (this->IsEnabled() ? "enabled" : "disabled");
 }
