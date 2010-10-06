@@ -31,6 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionBase.h>
 #include <cisstMultiTask/mtsCommandVoidReturn.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsGenericObjectProxy.h>
 
 // Always include last
 #include <cisstMultiTask/mtsExport.h>
@@ -39,6 +40,22 @@ class CISST_EXPORT mtsFunctionVoidReturn: public mtsFunctionBase {
  protected:
     typedef mtsCommandVoidReturn CommandType;
     CommandType * Command;
+
+    template <typename _userType, bool>
+    class ConditionalWrap {
+    public:
+        static mtsExecutionResult Call(mtsCommandVoidReturn * command, _userType & argument) {
+            mtsGenericObjectProxyRef<_userType> argumentWrapped(argument); 
+            return command->Execute(argumentWrapped);
+        }
+    };
+    template <typename _userType>
+    class ConditionalWrap<_userType, true> {
+    public:
+        static mtsExecutionResult Call(mtsCommandVoidReturn * command, _userType & argument) {
+            return command->Execute(argument);
+        }
+    };
 
  public:
     /*! Default constructor.  Does nothing, use Instantiate before
@@ -64,6 +81,15 @@ class CISST_EXPORT mtsFunctionVoidReturn: public mtsFunctionBase {
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command() instead of Command->Execute(). */
     mtsExecutionResult operator()(mtsGenericObject & result) const;
+
+	/*! Overloaded operator that accepts different argument types. */
+    template <class _userType>
+    mtsExecutionResult operator()(_userType & result) const {
+        mtsExecutionResult executionResult = Command ?
+            ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, result)
+          : mtsExecutionResult::NO_INTERFACE;
+        return executionResult;
+    }
 
     /*! Access to underlying command object. */
     CommandType * GetCommand(void) const;
