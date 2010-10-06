@@ -36,16 +36,25 @@ class mtsCommandAndEventTest: public CppUnit::TestFixture
 private:
     CPPUNIT_TEST_SUITE(mtsCommandAndEventTest);
     {
-        CPPUNIT_TEST(TestLocalDeviceDevice);
-        CPPUNIT_TEST(TestLocalPeriodicPeriodic);
-        CPPUNIT_TEST(TestLocalContinuousContinuous);
-        CPPUNIT_TEST(TestLocalFromCallbackFromCallback);
-        CPPUNIT_TEST(TestLocalFromSignalFromSignal);
+        CPPUNIT_TEST(TestLocalDeviceDevice_mtsInt);
+        CPPUNIT_TEST(TestLocalDeviceDevice_int);
+        CPPUNIT_TEST(TestLocalPeriodicPeriodic_mtsInt);
+        CPPUNIT_TEST(TestLocalPeriodicPeriodic_int);
+        CPPUNIT_TEST(TestLocalContinuousContinuous_mtsInt);
+        CPPUNIT_TEST(TestLocalContinuousContinuous_int);
+        CPPUNIT_TEST(TestLocalFromCallbackFromCallback_mtsInt);
+        CPPUNIT_TEST(TestLocalFromCallbackFromCallback_int);
+        CPPUNIT_TEST(TestLocalFromSignalFromSignal_mtsInt);
+        CPPUNIT_TEST(TestLocalFromSignalFromSignal_int);
 
-        CPPUNIT_TEST(TestLocalPeriodicPeriodicBlocking);
-        CPPUNIT_TEST(TestLocalContinuousContinuousBlocking);
-        CPPUNIT_TEST(TestLocalFromCallbackFromCallbackBlocking);
-        CPPUNIT_TEST(TestLocalFromSignalFromSignalBlocking);
+        CPPUNIT_TEST(TestLocalPeriodicPeriodicBlocking_mtsInt);
+        CPPUNIT_TEST(TestLocalPeriodicPeriodicBlocking_int);
+        CPPUNIT_TEST(TestLocalContinuousContinuousBlocking_mtsInt);
+        CPPUNIT_TEST(TestLocalContinuousContinuousBlocking_int);
+        CPPUNIT_TEST(TestLocalFromCallbackFromCallbackBlocking_mtsInt);
+        CPPUNIT_TEST(TestLocalFromCallbackFromCallbackBlocking_int);
+        CPPUNIT_TEST(TestLocalFromSignalFromSignalBlocking_mtsInt);
+        CPPUNIT_TEST(TestLocalFromSignalFromSignalBlocking_int);
 
 #if CISST_MTS_HAS_ICE
         //        CPPUNIT_TEST(TestRemoteDeviceDevice);
@@ -63,16 +72,42 @@ public:
     void TestExecution(_clientType * client, _serverType * server,
                        double clientExecutionDelay, double serverExecutionDelay,
                        double blockingDelay = 0.0);
-    void TestLocalDeviceDevice(void);
-    void TestLocalPeriodicPeriodic(void);
-    void TestLocalContinuousContinuous(void);
-    void TestLocalFromCallbackFromCallback(void);
-    void TestLocalFromSignalFromSignal(void);
 
-    void TestLocalPeriodicPeriodicBlocking(void);
-    void TestLocalContinuousContinuousBlocking(void);
-    void TestLocalFromCallbackFromCallbackBlocking(void);
-    void TestLocalFromSignalFromSignalBlocking(void);
+    template <class _elementType> void TestLocalDeviceDevice(void);
+    void TestLocalDeviceDevice_mtsInt(void);
+    void TestLocalDeviceDevice_int(void);
+
+    template <class _elementType> void TestLocalPeriodicPeriodic(void);
+    void TestLocalPeriodicPeriodic_mtsInt(void);
+    void TestLocalPeriodicPeriodic_int(void);
+
+    template <class _elementType> void TestLocalContinuousContinuous(void);
+    void TestLocalContinuousContinuous_mtsInt(void);
+    void TestLocalContinuousContinuous_int(void);
+
+    template <class _elementType> void TestLocalFromCallbackFromCallback(void);
+    void TestLocalFromCallbackFromCallback_mtsInt(void);
+    void TestLocalFromCallbackFromCallback_int(void);
+
+    template <class _elementType> void TestLocalFromSignalFromSignal(void);
+    void TestLocalFromSignalFromSignal_mtsInt(void);
+    void TestLocalFromSignalFromSignal_int(void);
+
+    template <class _elementType> void TestLocalPeriodicPeriodicBlocking(void);
+    void TestLocalPeriodicPeriodicBlocking_mtsInt(void);
+    void TestLocalPeriodicPeriodicBlocking_int(void);
+
+    template <class _elementType> void TestLocalContinuousContinuousBlocking(void);
+    void TestLocalContinuousContinuousBlocking_mtsInt(void);
+    void TestLocalContinuousContinuousBlocking_int(void);
+
+    template <class _elementType> void TestLocalFromCallbackFromCallbackBlocking(void);
+    void TestLocalFromCallbackFromCallbackBlocking_mtsInt(void);
+    void TestLocalFromCallbackFromCallbackBlocking_int(void);
+
+    template <class _elementType> void TestLocalFromSignalFromSignalBlocking(void);
+    void TestLocalFromSignalFromSignalBlocking_mtsInt(void);
+    void TestLocalFromSignalFromSignalBlocking_int(void);
 
 #if CISST_MTS_HAS_ICE
     void TestRemoteDeviceDevice(void);

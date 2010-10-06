@@ -60,8 +60,23 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
                                            double clientExecutionDelay, double serverExecutionDelay,
                                            double blockingDelay)
 {
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
+
+    // we assume both client and servers use the same type
+    typedef typename _serverType::value_type value_type;
+    
+    // add to manager abd start all
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
+    manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
+
+    // test commands and timing
     const double queueingDelay = 10.0 * cmn_ms;
-    const osaTimeServer & timeServer = mtsComponentManager::GetInstance()->GetTimeServer();
+    const osaTimeServer & timeServer = manager->GetTimeServer();
     double startTime, stopTime;
 
     // check initial values
@@ -70,8 +85,8 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
 
     // value we used to make sure commands are processed, default is
     // -1, void command set to 0
-    mtsInt valueWrite;
-    valueWrite.Data = 4;
+    value_type valueWrite;
+    valueWrite = 4;
 
     // loop over void and write commands to alternate blocking and non
     // blocking commands
@@ -92,8 +107,8 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         stopTime = timeServer.GetRelativeTime();
         CPPUNIT_ASSERT((stopTime - startTime) <= queueingDelay); // make sure execution is fast
         osaSleep(serverExecutionDelay + blockingDelay);  // time to dequeue and let command execute
-        CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT(valueWrite == server->InterfaceProvided1.GetValue()); // set to new value
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
         // test filtered write command
         startTime = timeServer.GetRelativeTime();
@@ -101,8 +116,8 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         stopTime = timeServer.GetRelativeTime();
         CPPUNIT_ASSERT((stopTime - startTime) <= queueingDelay); // make sure execution is fast
         osaSleep(serverExecutionDelay + blockingDelay);  // time to dequeue and let command execute
-        CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // set to new value + 1 (filter)
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // set to new value + 1 (filter)
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
         // test void command blocking
         if (blockingDelay > 0.0) {
@@ -116,8 +131,8 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.FunctionVoid.ExecuteBlocking();
         }
-        CPPUNIT_ASSERT_EQUAL(0,  server->InterfaceProvided1.GetValue()); // reset
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT(0 == server->InterfaceProvided1.GetValue()); // reset
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
         // test write command blocking
         if (blockingDelay > 0.0) {
@@ -131,8 +146,8 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.FunctionWrite.ExecuteBlocking(valueWrite);
         }
-        CPPUNIT_ASSERT_EQUAL(valueWrite.Data, server->InterfaceProvided1.GetValue()); // set to new value
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT(valueWrite == server->InterfaceProvided1.GetValue()); // set to new value
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
         // test filtered write command blocking
         if (blockingDelay > 0.0) {
@@ -146,11 +161,11 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.FunctionFilteredWrite.ExecuteBlocking(valueWrite);
         }
-        CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // set to new value + 1 (filter)
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // set to new value + 1 (filter)
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
         // test void return command (always blocking)
-        mtsBool result;
+        value_type result;
         if (blockingDelay > 0.0) {
             startTime = timeServer.GetRelativeTime();
             client->InterfaceRequired1.FunctionVoidReturn(result);
@@ -162,9 +177,9 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.FunctionVoidReturn(result);
         }
-        CPPUNIT_ASSERT_EQUAL(result.Data, true); // number was positive
-        CPPUNIT_ASSERT_EQUAL(-(valueWrite.Data + 1),  server->InterfaceProvided1.GetValue()); // negated
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT(result == 1); // number was positive
+        CPPUNIT_ASSERT((-(valueWrite + 1)) == server->InterfaceProvided1.GetValue()); // negated
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
         // call void return again to change sign of value back
         if (blockingDelay > 0.0) {
@@ -178,150 +193,116 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
             // no significant delay but result should be garanteed without sleep
             client->InterfaceRequired1.FunctionVoidReturn(result);
         }
-        CPPUNIT_ASSERT_EQUAL(result.Data, false); // number was negative
-        CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1,  server->InterfaceProvided1.GetValue()); // negated back
-        CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+        CPPUNIT_ASSERT(result == -1); // number was negative
+        CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // negated back
+        CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
     }
 
     // test read command
-    mtsInt valueRead;
-    valueRead.Data = 0;
+    value_type valueRead;
+    valueRead = 0;
     client->InterfaceRequired1.FunctionRead(valueRead);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, valueRead.Data);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
-    CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+    CPPUNIT_ASSERT((valueWrite + 1) == valueRead);
+    CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
     // test qualified read command
-    valueRead.Data = 0;
+    valueRead = 0;
     client->InterfaceRequired1.FunctionQualifiedRead(valueWrite, valueRead);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, valueRead.Data);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
-    CPPUNIT_ASSERT_EQUAL(-1, client->InterfaceRequired1.GetValue()); // unchanged
+    CPPUNIT_ASSERT((valueWrite + 1) == valueRead);
+    CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
     // test void event
     server->InterfaceProvided1.EventVoid();
     osaSleep(clientExecutionDelay);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
-    CPPUNIT_ASSERT_EQUAL(0, client->InterfaceRequired1.GetValue()); // reset by void event
+    CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT(0 == client->InterfaceRequired1.GetValue()); // reset by void event
 
     // test write event
     server->InterfaceProvided1.EventWrite(valueWrite);
     osaSleep(clientExecutionDelay);
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data + 1, server->InterfaceProvided1.GetValue()); // unchanged
-    CPPUNIT_ASSERT_EQUAL(valueWrite.Data, client->InterfaceRequired1.GetValue()); // set by write event
+    CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // unchanged
+    CPPUNIT_ASSERT(valueWrite == client->InterfaceRequired1.GetValue()); // set by write event
+
+    // stop all and cleanup
+    manager->KillAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
 }
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalDeviceDevice(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
-    mtsTestDevice2 * client = new mtsTestDevice2;
-    mtsTestDevice3 * server = new mtsTestDevice3;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
+    mtsTestDevice2<_elementType> * client = new mtsTestDevice2<_elementType>;
+    mtsTestDevice3<_elementType> * server = new mtsTestDevice3<_elementType>;
     TestExecution(client, server, 0.0, 0.0);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalDeviceDevice_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalDeviceDevice<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalDeviceDevice_int(void) {
+    mtsCommandAndEventTest::TestLocalDeviceDevice<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalPeriodicPeriodic(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
-    mtsTestPeriodic1 * client = new mtsTestPeriodic1("mtsTestPeriodic1Client");
-    mtsTestPeriodic1 * server = new mtsTestPeriodic1("mtsTestPeriodic1Server");
-
+    mtsTestPeriodic1<_elementType> * client = new mtsTestPeriodic1<_elementType>("mtsTestPeriodic1Client");
+    mtsTestPeriodic1<_elementType> * server = new mtsTestPeriodic1<_elementType>("mtsTestPeriodic1Server");
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalPeriodicPeriodic_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalPeriodicPeriodic<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalPeriodicPeriodic_int(void) {
+    mtsCommandAndEventTest::TestLocalPeriodicPeriodic<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalContinuousContinuous(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
-    mtsTestContinuous1 * client = new mtsTestContinuous1("mtsTestContinuous1Client");
-    mtsTestContinuous1 * server = new mtsTestContinuous1("mtsTestContinuous1Server");
-
+    mtsTestContinuous1<_elementType> * client = new mtsTestContinuous1<_elementType>("mtsTestContinuous1Client");
+    mtsTestContinuous1<_elementType> * server = new mtsTestContinuous1<_elementType>("mtsTestContinuous1Server");
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalContinuousContinuous_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalContinuousContinuous<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalContinuousContinuous_int(void) {
+    mtsCommandAndEventTest::TestLocalContinuousContinuous<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
-    mtsTestFromCallback1 * client = new mtsTestFromCallback1("mtsTestFromCallback1Client");
+    mtsTestFromCallback1<_elementType> * client = new mtsTestFromCallback1<_elementType>("mtsTestFromCallback1Client");
     mtsTestCallbackTrigger * clientTrigger = new mtsTestCallbackTrigger(client);
-    mtsTestFromCallback1 * server = new mtsTestFromCallback1("mtsTestFromCallback1Server");
+    mtsTestFromCallback1<_elementType> * server = new mtsTestFromCallback1<_elementType>("mtsTestFromCallback1Server");
     mtsTestCallbackTrigger * serverTrigger = new mtsTestCallbackTrigger(server);
-
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     clientTrigger->Stop();
     delete clientTrigger;
     delete client;
@@ -329,124 +310,88 @@ void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback(void)
     delete serverTrigger;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalFromCallbackFromCallback<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalFromCallbackFromCallback_int(void) {
+    mtsCommandAndEventTest::TestLocalFromCallbackFromCallback<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalFromSignalFromSignal(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
-    mtsTestFromSignal1 * client = new mtsTestFromSignal1("mtsTestFromSignal1Client");
-    mtsTestFromSignal1 * server = new mtsTestFromSignal1("mtsTestFromSignal1Server");
-
+    mtsTestFromSignal1<_elementType> * client = new mtsTestFromSignal1<_elementType>("mtsTestFromSignal1Client");
+    mtsTestFromSignal1<_elementType> * server = new mtsTestFromSignal1<_elementType>("mtsTestFromSignal1Server");
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalFromSignalFromSignal_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalFromSignalFromSignal<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalFromSignalFromSignal_int(void) {
+    mtsCommandAndEventTest::TestLocalFromSignalFromSignal<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     const double blockingDelay = 0.5 * cmn_s;
-    mtsTestPeriodic1 * client = new mtsTestPeriodic1("mtsTestPeriodic1Client");
-    mtsTestPeriodic1 * server = new mtsTestPeriodic1("mtsTestPeriodic1Server", blockingDelay);
-
+    mtsTestPeriodic1<_elementType> * client = new mtsTestPeriodic1<_elementType>("mtsTestPeriodic1Client");
+    mtsTestPeriodic1<_elementType> * server = new mtsTestPeriodic1<_elementType>("mtsTestPeriodic1Server", blockingDelay);
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking_int(void) {
+    mtsCommandAndEventTest::TestLocalPeriodicPeriodicBlocking<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     const double blockingDelay = 0.5 * cmn_s;
-    mtsTestContinuous1 * client = new mtsTestContinuous1("mtsTestContinuous1Client");
-    mtsTestContinuous1 * server = new mtsTestContinuous1("mtsTestContinuous1Server", blockingDelay);
-
+    mtsTestContinuous1<_elementType> * client = new mtsTestContinuous1<_elementType>("mtsTestContinuous1Client");
+    mtsTestContinuous1<_elementType> * server = new mtsTestContinuous1<_elementType>("mtsTestContinuous1Server", blockingDelay);
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking_int(void) {
+    mtsCommandAndEventTest::TestLocalContinuousContinuousBlocking<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     const double blockingDelay = 0.5 * cmn_s;
-    mtsTestFromCallback1 * client = new mtsTestFromCallback1("mtsTestFromCallback1Client");
+    mtsTestFromCallback1<_elementType> * client = new mtsTestFromCallback1<_elementType>("mtsTestFromCallback1Client");
     mtsTestCallbackTrigger * clientTrigger = new mtsTestCallbackTrigger(client);
-    mtsTestFromCallback1 * server = new mtsTestFromCallback1("mtsTestFromCallback1Server", blockingDelay);
+    mtsTestFromCallback1<_elementType> * server = new mtsTestFromCallback1<_elementType>("mtsTestFromCallback1Server", blockingDelay);
     mtsTestCallbackTrigger * serverTrigger = new mtsTestCallbackTrigger(server);
-
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     clientTrigger->Stop();
     delete clientTrigger;
     delete client;
@@ -454,35 +399,32 @@ void mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking(void)
     delete serverTrigger;
     delete server;
 }
+void mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking_int(void) {
+    mtsCommandAndEventTest::TestLocalFromCallbackFromCallbackBlocking<int>();
+}
 
 
+template <class _elementType>
 void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking(void)
 {
-    mtsComponentManager * manager = mtsComponentManager::GetInstance();
     const double blockingDelay = 0.5 * cmn_s;
-    mtsTestFromSignal1 * client = new mtsTestFromSignal1("mtsTestFromSignal1Client");
-    mtsTestFromSignal1 * server = new mtsTestFromSignal1("mtsTestFromSignal1Server", blockingDelay);
-
+    mtsTestFromSignal1<_elementType> * client = new mtsTestFromSignal1<_elementType>("mtsTestFromSignal1Client");
+    mtsTestFromSignal1<_elementType> * server = new mtsTestFromSignal1<_elementType>("mtsTestFromSignal1Server", blockingDelay);
     // these delays are OS dependent, we might need to increase them later
     const double clientExecutionDelay = 0.1 * cmn_s;
     const double serverExecutionDelay = 0.1 * cmn_s;
-
-    manager->AddComponent(client);
-    manager->AddComponent(server);
-    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->CreateAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
-    manager->StartAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
     TestExecution(client, server, clientExecutionDelay, serverExecutionDelay, blockingDelay);
-    manager->KillAll();
-    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
-    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
-    manager->RemoveComponent(client);
-    manager->RemoveComponent(server);
-
     delete client;
     delete server;
+}
+void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking_mtsInt(void) {
+    mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking<mtsInt>();
+}
+void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking_int(void) {
+    mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking<int>();
 }
 
 

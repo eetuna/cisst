@@ -52,10 +52,14 @@ http://www.cisst.org/cisst/license.txt.
 //-----------------------------------------------------------------------------
 //  Provided Interface and Required Interface Definition
 //-----------------------------------------------------------------------------
+template <class _elementType>
 class mtsTestInterfaceProvided
 {
+public:
+    typedef _elementType value_type; // STL convention
+
 private:
-    mtsInt Value;
+    value_type Value;
     double ExecutionDelay; // to test blocking commands
 
 public:
@@ -65,41 +69,41 @@ public:
     mtsTestInterfaceProvided(double executionDelay = 0.0):
         ExecutionDelay(executionDelay)
     {
-        Value.Data = -1;   // initial value = -1;
+        Value = -1;   // initial value = -1;
     }
 
     void CommandVoid(void) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
         }
-        Value.Data = 0;
+        Value = 0;
     }
 
-    void CommandVoidReturn(mtsBool & positive) {
+    void CommandVoidReturn(value_type & positive) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
         }
-        positive = (Value >= 0);
+        positive = (Value >= 0) ? 1 : -1;
         Value = -Value;
     }
 
-    void CommandWrite(const mtsInt & argument) {
+    void CommandWrite(const value_type & argument) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
         }
         Value = argument;
     }
 
-    void CommandRead(mtsInt & argument) const {
+    void CommandRead(value_type & argument) const {
         argument = Value;
     }
 
-    void CommandQualifiedRead(const mtsInt & argumentIn, mtsInt & argumentOut) const {
-        argumentOut.Data = argumentIn.Data + 1;
+    void CommandQualifiedRead(const value_type & argumentIn, value_type & argumentOut) const {
+        argumentOut = argumentIn + 1;
     }
 
     int GetValue(void) const {
-        return Value.Data;
+        return Value;
     }
 
     void PopulateExistingInterface(mtsInterfaceProvided * provided) {
@@ -117,14 +121,18 @@ public:
         provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::CommandQualifiedRead,
                                           this, "QualifiedRead");
         provided->AddEventVoid(this->EventVoid, "EventVoid");
-        provided->AddEventWrite(this->EventWrite, "EventWrite", mtsInt(-1));
+        provided->AddEventWrite(this->EventWrite, "EventWrite", value_type(-1));
     }
 };
 
+template <class _elementType>
 class mtsTestInterfaceRequired
 {
+public:
+    typedef _elementType value_type; // STL convention
+
 private:
-    mtsInt Value;
+    value_type Value;
 
 public:
     mtsFunctionVoid FunctionVoid;
@@ -135,19 +143,19 @@ public:
     mtsFunctionQualifiedRead FunctionQualifiedRead;
 
     mtsTestInterfaceRequired() {
-        Value.Data = -1;   // initial value = -1;
+        Value = -1;   // initial value = -1;
     }
 
     void EventVoidHandler(void) {
-        Value.Data = 0;
+        Value = 0;
     }
 
-    void EventWriteHandler(const mtsInt & argument) {
-        Value.Data = argument.Data;
+    void EventWriteHandler(const value_type & argument) {
+        Value = argument;
     }
 
     int GetValue(void) const {
-        return Value.Data;
+        return Value;
     }
 
     void PopulateExistingInterface(mtsInterfaceRequired * required) {
@@ -167,11 +175,13 @@ public:
 //  - provided interface: none
 //  - required interface: r1, r2
 //-----------------------------------------------------------------------------
+template <class _elementType>
 class mtsTestPeriodic1: public mtsTaskPeriodic
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1;
-    mtsTestInterfaceRequired InterfaceRequired1, InterfaceRequired2;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1, InterfaceRequired2;
 
     mtsTestPeriodic1(const std::string & name = "mtsTestPeriodic1",
                      double executionDelay = 0.0):
@@ -203,11 +213,13 @@ public:
     }
 };
 
+template <class _elementType>
 class mtsTestDevice1: public mtsComponent
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1;
-    mtsTestInterfaceRequired InterfaceRequired1, InterfaceRequired2;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1, InterfaceRequired2;
 
     mtsTestDevice1(const std::string & name = "mtsTestDevice1",
                    double executionDelay = 0.0):
@@ -241,11 +253,13 @@ public:
 //  - provided interface: p1, p2
 //  - required interface: r1
 //-----------------------------------------------------------------------------
+template <class _elementType>
 class mtsTestContinuous1: public mtsTaskContinuous
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1, InterfaceProvided2;
-    mtsTestInterfaceRequired InterfaceRequired1;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1, InterfaceProvided2;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1;
 
     mtsTestContinuous1(const std::string & name = "mtsTestContinuous1",
                        double executionDelay = 0.0):
@@ -280,11 +294,13 @@ public:
 };
 
 
+template <class _elementType>
 class mtsTestDevice2: public mtsComponent
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1, InterfaceProvided2;
-    mtsTestInterfaceRequired InterfaceRequired1;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1, InterfaceProvided2;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1;
 
     mtsTestDevice2(const std::string & name = "mtsTestDevice2",
                    double executionDelay = 0.0):
@@ -319,11 +335,13 @@ public:
 //  - provided interface: none
 //  - required interface: r1
 //-----------------------------------------------------------------------------
+template <class _elementType>
 class mtsTestFromCallback1: public mtsTaskFromCallback
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1;
-    mtsTestInterfaceRequired InterfaceRequired1;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1;
 
     // Counters to test Create()
     int CounterCreateCall;
@@ -390,11 +408,13 @@ public:
 };
 
 
+template <class _elementType>
 class mtsTestDevice3: public mtsComponent
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1;
-    mtsTestInterfaceRequired InterfaceRequired1;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1;
 
     mtsTestDevice3(const std::string & name = "mtsTestDevice3",
                    double executionDelay = 0.0):
@@ -420,11 +440,13 @@ public:
 };
 
 
+template <class _elementType>
 class mtsTestFromSignal1: public mtsTaskFromSignal
 {
 public:
-    mtsTestInterfaceProvided InterfaceProvided1;
-    mtsTestInterfaceRequired InterfaceRequired1;
+    typedef _elementType value_type;
+    mtsTestInterfaceProvided<value_type> InterfaceProvided1;
+    mtsTestInterfaceRequired<value_type> InterfaceRequired1;
 
     mtsTestFromSignal1(const std::string & name = "mtsTestFromSignal1",
                        double executionDelay = 0.0):

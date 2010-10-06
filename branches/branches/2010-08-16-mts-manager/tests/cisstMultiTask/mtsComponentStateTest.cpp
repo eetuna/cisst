@@ -46,12 +46,12 @@ void mtsComponentStateTest::TestTransitions(void)
 {
     const double maxTimeToChangeState = 3.0 * cmn_s; // this is an upper limit across OSs, raise it if needed
     mtsComponentManager * manager = mtsComponentManager::GetInstance();
-    mtsTestPeriodic1 * periodic1 = new mtsTestPeriodic1;
-    mtsTestContinuous1 * continuous1 = new mtsTestContinuous1;
-    mtsTestFromCallback1 * fromCallback1 = new mtsTestFromCallback1;
+    mtsTestPeriodic1<mtsInt> * periodic1 = new mtsTestPeriodic1<mtsInt>;
+    mtsTestContinuous1<mtsInt> * continuous1 = new mtsTestContinuous1<mtsInt>;
+    mtsTestFromCallback1<mtsInt> * fromCallback1 = new mtsTestFromCallback1<mtsInt>;
     mtsTestCallbackTrigger * callbackTrigger = new mtsTestCallbackTrigger(fromCallback1);
-    mtsTestFromSignal1 * fromSignal1 = new mtsTestFromSignal1;
-    mtsTestDevice2 * device2 = new mtsTestDevice2;
+    mtsTestFromSignal1<mtsInt> * fromSignal1 = new mtsTestFromSignal1<mtsInt>;
+    mtsTestDevice2<mtsInt> * device2 = new mtsTestDevice2<mtsInt>;
 
     CPPUNIT_ASSERT(periodic1->GetState() == mtsComponentState::CONSTRUCTED);
     CPPUNIT_ASSERT(continuous1->GetState() == mtsComponentState::CONSTRUCTED);
