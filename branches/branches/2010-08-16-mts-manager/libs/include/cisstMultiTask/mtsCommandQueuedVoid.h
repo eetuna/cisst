@@ -51,7 +51,7 @@ class CISST_EXPORT mtsCommandQueuedVoid: public mtsCommandVoid
 
  private:
     /*! Private copy constructor to prevent copies */
-    inline mtsCommandQueuedVoid(const ThisType & CMN_UNUSED(other));
+    mtsCommandQueuedVoid(const ThisType & CMN_UNUSED(other));
 
  public:
     mtsCommandQueuedVoid(void);
@@ -69,19 +69,19 @@ class CISST_EXPORT mtsCommandQueuedVoid: public mtsCommandVoid
     inline virtual void Allocate(unsigned int CMN_UNUSED(size)) {}
 
     /*! For a queued command, Execute means queueing the command.
-      This method will return mtsCommandBase::DEV_OK if the command
+      This method will return mtsExecutionResult::DEV_OK if the command
       has been queued, it doesn't mean that the actual has been
       executed yet.  If the command has been disabled (see
       mtsCommandBase::Disable()), Execute will return
-      mtsCommandBase::DISABLED.  finally, if the mailbox is full,
-      Execute() will return mtsCommandBase::MAILBOX_FULL.  This can
+      mtsExecutionResult::DISABLED.  finally, if the mailbox is full,
+      Execute() will return mtsExecutionResult::MAILBOX_FULL.  This can
       happen if the task receiving the command doesn't process/empty
       its mailboxes fast enough. */
-    mtsCommandBase::ReturnType Execute(mtsBlockingType blocking);
+    mtsExecutionResult Execute(mtsBlockingType blocking);
 
     mtsBlockingType BlockingFlagGet(void);
 
-    virtual const std::string GetMailBoxName(void) const;
+    std::string GetMailBoxName(void) const;
 
     void ToStream(std::ostream & outputStream) const;
 };

@@ -46,13 +46,13 @@ bool mtsFunctionWrite::Bind(CommandType * command) {
 }
 
 
-mtsCommandBase::ReturnType mtsFunctionWrite::operator()(const mtsGenericObject & argument) const {
-    return Command ? Command->Execute(argument, MTS_NOT_BLOCKING) : mtsCommandBase::NO_INTERFACE;
+mtsExecutionResult mtsFunctionWrite::operator()(const mtsGenericObject & argument) const {
+    return Command ? Command->Execute(argument, MTS_NOT_BLOCKING) : mtsExecutionResult::NO_INTERFACE;
 }
 
 
-mtsCommandBase::ReturnType mtsFunctionWrite::ExecuteBlocking(const mtsGenericObject & argument) const {
-    return Command ? Command->Execute(argument, MTS_BLOCKING) : mtsCommandBase::NO_INTERFACE;
+mtsExecutionResult mtsFunctionWrite::ExecuteBlocking(const mtsGenericObject & argument) const {
+    return Command ? Command->Execute(argument, MTS_BLOCKING) : mtsExecutionResult::NO_INTERFACE;
 }
 
 

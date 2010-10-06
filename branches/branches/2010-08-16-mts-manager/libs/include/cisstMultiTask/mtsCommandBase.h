@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 // pretty much always needed in conjunction with commands.  To ease
 // the user's life, we include them now.
 //include <cisstMultiTask/mtsGenericObjectProxy.h>
+#include <cisstMultiTask/mtsExecutionResult.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
 #include <iostream>
@@ -58,25 +59,6 @@ protected:
     bool EnableFlag;
 
 public:
-    /* use to bitshift and or for return value of a composite
-       would limit the number of composite interfaces to 31 for
-       an int return value
-    */
-    enum { RETURN_TYPE_BIT_SIZE = 1 };
-
-    /* the error value is -ve of the return value */
-    enum ReturnType {
-        DEV_OK = 0,
-        DEV_NOT_OK = 1,
-        BAD_COMMAND = 12,
-        NO_MAILBOX = 13,
-        BAD_INPUT = 14,
-        NO_INTERFACE = 15,
-        MAILBOX_FULL = 16,
-        DISABLED = 17,
-        COMMAND_FAILED = 18  // Read or QualifiedRead returned 'false'
-    };
-
     /*! The constructor. Does nothing */
     inline mtsCommandBase(void):
         Name("??"),

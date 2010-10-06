@@ -68,7 +68,7 @@ public:
       \param obj The data passed to the operation method
 
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute(const mtsGenericObject & argument, mtsBlockingType blocking) = 0;
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument, mtsBlockingType blocking) = 0;
 
     /* documented in base class */
     inline size_t NumberOfArguments(void) const {

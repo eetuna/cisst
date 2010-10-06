@@ -43,7 +43,7 @@ protected:
     template <typename _userType, bool>
     class ConditionalWrap {
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandReadBase * command, _userType & argument) {
+        static mtsExecutionResult Call(mtsCommandReadBase * command, _userType & argument) {
             mtsGenericObjectProxyRef<_userType> argumentWrapped(argument); 
             return command->Execute(argumentWrapped);
         }
@@ -51,7 +51,7 @@ protected:
     template <typename _userType>
     class ConditionalWrap<_userType, true> {
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandReadBase * command, _userType & argument) {
+        static mtsExecutionResult Call(mtsCommandReadBase * command, _userType & argument) {
             return command->Execute(argument);
         }
     };
@@ -79,15 +79,15 @@ public:
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
-    mtsCommandBase::ReturnType operator()(mtsGenericObject & argument) const;
+    mtsExecutionResult operator()(mtsGenericObject & argument) const;
 
 	/*! Overloaded operator that accepts different argument types. */
     template <class _userType>
-    mtsCommandBase::ReturnType operator()(_userType & argument) const {
-        mtsCommandBase::ReturnType ret = Command ?
+    mtsExecutionResult operator()(_userType & argument) const {
+        mtsExecutionResult result = Command ?
             ConditionalWrap<_userType, cmnIsDerivedFrom<_userType, mtsGenericObject>::YES>::Call(Command, argument)
-          : mtsCommandBase::NO_INTERFACE;
-        return ret;
+          : mtsExecutionResult::NO_INTERFACE;
+        return result;
     }
 
     /*! Access to underlying command object. */

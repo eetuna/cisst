@@ -95,8 +95,12 @@ public:
 
     /* documented in base class */
     inline void ToStream(std::ostream & outputStream) const {
-        outputStream << "method based callable object using class/object \""
-                     << mtsObjectName(this->ClassInstantiation) << "\"";
+        if (this->ClassInstantiation) {
+            outputStream << "method based callable void object using class/object \""
+                         << mtsObjectName(this->ClassInstantiation) << "\"";
+        } else {
+            outputStream << "invalid method based callable object";
+        }
     }
 };
 

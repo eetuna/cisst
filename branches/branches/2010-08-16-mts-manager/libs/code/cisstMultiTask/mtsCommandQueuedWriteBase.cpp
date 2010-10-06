@@ -81,14 +81,14 @@ void mtsCommandQueuedWriteGeneric::Allocate(size_t size)
 }
 
 
-mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGenericObject & argument,
+mtsExecutionResult mtsCommandQueuedWriteGeneric::Execute(const mtsGenericObject & argument,
                                                                  mtsBlockingType blocking)
 {
     if (this->IsEnabled()) {
         if (!MailBox) {
             CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWriteGeneric: Execute: no mailbox for \""
                               << this->Name << "\"" << std::endl;
-            return mtsCommandBase::NO_MAILBOX;
+            return mtsExecutionResult::NO_MAILBOX;
         }
         // copy the argument and blocking flag to the local storage.
         if (ArgumentsQueue.Put(argument) &&
@@ -97,7 +97,7 @@ mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGeneri
                 if (blocking == MTS_BLOCKING) {
                     MailBox->ThreadSignalWait();
                 }
-                return mtsCommandBase::DEV_OK;
+                return mtsExecutionResult::DEV_OK;
             } else {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWriteGeneric: Execute: mailbox full for \""
                                   << this->Name << "\"" << std::endl;
@@ -107,9 +107,9 @@ mtsCommandBase::ReturnType mtsCommandQueuedWriteGeneric::Execute(const mtsGeneri
             CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWriteGeneric: Execute: ArgumentsQueue or BlockingFlagQueue full for \""
                               << this->Name << "\"" << std::endl;
         }
-        return mtsCommandBase::MAILBOX_FULL;
+        return mtsExecutionResult::MAILBOX_FULL;
     }
-    return mtsCommandBase::DISABLED;
+    return mtsExecutionResult::DISABLED;
 }
 
 

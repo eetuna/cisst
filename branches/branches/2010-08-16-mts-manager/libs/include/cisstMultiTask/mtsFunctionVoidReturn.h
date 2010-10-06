@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #define _mtsFunctionVoidReturn_h
 
 #include <cisstMultiTask/mtsFunctionBase.h>
-#include <cisstMultiTask/mtsCommandVoidReturnBase.h>
+#include <cisstMultiTask/mtsCommandVoidReturn.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
 // Always include last
@@ -37,7 +37,7 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsFunctionVoidReturn: public mtsFunctionBase {
  protected:
-    typedef mtsCommandVoidReturnBase CommandType;
+    typedef mtsCommandVoidReturn CommandType;
     CommandType * Command;
 
  public:
@@ -63,7 +63,7 @@ class CISST_EXPORT mtsFunctionVoidReturn: public mtsFunctionBase {
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command() instead of Command->Execute(). */
-    mtsCommandBase::ReturnType operator()(mtsGenericObject & result) const;
+    mtsExecutionResult operator()(mtsGenericObject & result) const;
 
     /*! Access to underlying command object. */
     CommandType * GetCommand(void) const;

@@ -63,8 +63,8 @@ public:
     void AddCommand(BaseType * command);
 
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               mtsBlockingType blocking) = 0;
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                       mtsBlockingType blocking) = 0;
 
     /* documented in base class */
     virtual void ToStream(std::ostream & outputStream) const;

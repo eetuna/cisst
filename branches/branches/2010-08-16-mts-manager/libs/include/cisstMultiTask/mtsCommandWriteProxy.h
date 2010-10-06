@@ -76,9 +76,9 @@ public:
     }
 
     /*! Direct execute can be used for mtsMulticastCommandWrite. */
-    inline mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                              mtsBlockingType blocking) {
-        if (IsDisabled()) return mtsCommandBase::DISABLED;
+    inline mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                      mtsBlockingType blocking) {
+        if (IsDisabled()) return mtsExecutionResult::DISABLED;
 
         // todo fix urgent
         if (blocking == MTS_BLOCKING) {
@@ -88,16 +88,16 @@ public:
         if (NetworkProxyServer) {
             // Command write execution: client (request) -> server (execution)
             if (!NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument)) {
-                return mtsCommandBase::COMMAND_FAILED;
+                return mtsExecutionResult::COMMAND_FAILED;
             }
         } else {
             // Event write execution: server (event generator) -> client (event handler)
             if (!NetworkProxyClient->SendExecuteEventWriteSerialized(CommandID, argument)) {
-                return mtsCommandBase::COMMAND_FAILED;
+                return mtsExecutionResult::COMMAND_FAILED;
             }
         }
 
-        return mtsCommandBase::DEV_OK;
+        return mtsExecutionResult::DEV_OK;
     }
 
     /*! Getter for per-command (de)serializer */

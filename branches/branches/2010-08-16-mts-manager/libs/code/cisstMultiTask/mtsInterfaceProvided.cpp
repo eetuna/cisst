@@ -140,12 +140,12 @@ mtsInterfaceProvided::mtsInterfaceProvided(mtsInterfaceProvided * originalInterf
     // clone void return commands
     CommandVoidReturnMapType::const_iterator iterVoidReturn = originalInterface->CommandsVoidReturn.begin();
     const CommandVoidReturnMapType::const_iterator endVoidReturn = originalInterface->CommandsVoidReturn.end();
-    mtsCommandVoidReturnBase * commandVoidReturn;
-    mtsCommandQueuedVoidReturnBase * commandQueuedVoidReturn;
+    mtsCommandVoidReturn * commandVoidReturn;
+    mtsCommandQueuedVoidReturn * commandQueuedVoidReturn;
     for (;
          iterVoidReturn != endVoidReturn;
          iterVoidReturn++) {
-        commandQueuedVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturnBase *>(iterVoidReturn->second);
+        commandQueuedVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturn *>(iterVoidReturn->second);
         if (commandQueuedVoidReturn) {
             commandVoidReturn = commandQueuedVoidReturn->Clone(this->MailBox);
             CMN_LOG_CLASS_INIT_VERBOSE << "factory constructor: cloned queued void return command \"" << iterVoidReturn->first
@@ -354,32 +354,52 @@ mtsCommandVoid * mtsInterfaceProvided::AddCommandVoid(mtsCommandVoid * command)
 }
 
 
-mtsCommandVoidReturnBase * mtsInterfaceProvided::AddCommandVoidReturn(mtsCommandVoidReturnBase * command, mtsCommandQueueingPolicy queueingPolicy)
+mtsCommandVoidReturn * mtsInterfaceProvided::AddCommandVoidReturn(mtsCallableVoidReturnBase * callable,
+                                                                  const std::string & name,
+                                                                  mtsGenericObject * resultPrototype,
+                                                                  mtsCommandQueueingPolicy queueingPolicy)
 {
     // check that the input is valid
-    if (command) {
+    if (callable) {
         // determine if this should be a queued command or not
-        bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandVoidReturn", command->GetName());
+        bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandVoidReturn", name);
         if (!queued) {
-            if (!CommandsVoidReturn.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
-                command = 0;
+            mtsCommandVoidReturn * command = new mtsCommandVoidReturn(callable, name, resultPrototype); 
+            if (!CommandsVoidReturn.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
+                delete command;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: unable to add command \""
                                          << command->GetName() << "\"" << std::endl;
             }
             return command;
         } else {
             // create with no mailbox
-            mtsCommandQueuedVoidReturnBase * queuedCommand = new mtsCommandQueuedVoidReturn(0, command);
-            if (!CommandsVoidReturn.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
+            mtsCommandQueuedVoidReturn * queuedCommand = new mtsCommandQueuedVoidReturn(callable, name, resultPrototype, 0);
+            if (!CommandsVoidReturn.AddItem(name, queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
                 delete queuedCommand;
                 queuedCommand = 0;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: unable to add queued command \""
-                                         << command->GetName() << "\"" << std::endl;
+                                         << queuedCommand->GetName() << "\"" << std::endl;
             }
             return queuedCommand;
         }
     }
-    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: attempt to add undefined command (null pointer) to interface \""
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: attempt to add undefined command (null callable pointer) to interface \""
+                             << this->GetName() << "\"" << std::endl;
+    return 0;
+}
+
+
+mtsCommandVoidReturn * mtsInterfaceProvided::AddCommandVoidReturn(mtsCommandVoidReturn * command)
+{
+    // check that the input is valid
+    if (command) {
+        if (!CommandsVoidReturn.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: unable to add command \""
+                                     << command->GetName() << "\"" << std::endl;
+        }
+        return command;
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: attempt to add undefined command (null command pointer) to interface \""
                              << this->GetName() << "\"" << std::endl;
     return 0;
 }
@@ -632,7 +652,7 @@ mtsCommandVoid * mtsInterfaceProvided::GetCommandVoid(const std::string & comman
 }
 
 
-mtsCommandVoidReturnBase * mtsInterfaceProvided::GetCommandVoidReturn(const std::string & commandName) const {
+mtsCommandVoidReturn * mtsInterfaceProvided::GetCommandVoidReturn(const std::string & commandName) const {
     if (this->EndUserInterface) {
         return CommandsVoidReturn.GetItem(commandName, CMN_LOG_LOD_INIT_ERROR);
     }

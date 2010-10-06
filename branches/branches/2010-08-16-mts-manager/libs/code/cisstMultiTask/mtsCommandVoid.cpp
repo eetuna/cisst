@@ -45,13 +45,13 @@ mtsCommandVoid::~mtsCommandVoid()
 {}
 
 
-mtsCommandBase::ReturnType mtsCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking))
+mtsExecutionResult mtsCommandVoid::Execute(mtsBlockingType CMN_UNUSED(blocking))
 {
     if (this->IsEnabled()) {
         this->Callable->Execute();
-        return mtsCommandBase::DEV_OK;
+        return mtsExecutionResult::DEV_OK;
     }
-    return mtsCommandBase::DISABLED;
+    return mtsExecutionResult::DISABLED;
 }
 
 

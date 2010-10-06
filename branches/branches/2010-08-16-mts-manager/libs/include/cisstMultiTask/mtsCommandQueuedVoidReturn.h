@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandQueuedVoidReturn_h
 #define _mtsCommandQueuedVoidReturn_h
 
-#include <cisstMultiTask/mtsCommandQueuedVoidReturnBase.h>
+#include <cisstMultiTask/mtsCommandVoidReturn.h>
 
 
 /*!
@@ -38,75 +38,45 @@ http://www.cisst.org/cisst/license.txt.
  */
 
 /*! VoidReturn queued command using templated _returnType parameter */
-class mtsCommandQueuedVoidReturn: public mtsCommandQueuedVoidReturnBase
+class mtsCommandQueuedVoidReturn: public mtsCommandVoidReturn
 {
 public:
-    typedef mtsCommandQueuedVoidReturnBase BaseType;
+    typedef mtsCommandVoidReturn BaseType;
 
     /*! This type. */
     typedef mtsCommandQueuedVoidReturn ThisType;
 
+protected:
+    /*! Mailbox used to queue the commands */
+    mtsMailBox * MailBox;
+    
 private:
     /*! Private copy constructor to prevent copies */
-    inline mtsCommandQueuedVoidReturn(const ThisType & CMN_UNUSED(other));
+    mtsCommandQueuedVoidReturn(const ThisType & CMN_UNUSED(other));
 
 public:
 
-    inline mtsCommandQueuedVoidReturn(mtsCommandVoidReturnBase * actualCommand):
-        BaseType(0, actualCommand)
-    {}
-
-
-    inline mtsCommandQueuedVoidReturn(mtsMailBox * mailBox, mtsCommandVoidReturnBase * actualCommand):
-        BaseType(mailBox, actualCommand)
-    {}
-
+    mtsCommandQueuedVoidReturn(mtsCallableVoidReturnBase * callable, const std::string & name,
+                               const mtsGenericObject * resultPrototype,
+                               mtsMailBox * mailBox);
 
     // ReturnsQueue destructor should get called
-    inline virtual ~mtsCommandQueuedVoidReturn() {}
+    virtual ~mtsCommandQueuedVoidReturn();
 
+    mtsCommandQueuedVoidReturn * Clone(mtsMailBox * mailBox) const;
+    
+    mtsExecutionResult Execute(mtsGenericObject & result);
 
-    inline virtual mtsCommandQueuedVoidReturnBase * Clone(mtsMailBox * mailBox) const {
-        return new mtsCommandQueuedVoidReturn(mailBox, this->ActualCommand);
-    }
+    mtsGenericObject * GetResultPointer(void);
 
+    std::string GetMailBoxName(void) const;
 
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & result)
-    {
-        if (this->IsEnabled()) {
-            if (!MailBox) {
-                CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoidReturn: Execute: no mailbox for \""
-                                  << this->Name << "\"" << std::endl;
-                return mtsCommandBase::NO_MAILBOX;
-            }
-            // preserve address of result and wait to be dequeued
-            ResultPointer = &result;
-            if (!MailBox->Write(this)) {
-                CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedVoidReturn: Execute: mailbox full for \""
-                                  << this->Name << "\"" <<  std::endl;
-                return mtsCommandBase::MAILBOX_FULL;
-            }
-            MailBox->ThreadSignalWait();
-            return mtsCommandBase::DEV_OK;
-        }
-        return mtsCommandBase::DISABLED;
-    }
+    void ToStream(std::ostream & outputStream) const;
 
+protected:
+    /*! Pointer on caller provided placeholder for result */
+    mtsGenericObject * ResultPointer;
 
-    /* documented in base class */
-    inline const mtsGenericObject * GetReturnPrototype(void) const {
-        return this->ActualCommand->GetReturnPrototype();
-    }
-
-    /* documented in base class */
-    inline size_t NumberOfArguments(void) const {
-        return 0;
-    }
-
-    /* documented in base class */
-    inline bool Returns(void) const {
-        return true;
-    }
 };
 
 

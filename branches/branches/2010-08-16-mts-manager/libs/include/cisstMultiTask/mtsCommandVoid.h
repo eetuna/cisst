@@ -75,7 +75,7 @@ public:
     /*! The execute method. Calling the execute method from the
       invoker applies the operation on the receiver.
     */
-    virtual mtsCommandBase::ReturnType Execute(mtsBlockingType CMN_UNUSED(blocking));
+    virtual mtsExecutionResult Execute(mtsBlockingType CMN_UNUSED(blocking));
 
     /*! Get a direct pointer to the callable object.  This method is
       used for queued commands.  The caller should still use the

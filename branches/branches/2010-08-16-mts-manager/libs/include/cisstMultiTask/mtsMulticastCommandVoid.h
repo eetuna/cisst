@@ -65,7 +65,7 @@ public:
     void AddCommand(BaseType * command);
 
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(mtsBlockingType CMN_UNUSED(blocking));
+    virtual mtsExecutionResult Execute(mtsBlockingType CMN_UNUSED(blocking));
 
     /* documented in base class */
     virtual void ToStream(std::ostream & outputStream) const;

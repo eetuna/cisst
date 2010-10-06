@@ -19,6 +19,7 @@ set (SOURCE_FILES
      mtsClassServices.cpp
 
      mtsGenericObject.cpp
+     mtsExecutionResult.cpp
 
      mtsMulticastCommandVoid.cpp
      mtsMulticastCommandWriteBase.cpp
@@ -33,7 +34,10 @@ set (SOURCE_FILES
 
      mtsCommandVoid.cpp
      mtsCommandQueuedVoid.cpp
-     mtsCommandQueuedVoidReturnBase.cpp
+
+     mtsCommandVoidReturn.cpp
+     mtsCommandQueuedVoidReturn.cpp
+
      mtsCommandQueuedWriteBase.cpp
      mtsCommandFilteredQueuedWrite.cpp
 
@@ -76,6 +80,7 @@ set (HEADER_FILES
      mtsMacros.h
      mtsGenericObject.h
      mtsGenericObjectProxy.h
+     mtsExecutionResult.h
 
      mtsFixedSizeVector.h
      mtsFixedSizeVectorTypes.h
@@ -90,13 +95,14 @@ set (HEADER_FILES
      mtsCallableVoidMethod.h
      mtsCallableVoidFunction.h
      mtsCommandVoid.h
-     mtsCommandVoidReturn.h
-     mtsCommandVoidReturnBase.h
-     mtsMulticastCommandVoid.h
      mtsCommandQueuedVoid.h
-     mtsCommandQueuedVoidReturn.h
-     mtsCommandQueuedVoidReturnBase.h
+     mtsMulticastCommandVoid.h
      mtsFunctionVoid.h
+
+     mtsCallableVoidReturnBase.h
+     mtsCallableVoidReturnMethod.h
+     mtsCommandVoidReturn.h
+     mtsCommandQueuedVoidReturn.h
      mtsFunctionVoidReturn.h
 
      mtsCommandRead.h

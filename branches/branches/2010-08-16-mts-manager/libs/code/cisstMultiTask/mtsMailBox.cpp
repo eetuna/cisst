@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnAssert.h>
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCallableVoidBase.h>
+#include <cisstMultiTask/mtsCallableVoidReturnBase.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
@@ -77,7 +78,7 @@ bool mtsMailBox::ExecuteNext(void)
    mtsCommandQueuedVoid * commandVoid;
    mtsCommandQueuedWriteBase * commandWrite;
    mtsCommandQueuedWriteGeneric * commandWriteGeneric;
-   mtsCommandQueuedVoidReturnBase * commandVoidReturn;
+   mtsCommandQueuedVoidReturn * commandVoidReturn;
 
    if (!(*command)->Returns()) {
        switch ((*command)->NumberOfArguments()) {
@@ -114,9 +115,9 @@ bool mtsMailBox::ExecuteNext(void)
    } else {
        switch ((*command)->NumberOfArguments()) {
        case 0:
-           commandVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturnBase *>(*command);
+           commandVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturn *>(*command);
            CMN_ASSERT(commandVoidReturn);
-           commandVoidReturn->GetActualCommand()->Execute( *(commandVoidReturn->GetResultPointer()) );
+           commandVoidReturn->GetCallable()->Execute( *(commandVoidReturn->GetResultPointer()) );
            this->ThreadSignal.Raise();
            break;
        default:

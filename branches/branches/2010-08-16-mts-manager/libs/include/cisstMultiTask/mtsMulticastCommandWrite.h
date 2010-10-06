@@ -68,12 +68,12 @@ public:
     }
 
     /*! Execute all the commands in the composite. */
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               mtsBlockingType CMN_UNUSED(blocking)) {
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                       mtsBlockingType CMN_UNUSED(blocking)) {
         // cast argument first
         const ArgumentFinalType * data = dynamic_cast< const ArgumentFinalType * >(&argument);
         if (data == 0) {
-            return mtsCommandBase::BAD_INPUT;
+            return mtsExecutionResult::BAD_INPUT;
         }
         // if cast succeeded call using actual type
         size_t index;
@@ -81,7 +81,7 @@ public:
         for (index = 0; index < commandsSize; index++) {
             Commands[index]->Execute(*data, MTS_NOT_BLOCKING);
         }
-        return mtsCommandBase::DEV_OK;
+        return mtsExecutionResult::DEV_OK;
     }
 };
 

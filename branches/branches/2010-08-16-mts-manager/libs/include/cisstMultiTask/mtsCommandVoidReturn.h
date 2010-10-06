@@ -28,8 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandVoidReturn_h
 #define _mtsCommandVoidReturn_h
 
-
-#include <cisstMultiTask/mtsCommandVoidReturnBase.h>
+#include <cisstMultiTask/mtsCommandBase.h>
 #include <string>
 
 
@@ -42,125 +41,68 @@ http://www.cisst.org/cisst/license.txt.
   method, i.e. it requires the class and method name as well as an
   instantiation of the class to get and actual pointer on the
   method. */
-template <class _classType, class _returnType>
-class mtsCommandVoidReturn: public mtsCommandVoidReturnBase {
+
+class mtsCommandVoidReturn: public mtsCommandBase {
 
 public:
-    typedef mtsCommandVoidReturnBase BaseType;
-    typedef _returnType ReturnType;
-
-    /*! Typedef for the specific interface. */
-    typedef _classType ClassType;
+    /*! Base type */
+    typedef mtsCommandBase BaseType;
 
     /*! This type. */
-    typedef mtsCommandVoidReturn<ClassType, ReturnType> ThisType;
-
-    /*! Typedef for pointer to member function (method) of a specific
-      class (_classType). */
-    typedef void(_classType::*ActionType)(ReturnType & result);
+    typedef mtsCommandVoidReturn ThisType;
 
 private:
     /*! Private copy constructor to prevent copies */
-    inline mtsCommandVoidReturn(const ThisType & CMN_UNUSED(other)) {}
+    mtsCommandVoidReturn(const ThisType & CMN_UNUSED(other));
 
 protected:
     /*! The pointer to member function of the receiver class that
       is to be invoked for a particular instance of the command. */
-    ActionType Action;
-
-    /*! Stores the receiver object of the command. */
-    ClassType * ClassInstantiation;
-
-    template <bool, typename _dummy = void>
-    class ConditionalCast {
-        // Default case: ReturnType not derived from mtsGenericObjectProxy
-    public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType * instance, ActionType method, mtsGenericObject & result) {
-            ReturnType * resultCasted = mtsGenericTypes<ReturnType>::CastArg(result);
-            if (resultCasted == 0) {
-                return mtsCommandBase::BAD_INPUT;
-            }
-            (instance->*method)(*resultCasted);
-            return mtsCommandBase::DEV_OK;
-        }
-    };
-
-    template <typename _dummy>
-    class ConditionalCast<true, _dummy> {
-        // Specialization: ReturnType is derived from mtsGenericObjectProxy (and thus also from mtsGenericObject)
-        // In this case, we may need to create a temporary Proxy object.
-    public:
-        static mtsCommandBase::ReturnType CallMethod(ClassType * instance, ActionType method, mtsGenericObject & result) {
-            // First, check if a Proxy object was passed.
-            ReturnType * resultCasted = dynamic_cast<ReturnType *>(&result);
-            if (resultCasted) {
-                (instance->*method)(*resultCasted);
-                return mtsCommandBase::DEV_OK;
-            }
-            // If it isn't a Proxy, maybe it is a ProxyRef
-            typedef typename ReturnType::RefType ReturnRefType;
-            ReturnRefType * dataRef = dynamic_cast<ReturnRefType *>(&result);
-            if (!dataRef) {
-                CMN_LOG_INIT_ERROR << "mtsCommandVoidReturn: CallMethod could not cast from " << typeid(result).name()
-                                   << " to " << typeid(ReturnRefType).name() << std::endl;
-                return mtsCommandBase::BAD_INPUT;
-            }
-            // Now, make the call using the temporary
-            ReturnType temp;
-            (instance->*method)(temp);
-            // Finally, copy the data to the return
-            *dataRef = temp;
-            return mtsCommandBase::DEV_OK;
-        }
-    };
+    mtsCallableVoidReturnBase * Callable;
 
 public:
     /*! The constructor. Does nothing. */
-    mtsCommandVoidReturn(void): BaseType(), ClassInstantiation(0) {}
+    mtsCommandVoidReturn(void);
 
     /*! The constructor.
       \param action Pointer to the member function that is to be called
       by the invoker of the command
       \param classInstantiation Pointer to the receiver of the command
       \param name A string to identify the command. */
-    mtsCommandVoidReturn(ActionType action, ClassType * classInstantiation, const std::string & name,
-                         const ReturnType & returnPrototype):
-        BaseType(name),
-        Action(action),
-        ClassInstantiation(classInstantiation)
-    {
-        this->ReturnPrototype = mtsGenericTypes<ReturnType>::ConditionalCreate(returnPrototype, name);
-    }
+    mtsCommandVoidReturn(mtsCallableVoidReturnBase * callable, const std::string & name,
+                         const mtsGenericObject * resultPrototype);
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCommandVoidReturn() {
-        if (this->ReturnPrototype) {
-            delete this->ReturnPrototype;
-        }
-    }
+    virtual ~mtsCommandVoidReturn();
 
     /*! The execute method. Calling the execute method from the
       invoker applies the operation on the receiver.
     */
-    mtsCommandBase::ReturnType Execute(mtsGenericObject & result) {
-        if (this->IsEnabled()) {
-            return ConditionalCast<cmnIsDerivedFromTemplated<ReturnType, mtsGenericObjectProxy>::YES
-                                  >::CallMethod(ClassInstantiation, Action, result);
-        }
-        return mtsCommandBase::DISABLED;
-    }
+    virtual mtsExecutionResult Execute(mtsGenericObject & result);
+
+    /*! Get a direct pointer to the callable object.  This method is
+      used for queued commands.  The caller should still use the
+      Execute method which will queue the command.  When the command
+      is de-queued, one needs access to the callable object to call
+      the final method or function. */
+    mtsCallableVoidReturnBase * GetCallable(void) const;
 
     /* documented in base class */
-    void ToStream(std::ostream & outputStream) const {
-        outputStream << "mtsCommandVoidReturn: ";
-        if (this->ClassInstantiation) {
-            outputStream << this->Name << "(" << this->GetReturnPrototype()->Services()->GetName() << "&) using class/object \""
-                         << mtsObjectName(this->ClassInstantiation) << "\" currently "
-                         << (this->IsEnabled() ? "enabled" : "disabled");
-        } else {
-            outputStream << "Not initialized properly";
-        }
-    }
+    size_t NumberOfArguments(void) const;
+
+    /* documented in base class */
+    bool Returns(void) const;
+
+    /*! Return a pointer on the result prototype */
+    const mtsGenericObject * GetResultPrototype(void) const;
+
+    /* documented in base class */
+    void ToStream(std::ostream & outputStream) const;
+
+protected:
+    void SetResultPrototype(const mtsGenericObject * resultPrototype);
+
+    const mtsGenericObject * ResultPrototype;
 };
 
 #endif // _mtsCommandVoidReturn_h

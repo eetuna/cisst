@@ -46,8 +46,8 @@ protected:
     class ConditionalWrap {
         // default case: both parameters need to be wrapped
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandQualifiedReadBase * command,
-                                               const _userType1 & argument1, _userType2 & argument2) {
+        static mtsExecutionResult Call(mtsCommandQualifiedReadBase * command,
+                                       const _userType1 & argument1, _userType2 & argument2) {
             const mtsGenericObjectProxyRef<_userType1> argument1Wrapped(argument1);
             mtsGenericObjectProxyRef<_userType2> argument2Wrapped(argument2);
             return command->Execute(argument1Wrapped, argument2Wrapped);
@@ -57,8 +57,8 @@ protected:
     class ConditionalWrap<_userType1, _userType2, false, true> {
         // specialization: only first parameter needs to be wrapped
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandQualifiedReadBase * command,
-                                               const _userType1 & argument1, _userType2 & argument2) {
+        static mtsExecutionResult Call(mtsCommandQualifiedReadBase * command,
+                                       const _userType1 & argument1, _userType2 & argument2) {
             const mtsGenericObjectProxyRef<_userType1> argument1Wrapped(argument1);
             return command->Execute(argument1Wrapped, argument2);
         }
@@ -67,8 +67,8 @@ protected:
     class ConditionalWrap<_userType1, _userType2, true, false> {
         // specialization: only second parameter needs to be wrapped
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandQualifiedReadBase * command,
-                                               const _userType1 & argument1, _userType2 & argument2) {
+        static mtsExecutionResult Call(mtsCommandQualifiedReadBase * command,
+                                       const _userType1 & argument1, _userType2 & argument2) {
             mtsGenericObjectProxyRef<_userType2> argument2Wrapped(argument2);
             return command->Execute(argument1, argument2Wrapped);
         }
@@ -77,8 +77,8 @@ protected:
     class ConditionalWrap<_userType1, _userType2, true, true> {
         // specialization: neither parameter needs to be wrapped
     public:
-        static mtsCommandBase::ReturnType Call(mtsCommandQualifiedReadBase * command,
-                                               const _userType1 & argument1, _userType2 & argument2) {
+        static mtsExecutionResult Call(mtsCommandQualifiedReadBase * command,
+                                       const _userType1 & argument1, _userType2 & argument2) {
             return command->Execute(argument1, argument2); }
     };
 
@@ -105,18 +105,18 @@ protected:
 
     /*! Overloaded operator to enable more intuitive syntax
       e.g., Command(argument) instead of Command->Execute(argument). */
-    mtsCommandBase::ReturnType operator()(const mtsGenericObject & qualifier,
-                                          mtsGenericObject & argument) const;
+    mtsExecutionResult operator()(const mtsGenericObject & qualifier,
+                                  mtsGenericObject & argument) const;
 
 	/*! Overloaded operator that accepts different argument types (for qualified read). */
     template <class _userType1, class _userType2>
-    mtsCommandBase::ReturnType operator()(const _userType1 & argument1, _userType2 & argument2) const {
-        mtsCommandBase::ReturnType ret = Command ?
+    mtsExecutionResult operator()(const _userType1 & argument1, _userType2 & argument2) const {
+        mtsExecutionResult result = Command ?
             ConditionalWrap<_userType1, _userType2,
                             cmnIsDerivedFrom<_userType1, mtsGenericObject>::YES,
                             cmnIsDerivedFrom<_userType1, mtsGenericObject>::YES>::Call(Command, argument1, argument2)
-          : mtsCommandBase::NO_INTERFACE;
-        return ret;
+          : mtsExecutionResult::NO_INTERFACE;
+        return result;
     }
 
     /*! Access to underlying command object. */

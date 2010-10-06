@@ -55,19 +55,19 @@ typedef enum {MTS_BLOCKING, MTS_NOT_BLOCKING} mtsBlockingType;
 // commands
 class mtsCommandBase;
 
-// void callable
+// void callables and commands
 class mtsCallableVoidBase;
 template <class _classType> class mtsCallableVoidMethod;
 class mtsCallableVoidFunction;
-
-// void commands
 class mtsCommandVoid;
 class mtsCommandQueuedVoid;
 class mtsFunctionVoid;
 
-// void return commands
-class mtsCommandVoidReturnBase;
-template <class _classType, class _resultType> class mtsCommandVoidReturn;
+// void return callables and commands
+class mtsCallableVoidReturnBase;
+template <class _classType, class _returnType> class mtsCallableVoidReturnMethod;
+class mtsCommandVoidReturn;
+class mtsCommandQueuedVoidReturn;
 class mtsFunctionVoidReturn;
 
 // read commands

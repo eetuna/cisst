@@ -73,17 +73,17 @@ public:
     }
 
     /*! The execute method. */
-    virtual mtsCommandBase::ReturnType Execute(mtsGenericObject & argument) {
+    virtual mtsExecutionResult Execute(mtsGenericObject & argument) {
         if (IsDisabled()) {
-            return mtsCommandBase::DISABLED;
+            return mtsExecutionResult::DISABLED;
         }
 
         if (NetworkProxyServer) {
             if (!NetworkProxyServer->SendExecuteCommandReadSerialized(ClientID, CommandID, argument)) {
-                return mtsCommandBase::COMMAND_FAILED;
+                return mtsExecutionResult::COMMAND_FAILED;
             }
         }
-        return mtsCommandBase::DEV_OK;
+        return mtsExecutionResult::DEV_OK;
     }
 
     /*! Generate human readable description of this object */

@@ -80,8 +80,8 @@ public:
     virtual void Allocate(size_t size) = 0;
 
 
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               mtsBlockingType blocking) = 0;
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                       mtsBlockingType blocking) = 0;
 
 
     virtual const mtsGenericObject * ArgumentPeek(void) const = 0;

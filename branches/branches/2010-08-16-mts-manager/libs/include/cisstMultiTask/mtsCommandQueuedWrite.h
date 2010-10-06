@@ -117,17 +117,17 @@ public:
     }
 
 
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               mtsBlockingType blocking) {
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                       mtsBlockingType blocking) {
         if (this->IsEnabled()) {
             if (!MailBox) {
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute: no mailbox for \""
                                   << this->Name << "\"" << std::endl;
-                return mtsCommandBase::NO_MAILBOX;
+                return mtsExecutionResult::NO_MAILBOX;
             }
             const ArgumentQueueBaseType * argumentTyped = dynamic_cast<const ArgumentQueueBaseType*>(&argument);
             if (!argumentTyped) {
-                return mtsCommandBase::BAD_INPUT;
+                return mtsExecutionResult::BAD_INPUT;
             }
             // copy the argument and blocking flag to the local storage.
             if (ArgumentsQueue.Put(*argumentTyped) &&
@@ -136,7 +136,7 @@ public:
                     if (blocking == MTS_BLOCKING) {
                         MailBox->ThreadSignalWait();
                     }
-                    return mtsCommandBase::DEV_OK;
+                    return mtsExecutionResult::DEV_OK;
                 } else {
                     CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): mailbox full for \""
                                       << this->Name << "\"" << std::endl;
@@ -147,9 +147,9 @@ public:
                 CMN_LOG_RUN_ERROR << "Class mtsCommandQueuedWrite: Execute(): ArgumentsQueue or BlockingFlagQueue full for \""
                                   << this->Name << "\"" << std::endl;
             }
-            return mtsCommandBase::MAILBOX_FULL;
+            return mtsExecutionResult::MAILBOX_FULL;
         }
-        return mtsCommandBase::DISABLED;
+        return mtsExecutionResult::DISABLED;
     }
 
     /* commented in base class */
@@ -222,8 +222,8 @@ public:
     }
 
 
-    virtual mtsCommandBase::ReturnType Execute(const mtsGenericObject & argument,
-                                               mtsBlockingType blocking);
+    virtual mtsExecutionResult Execute(const mtsGenericObject & argument,
+                                       mtsBlockingType blocking);
 
 
     /* commented in base class */

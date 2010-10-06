@@ -54,8 +54,8 @@ public:
     ~mtsCommandVoidProxy() {}
 
     /*! Execute void command */
-    mtsCommandBase::ReturnType Execute(mtsBlockingType blocking) {
-        if (IsDisabled()) return mtsCommandBase::DISABLED;
+    mtsExecutionResult Execute(mtsBlockingType blocking) {
+        if (IsDisabled()) return mtsExecutionResult::DISABLED;
 
         // todo fix urgent
         if (blocking == MTS_BLOCKING) {
@@ -65,16 +65,16 @@ public:
         if (NetworkProxyServer) {
             // Command void execution: client (request) -> server (execution)
             if (!NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID)) {
-                return mtsCommandBase::COMMAND_FAILED;
+                return mtsExecutionResult::COMMAND_FAILED;
             }
         } else {
             // Event void execution: server (event generator) -> client (event handler)
             if (!NetworkProxyClient->SendExecuteEventVoid(CommandID)) {
-                return mtsCommandBase::COMMAND_FAILED;
+                return mtsExecutionResult::COMMAND_FAILED;
             }
         }
 
-        return mtsCommandBase::DEV_OK;
+        return mtsExecutionResult::DEV_OK;
     }
 
     /*! Generate human readable description of this object */

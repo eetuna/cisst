@@ -67,7 +67,7 @@ public:
       \param obj The data passed to the operation method
 
       \result Boolean value, true if success, false otherwise */
-    virtual BaseType::ReturnType Execute(Argument1Type & argument1, Argument2Type & argument2) = 0;
+    virtual mtsExecutionResult Execute(Argument1Type & argument1, Argument2Type & argument2) = 0;
 
     /* documented in base class */
     virtual void ToStream(std::ostream & outputStream) const = 0;
