@@ -25,6 +25,5 @@ add_subdirectory (pointtracker)
 add_subdirectory (gridtracker)
 add_subdirectory (exposurecorrection)
 add_subdirectory (svlmts1)
-add_subdirectory (svlmts2)
 #ADD_SUBDIRECTORY(webgui)
 
