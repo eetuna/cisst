@@ -73,7 +73,8 @@ public:
     }
 
     svlSampleImageCustom(const svlSampleImageCustom & other) :
-        svlSampleImage()
+        svlSampleImage(),
+        OwnData(true)
     {
         CopyOf(other);
     }
