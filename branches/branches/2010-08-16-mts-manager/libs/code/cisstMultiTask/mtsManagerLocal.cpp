@@ -36,7 +36,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsManagerComponentClient.h>
 #include <cisstMultiTask/mtsManagerComponentServer.h>
-#include <cisstMultiTask/mtsTaskViewer.h>
+#include <cisstMultiTask/mtsComponentViewer.h>
 
 #if CISST_MTS_HAS_ICE
 #include <cisstMultiTask/mtsComponentProxy.h>
@@ -1451,13 +1451,13 @@ bool mtsManagerLocal::CreateManagerComponents(void)
             return false;
         }
         if (Configuration == LCM_CONFIG_STANDALONE) {
-            // Add TaskViewer in standalone configuration. In networked configuration, we assume
-            // that the TaskViewer will be in a separate process.
-            mtsTaskViewer *taskViewer = new mtsTaskViewer("TaskViewer", 1.0*cmn_s);
-            CMN_LOG_CLASS_INIT_VERBOSE << "CreateManagerComponents: Creating TaskViewer" << std::endl;
+            // Add ComponentViewer in standalone configuration. In networked configuration, we assume
+            // that the ComponentViewer will be in a separate process.
+            mtsComponentViewer *componentViewer = new mtsComponentViewer("ComponentViewer", 1.0*cmn_s);
+            CMN_LOG_CLASS_INIT_VERBOSE << "CreateManagerComponents: Creating ComponentViewer" << std::endl;
             // Call AddComponent with 'true' to get internal interface to component manager
-            if (!AddComponentWithControlService(taskViewer)) {
-                CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add TaskViewer component" << std::endl;
+            if (!AddComponentWithControlService(componentViewer)) {
+                CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add ComponentViewer" << std::endl;
                 return false;
             }
         }

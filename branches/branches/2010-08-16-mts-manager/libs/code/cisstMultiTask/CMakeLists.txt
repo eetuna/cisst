@@ -72,7 +72,7 @@ set (SOURCE_FILES
      mtsManagerComponentClient.cpp
 
      mtsParameterTypes.cpp
-     mtsTaskViewer.cpp
+     mtsComponentViewer.cpp
      )
 
 # all header files
@@ -168,7 +168,7 @@ set (HEADER_FILES
      mtsManagerComponentClient.h
 
      mtsParameterTypes.h
-     mtsTaskViewer.h
+     mtsComponentViewer.h
 
      mtsHistory.h
      )

@@ -24,8 +24,8 @@ http://www.cisst.org/cisst/license.txt.
   \ingroup cisstMultiTask
 */
 
-#ifndef _mtsTaskViewer_h
-#define _mtsTaskViewer_h
+#ifndef _mtsComponentViewer_h
+#define _mtsComponentViewer_h
 
 
 #include <cisstOSAbstraction/osaSocket.h>
@@ -36,7 +36,7 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last!
 #include <cisstMultiTask/mtsExport.h>
 
-class CISST_EXPORT mtsTaskViewer : public mtsTaskPeriodic
+class CISST_EXPORT mtsComponentViewer : public mtsTaskPeriodic
 {
    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
@@ -66,9 +66,9 @@ protected:
 
 public:
 
-    mtsTaskViewer(const std::string & name, double periodicityInSeconds);
+    mtsComponentViewer(const std::string & name, double periodicityInSeconds);
 
-    virtual ~mtsTaskViewer();
+    virtual ~mtsComponentViewer();
 
     void Configure(const std::string & CMN_UNUSED(filename)) {}
 
@@ -80,6 +80,6 @@ public:
 
 };
 
-CMN_DECLARE_SERVICES_INSTANTIATION(mtsTaskViewer)
+CMN_DECLARE_SERVICES_INSTANTIATION(mtsComponentViewer)
 
-#endif // _mts_TaskViewer.h
+#endif // _mts_ComponentViewer.h

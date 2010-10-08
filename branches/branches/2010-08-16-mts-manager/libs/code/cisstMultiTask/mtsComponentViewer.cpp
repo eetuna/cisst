@@ -20,12 +20,12 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstCommon/cmnUnits.h>
 #include <cisstOSAbstraction/osaSleep.h>
-#include <cisstMultiTask/mtsTaskViewer.h>
+#include <cisstMultiTask/mtsComponentViewer.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 
-CMN_IMPLEMENT_SERVICES(mtsTaskViewer)
+CMN_IMPLEMENT_SERVICES(mtsComponentViewer)
 
-mtsTaskViewer::mtsTaskViewer(const std::string & name, double periodicityInSeconds) :
+mtsComponentViewer::mtsComponentViewer(const std::string & name, double periodicityInSeconds) :
     mtsTaskPeriodic(name, periodicityInSeconds),
     JGraphSocket(osaSocket::TCP),
     JGraphSocketConnected(false),
@@ -37,17 +37,17 @@ mtsTaskViewer::mtsTaskViewer(const std::string & name, double periodicityInSecon
     mtsInterfaceRequired *required = AddInterfaceRequired(InternalCommands.GetInterfaceName());
     if (required) {
         InternalCommands.SetInterfaceRequired(required);
-        InternalCommands.AddComponentEventHandler(&mtsTaskViewer::AddComponent, this);
-        InternalCommands.AddConnectionEventHandler(&mtsTaskViewer::AddConnection, this);
+        InternalCommands.AddComponentEventHandler(&mtsComponentViewer::AddComponent, this);
+        InternalCommands.AddConnectionEventHandler(&mtsComponentViewer::AddConnection, this);
     }
 }
 
-mtsTaskViewer::~mtsTaskViewer()
+mtsComponentViewer::~mtsComponentViewer()
 {
     this->Cleanup();
 }
 
-void mtsTaskViewer::Startup(void)
+void mtsComponentViewer::Startup(void)
 {
     CMN_LOG_CLASS_INIT_VERBOSE << "Startup called" << std::endl;
     // Try to connect to JGraph or UDrawGraph viewer
@@ -59,7 +59,7 @@ void mtsTaskViewer::Startup(void)
         SendAllInfo();
 }
 
-void mtsTaskViewer::Run(void)
+void mtsComponentViewer::Run(void)
 {
     if (!UDrawSocketConnected) {
        ConnectToUDrawGraph();
@@ -82,7 +82,7 @@ void mtsTaskViewer::Run(void)
     ProcessQueuedEvents();
 }
 
-void mtsTaskViewer::Cleanup(void)
+void mtsComponentViewer::Cleanup(void)
 {
     if (JGraphSocketConnected) {
         JGraphSocket.Close();
@@ -97,7 +97,7 @@ void mtsTaskViewer::Cleanup(void)
 
 //*************************************** Event Handlers ******************************************************
 
-void mtsTaskViewer::AddComponent(const mtsDescriptionComponent &componentInfo)
+void mtsComponentViewer::AddComponent(const mtsDescriptionComponent &componentInfo)
 {
     if (JGraphSocketConnected) {
         std::string buffer = GetComponentInGraphFormat(componentInfo.ProcessName, componentInfo.ComponentName);
@@ -118,7 +118,7 @@ void mtsTaskViewer::AddComponent(const mtsDescriptionComponent &componentInfo)
     }
 }
 
-void mtsTaskViewer::AddConnection(const mtsDescriptionConnection &connection)
+void mtsComponentViewer::AddConnection(const mtsDescriptionConnection &connection)
 {
     // Send to TaskViewer if present
     if (JGraphSocketConnected) {
@@ -152,7 +152,7 @@ void mtsTaskViewer::AddConnection(const mtsDescriptionConnection &connection)
 
 //********************************* Local (protected) methods ***********************************************
 
-bool mtsTaskViewer::ConnectToJGraph(const std::string &ipAddress, unsigned short port)
+bool mtsComponentViewer::ConnectToJGraph(const std::string &ipAddress, unsigned short port)
 {
     // Try to connect to the JGraph application software (Java program).
     // Note that the JGraph application also sends event messages back via the socket,
@@ -165,7 +165,7 @@ bool mtsTaskViewer::ConnectToJGraph(const std::string &ipAddress, unsigned short
     return JGraphSocketConnected;
 }
 
-bool mtsTaskViewer::ConnectToUDrawGraph(const std::string &ipAddress, unsigned short port)
+bool mtsComponentViewer::ConnectToUDrawGraph(const std::string &ipAddress, unsigned short port)
 {
     // Try to connect to UDrawGraph on port 2554
     // (Note: default UDrawGraph port is 2542, but this may be a target for hackers).
@@ -186,13 +186,13 @@ bool mtsTaskViewer::ConnectToUDrawGraph(const std::string &ipAddress, unsigned s
     return UDrawSocketConnected;
 }
 
-bool mtsTaskViewer::IsProxyComponent(const std::string & componentName) const
+bool mtsComponentViewer::IsProxyComponent(const std::string & componentName) const
 {
     // PK: Need to fix this to be more robust
     return (componentName.find("Proxy", componentName.length()-5) != std::string::npos);
 }
 
-void mtsTaskViewer::SendAllInfo(void)
+void mtsComponentViewer::SendAllInfo(void)
 {
     // Now, send all existing components and connections
     std::vector<std::string> processList;
@@ -224,7 +224,7 @@ void mtsTaskViewer::SendAllInfo(void)
     }
 }
 
-std::string mtsTaskViewer::GetComponentInGraphFormat(const std::string &processName,
+std::string mtsComponentViewer::GetComponentInGraphFormat(const std::string &processName,
                                                      const std::string &componentName) const
 {
     size_t i;
@@ -251,7 +251,7 @@ std::string mtsTaskViewer::GetComponentInGraphFormat(const std::string &processN
     return buffer;
 }
 
-std::string mtsTaskViewer::GetComponentInUDrawGraphFormat(const std::string &processName,
+std::string mtsComponentViewer::GetComponentInUDrawGraphFormat(const std::string &processName,
                                                           const std::string &componentName) const
 {
 #if 0
