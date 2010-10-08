@@ -31,6 +31,11 @@ int main(void)
     appTask * appTaskControl1 = new appTask("ControlRobot1", "Robot1", "Robot2", 50 * cmn_ms);
     appTask * appTaskControl2 = new appTask("ControlRobot2", "Robot2", "Robot1", 100 * cmn_ms);
 
+    // create and add Component Viewer
+    mtsComponentViewer *componentViewer = new mtsComponentViewer("ComponentViewer", 1.0*cmn_s);
+    if (!taskManager->AddComponentWithControlService(componentViewer))
+        CMN_LOG_INIT_ERROR << "Failed to add ComponentViewer" << std::endl;
+
     // add all tasks
     taskManager->AddComponent(robotTask);
     taskManager->AddComponent(monitor);

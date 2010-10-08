@@ -1450,17 +1450,19 @@ bool mtsManagerLocal::CreateManagerComponents(void)
             CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add internal manager component server" << std::endl;
             return false;
         }
+#if 0
+        // Enable this code to automatically use ComponentViewer
         if (Configuration == LCM_CONFIG_STANDALONE) {
             // Add ComponentViewer in standalone configuration. In networked configuration, we assume
             // that the ComponentViewer will be in a separate process.
             mtsComponentViewer *componentViewer = new mtsComponentViewer("ComponentViewer", 1.0*cmn_s);
             CMN_LOG_CLASS_INIT_VERBOSE << "CreateManagerComponents: Creating ComponentViewer" << std::endl;
-            // Call AddComponent with 'true' to get internal interface to component manager
             if (!AddComponentWithControlService(componentViewer)) {
                 CMN_LOG_CLASS_INIT_ERROR << "CreateManagerComponents: failed to add ComponentViewer" << std::endl;
                 return false;
             }
         }
+#endif
     }
 
     if ((Configuration == LCM_CONFIG_STANDALONE) || (Configuration == LCM_CONFIG_NETWORKED)) {
