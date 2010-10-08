@@ -76,6 +76,15 @@ public:
         svlSampleImage(),
         OwnData(true)
     {
+        for (unsigned int vch = 0; vch < _VideoChannels; vch ++) {
+            Image[vch] = new vctDynamicMatrix<_ValueType>;
+#if (CISST_SVL_HAS_OPENCV == ON)
+            int ocvdepth = GetOCVDepth();
+            if (ocvdepth >= 0) OCVImageHeader[vch] = cvCreateImageHeader(cvSize(0, 0), ocvdepth, _DataChannels);
+            else OCVImageHeader[vch] = 0;
+#endif // CISST_SVL_HAS_OPENCV
+        }
+
         CopyOf(other);
     }
 
