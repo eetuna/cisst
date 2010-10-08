@@ -64,6 +64,8 @@ http://www.cisst.org/cisst/license.txt.
 // enums defined in mtsForwardDeclarations
 %include "cisstMultiTask/mtsForwardDeclarations.h"
 
+%include "cisstMultiTask/mtsExecutionResult.h"
+
 // Wrap commands
 %include "cisstMultiTask/mtsCommandBase.h"
 %include "cisstMultiTask/mtsCommandVoid.h"
@@ -75,7 +77,7 @@ http://www.cisst.org/cisst/license.txt.
 %extend mtsCommandVoid {
     %pythoncode {
         def __call__(self):
-            return self.Execute(MTS_NOT_BLOCKING)
+            return self.Execute(MTS_NOT_BLOCKING).GetResult()
     }
 }
 
@@ -91,10 +93,10 @@ http://www.cisst.org/cisst/license.txt.
 
         def __call__(self, argument):
             if isinstance(argument, self.ArgumentType):
-                return self.Execute(argument, MTS_NOT_BLOCKING)
+                return self.Execute(argument, MTS_NOT_BLOCKING).GetResult()
             else:
                 realArgument = self.ArgumentType(argument)
-                return self.Execute(realArgument, MTS_NOT_BLOCKING)
+                return self.Execute(realArgument, MTS_NOT_BLOCKING).GetResult()
     }
 }
 
@@ -115,6 +117,7 @@ http://www.cisst.org/cisst/license.txt.
                 argument = self.ArgumentType(self.GetArgumentPrototype())
             except Exception:
                 argument = self.GetArgumentPrototype()
+            # Probably should check return value below
             self.Execute(argument)
             # If argument has a GetDataCopy method, we assume it is derived from
             # mtsGenericObjectProxy (%extend is used to add this method).
@@ -139,6 +142,7 @@ http://www.cisst.org/cisst/license.txt.
 
         def __call__(self, argument1):
             argument2 = self.Argument2Type(self.GetArgument2Prototype())
+            # Probably should check return value of self.Execute
             if isinstance(argument1, self.Argument1Type):
                 self.Execute(argument1, argument2)
             else:
