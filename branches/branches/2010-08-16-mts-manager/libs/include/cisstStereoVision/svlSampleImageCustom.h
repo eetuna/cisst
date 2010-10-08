@@ -72,6 +72,12 @@ public:
         }
     }
 
+    svlSampleImageCustom(const svlSampleImageCustom & other) :
+        svlSampleImage()
+    {
+        CopyOf(other);
+    }
+
 
     ////////////////
     // Destructor //
