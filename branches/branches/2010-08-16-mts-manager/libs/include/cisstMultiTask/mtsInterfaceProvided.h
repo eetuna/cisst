@@ -206,6 +206,19 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
         return this->AddCommandVoid(new mtsCallableVoidFunction(function), commandName, queueingPolicy);
     }
 
+
+    template <class __classType, class __resultType>
+    inline mtsCommandVoidReturn * AddCommandVoidReturn(void (__classType::*method)(__resultType &),
+                                                       __classType * classInstantiation,
+                                                       const std::string & commandName,
+                                                       const __resultType & resultPrototype,
+                                                       mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+        return this->AddCommandVoidReturn(new mtsCallableVoidReturnMethod<__classType, __resultType>(method, classInstantiation),
+                                          commandName,
+                                          mtsGenericTypes<__resultType>::ConditionalCreate(resultPrototype, commandName),
+                                          queueingPolicy);
+    }
+
     template <class __classType, class __resultType>
     inline mtsCommandVoidReturn * AddCommandVoidReturn(void (__classType::*method)(__resultType &),
                                                        __classType * classInstantiation,

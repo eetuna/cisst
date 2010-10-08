@@ -65,6 +65,15 @@ mtsFunctionVoidReturn::CommandType * mtsFunctionVoidReturn::GetCommand(void) con
 }
 
 
+const mtsGenericObject * mtsFunctionVoidReturn::GetResultPrototype(void) const
+{
+    if (this->Command) {
+        return this->Command->GetResultPrototype();
+    }
+    return 0;
+}
+
+
 void mtsFunctionVoidReturn::ToStream(std::ostream & outputStream) const {
     if (this->Command != 0) {
         outputStream << "mtsFunctionVoidReturn for " << *Command;

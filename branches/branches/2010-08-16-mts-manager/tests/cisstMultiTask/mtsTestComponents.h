@@ -60,16 +60,22 @@ public:
 
 private:
     value_type Value;
+    value_type Argument1Prototype, Argument2Prototype;
     double ExecutionDelay; // to test blocking commands
 
 public:
     mtsFunctionVoid EventVoid;
     mtsFunctionWrite EventWrite;
 
+    enum {Argument1PrototypeDefault = 100};
+    enum {Argument2PrototypeDefault = 200};
+
     mtsTestInterfaceProvided(double executionDelay = 0.0):
         ExecutionDelay(executionDelay)
     {
         Value = -1;   // initial value = -1;
+        Argument1Prototype = Argument1PrototypeDefault;
+        Argument2Prototype = Argument2PrototypeDefault;
     }
 
     void CommandVoid(void) {
@@ -110,20 +116,21 @@ public:
         provided->AddCommandVoid(&mtsTestInterfaceProvided::CommandVoid,
                                  this, "Void");
         provided->AddCommandVoidReturn(&mtsTestInterfaceProvided::CommandVoidReturn,
-                                       this, "VoidReturn");
+                                       this, "VoidReturn", Argument2Prototype);
         provided->AddCommandWrite(&mtsTestInterfaceProvided::CommandWrite,
-                                  this, "Write");
+                                  this, "Write", Argument1Prototype);
         provided->AddCommandFilteredWrite(&mtsTestInterfaceProvided::CommandQualifiedRead,
                                           &mtsTestInterfaceProvided::CommandWrite,
                                           this, "FilteredWrite");
         provided->AddCommandRead(&mtsTestInterfaceProvided::CommandRead,
-                                 this, "Read");
+                                 this, "Read", Argument1Prototype);
         provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::CommandQualifiedRead,
-                                          this, "QualifiedRead");
+                                          this, "QualifiedRead", Argument1Prototype, Argument2Prototype);
         provided->AddEventVoid(this->EventVoid, "EventVoid");
-        provided->AddEventWrite(this->EventWrite, "EventWrite", value_type(-1));
+        provided->AddEventWrite(this->EventWrite, "EventWrite", Argument2Prototype);
     }
 };
+
 
 template <class _elementType>
 class mtsTestInterfaceRequired

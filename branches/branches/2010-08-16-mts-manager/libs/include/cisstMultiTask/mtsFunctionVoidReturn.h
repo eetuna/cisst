@@ -94,6 +94,9 @@ class CISST_EXPORT mtsFunctionVoidReturn: public mtsFunctionBase {
     /*! Access to underlying command object. */
     CommandType * GetCommand(void) const;
 
+    /*! Access to the command result prototype. */
+    const mtsGenericObject * GetResultPrototype(void) const;
+
     /*! Human readable output to stream. */
     void ToStream(std::ostream & outputStream) const;
 };

@@ -56,6 +56,9 @@ private:
         CPPUNIT_TEST(TestLocalFromSignalFromSignalBlocking_mtsInt);
         CPPUNIT_TEST(TestLocalFromSignalFromSignalBlocking_int);
 
+        CPPUNIT_TEST(TestArgumentPrototypes_mtsInt);
+        CPPUNIT_TEST(TestArgumentPrototypes_int);
+
 #if CISST_MTS_HAS_ICE
         //        CPPUNIT_TEST(TestRemoteDeviceDevice);
 #endif
@@ -108,6 +111,10 @@ public:
     template <class _elementType> void TestLocalFromSignalFromSignalBlocking(void);
     void TestLocalFromSignalFromSignalBlocking_mtsInt(void);
     void TestLocalFromSignalFromSignalBlocking_int(void);
+
+    template <class _elementType> void TestArgumentPrototypes(void);
+    void TestArgumentPrototypes_mtsInt(void);
+    void TestArgumentPrototypes_int(void);
 
 #if CISST_MTS_HAS_ICE
     void TestRemoteDeviceDevice(void);

@@ -65,7 +65,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
     // we assume both client and servers use the same type
     typedef typename _serverType::value_type value_type;
     
-    // add to manager abd start all
+    // add to manager and start all
     manager->AddComponent(client);
     manager->AddComponent(server);
     manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
@@ -425,6 +425,92 @@ void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking_mtsInt(void) 
 }
 void mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking_int(void) {
     mtsCommandAndEventTest::TestLocalFromSignalFromSignalBlocking<int>();
+}
+
+
+template <class _elementType>
+void mtsCommandAndEventTest::TestArgumentPrototypes(void)
+{
+    typedef _elementType value_type;
+
+    mtsTestContinuous1<value_type> * client = new mtsTestContinuous1<value_type>("mtsTestContinuous1Client");
+    mtsTestContinuous1<value_type> * server = new mtsTestContinuous1<value_type>("mtsTestContinuous1Server");
+
+    mtsComponentManager * manager = mtsComponentManager::GetInstance();
+
+    // add to manager and start all
+    manager->AddComponent(client);
+    manager->AddComponent(server);
+    manager->Connect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->CreateAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::READY, TransitionDelay));
+    manager->StartAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::ACTIVE, TransitionDelay));
+
+    // test that values are set properly for all argument prototypes
+    const mtsGenericObject * argumentPrototypeGeneric;
+    const mtsInt * argumentPrototype;
+    int expected, actual;
+
+    // test argument prototype for void with result command
+    argumentPrototypeGeneric = client->InterfaceRequired1.FunctionVoidReturn.GetResultPrototype();
+    CPPUNIT_ASSERT(argumentPrototypeGeneric != 0);
+    argumentPrototype = dynamic_cast<const mtsInt *>(argumentPrototypeGeneric);
+    CPPUNIT_ASSERT(argumentPrototype != 0);
+    expected = mtsTestInterfaceProvided<mtsInt>::Argument2PrototypeDefault;
+    actual = *argumentPrototype;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+
+    // test argument prototype for write command
+    argumentPrototypeGeneric = client->InterfaceRequired1.FunctionWrite.GetArgumentPrototype();
+    CPPUNIT_ASSERT(argumentPrototypeGeneric != 0);
+    argumentPrototype = dynamic_cast<const mtsInt *>(argumentPrototypeGeneric);
+    CPPUNIT_ASSERT(argumentPrototype != 0);
+    expected = mtsTestInterfaceProvided<mtsInt>::Argument1PrototypeDefault;
+    actual = *argumentPrototype;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+
+    // test argument prototype for read command
+    argumentPrototypeGeneric = client->InterfaceRequired1.FunctionRead.GetArgumentPrototype();
+    CPPUNIT_ASSERT(argumentPrototypeGeneric != 0);
+    argumentPrototype = dynamic_cast<const mtsInt *>(argumentPrototypeGeneric);
+    CPPUNIT_ASSERT(argumentPrototype != 0);
+    expected = mtsTestInterfaceProvided<mtsInt>::Argument1PrototypeDefault;
+    actual = *argumentPrototype;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+
+    // test argument prototype for qualified read command
+    argumentPrototypeGeneric = client->InterfaceRequired1.FunctionQualifiedRead.GetArgument1Prototype();
+    CPPUNIT_ASSERT(argumentPrototypeGeneric != 0);
+    argumentPrototype = dynamic_cast<const mtsInt *>(argumentPrototypeGeneric);
+    CPPUNIT_ASSERT(argumentPrototype != 0);
+    expected = mtsTestInterfaceProvided<mtsInt>::Argument1PrototypeDefault;
+    actual = *argumentPrototype;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+
+    argumentPrototypeGeneric = client->InterfaceRequired1.FunctionQualifiedRead.GetArgument2Prototype();
+    CPPUNIT_ASSERT(argumentPrototypeGeneric != 0);
+    argumentPrototype = dynamic_cast<const mtsInt *>(argumentPrototypeGeneric);
+    CPPUNIT_ASSERT(argumentPrototype != 0);
+    expected = mtsTestInterfaceProvided<mtsInt>::Argument2PrototypeDefault;
+    actual = *argumentPrototype;
+    CPPUNIT_ASSERT_EQUAL(expected, actual);
+
+    // stop all and cleanup
+    manager->KillAll();
+    CPPUNIT_ASSERT(manager->WaitForStateAll(mtsComponentState::FINISHED, TransitionDelay));
+    manager->Disconnect(client->GetName(), "r1", server->GetName(), "p1");
+    manager->RemoveComponent(client);
+    manager->RemoveComponent(server);
+
+    delete client;
+    delete server;
+}
+void mtsCommandAndEventTest::TestArgumentPrototypes_mtsInt(void) {
+    mtsCommandAndEventTest::TestArgumentPrototypes<mtsInt>();
+}
+void mtsCommandAndEventTest::TestArgumentPrototypes_int(void) {
+    mtsCommandAndEventTest::TestArgumentPrototypes<int>();
 }
 
 
