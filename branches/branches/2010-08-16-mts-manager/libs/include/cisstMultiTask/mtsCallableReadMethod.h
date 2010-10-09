@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: mtsCallableVoidReturn.h 1822 2010-09-24 19:50:59Z adeguet1 $
+  $Id: mtsCallableRead.h 1822 2010-09-24 19:50:59Z adeguet1 $
 
   Author(s): Anton Deguet
   Created on: 2010-09-16
@@ -25,11 +25,11 @@ http://www.cisst.org/cisst/license.txt.
   \brief Defines a command with no argument
 */
 
-#ifndef _mtsCallableVoidReturnMethod_h
-#define _mtsCallableVoidReturnMethod_h
+#ifndef _mtsCallableReadMethod_h
+#define _mtsCallableReadMethod_h
 
 
-#include <cisstMultiTask/mtsCallableVoidReturnBase.h>
+#include <cisstMultiTask/mtsCallableReadBase.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
 #include <string>
@@ -38,26 +38,26 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 */
-template <class _classType, class _resultType>
-class mtsCallableVoidReturnMethod: public mtsCallableVoidReturnBase {
+template <class _classType, class _returnType>
+class mtsCallableReadMethod: public mtsCallableReadBase {
 
 public:
-    typedef mtsCallableVoidReturnBase BaseType;
-    typedef _resultType ResultType;
+    typedef mtsCallableReadBase BaseType;
+    typedef _returnType ReturnType;
 
     /*! Typedef for the specific interface. */
     typedef _classType ClassType;
 
     /*! This type. */
-    typedef mtsCallableVoidReturnMethod<ClassType, ResultType> ThisType;
+    typedef mtsCallableReadMethod<ClassType, ReturnType> ThisType;
 
     /*! Typedef for pointer to member function (method) of a specific
       class (_classType). */
-    typedef void(_classType::*ActionType)(ResultType & result);
+    typedef bool(_classType::*ActionType)(ReturnType & argument) const;
 
 private:
     /*! Private copy constructor to prevent copies */
-    inline mtsCallableVoidReturnMethod(const ThisType & CMN_UNUSED(other)) {}
+    inline mtsCallableReadMethod(const ThisType & CMN_UNUSED(other)) {}
 
 protected:
     /*! The pointer to member function of the receiver class that
@@ -69,15 +69,17 @@ protected:
 
     template <bool, typename _dummy = void>
     class ConditionalCast {
-        // Default case: ResultType not derived from mtsGenericObjectProxy
+        // Default case: ReturnType not derived from mtsGenericObjectProxy
     public:
-        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, mtsGenericObject & result) {
-            ResultType * resultCasted = mtsGenericTypes<ResultType>::CastArg(result);
-            if (resultCasted == 0) {
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, mtsGenericObject & argument) {
+            ReturnType * argumentCasted = mtsGenericTypes<ReturnType>::CastArg(argument);
+            if (argumentCasted == 0) {
                 return mtsExecutionResult::BAD_INPUT;
             }
-            (classInstantiation->*action)(*resultCasted);
-            return mtsExecutionResult::DEV_OK;
+            if ( (classInstantiation->*action)(*argumentCasted) ) {
+                return mtsExecutionResult::DEV_OK;
+            }
+            return mtsExecutionResult::COMMAND_FAILED;
         }
     };
 
@@ -86,52 +88,58 @@ protected:
         // Specialization: ReturnType is derived from mtsGenericObjectProxy (and thus also from mtsGenericObject)
         // In this case, we may need to create a temporary Proxy object.
     public:
-        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, mtsGenericObject & result) {
+        static mtsExecutionResult CallMethod(ClassType * classInstantiation, ActionType action, mtsGenericObject & argument) {
             // First, check if a Proxy object was passed.
-            ResultType * resultCasted = dynamic_cast<ResultType *>(&result);
-            if (resultCasted) {
-                (classInstantiation->*action)(*resultCasted);
-                return mtsExecutionResult::DEV_OK;
+            ReturnType * argumentCasted = dynamic_cast<ReturnType *>(&argument);
+            if (argumentCasted) {
+                if ( (classInstantiation->*action)(*argumentCasted) ) {
+                    return mtsExecutionResult::DEV_OK;
+                }
+                return mtsExecutionResult::COMMAND_FAILED;
             }
             // If it isn't a Proxy, maybe it is a ProxyRef
-            typedef typename ResultType::RefType ResultRefType;
-            ResultRefType * dataRef = dynamic_cast<ResultRefType *>(&result);
+            typedef typename ReturnType::RefType ReturnRefType;
+            ReturnRefType * dataRef = dynamic_cast<ReturnRefType *>(&argument);
             if (!dataRef) {
-                CMN_LOG_INIT_ERROR << "mtsCallableVoidReturn: CallMethod could not cast from " << typeid(result).name()
-                                   << " to " << typeid(ResultRefType).name() << std::endl;
+                CMN_LOG_INIT_ERROR << "mtsCallableRead: CallMethod could not cast from " << typeid(argument).name()
+                                   << " to " << typeid(ReturnRefType).name() << std::endl;
                 return mtsExecutionResult::BAD_INPUT;
             }
             // Now, make the call using the temporary
-            ResultType temp;
-            (classInstantiation->*action)(temp);
-            // Finally, copy the data to the return
+            ReturnType temp;
+            if ( (classInstantiation->*action)(temp) ) {
+                // Finally, copy the data to the return
+                *dataRef = temp;
+                return mtsExecutionResult::DEV_OK;
+            }
+            // Copy result anyway
             *dataRef = temp;
-            return mtsExecutionResult::DEV_OK;
+            return mtsExecutionResult::COMMAND_FAILED;
         }
     };
 
 public:
     /*! The constructor. Does nothing. */
-    mtsCallableVoidReturnMethod(void): BaseType(), ClassInstantiation(0) {}
+    mtsCallableReadMethod(void): BaseType(), ClassInstantiation(0) {}
 
     /*! The constructor.
       \param action Pointer to the member function that is to be called
       by the invoker of the command
       \param classInstantiation Pointer to the receiver of the command
     */
-    mtsCallableVoidReturnMethod(ActionType action, ClassType * classInstantiation):
+    mtsCallableReadMethod(ActionType action, ClassType * classInstantiation):
         BaseType(),
         Action(action),
         ClassInstantiation(classInstantiation)
     {}
 
     /*! The destructor. Does nothing */
-    virtual ~mtsCallableVoidReturnMethod() {}
+    virtual ~mtsCallableReadMethod() {}
 
     /* documented in base class */
-    mtsExecutionResult Execute(mtsGenericObject & result) {
-        return ConditionalCast<cmnIsDerivedFromTemplated<ResultType, mtsGenericObjectProxy>::YES>
-            ::CallMethod(ClassInstantiation, Action, result);
+    mtsExecutionResult Execute(mtsGenericObject & argument) {
+        return ConditionalCast<cmnIsDerivedFromTemplated<ReturnType, mtsGenericObjectProxy>::YES>
+            ::CallMethod(ClassInstantiation, Action, argument);
     }
 
     /* documented in base class */
@@ -145,4 +153,5 @@ public:
     }
 };
 
-#endif // _mtsCallableVoidReturnMethod_h
+#endif // _mtsCallableReadMethod_h
+

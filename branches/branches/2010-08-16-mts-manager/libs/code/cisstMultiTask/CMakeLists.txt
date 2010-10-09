@@ -28,6 +28,7 @@ set (SOURCE_FILES
      mtsFunctionVoidReturn.cpp
      mtsFunctionRead.cpp
      mtsFunctionWrite.cpp
+     mtsFunctionWriteReturn.cpp
      mtsFunctionQualifiedRead.cpp
 
      mtsEventReceiver.cpp
@@ -37,6 +38,9 @@ set (SOURCE_FILES
 
      mtsCommandVoidReturn.cpp
      mtsCommandQueuedVoidReturn.cpp
+
+     mtsCommandWriteReturn.cpp
+     mtsCommandQueuedWriteReturn.cpp
 
      mtsCommandQueuedWriteBase.cpp
      mtsCommandFilteredQueuedWrite.cpp
@@ -105,6 +109,14 @@ set (HEADER_FILES
      mtsCommandQueuedVoidReturn.h
      mtsFunctionVoidReturn.h
 
+     mtsCallableWriteReturnBase.h
+     mtsCallableWriteReturnMethod.h
+     mtsCommandWriteReturn.h
+     mtsCommandQueuedWriteReturn.h
+     mtsFunctionWriteReturn.h
+
+     mtsCallableReadBase.h
+     mtsCallableReadMethod.h
      mtsCommandRead.h
      mtsCommandReadBase.h
      mtsCommandWrite.h

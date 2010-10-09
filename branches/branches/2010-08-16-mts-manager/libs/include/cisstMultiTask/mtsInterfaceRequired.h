@@ -125,8 +125,9 @@ protected:
     virtual std::vector<std::string> GetNamesOfFunctions(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsVoid(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsVoidReturn(void) const;
-    virtual std::vector<std::string> GetNamesOfFunctionsRead(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsWrite(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsWriteReturn(void) const;
+    virtual std::vector<std::string> GetNamesOfFunctionsRead(void) const;
     virtual std::vector<std::string> GetNamesOfFunctionsQualifiedRead(void) const;
     //@}
 
@@ -231,10 +232,13 @@ protected:
     FunctionInfoMapType FunctionsVoidReturn; // Void return (command)
 
     /*! Typedef for a map of name of one argument command and name of command. */
-    FunctionInfoMapType FunctionsRead; // Read (state read)
+    FunctionInfoMapType FunctionsWrite; // Write (command)
 
     /*! Typedef for a map of name of one argument command and name of command. */
-    FunctionInfoMapType FunctionsWrite; // Write (command)
+    FunctionInfoMapType FunctionsWriteReturn; // Write return (command)
+
+    /*! Typedef for a map of name of one argument command and name of command. */
+    FunctionInfoMapType FunctionsRead; // Read (state read)
 
     /*! Typedef for a map of name of two argument command and name of command. */
     FunctionInfoMapType FunctionsQualifiedRead; // Qualified Read (conversion, read at time index, ...)
@@ -260,9 +264,11 @@ public:
 
     bool AddFunction(const std::string & functionName, mtsFunctionVoidReturn & function, mtsRequiredType required = MTS_REQUIRED);
 
-    bool AddFunction(const std::string & functionName, mtsFunctionRead & function, mtsRequiredType required = MTS_REQUIRED);
-
     bool AddFunction(const std::string & functionName, mtsFunctionWrite & function, mtsRequiredType required = MTS_REQUIRED);
+
+    bool AddFunction(const std::string & functionName, mtsFunctionWriteReturn & function, mtsRequiredType required = MTS_REQUIRED);
+
+    bool AddFunction(const std::string & functionName, mtsFunctionRead & function, mtsRequiredType required = MTS_REQUIRED);
 
     bool AddFunction(const std::string & functionName, mtsFunctionQualifiedRead & function, mtsRequiredType required = MTS_REQUIRED);
 

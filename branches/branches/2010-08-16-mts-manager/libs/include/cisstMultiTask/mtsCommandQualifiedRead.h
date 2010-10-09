@@ -251,8 +251,6 @@ public:
         ActionOld(0),
         ClassInstantiation(classInstantiation)
     {
-        //this->Argument1Prototype = dynamic_cast<mtsGenericObject*>(argument1Prototype.Services()->Create());
-        //this->Argument2Prototype = dynamic_cast<mtsGenericObject*>(argument2Prototype.Services()->Create());
         this->Argument1Prototype = mtsGenericTypes<Argument1Type>::ConditionalCreate(argument1Prototype, name);
         this->Argument2Prototype = mtsGenericTypes<Argument2Type>::ConditionalCreate(argument2Prototype, name);
     }
@@ -265,8 +263,6 @@ public:
         ActionOld(action),
         ClassInstantiation(classInstantiation)
     {
-        //this->Argument1Prototype = dynamic_cast<mtsGenericObject*>(argument1Prototype.Services()->Create());
-        //this->Argument2Prototype = dynamic_cast<mtsGenericObject*>(argument2Prototype.Services()->Create());
         this->Argument1Prototype = mtsGenericTypes<Argument1Type>::ConditionalCreate(argument1Prototype, name);
         this->Argument2Prototype = mtsGenericTypes<Argument2Type>::ConditionalCreate(argument2Prototype, name);
     }

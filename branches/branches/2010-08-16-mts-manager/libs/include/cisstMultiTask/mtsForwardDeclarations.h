@@ -71,6 +71,8 @@ class mtsCommandQueuedVoidReturn;
 class mtsFunctionVoidReturn;
 
 // read commands
+class mtsCallableReadBase;
+template <class _classType, class _argumentType> class mtsCallableReadMethod;
 class mtsCommandReadBase;
 template <class _classType, class _argumentType> class mtsCommandRead;
 class mtsFunctionRead;
@@ -79,6 +81,13 @@ class mtsFunctionRead;
 class mtsCommandWriteBase;
 template <class _classType, class _argumentType> class mtsCommandWrite;
 class mtsFunctionWrite;
+
+// write with returned value commands
+class mtsCallableWriteReturnBase;
+template <class _classType, class _argumentType, class _returnType> class mtsCallableWriteReturnMethod;
+class mtsCommandWriteReturn;
+class mtsCommandQueuedWriteReturn;
+class mtsFunctionWriteReturn;
 
 // qualified read commands
 class mtsCommandQualifiedReadBase;

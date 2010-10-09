@@ -78,14 +78,14 @@ public:
         Argument2Prototype = Argument2PrototypeDefault;
     }
 
-    void CommandVoid(void) {
+    void MethodVoid(void) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
         }
         Value = 0;
     }
 
-    void CommandVoidReturn(value_type & positive) {
+    void MethodVoidReturn(value_type & positive) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
         }
@@ -93,18 +93,26 @@ public:
         Value = -Value;
     }
 
-    void CommandWrite(const value_type & argument) {
+    void MethodWrite(const value_type & argument) {
         if (ExecutionDelay > 0.0) {
             osaSleep(ExecutionDelay);
         }
         Value = argument;
     }
 
-    void CommandRead(value_type & argument) const {
+    void MethodWriteReturn(const value_type & argument, value_type & positive) {
+        if (ExecutionDelay > 0.0) {
+            osaSleep(ExecutionDelay);
+        }
+        positive = (Value >= 0) ? 1 : -1;
+        Value = argument;
+    }
+
+    void MethodRead(value_type & argument) const {
         argument = Value;
     }
 
-    void CommandQualifiedRead(const value_type & argumentIn, value_type & argumentOut) const {
+    void MethodQualifiedRead(const value_type & argumentIn, value_type & argumentOut) const {
         argumentOut = argumentIn + 1;
     }
 
@@ -113,18 +121,20 @@ public:
     }
 
     void PopulateExistingInterface(mtsInterfaceProvided * provided) {
-        provided->AddCommandVoid(&mtsTestInterfaceProvided::CommandVoid,
+        provided->AddCommandVoid(&mtsTestInterfaceProvided::MethodVoid,
                                  this, "Void");
-        provided->AddCommandVoidReturn(&mtsTestInterfaceProvided::CommandVoidReturn,
+        provided->AddCommandVoidReturn(&mtsTestInterfaceProvided::MethodVoidReturn,
                                        this, "VoidReturn", Argument2Prototype);
-        provided->AddCommandWrite(&mtsTestInterfaceProvided::CommandWrite,
+        provided->AddCommandWrite(&mtsTestInterfaceProvided::MethodWrite,
                                   this, "Write", Argument1Prototype);
-        provided->AddCommandFilteredWrite(&mtsTestInterfaceProvided::CommandQualifiedRead,
-                                          &mtsTestInterfaceProvided::CommandWrite,
+        provided->AddCommandWriteReturn(&mtsTestInterfaceProvided::MethodWriteReturn,
+                                        this, "WriteReturn", Argument1Prototype, Argument2Prototype);
+        provided->AddCommandFilteredWrite(&mtsTestInterfaceProvided::MethodQualifiedRead,
+                                          &mtsTestInterfaceProvided::MethodWrite,
                                           this, "FilteredWrite");
-        provided->AddCommandRead(&mtsTestInterfaceProvided::CommandRead,
+        provided->AddCommandRead(&mtsTestInterfaceProvided::MethodRead,
                                  this, "Read", Argument1Prototype);
-        provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::CommandQualifiedRead,
+        provided->AddCommandQualifiedRead(&mtsTestInterfaceProvided::MethodQualifiedRead,
                                           this, "QualifiedRead", Argument1Prototype, Argument2Prototype);
         provided->AddEventVoid(this->EventVoid, "EventVoid");
         provided->AddEventWrite(this->EventWrite, "EventWrite", Argument2Prototype);
@@ -145,6 +155,7 @@ public:
     mtsFunctionVoid FunctionVoid;
     mtsFunctionVoidReturn FunctionVoidReturn;
     mtsFunctionWrite FunctionWrite;
+    mtsFunctionWriteReturn FunctionWriteReturn;
     mtsFunctionWrite FunctionFilteredWrite;
     mtsFunctionRead FunctionRead;
     mtsFunctionQualifiedRead FunctionQualifiedRead;
@@ -169,6 +180,7 @@ public:
         required->AddFunction("Void", this->FunctionVoid);
         required->AddFunction("VoidReturn", this->FunctionVoidReturn);
         required->AddFunction("Write", this->FunctionWrite);
+        required->AddFunction("WriteReturn", this->FunctionWriteReturn);
         required->AddFunction("FilteredWrite", this->FunctionFilteredWrite);
         required->AddFunction("Read", this->FunctionRead);
         required->AddFunction("QualifiedRead", this->FunctionQualifiedRead);

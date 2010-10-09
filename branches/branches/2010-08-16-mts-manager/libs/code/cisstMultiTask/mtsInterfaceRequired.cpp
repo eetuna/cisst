@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsFunctionVoid.h>
 #include <cisstMultiTask/mtsFunctionVoidReturn.h>
 #include <cisstMultiTask/mtsFunctionWrite.h>
+#include <cisstMultiTask/mtsFunctionWriteReturn.h>
 #include <cisstMultiTask/mtsFunctionRead.h>
 #include <cisstMultiTask/mtsFunctionQualifiedRead.h>
 #include <cisstMultiTask/mtsEventReceiver.h>
@@ -37,8 +38,9 @@ mtsInterfaceRequired::mtsInterfaceRequired(const std::string & interfaceName,
     MailBox(mailBox),
     FunctionsVoid("FunctionsVoid"),
     FunctionsVoidReturn("FunctionsVoidReturn"),
-    FunctionsRead("FunctionsRead"),
     FunctionsWrite("FunctionsWrite"),
+    FunctionsWriteReturn("FunctionsWriteReturn"),
+    FunctionsRead("FunctionsRead"),
     FunctionsQualifiedRead("FunctionsQualifiedRead"),
     EventReceiversVoid("EventReceiversVoid"),
     EventReceiversWrite("EventReceiversWrite"),
@@ -47,8 +49,9 @@ mtsInterfaceRequired::mtsInterfaceRequired(const std::string & interfaceName,
 {
     FunctionsVoid.SetOwner(*this);
     FunctionsVoidReturn.SetOwner(*this);
-    FunctionsRead.SetOwner(*this);
     FunctionsWrite.SetOwner(*this);
+    FunctionsWriteReturn.SetOwner(*this);
+    FunctionsRead.SetOwner(*this);
     FunctionsQualifiedRead.SetOwner(*this);
     EventReceiversVoid.SetOwner(*this);
     EventReceiversWrite.SetOwner(*this);
@@ -61,8 +64,9 @@ mtsInterfaceRequired::~mtsInterfaceRequired()
 {
     FunctionsVoid.DeleteAll();
     FunctionsVoidReturn.DeleteAll();
-    FunctionsRead.DeleteAll();
     FunctionsWrite.DeleteAll();
+    FunctionsWriteReturn.DeleteAll();
+    FunctionsRead.DeleteAll();
     FunctionsQualifiedRead.DeleteAll();
 }
 
@@ -123,10 +127,13 @@ std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctions(void) const {
     std::vector<std::string> tmp = GetNamesOfFunctionsVoidReturn();
     commands.insert(commands.begin(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = GetNamesOfFunctionsRead();
+    tmp = GetNamesOfFunctionsWrite();
     commands.insert(commands.begin(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = GetNamesOfFunctionsWrite();
+    tmp = GetNamesOfFunctionsWriteReturn();
+    commands.insert(commands.begin(), tmp.begin(), tmp.end());
+    tmp.clear();
+    tmp = GetNamesOfFunctionsRead();
     commands.insert(commands.begin(), tmp.begin(), tmp.end());
     tmp.clear();
     tmp = GetNamesOfFunctionsQualifiedRead();
@@ -145,13 +152,18 @@ std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsVoidReturn(voi
 }
 
 
-std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsRead(void) const {
-    return FunctionsRead.GetNames();
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsWrite(void) const {
+    return FunctionsWrite.GetNames();
 }
 
 
-std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsWrite(void) const {
-    return FunctionsWrite.GetNames();
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsWriteReturn(void) const {
+    return FunctionsWriteReturn.GetNames();
+}
+
+
+std::vector<std::string> mtsInterfaceRequired::GetNamesOfFunctionsRead(void) const {
+    return FunctionsRead.GetNames();
 }
 
 
@@ -220,16 +232,24 @@ bool mtsInterfaceRequired::Disconnect(void)
     // better to set the pointers to NOPVoid, NOPRead, etc., which can
     // be static members of the corresponding command classes.
     FunctionInfoMapType::iterator iter;
-    for (iter = FunctionsVoid.begin(); iter != FunctionsVoid.end(); iter++)
+    for (iter = FunctionsVoid.begin(); iter != FunctionsVoid.end(); iter++) {
         iter->second->Detach();
-    for (iter = FunctionsVoidReturn.begin(); iter != FunctionsVoidReturn.end(); iter++)
+    }
+    for (iter = FunctionsVoidReturn.begin(); iter != FunctionsVoidReturn.end(); iter++) {
         iter->second->Detach();
-    for (iter = FunctionsRead.begin(); iter != FunctionsRead.end(); iter++)
+    }
+    for (iter = FunctionsWrite.begin(); iter != FunctionsWrite.end(); iter++) {
         iter->second->Detach();
-    for (iter = FunctionsWrite.begin(); iter != FunctionsWrite.end(); iter++)
+    }
+    for (iter = FunctionsWriteReturn.begin(); iter != FunctionsWriteReturn.end(); iter++) {
         iter->second->Detach();
-    for (iter = FunctionsQualifiedRead.begin(); iter != FunctionsQualifiedRead.end(); iter++)
+    }
+    for (iter = FunctionsRead.begin(); iter != FunctionsRead.end(); iter++) {
         iter->second->Detach();
+    }
+    for (iter = FunctionsQualifiedRead.begin(); iter != FunctionsQualifiedRead.end(); iter++) {
+        iter->second->Detach();
+    }
 #if 0
     // Now, do the event handlers.  Still need to implement RemoveObserver
     EventHandlerVoidMapType::iterator iterEventVoid;
@@ -328,42 +348,6 @@ bool mtsInterfaceRequired::BindCommandsAndEvents(void)
         success &= result;
     }
 
-    mtsFunctionRead * functionRead;
-    for (iter = FunctionsRead.begin();
-         iter != FunctionsRead.end();
-         iter++) {
-        if (!iter->second->Pointer) {
-            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for read command \""
-                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
-            result = false;
-        } else {
-            functionRead = dynamic_cast<mtsFunctionRead *>(iter->second->Pointer);
-            if (!functionRead) {
-                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for read command \""
-                                         << iter->first << "\" in interface \"" << this->GetName() << "\" (got \""
-                                         << typeid(iter->second->Pointer).name() << "\")" << std::endl;
-                result = false;
-            } else {
-                result = functionRead->Bind(interfaceProvided->GetCommandRead(iter->first));
-                if (!result) {
-                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
-                                               << iter->first << "\" (connecting \""
-                                               << this->GetName() << "\" to \""
-                                               << interfaceProvided->GetName() << "\")"<< std::endl;
-                } else {
-                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
-                                             << iter->first  << "\" (connecting \""
-                                             << this->GetName() << "\" to \""
-                                             << interfaceProvided->GetName() << "\")"<< std::endl;
-                }
-            }
-        }
-        if (iter->second->Required == MTS_OPTIONAL) {
-            result = true;
-        }
-        success &= result;
-    }
-
     mtsFunctionWrite * functionWrite;
     for (iter = FunctionsWrite.begin();
          iter != FunctionsWrite.end();
@@ -389,6 +373,78 @@ bool mtsInterfaceRequired::BindCommandsAndEvents(void)
                 } else {
                     CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write command \""
                                              << iter->first << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
+        }
+        if (iter->second->Required == MTS_OPTIONAL) {
+            result = true;
+        }
+        success &= result;
+    }
+
+    mtsFunctionWriteReturn * functionWriteReturn;
+    for (iter = FunctionsWriteReturn.begin();
+         iter != FunctionsWriteReturn.end();
+         iter++) {
+        if (!iter->second->Pointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for write with result command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            result = false;
+        } else {
+            functionWriteReturn = dynamic_cast<mtsFunctionWriteReturn *>(iter->second->Pointer);
+            if (!functionWriteReturn) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for write with result command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\" (got \""
+                                         << typeid(iter->second->Pointer).name() << "\")" << std::endl;
+                result = false;
+            } else {
+                result = functionWriteReturn->Bind(interfaceProvided->GetCommandWriteReturn(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for write with result command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for write with result command \""
+                                             << iter->first << "\" (connecting \""
+                                             << this->GetName() << "\" to \""
+                                             << interfaceProvided->GetName() << "\")"<< std::endl;
+                }
+            }
+        }
+        if (iter->second->Required == MTS_OPTIONAL) {
+            result = true;
+        }
+        success &= result;
+    }
+
+    mtsFunctionRead * functionRead;
+    for (iter = FunctionsRead.begin();
+         iter != FunctionsRead.end();
+         iter++) {
+        if (!iter->second->Pointer) {
+            CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: found null function pointer for read command \""
+                                     << iter->first << "\" in interface \"" << this->GetName() << "\"" << std::endl;
+            result = false;
+        } else {
+            functionRead = dynamic_cast<mtsFunctionRead *>(iter->second->Pointer);
+            if (!functionRead) {
+                CMN_LOG_CLASS_INIT_ERROR << "BindCommandsAndEvents: incorrect function pointer for read command \""
+                                         << iter->first << "\" in interface \"" << this->GetName() << "\" (got \""
+                                         << typeid(iter->second->Pointer).name() << "\")" << std::endl;
+                result = false;
+            } else {
+                result = functionRead->Bind(interfaceProvided->GetCommandRead(iter->first));
+                if (!result) {
+                    CMN_LOG_CLASS_INIT_WARNING << "BindCommandsAndEvents: failed for read command \""
+                                               << iter->first << "\" (connecting \""
+                                               << this->GetName() << "\" to \""
+                                               << interfaceProvided->GetName() << "\")"<< std::endl;
+                } else {
+                    CMN_LOG_CLASS_INIT_DEBUG << "BindCommandsAndEvents: succeeded for read command \""
+                                             << iter->first  << "\" (connecting \""
                                              << this->GetName() << "\" to \""
                                              << interfaceProvided->GetName() << "\")"<< std::endl;
                 }
@@ -590,17 +646,24 @@ bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunc
 }
 
 
-bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionRead & function,
-                                       mtsRequiredType required)
-{
-    return FunctionsRead.AddItem(functionName, new FunctionInfo(function, required));
-}
-
-
 bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionWrite & function,
                                        mtsRequiredType required)
 {
     return FunctionsWrite.AddItem(functionName, new FunctionInfo(function, required));
+}
+
+
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionWriteReturn & function,
+                                       mtsRequiredType required)
+{
+    return FunctionsWriteReturn.AddItem(functionName, new FunctionInfo(function, required));
+}
+
+
+bool mtsInterfaceRequired::AddFunction(const std::string & functionName, mtsFunctionRead & function,
+                                       mtsRequiredType required)
+{
+    return FunctionsRead.AddItem(functionName, new FunctionInfo(function, required));
 }
 
 

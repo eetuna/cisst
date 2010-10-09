@@ -64,7 +64,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
 
     // we assume both client and servers use the same type
     typedef typename _serverType::value_type value_type;
-    
+
     // add to manager and start all
     manager->AddComponent(client);
     manager->AddComponent(server);
@@ -85,7 +85,7 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
 
     // value we used to make sure commands are processed, default is
     // -1, void command set to 0
-    value_type valueWrite;
+    value_type valueWrite, valueWritePlusOne, valueRead;
     valueWrite = 4;
 
     // loop over void and write commands to alternate blocking and non
@@ -181,17 +181,21 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
         CPPUNIT_ASSERT((-(valueWrite + 1)) == server->InterfaceProvided1.GetValue()); // negated
         CPPUNIT_ASSERT(-1 == client->InterfaceRequired1.GetValue()); // unchanged
 
-        // call void return again to change sign of value back
+        // call write return to change sign of value back
         if (blockingDelay > 0.0) {
             startTime = timeServer.GetRelativeTime();
-            client->InterfaceRequired1.FunctionVoidReturn(result);
+            valueWritePlusOne = valueWrite + 1;
+            client->InterfaceRequired1.FunctionWriteReturn(valueWritePlusOne, valueRead);
+            result = valueRead;
             stopTime = timeServer.GetRelativeTime();
             std::stringstream message;
             message << "Actual: " << (stopTime - startTime) << " >= " << (blockingDelay * 0.9);
             CPPUNIT_ASSERT_MESSAGE(message.str(), (stopTime - startTime) >= (blockingDelay * 0.9));
         } else {
             // no significant delay but result should be garanteed without sleep
-            client->InterfaceRequired1.FunctionVoidReturn(result);
+            valueWritePlusOne = valueWrite + 1;
+            client->InterfaceRequired1.FunctionWriteReturn(valueWritePlusOne, valueRead);
+            result = valueRead;
         }
         CPPUNIT_ASSERT(result == -1); // number was negative
         CPPUNIT_ASSERT((valueWrite + 1) == server->InterfaceProvided1.GetValue()); // negated back
@@ -200,7 +204,6 @@ void mtsCommandAndEventTest::TestExecution(_clientType * client, _serverType * s
     }
 
     // test read command
-    value_type valueRead;
     valueRead = 0;
     client->InterfaceRequired1.FunctionRead(valueRead);
     CPPUNIT_ASSERT((valueWrite + 1) == valueRead);

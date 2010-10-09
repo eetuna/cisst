@@ -34,6 +34,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCallableVoidMethod.h>
 #include <cisstMultiTask/mtsCallableVoidFunction.h>
 #include <cisstMultiTask/mtsCallableVoidReturnMethod.h>
+#include <cisstMultiTask/mtsCallableWriteReturnMethod.h>
 #include <cisstMultiTask/mtsCommandFilteredQueuedWrite.h>
 #include <cisstMultiTask/mtsInterfaceProvidedOrOutput.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
@@ -112,6 +113,9 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     /*! Typedef for a map of name and write commands. */
     typedef cmnNamedMap<mtsCommandWriteBase> CommandWriteMapType;
 
+    /*! Typedef for a map of name and write return commands. */
+    typedef cmnNamedMap<mtsCommandWriteReturn> CommandWriteReturnMapType;
+
     /*! Typedef for a map of name and read commands. */
     typedef cmnNamedMap<mtsCommandReadBase> CommandReadMapType;
 
@@ -149,6 +153,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     std::vector<std::string> GetNamesOfCommandsVoid(void) const;
     std::vector<std::string> GetNamesOfCommandsVoidReturn(void) const;
     std::vector<std::string> GetNamesOfCommandsWrite(void) const;
+    std::vector<std::string> GetNamesOfCommandsWriteReturn(void) const;
     std::vector<std::string> GetNamesOfCommandsRead(void) const;
     std::vector<std::string> GetNamesOfCommandsQualifiedRead(void) const;
     //@}
@@ -163,8 +168,9 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     //@{
     mtsCommandVoid * GetCommandVoid(const std::string & commandName) const;
     mtsCommandVoidReturn * GetCommandVoidReturn(const std::string & commandName) const;
-    mtsCommandReadBase * GetCommandRead(const std::string & commandName) const;
     mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
+    mtsCommandWriteReturn * GetCommandWriteReturn(const std::string & commandName) const;
+    mtsCommandReadBase * GetCommandRead(const std::string & commandName) const;
     mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
 
@@ -206,7 +212,8 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
         return this->AddCommandVoid(new mtsCallableVoidFunction(function), commandName, queueingPolicy);
     }
 
-
+    /*! Add a void command with result. */
+    //@{
     template <class __classType, class __resultType>
     inline mtsCommandVoidReturn * AddCommandVoidReturn(void (__classType::*method)(__resultType &),
                                                        __classType * classInstantiation,
@@ -229,6 +236,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                           mtsGenericTypes<__resultType>::ConditionalCreate(__resultType(), commandName),
                                           queueingPolicy);
     }
+    //@}
 
     /*! Add a write command to the provided interface based on a
       method and an object instantiating the method.  This method
@@ -259,6 +267,35 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                                  mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandWrite<__classType, __argumentType>(method, classInstantiation, commandName, __argumentType(),
                                                                   queueingPolicy);
+    }
+    //@}
+
+    /*! Add a write command with result. */
+    //@{
+    template <class __classType, class __argumentType, class __resultType>
+    inline mtsCommandWriteReturn * AddCommandWriteReturn(void (__classType::*method)(const __argumentType &, __resultType &),
+                                                         __classType * classInstantiation,
+                                                         const std::string & commandName,
+                                                         const __argumentType & argumentPrototype,
+                                                         const __resultType & resultPrototype,
+                                                         mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+        return this->AddCommandWriteReturn(new mtsCallableWriteReturnMethod<__classType, __argumentType, __resultType>(method, classInstantiation),
+                                          commandName,
+                                          mtsGenericTypes<__argumentType>::ConditionalCreate(argumentPrototype, commandName),
+                                          mtsGenericTypes<__resultType>::ConditionalCreate(resultPrototype, commandName),
+                                          queueingPolicy);
+    }
+
+    template <class __classType, class __argumentType, class __resultType>
+    inline mtsCommandWriteReturn * AddCommandWriteReturn(void (__classType::*method)(const __argumentType &, __resultType &),
+                                                         __classType * classInstantiation,
+                                                         const std::string & commandName,
+                                                         mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
+        return this->AddCommandWriteReturn(new mtsCallableWriteReturnMethod<__classType, __argumentType, __resultType>(method, classInstantiation),
+                                           commandName,
+                                           mtsGenericTypes<__argumentType>::ConditionalCreate(__argumentType(), commandName),
+                                           mtsGenericTypes<__resultType>::ConditionalCreate(__resultType(), commandName),
+                                           queueingPolicy);
     }
     //@}
 
@@ -456,6 +493,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     CommandVoidMapType CommandsVoid;
     CommandVoidReturnMapType CommandsVoidReturn;
     CommandWriteMapType CommandsWrite;
+    CommandWriteReturnMapType CommandsWriteReturn;
     CommandReadMapType CommandsRead;
     CommandQualifiedReadMapType CommandsQualifiedRead;
     EventVoidMapType EventVoidGenerators;
@@ -482,6 +520,12 @@ protected:
     mtsCommandWriteBase * AddCommandWrite(mtsCommandWriteBase * command,
                                           mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
 
+    mtsCommandWriteReturn * AddCommandWriteReturn(mtsCallableWriteReturnBase * callable,
+                                                  const std::string & name,
+                                                  mtsGenericObject * argumentPrototype,
+                                                  mtsGenericObject * resultPrototype,
+                                                  mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+
     mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
 
     mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
@@ -492,7 +536,7 @@ protected:
     /*! Methods to add an existing command to the interface.  These
       methods will not check the queueing policy of the interface nor
       the type of command (queued or not).  These methods must be used
-      with extreme caution since they bypasse the built-in thread
+      with extreme caution since they bypass the built-in thread
       safety mechanisms. */
     //@{
     mtsCommandVoid * AddCommandVoid(mtsCommandVoid * command);

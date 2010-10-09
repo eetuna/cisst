@@ -81,7 +81,7 @@ void mtsCommandVoidReturn::ToStream(std::ostream & outputStream) const
 {
     outputStream << "mtsCommandVoidReturn: ";
     if (this->Callable) {
-        outputStream << this->Name << "(" << this->GetResultPrototype()->Services()->GetName() << "&) using "
+        outputStream << this->Name << "(" << this->GetResultPrototype()->Services()->GetName() << " &) using "
                      << *Callable << "\" currently "
                      << (this->IsEnabled() ? "enabled" : "disabled");
     } else {

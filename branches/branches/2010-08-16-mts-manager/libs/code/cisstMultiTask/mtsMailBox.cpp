@@ -22,9 +22,11 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsMailBox.h>
 #include <cisstMultiTask/mtsCallableVoidBase.h>
 #include <cisstMultiTask/mtsCallableVoidReturnBase.h>
+#include <cisstMultiTask/mtsCallableWriteReturnBase.h>
 #include <cisstMultiTask/mtsCommandQueuedVoid.h>
-#include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
+#include <cisstMultiTask/mtsCommandQueuedWrite.h>
+#include <cisstMultiTask/mtsCommandQueuedWriteReturn.h>
 
 
 mtsMailBox::mtsMailBox(const std::string & name,
@@ -79,6 +81,7 @@ bool mtsMailBox::ExecuteNext(void)
    mtsCommandQueuedWriteBase * commandWrite;
    mtsCommandQueuedWriteGeneric * commandWriteGeneric;
    mtsCommandQueuedVoidReturn * commandVoidReturn;
+   mtsCommandQueuedWriteReturn * commandWriteReturn;
 
    if (!(*command)->Returns()) {
        switch ((*command)->NumberOfArguments()) {
@@ -118,6 +121,13 @@ bool mtsMailBox::ExecuteNext(void)
            commandVoidReturn = dynamic_cast<mtsCommandQueuedVoidReturn *>(*command);
            CMN_ASSERT(commandVoidReturn);
            commandVoidReturn->GetCallable()->Execute( *(commandVoidReturn->GetResultPointer()) );
+           this->ThreadSignal.Raise();
+           break;
+       case 1:
+           commandWriteReturn = dynamic_cast<mtsCommandQueuedWriteReturn *>(*command);
+           CMN_ASSERT(commandWriteReturn);
+           commandWriteReturn->GetCallable()->Execute( *(commandWriteReturn->GetArgumentPointer()),
+                                                       *(commandWriteReturn->GetResultPointer()) );
            this->ThreadSignal.Raise();
            break;
        default:
