@@ -48,16 +48,16 @@ class CISST_EXPORT mtsExecutionResult
     /*! Possible states */
     /* \todo use consecutive values - will simplify ToStream method */
     /* \todo add timed_out, no_callable_object, ... */
-    typedef enum {DEV_OK = 0,
-                  DEV_NOT_OK = 1,
-                  BAD_COMMAND = 12,
-                  NO_MAILBOX = 13,
-                  BAD_INPUT = 14,
-                  NO_INTERFACE = 15,
-                  MAILBOX_FULL = 16,
-                  DISABLED = 17,
-                  COMMAND_FAILED = 18  // Read or QualifiedRead returned 'false'
-    } Enum;
+    enum Enum {DEV_OK = 0,
+               DEV_NOT_OK = 1,
+               BAD_COMMAND = 12,
+               NO_MAILBOX = 13,
+               BAD_INPUT = 14,
+               NO_INTERFACE = 15,
+               MAILBOX_FULL = 16,
+               DISABLED = 17,
+               COMMAND_FAILED = 18  // Read or QualifiedRead returned 'false'
+    };
 
     /*! Default constructor, set value to DEV_OK. */
     mtsExecutionResult(void);
