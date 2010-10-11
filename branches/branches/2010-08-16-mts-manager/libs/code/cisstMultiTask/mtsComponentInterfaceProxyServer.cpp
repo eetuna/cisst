@@ -365,7 +365,8 @@ bool mtsComponentInterfaceProxyServer::SendFetchFunctionProxyPointers(
     }
 }
 
-bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(const ClientIDType clientID, const CommandIDType commandID)
+bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(
+    const ClientIDType clientID, const CommandIDType commandID, const mtsBlockingType blocking)
 {
     ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) {
@@ -374,11 +375,12 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(const ClientIDType
     }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandVoid: " << commandID);
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandVoid: " << commandID << ", "
+        << (blocking == MTS_BLOCKING ? "BLOCKING" : "NON-BLOCKING"));
 #endif
 
     try {
-        (*clientProxy)->ExecuteCommandVoid(commandID);
+        (*clientProxy)->ExecuteCommandVoid(commandID, (blocking == MTS_BLOCKING));
     } catch (const ::Ice::Exception & ex) {
         LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandVoid: network exception: " << ex);
         OnClientDisconnect(clientID);
@@ -388,11 +390,13 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandVoid(const ClientIDType
     return true;
 }
 
-bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument)
+bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(
+    const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument, const mtsBlockingType blocking)
 {
     ComponentInterfaceClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
     if (!clientProxy) {
-        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: no proxy client found or inactive proxy: " << clientID);
+        LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: no proxy client found or inactive proxy: " 
+            << clientID << ", " << (blocking == MTS_BLOCKING ? "BLOCKING" : "NON-BLOCKING"));
         return false;
     }
 
@@ -412,11 +416,12 @@ bool mtsComponentInterfaceProxyServer::SendExecuteCommandWriteSerialized(const C
     }
 
 #ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID << ", " << serializedArgument.size() << " bytes");
+    LogPrint(mtsComponentInterfaceProxyServer, ">>>>> SEND: SendExecuteCommandWriteSerialized: " << commandID << ", " << serializedArgument.size() << " bytes"
+        << ", " << (blocking == MTS_BLOCKING ? "BLOCKING" : "NON-BLOCKING"));
 #endif
 
     try {
-        (*clientProxy)->ExecuteCommandWriteSerialized(commandID, serializedArgument);
+        (*clientProxy)->ExecuteCommandWriteSerialized(commandID, serializedArgument, (blocking == MTS_BLOCKING));
     } catch (const ::Ice::Exception & ex) {
         LogError(mtsComponentInterfaceProxyServer, "SendExecuteCommandWriteSerialized: network exception: " << ex);
         OnClientDisconnect(clientID);

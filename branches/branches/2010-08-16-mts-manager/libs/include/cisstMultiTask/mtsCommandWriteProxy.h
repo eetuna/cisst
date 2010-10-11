@@ -80,14 +80,9 @@ public:
                                       mtsBlockingType blocking) {
         if (IsDisabled()) return mtsExecutionResult::DISABLED;
 
-        // todo fix urgent
-        if (blocking == MTS_BLOCKING) {
-            cmnThrow("Oops, mtsCommandWriteProxy::Execute, blocking commands are not supported over the network yet, Min?");
-        }
-
         if (NetworkProxyServer) {
             // Command write execution: client (request) -> server (execution)
-            if (!NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument)) {
+            if (!NetworkProxyServer->SendExecuteCommandWriteSerialized(ClientID, CommandID, argument, blocking)) {
                 return mtsExecutionResult::COMMAND_FAILED;
             }
         } else {

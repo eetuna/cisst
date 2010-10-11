@@ -1985,26 +1985,6 @@ bool mtsManagerLocal::ConnectLocally(const std::string & clientComponentName, co
         }
     }
 
-    /* smmy
-    // Post-connect processing to handle the special case 2:
-    // When user component's provided interface (InterfaceInternal's provided
-    // interface) gets connected with manager component client's provided
-    // interface (InterfaceComponent's provided interface) and a component
-    // name of the user component is unknown to the manager component client,
-    // a nerw set of function objects needs to be created so that manager component
-    // client can handle multiple user components.
-    mtsManagerComponentClient * MCC = dynamic_cast<mtsManagerComponentClient*>(serverComponent);
-    if (MCC) {
-        if (serverInterfaceProvidedName == mtsManagerComponentBase::InterfaceNames::InterfaceComponentProvided) {
-            if (!MCC->AddNewClientComponent(clientComponentName)) {
-                CMN_LOG_CLASS_INIT_ERROR << "ConnectLocally: failed to create new set of InterfaceComponent function objects: "
-                    << clientComponentName << std::endl;
-                return false;
-            }
-        }
-    }
-    */
-
     // Post-connect processing otherwise:
     // When an user component without internal interfaces is connected to each
     // other, no special post-processing is required.

@@ -153,11 +153,11 @@ public:
         mtsComponentInterfaceProxy::FunctionProxyPointerSet & functionProxyPointers);
 
     /*! Execute commands and events. This will call function proxies in the required
-        interface proxy at server process.
+        interface proxy at the server process.
         clientID designates which network proxy client should execute a command
         and commandID represents which function proxy object should be called. */
-    bool SendExecuteCommandVoid(const ClientIDType clientID, const CommandIDType commandID);
-    bool SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument);
+    bool SendExecuteCommandVoid(const ClientIDType clientID, const CommandIDType commandID, const mtsBlockingType blocking);
+    bool SendExecuteCommandWriteSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argument, const mtsBlockingType blocking);
     bool SendExecuteCommandReadSerialized(const ClientIDType clientID, const CommandIDType commandID, mtsGenericObject & argument);
     bool SendExecuteCommandQualifiedReadSerialized(const ClientIDType clientID, const CommandIDType commandID, const mtsGenericObject & argumentIn, mtsGenericObject & argumentOut);
 

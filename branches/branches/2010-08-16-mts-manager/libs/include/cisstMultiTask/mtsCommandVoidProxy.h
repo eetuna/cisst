@@ -57,14 +57,9 @@ public:
     mtsExecutionResult Execute(mtsBlockingType blocking) {
         if (IsDisabled()) return mtsExecutionResult::DISABLED;
 
-        // todo fix urgent
-        if (blocking == MTS_BLOCKING) {
-            cmnThrow("Oops, mtsCommandVoidProxy::Execute, blocking commands are not supported over the network yet, Min?");
-        }
-
         if (NetworkProxyServer) {
             // Command void execution: client (request) -> server (execution)
-            if (!NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID)) {
+            if (!NetworkProxyServer->SendExecuteCommandVoid(ClientID, CommandID, blocking)) {
                 return mtsExecutionResult::COMMAND_FAILED;
             }
         } else {
