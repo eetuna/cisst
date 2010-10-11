@@ -37,12 +37,12 @@ http://www.cisst.org/cisst/license.txt.
 class mtsCommandFilteredQueuedWrite: public mtsCommandQueuedWriteGeneric
 {
 public:
-    typedef mtsCommandQueuedWriteGeneric  BaseType;
+    typedef mtsCommandQueuedWriteGeneric BaseType;
     typedef mtsCommandFilteredQueuedWrite ThisType;
 
 protected:
     mtsCommandQualifiedReadBase * ActualFilter;
-    mtsGenericObject *filterOutput;
+    mtsGenericObject * FilterOutput;
 
 private:
     /*! Private copy constructor to prevent copies */

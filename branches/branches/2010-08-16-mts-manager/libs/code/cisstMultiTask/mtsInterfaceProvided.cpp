@@ -27,6 +27,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandQueuedVoidReturn.h>
 #include <cisstMultiTask/mtsCommandQueuedWrite.h>
 #include <cisstMultiTask/mtsCommandQueuedWriteReturn.h>
+#include <cisstMultiTask/mtsCommandFilteredWrite.h>
+#include <cisstMultiTask/mtsCommandFilteredQueuedWrite.h>
 
 #include <iostream>
 #include <string>
@@ -337,7 +339,7 @@ mtsCommandVoid * mtsInterfaceProvided::AddCommandVoid(mtsCallableVoidBase * call
         // determine if this should be a queued command or not
         bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandVoid", name);
         if (!queued) {
-            mtsCommandVoid * command = new mtsCommandVoid(callable, name); 
+            mtsCommandVoid * command = new mtsCommandVoid(callable, name);
             if (!CommandsVoid.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
                 delete command;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoid: unable to add command \""
@@ -388,7 +390,7 @@ mtsCommandVoidReturn * mtsInterfaceProvided::AddCommandVoidReturn(mtsCallableVoi
         // determine if this should be a queued command or not
         bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandVoidReturn", name);
         if (!queued) {
-            mtsCommandVoidReturn * command = new mtsCommandVoidReturn(callable, name, resultPrototype); 
+            mtsCommandVoidReturn * command = new mtsCommandVoidReturn(callable, name, resultPrototype);
             if (!CommandsVoidReturn.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
                 delete command;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandVoidReturn: unable to add command \""
@@ -471,7 +473,7 @@ mtsCommandWriteReturn * mtsInterfaceProvided::AddCommandWriteReturn(mtsCallableW
         // determine if this should be a queued command or not
         bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandWriteReturn", name);
         if (!queued) {
-            mtsCommandWriteReturn * command = new mtsCommandWriteReturn(callable, name, argumentPrototype, resultPrototype); 
+            mtsCommandWriteReturn * command = new mtsCommandWriteReturn(callable, name, argumentPrototype, resultPrototype);
             if (!CommandsWriteReturn.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
                 delete command;
                 CMN_LOG_CLASS_INIT_ERROR << "AddCommandWriteReturn: unable to add command \""
@@ -529,7 +531,8 @@ mtsCommandQualifiedReadBase * mtsInterfaceProvided::AddCommandQualifiedRead(mtsC
 
 
 mtsCommandWriteBase * mtsInterfaceProvided::AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
-                                                                    mtsCommandWriteBase * command)
+                                                                    mtsCommandWriteBase * command,
+                                                                    mtsCommandQueueingPolicy queueingPolicy)
 {
     if (filter && command) {
         if (!CommandsInternal.AddItem(filter->GetName(), filter, CMN_LOG_LOD_INIT_ERROR)) {
@@ -545,13 +548,21 @@ mtsCommandWriteBase * mtsInterfaceProvided::AddCommandFilteredWrite(mtsCommandQu
             CommandsInternal.RemoveItem(filter->GetName(), CMN_LOG_LOD_INIT_ERROR);
             return 0;
         }
-        mtsCommandQueuedWriteBase * queuedCommand = new mtsCommandFilteredQueuedWrite(filter, command);
-        if (CommandsWrite.AddItem(command->GetName(), queuedCommand, CMN_LOG_LOD_INIT_ERROR)) {
-            return queuedCommand;
+        bool queued = this->UseQueueBasedOnInterfacePolicy(queueingPolicy, "AddCommandFilteredWrite", command->GetName());
+        mtsCommandWriteBase * filteredCommand;
+        if (!queued) {
+            filteredCommand = new mtsCommandFilteredWrite(filter, command);
+        } else {
+            filteredCommand = new mtsCommandFilteredQueuedWrite(filter, command);
+        }
+        if (filteredCommand && CommandsWrite.AddItem(command->GetName(), filteredCommand, CMN_LOG_LOD_INIT_ERROR)) {
+            return filteredCommand;
         } else {
             CommandsInternal.RemoveItem(filter->GetName(), CMN_LOG_LOD_INIT_ERROR);
             CommandsInternal.RemoveItem(command->GetName(), CMN_LOG_LOD_INIT_ERROR);
-            delete queuedCommand;
+            if (filteredCommand) {
+                delete filteredCommand;
+            }
             CMN_LOG_CLASS_INIT_ERROR << "AddCommandFilteredWrite: unable to add queued command \""
                                      << command->GetName() << "\"" << std::endl;
             return 0;

@@ -35,7 +35,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCallableVoidFunction.h>
 #include <cisstMultiTask/mtsCallableVoidReturnMethod.h>
 #include <cisstMultiTask/mtsCallableWriteReturnMethod.h>
-#include <cisstMultiTask/mtsCommandFilteredQueuedWrite.h>
 #include <cisstMultiTask/mtsInterfaceProvidedOrOutput.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
@@ -46,8 +45,8 @@ http://www.cisst.org/cisst/license.txt.
 /*!
   \ingroup cisstMultiTask
 
-  This class implements the provided interface for a component of type 
-  mtsComponent.  It provides services via command objects, which have 
+  This class implements the provided interface for a component of type
+  mtsComponent.  It provides services via command objects, which have
   four signatures:
 
      Void:           no parameters
@@ -374,20 +373,23 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
                                                          void (__classType::*method)(const __filteredType &),
                                                          __classType * classInstantiation, const std::string & commandName,
                                                          const __argumentType & argumentPrototype,
-                                                         const __filteredType & filteredPrototype) {
+                                                         const __filteredType & filteredPrototype,
+                                                         mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         std::string commandNameFilter(commandName + "Filter");
-        return this->AddCommandFilteredWrite(
-                                             new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
-                                             (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype),
-                                             new mtsCommandWrite<__classType, __filteredType>(method, classInstantiation, commandName, filteredPrototype));
+        return this->AddCommandFilteredWrite(new mtsCommandQualifiedRead<__classType, __argumentType, __filteredType>
+                                                 (premethod, classInstantiation, commandNameFilter, argumentPrototype, filteredPrototype),
+                                             new mtsCommandWrite<__classType, __filteredType>(method, classInstantiation, commandName, filteredPrototype),
+                                             queueingPolicy);
     }
 
     template <class __classType, class __argumentType, class __filteredType>
     inline mtsCommandWriteBase * AddCommandFilteredWrite(void (__classType::*premethod)(const __argumentType &, __filteredType &) const,
                                                          void (__classType::*method)(const __filteredType &),
-                                                         __classType * classInstantiation, const std::string & commandName) {
+                                                         __classType * classInstantiation, const std::string & commandName,
+                                                         mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY) {
         return this->AddCommandFilteredWrite(premethod, method, classInstantiation, commandName,
-                                             __argumentType(), __filteredType());
+                                             __argumentType(), __filteredType(),
+                                             queueingPolicy);
     }
     //@}
 #endif // SWIG
@@ -471,7 +473,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     /*! Flag to determine if by default void and write commands are
       queued. */
     mtsInterfaceQueueingPolicy QueueingPolicy;
-    
+
     /*! If this interface was created using an existing one, keep a
       pointer on the original one. */
     ThisType * OriginalInterface;
@@ -529,7 +531,8 @@ protected:
     mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
 
     mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
-                                                  mtsCommandWriteBase * command);
+                                                  mtsCommandWriteBase * command,
+                                                  mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
 
     mtsCommandQualifiedReadBase * AddCommandQualifiedRead(mtsCommandQualifiedReadBase * command);
 

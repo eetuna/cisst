@@ -43,6 +43,8 @@ set (SOURCE_FILES
      mtsCommandQueuedWriteReturn.cpp
 
      mtsCommandQueuedWriteBase.cpp
+
+     mtsCommandFilteredWrite.cpp
      mtsCommandFilteredQueuedWrite.cpp
 
      mtsMailBox.cpp
@@ -126,10 +128,10 @@ set (HEADER_FILES
      mtsMulticastCommandWriteBase.h
      mtsCommandQueuedWrite.h
      mtsCommandQueuedWriteBase.h
+     mtsCommandFilteredWrite.h
      mtsCommandFilteredQueuedWrite.h
      mtsFunctionRead.h
      mtsFunctionWrite.h
-     mtsEventWriteGeneratorProxy.h
 
      mtsCommandQualifiedRead.h
      mtsCommandQualifiedReadBase.h
@@ -223,6 +225,7 @@ if(CISST_MTS_HAS_ICE)
       mtsFunctionWriteProxy.h
       mtsFunctionQualifiedReadProxy.h
       mtsMulticastCommandWriteProxy.h
+      mtsEventWriteGeneratorProxy.h
       )
 
   SET(ICE_RESOURCE_DIR ${cisst_SOURCE_DIR}/libs/etc/cisstMultiTask/Ice)

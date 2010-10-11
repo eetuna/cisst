@@ -82,7 +82,7 @@ public:
         ToStream(outputStream);
         return outputStream.str();
     };
-    virtual void ToStream(std::ostream & out) const = 0;
+    virtual void ToStream(std::ostream & outputStream) const = 0;
     //@}
 
     /*! Returns number of arguments (parameters) expected by Execute

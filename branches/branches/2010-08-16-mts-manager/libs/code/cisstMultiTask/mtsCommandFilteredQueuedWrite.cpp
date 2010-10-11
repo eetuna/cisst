@@ -26,7 +26,9 @@ mtsCommandFilteredQueuedWrite::mtsCommandFilteredQueuedWrite(mtsCommandQualified
     BaseType(0, actualCommand, 0), ActualFilter(actualFilter)
 {
     // PK: is there a better way to do this?
-    filterOutput = dynamic_cast<mtsGenericObject *>(actualFilter->GetArgument2Prototype()->Services()->Create());
+    if (actualFilter) {
+        FilterOutput = dynamic_cast<mtsGenericObject *>(actualFilter->GetArgument2Prototype()->Services()->Create());
+    }
 }
 
 
@@ -37,14 +39,18 @@ mtsCommandFilteredQueuedWrite::mtsCommandFilteredQueuedWrite(mtsMailBox * mailBo
     ActualFilter(actualFilter)
 {
     // PK: is there a better way to do this?
-    filterOutput = dynamic_cast<mtsGenericObject *>(actualFilter->GetArgument2Prototype()->Services()->Create());
+    if (actualFilter) {
+        FilterOutput = dynamic_cast<mtsGenericObject *>(actualFilter->GetArgument2Prototype()->Services()->Create());
+    }
 }
 
 
 // ArgumentsQueue destructor should get called
 mtsCommandFilteredQueuedWrite::~mtsCommandFilteredQueuedWrite()
 {
-    if (filterOutput) delete filterOutput;
+    if (FilterOutput) {
+        delete FilterOutput;
+    }
 }
 
 
@@ -65,12 +71,12 @@ mtsExecutionResult mtsCommandFilteredQueuedWrite::Execute(const mtsGenericObject
 {
     if (this->IsEnabled()) {
         // First, call the filter (qualified read)
-        mtsExecutionResult result = ActualFilter->Execute(argument, *filterOutput);
+        mtsExecutionResult result = ActualFilter->Execute(argument, *FilterOutput);
         if (result != mtsExecutionResult::DEV_OK) {
             return result;
         }
         // Next, queue the write command
-        return BaseType::Execute(*filterOutput, blocking);
+        return BaseType::Execute(*FilterOutput, blocking);
     }
     return mtsExecutionResult::DISABLED;
 }
