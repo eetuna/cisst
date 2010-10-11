@@ -248,7 +248,8 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentCreate(const
         InterfaceLCMCommands_ComponentCreate(arg);
         return;
     } else {
-        InterfaceLCMFunction.ComponentCreate.ExecuteBlocking(arg);
+        //InterfaceLCMFunction.ComponentCreate.ExecuteBlocking(arg);
+        InterfaceLCMFunction.ComponentCreate(arg);
     }
 }
 
@@ -267,7 +268,8 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentConnect(cons
         InterfaceLCMCommands_ComponentConnect(arg);
         return;
     } else {
-        InterfaceLCMFunction.ComponentConnect.ExecuteBlocking(arg);
+        //InterfaceLCMFunction.ComponentConnect.ExecuteBlocking(arg);
+        InterfaceLCMFunction.ComponentConnect(arg);
     }
 }
 
@@ -292,7 +294,8 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentStart(const 
         InterfaceLCMCommands_ComponentStart(arg);
         return;
     } else {
-        InterfaceLCMFunction.ComponentStart.ExecuteBlocking(arg);
+        //InterfaceLCMFunction.ComponentStart.ExecuteBlocking(arg);
+        InterfaceLCMFunction.ComponentStart(arg);
     }
 }
 
@@ -317,7 +320,8 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentStop(const m
         InterfaceLCMCommands_ComponentStop(arg);
         return;
     } else {
-        InterfaceLCMFunction.ComponentStop.ExecuteBlocking(arg);
+        //InterfaceLCMFunction.ComponentStop.ExecuteBlocking(arg);
+        InterfaceLCMFunction.ComponentStop(arg);
     }
 }
 
@@ -342,7 +346,8 @@ void mtsManagerComponentClient::InterfaceComponentCommands_ComponentResume(const
         InterfaceLCMCommands_ComponentResume(arg);
         return;
     } else {
-        InterfaceLCMFunction.ComponentResume.ExecuteBlocking(arg);
+        //InterfaceLCMFunction.ComponentResume.ExecuteBlocking(arg);
+        InterfaceLCMFunction.ComponentResume(arg);
     }
 }
 
@@ -475,7 +480,8 @@ void mtsManagerComponentClient::InterfaceLCMCommands_ComponentStop(const mtsComp
     // MJ: This Component Stop command could be executed through local component 
     // manager but it is not thread safe.  For thread-safe stop/resume, we
     // use the cisstMultiTask's thread-safe command pattern instead.
-    functionSet->ComponentStop.ExecuteBlocking(arg);
+    //functionSet->ComponentStop.ExecuteBlocking(arg);
+    functionSet->ComponentStop(arg);
 }
 
 void mtsManagerComponentClient::InterfaceLCMCommands_ComponentResume(const mtsComponentStatusControl & arg)

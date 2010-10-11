@@ -209,7 +209,8 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentCreate(const mtsDe
         return;
     }
 
-    functionSet->ComponentCreate.ExecuteBlocking(arg);
+    //functionSet->ComponentCreate.ExecuteBlocking(arg);
+    functionSet->ComponentCreate(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentConnect(const mtsDescriptionConnection & arg)
@@ -228,7 +229,8 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentConnect(const mtsD
         return;
     }
 
-    functionSet->ComponentConnect.ExecuteBlocking(arg);
+    //functionSet->ComponentConnect.ExecuteBlocking(arg);
+    functionSet->ComponentConnect(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStart(const mtsComponentStatusControl & arg)
@@ -251,7 +253,8 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStart(const mtsCom
         return;
     }
 
-    functionSet->ComponentStart.ExecuteBlocking(arg);
+    //functionSet->ComponentStart.ExecuteBlocking(arg);
+    functionSet->ComponentStart(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStop(const mtsComponentStatusControl & arg)
@@ -274,7 +277,8 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStop(const mtsComp
         return;
     }
 
-    functionSet->ComponentStop.ExecuteBlocking(arg);
+    //functionSet->ComponentStop.ExecuteBlocking(arg);
+    functionSet->ComponentStop(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentResume(const mtsComponentStatusControl & arg)
@@ -297,7 +301,8 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentResume(const mtsCo
         return;
     }
 
-    functionSet->ComponentResume.ExecuteBlocking(arg);
+    //functionSet->ComponentResume.ExecuteBlocking(arg);
+    functionSet->ComponentResume(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const
@@ -342,11 +347,13 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(std::v
 
 void mtsManagerComponentServer::AddComponentEvent(const mtsDescriptionComponent &component)
 {
-    InterfaceGCMEvents_AddComponent.ExecuteBlocking(component);
+    //InterfaceGCMEvents_AddComponent.ExecuteBlocking(component);
+    InterfaceGCMEvents_AddComponent(component);
 }
 
 void mtsManagerComponentServer::AddConnectionEvent(const mtsDescriptionConnection &connection)
 {
-    InterfaceGCMEvents_AddConnection.ExecuteBlocking(connection);
+    //InterfaceGCMEvents_AddConnection.ExecuteBlocking(connection);
+    InterfaceGCMEvents_AddConnection(connection);
 }
 
