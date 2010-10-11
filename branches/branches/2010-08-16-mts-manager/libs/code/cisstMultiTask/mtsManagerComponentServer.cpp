@@ -25,12 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(mtsManagerComponentServer);
 
-std::string mtsManagerComponentServer::NameOfManagerComponentServer = "MNGR-COMP-SERVER";
-std::string mtsManagerComponentServer::NameOfInterfaceGCMProvided = "InterfaceGCMProvided";
-std::string mtsManagerComponentServer::NameOfInterfaceGCMRequired = "InterfaceGCMRequired";
-
 mtsManagerComponentServer::mtsManagerComponentServer(mtsManagerGlobal * gcm)
-    : mtsManagerComponentBase(mtsManagerComponentServer::NameOfManagerComponentServer),
+    : mtsManagerComponentBase(mtsManagerComponentBase::ComponentNames::ManagerComponentServer),
       GCM(gcm)
 {
     // Prevent this component from being created more than once
@@ -86,7 +82,7 @@ bool mtsManagerComponentServer::AddInterfaceGCM(void)
     // for the creation of required interfaces.
 
     // Add provided interface to which InterfaceLCM's required interface connects.
-    std::string interfaceName = mtsManagerComponentServer::NameOfInterfaceGCMProvided;
+    const std::string interfaceName = mtsManagerComponentBase::InterfaceNames::InterfaceGCMProvided;
     mtsInterfaceProvided * provided = AddInterfaceProvided(interfaceName);
     if (!provided) {
         CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceGCM: failed to add \"GCM\" provided interface: " << interfaceName << std::endl;
@@ -132,7 +128,7 @@ bool mtsManagerComponentServer::AddNewClientProcess(const std::string & clientPr
     // Create a new set of function objects
     InterfaceGCMFunctionType * newFunctionSet = new InterfaceGCMFunctionType;
 
-    std::string interfaceName = mtsManagerComponentServer::NameOfInterfaceGCMRequired;
+    std::string interfaceName = mtsManagerComponentBase::InterfaceNames::InterfaceGCMRequired;
     interfaceName += "For";
     interfaceName += clientProcessName;
     mtsInterfaceRequired * required = AddInterfaceRequired(interfaceName);
@@ -165,14 +161,14 @@ bool mtsManagerComponentServer::AddNewClientProcess(const std::string & clientPr
     if (!LCM->Connect(LCM->GetProcessName(), this->GetName(), interfaceName,
                      clientProcessName, 
                      mtsManagerComponentClient::GetNameOfManagerComponentClient(clientProcessName),
-                     mtsManagerComponentClient::NameOfInterfaceLCMProvided))
+                     mtsManagerComponentBase::InterfaceNames::InterfaceLCMProvided))
     {
         CMN_LOG_CLASS_INIT_ERROR << "AddNewClientProcess: failed to connect: " 
             << mtsManagerGlobal::GetInterfaceUID(LCM->GetProcessName(), this->GetName(), interfaceName)
             << " - "
             << mtsManagerGlobal::GetInterfaceUID(clientProcessName,
                     mtsManagerComponentClient::GetNameOfManagerComponentClient(clientProcessName),
-                    mtsManagerComponentClient::NameOfInterfaceLCMProvided)
+                    mtsManagerComponentBase::InterfaceNames::InterfaceLCMProvided)
             << std::endl;
         return false;
     }
@@ -209,13 +205,11 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentCreate(const mtsDe
     // interface.
     InterfaceGCMFunctionType * functionSet = InterfaceGCMFunctionMap.GetItem(arg.ProcessName);
     if (!functionSet) {
-        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentCreate: failed to get function set: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentCreate: failed to execute \"Component Create\""));
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentCreate: failed to execute \"Component Create\": " << arg << std::endl;
         return;
     }
 
-    functionSet->ComponentCreate(arg);
+    functionSet->ComponentCreate.ExecuteBlocking(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentConnect(const mtsDescriptionConnection & arg)
@@ -230,13 +224,11 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentConnect(const mtsD
     // interface.
     InterfaceGCMFunctionType * functionSet = InterfaceGCMFunctionMap.GetItem(arg.Client.ProcessName);
     if (!functionSet) {
-        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentConnect: failed to get function set: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentConnect: failed to execute \"Component Connect\""));
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentConnect: failed to execute \"Component Connect\": " << arg << std::endl;
         return;
     }
 
-    functionSet->ComponentConnect(arg);
+    functionSet->ComponentConnect.ExecuteBlocking(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStart(const mtsComponentStatusControl & arg)
@@ -252,16 +244,14 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStart(const mtsCom
     InterfaceGCMFunctionType * functionSet = InterfaceGCMFunctionMap.GetItem(arg.ProcessName);
     if (!functionSet) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentStart: failed to get function set: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentStart: failed to execute \"Component Start\""));
+        return;
     }
     if (!functionSet->ComponentStart.IsValid()) {
-        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentStart: invalid function - has not been bound to command: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentStart: failed to execute \"Component Start\""));
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentStart: failed to execute \"Component Start\": " << arg << std::endl;
+        return;
     }
 
-    functionSet->ComponentStart(arg);
+    functionSet->ComponentStart.ExecuteBlocking(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStop(const mtsComponentStatusControl & arg)
@@ -277,17 +267,14 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentStop(const mtsComp
     InterfaceGCMFunctionType * functionSet = InterfaceGCMFunctionMap.GetItem(arg.ProcessName);
     if (!functionSet) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentStop: failed to get function set: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentStop: failed to execute \"Component Stop\""));
         return;
     }
     if (!functionSet->ComponentStop.IsValid()) {
-        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentStop: invalid function - has not been bound to command: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentStop: failed to execute \"Component Stop\""));
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentStop: failed to execute \"Component Stop\"" << std::endl;
+        return;
     }
 
-    functionSet->ComponentStop(arg);
+    functionSet->ComponentStop.ExecuteBlocking(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_ComponentResume(const mtsComponentStatusControl & arg)
@@ -303,17 +290,14 @@ void mtsManagerComponentServer::InterfaceGCMCommands_ComponentResume(const mtsCo
     InterfaceGCMFunctionType * functionSet = InterfaceGCMFunctionMap.GetItem(arg.ProcessName);
     if (!functionSet) {
         CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentResume: failed to get function set: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentResume: failed to execute \"Component Resume\""));
         return;
     }
     if (!functionSet->ComponentResume.IsValid()) {
-        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentResume: invalid function - has not been bound to command: " << arg << std::endl;
-        // MJ TEMP
-        cmnThrow(std::runtime_error("InterfaceGCMCommands_ComponentResume: failed to execute \"Component Resume\""));
+        CMN_LOG_CLASS_RUN_ERROR << "InterfaceGCMCommands_ComponentResume: failed to execute \"Component Resume\"" << std::endl;
+        return;
     }
 
-    functionSet->ComponentResume(arg);
+    functionSet->ComponentResume.ExecuteBlocking(arg);
 }
 
 void mtsManagerComponentServer::InterfaceGCMCommands_GetNamesOfProcesses(mtsStdStringVec & names) const
@@ -358,11 +342,11 @@ void mtsManagerComponentServer::InterfaceGCMCommands_GetListOfConnections(std::v
 
 void mtsManagerComponentServer::AddComponentEvent(const mtsDescriptionComponent &component)
 {
-    InterfaceGCMEvents_AddComponent(component);
+    InterfaceGCMEvents_AddComponent.ExecuteBlocking(component);
 }
 
 void mtsManagerComponentServer::AddConnectionEvent(const mtsDescriptionConnection &connection)
 {
-    InterfaceGCMEvents_AddConnection(connection);
+    InterfaceGCMEvents_AddConnection.ExecuteBlocking(connection);
 }
 

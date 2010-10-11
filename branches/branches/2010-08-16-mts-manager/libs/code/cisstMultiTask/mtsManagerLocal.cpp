@@ -309,7 +309,7 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
             // Do not trasnfer manager components (both client and server).  They will be created
             // again by CreateManagerComponents() later.
             if (it->second->GetName() == managerComponentName ||
-                it->second->GetName() == mtsManagerComponentServer::NameOfManagerComponentServer) {
+                it->second->GetName() == mtsManagerComponentBase::ComponentNames::ManagerComponentServer) {
                 continue;
             }
             if (!newInstance->AddComponent(it->second)) {
@@ -349,17 +349,21 @@ mtsManagerLocal * mtsManagerLocal::GetInstance(const std::string & globalCompone
 
 #define CHECK_INTERNAL_CONNECTION(_classType, _interfaceType)\
             if (!managerComponentInvolvedConnection) \
-                managerComponentInvolvedConnection |= (it->Client.InterfaceName == _classType::NameOf##_interfaceType##Required);\
+                managerComponentInvolvedConnection |= (it->Client.InterfaceName == _classType::InterfaceNames::##_interfaceType##Required);\
             if (!managerComponentInvolvedConnection)\
-                managerComponentInvolvedConnection |= (it->Server.InterfaceName == _classType::NameOf##_interfaceType##Provided);
+                managerComponentInvolvedConnection |= (it->Server.InterfaceName == _classType::InterfaceNames::##_interfaceType##Provided);
             // Check with InterfaceGCM
-            CHECK_INTERNAL_CONNECTION(mtsManagerComponentServer, InterfaceGCM);
+            //CHECK_INTERNAL_CONNECTION(mtsManagerComponentServer, InterfaceGCM);
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentBase, InterfaceGCM);
             // Check with InterfaceLCM
-            CHECK_INTERNAL_CONNECTION(mtsManagerComponentClient, InterfaceLCM);
+            //CHECK_INTERNAL_CONNECTION(mtsManagerComponentClient, InterfaceLCM);
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentBase, InterfaceLCM);
             // Check with InterfaceComponent
-            CHECK_INTERNAL_CONNECTION(mtsManagerComponentClient, InterfaceComponent);
+            //CHECK_INTERNAL_CONNECTION(mtsManagerComponentClient, InterfaceComponent);
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentBase, InterfaceComponent);
             // Check with InterfaceInternal
-            CHECK_INTERNAL_CONNECTION(mtsComponent, InterfaceInternal);
+            //CHECK_INTERNAL_CONNECTION(mtsComponent, InterfaceInternal);
+            CHECK_INTERNAL_CONNECTION(mtsManagerComponentBase, InterfaceInternal);
 
             // If any internal interface is involved in this connection, don't transfer it to
             // the new LCM.
@@ -490,14 +494,14 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
                 return false;
             }
             if (!Connect(ManagerComponent.Client->GetName(),
-                         mtsManagerComponentClient::NameOfInterfaceLCMRequired,
-                         mtsManagerComponentServer::NameOfManagerComponentServer,
-                         mtsManagerComponentServer::NameOfInterfaceGCMProvided))
+                         mtsManagerComponentBase::InterfaceNames::InterfaceLCMRequired,
+                         mtsManagerComponentBase::ComponentNames::ManagerComponentServer,
+                         mtsManagerComponentBase::InterfaceNames::InterfaceGCMProvided))
             {
                 CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: failed to connect: "
-                    << ManagerComponent.Client->GetName() << ":" << mtsManagerComponentClient::NameOfInterfaceLCMRequired
+                    << ManagerComponent.Client->GetName() << ":" << mtsManagerComponentBase::InterfaceNames::InterfaceLCMRequired
                     << " - "
-                    << mtsManagerComponentServer::NameOfManagerComponentServer << ":" << mtsManagerComponentServer::NameOfInterfaceGCMProvided
+                    << mtsManagerComponentBase::ComponentNames::ManagerComponentServer << ":" << mtsManagerComponentBase::InterfaceNames::InterfaceGCMProvided
                     << std::endl;
                 return false;
             }
@@ -511,19 +515,19 @@ bool mtsManagerLocal::ConnectManagerComponentClientToServer(void)
             }
             if (!Connect(this->ProcessName,
                          ManagerComponent.Client->GetName(),
-                         mtsManagerComponentClient::NameOfInterfaceLCMRequired,
+                         mtsManagerComponentBase::InterfaceNames::InterfaceLCMRequired,
                          ProcessNameOfLCMWithGCM,
-                         mtsManagerComponentServer::NameOfManagerComponentServer,
-                         mtsManagerComponentServer::NameOfInterfaceGCMProvided))
+                         mtsManagerComponentBase::ComponentNames::ManagerComponentServer,
+                         mtsManagerComponentBase::InterfaceNames::InterfaceGCMProvided))
             {
                 CMN_LOG_CLASS_INIT_ERROR << "ConnectManagerComponentClientToServer: failed to connect: "
                     << mtsManagerGlobal::GetInterfaceUID(this->ProcessName,
                                                          ManagerComponent.Client->GetName(),
-                                                         mtsManagerComponentClient::NameOfInterfaceLCMRequired)
+                                                         mtsManagerComponentBase::InterfaceNames::InterfaceLCMRequired)
                     << " - "
                     << mtsManagerGlobal::GetInterfaceUID(ProcessNameOfLCMWithGCM,
-                                                         mtsManagerComponentServer::NameOfManagerComponentServer,
-                                                         mtsManagerComponentServer::NameOfInterfaceGCMProvided)
+                                                         mtsManagerComponentBase::ComponentNames::ManagerComponentServer,
+                                                         mtsManagerComponentBase::InterfaceNames::InterfaceGCMProvided)
                     << std::endl;
                 return false;
             }
@@ -569,12 +573,12 @@ bool mtsManagerLocal::ConnectToManagerComponentClient(const std::string & compon
     const std::string nameOfinterfaceComponentRequired
         = mtsManagerComponentClient::GetNameOfInterfaceComponentRequired(componentName);
     if (!Connect(managerComponent->GetName(), nameOfinterfaceComponentRequired,
-                 componentName, mtsComponent::NameOfInterfaceInternalProvided))
+            componentName, mtsManagerComponentBase::InterfaceNames::InterfaceInternalProvided))
     {
         CMN_LOG_CLASS_INIT_ERROR << "ConnectToManagerComponentClient: failed to connect: " 
             << managerComponent->GetName() << ":" << nameOfinterfaceComponentRequired
             << " - "
-            << componentName << ":" << mtsComponent::NameOfInterfaceInternalProvided
+            << componentName << ":" << mtsManagerComponentBase::InterfaceNames::InterfaceInternalProvided
             << std::endl;
         return false;
     }
@@ -582,14 +586,14 @@ bool mtsManagerLocal::ConnectToManagerComponentClient(const std::string & compon
     // If a component has support for the dynamic component control services,
     // connect InterfaceInternal's required interface to InterfaceComponent's 
     // provided interface.
-    if (component->GetInterfaceRequired(mtsComponent::NameOfInterfaceInternalRequired)) {
-        if (!Connect(component->GetName(), mtsComponent::NameOfInterfaceInternalRequired,
-            managerComponent->GetName(), mtsManagerComponentClient::NameOfInterfaceComponentProvided))
+    if (component->GetInterfaceRequired(mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired)) {
+        if (!Connect(component->GetName(), mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired,
+            managerComponent->GetName(), mtsManagerComponentBase::InterfaceNames::InterfaceComponentProvided))
         {
             CMN_LOG_CLASS_INIT_ERROR << "ConnectToManagerComponentClient: failed to connect: "
-                << component->GetName() << ":" << mtsComponent::NameOfInterfaceInternalRequired
+                << component->GetName() << ":" << mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired
                 << " - "
-                << managerComponent->GetName() << ":" << mtsManagerComponentClient::NameOfInterfaceComponentProvided
+                << managerComponent->GetName() << ":" << mtsManagerComponentBase::InterfaceNames::InterfaceComponentProvided
                 << std::endl;
             return false;
         }
@@ -607,7 +611,7 @@ bool mtsManagerLocal::ConnectAllToManagerComponentClient(void)
     }
 
     mtsComponent * userComponent;
-    const std::string nameOfInterfaceInternalRequired = mtsComponent::NameOfInterfaceInternalRequired;
+    const std::string nameOfInterfaceInternalRequired = mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired;
 
     ComponentMapType::const_iterator it = ComponentMap.begin();
     const ComponentMapType::const_iterator itEnd = ComponentMap.end();
@@ -618,7 +622,7 @@ bool mtsManagerLocal::ConnectAllToManagerComponentClient(void)
 
         componentName = userComponent->GetName();
         if (componentName == managerComponent->GetName() ||
-            componentName == mtsManagerComponentServer::NameOfManagerComponentServer) 
+            componentName == mtsManagerComponentBase::ComponentNames::ManagerComponentServer) 
         {
             continue;
         }
@@ -1972,7 +1976,7 @@ bool mtsManagerLocal::ConnectLocally(const std::string & clientComponentName, co
     // component clients, i.e., multiple processes.
     mtsManagerComponentServer * MCS = dynamic_cast<mtsManagerComponentServer*>(serverComponent);
     if (MCS) {
-        if (serverInterfaceProvidedName == mtsManagerComponentServer::NameOfInterfaceGCMProvided) {
+        if (serverInterfaceProvidedName == mtsManagerComponentBase::InterfaceNames::InterfaceGCMProvided) {
             if (!MCS->AddNewClientProcess(clientProcessName)) {
                 CMN_LOG_CLASS_INIT_ERROR << "ConnectLocally: failed to create new set of InterfaceGCM function objects: "
                     << clientProcessName << std::endl;
@@ -1991,7 +1995,7 @@ bool mtsManagerLocal::ConnectLocally(const std::string & clientComponentName, co
     // client can handle multiple user components.
     mtsManagerComponentClient * MCC = dynamic_cast<mtsManagerComponentClient*>(serverComponent);
     if (MCC) {
-        if (serverInterfaceProvidedName == mtsManagerComponentClient::NameOfInterfaceComponentProvided) {
+        if (serverInterfaceProvidedName == mtsManagerComponentBase::InterfaceNames::InterfaceComponentProvided) {
             if (!MCC->AddNewClientComponent(clientComponentName)) {
                 CMN_LOG_CLASS_INIT_ERROR << "ConnectLocally: failed to create new set of InterfaceComponent function objects: "
                     << clientComponentName << std::endl;

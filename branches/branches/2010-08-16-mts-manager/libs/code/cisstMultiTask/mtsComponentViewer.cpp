@@ -30,15 +30,26 @@ mtsComponentViewer::mtsComponentViewer(const std::string & name, double periodic
     JGraphSocket(osaSocket::TCP),
     JGraphSocketConnected(false),
     UDrawSocket(osaSocket::TCP),
-    UDrawSocketConnected(false),
-    InternalCommands()
+    UDrawSocketConnected(false)
 {
+    // MJ TEMP
+#if 0
     // Extend internal required interface (to Manager Component) to include event handlers
-    mtsInterfaceRequired *required = AddInterfaceRequired(InternalCommands.GetInterfaceName());
+    mtsInterfaceRequired *required = AddInterfaceRequired(
+        mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired);
     if (required) {
         InternalCommands.SetInterfaceRequired(required);
         InternalCommands.AddComponentEventHandler(&mtsComponentViewer::AddComponent, this);
         InternalCommands.AddConnectionEventHandler(&mtsComponentViewer::AddConnection, this);
+    }
+#endif
+
+    mtsInterfaceRequired * required = EnableDynamicComponentManagement();
+    if (required) {
+        ManagerComponentServices->AddComponentEventHandler(&mtsComponentViewer::AddComponent, this);
+        ManagerComponentServices->AddConnectionEventHandler(&mtsComponentViewer::AddConnection, this);
+    } else {
+        cmnThrow(std::runtime_error("mtsComponentViewer constructor: failed to enable dynamic component composition"));
     }
 }
 
@@ -161,6 +172,7 @@ bool mtsComponentViewer::ConnectToJGraph(const std::string &ipAddress, unsigned 
     JGraphSocketConnected = JGraphSocket.Connect(ipAddress, port);
     if (JGraphSocketConnected) {
         osaSleep(1.0 * cmn_s);  // need to wait or JGraph server will not start properly
+        CMN_LOG_CLASS_INIT_VERBOSE << "Connected to JGraph TaskViewer" << std::endl;
     }
     return JGraphSocketConnected;
 }
@@ -182,6 +194,7 @@ bool mtsComponentViewer::ConnectToUDrawGraph(const std::string &ipAddress, unsig
             if (UDrawSocket.Receive(response, sizeof(response), 1.0))
                CMN_LOG_CLASS_INIT_VERBOSE << "Received response from UDraw(Graph), new: " << response << std::endl;
         }
+        CMN_LOG_CLASS_INIT_VERBOSE << "Connected to UDraw(Graph)" << std::endl;
     }
     return UDrawSocketConnected;
 }
@@ -198,10 +211,10 @@ void mtsComponentViewer::SendAllInfo(void)
     std::vector<std::string> processList;
     std::vector<std::string> componentList;
     size_t i, j;  // could use iterators instead
-    InternalCommands.RequestGetNamesOfProcesses(processList);
+    ManagerComponentServices->RequestGetNamesOfProcesses(processList);
     for (i = 0; i < processList.size(); i++) {
         componentList.clear();
-        InternalCommands.RequestGetNamesOfComponents(processList[i], componentList);
+        ManagerComponentServices->RequestGetNamesOfComponents(processList[i], componentList);
         for (j = 0; j < componentList.size(); j++) {
             // Ignore proxy components
             if (!IsProxyComponent(componentList[j])) {
@@ -212,7 +225,7 @@ void mtsComponentViewer::SendAllInfo(void)
             }
         }
         std::vector<mtsDescriptionConnection> connectionList;
-        InternalCommands.RequestGetListOfConnections(connectionList);
+        ManagerComponentServices->RequestGetListOfConnections(connectionList);
         for (i = 0; i < connectionList.size(); i++)
             this->AddConnection(connectionList[i]);
     }
@@ -230,7 +243,7 @@ std::string mtsComponentViewer::GetComponentInGraphFormat(const std::string &pro
     size_t i;
     std::vector<std::string> requiredList;
     std::vector<std::string> providedList;
-    InternalCommands.RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
+    ManagerComponentServices->RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
     // For now, ignore components that don't have any interfaces
     if ((requiredList.size() == 0) && (providedList.size() == 0))
         return "";
@@ -258,7 +271,7 @@ std::string mtsComponentViewer::GetComponentInUDrawGraphFormat(const std::string
     // Enable this to ignore components that don't have any interfaces
     std::vector<std::string> requiredList;
     std::vector<std::string> providedList;
-    InternalCommands.RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
+    ManagerComponentServices->RequestGetNamesOfInterfaces(processName, componentName, requiredList, providedList);
     if ((requiredList.size() == 0) && (providedList.size() == 0))
         return "";
 #endif

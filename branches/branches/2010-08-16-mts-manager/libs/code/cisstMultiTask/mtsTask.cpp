@@ -28,6 +28,7 @@
 #include <cisstMultiTask/mtsTask.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsInterfaceProvided.h>
+#include <cisstMultiTask/mtsManagerComponentBase.h>
 
 #include <iostream>
 
@@ -128,7 +129,7 @@ void mtsTask::ChangeState(mtsComponentState::Enum newState)
 
     // Inform the manager component client of the state change
     mtsInterfaceProvided * interfaceInternalProvided = 
-        GetInterfaceProvided(mtsComponent::NameOfInterfaceInternalProvided);
+        GetInterfaceProvided(mtsManagerComponentBase::InterfaceNames::InterfaceInternalProvided);
     if (interfaceInternalProvided) {
         mtsManagerLocal * LCM = mtsManagerLocal::GetInstance();
         EventGeneratorChangeState(mtsComponentStateChange(LCM->GetProcessName(), this->GetName(), this->State.GetState()));

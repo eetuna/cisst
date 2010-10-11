@@ -41,6 +41,11 @@ CMN_IMPLEMENT_SERVICES(ManagerComponent);
 ManagerComponent::ManagerComponent(const std::string & componentName, double period):
     mtsTaskPeriodic(componentName, period, false, 1000)
 {
+    // Enable manager component services
+    mtsInterfaceRequired * required = EnableDynamicComponentManagement();
+    if (!required) {
+        cmnThrow(std::runtime_error("ManagerComponent constructor: failed to enable dynamic component composition"));
+    }
 }
 
 void ManagerComponent::Run(void) 
@@ -60,14 +65,14 @@ void ManagerComponent::Run(void)
         std::cout << std::endl << "Creating counter components across network....." << std::endl;
 
         std::cout << "> " << PeerProcessName << ", " << CounterOddComponentType << ", " << CounterOddComponentName << ": ";
-        if (!RequestComponentCreate(PeerProcessName, CounterOddComponentType, CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentCreate(PeerProcessName, CounterOddComponentType, CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << PeerProcessName << ", " << CounterEvenComponentType << ", " << CounterEvenComponentName << ": ";
-        if (!RequestComponentCreate(PeerProcessName, CounterEvenComponentType, CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentCreate(PeerProcessName, CounterEvenComponentType, CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
@@ -82,7 +87,7 @@ void ManagerComponent::Run(void)
         //
         std::cout << std::endl << "Connecting counter components across network....." << std::endl;
         std::cout << "> Connection 1: ";
-        if (!RequestComponentConnect(PeerProcessName, CounterOddComponentName, NameCounterOddInterfaceRequired, 
+        if (!ManagerComponentServices->RequestComponentConnect(PeerProcessName, CounterOddComponentName, NameCounterOddInterfaceRequired, 
                                      PeerProcessName, CounterEvenComponentName, NameCounterEvenInterfaceProvided))
         {
             std::cout << "failure" << std::endl;
@@ -91,7 +96,7 @@ void ManagerComponent::Run(void)
         }
 
         std::cout << "> Connection 2: ";
-        if (!RequestComponentConnect(PeerProcessName, CounterEvenComponentName, NameCounterEvenInterfaceRequired,
+        if (!ManagerComponentServices->RequestComponentConnect(PeerProcessName, CounterEvenComponentName, NameCounterEvenInterfaceRequired,
                                      PeerProcessName, CounterOddComponentName, NameCounterOddInterfaceProvided))
         {
             std::cout << "failure" << std::endl;
@@ -108,14 +113,14 @@ void ManagerComponent::Run(void)
         //
         std::cout << std::endl << "Starting counter components across network....." << std::endl;
         std::cout << "> " << PeerProcessName << "." << CounterOddComponentName << ": ";
-        if (!RequestComponentStart(PeerProcessName, CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStart(PeerProcessName, CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << PeerProcessName << "." << CounterEvenComponentName << ": ";
-        if (!RequestComponentStart(PeerProcessName, CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStart(PeerProcessName, CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
@@ -129,14 +134,14 @@ void ManagerComponent::Run(void)
         //
         std::cout << std::endl << "Stopping counter components across network....." << std::endl;
         std::cout << "> " << PeerProcessName << "." << CounterOddComponentName << ": ";
-        if (!RequestComponentStop(PeerProcessName, CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStop(PeerProcessName, CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << PeerProcessName << "." << CounterEvenComponentName << ": ";
-        if (!RequestComponentStop(PeerProcessName, CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStop(PeerProcessName, CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
@@ -150,14 +155,14 @@ void ManagerComponent::Run(void)
         //
         std::cout << std::endl << "Resuming counter components across network....." << std::endl;
         std::cout << "> " << PeerProcessName << "." << CounterOddComponentName << ": ";
-        if (!RequestComponentResume(PeerProcessName, CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentResume(PeerProcessName, CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << PeerProcessName << "." << CounterEvenComponentName << ": ";
-        if (!RequestComponentResume(PeerProcessName, CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentResume(PeerProcessName, CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;

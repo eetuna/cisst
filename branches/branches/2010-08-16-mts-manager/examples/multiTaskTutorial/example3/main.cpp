@@ -33,8 +33,10 @@ int main(void)
 
     // create and add Component Viewer
     mtsComponentViewer *componentViewer = new mtsComponentViewer("ComponentViewer", 1.0*cmn_s);
-    if (!taskManager->AddComponentWithControlService(componentViewer))
+    if (!taskManager->AddComponentWithControlService(componentViewer)) {
         CMN_LOG_INIT_ERROR << "Failed to add ComponentViewer" << std::endl;
+        exit(1);
+    }
 
     // add all tasks
     taskManager->AddComponent(robotTask);

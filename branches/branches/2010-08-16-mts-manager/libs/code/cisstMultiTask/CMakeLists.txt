@@ -74,6 +74,7 @@ set (SOURCE_FILES
      mtsManagerComponentBase.cpp
      mtsManagerComponentServer.cpp
      mtsManagerComponentClient.cpp
+     mtsManagerComponentServices.cpp
 
      mtsParameterTypes.cpp
      mtsComponentViewer.cpp
@@ -178,6 +179,7 @@ set (HEADER_FILES
      mtsManagerComponentBase.h
      mtsManagerComponentServer.h
      mtsManagerComponentClient.h
+     mtsManagerComponentServices.h
 
      mtsParameterTypes.h
      mtsComponentViewer.h

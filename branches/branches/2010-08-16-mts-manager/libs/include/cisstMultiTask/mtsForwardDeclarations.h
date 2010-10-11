@@ -163,6 +163,7 @@ class mtsManagerLocalInterface;
 class mtsManagerGlobal;
 class mtsManagerGlobalInterface;
 
+class mtsManagerComponentServices;
 class mtsManagerComponentClient;
 class mtsManagerComponentServer;
 

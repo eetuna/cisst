@@ -25,39 +25,36 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisstMultiTask/mtsInterfaceInput.h>
 #include <cisstMultiTask/mtsManagerComponentBase.h>
+#include <cisstMultiTask/mtsManagerComponentServices.h>
 #include <cisstMultiTask/mtsParameterTypes.h>
 
 #include <cisstOSAbstraction/osaGetTime.h>
 #include <cisstOSAbstraction/osaSleep.h>
 
-const std::string mtsComponent::NameOfInterfaceInternalProvided = "InterfaceInternalProvided";
-const std::string mtsComponent::NameOfInterfaceInternalRequired = "InterfaceInternalRequired";
-
-const std::string mtsComponent::EventNames::AddComponent = "AddComponentEvent"; // mtsManagerComponentBase::EventNames::AddComponent;
-const std::string mtsComponent::EventNames::AddConnection = "AddConnectionEvent"; // mtsManagerComponentBase::EventNames::AddConnection;
-const std::string mtsComponent::EventNames::ChangeState   = "ChangeState"; // mtsManagerComponentBase::EventNames::AddConnection;
-
 mtsComponent::mtsComponent(const std::string & componentName):
     Name(componentName),
-    State(mtsComponentState::CONSTRUCTED),
-    UseSeparateLogFileFlag(false),
-    LoDMultiplexerStreambuf(0),
-    LogFile(0),
     InterfacesProvidedOrOutput("InterfacesProvided"),
     InterfacesRequiredOrInput("InterfacesRequiredOrInput")
 {
-    InterfacesProvidedOrOutput.SetOwner(*this);
-    InterfacesRequiredOrInput.SetOwner(*this);
+    Initialize();
 }
 
 
 mtsComponent::mtsComponent(void):
-    UseSeparateLogFileFlag(false),
-    LoDMultiplexerStreambuf(0),
-    LogFile(0),
     InterfacesProvidedOrOutput("InterfacesProvided"),
     InterfacesRequiredOrInput("InterfacesRequiredOrInput")
 {
+    Initialize();
+}
+
+void mtsComponent::Initialize(void)
+{
+    UseSeparateLogFileFlag = false;
+    LoDMultiplexerStreambuf = 0;
+    LogFile = 0;
+
+    ManagerComponentServices = 0;
+
     InterfacesProvidedOrOutput.SetOwner(*this);
     InterfacesRequiredOrInput.SetOwner(*this);
 }
@@ -80,6 +77,10 @@ mtsComponent::~mtsComponent()
     if (this->LogFile) {
         this->LogFile->close();
         delete this->LogFile;
+    }
+
+    if (ManagerComponentServices) {
+        delete ManagerComponentServices;
     }
 }
 
@@ -746,46 +747,58 @@ bool mtsComponent::WaitForState(mtsComponentState desiredState, double timeout)
     return true;
 }
 
+mtsInterfaceRequired * mtsComponent::EnableDynamicComponentManagement(void)
+{
+    // Extend internal required interface (to Manager Component) to include event handlers
+    mtsInterfaceRequired * required = AddInterfaceRequired(
+        mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired);
+    if (!required) {
+        CMN_LOG_CLASS_INIT_ERROR << "EnableDynamicComponentManagement: failed to add internal required interface to component " 
+            << "\"" << GetName() << "\"" << std::endl;
+        return 0;
+    } else {
+        CMN_LOG_CLASS_INIT_VERBOSE << "EnableDynamicComponentManagement: successfully added internal required interface" << std::endl;
+    }
 
-bool mtsComponent::AddInterfaceInternal(const bool allowDynamicControlRequest)
+    // Check if manager component service object has already been created
+    if (ManagerComponentServices) {
+        CMN_LOG_CLASS_INIT_WARNING << "EnableDynamicComponentManagement: redefine ManagerComponentServices object" << std::endl;
+        delete ManagerComponentServices;
+    }
+
+    ManagerComponentServices = new mtsManagerComponentServices(required);
+    ManagerComponentServices->InitializeInterfaceInternalRequired();
+
+    CMN_LOG_CLASS_INIT_VERBOSE << "EnableDynamicComponentManagement: successfully initialized dynamic component management services" << std::endl;
+
+    return required;
+}
+
+bool mtsComponent::AddInterfaceInternal(const bool useMangerComponentServices)
 {
     // Add required interface
     std::string interfaceName;
-    if (allowDynamicControlRequest) {
-        mtsInterfaceRequired *required = 0;
-        interfaceName = mtsComponent::NameOfInterfaceInternalRequired;
-        if (GetInterfaceRequired(interfaceName))
-            CMN_LOG_CLASS_INIT_WARNING << "AddInterfaceInternal: required interface already present" << std::endl;
-        else
-            required = AddInterfaceRequired(interfaceName);
-        if (required) {
-            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentCreate,
-                InternalInterfaceFunctions.ComponentCreate);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentConnect,
-                InternalInterfaceFunctions.ComponentConnect);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStart,
-                InternalInterfaceFunctions.ComponentStart);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentStop,
-                InternalInterfaceFunctions.ComponentStop);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::ComponentResume,
-                InternalInterfaceFunctions.ComponentResume);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfProcesses,
-                InternalInterfaceFunctions.GetNamesOfProcesses);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfComponents,
-                InternalInterfaceFunctions.GetNamesOfComponents);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::GetNamesOfInterfaces,
-                InternalInterfaceFunctions.GetNamesOfInterfaces);
-            required->AddFunction(mtsManagerComponentBase::CommandNames::GetListOfConnections,
-                InternalInterfaceFunctions.GetListOfConnections);
-            CMN_LOG_CLASS_INIT_VERBOSE << "AddInterfaceInternal: successfully added internal required interface" << std::endl;
+    if (useMangerComponentServices) {
+        // If a user component needs to use the dynamic component management services,
+        // mtsComponent::EnableDynamicComponentManagement() should be called beforehand 
+        // in the user component's constructor so that the internal required interface and DCC
+        // service object is properly initialized.
+        // Only validity of such internal structures is checked here.
+        mtsInterfaceRequired * required = GetInterfaceRequired(
+            mtsManagerComponentBase::InterfaceNames::InterfaceInternalRequired);
+        if (!required) {
+            CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: dynamic component management service (1) is not properly initialized" << std::endl;
+            return false;
         }
-        else
-            CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: failed to add internal required interface: " << interfaceName << std::endl;
+        if (!ManagerComponentServices) {
+            CMN_LOG_CLASS_INIT_ERROR << "AddInterfaceInternal: dynamic component management service (2) is not properly initialized" << std::endl;
+            return false;
+        }
     }
 
     // Add provided interface
     mtsInterfaceProvided *provided = 0;
-    interfaceName = mtsComponent::NameOfInterfaceInternalProvided;
+    interfaceName = mtsManagerComponentBase::InterfaceNames::InterfaceInternalProvided;
     if (GetInterfaceProvided(interfaceName))
         CMN_LOG_INIT_WARNING << "AddInterfaceInternal: provided interface already present" << std::endl;
     else {
@@ -859,6 +872,7 @@ void mtsComponent::InterfaceInternalCommands_ComponentResume(const mtsComponentS
     CMN_LOG_CLASS_RUN_VERBOSE << "InterfaceInternalCommands_ComponentResume: resumed component:  " << GetName() << std::endl;
 }
 
+/*
 bool mtsComponent::RequestComponentCreate(const std::string & className, const std::string & componentName) const
 {
     if (!InternalInterfaceFunctions.ComponentCreate.IsValid()) {
@@ -1151,3 +1165,4 @@ bool mtsComponent::RequestGetListOfConnections(std::vector<mtsDescriptionConnect
 
     return true;
 }
+*/

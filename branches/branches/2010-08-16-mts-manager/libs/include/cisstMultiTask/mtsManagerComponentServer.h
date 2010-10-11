@@ -90,13 +90,6 @@ public:
         provided interface */
     bool AddNewClientProcess(const std::string & clientProcessName);
 
-    /*! Name of this component which is globally unique */
-    static std::string NameOfManagerComponentServer;
-
-    /*! Name of provided interface that provides services */
-    static std::string NameOfInterfaceGCMProvided;
-    static std::string NameOfInterfaceGCMRequired;
-
     /*! Commands */
     void InterfaceGCMCommands_ComponentCreate(const mtsDescriptionComponent & arg);
     void InterfaceGCMCommands_ComponentConnect(const mtsDescriptionConnection & arg);

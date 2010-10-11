@@ -40,7 +40,13 @@ CMN_IMPLEMENT_SERVICES(ManagerComponentLocal);
 ManagerComponentLocal::ManagerComponentLocal(const std::string & componentName, double period):
     mtsTaskPeriodic(componentName, period, false, 1000)
 {
-     UseSeparateLogFileDefault();
+    UseSeparateLogFileDefault();
+
+    // Enable manager component services
+    mtsInterfaceRequired * required = EnableDynamicComponentManagement();
+    if (!required) {
+        cmnThrow(std::runtime_error("ManagerComponentLocal constructor: failed to enable dynamic component composition"));
+    }
 }
 
 void ManagerComponentLocal::Run(void) 
@@ -55,7 +61,7 @@ void ManagerComponentLocal::Run(void)
         std::vector<std::string> processes, components, interfacesRequired, interfacesProvided;
         if (osaGetTime() - lastTick > 5.0) {
             std::cout << "==================================== Processes" << std::endl;
-            if (RequestGetNamesOfProcesses(processes)) {
+            if (ManagerComponentServices->RequestGetNamesOfProcesses(processes)) {
                 for (size_t i = 0; i < processes.size(); ++i) {
                     std::cout << processes[i] << std::endl;
                 }
@@ -63,7 +69,7 @@ void ManagerComponentLocal::Run(void)
 
             std::cout << std::endl << "==================================== Components" << std::endl;
             for (size_t i = 0; i < processes.size(); ++i) {
-                if (RequestGetNamesOfComponents(processes[i], components)) {
+                if (ManagerComponentServices->RequestGetNamesOfComponents(processes[i], components)) {
                     for (size_t j = 0; j < components.size(); ++j) {
                         std::cout << processes[i] << " - " << components[j] << std::endl;
                     }
@@ -75,7 +81,7 @@ void ManagerComponentLocal::Run(void)
                 for (size_t j = 0; j < components.size(); ++j) {
                     std::cout << processes[i] << "." << components[j] << std::endl;
                     std::cout << "\tRequired: " << std::endl;
-                    if (RequestGetNamesOfInterfaces(processes[i], components[j], interfacesRequired, interfacesProvided)) {
+                    if (ManagerComponentServices->RequestGetNamesOfInterfaces(processes[i], components[j], interfacesRequired, interfacesProvided)) {
                         for (size_t k = 0; k < interfacesRequired.size(); ++k) {
                             std::cout << "\t\t" << interfacesRequired[k] << std::endl;
                         }
@@ -91,7 +97,7 @@ void ManagerComponentLocal::Run(void)
 
             std::cout << std::endl << "==================================== Connections" << std::endl;
 			std::vector<mtsDescriptionConnection> connections;
-            if (RequestGetListOfConnections(connections)) {
+            if (ManagerComponentServices->RequestGetListOfConnections(connections)) {
                 for (size_t i = 0; i < connections.size(); ++i) {
                     std::cout << connections[i] << std::endl;
                 }
@@ -113,14 +119,14 @@ void ManagerComponentLocal::Run(void)
         std::cout << std::endl << "Creating counter components....." << std::endl;
 
         std::cout << "> " << CounterOddComponentType << ", " << CounterOddComponentName << ": ";
-        if (!RequestComponentCreate(CounterOddComponentType, CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentCreate(CounterOddComponentType, CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << CounterEvenComponentType << ", " << CounterEvenComponentName << ": ";
-        if (!RequestComponentCreate(CounterEvenComponentType, CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentCreate(CounterEvenComponentType, CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
@@ -135,7 +141,7 @@ void ManagerComponentLocal::Run(void)
         //
         std::cout << std::endl << "Connecting counter components....." << std::endl;
         std::cout << "> Connection 1: ";
-        if (!RequestComponentConnect(CounterOddComponentName, NameCounterOddInterfaceRequired, 
+        if (!ManagerComponentServices->RequestComponentConnect(CounterOddComponentName, NameCounterOddInterfaceRequired, 
             CounterEvenComponentName, NameCounterEvenInterfaceProvided))
         {
             std::cout << "failure" << std::endl;
@@ -144,7 +150,7 @@ void ManagerComponentLocal::Run(void)
         }
 
         std::cout << "> Connection 2: ";
-        if (!RequestComponentConnect(CounterEvenComponentName, NameCounterEvenInterfaceRequired,
+        if (!ManagerComponentServices->RequestComponentConnect(CounterEvenComponentName, NameCounterEvenInterfaceRequired,
             CounterOddComponentName, NameCounterOddInterfaceProvided))
         {
             std::cout << "failure" << std::endl;
@@ -161,14 +167,14 @@ void ManagerComponentLocal::Run(void)
         //
         std::cout << std::endl << "Starting counter components....." << std::endl;
         std::cout << "> " << CounterOddComponentName << ": ";
-        if (!RequestComponentStart(CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStart(CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << CounterEvenComponentName << ": ";
-        if (!RequestComponentStart(CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStart(CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
@@ -182,14 +188,14 @@ void ManagerComponentLocal::Run(void)
         //
         std::cout << std::endl << "Stopping counter components....." << std::endl;
         std::cout << "> " << CounterOddComponentName << ": ";
-        if (!RequestComponentStop(CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStop(CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << CounterEvenComponentName << ": ";
-        if (!RequestComponentStop(CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentStop(CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
@@ -203,14 +209,14 @@ void ManagerComponentLocal::Run(void)
         //
         std::cout << std::endl << "Resuming counter components....." << std::endl;
         std::cout << "> " << CounterOddComponentName << ": ";
-        if (!RequestComponentResume(CounterOddComponentName)) {
+        if (!ManagerComponentServices->RequestComponentResume(CounterOddComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;
         }
 
         std::cout << "> " << CounterEvenComponentName << ": ";
-        if (!RequestComponentResume(CounterEvenComponentName)) {
+        if (!ManagerComponentServices->RequestComponentResume(CounterEvenComponentName)) {
             std::cout << "failure" << std::endl;
         } else {
             std::cout << "success" << std::endl;

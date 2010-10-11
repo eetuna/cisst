@@ -126,12 +126,6 @@ public:
     mtsFunctionWrite InterfaceComponentEvents_AddComponent;
     mtsFunctionWrite InterfaceComponentEvents_AddConnection;
 
-    /*! Name of internal interfaces */
-    static std::string NameOfInterfaceComponentProvided;
-    static std::string NameOfInterfaceComponentRequired;
-    static std::string NameOfInterfaceLCMProvided;
-    static std::string NameOfInterfaceLCMRequired;
-
     /*! Returns name of manager component client */
     static std::string GetNameOfManagerComponentClient(const std::string & processName);
     

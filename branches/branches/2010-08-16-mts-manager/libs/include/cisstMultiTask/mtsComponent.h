@@ -90,6 +90,9 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       constructor on a component anyway. */
     mtsComponent(const mtsComponent & other);
 
+    /*! Initializer */
+    void Initialize(void);
+
     /*! Add an already existing interface required to the interface,
       the user must pay attention to mailbox (or lack of) used to
       create the required interface.  By default, mtsComponent uses a
@@ -356,89 +359,37 @@ class CISST_EXPORT mtsComponent: public cmnGenericObject
       via the required interfaces. */
     size_t ProcessQueuedEvents(void);
 
+    /*! Dynamic component management service provider */
+    mtsManagerComponentServices * ManagerComponentServices;
+
+    /*! \brief Enable support for dynamic component management services
+        \return Pointer to internal required interface, if success.  
+                NULL otherwise.
+        \note If user component needs dynamic component management services, 
+              this method should be called by user component's constructor */
+    mtsInterfaceRequired * EnableDynamicComponentManagement(void);
+
+    /*! Event generator to inform the manager component client of the state
+        change of this component */
+    mtsFunctionWrite EventGeneratorChangeState;
+
     /*! \brief Add internal interfaces 
-        \param allowDynamicControlRequest True to allow this component to use
+        \param useMangerComponentServices True to allow this component to use
                dynamic component control services through mts command pattern
                to control other components.  
                If true, the internal required interface is added to this 
                component (the internal provided interface is added by default) */
-    bool AddInterfaceInternal(const bool allowDynamicControlRequest = false);
-
-    /*! Internal functions to use services provided by manager component client */
-    struct {
-        // Dynamic component management
-        mtsFunctionWrite ComponentCreate;
-        mtsFunctionWrite ComponentConnect;
-        mtsFunctionWrite ComponentStart;
-        mtsFunctionWrite ComponentStop;
-        mtsFunctionWrite ComponentResume;
-        // Getters
-        mtsFunctionRead          GetNamesOfProcesses;
-        mtsFunctionQualifiedRead GetNamesOfComponents; // in: process name, out: components' names
-        mtsFunctionQualifiedRead GetNamesOfInterfaces; // in: process name, out: interfaces' names
-        mtsFunctionRead          GetListOfConnections;
-    } InternalInterfaceFunctions;
-
-    struct EventNames {
-        const static std::string AddComponent;
-        const static std::string AddConnection;
-        const static std::string ChangeState;
-    };
+    bool AddInterfaceInternal(const bool useMangerComponentServices = false);
 
     /*! Internal commands to process command execution request coming from manager
         component client */
     void InterfaceInternalCommands_ComponentStop(const mtsComponentStatusControl & arg);
     void InterfaceInternalCommands_ComponentResume(const mtsComponentStatusControl & arg);
 
-    /*! Event generator to inform the manager component client of the state
-        change of this component */
-    mtsFunctionWrite EventGeneratorChangeState;
-
  public:
 
     /*! Send a human readable description of the component. */
     void ToStream(std::ostream & outputStream) const;
-
-    /*! Wrappers for internal function object */
-    bool RequestComponentCreate(const std::string & className, const std::string & componentName) const;
-    bool RequestComponentCreate(
-        const std::string& processName, const std::string & className, const std::string & componentName) const;
-
-    bool RequestComponentConnect(
-        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
-    bool RequestComponentConnect(
-        const std::string & clientProcessName,
-        const std::string & clientComponentName, const std::string & clientInterfaceRequiredName,
-        const std::string & serverProcessName,
-        const std::string & serverComponentName, const std::string & serverInterfaceProvidedName) const;
-
-    bool RequestComponentStart(const std::string & componentName, const double delayInSecond = 0.0) const;
-    bool RequestComponentStart(const std::string& processName, const std::string & componentName,
-                               const double delayInSecond = 0.0) const;
-
-    bool RequestComponentStop(const std::string & componentName, const double delayInSecond = 0.0) const;
-    bool RequestComponentStop(const std::string& processName, const std::string & componentName,
-                              const double delayInSecond = 0.0) const;
-
-    bool RequestComponentResume(const std::string & componentName, const double delayInSecond = 0.0) const;
-    bool RequestComponentResume(const std::string& processName, const std::string & componentName,
-                                const double delayInSecond = 0.0) const;
-
-    bool RequestGetNamesOfProcesses(std::vector<std::string> & namesOfProcesses) const;
-    bool RequestGetNamesOfComponents(const std::string & processName, std::vector<std::string> & namesOfComponents) const;
-    bool RequestGetNamesOfInterfaces(const std::string & processName,
-                                     const std::string & componentName,
-                                     std::vector<std::string> & namesOfInterfacesRequired,
-                                     std::vector<std::string> & namesOfInterfacesProvided) const;
-    bool RequestGetListOfConnections(std::vector<mtsDescriptionConnection> & listOfConnections) const;
-
-    /*! Names of internal interfaces to enable user components to use mts-command
-        pattern for communication with other components */
-#ifndef SWIG
-    const static std::string NameOfInterfaceInternalProvided;
-    const static std::string NameOfInterfaceInternalRequired;
-#endif // SWIG
 };
 
 
