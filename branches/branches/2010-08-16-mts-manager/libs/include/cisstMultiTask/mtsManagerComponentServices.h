@@ -97,7 +97,7 @@ public:
     template <class __classType>
     bool ChangeStateEventHandler(void (__classType::*method)(const mtsComponentStateChange &),
                                  __classType * classInstantiation,
-                                 mtsEventQueueingPolicy queuingPolicy = MTS_INTERFACE_EVENT_POLICY)
+                                 mtsEventQueueingPolicy queueingPolicy = MTS_INTERFACE_EVENT_POLICY)
     {
         if (InternalInterfaceRequired) {
             InternalInterfaceRequired->AddEventHandlerWrite(method, classInstantiation, 
