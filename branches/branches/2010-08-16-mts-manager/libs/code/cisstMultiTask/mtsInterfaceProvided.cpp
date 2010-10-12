@@ -498,7 +498,27 @@ mtsCommandWriteReturn * mtsInterfaceProvided::AddCommandWriteReturn(mtsCallableW
 }
 
 
-mtsCommandReadBase * mtsInterfaceProvided::AddCommandRead(mtsCommandReadBase * command)
+mtsCommandRead * mtsInterfaceProvided::AddCommandRead(mtsCallableReadBase * callable,
+                                                      const std::string & name,
+                                                      mtsGenericObject * argumentPrototype)
+{
+    // check that the input is valid
+    if (callable) {
+        mtsCommandRead * command = new mtsCommandRead(callable, name, argumentPrototype);
+        if (!CommandsRead.AddItem(name, command, CMN_LOG_LOD_INIT_ERROR)) {
+            delete command;
+            CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead: unable to add command \""
+                                     << command->GetName() << "\"" << std::endl;
+        }
+        return command;
+    }
+    CMN_LOG_CLASS_INIT_ERROR << "AddCommandRead: attempt to add undefined command (null callable pointer) to interface \""
+                             << this->GetName() << "\"" << std::endl;
+    return 0;
+}
+
+
+mtsCommandRead * mtsInterfaceProvided::AddCommandRead(mtsCommandRead * command)
 {
     if (command) {
         if (!CommandsRead.AddItem(command->GetName(), command, CMN_LOG_LOD_INIT_ERROR)) {
@@ -767,7 +787,7 @@ mtsCommandWriteReturn * mtsInterfaceProvided::GetCommandWriteReturn(const std::s
 }
 
 
-mtsCommandReadBase * mtsInterfaceProvided::GetCommandRead(const std::string & commandName) const {
+mtsCommandRead * mtsInterfaceProvided::GetCommandRead(const std::string & commandName) const {
     if (this->OriginalInterface) {
         return this->OriginalInterface->GetCommandRead(commandName);
     }

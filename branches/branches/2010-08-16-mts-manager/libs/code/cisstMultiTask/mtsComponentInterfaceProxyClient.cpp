@@ -245,8 +245,8 @@ void mtsComponentInterfaceProxyClient::ReceiveExecuteCommandReadSerialized(const
 
     // Create a temporary argument which includes dynamic allocation internally.
     // Therefore, this object should be deallocated manually.
-    mtsGenericObject * tempArgument = dynamic_cast<mtsGenericObject *>(
-        functionReadProxy->GetCommand()->GetArgumentClassServices()->Create());
+    mtsGenericObject * tempArgument =
+        dynamic_cast<mtsGenericObject *>(functionReadProxy->GetCommand()->GetArgumentPrototype()->Services()->Create());
     if (!tempArgument) {
         LogError(mtsComponentInterfaceProxyClient, "ReceiveExecuteCommandReadSerialized: failed to create a temporary argument");
         return;

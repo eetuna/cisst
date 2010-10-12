@@ -69,7 +69,7 @@ http://www.cisst.org/cisst/license.txt.
 // Wrap commands
 %include "cisstMultiTask/mtsCommandBase.h"
 %include "cisstMultiTask/mtsCommandVoid.h"
-%include "cisstMultiTask/mtsCommandReadBase.h"
+%include "cisstMultiTask/mtsCommandRead.h"
 %include "cisstMultiTask/mtsCommandWriteBase.h"
 %include "cisstMultiTask/mtsCommandQualifiedReadBase.h"
 
@@ -101,11 +101,11 @@ http://www.cisst.org/cisst/license.txt.
 }
 
 // Extend mtsCommandRead
-%extend mtsCommandReadBase {
+%extend mtsCommandRead {
     %pythoncode {
         def UpdateFromC(self):
             try:
-                tmpObject = self.GetArgumentClassServices().Create()
+                tmpObject = self.GetArgumentPrototype().Services().Create()
                 self.ArgumentType = tmpObject.__class__
             except TypeError, e:
                 print 'Read command ', self.GetName(), ': ', e

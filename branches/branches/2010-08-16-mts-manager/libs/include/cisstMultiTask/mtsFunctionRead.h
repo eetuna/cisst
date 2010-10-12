@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionBase.h>
-#include <cisstMultiTask/mtsCommandReadBase.h>
+#include <cisstMultiTask/mtsCommandRead.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
@@ -37,13 +37,13 @@ http://www.cisst.org/cisst/license.txt.
 
 class CISST_EXPORT mtsFunctionRead: public mtsFunctionBase {
 protected:
-    typedef mtsCommandReadBase CommandType;
+    typedef mtsCommandRead CommandType;
     CommandType * Command;
 
     template <typename _userType, bool>
     class ConditionalWrap {
     public:
-        static mtsExecutionResult Call(mtsCommandReadBase * command, _userType & argument) {
+        static mtsExecutionResult Call(mtsCommandRead * command, _userType & argument) {
             mtsGenericObjectProxyRef<_userType> argumentWrapped(argument); 
             return command->Execute(argumentWrapped);
         }
@@ -51,7 +51,7 @@ protected:
     template <typename _userType>
     class ConditionalWrap<_userType, true> {
     public:
-        static mtsExecutionResult Call(mtsCommandReadBase * command, _userType & argument) {
+        static mtsExecutionResult Call(mtsCommandRead * command, _userType & argument) {
             return command->Execute(argument);
         }
     };

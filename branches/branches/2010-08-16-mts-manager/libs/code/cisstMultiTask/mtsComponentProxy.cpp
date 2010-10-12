@@ -962,7 +962,7 @@ void mtsComponentProxy::ExtractInterfaceProvidedDescription(
     }
 
     // Extract read commands
-    mtsCommandReadBase * readCommand;
+    mtsCommandRead * readCommand;
     CommandReadElement elementCommandRead;
     const std::vector<std::string> namesOfReadCommand = endUserInterface->GetNamesOfCommandsRead();
     for (size_t i = 0; i < namesOfReadCommand.size(); ++i) {

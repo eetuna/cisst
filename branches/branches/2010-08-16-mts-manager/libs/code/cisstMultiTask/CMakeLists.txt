@@ -47,6 +47,8 @@ set (SOURCE_FILES
      mtsCommandFilteredWrite.cpp
      mtsCommandFilteredQueuedWrite.cpp
 
+     mtsCommandRead.cpp
+
      mtsMailBox.cpp
      mtsStateIndex.cpp
      mtsStateTable.cpp
@@ -120,8 +122,8 @@ set (HEADER_FILES
 
      mtsCallableReadBase.h
      mtsCallableReadMethod.h
+     mtsCallableReadReturnVoidMethod.h
      mtsCommandRead.h
-     mtsCommandReadBase.h
      mtsCommandWrite.h
      mtsCommandWriteBase.h
      mtsMulticastCommandWrite.h

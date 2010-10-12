@@ -73,8 +73,7 @@ class mtsFunctionVoidReturn;
 // read commands
 class mtsCallableReadBase;
 template <class _classType, class _argumentType> class mtsCallableReadMethod;
-class mtsCommandReadBase;
-template <class _classType, class _argumentType> class mtsCommandRead;
+class mtsCommandRead;
 class mtsFunctionRead;
 
 // write commands

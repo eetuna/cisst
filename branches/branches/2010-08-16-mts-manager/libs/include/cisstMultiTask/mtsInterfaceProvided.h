@@ -35,6 +35,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCallableVoidFunction.h>
 #include <cisstMultiTask/mtsCallableVoidReturnMethod.h>
 #include <cisstMultiTask/mtsCallableWriteReturnMethod.h>
+#include <cisstMultiTask/mtsCallableReadMethod.h>
+#include <cisstMultiTask/mtsCallableReadReturnVoidMethod.h>
 #include <cisstMultiTask/mtsInterfaceProvidedOrOutput.h>
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 
@@ -116,7 +118,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     typedef cmnNamedMap<mtsCommandWriteReturn> CommandWriteReturnMapType;
 
     /*! Typedef for a map of name and read commands. */
-    typedef cmnNamedMap<mtsCommandReadBase> CommandReadMapType;
+    typedef cmnNamedMap<mtsCommandRead> CommandReadMapType;
 
     /*! Typedef for a map of name and qualified read commands. */
     typedef cmnNamedMap<mtsCommandQualifiedReadBase> CommandQualifiedReadMapType;
@@ -169,7 +171,7 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
     mtsCommandVoidReturn * GetCommandVoidReturn(const std::string & commandName) const;
     mtsCommandWriteBase * GetCommandWrite(const std::string & commandName) const;
     mtsCommandWriteReturn * GetCommandWriteReturn(const std::string & commandName) const;
-    mtsCommandReadBase * GetCommandRead(const std::string & commandName) const;
+    mtsCommandRead * GetCommandRead(const std::string & commandName) const;
     mtsCommandQualifiedReadBase * GetCommandQualifiedRead(const std::string & commandName) const;
     //@}
 
@@ -309,19 +311,23 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       \returns pointer on the newly created and added command, null pointer (0) if creation or addition failed (name already used) */
     //@{
     template <class __classType, class __argumentType>
-    inline mtsCommandReadBase * AddCommandRead(void (__classType::*method)(__argumentType &) const,
-                                               __classType * classInstantiation,
-                                               const std::string & commandName,
-                                               const __argumentType & argumentPrototype) {
-        return this->AddCommandRead(new mtsCommandRead<__classType, __argumentType>(method, classInstantiation, commandName, argumentPrototype));
+    inline mtsCommandRead * AddCommandRead(void (__classType::*method)(__argumentType &) const,
+                                           __classType * classInstantiation,
+                                           const std::string & commandName,
+                                           const __argumentType & argumentPrototype) {
+        return this->AddCommandRead(new mtsCallableReadReturnVoidMethod<__classType, __argumentType>(method, classInstantiation),
+                                    commandName,
+                                    mtsGenericTypes<__argumentType>::ConditionalCreate(argumentPrototype, commandName));
     }
 
     template <class __classType, class __argumentType>
-    inline mtsCommandReadBase * AddCommandRead(void (__classType::*method)(__argumentType &) const,
-                                               __classType * classInstantiation,
-                                               const std::string & commandName)
+    inline mtsCommandRead * AddCommandRead(void (__classType::*method)(__argumentType &) const,
+                                           __classType * classInstantiation,
+                                           const std::string & commandName)
     {
-        return this->AddCommandRead(method, classInstantiation, commandName, __argumentType());
+        return this->AddCommandRead(new mtsCallableReadReturnVoidMethod<__classType, __argumentType>(method, classInstantiation),
+                                    commandName,
+                                    mtsGenericTypes<__argumentType>::ConditionalCreate(__argumentType(), commandName));
     }
     //@}
 
@@ -332,8 +338,8 @@ class CISST_EXPORT mtsInterfaceProvided: public mtsInterfaceProvidedOrOutput {
       command to get the value at the specified time. */
     // Note: Could use string for state, rather than the variable
     template <class _elementType>
-    mtsCommandReadBase * AddCommandReadState(const mtsStateTable & stateTable,
-                                             const _elementType & stateData, const std::string & commandName);
+    mtsCommandRead * AddCommandReadState(const mtsStateTable & stateTable,
+                                         const _elementType & stateData, const std::string & commandName);
 
     /*! Adds command object to read history (i.e., vector of data)
       from the state table. */
@@ -528,11 +534,13 @@ protected:
                                                   mtsGenericObject * resultPrototype,
                                                   mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
 
-    mtsCommandReadBase * AddCommandRead(mtsCommandReadBase * command);
-
     mtsCommandWriteBase * AddCommandFilteredWrite(mtsCommandQualifiedReadBase * filter,
                                                   mtsCommandWriteBase * command,
                                                   mtsCommandQueueingPolicy queueingPolicy = MTS_INTERFACE_COMMAND_POLICY);
+
+    mtsCommandRead * AddCommandRead(mtsCallableReadBase * callable,
+                                    const std::string & name,
+                                    mtsGenericObject * argumentPrototype);
 
     mtsCommandQualifiedReadBase * AddCommandQualifiedRead(mtsCommandQualifiedReadBase * command);
 
@@ -544,6 +552,7 @@ protected:
     //@{
     mtsCommandVoid * AddCommandVoid(mtsCommandVoid * command);
     mtsCommandVoidReturn * AddCommandVoidReturn(mtsCommandVoidReturn * command);
+    mtsCommandRead * AddCommandRead(mtsCommandRead * command);
     //@}
 
     bool AddEvent(const std::string & commandName, mtsMulticastCommandVoid * generator);
@@ -555,8 +564,8 @@ protected:
 #ifndef SWIG
 
 template <class _elementType>
-mtsCommandReadBase * mtsInterfaceProvided::AddCommandReadState(const mtsStateTable & stateTable,
-                                                               const _elementType & stateData, const std::string & commandName)
+mtsCommandRead * mtsInterfaceProvided::AddCommandReadState(const mtsStateTable & stateTable,
+                                                           const _elementType & stateData, const std::string & commandName)
 {
     typedef typename mtsGenericTypes<_elementType>::FinalType FinalType;
     typedef typename mtsStateTable::Accessor<_elementType> AccessorType;
@@ -568,8 +577,9 @@ mtsCommandReadBase * mtsInterfaceProvided::AddCommandReadState(const mtsStateTab
     }
     this->AddCommandQualifiedRead(new mtsCommandQualifiedRead<AccessorType, mtsStateIndex, FinalType>
                                   (&AccessorType::Get, stateAccessor, commandName, mtsStateIndex(), FinalType(stateData)));
-    return this->AddCommandRead(new mtsCommandRead<AccessorType, FinalType>
-                                (&AccessorType::GetLatest, stateAccessor, commandName, FinalType(stateData)));
+    return this->AddCommandRead(new mtsCallableReadMethod<AccessorType, FinalType>(&AccessorType::GetLatest, stateAccessor),
+                                commandName,
+                                mtsGenericTypes<FinalType>::ConditionalCreate(FinalType(stateData), commandName));
 }
 
 template <class _elementType>

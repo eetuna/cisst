@@ -28,7 +28,7 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _mtsCommandReadProxy_h
 #define _mtsCommandReadProxy_h
 
-#include <cisstMultiTask/mtsCommandReadBase.h>
+#include <cisstMultiTask/mtsCommandRead.h>
 #include <cisstMultiTask/mtsCommandProxyBase.h>
 #include <cisstMultiTask/mtsProxySerializer.h>
 
@@ -39,7 +39,7 @@ http://www.cisst.org/cisst/license.txt.
   method is called, the command id with payload is sent to the connected peer
   interface across a network.
 */
-class mtsCommandReadProxy: public mtsCommandReadBase, public mtsCommandProxyBase
+class mtsCommandReadProxy: public mtsCommandRead, public mtsCommandProxyBase
 {
     friend class mtsComponentProxy;
 
@@ -49,7 +49,7 @@ protected:
 
 public:
     /*! Typedef for base type */
-    typedef mtsCommandReadBase BaseType;
+    typedef mtsCommandRead BaseType;
 
     /*! Constructor. Command proxy is disabled by defaultand is enabled when
         command id and network proxy are set. */

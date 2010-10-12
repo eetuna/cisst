@@ -19,7 +19,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 #include <cisstMultiTask/mtsFunctionRead.h>
-#include <cisstMultiTask/mtsCommandReadBase.h>
+#include <cisstMultiTask/mtsCommandRead.h>
 
 
 mtsFunctionRead::~mtsFunctionRead()
@@ -51,7 +51,7 @@ mtsExecutionResult mtsFunctionRead::operator()(mtsGenericObject & argument) cons
 }
 
 
-mtsCommandReadBase * mtsFunctionRead::GetCommand(void) const {
+mtsCommandRead * mtsFunctionRead::GetCommand(void) const {
     return Command;
 }
 

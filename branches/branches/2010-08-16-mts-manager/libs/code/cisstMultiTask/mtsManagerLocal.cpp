@@ -1101,13 +1101,13 @@ void mtsManagerLocal::GetDescriptionOfCommand(std::string & description,
             break;
         case 'R':
             {
-                mtsCommandReadBase * command = interfaceProvided->GetCommandRead(actualCommandName);
+                mtsCommandRead * command = interfaceProvided->GetCommandRead(actualCommandName);
                 if (!command) {
                     description = "No read command found for ";
                     description += actualCommandName;
                     return;
                 }
-                description += command->GetArgumentClassServices()->GetName();
+                description += command->GetArgumentPrototype()->Services()->GetName();
             }
             break;
         case 'Q':
@@ -1317,7 +1317,7 @@ void mtsManagerLocal::GetArgumentInformation(std::string & argumentName,
     if (!interfaceProvided) return;
 
     // Get argument name
-    mtsCommandReadBase * command;
+    mtsCommandRead * command;
     char commandType = *commandName.c_str();
     std::string actualCommandName = commandName.substr(3, commandName.size() - 2);
 
@@ -1337,7 +1337,7 @@ void mtsManagerLocal::GetArgumentInformation(std::string & argumentName,
                 argumentName = "No read command found";
                 return;
             }
-            argumentName = command->GetArgumentClassServices()->GetName();
+            argumentName = command->GetArgumentPrototype()->Services()->GetName();
             break;
         default:
             argumentName = "Failed to get argument information";
@@ -1373,14 +1373,14 @@ void mtsManagerLocal::GetValuesOfCommand(SetOfValues & values,
 
     // Get argument name
     std::string actualCommandName = commandName.substr(3, commandName.size() - 2);
-    mtsCommandReadBase * command = interfaceProvided->GetCommandRead(actualCommandName);
+    mtsCommandRead * command = interfaceProvided->GetCommandRead(actualCommandName);
     if (!command) {
         CMN_LOG_CLASS_INIT_ERROR << "GetValuesOfCommand: no command found: " << actualCommandName << std::endl;
         return;
     };
 
     // Get argument prototype
-    mtsGenericObject * argument = dynamic_cast<mtsGenericObject*>(command->GetArgumentClassServices()->Create());
+    mtsGenericObject * argument = dynamic_cast<mtsGenericObject*>(command->GetArgumentPrototype()->Services()->Create());
     if (!argument) {
         CMN_LOG_CLASS_INIT_ERROR << "GetValuesOfCommand: failed to create temporary argument" << std::endl;
         return;
