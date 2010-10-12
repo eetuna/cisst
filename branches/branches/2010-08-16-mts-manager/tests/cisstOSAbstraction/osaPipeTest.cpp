@@ -29,7 +29,7 @@ void osaPipeTest::TestPipeInternalsSize(void) {
 
 void osaPipeTest::TestPipe() {
 	osaPipe pipe;
-	std::string testProgramName = std::string(CISST_BUILD_ROOT) + std::string("/tests/bin/cisstPipeUtility");
+	std::string testProgramName = std::string(CISST_BUILD_ROOT) + std::string("/tests/bin/osaPipeUtility");
 	char * const command[] = {(char * const) testProgramName.c_str(), NULL};
 	pipe.Open(command, "rw");
 
