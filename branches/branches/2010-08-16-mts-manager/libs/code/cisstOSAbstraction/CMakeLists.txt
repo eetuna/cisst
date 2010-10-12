@@ -29,7 +29,7 @@ SET(SOURCE_FILES
     osaDynamicLoaderAndFactory.cpp
     osaGetTime.cpp
     osaMutex.cpp
-	 osaPipe.cpp
+    osaPipe.cpp
     osaSerialPort.cpp
     osaSleep.cpp
     osaSocket.cpp
@@ -50,7 +50,7 @@ SET(HEADER_FILES
     osaExport.h
     osaGetTime.h
     osaMutex.h
-	 osaPipe.h
+    osaPipe.h
     osaSerialPort.h
     osaSleep.h
     osaSocket.h

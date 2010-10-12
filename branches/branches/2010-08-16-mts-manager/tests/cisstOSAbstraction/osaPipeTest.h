@@ -18,21 +18,28 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#ifndef _osaPipeTest_h
+#define _osaPipeTest_h
+
 #include <cppunit/TestCase.h>
 #include <cppunit/extensions/HelperMacros.h>
 
 class osaPipeTest : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(osaPipeTest);
-	CPPUNIT_TEST(TestPipe);
+    {
+        CPPUNIT_TEST(TestPipe);
+    }
 	CPPUNIT_TEST(TestPipeInternalsSize);
 
 	CPPUNIT_TEST_SUITE_END();
 
-	public:
-		/*! Test that structure for internal size is large enough */
-		void TestPipeInternalsSize(void);
+public:
+    /*! Test that structure for internal size is large enough */
+    void TestPipeInternalsSize(void);
 
-		/*! Test communication with UDraw using a pipe */
-		void TestPipe(void);
+    /*! Test communication with cisstOSAbstractionTestsPipeUtility */
+    void TestPipe(void);
 };
+
+#endif // _osaPipeTest_h
