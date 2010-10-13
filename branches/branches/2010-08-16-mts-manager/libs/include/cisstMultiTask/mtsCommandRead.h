@@ -32,6 +32,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsCommandBase.h>
 #include <cisstMultiTask/mtsGenericObjectProxy.h>
 
+// Always include last
+#include <cisstMultiTask/mtsExport.h>
 
 /*!
   \ingroup cisstMultiTask
@@ -39,7 +41,7 @@ http://www.cisst.org/cisst/license.txt.
   A templated version of command object with one argument for
   execute. The template argument is the interface type whose method is
   contained in the command object. */
-class mtsCommandRead: public mtsCommandBase {
+class CISST_EXPORT mtsCommandRead: public mtsCommandBase {
 public:
     /*! Base type */
     typedef mtsCommandBase BaseType;
