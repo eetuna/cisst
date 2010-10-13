@@ -56,9 +56,9 @@ ui3Manager::ui3Manager(const std::string & name):
     AddStream(svlTypeImageRGBStereo, "StereoVideo#3");
 
     // add the UI manager to the task manager
-    this->TaskManager = mtsTaskManager::GetInstance();
-    CMN_ASSERT(TaskManager);
-    TaskManager->AddTask(this);
+    this->ComponentManager = mtsComponentManager::GetInstance();
+    CMN_ASSERT(ComponentManager);
+    ComponentManager->AddComponent(this);
 
     this->Manager = this;
     this->AddMenuBar(true);
@@ -89,8 +89,8 @@ bool ui3Manager::SetupMaM(const std::string & mamDevice, const std::string & mam
     requiredInterface->AddEventHandlerWrite(&ui3Manager::MaMModeEventHandler, this, "Button");
 
     // connect the left master device to the right master required interface
-    this->TaskManager->Connect(this->GetName(), "MaM",
-                               mamDevice, mamInterface);
+    this->ComponentManager->Connect(this->GetName(), "MaM",
+                                    mamDevice, mamInterface);
     
     // update flag
     this->HasMaMDevice = true;
@@ -219,9 +219,9 @@ bool ui3Manager::AddBehavior(ui3BehaviorBase * behavior,
     behavior->SecondaryMasterButtonEvent.Bind(providedInterface->AddEventWrite("SecondaryMasterButton", prmEventButton()));
 
     // add the task to the task manager (mts) code 
-    this->TaskManager->AddTask(behavior);
-    this->TaskManager->Connect(behavior->GetName(), "ManagerInterface" + behavior->GetName(),
-                               this->GetName(), "BehaviorInterface" + behavior->GetName());
+    this->ComponentManager->AddComponent(behavior);
+    this->ComponentManager->Connect(behavior->GetName(), "ManagerInterface" + behavior->GetName(),
+                                    this->GetName(), "BehaviorInterface" + behavior->GetName());
     // add a button in the main menu bar with callback
     this->MenuBar->AddClickButton(behavior->GetName(),
                                   position,
@@ -312,7 +312,7 @@ void ui3Manager::ConnectAll(void)
                 case ui3MasterArm::PRIMARY:
                     requiredInterface->AddFunction(commandName,
                                                    (*iterator)->GetPrimaryMasterPosition,
-                                                   mtsRequired);
+                                                   MTS_REQUIRED);
                     CMN_LOG_CLASS_INIT_DEBUG << "ConnectAll: added required command \""
                                              << commandName << "\" to required interface \"ManagerInterface\" of behavior \"" 
                                              << (*iterator)->GetName() << "\" to be bound to \"GetPrimaryMasterPosition\"" << std::endl;
@@ -320,7 +320,7 @@ void ui3Manager::ConnectAll(void)
                 case ui3MasterArm::SECONDARY:
                     requiredInterface->AddFunction(commandName,
                                                    (*iterator)->GetSecondaryMasterPosition,
-                                                   mtsRequired);
+                                                   MTS_REQUIRED);
                     CMN_LOG_CLASS_INIT_DEBUG << "ConnectAll: added required command \""
                                              << commandName << "\" to required interface \"ManagerInterface\" of behavior \"" 
                                              << (*iterator)->GetName() << "\" to be bound to \"GetSecondaryMasterPosition\"" << std::endl;
@@ -336,8 +336,8 @@ void ui3Manager::ConnectAll(void)
     for (iterator = this->Behaviors.begin();
          iterator != end;
          iterator++) {
-        this->TaskManager->Connect((*iterator)->GetName(), "ManagerInterface",
-                                   this->GetName(), "BehaviorsInterface");
+        this->ComponentManager->Connect((*iterator)->GetName(), "ManagerInterface",
+                                        this->GetName(), "BehaviorsInterface");
     }
 }
 
@@ -544,7 +544,8 @@ void ui3Manager::Run(void)
         armPointer->Cursor->Set2D(isOverMenu);
         if (selectedButton) {
             if (armPointer->ButtonReleased) {
-                selectedButton->CallBack();
+                // todo, add error code check
+                selectedButton->Callable->Execute();
             }
         }
 
