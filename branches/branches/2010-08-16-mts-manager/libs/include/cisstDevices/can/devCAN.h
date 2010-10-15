@@ -21,6 +21,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <iostream>
 #include <iomanip>
 
+#include <cisstVector/vctDynamicVector.h>
+
 //! Generic CAN bus
 /**
    The only thing this class does is to define the interface that must be
@@ -107,10 +109,10 @@ public:
     /**
        Set the id of the CAN frame and the message
     */
-    Frame( Frame::ID canid, 
-	   Frame::DataField data, 
-	   Frame::DataLength nbytes );
-    
+    Frame( Frame::ID canid, Frame::DataField data, Frame::DataLength nbytes );
+
+    Frame( Frame::ID canid, const vctDynamicVector<Frame::Data>& data );
+
     //! Return the identifier of the frame
     Frame::ID GetID() const { return id; }
   
