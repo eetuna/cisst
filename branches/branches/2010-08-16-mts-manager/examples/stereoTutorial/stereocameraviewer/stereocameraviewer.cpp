@@ -43,6 +43,7 @@ public:
 		,ImageShifter(0)
         ,ImageWriterFilter(0)
         ,VideoWriterFilter(0)
+        ,Gamma(0)
         ,SplitterOutput(0)
         ,Recording(false)
     {
@@ -50,6 +51,8 @@ public:
 
     void OnUserEvent(unsigned int CMN_UNUSED(winid), bool ascii, unsigned int eventid)
     {
+        double gamma;
+
         // handling user inputs
         if (ascii) {
             switch (eventid) {
@@ -91,6 +94,22 @@ public:
 						cout << endl << " >>> Adjustments disabled <<<" << endl;
 					}
                 }
+                break;
+
+                case '9':
+                    if (Gamma) {
+                        Gamma->GetGamma(gamma);
+                        cout << endl << " >>> Gamma: " << gamma << endl;
+                        Gamma->SetGamma(gamma - 5.0);
+                    }
+                break;
+
+                case '0':
+                    if (Gamma) {
+                        Gamma->GetGamma(gamma);
+                        cout << endl << " >>> Gamma: " << gamma << endl;
+                        Gamma->SetGamma(gamma + 5.0);
+                    }
                 break;
 
                 default:
@@ -141,6 +160,7 @@ public:
     svlFilterImageTranslation* ImageShifter;
     svlFilterImageFileWriter* ImageWriterFilter;
     svlFilterVideoFileWriter* VideoWriterFilter;
+    svlFilterImageExposureCorrection* Gamma;
     svlFilterOutput* SplitterOutput;
     bool Recording;
 };
@@ -157,6 +177,8 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     // instantiating SVL stream and filters
     svlStreamManager stream(8);
     svlFilterSourceVideoCapture source(2);
+    svlFilterVideoExposureManager exposure;
+    svlFilterImageExposureCorrection gamma;
     svlFilterSplitter splitter;
     svlFilterImageTranslation shifter;
     svlFilterImageResizer resizer;
@@ -167,16 +189,6 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     svlFilterImageFileWriter imagewriter;
     svlFilterVideoFileWriter videowriter;
 
-    // Add framerate overlay
-    svlOverlayFramerate fps_overlay(SVL_LEFT,              // background video channel
-                                    true,                  // visible
-                                    &window,        // filter
-                                    svlRect(4, 4, 47, 20), // bounding rectangle
-                                    14.0,                  // font size
-                                    svlRGB(255, 255, 255), // text color
-                                    svlRGB(0, 0, 0));      // background color
-    overlay.AddOverlay(fps_overlay);
-
     // setup source
     // Delete "device.dat" to reinitialize input device
     if (source.LoadSettings("stereodevice.dat") != SVL_OK) {
@@ -184,6 +196,16 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
         source.DialogSetup(SVL_LEFT);
         source.DialogSetup(SVL_RIGHT);
     }
+
+    // setup exposure manager
+    exposure.SetVideoCaptureFilter(&source);
+    exposure.SetSaturationTolerance(0.1);
+    exposure.SetSaturationThreshold(230);
+    exposure.SetMaxShutter(1305);
+    exposure.SetMaxGain(1000);
+
+    // setup gamma correction
+    gamma.SetGamma(0.0);
 
     // setup splitter
     splitter.AddOutput("output2", 8, 200);
@@ -229,6 +251,7 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     // setup image window
     window_cb.ImageWriterFilter = &imagewriter;
 	window_cb.ImageShifter = &shifter;
+    window_cb.Gamma = &gamma;
     if (save == true) {
         window_cb.VideoWriterFilter = &videowriter;
         window_cb.SplitterOutput = splitteroutput;
@@ -250,12 +273,40 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
 		}
 	}
 
+    // Add buffer status overlay
+    svlOverlayAsyncOutputProperties buffer_overlay(SVL_LEFT,
+                                                   true,
+                                                   splitteroutput,
+                                                   svlRect(4, 4, 225, 20),
+                                                   14.0,
+                                                   svlRGB(255, 255, 255),
+                                                   svlRGB(0, 128, 0));
+    if (save) overlay.AddOverlay(buffer_overlay);
+
+    // Add framerate overlay
+    svlOverlayFramerate fps_overlay(SVL_LEFT,               // background video channel
+                                    true,                   // visible
+                                    &window,                // filter
+                                    svlRect(4, 24, 47, 40), // bounding rectangle
+                                    14.0,                   // font size
+                                    svlRGB(255, 255, 255),  // text color
+                                    svlRGB(128, 0, 0));     // background color
+    overlay.AddOverlay(fps_overlay);
+
     // chain filters to pipeline
     svlFilterOutput *output;
 
     // Add source
     stream.SetSourceFilter(&source);
         output = source.GetOutput();
+
+    // Add exposure correction
+    output->Connect(exposure.GetInput());
+        output = exposure.GetOutput();
+
+    // Add gamma correction
+    output->Connect(gamma.GetInput());
+        output = gamma.GetOutput();
 
     // Add splitter
     output->Connect(splitter.GetInput());
@@ -291,8 +342,8 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     output->Connect(window.GetInput());
         output = window.GetOutput();
 
-    // If saving enabled, then add video writer on separate branch
     if (save == true) {
+        // If saving enabled, then add video writer on separate branch
         splitteroutput->SetBlock(true);
         splitteroutput->Connect(videowriter.GetInput());
     }
@@ -312,6 +363,8 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
         cerr << "  In image window:" << endl;
         cerr << "    'a'   - Enable/disable adjustments" << endl;
         cerr << "    's'   - Take image snapshots" << endl;
+        cerr << "    '9'   - Reduce gamma" << endl;
+        cerr << "    '0'   - Increase gamma" << endl;
         if (save == true) {
             cerr << "    SPACE - Video recorder control: Record/Pause" << endl;
         }
