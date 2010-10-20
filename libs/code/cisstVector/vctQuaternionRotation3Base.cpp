@@ -51,39 +51,45 @@ vctQuaternionRotation3BaseFromRaw(vctQuaternionRotation3Base<_quaternionType> & 
     typedef typename _quaternionType::value_type value_type;
     typedef typename _quaternionType::TypeTraits TypeTraits;
     typedef typename _quaternionType::NormType NormType;
+    typedef typename _matrixType::value_type trace_type;
+    const trace_type one = trace_type(1), two = trace_type(2), quarter = trace_type(0.25);
 
-    NormType trace, traceInverse;
-    trace = NormType(1.0) + matrixRotation.Element(0, 0) + matrixRotation.Element(1, 1) + matrixRotation.Element(2, 2);
-    if (vctUnaryOperations<NormType>::AbsValue::Operate(trace) > cmnTypeTraits<NormType>::Tolerance()) {
-        trace = NormType(sqrt(trace) * 2.0);
-        traceInverse = NormType(1.0) / trace;
-        quaternionRotation.X() = value_type((matrixRotation.Element(2, 1) - matrixRotation.Element(1, 2)) * traceInverse);
-        quaternionRotation.Y() = value_type((matrixRotation.Element(0, 2) - matrixRotation.Element(2, 0)) * traceInverse);
-        quaternionRotation.Z() = value_type((matrixRotation.Element(1, 0) - matrixRotation.Element(0, 1)) * traceInverse);
-        quaternionRotation.R() = value_type(0.25 * trace);
+    trace_type ftrace, ftraceInverse;
+    const trace_type el_0_0 = matrixRotation.Element(0, 0);
+    const trace_type el_1_1 = matrixRotation.Element(1, 1);
+    const trace_type el_2_2 = matrixRotation.Element(2, 2);
+    const trace_type trace = one + el_0_0 + el_1_1 + el_2_2;
+    if (vctUnaryOperations<trace_type>::AbsValue::Operate(trace) > cmnTypeTraits<trace_type>::Tolerance()) {
+        ftrace = trace_type(sqrt(trace)) * two;
+        ftraceInverse = one / ftrace;
+        quaternionRotation.X() = value_type((matrixRotation.Element(2, 1) - matrixRotation.Element(1, 2)) * ftraceInverse);
+        quaternionRotation.Y() = value_type((matrixRotation.Element(0, 2) - matrixRotation.Element(2, 0)) * ftraceInverse);
+        quaternionRotation.Z() = value_type((matrixRotation.Element(1, 0) - matrixRotation.Element(0, 1)) * ftraceInverse);
+        quaternionRotation.R() = value_type(quarter * ftrace);
     } else 
-        if (matrixRotation.Element(0, 0) > matrixRotation.Element(1, 1) && matrixRotation.Element(0, 0) > matrixRotation.Element(2, 2))  {
-            trace  = NormType(sqrt(1.0 + matrixRotation.Element(0, 0) - matrixRotation.Element(1, 1) - matrixRotation.Element(2, 2)) * 2.0);
-            traceInverse = NormType(1.0) / trace;
-            quaternionRotation.X() = value_type(0.25 * trace);
-            quaternionRotation.Y() = value_type((matrixRotation.Element(0, 1) + matrixRotation.Element(1, 0)) * traceInverse);
-            quaternionRotation.Z() = value_type((matrixRotation.Element(2, 0) + matrixRotation.Element(0, 2)) * traceInverse);
-            quaternionRotation.R() = value_type((matrixRotation.Element(1, 2) - matrixRotation.Element(2, 1)) * traceInverse);
-        } else if (matrixRotation.Element(1, 1) > matrixRotation.Element(2, 2)) {
-            trace  = NormType(sqrt(1.0 + matrixRotation.Element(1, 1) - matrixRotation.Element(0, 0) - matrixRotation.Element(2, 2)) * 2.0);
-            traceInverse = NormType(1.0) / trace;
-            quaternionRotation.X() = value_type((matrixRotation.Element(0, 1) + matrixRotation.Element(1, 0)) * traceInverse);
-            quaternionRotation.Y() = value_type(0.25 * trace);
-            quaternionRotation.Z() = value_type((matrixRotation.Element(1, 2) + matrixRotation.Element(2, 1)) * traceInverse);
-            quaternionRotation.R() = value_type((matrixRotation.Element(2, 0) - matrixRotation.Element(0, 2)) * traceInverse);
+        if ((el_0_0 >= el_1_1) && (el_0_0 >= el_2_2))  {
+            ftrace  = trace_type(sqrt(one + el_0_0 - el_1_1 - el_2_2)) * two;
+            ftraceInverse = one / ftrace;
+            quaternionRotation.X() = value_type(quarter * ftrace);
+            quaternionRotation.Y() = value_type((matrixRotation.Element(0, 1) + matrixRotation.Element(1, 0)) * ftraceInverse);
+            quaternionRotation.Z() = value_type((matrixRotation.Element(2, 0) + matrixRotation.Element(0, 2)) * ftraceInverse);
+            quaternionRotation.R() = value_type((matrixRotation.Element(1, 2) - matrixRotation.Element(2, 1)) * ftraceInverse);
+        } else if (el_1_1 >= el_2_2) {
+            ftrace  = trace_type(sqrt(one - el_0_0 + el_1_1  - el_2_2)) * two;
+            ftraceInverse = one / ftrace;
+            quaternionRotation.X() = value_type((matrixRotation.Element(0, 1) + matrixRotation.Element(1, 0)) * ftraceInverse);
+            quaternionRotation.Y() = value_type(quarter * ftrace);
+            quaternionRotation.Z() = value_type((matrixRotation.Element(1, 2) + matrixRotation.Element(2, 1)) * ftraceInverse);
+            quaternionRotation.R() = value_type((matrixRotation.Element(2, 0) - matrixRotation.Element(0, 2)) * ftraceInverse);
         } else {
-            trace  = NormType(sqrt(1.0 + matrixRotation.Element(2, 2) - matrixRotation.Element(0, 0) - matrixRotation.Element(1, 1)) * 2.0);
-            traceInverse = NormType(1.0) / trace;
-            quaternionRotation.X() = value_type((matrixRotation.Element(2, 0) + matrixRotation.Element(0, 2)) * traceInverse);
-            quaternionRotation.Y() = value_type((matrixRotation.Element(1, 2) + matrixRotation.Element(2, 1)) * traceInverse);
-            quaternionRotation.Z() = value_type(0.25 * trace);
-            quaternionRotation.R() = value_type((matrixRotation.Element(0, 1) - matrixRotation.Element(1, 0)) * traceInverse);
+            ftrace  = trace_type(sqrt(one - el_0_0 - el_1_1 + el_2_2) * two);
+            ftraceInverse = one / ftrace;
+            quaternionRotation.X() = value_type((matrixRotation.Element(2, 0) + matrixRotation.Element(0, 2)) * ftraceInverse);
+            quaternionRotation.Y() = value_type((matrixRotation.Element(1, 2) + matrixRotation.Element(2, 1)) * ftraceInverse);
+            quaternionRotation.Z() = value_type(quarter * ftrace);
+            quaternionRotation.R() = value_type((matrixRotation.Element(0, 1) - matrixRotation.Element(1, 0)) * ftraceInverse);
         }
+    quaternionRotation.NormalizedSelf();
 }
 
 
