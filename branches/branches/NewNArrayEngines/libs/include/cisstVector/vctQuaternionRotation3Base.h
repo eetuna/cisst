@@ -845,19 +845,14 @@ public:
       \sa AlmostEqual
     */
     inline bool AlmostEquivalent(const ThisType & other,
-                                 value_type tolerance = TypeTraits::Tolerance()) const {
-        ThisType differenceVector;
-        differenceVector.DifferenceOf(*this, other);
-        differenceVector.AbsSelf();
-        if (differenceVector.Lesser(tolerance)) {
-            return true;
-        }
-        differenceVector.SumOf(*this, other);
-        differenceVector.AbsSelf();
-        if (differenceVector.Lesser(tolerance)) {
-            return true;
-        }
-        return false;
+                                 value_type tolerance = TypeTraits::Tolerance()) const
+    {
+        const value_type thisNormSquare = NormSquare();
+        const value_type otherNormSquare = other.NormSquare();
+        const value_type thisDotOther = this->DotProduct(other);
+        bool result = abs(thisNormSquare - otherNormSquare) <= tolerance;
+        result = result && (abs(abs(thisDotOther) - thisNormSquare) <= tolerance);
+        return result;
     }
 
 
