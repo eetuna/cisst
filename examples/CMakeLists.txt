@@ -28,6 +28,7 @@ SET(CISST_EXAMPLES
     commonTutorial
     devicesTutorial
     interactiveTutorial
+    majorAxisRotations
     multiTaskTutorial
     nArrayBenchmark
     numericalTutorial
