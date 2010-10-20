@@ -449,7 +449,7 @@ public:
                             _elementOperationType::Operate(* reinterpret_cast<InputPointerType>(inputPointer) ) );
 
                     numberOfWrappedDimensions =
-						inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputStrides, inputSTND);
+						inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputCharStrides, inputSTND);
                 }
                 return incrementalResult;
 #else
@@ -563,7 +563,7 @@ public:
 								*reinterpret_cast<Input2PointerType>(input2Pointer) ) );
 
                     numberOfWrappedDimensions =
-                        input1LoopControl::IncrementPointers<_dimension>(input1Targets, input1Pointer, input1Strides, input1STND);
+                        input1LoopControl::IncrementPointers<_dimension>(input1Targets, input1Pointer, input1CharStrides, input1STND);
 
                     input2Pointer = input2LoopControl::SyncCurrentPointer(input2Pointer, input2OTND, numberOfWrappedDimensions);
                 }
@@ -659,7 +659,7 @@ public:
 						_elementOperationType::Operate(*reinterpret_cast<const inputTargetType *>(inputPointer), inputScalar) );
 
                     numberOfWrappedDimensions =
-                        inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputStrides, inputSTND);
+                        inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputCharStrides, inputSTND);
                 }
                 return incrementalResult;
 #else
@@ -788,7 +788,7 @@ public:
 						*reinterpret_cast<Input2PointerType>(input2Pointer));
 
                     numberOfWrappedDimensions =
-						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputStrides, outputSTND);
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputCharStrides, outputSTND);
 
 					input1Pointer = input1LoopControl::SyncCurrentPointer(input1Pointer, input1OTND, numberOfWrappedDimensions);
 					input2Pointer = input2LoopControl::SyncCurrentPointer(input2Pointer, input2OTND, numberOfWrappedDimensions);
@@ -912,7 +912,7 @@ public:
 						_elementOperationType::Operate(*reinterpret_cast<InputPointerType>(inputPointer), inputScalar);
 
                     numberOfWrappedDimensions =
-						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputStrides, outputSTND);
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputCharStrides, outputSTND);
 
 					inputPointer = inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
@@ -1027,7 +1027,7 @@ public:
 						_elementOperationType::Operate(inputScalar, *reinterpret_cast<InputPointerType>(inputPointer));
 
                     numberOfWrappedDimensions =
-						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputStrides, outputSTND);
+						outputLoopControl::IncrementPointers<_dimension>(outputTargets, outputPointer, outputCharStrides, outputSTND);
 
 					inputPointer = inputLoopControl::SyncCurrentPointer(inputPointer, inputOTND, numberOfWrappedDimensions);
                 }
@@ -1085,9 +1085,9 @@ public:
             if (inputOutputOwner.IsCompact()) {
                 vctDynamicCompactLoopEngines::CioSi<_elementOperationType>::Run(inputOutputOwner, inputScalar);
             } else {
+#if OFRI_NEW_NARRY_LOOP_CONTROL
                 const nsize_type & inputOutputSizes = inputOutputOwner.sizes();
                 const nstride_type & inputOutputStrides = inputOutputOwner.strides();
-#if OFRI_NEW_NARRY_LOOP_CONTROL
 				const stride_type inOutElementStrideForCharPtr = (stride_type)( ((typename InputOutputNArrayType::value_type *)(0)) + 1 );
 #  if CHAR_TARGET
 				typedef char inOutTargetType;
@@ -1113,7 +1113,7 @@ public:
 						*reinterpret_cast<InputOutputPointerType>(inputOutputPointer), inputScalar);
 
                     numberOfWrappedDimensions =
-						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inputOutputPointer, inputOutputStrides, inOutSTND);
+						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inputOutputPointer, inOutCharStrides, inOutSTND);
                 }
 #else
                 // declare all variables used for inputOwner
@@ -1411,7 +1411,7 @@ public:
 						*reinterpret_cast<InputOutputPointerType>(inputOutputPointer));
 
                     numberOfWrappedDimensions =
-						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inputOutputPointer, inputOutputStrides, inOutSTND);
+						inOutLoopControl::IncrementPointers<_dimension>(inOutTargets, inputOutputPointer, inOutCharStrides, inOutSTND);
                 }
 #else
                 // otherwise
@@ -1612,7 +1612,7 @@ public:
                     }
 
                     numberOfWrappedDimensions =
-						inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputStrides, inputSTND);
+						inputLoopControl::IncrementPointers<_dimension>(inputTargets, inputPointer, inputCharStrides, inputSTND);
                 }
                 minValue = minElement;
                 maxValue = maxElement;
