@@ -3,7 +3,7 @@
 #
 # CMakeLists for cisstCommon tests
 #
-# (C) Copyright 2003-2010 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2003-2011 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -17,6 +17,7 @@
 # all source files
 set (SOURCE_FILES
      cmnClassRegisterTest.cpp
+     cmnDataTest.cpp
      cmnLogLoDTest.cpp
      cmnObjectRegisterTest.cpp
      cmnPathTest.cpp
@@ -28,6 +29,7 @@ set (SOURCE_FILES
 # all header files
 set (HEADER_FILES
      cmnClassRegisterTest.h
+     cmnDataTest.h
      cmnLogLoDTest.h
      cmnObjectRegisterTest.h
      cmnPathTest.h
