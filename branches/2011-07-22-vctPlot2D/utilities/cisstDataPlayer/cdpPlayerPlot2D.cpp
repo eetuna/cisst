@@ -51,7 +51,7 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     // create the user interface
     Plot = new vctPlot2DOpenGLQtWidget(mainWidget);
     Plot->SetNumberOfPoints(100);
-    TracePointer = Plot->AddTrace("Data");
+    TracePointer = Plot->AddTrace("Scale-Data");
     VerticalLinePointer = Plot->AddVerticalLine("X");
 
     CentralLayout = new QGridLayout(mainWidget);

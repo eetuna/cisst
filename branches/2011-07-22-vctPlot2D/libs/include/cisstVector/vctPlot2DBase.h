@@ -154,7 +154,7 @@ public:
     /*! Storage for a given vertical line. */
     class CISST_EXPORT VerticalLine
     {
-        friend class vctPlot2DBase;
+		friend class vctPlot2DBase;
         friend class vctPlot2DOpenGL;
         friend class vctPlot2DVTK;
     public:
@@ -171,6 +171,40 @@ public:
         vctDouble3 Color;
         double LineWidth;
     };
+
+    class CISST_EXPORT Scale{
+        friend class vctPlot2DBase;
+        friend class vctPlot2DOpenGL;
+        friend class vctPlot2DVTK;
+    public:
+        Scale(const std::string & name, size_t pointDimension = 2);
+        ~Scale();
+        vctPlot2DBase::Trace * AddSignal(const std::string & name);
+        void AddVerticalLine(vctPlot2DBase::VerticalLine *);
+        void SetColor(const vctDouble3 & colorInRange0To1);
+        void ContinuousUpdate(void);        
+    protected:
+        // keep traces in a vector
+        typedef std::vector<Trace *>          TracesType;
+        TracesType                            Traces;
+        // maintain a map to find trace Id by name
+        typedef std::map<std::string, size_t> TracesIdType;
+        TracesIdType TracesId;
+    private:
+        size_t PointSize;
+        vctDouble3 Color;
+        double LineWidth;
+    };
+    // keep scale in a vector
+    typedef std::vector<Scale *> ScaleType;
+    ScaleType Scales;
+    typedef std::map<std::string, size_t> ScalesIdType;
+    ScalesIdType ScalesId;
+
+    //Scale Manipulate functions, one plot could have several Scales
+    vctPlot2DBase::Scale *AddScale(const std::string & name);
+    vctPlot2DBase::Scale *FindScale(const std::string & name);
+    // Scale *RemoveScale(const std::string &name);
 
 
     vctPlot2DBase(size_t PointSize = 2);
@@ -317,7 +351,7 @@ protected:
     // stores the min and max corresponding to the viewport
     vctDouble2 ViewingRangeX, ViewingRangeY;
     vctDouble2 Translation;
-    vctDouble2 Scale;
+    vctDouble2 ScaleValue;
 
     // continuous computation of scales and offsets
     bool Continuous;
