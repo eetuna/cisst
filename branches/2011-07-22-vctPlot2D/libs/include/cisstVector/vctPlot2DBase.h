@@ -180,9 +180,27 @@ public:
         Scale(const std::string & name, size_t pointDimension = 2);
         ~Scale();
         vctPlot2DBase::Trace * AddSignal(const std::string & name);
-        void AddVerticalLine(vctPlot2DBase::VerticalLine *);
+        vctPlot2DBase::VerticalLine * AddVerticalLine(vctPlot2DBase::VerticalLine *);
         void SetColor(const vctDouble3 & colorInRange0To1);
-        void ContinuousUpdate(void);        
+        void ContinuousUpdate(void);       
+        void SetContinuousFitX(bool fit);
+        void SetContinuousFitY(bool fit);
+
+        void ComputeDataRangeX(double & min, double & max, bool assumesDataSorted = false) const;
+        void ComputeDataRangeY(double & min, double & max);
+        void ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max);
+
+
+        // Centering X,Y or XY
+        // void FitX(double padding = 0.0);
+        // void FitX(double min, double max, double padding = 0.0);
+        // void FitY(double padding = 0.1);
+        // void FitY(double min, double max, double padding = 0.1);
+        // void FitXY(const vctDouble2 & padding = vctDouble2(0.0, 0.1));
+        // void FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & padding = vctDouble2(0.0, 0.1));
+        // void AlignMaxX(void);
+
+
     protected:
         // keep traces in a vector
         typedef std::vector<Trace *>          TracesType;
@@ -190,6 +208,18 @@ public:
         // maintain a map to find trace Id by name
         typedef std::map<std::string, size_t> TracesIdType;
         TracesIdType TracesId;
+        bool ContinuousFitX;
+        bool ContinuousFitY;      
+        bool Continuous;
+
+        // viewport sizes
+        vctDouble2 Viewport;
+        // stores the min and max corresponding to the viewport
+        vctDouble2 ViewingRangeX, ViewingRangeY;
+        vctDouble2 Translation;
+        vctDouble2 ScaleValue;
+
+
     private:
         size_t PointSize;
         vctDouble3 Color;

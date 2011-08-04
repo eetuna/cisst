@@ -76,13 +76,116 @@ vctPlot2DBase::Scale * vctPlot2DBase::FindScale(const std::string & name){
 
 
 vctPlot2DBase::Scale::Scale(const std::string & name, size_t pointDimension){
-  this->PointSize = pointDimension;
+    this->PointSize = pointDimension;
+    this->Translation.SetAll(0.0);
+    this->ScaleValue.SetAll(1.0);
+
 }
 
 vctPlot2DBase::Scale::~Scale(){
 
 
 }
+
+// call each trace and find the min & max 
+void vctPlot2DBase::Scale::ComputeDataRangeX(double & min, double & max, bool assumesDataSorted) const{
+
+    size_t traceIndex;
+    const size_t numberofTraces = this->Traces.size();
+    double rmin, rmax;
+
+
+    if(numberofTraces != 0){
+        min = this->Traces[0]->Data.Element(this->Traces[0]->IndexFirst).X();
+        rmin = rmax = max = min;
+    }else{
+        min = -1;
+        max = 1;
+        return;
+    }
+
+    for(traceIndex = 0; traceIndex < numberofTraces; traceIndex++){
+        vctPlot2DBase::Trace *trace = this->Traces[traceIndex];
+        trace->ComputeDataRangeX(min, max, assumesDataSorted);
+        // get Scale[min,max]
+        rmin = (rmin > min) ? min : rmin;
+        rmax = (rmax < max) ? max : rmax;
+    }
+    min = rmin;
+    max = rmax;
+}
+
+void vctPlot2DBase::Scale::ComputeDataRangeY(double & min, double & max){
+    size_t traceIndex;
+    const size_t numberofTraces = this->Traces.size();
+    double rmin, rmax;
+
+    if(numberofTraces != 0){
+        min = this->Traces[0]->Data.Element(this->Traces[0]->IndexFirst).Y();
+        rmin = rmax = max = min;
+    }else{
+        min = -1;
+        max = 1;
+        return;
+    }
+       
+    for(traceIndex = 0; traceIndex < numberofTraces; traceIndex++){
+        vctPlot2DBase::Trace *trace = this->Traces[traceIndex];
+        trace->ComputeDataRangeY(min, max);
+        // get Scale[min,max]
+        rmin = (rmin > min) ? min : rmin;
+        rmax = (rmax < max) ? max : rmax;
+    }
+    min = rmin;
+    max = rmax;
+}
+
+void vctPlot2DBase::Scale::ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max){
+    size_t traceIndex;
+    const size_t numberofTraces = this->Traces.size();
+    vctDouble2 rmin, rmax;
+
+    if(numberofTraces != 0){
+        min = this->Traces[0]->Data.Element(this->Traces[0]->IndexFirst);
+        rmin = rmax = max = min;
+    }else{
+        min.SetAll(-1.0);
+        max.SetAll(1.0);
+        return;
+    }
+      
+    for(traceIndex = 0; traceIndex < numberofTraces; traceIndex++){
+        vctPlot2DBase::Trace *trace = this->Traces[traceIndex];
+        trace->ComputeDataRangeXY(min, max);
+        // get Scale[min,max]
+        rmin.X() = (rmin.X() > min.X()) ? min.X():rmin.X();
+        rmin.Y() = (rmin.Y() > min.Y()) ? min.Y():rmin.Y();
+        
+        rmax.X() = (rmax.X() < max.X()) ? max.X() : rmax.X();
+        rmax.Y() = (rmax.Y() < max.Y()) ? max.Y() : rmax.Y();        
+    }
+    min = rmin;
+    max = rmax;
+}
+
+
+void vctPlot2DBase::Scale::SetContinuousFitX(bool fit){
+    this->ContinuousFitX = fit;
+    //    this->ContinuousAlignMaxX = false;
+    this->Continuous = (this->ContinuousFitX
+                        || this->ContinuousFitY);
+
+    this->ContinuousFitX = fit;
+}
+
+void vctPlot2DBase::Scale::SetContinuousFitY(bool fit){
+    this->ContinuousFitY = fit;
+    this->Continuous = (this->ContinuousFitX
+                        || this->ContinuousFitY);
+
+    this->ContinuousFitY = fit;
+}
+
 
 void vctPlot2DBase::Scale::SetColor(const vctDouble3 & colorInRange0To1)
 {
@@ -109,27 +212,30 @@ vctPlot2DBase::Trace * vctPlot2DBase::Scale::AddSignal(const std::string & name)
     return 0;
 }
 
-void vctPlot2DBase::Scale::AddVerticalLine(vctPlot2DBase::VerticalLine * vertLine){
+vctPlot2DBase::VerticalLine * vctPlot2DBase::Scale::AddVerticalLine(vctPlot2DBase::VerticalLine * vertLine){
 
+    return 0;
 
 }
 void vctPlot2DBase::Scale::ContinuousUpdate(void)
-{
+{   
 
-    // const ScaleType::const_iterator scalesEnd = Scales.end();
-    // ScaleType::const_iterator scalesIter = Scales.begin();
-    // for (;
-    //      scalesIter != scalesEnd;
-    //      ++scalesIter) {
-    //     this->Render(*(scalesIter->second));
-    // }
-    // if (this->Continuous) {
-    //     if (this->ContinuousFitX && this->ContinuousFitY) {
-    //         this->FitXY();
-    //     } else if (this->ContinuousFitX) {
-    //         this->FitX();
-    //     } else if (this->ContinuousFitY) {
-    //         this->FitY();
+    // size_t traceIndex;
+    // const size_t numberOfTraces = this->Traces.size();
+
+    // for(traceIndex = 0; 
+    //     traceIndex < numberOfTraces;
+    //     traceIndex++){       
+    //     vctPlot2DBase::Trace * trace = this->Traces[traceIndex]; // should really be looking for first visible trace
+    //     //Note that this->Continuous shold be scale->Continuous, not vctPlot2DBase->Continuous ...
+    //     if (this->Continuous) {
+    //         if (this->ContinuousFitX && this->ContinuousFitY) {
+    //             trace->FitXY();
+    //         } else if (this->ContinuousFitX) {
+    //             trace->FitX();
+    //         } else if (this->ContinuousFitY) {
+    //             trace->FitY();
+    //         }
     //     }
     // }
 }
@@ -882,6 +988,11 @@ void vctPlot2DBase::SetContinuousFitX(bool fit)
     this->Continuous = (this->ContinuousFitX
                         || this->ContinuousFitY
                         || this->ContinuousAlignMaxX);
+    // size_t scaleIndex;
+    // const size_t numberofScales = this->Scales.size();
+
+    // for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+    //     this->Scales[scaleIndex]->SetContinuousFitX(fit);      
 }
 
 
@@ -891,6 +1002,11 @@ void vctPlot2DBase::SetContinuousFitY(bool fit)
     this->Continuous = (this->ContinuousFitX
                         || this->ContinuousFitY
                         || this->ContinuousAlignMaxX);
+    // size_t scaleIndex;
+    // const size_t numberofScales = this->Scales.size();
+
+    // for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+    //     this->Scales[scaleIndex]->SetContinuousFitY(fit);
 }
 
 
@@ -912,11 +1028,13 @@ void vctPlot2DBase::ComputeDataRangeX(double & min, double & max)
         max = 1.0;
     } else {
         size_t scaleIndex;
-        const size_t numberofScales = this->Scales.size();
+        const size_t numberofScales = this->Scales.size();        
 
         for(scaleIndex = 0; 
             scaleIndex < numberofScales;
             scaleIndex++){       
+            this->Scales[scaleIndex]->ComputeDataRangeX(min, max);
+            /*
             size_t traceIndex;
             const size_t numberOfTraces = this->Scales[scaleIndex]->Traces.size();
             vctPlot2DBase::Trace * trace = this->Scales[scaleIndex]->Traces[0]; // should really be looking for first visible trace
@@ -927,6 +1045,7 @@ void vctPlot2DBase::ComputeDataRangeX(double & min, double & max)
                  traceIndex++) {
                 this->Scales[scaleIndex]->Traces[traceIndex]->ComputeDataRangeX(min, max);
             }//Traces: for loop
+            */
         }//Scales: for loop
     }
 }
@@ -941,10 +1060,13 @@ void vctPlot2DBase::ComputeDataRangeY(double & min, double & max)
     } else {
         size_t scaleIndex;
         const size_t numberofScales = this->Scales.size();
+
         for(scaleIndex = 0; 
             scaleIndex < numberofScales;
             scaleIndex++){
 
+            this->Scales[scaleIndex]->ComputeDataRangeY(min, max);
+            /*
             size_t traceIndex;
             const size_t numberOfTraces = this->Scales[scaleIndex]->Traces.size();
             vctPlot2DBase::Trace * trace = this->Scales[scaleIndex]->Traces[0]; // should really be looking for first visible trace
@@ -955,6 +1077,7 @@ void vctPlot2DBase::ComputeDataRangeY(double & min, double & max)
                  traceIndex++) {
                 this->Scales[scaleIndex]->Traces[traceIndex]->ComputeDataRangeY(min, max);
             }//Traces: for loop
+            */
         }// Scales: for loop
     }
 }
@@ -967,18 +1090,42 @@ void vctPlot2DBase::ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max)
         min.SetAll(-1.0);
         max.SetAll(1.0);
     } else {
-        size_t traceIndex;
-        const size_t numberOfTraces = this->Traces.size();
-        vctPlot2DBase::Trace * trace = this->Traces[0]; // should really be looking for first visible trace
-        min.Assign(trace->Data.Element(trace->IndexFirst));
-        max.Assign(min);
-        for (traceIndex = 0;
-             traceIndex < numberOfTraces;
-             traceIndex++) {
-            this->Traces[traceIndex]->ComputeDataRangeXY(min, max);
-        }
+
+        size_t scaleIndex;
+        const size_t numberofScales = this->Scales.size();
+
+        for(scaleIndex = 0; 
+            scaleIndex < numberofScales;
+            scaleIndex++){
+            this->Scales[scaleIndex]->ComputeDataRangeXY(min, max);
+            /*
+            size_t traceIndex;
+            const size_t numberOfTraces = this->Scales[scaleIndex]->Traces.size();
+            vctPlot2DBase::Trace * trace = this->Scales[scaleIndex]->Traces[0]; // should really be looking for first visible trace
+            min.Assign(trace->Data.Element(trace->IndexFirst));
+            max.Assign(min);
+            for (traceIndex = 0;
+                 traceIndex < numberOfTraces;
+                 traceIndex++) {
+                this->Scales[scaleIndex]->Traces[traceIndex]->ComputeDataRangeXY(min, max);
+            }//Traces: for loop
+            */
+        }// Scales: for loop
     }
 }
+
+
+// void vctPlot2DBase::ContinuousUpdate(void)
+// {
+//     // call each Scale->ContinuousUpdate
+
+//     size_t scaleIndex;
+//     const size_t numberofScales = this->Scales.size();
+
+//     for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+//         this->Scales[scaleIndex]->ContinuousUpdate();
+
+// }
 
 
 void vctPlot2DBase::ContinuousUpdate(void)
