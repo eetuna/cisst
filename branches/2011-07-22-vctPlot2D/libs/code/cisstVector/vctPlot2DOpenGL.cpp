@@ -53,9 +53,20 @@ void vctPlot2DOpenGL::RenderInitialize(void)
 
 void vctPlot2DOpenGL::RenderResize(double width, double height)
 {
+
+    const size_t numberOfScales = this->Scales.size();
+    size_t scaleIndex ;
+
     this->Viewport.Assign(width, height);
+
+    for(scaleIndex = 0 ; scaleIndex < numberOfScales ; scaleIndex++){
+        vctPlot2DBase::Scale *scale = this->Scales[scaleIndex];
+        scale->Viewport.Assign(width, height);       
+    }
+    
     GLsizei w = static_cast<GLsizei>(width);
     GLsizei h = static_cast<GLsizei>(height);
+
     glViewport(0 , 0, w ,h); // set up viewport
     glMatrixMode(GL_PROJECTION); // set the projection matrix
     glLoadIdentity();
@@ -65,12 +76,12 @@ void vctPlot2DOpenGL::RenderResize(double width, double height)
 
 void vctPlot2DOpenGL::Render(void)
 {
-    size_t traceIndex, scaleIndex;
-    Trace * trace;
-    Scale * scale;
-    size_t numberOfTraces;
+    size_t scaleIndex;
+    // Trace * trace;
+    // Scale * scale;
+    // size_t numberOfTraces;
     const size_t numberOfScales = this->Scales.size();
-    size_t numberOfPoints;
+    // size_t numberOfPoints;
 
     // see if translation and scale need to be updated
     this->ContinuousUpdate();
@@ -78,67 +89,17 @@ void vctPlot2DOpenGL::Render(void)
     // clear
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // make sure there is no left over transformation
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslated(this->Translation.X(), this->Translation.Y(), 0.0);
-    glScaled(this->ScaleValue.X(), this->ScaleValue.Y(), 1.0);
+    // ------------------------------------------------------------------------------------------
+    // those codes should be called for each Scale
 
-    // plot all traces.   this needs to be updated to use glScale and glTranslate to avoid all conputations on CPU
-    double * data;
-    size_t size;
-   
+    // make sure there is no left over transformation
+
     for(scaleIndex =0; 
         scaleIndex < numberOfScales; 
-        scaleIndex++){
-        scale = this->Scales[scaleIndex];
-        numberOfTraces = scale->Traces.size();
-        for (traceIndex = 0;
-             traceIndex < numberOfTraces;
-             traceIndex++) {
-            trace = scale->Traces[traceIndex];
-            //trace->CriticalSectionForBuffer.Enter();
-            if (trace->Visible) {
-                numberOfPoints = trace->Data.size();
-                glColor3d(trace->Color.Element(0),
-                          trace->Color.Element(1),
-                          trace->Color.Element(2));
-                glLineWidth(static_cast<GLfloat>(trace->LineWidth));
-                data = trace->Data.Element(0).Pointer();
-                size = trace->Data.size();
-                if (trace->IndexFirst >= trace->IndexLast) {
-                    // circular buffer is full/split in two
-                    glEnableClientState(GL_VERTEX_ARRAY);
-                    glVertexPointer(2, GL_DOUBLE, 0, data);
-                    // draw first part
-                    glDrawArrays(GL_LINE_STRIP,
-                                 static_cast<GLint>(trace->IndexFirst),
-                                 static_cast<GLsizei>(size - trace->IndexFirst));
-                    // draw second part
-                    glDrawArrays(GL_LINE_STRIP,
-                                 0,
-                                 static_cast<GLsizei>(trace->IndexLast + 1));
-                    glDisableClientState(GL_VERTEX_ARRAY);
-                    // draw between end of buffer and beginning
-                    glBegin(GL_LINE_STRIP);
-                    glVertex2d(trace->Data.Element(size - 1).X(),
-                               trace->Data.Element(size - 1).Y());
-                    glVertex2d(trace->Data.Element(0).X(),
-                               trace->Data.Element(0).Y());
-                    glEnd();
-                } else {
-                    // simpler case, all points contiguous
-                    glEnableClientState(GL_VERTEX_ARRAY);
-                    glVertexPointer(2, GL_DOUBLE, 0, data);
-                    glDrawArrays(GL_LINE_STRIP,
-                                 0,
-                                 static_cast<GLsizei>(trace->IndexLast + 1));
-                    glDisableClientState(GL_VERTEX_ARRAY);
-                }
-            }
-            //trace->CriticalSectionForBuffer.Leave();
-        }
+        scaleIndex++){   
+        this->Render(Scales[scaleIndex]);
     }
+
     // render vertical lines
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -247,4 +208,73 @@ void vctPlot2DOpenGL::Render(const vctPlot2DBase::VerticalLine & line)
     glVertex2d(line.X, this->Viewport.Y());
     glVertex2d(line.X, 0);
     glEnd();
+}
+
+
+void vctPlot2DOpenGL::Render(const vctPlot2DBase::Trace * trace){
+
+    size_t numberOfPoints;
+    //trace->CriticalSectionForBuffer.Enter();
+    if (trace->Visible) {
+        numberOfPoints = trace->Data.size();
+        glColor3d(trace->Color.Element(0),
+                  trace->Color.Element(1),
+                  trace->Color.Element(2));
+        glLineWidth(static_cast<GLfloat>(trace->LineWidth));
+        const double *data = trace->Data.Element(0).Pointer();
+        size_t size = trace->Data.size();
+        if (trace->IndexFirst >= trace->IndexLast) {
+            // circular buffer is full/split in two
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(2, GL_DOUBLE, 0, data);
+            // draw first part
+            glDrawArrays(GL_LINE_STRIP,
+                         static_cast<GLint>(trace->IndexFirst),
+                         static_cast<GLsizei>(size - trace->IndexFirst));
+            // draw second part
+            glDrawArrays(GL_LINE_STRIP,
+                         0,
+                         static_cast<GLsizei>(trace->IndexLast + 1));
+            glDisableClientState(GL_VERTEX_ARRAY);
+            // draw between end of buffer and beginning
+            glBegin(GL_LINE_STRIP);
+            glVertex2d(trace->Data.Element(size - 1).X(),
+                       trace->Data.Element(size - 1).Y());
+            glVertex2d(trace->Data.Element(0).X(),
+                       trace->Data.Element(0).Y());
+            glEnd();
+        } else {
+            // simpler case, all points contiguous
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(2, GL_DOUBLE, 0, data);
+            glDrawArrays(GL_LINE_STRIP,
+                         0,
+                         static_cast<GLsizei>(trace->IndexLast + 1));
+            glDisableClientState(GL_VERTEX_ARRAY);
+        }
+    }
+
+}
+
+
+void vctPlot2DOpenGL::Render(const vctPlot2DBase::Scale * scale)
+{
+
+    const size_t numberOfTraces = scale->Traces.size();
+    size_t traceIndex ;
+    vctPlot2DBase::Trace *trace;
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    // glTranslated(this->Translation.X(), this->Translation.Y(), 0.0);
+    // glScaled(this->ScaleValue.X(), this->ScaleValue.Y(), 1.0);    
+    
+    glTranslated(scale->Translation.X(), scale->Translation.Y(), 0.0);
+    glScaled(scale->ScaleValue.X(), scale->ScaleValue.Y(), 1.0);
+    
+    for (traceIndex = 0;
+         traceIndex < numberOfTraces;
+         traceIndex++) {
+        trace = scale->Traces[traceIndex];
+        Render(trace);      
+    }
 }

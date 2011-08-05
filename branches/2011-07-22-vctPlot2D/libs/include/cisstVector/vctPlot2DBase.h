@@ -192,14 +192,13 @@ public:
 
 
         // Centering X,Y or XY
-        // void FitX(double padding = 0.0);
-        // void FitX(double min, double max, double padding = 0.0);
-        // void FitY(double padding = 0.1);
-        // void FitY(double min, double max, double padding = 0.1);
-        // void FitXY(const vctDouble2 & padding = vctDouble2(0.0, 0.1));
-        // void FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & padding = vctDouble2(0.0, 0.1));
-        // void AlignMaxX(void);
-
+        void FitX(double padding = 0.0);
+        void FitX(double min, double max, double padding = 0.0);
+        void FitY(double padding = 0.1);
+        void FitY(double min, double max, double padding = 0.1);
+        void FitXY(const vctDouble2 & padding = vctDouble2(0.0, 0.1));
+        void FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & padding = vctDouble2(0.0, 0.1));
+        // void AlignMaxX(void);       
 
     protected:
         // keep traces in a vector

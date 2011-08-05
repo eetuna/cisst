@@ -40,8 +40,13 @@ public:
     //@{
     virtual void RenderInitialize(void);
     virtual void RenderResize(double width, double height);
-    virtual void Render(void); // todo, move render to base class, not virtual
+    virtual void Render(void); // todo, move render to base class, not virtual    
     virtual void Render(const VerticalLine & line); // todo, move to base class as virtual and should be called by Render(void)
+    // Joshua: Should we move OpenGL things to vctPlot2DBase? 
+    // I choose not to ... just render here. 
+    // called by Render(void)
+    virtual void Render(const Scale * scale);
+    virtual void Render(const Trace * trace);
     //@}
 };
 

@@ -87,6 +87,68 @@ vctPlot2DBase::Scale::~Scale(){
 
 }
 
+void vctPlot2DBase::Scale::FitX(double padding)
+{
+    double min, max;
+    this->ComputeDataRangeX(min, max);
+    this->FitX(min, max, padding);
+}
+
+
+void vctPlot2DBase::Scale::FitX(double min, double max, double padding)
+{
+    this->ViewingRangeX.Assign(min, max);
+    this->ScaleValue.X() = this->Viewport.X() / ((max - min) * (1.0 + padding));
+    this->Translation.X() =
+        - min * this->ScaleValue.X()
+        + 0.5 * padding * this->Viewport.X();
+}
+
+void vctPlot2DBase::Scale::FitY(double padding)
+{
+    double min, max;
+    this->ComputeDataRangeY(min, max);
+    this->FitY(min, max, padding);
+}
+
+
+void vctPlot2DBase::Scale::FitY(double min, double max, double padding)
+{
+    this->ViewingRangeY.Assign(min, max);
+    this->ScaleValue.Y() = this->Viewport.Y() / ((max - min) * (1.0 + padding));
+    this->Translation.Y() =
+        - min * this->ScaleValue.Y()
+        + 0.5 * padding * this->Viewport.Y();
+}
+
+void vctPlot2DBase::Scale::FitXY(const vctDouble2 & padding)
+{
+    vctDouble2 min, max;
+    this->ComputeDataRangeXY(min, max);
+    this->FitXY(min, max, padding);
+}
+
+
+void vctPlot2DBase::Scale::FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & padding)
+{
+    this->ViewingRangeX.Assign(min.X(), max.X());
+    this->ViewingRangeY.Assign(min.Y(), max.Y());
+    // compute scale
+    vctDouble2 dataDiff;
+    dataDiff.DifferenceOf(max, min);
+    this->ScaleValue.ElementwiseRatioOf(this->Viewport, dataDiff);
+    vctDouble2 pad(padding);
+    pad.Add(1.0);
+    this->ScaleValue.ElementwiseDivide(pad);
+    // compute translation
+    this->Translation.ElementwiseProductOf(min, this->ScaleValue);
+    this->Translation.NegationSelf();
+    pad.ElementwiseProductOf(padding, this->Viewport);
+    pad.Multiply(0.5);
+    this->Translation.Add(pad);
+
+}
+
 // call each trace and find the min & max 
 void vctPlot2DBase::Scale::ComputeDataRangeX(double & min, double & max, bool assumesDataSorted) const{
 
@@ -185,7 +247,6 @@ void vctPlot2DBase::Scale::SetContinuousFitY(bool fit){
 
     this->ContinuousFitY = fit;
 }
-
 
 void vctPlot2DBase::Scale::SetColor(const vctDouble3 & colorInRange0To1)
 {
@@ -913,12 +974,18 @@ void vctPlot2DBase::FitX(double padding)
 
 
 void vctPlot2DBase::FitX(double min, double max, double padding)
-{
+{    
     this->ViewingRangeX.Assign(min, max);
     this->ScaleValue.X() = this->Viewport.X() / ((max - min) * (1.0 + padding));
     this->Translation.X() =
         - min * this->ScaleValue.X()
         + 0.5 * padding * this->Viewport.X();
+
+    size_t scaleIndex;
+    const size_t numberofScales = this->Scales.size();
+
+    for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+        this->Scales[scaleIndex]->FitX(min,max, padding);    
 }
 
 
@@ -932,11 +999,18 @@ void vctPlot2DBase::FitY(double padding)
 
 void vctPlot2DBase::FitY(double min, double max, double padding)
 {
+
     this->ViewingRangeY.Assign(min, max);
     this->ScaleValue.Y() = this->Viewport.Y() / ((max - min) * (1.0 + padding));
     this->Translation.Y() =
         - min * this->ScaleValue.Y()
         + 0.5 * padding * this->Viewport.Y();
+
+    size_t scaleIndex;
+    const size_t numberofScales = this->Scales.size();
+
+    for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+        this->Scales[scaleIndex]->FitY(min, max, padding);
 }
 
 
@@ -950,21 +1024,12 @@ void vctPlot2DBase::FitXY(const vctDouble2 & padding)
 
 void vctPlot2DBase::FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & padding)
 {
-    this->ViewingRangeX.Assign(min.X(), max.X());
-    this->ViewingRangeY.Assign(min.Y(), max.Y());
-    // compute scale
-    vctDouble2 dataDiff;
-    dataDiff.DifferenceOf(max, min);
-    this->ScaleValue.ElementwiseRatioOf(this->Viewport, dataDiff);
-    vctDouble2 pad(padding);
-    pad.Add(1.0);
-    this->ScaleValue.ElementwiseDivide(pad);
-    // compute translation
-    this->Translation.ElementwiseProductOf(min, this->ScaleValue);
-    this->Translation.NegationSelf();
-    pad.ElementwiseProductOf(padding, this->Viewport);
-    pad.Multiply(0.5);
-    this->Translation.Add(pad);
+    size_t scaleIndex;
+    const size_t numberofScales = this->Scales.size();
+
+    for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+        this->Scales[scaleIndex]->FitXY(min, max, padding);    
+
 }
 
 
@@ -1022,38 +1087,6 @@ void vctPlot2DBase::SetContinuousAlignMaxX(bool align)
 
 void vctPlot2DBase::ComputeDataRangeX(double & min, double & max)
 {
-    //    if (this->Traces.size() == 0) {
-    if(this->Scales.size() == 0){
-        min = -1.0;
-        max = 1.0;
-    } else {
-        size_t scaleIndex;
-        const size_t numberofScales = this->Scales.size();        
-
-        for(scaleIndex = 0; 
-            scaleIndex < numberofScales;
-            scaleIndex++){       
-            this->Scales[scaleIndex]->ComputeDataRangeX(min, max);
-            /*
-            size_t traceIndex;
-            const size_t numberOfTraces = this->Scales[scaleIndex]->Traces.size();
-            vctPlot2DBase::Trace * trace = this->Scales[scaleIndex]->Traces[0]; // should really be looking for first visible trace
-            min = trace->Data.Element(trace->IndexFirst).X();
-            max = min;
-            for (traceIndex = 0;
-                 traceIndex < numberOfTraces;
-                 traceIndex++) {
-                this->Scales[scaleIndex]->Traces[traceIndex]->ComputeDataRangeX(min, max);
-            }//Traces: for loop
-            */
-        }//Scales: for loop
-    }
-}
-
-
-void vctPlot2DBase::ComputeDataRangeY(double & min, double & max)
-{
-    //    if (this->Traces.size() == 0) {
     if(this->Scales.size() == 0){
         min = -1.0;
         max = 1.0;
@@ -1061,31 +1094,31 @@ void vctPlot2DBase::ComputeDataRangeY(double & min, double & max)
         size_t scaleIndex;
         const size_t numberofScales = this->Scales.size();
 
-        for(scaleIndex = 0; 
+        for(scaleIndex = 0;
             scaleIndex < numberofScales;
-            scaleIndex++){
+            scaleIndex++)
+            this->Scales[scaleIndex]->ComputeDataRangeX(min, max);        
+    }
+}
 
+
+void vctPlot2DBase::ComputeDataRangeY(double & min, double & max)
+{
+    if(this->Scales.size() == 0){
+        min = -1.0;
+        max = 1.0;
+    } else {
+        size_t scaleIndex;
+        const size_t numberofScales = this->Scales.size();
+
+        for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
             this->Scales[scaleIndex]->ComputeDataRangeY(min, max);
-            /*
-            size_t traceIndex;
-            const size_t numberOfTraces = this->Scales[scaleIndex]->Traces.size();
-            vctPlot2DBase::Trace * trace = this->Scales[scaleIndex]->Traces[0]; // should really be looking for first visible trace
-            min = trace->Data.Element(trace->IndexFirst).Y();
-            max = min;
-            for (traceIndex = 0;
-                 traceIndex < numberOfTraces;
-                 traceIndex++) {
-                this->Scales[scaleIndex]->Traces[traceIndex]->ComputeDataRangeY(min, max);
-            }//Traces: for loop
-            */
-        }// Scales: for loop
     }
 }
 
 
 void vctPlot2DBase::ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max)
 {
-
     if (this->Traces.size() == 0) {
         min.SetAll(-1.0);
         max.SetAll(1.0);
@@ -1094,23 +1127,8 @@ void vctPlot2DBase::ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max)
         size_t scaleIndex;
         const size_t numberofScales = this->Scales.size();
 
-        for(scaleIndex = 0; 
-            scaleIndex < numberofScales;
-            scaleIndex++){
+        for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
             this->Scales[scaleIndex]->ComputeDataRangeXY(min, max);
-            /*
-            size_t traceIndex;
-            const size_t numberOfTraces = this->Scales[scaleIndex]->Traces.size();
-            vctPlot2DBase::Trace * trace = this->Scales[scaleIndex]->Traces[0]; // should really be looking for first visible trace
-            min.Assign(trace->Data.Element(trace->IndexFirst));
-            max.Assign(min);
-            for (traceIndex = 0;
-                 traceIndex < numberOfTraces;
-                 traceIndex++) {
-                this->Scales[scaleIndex]->Traces[traceIndex]->ComputeDataRangeXY(min, max);
-            }//Traces: for loop
-            */
-        }// Scales: for loop
     }
 }
 
