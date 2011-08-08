@@ -79,6 +79,8 @@ vctPlot2DBase::Scale::Scale(const std::string & name, size_t pointDimension){
     this->PointSize = pointDimension;
     this->Translation.SetAll(0.0);
     this->ScaleValue.SetAll(1.0);
+    SetContinuousFitX(true);
+    SetContinuousFitY(true);
 
 }
 
@@ -237,7 +239,6 @@ void vctPlot2DBase::Scale::SetContinuousFitX(bool fit){
     this->Continuous = (this->ContinuousFitX
                         || this->ContinuousFitY);
 
-    this->ContinuousFitX = fit;
 }
 
 void vctPlot2DBase::Scale::SetContinuousFitY(bool fit){
@@ -245,7 +246,6 @@ void vctPlot2DBase::Scale::SetContinuousFitY(bool fit){
     this->Continuous = (this->ContinuousFitX
                         || this->ContinuousFitY);
 
-    this->ContinuousFitY = fit;
 }
 
 void vctPlot2DBase::Scale::SetColor(const vctDouble3 & colorInRange0To1)
@@ -273,32 +273,35 @@ vctPlot2DBase::Trace * vctPlot2DBase::Scale::AddSignal(const std::string & name)
     return 0;
 }
 
-vctPlot2DBase::VerticalLine * vctPlot2DBase::Scale::AddVerticalLine(vctPlot2DBase::VerticalLine * vertLine){
+vctPlot2DBase::VerticalLine * vctPlot2DBase::Scale::AddVerticalLine(const std::string &name){    
+
+    VerticalLinesIdType::const_iterator found = this->VerticalLinesId.find(name);
+    const VerticalLinesIdType::const_iterator end = this->VerticalLinesId.end();
+
+    if (found == end) {
+        size_t vLineSize = VerticalLines.size();
+        // new name
+        //set the number of points to default, 100
+        VerticalLine * newVLine = new VerticalLine(name);
+        this->VerticalLines.push_back(newVLine);
+        VerticalLinesId[name] = vLineSize;
+        return newVLine;
+    }
 
     return 0;
-
 }
+
 void vctPlot2DBase::Scale::ContinuousUpdate(void)
-{   
-
-    // size_t traceIndex;
-    // const size_t numberOfTraces = this->Traces.size();
-
-    // for(traceIndex = 0; 
-    //     traceIndex < numberOfTraces;
-    //     traceIndex++){       
-    //     vctPlot2DBase::Trace * trace = this->Traces[traceIndex]; // should really be looking for first visible trace
-    //     //Note that this->Continuous shold be scale->Continuous, not vctPlot2DBase->Continuous ...
-    //     if (this->Continuous) {
-    //         if (this->ContinuousFitX && this->ContinuousFitY) {
-    //             trace->FitXY();
-    //         } else if (this->ContinuousFitX) {
-    //             trace->FitX();
-    //         } else if (this->ContinuousFitY) {
-    //             trace->FitY();
-    //         }
-    //     }
-    // }
+{
+    if (this->Continuous) {
+        if (this->ContinuousFitX && this->ContinuousFitY) {
+            this->FitXY();
+        } else if (this->ContinuousFitX) {
+            this->FitX();
+        } else if (this->ContinuousFitY) {
+            this->FitY();
+        }
+    }
 }
 
 
@@ -939,7 +942,29 @@ vctPlot2DBase::Trace * vctPlot2DBase::AddTrace(const std::string & name)
     return this->AddTrace(name, traceId);
 }
 
+vctPlot2DBase::VerticalLine * vctPlot2DBase::AddVerticalLine(const std::string & name)
+{
+    TracesIdType::const_iterator found;
+    const TracesIdType::const_iterator end = this->ScalesId.end();
+    const std::string delimiter("-");
+    std::string scaleName;
+    size_t delimiterPosition = name.find(delimiter);
+    Scale * scalePointer = this->FindScale(name);
+    
+    scaleName = name.substr(0, delimiterPosition);
 
+
+    // no such Scale, create one
+    if(!scalePointer){
+        std::cerr<<"AddScale now\n";
+        scalePointer = this->AddScale(scaleName);
+    }
+
+    return scalePointer->AddVerticalLine(name);
+
+}
+
+/*
 vctPlot2DBase::VerticalLine * vctPlot2DBase::AddVerticalLine(const std::string & name)
 {
     VerticalLine * newLine = new VerticalLine(name);
@@ -949,6 +974,7 @@ vctPlot2DBase::VerticalLine * vctPlot2DBase::AddVerticalLine(const std::string &
     delete newLine;
     return 0;
 }
+*/
 
 void vctPlot2DBase::SetNumberOfPoints(size_t numberOfPoints)
 {
@@ -1053,11 +1079,11 @@ void vctPlot2DBase::SetContinuousFitX(bool fit)
     this->Continuous = (this->ContinuousFitX
                         || this->ContinuousFitY
                         || this->ContinuousAlignMaxX);
-    // size_t scaleIndex;
-    // const size_t numberofScales = this->Scales.size();
+    size_t scaleIndex;
+    const size_t numberofScales = this->Scales.size();
 
-    // for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
-    //     this->Scales[scaleIndex]->SetContinuousFitX(fit);      
+    for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+        this->Scales[scaleIndex]->SetContinuousFitX(fit);
 }
 
 
@@ -1067,11 +1093,12 @@ void vctPlot2DBase::SetContinuousFitY(bool fit)
     this->Continuous = (this->ContinuousFitX
                         || this->ContinuousFitY
                         || this->ContinuousAlignMaxX);
-    // size_t scaleIndex;
-    // const size_t numberofScales = this->Scales.size();
+    size_t scaleIndex;
+    const size_t numberofScales = this->Scales.size();
 
-    // for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
-    //     this->Scales[scaleIndex]->SetContinuousFitY(fit);
+    for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+        this->Scales[scaleIndex]->SetContinuousFitY(fit);
+
 }
 
 
@@ -1133,31 +1160,34 @@ void vctPlot2DBase::ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max)
 }
 
 
-// void vctPlot2DBase::ContinuousUpdate(void)
-// {
-//     // call each Scale->ContinuousUpdate
-
-//     size_t scaleIndex;
-//     const size_t numberofScales = this->Scales.size();
-
-//     for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
-//         this->Scales[scaleIndex]->ContinuousUpdate();
-
-// }
-
-
 void vctPlot2DBase::ContinuousUpdate(void)
 {
-    if (this->Continuous) {
-        if (this->ContinuousFitX && this->ContinuousFitY) {
-            this->FitXY();
-        } else if (this->ContinuousFitX) {
-            this->FitX();
-        } else if (this->ContinuousFitY) {
-            this->FitY();
-        }
-    }
+    // call each Scale->ContinuousUpdate
+
+    size_t scaleIndex;
+    const size_t numberofScales = this->Scales.size();
+
+    for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
+        this->Scales[scaleIndex]->ContinuousUpdate();
+
 }
+
+
+// void vctPlot2DBase::ContinuousUpdate(void)
+// {
+//     if (this->Continuous) {
+//         if (this->ContinuousFitX && this->ContinuousFitY) {
+//             this->FitXY();
+//             std::cerr<<"1\n";
+//         } else if (this->ContinuousFitX) {
+//             this->FitX();
+//             std::cerr<<"2\n";
+//         } else if (this->ContinuousFitY) {
+//             this->FitY();
+//             std::cerr<<"3\n";
+//         }
+//     }
+// }
 
 
 void vctPlot2DBase::SetColor(size_t traceId, const vctDouble3 & colorInRange0To1)

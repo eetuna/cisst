@@ -156,7 +156,7 @@ public:
     {
 		friend class vctPlot2DBase;
         friend class vctPlot2DOpenGL;
-        friend class vctPlot2DVTK;
+        friend class vctPlot2DVTK;    
     public:
         VerticalLine(const std::string & name, const double x = 0.0);
         ~VerticalLine();
@@ -179,8 +179,9 @@ public:
     public:
         Scale(const std::string & name, size_t pointDimension = 2);
         ~Scale();
+
         vctPlot2DBase::Trace * AddSignal(const std::string & name);
-        vctPlot2DBase::VerticalLine * AddVerticalLine(vctPlot2DBase::VerticalLine *);
+        vctPlot2DBase::VerticalLine * AddVerticalLine(const std::string &name);
         void SetColor(const vctDouble3 & colorInRange0To1);
         void ContinuousUpdate(void);       
         void SetContinuousFitX(bool fit);
@@ -204,9 +205,16 @@ public:
         // keep traces in a vector
         typedef std::vector<Trace *>          TracesType;
         TracesType                            Traces;
+
+        typedef std::vector<VerticalLine *>          VerticalLinesType;
+        VerticalLinesType                     VerticalLines;
+
         // maintain a map to find trace Id by name
         typedef std::map<std::string, size_t> TracesIdType;
         TracesIdType TracesId;
+        typedef std::map<std::string, size_t> VerticalLinesIdType;
+        VerticalLinesIdType VerticalLinesId;
+
         bool ContinuousFitX;
         bool ContinuousFitY;      
         bool Continuous;
@@ -277,7 +285,7 @@ public:
     void FitY(double min, double max, double padding = 0.1);
     void FitXY(const vctDouble2 & padding = vctDouble2(0.0, 0.1));
     void FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & padding = vctDouble2(0.0, 0.1));
-    void AlignMaxX(void);
+    //  void AlignMaxX(void);
     //@}
 
     /*! Freeze the circular buffers, i.e. AddPoint does nothing.  When

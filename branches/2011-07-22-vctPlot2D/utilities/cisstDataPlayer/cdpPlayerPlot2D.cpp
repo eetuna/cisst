@@ -52,7 +52,7 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     Plot = new vctPlot2DOpenGLQtWidget(mainWidget);
     Plot->SetNumberOfPoints(100);
     TracePointer = Plot->AddTrace("Scale-Data");
-    VerticalLinePointer = Plot->AddVerticalLine("X");
+    VerticalLinePointer = Plot->AddVerticalLine("Scale-X");
 
     CentralLayout = new QGridLayout(mainWidget);
 
