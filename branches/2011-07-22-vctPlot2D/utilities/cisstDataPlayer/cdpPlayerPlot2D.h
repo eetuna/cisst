@@ -81,6 +81,13 @@ private:
         mtsFunctionWrite WriteVectorIndex;
     }Plot2DAccess;
 
+    struct Plot2DTrace{
+        vctPlot2DBase::Trace * TracePointer;      
+        std::string TimeFieldName;
+        std::string DataFieldName;
+    };
+    std::vector <cdpPlayerPlot2D::Plot2DTrace> Scales;
+
     // Parser for data file
     mtsTaskManager * taskManager;
     cdpPlayerParseStateTableData Parser;
@@ -101,6 +108,7 @@ private:
     void Quit(void);
     void LoadData(void);
     void UpdateLimits(void);
+    void StateExecutor(vctPlot2DBase::Trace *tracePointer);
 
     void OpenFile(void);
     bool ExtractDataFromStateTableCSVFile(QString & path);

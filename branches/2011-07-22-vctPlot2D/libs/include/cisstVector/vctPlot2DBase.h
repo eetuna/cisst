@@ -49,6 +49,8 @@ class CISST_EXPORT vctPlot2DBase
 
 public:
 
+    class Scale;
+
     /*! Storage for a given signal.  Each signal stores the data to
       display in a vector (vctDynamicVector) of points (vctDouble2).
       To prevent dynamic re-allocation, this class uses a "circular
@@ -133,7 +135,12 @@ public:
           preserves the data at the end by default. */
         void Resize(size_t numberOfPoints, bool trimOlder = true);
 
+        /*Helper Function*/
+        vctPlot2DBase::Trace * AddTrace(const std::string & name);
+        vctPlot2DBase::Scale * GetParent(void);
+
     protected:
+        Scale * Parent;
         /*! Trace name, used for GUI */
         std::string Name;
         bool Empty;
@@ -177,6 +184,14 @@ public:
         friend class vctPlot2DOpenGL;
         friend class vctPlot2DVTK;
     public:
+
+        // keep traces in a vector
+        typedef std::vector<Trace *>          TracesType;
+        TracesType                            Traces;
+
+        typedef std::vector<VerticalLine *>          VerticalLinesType;
+        VerticalLinesType                     VerticalLines;
+
         Scale(const std::string & name, size_t pointDimension = 2);
         ~Scale();
 
@@ -202,13 +217,6 @@ public:
         // void AlignMaxX(void);       
 
     protected:
-        // keep traces in a vector
-        typedef std::vector<Trace *>          TracesType;
-        TracesType                            Traces;
-
-        typedef std::vector<VerticalLine *>          VerticalLinesType;
-        VerticalLinesType                     VerticalLines;
-
         // maintain a map to find trace Id by name
         typedef std::map<std::string, size_t> TracesIdType;
         TracesIdType TracesId;

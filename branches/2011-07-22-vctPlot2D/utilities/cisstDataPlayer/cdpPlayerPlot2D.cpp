@@ -51,7 +51,13 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     // create the user interface
     Plot = new vctPlot2DOpenGLQtWidget(mainWidget);
     Plot->SetNumberOfPoints(100);
-    TracePointer = Plot->AddTrace("Scale-Data");
+
+    cdpPlayerPlot2D::Plot2DTrace * traceElement = new cdpPlayerPlot2D::Plot2DTrace;   
+    TracePointer = Plot->AddTrace("Scale-Data"); 
+    traceElement->TracePointer = TracePointer;
+    traceElement->TimeFieldName =  "TimeStamp";
+    traceElement->DataFieldName = "TipForceNorm_Nm";
+        
     VerticalLinePointer = Plot->AddVerticalLine("Scale-X");
 
     CentralLayout = new QGridLayout(mainWidget);
@@ -149,13 +155,8 @@ void cdpPlayerPlot2D::Startup(void)
     UpdateLimits();
 }
 
+void cdpPlayerPlot2D::StateExecutor(vctPlot2DBase::Trace *tracePointer){
 
-void cdpPlayerPlot2D::Run(void)
-{
-    ProcessQueuedEvents();
-    ProcessQueuedCommands();
-    
-    CS.Enter();
     //update the model (load data) etc.
     if (State == PLAY) {
 
@@ -168,9 +169,9 @@ void cdpPlayerPlot2D::Run(void)
         }
         else {
             if((ZoomScaleValue)  > (TimeBoundary-Time )*(0.8) && TimeBoundary <  PlayUntilTime.Data){
-                Parser.LoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
+                Parser.LoadDataFromFile(tracePointer, Time, ZoomScaleValue, false);
                 //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
-                Parser.GetBoundary(TracePointer, TopBoundary, LowBoundary);
+                Parser.GetBoundary(tracePointer->GetParent(), TopBoundary, LowBoundary);
                 TimeBoundary  =TopBoundary;
             }
             // update plot
@@ -184,9 +185,9 @@ void cdpPlayerPlot2D::Run(void)
         if(LastTime.Data != Time.Data ){          
             LastTime = Time;
             PlayStartTime = Time;
-            Parser.LoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
+            Parser.LoadDataFromFile(tracePointer, Time, ZoomScaleValue, true);
             //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
-            Parser.GetBoundary(TracePointer, TopBoundary, LowBoundary);
+            Parser.GetBoundary(tracePointer->GetParent(), TopBoundary, LowBoundary);
             TimeBoundary  =TopBoundary;
             // update plot
             UpdatePlot();
@@ -198,6 +199,64 @@ void cdpPlayerPlot2D::Run(void)
         //// update plot
         //UpdatePlot();
     }
+    
+}
+
+void cdpPlayerPlot2D::Run(void)
+{
+    ProcessQueuedEvents();
+    ProcessQueuedCommands();
+    
+    CS.Enter();
+
+    size_t traceIndex;
+    const size_t numberofTraces = TracePointer->GetParent()->Traces.size();
+
+    for(traceIndex = 0; traceIndex < numberofTraces; traceIndex++)
+        this->StateExecutor(TracePointer->GetParent()->Traces[traceIndex]);
+
+    //update the model (load data) etc.
+    // if (State == PLAY) {
+
+    //     double currentTime = TimeServer.GetAbsoluteTimeInSeconds();
+    //     Time = currentTime - PlayStartTime.Timestamp() + PlayStartTime.Data;
+
+    //     if (Time.Data > PlayUntilTime.Data)  {
+    //         Time = PlayUntilTime;
+    //         State = STOP;
+    //     }
+    //     else {
+    //         if((ZoomScaleValue)  > (TimeBoundary-Time )*(0.8) && TimeBoundary <  PlayUntilTime.Data){
+    //             Parser.LoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
+    //             //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
+    //             Parser.GetBoundary(TracePointer, TopBoundary, LowBoundary);
+    //             TimeBoundary  =TopBoundary;
+    //         }
+    //         // update plot
+    //         UpdatePlot();
+    //     }
+    // }
+    // //make sure we are at the correct seek position.
+    // else if (State == SEEK) {
+    //     //// Everything here should be moved to Qt thread since we have to re-alloc a new Plot object
+    //     //size_t i = 0;
+    //     if(LastTime.Data != Time.Data ){          
+    //         LastTime = Time;
+    //         PlayStartTime = Time;
+    //         Parser.LoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
+    //         //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
+    //         Parser.GetBoundary(TracePointer, TopBoundary, LowBoundary);
+    //         TimeBoundary  =TopBoundary;
+    //         // update plot
+    //         UpdatePlot();
+    //     }
+    // }
+    // else if (State == STOP) {
+    //     //do Nothing
+
+    //     //// update plot
+    //     //UpdatePlot();
+    // }
     
     CS.Leave();
     //now display updated data in the qt thread space.
@@ -465,7 +524,7 @@ bool cdpPlayerPlot2D::ExtractDataFromStateTableCSVFile(QString & path){
     Parser.LoadDataFromFile(TracePointer, 0.0, ZoomScaleValue,  false);
     //Parser.TriggerLoadDataFromFile(TracePointer, 0.0, ZoomScaleValue,  false);
 
-    Parser.GetBoundary(TracePointer,TopBoundary,LowBoundary);
+    Parser.GetBoundary(TracePointer->GetParent(),TopBoundary,LowBoundary);
 
     Parser.GetBeginEndTime(PlayerDataInfo.DataStart(), PlayerDataInfo.DataEnd());    
 //    Data = &DataPool1;

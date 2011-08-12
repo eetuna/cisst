@@ -26,50 +26,6 @@ http://www.cisst.org/cisst/license.txt.
 #include <iostream>
 
 
-
-/***************************************************************************************************
-    Plot Funcitons
-***************************************************************************************************/
-
-vctPlot2DBase::Scale * vctPlot2DBase::AddScale(const std::string & name){
-    // check if the name already exists
-    TracesIdType::const_iterator found = this->ScalesId.find(name);
-    const TracesIdType::const_iterator end = this->ScalesId.end();
-    if (found == end) {
-        size_t ScaleSize = this->Scales.size();
-        // new name
-        //set the number of points to default, 100       
-        Scale * newScale = new Scale(name);
-        this->Scales.push_back(newScale);
-        ScalesId[name] = ScaleSize;
-        // temporary solution
-        vctPlot2DBase::Traces = Scales[0]->Traces;
-        return newScale;
-    }    
-    return 0;    
-}
-
-vctPlot2DBase::Scale * vctPlot2DBase::FindScale(const std::string & name){
-    // check if the name already exists   
-    TracesIdType::const_iterator found;
-    const TracesIdType::const_iterator end = this->ScalesId.end();
-    const std::string delimiter("-");
-    std::string scaleName;
-    size_t delimiterPosition = name.find(delimiter);
-    
-    scaleName = name.substr(0, delimiterPosition);
-
-    found = this->ScalesId.find(scaleName);    
-    
-    // no match
-    if (found == end) 
-        return 0;
-    else
-        return Scales[found->second];
-}
-
-
-
 /***************************************************************************************************
     Scale Functions
 ***************************************************************************************************/
@@ -266,6 +222,7 @@ vctPlot2DBase::Trace * vctPlot2DBase::Scale::AddSignal(const std::string & name)
       // new name
       //set the number of points to default, 100
       Trace * newTrace = new Trace(name, 100, this->PointSize);
+      newTrace->Parent = this;
       this->Traces.push_back(newTrace);
       TracesId[name] = SignalSize;
       return newTrace;
@@ -342,6 +299,15 @@ vctPlot2DBase::Trace::~Trace()
         delete this->Buffer;
     }
 }
+
+vctPlot2DBase::Trace * vctPlot2DBase::Trace::AddTrace(const std::string & name){   
+    return Parent->AddSignal(name);
+}
+
+vctPlot2DBase::Scale * vctPlot2DBase::Trace::GetParent(void){
+    return Parent;
+}
+
 
 
 void vctPlot2DBase::Trace::AddPoint(const vctDouble2 & point)
@@ -849,6 +815,9 @@ void vctPlot2DBase::Trace::SetColor(const vctDouble3 & colorInRange0To1)
     this->Color.Assign(clippedColor);
 }
 
+/***************************************************************************************************
+    VerticalLine Functions
+***************************************************************************************************/
 
 vctPlot2DBase::VerticalLine::VerticalLine(const std::string & name, const double x):
     Name(name),
@@ -879,6 +848,10 @@ void vctPlot2DBase::VerticalLine::SetColor(const vctDouble3 & colorInRange0To1)
     this->Color.Assign(clippedColor);
 }
 
+
+/***************************************************************************************************
+    Plot Funcitons
+***************************************************************************************************/
 
 vctPlot2DBase::vctPlot2DBase(size_t pointSize):
     PointSize(pointSize),
@@ -1055,7 +1028,6 @@ void vctPlot2DBase::FitXY(vctDouble2 min, vctDouble2 max, const vctDouble2 & pad
 
     for(scaleIndex = 0; scaleIndex < numberofScales; scaleIndex++)
         this->Scales[scaleIndex]->FitXY(min, max, padding);    
-
 }
 
 
@@ -1202,4 +1174,41 @@ void vctPlot2DBase::SetBackgroundColor(const vctDouble3 & colorInRange0To1)
     clippedColor.ClippedAboveOf(colorInRange0To1, 1.0);
     clippedColor.ClippedBelowOf(clippedColor, 0.0);
     this->BackgroundColor.Assign(clippedColor);
+}
+
+vctPlot2DBase::Scale * vctPlot2DBase::AddScale(const std::string & name){
+    // check if the name already exists
+    TracesIdType::const_iterator found = this->ScalesId.find(name);
+    const TracesIdType::const_iterator end = this->ScalesId.end();
+    if (found == end) {
+        size_t ScaleSize = this->Scales.size();
+        // new name
+        //set the number of points to default, 100       
+        Scale * newScale = new Scale(name);
+        this->Scales.push_back(newScale);
+        ScalesId[name] = ScaleSize;
+        // temporary solution
+        vctPlot2DBase::Traces = Scales[0]->Traces;
+        return newScale;
+    }    
+    return 0;    
+}
+
+vctPlot2DBase::Scale * vctPlot2DBase::FindScale(const std::string & name){
+    // check if the name already exists   
+    TracesIdType::const_iterator found;
+    const TracesIdType::const_iterator end = this->ScalesId.end();
+    const std::string delimiter("-");
+    std::string scaleName;
+    size_t delimiterPosition = name.find(delimiter);
+    
+    scaleName = name.substr(0, delimiterPosition);
+
+    found = this->ScalesId.find(scaleName);    
+    
+    // no match
+    if (found == end) 
+        return 0;
+    else
+        return Scales[found->second];
 }

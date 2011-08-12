@@ -163,6 +163,15 @@ void cdpPlayerParseStateTableData::GetBoundary(vctPlot2DBase::Trace *  TraceHand
     return;
 }
 
+void cdpPlayerParseStateTableData::GetBoundary(vctPlot2DBase::Scale *  scaleHandle, double &TopBoundary, double &LowBoundary) {
+
+    scaleHandle->ComputeDataRangeX(LowBoundary,TopBoundary, true);
+    LowBoundary += this->TimeBaseOffset;
+    TopBoundary += this->TimeBaseOffset;
+    return;
+}
+
+
 void cdpPlayerParseStateTableData::GetBoundary(double TimeStampForSearch, double &TopBoundary, double &LowBoundary) {
     // Load Relative Field 
     std::vector <double> TimeIndex;    
