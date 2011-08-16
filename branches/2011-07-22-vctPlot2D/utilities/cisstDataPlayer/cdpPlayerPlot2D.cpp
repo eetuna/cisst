@@ -53,10 +53,16 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     Plot->SetNumberOfPoints(100);
 
     cdpPlayerPlot2D::Plot2DTrace * traceElement = new cdpPlayerPlot2D::Plot2DTrace;   
-    TracePointer = Plot->AddTrace("Scale-Data"); 
+    TracePointer = Plot->AddTrace("Scale-ForceNorm_Nm"); 
     traceElement->TracePointer = TracePointer;
     traceElement->TimeFieldName =  "TimeStamp";
     traceElement->DataFieldName = "TipForceNorm_Nm";
+    this->Scales.push_back(*traceElement);
+ //   TracePointer = Plot->AddTrace("Scale-TipForce_Nm_1");
+ //   traceElement->TracePointer = TracePointer;
+ //   traceElement->TimeFieldName =  "TimeStamp";
+ //   traceElement->DataFieldName = "TipForce_Nm_1";
+ //   this->Scales.push_back(*traceElement);    
         
     VerticalLinePointer = Plot->AddVerticalLine("Scale-X");
 
@@ -169,7 +175,12 @@ void cdpPlayerPlot2D::StateExecutor(vctPlot2DBase::Trace *tracePointer){
         }
         else {
             if((ZoomScaleValue)  > (TimeBoundary-Time )*(0.8) && TimeBoundary <  PlayUntilTime.Data){
-                Parser.LoadDataFromFile(tracePointer, Time, ZoomScaleValue, false);
+                size_t traceIndex = 0;
+                for( traceIndex = 0; traceIndex < this->Scales.size(); traceIndex++){
+                    Parser.SetDataFieldForSearch(this->Scales.at(traceIndex).DataFieldName);
+                    Parser.SetTimeFieldForSearch(this->Scales.at(traceIndex).TimeFieldName);
+                    Parser.LoadDataFromFile(this->Scales.at(traceIndex).TracePointer, Time, ZoomScaleValue, false);
+                }
                 //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
                 Parser.GetBoundary(tracePointer->GetParent(), TopBoundary, LowBoundary);
                 TimeBoundary  =TopBoundary;
@@ -185,7 +196,13 @@ void cdpPlayerPlot2D::StateExecutor(vctPlot2DBase::Trace *tracePointer){
         if(LastTime.Data != Time.Data ){          
             LastTime = Time;
             PlayStartTime = Time;
-            Parser.LoadDataFromFile(tracePointer, Time, ZoomScaleValue, true);
+            
+            size_t traceIndex = 0;
+            for( traceIndex = 0; traceIndex < this->Scales.size(); traceIndex++){
+                Parser.SetDataFieldForSearch(this->Scales.at(traceIndex).DataFieldName);
+                Parser.SetTimeFieldForSearch(this->Scales.at(traceIndex).TimeFieldName);
+                Parser.LoadDataFromFile(this->Scales.at(traceIndex).TracePointer, Time, ZoomScaleValue, true);
+            }
             //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
             Parser.GetBoundary(tracePointer->GetParent(), TopBoundary, LowBoundary);
             TimeBoundary  =TopBoundary;
@@ -513,15 +530,18 @@ bool cdpPlayerPlot2D::ExtractDataFromStateTableCSVFile(QString & path){
     const std::string TimeFieldName("TimeStamp");
     const std::string DataFieldName("TipForceNorm_Nm");
     std::string Path(path.toStdString());
+    size_t traceIndex = 0;
 
     // open header file
     Parser.ParseHeader(Path);
     Parser.GenerateIndex();
     // we sould name the file Path - .desc + .idx
     Parser.WriteIndexToFile("Parser.idx");
-    Parser.SetDataFieldForSearch(DataFieldName);
-    Parser.SetTimeFieldForSearch(TimeFieldName);
-    Parser.LoadDataFromFile(TracePointer, 0.0, ZoomScaleValue,  false);
+    for( traceIndex = 0; traceIndex < Scales.size(); traceIndex++){
+        Parser.SetDataFieldForSearch(Scales.at(traceIndex).DataFieldName);
+        Parser.SetTimeFieldForSearch(Scales.at(traceIndex).TimeFieldName);
+        Parser.LoadDataFromFile(Scales.at(traceIndex).TracePointer, 0.0, ZoomScaleValue,  false);
+    }
     //Parser.TriggerLoadDataFromFile(TracePointer, 0.0, ZoomScaleValue,  false);
 
     Parser.GetBoundary(TracePointer->GetParent(),TopBoundary,LowBoundary);
