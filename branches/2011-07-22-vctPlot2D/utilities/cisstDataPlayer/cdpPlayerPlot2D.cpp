@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <QFileDialog>
 #include <QLabel>
 #include <QDoubleSpinBox>
+#include <QtGui>
 #include <cisstOSAbstraction/osaGetTime.h>
 
 
@@ -35,10 +36,31 @@ http://www.cisst.org/cisst/license.txt.
 
 CMN_IMPLEMENT_SERVICES(cdpPlayerPlot2D);
 
+
+// Add/Remove Signal Window
+addSignalWindow::addSignalWindow(QWidget *parent)
+: QWidget(parent)
+{
+    grid = new QGridLayout;
+    setLayout(grid);
+    
+    setWindowTitle(tr("Group Boxes"));
+    resize(480, 320);
+}
+
+void addSignalWindow::AddWidget(QWidget *widget, int x, int y){
+    this->grid->addWidget(widget,x,y);
+    setLayout(grid);
+    return;
+}
+
+
 cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     cdpPlayerBase(name, period)
 {
 
+    //Test
+    
     // create the user interface
     ExWidget.setupUi(&Widget);
     mainWidget = new QWidget();
@@ -47,23 +69,21 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     ZoomInOut = new QLabel(mainWidget);
     ZoomInOut->setText("Set Visualization Scale");
     ScaleZoom->setMaximum(9999);
+    
+    SignalButton = new QPushButton(tr("&Add/Remove Signal"),mainWidget);
 
     // create the user interface
     Plot = new vctPlot2DOpenGLQtWidget(mainWidget);
     Plot->SetNumberOfPoints(100);
 
-    cdpPlayerPlot2D::Plot2DTrace * traceElement = new cdpPlayerPlot2D::Plot2DTrace;   
-    TracePointer = Plot->AddTrace("Scale-ForceNorm_Nm"); 
-    traceElement->TracePointer = TracePointer;
+    
+    // TODO: Set default Trace here, thifs should be removed for multi-Scale architecture
+    cdpPlayerPlot2D::Plot2DScale * traceElement = new cdpPlayerPlot2D::Plot2DScale;   
+    traceElement->scalePointer = Plot->AddScale("Scale");
     traceElement->TimeFieldName =  "TimeStamp";
-    traceElement->DataFieldName = "TipForceNorm_Nm";
+    //traceElement->DataFieldName = "TipForceNorm_Nm";
     this->Scales.push_back(*traceElement);
- //   TracePointer = Plot->AddTrace("Scale-TipForce_Nm_1");
- //   traceElement->TracePointer = TracePointer;
- //   traceElement->TimeFieldName =  "TimeStamp";
- //   traceElement->DataFieldName = "TipForce_Nm_1";
- //   this->Scales.push_back(*traceElement);    
-        
+
     VerticalLinePointer = Plot->AddVerticalLine("Scale-X");
 
     CentralLayout = new QGridLayout(mainWidget);
@@ -74,8 +94,9 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
     CentralLayout->addWidget(Plot, 0, 0, 1, 2);
     CentralLayout->addWidget(ScaleZoom, 1, 1, 1, 2);
     CentralLayout->addWidget(ZoomInOut, 1, 0, 1, 1);
+    CentralLayout->addWidget(SignalButton, 2,0,1,2);
 
-    CentralLayout->addWidget(this->GetWidget(),2,0,4,4);
+    CentralLayout->addWidget(this->GetWidget(),3,0,4,4);
     mainWidget->resize(300,500);
 
     // Add elements to state table
@@ -99,7 +120,8 @@ cdpPlayerPlot2D::cdpPlayerPlot2D(const std::string & name, double period):
 
     ZoomScaleValue = 1;
 
-
+    window.show();
+    window.setVisible(false);
     //// Add Parser Thread
     //taskManager = mtsTaskManager::GetInstance();
     //taskManager->AddComponent(&Parser);
@@ -139,6 +161,9 @@ void cdpPlayerPlot2D::MakeQTConnections(void)
 
     QObject::connect(ScaleZoom , SIGNAL(valueChanged(double)),
                      this, SLOT(QSlotSpinBoxValueChanged(double)));
+    
+    QObject::connect(SignalButton, SIGNAL(clicked()),
+                     this, SLOT(QSlotAddRemoveSignalClicked()));
 }
 
 
@@ -176,12 +201,21 @@ void cdpPlayerPlot2D::StateExecutor(vctPlot2DBase::Trace *tracePointer){
         else {
             if((ZoomScaleValue)  > (TimeBoundary-Time )*(0.8) && TimeBoundary <  PlayUntilTime.Data){
                 size_t traceIndex = 0;
-                for( traceIndex = 0; traceIndex < this->Scales.size(); traceIndex++){
-                    Parser.SetDataFieldForSearch(this->Scales.at(traceIndex).DataFieldName);
-                    Parser.SetTimeFieldForSearch(this->Scales.at(traceIndex).TimeFieldName);
-                    Parser.LoadDataFromFile(this->Scales.at(traceIndex).TracePointer, Time, ZoomScaleValue, false);
+                // TODO: Modify this part for multi-Scale, so far, it is multi-Signal/Trace only 
+                // we assume we have only one scale here, loop for every trace
+                for(traceIndex = 0; traceIndex < this->Scales.at(0).scalePointer->Traces.size(); traceIndex++){
+                    vctPlot2DBase::Trace * traceP = this->Scales.at(0).scalePointer->Traces.at(traceIndex);
+                    // check if the name already exists
+                    std::string name = traceP->GetName();
+                    const std::string delimiter("-");
+                    std::string dataFieldName;
+                    size_t delimiterPosition = name.find(delimiter);
+                    
+                    dataFieldName = name.substr(delimiterPosition+1, name.size());                    
+                    Parser.SetDataFieldForSearch(dataFieldName);
+                    Parser.SetTimeFieldForSearch(this->Scales.at(0).TimeFieldName);
+                    Parser.LoadDataFromFile(traceP, Time, ZoomScaleValue, false);                    
                 }
-                //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
                 Parser.GetBoundary(tracePointer->GetParent(), TopBoundary, LowBoundary);
                 TimeBoundary  =TopBoundary;
             }
@@ -198,13 +232,22 @@ void cdpPlayerPlot2D::StateExecutor(vctPlot2DBase::Trace *tracePointer){
             PlayStartTime = Time;
             
             size_t traceIndex = 0;
-            for( traceIndex = 0; traceIndex < this->Scales.size(); traceIndex++){
-                Parser.SetDataFieldForSearch(this->Scales.at(traceIndex).DataFieldName);
-                Parser.SetTimeFieldForSearch(this->Scales.at(traceIndex).TimeFieldName);
-                Parser.LoadDataFromFile(this->Scales.at(traceIndex).TracePointer, Time, ZoomScaleValue, true);
+            for(traceIndex = 0; traceIndex < this->Scales.at(0).scalePointer->Traces.size(); traceIndex++){
+                vctPlot2DBase::Trace * traceP = this->Scales.at(0).scalePointer->Traces.at(traceIndex);
+                std::string name = traceP->GetName();
+                const std::string delimiter("-");
+                std::string dataFieldName;
+                size_t delimiterPosition = name.find(delimiter);
+                
+                dataFieldName = name.substr(delimiterPosition+1, name.size());                    
+                Parser.SetDataFieldForSearch(dataFieldName);
+
+                Parser.SetDataFieldForSearch(dataFieldName);
+                Parser.SetTimeFieldForSearch(this->Scales.at(0).TimeFieldName);
+                Parser.LoadDataFromFile(traceP, Time, ZoomScaleValue, true);                    
             }
-            //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
             Parser.GetBoundary(tracePointer->GetParent(), TopBoundary, LowBoundary);
+            
             TimeBoundary  =TopBoundary;
             // update plot
             UpdatePlot();
@@ -227,53 +270,12 @@ void cdpPlayerPlot2D::Run(void)
     CS.Enter();
 
     size_t traceIndex;
-    const size_t numberofTraces = TracePointer->GetParent()->Traces.size();
+    const size_t numberofTraces = this->Scales.at(0).scalePointer->Traces.size();//TracePointer->GetParent()->Traces.size();
 
+    //TODO: This is one scale based, need to be changed for multi-Scale
     for(traceIndex = 0; traceIndex < numberofTraces; traceIndex++)
-        this->StateExecutor(TracePointer->GetParent()->Traces[traceIndex]);
-
-    //update the model (load data) etc.
-    // if (State == PLAY) {
-
-    //     double currentTime = TimeServer.GetAbsoluteTimeInSeconds();
-    //     Time = currentTime - PlayStartTime.Timestamp() + PlayStartTime.Data;
-
-    //     if (Time.Data > PlayUntilTime.Data)  {
-    //         Time = PlayUntilTime;
-    //         State = STOP;
-    //     }
-    //     else {
-    //         if((ZoomScaleValue)  > (TimeBoundary-Time )*(0.8) && TimeBoundary <  PlayUntilTime.Data){
-    //             Parser.LoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
-    //             //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, false);
-    //             Parser.GetBoundary(TracePointer, TopBoundary, LowBoundary);
-    //             TimeBoundary  =TopBoundary;
-    //         }
-    //         // update plot
-    //         UpdatePlot();
-    //     }
-    // }
-    // //make sure we are at the correct seek position.
-    // else if (State == SEEK) {
-    //     //// Everything here should be moved to Qt thread since we have to re-alloc a new Plot object
-    //     //size_t i = 0;
-    //     if(LastTime.Data != Time.Data ){          
-    //         LastTime = Time;
-    //         PlayStartTime = Time;
-    //         Parser.LoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
-    //         //Parser.TriggerLoadDataFromFile(TracePointer, Time, ZoomScaleValue, true);
-    //         Parser.GetBoundary(TracePointer, TopBoundary, LowBoundary);
-    //         TimeBoundary  =TopBoundary;
-    //         // update plot
-    //         UpdatePlot();
-    //     }
-    // }
-    // else if (State == STOP) {
-    //     //do Nothing
-
-    //     //// update plot
-    //     //UpdatePlot();
-    // }
+        this->StateExecutor(this->Scales.at(0).scalePointer->Traces[traceIndex]);
+        //this->StateExecutor(TracePointer->GetParent()->Traces[traceIndex]);
     
     CS.Leave();
     //now display updated data in the qt thread space.
@@ -382,6 +384,23 @@ void cdpPlayerPlot2D::Quit(void)
 }
 
 
+
+void cdpPlayerPlot2D::DataCheckBoxStateChanged(int CMN_UNUSED(state)){
+    // Update Data Signal List 
+    for(size_t i = 0; i < window.DataCheckBox.size();i++){
+        // TODO: modify this part for multi-Scale, it is now multi-Signal/Tracs.
+        if(window.DataCheckBox.at(i)->isChecked()){
+            this->Scales.at(0).scalePointer->AddSignal(this->Scales.at(0).scalePointer->GetName() + "-" + DataList.at(i));
+        }else{
+            this->Scales.at(0).scalePointer->RemoveSignal(this->Scales.at(0).scalePointer->GetName() + "-" + DataList.at(i));
+        }
+    }
+}
+void cdpPlayerPlot2D::TimeRadioButtonStateChanged(int CMN_UNUSED(state)){
+    // Change Time-base
+    
+}
+
 void cdpPlayerPlot2D::QSlotPlayClicked(void)
 {
     mtsDouble playTime;
@@ -434,6 +453,34 @@ void cdpPlayerPlot2D::QSlotStopClicked(void)
     }
 }
 
+void cdpPlayerPlot2D::QSlotAddRemoveSignalClicked(void){    
+    // Update Data Signal List 
+
+    for(size_t j = 0; j < this->Scales.at(0).scalePointer->Traces.size(); j++){
+        std::string traceName = this->Scales.at(0).scalePointer->Traces.at(j)->GetName();
+        for(size_t i = 0; i < DataList.size();i++){
+            const std::string delimiter("-");
+            std::string dataFieldName;
+            std::string checkBoxName = window.DataCheckBox.at(i)->text().toAscii().data();
+            size_t delimiterPosition = traceName.find(delimiter);
+            
+            dataFieldName = traceName.substr(delimiterPosition+1, traceName.size()); 
+            // TODO: modify this part for multi-Scale, it is now multi-Signal/Tracs.
+            if(DataList.at(i).find(dataFieldName) != std::string::npos){
+                window.DataCheckBox.at(i)->setChecked(true);
+            }
+        }
+    }
+    
+    for(size_t i = 0 ; i < TimeList.size(); i++){
+        if(TimeList.at(i).find(this->Scales.at(0).TimeFieldName) != std::string::npos)
+            window.TimeRadio.at(i)->setChecked(true);
+        
+    }
+    window.setVisible(true);
+    
+}
+
 
 void cdpPlayerPlot2D::LoadData(void)
 {
@@ -454,6 +501,42 @@ void cdpPlayerPlot2D::LoadData(void)
     Time =  PlayerDataInfo.DataStart();
 
     UpdatePlayerInfo(PlayerDataInfo);
+}
+
+void cdpPlayerPlot2D::CreateSignalBox(void){
+    QVBoxLayout *vboxData = new QVBoxLayout;
+    QGroupBox *dataFieldAdded = new QGroupBox(tr("Data Field"));
+    dataFieldAdded->setFlat(true);
+    for(size_t i = 0; i < DataList.size(); i++){
+        QCheckBox *checkBox = new QCheckBox(DataList.at(i).c_str());
+        window.DataCheckBox.push_back(checkBox);
+        
+        QObject::connect(checkBox, SIGNAL(stateChanged(int)),
+                         this, SLOT(DataCheckBoxStateChanged(int)));
+        
+        vboxData->addWidget(checkBox);
+    }
+    vboxData->addStretch(1);
+    dataFieldAdded->setLayout(vboxData);
+    window.AddWidget(dataFieldAdded,0,0);
+    
+ 
+    QVBoxLayout *vboxTime = new QVBoxLayout;
+    QGroupBox *timeFieldAdded = new QGroupBox(tr("Time Field"));
+    timeFieldAdded->setFlat(true);
+    for(size_t i = 0; i < TimeList.size(); i++){
+        QRadioButton *radio = new QRadioButton(TimeList.at(i).c_str());
+        window.TimeRadio.push_back(radio);
+        QObject::connect(radio, SIGNAL(stateChanged(int)),
+                         this, SLOT(TimeRadioButtonStateChanged(int)));
+
+        vboxTime->addWidget(radio);
+    }
+    vboxTime->addStretch(1);
+    timeFieldAdded->setLayout(vboxTime);
+    window.AddWidget(timeFieldAdded,0,1);
+    
+    //window.setVisible(true);
 }
 
 
@@ -479,6 +562,7 @@ void cdpPlayerPlot2D::QSlotOpenFileClicked(void)
     OpenFile();
     LoadData();
     UpdateLimits();
+    CreateSignalBox();
 }
 
 
@@ -499,12 +583,10 @@ void cdpPlayerPlot2D::OpenFile(void)
 
     result = QFileDialog::getOpenFileName(mainWidget, "Open File", tr("./"), tr("Desc (*.desc)"));
     if (!result.isNull()) {
-        size_t i = 0;
-
         // read Data from file
 	    ExtractDataFromStateTableCSVFile(result);
 
-        Parser.GetBoundary(TracePointer,TopBoundary,LowBoundary);
+        Parser.GetBoundary(/*TracePointer*/this->Scales.at(0).scalePointer,TopBoundary,LowBoundary);
         TimeBoundary = TopBoundary;
         ResetPlayer();
         UpdatePlot();
@@ -527,8 +609,6 @@ void cdpPlayerPlot2D::UpdateLimits()
 
 bool cdpPlayerPlot2D::ExtractDataFromStateTableCSVFile(QString & path){
 
-    const std::string TimeFieldName("TimeStamp");
-    const std::string DataFieldName("TipForceNorm_Nm");
     std::string Path(path.toStdString());
     size_t traceIndex = 0;
 
@@ -537,19 +617,25 @@ bool cdpPlayerPlot2D::ExtractDataFromStateTableCSVFile(QString & path){
     Parser.GenerateIndex();
     // we sould name the file Path - .desc + .idx
     Parser.WriteIndexToFile("Parser.idx");
-    for( traceIndex = 0; traceIndex < Scales.size(); traceIndex++){
-        Parser.SetDataFieldForSearch(Scales.at(traceIndex).DataFieldName);
-        Parser.SetTimeFieldForSearch(Scales.at(traceIndex).TimeFieldName);
-        Parser.LoadDataFromFile(Scales.at(traceIndex).TracePointer, 0.0, ZoomScaleValue,  false);
+    Parser.GetHeaderField(TimeList, DataList);
+    // Make the first element default value
+    Scales.at(0).scalePointer->AddSignal(DataList.at(0));
+    for(traceIndex = 0; traceIndex < this->Scales.at(0).scalePointer->Traces.size(); traceIndex++){
+        vctPlot2DBase::Trace * traceP = this->Scales.at(0).scalePointer->Traces.at(traceIndex);
+        std::string name = traceP->GetName();
+        const std::string delimiter("-");
+        std::string dataFieldName;
+        size_t delimiterPosition = name.find(delimiter);
+        
+        dataFieldName = name.substr(delimiterPosition+1, name.size());                    
+        
+        Parser.SetDataFieldForSearch(dataFieldName);
+        Parser.SetTimeFieldForSearch(this->Scales.at(0).TimeFieldName);
+        Parser.LoadDataFromFile(traceP, 0.0, ZoomScaleValue, false);                    
     }
-    //Parser.TriggerLoadDataFromFile(TracePointer, 0.0, ZoomScaleValue,  false);
-
-    Parser.GetBoundary(TracePointer->GetParent(),TopBoundary,LowBoundary);
-
-    Parser.GetBeginEndTime(PlayerDataInfo.DataStart(), PlayerDataInfo.DataEnd());    
-//    Data = &DataPool1;
-//    TimeStamps =&TimeStampsPool1;
-
+    
+    Parser.GetBeginEndTime(PlayerDataInfo.DataStart(), PlayerDataInfo.DataEnd());        
+    
     return true;
 }
 

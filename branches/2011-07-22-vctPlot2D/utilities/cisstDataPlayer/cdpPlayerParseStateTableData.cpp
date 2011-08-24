@@ -67,7 +67,7 @@ void cdpPlayerParseStateTableData::ParseHeader(std::string Path) {
     for (int i = 0; i < Header.NumberOfTotalFields; i++) {
         std::getline(inf, Temp);
         Header.Fields.push_back(Temp);
-    }    
+    }
 #if 0
     std::cerr<<"/***************************************************************************/"<<std::endl;
     std::cerr<<"FilePath: "<<Header.FilePath<<  std::endl;
@@ -82,6 +82,27 @@ void cdpPlayerParseStateTableData::ParseHeader(std::string Path) {
     }  
 #endif
     inf.close();
+}
+
+void cdpPlayerParseStateTableData::GetHeaderField(std::vector <std::string> &TimeFieldName, std::vector <std::string> &DataFieldName){
+    
+    for (int i  = 0 ; i < Header.Fields.size(); i++) {        
+        std::vector <std::string> Token;   
+        Tokenize(Header.Fields.at(i), Token, ":");// get rid of first string
+        for (size_t j = 0; j < Token.at(1).size(); j++) {
+            if(Token.at(1)[j] == ' '){
+                Token.at(1).erase(0,j+1);
+                j = 0;
+            }
+        }
+        if(!Token.at(0).compare("Time")){//Time Field
+            TimeFieldName.push_back(Token.at(1));
+        }else{
+            DataFieldName.push_back(Token.at(1));
+        }
+        Token.clear();
+    } 
+    
 }
 
 // read data File and make index for every 1MB data
@@ -155,24 +176,28 @@ void cdpPlayerParseStateTableData::TestIndex(void) {
 }
 
 // return next boundary of time
-void cdpPlayerParseStateTableData::GetBoundary(vctPlot2DBase::Trace *  TraceHandle, double &TopBoundary, double &LowBoundary) {
-
+bool cdpPlayerParseStateTableData::GetBoundary(vctPlot2DBase::Trace *  TraceHandle, double &TopBoundary, double &LowBoundary) {
+    
     TraceHandle->ComputeDataRangeX(LowBoundary,TopBoundary, true);
-    LowBoundary += this->TimeBaseOffset;
-    TopBoundary += this->TimeBaseOffset;
-    return;
+        LowBoundary += this->TimeBaseOffset;
+        TopBoundary += this->TimeBaseOffset;
+    return true;
 }
 
-void cdpPlayerParseStateTableData::GetBoundary(vctPlot2DBase::Scale *  scaleHandle, double &TopBoundary, double &LowBoundary) {
+bool cdpPlayerParseStateTableData::GetBoundary(vctPlot2DBase::Scale *  scaleHandle, double &TopBoundary, double &LowBoundary) {
 
-    scaleHandle->ComputeDataRangeX(LowBoundary,TopBoundary, true);
-    LowBoundary += this->TimeBaseOffset;
-    TopBoundary += this->TimeBaseOffset;
-    return;
+    bool success;
+    
+    success = scaleHandle->ComputeDataRangeX(LowBoundary,TopBoundary, true);
+    if(success){
+        LowBoundary += this->TimeBaseOffset;
+        TopBoundary += this->TimeBaseOffset;
+    }
+    return success;
 }
 
 
-void cdpPlayerParseStateTableData::GetBoundary(double TimeStampForSearch, double &TopBoundary, double &LowBoundary) {
+bool cdpPlayerParseStateTableData::GetBoundary(double TimeStampForSearch, double &TopBoundary, double &LowBoundary) {
     // Load Relative Field 
     std::vector <double> TimeIndex;    
     unsigned int i  = 0;
@@ -189,15 +214,14 @@ void cdpPlayerParseStateTableData::GetBoundary(double TimeStampForSearch, double
         Token.clear();
     } 
 
-    return;
+    return true;
 }
 
 size_t cdpPlayerParseStateTableData::GetDataPoisitionFromFile(double Data, int FieldNumber) {
-    
-    int i ;
+    size_t i ;
     size_t TryToCount = 0;
 
-    for ( i  = 0 ; i < Index.size(); i++) {        
+    for ( i   = 0 ; i < Index.size(); i++) {        
         std::vector <std::string> Token;   
         Tokenize(Index.at(i).LineAtIndex, Token, Header.Delimiter);// get rid of first string
         if (Data <= strtod(Token.at(FieldNumber).c_str(), NULL ))

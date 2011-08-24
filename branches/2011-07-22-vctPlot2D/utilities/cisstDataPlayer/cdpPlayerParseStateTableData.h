@@ -60,9 +60,9 @@ public:
     // Load Data into buffer by time index
     // Load a range of data, we may use a ping-pong buffer. Range should be time or data size. I am not sure yet
     // Compare TimeStampForSearch with TimeField which is set from user and load data & time to Data,Time respectively
-    void GetBoundary(double TimeStampForSearch, double &TopBoundary, double &LowBoundary);
-    void GetBoundary(vctPlot2DBase::Trace *  TraceHandle, double &TopBoundary, double &LowBoundary);
-    void GetBoundary(vctPlot2DBase::Scale *  scaleHandle, double &TopBoundary, double &LowBoundary);
+    bool GetBoundary(double TimeStampForSearch, double &TopBoundary, double &LowBoundary);
+    bool GetBoundary(vctPlot2DBase::Trace *  TraceHandle, double &TopBoundary, double &LowBoundary);
+    bool GetBoundary(vctPlot2DBase::Scale *  scaleHandle, double &TopBoundary, double &LowBoundary);
     //void LoadDataFromFile(double TimeStampForSearch, std::vector <double> &Data, std::vector <double> &Time ); 
     //void LoadDataFromFile(vctPlot2DBase::Trace *  TraceHandle ,double TimeStampForSearch, bool ResetTraceBuffer);
     void LoadDataFromFile(vctPlot2DBase::Trace *  TraceHandle ,double TimeStampForSearch, double VisualRange=0.0,  bool ResetTraceBuffer=false);
@@ -71,7 +71,7 @@ public:
     void SetTimeFieldForSearch(std::string TimeField);
     void GetBeginEndTime(double &Begin, double &End);
     size_t GetDataPoisitionFromFile(double Data, int FieldNumber);
-
+    void GetHeaderField(std::vector <std::string> &Time, std::vector <std::string> &Data);
     // Test Function, remove later
     void TestIndex(void);
 private:

@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <QObject>
 #include <QtGui/QCloseEvent>
+#include <QWidget>
 #include <cisstMultiTask.h>
 
 #include "ui_cdpPlayerWidget.h"
@@ -34,6 +35,25 @@ http://www.cisst.org/cisst/license.txt.
 
 // Always include last
 #include "cdpExport.h"
+
+class QGroupBox;
+class QPushButton;
+class QRadioButton;
+
+class addSignalWindow : public QWidget
+{
+    Q_OBJECT;
+public:
+    addSignalWindow(QWidget *parent = 0);
+    void AddWidget(QWidget *widget, int x, int y);
+    std::vector <QCheckBox *> DataCheckBox;
+    std::vector <QRadioButton *> TimeRadio;
+private:
+    QGridLayout *grid;
+public slots:
+
+
+};
 
 class CISST_EXPORT cdpPlayerPlot2D: public cdpPlayerBase
 {
@@ -51,19 +71,22 @@ public:
     void Cleanup(void) {};
 
 private:
+
     Ui::cdpPlayerWidget ExWidget;
     QWidget * mainWidget;
     QGridLayout * CentralLayout ;
     QDoubleSpinBox * ScaleZoom;
     QLabel * ZoomInOut;
     vctPlot2DOpenGLQtWidget * Plot;
-    vctPlot2DBase::Trace * TracePointer;
+//  vctPlot2DBase::Trace * TracePointer;
     vctPlot2DBase::VerticalLine * VerticalLinePointer;
+    QPushButton *SignalButton;
 
     std::vector <double> *TimeStamps;
     std::vector <double> *Data;
 
     double TopBoundary, LowBoundary;
+    addSignalWindow window;
 
 
     // PoolPoint is pointing to ping pong buffer
@@ -81,17 +104,21 @@ private:
         mtsFunctionWrite WriteVectorIndex;
     }Plot2DAccess;
 
-    struct Plot2DTrace{
-        vctPlot2DBase::Trace * TracePointer;      
+    struct Plot2DScale{
+        //vctPlot2DBase::Trace * TracePointer; 
+        vctPlot2DBase::Scale * scalePointer;
         std::string TimeFieldName;
-        std::string DataFieldName;
+        //std::string DataFieldName;
     };
-    std::vector <cdpPlayerPlot2D::Plot2DTrace> Scales;
+    std::vector <cdpPlayerPlot2D::Plot2DScale> Scales;
 
     // Parser for data file
     mtsTaskManager * taskManager;
     cdpPlayerParseStateTableData Parser;
     osaCriticalSection CS;
+    
+    //TimeField and DataField for adding signal window
+    std::vector <std::string> TimeList, DataList;
 
     void SetVectorIndex(const mtsInt & index){ VectorIndex = index; };
     
@@ -108,6 +135,7 @@ private:
     void Quit(void);
     void LoadData(void);
     void UpdateLimits(void);
+    void CreateSignalBox(void);
     void StateExecutor(vctPlot2DBase::Trace *tracePointer);
 
     void OpenFile(void);
@@ -123,6 +151,10 @@ private slots:
     void QSlotSetSaveEndClicked(void);
     void QSlotOpenFileClicked(void);
     void QSlotSpinBoxValueChanged(double);
+    void QSlotAddRemoveSignalClicked(void);
+    
+    void DataCheckBoxStateChanged(int state);
+    void TimeRadioButtonStateChanged(int state);
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(cdpPlayerPlot2D);

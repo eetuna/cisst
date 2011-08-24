@@ -138,6 +138,7 @@ public:
         /*Helper Function*/
         vctPlot2DBase::Trace * AddTrace(const std::string & name);
         vctPlot2DBase::Scale * GetParent(void);
+        std::string GetName(void);
 
     protected:
         Scale * Parent;
@@ -195,16 +196,19 @@ public:
         Scale(const std::string & name, size_t pointDimension = 2);
         ~Scale();
 
+        std::string GetName(void);
         vctPlot2DBase::Trace * AddSignal(const std::string & name);
+        bool RemoveSignal(const std::string & name);
+        
         vctPlot2DBase::VerticalLine * AddVerticalLine(const std::string &name);
         void SetColor(const vctDouble3 & colorInRange0To1);
         void ContinuousUpdate(void);       
         void SetContinuousFitX(bool fit);
         void SetContinuousFitY(bool fit);
 
-        void ComputeDataRangeX(double & min, double & max, bool assumesDataSorted = false) const;
-        void ComputeDataRangeY(double & min, double & max);
-        void ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max);
+        bool ComputeDataRangeX(double & min, double & max, bool assumesDataSorted = false) const;
+        bool ComputeDataRangeY(double & min, double & max);
+        bool ComputeDataRangeXY(vctDouble2 & min, vctDouble2 & max);
 
 
         // Centering X,Y or XY
@@ -236,6 +240,7 @@ public:
 
 
     private:
+        std::string Name;
         size_t PointSize;
         vctDouble3 Color;
         double LineWidth;
@@ -268,6 +273,8 @@ public:
       already been used.  If so, the trace won't be added and the
       method returns a 0 pointer. */
     Trace * AddTrace(const std::string & name);
+    
+    bool RemoveTrace(const std::string & name);
 
     /*! Create a new vertical line.  This method checks if the name
       has already been used.  If so, the line won't be added and the
