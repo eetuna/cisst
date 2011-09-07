@@ -170,6 +170,22 @@ public:
     }
 
 
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<int __stride1, class __dataPtrType1, int __stride2>
+    inline void
+    ApplyTo(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1> & input,
+            vctFixedSizeVectorRef<value_type, DIMENSION, __stride2> output) const {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        // Implementation note: We think working on a local copy of the input
+        // is faster than working on the members, because of fewer indirections,
+        // especially when combined with the dot product operation.
+        const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
+        output[0] = vctDotProduct( this->Row(0), inputCopy );
+        output[1] = vctDotProduct( this->Row(1), inputCopy );
+        output[2] = vctDotProduct( this->Row(2), inputCopy );
+    }
+
+
     /*! Apply the rotation to a vector of fixed size 3. The result is
       returned by copy.  This interface might be more convenient for
       some but one should note that it is less efficient since it
@@ -225,10 +241,45 @@ public:
     }
 
 
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType1>
+    inline void
+    ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType1, value_type> & input,
+            vctDynamicVectorRef<value_type> output) const
+        throw(std::runtime_error)
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT(input.size() == DIMENSION);
+        CMN_ASSERT(output.size() == DIMENSION);
+        // see implementation note for fixed size i/o version
+        const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
+        output[0] = vctDotProduct( this->Row(0), inputCopy );
+        output[1] = vctDotProduct( this->Row(1), inputCopy );
+        output[2] = vctDotProduct( this->Row(2), inputCopy );
+    }
+
+
     template<class __vectorOwnerType, int __stride, class __dataPtrType>
     inline void
     ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
             vctFixedSizeVectorBase<DIMENSION, __stride, value_type, __dataPtrType> & output) const
+        throw(std::runtime_error)
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT(input.size() == DIMENSION);
+        // see implementation note for fixed size i/o version
+        const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
+        output[0] = vctDotProduct( this->Row(0), inputCopy );
+        output[1] = vctDotProduct( this->Row(1), inputCopy );
+        output[2] = vctDotProduct( this->Row(2), inputCopy );
+    }
+
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType, int __stride>
+    inline void
+    ApplyTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
+            vctFixedSizeVectorRef<value_type, DIMENSION, __stride> output) const
         throw(std::runtime_error)
     {
         CMN_ASSERT(input.Pointer() != output.Pointer());
@@ -263,6 +314,20 @@ public:
     inline void
     ApplyInverseTo(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1> & input,
                    vctFixedSizeVectorBase<DIMENSION, __stride2, value_type, __dataPtrType2> & output) const {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        // see implementation note for fixed size i/o ApplyTo() version
+        const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
+        output[0] = vctDotProduct( inputCopy, this->Column(0) );
+        output[1] = vctDotProduct( inputCopy, this->Column(1) );
+        output[2] = vctDotProduct( inputCopy, this->Column(2) );
+    }
+
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<int __stride1, class __dataPtrType1, int __stride2>
+    inline void
+    ApplyInverseTo(const vctFixedSizeConstVectorBase<DIMENSION, __stride1, value_type, __dataPtrType1> & input,
+                   vctFixedSizeVectorRef<value_type, DIMENSION, __stride2> output) const {
         CMN_ASSERT(input.Pointer() != output.Pointer());
         // see implementation note for fixed size i/o ApplyTo() version
         const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
@@ -349,6 +414,22 @@ public:
         output[2] = vctDotProduct( inputCopy, this->Column(2) );
     }
 
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType1>
+    inline void
+    ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType1, value_type> & input,
+                   vctDynamicVectorRef<value_type> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT(input.size() == DIMENSION);
+        CMN_ASSERT(output.size() == DIMENSION);
+        // see implementation note for fixed size i/o ApplyTo() version
+        const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
+        output[0] = vctDotProduct( inputCopy, this->Column(0) );
+        output[1] = vctDotProduct( inputCopy, this->Column(1) );
+        output[2] = vctDotProduct( inputCopy, this->Column(2) );
+    }
+
     /*! Apply the the inverse of the rotation to a dynamic vector.
       The result is stored into a fixed-size vector passed by
       reference by the caller.  It is assumed that both are of size 3.
@@ -357,6 +438,21 @@ public:
     inline void
     ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
                    vctFixedSizeVectorBase<DIMENSION, __stride, value_type, __dataPtrType> & output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        CMN_ASSERT(input.size() == DIMENSION);
+        // see implementation note for fixed size i/o ApplyTo() version
+        const vctFixedSizeVector<value_type, 3> inputCopy( input[0], input[1], input[2] );
+        output[0] = vctDotProduct( inputCopy, this->Column(0) );
+        output[1] = vctDotProduct( inputCopy, this->Column(1) );
+        output[2] = vctDotProduct( inputCopy, this->Column(2) );
+    }
+
+    /* A specialization using vctXXXRef output *passed by value* to overcome gcc limitation */
+    template<class __vectorOwnerType, int __stride>
+    inline void
+    ApplyInverseTo(const vctDynamicConstVectorBase<__vectorOwnerType, value_type> & input,
+                   vctFixedSizeVectorRef<value_type, DIMENSION, __stride> output) const
     {
         CMN_ASSERT(input.Pointer() != output.Pointer());
         CMN_ASSERT(input.size() == DIMENSION);
@@ -390,6 +486,29 @@ public:
         output.ProductOf(myRef, input);
     }
 
+    /*! A specialization of ApplyTo with the output argument vctXXXRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template <unsigned int __cols, int __rowStride1, int __colStride1, class __dataPtrType1,
+              int __rowStride2, int __colStride2>
+    inline void ApplyTo(const vctFixedSizeConstMatrixBase<DIMENSION, __cols, __rowStride1, __colStride1, value_type, __dataPtrType1> & input,
+                        vctFixedSizeMatrixRef<value_type, DIMENSION, __cols, __rowStride2, __colStride2> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        output.ProductOf(*this, input);
+    }
+
+    /*! A specialization of ApplyTo with the output argument vctDynamicRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template<class __matrixOwnerType1>
+    inline void ApplyTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
+                        vctDynamicMatrixRef<value_type> output) const
+    {
+        CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        vctDynamicConstMatrixRef<value_type> myRef(*this);
+        output.ProductOf(myRef, input);
+    }
+
     /*! Apply the inverse rotation to a fixed-size matrix with 3 rows.  The result is
       stored in another fixed-size matrix */
     template <unsigned int __cols, int __rowStride1, int __colStride1, class __dataPtrType1,
@@ -401,11 +520,34 @@ public:
         output.ProductOf(this->TransposeRef(), input);
     }
 
+    /*! A specialization of ApplyInverseTo with the output argument vctFixedSizeRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template <unsigned int __cols, int __rowStride1, int __colStride1, class __dataPtrType1,
+              int __rowStride2, int __colStride2>
+    inline void ApplyInverseTo(const vctFixedSizeConstMatrixBase<DIMENSION, __cols, __rowStride1, __colStride1, value_type, __dataPtrType1> & input,
+                        vctFixedSizeMatrixRef<value_type, DIMENSION, __cols, __rowStride2, __colStride2> output) const
+    {
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        output.ProductOf(this->TransposeRef(), input);
+    }
+
     /*! Apply this rotation inverse to a dynamic matrix with 3 rows.  The result is
       stored in another dynamic matrix. */
     template<class __matrixOwnerType1, class __matrixOwnerType2>
     inline void ApplyInverseTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
                                vctDynamicMatrixBase<__matrixOwnerType2, value_type> & output) const
+    {
+        CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
+        CMN_ASSERT(input.Pointer() != output.Pointer());
+        vctDynamicConstMatrixRef<value_type> myInvRef(this->TransposeRef());
+        output.ProductOf(myInvRef, input);
+    }
+
+    /*! A specialization of ApplyInverseTo with the output argument vctDynamicRef *passed by value*
+      to overcome a limitation of gcc in using non-const references to temporary, unnamed objects */
+    template<class __matrixOwnerType1>
+    inline void ApplyInverseTo(const vctDynamicConstMatrixBase<__matrixOwnerType1, value_type> & input,
+                               vctDynamicMatrixRef<value_type> output) const
     {
         CMN_ASSERT((input.rows() == DIMENSION) && (output.rows() == DIMENSION) && (input.cols() == output.cols()));
         CMN_ASSERT(input.Pointer() != output.Pointer());

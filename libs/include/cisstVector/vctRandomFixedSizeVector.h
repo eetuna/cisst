@@ -47,8 +47,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 template <unsigned int _size, int _stride, class _elementType, class _dataPtrType>
 void vctRandom(vctFixedSizeVectorBase<_size, _stride, _elementType, _dataPtrType> & vector,
-               const _elementType min,
-               const _elementType max) {
+               const _elementType min, const _elementType max) {
     cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
     const unsigned int size = vector.size();
     unsigned int index;
@@ -58,6 +57,18 @@ void vctRandom(vctFixedSizeVectorBase<_size, _stride, _elementType, _dataPtrType
     }
 }
 
-
+// A specialization for a vctFixedSizeVectorRef argumant *passed by value* to overcome
+// a limitation of gcc regarding non-const references to unnamed objects
+template<unsigned int _size, int _stride, class _elementType>
+void vctRandom(vctFixedSizeVectorRef<_elementType, _size, _stride> vector,
+               const _elementType min, const _elementType max)
+{
+    cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
+    const unsigned int size = vector.size();
+    unsigned int index;
+    for (index = 0; index < size; ++index) {
+        randomSequence.ExtractRandomValue(min, max, vector[index]);    
+    }
+}
 #endif  // _vctRandomFixedSizeVector_h
 

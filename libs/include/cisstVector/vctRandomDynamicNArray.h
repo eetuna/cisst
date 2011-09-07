@@ -61,5 +61,20 @@ void vctRandom(vctDynamicNArrayBase<_nArrayOwnerType, _elementType, _dimension> 
 }
 
 
+// A specialization for a vctDynamicNArrayRef argumant *passed by value* to overcome
+// a limitation of gcc regarding non-const references to unnamed objects
+template <typename _elementType, unsigned int _dimension>
+void vctRandom(vctDynamicNArrayRef<_elementType, _dimension> nArray,
+               const _elementType min, const _elementType max)
+{
+    cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
+    typedef typename vctDynamicNArrayRef<_elementType, _dimension>::iterator iterator;
+    iterator iter;
+    const iterator end = nArray.end();
+    for (iter = nArray.begin(); iter != end; iter++) {
+        randomSequence.ExtractRandomValue(min, max, *iter);
+    }
+}
+
 #endif  // _vctRandomDynamicNArray_h
 

@@ -24,9 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 #include "vctGenericRotationTest.h"
 
 #include <cisstCommon/cmnConstants.h>
-#include <cisstVector/vctRandomTransformations.h>
-#include <cisstVector/vctRandomFixedSizeVector.h>
-
+#include <cisstVector/vctRandom.h>
 
 template <class _elementType>
 void vctMatrixRotation3Test::TestConstructors(void) {
@@ -530,6 +528,13 @@ void vctMatrixRotation3Test::TestApplyMethodsOperators(void) {
     typedef _elementType value_type;
     typedef vctMatrixRotation3<value_type> RotationType;
     typedef vctFixedSizeVector<value_type, 3> VectorType;
+    enum {NUM_MATRIX_ROWS = 3, NUM_MATRIX_COLS = 6};
+    typedef vctFixedSizeMatrix<value_type, NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_ROW_MAJOR> FixedSizeMatrixRowMajor;
+    typedef vctFixedSizeMatrix<value_type, NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_COL_MAJOR> FixedSizeMatrixColMajor;
+    typedef vctFixedSizeMatrix<value_type, NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_ROW_MAJOR> FixedSizeMatrixTpsRowMajor;
+    typedef vctFixedSizeMatrix<value_type, NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_COL_MAJOR> FixedSizeMatrixTpsColMajor;
+    typedef vctDynamicVector<value_type> DynamicVectorType;
+    typedef vctDynamicMatrix<value_type> DynamicMatrixType;
     
     RotationType matrixRotation;
     vctRandom(matrixRotation);
@@ -538,9 +543,96 @@ void vctMatrixRotation3Test::TestApplyMethodsOperators(void) {
     vctRandom(vector, static_cast<value_type>(-1.0), static_cast<value_type>(1.0));
     vctGenericRotationTest::TestApplyMethodsOperatorsObject(matrixRotation, vector);
 
+    DynamicVectorType dataDynVector(NUM_MATRIX_ROWS), resultDynVec1(NUM_MATRIX_ROWS), resultDynVec2(NUM_MATRIX_ROWS);
+    vctRandom(dataDynVector, static_cast<value_type>(-1.0), static_cast<value_type>(1.0));
+    vctGenericRotationTest::TestApplyMethodsOperatorsObject(matrixRotation, dataDynVector);
+
     RotationType rotation;
     vctRandom(rotation);
     vctGenericRotationTest::TestApplyMethodsOperatorsXform(matrixRotation, rotation);
+
+    vctDynamicVectorRef<value_type> dataVecRef(dataDynVector), resultVec1Ref(resultDynVec1), resultVec2Ref(resultDynVec2);
+    matrixRotation.ApplyTo(dataVecRef, resultVec1Ref);
+    matrixRotation.ApplyInverseTo(resultVec1Ref, resultVec2Ref);
+    CPPUNIT_ASSERT( resultDynVec2.AlmostEqual(dataDynVector) );
+
+    FixedSizeMatrixRowMajor dataMatrixRowMajor;
+    vctRandom(dataMatrixRowMajor, static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    FixedSizeMatrixRowMajor resultMatrixRowMajor1, resultMatrixRowMajor2;
+    matrixRotation.ApplyTo(dataMatrixRowMajor, resultMatrixRowMajor1);
+    matrixRotation.ApplyInverseTo(resultMatrixRowMajor1, resultMatrixRowMajor2);
+    CPPUNIT_ASSERT( resultMatrixRowMajor2.AlmostEqual(dataMatrixRowMajor) );
+
+    // Test the Apply methods on a single column of a fixed-size matrix
+    vctRandom(dataMatrixRowMajor.Column(0), static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    matrixRotation.ApplyTo(dataMatrixRowMajor.Column(0), resultMatrixRowMajor1.Column(0));
+    matrixRotation.ApplyInverseTo(resultMatrixRowMajor1.Column(0), resultMatrixRowMajor2.Column(0));
+    CPPUNIT_ASSERT( resultMatrixRowMajor2.Column(0).AlmostEqual(dataMatrixRowMajor.Column(0)) );
+
+    FixedSizeMatrixColMajor dataMatrixColMajor;
+    vctRandom(dataMatrixColMajor, static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    FixedSizeMatrixColMajor resultMatrixColMajor1, resultMatrixColMajor2;
+    matrixRotation.ApplyTo(dataMatrixColMajor, resultMatrixColMajor1);
+    matrixRotation.ApplyInverseTo(resultMatrixColMajor1, resultMatrixColMajor2);
+    CPPUNIT_ASSERT( resultMatrixColMajor2.AlmostEqual(dataMatrixColMajor) );
+
+    FixedSizeMatrixTpsRowMajor dataMatrixTpsRowMajor;
+    vctRandom(dataMatrixTpsRowMajor.TransposeRef(), static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    FixedSizeMatrixTpsRowMajor resultMatrixTpsRowMajor1, resultMatrixTpsRowMajor2;
+    matrixRotation.ApplyTo(dataMatrixTpsRowMajor.TransposeRef(), resultMatrixTpsRowMajor1.TransposeRef());
+    matrixRotation.ApplyInverseTo(resultMatrixTpsRowMajor1.TransposeRef(), resultMatrixTpsRowMajor2.TransposeRef());
+    CPPUNIT_ASSERT( resultMatrixTpsRowMajor2.AlmostEqual(dataMatrixTpsRowMajor) );
+
+    FixedSizeMatrixTpsColMajor dataMatrixTpsColMajor;
+    vctRandom(dataMatrixTpsColMajor, static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    FixedSizeMatrixTpsColMajor resultMatrixTpsColMajor1, resultMatrixTpsColMajor2;
+    matrixRotation.ApplyTo(dataMatrixTpsColMajor.TransposeRef(), resultMatrixTpsColMajor1.TransposeRef());
+    matrixRotation.ApplyInverseTo(resultMatrixTpsColMajor1.TransposeRef(), resultMatrixTpsColMajor2.TransposeRef());
+    CPPUNIT_ASSERT( resultMatrixTpsColMajor2.AlmostEqual(dataMatrixTpsColMajor) );
+
+    DynamicMatrixType dataMatrixDynamic, resultMatrixDynamic1, resultMatrixDynamic2;
+    dataMatrixDynamic.SetSize(NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_ROW_MAJOR);
+    resultMatrixDynamic1.SetSize(NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_ROW_MAJOR);
+    resultMatrixDynamic2.SetSize(NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_ROW_MAJOR);
+    vctRandom(dataMatrixDynamic, static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    matrixRotation.ApplyTo(dataMatrixDynamic, resultMatrixDynamic1);
+    matrixRotation.ApplyInverseTo(resultMatrixDynamic1, resultMatrixDynamic2);
+    CPPUNIT_ASSERT( resultMatrixDynamic2.AlmostEqual(dataMatrixDynamic) );
+
+    // Test the Apply methods on a single column of a dynamic matrix
+    vctRandom(dataMatrixDynamic.Column(0), static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    matrixRotation.ApplyTo(dataMatrixDynamic.Column(0), resultMatrixDynamic1.Column(0));
+    matrixRotation.ApplyInverseTo(resultMatrixDynamic1.Column(0), resultMatrixDynamic2.Column(0));
+    CPPUNIT_ASSERT( resultMatrixDynamic2.Column(0).AlmostEqual(dataMatrixDynamic.Column(0)) );
+
+    dataMatrixDynamic.SetSize(NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_COL_MAJOR);
+    resultMatrixDynamic1.SetSize(NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_COL_MAJOR);
+    resultMatrixDynamic2.SetSize(NUM_MATRIX_ROWS, NUM_MATRIX_COLS, VCT_COL_MAJOR);
+    vctRandom(dataMatrixDynamic, static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    matrixRotation.ApplyTo(dataMatrixDynamic, resultMatrixDynamic1);
+    matrixRotation.ApplyInverseTo(resultMatrixDynamic1, resultMatrixDynamic2);
+    CPPUNIT_ASSERT( resultMatrixDynamic2.AlmostEqual(dataMatrixDynamic) );
+
+    dataMatrixDynamic.SetSize(NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_ROW_MAJOR);
+    resultMatrixDynamic1.SetSize(NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_ROW_MAJOR);
+    resultMatrixDynamic2.SetSize(NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_ROW_MAJOR);
+    // Note that here we also test vctRandom for a reference matrix
+    vctRandom(dataMatrixDynamic.TransposeRef(), static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    matrixRotation.ApplyTo(dataMatrixDynamic.TransposeRef(), resultMatrixDynamic1.TransposeRef());
+    matrixRotation.ApplyInverseTo(resultMatrixDynamic1.TransposeRef(), resultMatrixDynamic2.TransposeRef());
+    CPPUNIT_ASSERT( resultMatrixDynamic2.AlmostEqual(dataMatrixDynamic) );
+
+    dataMatrixDynamic.SetSize(NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_COL_MAJOR);
+    resultMatrixDynamic1.SetSize(NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_COL_MAJOR);
+    // Note that resultMatrixDynamic2 was deliberately left as VCT_ROW_MAJOR to test mixed-order
+    // arguments
+    resultMatrixDynamic2.SetSize(NUM_MATRIX_COLS, NUM_MATRIX_ROWS, VCT_ROW_MAJOR);
+    vctRandom(dataMatrixDynamic, static_cast<value_type>(-2.0), static_cast<value_type>(2.0));
+    matrixRotation.ApplyTo(dataMatrixDynamic.TransposeRef(), resultMatrixDynamic1.TransposeRef());
+    matrixRotation.ApplyInverseTo(resultMatrixDynamic1.TransposeRef(), resultMatrixDynamic2.TransposeRef());
+    CPPUNIT_ASSERT( resultMatrixDynamic2.AlmostEqual(dataMatrixDynamic) );
+
+
 }
 
 void vctMatrixRotation3Test::TestApplyMethodsOperatorsDouble(void) {

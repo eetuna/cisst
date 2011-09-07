@@ -49,8 +49,7 @@ template <unsigned int _rows, unsigned int _cols, int _rowStride,
           int _colStride, class _elementType, class _dataPtrType>
 void vctRandom(vctFixedSizeMatrixBase<_rows, _cols, _rowStride, _colStride,
                _elementType, _dataPtrType> & matrix,
-               const _elementType min,
-               const _elementType max) {
+               const _elementType min, const _elementType max) {
     cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
     const unsigned int rows = matrix.rows();
     const unsigned int cols = matrix.cols();
@@ -59,6 +58,23 @@ void vctRandom(vctFixedSizeMatrixBase<_rows, _cols, _rowStride, _colStride,
         for (colIndex = 0; colIndex < cols; ++colIndex) {
             randomSequence.ExtractRandomValue(min, max,
                                               matrix.Element(rowIndex, colIndex));    
+        }
+    }
+}
+
+// A specialization for a vctFixedSizeMatrixRef argumant *passed by value* to overcome
+// a limitation of gcc regarding non-const references to unnamed objects
+template <unsigned int _rows, unsigned int _cols, int _rowStride, 
+          int _colStride, class _elementType>
+void vctRandom(vctFixedSizeMatrixRef<_elementType, _rows, _cols, _rowStride, _colStride> matrix,
+               const _elementType min, const _elementType max) {
+    cmnRandomSequence & randomSequence = cmnRandomSequence::GetInstance();
+    const unsigned int rows = matrix.rows();
+    const unsigned int cols = matrix.cols();
+    unsigned int rowIndex, colIndex;
+    for (rowIndex = 0; rowIndex < rows; ++rowIndex) {
+        for (colIndex = 0; colIndex < cols; ++colIndex) {
+            randomSequence.ExtractRandomValue(min, max, matrix.Element(rowIndex, colIndex));    
         }
     }
 }
