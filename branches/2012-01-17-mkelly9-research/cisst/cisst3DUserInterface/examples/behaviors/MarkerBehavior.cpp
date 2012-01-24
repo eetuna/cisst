@@ -34,11 +34,25 @@ http://www.cisst.org/cisst/license.txt.
 #include <vtkProperty.h>
 
 
+// how close markers need to be to delete (in mm)
+#define MARKER_DISTANCE_THRESHOLD (5.0)
+// z-axis translation between tool eye and tip (in mm)
+#define WRIST_TIP_OFFSET (11.0)
+
+
 struct MarkerType
 {
     vctFrm3 AbsolutePosition;
     ui3VisibleAxes * VisibleObject;
     int count;
+};
+
+
+enum OperatingMode
+{
+	NONE,
+	SET_FIDUCIALS,
+	REGISTER
 };
 
 
@@ -60,12 +74,16 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->VisibleList->Add(MapCursor);
     this->VisibleList->Add(MarkerList);
 
-    this->Offset.SetAll(0.0);
+	// offset to move points from eye to tooltip (roughly 11mm)
+    this->Offset.SetAll(0);
     this->MarkerCount = 0;
     this->CameraPressed = false;
     this->LeftMTMOpen = true;
     this->RightMTMOpen = true;
     this->ClutchPressed = false;
+	this->ModeSelected = NONE;
+
+	this->WristToTip.Translation().Assign(vctFrm3(0, 0, WRIST_TIP_OFFSET));
 }
 
 
@@ -78,18 +96,18 @@ void MarkerBehavior::ConfigureMenuBar()
 {
     this->MenuBar->AddClickButton("Set Fiducial",
                                   1,
-                                  "empty.png",
+                                  "circle.png",
                                   &MarkerBehavior::SetFiducialButtonCallback,
                                   this);
-    this->MenuBar->AddClickButton("Register",
-                                  2,
-                                  "empty.png",
-                                  &MarkerBehavior::RegisterButtonCallback,
-                                  this);
     this->MenuBar->AddClickButton("Clear Fiducials",
-                                  3,
-                                  "empty.png",
+                                  2,
+                                  "redo.png",
                                   &MarkerBehavior::ClearFiducialsButtonCallback,
+                                  this);
+    this->MenuBar->AddClickButton("Register",
+                                  3,
+                                  "cylinder.png",
+                                  &MarkerBehavior::RegisterButtonCallback,
                                   this);
 }
 
@@ -176,7 +194,6 @@ bool MarkerBehavior::RunForeground()
 
     // apply to object
     this->Slave1->GetCartesianPosition(this->Slave1Position);
-    this->Slave1Position.Position().Translation().Add(this->Offset);
 
     return true;
 }
@@ -203,13 +220,13 @@ bool MarkerBehavior::RunNoInput()
     FindClosestMarker();
 
     // prepare to drop marker if clutch and right MTM are pressed
-    if (ClutchPressed && !RightMTMOpen) 
+	if (ClutchPressed && !RightMTMOpen && ModeSelected == SET_FIDUCIALS) 
     {
         this->AddMarker();
     }
 
     // prepare to remove marker if clutch and left MTM are pressed
-    if (ClutchPressed && !LeftMTMOpen)
+	if (ClutchPressed && !LeftMTMOpen && ModeSelected == SET_FIDUCIALS)
     {
         this->RemoveMarker();
     }
@@ -220,16 +237,26 @@ bool MarkerBehavior::RunNoInput()
     {
         if (this->MapCursor->Visible())
         {
-            // if the cursor is visible then hide
+            // if the cursor is visible then hide;
             this->MapCursor->Hide();
         }
         // update the visible map position when the camera is clutched
         this->UpdateVisibleMap();
     }
     else {
-        if (!this->MapCursor->Visible())
+		if (ModeSelected == SET_FIDUCIALS)
+		{
+			if (!this->MapCursor->Visible())
+			{
+				this->MapCursor->Show();
+			}
+		}
+		else
         {
-            this->MapCursor->Show();
+            if (this->MapCursor->Visible())
+			{
+				this->MapCursor->Hide();
+			}
         }
     }
     PreviousSlavePosition = Slave1Position.Position().Translation();
@@ -251,12 +278,14 @@ void MarkerBehavior::SetFiducialButtonCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Set fiducials button pressed" << std::endl;
 
-    this->AddMarker();
+	ModeSelected = SET_FIDUCIALS;
 }
 
 void MarkerBehavior::RegisterButtonCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Register button pressed" << std::endl;
+
+	ModeSelected = REGISTER;
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
@@ -264,9 +293,15 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Clear fiducials button pressed" << std::endl;
 
     // hide all the markers
-    for (int i = 0 ; i < MARKER_MAX; i++) {
+    for (int i = 0 ; i < MarkerCount; i++) {
         MyMarkers[i]->Hide();
     }
+	// hide map cursor until out of MaM mode so as not to confuse the user into
+	// thinking that not all cursors have been cleared
+	if (this->MapCursor->Visible())
+	{
+		this->MapCursor->Hide();
+	}
 }
 
 void MarkerBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
@@ -513,9 +548,6 @@ void MarkerBehavior::AddMarker(void)
         MyMarkers[MarkerCount] = newMarkerVisible;  // NOTE: this array should be gone, but I am using it to hide the markers when they are being removed
         // make sure the new marker is created and part of the scene before editting it
         newMarkerVisible->WaitForCreation();
-#if 0
-        newMarkerVisible->SetColor(153.0/255.0, 255.0/255.0, 153.0/255.0); 
-#endif
         if (MarkerCount < MARKER_MAX)
         {
             MarkerType * newMarker = new MarkerType;
@@ -595,23 +627,13 @@ int MarkerBehavior::FindClosestMarker()
     // return value is that marker's count
     for (iter2 = Markers.begin(); iter2 != end; iter2++)
     {
-        if (closestDist < 2.0 && (*iter2)->count == currentCount)
+        if (closestDist < MARKER_DISTANCE_THRESHOLD && (*iter2)->count == currentCount)
         {
-#if 0
-            (*iter2)->VisibleObject->SetColor(255.0/255.0, 0.0/255.0, 51.0/255.0);
-#endif
             returnValue = currentCount;
         }
-#if 0
-        else
-        {
-             // otherwise, all the markers should be green, return an invalid number
-            (*iter2)->VisibleObject->SetColor(153.0/255.0, 255.0/255.0, 153.0/255.0);
-        }
-#endif
     }
     
-    if (closestDist > 2.0)
+    if (closestDist > MARKER_DISTANCE_THRESHOLD)
     {
         returnValue = MARKER_MAX + 1;
     }

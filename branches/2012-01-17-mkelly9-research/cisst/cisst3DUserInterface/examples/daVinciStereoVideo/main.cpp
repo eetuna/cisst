@@ -32,11 +32,9 @@ http://www.cisst.org/cisst/license.txt.
 
 #include "BehaviorLUS.h"
 
-#include <MeasurementBehavior.h>
-#include <MapBehavior.h>
+#include <MarkerBehavior.h>
 #include <ImageViewer.h>
 #include <ImageViewerKidney.h>
-#include <PNGViewer3D.h>
 
 #define HAS_ULTRASOUDS 0
 
@@ -61,6 +59,7 @@ int main()
 #endif
     componentManager->AddComponent(daVinci);
 
+#if 0
     ui3Manager guiManager;
     MeasurementBehavior measurementBehavior("Measure");
     guiManager.AddBehavior(&measurementBehavior,
@@ -81,15 +80,25 @@ int main()
     guiManager.AddBehavior(&imageViewerKidney,
                            4,
                            "move.png");
+#endif
+
+    ui3Manager guiManager;
+    MarkerBehavior markerBehavior("Marker");
+    guiManager.AddBehavior(&markerBehavior,
+                           1,
+                           "handles.png");
 
     // this is were the icons have been copied by CMake post build rule
     cmnPath path;
     path.Add(std::string(CISST_BUILD_ROOT) + "/share/cisst-1.0/cisst3DUserInterface/icons");
+
+#if 0
     std::string fileName = path.Find("move.png", cmnPath::READ);
     PNGViewer3D pngViewer("PGNViewer", fileName);
     guiManager.AddBehavior(&pngViewer,
                            5,
                            "square.png");
+#endif
 
 #if HAS_ULTRASOUDS
     svlInitialize();
@@ -228,8 +237,10 @@ int main()
     guiManager.SetupMaM(daVinci, "MastersAsMice");
     guiManager.ConnectAll();
 
+#if 0
     // connect measurement behavior
     componentManager->Connect(measurementBehavior.GetName(), "StartStopMeasure", daVinci->GetName(), "Clutch");
+#endif
 
     // following should be replaced by a utility function or method of ui3Manager
     std::cout << "Creating components" << std::endl;

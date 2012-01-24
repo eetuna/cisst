@@ -32,6 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 #define MARKER_MAX 20
 
 struct MarkerType;
+enum OperatingMode;
 
 // Always include last!
 #include "ui3BehaviorsExport.h"
@@ -69,8 +70,10 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         vctDouble3 PreviousCursorPosition;
         vctDouble3 Offset;
         vctFrm3 Position;
+		vctFrm3 WristToTip;
         bool Following;
         bool Transition;
+		OperatingMode ModeSelected;
 
         ui3SlaveArm * Slave1;
         ui3SlaveArm * ECM1;
@@ -94,7 +97,6 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         MarkersType Markers;
 
     private:
-
         ui3VisibleList * VisibleList;
         ui3VisibleObject * MapCursor;
         ui3VisibleList * MarkerList;
