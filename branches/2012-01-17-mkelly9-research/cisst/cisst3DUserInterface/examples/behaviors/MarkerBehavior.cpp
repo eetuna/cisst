@@ -27,6 +27,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisst3DUserInterface/ui3Manager.h>
 #include <cisst3DUserInterface/ui3SlaveArm.h> // bad, ui3 should not have slave arm to start with (adeguet1)
+#include <cisstNumerical/nmrRegistrationRigid.h>
 
 #include <vtkActor.h>
 #include <vtkAssembly.h>
@@ -50,9 +51,8 @@ struct MarkerType
 
 enum OperatingMode
 {
-	NONE,
-	SET_FIDUCIALS,
-	REGISTER
+    NONE,
+    SET_FIDUCIALS,
 };
 
 
@@ -74,16 +74,16 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->VisibleList->Add(MapCursor);
     this->VisibleList->Add(MarkerList);
 
-	// offset to move points from eye to tooltip (roughly 11mm)
+    // offset to move points from eye to tooltip (roughly 11mm)
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
     this->CameraPressed = false;
     this->LeftMTMOpen = true;
     this->RightMTMOpen = true;
     this->ClutchPressed = false;
-	this->ModeSelected = NONE;
+    this->ModeSelected = NONE;
 
-	this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
+    this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
 }
 
 
@@ -222,13 +222,13 @@ bool MarkerBehavior::RunNoInput()
     FindClosestMarker();
 
     // prepare to drop marker if clutch and right MTM are pressed
-	if (ClutchPressed && !RightMTMOpen && ModeSelected == SET_FIDUCIALS) 
+    if (ClutchPressed && !RightMTMOpen && ModeSelected == SET_FIDUCIALS) 
     {
         this->AddMarker();
     }
 
     // prepare to remove marker if clutch and left MTM are pressed
-	if (ClutchPressed && !LeftMTMOpen && ModeSelected == SET_FIDUCIALS)
+    if (ClutchPressed && !LeftMTMOpen && ModeSelected == SET_FIDUCIALS)
     {
         this->RemoveMarker();
     }
@@ -246,19 +246,19 @@ bool MarkerBehavior::RunNoInput()
         this->UpdateVisibleMap();
     }
     else {
-		if (ModeSelected == SET_FIDUCIALS)
-		{
-			if (!this->MapCursor->Visible())
-			{
-				this->MapCursor->Show();
-			}
-		}
-		else
+        if (ModeSelected == SET_FIDUCIALS)
+        {
+            if (!this->MapCursor->Visible())
+            {
+                this->MapCursor->Show();
+            }
+        }
+        else
         {
             if (this->MapCursor->Visible())
-			{
-				this->MapCursor->Hide();
-			}
+            {
+                this->MapCursor->Hide();
+            }
         }
     }
     PreviousSlavePosition = Slave1Position.Position().Translation();
@@ -280,14 +280,55 @@ void MarkerBehavior::SetFiducialButtonCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Set fiducials button pressed" << std::endl;
 
-	ModeSelected = SET_FIDUCIALS;
+    ModeSelected = SET_FIDUCIALS;
 }
 
 void MarkerBehavior::RegisterButtonCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Register button pressed" << std::endl;
 
-	ModeSelected = REGISTER;
+    // get points from file
+    vctDynamicVector<vct3> initialPoints;
+    std::ifstream inputFile("registrationInput.txt");
+    while (inputFile.good())
+    {
+        std::string line;
+        std::getline(inputFile, line);
+        std::stringstream ss(line);
+        double x;
+        double y;
+        double z;
+        ss >> x;
+        ss >> y;
+        ss >> z;
+
+        vctDouble3 point(x, y, z);
+        initialPoints.resize(initialPoints.size() + 1);
+        initialPoints[initialPoints.size()] = point;
+    }
+    inputFile.close();
+
+    // get selected points
+    vctDynamicVector<vct3> selectedPoints;
+    for (unsigned int i = 0; i < Markers.size(); i++)
+	{
+		if (Markers[i]->VisibleObject->Visible())
+		{
+			selectedPoints.resize(selectedPoints.size()+1);
+			selectedPoints[i] = this->Markers[i]->AbsolutePosition.Translation();
+		}
+    }
+
+    // perform registration
+    vctFrm3 registration;
+    nmrRegistrationRigid(initialPoints, selectedPoints, registration);
+
+    // output registration results
+    std::ofstream outFile("registrationOutput.txt");
+	std::cout << "initialPoints: " << initialPoints << std::endl;
+	std::cout << "selectedPoints: " << selectedPoints << std::endl;
+    registration.ToStream(outFile);
+    outFile.close();
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
@@ -298,12 +339,12 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     for (int i = 0 ; i < MarkerCount; i++) {
         MyMarkers[i]->Hide();
     }
-	// hide map cursor until out of MaM mode so as not to confuse the user into
-	// thinking that not all cursors have been cleared
-	if (this->MapCursor->Visible())
-	{
-		this->MapCursor->Hide();
-	}
+    // hide map cursor until out of MaM mode so as not to confuse the user into
+    // thinking that not all cursors have been cleared
+    if (this->MapCursor->Visible())
+    {
+        this->MapCursor->Hide();
+    }
 }
 
 void MarkerBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
@@ -556,21 +597,15 @@ void MarkerBehavior::AddMarker(void)
         {
             MarkerType * newMarker = new MarkerType;
             newMarkerVisible->Show();
-            std::cout<< "newMarkerVisible: " << newMarkerVisible->Visible() << std::endl;
             newMarker->VisibleObject = newMarkerVisible;
             newMarker->count = MarkerCount;
                 // set the position of the marker based on current cursor position
             newMarker->AbsolutePosition = GetCurrentCursorPositionWRTECMRCM();
             newMarkerVisible->SetTransformation(newMarker->AbsolutePosition);
-            std::cout << "GetCurrentCursorPositionWRTECMRCM()" << newMarker->AbsolutePosition << std::endl;
                 // add the marker to the list
             this->Markers.push_back(newMarker); // need to delete them too
                 // update the list (updates bounding box and position of all markers
             this->UpdateVisibleMap();
-            std::cout << "AddMarker has been called " << MapCursor->GetTransformation() << std::endl;
-
-            // output the marker coordinate
-            std::cout << "Marker added at " << newMarker->AbsolutePosition << std::endl;
 
             MarkerCount++;
         }

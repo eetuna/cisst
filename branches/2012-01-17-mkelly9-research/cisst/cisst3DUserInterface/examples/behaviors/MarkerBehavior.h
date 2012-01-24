@@ -93,7 +93,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void RemoveMarker();
         int FindClosestMarker();
 
-        typedef  std::list<MarkerType*> MarkersType;
+        typedef  std::vector<MarkerType*> MarkersType;
         MarkersType Markers;
 
     private:
