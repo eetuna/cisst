@@ -75,7 +75,7 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->VisibleList->Add(MarkerList);
 
 	// offset to move points from eye to tooltip (roughly 11mm)
-    this->Offset.SetAll(0);
+    this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
     this->CameraPressed = false;
     this->LeftMTMOpen = true;
@@ -83,7 +83,7 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->ClutchPressed = false;
 	this->ModeSelected = NONE;
 
-	this->WristToTip.Translation().Assign(vctFrm3(0, 0, WRIST_TIP_OFFSET));
+	this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
 }
 
 
@@ -194,6 +194,8 @@ bool MarkerBehavior::RunForeground()
 
     // apply to object
     this->Slave1->GetCartesianPosition(this->Slave1Position);
+    // apply wrist to tip transformation
+    this->Slave1Position.Position() = this->Slave1Position.Position() * this->WristToTip;
 
     return true;
 }
@@ -407,6 +409,8 @@ vctFrm3 MarkerBehavior::GetCurrentCursorPositionWRTECMRCM(void)
     // raw cartesian position from slave daVinci, no ui3 correction
     prmPositionCartesianGet slavePosition;
     GetCartesianPositionSlave(slavePosition);
+    // apply wrist to tip transformation
+    slavePosition.Position() = slavePosition.Position() * this->WristToTip;
 
     vctFrm3 finalFrame;
 
