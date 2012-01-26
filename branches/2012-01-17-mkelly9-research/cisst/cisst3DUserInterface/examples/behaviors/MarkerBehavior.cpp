@@ -245,7 +245,8 @@ bool MarkerBehavior::RunNoInput()
         // update the visible map position when the camera is clutched
         this->UpdateVisibleMap();
     }
-    else {
+    else
+    {
         if (ModeSelected == SET_FIDUCIALS)
         {
             if (!this->MapCursor->Visible())
@@ -599,15 +600,19 @@ void MarkerBehavior::AddMarker(void)
             newMarkerVisible->Show();
             newMarker->VisibleObject = newMarkerVisible;
             newMarker->count = MarkerCount;
-                // set the position of the marker based on current cursor position
+            // set the position of the marker based on current cursor position
             newMarker->AbsolutePosition = GetCurrentCursorPositionWRTECMRCM();
             newMarkerVisible->SetTransformation(newMarker->AbsolutePosition);
-                // add the marker to the list
+            // add the marker to the list
             this->Markers.push_back(newMarker); // need to delete them too
-                // update the list (updates bounding box and position of all markers
+            // update the list (updates bounding box and position of all markers
             this->UpdateVisibleMap();
 
             MarkerCount++;
+
+            std::ofstream outFile("points.txt", std::ios_base::app);
+            newMarker->AbsolutePosition.Translation().ToStreamRaw(outFile, ',');
+            outFile << std::endl;
         }
         MarkerDropped = true;
     }
