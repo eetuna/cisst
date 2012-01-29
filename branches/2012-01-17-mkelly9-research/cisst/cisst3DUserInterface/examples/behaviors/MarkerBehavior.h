@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <list>
 #include <limits>
-#define MARKER_MAX 20
+#define MARKER_MAX 50
 
 struct MarkerType;
 enum OperatingMode;

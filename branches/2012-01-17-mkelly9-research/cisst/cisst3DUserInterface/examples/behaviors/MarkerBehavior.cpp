@@ -52,7 +52,7 @@ struct MarkerType
 enum OperatingMode
 {
     NONE,
-    SET_FIDUCIALS,
+    SET_FIDUCIALS
 };
 
 
@@ -221,6 +221,13 @@ bool MarkerBehavior::RunNoInput()
     UpdateCursorPosition();
     FindClosestMarker();
 
+	// make it possible to add/remove markers again
+	if (!ClutchPressed)
+	{
+		this->MarkerDropped = false;
+		this->MarkerRemoved = false;
+	}
+
     // prepare to drop marker if clutch and right MTM are pressed
     if (ClutchPressed && !RightMTMOpen && ModeSelected == SET_FIDUCIALS) 
     {
@@ -305,7 +312,7 @@ void MarkerBehavior::RegisterButtonCallback(void)
 
         vctDouble3 point(x, y, z);
         initialPoints.resize(initialPoints.size() + 1);
-        initialPoints[initialPoints.size()] = point;
+        initialPoints[initialPoints.size()-1] = point;
     }
     inputFile.close();
 
@@ -322,14 +329,23 @@ void MarkerBehavior::RegisterButtonCallback(void)
 
     // perform registration
     vctFrm3 registration;
-    nmrRegistrationRigid(initialPoints, selectedPoints, registration);
+    bool success = nmrRegistrationRigid(initialPoints, selectedPoints, registration);
+	if (!success)
+	{
+#if 0
+		CMN_LOG_RUN_WARNING << "MarkerBehavior::RegisterButtonCallback: registration failed;"
+			                << " check nmrRegistrationRigid logs" << std::endl;
+#endif
+		std::cerr << "MarkerBehavior::RegisterButtonCallback: registration failed;"
+			      << " check nmrRegistrationRigid logs" << std::endl;
+		return;
+	}
 
     // output registration results
-    std::ofstream outFile("registrationOutput.txt");
-	std::cout << "initialPoints: " << initialPoints << std::endl;
-	std::cout << "selectedPoints: " << selectedPoints << std::endl;
-    registration.ToStream(outFile);
-    outFile.close();
+    std::ofstream outputFile("registrationOutput.txt");
+	registration.ToStream(std::cout);
+	std::cout << std::endl;
+    outputFile.close();
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
@@ -337,7 +353,8 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Clear fiducials button pressed" << std::endl;
 
     // hide all the markers
-    for (int i = 0 ; i < MarkerCount; i++) {
+    for (int i = 0 ; i < MarkerCount; i++)
+	{
         MyMarkers[i]->Hide();
     }
     // hide map cursor until out of MaM mode so as not to confuse the user into
@@ -356,7 +373,6 @@ void MarkerBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
     }
     else if (event.Type() == prmEventButton::RELEASED) {
         this->RightMTMOpen = true;
-        this->MarkerDropped = false;
         this->Following = false;
     }
 }
@@ -372,7 +388,6 @@ void MarkerBehavior::SecondaryMasterButtonCallback(const prmEventButton & event)
     }
     else if (event.Type() == prmEventButton::RELEASED) {
         this->LeftMTMOpen = true;
-        this->MarkerRemoved = false;
     }
 }
 
@@ -585,6 +600,7 @@ the position of the marker is the position of the cursor at the time that it is 
 */
 void MarkerBehavior::AddMarker(void)
 {
+	std::cout << "add called marker dropped is " << MarkerDropped << " clutch pressed is " << ClutchPressed << std::endl;
     if (MarkerDropped == false && MarkerCount < MARKER_MAX)
     {
         // create new marker!
@@ -608,11 +624,11 @@ void MarkerBehavior::AddMarker(void)
             // update the list (updates bounding box and position of all markers
             this->UpdateVisibleMap();
 
-            MarkerCount++;
+			std::ofstream outFile("points.txt", std::ios_base::app);
+			newMarker->AbsolutePosition.Translation().ToStreamRaw(outFile, ',');
+			outFile << std::endl;
 
-            std::ofstream outFile("points.txt", std::ios_base::app);
-            newMarker->AbsolutePosition.Translation().ToStreamRaw(outFile, ',');
-            outFile << std::endl;
+            MarkerCount++;
         }
         MarkerDropped = true;
     }
