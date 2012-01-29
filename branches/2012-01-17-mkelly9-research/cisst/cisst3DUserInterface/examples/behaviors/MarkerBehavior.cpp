@@ -253,20 +253,22 @@ bool MarkerBehavior::RunNoInput()
         // update the visible map position when the camera is clutched
         this->UpdateVisibleMap();
     }
-
-    if (ModeSelected == SET_FIDUCIALS)
-    {
-        if (!this->MapCursor->Visible())
-        {
-            this->MapCursor->Show();
-        }
-    }
-    else
-    {
-        if (this->MapCursor->Visible())
-        {
-            this->MapCursor->Hide();
-        }
+	else
+	{
+		if (ModeSelected == SET_FIDUCIALS)
+		{
+			if (!this->MapCursor->Visible())
+			{
+				this->MapCursor->Show();
+			}
+		}
+		else
+		{
+			if (this->MapCursor->Visible())
+			{
+				this->MapCursor->Hide();
+			}
+		}
 	}
 
     PreviousSlavePosition = Slave1Position.Position().Translation();
