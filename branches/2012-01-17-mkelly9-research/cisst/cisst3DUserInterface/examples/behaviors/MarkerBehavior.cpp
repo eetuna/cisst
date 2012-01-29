@@ -208,6 +208,7 @@ bool MarkerBehavior::RunBackground()
 bool MarkerBehavior::RunNoInput()
 {
     this->Ticker++;
+
     if (this->Manager->MastersAsMice() != this->PreviousMaM) {
         this->PreviousMaM = this->Manager->MastersAsMice();
         this->VisibleList->Show();
@@ -229,13 +230,13 @@ bool MarkerBehavior::RunNoInput()
 	}
 
     // prepare to drop marker if clutch and right MTM are pressed
-    if (ClutchPressed && !RightMTMOpen && ModeSelected == SET_FIDUCIALS) 
+    if (ClutchPressed && !RightMTMOpen) 
     {
         this->AddMarker();
     }
 
     // prepare to remove marker if clutch and left MTM are pressed
-    if (ClutchPressed && !LeftMTMOpen && ModeSelected == SET_FIDUCIALS)
+    if (ClutchPressed && !LeftMTMOpen)
     {
         this->RemoveMarker();
     }
@@ -252,23 +253,22 @@ bool MarkerBehavior::RunNoInput()
         // update the visible map position when the camera is clutched
         this->UpdateVisibleMap();
     }
-    else
+
+    if (ModeSelected == SET_FIDUCIALS)
     {
-        if (ModeSelected == SET_FIDUCIALS)
+        if (!this->MapCursor->Visible())
         {
-            if (!this->MapCursor->Visible())
-            {
-                this->MapCursor->Show();
-            }
-        }
-        else
-        {
-            if (this->MapCursor->Visible())
-            {
-                this->MapCursor->Hide();
-            }
+            this->MapCursor->Show();
         }
     }
+    else
+    {
+        if (this->MapCursor->Visible())
+        {
+            this->MapCursor->Hide();
+        }
+	}
+
     PreviousSlavePosition = Slave1Position.Position().Translation();
     return true;
 }
@@ -600,8 +600,7 @@ the position of the marker is the position of the cursor at the time that it is 
 */
 void MarkerBehavior::AddMarker(void)
 {
-	std::cout << "add called marker dropped is " << MarkerDropped << " clutch pressed is " << ClutchPressed << std::endl;
-    if (MarkerDropped == false && MarkerCount < MARKER_MAX)
+	if (MarkerDropped == false && MarkerCount < MARKER_MAX && ModeSelected == SET_FIDUCIALS)
     {
         // create new marker!
         ui3VisibleAxes * newMarkerVisible = new ui3VisibleAxes;
@@ -640,7 +639,7 @@ Removes the last marker from the list
 */
 void MarkerBehavior::RemoveMarker(void)
 {
-    if (MarkerRemoved == false)
+    if (MarkerRemoved == false && ModeSelected == SET_FIDUCIALS)
     {
         if (MarkerCount > 0)
         {
