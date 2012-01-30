@@ -320,34 +320,41 @@ void MarkerBehavior::RegisterButtonCallback(void)
 
     // get selected points
     vctDynamicVector<vct3> selectedPoints;
+	unsigned int size = 0;
     for (unsigned int i = 0; i < Markers.size(); i++)
 	{
 		if (Markers[i]->VisibleObject->Visible())
 		{
-			selectedPoints.resize(selectedPoints.size()+1);
-			selectedPoints[i] = this->Markers[i]->AbsolutePosition.Translation();
+			size++;
+			selectedPoints.resize(size);
+			selectedPoints[size-1] = Markers[i]->AbsolutePosition.Translation();
 		}
     }
 
     // perform registration
     vctFrm3 registration;
-    bool success = nmrRegistrationRigid(initialPoints, selectedPoints, registration);
+	double error;
+    bool success = nmrRegistrationRigid(initialPoints, selectedPoints, registration, &error);
 	if (!success)
 	{
-#if 0
 		CMN_LOG_RUN_WARNING << "MarkerBehavior::RegisterButtonCallback: registration failed;"
 			                << " check nmrRegistrationRigid logs" << std::endl;
-#endif
-		std::cerr << "MarkerBehavior::RegisterButtonCallback: registration failed;"
-			      << " check nmrRegistrationRigid logs" << std::endl;
 		return;
 	}
 
     // output registration results
     std::ofstream outputFile("registrationOutput.txt");
-	registration.ToStream(std::cout);
-	std::cout << std::endl;
+
+	outputFile << "initial points:" << std::endl << initialPoints << std::endl
+		       << "selected points:" << std::endl << selectedPoints << std::endl;
+	registration.ToStream(outputFile);
+	outputFile << std::endl << "overall error: " << error;
     outputFile.close();
+
+	std::cout << "initial points:" << std::endl << initialPoints << std::endl
+		       << "selected points:" << std::endl << selectedPoints << std::endl;
+	registration.ToStream(std::cout);
+	std::cout << std::endl << "overall error: " << error;
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
@@ -355,9 +362,9 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Clear fiducials button pressed" << std::endl;
 
     // hide all the markers
-    for (int i = 0 ; i < MarkerCount; i++)
+    for (unsigned int i = 0 ; i < Markers.size(); i++)
 	{
-        MyMarkers[i]->Hide();
+        Markers[i]->VisibleObject->Hide();
     }
     // hide map cursor until out of MaM mode so as not to confuse the user into
     // thinking that not all cursors have been cleared
@@ -625,9 +632,9 @@ void MarkerBehavior::AddMarker(void)
             // update the list (updates bounding box and position of all markers
             this->UpdateVisibleMap();
 
-			std::ofstream outFile("points.txt", std::ios_base::app);
-			newMarker->AbsolutePosition.Translation().ToStreamRaw(outFile, ',');
-			outFile << std::endl;
+			std::ofstream outputFile("points.txt", std::ios_base::app);
+			newMarker->AbsolutePosition.Translation().ToStreamRaw(outputFile, ',');
+			outputFile << std::endl;
 
             MarkerCount++;
         }
