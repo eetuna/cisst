@@ -348,13 +348,13 @@ void MarkerBehavior::RegisterButtonCallback(void)
 	outputFile << "initial points:" << std::endl << initialPoints << std::endl
 		       << "selected points:" << std::endl << selectedPoints << std::endl;
 	registration.ToStream(outputFile);
-	outputFile << std::endl << "overall error: " << error;
+	outputFile << std::endl << "fiducial registration error: " << error;
     outputFile.close();
 
 	std::cout << "initial points:" << std::endl << initialPoints << std::endl
 		       << "selected points:" << std::endl << selectedPoints << std::endl;
 	registration.ToStream(std::cout);
-	std::cout << std::endl << "overall error: " << error;
+	std::cout << std::endl << "fiducial registration error: " << error;
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
