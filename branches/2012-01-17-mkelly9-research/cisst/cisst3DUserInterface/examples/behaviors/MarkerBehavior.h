@@ -31,6 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <limits>
 #define MARKER_MAX 50
 
+class MarkerBehaviorTextObject;
 struct MarkerType;
 enum OperatingMode;
 
@@ -98,6 +99,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
 
     private:
         ui3VisibleList * VisibleList;
+		MarkerBehaviorTextObject * TextObject;
         ui3VisibleObject * MapCursor;
         ui3VisibleList * MarkerList;
         ui3VisibleAxes * MyMarkers[MARKER_MAX];

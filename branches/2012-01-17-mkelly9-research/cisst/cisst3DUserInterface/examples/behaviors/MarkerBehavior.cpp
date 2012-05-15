@@ -33,7 +33,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <vtkAssembly.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
-
+#include <vtkFollower.h>
+#include <vtkVectorText.h>
 
 // how close markers need to be to delete (in mm)
 #define MARKER_DISTANCE_THRESHOLD (5.0)
@@ -56,16 +57,84 @@ enum OperatingMode
 };
 
 
+// copied from MarkerBehaviorTextObject
+class MarkerBehaviorTextObject: public ui3VisibleObject
+{
+	CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_ALLOW_DEFAULT);
+public:
+    inline MarkerBehaviorTextObject(const std::string & name = "Text"):
+        ui3VisibleObject(name),
+        Text(0),
+        TextMapper(0),
+        TextActor(0)
+    {}
+
+    inline ~MarkerBehaviorTextObject()
+    {}
+
+    inline bool CreateVTKObjects(void) {
+
+        Text = vtkVectorText::New();
+        CMN_ASSERT(Text);
+        Text->SetText("TEST TEST");
+
+        TextMapper = vtkPolyDataMapper::New();
+        CMN_ASSERT(TextMapper);
+        TextMapper->SetInputConnection(Text->GetOutputPort());
+        TextMapper->ImmediateModeRenderingOn();
+
+        TextActor = vtkFollower::New();
+        CMN_ASSERT(TextActor);
+        TextActor->SetMapper(TextMapper);
+        TextActor->GetProperty()->SetColor(0.0, 0.0, 200.0/255.0 );
+        TextActor-> SetScale(2.5);
+
+        this->AddPart(this->TextActor);
+
+        return true;
+    }
+
+	inline bool UpdateVTKObjects(void) {
+        return true;
+    }
+
+    inline void SetText(const std::string & text)
+    {
+        if (this->Text) {
+            this->Text->SetText(text.c_str());
+        }
+    }
+
+    inline void SetColor(double r, double g, double b)
+    {
+        if (this->TextActor && (r+g+b)<= 3) {
+            this->TextActor->GetProperty()->SetColor(r,g,b);
+        }
+    }
+
+
+protected:
+    vtkVectorText * Text;
+    vtkPolyDataMapper * TextMapper;
+    vtkFollower * TextActor;
+};
+
+CMN_DECLARE_SERVICES_INSTANTIATION(MarkerBehaviorTextObject);
+CMN_IMPLEMENT_SERVICES(MarkerBehaviorTextObject);
+
+
 MarkerBehavior::MarkerBehavior(const std::string & name):
         ui3BehaviorBase(std::string("MarkerBehavior::") + name, 0),
         Ticker(0),
         Following(false),
         VisibleList(0),
         MarkerList(0),
-        MarkerCount(0)
+        MarkerCount(0),
+		TextObject(0)
 {
     this->VisibleList = new ui3VisibleList("MarkerBehavior");
     this->MarkerList = new ui3VisibleList("MarkerList");
+	this->TextObject = new MarkerBehaviorTextObject;
     
     this->MapCursor = new ui3VisibleAxes;
     
@@ -73,8 +142,10 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     
     this->VisibleList->Add(MapCursor);
     this->VisibleList->Add(MarkerList);
+	this->VisibleList->Add(TextObject);
 
-    // offset to move points from eye to tooltip (roughly 11mm)
+	this->VisibleList->Show();
+
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
     this->CameraPressed = false;
@@ -691,12 +762,13 @@ int MarkerBehavior::FindClosestMarker()
         }
     }
     
-    // if there is one close to the cursor, turn it red
+    // if there is one close to the cursor, display a message
     // return value is that marker's count
     for (iter2 = Markers.begin(); iter2 != end; iter2++)
     {
         if (closestDist < MARKER_DISTANCE_THRESHOLD && (*iter2)->count == currentCount)
         {
+			this->TextObject->SetText("CLOSE");
             returnValue = currentCount;
         }
     }
