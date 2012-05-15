@@ -30,6 +30,8 @@ add_library (ui3ExBehaviors
              ImageViewerKidney.cpp
              RegistrationBehavior.h
              RegistrationBehavior.cpp
+             ManualRegistration.h
+             ManualRegistration.cpp
              PNGViewer3D.h
              PNGViewer3D.cpp
              VideoViewer3D.h

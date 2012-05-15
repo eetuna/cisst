@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -25,7 +25,8 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(cdgMember);
 
 
-cdgMember::cdgMember():
+cdgMember::cdgMember(unsigned int lineNumber):
+    cdgScope(lineNumber),
     UsesClassTypedef(false)
 {
 }
@@ -44,7 +45,7 @@ bool cdgMember::HasKeyword(const std::string & keyword) const
         || (keyword == "description")
         || (keyword == "default")
         || (keyword == "accessors")
-        || (keyword == "scope")) {
+        || (keyword == "visibility")) {
         return true;
     }
     return false;
@@ -52,7 +53,8 @@ bool cdgMember::HasKeyword(const std::string & keyword) const
 
 
 bool cdgMember::HasScope(const std::string & CMN_UNUSED(keyword),
-                         cdgScope::Stack & CMN_UNUSED(scopes))
+                         cdgScope::Stack & CMN_UNUSED(scopes),
+                         unsigned int CMN_UNUSED(lineNumber))
 {
     return false;
 }
@@ -88,16 +90,41 @@ bool cdgMember::SetValue(const std::string & keyword,
         return true;
     }
     if (keyword == "default") {
-        std::cerr << "------------ default not handled yet ---------" << std::endl;
+        if (!this->Default.empty()) {
+            errorMessage = "default already set";
+            return false;
+        }
+        this->Default = value;
         return true;
     }
     if (keyword == "accessors") {
-        std::cerr << "------------ accessors not handled yet ---------" << std::endl;
-        return true;
+        if (!this->Accessors.empty()) {
+            errorMessage = "accessor type already set (" + value + ")";
+            return false;
+        }
+        if ((value == "none")
+            || (value == "references")
+            || (value == "set-get")
+            || (value == "all")) {
+            this->Accessors = value;
+            return true;
+        }
+        errorMessage = "accessor must be \"none\", \"references\", \"set-get\" or \"all\", not \"" + value + "\'";
+        return false;
     }
-    if (keyword == "scope") {
-        std::cerr << "------------ scope not handled yet ---------" << std::endl;
-        return true;
+    if (keyword == "visibility") {
+        if (!this->Visibility.empty()) {
+            errorMessage = "visibility already set";
+            return false;
+        }
+        if ((value == "public")
+            || (value == "private")
+            || (value == "protected")) {
+            this->Visibility = value;
+            return true;
+        }
+        errorMessage = "visibility must be \"public\", \"protected\" or \"private\", not \"" + value + "\"";
+        return false;
     }
     errorMessage = "unhandled keyword \"" + keyword + "\"";
     return false;
@@ -120,36 +147,79 @@ bool cdgMember::IsValid(std::string & errorMessage) const
 }
 
 
-void cdgMember::GenerateHeaderDeclaration(std::ostream & output) const
+void cdgMember::FillInDefaults(void)
 {
-    output << "    " << Type << " " << Name << "; // " << Description << std::endl;    
+    if (this->Accessors.empty()) {
+        this->Accessors = "all";
+    }
+    if (this->Visibility.empty()) {
+        this->Visibility = "protected";
+    }
 }
 
 
-void cdgMember::GenerateHeaderAccessors(std::ostream & output) const
+void cdgMember::GenerateHeader(std::ostream & outputStream) const
 {
-    output << "    const " << Type << " & Get" << Name << "(void) const;" << std::endl
-           << "    void Set" << Name << "(const " << Type << " & newValue);" << std::endl;
+    GenerateLineComment(outputStream);
+    outputStream << " protected:" << std::endl
+                 << "    " << Type << " " << Name << "Member; // " << Description << std::endl;
+    if (this->Accessors != "none") {
+        outputStream << " public:" << std::endl;
+    }
+    if ((this->Accessors == "all")
+        || (this->Accessors == "set-get")) {
+        outputStream << "    /* accessor is: " << this->Accessors << "*/" << std::endl
+                     << "    void Get" << Name << "(" << Type << " & placeHolder) const;" << std::endl
+                     << "    void Set" << Name << "(const " << Type << " & newValue);" << std::endl;
+    }
+    if ((this->Accessors == "all")
+        || (this->Accessors == "references")) {
+        outputStream << "    /* accessor is: " << this->Accessors << "*/" << std::endl
+                     << "    const " << Type << " & " << Name << "(void) const;" << std::endl
+                     << "    " << Type << " & " << Name << "(void);" << std::endl;
+    }
 }
 
 
-void cdgMember::GenerateCodeAccessors(std::ostream & output, const std::string & className) const
+void cdgMember::GenerateCode(std::ostream & outputStream) const
 {
+    GenerateLineComment(outputStream);
     std::string returnType;
     if (UsesClassTypedef) {
-        returnType = className + "::" + Type;
+        returnType = ClassName + "::" + Type;
     } else {
         returnType = Type;
     }
-    output << std::endl
-           << "const " << returnType << " & " << className << "::Get" << Name << "(void) const" << std::endl
-           << "{" << std::endl
-           << "    return this->" << Name << ";" << std::endl
-           << "}" << std::endl
-           << std::endl
-           << "void " << className << "::Set" << Name << "(const " << Type << " & newValue)" << std::endl
-           << "{" << std::endl
-           << "    this->" << Name << " = newValue;" << std::endl
-           << "}" << std::endl
-           << std::endl;
+
+    if ((this->Accessors == "all")
+        || (this->Accessors == "set-get")) {
+        outputStream << std::endl
+                     << "/* accessor is: " << this->Accessors << "*/" << std::endl
+                     << "void " << ClassName << "::Get" << Name << "(" << Type << " & placeHolder) const" << std::endl
+                     << "{" << std::endl
+                     << "    placeHolder = this->" << Name << "Member;" << std::endl
+                     << "}" << std::endl
+                     << std::endl
+                     << "void " << ClassName << "::Set" << Name << "(const " << Type << " & newValue)" << std::endl
+                     << "{" << std::endl
+                     << "    this->" << Name << "Member = newValue;" << std::endl
+                     << "}" << std::endl
+                     << std::endl;
+    }
+
+    if ((this->Accessors == "all")
+        || (this->Accessors == "references")) {
+        outputStream << std::endl
+                     << "/* accessor is: " << this->Accessors << "*/" << std::endl
+                     << "const " << Type << " & " << ClassName << "::" << Name << "(void) const" << std::endl
+                     << "{" << std::endl
+                     << "    return this->" << Name << "Member;" << std::endl
+                     << "}" << std::endl
+                     << std::endl
+                     << Type << " & " << ClassName << "::" << Name << "(void)" << std::endl
+                     << "{" << std::endl
+                     << "    return this->" << Name << "Member;" << std::endl
+                     << "}" << std::endl
+                     << std::endl;
+    }
 }

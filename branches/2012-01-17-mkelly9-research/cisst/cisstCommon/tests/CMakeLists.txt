@@ -97,3 +97,5 @@ if (CISST_HAS_XML)
   cisst_target_link_libraries (cisstCommonTests cisstCommonXML)
 endif (CISST_HAS_XML)
 
+set_target_properties (cisstCommonTests
+                       PROPERTIES COMPILE_DEFINITIONS "CISST_SOURCE_DIR=\"${cisst_SOURCE_DIR}/\"")

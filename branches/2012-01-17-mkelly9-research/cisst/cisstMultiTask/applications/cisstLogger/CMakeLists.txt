@@ -1,5 +1,5 @@
 #
-# $Id: CMakeLists.txt 3034 2011-10-09 01:53:36Z adeguet1 $
+# $Id$
 #
 # (C) Copyright 2011 Johns Hopkins University (JHU), All Rights Reserved.
 #
@@ -18,7 +18,7 @@ project (cisstLogger)
 set (REQUIRED_CISST_LIBRARIES cisstCommon cisstOSAbstraction cisstMultiTask)
 
 # find cisst and make sure the required libraries have been compiled
-find_package (cisst REQUIRED ${REQUIRED_CISST_LIBRARIES} QUIET)
+find_package (cisst COMPONENTS ${REQUIRED_CISST_LIBRARIES} QUIET)
 
 if (cisst_FOUND_AS_REQUIRED)
 

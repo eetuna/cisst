@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -23,22 +23,12 @@ http://www.cisst.org/cisst/license.txt.
 #include <iostream>
 #include "cdgFile.h"
 
-/* example:
-
-include <cisstVector/vctFixedSizeTypes.h>
-include <iostream>
-
-typename newType
-
-typedef vctFixedSizeVector<vctFixedSizeVector<3, double>, 3> MatrixType;
-typedef IndexType Index
-
-member double Sine Sine
-member vctDouble3 Position End effector
-member std::string Name Human readable name
-member IndexType Index
-
- */
+/*
+  \todo use global keyword name to set include guards - maybe used for something else?
+  \todo strip space at end of value
+  \todo add method SetValue(keyword, value) for all data types to remove logic from parser
+  \todo add method ParsingDone to all data types to check which values have been set, set default for optional and complain for required field
+*/
 
 int main(int argc, char* argv[])
 {
@@ -59,6 +49,7 @@ int main(int argc, char* argv[])
     std::string codeFull = codeDir + "/" + codeName;
 
     cdgFile file;
+    file.SetHeader(headerName);
     std::ifstream input(inputName.c_str());
     bool parseSucceeded;
     if (input.is_open()) {
@@ -86,7 +77,7 @@ int main(int argc, char* argv[])
     std::ofstream code(codeFull.c_str());
     if (code.is_open()) {
         std::cout << "Generating code file \"" << codeFull << "\"" << std::endl;
-        file.GenerateCode(code, headerName);
+        file.GenerateCode(code);
         code.close();
     } else {
         std::cout << "Error, can't open file (write) \"" << codeFull << "\"" << std::endl;

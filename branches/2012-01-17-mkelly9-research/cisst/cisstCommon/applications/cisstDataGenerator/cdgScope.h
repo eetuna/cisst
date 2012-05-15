@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -30,24 +30,40 @@ http://www.cisst.org/cisst/license.txt.
 class cdgScope: public cmnGenericObject {
 
 public:
-    
+
     enum Type {CDG_GLOBAL,
                CDG_CLASS,
+               CDG_BASECLASS,
                CDG_TYPEDEF,
                CDG_MEMBER,
                CDG_CODE};
 
-    typedef std::list<cdgScope *> Stack;
+    typedef std::vector<cdgScope *> ScopesList;
+    typedef ScopesList Stack; // for parser to manage nested scopes
+
+    cdgScope(unsigned int lineNumber);
 
     const std::string & GetScopeName(void) const;
     virtual Type GetScope(void) const = 0;
     virtual bool HasKeyword(const std::string & keyword) const = 0;
     virtual bool HasScope(const std::string & keyword,
-                          Stack & scopes) = 0;
+                          Stack & scopes,
+                          unsigned int lineNumber) = 0;
     virtual bool SetValue(const std::string & keyword,
                           const std::string & value,
                           std::string & errorMessage) = 0;
     virtual bool IsValid(std::string & errorMessage) const = 0;
+    virtual void FillInDefaults(void);
+    virtual void GenerateHeader(std::ostream & outputStream) const = 0;
+    virtual void GenerateCode(std::ostream & outputStream) const = 0;
+
+protected:
+    ScopesList Scopes; // list of "scopes" found in this scope
+    unsigned int LineNumber;
+    void GenerateLineComment(std::ostream & outputStream) const;
+
+private:
+    cdgScope(void); // make sure constructor with line number is always used.
 };
 
 #endif // _cdgScope_h

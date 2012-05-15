@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# (C) Copyright 2005-2011 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2005-2012 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -37,6 +37,7 @@ set (CISST_SOURCE_DIR "${cisst_SOURCE_DIR}")
 set (CISST_SHARE_INSTALL_SUFFIX "share/cisst-${CISST_VERSION}")
 set (CISST_SHARE_DIR  "${CISST_BINARY_DIR}/${CISST_SHARE_INSTALL_SUFFIX}")
 set (CISST_CMAKE_INSTALL_SUFFIX "${CISST_SHARE_INSTALL_SUFFIX}/cmake")
+set (CISST_CMAKE_MODULES_INSTALL_SUFFIX "${CISST_SHARE_INSTALL_SUFFIX}/cmake/Modules")
 set (CISST_CMAKE_SOURCE_DIR "${CISST_SOURCE_DIR}/cmake")
 set (CISST_CMAKE_BINARY_DIR "${CISST_BINARY_DIR}/${CISST_CMAKE_INSTALL_SUFFIX}")
 set (CISST_CMAKE_DIRS "${CISST_CMAKE_SOURCE_DIR}" "${CISST_CMAKE_BINARY_DIR}")
@@ -74,6 +75,31 @@ set_property (TARGET cisstRevision PROPERTY FOLDER "cisstCommon")
 # Install cisstRevision.h
 set_source_files_properties ("${CISST_REVISION_HEADER}" GENERATED)
 install (FILES "${cisst_BINARY_DIR}/include/cisstRevision.h"
+         DESTINATION include
+         COMPONENT cisstCommon)
+
+# Generate cisstBuildType.h
+set (CISST_BUILDTYPE_HEADER_SRC "${cisst_SOURCE_DIR}/cisstBuildType.h.in")
+set (CISST_BUILDTYPE_HEADER "${cisst_BINARY_DIR}/include/cisstBuildType.h")
+# Script to be executed everytime
+configure_file ("${cisst_SOURCE_DIR}/cmake/cisstGenerateBuildType.cmake.in"
+                "${cisst_BINARY_DIR}/cisstGenerateBuildType.cmake"
+                @ONLY)
+add_custom_target (cisstBuildType ALL
+                   COMMAND ${CMAKE_COMMAND}
+                           -DCISST_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}"
+                           -DCISST_CFG_INTDIR:STRING="${CMAKE_CFG_INTDIR}"
+                           -P "${cisst_BINARY_DIR}/cisstGenerateBuildType.cmake"
+                   COMMENT "Generating ${CISST_BUILDTYPE_HEADER} from ${CISST_BUILDTYPE_HEADER_SRC}"
+                   SOURCES "${CISST_BUILDTYPE_HEADER_SRC}"
+                           "${CISST_BUILDTYPE_HEADER}"
+                           "${cisst_SOURCE_DIR}/cmake/cisstGenerateBuildType.cmake.in"
+                           "${cisst_BINARY_DIR}/cisstGenerateBuildType.cmake")
+set_property (TARGET cisstBuildType PROPERTY FOLDER "cisstCommon")
+
+# Install cisstBuildType.h
+set_source_files_properties ("${CISST_BUILDTYPE_HEADER}" GENERATED)
+install (FILES "${cisst_BINARY_DIR}/include/cisstBuildType.h"
          DESTINATION include
          COMPONENT cisstCommon)
 
@@ -145,11 +171,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(XENOMAI)
     # add /usr/xenomai/include/posix. This is a *must* since we want to
     # to use xenomai/include/posix/pthread.h
-    set (CISST_XENOMAI_INCLUDE_DIRECTORIES ${XENOMAI_INCLUDE_DIR} ${XENOMAI_INCLUDE_POSIX_DIR})
+    set (CISST_XENOMAI_INCLUDE_DIRECTORIES ${XENOMAI_INCLUDE_DIR} )#${XENOMAI_INCLUDE_POSIX_DIR})
     cisst_set_package_settings (cisstCommon Xenomai INCLUDE_DIRECTORIES CISST_XENOMAI_INCLUDE_DIRECTORIES)
     # add libnative libxenomai librtdm libpthread_rt
     set (CISST_XENOMAI_LIBRARIES ${XENOMAI_LIBRARY_NATIVE}
-                                 ${XENOMAI_LIBRARY_PTHREAD_RT}
+#                                 ${XENOMAI_LIBRARY_PTHREAD_RT}
                                  ${XENOMAI_LIBRARY_RTDM}
                                  ${XENOMAI_LIBRARY_XENOMAI})
     cisst_set_package_settings (cisstCommon Xenomai LIBRARIES CISST_XENOMAI_LIBRARIES)
@@ -394,9 +420,23 @@ install (FILES  ${cisst_BINARY_DIR}/include/cisstConfig.h
          DESTINATION include
          COMPONENT cisstCommon)
 
+# Install auxiliary Find*.cmake files
+install (DIRECTORY ${CISST_CMAKE_SOURCE_DIR}/
+         DESTINATION ${CISST_CMAKE_MODULES_INSTALL_SUFFIX}
+         COMPONENT cisstCommon
+         FILES_MATCHING PATTERN "Find*.cmake"
+         PATTERN ".svn" EXCLUDE)
+
+file (COPY ${CISST_CMAKE_SOURCE_DIR}/
+      DESTINATION ${CISST_CMAKE_MODULES_INSTALL_SUFFIX}
+      FILES_MATCHING PATTERN "Find*.cmake"
+      PATTERN ".svn" EXCLUDE)
+
 # Use CPack package generator
-set (CPACK_PACKAGE_NAME "cisst")
-set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "cisst libraries")
+if (NOT UNIX)
+  set (CPACK_PACKAGE_NAME "cisst")
+  set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "cisst libraries")
+endif (NOT UNIX)
 # For now, enable all default libraries (even if not compiled)
 set (CPACK_COMPONENTS_ALL ${CISST_LIBRARIES_DEFAULT})
 if (CISST_cisstCommonXML) # we can only test CISST_XML_LIB if cisstCommonXML is activated
