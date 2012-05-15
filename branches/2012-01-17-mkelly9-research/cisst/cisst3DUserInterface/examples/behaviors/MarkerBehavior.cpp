@@ -31,9 +31,13 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <vtkActor.h>
 #include <vtkAssembly.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty.h>
 #include <vtkFollower.h>
+#include <vtkGenericDataObjectReader.h>
+#include <vtkOutlineFilter.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkPolyDataReader.h>
+#include <vtkProperty.h>
+#include <vtkSmartPointer.h>
 #include <vtkVectorText.h>
 
 // how close markers need to be to delete (in mm)
@@ -41,8 +45,7 @@ http://www.cisst.org/cisst/license.txt.
 // z-axis translation between tool eye and tip (in mm)
 #define WRIST_TIP_OFFSET (11.0)
 
-
-// copied from MarkerBehaviorTextObject
+// copied from MapBehaviorTextObject
 class MarkerBehaviorTextObject: public ui3VisibleObject
 {
 	CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_ALLOW_DEFAULT);
@@ -61,7 +64,7 @@ public:
 
         Text = vtkVectorText::New();
         CMN_ASSERT(Text);
-        Text->SetText("TEST TEST");
+        Text->SetText("");
 
         TextMapper = vtkPolyDataMapper::New();
         CMN_ASSERT(TextMapper);
@@ -103,9 +106,134 @@ protected:
     vtkPolyDataMapper * TextMapper;
     vtkFollower * TextActor;
 };
-
 CMN_DECLARE_SERVICES_INSTANTIATION(MarkerBehaviorTextObject);
 CMN_IMPLEMENT_SERVICES(MarkerBehaviorTextObject);
+
+
+// copied from ImageViewerKidneySurfaceVisibleObject
+class MarkerBehaviorModelObject: public ui3VisibleObject
+{
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+public:
+    inline MarkerBehaviorModelObject(const std::string & name, const std::string & inputFile, bool hasOutline = false):
+        ui3VisibleObject(name),
+        InputFile(inputFile),
+        SurfaceReader(0),
+        SurfaceMapper(0),
+        SurfaceActor(0),
+        HasOutline(hasOutline),
+        OutlineData(0),
+        OutlineMapper(0),
+        OutlineActor(0)
+    {}
+
+    inline ~MarkerBehaviorModelObject()
+    {
+        if (this->SurfaceActor) {
+            this->SurfaceActor->Delete();
+            this->SurfaceActor = 0;
+        }
+        if (this->SurfaceMapper) {
+            this->SurfaceMapper->Delete();
+            this->SurfaceMapper = 0;
+        }
+        if (this->SurfaceReader) {
+            this->SurfaceReader->Delete();
+            this->SurfaceReader = 0;
+        }
+        if (this->OutlineData) {
+            this->OutlineData->Delete();
+            this->OutlineData = 0;
+        }
+        if (this->OutlineMapper) {
+            this->OutlineMapper->Delete();
+            this->OutlineMapper = 0;
+        }
+        if (this->OutlineActor) {
+            this->OutlineActor->Delete();
+            this->OutlineActor = 0;
+        }
+    }
+
+    inline bool CreateVTKObjects(void) {
+        SurfaceReader = vtkPolyDataReader::New();
+        CMN_ASSERT(SurfaceReader);
+        CMN_LOG_CLASS_INIT_VERBOSE << "Loading file \"" << InputFile << "\"" << std::endl;
+        SurfaceReader->SetFileName(InputFile.c_str());
+        CMN_LOG_CLASS_INIT_VERBOSE << "File \"" << InputFile << "\" loaded" << std::endl;
+        SurfaceReader->Update();
+
+        SurfaceMapper = vtkPolyDataMapper::New();
+        CMN_ASSERT(SurfaceMapper);
+        SurfaceMapper->SetInputConnection(SurfaceReader->GetOutputPort());
+        SurfaceMapper->ScalarVisibilityOff();
+        SurfaceMapper->ImmediateModeRenderingOn();
+
+        SurfaceActor = vtkActor::New();
+        CMN_ASSERT(SurfaceActor);
+        SurfaceActor->SetMapper(SurfaceMapper);
+        // SurfaceActor->GetProperty()->SetSpecular(.3);
+        // SurfaceActor->GetProperty()->SetSpecularPower(20);
+        SurfaceActor->GetProperty()->SetOpacity(1.0); // to allow to see thru
+    
+        // Scale the actors.
+        SurfaceActor->SetScale(0.10);
+
+        this->AddPart(this->SurfaceActor);
+
+        // Create a frame for the data volume.
+        if (HasOutline) {
+            OutlineData = vtkOutlineFilter::New();
+            CMN_ASSERT(OutlineData);
+            OutlineData->SetInputConnection(SurfaceReader->GetOutputPort());
+            OutlineMapper = vtkPolyDataMapper::New();
+            CMN_ASSERT(OutlineMapper);
+            OutlineMapper->SetInputConnection(OutlineData->GetOutputPort());
+            OutlineMapper->ImmediateModeRenderingOn();
+            OutlineActor = vtkActor::New();
+            CMN_ASSERT(OutlineActor);
+            OutlineActor->SetMapper(OutlineMapper);
+            OutlineActor->GetProperty()->SetColor(1,1,1);
+            
+            // Scale the actors.
+            OutlineActor->SetScale(0.05);
+            this->AddPart(this->OutlineActor);
+        }
+        return true;
+    }
+
+	inline bool UpdateVTKObjects(void) {
+        return true;
+    }
+
+    inline void SetColor(double r, double g, double b) {
+        SurfaceActor->GetProperty()->SetDiffuseColor(r, g, b);
+    }
+
+    inline void SetOpacity(double opacity) {
+        SurfaceActor->GetProperty()->SetOpacity(opacity);
+    }
+
+    vctDouble3 GetCenter(void) {
+        vctDouble3 center;
+        if (HasOutline) {
+            center.Assign(OutlineActor->GetCenter());
+        }
+        return center;
+    }
+
+protected:
+    std::string InputFile;
+    vtkPolyDataReader * SurfaceReader;
+    vtkPolyDataMapper * SurfaceMapper;
+    vtkActor * SurfaceActor;
+    bool HasOutline;
+    vtkOutlineFilter * OutlineData;
+    vtkPolyDataMapper * OutlineMapper;
+    vtkActor * OutlineActor;
+};
+CMN_DECLARE_SERVICES_INSTANTIATION(MarkerBehaviorModelObject);
+CMN_IMPLEMENT_SERVICES(MarkerBehaviorModelObject);
 
 
 MarkerBehavior::MarkerBehavior(const std::string & name):
@@ -122,14 +250,29 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
 	this->TextObject = new MarkerBehaviorTextObject;
     
     this->MapCursor = new ui3VisibleAxes;
+    this->ProstateModel = new MarkerBehaviorModelObject("ProstateModel", "prostate.vtk");
+#if 0
+    this->UrethraModel = new MarkerBehaviorModelObject("UrethraModel", "urethra.vtk");
+#endif
     
     this->MarkerList->Hide();
     
     this->VisibleList->Add(MapCursor);
+    this->MapCursor->Show();
     this->VisibleList->Add(MarkerList);
+    this->MapCursor->Show();
 	this->VisibleList->Add(TextObject);
-
-	this->VisibleList->Show();
+    this->MapCursor->Show();
+    this->VisibleList->Add(ProstateModel);
+#if 0
+    this->ProstateModel->Hide();
+#endif
+    this->ProstateModel->Show();
+#if 0
+    this->VisibleList->Add(UrethraModel);
+    this->UrethraModel->Hide();
+    this->UrethraModel->Show();
+#endif
 
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
@@ -137,7 +280,7 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->LeftMTMOpen = true;
     this->RightMTMOpen = true;
     this->ClutchPressed = false;
-    this->ModeSelected = NONE;
+    this->SettingFiducials = false;
 
     this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
 }
@@ -165,10 +308,10 @@ void MarkerBehavior::ConfigureMenuBar()
                                   "cylinder.png",
                                   &MarkerBehavior::RegisterButtonCallback,
                                   this);
-    this->MenuBar->AddClickButton("Display Prostate Model",
+    this->MenuBar->AddClickButton("Show/Hide Prostate Model",
                                   4,
                                   "sphere.png",
-                                  &MarkerBehavior::DisplayProstateModelCallback,
+                                  &MarkerBehavior::ProstateModelCallback,
                                   this);
 }
 
@@ -316,7 +459,7 @@ bool MarkerBehavior::RunNoInput()
     }
 	else
 	{
-		if (ModeSelected == SET_FIDUCIALS)
+		if (SettingFiducials)
 		{
 			if (!this->MapCursor->Visible())
 			{
@@ -351,7 +494,7 @@ void MarkerBehavior::SetFiducialButtonCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Set fiducials button pressed" << std::endl;
 
-    ModeSelected = SET_FIDUCIALS;
+    SettingFiducials = true;
 }
 
 void MarkerBehavior::RegisterButtonCallback(void)
@@ -436,10 +579,35 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
 }
 
 
-void MarkerBehavior::DisplayProstateModelCallback(void)
+void MarkerBehavior::ProstateModelCallback(void)
 {
-    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Clear fiducials button pressed" << std::endl;
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Show/hide prostate model pressed" << std::endl;
+
+    if (this->ProstateModel->Visible())
+    {
+        this->ProstateModel->Hide();
+    }
+    else
+    {
+        this->ProstateModel->Show();
+    }
 }
+
+
+void MarkerBehavior::UrethraModelCallback(void)
+{
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Show/hide urethra model pressed" << std::endl;
+
+    if (this->UrethraModel->Visible())
+    {
+        this->UrethraModel->Hide();
+    }
+    else
+    {
+        this->UrethraModel->Show();
+    }
+}
+
 
 void MarkerBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
 {
@@ -676,7 +844,7 @@ the position of the marker is the position of the cursor at the time that it is 
 */
 void MarkerBehavior::AddMarker(void)
 {
-	if (MarkerDropped == false && MarkerCount < MARKER_MAX && ModeSelected == SET_FIDUCIALS)
+	if (MarkerDropped == false && MarkerCount < MARKER_MAX && SettingFiducials)
     {
         // create new marker!
         ui3VisibleAxes * newMarkerVisible = new ui3VisibleAxes;
@@ -715,7 +883,7 @@ Removes the last marker from the list
 */
 void MarkerBehavior::RemoveMarker(void)
 {
-    if (MarkerRemoved == false && ModeSelected == SET_FIDUCIALS)
+    if (MarkerRemoved == false && SettingFiducials)
     {
         if (MarkerCount > 0)
         {

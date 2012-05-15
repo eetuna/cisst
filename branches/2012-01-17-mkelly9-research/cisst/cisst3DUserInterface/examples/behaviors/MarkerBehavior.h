@@ -26,24 +26,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VisibleObject.h>
 #include <cisst3DUserInterface/ui3VisibleList.h>
 #include <cisst3DUserInterface/ui3VisibleAxes.h>
+#include <vtkPolyData.h>
 
 #include <list>
 #include <limits>
 #define MARKER_MAX 50
 
 class MarkerBehaviorTextObject;
+class MarkerBehaviorModelObject;
 
 struct MarkerType
 {
     vctFrm3 AbsolutePosition;
     ui3VisibleAxes * VisibleObject;
     int count;
-};
-
-enum OperatingMode
-{
-    NONE,
-    SET_FIDUCIALS
 };
 
 // Always include last!
@@ -77,7 +73,8 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void SetFiducialButtonCallback(void);
         void RegisterButtonCallback(void);
         void ClearFiducialsButtonCallback(void);
-        void DisplayProstateModelCallback(void);
+        void ProstateModelCallback(void);
+        void UrethraModelCallback(void);
         StateType PreviousState;
         bool PreviousMaM;
         vctDouble3 PreviousCursorPosition;
@@ -86,7 +83,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
 		vctFrm3 WristToTip;
         bool Following;
         bool Transition;
-		OperatingMode ModeSelected;
+        bool SettingFiducials;
 
         ui3SlaveArm * Slave1;
         ui3SlaveArm * ECM1;
@@ -115,6 +112,9 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         ui3VisibleList * VisibleList;
 		MarkerBehaviorTextObject * TextObject;
         ui3VisibleObject * MapCursor;
+        MarkerBehaviorModelObject * ProstateModel;
+        MarkerBehaviorModelObject * UrethraModel;
+        ui3Widget3D * Widget3D;
         ui3VisibleList * MarkerList;
         ui3VisibleAxes * MyMarkers[MARKER_MAX];
         bool RightMTMOpen, LeftMTMOpen;
