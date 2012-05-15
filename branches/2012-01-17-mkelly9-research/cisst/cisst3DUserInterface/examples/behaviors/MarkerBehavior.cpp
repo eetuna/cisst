@@ -42,21 +42,6 @@ http://www.cisst.org/cisst/license.txt.
 #define WRIST_TIP_OFFSET (11.0)
 
 
-struct MarkerType
-{
-    vctFrm3 AbsolutePosition;
-    ui3VisibleAxes * VisibleObject;
-    int count;
-};
-
-
-enum OperatingMode
-{
-    NONE,
-    SET_FIDUCIALS
-};
-
-
 // copied from MarkerBehaviorTextObject
 class MarkerBehaviorTextObject: public ui3VisibleObject
 {
@@ -128,9 +113,9 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
         Ticker(0),
         Following(false),
         VisibleList(0),
+		TextObject(0),
         MarkerList(0),
-        MarkerCount(0),
-		TextObject(0)
+        MarkerCount(0)
 {
     this->VisibleList = new ui3VisibleList("MarkerBehavior");
     this->MarkerList = new ui3VisibleList("MarkerList");
@@ -179,6 +164,11 @@ void MarkerBehavior::ConfigureMenuBar()
                                   3,
                                   "cylinder.png",
                                   &MarkerBehavior::RegisterButtonCallback,
+                                  this);
+    this->MenuBar->AddClickButton("Display Prostate Model",
+                                  4,
+                                  "sphere.png",
+                                  &MarkerBehavior::DisplayProstateModelCallback,
                                   this);
 }
 
@@ -430,7 +420,7 @@ void MarkerBehavior::RegisterButtonCallback(void)
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
 {
-    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Clear fiducials button pressed" << std::endl;
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Display prostate model pressed" << std::endl;
 
     // hide all the markers
     for (unsigned int i = 0 ; i < Markers.size(); i++)
@@ -443,6 +433,12 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     {
         this->MapCursor->Hide();
     }
+}
+
+
+void MarkerBehavior::DisplayProstateModelCallback(void)
+{
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Clear fiducials button pressed" << std::endl;
 }
 
 void MarkerBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)

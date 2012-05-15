@@ -32,8 +32,19 @@ http://www.cisst.org/cisst/license.txt.
 #define MARKER_MAX 50
 
 class MarkerBehaviorTextObject;
-struct MarkerType;
-enum OperatingMode;
+
+struct MarkerType
+{
+    vctFrm3 AbsolutePosition;
+    ui3VisibleAxes * VisibleObject;
+    int count;
+};
+
+enum OperatingMode
+{
+    NONE,
+    SET_FIDUCIALS
+};
 
 // Always include last!
 #include "ui3BehaviorsExport.h"
@@ -66,6 +77,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void SetFiducialButtonCallback(void);
         void RegisterButtonCallback(void);
         void ClearFiducialsButtonCallback(void);
+        void DisplayProstateModelCallback(void);
         StateType PreviousState;
         bool PreviousMaM;
         vctDouble3 PreviousCursorPosition;
