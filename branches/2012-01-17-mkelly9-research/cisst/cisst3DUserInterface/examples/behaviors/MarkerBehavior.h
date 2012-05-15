@@ -110,6 +110,8 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         MarkersType Markers;
 
     private:
+        std::string GetRegistrationOutputFilename(void);
+
         ui3VisibleList * VisibleList;
 		MarkerBehaviorTextObject * TextObject;
         ui3VisibleObject * MapCursor;

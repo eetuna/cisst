@@ -404,7 +404,7 @@ void MarkerBehavior::RegisterButtonCallback(void)
 	}
 
     // output registration results
-    std::ofstream outputFile("registrationOutput.txt");
+    std::ofstream outputFile(GetRegistrationOutputFilename().c_str());
 
 	outputFile << "initial points:" << std::endl << initialPoints << std::endl
 		       << "selected points:" << std::endl << selectedPoints << std::endl;
@@ -775,4 +775,30 @@ int MarkerBehavior::FindClosestMarker()
     }
 
     return returnValue;
+}
+
+
+// Gets the next registration output file, following the scheme
+// "RegistrationOutput1.txt", "RegistrationOutput2.txt", etc.
+// Never overwrites an existing file, so it has to find the next numbre to use
+std::string MarkerBehavior::GetRegistrationOutputFilename(void)
+{
+    int i = 1;
+    std::stringstream sstream;
+    std::ifstream fstream;
+    while (true)
+    {
+        sstream << "RegistrationOutput" << i;
+        fstream.open(sstream.str().c_str());
+        if (fstream.is_open())
+        {
+            break;
+        }
+        sstream.str("");
+        sstream.clear();
+        i++;
+    }
+    fstream.close();
+
+    return sstream.str();
 }
