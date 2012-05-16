@@ -75,12 +75,15 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void ClearFiducialsButtonCallback(void);
         void ProstateModelCallback(void);
         void UrethraModelCallback(void);
+        void SwitchModelModeCallback(void);
         StateType PreviousState;
         bool PreviousMaM;
         vctDouble3 PreviousCursorPosition;
         vctDouble3 Offset;
         vctFrm3 Position;
+		vctFrm3 ModelOffset;
 		vctFrm3 WristToTip;
+		vctFrm3 IdentityTransformation;
         bool Following;
         bool Transition;
         bool SettingFiducials;
@@ -103,17 +106,17 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void RemoveMarker();
         int FindClosestMarker();
 
-        typedef  std::vector<MarkerType*> MarkersType;
+        typedef  std::vector<MarkerType *> MarkersType;
         MarkersType Markers;
 
     private:
         std::string GetRegistrationOutputFilename(void);
 
         ui3VisibleList * RootList;
+        ui3VisibleList * CursorList;
         ui3VisibleList * MarkerList;
         ui3VisibleList * ModelList;
         ui3VisibleList * FollowCameraList;
-        ui3VisibleList * MiscList;
 
         ui3VisibleObject * Cursor;
         ui3VisibleAxes * MyMarkers[MARKER_MAX];
@@ -126,6 +129,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         bool RightMTMOpen, LeftMTMOpen;
         bool CameraPressed, ClutchPressed;
         bool MarkerDropped, MarkerRemoved;
+        bool OffsetMode;
         int MarkerCount;
         vctDouble3 PreviousSlavePosition;
 

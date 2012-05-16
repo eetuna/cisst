@@ -42,6 +42,8 @@ http://www.cisst.org/cisst/license.txt.
 
 // how close markers need to be to delete (in mm)
 #define MARKER_DISTANCE_THRESHOLD (5.0)
+// amount of offset from cursor for model display when in offset mode
+#define MODEL_OFFSET (20.0)
 // z-axis translation between tool eye and tip (in mm)
 #define WRIST_TIP_OFFSET (11.0)
 
@@ -241,10 +243,10 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
         Ticker(0),
         Following(false),
         RootList(0),
+        CursorList(0),
         MarkerList(0),
         ModelList(0),
         FollowCameraList(0),
-        MiscList(0),
 		TextObject(0),
         MarkerCount(0)
 {
@@ -252,7 +254,7 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->MarkerList = new ui3VisibleList("MarkerList");
     this->ModelList = new ui3VisibleList("ModelList");
     this->FollowCameraList = new ui3VisibleList("FollowCameraList");
-    this->MiscList = new ui3VisibleList("MiscList");
+    this->CursorList = new ui3VisibleList("CursorList");
 
 	this->TextObject = new MarkerBehaviorTextObject;
     this->Cursor = new ui3VisibleAxes;
@@ -263,12 +265,12 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->FollowCameraList->Add(ProstateModel);
     this->FollowCameraList->Add(UrethraModel);
 
-    this->MiscList->Add(Cursor);
-    this->MiscList->Add(TextObject);
+    this->CursorList->Add(Cursor);
+    this->CursorList->Add(TextObject);
 
     this->RootList->Add(MarkerList);
     this->RootList->Add(ModelList);
-    this->RootList->Add(MiscList);
+    this->RootList->Add(CursorList);
 
     this->RootList->Show();
 
@@ -280,7 +282,12 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->ClutchPressed = false;
     this->SettingFiducials = false;
 
+    this->ModelOffset.Translation().Assign(vctDouble3(MODEL_OFFSET, MODEL_OFFSET, 0.0));
     this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
+    this->IdentityTransformation.Translation().Assign(vctDouble3(0.0, 0.0, 0.0));
+
+    this->OffsetMode = true;
+    this->ModelList->SetTransformation(ModelOffset);
 }
 
 
@@ -310,6 +317,11 @@ void MarkerBehavior::ConfigureMenuBar()
                                   4,
                                   "sphere.png",
                                   &MarkerBehavior::ProstateModelCallback,
+                                  this);
+    this->MenuBar->AddClickButton("Offset / Augmented Reality",
+                                  5,
+                                  "iconify-top-left.png",
+                                  &MarkerBehavior::SwitchModelModeCallback,
                                   this);
 }
 
@@ -607,6 +619,23 @@ void MarkerBehavior::UrethraModelCallback(void)
 }
 
 
+void MarkerBehavior::SwitchModelModeCallback(void)
+{
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Offset / augmented reality mode pressed" << std::endl;
+
+    if (OffsetMode)
+    {
+        OffsetMode = false;
+        ModelList->SetTransformation(ModelOffset);
+    }
+    else
+    {
+        OffsetMode = true;
+        ModelList->SetTransformation(IdentityTransformation);
+    }
+}
+
+
 void MarkerBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
 {
     if (event.Type() == prmEventButton::PRESSED) {
@@ -743,6 +772,7 @@ void MarkerBehavior::UpdateCursorPosition(void)
     t1 = (cursorVTK.Translation());
     cursorVTK.Translation().Assign(t1);
     Cursor->SetTransformation(cursorVTK);
+    FollowCameraList->SetTransformation(cursorVTK);
 }
 
 
