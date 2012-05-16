@@ -240,39 +240,37 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
         ui3BehaviorBase(std::string("MarkerBehavior::") + name, 0),
         Ticker(0),
         Following(false),
-        VisibleList(0),
-		TextObject(0),
+        RootList(0),
         MarkerList(0),
+        ModelList(0),
+        FollowCameraList(0),
+        MiscList(0),
+		TextObject(0),
         MarkerCount(0)
 {
-    this->VisibleList = new ui3VisibleList("MarkerBehavior");
+    this->RootList = new ui3VisibleList("MarkerBehavior");
     this->MarkerList = new ui3VisibleList("MarkerList");
+    this->ModelList = new ui3VisibleList("ModelList");
+    this->FollowCameraList = new ui3VisibleList("FollowCameraList");
+    this->MiscList = new ui3VisibleList("MiscList");
+
 	this->TextObject = new MarkerBehaviorTextObject;
-    
-    this->MapCursor = new ui3VisibleAxes;
+    this->Cursor = new ui3VisibleAxes;
     this->ProstateModel = new MarkerBehaviorModelObject("ProstateModel", "prostate.vtk");
-#if 0
     this->UrethraModel = new MarkerBehaviorModelObject("UrethraModel", "urethra.vtk");
-#endif
     
-    this->MarkerList->Hide();
-    
-    this->VisibleList->Add(MapCursor);
-    this->MapCursor->Show();
-    this->VisibleList->Add(MarkerList);
-    this->MapCursor->Show();
-	this->VisibleList->Add(TextObject);
-    this->MapCursor->Show();
-    this->VisibleList->Add(ProstateModel);
-#if 0
-    this->ProstateModel->Hide();
-#endif
-    this->ProstateModel->Show();
-#if 0
-    this->VisibleList->Add(UrethraModel);
-    this->UrethraModel->Hide();
-    this->UrethraModel->Show();
-#endif
+    this->ModelList->Add(FollowCameraList);
+    this->FollowCameraList->Add(ProstateModel);
+    this->FollowCameraList->Add(UrethraModel);
+
+    this->MiscList->Add(Cursor);
+    this->MiscList->Add(TextObject);
+
+    this->RootList->Add(MarkerList);
+    this->RootList->Add(ModelList);
+    this->RootList->Add(MiscList);
+
+    this->RootList->Show();
 
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
@@ -380,7 +378,7 @@ bool MarkerBehavior::RunForeground()
 
     if (this->Manager->MastersAsMice() != this->PreviousMaM) {
         this->PreviousMaM = this->Manager->MastersAsMice();
-        this->VisibleList->Show();
+        this->RootList->Show();
         this->MarkerList->Show();
     }
 
@@ -388,7 +386,7 @@ bool MarkerBehavior::RunForeground()
     // state is used by multiple threads ...
     if (this->State != this->PreviousState) {
         this->PreviousState = this->State;
-        this->VisibleList->Show();
+        this->RootList->Show();
         this->MarkerList->Show();
     }
     // running in foreground GUI mode
@@ -415,7 +413,7 @@ bool MarkerBehavior::RunNoInput()
 
     if (this->Manager->MastersAsMice() != this->PreviousMaM) {
         this->PreviousMaM = this->Manager->MastersAsMice();
-        this->VisibleList->Show();
+        this->RootList->Show();
     }
     this->Transition = true;
     this->Slave1->GetCartesianPosition(this->Slave1Position);
@@ -449,10 +447,10 @@ bool MarkerBehavior::RunNoInput()
     if (CameraPressed ||
        (!ClutchPressed && (PreviousSlavePosition == Slave1Position.Position().Translation())))
     {
-        if (this->MapCursor->Visible())
+        if (this->Cursor->Visible())
         {
             // if the cursor is visible then hide;
-            this->MapCursor->Hide();
+            this->Cursor->Hide();
         }
         // update the visible map position when the camera is clutched
         this->UpdateVisibleMap();
@@ -461,16 +459,16 @@ bool MarkerBehavior::RunNoInput()
 	{
 		if (SettingFiducials)
 		{
-			if (!this->MapCursor->Visible())
+			if (!this->Cursor->Visible())
 			{
-				this->MapCursor->Show();
+				this->Cursor->Show();
 			}
 		}
 		else
 		{
-			if (this->MapCursor->Visible())
+			if (this->Cursor->Visible())
 			{
-				this->MapCursor->Hide();
+				this->Cursor->Hide();
 			}
 		}
 	}
@@ -572,9 +570,9 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     }
     // hide map cursor until out of MaM mode so as not to confuse the user into
     // thinking that not all cursors have been cleared
-    if (this->MapCursor->Visible())
+    if (this->Cursor->Visible())
     {
-        this->MapCursor->Hide();
+        this->Cursor->Hide();
     }
 }
 
@@ -744,7 +742,7 @@ void MarkerBehavior::UpdateCursorPosition(void)
     vctDouble3 t1;
     t1 = (cursorVTK.Translation());
     cursorVTK.Translation().Assign(t1);
-    MapCursor->SetTransformation(cursorVTK);
+    Cursor->SetTransformation(cursorVTK);
 }
 
 
@@ -851,7 +849,7 @@ void MarkerBehavior::AddMarker(void)
         // must be added to the list
         MarkerList->Add(newMarkerVisible);
         MyMarkers[MarkerCount] = newMarkerVisible;  // NOTE: this array should be gone, but I am using it to hide the markers when they are being removed
-        // make sure the new marker is created and part of the scene before editting it
+        // make sure the new marker is created and part of the scene before editing it
         newMarkerVisible->WaitForCreation();
         if (MarkerCount < MARKER_MAX)
         {

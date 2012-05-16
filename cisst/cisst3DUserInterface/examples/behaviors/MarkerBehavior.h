@@ -60,7 +60,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void Configure(const std::string & configFile);
         bool SaveConfiguration(const std::string & configFile);
         inline ui3VisibleObject * GetVisibleObject(void) {
-            return this->VisibleList;
+            return this->RootList;
         }
 
     protected:
@@ -109,14 +109,20 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
     private:
         std::string GetRegistrationOutputFilename(void);
 
-        ui3VisibleList * VisibleList;
+        ui3VisibleList * RootList;
+        ui3VisibleList * MarkerList;
+        ui3VisibleList * ModelList;
+        ui3VisibleList * FollowCameraList;
+        ui3VisibleList * MiscList;
+
+        ui3VisibleObject * Cursor;
+        ui3VisibleAxes * MyMarkers[MARKER_MAX];
+
 		MarkerBehaviorTextObject * TextObject;
-        ui3VisibleObject * MapCursor;
         MarkerBehaviorModelObject * ProstateModel;
         MarkerBehaviorModelObject * UrethraModel;
         ui3Widget3D * Widget3D;
-        ui3VisibleList * MarkerList;
-        ui3VisibleAxes * MyMarkers[MARKER_MAX];
+
         bool RightMTMOpen, LeftMTMOpen;
         bool CameraPressed, ClutchPressed;
         bool MarkerDropped, MarkerRemoved;
