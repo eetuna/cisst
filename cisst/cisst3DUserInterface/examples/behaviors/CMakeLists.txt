@@ -22,6 +22,8 @@ add_library (ui3ExBehaviors
              MeasurementBehavior.cpp
              MapBehavior.h
              MapBehavior.cpp
+             MarkerBehavior.h
+             MarkerBehavior.cpp
              ImageViewer.h
              ImageViewer.cpp
              ImageViewerKidney.h
