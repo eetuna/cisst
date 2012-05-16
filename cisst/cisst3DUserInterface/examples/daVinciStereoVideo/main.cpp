@@ -59,8 +59,8 @@ int main()
 #endif
     componentManager->AddComponent(daVinci);
 
-#if 0
     ui3Manager guiManager;
+#if 0
     MeasurementBehavior measurementBehavior("Measure");
     guiManager.AddBehavior(&measurementBehavior,
                            1,
@@ -75,6 +75,7 @@ int main()
     guiManager.AddBehavior(&imageViewer,
                            3,
                            "move.png");
+#endif
 #if TORS
 	ManualRegistration manualRegistration("manualRegistration");
     guiManager.AddBehavior(&manualRegistration,
@@ -87,7 +88,6 @@ int main()
                            "move.png");
 #endif
 
-    ui3Manager guiManager;
     MarkerBehavior markerBehavior("Marker");
     guiManager.AddBehavior(&markerBehavior,
                            1,
