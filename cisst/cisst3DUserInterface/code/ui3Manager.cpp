@@ -45,7 +45,7 @@ ui3BehaviorBase(name, 0),
     ActiveBehavior(0),
     SceneManager(0),
     RendererThread(0),
-    IsOverMenu(0),
+    IsOverMenu(false),
     HasMaMDevice(false),
     PickRequested(false)
 {
