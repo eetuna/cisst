@@ -22,7 +22,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <MarkerBehavior.h>
 
-#include <cisstCommon/cmnPath.h>
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
@@ -254,21 +253,22 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->MarkerList = new ui3VisibleList("MarkerList");
     this->ModelList = new ui3VisibleList("ModelList");
     this->FollowCameraList = new ui3VisibleList("FollowCameraList");
+    this->RegistrationList = new ui3VisibleList("RegistrationList");
     this->CursorList = new ui3VisibleList("CursorList");
 
 	this->TextObject = new MarkerBehaviorTextObject;
     this->Cursor = new ui3VisibleAxes;
 
-	cmnPath path;
-    path.AddRelativeToCisstShare("/models/dv-3dus");
-    std::string prostateName = path.Find(PROSTATE_MODEL_PATH, cmnPath::READ);
+    Path.AddRelativeToCisstShare("/models/dv-3dus");
+    std::string prostateName = Path.Find(PROSTATE_MODEL_PATH, cmnPath::READ);
 	this->ProstateModel = new MarkerBehaviorModelObject("ProstateModel", prostateName);
-	std::string urethraName = path.Find(URETHRA_MODEL_PATH, cmnPath::READ);
+	std::string urethraName = Path.Find(URETHRA_MODEL_PATH, cmnPath::READ);
     this->UrethraModel = new MarkerBehaviorModelObject("UrethraModel", urethraName);
     
+    this->RegistrationList->Add(ProstateModel);
+    this->RegistrationList->Add(UrethraModel);
+    this->FollowCameraList->Add(RegistrationList);
     this->ModelList->Add(FollowCameraList);
-    this->FollowCameraList->Add(ProstateModel);
-    this->FollowCameraList->Add(UrethraModel);
 
     this->CursorList->Add(Cursor);
     this->CursorList->Add(TextObject);
@@ -292,7 +292,6 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
 
     this->ModelOffset.Translation().Assign(vctDouble3(MODEL_OFFSET, MODEL_OFFSET, 0.0));
     this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
-    this->IdentityTransformation.Translation().Assign(vctDouble3(0.0, 0.0, 0.0));
 
     this->OffsetMode = true;
     this->ModelList->SetTransformation(ModelOffset);
@@ -521,7 +520,8 @@ void MarkerBehavior::RegisterButtonCallback(void)
 
     // get points from file
     vctDynamicVector<vct3> initialPoints;
-    std::ifstream inputFile(REGISTRATION_INPUT_PATH);
+    std::string inputFilename = Path.Find(REGISTRATION_INPUT_PATH, cmnPath::READ);
+    std::ifstream inputFile(inputFilename.c_str());
     while (inputFile.good())
     {
         std::string line;
@@ -567,16 +567,22 @@ void MarkerBehavior::RegisterButtonCallback(void)
     // output registration results
     std::ofstream outputFile(GetRegistrationOutputFilename().c_str());
 
-	outputFile << "initial points:" << std::endl << initialPoints << std::endl
-		       << "selected points:" << std::endl << selectedPoints << std::endl;
+	outputFile << "initial points:" << std::endl
+		       << initialPoints << std::endl
+		       << "selected points:" << std::endl
+			   << selectedPoints << std::endl;
 	registration.ToStream(outputFile);
 	outputFile << std::endl << "fiducial registration error: " << error;
     outputFile.close();
 
-	std::cout << "initial points:" << std::endl << initialPoints << std::endl
-		       << "selected points:" << std::endl << selectedPoints << std::endl;
+	std::cout << "initial points:" << std::endl
+		      << initialPoints << std::endl
+		      << "selected points:" << std::endl
+			  << selectedPoints << std::endl;
 	registration.ToStream(std::cout);
 	std::cout << std::endl << "fiducial registration error: " << error;
+
+    RegistrationList->SetTransformation(registration);
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
@@ -584,16 +590,11 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Display prostate model pressed" << std::endl;
 
     // hide all the markers
-    for (unsigned int i = 0 ; i < Markers.size(); i++)
-	{
-        Markers[i]->VisibleObject->Hide();
-    }
+	MarkerList->Hide();
+
     // hide map cursor until out of MaM mode so as not to confuse the user into
     // thinking that not all cursors have been cleared
-    if (this->Cursor->Visible())
-    {
-        this->Cursor->Hide();
-    }
+	CursorList->Hide();
 }
 
 
@@ -629,13 +630,14 @@ void MarkerBehavior::SwitchModelModeCallback(void)
     if (OffsetMode)
     {
         OffsetMode = false;
-        ModelList->SetTransformation(IdentityTransformation);
+		ModelOffset.Translation().Assign(vctDouble3(0.0, 0.0, 0.0));
     }
     else
     {
         OffsetMode = true;
-        ModelList->SetTransformation(ModelOffset);
+		ModelOffset.Translation().Assign(vctDouble3(MODEL_OFFSET, MODEL_OFFSET, 0.0));
     }
+	ModelList->SetTransformation(ModelOffset);
 }
 
 
@@ -760,7 +762,6 @@ void MarkerBehavior::UpdateCursorPosition(void)
 {
     vctFrm3 finalFrame;
     finalFrame = GetCurrentCursorPositionWRTECMRCM();
-    vctFrm3 cursorVTK;
     if (MarkerCount == 0)
     {
         vctFrm3 ECMtoVTK;
@@ -769,13 +770,13 @@ void MarkerBehavior::UpdateCursorPosition(void)
         ECMRCMtoVTK = ECMtoVTK * ECMtoECMRCM.Inverse();
     }
 
+	vctFrm3 cursorVTK;
     ECMRCMtoVTK.ApplyTo(finalFrame, cursorVTK);// cursorVTK = ECMRCMtoVTK * finalframe
 
-    vctDouble3 t1;
-    t1 = (cursorVTK.Translation());
+	// Update cursor position
+    vctDouble3 t1 = cursorVTK.Translation();
     cursorVTK.Translation().Assign(t1);
     Cursor->SetTransformation(cursorVTK);
-    FollowCameraList->SetTransformation(cursorVTK);
 }
 
 
@@ -866,6 +867,9 @@ void MarkerBehavior::UpdateVisibleMap(void)
 
         (*iter)->VisibleObject->SetTransformation(positionInSAW);
     }
+
+	// Update model coordinates too
+	FollowCameraList->SetTransformation(ECMRCMtoVTK);
 }
 
 
@@ -984,10 +988,10 @@ std::string MarkerBehavior::GetRegistrationOutputFilename(void)
 {
     int i = 1;
     std::stringstream sstream;
-    std::ifstream fstream;
+    std::ofstream fstream;
     while (true)
     {
-        sstream << "RegistrationOutput" << i;
+        sstream << "RegistrationOutput" << i << ".txt";
         fstream.open(sstream.str().c_str());
         if (fstream.is_open())
         {

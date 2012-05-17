@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 
+#include <cisstCommon/cmnPath.h>
 #include <cisstParameterTypes/prmPositionJointGet.h>
 #include <cisst3DUserInterface/ui3BehaviorBase.h>
 #include <cisst3DUserInterface/ui3VisibleObject.h>
@@ -90,7 +91,6 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         vctFrm3 Position;
 		vctFrm3 ModelOffset;
 		vctFrm3 WristToTip;
-		vctFrm3 IdentityTransformation;
         bool Following;
         bool Transition;
         bool SettingFiducials;
@@ -124,6 +124,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         ui3VisibleList * MarkerList;
         ui3VisibleList * ModelList;
         ui3VisibleList * FollowCameraList;
+        ui3VisibleList * RegistrationList;
 
         ui3VisibleObject * Cursor;
         ui3VisibleAxes * MyMarkers[MARKER_MAX];
@@ -143,5 +144,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
 
         vctFrm3 ECMtoECMRCM, ECMRCMtoVTK;
         vctDouble3 centerRotated;
+
+        cmnPath Path;
 };
 
