@@ -75,7 +75,6 @@ int main()
     guiManager.AddBehavior(&imageViewer,
                            3,
                            "move.png");
-#endif
 #if TORS
 	ManualRegistration manualRegistration("manualRegistration");
     guiManager.AddBehavior(&manualRegistration,
@@ -87,6 +86,7 @@ int main()
                            4,
                            "move.png");
 #endif
+#endif
 
     MarkerBehavior markerBehavior("Marker");
     guiManager.AddBehavior(&markerBehavior,
@@ -94,14 +94,14 @@ int main()
                            "handles.png");
 
     // this is were the icons have been copied by CMake post build rule
-    cmnPath path;;
+    cmnPath path;
     path.AddRelativeToCisstShare("/cisst3DUserInterface/icons");
 
 #if 0
     std::string fileName = path.Find("move.png", cmnPath::READ);
     PNGViewer3D * pngViewer;
     if (fileName != "") {
-        pngViewer = new PNGViewer3D("PGNViewer", fileName);
+        pngViewer = new PNGViewer3D("PNGViewer", fileName);
         guiManager.AddBehavior(pngViewer,
                                5,
                                "square.png");

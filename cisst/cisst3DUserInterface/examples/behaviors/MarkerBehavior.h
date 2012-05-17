@@ -42,6 +42,13 @@ struct MarkerType
     int count;
 };
 
+enum ModelDisplayMode
+{
+	DISPLAY_PROSTATE,
+	DISPLAY_URETHRA,
+	DISPLAY_NONE
+};
+
 // Always include last!
 #include "ui3BehaviorsExport.h"
 
@@ -70,10 +77,10 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void SecondaryMasterButtonCallback(const prmEventButton & event);
         void MasterClutchPedalCallback(const prmEventButton & payload);
         void CameraControlPedalCallback(const prmEventButton & payload);
-        void SetFiducialButtonCallback(void);
+        void SetFiducialsButtonCallback(void);
         void RegisterButtonCallback(void);
         void ClearFiducialsButtonCallback(void);
-        void ProstateModelCallback(void);
+        void ModelToggleCallback(void);
         void UrethraModelCallback(void);
         void SwitchModelModeCallback(void);
         StateType PreviousState;
@@ -130,6 +137,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         bool CameraPressed, ClutchPressed;
         bool MarkerDropped, MarkerRemoved;
         bool OffsetMode;
+		ModelDisplayMode DisplayMode;
         int MarkerCount;
         vctDouble3 PreviousSlavePosition;
 

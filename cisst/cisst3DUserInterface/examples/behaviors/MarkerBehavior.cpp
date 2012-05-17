@@ -22,6 +22,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <MarkerBehavior.h>
 
+#include <cisstCommon/cmnPath.h>
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
@@ -46,6 +47,10 @@ http://www.cisst.org/cisst/license.txt.
 #define MODEL_OFFSET (20.0)
 // z-axis translation between tool eye and tip (in mm)
 #define WRIST_TIP_OFFSET (11.0)
+
+#define PROSTATE_MODEL_PATH ("prostate.vtk")
+#define URETHRA_MODEL_PATH ("urethra.vtk")
+#define REGISTRATION_INPUT_PATH ("registrationInput.txt")
 
 // copied from MapBehaviorTextObject
 class MarkerBehaviorTextObject: public ui3VisibleObject
@@ -174,12 +179,7 @@ public:
         SurfaceActor = vtkActor::New();
         CMN_ASSERT(SurfaceActor);
         SurfaceActor->SetMapper(SurfaceMapper);
-        // SurfaceActor->GetProperty()->SetSpecular(.3);
-        // SurfaceActor->GetProperty()->SetSpecularPower(20);
-        SurfaceActor->GetProperty()->SetOpacity(1.0); // to allow to see thru
-    
-        // Scale the actors.
-        SurfaceActor->SetScale(0.10);
+        SurfaceActor->GetProperty()->SetOpacity(1.0); // change this if you want the model to be slightly transparent
 
         this->AddPart(this->SurfaceActor);
 
@@ -258,8 +258,13 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
 
 	this->TextObject = new MarkerBehaviorTextObject;
     this->Cursor = new ui3VisibleAxes;
-    this->ProstateModel = new MarkerBehaviorModelObject("ProstateModel", "prostate.vtk");
-    this->UrethraModel = new MarkerBehaviorModelObject("UrethraModel", "urethra.vtk");
+
+	cmnPath path;
+    path.AddRelativeToCisstShare("/models/dv-3dus");
+    std::string prostateName = path.Find(PROSTATE_MODEL_PATH, cmnPath::READ);
+	this->ProstateModel = new MarkerBehaviorModelObject("ProstateModel", prostateName);
+	std::string urethraName = path.Find(URETHRA_MODEL_PATH, cmnPath::READ);
+    this->UrethraModel = new MarkerBehaviorModelObject("UrethraModel", urethraName);
     
     this->ModelList->Add(FollowCameraList);
     this->FollowCameraList->Add(ProstateModel);
@@ -273,6 +278,9 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->RootList->Add(CursorList);
 
     this->RootList->Show();
+	this->DisplayMode = DISPLAY_NONE;
+	this->ProstateModel->Hide();
+	this->UrethraModel->Hide();
 
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
@@ -298,10 +306,10 @@ MarkerBehavior::~MarkerBehavior()
 
 void MarkerBehavior::ConfigureMenuBar()
 {
-    this->MenuBar->AddClickButton("Set Fiducial",
+    this->MenuBar->AddClickButton("Set Fiducials",
                                   1,
                                   "circle.png",
-                                  &MarkerBehavior::SetFiducialButtonCallback,
+                                  &MarkerBehavior::SetFiducialsButtonCallback,
                                   this);
     this->MenuBar->AddClickButton("Clear Fiducials",
                                   2,
@@ -313,10 +321,10 @@ void MarkerBehavior::ConfigureMenuBar()
                                   "cylinder.png",
                                   &MarkerBehavior::RegisterButtonCallback,
                                   this);
-    this->MenuBar->AddClickButton("Show/Hide Prostate Model",
+    this->MenuBar->AddClickButton("Toggle Prostate/Urethra/None",
                                   4,
-                                  "sphere.png",
-                                  &MarkerBehavior::ProstateModelCallback,
+                                  "slices.png",
+                                  &MarkerBehavior::ModelToggleCallback,
                                   this);
     this->MenuBar->AddClickButton("Offset / Augmented Reality",
                                   5,
@@ -500,7 +508,7 @@ bool MarkerBehavior::SaveConfiguration(const std::string & CMN_UNUSED(configFile
     return true;
 }
 
-void MarkerBehavior::SetFiducialButtonCallback(void)
+void MarkerBehavior::SetFiducialsButtonCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Set fiducials button pressed" << std::endl;
 
@@ -513,7 +521,7 @@ void MarkerBehavior::RegisterButtonCallback(void)
 
     // get points from file
     vctDynamicVector<vct3> initialPoints;
-    std::ifstream inputFile("registrationInput.txt");
+    std::ifstream inputFile(REGISTRATION_INPUT_PATH);
     while (inputFile.good())
     {
         std::string line;
@@ -589,49 +597,44 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
 }
 
 
-void MarkerBehavior::ProstateModelCallback(void)
+void MarkerBehavior::ModelToggleCallback(void)
 {
-    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Show/hide prostate model pressed" << std::endl;
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Toggle prostate/urethra/none" << std::endl;
 
-    if (this->ProstateModel->Visible())
-    {
-        this->ProstateModel->Hide();
-    }
-    else
-    {
-        this->ProstateModel->Show();
-    }
-}
-
-
-void MarkerBehavior::UrethraModelCallback(void)
-{
-    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Show/hide urethra model pressed" << std::endl;
-
-    if (this->UrethraModel->Visible())
-    {
-        this->UrethraModel->Hide();
-    }
-    else
-    {
-        this->UrethraModel->Show();
-    }
+	switch(this->DisplayMode)
+	{
+		case DISPLAY_PROSTATE:
+			this->DisplayMode = DISPLAY_URETHRA;
+			this->ProstateModel->Hide();
+			this->UrethraModel->Show();
+			break;
+		case DISPLAY_URETHRA:
+			this->DisplayMode = DISPLAY_NONE;
+			this->ProstateModel->Hide();
+			this->UrethraModel->Hide();
+			break;
+		case DISPLAY_NONE:
+			this->DisplayMode = DISPLAY_PROSTATE;
+			this->ProstateModel->Show();
+			this->UrethraModel->Hide();
+			break;
+		}
 }
 
 
 void MarkerBehavior::SwitchModelModeCallback(void)
 {
-    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Offset / augmented reality mode pressed" << std::endl;
+    CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Offset / augmented reality mode toggled" << std::endl;
 
     if (OffsetMode)
     {
         OffsetMode = false;
-        ModelList->SetTransformation(ModelOffset);
+        ModelList->SetTransformation(IdentityTransformation);
     }
     else
     {
         OffsetMode = true;
-        ModelList->SetTransformation(IdentityTransformation);
+        ModelList->SetTransformation(ModelOffset);
     }
 }
 
