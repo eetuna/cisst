@@ -39,7 +39,9 @@ ui3MasterArm::ui3MasterArm(const std::string & name):
     ScaleFactor(1.0),
     Clutched(false),
     Manager(0),
-    Selected(0)
+    Selected(0),
+	IsOverMenu(false),
+	PressedOverMenu(false)
 {
 }
 
