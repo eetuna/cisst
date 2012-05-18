@@ -70,7 +70,7 @@ public:
 
         Text = vtkVectorText::New();
         CMN_ASSERT(Text);
-        Text->SetText("");
+        Text->SetText("X");
 
         TextMapper = vtkPolyDataMapper::New();
         CMN_ASSERT(TextMapper);
@@ -80,7 +80,7 @@ public:
         TextActor = vtkFollower::New();
         CMN_ASSERT(TextActor);
         TextActor->SetMapper(TextMapper);
-        TextActor->GetProperty()->SetColor(0.0, 0.0, 200.0/255.0 );
+        TextActor->GetProperty()->SetColor(255, 0, 0);
         TextActor-> SetScale(2.5);
 
         this->AddPart(this->TextActor);
@@ -817,6 +817,13 @@ void MarkerBehavior::UpdateCursorPosition(void)
     vctDouble3 t1 = cursorVTK.Translation();
     cursorVTK.Translation().Assign(t1);
     Cursor->SetTransformation(cursorVTK);
+
+    // Make the text have the same translation but no rotation
+    // Also, give it a small offset so it's easier to see
+    vctFrm3 textFrame;
+    textFrame.Translation().Assign(cursorVTK.Translation());
+    textFrame.Translation().Add(vctDouble3(3.0, 0.0, 0.0));
+    TextObject->SetTransformation(textFrame);
 }
 
 
@@ -1000,15 +1007,28 @@ int MarkerBehavior::FindClosestMarker()
         }
     }
     
+    bool foundCloseMarker = false;
     // if there is one close to the cursor, display a message
     // return value is that marker's count
     for (iter2 = Markers.begin(); iter2 != end; iter2++)
     {
         if (closestDist < MARKER_DISTANCE_THRESHOLD && (*iter2)->count == currentCount)
         {
-			this->TextObject->SetText("CLOSE");
+            if ((*iter2)->VisibleObject->Visible())
+            {
+                foundCloseMarker = true;
+            }
             returnValue = currentCount;
         }
+    }
+
+    if (foundCloseMarker)
+    {
+        this->TextObject->Show();
+    }
+    else
+    {
+        this->TextObject->Hide();
     }
     
     if (closestDist > MARKER_DISTANCE_THRESHOLD)
