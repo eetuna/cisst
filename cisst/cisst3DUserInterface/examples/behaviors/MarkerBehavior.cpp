@@ -29,7 +29,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3SlaveArm.h> // bad, ui3 should not have slave arm to start with (adeguet1)
 #include <cisstNumerical/nmrRegistrationRigid.h>
 
-#include <vtkActor.h>
+#include <cisst3DUserInterface/ui3VTKStippleActor.h>
 #include <vtkAssembly.h>
 #include <vtkFollower.h>
 #include <vtkGenericDataObjectReader.h>
@@ -175,10 +175,10 @@ public:
         SurfaceMapper->ScalarVisibilityOff();
         SurfaceMapper->ImmediateModeRenderingOn();
 
-        SurfaceActor = vtkActor::New();
+        SurfaceActor = ui3VTKStippleActor::New();
         CMN_ASSERT(SurfaceActor);
         SurfaceActor->SetMapper(SurfaceMapper);
-        SurfaceActor->GetProperty()->SetOpacity(1.0); // change this if you want the model to be slightly transparent
+//        SurfaceActor->GetProperty()->SetOpacity(1.0); // change this if you want the model to be slightly transparent
 
         this->AddPart(this->SurfaceActor);
 
@@ -227,7 +227,7 @@ protected:
     std::string InputFile;
     vtkPolyDataReader * SurfaceReader;
     vtkPolyDataMapper * SurfaceMapper;
-    vtkActor * SurfaceActor;
+    ui3VTKStippleActor * SurfaceActor;
     bool HasOutline;
     vtkOutlineFilter * OutlineData;
     vtkPolyDataMapper * OutlineMapper;
