@@ -84,6 +84,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         void ModelToggleCallback(void);
         void UrethraModelCallback(void);
         void SwitchModelModeCallback(void);
+        void ChangeOpacityCallback(void);
         StateType PreviousState;
         bool PreviousMaM;
         vctDouble3 PreviousCursorPosition;
@@ -123,8 +124,8 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         ui3VisibleList * CursorList;
         ui3VisibleList * MarkerList;
         ui3VisibleList * ModelList;
-        ui3VisibleList * FollowCameraList;
-        ui3VisibleList * RegistrationList;
+        ui3VisibleList * ModelCameraList;
+        ui3VisibleList * ModelRegistrationList;
 
         ui3VisibleObject * Cursor;
         ui3VisibleAxes * MyMarkers[MARKER_MAX];
@@ -138,6 +139,7 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         bool CameraPressed, ClutchPressed;
         bool MarkerDropped, MarkerRemoved;
         bool OffsetMode;
+        bool RegistrationComplete;
 		ModelDisplayMode DisplayMode;
         int MarkerCount;
         vctDouble3 PreviousSlavePosition;

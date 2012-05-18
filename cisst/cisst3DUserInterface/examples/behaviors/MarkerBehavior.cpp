@@ -176,9 +176,9 @@ public:
         SurfaceMapper->ImmediateModeRenderingOn();
 
         SurfaceActor = ui3VTKStippleActor::New();
+        SetStipplePercentage(40);
         CMN_ASSERT(SurfaceActor);
         SurfaceActor->SetMapper(SurfaceMapper);
-//        SurfaceActor->GetProperty()->SetOpacity(1.0); // change this if you want the model to be slightly transparent
 
         this->AddPart(this->SurfaceActor);
 
@@ -211,8 +211,13 @@ public:
         SurfaceActor->GetProperty()->SetDiffuseColor(r, g, b);
     }
 
-    inline void SetOpacity(double opacity) {
-        SurfaceActor->GetProperty()->SetOpacity(opacity);
+    inline int GetStipplePercentage(void) {
+        return StipplePercentage;
+    }
+
+    inline void SetStipplePercentage(int percentage) {
+        StipplePercentage = percentage;
+        SurfaceActor->SetStipplePercentage(StipplePercentage);
     }
 
     vctDouble3 GetCenter(void) {
@@ -232,6 +237,7 @@ protected:
     vtkOutlineFilter * OutlineData;
     vtkPolyDataMapper * OutlineMapper;
     vtkActor * OutlineActor;
+    int StipplePercentage;
 };
 CMN_DECLARE_SERVICES_INSTANTIATION(MarkerBehaviorModelObject);
 CMN_IMPLEMENT_SERVICES(MarkerBehaviorModelObject);
@@ -245,15 +251,15 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
         CursorList(0),
         MarkerList(0),
         ModelList(0),
-        FollowCameraList(0),
+        ModelCameraList(0),
 		TextObject(0),
         MarkerCount(0)
 {
     this->RootList = new ui3VisibleList("MarkerBehavior");
     this->MarkerList = new ui3VisibleList("MarkerList");
     this->ModelList = new ui3VisibleList("ModelList");
-    this->FollowCameraList = new ui3VisibleList("FollowCameraList");
-    this->RegistrationList = new ui3VisibleList("RegistrationList");
+    this->ModelCameraList = new ui3VisibleList("ModelCameraList");
+    this->ModelRegistrationList = new ui3VisibleList("ModelRegistrationList");
     this->CursorList = new ui3VisibleList("CursorList");
 
 	this->TextObject = new MarkerBehaviorTextObject;
@@ -265,10 +271,10 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
 	std::string urethraName = Path.Find(URETHRA_MODEL_PATH, cmnPath::READ);
     this->UrethraModel = new MarkerBehaviorModelObject("UrethraModel", urethraName);
     
-    this->RegistrationList->Add(ProstateModel);
-    this->RegistrationList->Add(UrethraModel);
-    this->FollowCameraList->Add(RegistrationList);
-    this->ModelList->Add(FollowCameraList);
+    this->ModelRegistrationList->Add(ProstateModel);
+    this->ModelRegistrationList->Add(UrethraModel);
+    this->ModelCameraList->Add(ModelRegistrationList);
+    this->ModelList->Add(ModelCameraList);
 
     this->CursorList->Add(Cursor);
     this->CursorList->Add(TextObject);
@@ -289,6 +295,7 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->RightMTMOpen = true;
     this->ClutchPressed = false;
     this->SettingFiducials = false;
+    this->RegistrationComplete = false;
 
     this->ModelOffset.Translation().Assign(vctDouble3(MODEL_OFFSET, MODEL_OFFSET, 0.0));
     this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
@@ -329,6 +336,11 @@ void MarkerBehavior::ConfigureMenuBar()
                                   5,
                                   "iconify-top-left.png",
                                   &MarkerBehavior::SwitchModelModeCallback,
+                                  this);
+    this->MenuBar->AddClickButton("Change transparency amount",
+                                  6,
+                                  "cube.png",
+                                  &MarkerBehavior::ChangeOpacityCallback,
                                   this);
 }
 
@@ -582,7 +594,14 @@ void MarkerBehavior::RegisterButtonCallback(void)
 	registration.ToStream(std::cout);
 	std::cout << std::endl << "fiducial registration error: " << error;
 
-    RegistrationList->SetTransformation(registration);
+    // Put the models where they should be according to the registration
+    ModelRegistrationList->SetTransformation(registration);
+    // Clear the fiducials, since the registration is complete
+    ClearFiducialsButtonCallback();
+
+    // Finally, mark the registration complete and display the model
+    RegistrationComplete = true;
+    ModelToggleCallback();
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)
@@ -590,11 +609,18 @@ void MarkerBehavior::ClearFiducialsButtonCallback(void)
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Display prostate model pressed" << std::endl;
 
     // hide all the markers
-	MarkerList->Hide();
+    for (unsigned int i = 0 ; i < Markers.size(); i++)
+    {
+        Markers[i]->VisibleObject->Hide();
+    }
+    MarkerList->Hide();
 
     // hide map cursor until out of MaM mode so as not to confuse the user into
     // thinking that not all cursors have been cleared
-	CursorList->Hide();
+    if (this->Cursor->Visible())
+    {
+        this->Cursor->Hide();
+    }
 }
 
 
@@ -602,6 +628,11 @@ void MarkerBehavior::ModelToggleCallback(void)
 {
     CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" Toggle prostate/urethra/none" << std::endl;
 
+    if (!RegistrationComplete)
+    {
+        std::cout << "Not displaying model, since you haven't done a registration yet" << std::endl;
+        return;
+    }
 	switch(this->DisplayMode)
 	{
 		case DISPLAY_PROSTATE:
@@ -620,6 +651,15 @@ void MarkerBehavior::ModelToggleCallback(void)
 			this->UrethraModel->Hide();
 			break;
 		}
+}
+
+
+void MarkerBehavior::ChangeOpacityCallback(void)
+{
+    int oldPercentage = ProstateModel->GetStipplePercentage();
+    int newPercentage = (oldPercentage + 20) % 100;
+    ProstateModel->SetStipplePercentage(newPercentage);
+    UrethraModel->SetStipplePercentage(newPercentage);
 }
 
 
@@ -869,7 +909,7 @@ void MarkerBehavior::UpdateVisibleMap(void)
     }
 
 	// Update model coordinates too
-	FollowCameraList->SetTransformation(ECMRCMtoVTK);
+	ModelCameraList->SetTransformation(ECMRCMtoVTK);
 }
 
 
@@ -932,7 +972,6 @@ void MarkerBehavior::RemoveMarker(void)
         {
             std::cout << "There are no more markers to remove" << std::endl;
         }
-        std::cout << "Marker Count: " << MarkerCount << std::endl;
         MarkerRemoved = true;
     }
 }
