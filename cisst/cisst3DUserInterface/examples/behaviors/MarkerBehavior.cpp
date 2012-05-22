@@ -262,6 +262,9 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->ModelRegistrationList = new ui3VisibleList("ModelRegistrationList");
     this->CursorList = new ui3VisibleList("CursorList");
 
+    // TODO: debugging code, remove later
+    this->FiducialList = new ui3VisibleList("FiducialList (DEBUG)");
+
 	this->TextObject = new MarkerBehaviorTextObject;
     this->Cursor = new ui3VisibleAxes;
 
@@ -283,10 +286,14 @@ MarkerBehavior::MarkerBehavior(const std::string & name):
     this->RootList->Add(ModelList);
     this->RootList->Add(CursorList);
 
-    this->RootList->Show();
-	this->DisplayMode = DISPLAY_NONE;
+    // TODO: debugging code, remove later
+    this->FiducialList->Hide();
+    this->RootList->Add(FiducialList);
+
 	this->ProstateModel->Hide();
 	this->UrethraModel->Hide();
+    this->RootList->Show();
+	this->DisplayMode = DISPLAY_NONE;
 
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
@@ -549,6 +556,18 @@ void MarkerBehavior::RegisterButtonCallback(void)
         vctDouble3 point(x, y, z);
         initialPoints.resize(initialPoints.size() + 1);
         initialPoints[initialPoints.size()-1] = point;
+
+        // TODO: debugging code, remove this later
+        ui3VisibleAxes * newMarkerVisible = new ui3VisibleAxes;
+        FiducialList->Add(newMarkerVisible);
+        newMarkerVisible->WaitForCreation();
+        MarkerType * newMarker = new MarkerType;
+        newMarkerVisible->Show();
+        newMarker->VisibleObject = newMarkerVisible;
+        vctFrm3 position;
+        position.Translation() = vctDouble3(x, y, z);
+        newMarker->AbsolutePosition = position;
+        newMarkerVisible->SetTransformation(position);
     }
     inputFile.close();
 
@@ -602,6 +621,10 @@ void MarkerBehavior::RegisterButtonCallback(void)
     // Finally, mark the registration complete and display the model
     RegistrationComplete = true;
     ModelToggleCallback();
+
+    // TODO: this is debugging code... remove later
+    FiducialList->SetTransformation(registration);
+    FiducialList->Show();
 }
 
 void MarkerBehavior::ClearFiducialsButtonCallback(void)

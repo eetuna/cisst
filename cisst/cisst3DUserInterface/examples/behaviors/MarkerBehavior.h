@@ -127,6 +127,9 @@ class CISST_EXPORT MarkerBehavior: public ui3BehaviorBase
         ui3VisibleList * ModelCameraList;
         ui3VisibleList * ModelRegistrationList;
 
+        // TODO: debugging code, remove later
+        ui3VisibleList * FiducialList;
+
         ui3VisibleObject * Cursor;
         ui3VisibleAxes * MyMarkers[MARKER_MAX];
 
