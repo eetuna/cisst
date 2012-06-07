@@ -40,6 +40,8 @@ public:
     int SetCameraGeometry(const svlCameraGeometry & geometry);
     int SetROI(const svlRect & rect);
     int SetROI(int left, int top, int right, int bottom);
+    svlSampleImage3DMap GetSurface(void){return OutputSurface;};
+    svlRect GetROI(void){return ROI;};
 
 protected:
     virtual int Initialize(svlSample* syncInput, svlSample* &syncOutput);

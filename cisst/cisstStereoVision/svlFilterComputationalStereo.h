@@ -75,6 +75,7 @@ public:
     unsigned int GetSmoothnessFactor();
     double       GetTemporalFiltering();
     unsigned int GetSpatialFiltering();
+    svlSampleMatrixFloat* GetOutputMatrix(void){return OutputMatrix;};
 
 private:
     // Work in progress...

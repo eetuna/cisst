@@ -50,6 +50,7 @@ public:
         OpenCV          = 4,
         MatroxImaging   = 5,
         BlackMagicDeckLink = 6,
+        NVIDIAQuadroSDI = 7,
         NumberOfPlatformTypes
     };
 

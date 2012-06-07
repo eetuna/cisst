@@ -511,7 +511,7 @@ void svlFilterSourceVideoCapture::InitializeCaptureAPIs()
                 if ((*iter).first == "svlVidCapSrcMIL") {
                     go = svlVidCapSrcMIL::GetInstance();
                 }
-#endif // CISST_SVL_HAS_MIL
+#endif // CISST_SVL_HAS_MIL               
             }
 
             api = dynamic_cast<svlVidCapSrcBase*>(go);
@@ -2312,6 +2312,10 @@ std::ostream & operator << (std::ostream & stream, const svlFilterSourceVideoCap
 
         case svlFilterSourceVideoCapture::BlackMagicDeckLink:
             stream << " [BlackMagic DeckLink device]";
+        break;
+
+        case svlFilterSourceVideoCapture::NVIDIAQuadroSDI:
+            stream << " [NVIDIA Quadro SDI device]";
         break;
 
         case svlFilterSourceVideoCapture::NumberOfPlatformTypes:

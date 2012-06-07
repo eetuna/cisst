@@ -54,6 +54,11 @@
 #include "svlVidCapSrcBMD.h"
 #endif // CISST_SVL_HAS_BM_DECKLINK
 
+//TODO::CMAKE flag for SDI
+//#if CISST_SVL_HAS_OPENGL
+#include <cisstStereoVision/svlVidCapSrcSDI.h>
+//#endif//CISST_HAS_OPENGL
+
 void svlInitializeVideoCapture()
 {
 #ifdef _svlVidCapSrcMIL_h
@@ -83,5 +88,9 @@ void svlInitializeVideoCapture()
 #ifdef _svlVidCapSrcBMD_h
     SVL_INITIALIZE(svlVidCapSrcBMD);
 #endif // _svlVidCapSrcBMD_h
+
+#ifdef _svlVidCapSrcSDI_h
+    SVL_INITIALIZE(svlVidCapSrcSDI);
+#endif // _svlVidCapSrcSDI_h
 }
 

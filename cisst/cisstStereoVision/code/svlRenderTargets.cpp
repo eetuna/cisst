@@ -38,6 +38,11 @@ http://www.cisst.org/cisst/license.txt.
     #include "svlVidCapSrcMIL.h"
 #endif // CISST_SVL_HAS_MIL
 
+//TODO::CMAKE flag for SDI
+#if CISST_SVL_HAS_OPENGL
+#include "svlVidCapSrcSDI.h"
+#endif//CISST_HAS_OPENGL
+
 #define __VERBOSE__  0
 
 
