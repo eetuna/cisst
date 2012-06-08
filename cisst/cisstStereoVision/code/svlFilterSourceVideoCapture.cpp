@@ -223,6 +223,12 @@ int svlFilterSourceVideoCapture::EnumerateDevices()
                 go = svlVidCapSrcMIL::GetInstance();
             }
 #endif // CISST_SVL_HAS_MIL
+
+//TODO
+            // SDI device object is a singleton, cannot be created dynamically
+            if (APIPlatforms[j] == NVIDIAQuadroSDI) {
+                go = svlVidCapSrcSDI::GetInstance();
+            }
         }
 
         api = dynamic_cast<svlVidCapSrcBase*>(go);
@@ -511,7 +517,11 @@ void svlFilterSourceVideoCapture::InitializeCaptureAPIs()
                 if ((*iter).first == "svlVidCapSrcMIL") {
                     go = svlVidCapSrcMIL::GetInstance();
                 }
-#endif // CISST_SVL_HAS_MIL               
+#endif // CISST_SVL_HAS_MIL
+                if ((*iter).first == "svlVidCapSrcSDI") {
+                    go = svlVidCapSrcSDI::GetInstance();
+                }
+
             }
 
             api = dynamic_cast<svlVidCapSrcBase*>(go);
@@ -582,6 +592,10 @@ int svlFilterSourceVideoCapture::CreateCaptureAPIHandlers()
                     DeviceGenObj[j] = svlVidCapSrcMIL::GetInstance();
                 }
 #endif // CISST_SVL_HAS_MIL
+                // SDI device object is a singleton, cannot be created dynamically
+                if (APIPlatforms[j] == NVIDIAQuadroSDI) {
+                    DeviceGenObj[j] = svlVidCapSrcSDI::GetInstance();
+                }
             }
 
             DeviceObj[j] = dynamic_cast<svlVidCapSrcBase*>(DeviceGenObj[j]);

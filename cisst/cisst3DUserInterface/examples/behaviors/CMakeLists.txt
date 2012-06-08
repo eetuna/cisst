@@ -39,4 +39,4 @@ set_property (TARGET ui3ExBehaviors PROPERTY FOLDER "cisst3DUserInterface/exampl
 
 cisst_target_link_libraries (ui3ExBehaviors
                              cisstCommon cisstVector cisstOSAbstraction cisstMultiTask
-                             cisstStereoVision cisstRobot cisstParameterTypes cisst3DUserInterface)
+                             cisstStereoVision cisstParameterTypes cisst3DUserInterface)

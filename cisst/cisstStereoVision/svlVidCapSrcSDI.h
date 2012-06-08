@@ -51,6 +51,9 @@
 #include "audio.h"
 #include "ringbuffer.h"
 
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
+
 #include <cisstStereoVision/svlFilterSourceVideoCapture.h>
 #include <cisstStereoVision/svlRenderTargets.h>
 
@@ -58,6 +61,7 @@
 
 class osaThread;
 class svlBufferImage;
+class svlVidCapSrcSDIThread;
 
 // Render Target
 class svlVidCapSrcSDIRenderTarget : public svlRenderTargetBase
@@ -116,11 +120,12 @@ private:
 class svlVidCapSrcSDI : public svlVidCapSrcBase
 {
     friend class svlVidCapSrcSDIRenderTarget;
+    friend class svlVidCapSrcSDIThread;
 
-    CMN_DECLARE_SERVICES(CMN_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
+    CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
 public:
-    //static svlVidCapSrcSDI* GetInstance();
+    static svlVidCapSrcSDI* GetInstance();
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
     int SetStreamCount(unsigned int numofstreams);
     int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
@@ -141,22 +146,12 @@ public:
     bool IsCaptureSupported(unsigned int sysid, unsigned int digid = 0);
     bool IsOverlaySupported(unsigned int sysid, unsigned int digid = 0);
 
-    bool SetupSDIDevices(Display *d,HGPUNV *g);
-    GLboolean  SetupGL();
+    svlVidCapSrcSDIThread* GetCaptureProc(int i){return CaptureProc[i];};
 
-    bool StartSDIPipeline();
-    bool StopSDIPipeline();
-    GLenum DisplayVideo(bool drawFrameRate);
-    GLenum  CaptureVideo(GLuint *dropBool,float runTime = 0.0);
-    Window CreateWindow();
-    CNvSDIin GetSDIin(){return m_SDIin;};
-    void Shutdown();
-    void MakeCurrentGLCtx();
+private:
 
     svlVidCapSrcSDI();
     ~svlVidCapSrcSDI();
-
-private:
 
     //TODO::Match with sdi in
     unsigned int NumOfStreams;
@@ -166,6 +161,42 @@ private:
     vctDynamicVector<int> SystemID;
     vctDynamicVector<int> DigitizerID;
     vctDynamicVector<svlBufferImage*> ImageBuffer;
+
+    svlVidCapSrcSDIThread** CaptureProc;
+    osaThread** CaptureThread;
+
+};
+
+class svlVidCapSrcSDIThread
+{
+public:
+    svlVidCapSrcSDIThread(int streamid);
+    ~svlVidCapSrcSDIThread() {Shutdown();XCloseDisplay(dpy);};
+    void* Proc(svlVidCapSrcSDI* baseref);
+
+    bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
+    bool IsError() { return Error; }
+
+    bool SetupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
+    GLboolean  SetupGL();
+
+    bool StartSDIPipeline();
+    bool StopSDIPipeline();
+    GLenum DisplayVideo(bool drawFrameRate);
+    GLenum  CaptureVideo(GLuint dropBool=0,float runTime = 0.0);
+    Window CreateWindow();
+    CNvSDIin GetSDIin(){return m_SDIin;};
+    void Shutdown();
+    void MakeCurrentGLCtx();
+    Display * GetDisplay(){return dpy;};
+    HGPUNV * GetGPU() {return gpu;};
+
+private:
+    int StreamID;
+    bool Error;
+    osaThreadSignal InitEvent;
+    bool InitSuccess;
+    IplImage *Frame;
 
     CaptureOptions captureOptions;
     //X stuff
@@ -177,6 +208,7 @@ private:
     CNvSDIin m_SDIin;
     GLuint m_windowWidth;                   // Window width
     GLuint m_windowHeight;                  // Window height
+    double m_inputFrameRate;
     GLuint gTexObjs[MAX_VIDEO_STREAMS];
 
     bool setupSDIinGL();

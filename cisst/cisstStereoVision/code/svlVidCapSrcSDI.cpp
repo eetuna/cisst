@@ -2,8 +2,10 @@
 #include <cisstOSAbstraction/osaThread.h>
 #include <cisstStereoVision/svlBufferImage.h>
 #include <cisstOSAbstraction/osaSleep.h>
+#include <cisstStereoVision/svlConverters.h>
 
 #define __VERBOSE__  1
+#define SDINUMDEVICES 1
 
 /*************************************/
 /* svlVidCapSrcSDIRenderTarget class */
@@ -44,7 +46,7 @@ svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(Display *d,HGPUNV *g, u
 svlVidCapSrcSDIRenderTarget::~svlVidCapSrcSDIRenderTarget()
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMILRenderTarget::destructor()" << std::endl;
+    std::cout << "svlVidCapSrcSDIRenderTarget::destructor()" << std::endl;
 #endif
 
     KillThread = true;
@@ -111,7 +113,7 @@ bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, i
 unsigned int svlVidCapSrcSDIRenderTarget::GetWidth()
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMILRenderTarget::GetWidth()" << std::endl;
+    std::cout << "svlVidCapSrcSDIRenderTarget::GetWidth()" << std::endl;
 #endif
 
     if (SystemID < 0) return 0;
@@ -420,20 +422,20 @@ CMN_IMPLEMENT_SERVICES_DERIVED(svlVidCapSrcSDI, svlVidCapSrcBase)
 // Name: drawOGLString
 // Desc: Draw string using OpenGL
 //-----------------------------------------------------------------------------
-static void
-drawOGLString(const std::string &str, float xpos=50, float ypos=50)
-{
-    // Enable blend
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glRasterPos2f(xpos, ypos);
-    for (unsigned int i=0; i < str.length(); i++) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]);
-    }
+//static void
+//drawOGLString(const std::string &str, float xpos=50, float ypos=50)
+//{
+//    // Enable blend
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glEnable(GL_BLEND);
+//    glRasterPos2f(xpos, ypos);
+//    for (unsigned int i=0; i < str.length(); i++) {
+//        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]);
+//    }
 
-    // Disable blend.
-    glDisable(GL_BLEND);
-}
+//    // Disable blend.
+//    glDisable(GL_BLEND);
+//}
 
 
 //-----------------------------------------------------------------------------
@@ -476,45 +478,33 @@ svlVidCapSrcSDI::svlVidCapSrcSDI():
     svlVidCapSrcBase(),
     NumOfStreams(0),
     Initialized(false),
-    Running(false)
+    Running(false),
+    CaptureProc(0),
+    CaptureThread(0)
 {
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDI::constructor()" << std::endl;
 #endif
 
-    //TODO:??
-//    HGPUNV gpuList[MAX_GPUS];
-//    // Open X display
-//    dpy = XOpenDisplay(NULL);
-//    //scan the systems for GPUs
-//    int	num_gpus = ScanHW(dpy,gpuList);
-//    if(num_gpus < 1)
-//        exit(1);
-//    //grab the first GPU for now for DVP
-//    gpu = &gpuList[0];
-
-//    SetupSDIDevices(dpy,gpu);
-//    CreateWindow();
-//    SetupGL();
 
 }
 
 
 svlVidCapSrcSDI::~svlVidCapSrcSDI()
 {
-    Shutdown();
+
 }
 
 //TODO:GetInstance
-//svlVidCapSrcSDI* svlVidCapSrcSDI::GetInstance()
-//{
-//#if __VERBOSE__ == 1
-//    std::cout << "svlVidCapSrcSDI::GetInstance()" << std::endl;
-//#endif
+svlVidCapSrcSDI* svlVidCapSrcSDI::GetInstance()
+{
+#if __VERBOSE__ == 1
+    std::cout << "svlVidCapSrcSDI::GetInstance()" << std::endl;
+#endif
 
-//    static svlVidCapSrcSDI instance;
-//    return &instance;
-//}
+    static svlVidCapSrcSDI instance;
+    return &instance;
+}
 
 svlFilterSourceVideoCapture::PlatformType svlVidCapSrcSDI::GetPlatformType()
 {
@@ -536,10 +526,16 @@ int svlVidCapSrcSDI::SetStreamCount(unsigned int numofstreams)
     //Release();
 
     NumOfStreams = numofstreams;
-
+    CaptureProc = new svlVidCapSrcSDIThread*[SDINUMDEVICES];
+    CaptureThread = new osaThread*[SDINUMDEVICES];
     SystemID.SetSize(NumOfStreams);
     DigitizerID.SetSize(NumOfStreams);
     ImageBuffer.SetSize(NumOfStreams);
+
+    for (unsigned int i = 0; i < SDINUMDEVICES; i ++) {
+        CaptureProc[i] = 0;
+        CaptureThread[i] = 0;
+    }
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
         SystemID[i] = -1;
@@ -562,75 +558,75 @@ int svlVidCapSrcSDI::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
     bool cap, ovrl;
 
     //MILNumberOfSystems = 0;
-    for (sys = 0; sys < MAX_VIDEO_STREAMS; sys ++) {
-        //TODO
-//        if (!MILInitializeSystem(sys)) break;
-//        MILNumberOfSystems ++;
+    //    for (sys = 0; sys < m_SDIin.getNumStreams(); sys ++) {
+    //TODO
+    //        if (!MILInitializeSystem(sys)) break;
+    //        MILNumberOfSystems ++;
 
-//        for (dig = 0; dig < MilNumberOfDigitizers[sys]; dig ++) {
-//            if (MILInitializeDigitizer(sys, dig)) {
-//                if (MILInitializeCapture(sys, dig)) MILReleaseCapture(sys, dig);
-//                if (MILInitializeOverlay(sys, dig)) MILReleaseOverlay(sys, dig);
-//                MILReleaseDigitizer(sys, dig);
-//            }
-//        }
-//        MILReleaseSystem(sys);
-    }
+    //        for (dig = 0; dig < MilNumberOfDigitizers[sys]; dig ++) {
+    //            if (MILInitializeDigitizer(sys, dig)) {
+    //                if (MILInitializeCapture(sys, dig)) MILReleaseCapture(sys, dig);
+    //                if (MILInitializeOverlay(sys, dig)) MILReleaseOverlay(sys, dig);
+    //                MILReleaseDigitizer(sys, dig);
+    //            }
+    //        }
+    //        MILReleaseSystem(sys);
+    //    }
 
     // Allocate memory for device info array
     // CALLER HAS TO FREE UP THIS ARRAY!!!
-//    if (MILNumberOfSystems > 0) {
+    if (SDINUMDEVICES > 0) {
 
-//        deviceinfo[0] = new svlFilterSourceVideoCapture::DeviceInfo[MILNumberOfSystems];
+        deviceinfo[0] = new svlFilterSourceVideoCapture::DeviceInfo[SDINUMDEVICES];
 
-//        for (sys = 0; sys < MILNumberOfSystems; sys ++) {
-//            // platform
-//            deviceinfo[0][sys].platform = svlFilterSourceVideoCapture::MatroxImaging;
+        for (sys = 0; sys < SDINUMDEVICES; sys ++) {
+            // platform
+            deviceinfo[0][sys].platform = svlFilterSourceVideoCapture::NVIDIAQuadroSDI;
 
-//            // id
-//            deviceinfo[0][sys].ID = sys;
+            // id
+            deviceinfo[0][sys].ID = sys;
 
-//            // name
-//            std::stringstream dev_name;
-//            dev_name << "Matrox Imaging Device (" << "M_DEV" << sys << ")";
+            // name
+            std::stringstream dev_name;
+            dev_name << "NVIDIA Quadro SDI (" << "SDI_DEV" << sys << ")";
 
-//            memset(deviceinfo[0][sys].name, 0, SVL_VCS_STRING_LENGTH);
-//            memcpy(deviceinfo[0][sys].name,
-//                   dev_name.str().c_str(),
-//                   std::min(SVL_VCS_STRING_LENGTH - 1, static_cast<int>(dev_name.str().length())));
+            memset(deviceinfo[0][sys].name, 0, SVL_VCS_STRING_LENGTH);
+            memcpy(deviceinfo[0][sys].name,
+                   dev_name.str().c_str(),
+                   std::min(SVL_VCS_STRING_LENGTH - 1, static_cast<int>(dev_name.str().length())));
 
-//            // digitizers
-//            digitizers = MilNumberOfDigitizers[sys];
-//            if (digitizers > SVL_VCS_ARRAY_LENGTH) digitizers = SVL_VCS_ARRAY_LENGTH;
-//            deviceinfo[0][sys].inputcount = digitizers;
-//            deviceinfo[0][sys].activeinput = 0;
+            //            // digitizers
+            //            digitizers = MilNumberOfDigitizers[sys];
+            //            if (digitizers > SVL_VCS_ARRAY_LENGTH) digitizers = SVL_VCS_ARRAY_LENGTH;
+            //            deviceinfo[0][sys].inputcount = digitizers;
+            //            deviceinfo[0][sys].activeinput = 0;
 
-//            for (dig = 0; dig < digitizers; dig ++) {
-//                std::stringstream in_name;
-//                in_name << "Digitizer #" << dig << " (M_DEV" << dig << ": ";
+            //            for (dig = 0; dig < digitizers; dig ++) {
+            //                std::stringstream in_name;
+            //                in_name << "Digitizer #" << dig << " (M_DEV" << dig << ": ";
 
-//                cap = MilCaptureSupported[sys][dig];
-//                ovrl = MilOverlaySupported[sys][dig];
-//                if (cap && ovrl) in_name << "Capture+Overlay)";
-//                else if (cap) in_name << "Capture only)";
-//                else if (ovrl) in_name << "Overlay only)";
-//                else in_name << "Not supported)";
+            //                cap = MilCaptureSupported[sys][dig];
+            //                ovrl = MilOverlaySupported[sys][dig];
+            //                if (cap && ovrl) in_name << "Capture+Overlay)";
+            //                else if (cap) in_name << "Capture only)";
+            //                else if (ovrl) in_name << "Overlay only)";
+            //                else in_name << "Not supported)";
 
-//                memset(deviceinfo[0][sys].inputnames[dig], 0, SVL_VCS_STRING_LENGTH);
-//                memcpy(deviceinfo[0][sys].inputnames[dig],
-//                       in_name.str().c_str(),
-//                       std::min(SVL_VCS_STRING_LENGTH - 1, static_cast<int>(in_name.str().length())));
-//            }
+            //                memset(deviceinfo[0][sys].inputnames[dig], 0, SVL_VCS_STRING_LENGTH);
+            //                memcpy(deviceinfo[0][sys].inputnames[dig],
+            //                       in_name.str().c_str(),
+            //                       std::min(SVL_VCS_STRING_LENGTH - 1, static_cast<int>(in_name.str().length())));
+            //            }
 
-//            // test
-//            deviceinfo[0][sys].testok = true;
-//        }
-//    }
-//    else {
-//        deviceinfo[0] = 0;
-//    }
+            //            // test
+            deviceinfo[0][sys].testok = true;
+        }
+    }
+    else {
+        deviceinfo[0] = 0;
+    }
 
-    return 1;//m_SDIin.getNumStreams();//MILNumberOfSystems;
+    return SDINUMDEVICES;//MILNumberOfSystems;
 }
 
 int svlVidCapSrcSDI::Open()
@@ -645,51 +641,53 @@ int svlVidCapSrcSDI::Open()
     Close();
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
-    //TODO:
-//        if (MilSystem[SystemID[i]] == M_NULL) {
-//            if (!MILInitializeSystem(SystemID[i])) {
-//#if __VERBOSE__ == 1
-//                std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize system M_DEV" << SystemID[i] << std::endl;
-//#endif
-//                goto labError;
-//            }
-//        }
+        //TODO:
+        //        if (MilSystem[SystemID[i]] == M_NULL) {
+        //            if (!MILInitializeSystem(SystemID[i])) {
+        //#if __VERBOSE__ == 1
+        //                std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize system M_DEV" << SystemID[i] << std::endl;
+        //#endif
+        //                goto labError;
+        //            }
+        //        }
 
-//        if (MilDigitizer[SystemID[i]][DigitizerID[i]] == M_NULL) {
-//            if (!MILInitializeDigitizer(SystemID[i], DigitizerID[i])) {
-//#if __VERBOSE__ == 1
-//                std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize digitizer M_DEV"
-//                          << DigitizerID[i] << " on system M_DEV" << SystemID[i] << std::endl;
-//#endif
-//                goto labError;
-//            }
-//        }
+        //        if (MilDigitizer[SystemID[i]][DigitizerID[i]] == M_NULL) {
+        //            if (!MILInitializeDigitizer(SystemID[i], DigitizerID[i])) {
+        //#if __VERBOSE__ == 1
+        //                std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize digitizer M_DEV"
+        //                          << DigitizerID[i] << " on system M_DEV" << SystemID[i] << std::endl;
+        //#endif
+        //                goto labError;
+        //            }
+        //        }
 
-//        if (!MILInitializeCapture(SystemID[i], DigitizerID[i])) {
-//#if __VERBOSE__ == 1
-//            std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize capture on system M_DEV"
-//                      << SystemID[i] << ", digitizer M_DEV" << DigitizerID[i] << std::endl;
-//#endif
-//            goto labError;
-//        }
+        //        if (!MILInitializeCapture(SystemID[i], DigitizerID[i])) {
+        //#if __VERBOSE__ == 1
+        //            std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize capture on system M_DEV"
+        //                      << SystemID[i] << ", digitizer M_DEV" << DigitizerID[i] << std::endl;
+        //#endif
+        //            goto labError;
+        //        }
 
-//        if (MilBands[SystemID[i]][DigitizerID[i]] != 1 &&
-//            MilBands[SystemID[i]][DigitizerID[i]] != 3) goto labError;
+        //        if (MilBands[SystemID[i]][DigitizerID[i]] != 1 &&
+        //            MilBands[SystemID[i]][DigitizerID[i]] != 3) goto labError;
 
-//        // Allocate capture buffers
-        const unsigned int width  = m_SDIin.getWidth();//MilWidth[SystemID[i]][DigitizerID[i]];
-        const unsigned int height =  m_SDIin.getWidth();//MilHeight[SystemID[i]][DigitizerID[i]];
+        //        // Allocate capture buffers
+        const unsigned int width  = 1920;//CaptureProc[0]->GetSDIin().getWidth();//MilWidth[SystemID[i]][DigitizerID[i]];
+        const unsigned int height = 1080;// CaptureProc[0]->GetSDIin().getWidth();//MilHeight[SystemID[i]][DigitizerID[i]];
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMIL::Open - Allocate image buffer (" << width << ", " << height << ")" << std::endl;
+        std::cout << "svlVidCapSrcMIL::Open - Allocate image buffer (" << width << ", " << height << ")" << std::endl;
 #endif
         ImageBuffer[i] = new svlBufferImage(width, height);
         // Set the pointer in the capture structure that will be accessed in the callback
-//        MilCaptureParams[SystemID[i]][DigitizerID[i]].ImageBuffer = ImageBuffer[i];
-//        MilCaptureParams[SystemID[i]][DigitizerID[i]].SystemID    = SystemID[i];
-//        MilCaptureParams[SystemID[i]][DigitizerID[i]].DigitizerID = DigitizerID[i];
+        //        MilCaptureParams[SystemID[i]][DigitizerID[i]].ImageBuffer = ImageBuffer[i];
+        //        MilCaptureParams[SystemID[i]][DigitizerID[i]].SystemID    = SystemID[i];
+        //        MilCaptureParams[SystemID[i]][DigitizerID[i]].DigitizerID = DigitizerID[i];
     }
 
     Initialized = true;
+
+    NumOfStreams = 2;//CaptureProc[0]->GetSDIin().getNumStreams();
     return SVL_OK;
 
 labError:
@@ -709,29 +707,27 @@ void svlVidCapSrcSDI::Close()
 
     Initialized = false;
 
-    Shutdown();
+    //    for (unsigned int sys = 0; sys < MIL_MAX_SYS; sys ++) {
+    //        if (MilSystem[sys] == M_NULL) continue;
+    //        bool no_release = false;
 
-//    for (unsigned int sys = 0; sys < MIL_MAX_SYS; sys ++) {
-//        if (MilSystem[sys] == M_NULL) continue;
-//        bool no_release = false;
+    //        for (unsigned int dig = 0; dig < MIL_MAX_DIG; dig ++) {
+    //            if (MilDigitizer[dig] == M_NULL) continue;
 
-//        for (unsigned int dig = 0; dig < MIL_MAX_DIG; dig ++) {
-//            if (MilDigitizer[dig] == M_NULL) continue;
+    //            // Release capture
+    //            MILReleaseCapture(sys, dig);
 
-//            // Release capture
-//            MILReleaseCapture(sys, dig);
+    //            // Do not release system and digitizer if overlay is used
+    //            if (MilDisplay[sys][dig] == M_NULL) {
+    //                MILReleaseDigitizer(sys, dig);
+    //            }
+    //            else {
+    //                no_release = true;
+    //            }
+    //        }
 
-//            // Do not release system and digitizer if overlay is used
-//            if (MilDisplay[sys][dig] == M_NULL) {
-//                MILReleaseDigitizer(sys, dig);
-//            }
-//            else {
-//                no_release = true;
-//            }
-//        }
-
-//        if (!no_release) MILReleaseSystem(sys);
-//    }
+    //        if (!no_release) MILReleaseSystem(sys);
+    //    }
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
         delete ImageBuffer[i];
@@ -742,18 +738,29 @@ void svlVidCapSrcSDI::Close()
 int svlVidCapSrcSDI::Start()
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMIL::Start()" << std::endl;
+    std::cout << "svlVidCapSrcSDI::Start()" << std::endl;
 #endif
 
     if (!Initialized) return SVL_FAIL;
     Running = true;
+    for (unsigned int i = 0; i < SDINUMDEVICES; i ++) {
+        CaptureProc[i] = new svlVidCapSrcSDIThread(i);
+        CaptureThread[i] = new osaThread;
+        Running = true;
+        CaptureThread[i]->Create<svlVidCapSrcSDIThread, svlVidCapSrcSDI*>(CaptureProc[i],
+                                                                          &svlVidCapSrcSDIThread::Proc,
+                                                                          this);
+        if (CaptureProc[i]->WaitForInit() == false) return SVL_FAIL;
+    }
+
+
     return SVL_OK;
 }
 
 svlImageRGB* svlVidCapSrcSDI::GetLatestFrame(bool waitfornew, unsigned int videoch)
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMIL::GetLatestFrame(" << waitfornew << ", " << videoch << ")" << std::endl;
+    std::cout << "svlVidCapSrcSDI::GetLatestFrame(" << waitfornew << ", " << videoch << ")" << std::endl;
 #endif
 
     if (videoch >= NumOfStreams || !Initialized) return 0;
@@ -768,6 +775,18 @@ int svlVidCapSrcSDI::Stop()
 
     if (!Running) return SVL_FAIL;
     Running = false;
+    for (unsigned int i = 0; i < SDINUMDEVICES; i ++) {
+        if (CaptureThread[i]) {
+            CaptureThread[i]->Wait();
+            delete(CaptureThread[i]);
+            CaptureThread[i] = 0;
+        }
+        if (CaptureProc[i]) {
+            delete(CaptureProc[i]);
+            CaptureProc[i] = 0;
+        }
+    }
+
     return SVL_OK;
 }
 
@@ -821,8 +840,8 @@ int svlVidCapSrcSDI::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCa
     if (static_cast<int>(deviceid) >= MAX_VIDEO_STREAMS || formatlist == 0) return SVL_FAIL;
 
     formatlist[0] = new svlFilterSourceVideoCapture::ImageFormat[1];
-    formatlist[0][0].width = m_SDIin.getWidth();
-    formatlist[0][0].height = m_SDIin.getHeight();
+    formatlist[0][0].width = 1920;//CaptureProc[0]->GetSDIin().getWidth();
+    formatlist[0][0].height = 1080;//CaptureProc[0]->GetSDIin().getHeight();
     formatlist[0][0].colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
@@ -840,8 +859,8 @@ int svlVidCapSrcSDI::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format,
 
     if (SystemID[videoch] > 0 && SystemID[videoch] >= static_cast<int>(MAX_VIDEO_STREAMS)) return SVL_FAIL;
 
-    format.width = m_SDIin.getWidth();
-    format.height = m_SDIin.getHeight();
+    format.width = 1920;//CaptureProc[0]->GetSDIin().getWidth();
+    format.height = 1080;//CaptureProc[0]->GetSDIin().getHeight();
     format.colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     format.rgb_order = true;
     format.yuyv_order = false;
@@ -854,7 +873,7 @@ int svlVidCapSrcSDI::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format,
 bool svlVidCapSrcSDI::IsCaptureSupported(unsigned int sysid, unsigned int digid)
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMIL::IsCaptureSupported(" << sysid << ", " << digid << ")" << std::endl;
+    std::cout << "svlVidCapSrcSDI::IsCaptureSupported(" << sysid << ", " << digid << ")" << std::endl;
 #endif
 
     //if (sysid >= MILNumberOfSystems || digid >= MilNumberOfDigitizers[sysid]) return false;
@@ -885,9 +904,11 @@ bool svlVidCapSrcSDI::IsOverlaySupported(unsigned int sysid, unsigned int digid)
 // Desc: Calculate the graphics window size
 //-----------------------------------------------------------------------------
 void
-svlVidCapSrcSDI::calcWindowSize()
+svlVidCapSrcSDIThread::calcWindowSize()
 {
     int numStreams = m_SDIin.getNumStreams();
+    //TODO: fix frame rate
+    m_inputFrameRate = 59.94;
     switch(m_SDIin.getVideoFormat()) {
     case NV_CTRL_GVIO_VIDEO_FORMAT_487I_59_94_SMPTE259_NTSC:
     case NV_CTRL_GVIO_VIDEO_FORMAT_576I_50_00_SMPTE259_PAL:
@@ -971,7 +992,7 @@ svlVidCapSrcSDI::calcWindowSize()
 // Desc: Application teardown
 //-----------------------------------------------------------------------------
 void
-svlVidCapSrcSDI::Shutdown()
+svlVidCapSrcSDIThread::Shutdown()
 {
     StopSDIPipeline();
     cleanupSDIDevices();
@@ -996,7 +1017,7 @@ Bool WaitForNotify(Display * d, XEvent * e, char *arg)
 // Desc: Create window
 //-----------------------------------------------------------------------------
 Window
-svlVidCapSrcSDI::CreateWindow()
+svlVidCapSrcSDIThread::CreateWindow()
 {
     XVisualInfo *vi ;
     GLXFBConfig *configs, config;
@@ -1124,7 +1145,7 @@ svlVidCapSrcSDI::CreateWindow()
     return win;
 }
 
-void svlVidCapSrcSDI::MakeCurrentGLCtx()
+void svlVidCapSrcSDIThread::MakeCurrentGLCtx()
 {
     glXMakeCurrent(dpy, win, ctx);
 }
@@ -1135,7 +1156,7 @@ void svlVidCapSrcSDI::MakeCurrentGLCtx()
 // Desc: Destroy window
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::destroyWindow()
+svlVidCapSrcSDIThread::destroyWindow()
 {
     XUnmapWindow(dpy,win);
     XDestroyWindow(dpy, win);
@@ -1150,7 +1171,7 @@ svlVidCapSrcSDI::destroyWindow()
 // Desc: Initialize SDI capture device state.
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::setupSDIinDevice(Display *d, HGPUNV *g)
+svlVidCapSrcSDIThread::setupSDIinDevice(Display *d, HGPUNV *g)
 {
     GLfloat mat[4][4];
     float scale = 1.0f;
@@ -1204,6 +1225,7 @@ svlVidCapSrcSDI::setupSDIinDevice(Display *d, HGPUNV *g)
     m_SDIin.setCaptureOptions(d,captureOptions);
 
     bool ret = m_SDIin.initCaptureDeviceNVCtrl();
+    //NumOfStreams = m_SDIin.getNumStreams();
 
     return ret;
 }
@@ -1214,7 +1236,7 @@ svlVidCapSrcSDI::setupSDIinDevice(Display *d, HGPUNV *g)
 // Desc: Initialize OpenGL SDI capture state.
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::setupSDIinGL()
+svlVidCapSrcSDIThread::setupSDIinGL()
 {
     //Setup GL
     m_SDIin.initCaptureDeviceGL();
@@ -1227,7 +1249,7 @@ svlVidCapSrcSDI::setupSDIinGL()
 // Desc: Destroy SDI capture device.
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::cleanupSDIin()
+svlVidCapSrcSDIThread::cleanupSDIin()
 {
     m_SDIin.endCapture();
     bool ret = m_SDIin.destroyCaptureDeviceNVCtrl();
@@ -1245,7 +1267,7 @@ svlVidCapSrcSDI::cleanupSDIin()
 // Desc: Setup OpenGL capture.
 //-----------------------------------------------------------------------------
 GLboolean
-svlVidCapSrcSDI::SetupGL()
+svlVidCapSrcSDIThread::SetupGL()
 {
     glClearColor( 0.0, 0.0, 0.0, 0.0);
     glClearDepth( 1.0 );
@@ -1265,10 +1287,16 @@ svlVidCapSrcSDI::SetupGL()
 // Desc: Setup SDI capture devices
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::SetupSDIDevices(Display *d,HGPUNV *g)
+svlVidCapSrcSDIThread::SetupSDIDevices(Display *d,HGPUNV *g)
 {
-    gpu = g;
-    dpy = d;
+    if(d && g)
+    {
+        gpu = g;
+        dpy = d;
+    }
+    if(!dpy || !gpu)
+        return FALSE;
+
     if(setupSDIinDevice(dpy,gpu) != TRUE) {
         printf("Error setting up video capture.\n");
         return FALSE;
@@ -1283,14 +1311,14 @@ svlVidCapSrcSDI::SetupSDIDevices(Display *d,HGPUNV *g)
 // Desc: Start SDI video capture.
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::StartSDIPipeline()
+svlVidCapSrcSDIThread::StartSDIPipeline()
 {
     // Start video capture
     if(m_SDIin.startCapture()!= TRUE) {
         printf("Error starting video capture.\n");
         return FALSE;
     }
-
+    //CaptureStarted = true;
     return TRUE;
 }
 
@@ -1300,7 +1328,7 @@ svlVidCapSrcSDI::StartSDIPipeline()
 // Desc: Stop SDI video capture.
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::StopSDIPipeline()
+svlVidCapSrcSDIThread::StopSDIPipeline()
 {
     if(m_SDIin.endCapture()!= TRUE) {
         printf("Error starting video capture.\n");
@@ -1315,7 +1343,7 @@ svlVidCapSrcSDI::StopSDIPipeline()
 // Desc: Cleanup SDI capture devices.
 //-----------------------------------------------------------------------------
 bool
-svlVidCapSrcSDI::cleanupSDIDevices()
+svlVidCapSrcSDIThread::cleanupSDIDevices()
 {
     bool ret = TRUE;
     if(cleanupSDIin() != TRUE)
@@ -1329,7 +1357,7 @@ svlVidCapSrcSDI::cleanupSDIDevices()
 // Name: CleanupGL
 // Desc: OpenGL teardown.
 //-----------------------------------------------------------------------------
-GLboolean svlVidCapSrcSDI::cleanupGL()
+GLboolean svlVidCapSrcSDIThread::cleanupGL()
 {
 
     m_SDIin.destroyCaptureDeviceGL();
@@ -1350,7 +1378,7 @@ GLboolean svlVidCapSrcSDI::cleanupGL()
 // Desc: Main SDI video capture function.
 //-----------------------------------------------------------------------------
 GLenum
-svlVidCapSrcSDI::CaptureVideo(GLuint *captureLatency,float runTime)
+svlVidCapSrcSDIThread::CaptureVideo(GLuint dropBool,float runTime)
 {
     static GLuint64EXT captureTime;
     GLuint sequenceNum;
@@ -1358,7 +1386,7 @@ svlVidCapSrcSDI::CaptureVideo(GLuint *captureLatency,float runTime)
     GLenum ret;
     static int numFails = 0;
     static int numTries = 0;
-    *captureLatency = 0;
+    GLuint captureLatency = 0;
     unsigned int droppedFrames;
     float longGVITime=1;
 
@@ -1371,7 +1399,7 @@ svlVidCapSrcSDI::CaptureVideo(GLuint *captureLatency,float runTime)
             droppedFrames = sequenceNum - prevSequenceNum;
             printf("glVideoCaptureNV: Dropped %d frames\n",sequenceNum - prevSequenceNum);
             printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
-            *captureLatency = 1;
+            captureLatency = 1;
         }
         //    if(m_SDIin.m_gviTime > 1.0/30)
         //    {
@@ -1424,7 +1452,7 @@ svlVidCapSrcSDI::CaptureVideo(GLuint *captureLatency,float runTime)
         return GL_FAILURE_NV;
     }
 
-    if(*captureLatency)
+    if(captureLatency==1)
     {
         for(unsigned int i=0;i< droppedFrames+1;i++)
         {
@@ -1439,7 +1467,7 @@ svlVidCapSrcSDI::CaptureVideo(GLuint *captureLatency,float runTime)
         //      {
         printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
         CaptureVideo(captureLatency,runTime-1.0/30);
-        *captureLatency = 1;
+        captureLatency = 1;
     }else if(m_SDIin.m_gviTime > 1.0/30)
     {
         //      longGVITime = m_SDIin.m_gviTime;
@@ -1457,7 +1485,7 @@ svlVidCapSrcSDI::CaptureVideo(GLuint *captureLatency,float runTime)
 // Desc: Draw single SDI video stream in graphics window.
 //-----------------------------------------------------------------------------
 GLvoid
-svlVidCapSrcSDI::drawOne()
+svlVidCapSrcSDIThread::drawOne()
 {
     // Calculate scaled video dimensions.
     GLfloat scaledVideoWidth;
@@ -1501,7 +1529,7 @@ svlVidCapSrcSDI::drawOne()
 //       Video streams are stacked on atop the other.
 //-----------------------------------------------------------------------------
 GLvoid
-svlVidCapSrcSDI::drawTwo()
+svlVidCapSrcSDIThread::drawTwo()
 {
     // Calculate scaled video dimensions.
     GLfloat scaledVideoWidth;
@@ -1558,7 +1586,7 @@ svlVidCapSrcSDI::drawTwo()
     glEnd();
 }
 
-void svlVidCapSrcSDI::drawCircle(GLuint gWidth, GLuint gHeight)
+void svlVidCapSrcSDIThread::drawCircle(GLuint gWidth, GLuint gHeight)
 {
 
     glViewport(0, 0, gWidth, gHeight);
@@ -1591,7 +1619,7 @@ void svlVidCapSrcSDI::drawCircle(GLuint gWidth, GLuint gHeight)
 //       Use 3 quadrants with the remaining quadrant black.
 //-----------------------------------------------------------------------------
 GLvoid
-svlVidCapSrcSDI::drawThree()
+svlVidCapSrcSDIThread::drawThree()
 {
     // Calculate scaled video dimensions.
     GLfloat scaledVideoWidth;
@@ -1676,7 +1704,7 @@ svlVidCapSrcSDI::drawThree()
 //       One stream is drawn in each quadrant.
 //-----------------------------------------------------------------------------
 GLvoid
-svlVidCapSrcSDI::drawFour()
+svlVidCapSrcSDIThread::drawFour()
 {
     // Calculate scaled video dimensions.
     GLfloat scaledVideoWidth;
@@ -1779,7 +1807,7 @@ svlVidCapSrcSDI::drawFour()
 // Desc: Main drawing routine.
 //-----------------------------------------------------------------------------
 GLenum
-svlVidCapSrcSDI::DisplayVideo(bool drawFrameRate)
+svlVidCapSrcSDIThread::DisplayVideo(bool drawFrameRate)
 {
     glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -1825,14 +1853,82 @@ svlVidCapSrcSDI::DisplayVideo(bool drawFrameRate)
     glColor3f(1.0f, 1.0f, 0.0f);
 
     // Draw frames per second
-    if(drawFrameRate)
+    if(0)
     {
         std::stringstream ss;
         ss << CalcFPS() << " fps";
-        drawOGLString(ss.str(), m_windowWidth - 80.0f, 0.0f);
+        //drawOGLString(ss.str(), m_windowWidth - 80.0f, 0.0f);
     }
     glXSwapBuffers(dpy, win);
     glDisable(GL_TEXTURE_RECTANGLE_NV);
     return GL_TRUE;
+}
+
+/****************************************/
+/*     svlVidCapSrcSDIThread class      */
+/****************************************/
+
+svlVidCapSrcSDIThread::svlVidCapSrcSDIThread(int streamid)
+{
+
+    StreamID = streamid;
+    InitSuccess = false;
+    //TODO:??
+}
+
+void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
+{
+    // signal success to main thread
+    Error = false;
+    InitEvent.Raise();
+    GLint inBuf;
+    cudaError_t cerr;
+    unsigned char *inDevicePtr;
+    unsigned char *outDevicePtr;
+    unsigned char* dest;
+
+    HGPUNV gpuList[MAX_GPUS];
+    // Open X display
+    dpy = XOpenDisplay(NULL);
+    //scan the systems for GPUs
+    int	num_gpus = ScanHW(dpy,gpuList);
+    if(num_gpus < 1)
+        exit(1);
+    //grab the first GPU for now for DVP
+    gpu = &gpuList[0];
+    SetupSDIDevices();
+    win = CreateWindow();
+    SetupGL();
+    StartSDIPipeline();
+
+    while (baseref->Running) {
+        if (CaptureVideo() != GL_FAILURE_NV)
+        {
+//            for(unsigned int i=0;i<m_SDIin.getNumStreams();i++)
+//            {
+//                inBuf = m_SDIin.getBufferObjectHandle(0);
+//                // Map buffer(s) into CUDA
+//                cerr = cudaGLMapBufferObject((void**)&inDevicePtr, inBuf);
+//                //cudaCheckErrors("map");
+//                cerr = cudaGLMapBufferObject((void**)&outDevicePtr, gTexObjs[i]);
+//                //cudaCheckErrors("map");
+//                unsigned int pitch = m_SDIin.getBufferObjectPitch(0);
+//                unsigned int height = m_SDIin.getHeight();
+//                cudaMemcpy(outDevicePtr,inDevicePtr,pitch*height,cudaMemcpyDeviceToDevice);
+//                dest = baseref->ImageBuffer[i]->GetPushBuffer();
+//                svlConverter::UYVYtoRGB24(outDevicePtr,
+//                                          dest,
+//                                          m_SDIin.getWidth() * m_SDIin.getHeight(),
+//                                          true, true, true);
+//                baseref->ImageBuffer[i]->Push();
+                //DrawOutputScene(m_SDIin.getTextureObjectHandle(0),m_SDIin.getTextureObjectHandle(1));
+                DisplayVideo(false);//drawCaptureFrameRate);
+//            }
+        }
+
+
+    }
+
+    return this;
 }
 
