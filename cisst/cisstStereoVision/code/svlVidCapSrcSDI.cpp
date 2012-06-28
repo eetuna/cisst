@@ -7,16 +7,58 @@
 #define __VERBOSE__  1
 #define SDINUMDEVICES 1
 
+//-----------------------------------------------------------------------------
+// Name: WaitForNotify
+// Desc: Wait for notify event routine
+//-----------------------------------------------------------------------------
+static
+Bool WaitForNotify(Display * d, XEvent * e, char *arg)
+{
+    return (e->type == MapNotify) && (e->xmap.window == (Window) arg);
+}
+
+//-----------------------------------------------------------------------------
+// Name: calcScaledVideoDimensions
+// Desc: Calculate scaled video dimensions that preserve aspect ratio
+//-----------------------------------------------------------------------------
+GLvoid
+calcScaledVideoDimensions(GLuint ww, GLuint wh, GLuint vw, GLuint vh,
+                          GLfloat *svw, GLfloat *svh)
+{
+    GLfloat fww = ww;
+    GLfloat fwh = wh;
+    GLfloat fvw = vw;
+    GLfloat fvh = vh;
+
+    // Set the scale video width to the window width.
+    // Scale the video height by the aspect ratio.
+    // If the resulting height is greater than the
+    // window height, the set the video height to
+    // the window height and scale the width by the
+    // video aspect ratio.
+    *svw = fww;
+    *svh = (fvh / fvw) * *svw;
+    if (*svh > wh) {
+        *svh = fwh;
+        *svw = (fvw / fvh) * *svh;
+    }
+
+    // Normalize
+    *svh /= fwh;
+    *svw /= fww;
+}
+
 /*************************************/
 /* svlVidCapSrcSDIRenderTarget class */
 /*************************************/
 
-svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(Display *d,HGPUNV *g, unsigned int video_format, GLsizei num_streams,unsigned int deviceID, unsigned int displayID):
+svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(unsigned int deviceID, unsigned int displayID):
     svlRenderTargetBase(),
     Thread(0),
     TransferSuccessful(true),
     KillThread(false),
-    ThreadKilled(true)
+    ThreadKilled(true),
+    Running(false)
 {
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDIRenderTarget::constructor()" << std::endl;
@@ -29,6 +71,12 @@ svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(Display *d,HGPUNV *g, u
     //svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
     //TODO::CAPTURE
 
+    for (int i = 0; i < m_SDIin.getNumStreams (); i++) {
+        m_overlayBuf[i] =
+                (unsigned char *) malloc (m_SDIin.getWidth() *
+                                          m_SDIin.getHeight());
+    }
+
     // Start up overlay thread
     Thread = new osaThread;
     Thread->Create<svlVidCapSrcSDIRenderTarget, void*>(this, &svlVidCapSrcSDIRenderTarget::ThreadProc, 0);
@@ -39,10 +87,9 @@ svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(Display *d,HGPUNV *g, u
         // If it takes longer than 1 sec, don't execute
         KillThread = true;
     }
-
-    setupSDIDevices(d,g,video_format,num_streams);
-    setupGL();
+    Running = true;
 }
+
 svlVidCapSrcSDIRenderTarget::~svlVidCapSrcSDIRenderTarget()
 {
 #if __VERBOSE__ == 1
@@ -53,18 +100,38 @@ svlVidCapSrcSDIRenderTarget::~svlVidCapSrcSDIRenderTarget()
     if (ThreadKilled == false) Thread->Wait();
     delete Thread;
 
-    cleanupGL();
+    cleanupSDIGL();
     cleanupSDIDevices();
 }
 
-
-
-bool svlVidCapSrcSDIRenderTarget::setupSDIDevices(Display *d,HGPUNV *g, unsigned int video_format, GLsizei num_streams)
+void svlVidCapSrcSDIRenderTarget::Shutdown()
 {
-    gpu = g;
-    dpy = d;
-    m_num_streams = num_streams;
-    if(setupSDIoutDevice(dpy,gpu,video_format) != TRUE)
+    KillThread = true;
+    if (ThreadKilled == false) Thread->Wait();
+    delete Thread;
+
+    stopSDIPipeline();
+    cleanupSDIGL();
+    cleanupSDIDevices();
+}
+
+bool svlVidCapSrcSDIRenderTarget::setupSDIDevices(Display * d, HGPUNV * g)
+{
+    if(d && g)
+    {
+        gpu = g;
+        dpy = d;
+    }
+    if(!dpy || !gpu)
+        return FALSE;
+
+    if(setupSDIinDevice(dpy,gpu) != TRUE) {
+        printf("Error setting up video capture.\n");
+        return FALSE;
+    }
+
+    m_num_streams = m_SDIin.getNumStreams();
+    if(setupSDIoutDevice(dpy,gpu,NV_CTRL_GVO_VIDEO_FORMAT_487I_59_94_SMPTE259_NTSC) != TRUE)//m_SDIin.getVideoFormat()) != TRUE)//
     {
         printf("Error setting up video output.\n");
         m_SDIoutEnabled = FALSE;
@@ -95,15 +162,16 @@ bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, i
     // Copy image to the Matrox buffer with translation and flip...
     //TODO::CAPTURE?
     //svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
-    //    TranslateImage(buffer,
-    //                   device->MilOverlayBuffer[SystemID][DigitizerID],
-    //                   device->MilWidth[SystemID][DigitizerID] * 3,
-    //                   device->MilHeight[SystemID][DigitizerID],
-    //                   offsetx * 3,
-    //                   offsety,
-    //                   vflip);
+    //        TranslateImage(buffer,
+    //                       device->MilOverlayBuffer[SystemID][DigitizerID],
+    //                       device->MilWidth[SystemID][DigitizerID] * 3,
+    //                       device->MilHeight[SystemID][DigitizerID],
+    //                       offsetx * 3,
+    //                       offsety,
+    //                       vflip);
+    memcpy(m_overlayBuf[0],buffer,m_SDIout.getWidth()*m_SDIout.getHeight());
 
-    // Signal Thread that there is a new frame to transfer
+    //Signal Thread that there is a new frame to transfer
     NewFrameSignal.Raise();
 
     // Frame successfully filed for transfer
@@ -135,23 +203,54 @@ void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDIRenderTarget::ThreadProc()" << std::endl;
 #endif
+    //ThreadKilled = false;
+    //ThreadReadySignal.Raise();
+    // signal success to main thread
+    GLint inBuf;
+    cudaError_t cerr;
+    unsigned char* inDevicePtr;
+    unsigned char* outDevicePtr;
+    unsigned char* ptr;
 
-    ThreadKilled = false;
-    ThreadReadySignal.Raise();
+    HGPUNV gpuList[MAX_GPUS];
+    // Open X display
+    dpy = XOpenDisplay(NULL);
+    //scan the systems for GPUs
+    int	num_gpus = ScanHW(dpy,gpuList);
+    if(num_gpus < 1)
+        exit(1);
+    //grab the first GPU for now for DVP
+    gpu = &gpuList[0];
+    setupSDIDevices();
+    win = createWindow();
+    setupSDIGL();
+    startSDIPipeline();
+    unsigned int pitch0 = m_SDIin.getBufferObjectPitch (0);
+    unsigned int pitch1 = m_SDIin.getBufferObjectPitch (1);
+    unsigned int height = m_SDIin.getHeight();
+    unsigned int size = pitch0*height;
+    std::cout << "svlVidCapSrcSDIThread::Proc(), pitches: " << pitch0 << ", " << pitch1 << " height: " << height << std::endl;
 
-    while (!KillThread) {
-        if (NewFrameSignal.Wait(0.5)) {
-            //TODO::TRANSFER
-            //TransferSuccessful = svlVidCapSrcMIL::GetInstance()->MILUploadOverlay(SystemID, DigitizerID);
-            ThreadReadySignal.Raise();
+    while (Running) {
+        if (CaptureVideo() != GL_FAILURE_NV)
+        {
+            DisplayVideo();
+            if(NewFrameSignal.Wait(0.5))
+            {
+                DrawOutputScene(true);
+                ThreadReadySignal.Raise();
+            }
+            else
+                DrawOutputScene();
+            OutputVideo();
         }
     }
 
-    // Release waiting threads (if any)
     ThreadReadySignal.Raise();
 
     ThreadKilled = true;
     return this;
+
 }
 
 bool svlVidCapSrcSDIRenderTarget::setupSDIoutDevice(Display *d,HGPUNV *g, unsigned int video_format)
@@ -174,14 +273,7 @@ bool svlVidCapSrcSDIRenderTarget::setupSDIoutDevice(Display *d,HGPUNV *g, unsign
     return ret;
 }
 
-GLboolean svlVidCapSrcSDIRenderTarget::setupGL()
-{
-    if(m_SDIoutEnabled)
-        setupSDIoutGL();
-    return GL_TRUE;
-}
-
-bool svlVidCapSrcSDIRenderTarget::setupSDIoutGL()
+GLboolean svlVidCapSrcSDIRenderTarget::setupSDIoutGL()
 {
     //Setup the output after the capture is configured.
     glGenTextures(m_num_streams, m_OutTexture);
@@ -215,19 +307,7 @@ bool svlVidCapSrcSDIRenderTarget::setupSDIoutGL()
     }
     // Free list of available video devices, don't need it anymore.
     free(videoDevices);
-    return 1;
-}
-
-
-////////////////////////
-// SDI-OUT Cleanup
-////////////////////////
-
-
-bool svlVidCapSrcSDIRenderTarget::cleanupSDIout()
-{
-    bool ret = m_SDIout.destroyOutputDeviceNVCtrl();
-    return ret;
+    return GL_TRUE;
 }
 
 /////////////////////////////////////
@@ -278,10 +358,76 @@ void svlVidCapSrcSDIRenderTarget::drawCircle(GLuint gWidth, GLuint gHeight)
 // Draw Scene
 /////////////////////////////////////
 
-GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(GLuint cudaOutTexture1, GLuint cudaOutTexture2, unsigned char* vtkPixelData)
+//-----------------------------------------------------------------------------
+// Name: DisplayVideo
+// Desc: Main drawing routine.
+//-----------------------------------------------------------------------------
+GLenum
+svlVidCapSrcSDIRenderTarget::DisplayVideo(bool drawFrameRate)
+{
+    glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Set view parameters.
+    glViewport(0, 0, m_windowWidth, m_windowHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    int numStreams =  m_SDIin.getNumStreams();
+    switch(numStreams) {
+    case 1:
+        drawOne();
+        break;
+    case 2:
+        drawTwo();
+        break;
+    case 3:
+        drawThree();
+        break;
+    case 4:
+        drawFour();
+        break;
+    default:
+        drawOne();
+    };
+
+    // Disable texture mapping
+    glDisable(GL_TEXTURE_RECTANGLE_NV);
+
+    // Reset view parameters
+    glViewport(0, 0, m_windowWidth, m_windowHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0.0, m_windowWidth, 0.0, m_windowHeight);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    // Set draw color
+    glColor3f(1.0f, 1.0f, 0.0f);
+
+    // Draw frames per second
+    if(0)
+    {
+        std::stringstream ss;
+        ss << CalcFPS() << " fps";
+        //drawOGLString(ss.str(), m_windowWidth - 80.0f, 0.0f);
+    }
+    glXSwapBuffers(dpy, win);
+    glDisable(GL_TEXTURE_RECTANGLE_NV);
+    return GL_TRUE;
+}
+
+GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(bool drawOverlay,GLuint cudaOutTexture1, GLuint cudaOutTexture2)
 {
     GLuint width;
     GLuint height;
+    if(cudaOutTexture1 == -1)
+        cudaOutTexture1 = m_SDIin.getTextureObjectHandle(0);
+    if(cudaOutTexture2 == -1)
+        cudaOutTexture2 = m_SDIin.getTextureObjectHandle(1);
 
     for(int i=0;i<m_num_streams;i++)
     {
@@ -322,7 +468,7 @@ GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(GLuint cudaOutTexture1, G
         glTexCoord2f((GLfloat)width, 0.0); glVertex2f(1, -1);
         glEnd();
 
-        if(1)
+        if(!drawOverlay)
         {
             glEnable (GL_BLEND);
             glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -333,7 +479,7 @@ GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(GLuint cudaOutTexture1, G
         {
             glEnable (GL_BLEND);
             glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            drawVTKPixels(m_SDIout.getWidth(), m_SDIout.getHeight(),vtkPixelData);
+            drawVTKPixels(m_SDIout.getWidth(), m_SDIout.getHeight(),m_overlayBuf[0]);
         }
 
         if(m_SDIoutEnabled)
@@ -383,7 +529,13 @@ GLboolean svlVidCapSrcSDIRenderTarget::OutputVideo()
 // Cleanup
 /////////////////////////////////////
 
-GLboolean svlVidCapSrcSDIRenderTarget::cleanupGL()
+
+////////////////////////
+// SDI-OUT Cleanup
+////////////////////////
+
+
+GLboolean svlVidCapSrcSDIRenderTarget::cleanupSDIoutGL()
 {
     // Destroy objects
     if(m_SDIoutEnabled)
@@ -398,12 +550,880 @@ GLboolean svlVidCapSrcSDIRenderTarget::cleanupGL()
     return GL_TRUE;
 }
 
-bool svlVidCapSrcSDIRenderTarget::cleanupSDIDevices()
+bool svlVidCapSrcSDIRenderTarget::cleanupSDIoutDevices()
 {
     bool ret = TRUE;
-    if(m_SDIoutEnabled && (cleanupSDIout() != TRUE))
+    if(m_SDIoutEnabled && (m_SDIout.destroyOutputDeviceNVCtrl() != TRUE))
         ret = FALSE;
     return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Name: CreateWindow
+// Desc: Create window
+//-----------------------------------------------------------------------------
+Window
+svlVidCapSrcSDIRenderTarget::createWindow()
+{
+    XVisualInfo *vi ;
+    GLXFBConfig *configs, config;
+    XEvent event;
+    XSetWindowAttributes swa;
+
+    unsigned long mask;
+    int numConfigs;
+    int config_list[] = { GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+                          GLX_DOUBLEBUFFER, GL_TRUE,
+                          GLX_RENDER_TYPE, GLX_RGBA_BIT,
+                          GLX_RED_SIZE, 8,
+                          GLX_GREEN_SIZE, 8,
+                          GLX_BLUE_SIZE, 8,
+                          GLX_FLOAT_COMPONENTS_NV, GL_FALSE,
+                          None };
+    int i;
+    // Find required framebuffer configuration
+    configs = glXChooseFBConfig(dpy, captureOptions.xscreen, config_list, &numConfigs);
+    if (!configs) {
+        fprintf(stderr, "Unable to find a matching FBConfig.\n");
+        exit(1);
+    }
+
+    // Find an FBconfig with the required number of color bits.
+    for (i = 0; i < numConfigs; i++) {
+        int attr;
+        if (glXGetFBConfigAttrib(dpy, configs[i], GLX_RED_SIZE, &attr)) {
+            printf("glXGetFBConfigAttrib(GLX_RED_SIZE) failed!\n");
+            exit(1);
+        }
+        if (attr != 8)
+            continue;
+
+        if (glXGetFBConfigAttrib(dpy, configs[i], GLX_GREEN_SIZE, &attr)) {
+            printf("glXGetFBConfigAttrib(GLX_GREEN_SIZE) failed!\n");
+            exit(1);
+        }
+        if (attr != 8)
+            continue;
+
+        if (glXGetFBConfigAttrib(dpy, configs[i], GLX_BLUE_SIZE, &attr)) {
+            printf("glXGetFBConfigAttrib(GLX_BLUE_SIZE) failed!\n");
+            exit(1);
+        }
+
+        if (attr != 8)
+            continue;
+
+        if (glXGetFBConfigAttrib(dpy, configs[i], GLX_ALPHA_SIZE, &attr)) {
+            printf("glXGetFBConfigAttrib(GLX_ALPHA_SIZE) failed\n");
+            exit(1);
+        }
+
+        if (attr != 8)
+            continue;
+
+        break;
+    }
+
+    if (i == numConfigs) {
+        printf("No FBConfigs found\n");
+        exit(1);
+    }
+
+    config = configs[i];
+
+    // Don't need the config list anymore so free it.
+    XFree(configs);
+    configs = NULL;
+
+    // Create an OpenGL rendering context for the onscreen window.
+    ctx = glXCreateNewContext(dpy, config, GLX_RGBA_TYPE, 0, GL_TRUE);
+
+    // Get visual from FB config.
+    if ((vi = glXGetVisualFromFBConfig(dpy, config)) != NULL) {
+        printf("Using visual %0x\n", (int) vi->visualid);
+        printf("Depth = %d\n", vi->depth);
+    } else {
+        printf("Couldn't find visual for onscreen window.\n");
+        exit(1);
+    }
+
+    // Create color map.
+    if (!(cmap = XCreateColormap(dpy, RootWindow(dpy, vi->screen),
+                                 vi->visual, AllocNone))) {
+        fprintf(stderr, "XCreateColormap failed!\n");
+        exit(1);
+    }
+
+
+    // Calculate window width & height.
+    calcWindowSize();
+
+    // Create window.
+    swa.colormap = cmap;
+    swa.border_pixel = 0;
+    swa.background_pixel = 1;
+    swa.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask |
+            KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
+            PointerMotionMask ;
+    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
+    win = XCreateWindow(dpy, RootWindow(dpy, vi->screen),
+                        0, 0, m_windowWidth, m_windowHeight, 0,
+                        vi->depth, InputOutput, vi->visual,
+                        mask, &swa);
+
+    // Map window.
+    XMapWindow(dpy, win);
+    XIfEvent(dpy, &event, WaitForNotify, (char *) win);
+
+    // Set window colormap.
+    XSetWMColormapWindows(dpy, win, &win, 1);
+
+    // Make OpenGL rendering context current.
+    if (!(glXMakeCurrent(dpy, win, ctx))) {
+        fprintf(stderr, "glXMakeCurrent failed!\n");
+        exit(1);
+    }
+
+    // Don't lock the capture/draw loop to the graphics vsync.
+    glXSwapIntervalSGI(0);
+    XFlush(dpy);
+
+    return win;
+}
+
+//-----------------------------------------------------------------------------
+// Name: DestroyWindow
+// Desc: Destroy window
+//-----------------------------------------------------------------------------
+bool
+svlVidCapSrcSDIRenderTarget::destroyWindow()
+{
+    XUnmapWindow(dpy,win);
+    XDestroyWindow(dpy, win);
+    XFreeColormap(dpy,cmap);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+// Name: setupSDIinDevice
+// Desc: Initialize SDI capture device state.
+//-----------------------------------------------------------------------------
+bool
+svlVidCapSrcSDIRenderTarget::setupSDIinDevice(Display *d, HGPUNV *g)
+{
+    GLfloat mat[4][4];
+    float scale = 1.0f;
+    GLfloat max[] = {5000, 5000, 5000, 5000};
+    //GLfloat max[] = {256, 256, 256, 256};
+    GLfloat min[] = {0, 0, 0, 0};
+    // Initialize matrix to the identity.
+    mat[0][0] = scale; mat[0][1] = 0; mat[0][2] = 0; mat[0][3] = 0;
+    mat[1][0] = 0; mat[1][1] = scale; mat[1][2] = 0; mat[1][3] = 0;
+    mat[2][0] = 0; mat[2][1] = 0; mat[2][2] = scale; mat[2][3] = 0;
+    mat[3][0] = 0; mat[3][1] = 0; mat[3][2] = 0; mat[3][3] = scale;
+    GLfloat offset[] = {0, 0, 0, 0};
+    mat[0][0] = 1.164f *scale;
+    mat[0][1] = 1.164f *scale;
+    mat[0][2] = 1.164f *scale;
+    mat[0][3] = 0;
+
+    mat[1][0] = 0;
+    mat[1][1] = -0.392f *scale;
+    mat[1][2] = 2.017f *scale;
+    mat[1][3] = 0;
+
+    mat[2][0] = 1.596f *scale;
+    mat[2][1] = -0.813f *scale;
+    mat[2][2] = 0.f;
+    mat[2][3] = 0;
+
+    mat[3][0] = 0;
+    mat[3][1] = 0;
+    mat[3][2] = 0;
+    mat[3][3] = 1;
+
+    offset[0] =-0.87f;
+    offset[1] = 0.53026f;
+    offset[2] = -1.08f;
+    offset[3] = 0;
+
+
+    captureOptions.cscMax = max;
+    captureOptions.cscMin = min;
+    captureOptions.cscMat = &mat[0][0];
+    captureOptions.cscOffset = offset;
+    captureOptions.captureType = TEXTURE_FRAME;
+    captureOptions.textureInternalFormat =  GL_RGBA8;
+    captureOptions.pixelFormat = GL_RGBA;
+    captureOptions.bitsPerComponent = NV_CTRL_GVI_BITS_PER_COMPONENT_8;
+    captureOptions.sampling = NV_CTRL_GVI_COMPONENT_SAMPLING_422;
+    captureOptions.xscreen = g->deviceXScreen;
+    captureOptions.bDualLink = false;
+    captureOptions.bChromaExpansion = true;
+    m_SDIin.setCaptureOptions(d,captureOptions);
+
+    bool ret = m_SDIin.initCaptureDeviceNVCtrl();
+
+    return ret;
+}
+
+
+//-----------------------------------------------------------------------------
+// Name: setupSDIinGL
+// Desc: Initialize OpenGL SDI capture state.
+//-----------------------------------------------------------------------------
+GLboolean
+svlVidCapSrcSDIRenderTarget::setupSDIinGL()
+{
+    //Setup GL
+    m_SDIin.initCaptureDeviceGL();
+    return true;
+}
+
+
+//-----------------------------------------------------------------------------
+// Name: cleanupSDIin()
+// Desc: Destroy SDI capture device.
+//-----------------------------------------------------------------------------
+bool
+svlVidCapSrcSDIRenderTarget::cleanupSDIinDevices()
+{
+    m_SDIin.endCapture();
+    bool ret = m_SDIin.destroyCaptureDeviceNVCtrl();
+    return ret;
+}
+
+
+/////////////////////////////////////
+// Main Methods
+/////////////////////////////////////
+
+
+//-----------------------------------------------------------------------------
+// Name: SetupGL
+// Desc: Setup OpenGL capture.
+//-----------------------------------------------------------------------------
+GLboolean
+svlVidCapSrcSDIRenderTarget::setupSDIGL()
+{
+    glClearColor( 0.0, 0.0, 0.0, 0.0);
+    glClearDepth( 1.0 );
+
+    glDisable(GL_DEPTH_TEST);
+
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+
+    setupSDIinGL();
+    setupSDIoutGL();
+
+    return GL_TRUE;
+}
+
+//-----------------------------------------------------------------------------
+// Name: StartSDIPipeline
+// Desc: Start SDI video capture.
+//-----------------------------------------------------------------------------
+bool
+svlVidCapSrcSDIRenderTarget::startSDIPipeline()
+{
+    // Start video capture
+    if(m_SDIin.startCapture()!= TRUE) {
+        printf("Error starting video capture.\n");
+        return FALSE;
+    }
+    //CaptureStarted = true;
+    return TRUE;
+}
+
+
+//-----------------------------------------------------------------------------
+// Name: StopSDIPipeline
+// Desc: Stop SDI video capture.
+//-----------------------------------------------------------------------------
+bool
+svlVidCapSrcSDIRenderTarget::stopSDIPipeline()
+{
+    if(m_SDIin.endCapture()!= TRUE) {
+        printf("Error starting video capture.\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+//-----------------------------------------------------------------------------
+// Name: CleanupSDIDevices
+// Desc: Cleanup SDI capture devices.
+//-----------------------------------------------------------------------------
+bool
+svlVidCapSrcSDIRenderTarget::cleanupSDIDevices()
+{
+    bool ret = TRUE;
+    if(cleanupSDIinDevices() != TRUE)
+        ret = FALSE;
+    ret = cleanupSDIoutDevices();
+    return ret;
+}
+
+
+//-----------------------------------------------------------------------------
+// Name: CleanupGL
+// Desc: OpenGL teardown.
+//-----------------------------------------------------------------------------
+GLboolean svlVidCapSrcSDIRenderTarget::cleanupSDIGL()
+{
+
+    cleanupSDIinGL();
+
+    cleanupSDIoutGL();
+
+    return GL_TRUE;
+}
+
+GLboolean svlVidCapSrcSDIRenderTarget::cleanupSDIinGL()
+{
+
+    m_SDIin.destroyCaptureDeviceGL();
+
+    // Delete OpenGL rendering context.
+    glXMakeCurrent(dpy,NULL,NULL) ;
+    if (ctx) {
+        glXDestroyContext(dpy,ctx) ;
+        ctx = NULL;
+    }
+
+    return GL_TRUE;
+}
+
+//-----------------------------------------------------------------------------
+// Name: Process
+// Desc: Copy from buffer to texture
+//-----------------------------------------------------------------------------
+
+GLuint svlVidCapSrcSDIRenderTarget::getTextureFromBuffer(unsigned int index)
+{
+    //doCuda();
+    GLuint texture;
+    GLuint width = m_SDIin.getWidth();
+    GLuint height = m_SDIin.getHeight();
+    GLuint pitch = m_SDIin.getBufferObjectPitch(0);
+    // To skip a costly data copy from video buffer to texture we
+    // can just bind a video buffer to GL_PIXEL_UNPACK_BUFFER_ARB and call
+    // glTexSubImage2D referencing into the buffer with the PixelData pointer
+    // set to 0.
+
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, texture);
+    //glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, m_SDIin.getBufferObjectHandle(0));
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, texture);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH,pitch/4);
+
+    glTexSubImage2D(GL_TEXTURE_RECTANGLE_NV, 0, 0, 0, width, height,
+                    GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, 0);
+
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+    assert(glGetError() == GL_NO_ERROR);
+
+    return texture;
+}
+
+//-----------------------------------------------------------------------------
+// Name: Capture
+// Desc: Main SDI video capture function.
+//-----------------------------------------------------------------------------
+GLenum
+svlVidCapSrcSDIRenderTarget::CaptureVideo(GLuint dropBool,float runTime)
+{
+    static GLuint64EXT captureTime;
+    GLuint sequenceNum;
+    static GLuint prevSequenceNum = 0;
+    GLenum ret;
+    static int numFails = 0;
+    static int numTries = 0;
+    GLuint captureLatency = 0;
+    unsigned int droppedFrames;
+    float longGVITime=1;
+
+    if(numFails < 100) {
+
+        // Capture the video to a buffer object
+        ret = m_SDIin.capture(&sequenceNum, &captureTime);
+        if(sequenceNum - prevSequenceNum > 1)
+        {
+            droppedFrames = sequenceNum - prevSequenceNum;
+            printf("glVideoCaptureNV: Dropped %d frames\n",sequenceNum - prevSequenceNum);
+            printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+            captureLatency = 1;
+        }
+        //    if(m_SDIin.m_gviTime > 1.0/30)
+        //    {
+        //      printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+        //      *captureLatency = 1;
+        //    }
+
+        prevSequenceNum = sequenceNum;
+        switch(ret) {
+        case GL_SUCCESS_NV:
+            //printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+            numFails = 0;
+            break;
+        case GL_PARTIAL_SUCCESS_NV:
+            printf("glVideoCaptureNV: GL_PARTIAL_SUCCESS_NV\n");
+            numFails = 0;
+            break;
+        case GL_FAILURE_NV:
+            printf("glVideoCaptureNV: GL_FAILURE_NV - Video capture failed.\n");
+            numFails++;
+            break;
+        default:
+            printf("glVideoCaptureNV: Unknown return value.\n");
+            break;
+        } // switch
+
+    }
+    // The incoming signal format or some other error occurred during
+    // capture, shutdown and try to restart capture.
+    else {
+        if(numTries == 0) {
+            stopSDIPipeline();
+            cleanupSDIinDevices();
+
+            cleanupSDIinGL();
+        }
+
+        // Initialize the video capture device.
+        if (setupSDIinDevice(dpy,gpu) != TRUE) {
+            numTries++;
+            return GL_FAILURE_NV;
+        }
+
+        // Reinitialize OpenGL.
+        setupSDIinGL();
+
+        startSDIPipeline();
+        numFails = 0;
+        numTries = 0;
+        return GL_FAILURE_NV;
+    }
+
+    if(captureLatency==1)
+    {
+        for(unsigned int i=0;i< droppedFrames+1;i++)
+        {
+            printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+            CaptureVideo(captureLatency);
+        }
+    }
+    if(m_SDIin.m_gviTime + runTime > 1.0/30)
+    {
+        //      longGVITime = m_SDIin.m_gviTime;
+        //      for(unsigned int i=0;i< longGVITime*30+2;i++)
+        //      {
+        printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+        CaptureVideo(captureLatency,runTime-1.0/30);
+        captureLatency = 1;
+    }else if(m_SDIin.m_gviTime > 1.0/30)
+    {
+        //      longGVITime = m_SDIin.m_gviTime;
+        //      for(unsigned int i=0;i< longGVITime*30+2;i++)
+        //      {
+        //printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+        CaptureVideo(captureLatency);
+    }
+
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Name: drawOne
+// Desc: Draw single SDI video stream in graphics window.
+//-----------------------------------------------------------------------------
+GLvoid
+svlVidCapSrcSDIRenderTarget::drawOne()
+{
+    GLuint tex0;
+    // Calculate scaled video dimensions.
+    GLfloat scaledVideoWidth;
+    GLfloat scaledVideoHeight;
+    int videoWidth = m_SDIin.getWidth();
+    int videoHeight = m_SDIin.getHeight();
+    calcScaledVideoDimensions(m_windowWidth, m_windowHeight,
+                              videoWidth, videoHeight,
+                              &scaledVideoWidth,
+                              &scaledVideoHeight);
+
+    // Set draw color.
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Enable texture mapping
+    glEnable(GL_TEXTURE_RECTANGLE_NV);
+
+    // Bind texture object for first video stream
+    if(captureOptions.captureType == BUFFER_FRAME)
+        tex0 = getTextureFromBuffer(0);
+    else
+        tex0 = m_SDIin.getTextureObjectHandle(0);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex0);
+
+    // Set viewport to whole window area.
+    glViewport(0, 0, m_windowWidth, m_windowHeight);
+
+    // Draw textured quad in graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+}
+
+//-----------------------------------------------------------------------------
+// Name: drawTwo
+// Desc: Draw two SDI video stream in graphics window.
+//       Video streams are stacked on atop the other.
+//-----------------------------------------------------------------------------
+GLvoid
+svlVidCapSrcSDIRenderTarget::drawTwo()
+{
+    GLuint tex0;
+    // Calculate scaled video dimensions.
+    GLfloat scaledVideoWidth;
+    GLfloat scaledVideoHeight;
+    int videoWidth = m_SDIin.getWidth();
+    int videoHeight = m_SDIin.getHeight();
+    calcScaledVideoDimensions(m_windowWidth, m_windowHeight / 2,
+                              videoWidth, videoHeight,
+                              &scaledVideoWidth,
+                              &scaledVideoHeight);
+
+    // Set draw color.
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Enable texture mapping
+    glEnable(GL_TEXTURE_RECTANGLE_NV);
+
+    // Bind texture object for first video stream
+    if(captureOptions.captureType == BUFFER_FRAME)
+        tex0 = getTextureFromBuffer(0);
+    else
+        tex0 = m_SDIin.getTextureObjectHandle(0);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex0);
+
+    // Set viewport to lower half of window.
+    glViewport(0, m_windowHeight / 2, m_windowWidth, m_windowHeight / 2);
+
+    // Draw textured quad in lower half of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    // Bind texture object for second video stream
+    GLuint tex1 = m_SDIin.getTextureObjectHandle(1);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex1);
+
+    // Set viewport to upper half of window.
+    glViewport(0, 0, m_windowWidth, m_windowHeight / 2);
+
+    // Draw textured quad in upper half of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+}
+
+//-----------------------------------------------------------------------------
+// Name: drawThree
+// Desc: Draw three SDI video stream in graphics window.
+//       Use 3 quadrants with the remaining quadrant black.
+//-----------------------------------------------------------------------------
+GLvoid
+svlVidCapSrcSDIRenderTarget::drawThree()
+{
+    // Calculate scaled video dimensions.
+    GLfloat scaledVideoWidth;
+    GLfloat scaledVideoHeight;
+    int videoWidth = m_SDIin.getWidth();
+    int videoHeight = m_SDIin.getHeight();
+    calcScaledVideoDimensions(m_windowWidth / 2.0f, m_windowHeight / 2.0f,
+                              videoWidth, videoHeight,
+                              &scaledVideoWidth,
+                              &scaledVideoHeight);
+
+    // Set draw color.
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Enable texture mapping
+    glEnable(GL_TEXTURE_RECTANGLE_NV);
+
+    // Bind texture object for first video stream
+    GLuint tex0 = m_SDIin.getTextureObjectHandle(0);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex0);
+
+    // Set viewport to lower left quadrant
+    glViewport(0, 0, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in lower left quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    // Bind texture object for second video stream
+    GLuint tex1 = m_SDIin.getTextureObjectHandle(1);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex1);
+
+    // Set viewport to upper left quadrant
+    glViewport(0, m_windowHeight / 2, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in upper left quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    // Bind texture object for third video stream
+    GLuint tex2 = m_SDIin.getTextureObjectHandle(2);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex2);
+
+    // Set viewport to upper right quadrant.
+    glViewport(m_windowWidth / 2, m_windowHeight / 2, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in upper right quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, NULL);
+}
+
+
+//-----------------------------------------------------------------------------
+// Name: drawFour
+// Desc: Draw four SDI video stream tiled in graphics window.
+//       One stream is drawn in each quadrant.
+//-----------------------------------------------------------------------------
+GLvoid
+svlVidCapSrcSDIRenderTarget::drawFour()
+{
+    // Calculate scaled video dimensions.
+    GLfloat scaledVideoWidth;
+    GLfloat scaledVideoHeight;
+    int videoWidth = m_SDIin.getWidth();
+    int videoHeight = m_SDIin.getHeight();
+    calcScaledVideoDimensions(m_windowWidth / 2.0f, m_windowHeight / 2.0f,
+                              videoWidth, videoHeight,
+                              &scaledVideoWidth,
+                              &scaledVideoHeight);
+
+    // Set draw color.
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Enable texture mapping
+    glEnable(GL_TEXTURE_RECTANGLE_NV);
+
+    // Bind texture object for first video stream
+    GLuint tex0 = m_SDIin.getTextureObjectHandle(0);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex0);
+
+    // Set viewport to lower left corner quadrant
+    glViewport(0, 0, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in lower left quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    // Bind texture object for second video stream
+    GLuint tex1 = m_SDIin.getTextureObjectHandle(1);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex1);
+
+    // Set viewport to upper left quadrant.
+    glViewport(0, m_windowHeight / 2, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in lower right quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    // Bind texture object for third video stream
+    GLuint tex2 = m_SDIin.getTextureObjectHandle(2);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex2);
+
+    // Set viewport to upper right quadrant.
+    glViewport(m_windowWidth / 2, m_windowHeight / 2, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in upper right quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    // Bind texture object for fourth video stream
+    GLuint tex3 = m_SDIin.getTextureObjectHandle(3);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex3);
+
+    // Set viewport to lower right quadrant.
+    glViewport(m_windowWidth / 2, 0, m_windowWidth / 2, m_windowHeight / 2);
+
+    // Draw textured quad in upper right quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2i(0, 0);
+    glVertex2f(-scaledVideoWidth, -scaledVideoHeight);
+    glTexCoord2i(0, videoHeight);
+    glVertex2f(-scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, videoHeight);
+    glVertex2f(scaledVideoWidth, scaledVideoHeight);
+    glTexCoord2i(videoWidth, 0);
+    glVertex2f(scaledVideoWidth, -scaledVideoHeight);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, NULL);
+}
+
+//-----------------------------------------------------------------------------
+// Name: calcWindowSize
+// Desc: Calculate the graphics window size
+//-----------------------------------------------------------------------------
+void
+svlVidCapSrcSDIRenderTarget::calcWindowSize()
+{
+    int numStreams = m_SDIin.getNumStreams();
+    //TODO: fix frame rate
+    m_inputFrameRate = 59.94;
+    switch(m_SDIin.getVideoFormat()) {
+    case NV_CTRL_GVIO_VIDEO_FORMAT_487I_59_94_SMPTE259_NTSC:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_576I_50_00_SMPTE259_PAL:
+        if (numStreams == 1) {
+            m_windowWidth = 360; m_windowHeight = 243;
+        } else if (numStreams == 2) {
+            m_windowWidth = 720; m_windowHeight = 496;
+        } else {
+            m_windowWidth = 720; m_windowHeight = 486;
+        }
+        break;
+
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_59_94_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_60_00_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_50_00_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_30_00_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_29_97_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_25_00_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_24_00_SMPTE296:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_720P_23_98_SMPTE296:
+        if (numStreams == 1) {
+            m_windowWidth = 320; m_windowHeight = 180;
+        } else if (numStreams == 2) {
+            m_windowWidth = 320; m_windowHeight = 360;
+        } else {
+            m_windowWidth = 640; m_windowHeight = 486;
+        }
+        break;
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1035I_59_94_SMPTE260:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1035I_60_00_SMPTE260:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080I_50_00_SMPTE295:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080I_50_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080I_59_94_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080I_60_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080P_23_976_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080P_24_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080P_25_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080P_29_97_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080P_30_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080I_48_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080I_47_96_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080PSF_25_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080PSF_29_97_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080PSF_30_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080PSF_24_00_SMPTE274:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_1080PSF_23_98_SMPTE274:
+        if (numStreams == 1) {
+            m_windowWidth = 480; m_windowHeight = 270;
+        } else if (numStreams == 2) {
+            m_windowWidth = 480; m_windowHeight = 540;
+        } else {
+            m_windowWidth = 960; m_windowHeight = 540;
+        }
+        break;
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048P_30_00_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048P_29_97_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048I_60_00_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048I_59_94_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048P_25_00_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048I_50_00_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048P_24_00_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048P_23_98_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048I_48_00_SMPTE372:
+    case NV_CTRL_GVIO_VIDEO_FORMAT_2048I_47_96_SMPTE372:
+        if (numStreams == 1) {
+            m_windowWidth = 512; m_windowHeight = 270;
+        } else if (numStreams == 2) {
+            m_windowWidth = 512; m_windowHeight = 540;
+        } else {
+            m_windowWidth = 1024; m_windowHeight = 540;
+        }
+        break;
+    default:
+        m_windowWidth = 500;
+        m_windowHeight = 500;
+    }
 }
 
 /*************************************/
@@ -438,36 +1458,7 @@ CMN_IMPLEMENT_SERVICES_DERIVED(svlVidCapSrcSDI, svlVidCapSrcBase)
 //}
 
 
-//-----------------------------------------------------------------------------
-// Name: calcScaledVideoDimensions
-// Desc: Calculate scaled video dimensions that preserve aspect ratio
-//-----------------------------------------------------------------------------
-GLvoid
-calcScaledVideoDimensions(GLuint ww, GLuint wh, GLuint vw, GLuint vh,
-                          GLfloat *svw, GLfloat *svh)
-{
-    GLfloat fww = ww;
-    GLfloat fwh = wh;
-    GLfloat fvw = vw;
-    GLfloat fvh = vh;
 
-    // Set the scale video width to the window width.
-    // Scale the video height by the aspect ratio.
-    // If the resulting height is greater than the
-    // window height, the set the video height to
-    // the window height and scale the width by the
-    // video aspect ratio.
-    *svw = fww;
-    *svh = (fvh / fvw) * *svw;
-    if (*svh > wh) {
-        *svh = fwh;
-        *svw = (fvw / fvh) * *svh;
-    }
-
-    // Normalize
-    *svh /= fwh;
-    *svw /= fww;
-}
 
 
 ////////////////////////////////////
@@ -477,7 +1468,8 @@ calcScaledVideoDimensions(GLuint ww, GLuint wh, GLuint vw, GLuint vh,
 svlVidCapSrcSDI::svlVidCapSrcSDI():
     svlVidCapSrcBase(),
     NumOfStreams(0),
-    Initialized(false),
+    InitializedInput(false),
+    InitializedOutput(false),
     Running(false),
     CaptureProc(0),
     CaptureThread(0)
@@ -552,7 +1544,7 @@ int svlVidCapSrcSDI::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
     std::cout << "svlVidCapSrcSDI::GetDeviceList(...)" << std::endl;
 #endif
 
-    if (deviceinfo == 0 || Initialized) return SVL_FAIL;
+    if (deviceinfo == 0 || (InitializedInput && InitializedOutput)) return SVL_FAIL;
 
     unsigned int sys, dig, digitizers;
     bool cap, ovrl;
@@ -636,7 +1628,7 @@ int svlVidCapSrcSDI::Open()
 #endif
 
     if (NumOfStreams <= 0) return SVL_FAIL;
-    if (Initialized) return SVL_OK;
+    if (InitializedInput) return SVL_OK;
 
     Close();
 
@@ -673,19 +1665,20 @@ int svlVidCapSrcSDI::Open()
         //            MilBands[SystemID[i]][DigitizerID[i]] != 3) goto labError;
 
         //        // Allocate capture buffers
+        const unsigned int pitch  = 3840;//CaptureProc[0]->GetSDIin().getWidth();//MilWidth[SystemID[i]][DigitizerID[i]];
         const unsigned int width  = 1920;//CaptureProc[0]->GetSDIin().getWidth();//MilWidth[SystemID[i]][DigitizerID[i]];
-        const unsigned int height = 1080;// CaptureProc[0]->GetSDIin().getWidth();//MilHeight[SystemID[i]][DigitizerID[i]];
+        const unsigned int height = 1080;//CaptureProc[0]->GetSDIin().getWidth();//MilHeight[SystemID[i]][DigitizerID[i]];
 #if __VERBOSE__ == 1
-        std::cout << "svlVidCapSrcMIL::Open - Allocate image buffer (" << width << ", " << height << ")" << std::endl;
+        std::cout << "svlVidCapSrcSDI::Open - Allocate image buffer (" << pitch << ", " << height << ")" << std::endl;
 #endif
-        ImageBuffer[i] = new svlBufferImage(width, height);
+        ImageBuffer[i] = new svlBufferImage(pitch, height);
         // Set the pointer in the capture structure that will be accessed in the callback
         //        MilCaptureParams[SystemID[i]][DigitizerID[i]].ImageBuffer = ImageBuffer[i];
         //        MilCaptureParams[SystemID[i]][DigitizerID[i]].SystemID    = SystemID[i];
         //        MilCaptureParams[SystemID[i]][DigitizerID[i]].DigitizerID = DigitizerID[i];
     }
 
-    Initialized = true;
+    InitializedInput = true;
 
     NumOfStreams = 2;//CaptureProc[0]->GetSDIin().getNumStreams();
     return SVL_OK;
@@ -698,14 +1691,14 @@ labError:
 void svlVidCapSrcSDI::Close()
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcMIL::Close()" << std::endl;
+    std::cout << "svlVidCapSrcSDI::Close()" << std::endl;
 #endif
 
     if (NumOfStreams == 0) return;
 
     Stop();
 
-    Initialized = false;
+    InitializedInput = false;
 
     //    for (unsigned int sys = 0; sys < MIL_MAX_SYS; sys ++) {
     //        if (MilSystem[sys] == M_NULL) continue;
@@ -741,7 +1734,7 @@ int svlVidCapSrcSDI::Start()
     std::cout << "svlVidCapSrcSDI::Start()" << std::endl;
 #endif
 
-    if (!Initialized) return SVL_FAIL;
+    if (!InitializedInput) return SVL_FAIL;
     Running = true;
     for (unsigned int i = 0; i < SDINUMDEVICES; i ++) {
         CaptureProc[i] = new svlVidCapSrcSDIThread(i);
@@ -763,7 +1756,7 @@ svlImageRGB* svlVidCapSrcSDI::GetLatestFrame(bool waitfornew, unsigned int video
     std::cout << "svlVidCapSrcSDI::GetLatestFrame(" << waitfornew << ", " << videoch << ")" << std::endl;
 #endif
 
-    if (videoch >= NumOfStreams || !Initialized) return 0;
+    if (videoch >= NumOfStreams || !InitializedInput) return 0;
     return ImageBuffer[videoch]->Pull(waitfornew);
 }
 
@@ -845,7 +1838,7 @@ int svlVidCapSrcSDI::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCa
     formatlist[0][0].colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
-    formatlist[0][0].framerate = -1.0;
+    formatlist[0][0].framerate = 59.94;
     formatlist[0][0].custom_mode = -1;
 
     return 1;
@@ -864,7 +1857,7 @@ int svlVidCapSrcSDI::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format,
     format.colorspace = svlFilterSourceVideoCapture::PixelRGB8;
     format.rgb_order = true;
     format.yuyv_order = false;
-    format.framerate = -1.0;
+    format.framerate = 59.94;
     format.custom_mode = -1;
 
     return SVL_OK;
@@ -999,18 +1992,6 @@ svlVidCapSrcSDIThread::Shutdown()
 
     cleanupGL();
 }
-
-
-//-----------------------------------------------------------------------------
-// Name: WaitForNotify
-// Desc: Wait for notify event routine
-//-----------------------------------------------------------------------------
-static
-Bool WaitForNotify(Display * d, XEvent * e, char *arg)
-{
-    return (e->type == MapNotify) && (e->xmap.window == (Window) arg);
-}
-
 
 //-----------------------------------------------------------------------------
 // Name: CreateWindow
@@ -1214,18 +2195,15 @@ svlVidCapSrcSDIThread::setupSDIinDevice(Display *d, HGPUNV *g)
     captureOptions.cscMin = min;
     captureOptions.cscMat = &mat[0][0];
     captureOptions.cscOffset = offset;
-    captureOptions.captureType = TEXTURE_FRAME;
-    captureOptions.textureInternalFormat =  GL_RGBA8;
-    captureOptions.pixelFormat = GL_RGBA;
+    captureOptions.captureType = BUFFER_FRAME;
+    captureOptions.bufferInternalFormat = GL_RGBA8;
     captureOptions.bitsPerComponent = NV_CTRL_GVI_BITS_PER_COMPONENT_8;
     captureOptions.sampling = NV_CTRL_GVI_COMPONENT_SAMPLING_422;
     captureOptions.xscreen = g->deviceXScreen;
     captureOptions.bDualLink = false;
     captureOptions.bChromaExpansion = true;
     m_SDIin.setCaptureOptions(d,captureOptions);
-
     bool ret = m_SDIin.initCaptureDeviceNVCtrl();
-    //NumOfStreams = m_SDIin.getNumStreams();
 
     return ret;
 }
@@ -1372,6 +2350,37 @@ GLboolean svlVidCapSrcSDIThread::cleanupGL()
     return GL_TRUE;
 }
 
+//-----------------------------------------------------------------------------
+// Name: Process
+// Desc: Copy from buffer to texture
+//-----------------------------------------------------------------------------
+
+GLuint svlVidCapSrcSDIThread::getTextureFromBuffer(unsigned int index)
+{
+    //doCuda();
+    GLuint texture;
+    GLuint width = m_SDIin.getWidth();
+    GLuint height = m_SDIin.getHeight();
+    GLuint pitch = m_SDIin.getBufferObjectPitch(0);
+    // To skip a costly data copy from video buffer to texture we
+    // can just bind a video buffer to GL_PIXEL_UNPACK_BUFFER_ARB and call
+    // glTexSubImage2D referencing into the buffer with the PixelData pointer
+    // set to 0.
+
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, texture);
+    //glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, m_SDIin.getBufferObjectHandle(0));
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, texture);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH,pitch/4);
+
+    glTexSubImage2D(GL_TEXTURE_RECTANGLE_NV, 0, 0, 0, width, height,
+                    GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV, 0);
+
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+    assert(glGetError() == GL_NO_ERROR);
+
+    return texture;
+}
 
 //-----------------------------------------------------------------------------
 // Name: Capture
@@ -1487,6 +2496,7 @@ svlVidCapSrcSDIThread::CaptureVideo(GLuint dropBool,float runTime)
 GLvoid
 svlVidCapSrcSDIThread::drawOne()
 {
+    GLuint tex0;
     // Calculate scaled video dimensions.
     GLfloat scaledVideoWidth;
     GLfloat scaledVideoHeight;
@@ -1504,7 +2514,10 @@ svlVidCapSrcSDIThread::drawOne()
     glEnable(GL_TEXTURE_RECTANGLE_NV);
 
     // Bind texture object for first video stream
-    GLuint tex0 = m_SDIin.getTextureObjectHandle(0);
+    if(captureOptions.captureType == BUFFER_FRAME)
+        tex0 = getTextureFromBuffer(0);
+    else
+        tex0 = m_SDIin.getTextureObjectHandle(0);
     glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex0);
 
     // Set viewport to whole window area.
@@ -1531,6 +2544,7 @@ svlVidCapSrcSDIThread::drawOne()
 GLvoid
 svlVidCapSrcSDIThread::drawTwo()
 {
+    GLuint tex0;
     // Calculate scaled video dimensions.
     GLfloat scaledVideoWidth;
     GLfloat scaledVideoHeight;
@@ -1548,7 +2562,10 @@ svlVidCapSrcSDIThread::drawTwo()
     glEnable(GL_TEXTURE_RECTANGLE_NV);
 
     // Bind texture object for first video stream
-    GLuint tex0 = m_SDIin.getTextureObjectHandle(0);
+    if(captureOptions.captureType == BUFFER_FRAME)
+        tex0 = getTextureFromBuffer(1);
+    else
+        tex0 = m_SDIin.getTextureObjectHandle(1);
     glBindTexture(GL_TEXTURE_RECTANGLE_NV, tex0);
 
     // Set viewport to lower half of window.
@@ -1880,12 +2897,13 @@ void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
 {
     // signal success to main thread
     Error = false;
+    InitSuccess = true;
     InitEvent.Raise();
     GLint inBuf;
     cudaError_t cerr;
-    unsigned char *inDevicePtr;
-    unsigned char *outDevicePtr;
-    unsigned char* dest;
+    unsigned char* inDevicePtr;
+    unsigned char* outDevicePtr;
+    unsigned char* ptr;
 
     HGPUNV gpuList[MAX_GPUS];
     // Open X display
@@ -1900,35 +2918,35 @@ void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
     win = CreateWindow();
     SetupGL();
     StartSDIPipeline();
+    unsigned int pitch0 = m_SDIin.getBufferObjectPitch (0);
+    unsigned int pitch1 = m_SDIin.getBufferObjectPitch (1);
+    unsigned int height = m_SDIin.getHeight();
+    unsigned int size = pitch0*height;
+    std::cout << "svlVidCapSrcSDIThread::Proc(), pitches: " << pitch0 << ", " << pitch1 << " height: " << height << std::endl;
+    for (int i = 0; i < m_SDIin.getNumStreams (); i++) {
+        m_memBuf[i] =
+                (unsigned char *) malloc (m_SDIin.getBufferObjectPitch (i) *
+                                          m_SDIin.getHeight ());
+    }
 
     while (baseref->Running) {
         if (CaptureVideo() != GL_FAILURE_NV)
         {
-//            for(unsigned int i=0;i<m_SDIin.getNumStreams();i++)
-//            {
-//                inBuf = m_SDIin.getBufferObjectHandle(0);
-//                // Map buffer(s) into CUDA
-//                cerr = cudaGLMapBufferObject((void**)&inDevicePtr, inBuf);
-//                //cudaCheckErrors("map");
-//                cerr = cudaGLMapBufferObject((void**)&outDevicePtr, gTexObjs[i]);
-//                //cudaCheckErrors("map");
-//                unsigned int pitch = m_SDIin.getBufferObjectPitch(0);
-//                unsigned int height = m_SDIin.getHeight();
-//                cudaMemcpy(outDevicePtr,inDevicePtr,pitch*height,cudaMemcpyDeviceToDevice);
-//                dest = baseref->ImageBuffer[i]->GetPushBuffer();
-//                svlConverter::UYVYtoRGB24(outDevicePtr,
-//                                          dest,
-//                                          m_SDIin.getWidth() * m_SDIin.getHeight(),
-//                                          true, true, true);
-//                baseref->ImageBuffer[i]->Push();
-                //DrawOutputScene(m_SDIin.getTextureObjectHandle(0),m_SDIin.getTextureObjectHandle(1));
-                DisplayVideo(false);//drawCaptureFrameRate);
-//            }
+            for (int i = 0; i < m_SDIin.getNumStreams(); i++) {
+                glBindBufferARB (GL_VIDEO_BUFFER_NV,
+                                 m_SDIin.getBufferObjectHandle (i));
+                glGetBufferSubDataARB (GL_VIDEO_BUFFER_NV, 0,
+                                       m_SDIin.getBufferObjectPitch (i) *
+                                       m_SDIin.getHeight (), m_memBuf[i]);
+                //                 ptr = baseref->ImageBuffer[i]->GetPushBuffer(size);
+                //                 if (!size || !ptr) { /* trouble */ }
+                //                 memcpy(ptr, m_memBuf[i], size);
+                //                 baseref->ImageBuffer[i]->Push();
+                glBindBufferARB (GL_VIDEO_BUFFER_NV, NULL);
+            }
+            //DisplayVideo(false);//drawCaptureFrameRate);
         }
-
-
     }
-
     return this;
 }
 

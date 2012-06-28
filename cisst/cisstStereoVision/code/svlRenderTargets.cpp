@@ -5,7 +5,7 @@
   $Id$
   
   Author(s):  Balazs Vagvolgyi
-  Created on: 2009-03-12 
+  Created on: 2009-03-12
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -24,26 +24,26 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlConfig.h>
 
 #ifdef _MSC_VER
-    // Quick fix for Visual Studio Intellisense:
-    // The Intellisense parser can't handle the CMN_UNUSED macro
-    // correctly if defined in cmnPortability.h, thus
-    // we should redefine it here for it.
-    // Removing this part of the code will not effect compilation
-    // in any way, on any platforms.
-    #undef CMN_UNUSED
-    #define CMN_UNUSED(argument) argument
+// Quick fix for Visual Studio Intellisense:
+// The Intellisense parser can't handle the CMN_UNUSED macro
+// correctly if defined in cmnPortability.h, thus
+// we should redefine it here for it.
+// Removing this part of the code will not effect compilation
+// in any way, on any platforms.
+#undef CMN_UNUSED
+#define CMN_UNUSED(argument) argument
 #endif
 
 #if CISST_SVL_HAS_MIL
-    #include "svlVidCapSrcMIL.h"
+#include "svlVidCapSrcMIL.h"
 #endif // CISST_SVL_HAS_MIL
 
 //TODO::CMAKE flag for SDI
-#if CISST_SVL_HAS_OPENGL
-#include "svlVidCapSrcSDI.h"
+#if CISST_HAS_OPENGL
+#include <cisstStereoVision/svlVidCapSrcSDI.h>
 #endif//CISST_HAS_OPENGL
 
-#define __VERBOSE__  0
+#define __VERBOSE__  1
 
 
 /*************************************/
@@ -73,7 +73,25 @@ svlRenderTargets::svlRenderTargets()
     Targets.SetAll(0);
 
     delete [] devlist;
-#endif // CISST_SVL_HAS_MIL
+#elif CISST_HAS_OPENGL //CISST_SVL_HAS_MIL
+    svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
+    svlFilterSourceVideoCapture::DeviceInfo *devlist;
+    int devicecount = device->GetDeviceList(&devlist);
+    int overlaycount = 0;
+
+    for (int i = 0; i < devicecount; i ++) {
+        if (device->IsOverlaySupported(i)) {
+            TargetDeviceID.resize(overlaycount + 1);
+            TargetDeviceID[overlaycount] = i;
+            overlaycount ++;
+        }
+    }
+    Targets.SetSize(overlaycount);
+    Targets.SetAll(0);
+
+    delete [] devlist;
+#endif // CISST_HAS_OPENGL
+
 }
 
 svlRenderTargets::~svlRenderTargets()
@@ -111,7 +129,26 @@ svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
     }
     return 0;
 }
-#else // CISST_SVL_HAS_MIL
+#elif CISST_HAS_OPENGL // CISST_SVL_HAS_MIL
+svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
+{
+#if __VERBOSE__ == 1
+    std::cerr << "svlRenderTargets::Get()" << std::endl;
+#endif
+
+    svlRenderTargets* instance = Instance();
+    if (instance->Targets.size() > deviceID) {
+        if (!instance->Targets[deviceID]) {
+            instance->Targets[deviceID] = new svlVidCapSrcSDIRenderTarget(instance->TargetDeviceID[deviceID]);
+        }
+#if __VERBOSE__ == 1
+        std::cerr << "returning svlVidCapSrcSDIRenderTarget" << std::endl;
+#endif
+        return instance->Targets[deviceID];
+    }
+    return 0;
+}
+#else // CISST_HAS_OPENGL
 svlRenderTargetBase* svlRenderTargets::Get(unsigned int CMN_UNUSED(deviceID))
 {
 #if __VERBOSE__ == 1

@@ -78,8 +78,9 @@
 int main(int argc, char *argv[])
 {
     timeval setup, start, end;
+    //svlRenderTargetBase* target = svlRenderTargets::Get(0);
     svlVidCapSrcSDI* vidCapSrcSDI = svlVidCapSrcSDI::GetInstance();
-    vidCapSrcSDI->SetStreamCount(1);
+    vidCapSrcSDI->SetStreamCount(2);
     vidCapSrcSDI->SetDevice(0,0,0);
     // Required for drawOGLString.
     //glutInit(&argc, argv);
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
 //    //scan the systems for GPUs
 //    int	num_gpus = ScanHW(dpy,gpuList);
 
-//    if(num_gpus < 1)
+//    if(num_gpus < 1)7
 //        exit(1);
 
 //    //grab the first GPU for now for DVP
@@ -109,10 +110,13 @@ int main(int argc, char *argv[])
         if(vidCapSrcSDI->Open() != SVL_OK)
             return 0;
     }
-    vidCapSrcSDI->Start();
-    //usleep(1000);
+    if(vidCapSrcSDI->Start() != SVL_OK)
+        return 0;
+    //vidCapSrcSDI->GetCaptureProc(0)->Proc(vidCapSrcSDI);
+
 
     //svlVidCapSrcSDIRenderTarget target(vidCapSrcSDI->GetCaptureProc(0)->GetDisplay(),vidCapSrcSDI->GetCaptureProc(0)->GetGPU(),vidCapSrcSDI->GetCaptureProc(0)->GetSDIin().getVideoFormat(),vidCapSrcSDI->GetCaptureProc(0)->GetSDIin().getNumStreams());
+
     gettimeofday(&setup, 0);
 
     double runtime;
@@ -147,6 +151,7 @@ int main(int argc, char *argv[])
                 //target.DrawOutputScene(vidCapSrcSDI->GetCaptureProc(0)->GetSDIin().getTextureObjectHandle(0),vidCapSrcSDI->GetCaptureProc(0)->GetSDIin().getTextureObjectHandle(1));//,OffScreenBuffer->GetPointer(0));
                 //target.OutputVideo();
            // }
+            //target->SetImage()
             gettimeofday(&end, 0);
             if(runtime/1000000 > 1.0/30)// && !captureLatency)
             {
@@ -161,7 +166,10 @@ int main(int argc, char *argv[])
         count++;
 
     }
-    vidCapSrcSDI->GetCaptureProc(0)->Shutdown();
+    if(vidCapSrcSDI)
+        vidCapSrcSDI->GetCaptureProc(0)->Shutdown();
+    //if(target)
+    //    target->Shutdown();
 
 }
 

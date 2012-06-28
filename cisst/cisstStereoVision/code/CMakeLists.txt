@@ -809,7 +809,7 @@ IF(CISST_HAS_OPENGL)
 
 add_definitions (-DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES -D_GNU_SOURCE)
 
-set (QUADRO_SDI_SDK "/home/wen/MyCommon/NVIDIA Quadro 5000 SDI/sdk/")
+set (QUADRO_SDI_SDK "/home/wenl/MyCommon/NVIDIAQuadroSDI/sdk/")
 
 find_package (OpenGL REQUIRED)
 find_package (GLUT REQUIRED)

@@ -67,35 +67,44 @@ class svlVidCapSrcSDIThread;
 class svlVidCapSrcSDIRenderTarget : public svlRenderTargetBase
 {
     friend class svlRenderTargets;
+    friend class svlVidCapSrcSDIThread;
 
 public:
     bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip);
     unsigned int GetWidth();
     unsigned int GetHeight();
-    void* ThreadProc(void* param);
+    void* ThreadProc(void* CMN_UNUSED(param));
+    void* CaptureThreadProc(void* param);
 
+    GLenum  CaptureVideo(GLuint dropBool=0,float runTime = 0.0);
     GLboolean OutputVideo ();
-    GLboolean DrawOutputScene(GLuint cudaOutTexture1, GLuint cudaOutTexture2, unsigned char* vtkPixelData = new unsigned char[0]);
-    svlVidCapSrcSDIRenderTarget(Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams, unsigned int deviceID=0, unsigned int displayID = 0);
-    ~svlVidCapSrcSDIRenderTarget();
+    GLboolean DrawOutputScene(bool drawOverlay=false, GLuint cudaOutTexture1=-1, GLuint cudaOutTexture2=-1);
+    GLenum DisplayVideo(bool drawFrameRate = false);
+    void Shutdown();
+    void MakeCurrentGLCtx(){glXMakeCurrent(dpy, win, ctx);};
 
 protected:
-
+    svlVidCapSrcSDIRenderTarget(unsigned int deviceID, unsigned int displayID=0);
+    svlVidCapSrcSDIRenderTarget(Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams, unsigned int deviceID=0, unsigned int displayID = 0);
+    ~svlVidCapSrcSDIRenderTarget();
 
 private:
     int SystemID;
     int DigitizerID;
 
-    osaThread* Thread;
+    osaThread *Thread, *CaptureThread;
     osaThreadSignal NewFrameSignal;
     osaThreadSignal ThreadReadySignal;
     bool TransferSuccessful;
     bool KillThread;
     bool ThreadKilled;
+    bool Running;
 
     Display * dpy;		// Display
+    Window win;            // Window
     HGPUNV *gpu;
     GLsizei m_num_streams;
+    unsigned char *m_overlayBuf[MAX_VIDEO_STREAMS];   // System memory buffers
     CFBO m_FBO[MAX_VIDEO_STREAMS];			// Channel 1 FBO
     OutputOptions outputOptions;
     CNvSDIout m_SDIout;
@@ -104,17 +113,47 @@ private:
     CaptureOptions m_captureOptions;
     bool m_SDIoutEnabled;
 
-    GLboolean setupGL ();
-    bool setupSDIoutGL ();
+    //capture
+    unsigned char *m_memBuf[MAX_VIDEO_STREAMS];   // System memory buffers
+    CaptureOptions captureOptions;
+    Colormap cmap;
+    GLXContext ctx;        // OpenGL rendering context
+    CNvSDIin m_SDIin;
+    GLuint m_windowWidth;                   // Window width
+    GLuint m_windowHeight;                  // Window height
+    double m_inputFrameRate;
+    GLuint gTexObjs[MAX_VIDEO_STREAMS];
+
     void drawVTKPixels(GLuint gWidth, GLuint gHeight, unsigned char* vtkPixelData);
     void drawCircle(GLuint gWidth, GLuint gHeight);
 
-    bool setupSDIDevices (Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams);
-    bool setupSDIoutDevice (Display * d, HGPUNV * g, unsigned int video_format);
+    void calcWindowSize();
+    void drawOne();
+    void drawTwo();
+    void drawThree();
+    void drawFour();
+    GLuint getTextureFromBuffer(unsigned int index);
 
-    GLboolean cleanupGL ();
+    //bool setupSDIDevices (Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams);
+    bool setupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
+    bool setupSDIinDevice(Display *d,HGPUNV *g);
+    bool setupSDIoutDevice(Display * d, HGPUNV * g, unsigned int video_format);
+    GLboolean setupSDIGL();
+    GLboolean setupSDIinGL();
+    GLboolean setupSDIoutGL();
+
+    bool startSDIPipeline();
+    bool stopSDIPipeline();
+
     bool cleanupSDIDevices ();
-    bool cleanupSDIout ();
+    bool cleanupSDIinDevices();
+    bool cleanupSDIoutDevices ();
+    GLboolean cleanupSDIGL ();
+    GLboolean cleanupSDIinGL();
+    GLboolean cleanupSDIoutGL();
+    bool destroyWindow();
+
+    Window createWindow();
 };
 
 class svlVidCapSrcSDI : public svlVidCapSrcBase
@@ -128,6 +167,7 @@ public:
     static svlVidCapSrcSDI* GetInstance();
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
     int SetStreamCount(unsigned int numofstreams);
+    int GetStreamCount(void){return NumOfStreams;};
     int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
     int Open();
     void Close();
@@ -155,7 +195,7 @@ private:
 
     //TODO::Match with sdi in
     unsigned int NumOfStreams;
-    bool Initialized;
+    bool InitializedInput, InitializedOutput;
     bool Running;
 
     vctDynamicVector<int> SystemID;
@@ -198,6 +238,7 @@ private:
     bool InitSuccess;
     IplImage *Frame;
 
+    unsigned char *m_memBuf[MAX_VIDEO_STREAMS];   // System memory buffers
     CaptureOptions captureOptions;
     //X stuff
     Display *dpy;          // Display
@@ -220,6 +261,7 @@ private:
     void drawCircle(GLuint gWidth, GLuint gHeight);
     void drawThree();
     void drawFour();
+    GLuint getTextureFromBuffer(unsigned int index);
 
     GLboolean cleanupGL();
     bool cleanupSDIin();

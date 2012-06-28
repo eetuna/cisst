@@ -37,9 +37,9 @@
 #endif // CISST_SVL_HAS_MIL
 
 //TODO::CMAKE flag for SDI
-//#if CISST_SVL_HAS_OPENGL
+#if CISST_HAS_OPENGL
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
-//#endif//CISST_HAS_OPENGL
+#endif//CISST_HAS_OPENGL
 
 
 void svlInitializeVideoCapture();

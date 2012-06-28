@@ -28,7 +28,7 @@ if (cisst_FOUND_AS_REQUIRED)
 
   include_directories (behaviors)
   add_subdirectory (behaviors)
-  add_subdirectory(daVinciStereoDisparity)
+  add_subdirectory(nvidiaQuadroSDI)
 
   # sawSensablePhantom has been compiled within cisst, we should find it automatically
   cisst_find_saw_component (sawSensablePhantom QUIET)

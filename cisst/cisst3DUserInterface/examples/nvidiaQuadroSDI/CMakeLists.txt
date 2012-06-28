@@ -14,26 +14,30 @@
 
 cmake_minimum_required (VERSION 2.6)
 
-# create a list of libraries needed for this project
-set (REQUIRED_CISST_LIBRARIES cisstCommon cisstVector cisstOSAbstraction cisstMultiTask cisstStereoVision)
+project (ui3ExNVIDIAQuadroSDI)
 
-# find cisst and make sure the required libraries have been compiled
-find_package (cisst REQUIRED ${REQUIRED_CISST_LIBRARIES})
+# sawSensablePhantom configuration
+include_directories (${sawIntuitiveDaVinci_INCLUDE_DIR})
+link_directories (${sawIntuitiveDaVinci_LIBRARY_DIR})
 
-if (cisst_FOUND_AS_REQUIRED)
 
-  # load cisst configuration
-  include (${CISST_USE_FILE})
+add_executable (ui3ExNVIDIAQuadroSDI
+                svlSDI.cpp)
 
-  if (CISST_SVL_HAS_X11 OR WIN32)
-    add_executable (svlExNVIDIAQuadroSDI svlSDI.cpp)
-    set_property (TARGET svlExNVIDIAQuadroSDI PROPERTY FOLDER "cisstStereoVision/examples")
-    cisst_target_link_libraries (svlExNVIDIAQuadroSDI ${REQUIRED_CISST_LIBRARIES})
+set_property (TARGET ui3ExNVIDIAQuadroSDI PROPERTY FOLDER "cisst3DUserInterface/examples")
 
-  else (CISST_SVL_HAS_X11 OR WIN32)
-    message ("Information: code in ${CMAKE_CURRENT_SOURCE_DIR} will not be compiled, it requires CISST_SVL_HAS_X11 or WIN32")
-  endif (CISST_SVL_HAS_X11 OR WIN32)
+target_link_libraries (ui3ExNVIDIAQuadroSDI
+                       ${sawIntuitiveDaVinci_LIBRARIES})
 
-else (cisst_FOUND_AS_REQUIRED)
-  message ("Information: code in ${CMAKE_CURRENT_SOURCE_DIR} will not be compiled, it requires ${REQUIRED_CISST_LIBRARIES}")
-endif (cisst_FOUND_AS_REQUIRED)
+cisst_target_link_libraries (ui3ExNVIDIAQuadroSDI
+                             cisstCommon cisstVector cisstOSAbstraction cisstMultiTask
+                             cisstStereoVision cisstParameterTypes cisst3DUserInterface)
+
+# Copy VTK models to the build tree
+if (WIN32)
+    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/probeEnd.STL
+                    ${CMAKE_CURRENT_BINARY_DIR}/probeEnd.STL COPYONLY)
+else (WIN32)
+    configure_file (${CMAKE_CURRENT_SOURCE_DIR}/probeEnd.STL
+                    ${EXECUTABLE_OUTPUT_PATH}/probeEnd.STL COPYONLY)
+endif (WIN32)

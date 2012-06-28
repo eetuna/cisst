@@ -429,6 +429,14 @@ int svlFilterSourceVideoCapture::Initialize(svlSample* &syncOutput)
         }
     }
 
+// wpliu TODO: 06/26/2012 Flag for Quadro SDI
+#if CISST_HAS_OPENGL
+    if (DeviceObj[API[0]]->Start() != SVL_OK) {
+        ret = SVL_VCS_UNABLE_TO_START_CAPTURE;
+        goto labError;
+    }
+
+#else
     // Start capturing in the background
     for (i = 0; i < NumberOfChannels; i ++) {
         if (DeviceObj[API[i]]->Start() != SVL_OK) {
@@ -436,6 +444,7 @@ int svlFilterSourceVideoCapture::Initialize(svlSample* &syncOutput)
             goto labError;
         }
     }
+#endif //CISST_SVL_HAS_OPENGL
 
     return SVL_OK;
 
