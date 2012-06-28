@@ -11,7 +11,9 @@
 # http://www.cisst.org/cisst/license.txt.
 #
 # --- end cisst license ---
-
+SET(CMAKE_CXX_COMPILER_WORKS 1) #in CMakeTestCXXCompiler.cmake file
+#and
+SET(CMAKE_C_COMPILER_WORKS 1) #in CMakeTestCCompiler.cmake file
 
 # Backward compatibility
 cmake_minimum_required (VERSION 2.6.2)
