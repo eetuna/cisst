@@ -808,19 +808,19 @@ ENDIF(CISST_SVL_HAS_FFMPEG OR NOT FFMPEG_OPTIONS)
 IF(NOT WIN32)
 
 	add_definitions (-DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES -D_GNU_SOURCE)
-
-	set (QUADRO_SDI_SDK "/home/wen/MyCommon/NVIDIA Quadro 5000 SDI/sdk/")
+        set (QUADRO_SDI_SDK "/home/wen/MyCommon/NVIDIA Quadro 5000 SDI/sdk/")
+        #set (QUADRO_SDI_SDK "/home/wenl/MyCommon/NVIDIAQuadroSDI/sdk/")
 
 	find_package (OpenGL REQUIRED)
 	find_package (GLUT REQUIRED)
-	#find_package (CUDA REQUIRED)
+        find_package (CUDA REQUIRED)
 	find_package (Threads REQUIRED)
 
 	add_definitions (-DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES -D_GNU_SOURCE)
 
 	SET (SDI_INCLUDE_DIRECTORIES
 			"${GLUT_INCLUDE_DIR}"
-	#        "${CUDA_INCLUDE_DIRS}"
+                        "${CUDA_INCLUDE_DIRS}"
 			"${QUADRO_SDI_SDK}/linux/include" "${QUADRO_SDI_SDK}/common" "${QUADRO_SDI_SDK}/linux/src"
 			)
 
@@ -858,7 +858,7 @@ IF(NOT WIN32)
 				"${SDI_xnvctrl_LIBRARY}"
 				"${SDI_anc_LIBRARY}"
 				pthread
-				${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} #${CUDA_LIBRARIES}
+                                ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${CUDA_LIBRARIES}
 				)
 
 	SET(SVL_ADDITIONAL_LIBRARIES

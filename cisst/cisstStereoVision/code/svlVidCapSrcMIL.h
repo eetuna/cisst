@@ -48,7 +48,7 @@ protected:
     ~svlVidCapSrcMILRenderTarget();
 
 public:
-    bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip);
+    bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index=0);
     unsigned int GetWidth();
     unsigned int GetHeight();
 

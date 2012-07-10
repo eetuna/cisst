@@ -34,6 +34,7 @@
 #include <sstream>
 
 #include <X11/keysym.h>
+#include <X11/Xlib.h>
 
 #include <getopt.h>
 
@@ -70,7 +71,7 @@ class svlVidCapSrcSDIRenderTarget : public svlRenderTargetBase
     friend class svlVidCapSrcSDIThread;
 
 public:
-    bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip);
+    bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index=0);
     unsigned int GetWidth();
     unsigned int GetHeight();
     void* ThreadProc(void* CMN_UNUSED(param));
@@ -78,7 +79,7 @@ public:
 
     GLenum  CaptureVideo(GLuint dropBool=0,float runTime = 0.0);
     GLboolean OutputVideo ();
-    GLboolean DrawOutputScene(bool drawOverlay=false, GLuint cudaOutTexture1=-1, GLuint cudaOutTexture2=-1);
+    GLboolean DrawOutputScene(bool drawOverlay=false, GLuint cudaOutTexture1=-1, GLuint cudaOutTexture2=-1, unsigned char* vtkPixelData = new unsigned char[0]);
     GLenum DisplayVideo(bool drawFrameRate = false);
     void Shutdown();
     void MakeCurrentGLCtx(){glXMakeCurrent(dpy, win, ctx);};
@@ -154,6 +155,8 @@ private:
     bool destroyWindow();
 
     Window createWindow();
+
+    bool translateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip);
 };
 
 class svlVidCapSrcSDI : public svlVidCapSrcBase

@@ -31,7 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 #include "ManualRegistration.h"
 
 #define CUBE_DEMO 1
-#define IMPORT_FIDUCIALS 1
+#define IMPORT_FIDUCIALS 0
 #define FIDUCIAL_COUNT_MAX 30
 // z-axis translation between tool eye and tip (mm) for debakey forceps
 #define WRIST_TIP_OFFSET (11.0)
@@ -1249,7 +1249,7 @@ void ManualRegistration::Register(void)
     double * fre = new double[3*fiducialsVirtual.size()];
     memset(fre, 0, 3*fiducialsVirtual.size() * sizeof(double));
 
-    bool valid = nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
+    bool valid = false;//nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
     if (valid) {
         // apply transformation in ECMRCM
         this->VisibleListVirtual->SetTransformation(displacement * this->VisibleListVirtual->GetTransformation());
@@ -1262,7 +1262,7 @@ void ManualRegistration::Register(void)
     GetFiducials(fiducialsVirtual, fiducialsReal,CALIBRATION_REAL,UI3);
     fre = new double[3*fiducialsVirtual.size()];
     memset(fre, 0, 3*fiducialsVirtual.size() * sizeof(double));
-    valid = nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
+    valid = false;//nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
     if (valid) {
         // save calibration transformation
         this->WristCalibration = displacement;

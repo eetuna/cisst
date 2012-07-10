@@ -4,7 +4,7 @@
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstStereoVision/svlConverters.h>
 
-#define __VERBOSE__  1
+#define __VERBOSE__  0
 #define SDINUMDEVICES 1
 
 //-----------------------------------------------------------------------------
@@ -67,15 +67,12 @@ svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(unsigned int deviceID, 
     SystemID = deviceID;
     DigitizerID = displayID;
 
-    // Try to initialize overlay module
-    //svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
-    //TODO::CAPTURE
-
-    for (int i = 0; i < m_SDIin.getNumStreams (); i++) {
-        m_overlayBuf[i] =
-                (unsigned char *) malloc (m_SDIin.getWidth() *
-                                          m_SDIin.getHeight());
-    }
+    // fixes this error in linux:
+    //[xcb] Unknown request in queue while dequeuing
+    //[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
+    //[xcb] Aborting, sorry about that.
+    //../src/xcb_io.c:178: dequeue_pending_request: Assertion `!xcb_xlib_unknown_req_in_deq' failed.
+    XInitThreads();
 
     // Start up overlay thread
     Thread = new osaThread;
@@ -85,7 +82,8 @@ svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(unsigned int deviceID, 
     }
     else {
         // If it takes longer than 1 sec, don't execute
-        KillThread = true;
+        //KillThread = true;
+        ThreadReadySignal.Raise();
     }
     Running = true;
 }
@@ -131,7 +129,7 @@ bool svlVidCapSrcSDIRenderTarget::setupSDIDevices(Display * d, HGPUNV * g)
     }
 
     m_num_streams = m_SDIin.getNumStreams();
-    if(setupSDIoutDevice(dpy,gpu,NV_CTRL_GVO_VIDEO_FORMAT_487I_59_94_SMPTE259_NTSC) != TRUE)//m_SDIin.getVideoFormat()) != TRUE)//
+    if(setupSDIoutDevice(dpy,gpu,m_SDIin.getVideoFormat()) != TRUE)//NV_CTRL_GVO_VIDEO_FORMAT_487I_59_94_SMPTE259_NTSC) != TRUE)
     {
         printf("Error setting up video output.\n");
         m_SDIoutEnabled = FALSE;
@@ -145,7 +143,7 @@ bool svlVidCapSrcSDIRenderTarget::setupSDIDevices(Display * d, HGPUNV * g)
 
 //This routine should be called after the capture has already been configured
 //since it relies on the capture signal format configuration
-bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip)
+bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index)
 {
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDIRenderTarget::SetImage()" << std::endl;
@@ -154,28 +152,104 @@ bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, i
     if (SystemID < 0) return false;
 
     // Wait for thread to finish previous transfer
-    if (ThreadReadySignal.Wait(2.0) == false || TransferSuccessful == false || KillThread || ThreadKilled) {
-        // Something went terribly wrong on the thread
+    if (ThreadReadySignal.Wait(2.0) == false ||TransferSuccessful == false || KillThread || ThreadKilled) {
+        //Something went terribly wrong on the thread
         return false;
     }
 
     // Copy image to the Matrox buffer with translation and flip...
     //TODO::CAPTURE?
     //svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
-    //        TranslateImage(buffer,
-    //                       device->MilOverlayBuffer[SystemID][DigitizerID],
-    //                       device->MilWidth[SystemID][DigitizerID] * 3,
-    //                       device->MilHeight[SystemID][DigitizerID],
-    //                       offsetx * 3,
-    //                       offsety,
-    //                       vflip);
-    memcpy(m_overlayBuf[0],buffer,m_SDIout.getWidth()*m_SDIout.getHeight());
+   TransferSuccessful = translateImage(buffer,
+                   m_overlayBuf[index],
+                   GetWidth() * 3,
+                   GetHeight(),
+                   offsetx * 3,
+                   offsety,
+                   vflip);
+    //memcpy(m_overlayBuf[0],buffer,m_SDIout.getWidth()*m_SDIout.getHeight()*3);
 
     //Signal Thread that there is a new frame to transfer
     NewFrameSignal.Raise();
 
     // Frame successfully filed for transfer
     return true;
+}
+
+bool svlVidCapSrcSDIRenderTarget::translateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip)
+{
+#if __VERBOSE__ == 1
+    std::cerr << "svlVidCapSrcSDIRenderTarget::TranslateImage()" << std::endl;
+#endif
+
+    int abs_h = std::abs(trhoriz);
+    int abs_v = std::abs(trvert);
+
+    if (vflip) {
+        if (width <= abs_h || height <= abs_v) {
+            src += width * (height - 1);
+            for (int j = 0; j < height; j ++) {
+                memcpy(dest, src, width);
+                src -= width;
+                dest += width;
+            }
+            return true;
+        }
+
+        int linecopysize = width - abs_h;
+        int xfrom = std::max(0, trhoriz);
+        int yfrom = std::max(0, trvert);
+        int yto = height + std::min(0, trvert);
+        int copyxoffset = std::max(0, -trhoriz);
+        int copyyoffset = std::max(0, -trvert);
+
+        if (trhoriz == 0) {
+            src += width * (height - copyyoffset - 1);
+            dest += width * yfrom;
+            for (int j = height - abs_v - 1; j >= 0; j --) {
+                memcpy(dest, src, width);
+                src -= width;
+                dest += width;
+            }
+            return true;
+        }
+
+        src += width * (height - copyyoffset - 1) + copyxoffset;
+        dest += width * yfrom + xfrom;
+        for (int j = yfrom; j < yto; j ++) {
+            memcpy(dest, src, linecopysize);
+            src -= width;
+            dest += width;
+        }
+    }
+    else {
+        if (width <= abs_h || height <= abs_v) {
+            memset(dest, 0, width * height);
+            return false;
+        }
+
+        if (trhoriz == 0) {
+            memcpy(dest + std::max(0, trvert) * width,
+                   src + std::max(0, -trvert) * width,
+                   width * (height - abs_v));
+            return true;
+        }
+
+        int linecopysize = width - abs_h;
+        int xfrom = std::max(0, trhoriz);
+        int yfrom = std::max(0, trvert);
+        int yto = height + std::min(0, trvert);
+        int copyxoffset = std::max(0, -trhoriz);
+        int copyyoffset = std::max(0, -trvert);
+
+        src += width * copyyoffset + copyxoffset;
+        dest += width * yfrom + xfrom;
+        for (int j = yfrom; j < yto; j ++) {
+            memcpy(dest, src, linecopysize);
+            src += width;
+            dest += width;
+        }
+    }
 }
 
 unsigned int svlVidCapSrcSDIRenderTarget::GetWidth()
@@ -198,13 +272,13 @@ unsigned int svlVidCapSrcSDIRenderTarget::GetHeight()
     return m_SDIout.getHeight();
 }
 
+
 void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 {
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDIRenderTarget::ThreadProc()" << std::endl;
 #endif
-    //ThreadKilled = false;
-    //ThreadReadySignal.Raise();
+
     // signal success to main thread
     GLint inBuf;
     cudaError_t cerr;
@@ -231,17 +305,23 @@ void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
     unsigned int size = pitch0*height;
     std::cout << "svlVidCapSrcSDIThread::Proc(), pitches: " << pitch0 << ", " << pitch1 << " height: " << height << std::endl;
 
-    while (Running) {
+    for (int i = 0; i < m_SDIin.getNumStreams (); i++) {
+        m_overlayBuf[i] = new unsigned char[m_SDIin.getWidth()*m_SDIin.getHeight()*3];
+        //m_overlayBuf[i] = 0;
+        //(unsigned char *) malloc (m_SDIin.getWidth() * m_SDIin.getHeight()*3);
+    }
+    ThreadKilled = false;
+    ThreadReadySignal.Raise();
+
+    while (Running && !KillThread) {
         if (CaptureVideo() != GL_FAILURE_NV)
         {
             DisplayVideo();
+            DrawOutputScene(true);
             if(NewFrameSignal.Wait(0.5))
             {
-                DrawOutputScene(true);
                 ThreadReadySignal.Raise();
             }
-            else
-                DrawOutputScene();
             OutputVideo();
         }
     }
@@ -420,7 +500,7 @@ svlVidCapSrcSDIRenderTarget::DisplayVideo(bool drawFrameRate)
     return GL_TRUE;
 }
 
-GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(bool drawOverlay,GLuint cudaOutTexture1, GLuint cudaOutTexture2)
+GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(bool drawOverlay,GLuint cudaOutTexture1, GLuint cudaOutTexture2, unsigned char* vtkPixelData)
 {
     GLuint width;
     GLuint height;
@@ -456,7 +536,7 @@ GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(bool drawOverlay,GLuint c
         glMatrixMode( GL_MODELVIEW );
         glLoadIdentity();
         //draw the scene here with the m_CudaOutTexture
-        if(i==0)
+        if(i==1)
             glBindTexture(GL_TEXTURE_RECTANGLE_NV, cudaOutTexture1);
         else
             glBindTexture(GL_TEXTURE_RECTANGLE_NV, cudaOutTexture2);
@@ -468,18 +548,19 @@ GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(bool drawOverlay,GLuint c
         glTexCoord2f((GLfloat)width, 0.0); glVertex2f(1, -1);
         glEnd();
 
-        if(!drawOverlay)
+        if(0)
         {
             glEnable (GL_BLEND);
             glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             drawCircle(m_SDIout.getWidth(),m_SDIout.getHeight());
+            //drawVTKPixels(m_SDIout.getWidth(),m_SDIout.getHeight(),m_overlayBuf[0]);
             //drawSpinningSphere(m_SDIout.getWidth(), m_SDIout.getHeight());
             //usleep(1000*1000);
         }else
         {
             glEnable (GL_BLEND);
             glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            drawVTKPixels(m_SDIout.getWidth(), m_SDIout.getHeight(),m_overlayBuf[0]);
+            drawVTKPixels(m_SDIout.getWidth(), m_SDIout.getHeight(),m_overlayBuf[i]);
         }
 
         if(m_SDIoutEnabled)
@@ -1012,7 +1093,7 @@ svlVidCapSrcSDIRenderTarget::CaptureVideo(GLuint dropBool,float runTime)
     {
         for(unsigned int i=0;i< droppedFrames+1;i++)
         {
-            printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+            //printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
             CaptureVideo(captureLatency);
         }
     }
@@ -1021,7 +1102,7 @@ svlVidCapSrcSDIRenderTarget::CaptureVideo(GLuint dropBool,float runTime)
         //      longGVITime = m_SDIin.m_gviTime;
         //      for(unsigned int i=0;i< longGVITime*30+2;i++)
         //      {
-        printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+        //printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
         CaptureVideo(captureLatency,runTime-1.0/30);
         captureLatency = 1;
     }else if(m_SDIin.m_gviTime > 1.0/30)
@@ -2932,19 +3013,19 @@ void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
     while (baseref->Running) {
         if (CaptureVideo() != GL_FAILURE_NV)
         {
-            for (int i = 0; i < m_SDIin.getNumStreams(); i++) {
-                glBindBufferARB (GL_VIDEO_BUFFER_NV,
-                                 m_SDIin.getBufferObjectHandle (i));
-                glGetBufferSubDataARB (GL_VIDEO_BUFFER_NV, 0,
-                                       m_SDIin.getBufferObjectPitch (i) *
-                                       m_SDIin.getHeight (), m_memBuf[i]);
-                //                 ptr = baseref->ImageBuffer[i]->GetPushBuffer(size);
-                //                 if (!size || !ptr) { /* trouble */ }
-                //                 memcpy(ptr, m_memBuf[i], size);
-                //                 baseref->ImageBuffer[i]->Push();
-                glBindBufferARB (GL_VIDEO_BUFFER_NV, NULL);
-            }
-            //DisplayVideo(false);//drawCaptureFrameRate);
+//            for (int i = 0; i < m_SDIin.getNumStreams(); i++) {
+//                glBindBufferARB (GL_VIDEO_BUFFER_NV,
+//                                 m_SDIin.getBufferObjectHandle (i));
+//                glGetBufferSubDataARB (GL_VIDEO_BUFFER_NV, 0,
+//                                       m_SDIin.getBufferObjectPitch (i) *
+//                                       m_SDIin.getHeight (), m_memBuf[i]);
+//                //                 ptr = baseref->ImageBuffer[i]->GetPushBuffer(size);
+//                //                 if (!size || !ptr) { /* trouble */ }
+//                //                 memcpy(ptr, m_memBuf[i], size);
+//                //                 baseref->ImageBuffer[i]->Push();
+//                glBindBufferARB (GL_VIDEO_BUFFER_NV, NULL);
+//            }
+            DisplayVideo(false);//drawCaptureFrameRate);
         }
     }
     return this;

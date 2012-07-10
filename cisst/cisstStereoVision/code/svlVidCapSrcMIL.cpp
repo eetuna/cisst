@@ -81,7 +81,7 @@ svlVidCapSrcMILRenderTarget::~svlVidCapSrcMILRenderTarget()
     svlVidCapSrcMIL::GetInstance()->MILReleaseOverlay(SystemID, DigitizerID);
 }
 
-bool svlVidCapSrcMILRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip)
+bool svlVidCapSrcMILRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index)
 {
 #if __VERBOSE__ == 1
     std::cerr << "svlVidCapSrcMILRenderTarget::SetImage()" << std::endl;

@@ -143,7 +143,7 @@ void ui3VTKRenderer::Render(bool pickRequested, const vct3& pickerPoint)
             this->Target->SetImage(this->OffScreenBuffer->GetPointer(0),
                                    static_cast<int>(this->OpticalCenterOffset[0]),
                                    static_cast<int>(this->OpticalCenterOffset[1]),
-                                   true);
+                                   true,CameraID);
         }
 
     } else {

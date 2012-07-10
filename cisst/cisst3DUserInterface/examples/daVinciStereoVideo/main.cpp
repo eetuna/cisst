@@ -40,7 +40,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <ManualRegistration.h>
 
 #define HAS_ULTRASOUDS 0
-#define TORS 0
+#define TORS 1
+#define DUAL_RENDER_TARGETS 0
 
 int main()
 {
@@ -147,15 +148,19 @@ int main()
 
     svlCameraGeometry camera_geometry;
     // Load Camera calibration results
+#if DUAL_RENDER_TARGETS
     camera_geometry.LoadCalibration("E:/Users/davinci_mock_or/calib_results.txt");
+#else
+    camera_geometry.LoadCalibration("/home/wenl/MyCommon/calib_results.txt");
+#endif
     // Center world in between the two cameras (da Vinci specific)
     camera_geometry.SetWorldToCenter();
     // Rotate world by 180 degrees (VTK specific)
     camera_geometry.RotateWorldAboutY(180.0);
 
     // *** Left view ***
-    guiManager.AddRenderer(svlRenderTargets::Get(1)->GetWidth(),  // render width
-                           svlRenderTargets::Get(1)->GetHeight(), // render height
+    guiManager.AddRenderer(svlRenderTargets::Get(DUAL_RENDER_TARGETS)->GetWidth(),  // render width
+                           svlRenderTargets::Get(DUAL_RENDER_TARGETS)->GetHeight(), // render height
                            1.0,                                   // virtual camera zoom
                            false,                                 // borderless?
                            0, 0,                                  // window position
@@ -173,7 +178,7 @@ int main()
                            "RightEyeView");                       // name of renderer
 
     // Sending renderer output to external render targets
-    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(1));
+    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(DUAL_RENDER_TARGETS));
     guiManager.SetRenderTargetToRenderer("RightEyeView", svlRenderTargets::Get(0));
 
 #if 0
