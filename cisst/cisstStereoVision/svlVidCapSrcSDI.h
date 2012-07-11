@@ -1,15 +1,27 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
+/* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
+
+/*
+  $Id: svlVidCapSrcSDI.h 3721 2012-07-10 00:45:02Z wliu25 $
+
+  Author(s):  Wen P. Liu
+  Created on: 2012
+
+  (C) Copyright 2006-2012 Johns Hopkins University (JHU), All Rights
+  Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+
+*/
+
 #ifndef _svlVidCapSrcSDI_h
 #define _svlVidCapSrcSDI_h
-
-//
-// svlVidCapSrcSDI.h
-//
-// Copyright (C) 2007 NVIDIA Corporation
-//
-// This demo demonstrates how to send two different
-// video streams from the Quadro FX SDI using
-// NV_present_video.
-//
 
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -65,24 +77,31 @@ class svlBufferImage;
 class svlVidCapSrcSDIThread;
 
 // Render Target
+/////////////////////////////////////////////////////////////////////////////////////////////
 class svlVidCapSrcSDIRenderTarget : public svlRenderTargetBase
 {
     friend class svlRenderTargets;
     friend class svlVidCapSrcSDIThread;
 
 public:
+    // Functions inherited from svlRenderTargetBase
     bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index=0);
     unsigned int GetWidth();
     unsigned int GetHeight();
-    void* ThreadProc(void* CMN_UNUSED(param));
-    void* CaptureThreadProc(void* param);
 
-    GLenum  CaptureVideo(GLuint dropBool=0,float runTime = 0.0);
+    // Capture and overlay function
+    void* ThreadProc(void* CMN_UNUSED(param));
+    // Capture call (OpenGL)
+    GLenum  CaptureVideo(float runTime=0.0);
+    // SDI output (OpenGL)
     GLboolean OutputVideo ();
-    GLboolean DrawOutputScene(bool drawOverlay=false, GLuint cudaOutTexture1=-1, GLuint cudaOutTexture2=-1, unsigned char* vtkPixelData = new unsigned char[0]);
-    GLenum DisplayVideo(bool drawFrameRate = false);
+    // Render output to OpenGL textures
+    GLboolean DrawOutputScene(GLuint cudaOutTexture1=-1, GLuint cudaOutTexture2=-1, unsigned char* vtkPixelData = new unsigned char[0]);
+    // Display captured video to screen as GL textures, in stacked windows
+    GLenum DisplayVideo();
+
     void Shutdown();
-    void MakeCurrentGLCtx(){glXMakeCurrent(dpy, win, ctx);};
+    void MakeCurrentGLCtx(){glXMakeCurrent(dpy, win, ctx);}
 
 protected:
     svlVidCapSrcSDIRenderTarget(unsigned int deviceID, unsigned int displayID=0);
@@ -93,7 +112,7 @@ private:
     int SystemID;
     int DigitizerID;
 
-    osaThread *Thread, *CaptureThread;
+    osaThread *Thread;
     osaThreadSignal NewFrameSignal;
     osaThreadSignal ThreadReadySignal;
     bool TransferSuccessful;
@@ -101,17 +120,23 @@ private:
     bool ThreadKilled;
     bool Running;
 
-    Display * dpy;		// Display
-    Window win;            // Window
+    // X windows
+    Display * dpy;
+    Window win;
+    Window createWindow();
+    void calcWindowSize();
+    bool destroyWindow();
+
     HGPUNV *gpu;
     GLsizei m_num_streams;
+
+    //output
     unsigned char *m_overlayBuf[MAX_VIDEO_STREAMS];   // System memory buffers
     CFBO m_FBO[MAX_VIDEO_STREAMS];			// Channel 1 FBO
     OutputOptions outputOptions;
     CNvSDIout m_SDIout;
     GLuint m_OutTexture[MAX_VIDEO_STREAMS];
     CFBO gFBO[MAX_VIDEO_OUT_STREAMS];  // FBOS, need two, one per channel
-    CaptureOptions m_captureOptions;
     bool m_SDIoutEnabled;
 
     //capture
@@ -120,22 +145,18 @@ private:
     Colormap cmap;
     GLXContext ctx;        // OpenGL rendering context
     CNvSDIin m_SDIin;
-    GLuint m_windowWidth;                   // Window width
-    GLuint m_windowHeight;                  // Window height
+    GLuint m_windowWidth;
+    GLuint m_windowHeight;
     double m_inputFrameRate;
     GLuint gTexObjs[MAX_VIDEO_STREAMS];
 
-    void drawVTKPixels(GLuint gWidth, GLuint gHeight, unsigned char* vtkPixelData);
+    void drawUnsignedCharImage(GLuint gWidth, GLuint gHeight, unsigned char* imageData);
     void drawCircle(GLuint gWidth, GLuint gHeight);
-
-    void calcWindowSize();
     void drawOne();
     void drawTwo();
     void drawThree();
     void drawFour();
-    GLuint getTextureFromBuffer(unsigned int index);
 
-    //bool setupSDIDevices (Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams);
     bool setupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
     bool setupSDIinDevice(Display *d,HGPUNV *g);
     bool setupSDIoutDevice(Display * d, HGPUNV * g, unsigned int video_format);
@@ -152,13 +173,13 @@ private:
     GLboolean cleanupSDIGL ();
     GLboolean cleanupSDIinGL();
     GLboolean cleanupSDIoutGL();
-    bool destroyWindow();
 
-    Window createWindow();
-
+    GLuint getTextureFromBuffer(unsigned int index);
     bool translateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip);
 };
 
+// Video Capture
+/////////////////////////////////////////////////////////////////////////////////////////////
 class svlVidCapSrcSDI : public svlVidCapSrcBase
 {
     friend class svlVidCapSrcSDIRenderTarget;
@@ -170,7 +191,7 @@ public:
     static svlVidCapSrcSDI* GetInstance();
     svlFilterSourceVideoCapture::PlatformType GetPlatformType();
     int SetStreamCount(unsigned int numofstreams);
-    int GetStreamCount(void){return NumOfStreams;};
+    int GetStreamCount(void){return NumOfStreams;}
     int GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **deviceinfo);
     int Open();
     void Close();
@@ -189,14 +210,13 @@ public:
     bool IsCaptureSupported(unsigned int sysid, unsigned int digid = 0);
     bool IsOverlaySupported(unsigned int sysid, unsigned int digid = 0);
 
-    svlVidCapSrcSDIThread* GetCaptureProc(int i){return CaptureProc[i];};
+    svlVidCapSrcSDIThread* GetCaptureProc(int i){return CaptureProc[i];}
 
 private:
 
     svlVidCapSrcSDI();
     ~svlVidCapSrcSDI();
 
-    //TODO::Match with sdi in
     unsigned int NumOfStreams;
     bool InitializedInput, InitializedOutput;
     bool Running;
@@ -210,11 +230,14 @@ private:
 
 };
 
+// Video Capture Thread
+// 20120710 - Does not render correctly wpliu
+/////////////////////////////////////////////////////////////////////////////////////////////
 class svlVidCapSrcSDIThread
 {
 public:
     svlVidCapSrcSDIThread(int streamid);
-    ~svlVidCapSrcSDIThread() {Shutdown();XCloseDisplay(dpy);};
+    ~svlVidCapSrcSDIThread() {Shutdown();XCloseDisplay(dpy);}
     void* Proc(svlVidCapSrcSDI* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
@@ -225,14 +248,14 @@ public:
 
     bool StartSDIPipeline();
     bool StopSDIPipeline();
-    GLenum DisplayVideo(bool drawFrameRate);
-    GLenum  CaptureVideo(GLuint dropBool=0,float runTime = 0.0);
+    GLenum DisplayVideo();
+    GLenum  CaptureVideo(float runTime = 0.0);
     Window CreateWindow();
-    CNvSDIin GetSDIin(){return m_SDIin;};
+    CNvSDIin GetSDIin(){return m_SDIin;}
     void Shutdown();
     void MakeCurrentGLCtx();
-    Display * GetDisplay(){return dpy;};
-    HGPUNV * GetGPU() {return gpu;};
+    Display * GetDisplay(){return dpy;}
+    HGPUNV * GetGPU() {return gpu;}
 
 private:
     int StreamID;
@@ -244,14 +267,14 @@ private:
     unsigned char *m_memBuf[MAX_VIDEO_STREAMS];   // System memory buffers
     CaptureOptions captureOptions;
     //X stuff
-    Display *dpy;          // Display
-    Window win;            // Window
+    Display *dpy;
+    Window win;
     Colormap cmap;
     GLXContext ctx;        // OpenGL rendering context
     HGPUNV *gpu;
     CNvSDIin m_SDIin;
-    GLuint m_windowWidth;                   // Window width
-    GLuint m_windowHeight;                  // Window height
+    GLuint m_windowWidth;
+    GLuint m_windowHeight;
     double m_inputFrameRate;
     GLuint gTexObjs[MAX_VIDEO_STREAMS];
 

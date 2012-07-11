@@ -43,7 +43,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
 #endif//CISST_HAS_OPENGL
 
-#define __VERBOSE__  1
+#define __VERBOSE__  0
 
 
 /*************************************/

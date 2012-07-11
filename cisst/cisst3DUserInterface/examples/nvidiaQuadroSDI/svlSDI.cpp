@@ -1,8 +1,8 @@
 //
-// svlVidCapSrcSDI - demonstrates SDI capture, interop with CUDA and SDI output
+// svlExNVIDIAQuadroSDI - demonstrates SDI capture, vtk overlay and SDI output
 //
-// Alina Alt (aalt@nvidia.com)
-// August 2010
+// Wen P. Liu
+// June 2012
 //
 
 #include <cisstStereoVision.h>
@@ -16,17 +16,12 @@
 #include "vtkRenderer.h"
 #include "vtkRenderWindowInteractor.h"
 
-//#include "error.h"
 vtkSphereSource *sphere,*sphere0;
 vtkPolyDataMapper *sphereDataMapper,*sphereDataMapper0;
-// actor coordinates geometry, properties, transformation
 vtkActor *aSphere,*aSphere0;
-// a renderer and render window
 vtkRenderer *ren,*ren0;
 vtkRenderWindow *renWin,*renWin0;
 vtkUnsignedCharArray * OffScreenBuffer,*OffScreenBuffer0;
-
-//// an interactor
 ////vtkRenderWindowInteractor *iren;
 
 void setupVTK(int width, int height)
@@ -117,12 +112,12 @@ void getVTKData(int x2, int y2)
 //-----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    timeval setup, start, end;
     svlVidCapSrcSDIRenderTarget* target = (svlVidCapSrcSDIRenderTarget*)svlRenderTargets::Get(0);
     svlRenderTargets::Get(0);
     setupVTK(400,500);//target->GetWidth(),target->GetHeight()
     setupVTK0(400,500);
 
+    //initialization for svlVidCapSrcSDI
 //    svlVidCapSrcSDI* vidCapSrcSDI = svlVidCapSrcSDI::GetInstance();
 //    vidCapSrcSDI->SetStreamCount(2);
 //    vidCapSrcSDI->SetDevice(0,0,0);
@@ -135,20 +130,10 @@ int main(int argc, char *argv[])
 //    if(vidCapSrcSDI->Start() != SVL_OK)
 //        return 0;
 
-    gettimeofday(&setup, 0);
-
-    double runtime;
-    int count =0;
-    //
-    // Capture,draw and output
-    //
-
+    int count = 0;
     bool bNotDone = 1;
-    bool drawCaptureFrameRate = 1;
-    GLuint captureLatency = 1;
 
     while (bNotDone) {
-        //gettimeofday(&start, 0);
         aSphere->SetPosition(count%2,count%3,0);
         aSphere0->SetPosition(count%3,count%2,0);
         renWin->Render();
@@ -156,8 +141,10 @@ int main(int argc, char *argv[])
         getVTKData(target->GetWidth(),target->GetHeight());
         target->MakeCurrentGLCtx();
         //if(count%1000==0)
-        target->SetImage(OffScreenBuffer->GetPointer(0),0,0,false);
-        target->SetImage(OffScreenBuffer0->GetPointer(0),0,0,false,1);
+        //{
+            target->SetImage(OffScreenBuffer->GetPointer(0),0,0,false);
+            target->SetImage(OffScreenBuffer0->GetPointer(0),0,0,false,1);
+        //}
         count++;
     }
 
