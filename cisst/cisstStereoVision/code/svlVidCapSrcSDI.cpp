@@ -183,6 +183,7 @@ bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, i
 #endif
 
     if (SystemID < 0) return false;
+    //MakeCurrentGLCtx();
 
     // Wait for thread to finish previous transfer
     if (ThreadReadySignal.Wait(2.0) == false ||TransferSuccessful == false || KillThread || ThreadKilled) {
@@ -609,7 +610,7 @@ bool svlVidCapSrcSDIRenderTarget::setupSDIoutDevice(Display *d,HGPUNV *g, unsign
     // SDI output frame buffer queue Length?
     outputOptions.fql = 5;
     outputOptions.sync_source = NV_CTRL_GVO_SYNC_SOURCE_SDI;
-    outputOptions.sync_mode = NV_CTRL_GVO_SYNC_MODE_FREE_RUNNING;
+    outputOptions.sync_mode = NV_CTRL_GVO_SYNC_MODE_GENLOCK;//NV_CTRL_GVO_SYNC_MODE_FREE_RUNNING;
 
     m_SDIout.setOutputOptions(d,outputOptions);
     bool ret = m_SDIout.initOutputDeviceNVCtrl();
@@ -912,6 +913,10 @@ GLuint svlVidCapSrcSDIRenderTarget::getTextureFromBuffer(unsigned int index)
 /////////////////////////////////////
 void svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage(GLuint gWidth, GLuint gHeight, unsigned char* imageData)
 {
+#if __VERBOSE__ == 1
+    std::cout << "svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage()" << std::endl;
+#endif
+
     glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, GL_RGBA8, m_SDIout.getWidth(), m_SDIout.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData );
 
     // Draw textured quad in lower left quadrant of graphics window.
@@ -1644,45 +1649,13 @@ int svlVidCapSrcSDI::Open()
     Close();
 
     for (unsigned int i = 0; i < NumOfStreams; i ++) {
-        //TODO:
-        //        if (MilSystem[SystemID[i]] == M_NULL) {
-        //            if (!MILInitializeSystem(SystemID[i])) {
-        //#if __VERBOSE__ == 1
-        //                std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize system M_DEV" << SystemID[i] << std::endl;
-        //#endif
-        //                goto labError;
-        //            }
-        //        }
-
-        //        if (MilDigitizer[SystemID[i]][DigitizerID[i]] == M_NULL) {
-        //            if (!MILInitializeDigitizer(SystemID[i], DigitizerID[i])) {
-        //#if __VERBOSE__ == 1
-        //                std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize digitizer M_DEV"
-        //                          << DigitizerID[i] << " on system M_DEV" << SystemID[i] << std::endl;
-        //#endif
-        //                goto labError;
-        //            }
-        //        }
-
-        //        if (!MILInitializeCapture(SystemID[i], DigitizerID[i])) {
-        //#if __VERBOSE__ == 1
-        //            std::cout << "svlVidCapSrcMIL::Open() - Failed to initialize capture on system M_DEV"
-        //                      << SystemID[i] << ", digitizer M_DEV" << DigitizerID[i] << std::endl;
-        //#endif
-        //            goto labError;
-        //        }
-
-        //        if (MilBands[SystemID[i]][DigitizerID[i]] != 1 &&
-        //            MilBands[SystemID[i]][DigitizerID[i]] != 3) goto labError;
-
         //        // Allocate capture buffers
-        const unsigned int pitch  = 7680;//CaptureProc[0]->GetSDIin().getWidth();//MilWidth[SystemID[i]][DigitizerID[i]];
-        const unsigned int width  = 1920;//CaptureProc[0]->GetSDIin().getWidth();//MilWidth[SystemID[i]][DigitizerID[i]];
+        const unsigned int width  = 1920;//MilWidth[SystemID[i]][DigitizerID[i]];
         const unsigned int height = 1080;//CaptureProc[0]->GetSDIin().getWidth();//MilHeight[SystemID[i]][DigitizerID[i]];
-#if __VERBOSE__ == 1
-        std::cout << "svlVidCapSrcSDI::Open - Allocate image buffer (" << pitch << ", " << height << ")" << std::endl;
-#endif
-        ImageBuffer[i] = new svlBufferImage(width*4, height);
+        //#if __VERBOSE__ == 1
+        std::cout << "svlVidCapSrcSDI::Open - Allocate image buffer (" << width << ", " << height << ")" << std::endl;
+        //#endif
+        ImageBuffer[i] = new svlBufferImage(width, height);
     }
 
     InitializedInput = true;
@@ -1730,7 +1703,6 @@ int svlVidCapSrcSDI::Start()
                                                                           this);
         if (CaptureProc[i]->WaitForInit() == false) return SVL_FAIL;
     }
-
 
     return SVL_OK;
 }
@@ -2906,6 +2878,13 @@ void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
         m_memBuf[i] =
                 (unsigned char *) malloc (m_SDIin.getBufferObjectPitch (i) *
                                           m_SDIin.getHeight ());
+
+        //#if __VERBOSE__ == 1
+        std::cout << "svlVidCapSrcSDIThread::Proc - Allocate image buffer (" << m_SDIin.getWidth() << ", " << m_SDIin.getHeight() << ")" << std::endl;
+        //#endif
+        baseref->ImageBuffer[i] = new svlBufferImage(m_SDIin.getWidth(), m_SDIin.getHeight());
+        comprBuffer[i] =  (unsigned char *) malloc (m_SDIin.getWidth() * 3 *
+                                                    m_SDIin.getHeight());
     }
 
     while (baseref->Running) {
@@ -2921,12 +2900,30 @@ void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
                 unsigned int size=0;
                 ptr = baseref->ImageBuffer[i]->GetPushBuffer(size);
                 if (!size || !ptr) { /* trouble */ }
-                memcpy(ptr, m_memBuf[i], size);
+                //memcpy(ptr, m_memBuf[i], size);
+                svlConverter::RGBA32toRGB24(m_memBuf[i], ptr, m_SDIin.getWidth()*m_SDIin.getHeight());
+                flip(ptr,i);
                 baseref->ImageBuffer[i]->Push();
             }
             //DisplayVideo(); 20120710 - wpliu not working
         }
     }
     return this;
+}
+
+void svlVidCapSrcSDIThread::flip(unsigned char* image, int index)
+{
+    const unsigned int stride =  m_SDIin.getWidth() * 3;
+    const unsigned int rows = m_SDIin.getHeight() >> 1;
+    unsigned char *down = image;
+    unsigned char *up = image + (m_SDIin.getHeight() - 1) * stride;
+
+    for (unsigned int i = 0; i < rows; i ++) {
+        memcpy(comprBuffer[index], down, stride);
+        memcpy(down, up, stride);
+        memcpy(up, comprBuffer[index], stride);
+
+        down += stride; up -= stride;
+    }
 }
 

@@ -299,6 +299,12 @@ int CameraViewer(bool interpolation, bool save, int width, int height, int fulls
     stream.SetSourceFilter(&source);
         output = source.GetOutput();
 
+#if 1
+
+    svlFilterImageChannelSwapper rgb_swapper;
+    output->Connect(rgb_swapper.GetInput());
+        output = rgb_swapper.GetOutput();
+#endif
         // Add exposure correction
     output->Connect(exposure.GetInput());
         output = exposure.GetOutput();

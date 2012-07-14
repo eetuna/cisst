@@ -261,7 +261,7 @@ int CameraViewer(bool interpolation, bool save, int width, int height)
     stream.SetSourceFilter(&source);
         output = source.GetOutput();
 
-#if 0
+#if 1
 
     svlFilterImageChannelSwapper rgb_swapper;
     output->Connect(rgb_swapper.GetInput());

@@ -265,6 +265,7 @@ private:
     IplImage *Frame;
 
     unsigned char *m_memBuf[MAX_VIDEO_STREAMS];   // System memory buffers
+    unsigned char *comprBuffer[MAX_VIDEO_STREAMS];   // System memory buffers
     CaptureOptions captureOptions;
     //X stuff
     Display *dpy;
@@ -293,6 +294,8 @@ private:
     bool cleanupSDIin();
     bool cleanupSDIDevices();
     bool destroyWindow();
+
+    void flip(unsigned char* image, int index);
 
 };
 
