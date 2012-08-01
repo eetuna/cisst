@@ -59,7 +59,7 @@ void setupVTK(int width, int height)
 
     renWin->DoubleBufferOff();
     OffScreenBuffer = vtkUnsignedCharArray::New();
-    OffScreenBuffer->Resize(width * height * 3);
+    OffScreenBuffer->Resize(width * height * 4);
 }
 
 void setupVTK0(int width, int height)
@@ -97,7 +97,7 @@ void setupVTK0(int width, int height)
 
     renWin0->DoubleBufferOff();
     OffScreenBuffer0 = vtkUnsignedCharArray::New();
-    OffScreenBuffer0->Resize(width * height * 3);
+    OffScreenBuffer0->Resize(width * height * 4);
 }
 
 void getVTKData(int x2, int y2)
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
         renWin->Render();
         renWin0->Render();
         getVTKData(target->GetWidth(),target->GetHeight());
-        target->MakeCurrentGLCtx();
+        //target->MakeCurrentGLCtx();
         //if(count%1000==0)
         //{
             target->SetImage(OffScreenBuffer->GetPointer(0),0,0,false);

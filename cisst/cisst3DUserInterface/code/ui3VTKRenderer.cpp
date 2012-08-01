@@ -66,15 +66,18 @@ ui3VTKRenderer::ui3VTKRenderer(ui3SceneManager* scene,
         // Setup off-screen rendering
         this->RenderWindow = vtkRenderWindow::New();
         CMN_ASSERT(this->RenderWindow);
+        this->RenderWindow->DoubleBufferOff();
+
+        this->OffScreenBuffer = vtkUnsignedCharArray::New();
+        CMN_ASSERT(this->OffScreenBuffer);
+
 #if CISST_SVL_HAS_MIL
+        this->OffScreenBuffer->Resize(this->Width * this->Height * 3);
         this->RenderWindow->OffScreenRenderingOn();
 #else
         this->RenderWindow->SetAlphaBitPlanes(1);
-        this->RenderWindow->DoubleBufferOff();
+        this->OffScreenBuffer->Resize(this->Width * this->Height * 4);
 #endif
-        this->OffScreenBuffer = vtkUnsignedCharArray::New();
-        CMN_ASSERT(this->OffScreenBuffer);
-        this->OffScreenBuffer->Resize(this->Width * this->Height * 3);
     }
     else {
         // Setup regular in window rendering
@@ -145,13 +148,15 @@ void ui3VTKRenderer::Render(bool pickRequested, const vct3& pickerPoint)
             // Push VTK off-screen frame buffer to external render target
 #if CISST_SVL_HAS_MIL
             this->RenderWindow->GetPixelData(0, 0, this->Width - 1, this->Height - 1, 0, this->OffScreenBuffer);
+            this->Target->SetImage(this->OffScreenBuffer->GetPointer(0),
+                                   static_cast<int>(this->OpticalCenterOffset[0]),
+                                   static_cast<int>(this->OpticalCenterOffset[1]),
+                                   false,CameraID);
 #else
             this->RenderWindow->GetRGBACharPixelData(0,0,this->Width-1,this->Height-1,0,this->OffScreenBuffer);
-#endif
             this->Target->SetImage(this->OffScreenBuffer->GetPointer(0),0,0,
-                                   //static_cast<int>(this->OpticalCenterOffset[0]),
-                                   //static_cast<int>(this->OpticalCenterOffset[1]),
                                    false,CameraID);
+#endif
         }
 
     } else {

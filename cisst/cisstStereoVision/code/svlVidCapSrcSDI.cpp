@@ -103,7 +103,7 @@ svlVidCapSrcSDIRenderTarget::~svlVidCapSrcSDIRenderTarget()
 unsigned int svlVidCapSrcSDIRenderTarget::GetWidth()
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcSDIRenderTarget::GetWidth()" << std::endl;
+    std::cout << "svlVidCapSrcSDIRenderTarget::GetWidth() " << m_SDIout.getWidth()<< std::endl;
 #endif
 
     if (SystemID < 0) return 0;
@@ -113,7 +113,7 @@ unsigned int svlVidCapSrcSDIRenderTarget::GetWidth()
 unsigned int svlVidCapSrcSDIRenderTarget::GetHeight()
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcSDIRenderTarget::GetHeight()" << std::endl;
+    std::cout << "svlVidCapSrcSDIRenderTarget::GetHeight() " << m_SDIout.getHeight()<< std::endl;
 #endif
 
     if (SystemID < 0) return 0;
@@ -148,7 +148,7 @@ void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 
     // Allocate overlay buffers
     for (int i = 0; i < m_SDIin.getNumStreams (); i++) {
-        m_overlayBuf[i] = (unsigned char *) malloc (m_SDIin.getWidth() * m_SDIin.getHeight()*3);
+        m_overlayBuf[i] = (unsigned char *) malloc (m_SDIin.getWidth() * m_SDIin.getHeight()*4);
     }
 
     // Main capture + overlay loop
@@ -179,7 +179,7 @@ void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index)
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcSDIRenderTarget::SetImage()" << std::endl;
+    std::cout << "svlVidCapSrcSDIRenderTarget::SetImage() index: " << index << " (" << offsetx<<"," <<offsety<< ")" <<std::endl;
 #endif
 
     if (SystemID < 0) return false;
@@ -196,16 +196,16 @@ bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, i
     {
         TransferSuccessful = translateImage(buffer,
                                             m_overlayBuf[index],
-                                            GetWidth() * 3,
+                                            GetWidth() * 4,
                                             GetHeight(),
-                                            offsetx * 3,
+                                            offsetx*4,
                                             offsety,
                                             vflip);
     }else
     {
         return false;
     }
-    //memcpy(m_overlayBuf[0],buffer,m_SDIout.getWidth()*m_SDIout.getHeight()*3);
+    //memcpy(m_overlayBuf[0],buffer,m_SDIout.getWidth()*m_SDIout.getHeight()*4);
 
     // Signal Thread that there is a new frame to transfer
     NewFrameSignal.Raise();
@@ -287,6 +287,7 @@ bool svlVidCapSrcSDIRenderTarget::translateImage(unsigned char* src, unsigned ch
             src += width;
             dest += width;
         }
+        return true;
     }
 
     return false;
@@ -610,7 +611,7 @@ bool svlVidCapSrcSDIRenderTarget::setupSDIoutDevice(Display *d,HGPUNV *g, unsign
     // SDI output frame buffer queue Length?
     outputOptions.fql = 5;
     outputOptions.sync_source = NV_CTRL_GVO_SYNC_SOURCE_SDI;
-    outputOptions.sync_mode = NV_CTRL_GVO_SYNC_MODE_GENLOCK;//NV_CTRL_GVO_SYNC_MODE_FREE_RUNNING;
+    outputOptions.sync_mode = NV_CTRL_GVO_SYNC_MODE_FREE_RUNNING;//NV_CTRL_GVO_SYNC_MODE_GENLOCK;
 
     m_SDIout.setOutputOptions(d,outputOptions);
     bool ret = m_SDIout.initOutputDeviceNVCtrl();
@@ -922,9 +923,9 @@ void svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage(GLuint gWidth, GLuint gH
     // Draw textured quad in lower left quadrant of graphics window.
     glBegin(GL_QUADS);
     glTexCoord2f(0.0, 0.0); glVertex2f(-1, -1);
-    glTexCoord2f(0.0, (GLfloat)gHeight); glVertex2f(-1, 1);
-    glTexCoord2f((GLfloat)gWidth, (GLfloat)gHeight); glVertex2f(1, 1);
-    glTexCoord2f((GLfloat)gWidth, 0.0); glVertex2f(1, -1);
+    glTexCoord2f(0.0, (GLfloat)m_SDIout.getHeight()); glVertex2f(-1, 1);
+    glTexCoord2f((GLfloat)m_SDIout.getWidth(), (GLfloat)m_SDIout.getHeight()); glVertex2f(1, 1);
+    glTexCoord2f((GLfloat)m_SDIout.getWidth(), 0.0); glVertex2f(1, -1);
     glEnd();
 }
 
