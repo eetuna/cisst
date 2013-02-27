@@ -10,11 +10,25 @@
 #include <sys/time.h>
 #include "vtkSphereSource.h"
 #include "vtkPolyDataMapper.h"
-#include "vtkProperty.h"
 #include "vtkActor.h"
-#include "vtkRenderWindow.h"
+#include "vtkBoxWidget.h"
+#include "vtkCamera.h"
+#include "vtkCommand.h"
+#include "vtkColorTransferFunction.h"
+#include "vtkDICOMImageReader.h"
+#include "vtkImageData.h"
+#include "vtkImageResample.h"
+#include "vtkMetaImageReader.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkPlanes.h"
+#include "vtkProperty.h"
 #include "vtkRenderer.h"
+#include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
+#include "vtkVolume.h"
+#include "vtkVolumeProperty.h"
+#include "vtkXMLImageDataReader.h"
+#include "vtkSmartVolumeMapper.h"
 
 vtkSphereSource *sphere,*sphere0;
 vtkPolyDataMapper *sphereDataMapper,*sphereDataMapper0;
@@ -23,12 +37,62 @@ vtkRenderer *ren,*ren0;
 vtkRenderWindow *renWin,*renWin0;
 vtkUnsignedCharArray * OffScreenBuffer,*OffScreenBuffer0;
 ////vtkRenderWindowInteractor *iren;
+vtkVolume *volume;
+vtkSmartVolumeMapper *mapper;
 
-void setupVTK(int width, int height)
+void setupObjects()
 {
+    //DICOM
+    // Read the data
+    vtkAlgorithm *reader=0;
+    vtkImageData *input=0;
+    double opacityWindow = 4096;
+    double opacityLevel = 1024;
+    vtkMetaImageReader *metaReader = vtkMetaImageReader::New();
+    metaReader->SetFileName("/home/wen/Images/20130201_Sphere/SiemensReconstruction/SPHERIC/20130201_Sphere_SiemensReconstructionCentered.mha");
+    metaReader->Update();
+    input=metaReader->GetOutput();
+    reader=metaReader;
+    // Verify that we actually have a volume
+    int dim[3];
+    input->GetDimensions(dim);
+    if ( dim[0] < 2 ||
+         dim[1] < 2 ||
+         dim[2] < 2 )
+    {
+        cout << "Error loading data!" << endl;
+        exit(EXIT_FAILURE);
+    }
+    // Create our volume and mapper
+    volume = vtkVolume::New();
+    mapper = vtkSmartVolumeMapper::New();
+
+    mapper->SetInputConnection( reader->GetOutputPort() );
+
+    // Create our transfer function
+    vtkColorTransferFunction *colorFun = vtkColorTransferFunction::New();
+    vtkPiecewiseFunction *opacityFun = vtkPiecewiseFunction::New();
+
+    // Create the property and attach the transfer functions
+    vtkVolumeProperty *property = vtkVolumeProperty::New();
+    property->SetIndependentComponents(true);
+    property->SetColor( colorFun );
+    property->SetScalarOpacity( opacityFun );
+    property->SetInterpolationTypeToLinear();
+
+    // connect up the volume to the property and the mapper
+    volume->SetProperty( property );
+    volume->SetMapper( mapper );
+
+    //MIP
+    colorFun->AddRGBSegment(0.0, 1.0, 1.0, 1.0, 255.0, 1.0, 1.0, 1.0 );
+    opacityFun->AddSegment( opacityLevel - 0.5*opacityWindow, 0.0,
+                            opacityLevel + 0.5*opacityWindow, 1.0 );
+    mapper->SetBlendModeToMaximumIntensity();
+
     // create sphere geometry
     sphere = vtkSphereSource::New();
-    sphere->SetRadius(1.0);
+    sphere->SetRadius(0.025);
     sphere->SetThetaResolution(18);
     sphere->SetPhiResolution(18);
 
@@ -41,6 +105,26 @@ void setupVTK(int width, int height)
     aSphere->SetMapper(sphereDataMapper);
     aSphere->GetProperty()->SetColor(0,0,1); // sphere color blue
     aSphere->GetProperty()->SetOpacity(0.5);
+
+    // create sphere geometry
+    sphere0 = vtkSphereSource::New();
+    sphere0->SetRadius(0.025);
+    sphere0->SetThetaResolution(18);
+    sphere0->SetPhiResolution(18);
+
+    // map to graphics library
+    sphereDataMapper0 = vtkPolyDataMapper::New();
+    sphereDataMapper0->SetInput(sphere->GetOutput());
+
+    // actor coordinates geometry, properties, transformation
+    aSphere0 = vtkActor::New();
+    aSphere0->SetMapper(sphereDataMapper0);
+    aSphere0->GetProperty()->SetColor(1,0,0); // sphere color red
+    aSphere0->GetProperty()->SetOpacity(0.5);
+}
+
+void setupVTK(int width, int height)
+{
 
     // a renderer and render window
     ren = vtkRenderer::New();
@@ -57,6 +141,10 @@ void setupVTK(int width, int height)
     // add the actor to the scene
     ren->AddActor(aSphere);
 
+    // Add the volume to the scene
+    if(volume)
+        ren->AddVolume( volume );
+
     renWin->DoubleBufferOff();
     OffScreenBuffer = vtkUnsignedCharArray::New();
     OffScreenBuffer->Resize(width * height * 4);
@@ -64,21 +152,6 @@ void setupVTK(int width, int height)
 
 void setupVTK0(int width, int height)
 {
-    // create sphere geometry
-    sphere0 = vtkSphereSource::New();
-    sphere0->SetRadius(1.0);
-    sphere0->SetThetaResolution(18);
-    sphere0->SetPhiResolution(18);
-
-    // map to graphics library
-    sphereDataMapper0 = vtkPolyDataMapper::New();
-    sphereDataMapper0->SetInput(sphere->GetOutput());
-
-    // actor coordinates geometry, properties, transformation
-    aSphere0 = vtkActor::New();
-    aSphere0->SetMapper(sphereDataMapper0);
-    aSphere0->GetProperty()->SetColor(1,0,0); // sphere color red
-    aSphere0->GetProperty()->SetOpacity(0.5);
 
     // a renderer and render window
     ren0 = vtkRenderer::New();
@@ -93,7 +166,12 @@ void setupVTK0(int width, int height)
     //iren->SetRenderWindow(renWin);
 
     // add the actor to the scene
-    ren0->AddActor(aSphere0);
+    ren0->AddActor(aSphere);
+
+    // Add the volume to the scene
+    if(volume)
+        ren0->AddVolume( volume );
+    //ren0->ResetCamera();
 
     renWin0->DoubleBufferOff();
     OffScreenBuffer0 = vtkUnsignedCharArray::New();
@@ -114,21 +192,22 @@ int main(int argc, char *argv[])
 {
     svlVidCapSrcSDIRenderTarget* target = (svlVidCapSrcSDIRenderTarget*)svlRenderTargets::Get(0);
     svlRenderTargets::Get(0);
+    setupObjects();
     setupVTK(400,500);//target->GetWidth(),target->GetHeight()
     setupVTK0(400,500);
 
     //initialization for svlVidCapSrcSDI
-//    svlVidCapSrcSDI* vidCapSrcSDI = svlVidCapSrcSDI::GetInstance();
-//    vidCapSrcSDI->SetStreamCount(2);
-//    vidCapSrcSDI->SetDevice(0,0,0);
+    //    svlVidCapSrcSDI* vidCapSrcSDI = svlVidCapSrcSDI::GetInstance();
+    //    vidCapSrcSDI->SetStreamCount(2);
+    //    vidCapSrcSDI->SetDevice(0,0,0);
 
-//    if(vidCapSrcSDI->Open() == SVL_OK)
-//    {
-//        if(vidCapSrcSDI->Open() != SVL_OK)
-//            return 0;
-//    }
-//    if(vidCapSrcSDI->Start() != SVL_OK)
-//        return 0;
+    //    if(vidCapSrcSDI->Open() == SVL_OK)
+    //    {
+    //        if(vidCapSrcSDI->Open() != SVL_OK)
+    //            return 0;
+    //    }
+    //    if(vidCapSrcSDI->Start() != SVL_OK)
+    //        return 0;
 
     int count = 0;
     bool bNotDone = 1;
@@ -142,8 +221,8 @@ int main(int argc, char *argv[])
         //target->MakeCurrentGLCtx();
         //if(count%1000==0)
         //{
-            target->SetImage(OffScreenBuffer->GetPointer(0),0,0,false);
-            target->SetImage(OffScreenBuffer0->GetPointer(0),0,0,false,1);
+        target->SetImage(OffScreenBuffer->GetPointer(0),0,0,false);
+        target->SetImage(OffScreenBuffer0->GetPointer(0),0,0,false,1);
         //}
         count++;
     }

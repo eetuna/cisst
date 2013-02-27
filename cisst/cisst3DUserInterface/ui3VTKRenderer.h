@@ -75,6 +75,11 @@ class CISST_EXPORT ui3VTKRenderer: public cmnGenericObject
         return this->CameraGeometry;
     };
 
+    vtkRenderer * GetRenderer(void)
+    {
+        return Renderer;
+    };
+
  private:
     ui3SceneManager* SceneManager;
 

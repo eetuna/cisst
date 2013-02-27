@@ -45,6 +45,8 @@ class vtkVolume16Reader;
 class vtkUnsignedCharArray;
 class vtkPropPicker;
 class vtkPicker;
+class vtkVectorText;
+class vtkFollower;
 
 #endif // _ui3VTKForwardDeclarations_h
 

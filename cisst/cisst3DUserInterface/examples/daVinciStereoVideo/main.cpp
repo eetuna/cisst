@@ -25,7 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
-#include <cisstStereoVision/svlRenderTargets.h>
+#include <cisstStereoVision.h>
 #include <cisst3DUserInterface/ui3CursorSphere.h>
 
 #include <sawIntuitiveDaVinci/mtsIntuitiveDaVinci.h>
@@ -42,6 +42,7 @@ http://www.cisst.org/cisst/license.txt.
 #define HAS_ULTRASOUDS 0
 #define TORS 1
 #define DUAL_RENDER_TARGETS 0
+#define VOLUME_RENDERING 1
 
 int main()
 {
@@ -78,7 +79,7 @@ int main()
                            3,
                            "move.png");
 #if TORS
-	ManualRegistration manualRegistration("manualRegistration");
+    ManualRegistration manualRegistration("manualRegistration");
     guiManager.AddBehavior(&manualRegistration,
                            4,
                            "move.png");
@@ -143,6 +144,50 @@ int main()
     vidUltrasoundStream.Initialize();
 #endif
 
+#if 1
+    ////////////////////////////////////////////////////////////////
+    // setup video stream
+#if VOLUME_RENDERING
+    svlInitialize();
+    svlStreamManager vidStream(2);  // running on multiple threads
+    svlFilterSourceImageFile source(2);
+    svlFilterImageOverlay overlayFilter;
+    overlayFilter.AddInputImage("overlayLeft");
+    overlayFilter.AddInputImage("overlayRight");
+    svlOverlayImage overlayLeft(SVL_LEFT,true,"overlayLeft",SVL_LEFT,vctInt2(0,0),128);
+    svlOverlayImage overlayRight(SVL_RIGHT,true,"overlayRight",SVL_RIGHT,vctInt2(0,0),128);
+
+    // Setup dummy video source
+    if (source.SetFilePath("/home/wen/Images/CameraCalibration/20120716/left_002", "bmp", SVL_LEFT) != SVL_OK) return 0;
+    if (source.SetFilePath("/home/wen/Images/StructuredLight/20120421/Phantom/L1", "bmp", SVL_RIGHT) != SVL_OK) return 0;
+    overlayFilter.AddOverlay(overlayLeft);
+    overlayFilter.AddOverlay(overlayRight);
+    //source.SetTargetFrequency(10.0);
+
+    //    svlFilterSourceVideoCapture vidBackgroundSource(true); // stereo source
+    //    if (vidBackgroundSource.LoadSettings("capture_device.dat") != SVL_OK) {
+    //        cout << "Setup LEFT camera:" << endl;
+    //        vidBackgroundSource.DialogSetup(SVL_LEFT);
+    //        cout << "Setup RIGHT camera:" << endl;
+    //        vidBackgroundSource.DialogSetup(SVL_RIGHT);
+    //        vidBackgroundSource.SaveSettings("capture_device.dat");
+    //    }
+    vidStream.SetSourceFilter(&source);
+
+    // add guiManager as a filter to the pipeline, so it will receive video frames
+    // "StereoVideo" is defined in the UI Manager as a possible video interface
+    //source.GetOutput()->Connect(guiManager.GetStreamSamplerFilter("StereoVideo")->GetInput());
+    source.GetOutput()->Connect(overlayFilter.GetInput());
+    overlayFilter.GetOutput()->Connect(guiManager.GetStreamSamplerFilter("StereoVideo")->GetInput());
+    //svlFilterImageWindow vidUltrasoundWindow;
+    //manualRegistration.GetStreamSamplerFilter("StereoVideo")->GetOutput()->Connect(vidUltrasoundWindow.GetInput());
+    //vidStream.Trunk().Append(guiManager.GetStreamSamplerFilter("StereoVideo"));
+
+    vidStream.Initialize();
+#endif
+    ////////////////////////////////////////////////////////////////
+
+#endif
     ////////////////////////////////////////////////////////////////
     // setup renderers
 
@@ -151,7 +196,7 @@ int main()
 #if DUAL_RENDER_TARGETS
     camera_geometry.LoadCalibration("E:/Users/davinci_mock_or/calib_results.txt");
 #else
-    camera_geometry.LoadCalibration("/home/wenl/MyCommon/calib_results.txt");
+    camera_geometry.LoadCalibration("/home/wen/MyCommon/calib_results.txt");
 #endif
     // Center world in between the two cameras (da Vinci specific)
     camera_geometry.SetWorldToCenter();
@@ -181,6 +226,12 @@ int main()
     guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(DUAL_RENDER_TARGETS));
     guiManager.SetRenderTargetToRenderer("RightEyeView", svlRenderTargets::Get(0));
 
+#if VOLUME_RENDERING
+    // Creating video background image planes
+    guiManager.AddVideoBackgroundToRenderer("LeftEyeView",  "StereoVideo", SVL_LEFT);
+    guiManager.AddVideoBackgroundToRenderer("RightEyeView", "StereoVideo", SVL_RIGHT);
+#endif
+
 #if 0
     // Add third camera: simple perspective camera placed in the world center
     camera_geometry.SetPerspective(400.0, 2);
@@ -200,16 +251,20 @@ int main()
     vidUltrasoundStream.Start();
 #endif
 
+#if VOLUME_RENDERING
+    vidStream.Start();
+#endif
+
     vctFrm3 transform;
     transform.Translation().Assign(0.0, 0.0, 0.0);
     transform.Rotation().From(vctAxAnRot3(vctDouble3(0.0, 1.0, 0.0), cmnPI));
 
     // setup first arm
-    ui3MasterArm * rightMaster = new ui3MasterArm("MTMR");
+    ui3MasterArm * rightMaster = new ui3MasterArm("MTMR1");
     guiManager.AddMasterArm(rightMaster);
-    rightMaster->SetInput(daVinci, "MTMR",
-                          daVinci, "MTMRSelect",
-                          daVinci, "MTMRClutch",
+    rightMaster->SetInput(daVinci, "MTMR1",
+                          daVinci, "MTMR1Select",
+                          daVinci, "MTMR1Clutch",
                           ui3MasterArm::PRIMARY);
     rightMaster->SetTransformation(transform, 0.8 /* scale factor */);
     ui3CursorBase * rightCursor = new ui3CursorSphere();
@@ -217,11 +272,11 @@ int main()
     rightMaster->SetCursor(rightCursor);
 
     // setup second arm
-    ui3MasterArm * leftMaster = new ui3MasterArm("MTML");
+    ui3MasterArm * leftMaster = new ui3MasterArm("MTML1");
     guiManager.AddMasterArm(leftMaster);
-    leftMaster->SetInput(daVinci, "MTML",
-                         daVinci, "MTMLSelect",
-                         daVinci, "MTMLClutch",
+    leftMaster->SetInput(daVinci, "MTML1",
+                         daVinci, "MTML1Select",
+                         daVinci, "MTML1Clutch",
                          ui3MasterArm::SECONDARY);
     leftMaster->SetTransformation(transform, 0.8 /* scale factor */);
     ui3CursorBase * leftCursor = new ui3CursorSphere();
@@ -267,6 +322,10 @@ int main()
     } while (ch != 'q');
 #if HAS_ULTRASOUDS
     vidUltrasoundStream.Release();
+#endif
+
+#if VOLUME_RENDERING
+    vidStream.Release();
 #endif
 
     std::cout << "Stopping components" << std::endl;

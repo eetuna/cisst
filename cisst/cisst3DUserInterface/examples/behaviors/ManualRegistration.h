@@ -25,6 +25,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/ui3VisibleAxes.h>
 #include <cisst3DUserInterface/ui3VTKStippleActor.h>
 #include <cisst3DUserInterface/ui3VTKRenderer.h>
+#include <cisst3DUserInterface/ui3ImagePlane.h>
 
 #include <vtkActor.h>
 #include <vtkAssembly.h>
@@ -47,6 +48,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <vtkCubeSource.h>
 #include <vtkCylinderSource.h>
 #include <vtkFloatArray.h>
+#include <vtkFollower.h>
 #include <vtkPointData.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
@@ -58,6 +60,20 @@ http://www.cisst.org/cisst/license.txt.
 #include <vtkVectorText.h>
 #include <vtkLinearExtrusionFilter.h>
 
+
+#include "vtkColorTransferFunction.h"
+#include "vtkDICOMImageReader.h"
+#include "vtkImageData.h"
+#include "vtkImageResample.h"
+#include "vtkMetaImageReader.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkPlanes.h"
+#include "vtkProperty.h"
+#include "vtkVolume.h"
+#include "vtkVolumeProperty.h"
+#include "vtkXMLImageDataReader.h"
+#include "vtkSmartVolumeMapper.h"
+
 // Always include last!
 #include <ui3BehaviorsExport.h>
 
@@ -66,10 +82,10 @@ class ManualRegistrationSurfaceVisibleStippleObject;
 class CISST_EXPORT ManualRegistration: public ui3BehaviorBase
 {
 public:
-    enum VisibleObjectType {ALL = 0, NO_FIDUCIALS, MODEL, TUMOR, CURSOR, TARGETS_REAL, TARGETS_VIRTUAL, FIDUCIALS_REAL, FIDUCIALS_VIRTUAL, CALIBRATION_REAL, CALIBRATION_VIRTUAL};
+    enum VisibleObjectType {ALL = 0, NO_FIDUCIALS, MODEL, TUMOR, MODEL_ONLY, TUMOR_ONLY, TARGETS_REAL, TARGETS_VIRTUAL, FIDUCIALS_REAL, FIDUCIALS_VIRTUAL, CALIBRATION_REAL, CALIBRATION_VIRTUAL};
     enum BooleanFlagTypes {DEBUG = 0, VISIBLE, PREVIOUS_MAM, LEFT_BUTTON, RIGHT_BUTTON,
                            CAMERA_PRESSED, CLUTCH_PRESSED, BOTH_BUTTON_PRESSED, UPDATE_FIDUCIALS, LEFT_BUTTON_RELEASED, RIGHT_BUTTON_RELEASED};
-    enum Frame {ECM=0, UI3, ECMRCM};
+    enum Frame {WRIST=0, TIP, TOOLTIP, TOOLTOP, ECM, UI3, ECMRCM};
 
     ManualRegistration(const std::string & name);
     ~ManualRegistration();
@@ -129,6 +145,7 @@ private:
     bool RayRayIntersect(vctDouble3 p1,vctDouble3 p2,vctDouble3 p3,vctDouble3 p4,vctDouble3 &pa,vctDouble3 &pb);
     void GetFiducials(vctDynamicVector<vct3>& fiducialsVirtualECMRCM, vctDynamicVector<vct3>& fiducialsRealECMRCM,VisibleObjectType type, Frame frame);
     void UpdateVisibleList(void);
+    void OnStreamSample(svlSample* sample, int streamindex);
 
     StateType PreviousState;
     mtsFunctionRead GetCartesianPositionSlave;
@@ -140,13 +157,17 @@ private:
     VisibleObjectType FiducialToggle;
     double MeanTRE, MaxTRE, MeanTREProjection, MaxTREProjection, MeanTRETriangulation, MaxTRETriangulation;
     int TREFiducialCount;
-    FILE *TRE, * TREProjection, *TRETriangulation;
+    int calibrationCount;
+    FILE *TRE, *TREProjection, *TRETriangulation;
 
     vctDouble3 InitialMasterLeft, InitialMasterRight;
-    vctFrm3 WristCalibration, WristToTip;
-    ui3VisibleObject * Cursor;
+    typedef std::map<int, vctFrm3> ManualRegistrationFrameType;
+    ManualRegistrationFrameType Frames;
+    ui3VisibleAxes * Cursor;
     ui3VisibleList * VisibleList, * VisibleListECM, * VisibleListECMRCM, * VisibleListVirtual, * VisibleListReal;
-    typedef std::map<int, ManualRegistrationSurfaceVisibleStippleObject *> ManualRegistrationType;
-    ManualRegistrationType VisibleObjects, VisibleObjectsVirtualFiducials, VisibleObjectsRealFiducials, VisibleObjectsVirtualTargets, VisibleObjectsRealTargets,
+    typedef std::map<int, ManualRegistrationSurfaceVisibleStippleObject *> ManualRegistrationObjectType;
+    ManualRegistrationObjectType VisibleObjects, VisibleObjectsVirtualFeedback, VisibleObjectsVirtualTumors, VisibleObjectsVirtualFiducials, VisibleObjectsRealFiducials, VisibleObjectsVirtualTargets, VisibleObjectsRealTargets,
         VisibleObjectsVirtualCalibration,VisibleObjectsRealCalibration;
+
+    ui3ImagePlane *ImagePlaneLeft, *ImagePlaneRight;
 };

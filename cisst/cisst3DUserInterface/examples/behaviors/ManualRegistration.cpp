@@ -33,22 +33,24 @@ http://www.cisst.org/cisst/license.txt.
 #define CUBE_DEMO 1
 #define IMPORT_FIDUCIALS 0
 #define FIDUCIAL_COUNT_MAX 30
-// z-axis translation between tool eye and tip (mm) for debakey forceps
-#define WRIST_TIP_OFFSET (11.0)
+#define IMPORT_MULTIPLE_TARGETS 0
+// z-axis translation between tool eye and tip (11.0 mm) for debakey forceps; (9.0mm) for Large Needle Driver
+#define WRIST_TIP_OFFSET (9.0)
 
 class ManualRegistrationSurfaceVisibleStippleObject: public ui3VisibleObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 public:
-    enum GeometryType {NONE=0,CUBE,SPHERE,CYLINDER};
+    enum GeometryType {NONE=0,CUBE,SPHERE,CYLINDER,TEXT};
     inline ManualRegistrationSurfaceVisibleStippleObject(const std::string & inputFile, const GeometryType & geometry=NONE, int size = 0, bool hasOutline = false):
-    ui3VisibleObject(),
+        ui3VisibleObject(),
         Visible(true),
         Valid(true),
         InputFile(inputFile),
         SurfaceReader(0),
         SurfaceMapper(0),
         SurfaceActor(0),
+        TextActor(0),
         HasOutline(hasOutline),
         OutlineData(0),
         OutlineMapper(0),
@@ -84,6 +86,10 @@ public:
             this->OutlineActor->Delete();
             this->OutlineActor = 0;
         }
+        if (this->TextActor) {
+            this->TextActor->Delete();
+            this->TextActor = 0;
+        }
     }
 
     inline bool CreateVTKObjectCube()
@@ -99,6 +105,7 @@ public:
         SurfaceActor = ui3VTKStippleActor::New();
         CMN_ASSERT(SurfaceActor);
         SurfaceActor->SetMapper(SurfaceMapper);
+        TextActor = ui3VTKStippleActor::New();
 
         // Add the actor
         this->AddPart(this->SurfaceActor);
@@ -132,13 +139,30 @@ public:
 
         vtkPolyDataMapper* txtMapper = vtkPolyDataMapper::New();
         txtMapper->SetInputConnection( extrude->GetOutputPort());
-        ui3VTKStippleActor * textActor = ui3VTKStippleActor::New();
-        CMN_ASSERT(textActor);
-        textActor->SetMapper(txtMapper);
+        TextActor = ui3VTKStippleActor::New();
+        CMN_ASSERT(TextActor);
+        TextActor->SetMapper(txtMapper);
+
+        vtkSphereSource *sphereSource = vtkSphereSource::New();
+        CMN_ASSERT(sphereSource);
+        sphereSource->SetRadius(this->Size);
+
+        vtkPolyDataMapper * sphereSurfaceMapper = vtkPolyDataMapper::New();
+        CMN_ASSERT(sphereSurfaceMapper);
+        sphereSurfaceMapper->SetInputConnection(sphereSource->GetOutputPort());
+        sphereSurfaceMapper->ImmediateModeRenderingOn();
+
+        ui3VTKStippleActor * sphereSurfaceActor = ui3VTKStippleActor::New();
+        CMN_ASSERT(sphereSurfaceActor);
+        sphereSurfaceActor->SetMapper(sphereSurfaceMapper);
+        double sphereOffset[3] = {-WRIST_TIP_OFFSET,0.0,0.0};
+        sphereSurfaceActor->SetPosition(sphereOffset);
+        sphereSurfaceActor->GetProperty()->SetOpacity(0.25);
 
         // Add the actor(s)
+        this->AddPart(sphereSurfaceActor);
         this->AddPart(SurfaceActor);
-        this->AddPart(textActor);
+        this->AddPart(TextActor);
         return true;
     }
 
@@ -164,17 +188,17 @@ public:
         extrude->SetInputConnection( vecText->GetOutputPort());
         extrude->SetExtrusionTypeToNormalExtrusion();
         extrude->SetVector(0, 0, 1 );
-        extrude->SetScaleFactor (0.5);
+        extrude->SetScaleFactor (0.2);
 
         vtkPolyDataMapper* txtMapper = vtkPolyDataMapper::New();
         txtMapper->SetInputConnection( extrude->GetOutputPort());
-        ui3VTKStippleActor * textActor = ui3VTKStippleActor::New();
-        CMN_ASSERT(textActor);
-        textActor->SetMapper(txtMapper);
+        TextActor = ui3VTKStippleActor::New();
+        CMN_ASSERT(TextActor);
+        TextActor->SetMapper(txtMapper);
 
         // Add the actor(s)
         this->AddPart(SurfaceActor);
-        this->AddPart(textActor);
+        this->AddPart(TextActor);
 
 
         return true;
@@ -194,6 +218,20 @@ public:
         SurfaceMapper->SetInputConnection(SurfaceReader->GetOutputPort());
         SurfaceMapper->ScalarVisibilityOff();
         SurfaceMapper->ImmediateModeRenderingOn();
+
+        // Normals
+        //vtkPolyDataNormals *normals = vtkPolyDataNormals::New();
+        //normals->SetInput(SurfaceReader->GetOutput());
+        //normals->SetFeatureAngle(60.0);
+        //normals->FlipNormalsOff();
+
+        //normals->FlipNormalsOn();
+        //normals->AutoOrientNormalsOn();
+        //normals->NonManifoldTraversalOff();
+        //normals->ConsistencyOn();
+        //normals->ComputeCellNormalsOn();
+        //normals->ComputePointNormalsOff();
+        //normals->Update();
 
         SurfaceActor = ui3VTKStippleActor::New();
         CMN_ASSERT(SurfaceActor);
@@ -218,6 +256,7 @@ public:
             //OutlineActor->SetScale(0.05);
             this->AddPart(this->OutlineActor);
         }
+        TextActor = ui3VTKStippleActor::New();
 
         // Set Opacity/Transparency with vtk
         //SurfaceActor->GetProperty()->SetOpacity(1.0);
@@ -230,6 +269,32 @@ public:
         return true;
     }
 
+    inline bool CreateVTKObjectText(void) {
+        SurfaceReader = vtkPolyDataReader::New();
+        SurfaceMapper = vtkPolyDataMapper::New();
+        SurfaceActor = ui3VTKStippleActor::New();
+
+        // Create a vector text
+        vtkVectorText* vecText = vtkVectorText::New();
+        vecText->SetText(InputFile.c_str());
+
+        vtkLinearExtrusionFilter* extrude = vtkLinearExtrusionFilter::New();
+        extrude->SetInputConnection( vecText->GetOutputPort());
+        extrude->SetExtrusionTypeToNormalExtrusion();
+        extrude->SetVector(0, 0, 1 );
+        extrude->SetScaleFactor (0.5);
+
+        vtkPolyDataMapper* txtMapper = vtkPolyDataMapper::New();
+        txtMapper->SetInputConnection( extrude->GetOutputPort());
+        TextActor = ui3VTKStippleActor::New();
+        CMN_ASSERT(TextActor);
+        TextActor->SetMapper(txtMapper);
+
+        // Add the actor(s)
+        this->AddPart(TextActor);
+        return true;
+    }
+
     inline bool CreateVTKObjects(void) {
 
         // Create surface actor/mapper
@@ -237,16 +302,19 @@ public:
         {
         case CUBE:
             return CreateVTKObjectCube();
-        break;
+            break;
         case CYLINDER:
             return CreateVTKObjectCylinder();
-        break;
+            break;
         case SPHERE:
             return CreateVTKObjectSphere();
-        break;
+            break;
+        case TEXT:
+            return CreateVTKObjectText();
+            break;
         default:
             return CreateVTKObjectFromFile();
-        break;
+            break;
         }
 
         return true;
@@ -262,6 +330,7 @@ public:
 
     inline void SetOpacity(double opacity) {
         SurfaceActor->GetProperty()->SetOpacity(opacity);
+        //TextActor->GetProperty()->SetOpacity(opacity);
     }
 
     inline void SetStipplePercentage(int percentage) {
@@ -269,6 +338,29 @@ public:
             osaSleep(0.1 * cmn_s);
         }
         SurfaceActor->SetStipplePercentage(percentage);
+    }
+
+    inline void SetText(std::string text)
+    {
+        // Create a vector text
+        vtkVectorText* vecText = vtkVectorText::New();
+        vecText->SetText(text.c_str());
+        vtkPolyDataMapper* txtMapper = vtkPolyDataMapper::New();
+
+        if(text.size() > 0)
+        {
+            vtkLinearExtrusionFilter* extrude = vtkLinearExtrusionFilter::New();
+            extrude->SetInputConnection( vecText->GetOutputPort());
+            extrude->SetExtrusionTypeToNormalExtrusion();
+            extrude->SetVector(0, 0, 1 );
+            extrude->SetScaleFactor (0.8);
+
+            txtMapper->SetInputConnection( extrude->GetOutputPort());
+        }else
+        {
+            txtMapper->SetInputConnection( vecText->GetOutputPort());
+        }
+        TextActor->SetMapper(txtMapper);
     }
 
     vctDouble3 GetCenter(void) {
@@ -291,11 +383,12 @@ protected:
     vtkPolyDataReader * SurfaceReader;
     vtkPolyDataMapper * SurfaceMapper;
     ui3VTKStippleActor * SurfaceActor;
+    ui3VTKStippleActor * TextActor;
     bool HasOutline;
     vtkOutlineFilter * OutlineData;
     vtkPolyDataMapper * OutlineMapper;
     vtkActor  * OutlineActor;
-
+    vtkVolume *volume;
     GeometryType Geometry;
     int Size;
 };
@@ -304,13 +397,15 @@ CMN_DECLARE_SERVICES_INSTANTIATION(ManualRegistrationSurfaceVisibleStippleObject
 CMN_IMPLEMENT_SERVICES(ManualRegistrationSurfaceVisibleStippleObject);
 
 ManualRegistration::ManualRegistration(const std::string & name):
-ui3BehaviorBase(std::string("ManualRegistration::") + name, 0),
-VisibleList(0),
-VisibleListECM(0),
-VisibleListECMRCM(0),
-VisibleListVirtual(0),
-VisibleListReal(0)
+    ui3BehaviorBase(std::string("ManualRegistration::") + name, 0),
+    VisibleList(0),
+    VisibleListECM(0),
+    VisibleListECMRCM(0),
+    VisibleListVirtual(0),
+    VisibleListReal(0)
 {
+    // add video source interfaces
+    //AddStream(svlTypeImageRGBA, "StereoVideo");
 
     VisibleList = new ui3VisibleList("ManualRegistration");
     VisibleListECM = new ui3VisibleList("ManualRegistrationECM");
@@ -319,36 +414,89 @@ VisibleListReal(0)
     VisibleListReal = new ui3VisibleList("ManualRegistrationReal");
 
     ManualRegistrationSurfaceVisibleStippleObject * model;
-    ManualRegistrationSurfaceVisibleStippleObject * tumor;  
+    ManualRegistrationSurfaceVisibleStippleObject * tumor;
+    ManualRegistrationSurfaceVisibleStippleObject * text;
+    ManualRegistrationSurfaceVisibleStippleObject * toolTip;
+    ManualRegistrationSurfaceVisibleStippleObject * toolTop;
     this->Cursor = new ui3VisibleAxes;
 
 #if CUBE_DEMO
     model = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::CUBE,25);
-    tumor = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::CUBE,5);
+    tumor = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::SPHERE,5);
+
+    // Adding US image plane
+//    ImagePlaneLeft = new ui3ImagePlane();
+//    ImagePlaneRight = new ui3ImagePlane();
+//    CMN_ASSERT(ImagePlaneLeft);
+//    CMN_ASSERT(ImagePlaneRight);
+//    // Get bitmap dimensions from pipeline.
+//    // The pipeline has to be already initialized to get the required info.
+
+//    ImagePlaneLeft->SetBitmapSize(GetStreamWidth("StereoVideo",SVL_LEFT)/4, GetStreamHeight("StereoVideo",SVL_LEFT)/4);
+//    ImagePlaneRight->SetBitmapSize(GetStreamWidth("StereoVideo",SVL_RIGHT)/4, GetStreamHeight("StereoVideo",SVL_RIGHT)/4);
+
+//    // Set plane size (dimensions are already in millimeters), miltuplied by a scaling factor to fit probe dimensions
+//    ImagePlaneLeft->SetPhysicalSize(40.0*.35, 50.0*.35);
+//    ImagePlaneRight->SetPhysicalSize(40.0*.35, 50.0*.35);
+
+//    // Change pivot position to move plane to the right location.
+//    // The pivot point will remain in the origin, only the plane moves.
+//    ImagePlaneLeft->SetPhysicalPositionRelativeToPivot(vct3(0.0, 0.0, 0.0));
+//    ImagePlaneRight->SetPhysicalPositionRelativeToPivot(vct3(0.0, 0.0, 0.0));
+
 #else
+    //20121017_T2
+    model = new ManualRegistrationSurfaceVisibleStippleObject("/home/wen/Images/20121121_Maori/fixedSegmentation.vtk");
+    tumor = new ManualRegistrationSurfaceVisibleStippleObject("/home/wen/Images/20121017_T2/20121012_TORS_tongue2_intraop_targets.vtk");
+    text = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::TEXT,5);
     //model = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/TORS/TORS_tongue.vtk");
-    model = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/RedSkull/Red_Skull_CT_TORS_ROI_Resample1.vtk");
+    //model = new ManualRegistrationSurfaceVisibleStippleObject("/home/wen/Images/BronchoBoy/Lychron20120809/Slicer/Tongue.vtk");
+    //model = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/RedSkull/Red_Skull_CT_TORS_ROI_Resample1.vtk");
     //model = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/20120223_TORS_Pig_Phantoms/20120223_TORS_PigTongue_sc4_c191100_ROI_Resample0.6.vtk");
     //model = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/20120307_TORS_Pig_Phantoms/T3Final/BoneModel.vtk");
-
+    //tumor = new ManualRegistrationSurfaceVisibleStippleObject("/home/wen/Images/BronchoBoy/Lychron20120809/Slicer/BaseofTongueTumor00001.vtk");
     //tumor = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/20120223_TORS_Pig_Phantoms/20120223_TORS_PigTongue_sc4_c191100_Targets.vtk");
     //tumor = new ManualRegistrationSurfaceVisibleStippleObject("E:/Users/wliu25/MyCommon/data/20120307_TORS_Pig_Phantoms/T3Final/TargetPlanning.vtk");
 #endif
 
     VisibleObjects[MODEL] = model;
+#if IMPORT_MULTIPLE_TARGETS
+    toolTip = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::SPHERE,4);
+    toolTop = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::SPHERE,2);
+#else
     VisibleObjects[TUMOR] = tumor;
+#endif
 
-    for (ManualRegistrationType::iterator iter = VisibleObjects.begin();
-        iter != VisibleObjects.end();
-        iter++) {
-            VisibleListVirtual->Add(iter->second);
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjects.begin();
+         iter != VisibleObjects.end();
+         iter++) {
+        VisibleListVirtual->Add(iter->second);
     }
+
+//    this->ImagePlaneLeft->Lock();
+//    this->VisibleList->Add(this->ImagePlaneLeft);
+//    this->ImagePlaneLeft->Unlock();
+//    this->ImagePlaneRight->Lock();
+//    this->VisibleList->Add(this->ImagePlaneRight);
+//    this->ImagePlaneRight->Unlock();
 
     VisibleListECMRCM->Add(VisibleListVirtual);
     VisibleListECMRCM->Add(VisibleListReal);
     VisibleListECM->Add(VisibleListECMRCM);
     VisibleList->Add(VisibleListECM);
+
+
+#if IMPORT_MULTIPLE_TARGETS
     VisibleList->Add(this->Cursor);
+    VisibleObjectsVirtualFeedback[WRIST] = text;
+    VisibleObjectsVirtualFeedback[TOOLTIP] = toolTip;
+    VisibleObjectsVirtualFeedback[TOOLTOP] = toolTop;
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualFeedback.begin();
+         iter != VisibleObjectsVirtualFeedback.end();
+         iter++) {
+        VisibleList->Add(iter->second);
+    }
+#endif
 
     // Initialize boolean flags
     this->BooleanFlags[DEBUG] = true;
@@ -374,7 +522,18 @@ VisibleListReal(0)
     sprintf(file,"treTriangulation%d.txt");
     TRETriangulation = fopen(file,"w");
 
-    this->WristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
+    calibrationCount = 0;
+
+    // Frames
+    vctFrm3 wrist, wristToTip, wristToPinTip, wristToPinTop;
+    wrist.Translation().Assign(vctDouble3(0.0, 0.0, 0.0));
+    Frames[WRIST] = wrist;
+    wristToTip.Translation().Assign(vctDouble3(0.0, 0.0, WRIST_TIP_OFFSET));
+    Frames[TIP] = wristToTip;
+    wristToPinTip.Translation().Assign(vctDouble3(0.0, 18.0, WRIST_TIP_OFFSET/2));//0.0, 18.0 (length of map pin), WRIST_TIP_OFFSET/2
+    Frames[TOOLTIP] = wristToPinTip;
+    wristToPinTop.Translation().Assign(vctDouble3(0.0, -3.0, WRIST_TIP_OFFSET/2));
+    Frames[TOOLTOP] = wristToPinTop;
 }
 
 
@@ -387,7 +546,7 @@ ManualRegistration::~ManualRegistration()
 
 void ManualRegistration::PositionDepth(void)
 {
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
     foundModel = VisibleObjects.find(MODEL);
     if (foundModel == VisibleObjects.end()) {
         return;
@@ -427,7 +586,7 @@ void ManualRegistration::UpdatePreviousPosition()
 {
     bool debugLocal = false;
     // get current position in UI3
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
     foundModel = VisibleObjects.find(MODEL);
     if (foundModel == VisibleObjects.end()) {
         return;
@@ -443,7 +602,7 @@ void ManualRegistration::UpdatePreviousPosition()
 
 void ManualRegistration::PositionBack(void)
 {
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
     foundModel = VisibleObjects.find(MODEL);
     if (foundModel == VisibleObjects.end())
         return;
@@ -464,7 +623,7 @@ void ManualRegistration::PositionBack(void)
 
 void ManualRegistration::PositionHome(void)
 {
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
     foundModel = VisibleObjects.find(MODEL);
     if (foundModel != VisibleObjects.end())
         this->VisibleListVirtual->SetTransformation(this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse()*(foundModel->second)->HomePositionUI3);
@@ -472,7 +631,7 @@ void ManualRegistration::PositionHome(void)
     //hack
     fprintf(TRE,"meanTRE, maxTRE\n");
     fprintf(TRE,"%f, %f\n",MeanTRE/TREFiducialCount,MaxTRE);
-    fprintf(TREProjection,"meanTREProjection, maxTREProjection\n"); 
+    fprintf(TREProjection,"meanTREProjection, maxTREProjection\n");
     fprintf(TREProjection,"%f, %f\n",MeanTREProjection/(2*TREFiducialCount),MaxTREProjection);
     fclose(TRE);
     fclose(TREProjection);
@@ -512,8 +671,8 @@ void ManualRegistration::ToggleFiducials()
 
 void ManualRegistration::ToggleVisibility(void)
 {
-    bool localDebug = false;
-    ManualRegistrationType::iterator foundTumor;
+    bool localDebug = true;
+    ManualRegistrationObjectType::iterator foundTumor;
     foundTumor = VisibleObjects.find(TUMOR);
 
     switch(this->VisibleToggle)
@@ -525,12 +684,21 @@ void ManualRegistration::ToggleVisibility(void)
         this->VisibleToggle = MODEL;
         break;
     case(MODEL):
-        if(foundTumor != VisibleObjects.end())
+        if(foundTumor != VisibleObjects.end() || VisibleObjectsVirtualTumors.size() > 0)
             this->VisibleToggle = TUMOR;
         else
             this->VisibleToggle = TARGETS_REAL;
         break;
     case(TUMOR):
+        if(VisibleObjectsVirtualFeedback.size() > 0)
+            this->VisibleToggle = MODEL_ONLY;
+        else
+            this->VisibleToggle = TARGETS_REAL;
+        break;
+    case(MODEL_ONLY):
+        this->VisibleToggle = TUMOR_ONLY;
+        break;
+    case(TUMOR_ONLY):
         this->VisibleToggle = TARGETS_REAL;
         break;
     case(TARGETS_REAL):
@@ -553,35 +721,35 @@ void ManualRegistration::ToggleVisibility(void)
 void ManualRegistration::ConfigureMenuBar(void)
 {
     this->MenuBar->AddClickButton("PositionBack",
-        0,
-        "undo.png",
-        &ManualRegistration::PositionBack,
-        this);
+                                  0,
+                                  "undo.png",
+                                  &ManualRegistration::PositionBack,
+                                  this);
     this->MenuBar->AddClickButton("PositionHome",
-        1,
-        "triangle.png",
-        &ManualRegistration::PositionHome,
-        this);
+                                  1,
+                                  "triangle.png",
+                                  &ManualRegistration::PositionHome,
+                                  this);
     this->MenuBar->AddClickButton("ToggleFiducials",
-        2,
-        "map.png",
-        &ManualRegistration::ToggleFiducials,
-        this);
+                                  2,
+                                  "map.png",
+                                  &ManualRegistration::ToggleFiducials,
+                                  this);
     this->MenuBar->AddClickButton("Register",
-        3,
-        "move.png",
-        &ManualRegistration::Register,
-        this);
+                                  3,
+                                  "move.png",
+                                  &ManualRegistration::Register,
+                                  this);
     this->MenuBar->AddClickButton("ToggleVisibility",
-        4,
-        "sphere.png",
-        &ManualRegistration::ToggleVisibility,
-        this);
+                                  4,
+                                  "sphere.png",
+                                  &ManualRegistration::ToggleVisibility,
+                                  this);
     this->MenuBar->AddClickButton("PositionDepth",
-        5,
-        "iconify-top-left.png",
-        &ManualRegistration::PositionDepth,
-        this);
+                                  5,
+                                  "iconify-top-left.png",
+                                  &ManualRegistration::PositionDepth,
+                                  this);
 }
 
 void ManualRegistration::UpdateFiducials(void)
@@ -591,7 +759,6 @@ void ManualRegistration::UpdateFiducials(void)
     this->GetSecondaryMasterPosition(positionLeft);
     ManualRegistrationSurfaceVisibleStippleObject* closestFiducial = NULL;
     VisibleObjectType type = ALL;
-    bool addCalibrationVirtual = false;
 
     switch(this->FiducialToggle)
     {
@@ -616,21 +783,20 @@ void ManualRegistration::UpdateFiducials(void)
         }
         break;
     case(CALIBRATION_REAL):
+        //pinch right - just record right tool virtual location
         if(!this->BooleanFlags[BOTH_BUTTON_PRESSED] && this->BooleanFlags[RIGHT_BUTTON] && !this->BooleanFlags[LEFT_BUTTON]) {
-            type = CALIBRATION_REAL;
+            type = CALIBRATION_VIRTUAL;
             position = positionRight;
-            addCalibrationVirtual = true;
-        //For now we are not calibrating left, use for delete virtuals
+            //pinch left - add both real and virtual location for right tool
         }else if(!this->BooleanFlags[BOTH_BUTTON_PRESSED] && !this->BooleanFlags[RIGHT_BUTTON] && this->BooleanFlags[LEFT_BUTTON])
         {
-            type = CALIBRATION_VIRTUAL;
-            position = positionLeft;
-            addCalibrationVirtual = false;
+            type = CALIBRATION_REAL;
+            position = positionRight;
         }
         break;
     default:
         //std::cerr << "Doing nothing to update fiducial of this type: " << type << std::endl;
-        return;        
+        return;
     }
 
     int index;
@@ -641,7 +807,7 @@ void ManualRegistration::UpdateFiducials(void)
         if(this->FiducialToggle == CALIBRATION_REAL)
         {
             std::cout << "Trying to invalidate virual calibration at " << index << std::endl;
-            ManualRegistrationType::iterator foundObject = VisibleObjectsVirtualCalibration.find(index);
+            ManualRegistrationObjectType::iterator foundObject = VisibleObjectsVirtualCalibration.find(index);
             if(foundObject != VisibleObjectsVirtualCalibration.end())
                 (foundObject->second)->Valid = false;
         }
@@ -649,10 +815,20 @@ void ManualRegistration::UpdateFiducials(void)
         UpdateVisibleList();
     }else
     {
-        AddFiducial(position.Position(),type);
-        if(this->FiducialToggle == CALIBRATION_REAL && addCalibrationVirtual)
+        if(this->FiducialToggle == CALIBRATION_REAL)
         {
-            AddFiducial(GetCurrentCartesianPositionSlave(),CALIBRATION_VIRTUAL);
+            if(type == CALIBRATION_REAL)
+            {
+                AddFiducial(position.Position(),type);
+                AddFiducial(GetCurrentCartesianPositionSlave(),CALIBRATION_VIRTUAL);
+            }
+            else if(type == CALIBRATION_VIRTUAL)
+            {
+                AddFiducial(GetCurrentCartesianPositionSlave(),CALIBRATION_VIRTUAL);
+            }
+        }else
+        {
+            AddFiducial(position.Position(),type);
         }
         //std::cerr << "MaM position: " << position.Position().Translation() << " slave: " << GetCurrentCartesianPositionSlave().Translation() << std::endl;
     }
@@ -675,14 +851,14 @@ void ManualRegistration::FollowMaster(void)
     vctDouble3 positionLeftECMRCM = currentUI3toECMRCM * positionLeft.Position().Translation();
 
     if (!this->BooleanFlags[BOTH_BUTTON_PRESSED]
-    && this->BooleanFlags[RIGHT_BUTTON]
-    && !this->BooleanFlags[LEFT_BUTTON]) {
+            && this->BooleanFlags[RIGHT_BUTTON]
+            && !this->BooleanFlags[LEFT_BUTTON]) {
         //translation only using right
         displacementECMRCM.Translation() = positionRightECMRCM - initialMasterRightECMRCM;
     }
     else if (!this->BooleanFlags[BOTH_BUTTON_PRESSED]
-    && !this->BooleanFlags[RIGHT_BUTTON]
-    && this->BooleanFlags[LEFT_BUTTON]) {
+             && !this->BooleanFlags[RIGHT_BUTTON]
+             && this->BooleanFlags[LEFT_BUTTON]) {
         //translation only using left
         displacementECMRCM.Translation() = positionLeftECMRCM - initialMasterLeftECMRCM;
     } else if (this->BooleanFlags[BOTH_BUTTON_PRESSED]) {
@@ -693,18 +869,17 @@ void ManualRegistration::FollowMaster(void)
         double angle;
         angle = 0.0;
         double object_displacement[3], object_rotation[4];
-        vctDouble3 translation, translationInWorld;
-        vctDouble3 axisInWorld;
+        vctDouble3 translation;
 
         vctFrm3 handleCenterECMRCM;
         handleCenterECMRCM.Translation().SumOf(initialMasterRightECMRCM, initialMasterLeftECMRCM);
         handleCenterECMRCM.Translation().Divide(2.0);
 
         ComputeTransform(initialMasterRightECMRCM.Pointer(),
-            initialMasterLeftECMRCM.Pointer(),
-            positionRightECMRCM.Pointer(),
-            positionLeftECMRCM.Pointer(),
-            object_displacement, object_rotation);
+                         initialMasterLeftECMRCM.Pointer(),
+                         positionRightECMRCM.Pointer(),
+                         positionLeftECMRCM.Pointer(),
+                         object_displacement, object_rotation);
 
         // Set the Translation.
         translation.Assign(object_displacement);
@@ -716,7 +891,7 @@ void ManualRegistration::FollowMaster(void)
 
         // Set the Rotation.
         angle = object_rotation[0];
-        // hard coded scale
+        // hard coded scale to dampen rotation
         angle *= 0.5;
         axis.Assign(object_rotation+1);
         // visibleListVirtualPositionUI3.Rotation().ApplyInverseTo(axis, axisInWorld);
@@ -844,6 +1019,11 @@ bool ManualRegistration::RunForeground(void)
         FollowMaster();
     }
 
+    // Cursor & Feedback
+    int index;
+    ManualRegistrationSurfaceVisibleStippleObject* closestFiducial = NULL;
+    closestFiducial = FindClosestFiducial(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTIP],TUMOR,index);
+
     return true;
 }
 
@@ -853,6 +1033,12 @@ bool ManualRegistration::RunBackground(void)
     if (this->State != this->PreviousState) {
         this->PreviousState = this->State;
     }
+
+    // Cursor & Feedback
+    int index;
+    ManualRegistrationSurfaceVisibleStippleObject* closestFiducial = NULL;
+    closestFiducial = FindClosestFiducial(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTIP],TUMOR,index);
+
     return true;
 }
 
@@ -870,18 +1056,62 @@ bool ManualRegistration::RunNoInput(void)
 
     // prepare to drop marker if clutch and right MTM are pressed
     if ((this->BooleanFlags[CLUTCH_PRESSED] && this->BooleanFlags[RIGHT_BUTTON] && !this->BooleanFlags[RIGHT_BUTTON_RELEASED])
-    &&((this->FiducialToggle == TARGETS_REAL || this->FiducialToggle == FIDUCIALS_REAL) || this->FiducialToggle == CALIBRATION_REAL))
+            &&((this->FiducialToggle == TARGETS_REAL || this->FiducialToggle == FIDUCIALS_REAL) || this->FiducialToggle == CALIBRATION_REAL))
     {
         //Add fiducial
         std::cerr << "Add marker with slave" << std::endl;
         if(this->FiducialToggle == CALIBRATION_REAL)
             AddFiducial(GetCurrentCartesianPositionSlave(),CALIBRATION_VIRTUAL);
         else
-            AddFiducial(this->WristCalibration*GetCurrentCartesianPositionSlave()*this->WristToTip,this->FiducialToggle);
+            AddFiducial(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTIP],this->FiducialToggle);
     }
 
     // update cursor
-    this->Cursor->SetTransformation(this->WristCalibration*GetCurrentCartesianPositionSlave()*this->WristToTip);
+    ManualRegistrationObjectType::iterator foundObject;
+    this->Cursor->SetTransformation(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TIP]);
+    foundObject = VisibleObjectsVirtualFeedback.find(TOOLTIP);
+    if (foundObject != VisibleObjectsVirtualFeedback.end()) {
+        (foundObject->second)->SetTransformation(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTIP]);
+    }
+    foundObject = VisibleObjectsVirtualFeedback.find(TOOLTOP);
+    if (foundObject != VisibleObjectsVirtualFeedback.end()) {
+        (foundObject->second)->SetTransformation(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTOP]);
+    }
+    foundObject = VisibleObjectsVirtualFeedback.find(WRIST);
+    if (foundObject != VisibleObjectsVirtualFeedback.end()) {
+        (foundObject->second)->SetPosition((Frames[WRIST]*GetCurrentCartesianPositionSlave()).Translation());
+    }
+    // update depth cues for certain toggles
+    if(VisibleToggle == ALL || VisibleToggle == NO_FIDUCIALS || VisibleToggle == TUMOR)
+    {
+        int index;
+        ManualRegistrationSurfaceVisibleStippleObject* closestFiducial = NULL;
+        closestFiducial = FindClosestFiducial(Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTIP],TUMOR,index);
+        char buffer[33];
+        vctDouble3 dist;
+        if(closestFiducial != NULL && closestFiducial->Valid)
+        {
+            dist.DifferenceOf((Frames[WRIST]*GetCurrentCartesianPositionSlave()*Frames[TOOLTIP]).Translation(), closestFiducial->GetAbsoluteTransformation().Translation());
+            double abs = dist.Norm();
+            if(abs < 4.0)
+            {
+                if(abs < 1.0)
+                    closestFiducial->SetColor(1.0, 0.0, 0.25);
+                else if(abs < 2.0)
+                    closestFiducial->SetColor(255.0/255.0, 255.0/255.0, 0.0);
+                else if(abs < 4.0)
+                    closestFiducial->SetColor(153.0/255.0, 255.0/255.0, 153.0/255.0);
+            }
+            sprintf(buffer, "%2.2lf", abs);
+        }else
+        {
+            sprintf(buffer, "");
+        }
+        if (foundObject != VisibleObjectsVirtualFeedback.end())
+        {
+            (foundObject->second)->SetText(buffer);
+        }
+    }
 
     //check if the objects should be updated
     if (this->BooleanFlags[CAMERA_PRESSED]) {
@@ -909,7 +1139,7 @@ void ManualRegistration::OnQuit(void)
 void ManualRegistration::OnStart(void)
 {
     vctFrm3 homePosition, modelHomePosition, currentECMtoECMRCM, staticECMtoUI3;
-    ManualRegistrationType::iterator foundObject;
+    ManualRegistrationObjectType::iterator foundObject;
 
     // VirtualList - Set root transformation at origin
     homePosition.Translation().Assign(0.0,0.0,0.0);
@@ -939,37 +1169,57 @@ void ManualRegistration::OnStart(void)
     if (foundObject != VisibleObjects.end()) {
         (foundObject->second)->SetColor(1.0, 0.49, 0.25);
         (foundObject->second)->HomePositionUI3 = modelHomePosition;
-        (foundObject->second)->SetStipplePercentage(50);
-        (foundObject->second)->SetOpacity(0.7);
+        (foundObject->second)->SetStipplePercentage(0);
+        (foundObject->second)->SetOpacity(0.25);
     }
     foundObject = VisibleObjects.find(TUMOR);
     if (foundObject != VisibleObjects.end()) {
         (foundObject->second)->SetColor(1.0, 0.0, 0.25);
         (foundObject->second)->HomePositionUI3 = modelHomePosition;
-        (foundObject->second)->SetStipplePercentage(50);
-        (foundObject->second)->SetOpacity(0.7);
+        (foundObject->second)->SetStipplePercentage(0);
+        (foundObject->second)->SetOpacity(0.2);
     }
 
-    for (ManualRegistrationType::iterator iter = VisibleObjects.begin();
-        iter != VisibleObjects.end();
-        iter++) {
-            (iter->second)->Visible = true;
-            (iter->second)->Valid = true;
-            (iter->second)->Show();
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjects.begin();
+         iter != VisibleObjects.end();
+         iter++) {
+        (iter->second)->Visible = true;
+        (iter->second)->Valid = true;
+        (iter->second)->Show();
     }
 
 #if IMPORT_FIDUCIALS
 #if CUBE_DEMO
-    ImportFiducialFile("E:/Users/wliu25/MyCommon/data/TORS/CubeCTFids.fcsv", FIDUCIALS_VIRTUAL);
-    ImportFiducialFile("E:/Users/wliu25/MyCommon/data/TORS/CubeCTTargets.fcsv", TARGETS_VIRTUAL);
+    //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/TORS/CubeCTFids.fcsv", FIDUCIALS_VIRTUAL);
+    //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/TORS/CubeCTTargets.fcsv", TARGETS_VIRTUAL);
 #else
+    //20121017_T2
+    //ImportFiducialFile("/home/wen/Images/20121017_T2/demons_fids_flip.fcsv",FIDUCIALS_VIRTUAL);
+    //ImportFiducialFile("/home/wen/Images/20121023_T4/demons_fids.fcsv",FIDUCIALS_VIRTUAL);
+    ImportFiducialFile("/home/wen/Images/20121121_Maori/CBCT_F.fcsv",FIDUCIALS_VIRTUAL);
+    ImportFiducialFile("/home/wen/Images/TORS/robotCalibrationReal.fcsv", CALIBRATION_REAL);
+    ImportFiducialFile("/home/wen/Images/TORS/robotCalibrationVirtual.fcsv", CALIBRATION_VIRTUAL);
     //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/TORS/TORSPhantomFiducialList.fcsv",FIDUCIALS_VIRTUAL);
-    ImportFiducialFile("E:/Users/wliu25/MyCommon/data/RedSkull/TORSRegistrationFiducials.fcsv", FIDUCIALS_VIRTUAL);
-    ImportFiducialFile("E:/Users/wliu25/MyCommon/data/RedSkull/TORSTargetFiducials.fcsv", TARGETS_VIRTUAL);
+    //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/RedSkull/TORSRegistrationFiducials.fcsv", FIDUCIALS_VIRTUAL);
+    //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/RedSkull/TORSTargetFiducials.fcsv", TARGETS_VIRTUAL);
     //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/20120223_TORS_Pig_Phantoms/20120223_TORS_PigTongue_sc4_c191100_ROI_Fiducials.fcsv", FIDUCIALS_VIRTUAL);
     //ImportFiducialFile("E:/Users/wliu25/MyCommon/data/20120307_TORS_Pig_Phantoms/T3Final/fiducials.fcsv", FIDUCIALS_VIRTUAL);
 #endif
-    ImportFiducialFile("E:/Users/wliu25/MyCommon/data/TORS/CubeCalibrationReal.fcsv", CALIBRATION_REAL);
+#endif
+
+#if IMPORT_MULTIPLE_TARGETS
+    ImportFiducialFile("/home/wen/Images/20121121_Maori/demons_targets.fcsv", TUMOR);
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualFeedback.begin();
+         iter != VisibleObjectsVirtualFeedback.end();
+         iter++)
+    {
+        (iter->second)->SetStipplePercentage(0);
+        if(iter->first == WRIST)
+            (iter->second)->SetOpacity(0.5);
+        else
+            (iter->second)->SetOpacity(0.1);
+    }
+    Register();
 #endif
     UpdateVisibleList();
 }
@@ -1001,7 +1251,7 @@ void ManualRegistration::Startup(void) {
     interfaceProvided = daVinci->GetInterfaceProvided("Clutch");
     CMN_ASSERT(interfaceProvided);
     mtsCommandWrite<ManualRegistration, prmEventButton> * clutchCallbackCommand =
-        new mtsCommandWrite<ManualRegistration, prmEventButton>(&ManualRegistration::MasterClutchPedalCallback, this, "Button", prmEventButton());
+            new mtsCommandWrite<ManualRegistration, prmEventButton>(&ManualRegistration::MasterClutchPedalCallback, this, "Button", prmEventButton());
     CMN_ASSERT(clutchCallbackCommand);
     interfaceProvided->AddObserver("Button", clutchCallbackCommand);
 
@@ -1009,11 +1259,23 @@ void ManualRegistration::Startup(void) {
     interfaceProvided = daVinci->GetInterfaceProvided("Camera");
     CMN_ASSERT(interfaceProvided);
     mtsCommandWrite<ManualRegistration, prmEventButton> * cameraCallbackCommand =
-        new mtsCommandWrite<ManualRegistration, prmEventButton>(&ManualRegistration::CameraControlPedalCallback, this,
-        "Button", prmEventButton());
+            new mtsCommandWrite<ManualRegistration, prmEventButton>(&ManualRegistration::CameraControlPedalCallback, this,
+                                                                    "Button", prmEventButton());
     CMN_ASSERT(cameraCallbackCommand);
     interfaceProvided->AddObserver("Button", cameraCallbackCommand);
+}
 
+void ManualRegistration::OnStreamSample(svlSample * sample, int streamindex)
+{
+    //if (State == Foreground) {
+//    int indexLeft = GetStreamIndexFromName(SVL_LEFT);
+//    int indexRight = GetStreamIndexFromName(SVL_LEFT);
+//    if(indexLeft == streamindex)
+//        ImagePlaneLeft->SetImage(dynamic_cast<svlSampleImage *>(sample), streamindex);
+//    if(indexRight == streamindex)
+//        ImagePlaneRight->SetImage(dynamic_cast<svlSampleImage *>(sample), streamindex);
+//        std::cout << "OnStreamSample being called!" << std::endl;
+    //}
 }
 
 void ManualRegistration::PrimaryMasterButtonCallback(const prmEventButton & event)
@@ -1131,12 +1393,12 @@ vctFrm3 ManualRegistration::GetCurrentCartesianPositionSlave(void)
     GetCartesianPositionSlave(slavePosition);
 
     // Find first virtual object, i.e. Model
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
     foundModel = VisibleObjects.find(MODEL);
     vctFrm3 staticECMtoUI3, currentECMtoECMRCM, currentECMRCMtoUI3;
     staticECMtoUI3.Rotation().From(vctAxAnRot3(vctDouble3(0.0,1.0,0.0), cmnPI));
     currentECMtoECMRCM = GetCurrentECMtoECMRCM();
-    currentECMRCMtoUI3 = staticECMtoUI3 * currentECMtoECMRCM.Inverse();     
+    currentECMRCMtoUI3 = staticECMtoUI3 * currentECMtoECMRCM.Inverse();
 
     return staticECMtoUI3 * slavePosition.Position();
 }
@@ -1168,19 +1430,21 @@ void ManualRegistration::MasterClutchPedalCallback(const prmEventButton & payloa
         if (this->BooleanFlags[DEBUG])
             std::cout << "Clutch pressed" << std::endl;
     } else {
+        if (this->BooleanFlags[DEBUG])
+            std::cout << "Clutch release" << std::endl;
         this->BooleanFlags[CLUTCH_PRESSED] = false;
     }
 }
 
 bool ManualRegistration::ImportFiducialFile(const std::string & inputFile, VisibleObjectType type)
 {
-    double count=0.0;
+    int index = 0;
+    double count = 0.0;
     vct3 positionFromFile;
-    vctFrm3 fiducialPositionUI3, modelPositionUI3, altPositionUI3;
-    altPositionUI3.Translation().Assign(0.0,0.0,-127.0);
+    vctFrm3 fiducialPositionUI3, fiducialRotationX, fiducialRotationY, fiducialRotationZ;
     std::string tempLine = "aaaa";
     std::vector <std::string> token;
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
     foundModel = VisibleObjects.find(MODEL);
     if (foundModel == VisibleObjects.end())
         return false;
@@ -1200,19 +1464,22 @@ bool ManualRegistration::ImportFiducialFile(const std::string & inputFile, Visib
         if (token.at(0).compare(0,1,"#")) {
             if (token.size() < 4)
                 return false;
+            if(token.size() >= 5 && strtod(token.at(5).c_str(), NULL) == 0.0)
+                continue;
             //assume fiducials are given wrt to model
             positionFromFile =  vct3(strtod(token.at(1).c_str(), NULL),strtod(token.at(2).c_str(), NULL),strtod(token.at(3).c_str(), NULL));
             fiducialPositionUI3.Translation().Assign((foundModel->second)->GetAbsoluteTransformation() * positionFromFile);
             //Add random rotation
             if(type == CALIBRATION_REAL)
             {
-                fiducialPositionUI3.Rotation().From(vctAxAnRot3(vctDouble3(1.0,0.0,0.0), cmnPI/(count+1)));
+                fiducialRotationX.Rotation().From(vctMatRot3(vctAxAnRot3(vctDouble3(1.0,0.0,0.0), cmnPI/(count+1))));
+                fiducialRotationY.Rotation().From(vctMatRot3(vctAxAnRot3(vctDouble3(0.0,1.0,0.0), cmnPI/(count+3))));
+                fiducialRotationZ.Rotation().From(vctMatRot3(vctAxAnRot3(vctDouble3(0.0,0.0,1.0), cmnPI/(count+4))));
+                fiducialPositionUI3.Rotation().From((fiducialRotationX*fiducialRotationY*fiducialRotationZ).Rotation());
             }
             AddFiducial(fiducialPositionUI3, type);
-            ////HACK TO TEST REGISTRATION WITH STATIC REAL FIDUCIALS - REMOVE!!!
-            //fiducialPositionUI3.Translation().Assign(altPositionUI3 * positionFromFile);
-            //AddFiducial(fiducialPositionUI3, false);
             count++;
+            index++;
         }
         token.clear();
     }
@@ -1249,29 +1516,34 @@ void ManualRegistration::Register(void)
     double * fre = new double[3*fiducialsVirtual.size()];
     memset(fre, 0, 3*fiducialsVirtual.size() * sizeof(double));
 
-    bool valid = false;//nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
+    bool valid = nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
     if (valid) {
         // apply transformation in ECMRCM
         this->VisibleListVirtual->SetTransformation(displacement * this->VisibleListVirtual->GetTransformation());
         std::cerr << "Registered using # " << fiducialsReal.size() << " fiducials with fre: "<< fre[0] << std::endl;
     } else {
         std::cerr << "ERROR:ManualRegistration::Register() with # " << fiducialsReal.size() << " real, " << fiducialsVirtual.size()<< " virtual, see log" << std::endl;
-    }  
+    }
 
     // Calibrate
     GetFiducials(fiducialsVirtual, fiducialsReal,CALIBRATION_REAL,UI3);
     fre = new double[3*fiducialsVirtual.size()];
     memset(fre, 0, 3*fiducialsVirtual.size() * sizeof(double));
-    valid = false;//nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
-    if (valid) {
-        // save calibration transformation
-        this->WristCalibration = displacement;
-        std::cerr << "Calibrated wrist using # " << fiducialsReal.size() << " fiducials with fre: "<< fre[0] << std::endl;
-    } else {
-        std::cerr << "ERROR:ManualRegistration::Register() with # " << fiducialsReal.size() << " real, " << fiducialsVirtual.size()<< " virtual, see log" << std::endl;
-    }  
+    if(fiducialsVirtual.size() > calibrationCount)
+    {
+        valid = nmrRegistrationRigid(fiducialsVirtual, fiducialsReal, displacement,fre);
+        if (valid) {
+            // save calibration transformation
+            Frames[WRIST] = displacement;
+            std::cerr << "Calibrated wrist using # " << fiducialsReal.size() << " fiducials with fre: "<< fre[0] << " calib:" << Frames[WRIST] << std::endl;
+            calibrationCount = fiducialsVirtual.size();
+        } else {
+            std::cerr << "ERROR:ManualRegistration::Register() Calibrated wrist with # " << fiducialsReal.size() << " real, " << fiducialsVirtual.size()<< " virtual, see log" << std::endl;
+        }
+    }
 
-    ComputeTRE();
+    // targets
+    //ComputeTRE();
 }
 
 void ManualRegistration::ComputeTRE()
@@ -1343,7 +1615,7 @@ void ManualRegistration::ComputeTRE()
         //   maxTRETriangulation = errorTriangulationL2Norm;
         //c=cbct=virtual,p=translation,q=real; q-p = r
         //l = np.dot((c-p), (q-p)) / np.dot((q-p), (q-p))
-        //return p + (l * (q-p))      
+        //return p + (l * (q-p))
         r = targetsReal[i]-extrinsicsLeft.Translation();
         projection = extrinsicsLeft.Translation() + (((targetsVirtual[i]-extrinsicsLeft.Translation()).DotProduct(r))/(r.DotProduct(r)))*r;
         projectionErrorLeft[i] = targetsVirtual[i]-projection;
@@ -1351,7 +1623,7 @@ void ManualRegistration::ComputeTRE()
         double projectionErrorL2Norm = sqrt(projectionErrorLeft[i].NormSquare());
         mTREProjection += projectionErrorL2Norm;
         if(projectionErrorL2Norm > maxTREProjection)
-            maxTREProjection = projectionErrorL2Norm; 
+            maxTREProjection = projectionErrorL2Norm;
 
         if(this->BooleanFlags[DEBUG])
         {
@@ -1478,7 +1750,7 @@ void ManualRegistration::GetFiducials(vctDynamicVector<vct3>& fiducialsVirtual, 
 {
     int fiducialIndex = 0;
     bool debugLocal = false;
-    ManualRegistrationType localVisibleObjectsVirtual,localVisibleObjectsReal;
+    ManualRegistrationObjectType localVisibleObjectsVirtual,localVisibleObjectsReal;
 
     switch(type)
     {
@@ -1496,71 +1768,71 @@ void ManualRegistration::GetFiducials(vctDynamicVector<vct3>& fiducialsVirtual, 
         break;
     default:
         //std::cerr << "ERROR: Cannot find fiducial of this type: " << type << std::endl;
-        return;        
+        return;
     }
 
     //real
-    for (ManualRegistrationType::iterator iter = localVisibleObjectsReal.begin();
-        iter != localVisibleObjectsReal.end() && fiducialsReal.size() < FIDUCIAL_COUNT_MAX;
-        iter++) {
-            if((iter->second)->Valid)
+    for (ManualRegistrationObjectType::iterator iter = localVisibleObjectsReal.begin();
+         iter != localVisibleObjectsReal.end() && fiducialsReal.size() < FIDUCIAL_COUNT_MAX;
+         iter++) {
+        if((iter->second)->Valid)
+        {
+            fiducialsReal.resize(fiducialIndex + 1);
+            switch(frame)
             {
-                fiducialsReal.resize(fiducialIndex + 1);
-                switch(frame)
-                {
-                case(ECMRCM):
-                    fiducialsReal[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
-                    break;
-                case(UI3):
-                    fiducialsReal[fiducialIndex] = (iter->second)->GetAbsoluteTransformation().Translation();
-                    break;
-                default:
-                    fiducialsReal[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
-                    break;
-                }
-                fiducialIndex++;
-                if (this->BooleanFlags[DEBUG] && debugLocal)
-                    std::cerr << "Getting real fiducial " << fiducialIndex << " at abs positionUI3 " << ((iter->second)->GetAbsoluteTransformation()).Translation()
-                    << " relative position: " << ((iter->second)->GetTransformation()).Translation()
-                    << " returning " << fiducialsReal[fiducialIndex] << std::endl;
+            case(ECMRCM):
+                fiducialsReal[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
+                break;
+            case(UI3):
+                fiducialsReal[fiducialIndex] = (iter->second)->GetAbsoluteTransformation().Translation();
+                break;
+            default:
+                fiducialsReal[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
+                break;
             }
+            fiducialIndex++;
+            if (this->BooleanFlags[DEBUG] && debugLocal)
+                std::cerr << "Getting real fiducial " << fiducialIndex << " at abs positionUI3 " << ((iter->second)->GetAbsoluteTransformation()).Translation()
+                          << " relative position: " << ((iter->second)->GetTransformation()).Translation()
+                          << " returning " << fiducialsReal[fiducialIndex] << std::endl;
+        }
     }
 
     fiducialIndex = 0;
 
     //virtual
-    for (ManualRegistrationType::iterator iter = localVisibleObjectsVirtual.begin();
-        iter != localVisibleObjectsVirtual.end() && fiducialsVirtual.size() < FIDUCIAL_COUNT_MAX;
-        iter++) {
-            //for fiducials returns no more than # of real fiducials - size must equal for nmrRegistrationRigid
-            if((iter->second)->Valid && (fiducialsVirtual.size() < fiducialsReal.size()))
+    for (ManualRegistrationObjectType::iterator iter = localVisibleObjectsVirtual.begin();
+         iter != localVisibleObjectsVirtual.end() && fiducialsVirtual.size() < FIDUCIAL_COUNT_MAX;
+         iter++) {
+        //for fiducials returns no more than # of real fiducials - size must equal for nmrRegistrationRigid
+        if((iter->second)->Valid && (fiducialsVirtual.size() < fiducialsReal.size()))
+        {
+            fiducialsVirtual.resize(fiducialIndex + 1);
+            switch(frame)
             {
-                fiducialsVirtual.resize(fiducialIndex + 1);
-                switch(frame)
-                {
-                case(ECMRCM):
-                    fiducialsVirtual[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
-                    break;
-                case(UI3):
-                    fiducialsVirtual[fiducialIndex] = (iter->second)->GetAbsoluteTransformation().Translation();
-                    break;
-                default:
-                    fiducialsVirtual[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
-                    break;
-                }
-                fiducialIndex++;
-                if (this->BooleanFlags[DEBUG] && debugLocal)
-                    std::cerr << "Getting virtual fiducial " << fiducialIndex << " at abs positionUI3 " << ((iter->second)->GetAbsoluteTransformation()).Translation()
-                    << " relative position: " << ((iter->second)->GetTransformation()).Translation()
-                    << " returning " << fiducialsVirtual[fiducialIndex] << std::endl;
+            case(ECMRCM):
+                fiducialsVirtual[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
+                break;
+            case(UI3):
+                fiducialsVirtual[fiducialIndex] = (iter->second)->GetAbsoluteTransformation().Translation();
+                break;
+            default:
+                fiducialsVirtual[fiducialIndex] = this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse() *(iter->second)->GetAbsoluteTransformation().Translation();
+                break;
             }
+            fiducialIndex++;
+            if (this->BooleanFlags[DEBUG] && debugLocal)
+                std::cerr << "Getting virtual fiducial " << fiducialIndex << " at abs positionUI3 " << ((iter->second)->GetAbsoluteTransformation()).Translation()
+                          << " relative position: " << ((iter->second)->GetTransformation()).Translation()
+                          << " returning " << fiducialsVirtual[fiducialIndex] << std::endl;
+        }
     }
 }
 
 void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type)
 {
     int fiducialIndex;
-    ManualRegistrationType::iterator foundModel;
+    ManualRegistrationObjectType::iterator foundModel;
 
     // Find first virtual object, i.e. Model
     foundModel = VisibleObjects.find(MODEL);
@@ -1571,13 +1843,13 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
     switch(type)
     {
     case(TARGETS_REAL):
-        fiducialIndex = VisibleObjectsRealTargets.size(); 
+        fiducialIndex = VisibleObjectsRealTargets.size();
         break;
     case(TARGETS_VIRTUAL):
-        fiducialIndex = VisibleObjectsVirtualTargets.size(); 
+        fiducialIndex = VisibleObjectsVirtualTargets.size();
         break;
     case(FIDUCIALS_REAL):
-        fiducialIndex = VisibleObjectsRealFiducials.size(); 
+        fiducialIndex = VisibleObjectsRealFiducials.size();
         break;
     case(FIDUCIALS_VIRTUAL):
         fiducialIndex = VisibleObjectsVirtualFiducials.size();
@@ -1588,9 +1860,12 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
     case(CALIBRATION_VIRTUAL):
         fiducialIndex = VisibleObjectsVirtualCalibration.size();
         break;
+    case(TUMOR):
+        fiducialIndex = VisibleObjectsVirtualTumors.size();
+        break;
     default:
         //std::cerr << "ERROR: Cannot add fiducial of this type: " << type << std::endl;
-        return;        
+        return;
     }
 
     // create new visibleObject for fiducial
@@ -1631,12 +1906,18 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
         VisibleObjectsVirtualCalibration[fiducialIndex] = newFiducial;
         this->VisibleListVirtual->Add(newFiducial);
         break;
+    case(TUMOR):
+        sprintf(buffer, "%d", type-TUMOR);
+        newFiducial = new ManualRegistrationSurfaceVisibleStippleObject(buffer,ManualRegistrationSurfaceVisibleStippleObject::SPHERE,4);
+        VisibleObjectsVirtualTumors[fiducialIndex] = newFiducial;
+        this->VisibleListVirtual->Add(newFiducial);
+        break;
     default:
-        return;        
+        return;
     }
 
     newFiducial->WaitForCreation();
-    newFiducial->SetStipplePercentage(50);
+    newFiducial->SetStipplePercentage(0);
     newFiducial->SetOpacity(0.7);
     newFiducial->Show();
     newFiducial->Visible = true;
@@ -1649,7 +1930,7 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
         // set position wrt visibleListECMRCM
         newFiducial->SetTransformation(this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse()*positionUI3);
         CMN_LOG_CLASS_RUN_VERBOSE << "PrimaryMasterButtonCallback: added real target: " << fiducialIndex << " "
-            << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         if (this->BooleanFlags[DEBUG])
             std::cerr << "Adding real target " << fiducialIndex << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         break;
@@ -1658,7 +1939,7 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
         // set position wrt model
         newFiducial->SetTransformation((foundModel->second)->GetAbsoluteTransformation().Inverse()*positionUI3);
         CMN_LOG_CLASS_RUN_VERBOSE << "PrimaryMasterButtonCallback: added virtual target: " << fiducialIndex << " "
-            << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         if (this->BooleanFlags[DEBUG])
             std::cerr << "Adding virtual target " << fiducialIndex << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         break;
@@ -1667,7 +1948,7 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
         // set position wrt visibleListECMRCM
         newFiducial->SetTransformation(this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse()*positionUI3);
         CMN_LOG_CLASS_RUN_VERBOSE << "PrimaryMasterButtonCallback: added real fiducial: " << fiducialIndex << " "
-            << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         if (this->BooleanFlags[DEBUG])
             std::cerr << "Adding real fiducial " << fiducialIndex << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         break;
@@ -1676,7 +1957,7 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
         // set position wrt model
         newFiducial->SetTransformation((foundModel->second)->GetAbsoluteTransformation().Inverse()*positionUI3);
         CMN_LOG_CLASS_RUN_VERBOSE << "PrimaryMasterButtonCallback: added virtual fiducial: " << fiducialIndex << " "
-            << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         if (this->BooleanFlags[DEBUG])
             std::cerr << "Adding virtual fiducial " << fiducialIndex << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         break;
@@ -1685,28 +1966,38 @@ void ManualRegistration::AddFiducial(vctFrm3 positionUI3, VisibleObjectType type
         // set position wrt visibleListECMRCM
         newFiducial->SetTransformation(this->VisibleListECMRCM->GetAbsoluteTransformation().Inverse()*positionUI3);
         CMN_LOG_CLASS_RUN_VERBOSE << "PrimaryMasterButtonCallback: added calibration real: " << fiducialIndex << " "
-            << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         if (this->BooleanFlags[DEBUG])
-            std::cerr << "Adding calibration real " << fiducialIndex << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+            std::cerr << "Adding calibration real " << fiducialIndex << " at  positionUI3" << (this->VisibleListECMRCM->GetAbsoluteTransformation()*newFiducial->GetTransformation()).Translation() << " " << ((this->VisibleListECMRCM->GetAbsoluteTransformation()*newFiducial->GetTransformation()).Translation().Element(2) + 200) << std::endl;
         break;
     case(CALIBRATION_VIRTUAL):
         newFiducial->SetColor(1.0,0.75,0.75);
         // set position wrt model
         newFiducial->SetTransformation((foundModel->second)->GetAbsoluteTransformation().Inverse()*positionUI3);
         CMN_LOG_CLASS_RUN_VERBOSE << "PrimaryMasterButtonCallback: added calibration virtual : " << fiducialIndex << " "
-            << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
         if (this->BooleanFlags[DEBUG])
-            std::cerr << "Adding calibration virtual " << fiducialIndex << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+            std::cerr << "Adding calibration virtual " << fiducialIndex << " at  positionUI3" << ((foundModel->second)->GetAbsoluteTransformation()*newFiducial->GetTransformation()).Translation() << " " << ((foundModel->second)->GetAbsoluteTransformation()*newFiducial->GetTransformation()).Translation().Element(2) + 200<< std::endl;
         break;
-
+    case(TUMOR):
+        newFiducial->SetColor(0.0, 0.0, 1.0);
+        newFiducial->SetStipplePercentage(0);
+        newFiducial->SetOpacity(0.25);
+        // set position wrt model
+        newFiducial->SetTransformation((foundModel->second)->GetAbsoluteTransformation().Inverse()*positionUI3);
+        CMN_LOG_CLASS_RUN_VERBOSE << "Multiple Targets: added virtual target: " << type << " "
+                                  << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+        if (this->BooleanFlags[DEBUG])
+            std::cerr << "Adding virtual target " << type << " at positionUI3 " << newFiducial->GetAbsoluteTransformation().Translation() << std::endl;
+        break;
     default:
         std::cerr << "ERROR: Cannot add fiducial of this type: " << type << std::endl;
-        return;        
+        return;
     }
 
     ResetButtonEvents();
     UpdateVisibleList();
-    return;   
+    return;
 }
 
 /*!
@@ -1721,10 +2012,13 @@ ManualRegistrationSurfaceVisibleStippleObject* ManualRegistration::FindClosestFi
     double abs;
     int currentCount = 0;
     ManualRegistrationSurfaceVisibleStippleObject* closestFiducial = NULL;
-    ManualRegistrationType localVisibleObjects;
+    ManualRegistrationObjectType localVisibleObjects;
 
     switch(type)
     {
+    case(TUMOR):
+        localVisibleObjects = VisibleObjectsVirtualTumors;
+        break;
     case(TARGETS_REAL):
         localVisibleObjects = VisibleObjectsRealTargets;
         break;
@@ -1740,26 +2034,37 @@ ManualRegistrationSurfaceVisibleStippleObject* ManualRegistration::FindClosestFi
     case(CALIBRATION_REAL):
         localVisibleObjects = VisibleObjectsRealCalibration;
         break;
-   case(CALIBRATION_VIRTUAL):
+    case(CALIBRATION_VIRTUAL):
         localVisibleObjects = VisibleObjectsVirtualCalibration;
         break;
     default:
         //std::cerr << "ERROR: Cannot find fiducial of this type: " << type << std::endl;
-        return NULL;        
+        return NULL;
     }
 
     index = -1;
-    for (ManualRegistrationType::iterator iter = localVisibleObjects.begin();
-        iter != localVisibleObjects.end();
-        iter++) {
-            dist.DifferenceOf(positionUI3.Translation(), (iter->second)->GetAbsoluteTransformation().Translation());
-            abs = dist.Norm();
-            if(abs < closestDist)
+    char buffer[33];
+    for (ManualRegistrationObjectType::iterator iter = localVisibleObjects.begin();
+         iter != localVisibleObjects.end();
+         iter++) {
+        dist.DifferenceOf(positionUI3.Translation(), (iter->second)->GetAbsoluteTransformation().Translation());
+        abs = dist.Norm();
+        if(abs < closestDist)
+        {
+            currentCount++;
+            if(type == TUMOR)
             {
-                currentCount++;
+                closestDist = abs;
+                closestFiducial = (iter->second);
+                (iter->second)->SetColor(0.0, 0.0, 1.0);
+                sprintf(buffer, "%d", iter->first);
+                (iter->second)->SetText(buffer);
+            }else
+            {
                 closestDist = abs;
                 closestFiducial = (iter->second);
             }
+        }
     }
 
 
@@ -1777,13 +2082,13 @@ ManualRegistrationSurfaceVisibleStippleObject* ManualRegistration::FindClosestFi
     //    }
     //}
 
-    if(closestDist > 5.0)
+    if(closestDist > 4.0)
     {
         closestFiducial = NULL;
     }
     else{
-        if(this->BooleanFlags[DEBUG])
-            std::cerr << "Found existing marker at index: " << currentCount << std::endl;
+        //if(this->BooleanFlags[DEBUG])
+        //    std::cerr << "Found existing marker at index: " << currentCount << std::endl;
         index = currentCount;
     }
 
@@ -1793,89 +2098,117 @@ ManualRegistrationSurfaceVisibleStippleObject* ManualRegistration::FindClosestFi
 
 void ManualRegistration::UpdateVisibleList()
 {
-    for (ManualRegistrationType::iterator iter = VisibleObjects.begin();
-        iter != VisibleObjects.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible &&
-                (VisibleToggle == ALL || (VisibleToggle == NO_FIDUCIALS) ||VisibleToggle == iter->first)) {
-                    (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjects.begin();
+         iter != VisibleObjects.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible &&
+                (VisibleToggle == ALL || (VisibleToggle == NO_FIDUCIALS)|| (VisibleToggle == iter->first) ||
+                 (VisibleToggle == MODEL_ONLY && iter->first == MODEL) ||
+                 (VisibleToggle == TUMOR_ONLY && iter->first == TUMOR)))
+        {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
     }
 
-    if(VisibleToggle == ALL)
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualFeedback.begin();
+         iter != VisibleObjectsVirtualFeedback.end();
+         iter++) {
+        if(VisibleToggle == ALL || VisibleToggle == NO_FIDUCIALS || VisibleToggle == TUMOR)
+        {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
+    }
+    if(VisibleToggle == ALL || VisibleToggle == NO_FIDUCIALS || VisibleToggle == TUMOR)
     {
         this->Cursor->Show();
+        //this->ImagePlaneLeft->Show();
+        //this->ImagePlaneRight->Show();
     }else
     {
         this->Cursor->Hide();
+        //this->ImagePlaneLeft->Hide();
+        //this->ImagePlaneRight->Hide();
     }
 
-    for (ManualRegistrationType::iterator iter = VisibleObjectsVirtualFiducials.begin();
-        iter != VisibleObjectsVirtualFiducials.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible && 
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualTumors.begin();
+         iter != VisibleObjectsVirtualTumors.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible &&
+                (VisibleToggle == ALL || VisibleToggle == NO_FIDUCIALS || VisibleToggle == TUMOR || VisibleToggle == MODEL_ONLY || VisibleToggle == TUMOR_ONLY)) {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
+    }
+
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualFiducials.begin();
+         iter != VisibleObjectsVirtualFiducials.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible &&
                 (VisibleToggle == ALL || VisibleToggle == FIDUCIALS_REAL || VisibleToggle == FIDUCIALS_VIRTUAL)) {
-                    (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
     }
-    for (ManualRegistrationType::iterator iter = VisibleObjectsRealFiducials.begin();
-        iter != VisibleObjectsRealFiducials.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&& 
-                (VisibleToggle == ALL || VisibleToggle == FIDUCIALS_REAL || VisibleToggle == FIDUCIALS_VIRTUAL)) 
-            {
-                (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsRealFiducials.begin();
+         iter != VisibleObjectsRealFiducials.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&&
+                (VisibleToggle == ALL || VisibleToggle == FIDUCIALS_REAL || VisibleToggle == FIDUCIALS_VIRTUAL))
+        {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
     }
-    for (ManualRegistrationType::iterator iter = VisibleObjectsVirtualTargets.begin();
-        iter != VisibleObjectsVirtualTargets.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible && 
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualTargets.begin();
+         iter != VisibleObjectsVirtualTargets.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible &&
                 (VisibleToggle == ALL || VisibleToggle == TARGETS_REAL || VisibleToggle == TARGETS_VIRTUAL)) {
-                    (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
     }
-    for (ManualRegistrationType::iterator iter = VisibleObjectsRealTargets.begin();
-        iter != VisibleObjectsRealTargets.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&& 
-                (VisibleToggle == ALL || VisibleToggle == TARGETS_REAL || VisibleToggle == TARGETS_VIRTUAL)) 
-            {
-                (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
-    }
-
-    for (ManualRegistrationType::iterator iter = VisibleObjectsVirtualCalibration.begin();
-        iter != VisibleObjectsVirtualCalibration.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&& 
-                (VisibleToggle == ALL || VisibleToggle == CALIBRATION_REAL || VisibleToggle == CALIBRATION_VIRTUAL)) 
-            {
-                (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsRealTargets.begin();
+         iter != VisibleObjectsRealTargets.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&&
+                (VisibleToggle == ALL || VisibleToggle == TARGETS_REAL || VisibleToggle == TARGETS_VIRTUAL))
+        {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
     }
 
-    for (ManualRegistrationType::iterator iter = VisibleObjectsRealCalibration.begin();
-        iter != VisibleObjectsRealCalibration.end();
-        iter++) {
-            if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&& 
-                (VisibleToggle == ALL || VisibleToggle == CALIBRATION_REAL || VisibleToggle == CALIBRATION_VIRTUAL)) 
-            {
-                (iter->second)->Show();
-            } else {
-                (iter->second)->Hide();
-            }
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualCalibration.begin();
+         iter != VisibleObjectsVirtualCalibration.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&&
+                (VisibleToggle == ALL || VisibleToggle == CALIBRATION_REAL || VisibleToggle == CALIBRATION_VIRTUAL))
+        {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
+    }
+
+    for (ManualRegistrationObjectType::iterator iter = VisibleObjectsRealCalibration.begin();
+         iter != VisibleObjectsRealCalibration.end();
+         iter++) {
+        if (this->BooleanFlags[VISIBLE] && (iter->second)->Valid && (iter->second)->Visible&&
+                (VisibleToggle == ALL || VisibleToggle == CALIBRATION_REAL || VisibleToggle == CALIBRATION_VIRTUAL))
+        {
+            (iter->second)->Show();
+        } else {
+            (iter->second)->Hide();
+        }
     }
 }

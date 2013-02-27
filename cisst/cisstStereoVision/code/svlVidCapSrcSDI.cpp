@@ -179,7 +179,7 @@ void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index)
 {
 #if __VERBOSE__ == 1
-    std::cout << "svlVidCapSrcSDIRenderTarget::SetImage() index: " << index << " (" << offsetx<<"," <<offsety<< ")" <<std::endl;
+    std::cout << "svlVidCapSrcSDIRenderTarget::SetImage(): " << index << " (" << offsetx<<"," <<offsety<< ")" <<std::endl;
 #endif
 
     if (SystemID < 0) return false;
@@ -259,6 +259,8 @@ bool svlVidCapSrcSDIRenderTarget::translateImage(unsigned char* src, unsigned ch
             src -= width;
             dest += width;
         }
+
+        return true;
     }
     else {
         if (width <= abs_h || height <= abs_v) {
@@ -287,6 +289,7 @@ bool svlVidCapSrcSDIRenderTarget::translateImage(unsigned char* src, unsigned ch
             src += width;
             dest += width;
         }
+
         return true;
     }
 
@@ -513,7 +516,13 @@ GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(GLuint cudaOutTexture1, G
 #else
         // Enable GL alpha blending
         glEnable (GL_BLEND);
+        //glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+        //glBlendFuncSeparate(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
+
         glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendEquation(GL_FUNC_ADD);
+        //glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ZERO);
+
         // Draw overlay from unsigned char
         drawUnsignedCharImage(m_SDIout.getWidth(), m_SDIout.getHeight(),m_overlayBuf[i]);
 #endif
@@ -927,6 +936,7 @@ void svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage(GLuint gWidth, GLuint gH
     glTexCoord2f((GLfloat)m_SDIout.getWidth(), (GLfloat)m_SDIout.getHeight()); glVertex2f(1, 1);
     glTexCoord2f((GLfloat)m_SDIout.getWidth(), 0.0); glVertex2f(1, -1);
     glEnd();
+
 }
 
 void svlVidCapSrcSDIRenderTarget::drawCircle(GLuint gWidth, GLuint gHeight)

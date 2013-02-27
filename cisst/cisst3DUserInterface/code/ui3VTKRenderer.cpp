@@ -151,10 +151,14 @@ void ui3VTKRenderer::Render(bool pickRequested, const vct3& pickerPoint)
             this->Target->SetImage(this->OffScreenBuffer->GetPointer(0),
                                    static_cast<int>(this->OpticalCenterOffset[0]),
                                    static_cast<int>(this->OpticalCenterOffset[1]),
-                                   false,CameraID);
+                                   true,CameraID);
 #else
             this->RenderWindow->GetRGBACharPixelData(0,0,this->Width-1,this->Height-1,0,this->OffScreenBuffer);
-            this->Target->SetImage(this->OffScreenBuffer->GetPointer(0),0,0,
+            OpticalCenterOffset[0] = this->CameraGeometry.GetIntrinsics(CameraID).cc[0] - this->Width / 2.0;
+            OpticalCenterOffset[1] = this->CameraGeometry.GetIntrinsics(CameraID).cc[1] - this->Height / 2.0;
+            this->Target->SetImage(this->OffScreenBuffer->GetPointer(0),
+                                   static_cast<int>(this->OpticalCenterOffset[0]),
+                                   -static_cast<int>(this->OpticalCenterOffset[1]),//-yoffset since we are not flipping vertically
                                    false,CameraID);
 #endif
         }
