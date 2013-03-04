@@ -77,6 +77,7 @@ ui3VTKRenderer::ui3VTKRenderer(ui3SceneManager* scene,
 #else
         this->RenderWindow->SetAlphaBitPlanes(1);
         this->OffScreenBuffer->Resize(this->Width * this->Height * 4);
+        this->RenderWindow->OffScreenRenderingOn();
 #endif
     }
     else {

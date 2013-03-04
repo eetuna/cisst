@@ -34,10 +34,10 @@
 
 #if CISST_SVL_HAS_MIL
 #include "svlVidCapSrcMIL.h"
-#endif // CISST_SVL_HAS_MIL
+//#endif // CISST_SVL_HAS_MIL
 
 //TODO::CMAKE flag for SDI
-#if CISST_HAS_OPENGL
+#else //#if CISST_HAS_OPENGL
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
 #endif//CISST_HAS_OPENGL
 

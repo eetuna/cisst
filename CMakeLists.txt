@@ -78,19 +78,23 @@ else (CISST_BUILD_SHARED_LIBS)
 endif (CISST_BUILD_SHARED_LIBS)
 
 # To allow mixing static and dynamic libraries
-if (CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_COMPILER_IS_GNUCXX AND NOT MINGW)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-endif (CMAKE_COMPILER_IS_GNUCXX)
+endif (CMAKE_COMPILER_IS_GNUCXX AND NOT MINGW)
 
-# To have more warnings with gcc
-if (CMAKE_COMPILER_IS_GNUCXX)
+# To have more warnings (mostly for GCC and CLANG)
+if (NOT MSVC)
   include (CheckCXXCompilerFlag)
   check_cxx_compiler_flag ("-Wextra" CXX_SUPPORTS_WEXTRA)
   if (CXX_SUPPORTS_WEXTRA)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
   endif (CXX_SUPPORTS_WEXTRA)
+
+  check_cxx_compiler_flag ("-Wall" CXX_SUPPORTS_WALL)
+  if (CXX_SUPPORTS_WALL)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-endif (CMAKE_COMPILER_IS_GNUCXX)
+  endif (CXX_SUPPORTS_WALL)
+endif (NOT MSVC)
 
 # Finally, create lib targets
 add_subdirectory (cisst)
@@ -121,6 +125,21 @@ if (WIN32)
                 NAMES vsvars32.bat
                 PATHS ${BUILD_TOOL_DIRECTORY}/../../Common7/Tools)
   mark_as_advanced (VSVARS32_BAT)
+  # vcvarsall.bat can be used instead of vsvars32.bat
+  #   vcvarsall  [x86]    -- defaults to x86 (calls vsvars32.bat)
+  #   vcvarsall x86_amd64 -- cross-compile for x64
+  #   vcvarsall x86_ia64  -- cross-compile for Itanium
+  #   vcvarsall amd64     -- set up for x64
+  #   vcvarsall ia64      -- set up for Itanium
+  set (VCVARSALL_CONFIG "x86")
+  if (CMAKE_CL_64)
+     # For now, assume x64. Need to change to also support Itanium
+     set (VCVARSALL_CONFIG "amd64")
+  endif (CMAKE_CL_64)
+  find_program (VCVARSALL_BAT
+                NAMES vcvarsall.bat
+                PATHS ${BUILD_TOOL_DIRECTORY}/../../VC)
+  mark_as_advanced (VCVARSALL_BAT)
   configure_file (${cisst_saw_SOURCE_DIR}/cisst/utils/cisstvsvars.bat.in
                   ${cisst_saw_BINARY_DIR}/cisstvsvars.bat)
 

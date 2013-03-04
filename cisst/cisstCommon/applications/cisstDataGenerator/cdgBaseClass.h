@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -32,22 +32,12 @@ class cdgBaseClass: public cdgScope
     friend class cdgFile;
     friend class cdgClass;
 
-    std::string Type;
-    std::string Visibility;
-    std::string IsData;
 public:
-    cdgBaseClass(unsigned int lineNumber);
-
+    cdgBaseClass(size_t lineNumber);
     cdgScope::Type GetScope(void) const;
-    bool HasKeyword(const std::string & keyword) const;
-    bool HasScope(const std::string & keyword,
-                  cdgScope::Stack & scopes,
-                  unsigned int lineNumber);
-    bool SetValue(const std::string & keyword, const std::string & value,
-                  std::string & errorMessage);
-    bool IsValid(std::string & errorMessage) const;
-
-    void FillInDefaults(void) {};
+    cdgScope * Create(size_t lineNumber) const;
+    bool Validate(void);
+    void GenerateHeaderInheritance(std::ostream & outputStream) const;
     void GenerateHeader(std::ostream & outputStream) const;
     void GenerateCode(std::ostream & outputStream) const;
 

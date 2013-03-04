@@ -87,6 +87,7 @@ public:
     } PatternType;
 
     typedef struct _ImageFormat {
+        bool            defaults;               // write/optional
         unsigned int    width;                  // read/write
         unsigned int    height;                 // read/write
         PixelType       colorspace;             // read/write
@@ -163,7 +164,7 @@ public:
     int EnumerateDevices();
     int SetChannelCount(unsigned int channelcount);
 
-    void SetTargetFrequency(double hertz);
+    virtual void SetTargetFrequency(const double & hertz);
     double GetTargetFrequency() const;
 
     int DialogSetup(unsigned int videoch = SVL_LEFT);
@@ -198,6 +199,7 @@ public:
 
     int SaveSettings(const char* filepath);
     int LoadSettings(const char* filepath);
+    int SetDefaultSettings(unsigned int videoch = SVL_LEFT);
 
 protected:
     virtual int Initialize(svlSample* &syncOutput);

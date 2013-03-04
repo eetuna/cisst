@@ -7,7 +7,7 @@
   Author(s):	Ofri Sadowsky, Anton Deguet
   Created on:	2003-09-30
 
-  (C) Copyright 2003-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2003-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -117,52 +117,52 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
 
     /*! Returns an iterator on the first element (STL
       compatibility). */
-    inline iterator begin() {
+    inline iterator begin(void) {
         return iterator(this->Data);
     }
 
 
     /* documented in base class */
-    inline const_iterator begin() const {
+    inline const_iterator begin(void) const {
         return BaseType::begin();
     }
 
 
     /*! Returns an iterator on the last element (STL
       compatibility). */
-    iterator end() {
+    iterator end(void) {
         return iterator(this->Data + STRIDE * SIZE);
     }
 
 
     /* documented in base class */
-    inline const_iterator end() const {
+    inline const_iterator end(void) const {
         return BaseType::end();
     }
 
 
     /*! Returns a reverse iterator on the last element (STL
       compatibility). */
-    reverse_iterator rbegin() {
+    reverse_iterator rbegin(void) {
         return reverse_iterator(this->Data + STRIDE * (SIZE - 1));
     }
 
 
     /* documented in base class */
-    const_reverse_iterator rbegin() const {
+    const_reverse_iterator rbegin(void) const {
         return BaseType::rbegin();
     }
 
 
     /*! Returns a reverse iterator on the element before first
       (STL compatibility). */
-    reverse_iterator rend() {
+    reverse_iterator rend(void) {
         return reverse_iterator(this->Data - STRIDE);
     }
 
 
     /* documented in base class */
-    const_reverse_iterator rend() const {
+    const_reverse_iterator rend(void) const {
         return BaseType::rend();
     }
 
@@ -1197,6 +1197,20 @@ class vctFixedSizeVectorBase : public vctFixedSizeConstVectorBase<_size, _stride
             typename vctStoreBackBinaryOperations<value_type>::Addition,
             typename vctBinaryOperations<value_type>::Multiplication >::
             Unfold(*this, scalar, otherVector);
+        return *this;
+    }
+
+    template <stride_type __stride1, class __dataPtrType1,
+              stride_type __stride2, class __dataPtrType2>
+    inline ThisType & AddElementwiseProductOf(const vctFixedSizeConstVectorBase<_size, __stride1, value_type, __dataPtrType1> & vector1,
+                                              const vctFixedSizeConstVectorBase<_size, __stride2, value_type, __dataPtrType2> & vector2)
+
+    {
+        vctFixedSizeVectorRecursiveEngines<_size>::template
+            VioViVi<
+            typename vctStoreBackBinaryOperations<value_type>::Addition,
+            typename vctBinaryOperations<value_type>::Multiplication >::
+            Unfold(*this, vector1, vector2);
         return *this;
     }
 

@@ -199,6 +199,19 @@ set (HEADER_FILES
      mtsVector.h
      )
 
+if (MINGW)
+  message("Information: splitting mtsClassServices.cpp for MINGW")
+  file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/mtsClassServices1.cpp
+        "#define MTS_CLASS_SERVICES_PART1\n#include \"${CMAKE_CURRENT_SOURCE_DIR}/mtsClassServices.cpp\"\n")
+  file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/mtsClassServices2.cpp
+        "#define MTS_CLASS_SERVICES_PART2\n#include \"${CMAKE_CURRENT_SOURCE_DIR}/mtsClassServices.cpp\"\n")
+  file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/mtsClassServices3.cpp
+        "#define MTS_CLASS_SERVICES_PART3\n#include \"${CMAKE_CURRENT_SOURCE_DIR}/mtsClassServices.cpp\"\n")
+  set (ADDITIONAL_SOURCE_FILES ${ADDITIONAL_SOURCE_FILES}
+       ${CMAKE_CURRENT_BINARY_DIR}/mtsClassServices1.cpp
+       ${CMAKE_CURRENT_BINARY_DIR}/mtsClassServices2.cpp
+       ${CMAKE_CURRENT_BINARY_DIR}/mtsClassServices3.cpp)
+endif (MINGW)
 
 if (CISST_MTS_HAS_ICE)
 
@@ -291,6 +304,7 @@ if (CISST_MTS_HAS_ICE)
       COMMAND ${CMAKE_COMMAND}
       ARGS -E copy_if_different ${GENERATED_H_FILE} ${cisst_BINARY_DIR}/include/cisstMultiTask
       COMMENT "Compiling ${slice_file}.ice"
+      MAIN_DEPENDENCY ${cisstMultiTaskLibs_SOURCE_DIR}/share/Ice/${slice_file}.ice
     )
 
     include_directories (${CMAKE_CURRENT_BINARY_DIR})
@@ -366,5 +380,5 @@ if (WIN32 AND CISST_MTS_HAS_ICE)
 endif (WIN32 AND CISST_MTS_HAS_ICE)
 
 if (WIN32 AND CMAKE_CL_64)
-  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} "/bigobj")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif (WIN32 AND CMAKE_CL_64)

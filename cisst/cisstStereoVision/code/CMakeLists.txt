@@ -804,81 +804,114 @@ ELSE(CISST_SVL_HAS_FFMPEG OR NOT FFMPEG_OPTIONS)
 ENDIF(CISST_SVL_HAS_FFMPEG OR NOT FFMPEG_OPTIONS)
 
 #TODO
+# add flag for SDI
+# USE_NVAPI affects other examples
 #NVIDIA Quadro SDI
-IF(NOT WIN32)
+option (CISST_SVL_HAS_NVIDIA_QUADRO_SDI "Compile NVIDIA QUADRO SDI extensions" OFF)
+if (CISST_SVL_HAS_NVIDIA_QUADRO_SDI) 
+  if(WIN32)
+    
+    find_path (QUADRO_SDI_SDK_DIR 
+    NAME "win/include/nvapi.h"
+    HINTS "C:/Users/Wen/Projects/TORS/NVIDIA Quadro SDI Video SDK for OpenGL/")
 
-	add_definitions (-DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES -D_GNU_SOURCE)
-        set (QUADRO_SDI_SDK "/home/wen/MyCommon/NVIDIA Quadro 5000 SDI/sdk/")
-        #set (QUADRO_SDI_SDK "/home/wenl/MyCommon/NVIDIAQuadroSDI/sdk/")
+	find_package (OpenGL REQUIRED)
+    find_package (CUDA REQUIRED)
+
+	set (QUADRO_SDI_INCLUDE_DIRECTORIES
+            "${CUDA_INCLUDE_DIRS}"
+			"${QUADRO_SDI_SDK_DIR}/win/include" "${QUADRO_SDI_SDK_DIR}/common" "${QUADRO_SDI_SDK_DIR}/win/examples/common"
+			)
+
+	find_library (QUADRO_SDI_nvapi64_LIBRARY nvapi64
+				  DOC "Where can the NVIDIA Quadro SDI linux nvapi64 library be found"
+				  HINTS "${QUADRO_SDI_SDK_DIR}/win/lib64"
+				  )
+	find_library (QUADRO_SDI_ANCapi_LIBRARY ANCapi
+				  DOC "Where can the NVIDIA Quadro SDI linux ANCapi library be found"
+				  HINTS "${QUADRO_SDI_SDK_DIR}/win/lib64"
+				  )
+
+	add_definitions (-DUSE_NVAPI)
+	add_library (cisstStereoVision_nvSDI
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/Commandline.cpp"
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/Console.cpp"				
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/digits.cpp"				
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/error.cpp"
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/glExtensions.cpp"				
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/nvGPUutil.cpp"
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/nvSDIin.cpp"			
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/nvSDIout.cpp"		
+				"${QUADRO_SDI_SDK_DIR}/win/examples/common/nvSDIutil.cpp"
+				"${QUADRO_SDI_SDK_DIR}/common/timecode.cpp")
+
+	set (QUADRO_SDI_LIBRARIES
+				cisstStereoVision_nvSDI
+				"${QUADRO_SDI_nvapi64_LIBRARY}"
+				"${QUADRO_SDI_ANCapi_LIBRARY}"
+                ${OPENGL_LIBRARIES} ${CUDA_LIBRARIES}
+				)
+  ELSE (WIN32) 
+     
+	find_path (QUADRO_SDI_SDK_DIR 
+    NAME "sdk/linux/include/NVCtrl.h"
+    HINTS "/home/wen/MyCommon/NVIDIA Quadro 5000 SDI/sdk/")
 
 	find_package (OpenGL REQUIRED)
 	find_package (GLUT REQUIRED)
-        find_package (CUDA REQUIRED)
+    find_package (CUDA REQUIRED)
 	find_package (Threads REQUIRED)
 
-	add_definitions (-DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES -D_GNU_SOURCE)
-
-	SET (SDI_INCLUDE_DIRECTORIES
+	set (QUADRO_SDI_INCLUDE_DIRECTORIES
 			"${GLUT_INCLUDE_DIR}"
-                        "${CUDA_INCLUDE_DIRS}"
-			"${QUADRO_SDI_SDK}/linux/include" "${QUADRO_SDI_SDK}/common" "${QUADRO_SDI_SDK}/linux/src"
+            "${CUDA_INCLUDE_DIRS}"
+			"${QUADRO_SDI_SDK_DIR}/linux/include" "${QUADRO_SDI_SDK_DIR}/common" "${QUADRO_SDI_SDK_DIR}/linux/src"
 			)
 
-	SET(SVL_ADDITIONAL_INCLUDE_DIRECTORIES
-	   "${SVL_ADDITIONAL_INCLUDE_DIRECTORIES}"
-	   "${CMAKE_CURRENT_SOURCE_DIR}"
-	   "${SDL_INCLUDE_DIRECTORIES}")
-
-	#link_directories (${QUADRO_SDI_SDK}/linux/lib64)
-
-	FIND_LIBRARY(SDI_xnvctrl_LIBRARY XNVCtrl
-				"${QUADRO_SDI_SDK}/linux/lib64"
+	FIND_LIBRARY(QUADRO_SDI_xnvctrl_LIBRARY XNVCtrl
+				"${QUADRO_SDI_SDK_DIR}/linux/lib64"
 				  DOC "Where can the NVIDIA Quadro SDI linux XNvCtrl library be found"
 				  )
-	FIND_LIBRARY(SDI_anc_LIBRARY anc
-				"${QUADRO_SDI_SDK}/linux/lib64"
+	FIND_LIBRARY(QUADRO_SDI_anc_LIBRARY anc
+				"${QUADRO_SDI_SDK_DIR}/linux/lib64"
 				  DOC "Where can the NVIDIA Quadro SDI linux anc library be found"
 				  )
 
-	add_library (NvSDI
-				 "${QUADRO_SDI_SDK}/linux/src/NvSDIin.cpp"
-				 "${QUADRO_SDI_SDK}/linux/src/NvSDIout.cpp"
-				 "${QUADRO_SDI_SDK}/linux/src/NvSDIutils.cpp"
-				 "${QUADRO_SDI_SDK}/linux/src/commandline.cpp"
-				 "${QUADRO_SDI_SDK}/linux/src/timer.cpp"
-				 "${QUADRO_SDI_SDK}/linux/src/fbo.cpp"
-				 "${QUADRO_SDI_SDK}/linux/src/error.cpp"
-				 "${QUADRO_SDI_SDK}/common/timecode.cpp"
-				 "${QUADRO_SDI_SDK}/common/digits.cpp"
-				 "${QUADRO_SDI_SDK}/common/ringbuffer.cpp"
-				 "${QUADRO_SDI_SDK}/common/audio.cpp")
+	add_library (cisstStereoVision_nvSDI
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/NvSDIin.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/NvSDIout.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/NvSDIutils.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/commandline.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/timer.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/fbo.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/linux/src/error.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/common/timecode.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/common/digits.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/common/ringbuffer.cpp"
+				 "${QUADRO_SDI_SDK_DIR}/common/audio.cpp")
 
-	SET(SDI_LIBRARIES
-				NvSDI
-				"${SDI_xnvctrl_LIBRARY}"
-				"${SDI_anc_LIBRARY}"
-				pthread
-                                ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${CUDA_LIBRARIES}
+	set (QUADRO_SDI_LIBRARIES
+				cisstStereoVision_nvSDI
+				"${QUADRO_SDI_xnvctrl_LIBRARY}"
+				"${QUADRO_SDI_anc_LIBRARY}"
+                ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${CUDA_LIBRARIES}
 				)
 
-	SET(SVL_ADDITIONAL_LIBRARIES
-				"${SVL_ADDITIONAL_LIBRARIES}"
-				"${SDI_LIBRARIES}"
-				)
+  ENDIF(WIN32)
+  
+  set (SOURCE_FILES
+      ${SOURCE_FILES}
+	  svlVidCapSrcSDI.cpp
+	  )
+  set (HEADER_FILES
+      ${HEADER_FILES}
+      svlVidCapSrcSDI.h
+	  )
 
-	SET (SOURCE_FILES
-		   ${SOURCE_FILES}
-			svlVidCapSrcSDI.cpp
-		   )
-	SET(HEADER_FILES
-		   ${HEADER_FILES}
-		   svlVidCapSrcSDI.h
-		   )
+  cisst_set_package_settings (cisstStereoVision nvidiaquadrosdi INCLUDE_DIRECTORIES QUADRO_SDI_INCLUDE_DIRECTORIES)
+  cisst_set_package_settings (cisstStereoVision nvidiaquadrosdi LIBRARIES QUADRO_SDI_LIBRARIES)
 
-        cisst_set_package_settings (cisstStereoVision nvidiaquadrosdi INCLUDE_DIRECTORIES SDI_INCLUDE_DIRECTORIES)
-        cisst_set_package_settings (cisstStereoVision nvidiaquadrosdi LIBRARIES SDI_LIBRARIES)
-MESSAGE(STATUS "Trying to setup SDI SDK")
-ENDIF(NOT WIN32)
+endif (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
 
 # Matrox Imaging Library
 IF(CISST_SVL_HAS_MIL OR NOT MIL_OPTIONS)
@@ -1410,7 +1443,7 @@ configure_file (${cisstStereoVisionLibs_SOURCE_DIR}/svlConfig.h.in
                 @ONLY)
 install (FILES ${CISST_SVL_CONFIG_FILE}
          DESTINATION include/cisstStereoVision
-         COMPONENT cisstStereoVision)
+		 COMPONENT cisstStereoVision)
 
 # Add the config file to the project
 set_source_files_properties ("${CISST_SVL_CONFIG_FILE}"

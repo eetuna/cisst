@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -25,9 +25,18 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(cdgTypedef);
 
 
-cdgTypedef::cdgTypedef(unsigned int lineNumber):
-    cdgScope(lineNumber)
-{}
+cdgTypedef::cdgTypedef(size_t lineNumber):
+    cdgScope("typedef", lineNumber)
+{
+    cdgField * field;
+    field = this->AddField("name", "", true, "name of the new type defined");
+    CMN_ASSERT(field);
+
+    field = this->AddField("type", "", true, "C/C++ type used to define the new type");
+    CMN_ASSERT(field);
+
+    this->AddKnownScope(*this);
+}
 
 
 cdgScope::Type cdgTypedef::GetScope(void) const
@@ -36,65 +45,19 @@ cdgScope::Type cdgTypedef::GetScope(void) const
 }
 
 
-bool cdgTypedef::HasKeyword(const std::string & keyword) const
+cdgScope * cdgTypedef::Create(size_t lineNumber) const
 {
-    if ((keyword == "name")
-        || (keyword == "type")) {
-        return true;
-    }
-    return false;
+    return new cdgTypedef(lineNumber);
 }
 
 
-bool cdgTypedef::HasScope(const std::string & CMN_UNUSED(keyword),
-                          cdgScope::Stack & CMN_UNUSED(scopes),
-                          unsigned int CMN_UNUSED(lineNumber))
+bool cdgTypedef::Validate(void)
 {
-    return false;
-}
-
-
-bool cdgTypedef::SetValue(const std::string & keyword,
-                          const std::string & value,
-                          std::string & errorMessage)
-{
-    if (keyword == "name") {
-        if (!this->Name.empty()) {
-            errorMessage = "name already set";
-            return false;
-        }
-        this->Name = value;
         return true;
-    }
-    if (keyword == "type") {
-        if (!this->Type.empty()) {
-            errorMessage = "type already set";
-            return false;
-        }
-        this->Type = value;
-        return true;
-    }
-    errorMessage = "unhandled keyword \"" + keyword + "\"";
-    return false;
-}
-
-
-bool cdgTypedef::IsValid(std::string & errorMessage) const
-{
-    bool isValid = true;
-    if (this->Name.empty()) {
-        isValid = false;
-        errorMessage += " [no name defined] ";
-    }
-    if (this->Type.empty()) {
-        isValid = false;
-        errorMessage += " [no type defined] ";
-    }
-    return isValid;
 }
 
 
 void cdgTypedef::GenerateHeader(std::ostream & outputStream) const
 {
-    outputStream << "    typedef " << Type << " " << Name << ";" << std::endl;
+    outputStream << "    typedef " << this->GetFieldValue("type") << " " << this->GetFieldValue("name") << ";" << std::endl;
 }

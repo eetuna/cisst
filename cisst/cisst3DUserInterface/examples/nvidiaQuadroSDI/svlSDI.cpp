@@ -7,7 +7,9 @@
 
 #include <cisstStereoVision.h>
 #include <cisstStereoVision/svlRenderTargets.h>
+#if NOT WIN32
 #include <sys/time.h>
+#endif
 #include "vtkSphereSource.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkActor.h"
@@ -25,10 +27,10 @@
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
-#include "vtkVolume.h"
-#include "vtkVolumeProperty.h"
-#include "vtkXMLImageDataReader.h"
-#include "vtkSmartVolumeMapper.h"
+//#include "vtkVolume.h"
+//#include "vtkVolumeProperty.h"
+//#include "vtkXMLImageDataReader.h"
+//#include "vtkSmartVolumeMapper.h"
 
 vtkSphereSource *sphere,*sphere0;
 vtkPolyDataMapper *sphereDataMapper,*sphereDataMapper0;
@@ -37,58 +39,58 @@ vtkRenderer *ren,*ren0;
 vtkRenderWindow *renWin,*renWin0;
 vtkUnsignedCharArray * OffScreenBuffer,*OffScreenBuffer0;
 ////vtkRenderWindowInteractor *iren;
-vtkVolume *volume;
-vtkSmartVolumeMapper *mapper;
+//vtkVolume *volume;
+//vtkSmartVolumeMapper *mapper;
 
 void setupObjects()
 {
     //DICOM
     // Read the data
-    vtkAlgorithm *reader=0;
-    vtkImageData *input=0;
-    double opacityWindow = 4096;
-    double opacityLevel = 1024;
-    vtkMetaImageReader *metaReader = vtkMetaImageReader::New();
-    metaReader->SetFileName("/home/wen/Images/20130201_Sphere/SiemensReconstruction/SPHERIC/20130201_Sphere_SiemensReconstructionCentered.mha");
-    metaReader->Update();
-    input=metaReader->GetOutput();
-    reader=metaReader;
-    // Verify that we actually have a volume
-    int dim[3];
-    input->GetDimensions(dim);
-    if ( dim[0] < 2 ||
-         dim[1] < 2 ||
-         dim[2] < 2 )
-    {
-        cout << "Error loading data!" << endl;
-        exit(EXIT_FAILURE);
-    }
-    // Create our volume and mapper
-    volume = vtkVolume::New();
-    mapper = vtkSmartVolumeMapper::New();
+    //vtkAlgorithm *reader=0;
+    //vtkImageData *input=0;
+    //double opacityWindow = 4096;
+    //double opacityLevel = 1024;
+    //vtkMetaImageReader *metaReader = vtkMetaImageReader::New();
+    //metaReader->SetFileName("/home/wen/Images/20130201_Sphere/SiemensReconstruction/SPHERIC/20130201_Sphere_SiemensReconstructionCentered.mha");
+    //metaReader->Update();
+    //input=metaReader->GetOutput();
+    //reader=metaReader;
+    //// Verify that we actually have a volume
+    //int dim[3];
+    //input->GetDimensions(dim);
+    //if ( dim[0] < 2 ||
+    //     dim[1] < 2 ||
+    //     dim[2] < 2 )
+    //{
+    //    cout << "Error loading data!" << endl;
+    //    exit(EXIT_FAILURE);
+    //}
+    //// Create our volume and mapper
+    //volume = vtkVolume::New();
+    //mapper = vtkSmartVolumeMapper::New();
 
-    mapper->SetInputConnection( reader->GetOutputPort() );
+    //mapper->SetInputConnection( reader->GetOutputPort() );
 
-    // Create our transfer function
-    vtkColorTransferFunction *colorFun = vtkColorTransferFunction::New();
-    vtkPiecewiseFunction *opacityFun = vtkPiecewiseFunction::New();
+    //// Create our transfer function
+    //vtkColorTransferFunction *colorFun = vtkColorTransferFunction::New();
+    //vtkPiecewiseFunction *opacityFun = vtkPiecewiseFunction::New();
 
-    // Create the property and attach the transfer functions
-    vtkVolumeProperty *property = vtkVolumeProperty::New();
-    property->SetIndependentComponents(true);
-    property->SetColor( colorFun );
-    property->SetScalarOpacity( opacityFun );
-    property->SetInterpolationTypeToLinear();
+    //// Create the property and attach the transfer functions
+    //vtkVolumeProperty *property = vtkVolumeProperty::New();
+    //property->SetIndependentComponents(true);
+    //property->SetColor( colorFun );
+    //property->SetScalarOpacity( opacityFun );
+    //property->SetInterpolationTypeToLinear();
 
-    // connect up the volume to the property and the mapper
-    volume->SetProperty( property );
-    volume->SetMapper( mapper );
+    //// connect up the volume to the property and the mapper
+    //volume->SetProperty( property );
+    //volume->SetMapper( mapper );
 
-    //MIP
-    colorFun->AddRGBSegment(0.0, 1.0, 1.0, 1.0, 255.0, 1.0, 1.0, 1.0 );
-    opacityFun->AddSegment( opacityLevel - 0.5*opacityWindow, 0.0,
-                            opacityLevel + 0.5*opacityWindow, 1.0 );
-    mapper->SetBlendModeToMaximumIntensity();
+    ////MIP
+    //colorFun->AddRGBSegment(0.0, 1.0, 1.0, 1.0, 255.0, 1.0, 1.0, 1.0 );
+    //opacityFun->AddSegment( opacityLevel - 0.5*opacityWindow, 0.0,
+    //                        opacityLevel + 0.5*opacityWindow, 1.0 );
+    //mapper->SetBlendModeToMaximumIntensity();
 
     // create sphere geometry
     sphere = vtkSphereSource::New();
@@ -142,12 +144,13 @@ void setupVTK(int width, int height)
     ren->AddActor(aSphere);
 
     // Add the volume to the scene
-    if(volume)
-        ren->AddVolume( volume );
+    //if(volume)
+    //    ren->AddVolume( volume );
 
     renWin->DoubleBufferOff();
     OffScreenBuffer = vtkUnsignedCharArray::New();
     OffScreenBuffer->Resize(width * height * 4);
+    renWin->OffScreenRenderingOn();
 }
 
 void setupVTK0(int width, int height)
@@ -169,13 +172,14 @@ void setupVTK0(int width, int height)
     ren0->AddActor(aSphere);
 
     // Add the volume to the scene
-    if(volume)
-        ren0->AddVolume( volume );
+    //if(volume)
+    //    ren0->AddVolume( volume );
     //ren0->ResetCamera();
 
     renWin0->DoubleBufferOff();
     OffScreenBuffer0 = vtkUnsignedCharArray::New();
     OffScreenBuffer0->Resize(width * height * 4);
+    renWin0->OffScreenRenderingOn();
 }
 
 void getVTKData(int x2, int y2)
@@ -193,8 +197,8 @@ int main(int argc, char *argv[])
     svlVidCapSrcSDIRenderTarget* target = (svlVidCapSrcSDIRenderTarget*)svlRenderTargets::Get(0);
     svlRenderTargets::Get(0);
     setupObjects();
-    setupVTK(400,500);//target->GetWidth(),target->GetHeight()
-    setupVTK0(400,500);
+    setupVTK(1920,1080);//target->GetWidth(),target->GetHeight()//400,500
+    setupVTK0(1920,1080);
 
     //initialization for svlVidCapSrcSDI
     //    svlVidCapSrcSDI* vidCapSrcSDI = svlVidCapSrcSDI::GetInstance();

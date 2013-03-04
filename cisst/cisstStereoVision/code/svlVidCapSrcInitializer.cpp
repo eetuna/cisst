@@ -45,19 +45,18 @@
 #endif // CISST_SVL_HAS_OPENCV AND NOT CISST_WINDOWS
 
 // See header for details:
-//#if CISST_SVL_HAS_MIL
-//#include "svlVidCapSrcMIL.h"
-//#endif // CISST_SVL_HAS_MIL
-
-// See header for details:
 #if CISST_SVL_HAS_BM_DECKLINK
 #include "svlVidCapSrcBMD.h"
 #endif // CISST_SVL_HAS_BM_DECKLINK
 
+// See header for details:
+#if CISST_SVL_HAS_MIL
+#include "svlVidCapSrcMIL.h"
+//#endif // CISST_SVL_HAS_MIL
 //TODO::CMAKE flag for SDI
-//#if CISST_SVL_HAS_OPENGL
+#else
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
-//#endif//CISST_HAS_OPENGL
+#endif//CISST_SVL_HAS_MIL
 
 void svlInitializeVideoCapture()
 {

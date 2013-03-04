@@ -7,6 +7,7 @@
 #define __VERBOSE__  0
 #define SDINUMDEVICES 1
 
+#ifndef _WIN32
 //-----------------------------------------------------------------------------
 // Name: WaitForNotify
 // Desc: Wait for notify event routine
@@ -48,6 +49,8 @@ calcScaledVideoDimensions(GLuint ww, GLuint wh, GLuint vw, GLuint vh,
     *svw /= fww;
 }
 
+#endif
+
 /*************************************/
 /* svlVidCapSrcSDIRenderTarget class */
 /*************************************/
@@ -66,13 +69,14 @@ svlVidCapSrcSDIRenderTarget::svlVidCapSrcSDIRenderTarget(unsigned int deviceID, 
     SystemID = deviceID;
     DigitizerID = displayID;
 
+#ifndef _WIN32
     // Fixes this error in linux:
     //[xcb] Unknown request in queue while dequeuing
     //[xcb] Most likely this is a multi-threaded client and XInitThreads has not been called
     //[xcb] Aborting, sorry about that.
     //../src/xcb_io.c:178: dequeue_pending_request: Assertion `!xcb_xlib_unknown_req_in_deq' failed.
     XInitThreads();
-
+#endif
     // Start up overlay/capture thread
     Thread = new osaThread;
     Thread->Create<svlVidCapSrcSDIRenderTarget, void*>(this, &svlVidCapSrcSDIRenderTarget::ThreadProc, 0);
@@ -96,30 +100,104 @@ svlVidCapSrcSDIRenderTarget::~svlVidCapSrcSDIRenderTarget()
     if (ThreadKilled == false) Thread->Wait();
     delete Thread;
 
-    cleanupSDIGL();
-    cleanupSDIDevices();
+	Shutdown();
 }
 
 unsigned int svlVidCapSrcSDIRenderTarget::GetWidth()
 {
+#ifdef _WIN32
+#if __VERBOSE__ == 1
+    std::cout << "svlVidCapSrcSDIRenderTarget::GetWidth() " << m_SDIout.GetWidth()<< std::endl;
+#endif
+
+    if (SystemID < 0) return 0;
+    return m_SDIout.GetWidth();
+#else
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDIRenderTarget::GetWidth() " << m_SDIout.getWidth()<< std::endl;
 #endif
 
     if (SystemID < 0) return 0;
     return m_SDIout.getWidth();
+#endif
 }
 
 unsigned int svlVidCapSrcSDIRenderTarget::GetHeight()
 {
+#ifdef _WIN32
+#if __VERBOSE__ == 1
+    std::cout << "svlVidCapSrcSDIRenderTarget::GetHeight() " << m_SDIout.GetHeight()<< std::endl;
+#endif
+
+    if (SystemID < 0) return 0;
+    return m_SDIout.GetHeight();
+#else
 #if __VERBOSE__ == 1
     std::cout << "svlVidCapSrcSDIRenderTarget::GetHeight() " << m_SDIout.getHeight()<< std::endl;
 #endif
 
     if (SystemID < 0) return 0;
     return m_SDIout.getHeight();
+#endif
 }
+#ifdef _WIN32
+void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
+{
 
+	LPSTR lpCmdLine = 0;
+	if(Configure(&lpCmdLine) == E_FAIL)
+		return FALSE;
+
+	if(SetupSDIDevices() == E_FAIL)
+		return FALSE;
+
+	// Calculate the window size based on the incoming and outgoing video signals
+	CalcWindowSize();
+
+    HINSTANCE hInstance = GetModuleHandle(NULL);	// Need a handle to this process instance   
+	// Create window.  Use video dimensions of video initialized above.
+	g_hWnd = SetupWindow(hInstance, 0, 0, "NVIDIA Quadro SDI Capture to memory");
+
+	// Exit on error.
+	if (!g_hWnd) 
+		return FALSE; 
+
+	SetupGL();
+
+	if(StartSDIPipeline() == E_FAIL)
+		return FALSE;
+
+	// debug
+    std::cout << "svlVidCapSrcSDIRenderTarget::ThreadProc(), pitches: " << m_SDIin.GetBufferObjectPitch (0) << ", " << m_SDIin.GetBufferObjectPitch (1) << " width: " << m_SDIin.GetWidth() << " height: " << m_SDIin.GetHeight() << std::endl;
+
+    // Allocate overlay buffers
+    for (int i = 0; i < m_SDIin.GetNumStreams (); i++) {
+        m_overlayBuf[i] = (unsigned char *) malloc (m_SDIin.GetWidth() * m_SDIin.GetHeight()*4);
+    }
+
+    // Main capture + overlay loop
+    ThreadKilled = false;
+    ThreadReadySignal.Raise();
+
+    while (!KillThread) {
+        if (CaptureVideo() != GL_FAILURE_NV)
+        {
+            //DisplayVideo();
+            DrawOutputScene(true);
+            OutputVideo();
+            if(NewFrameSignal.Wait(0.0005))
+            {
+                ThreadReadySignal.Raise();
+            }
+        }
+    }
+
+    ThreadReadySignal.Raise();
+    ThreadKilled = true;
+
+    return this;
+}
+#else
 void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 {
 #if __VERBOSE__ == 1
@@ -173,6 +251,7 @@ void* svlVidCapSrcSDIRenderTarget::ThreadProc(void* CMN_UNUSED(param))
 
     return this;
 }
+#endif
 
 //This routine should be called after the capture has already been configured
 //since it relies on the capture signal format configuration
@@ -192,7 +271,11 @@ bool svlVidCapSrcSDIRenderTarget::SetImage(unsigned char* buffer, int offsetx, i
     }
 
     // Copy image to overlay buffer
+#ifdef _WIN32
+    if(index >= 0 && index < m_SDIin.GetNumStreams())
+#else
     if(index >= 0 && index < m_num_streams)
+#endif
     {
         TransferSuccessful = translateImage(buffer,
                                             m_overlayBuf[index],
@@ -295,7 +378,862 @@ bool svlVidCapSrcSDIRenderTarget::translateImage(unsigned char* src, unsigned ch
 
     return false;
 }
+void svlVidCapSrcSDIRenderTarget::drawCircle(GLuint gWidth, GLuint gHeight)
+{
 
+    glViewport(0, 0, gWidth, gHeight);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); /* clear window and z-buffer */
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(60.0, (GLfloat) gWidth / (GLfloat) gHeight, 1.0, 100.0);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    //                   eye point          center of view       up
+    GLfloat distance = 10.0;
+    gluLookAt( distance, distance, distance, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    glColor4f(1.0, 0.0, 0.0, 0.5);
+    static GLUquadric * qobj = NULL;
+    if (! qobj){
+        qobj = gluNewQuadric();
+        gluQuadricDrawStyle(qobj, GLU_FILL);
+        gluQuadricNormals(qobj, GLU_SMOOTH);
+        gluQuadricTexture(qobj, GL_TRUE);
+    }
+    gluSphere (qobj, 3, 50, 100);
+}
+
+#ifdef _WIN32
+//
+// Calculate the graphics window size.
+//
+void svlVidCapSrcSDIRenderTarget::CalcWindowSize()
+{  
+	switch(m_SDIin.GetSignalFormat()) {
+  case NVVIOSIGNALFORMAT_487I_59_94_SMPTE259_NTSC:
+  case NVVIOSIGNALFORMAT_576I_50_00_SMPTE259_PAL:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth; m_windowHeight = m_videoHeight;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth; m_windowHeight = m_videoHeight<<1;
+	  } else {
+		  m_windowWidth = m_videoWidth<<1; m_windowHeight = m_videoHeight<<1;
+	  }
+	  break;
+
+  case NVVIOSIGNALFORMAT_720P_59_94_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_60_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_50_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_30_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_29_97_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_25_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_24_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_23_98_SMPTE296:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>2;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>1;
+	  } else {
+		  m_windowWidth = m_videoWidth>>1; m_windowHeight = m_videoHeight>>1;
+	  }
+	  break;
+
+  case NVVIOSIGNALFORMAT_1035I_59_94_SMPTE260:
+  case NVVIOSIGNALFORMAT_1035I_60_00_SMPTE260:
+  case NVVIOSIGNALFORMAT_1080I_50_00_SMPTE295:
+  case NVVIOSIGNALFORMAT_1080I_50_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_59_94_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_60_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_23_976_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_24_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_25_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_29_97_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_30_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_48_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_47_96_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_25_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_29_97_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_30_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_24_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_23_98_SMPTE274:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>2;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>1;
+	  } else {
+		  m_windowWidth = m_videoWidth>>1; m_windowHeight = m_videoHeight>>1;
+	  }
+	  break;
+
+  case NVVIOSIGNALFORMAT_2048P_30_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_29_97_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_60_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_59_94_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_25_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_50_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_24_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_23_98_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_48_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_47_96_SMPTE372:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>2;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>1;
+	  } else {
+		  m_windowWidth = m_videoWidth>>1; m_windowHeight = m_videoHeight>>1;
+	  }
+	  break;
+
+  default:
+	  m_windowWidth = 500;
+	  m_windowHeight = 500;
+	}
+}
+
+HWND svlVidCapSrcSDIRenderTarget::SetupWindow(HINSTANCE hInstance, int x, int y, 
+							   char *title)
+{
+	WNDCLASS   wndclass; 
+	HWND	   hWnd;
+	HDC	  hDC;								// Device context
+
+	BOOL bStatus;
+	unsigned int uiNumFormats;
+	CHAR szAppName[]="OpenGL SDI Demo";
+
+	int pixelformat; 	
+
+	// Register the frame class.
+	wndclass.style         = 0; 
+	wndclass.lpfnWndProc   = DefWindowProc;//(WNDPROC) MainWndProc; 
+	wndclass.cbClsExtra    = 0; 
+	wndclass.cbWndExtra    = 0; 
+	wndclass.hInstance     = hInstance; 
+	wndclass.hIcon         = LoadIcon (hInstance, szAppName); 
+	wndclass.hCursor       = LoadCursor (NULL,IDC_ARROW); 
+	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1); 
+	wndclass.lpszMenuName  = szAppName; 
+	wndclass.lpszClassName = szAppName; 
+
+	if (!RegisterClass (&wndclass) ) 
+		return NULL; 
+
+	// Create initial window frame.
+	m_hWnd = CreateWindow ( szAppName, title, 
+		WS_CAPTION | WS_BORDER |  WS_SIZEBOX | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
+		x, 
+		y, 
+		m_windowWidth, 
+		m_windowHeight, 
+		NULL, 
+		NULL, 
+		hInstance, 
+		NULL ); 
+
+	// Exit on error.
+	if (!m_hWnd) 
+		return NULL; 
+
+	// Get device context for new window.
+	hDC = GetDC(m_hWnd);
+
+	PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
+	{
+		sizeof (PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
+		1,												// Version Number
+		PFD_DRAW_TO_WINDOW |							// Format Must Support Window
+		PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
+		PFD_DOUBLEBUFFER,								// Must Support Double Buffering
+		PFD_TYPE_RGBA,									// Request An RGBA Format
+		24,												// Select Our Color Depth
+		0, 0, 0, 0, 0, 0,								// Color Bits Ignored
+		1,												// Alpha Buffer
+		0,												// Shift Bit Ignored
+		0,												// No Accumulation Buffer
+		0, 0, 0, 0,										// Accumulation Bits Ignored
+		24,												// 24 Bit Z-Buffer (Depth Buffer)  
+		8,												// 8 Bit Stencil Buffer
+		0,												// No Auxiliary Buffer
+		PFD_MAIN_PLANE,									// Main Drawing Layer
+		0,												// Reserved
+		0, 0, 0											// Layer Masks Ignored
+	};
+
+	// Choose pixel format.
+	if ( (pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0 ) { 
+		MessageBox(NULL, "ChoosePixelFormat failed", "Error", MB_OK); 
+		return FALSE; 
+	} 
+
+	// Set pixel format.
+	if (SetPixelFormat(hDC, pixelformat, &pfd) == FALSE) { 
+		MessageBox(NULL, "SetPixelFormat failed", "Error", MB_OK); 
+		return FALSE; 
+	} 
+
+
+	// Release device context.
+	ReleaseDC(m_hWnd, hDC);
+
+	// Return window handle.
+	return(m_hWnd);
+
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::Configure(char *szCmdLine[])
+{
+	int numGPUs;
+	// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
+	numGPUs = CNvSDIoutGpuTopology::instance().getNumGpu(); 
+
+	if(numGPUs <= 0)
+	{
+		MessageBox(NULL, "Unable to obtain system GPU topology", "Error", MB_OK);
+		return E_FAIL;
+	}
+
+	int numCaptureDevices = CNvSDIinTopology::instance().getNumDevice();
+
+	if(numCaptureDevices <= 0)
+	{
+		MessageBox(NULL, "Unable to obtain system Capture topology", "Error", MB_OK);
+		return E_FAIL;
+	}
+	options.sampling = NVVIOCOMPONENTSAMPLING_422;
+	options.dualLink = false;
+	options.bitsPerComponent = 8;
+	options.expansionEnable = true;
+	options.captureDevice = 0;
+	options.captureGPU = CNvSDIoutGpuTopology::instance().getPrimaryGpuIndex();
+
+	ParseCommandLine(szCmdLine, &options);//get the user config
+
+	if(options.captureDevice >= numCaptureDevices)		
+	{
+		MessageBox(NULL, "Selected Capture Device is out of range", "Error", MB_OK);
+		return E_FAIL;
+	}
+	if(options.captureGPU >= numGPUs)		
+	{
+		MessageBox(NULL, "Selected Capture GPU is out of range", "Error", MB_OK);
+		return E_FAIL;
+	}
+	m_gpu = CNvSDIoutGpuTopology::instance().getGpu(options.captureGPU);
+
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::SetupSDIDevices()
+{
+	if(setupSDIinDevices() != S_OK)
+	{
+		MessageBox(NULL, "Error setting up video capture.", "Error", MB_OK);
+		return E_FAIL;
+	}
+
+	if (setupSDIoutDevice() == S_OK) {
+		m_bSDIout = TRUE;
+	} else {
+		MessageBox(NULL, "SDI video output unavailable.", "Warning", MB_OK);
+	}
+
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::setupSDIinDevices()
+{
+	m_SDIin.Init(&options);
+
+	// Initialize the video capture device.
+	if (m_SDIin.SetupDevice(true,options.captureDevice) != S_OK)
+		return E_FAIL;
+	m_videoWidth = m_SDIin.GetWidth();
+	m_videoHeight = m_SDIin.GetHeight();
+	m_num_streams = m_SDIin.GetNumStreams();
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::setupSDIoutDevice()
+{
+#ifdef _DEBUG
+	options.console = TRUE;
+#else
+	options.console = FALSE;
+#endif
+	options.videoFormat = m_SDIin.GetSignalFormat();
+	options.dataFormat = NVVIODATAFORMAT_R8G8B8_TO_YCRCB422;
+	if(m_SDIin.GetNumStreams() == 2)
+		options.dataFormat = NVVIODATAFORMAT_DUAL_R8G8B8_TO_DUAL_YCRCB422;
+	options.syncType = NVVIOCOMPSYNCTYPE_AUTO;
+	options.syncSource = NVVIOSYNCSOURCE_SDISYNC;
+	options.testPattern = TEST_PATTERN_RGB_COLORBARS_100;
+	options.syncEnable = 0;
+	options.frameLock = 0;
+	options.numFrames = 0;
+	options.repeat = 0;
+	options.gpu = 0;
+	options.block = 0;
+	options.videoInfo = 0;
+	options.fps = 0;
+	options.fsaa = 0;
+	options.hDelay = 0;
+	options.vDelay = 0;
+	options.flipQueueLength = 5;
+	options.field = 0;
+	options.console = 0;
+	options.log = 0;
+	options.cscEnable = 0;
+	
+	options.yComp = 0;
+	options.crComp = 0;
+	options.cbComp = 0;
+
+	options.x = 0;
+	options.y = 0;
+	options.width = 0;
+	options.height = 0;
+	//options.filename = 0;
+	//options.audioFile = 0;
+	options.audioChannels = 0;
+	options.audioBits = 0;
+	//Capture settings//
+	options.captureGPU = 0; //capture GPU
+	options.captureDevice = 0; //capture card number
+	options.dualLink = 0;
+	options.sampling = NVVIOCOMPONENTSAMPLING_422;
+	options.bitsPerComponent = 8;
+	options.expansionEnable = true;
+	options.fullScreen = 0;
+
+	return (m_SDIout.Init(&options, m_gpu));
+}
+
+GLboolean svlVidCapSrcSDIRenderTarget::SetupGL()
+{
+	// Create window device context and rendering context.
+	m_hDC = GetDC(m_hWnd); 
+
+	HGPUNV  gpuMask[2];
+	gpuMask[0] = m_gpu->getAffinityHandle();
+	gpuMask[1] = NULL;
+	if (!(m_hAffinityDC = wglCreateAffinityDCNV(gpuMask))) {
+		printf("Unable to create GPU affinity DC\n");
+	}
+
+	PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
+	{
+		sizeof (PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
+		1,												// Version Number
+		PFD_DRAW_TO_WINDOW |							// Format Must Support Window
+		PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
+		PFD_DOUBLEBUFFER,								// Must Support Double Buffering
+		PFD_TYPE_RGBA,									// Request An RGBA Format
+		24,												// Select Our Color Depth
+		0, 0, 0, 0, 0, 0,								// Color Bits Ignored
+		1,												// Alpha Buffer
+		0,												// Shift Bit Ignored
+		0,												// No Accumulation Buffer
+		0, 0, 0, 0,										// Accumulation Bits Ignored
+		24,												// 24 Bit Z-Buffer (Depth Buffer)  
+		8,												// 8 Bit Stencil Buffer
+		0,												// No Auxiliary Buffer
+		PFD_MAIN_PLANE,									// Main Drawing Layer
+		0,												// Reserved
+		0, 0, 0											// Layer Masks Ignored
+	};
+
+	GLuint pf = ChoosePixelFormat(m_hAffinityDC, &pfd);
+	HRESULT rslt = SetPixelFormat(m_hAffinityDC, pf, &pfd);
+	//		return NULL;
+	//Create affinity-rendering context from affinity-DC
+	if (!(m_hRC = wglCreateContext(m_hAffinityDC))) {
+		printf("Unable to create GPU affinity RC\n");
+	}
+
+	//m_hRC = wglCreateContext(m_hDC); 
+
+	// Make window rendering context current.
+	wglMakeCurrent(m_hDC, m_hRC); 
+	//load the required OpenGL extensions:
+	if(!loadSwapIntervalExtension() || !loadTimerQueryExtension() || !loadAffinityExtension())
+	{
+		printf("Could not load the required OpenGL extensions\n");
+		return false;
+	}
+
+
+	// Unlock capture/draw loop from vsync of graphics display.
+	// This should lock the capture/draw loop to the vsync of 
+	// input video.
+	if (wglSwapIntervalEXT) {
+		wglSwapIntervalEXT(0);
+	}
+	glClearColor( 0.0, 0.0, 0.0, 0.0); 
+	glClearDepth( 1.0 ); 
+
+	glDisable(GL_DEPTH_TEST); 
+
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_TEXTURE_2D);
+
+	setupSDIinGL();
+
+	setupSDIoutGL();
+
+	return GL_TRUE;
+}
+
+//
+// Initialize OpenGL
+//
+HRESULT svlVidCapSrcSDIRenderTarget::setupSDIinGL()
+{
+	if(!loadCaptureVideoExtension() || !loadBufferObjectExtension() )
+	{
+		printf("Could not load the required OpenGL extensions\n");
+		return false;
+	}
+
+	//setup the textures for capture
+	glGenTextures(m_SDIin.GetNumStreams(), m_videoTextures);
+	assert(glGetError() == GL_NO_ERROR);
+	for(int i = 0; i < m_SDIin.GetNumStreams();i++)
+	{
+		glBindTexture(GL_TEXTURE_RECTANGLE_NV, m_videoTextures[i]);
+		assert(glGetError() == GL_NO_ERROR);
+		glTexParameterf(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		assert(glGetError() == GL_NO_ERROR);
+
+		glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, GL_RGBA8, m_videoWidth, m_videoHeight, 
+			0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		assert(glGetError() == GL_NO_ERROR);
+	}
+
+	// CSC parameters
+	GLfloat mat[4][4];
+	float scale = 1.0f;
+
+	GLfloat max[] = {5000, 5000, 5000, 5000};;
+	GLfloat min[] = {0, 0, 0, 0};
+
+	GLfloat offset[] = {0, 0, 0, 0};
+
+	if (1) {
+		mat[0][0] = 1.164f *scale;
+		mat[0][1] = 1.164f *scale;
+		mat[0][2] = 1.164f *scale;
+		mat[0][3] = 0;  
+
+		mat[1][0] = 0;
+		mat[1][1] = -0.392f *scale;
+		mat[1][2] = 2.017f *scale;
+		mat[1][3] = 0;
+
+		mat[2][0] = 1.596f *scale;
+		mat[2][1] = -0.813f *scale;
+		mat[2][2] = 0.f;
+		mat[2][3] = 0;
+
+		mat[3][0] = 0;
+		mat[3][1] = 0;
+		mat[3][2] = 0;
+		mat[3][3] = 1;
+
+		offset[0] =-0.87f;
+		offset[1] = 0.53026f;
+		offset[2] = -1.08f;
+		offset[3] = 0;
+	}
+
+	GLuint gpuVideoSlot = 1;
+	m_SDIin.SetCSCParams(&mat[0][0], offset, min, max);
+	m_SDIin.BindDevice(gpuVideoSlot, m_hDC);	
+	for(int i = 0; i < m_SDIin.GetNumStreams(); i++)
+		m_SDIin.BindVideoTexture(m_videoTextures[i],i);
+
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::setupSDIoutGL()
+{
+	//Setup the output after the capture is configured.
+	glGenTextures(m_num_streams, m_OutTexture);
+	for(int i=0;i<m_num_streams;i++)
+	{
+		glBindTexture(GL_TEXTURE_RECTANGLE_NV, m_OutTexture[i]);
+
+		glTexParameterf(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, GL_RGBA8, m_SDIout.GetWidth(),m_SDIout.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
+
+		if (!m_FBO[i].create(m_SDIout.GetWidth(),m_SDIout.GetHeight(), 8, 1, GL_TRUE, GL_TRUE, m_OutTexture[i])) {
+			printf("Error creating FBO.\n");
+		}
+		m_FBO[i].unbind();
+	}
+
+	if(!loadPresentVideoExtension() ||  !loadFramebufferObjectExtension())
+	{
+		MessageBox(NULL, "Couldn't load required OpenGL extensions.", 
+			"Error", MB_OK);
+
+		exit(1);
+	}
+
+	// Enumerate the available video devices and
+	// bind to the first one found
+	HVIDEOOUTPUTDEVICENV *videoDevices;
+
+	// Get list of available video devices.
+	int numDevices = wglEnumerateVideoDevicesNV(m_hDC, NULL);
+
+	if (numDevices <= 0) {
+		MessageBox(NULL, "wglEnumerateVideoDevicesNV() did not return any devices.", 
+			"Error", MB_OK);
+		exit(1);
+	}
+
+	videoDevices = (HVIDEOOUTPUTDEVICENV *)malloc(numDevices *
+		sizeof(HVIDEOOUTPUTDEVICENV));
+
+	if (!videoDevices) {
+		fprintf(stderr, "malloc failed.  OOM?");
+		exit(1);
+	}
+
+	if (numDevices != wglEnumerateVideoDevicesNV(m_hDC, videoDevices)) {
+		free(videoDevices);
+		MessageBox(NULL, "Invonsistent results from wglEnumerateVideoDevicesNV()",
+			"Error", MB_OK);
+		exit(1);
+	}
+
+	//Bind the first device found.
+	if (!wglBindVideoDeviceNV(m_hDC, 1, videoDevices[0], NULL)) {
+		free(videoDevices);
+		MessageBox(NULL, "Failed to bind a videoDevice to slot 0.\n",
+			"Error", MB_OK);
+		exit(1);
+	}
+
+	// Free list of available video devices, don't need it anymore.
+	free(videoDevices);
+
+	// Start video transfers
+	if ( m_SDIout.Start()!= S_OK ) {
+		MessageBox(NULL, "Error starting video devices.", "Error", MB_OK);
+	}
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::StartSDIPipeline()
+{
+	// Start video capture
+	if(m_SDIin.StartCapture()!= S_OK)
+	{
+		MessageBox(NULL, "Error starting video capture.", "Error", MB_OK);
+		return E_FAIL;
+	}
+	return S_OK;
+}
+
+GLenum svlVidCapSrcSDIRenderTarget::CaptureVideo(float runTime)
+{
+	static GLuint64EXT captureTime;
+	GLuint sequenceNum;
+	static GLuint prevSequenceNum = 0;
+	GLenum ret;
+	static int numFails = 0;
+	static int numTries = 0;
+	GLuint captureLatency = 0;
+	unsigned int droppedFrames;
+
+	if(numFails < 100) {
+		// Capture the video to a buffer object
+#ifdef _WIN32
+		ret = m_SDIin.Capture(&sequenceNum, &captureTime);
+#else
+		ret = m_SDIin.capture(&sequenceNum, &captureTime);
+#endif
+		if(sequenceNum - prevSequenceNum > 1)
+		{
+			droppedFrames = sequenceNum - prevSequenceNum;
+#if __VERBOSE__ == 1
+			printf("glVideoCaptureNV: Dropped %d frames\n",sequenceNum - prevSequenceNum);
+			printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#endif
+			captureLatency = 1;
+		}
+
+#if __VERBOSE__ == 1
+		if(m_SDIin.m_gviTime > 1.0/30)
+		{
+			printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+			//*captureLatency = 1;
+		}
+#endif
+
+		prevSequenceNum = sequenceNum;
+		switch(ret) {
+		case GL_SUCCESS_NV:
+#if __VERBOSE__ == 1
+			printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#endif
+			numFails = 0;
+			break;
+		case GL_PARTIAL_SUCCESS_NV:
+			printf("glVideoCaptureNV: GL_PARTIAL_SUCCESS_NV\n");
+			numFails = 0;
+			break;
+		case GL_FAILURE_NV:
+			printf("glVideoCaptureNV: GL_FAILURE_NV - Video capture failed.\n");
+			numFails++;
+			break;
+		default:
+			printf("glVideoCaptureNV: Unknown return value.\n");
+			break;
+		} // switch
+
+	}
+	// The incoming signal format or some other error occurred during
+	// capture, shutdown and try to restart capture.
+	else {
+		if(numTries == 0) {
+			stopSDIPipeline();
+			//cleanupSDIDevices();
+
+			cleanupSDIinGL();
+		}
+
+		// Initialize the video capture device.
+#ifdef _WIN32
+		if (setupSDIinDevices() != TRUE) {
+#else
+		if (setupSDIinDevice(dpy,gpu) != TRUE) {
+#endif
+			numTries++;
+			return GL_FAILURE_NV;
+		}
+
+		// Reinitialize OpenGL.
+		setupSDIinGL();
+
+		StartSDIPipeline();
+		numFails = 0;
+		numTries = 0;
+		return GL_FAILURE_NV;
+	}
+
+	// Rough workaround latency from capture queue
+	if(captureLatency==1)
+	{
+		for(unsigned int i=0;i< droppedFrames+1;i++)
+		{
+#if __VERBOSE__ == 1
+			printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
+			CaptureVideo();
+		}
+	}
+	if(m_SDIin.m_gviTime + runTime > 1.0/30)
+	{
+#if __VERBOSE__ == 1
+		printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
+		CaptureVideo(runTime-1.0/30);
+		captureLatency = 1;
+	}else if(m_SDIin.m_gviTime > 1.0/30)
+	{
+#if __VERBOSE__ == 1
+		printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
+		CaptureVideo();
+	}
+
+	return ret;
+}
+
+GLboolean svlVidCapSrcSDIRenderTarget::DrawOutputScene(GLuint cudaOutTexture1, GLuint cudaOutTexture2, unsigned char* buffer)
+{
+	GLuint width;
+	GLuint height;
+
+	if(cudaOutTexture1 == -1)
+		cudaOutTexture1 = m_videoTextures[0];
+	if(cudaOutTexture2 == -1)
+		cudaOutTexture2 = m_videoTextures[1];
+
+	for(int i=0;i<m_num_streams;i++)
+	{
+		if(m_bSDIout)
+		{
+
+			m_FBO[i].bind(m_SDIout.GetWidth(), m_SDIout.GetHeight());
+
+			width = m_SDIout.GetWidth();
+			height = m_SDIout.GetHeight();
+		}
+        else
+        {
+            width = m_SDIin.GetWidth();
+            height = m_SDIin.GetHeight();
+        }
+        glEnable(GL_TEXTURE_RECTANGLE_NV);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glClearColor( 1.0, 1.0, 1.0, 0.0);
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        glViewport( 0, 0, width, height );
+        glMatrixMode( GL_PROJECTION );
+        glLoadIdentity();
+        gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
+        glMatrixMode( GL_MODELVIEW );
+        glLoadIdentity();
+
+        // Draw the scene here with the m_CudaOutTexture
+        if(i == 0)
+            glBindTexture(GL_TEXTURE_RECTANGLE_NV, cudaOutTexture1);
+        else
+            glBindTexture(GL_TEXTURE_RECTANGLE_NV, cudaOutTexture2);
+
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0); glVertex2f(-1, -1);
+        glTexCoord2f(0.0, (GLfloat)height); glVertex2f(-1, 1);
+        glTexCoord2f((GLfloat)width, (GLfloat)height); glVertex2f(1, 1);
+        glTexCoord2f((GLfloat)width, 0.0); glVertex2f(1, -1);
+        glEnd();
+
+#if 0
+        // Simple overlay
+        glEnable (GL_BLEND);
+        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#ifdef _WIN32
+		drawCircle(m_SDIout.GetWidth(),m_SDIout.GetHeight());
+#else
+		drawCircle(m_SDIout.getWidth(),m_SDIout.getHeight());
+#endif
+        //usleep(1000*1000);
+#else
+        // Enable GL alpha blending
+        glEnable (GL_BLEND);
+        //glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+        //glBlendFuncSeparate(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE, GL_ZERO);
+
+        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendEquation(GL_FUNC_ADD);
+        //glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ZERO);
+
+        // Draw overlay from unsigned char
+        drawUnsignedCharImage(m_SDIout.GetWidth(), m_SDIout.GetHeight(),m_overlayBuf[i]);
+#endif
+
+        if(m_bSDIout)
+        {
+            m_FBO[i].unbind();
+        }
+    }
+	return GL_TRUE;
+}
+
+void svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage(GLuint gWidth, GLuint gHeight, unsigned char* imageData)
+{
+#if __VERBOSE__ == 1
+    std::cout << "svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage()" << std::endl;
+#endif
+
+    glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, GL_RGBA8, m_SDIout.GetWidth(), m_SDIout.GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData );
+
+    // Draw textured quad in lower left quadrant of graphics window.
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0); glVertex2f(-1, -1);
+    glTexCoord2f(0.0, (GLfloat)m_SDIout.GetHeight()); glVertex2f(-1, 1);
+    glTexCoord2f((GLfloat)m_SDIout.GetWidth(), (GLfloat)m_SDIout.GetHeight()); glVertex2f(1, 1);
+    glTexCoord2f((GLfloat)m_SDIout.GetWidth(), 0.0); glVertex2f(1, -1);
+    glEnd();
+
+}
+
+GLboolean svlVidCapSrcSDIRenderTarget::OutputVideo()
+{
+	if(!m_bSDIout)
+		return GL_FALSE;
+
+	glPresentFrameDualFillNV(1, 0, 0, 0, GL_FRAME_NV,
+		GL_TEXTURE_RECTANGLE_NV, m_OutTexture[0],//m_FBO[0].renderbufferIds[0],
+		GL_NONE, 0,
+		GL_TEXTURE_RECTANGLE_NV, m_OutTexture[1],//m_FBO[1].renderbufferIds[0],
+		GL_NONE, 0);
+
+
+	glBindTexture(GL_TEXTURE_RECTANGLE_NV, 0);
+
+	GLenum l_eVal = glGetError();
+	if (l_eVal != GL_NO_ERROR) {
+		fprintf(stderr, "glPresentFameKeyedNV returned error\n");
+		return FALSE;
+	}
+
+	return GL_TRUE;
+}
+
+
+HRESULT svlVidCapSrcSDIRenderTarget::stopSDIPipeline()
+{
+	m_SDIin.EndCapture();
+	return S_OK;
+}
+
+GLboolean svlVidCapSrcSDIRenderTarget::cleanupSDIGL()
+{
+	GLboolean val = GL_TRUE;
+	cleanupSDIinGL();
+	if(m_bSDIout)
+		cleanupSDIoutGL();
+	// Delete OpenGL rendering context.
+	wglMakeCurrent(NULL,NULL) ; 
+	if (m_hRC) 
+	{
+		wglDeleteContext(m_hRC) ;
+		m_hRC = NULL ;
+	}		
+	ReleaseDC(m_hWnd,m_hDC);
+
+	wglDeleteDCNV(m_hAffinityDC);
+
+	return val;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::cleanupSDIinGL()
+{
+	for(int i = 0; i < m_SDIin.GetNumStreams(); i++)
+		m_SDIin.UnbindVideoTexture(i);
+	m_SDIin.UnbindDevice();
+	glDeleteTextures(m_SDIin.GetNumStreams(),m_videoTextures);
+
+
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIRenderTarget::cleanupSDIoutGL()
+{
+	glDeleteTextures(m_num_streams, m_OutTexture);
+	return S_OK;
+}
+
+//-----------------------------------------------------------------------------
+// Name: Shutdown
+// Desc: Application teardown
+//-----------------------------------------------------------------------------
+void
+svlVidCapSrcSDIRenderTarget::Shutdown()
+{
+	stopSDIPipeline();	
+	cleanupSDIGL();
+	//CleanupGL();			
+	//cleanupSDIDevices();	
+}
+
+#else
 //-----------------------------------------------------------------------------
 // Name: Capture
 // Desc: Main SDI video capture function.
@@ -334,11 +1272,15 @@ svlVidCapSrcSDIRenderTarget::CaptureVideo(float runTime)
         prevSequenceNum = sequenceNum;
         switch(ret) {
         case GL_SUCCESS_NV:
-            //printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#if __VERBOSE__ == 1
+            printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#endif
             numFails = 0;
             break;
         case GL_PARTIAL_SUCCESS_NV:
+#if __VERBOSE__ == 1
             printf("glVideoCaptureNV: GL_PARTIAL_SUCCESS_NV\n");
+#endif
             numFails = 0;
             break;
         case GL_FAILURE_NV:
@@ -381,7 +1323,9 @@ svlVidCapSrcSDIRenderTarget::CaptureVideo(float runTime)
     {
         for(unsigned int i=0;i< droppedFrames+1;i++)
         {
-            //printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#if __VERBOSE__ == 1
+            printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
             CaptureVideo();
         }
     }
@@ -939,33 +1883,6 @@ void svlVidCapSrcSDIRenderTarget::drawUnsignedCharImage(GLuint gWidth, GLuint gH
 
 }
 
-void svlVidCapSrcSDIRenderTarget::drawCircle(GLuint gWidth, GLuint gHeight)
-{
-
-    glViewport(0, 0, gWidth, gHeight);
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); /* clear window and z-buffer */
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(60.0, (GLfloat) gWidth / (GLfloat) gHeight, 1.0, 100.0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    //                   eye point          center of view       up
-    GLfloat distance = 10.0;
-    gluLookAt( distance, distance, distance, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-    glColor4f(1.0, 0.0, 0.0, 0.5);
-    static GLUquadric * qobj = NULL;
-    if (! qobj){
-        qobj = gluNewQuadric();
-        gluQuadricDrawStyle(qobj, GLU_FILL);
-        gluQuadricNormals(qobj, GLU_SMOOTH);
-        gluQuadricTexture(qobj, GL_TRUE);
-    }
-    gluSphere (qobj, 3, 50, 100);
-}
-
 //-----------------------------------------------------------------------------
 // Name: drawOne
 // Desc: Draw single SDI video stream in graphics window.
@@ -1502,6 +2419,7 @@ svlVidCapSrcSDIRenderTarget::calcWindowSize()
         m_windowHeight = 500;
     }
 }
+#endif
 
 /*************************************/
 /*        svlVidCapSrcSDI class      */
@@ -1855,6 +2773,673 @@ bool svlVidCapSrcSDI::IsOverlaySupported(unsigned int sysid, unsigned int digid)
     return true;
 }
 
+
+#ifdef _WIN32
+
+svlVidCapSrcSDIThread::svlVidCapSrcSDIThread(int streamid)
+{
+
+    StreamID = streamid;
+    InitSuccess = false;
+}
+
+void* svlVidCapSrcSDIThread::Proc(svlVidCapSrcSDI* baseref)
+{
+	// Signal success to main thread
+    Error = false;
+    InitSuccess = true;
+    InitEvent.Raise();
+    GLint inBuf;
+    cudaError_t cerr;
+    unsigned char* inDevicePtr;
+    unsigned char* outDevicePtr;
+    unsigned char* ptr;
+
+	LPSTR lpCmdLine = 0;
+	if(Configure(&lpCmdLine) == E_FAIL)
+		return FALSE;
+
+	if(SetupSDIDevices() == E_FAIL)
+		return FALSE;
+
+	// Calculate the window size based on the incoming and outgoing video signals
+	CalcWindowSize();
+
+    HINSTANCE hInstance = GetModuleHandle(NULL);	// Need a handle to this process instance   
+	// Create window.  Use video dimensions of video initialized above.
+	g_hWnd = SetupWindow(hInstance, 0, 0, "NVIDIA Quadro SDI Capture to memory");
+
+	// Exit on error.
+	if (!g_hWnd) 
+		return FALSE; 
+
+	SetupGL();
+
+	if(StartSDIPipeline() == E_FAIL)
+		return FALSE;
+
+	unsigned int pitch0 = m_SDIin.GetBufferObjectPitch (0);
+    unsigned int pitch1 = m_SDIin.GetBufferObjectPitch (1);
+    unsigned int height = m_SDIin.GetHeight();
+    //unsigned int size = pitch0*height;
+    std::cout << "svlVidCapSrcSDIThread::Proc(), pitches: " << pitch0 << ", " << pitch1 << " height: " << height << std::endl;
+    for (int i = 0; i < m_SDIin.GetNumStreams (); i++) {
+        m_memBuf[i] =
+                (unsigned char *) malloc (m_SDIin.GetBufferObjectPitch (i) *
+                                          m_SDIin.GetHeight ());
+
+        //#if __VERBOSE__ == 1
+        std::cout << "svlVidCapSrcSDIThread::Proc - Allocate image buffer (" << m_SDIin.GetWidth() << ", " << m_SDIin.GetHeight() << ")" << std::endl;
+        //#endif
+        baseref->ImageBuffer[i] = new svlBufferImage(m_SDIin.GetWidth(), m_SDIin.GetHeight());
+        comprBuffer[i] =  (unsigned char *) malloc (m_SDIin.GetWidth() * 3 *
+                                                    m_SDIin.GetHeight());
+    }
+
+    while (baseref->Running) {
+        if (CaptureVideo() != GL_FAILURE_NV)
+        {
+            for (int i = 0; i < m_SDIin.GetNumStreams(); i++) {
+
+				// Allocate required space in video capture buffer
+				glBindBuffer(GL_VIDEO_BUFFER_NV, m_videoTextures[i]);
+				assert(glGetError() == GL_NO_ERROR);		
+                glGetBufferSubData (GL_VIDEO_BUFFER_NV, 0,
+                                       m_SDIin.GetBufferObjectPitch (i) *
+                                       m_SDIin.GetHeight (), m_memBuf[i]);
+
+				
+				glBindBuffer (GL_VIDEO_BUFFER_NV, NULL);
+                unsigned int size=0;
+                ptr = baseref->ImageBuffer[i]->GetPushBuffer(size);
+                if (!size || !ptr) { /* trouble */ }
+                //memcpy(ptr, m_memBuf[i], size);
+                svlConverter::RGBA32toRGB24(m_memBuf[i], ptr, m_SDIin.GetWidth()*m_SDIin.GetHeight());
+                flip(ptr,i);
+                baseref->ImageBuffer[i]->Push();
+            }
+        }
+    }
+    return this;
+}
+
+GLenum svlVidCapSrcSDIThread::CaptureVideo(float runTime)
+{
+	static GLuint64EXT captureTime;
+	GLuint sequenceNum;
+	static GLuint prevSequenceNum = 0;
+	GLenum ret;
+	static int numFails = 0;
+	static int numTries = 0;
+	GLuint captureLatency = 0;
+	unsigned int droppedFrames;
+
+	if(numFails < 100) {
+		// Capture the video to a buffer object
+#ifdef _WIN32
+		ret = m_SDIin.Capture(&sequenceNum, &captureTime);
+#else
+		ret = m_SDIin.capture(&sequenceNum, &captureTime);
+#endif
+		if(sequenceNum - prevSequenceNum > 1)
+		{
+			droppedFrames = sequenceNum - prevSequenceNum;
+#if __VERBOSE__ == 1
+			printf("glVideoCaptureNV: Dropped %d frames\n",sequenceNum - prevSequenceNum);
+			printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#endif
+			captureLatency = 1;
+		}
+
+#if __VERBOSE__ == 1
+		if(m_SDIin.m_gviTime > 1.0/30)
+		{
+			printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+			//*captureLatency = 1;
+		}
+#endif
+
+		prevSequenceNum = sequenceNum;
+		switch(ret) {
+		case GL_SUCCESS_NV:
+#if __VERBOSE__ == 1
+			printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#endif
+			numFails = 0;
+			break;
+		case GL_PARTIAL_SUCCESS_NV:
+			printf("glVideoCaptureNV: GL_PARTIAL_SUCCESS_NV\n");
+			numFails = 0;
+			break;
+		case GL_FAILURE_NV:
+			printf("glVideoCaptureNV: GL_FAILURE_NV - Video capture failed.\n");
+			numFails++;
+			break;
+		default:
+			printf("glVideoCaptureNV: Unknown return value.\n");
+			break;
+		} // switch
+
+	}
+	// The incoming signal format or some other error occurred during
+	// capture, shutdown and try to restart capture.
+	else {
+		if(numTries == 0) {
+			stopSDIPipeline();
+			//cleanupSDIDevices();
+
+			cleanupSDIinGL();
+		}
+
+		// Initialize the video capture device.
+#ifdef _WIN32
+		if (setupSDIinDevices() != TRUE) {
+#else
+		if (setupSDIinDevice(dpy,gpu) != TRUE) {
+#endif
+			numTries++;
+			return GL_FAILURE_NV;
+		}
+
+		// Reinitialize OpenGL.
+		setupSDIinGL();
+
+		StartSDIPipeline();
+		numFails = 0;
+		numTries = 0;
+		return GL_FAILURE_NV;
+	}
+
+	// Rough workaround latency from capture queue
+	if(captureLatency==1)
+	{
+		for(unsigned int i=0;i< droppedFrames+1;i++)
+		{
+			//printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+			CaptureVideo();
+		}
+	}
+	if(m_SDIin.m_gviTime + runTime > 1.0/30)
+	{
+		//printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+		CaptureVideo(runTime-1.0/30);
+		captureLatency = 1;
+	}else if(m_SDIin.m_gviTime > 1.0/30)
+	{
+		//printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+		CaptureVideo();
+	}
+
+	return ret;
+}
+
+HRESULT svlVidCapSrcSDIThread::Configure(char *szCmdLine[])
+{
+		int numGPUs;
+	// Note, this function enumerates GPUs which are both CUDA & GLAffinity capable (i.e. newer Quadros)  
+	numGPUs = CNvSDIoutGpuTopology::instance().getNumGpu(); 
+
+	if(numGPUs <= 0)
+	{
+		MessageBox(NULL, "Unable to obtain system GPU topology", "Error", MB_OK);
+		return E_FAIL;
+	}
+
+	int numCaptureDevices = CNvSDIinTopology::instance().getNumDevice();
+
+	if(numCaptureDevices <= 0)
+	{
+		MessageBox(NULL, "Unable to obtain system Capture topology", "Error", MB_OK);
+		return E_FAIL;
+	}
+	options.sampling = NVVIOCOMPONENTSAMPLING_422;
+	options.dualLink = false;
+	options.bitsPerComponent = 8;
+	options.expansionEnable = true;
+	options.captureDevice = 0;
+	options.captureGPU = CNvSDIoutGpuTopology::instance().getPrimaryGpuIndex();
+
+	ParseCommandLine(szCmdLine, &options);//get the user config
+
+	if(options.captureDevice >= numCaptureDevices)		
+	{
+		MessageBox(NULL, "Selected Capture Device is out of range", "Error", MB_OK);
+		return E_FAIL;
+	}
+	if(options.captureGPU >= numGPUs)		
+	{
+		MessageBox(NULL, "Selected Capture GPU is out of range", "Error", MB_OK);
+		return E_FAIL;
+	}
+	m_gpu = CNvSDIoutGpuTopology::instance().getGpu(options.captureGPU);
+
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIThread::SetupSDIDevices()
+{
+	if(setupSDIinDevices() != S_OK)
+	{
+		MessageBox(NULL, "Error setting up video capture.", "Error", MB_OK);
+		return E_FAIL;
+	}	
+
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIThread::setupSDIinDevices()
+{
+	m_SDIin.Init(&options);
+
+	// Initialize the video capture device.
+	if (m_SDIin.SetupDevice(true,options.captureDevice) != S_OK)
+		return E_FAIL;
+	m_videoWidth = m_SDIin.GetWidth();
+	m_videoHeight = m_SDIin.GetHeight();
+	m_num_streams = m_SDIin.GetNumStreams();
+	return S_OK;
+}
+
+GLboolean svlVidCapSrcSDIThread::SetupGL()
+{
+	// Create window device context and rendering context.
+	m_hDC = GetDC(m_hWnd); 
+
+	HGPUNV  gpuMask[2];
+	gpuMask[0] = m_gpu->getAffinityHandle();
+	gpuMask[1] = NULL;
+	if (!(m_hAffinityDC = wglCreateAffinityDCNV(gpuMask))) {
+		printf("Unable to create GPU affinity DC\n");
+	}
+
+	PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
+	{
+		sizeof (PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
+		1,												// Version Number
+		PFD_DRAW_TO_WINDOW |							// Format Must Support Window
+		PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
+		PFD_DOUBLEBUFFER,								// Must Support Double Buffering
+		PFD_TYPE_RGBA,									// Request An RGBA Format
+		24,												// Select Our Color Depth
+		0, 0, 0, 0, 0, 0,								// Color Bits Ignored
+		1,												// Alpha Buffer
+		0,												// Shift Bit Ignored
+		0,												// No Accumulation Buffer
+		0, 0, 0, 0,										// Accumulation Bits Ignored
+		24,												// 24 Bit Z-Buffer (Depth Buffer)  
+		8,												// 8 Bit Stencil Buffer
+		0,												// No Auxiliary Buffer
+		PFD_MAIN_PLANE,									// Main Drawing Layer
+		0,												// Reserved
+		0, 0, 0											// Layer Masks Ignored
+	};
+
+	GLuint pf = ChoosePixelFormat(m_hAffinityDC, &pfd);
+	HRESULT rslt = SetPixelFormat(m_hAffinityDC, pf, &pfd);
+	//		return NULL;
+	//Create affinity-rendering context from affinity-DC
+	if (!(m_hRC = wglCreateContext(m_hAffinityDC))) {
+		printf("Unable to create GPU affinity RC\n");
+	}
+
+	//m_hRC = wglCreateContext(m_hDC); 
+
+	// Make window rendering context current.
+	wglMakeCurrent(m_hDC, m_hRC); 
+	//load the required OpenGL extensions:
+	if(!loadSwapIntervalExtension() || !loadTimerQueryExtension() || !loadAffinityExtension())
+	{
+		printf("Could not load the required OpenGL extensions\n");
+		return false;
+	}
+
+
+	// Unlock capture/draw loop from vsync of graphics display.
+	// This should lock the capture/draw loop to the vsync of 
+	// input video.
+	if (wglSwapIntervalEXT) {
+		wglSwapIntervalEXT(0);
+	}
+	glClearColor( 0.0, 0.0, 0.0, 0.0); 
+	glClearDepth( 1.0 ); 
+
+	glDisable(GL_DEPTH_TEST); 
+
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_TEXTURE_2D);
+
+	setupSDIinGL();
+
+	//setupSDIoutGL();
+
+	return GL_TRUE;
+}
+
+//
+// Initialize OpenGL
+//
+HRESULT svlVidCapSrcSDIThread::setupSDIinGL()
+{
+	//load the required OpenGL extensions:
+	if(!loadCaptureVideoExtension() || !loadBufferObjectExtension() )
+	{
+		printf("Could not load the required OpenGL extensions\n");
+		return false;
+	}
+	// Setup CSC for each stream.
+	GLfloat mat[4][4];
+	float scale = 1.0f;
+
+	GLfloat max[] = {5000, 5000, 5000, 5000};;
+	GLfloat min[] = {0, 0, 0, 0};
+
+	// Initialize matrix to the identity.
+	mat[0][0] = scale; mat[0][1] = 0; mat[0][2] = 0; mat[0][3] = 0;
+	mat[1][0] = 0; mat[1][1] = scale; mat[1][2] = 0; mat[1][3] = 0;
+	mat[2][0] = 0; mat[2][1] = 0; mat[2][2] = scale; mat[2][3] = 0;
+	mat[3][0] = 0; mat[3][1] = 0; mat[3][2] = 0; mat[3][3] = scale;
+
+	GLfloat offset[] = {0, 0, 0, 0};
+
+	if (1) {
+		mat[0][0] = 1.164f *scale;
+		mat[0][1] = 1.164f *scale;
+		mat[0][2] = 1.164f *scale;
+		mat[0][3] = 0;  
+
+		mat[1][0] = 0;
+		mat[1][1] = -0.392f *scale;
+		mat[1][2] = 2.017f *scale;
+		mat[1][3] = 0;
+
+		mat[2][0] = 1.596f *scale;
+		mat[2][1] = -0.813f *scale;
+		mat[2][2] = 0.f;
+		mat[2][3] = 0;
+
+		mat[3][0] = 0;
+		mat[3][1] = 0;
+		mat[3][2] = 0;
+		mat[3][3] = 1;
+
+		offset[0] =-0.87f;
+		offset[1] = 0.53026f;
+		offset[2] = -1.08f;
+		offset[3] = 0;
+	}
+	m_SDIin.SetCSCParams(&mat[0][0], offset, min, max);
+
+	GLuint gpuVideoSlot = 1;
+
+	m_SDIin.BindDevice(gpuVideoSlot,m_hDC);	
+
+	glGenBuffers(m_SDIin.GetNumStreams(), m_videoTextures);
+
+	m_videoHeight = m_SDIin.GetHeight();
+	m_videoWidth = m_SDIin.GetWidth();
+	//m_videoBufferFormat = GL_RGBA8;
+	for(int i = 0; i < m_SDIin.GetNumStreams();i++)
+	{
+		m_SDIin.BindVideoFrameBuffer(m_videoTextures[i],GL_RGBA8, i);
+		//m_videoBufferPitch = m_SDIin.GetBufferObjectPitch(i);
+
+		// Allocate required space in video capture buffer
+		glBindBuffer(GL_VIDEO_BUFFER_NV, m_videoTextures[i]);
+		assert(glGetError() == GL_NO_ERROR);		
+		glBufferData(GL_VIDEO_BUFFER_NV, m_SDIin.GetBufferObjectPitch(i) * m_videoHeight,
+			NULL, GL_STREAM_COPY);
+		assert(glGetError() == GL_NO_ERROR);
+
+	}
+}
+
+void svlVidCapSrcSDIThread::CalcWindowSize()
+{  
+	switch(m_SDIin.GetSignalFormat()) {
+  case NVVIOSIGNALFORMAT_487I_59_94_SMPTE259_NTSC:
+  case NVVIOSIGNALFORMAT_576I_50_00_SMPTE259_PAL:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth; m_windowHeight = m_videoHeight;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth; m_windowHeight = m_videoHeight<<1;
+	  } else {
+		  m_windowWidth = m_videoWidth<<1; m_windowHeight = m_videoHeight<<1;
+	  }
+	  break;
+
+  case NVVIOSIGNALFORMAT_720P_59_94_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_60_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_50_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_30_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_29_97_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_25_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_24_00_SMPTE296:
+  case NVVIOSIGNALFORMAT_720P_23_98_SMPTE296:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>2;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>1;
+	  } else {
+		  m_windowWidth = m_videoWidth>>1; m_windowHeight = m_videoHeight>>1;
+	  }
+	  break;
+
+  case NVVIOSIGNALFORMAT_1035I_59_94_SMPTE260:
+  case NVVIOSIGNALFORMAT_1035I_60_00_SMPTE260:
+  case NVVIOSIGNALFORMAT_1080I_50_00_SMPTE295:
+  case NVVIOSIGNALFORMAT_1080I_50_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_59_94_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_60_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_23_976_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_24_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_25_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_29_97_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080P_30_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_48_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080I_47_96_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_25_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_29_97_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_30_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_24_00_SMPTE274:
+  case NVVIOSIGNALFORMAT_1080PSF_23_98_SMPTE274:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>2;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>1;
+	  } else {
+		  m_windowWidth = m_videoWidth>>1; m_windowHeight = m_videoHeight>>1;
+	  }
+	  break;
+
+  case NVVIOSIGNALFORMAT_2048P_30_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_29_97_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_60_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_59_94_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_25_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_50_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_24_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048P_23_98_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_48_00_SMPTE372:
+  case NVVIOSIGNALFORMAT_2048I_47_96_SMPTE372:
+	  if (m_SDIin.GetNumStreams() == 1) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>2;
+	  } else if (m_SDIin.GetNumStreams() == 2) {
+		  m_windowWidth = m_videoWidth>>2; m_windowHeight = m_videoHeight>>1;
+	  } else {
+		  m_windowWidth = m_videoWidth>>1; m_windowHeight = m_videoHeight>>1;
+	  }
+	  break;
+
+  default:
+	  m_windowWidth = 500;
+	  m_windowHeight = 500;
+	}
+}
+
+HWND svlVidCapSrcSDIThread::SetupWindow(HINSTANCE hInstance, int x, int y, 
+							   char *title)
+{
+	WNDCLASS   wndclass; 
+	HWND	   hWnd;
+	HDC	  hDC;								// Device context
+
+	BOOL bStatus;
+	unsigned int uiNumFormats;
+	CHAR szAppName[]="OpenGL SDI Demo";
+
+	int pixelformat; 	
+
+	// Register the frame class.
+	wndclass.style         = 0; 
+	wndclass.lpfnWndProc   = DefWindowProc;//(WNDPROC) MainWndProc; 
+	wndclass.cbClsExtra    = 0; 
+	wndclass.cbWndExtra    = 0; 
+	wndclass.hInstance     = hInstance; 
+	wndclass.hIcon         = LoadIcon (hInstance, szAppName); 
+	wndclass.hCursor       = LoadCursor (NULL,IDC_ARROW); 
+	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1); 
+	wndclass.lpszMenuName  = szAppName; 
+	wndclass.lpszClassName = szAppName; 
+
+	if (!RegisterClass (&wndclass) ) 
+		return NULL; 
+
+	// Create initial window frame.
+	m_hWnd = CreateWindow ( szAppName, title, 
+		WS_CAPTION | WS_BORDER |  WS_SIZEBOX | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
+		x, 
+		y, 
+		m_windowWidth, 
+		m_windowHeight, 
+		NULL, 
+		NULL, 
+		hInstance, 
+		NULL ); 
+
+	// Exit on error.
+	if (!m_hWnd) 
+		return NULL; 
+
+	// Get device context for new window.
+	hDC = GetDC(m_hWnd);
+
+	PIXELFORMATDESCRIPTOR pfd =							// pfd Tells Windows How We Want Things To Be
+	{
+		sizeof (PIXELFORMATDESCRIPTOR),					// Size Of This Pixel Format Descriptor
+		1,												// Version Number
+		PFD_DRAW_TO_WINDOW |							// Format Must Support Window
+		PFD_SUPPORT_OPENGL |							// Format Must Support OpenGL
+		PFD_DOUBLEBUFFER,								// Must Support Double Buffering
+		PFD_TYPE_RGBA,									// Request An RGBA Format
+		24,												// Select Our Color Depth
+		0, 0, 0, 0, 0, 0,								// Color Bits Ignored
+		1,												// Alpha Buffer
+		0,												// Shift Bit Ignored
+		0,												// No Accumulation Buffer
+		0, 0, 0, 0,										// Accumulation Bits Ignored
+		24,												// 24 Bit Z-Buffer (Depth Buffer)  
+		8,												// 8 Bit Stencil Buffer
+		0,												// No Auxiliary Buffer
+		PFD_MAIN_PLANE,									// Main Drawing Layer
+		0,												// Reserved
+		0, 0, 0											// Layer Masks Ignored
+	};
+
+	// Choose pixel format.
+	if ( (pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0 ) { 
+		MessageBox(NULL, "ChoosePixelFormat failed", "Error", MB_OK); 
+		return FALSE; 
+	} 
+
+	// Set pixel format.
+	if (SetPixelFormat(hDC, pixelformat, &pfd) == FALSE) { 
+		MessageBox(NULL, "SetPixelFormat failed", "Error", MB_OK); 
+		return FALSE; 
+	} 
+
+
+	// Release device context.
+	ReleaseDC(m_hWnd, hDC);
+
+	// Return window handle.
+	return(m_hWnd);
+
+}
+
+HRESULT svlVidCapSrcSDIThread::StartSDIPipeline()
+{
+	// Start video capture
+	if(m_SDIin.StartCapture()!= S_OK)
+	{
+		MessageBox(NULL, "Error starting video capture.", "Error", MB_OK);
+		return E_FAIL;
+	}
+	return S_OK;
+}
+
+HRESULT svlVidCapSrcSDIThread::stopSDIPipeline()
+{
+	m_SDIin.EndCapture();
+	return S_OK;
+}
+
+GLboolean svlVidCapSrcSDIThread::cleanupSDIGL()
+{
+	GLboolean val = GL_TRUE;
+	cleanupSDIinGL();
+	//if(m_bSDIout)
+	//	cleanupSDIoutGL();
+	// Delete OpenGL rendering context.
+	wglMakeCurrent(NULL,NULL) ; 
+	if (m_hRC) 
+	{
+		wglDeleteContext(m_hRC) ;
+		m_hRC = NULL ;
+	}		
+	ReleaseDC(m_hWnd,m_hDC);
+
+	wglDeleteDCNV(m_hAffinityDC);
+
+	return val;
+}
+
+HRESULT svlVidCapSrcSDIThread::cleanupSDIinGL()
+{
+	for(int i = 0; i < m_SDIin.GetNumStreams(); i++)
+		m_SDIin.UnbindVideoTexture(i);
+	m_SDIin.UnbindDevice();
+	glDeleteTextures(m_SDIin.GetNumStreams(),m_videoTextures);
+
+
+	return S_OK;
+}
+
+void
+svlVidCapSrcSDIThread::Shutdown()
+{
+	stopSDIPipeline();	
+	cleanupSDIGL();
+	//CleanupGL();			
+	//cleanupSDIDevices();	
+}
+
+void svlVidCapSrcSDIThread::flip(unsigned char* image, int index)
+{
+    const unsigned int stride =  m_SDIin.GetWidth() * 3;
+    const unsigned int rows = m_SDIin.GetHeight() >> 1;
+    unsigned char *down = image;
+    unsigned char *up = image + (m_SDIin.GetHeight() - 1) * stride;
+
+    for (unsigned int i = 0; i < rows; i ++) {
+        memcpy(comprBuffer[index], down, stride);
+        memcpy(down, up, stride);
+        memcpy(up, comprBuffer[index], stride);
+
+        down += stride; up -= stride;
+    }
+}
+
+#else
 /////////////////////////////////////
 // Windows routines
 /////////////////////////////////////
@@ -2386,7 +3971,9 @@ svlVidCapSrcSDIThread::CaptureVideo(float runTime)
         prevSequenceNum = sequenceNum;
         switch(ret) {
         case GL_SUCCESS_NV:
-            //printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#if __VERBOSE__ == 1
+            printf("Frame:%d gpuTime:%f gviTime:%f\n", sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime);
+#endif
             numFails = 0;
             break;
         case GL_PARTIAL_SUCCESS_NV:
@@ -2432,18 +4019,24 @@ svlVidCapSrcSDIThread::CaptureVideo(float runTime)
     {
         for(unsigned int i=0;i< droppedFrames+1;i++)
         {
+#if __VERBOSE__ == 1
             printf("Call: %d of %d Frame:%d gpuTime:%f gviTime:%f goal:%f\n", i, droppedFrames+1, sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
             CaptureVideo();
         }
     }
     if(m_SDIin.m_gviTime + runTime > 1.0/30)
     {
+#if __VERBOSE__ == 1
         printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
         CaptureVideo(runTime-1.0/30);
         captureLatency = 1;
     }else if(m_SDIin.m_gviTime > 1.0/30)
     {
-        //printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#if __VERBOSE__ == 1
+        printf("Call: %f decrease to %f Frame:%d gpuTime:%f gviTime:%f goal:%f\n", runTime,runTime-1.0/30,sequenceNum, m_SDIin.m_gpuTime,m_SDIin.m_gviTime,1.0/30);
+#endif
         CaptureVideo();
     }
 
@@ -2937,4 +4530,6 @@ void svlVidCapSrcSDIThread::flip(unsigned char* image, int index)
         down += stride; up -= stride;
     }
 }
+
+#endif
 

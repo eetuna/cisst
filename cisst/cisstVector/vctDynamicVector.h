@@ -7,7 +7,7 @@
   Author(s):	Ofri Sadowsky, Anton Deguet
   Created on: 2004-07-01
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2012 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -705,4 +705,3 @@ vctDynamicVectorElementwiseCompareScalar(const vctDynamicConstVectorBase<_vector
 #endif // DOXYGEN
 
 #endif // _vctDynamicVector_h
-

@@ -42,6 +42,9 @@ mtsCollectorBase::mtsCollectorBase(const std::string & collectorName,
     OutputFile(0),
     OutputHeaderStream(0),
     OutputHeaderFile(0),
+    FloatingNotation(COLLECTOR_FILE_FLOATING_NOTATION_NONE),
+    Precision(10),
+    FillCharacter(' '),
     FileOpened(false),
     Serializer(0)
 {
@@ -113,8 +116,6 @@ void mtsCollectorBase::SetOutput(const std::string & fileName,
     }
     // create the output file
     this->OutputFile = new std::ofstream;
-    this->OutputFile->precision(10);
-    this->OutputFile->unsetf(std::ios::floatfield);
     this->OutputHeaderFile = new std::ofstream;
     // uses the oftream as our ostream
     this->OutputHeaderStream = this->OutputHeaderFile;
@@ -174,6 +175,18 @@ void mtsCollectorBase::SetOutput(const std::string & fileName,
     this->FileOpened = false;
 }
 
+void mtsCollectorBase::CloseOutput(void)
+{
+    if (this->FileOpened) {
+        CMN_LOG_CLASS_INIT_VERBOSE << "CloseOutput: closing file \"" << this->OutputFileName << "\"" << std::endl;
+        this->OutputFile->close();
+        this->OutputHeaderFile->close();
+        this->FileOpened = false;
+    }
+    else {
+        CMN_LOG_CLASS_INIT_ERROR << "CloseOutput: file not open for \"" << this->GetName() << "\"" << std::endl;
+    }
+}
 
 void mtsCollectorBase::OpenFileIfNeeded(void)
 {
@@ -184,16 +197,16 @@ void mtsCollectorBase::OpenFileIfNeeded(void)
     switch (FileFormat) {
     case COLLECTOR_FILE_FORMAT_CSV:
     case COLLECTOR_FILE_FORMAT_PLAIN_TEXT:
-        CMN_LOG_CLASS_INIT_VERBOSE << "SetOutput: opening file \"" << this->OutputFileName << "\" in text/append mode" << std::endl;
+        CMN_LOG_CLASS_INIT_VERBOSE << "SetOutput: opening file \"" << this->OutputFileName << "\" in text/truncated mode" << std::endl;
         this->OutputFile->open(this->OutputFileName.c_str(), std::ios::trunc);
         this->OutputHeaderFile->open(this->OutputHeaderFileName.c_str(), std::ios::trunc);
         this->FileOpened = true;
         break;
         // havnt changed the trunc /app option in the case below!!
     case COLLECTOR_FILE_FORMAT_BINARY:
-        CMN_LOG_CLASS_INIT_VERBOSE << "SetOutput: opening file \"" << this->OutputFileName << "\" in binary/append mode" << std::endl;
-        this->OutputFile->open(this->OutputFileName.c_str(), std::ios::binary | std::ios::app);
-        this->OutputHeaderFile->open(this->OutputHeaderFileName.c_str(), std::ios::app);
+        CMN_LOG_CLASS_INIT_VERBOSE << "SetOutput: opening file \"" << this->OutputFileName << "\" in binary/truncated mode" << std::endl;
+        this->OutputFile->open(this->OutputFileName.c_str(), std::ios::binary | std::ios::trunc);
+        this->OutputHeaderFile->open(this->OutputHeaderFileName.c_str(), std::ios::trunc);
         this->FileOpened = true;
         break;
     default:
@@ -260,6 +273,8 @@ void mtsCollectorBase::SetOutput(std::ostream & outputStream, const CollectorFil
     // use whatever format was used before
     this->FileFormat = fileFormat;
     this->SetDelimiter();
+    this->Precision = outputStream.precision();
+    this->FillCharacter = outputStream.fill();
     this->FirstRunningFlag = true;
     this->SampleCounter = 0;
     this->SampleCounterForEvent = 0;
@@ -308,6 +323,48 @@ void mtsCollectorBase::GetWorkingDirectory(mtsStdString & placeHolder) const
     placeHolder = this->WorkingDirectoryMember;
 }
 
+void mtsCollectorBase::SetOutputStreamFloatingNotation(const CollectorFileFloatingNotation floatingNotation)
+{
+    this->FloatingNotation = floatingNotation;
+    if (this->Status == COLLECTOR_COLLECTING) {
+        CMN_LOG_CLASS_RUN_WARNING << "SetOutputStreamFloatingNotation: floating notation modified while collecting, the setting will only be applied to future files" << std::endl;
+    }
+    else {
+        switch (floatingNotation) {
+        case COLLECTOR_FILE_FLOATING_NOTATION_NONE:
+            this->OutputStream->unsetf(std::ios::floatfield);
+            break;
+        case COLLECTOR_FILE_FLOATING_NOTATION_FIXED:
+            this->OutputStream->setf(std::ios::fixed, std::ios::floatfield);
+            break;
+        case COLLECTOR_FILE_FLOATING_NOTATION_SCIENTIFIC:
+            this->OutputStream->setf(std::ios::scientific, std::ios::floatfield);
+            break;
+        }
+    }
+}
+
+void mtsCollectorBase::SetOutputStreamPrecision(const int precision)
+{
+    this->Precision = precision;
+    if (this->Status == COLLECTOR_COLLECTING) {
+        CMN_LOG_CLASS_RUN_WARNING << "SetOutputStreamPrecision: precision modified while collecting, the setting will only be applied to future files" << std::endl;
+    }
+    else {
+        this->OutputStream->precision(precision);
+    }
+}
+
+void mtsCollectorBase::SetOutputStreamFill(const char fillCharacter) 
+{
+    this->FillCharacter = fillCharacter;
+    if (this->Status == COLLECTOR_COLLECTING) {
+        CMN_LOG_CLASS_RUN_WARNING << "SetOutputStreamFill: fill character modified while collecting, the setting will only be applied to future files" << std::endl;
+    }
+    else {
+        this->OutputStream->fill(fillCharacter);
+    }
+}
 
 void mtsCollectorBase::Init(void)
 {

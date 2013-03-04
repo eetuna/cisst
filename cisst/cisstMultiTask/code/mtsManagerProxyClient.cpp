@@ -19,13 +19,17 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
+#include <cisstOSAbstraction/osaSleep.h>
+#include <cisstOSAbstraction/osaCriticalSection.h>
+
 #include "mtsProxyConfig.h"
+#if IMPROVE_ICE_THREADING
+#include <cisstOSAbstraction/osaThreadSignal.h>
+#endif
+
 #include "mtsManagerProxyClient.h"
 #include "mtsManagerProxyServer.h"
 #include <cisstMultiTask/mtsFunctionVoid.h>
-
-#include <cisstOSAbstraction/osaSleep.h>
-#include <cisstOSAbstraction/osaCriticalSection.h>
 
 unsigned int mtsManagerProxyClient::InstanceCounter = 0;
 
@@ -45,13 +49,24 @@ void GetConnectionStringSet(mtsManagerProxy::ConnectionStringSet & connectionStr
 
 mtsManagerProxyClient::mtsManagerProxyClient(const std::string & serverEndpointInfo)
     : BaseClientType("config.LCM", serverEndpointInfo), ManagerServerProxy(0)
+#if IMPROVE_ICE_THREADING
+      , IceThreadInitEvent(0)
+#endif
 {
     ProxyName = "ManagerProxyClient";
+
+#if IMPROVE_ICE_THREADING
+    IceThreadInitEvent = new osaThreadSignal;
+#endif
 }
 
 mtsManagerProxyClient::~mtsManagerProxyClient()
 {
     StopProxy();
+
+#if IMPROVE_ICE_THREADING
+    delete IceThreadInitEvent;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -107,6 +122,11 @@ bool mtsManagerProxyClient::StartProxy(mtsManagerLocal * proxyOwner)
     WorkerThread.Create<ProxyWorker<mtsManagerLocal>, ThreadArguments<mtsManagerLocal>*>(
         &ProxyWorkerInfo, &ProxyWorker<mtsManagerLocal>::Run, &ThreadArgumentsInfo, threadName.c_str());
 
+#if IMPROVE_ICE_THREADING
+    // Wait for Ice thread to start
+    IceThreadInitEvent->Wait();
+#endif
+
     return true;
 }
 
@@ -131,6 +151,11 @@ void mtsManagerProxyClient::StartClient(void)
 {
     Server->Start();
 
+    ChangeProxyState(PROXY_STATE_ACTIVE);
+#if IMPROVE_ICE_THREADING
+    IceThreadInitEvent->Raise();
+#endif
+
     // This is a blocking call that should run in a different thread.
     IceCommunicator->waitForShutdown();
 }
@@ -146,7 +171,6 @@ void mtsManagerProxyClient::Runner(ThreadArguments<mtsManagerLocal> * arguments)
     ProxyClient->GetLogger()->trace("mtsManagerProxyClient", "proxy client starts");
 
     try {
-        ProxyClient->ChangeProxyState(PROXY_STATE_ACTIVE);
         ProxyClient->StartClient();
     } catch (const Ice::Exception& e) {
         std::string error("mtsManagerProxyClient: ");
@@ -486,20 +510,6 @@ void mtsManagerProxyClient::ReceiveGetDescriptionOfFunction(const std::string & 
 void mtsManagerProxyClient::ReceiveGetDescriptionOfEventHandler(const std::string & componentName, const std::string & requiredInterfaceName, const std::string & eventHandlerName, std::string & description) const
 {
     ProxyOwner->GetDescriptionOfEventHandler(description, componentName, requiredInterfaceName, eventHandlerName);
-}
-
-void mtsManagerProxyClient::ReceiveGetArgumentInformation(const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, std::string & argumentName, ::mtsManagerProxy::NamesOfSignals & signalNames) const
-{
-    ProxyOwner->GetArgumentInformation(argumentName, signalNames, componentName, providedInterfaceName, commandName);
-}
-
-void mtsManagerProxyClient::ReceiveGetValuesOfCommand(const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const int scalarIndex, ::mtsManagerProxy::SetOfValues & values) const
-{
-    mtsManagerLocalInterface::SetOfValues valuesCISSTtype;
-
-    ProxyOwner->GetValuesOfCommand(valuesCISSTtype, componentName, providedInterfaceName, commandName, scalarIndex);
-
-    mtsManagerProxyServer::ConstructValuesOfCommand(valuesCISSTtype, values);
 }
 
 std::string mtsManagerProxyClient::ReceiveGetProcessName()
@@ -962,9 +972,6 @@ mtsManagerProxyClient::ManagerClientI::ManagerClientI(
 mtsManagerProxyClient::ManagerClientI::~ManagerClientI()
 {
     Stop();
-
-    // Sleep for some time enough for Run() loop to terminate
-    osaSleep(1 * cmn_s);
 }
 
 void mtsManagerProxyClient::ManagerClientI::Start()
@@ -990,8 +997,15 @@ void mtsManagerProxyClient::ManagerClientI::Run()
         ManagerProxyClient->SendTestMessageFromClientToServer(ss.str());
     }
 #else
+    double lastTickChecked = 0.0, now;
     while (IsActiveProxy()) {
-        osaSleep(mtsProxyConfig::RefreshPeriodForManagers);
+        now = osaGetTime();
+        if (now < lastTickChecked + mtsProxyConfig::RefreshPeriodForManagers) {
+            osaSleep(10 * cmn_ms);
+            continue;
+        }
+        lastTickChecked = now;
+
         try {
             Server->Refresh();
         } catch (const ::Ice::Exception & ex) {
@@ -1224,24 +1238,4 @@ void mtsManagerProxyClient::ManagerClientI::GetDescriptionOfEventHandler(const s
 #endif
 
     ManagerProxyClient->ReceiveGetDescriptionOfEventHandler(componentName, requiredInterfaceName, eventHandlerName, description);
-}
-
-void mtsManagerProxyClient::ManagerClientI::GetArgumentInformation(const std::string & componentName, const std::string & providedInterfaceName,
-        const std::string & commandName, std::string & argumentName, ::mtsManagerProxy::NamesOfSignals & signalNames, const ::Ice::Current & CMN_UNUSED(current)) const
-{
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: GetArgumentInformation: " << componentName << ", " << providedInterfaceName << ", " << commandName);
-#endif
-
-    ManagerProxyClient->ReceiveGetArgumentInformation(componentName, providedInterfaceName, commandName, argumentName, signalNames);
-}
-
-void mtsManagerProxyClient::ManagerClientI::GetValuesOfCommand(const std::string & componentName, const std::string & providedInterfaceName,
-    const std::string & commandName, ::Ice::Int scalarIndex, ::mtsManagerProxy::SetOfValues & values, const ::Ice::Current & CMN_UNUSED(current)) const
-{
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(ManagerClientI, "<<<<< RECV: GetValuesOfCommand: " << componentName << ", " << providedInterfaceName << ", " << commandName << ", " << scalarIndex);
-#endif
-
-    ManagerProxyClient->ReceiveGetValuesOfCommand(componentName, providedInterfaceName, commandName, scalarIndex, values);
 }

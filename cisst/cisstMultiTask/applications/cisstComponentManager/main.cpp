@@ -30,17 +30,15 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstMultiTask/mtsTaskContinuous.h>
 #include <cisstMultiTask/mtsManagerComponentServices.h>
-#include <cisstMultiTask/mtsComponentDispatcher.h>
 
-class MainDispatcher : public mtsComponentDispatcherMain
+class MainDispatcher : public mtsTaskMain
 {
     mtsComponent *Shell;
 public:
     MainDispatcher(const std::string &name, mtsComponent *shell) :
-        mtsComponentDispatcherMain(name), Shell(shell) {}
+        mtsTaskMain(name), Shell(shell) {}
     ~MainDispatcher() {}
     void Run(void) {
-        mtsComponentDispatcherMain::Run();
         osaSleep(0.1);
         if (Shell->IsTerminated())
             Kill();
@@ -705,6 +703,8 @@ int main(int argc, char * argv[])
     cmnLogger::SetMask(CMN_LOG_ALLOW_ALL);
     cmnLogger::SetMaskFunction(CMN_LOG_ALLOW_ALL);
     cmnLogger::SetMaskDefaultLog(CMN_LOG_ALLOW_ALL); // for cisstLog.txt
+    // Enable system-wide thread-safe Logger
+    mtsManagerLocal::SetLogForwarding(true);
 
     mtsManagerGlobal *globalManager = 0;
     mtsManagerLocal * localManager = 0;;

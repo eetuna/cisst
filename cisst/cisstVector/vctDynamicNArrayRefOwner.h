@@ -4,7 +4,7 @@
 /*
   $Id$
 
-  Author(s):	Daniel Li
+  Author(s):  Daniel Li, Ofri Sadowsky, Anton Deguet
   Created on:	2006-07-06
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
@@ -287,7 +287,7 @@ protected:
 
 private:
     // copy constructor private to prevent any call
-    vctDynamicNArrayRefOwner(const ThisType & other) {};
+    vctDynamicNArrayRefOwner(const ThisType & CMN_UNUSED(other)) {};
 
 };
 

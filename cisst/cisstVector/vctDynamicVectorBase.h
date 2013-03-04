@@ -7,7 +7,7 @@
   Author(s):	Ofri Sadowsky, Anton Deguet
   Created on: 2004-07-01
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -1103,6 +1103,18 @@ public:
         return *this;
     }
 
+    template <class __vectorOwnerType1, class __vectorOwnerType2>
+    inline ThisType & AddElementwiseProductOf(const vctDynamicConstVectorBase<__vectorOwnerType1, _elementType> & vector1,
+                                              const vctDynamicConstVectorBase<__vectorOwnerType2, _elementType> & vector2)
+    {
+        vctDynamicVectorLoopEngines::
+            VioViVi<
+            typename vctStoreBackBinaryOperations<value_type>::Addition,
+            typename vctBinaryOperations<value_type>::Multiplication >::
+            Run(*this, vector1, vector2);
+        return *this;
+    }
+
 
 
     /*! \name Binary elementwise operations between a vector and a
@@ -1286,4 +1298,3 @@ public:
 
 
 #endif // _vctDynamicVectorBase_h
-

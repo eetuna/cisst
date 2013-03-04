@@ -47,6 +47,11 @@ protected:
     typedef IceUtil::Handle<ManagerClientI> ManagerClientIPtr;
     ManagerClientIPtr Server;
 
+#if IMPROVE_ICE_THREADING
+    /*! Signal to wait for internal Ice threads to run */
+    osaThreadSignal * IceThreadInitEvent;
+#endif
+
     /*! Instance counter used to set a short name of this thread */
     static unsigned int InstanceCounter;
 
@@ -114,12 +119,6 @@ protected:
                                          const std::string & functionName, std::string & description) const;
     void ReceiveGetDescriptionOfEventHandler(const std::string & componentName, const std::string & requiredInterfaceName,
                                              const std::string & eventHandlerName, std::string & description) const;
-
-    // Getters for data visualization
-    void ReceiveGetArgumentInformation(const std::string & componentName, const std::string & providedInterfaceName,
-                                       const std::string & commandName, std::string & argumentName, ::mtsManagerProxy::NamesOfSignals & signalNames) const;
-    void ReceiveGetValuesOfCommand(const std::string & componentName, const std::string & providedInterfaceName,
-                                   const std::string & commandName, const int scalarIndex, ::mtsManagerProxy::SetOfValues & values) const;
 
     std::string ReceiveGetProcessName();
     ::Ice::Int ReceiveGetCurrentInterfaceCount(const std::string & componentName);
@@ -291,10 +290,6 @@ protected:
         void GetDescriptionOfEventGenerator(const std::string & componentName, const std::string & providedInterfaceName, const std::string & eventGeneratorName, std::string & description, const ::Ice::Current & current) const;
         void GetDescriptionOfFunction(const std::string & componentName, const std::string & requiredInterfaceName, const std::string & eventGeneratorName, std::string & description, const ::Ice::Current & current) const;
         void GetDescriptionOfEventHandler(const std::string & componentName, const std::string & requiredInterfaceName, const std::string & eventHandlerName, std::string & description, const ::Ice::Current & current) const;
-
-        /*! Getters for data visualiation */
-        void GetArgumentInformation(const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, std::string & argumentName, ::mtsManagerProxy::NamesOfSignals & signalNames, const ::Ice::Current & current) const;
-        void GetValuesOfCommand(const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, int scalarIndex, ::mtsManagerProxy::SetOfValues & values, const ::Ice::Current & current) const;
 
         std::string GetProcessName(const ::Ice::Current &) const;
     };

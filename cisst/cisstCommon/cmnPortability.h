@@ -190,7 +190,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 // Intel compiler
-#if (__INTEL_COMPILER)
+#if defined(__INTEL_COMPILER)
   #define CISST_COMPILER CISST_INTEL_CC
   #if defined (__linux__) // linux
     #define CISST_OS CISST_LINUX
@@ -228,7 +228,7 @@ http://www.cisst.org/cisst/license.txt.
 // otherwise).
 #  ifndef WIN32
 #    define WIN32 1
-#  elif !WIN32
+#  else
 #    undef WIN32
 #    define WIN32 1
 #  endif
@@ -405,7 +405,7 @@ extern CISST_EXPORT const std::string cmnCompilersStrings[];
   \param x The number to be tested.
 */
 #ifdef CISST_COMPILER_IS_MSVC
-#define CMN_ISFINITE(x) _finite(x)
+#define CMN_ISFINITE(x) ((_finite(x) == 1) ? true : false)
 #elif (CISST_OS == CISST_QNX)
   #define CMN_ISFINITE(x) isfinite(x)
 #else

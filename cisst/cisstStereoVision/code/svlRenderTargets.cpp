@@ -36,10 +36,10 @@ http://www.cisst.org/cisst/license.txt.
 
 #if CISST_SVL_HAS_MIL
 #include "svlVidCapSrcMIL.h"
-#endif // CISST_SVL_HAS_MIL
+//#endif // CISST_SVL_HAS_MIL
 
 //TODO::CMAKE flag for SDI
-#if CISST_HAS_OPENGL
+#else //#if CISST_HAS_OPENGL
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
 #endif//CISST_HAS_OPENGL
 
@@ -73,7 +73,7 @@ svlRenderTargets::svlRenderTargets()
     Targets.SetAll(0);
 
     delete [] devlist;
-#elif CISST_HAS_OPENGL //CISST_SVL_HAS_MIL
+#else //#elif CISST_HAS_OPENGL //CISST_SVL_HAS_MIL
     svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
     svlFilterSourceVideoCapture::DeviceInfo *devlist;
     int devicecount = device->GetDeviceList(&devlist);
@@ -129,7 +129,7 @@ svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
     }
     return 0;
 }
-#elif CISST_HAS_OPENGL // CISST_SVL_HAS_MIL
+#elif 1 //#elif CISST_HAS_OPENGL // CISST_SVL_HAS_MIL
 svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
 {
 #if __VERBOSE__ == 1
@@ -148,7 +148,9 @@ svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
     }
     return 0;
 }
-#else // CISST_HAS_OPENGL
+
+#else
+
 svlRenderTargetBase* svlRenderTargets::Get(unsigned int CMN_UNUSED(deviceID))
 {
 #if __VERBOSE__ == 1

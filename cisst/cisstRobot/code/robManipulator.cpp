@@ -431,7 +431,7 @@ robManipulator::InverseKinematics( vctDynamicVector<double>& q,
   int INC = 1;                // The index increment 
 
   double ndq=1;               // norm of the iteration error
-  size_t i;                   // the iteration counter
+  size_t i = 0;               // the iteration counter
 
   // loop until Niter are executed or the error is bellow the tolerance
   for( i=0; i<Niterations && tolerance<ndq; i++ ){
@@ -1037,7 +1037,7 @@ robManipulator::InverseDynamics( const vctDynamicVector<double>& q,
 
     symv(&LOW, &N,
          &ALPHA, &A[0][0], &LDA, 
-	 qddv, &INC,
+         qddv, &INC,
          &BETA, Inertterm, &INC);
 
     free_rmatrix(A, 0, 0);

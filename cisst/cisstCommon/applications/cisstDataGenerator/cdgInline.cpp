@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
   --- begin cisst license - do not edit ---
@@ -25,10 +25,19 @@
 CMN_IMPLEMENT_SERVICES(cdgInline);
 
 
-cdgInline::cdgInline(unsigned int lineNumber, InlineType type):
-    cdgScope(lineNumber),
+cdgInline::cdgInline(size_t lineNumber, InlineType type):
+    cdgScope(((type == CDG_INLINE_HEADER) ? "inline-header" : "inline-code"), lineNumber),
     Type(type)
-{}
+{
+    cdgField * field;
+    field = this->AddField("", "", false,
+                           (type == CDG_INLINE_HEADER)
+                           ? "code that will be placed as-is in the generated header file"
+                           : "code that will be placed as-is in the generated source file");
+    CMN_ASSERT(field);
+    
+    this->AddKnownScope(*this);
+}
 
 
 cdgScope::Type cdgInline::GetScope(void) const
@@ -37,40 +46,15 @@ cdgScope::Type cdgInline::GetScope(void) const
 }
 
 
-bool cdgInline::HasKeyword(const std::string & CMN_UNUSED(keyword)) const
+cdgScope * cdgInline::Create(size_t lineNumber) const
 {
-    return false;
+    return new cdgInline(lineNumber, this->Type);
 }
 
 
-bool cdgInline::HasScope(const std::string & CMN_UNUSED(keyword),
-                         cdgScope::Stack & CMN_UNUSED(scopes),
-                         unsigned int CMN_UNUSED(lineNumber))
-{
-    return false;
-}
-
-
-bool cdgInline::SetValue(const std::string & CMN_UNUSED(keyword),
-                         const std::string & value,
-                         std::string & CMN_UNUSED(errorMessage))
-{
-    Value = value;
-    return true;
-}
-
-
-bool cdgInline::IsValid(std::string & CMN_UNUSED(errorMessage)) const
+bool cdgInline::Validate(void)
 {
     return true;
-}
-
-
-void cdgInline::FillInDefaults(void)
-{
-    if (Value.empty()) {
-        Value = "/* this should not happen, cdgInline not set */";
-    }
 }
 
 
@@ -78,7 +62,7 @@ void cdgInline::GenerateHeader(std::ostream & outputStream) const
 {
     if (Type == CDG_INLINE_HEADER) {
         GenerateLineComment(outputStream);
-        outputStream << Value;
+        outputStream << this->GetFieldValue("");
     }
 }
 
@@ -87,6 +71,6 @@ void cdgInline::GenerateCode(std::ostream & outputStream) const
 {
     if (Type == CDG_INLINE_CODE) {
         GenerateLineComment(outputStream);
-        outputStream << Value;
+        outputStream << this->GetFieldValue("");
     }
 }

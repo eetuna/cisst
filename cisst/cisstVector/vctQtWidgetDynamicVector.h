@@ -32,7 +32,7 @@ http://www.cisst.org/cisst/license.txt.
 
 
 template <class _elementType>
-class vctQtWidgetDynamicVectorRead
+class CISST_EXPORT vctQtWidgetDynamicVectorRead
 {
     typedef _elementType value_type;
     QTableWidget * Table;
@@ -49,7 +49,7 @@ typedef vctQtWidgetDynamicVectorRead<int> vctQtWidgetDynamicVectorIntRead;
 typedef vctQtWidgetDynamicVectorRead<unsigned int> vctQtWidgetDynamicVectorUIntRead;
 typedef vctQtWidgetDynamicVectorRead<bool> vctQtWidgetDynamicVectorBoolRead;
 
-#if (CISST_OS == CISST_WINDOWS)
+#if ((CISST_OS == CISST_WINDOWS) && (CISST_COMPILER != CISST_GCC))
 template class CISST_EXPORT vctQtWidgetDynamicVectorRead<double>;
 template class CISST_EXPORT vctQtWidgetDynamicVectorRead<float>;
 template class CISST_EXPORT vctQtWidgetDynamicVectorRead<int>;

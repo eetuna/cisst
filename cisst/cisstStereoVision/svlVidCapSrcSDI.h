@@ -23,27 +23,28 @@ http://www.cisst.org/cisst/license.txt.
 #ifndef _svlVidCapSrcSDI_h
 #define _svlVidCapSrcSDI_h
 
+#ifdef _WIN32
+#include <windows.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <GL/glu.h>
+#include <GL/wglext.h>
+
+#ifndef USE_NVAPI
+#define USE_NVAPI
+#endif
+
+#include "nvSDIin.h"
+#include "nvSDIout.h"
+#include "nvSDIutil.h"
+#include "glExtensions.h"
+#else
+
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glx.h>
 #include <GL/glxext.h>
 #include <GL/glu.h>
-
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/time.h>
-#include <pthread.h>
-
-#include <list>
-#include <iostream>
-#include <sstream>
 
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
@@ -57,6 +58,24 @@ http://www.cisst.org/cisst/license.txt.
 #include "NvSDIout.h"
 #include "fbo.h"
 #include "GraphicsN.h"
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <pthread.h>
+#endif
+
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+
+#include <list>
+#include <iostream>
+#include <sstream>
 
 #include "ANCapi.h"
 #include "commandline.h"
@@ -101,12 +120,21 @@ public:
     GLenum DisplayVideo();
 
     void Shutdown();
-    void MakeCurrentGLCtx(){glXMakeCurrent(dpy, win, ctx);}
+
+    void MakeCurrentGLCtx(){
+#ifdef _WIN32
+		wglMakeCurrent(m_hDC, m_hRC); 
+#else
+		glXMakeCurrent(dpy, win, ctx);
+#endif
+	}
 
 protected:
     svlVidCapSrcSDIRenderTarget(unsigned int deviceID, unsigned int displayID=0);
-    svlVidCapSrcSDIRenderTarget(Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams, unsigned int deviceID=0, unsigned int displayID = 0);
     ~svlVidCapSrcSDIRenderTarget();
+#ifndef _WIN32
+    svlVidCapSrcSDIRenderTarget(Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams, unsigned int deviceID=0, unsigned int displayID = 0);
+#endif
 
 private:
     int SystemID;
@@ -120,6 +148,53 @@ private:
     bool ThreadKilled;
     bool Running;
 
+    void drawUnsignedCharImage(GLuint gWidth, GLuint gHeight, unsigned char* imageData);
+    void drawCircle(GLuint gWidth, GLuint gHeight);
+#ifdef _WIN32
+    CNvSDIin m_SDIin;
+    CNvSDIout m_SDIout;
+    unsigned char *m_overlayBuf[MAX_VIDEO_STREAMS]; 
+    CFBO m_FBO[MAX_VIDEO_STREAMS];
+    GLuint m_OutTexture[MAX_VIDEO_STREAMS];
+
+	CNvSDIoutGpu *m_gpu;
+	Options options;
+	bool m_bSDIout;
+	GLuint m_num_streams;
+	int m_videoWidth;
+	int m_videoHeight;
+	GLuint m_windowWidth;                   // Window width
+	GLuint m_windowHeight;                  // Window height
+	unsigned int m_videoBufferPitch;
+
+	GLuint m_vidBufObj[MAX_VIDEO_STREAMS];
+
+	HWND g_hWnd;
+	HWND m_hWnd;							// Window handle
+	HDC	m_hDC;								// Device context
+	HGLRC m_hRC;							// OpenGL rendering context
+	HDC m_hAffinityDC;
+	GLuint m_videoTextures[MAX_VIDEO_OUT_STREAMS];
+
+	HRESULT Configure(char *szCmdLine[]);
+	HRESULT SetupSDIDevices();	
+	HRESULT setupSDIinDevices();
+	HRESULT setupSDIoutDevice();
+
+	GLboolean SetupGL();
+	HRESULT setupSDIinGL();
+	HRESULT setupSDIoutGL();
+	HRESULT StartSDIPipeline();
+	HRESULT stopSDIPipeline();
+    GLboolean cleanupSDIGL();
+	HRESULT cleanupSDIinGL();
+	HRESULT cleanupSDIoutGL();
+    //bool cleanupSDIDevices ();
+
+	void CalcWindowSize();
+	HWND SetupWindow(HINSTANCE hInstance, int x, int y, char *title);
+
+#else
     // X windows
     Display * dpy;
     Window win;
@@ -150,8 +225,6 @@ private:
     double m_inputFrameRate;
     GLuint gTexObjs[MAX_VIDEO_STREAMS];
 
-    void drawUnsignedCharImage(GLuint gWidth, GLuint gHeight, unsigned char* imageData);
-    void drawCircle(GLuint gWidth, GLuint gHeight);
     void drawOne();
     void drawTwo();
     void drawThree();
@@ -175,6 +248,7 @@ private:
     GLboolean cleanupSDIoutGL();
 
     GLuint getTextureFromBuffer(unsigned int index);
+#endif
     bool translateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip);
 };
 
@@ -237,12 +311,26 @@ class svlVidCapSrcSDIThread
 {
 public:
     svlVidCapSrcSDIThread(int streamid);
+#ifdef _WIN32
+    ~svlVidCapSrcSDIThread() {Shutdown();}
+#else
     ~svlVidCapSrcSDIThread() {Shutdown();XCloseDisplay(dpy);}
+#endif
     void* Proc(svlVidCapSrcSDI* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
     bool IsError() { return Error; }
 
+    GLenum DisplayVideo();
+    GLenum  CaptureVideo(float runTime = 0.0);
+
+    CNvSDIin GetSDIin(){return m_SDIin;}
+
+#ifdef _WIN32
+    void Shutdown();
+	HRESULT SetupSDIDevices();	
+	HRESULT StartSDIPipeline();
+#else
     bool SetupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
     GLboolean  SetupGL();
 
@@ -256,6 +344,7 @@ public:
     void MakeCurrentGLCtx();
     Display * GetDisplay(){return dpy;}
     HGPUNV * GetGPU() {return gpu;}
+#endif
 
 private:
     int StreamID;
@@ -263,9 +352,41 @@ private:
     osaThreadSignal InitEvent;
     bool InitSuccess;
     IplImage *Frame;
-
     unsigned char *m_memBuf[MAX_VIDEO_STREAMS];   // System memory buffers
     unsigned char *comprBuffer[MAX_VIDEO_STREAMS];   // System memory buffers
+
+    void flip(unsigned char* image, int index);
+
+#ifdef _WIN32
+    CNvSDIin m_SDIin;
+	CNvSDIoutGpu *m_gpu;
+	Options options;	
+	GLuint m_num_streams;
+	int m_videoWidth;
+	int m_videoHeight;
+	GLuint m_windowWidth;                   // Window width
+	GLuint m_windowHeight;                  // Window height
+	HWND g_hWnd;
+	HWND m_hWnd;							// Window handle
+	HDC	m_hDC;								// Device context
+	HGLRC m_hRC;							// OpenGL rendering context
+	HDC m_hAffinityDC;
+	GLuint m_videoTextures[MAX_VIDEO_STREAMS];
+
+	HRESULT Configure(char *szCmdLine[]);
+	HRESULT setupSDIinDevices();
+	HRESULT setupSDIoutDevice();
+	GLboolean SetupGL();
+	HRESULT setupSDIinGL();
+	HRESULT setupSDIoutGL();
+	void CalcWindowSize();
+	HWND SetupWindow(HINSTANCE hInstance, int x, int y, char *title);
+	HRESULT stopSDIPipeline();
+    GLboolean cleanupSDIGL();
+	HRESULT cleanupSDIinGL();
+    //bool cleanupSDIDevices ();
+#else
+
     CaptureOptions captureOptions;
     //X stuff
     Display *dpy;
@@ -294,8 +415,7 @@ private:
     bool cleanupSDIin();
     bool cleanupSDIDevices();
     bool destroyWindow();
-
-    void flip(unsigned char* image, int index);
+#endif
 
 };
 

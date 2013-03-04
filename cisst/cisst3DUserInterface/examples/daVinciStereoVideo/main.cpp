@@ -42,7 +42,7 @@ http://www.cisst.org/cisst/license.txt.
 #define HAS_ULTRASOUDS 0
 #define TORS 1
 #define DUAL_RENDER_TARGETS 0
-#define VOLUME_RENDERING 1
+#define VOLUME_RENDERING 0
 
 int main()
 {
@@ -196,7 +196,11 @@ int main()
 #if DUAL_RENDER_TARGETS
     camera_geometry.LoadCalibration("E:/Users/davinci_mock_or/calib_results.txt");
 #else
+#ifdef _WIN32
+	camera_geometry.LoadCalibration("C:/Users/Wen/MyCommon/calib_results.txt");
+#else
     camera_geometry.LoadCalibration("/home/wen/MyCommon/calib_results.txt");
+#endif
 #endif
     // Center world in between the two cameras (da Vinci specific)
     camera_geometry.SetWorldToCenter();

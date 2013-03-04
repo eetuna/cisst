@@ -26,6 +26,7 @@ if (cisst_FOUND_AS_REQUIRED)
   include (${CISST_USE_FILE})
 
   if (CISST_SVL_HAS_X11 OR WIN32)
+	add_definitions (-DWIN32 -D_DEBUG -DNDEBUG -D_CONSOLE -DUSE_NVAPI)  
     add_executable (svlExStereoCameraViewer stereocameraviewer.cpp)
     set_property (TARGET svlExStereoCameraViewer PROPERTY FOLDER "cisstStereoVision/examples")
     cisst_target_link_libraries (svlExStereoCameraViewer ${REQUIRED_CISST_LIBRARIES})

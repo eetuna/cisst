@@ -4,10 +4,10 @@
 /*
   $Id$
 
-  Author(s):	Daniel Li
+  Author(s):  Anton Deguet, Daniel Li, Ofri Sadowsky
   Created on:	2006-06-23
 
-  (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2006-2012 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -233,8 +233,7 @@ protected:
     {
         if (! ValidDimensionIndex(dimensionIndex))
         {
-            cmnThrow(std::out_of_range("vctDynamicNArray: Invalid dimension index of "
-                + dimensionIndex));
+            cmnThrow(std::out_of_range("vctDynamicNArray: Invalid index"));
         }
     }
 
@@ -264,8 +263,7 @@ protected:
     {
         if (! ValidIndex(dimension, index))
         {
-            cmnThrow(std::out_of_range("vctDynamicNArray: Invalid index in dimension "
-                + dimension));
+            cmnThrow(std::out_of_range("vctDynamicNArray: Invalid index"));
         }
     }
 
@@ -694,6 +692,24 @@ public:
         return vctDynamicNArrayLoopEngines<DIMENSION>::template
             SoNi< typename vctBinaryOperations<bool>::Or,
             typename vctUnaryOperations<bool, value_type>::IsNonzero>::
+            Run(*this);
+    }
+
+    /*! Return true if all the elements of this nArray are finite,
+      false otherwise */
+    inline bool IsFinite(void) const {
+        return vctDynamicNArrayLoopEngines<DIMENSION>::template
+            SoNi< typename vctBinaryOperations<bool>::And,
+            typename vctUnaryOperations<bool, value_type>::IsFinite>::
+            Run(*this);
+    }
+
+    /*! Return true if any element of this nArray is NaN, false
+      otherwise */
+    inline bool HasNaN(void) const {
+        return vctDynamicNArrayLoopEngines<DIMENSION>::template
+            SoNi< typename vctBinaryOperations<bool>::Or,
+            typename vctUnaryOperations<bool, value_type>::IsNaN>::
             Run(*this);
     }
     //@}

@@ -7,7 +7,7 @@
   Author(s):	Anton Deguet
   Created on:	2004-08-18
 
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2004-2012 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -33,6 +33,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstCommon/cmnPortability.h>
 #include <cisstCommon/cmnForwardDeclarations.h>
 #include <cisstCommon/cmnLogger.h>
+#include <cisstCommon/cmnThrow.h>
 
 #include <string>
 #include <iostream>
@@ -99,8 +100,8 @@ public:
     virtual void ToStreamRaw(std::ostream & outputStream, const char delimiter = ' ',
                              bool headerOnly = false, const std::string & headerPrefix = "") const;
 
-    /*! Read from an unformatted text input (e.g., one created by ToStreamRaw).
-      Returns true if successful. */
+    /*! Read from an unformatted text input (e.g., one created by
+      ToStreamRaw).  Returns true if successful. */
     virtual bool FromStreamRaw(std::istream & inputStream, const char delimiter = ' ');
 
     /*! Serialize the content of the object without any extra
@@ -117,6 +118,42 @@ public:
       default, it uses cmnLogger.  This method can be overloaded to
       define a log file/stream per object. */
     virtual cmnLogger::StreamBufType * GetLogMultiplexer(void) const;
+
+    /*! Methods for data visualization.  Derived classes should override
+        the following methods in order to be properly processed by the data
+        visualizer of the global component manager. */
+
+    /*! Return a number of data (which can be visualized, i.e., type-casted
+        to double) */
+    virtual size_t ScalarNumber(void) const {
+        return 0;
+    }
+
+    /*! Indicates if this object has a fixed number of scalars.  This
+      is used for arrays of object in order to optimize random access
+      for a given scalar.  When defining an object with a fixed number
+      of scalars, overloading this method to return true allows some
+      optimizations. */ 
+    virtual bool ScalarNumberIsFixed(void) const {
+        return false;
+    }
+
+    /*! Return the index-th (zero-based) value of data typecasted to
+      double.  Note that this method will throw an exception of type
+      std::outputStream if the index exceeds the number of scalars. */
+    virtual double Scalar(const size_t CMN_UNUSED(index)) const throw (std::out_of_range) {
+        cmnThrow(std::out_of_range("cmnGenericObject::Scalar base method called, no scalar"));
+        return 0.0;
+    }
+
+    /*! Return the name of index-th (zero-based) data typecasted to
+      double.  As for the Scalar, this method will throw an
+      exception of type std::out_of_range if the index exceeds the
+      number of scalar. */
+    virtual std::string ScalarDescription(const size_t CMN_UNUSED(index), const std::string & CMN_UNUSED(userDescription)) const {
+        cmnThrow(std::out_of_range("cmnGenericObject::ScalarDescription base method called, no scalar"));
+        return "index out of range";
+    }
 };
 
 

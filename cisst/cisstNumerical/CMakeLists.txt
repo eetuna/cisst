@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# (C) Copyright 2005-2011 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2005-2012 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -16,23 +16,22 @@
 project (cisstNumericalLibs)
 
 # Use Fortran NETLIB by default
-option (CISST_HAS_CISSTNETLIB "Use the netlib.org sets of numerical methods in Fortran (provided on cisst.org)." ON)
+option (CISST_HAS_CISSTNETLIB "Use the netlib.org sets of numerical methods in Fortran (provided on cisst.org)." OFF)
 if (CISST_HAS_CISSTNETLIB)
   find_package (CisstNetlib)
   cisst_set_package_settings (cisstNumerical cisstNetlib INCLUDE_DIRECTORIES CISSTNETLIB_INCLUDE_DIR)
   cisst_set_package_settings (cisstNumerical cisstNetlib LIBRARIES           CISSTNETLIB_LIBRARIES)
+  set (CISST_HAS_CISSTNETLIB_CONFIG ON)
 else (CISST_HAS_CISSTNETLIB)
   cisst_unset_all_package_settings (cisstNumerical cisstNetlib)
+  set (CISST_HAS_CISSTNETLIB_CONFIG OFF)
 endif (CISST_HAS_CISSTNETLIB)
 
 add_subdirectory (code)
 
-if (CISST_HAS_SWIG_PYTHON AND CISST_SWIG_FOUND)
-  add_subdirectory (codePython)
-  if (CISST_BUILD_TESTS)
-    add_subdirectory (testsPython)
-  endif (CISST_BUILD_TESTS)
-endif (CISST_HAS_SWIG_PYTHON AND CISST_SWIG_FOUND)
+# SWIG Python wrappers and tests
+cisst_offer_python (cisstNumerical)
+cisst_offer_tests_python (cisstNumerical)
 
 # build examples and tests, add an option to skip them
 cisst_offer_examples (cisstNumerical)

@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# (C) Copyright 2005-2011 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2005-2012 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -23,7 +23,12 @@ else (CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 # try to find ZeroC Ice
-find_package (Ice)
+if (CISST_HAS_IOS)
+  find_package (IceTouch)
+else (CISST_HAS_IOS)
+  find_package (Ice)
+endif (CISST_HAS_IOS)
+
 if (ICE_FOUND)
   option (CISST_MTS_HAS_ICE "Enable inter-process communication (IPC) feature of cisstMultiTask, requires ICE from ZeroC" ON)
   mark_as_advanced (CISST_MTS_HAS_ICE)
@@ -32,6 +37,13 @@ else (ICE_FOUND)
 endif (ICE_FOUND)
 
 if (CISST_MTS_HAS_ICE)
+  if (CISST_HAS_IOS)
+    find_package (IceTouch REQUIRED)
+    cisst_set_package_settings (cisstMultiTask ZeroCIce INCLUDE_DIRECTORIES ICE_INCLUDE_DIR)
+    cisst_set_package_settings (cisstMultiTask ZeroCIce LINK_DIRECTORIES ICE_LIBRARY_DIR)
+    set (ICE_LIBRARIES ${ICE_LIBRARY_NAME})
+    cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES)
+  else (CISST_HAS_IOS)
   find_package (Ice REQUIRED)
   cisst_set_package_settings (cisstMultiTask ZeroCIce INCLUDE_DIRECTORIES ICE_INCLUDE_DIR)
   cisst_set_package_settings (cisstMultiTask ZeroCIce LINK_DIRECTORIES ICE_LIBRARY_DIR)
@@ -43,6 +55,7 @@ if (CISST_MTS_HAS_ICE)
     set (ICE_LIBRARIES ${ICE_LIBRARY_NAME} IceUtil)
     cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES)
   endif (WIN32)
+  endif (CISST_HAS_IOS)
 else (CISST_MTS_HAS_ICE)
   cisst_unset_all_package_settings (cisstMultiTask ZeroCIce)
 endif (CISST_MTS_HAS_ICE)
@@ -53,12 +66,8 @@ add_subdirectory (code)
 add_subdirectory (applications)
 
 # SWIG Python wrappers and tests
-if (CISST_HAS_SWIG_PYTHON AND CISST_SWIG_FOUND)
-  add_subdirectory (codePython)
-  if (CISST_BUILD_TESTS)
-    add_subdirectory (testsPython)
-  endif (CISST_BUILD_TESTS)
-endif (CISST_HAS_SWIG_PYTHON AND CISST_SWIG_FOUND)
+cisst_offer_python (cisstMultiTask)
+cisst_offer_tests_python (cisstMultiTask)
 
 if (CISST_HAS_QT)
   add_subdirectory (codeQt)

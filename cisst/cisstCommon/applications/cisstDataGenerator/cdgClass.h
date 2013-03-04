@@ -7,7 +7,7 @@
   Author(s):  Anton Deguet
   Created on: 2010-09-06
 
-  (C) Copyright 2010-2012 Johns Hopkins University (JHU), All Rights
+  (C) Copyright 2010-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -40,16 +40,10 @@ class cdgClass: public cdgScope
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, CMN_LOG_LOD_RUN_ERROR);
 
-    /*! Name of the data type to be created. */
-    std::string Name;
-
-    /*! For declspec, CISST_EXPORT */
-    std::string Attribute;
-
     /*! List of header files to include.  Corresponds to keyword
       "include" in cisst data description file. */
-    typedef std::vector<std::string> IncludesType;
-    IncludesType Includes;
+    //    typedef std::vector<std::string> IncludesType;
+    //    IncludesType Includes;
 
     /*! List of typedefs.  Corresponds to keyword "typedef" in cisst
       data description file.  Typedef are reproduced in the
@@ -70,17 +64,10 @@ class cdgClass: public cdgScope
     BaseClassesType BaseClasses;
 
 public:
-
-    cdgClass(unsigned int lineNumber);
-
+    cdgClass(size_t lineNumber);
     cdgScope::Type GetScope(void) const;
-    bool HasKeyword(const std::string & keyword) const;
-    bool HasScope(const std::string & keyword,
-                  cdgScope::Stack & scopes,
-                  unsigned int lineNumber);
-    bool SetValue(const std::string & keyword, const std::string & value,
-                  std::string & errorMessage);
-    bool IsValid(std::string & errorMessage) const;
+    cdgScope * Create(size_t lineNumber) const;
+    bool Validate(void);
     void GenerateHeader(std::ostream & outputStream) const;
     void GenerateCode(std::ostream & outputStream) const;
 
@@ -94,6 +81,10 @@ protected:
     void GenerateMethodToStreamRawCode(std::ostream & outputStream) const;
     void GenerateStandardFunctionsHeader(std::ostream & outputStream) const;
     void GenerateStandardFunctionsCode(std::ostream & outputStream) const;
+
+    void GenerateDataMethodsHeader(std::ostream & outputStream) const;
+    void GenerateDataFunctionsHeader(std::ostream & outputStream) const;
+    void GenerateDataFunctionsCode(std::ostream & outputStream) const;
 
 private:
     cdgClass(void); // make sure constructor with line number is always used.

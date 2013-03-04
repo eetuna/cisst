@@ -3,11 +3,11 @@
 
 /*
   $Id$
-  
+
   Author(s):  Anton Deguet
   Created on: 2004-11-12
-  
-  (C) Copyright 2004-2007 Johns Hopkins University (JHU), All Rights
+
+  (C) Copyright 2004-2013 Johns Hopkins University (JHU), All Rights
   Reserved.
 
 --- begin cisst license - do not edit ---
@@ -35,6 +35,8 @@ http://www.cisst.org/cisst/license.txt.
 #include <stdexcept>
 
 
+#define VCT_CPPUNIT_ASSERT_DOUBLES_EQUAL_CAST(goal, actual, tolerance) \
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(goal), static_cast<double>(actual), static_cast<double>(tolerance));
 
 template <class _containerType>
 void RemoveQuasiZero(_containerType & container) {
@@ -72,7 +74,7 @@ void RemoveQuasiZero(_containerType & container) {
   (e.g. vctFixedSizeVectorRef).  If one use a container by reference,
   it is impossible to deduct which type of container to use to
   actually store a temporary variable.
- 
+
   Finally, some operations might perform some divisions by zero.  It
   is the responsability of the caller to avoid that.  The method
   RemoveQuasiZero has been written for that purpose.
@@ -89,13 +91,13 @@ class vctGenericContainerTest
                                    = cmnTypeTraits<typename _containerType1::value_type>::Tolerance()) {
 
         typedef typename _containerType1::value_type value_type;
-        
+
         CPPUNIT_ASSERT(container1.size() == container2.size());
         CPPUNIT_ASSERT(container1.size() > 2); // to have at least three elements
         const typename _containerType1::const_iterator end1 = container1.end();
         typename _containerType1::const_iterator iter1;
         typename _containerType1::value_type resultScalar;
-        
+
         resultScalar = container1.SumOfElements();
         typedef typename _containerType1::value_type value_type;
         value_type goal(0);
@@ -104,12 +106,12 @@ class vctGenericContainerTest
             goal += (*iter1);
         }
         CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
+        VCT_CPPUNIT_ASSERT_DOUBLES_EQUAL_CAST(goal, resultScalar, tolerance);
 
         container2.Zeros();
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(0), container2.SumOfElements(), tolerance);
+        VCT_CPPUNIT_ASSERT_DOUBLES_EQUAL_CAST(value_type(0), container2.SumOfElements(), tolerance);
         container2 = value_type(1);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(container2.size()), container2.SumOfElements(), tolerance);
+        VCT_CPPUNIT_ASSERT_DOUBLES_EQUAL_CAST(value_type(container2.size()), container2.SumOfElements(), tolerance);
 
         resultScalar = container1.ProductOfElements();
         goal = value_type(1);
@@ -117,10 +119,10 @@ class vctGenericContainerTest
             goal *= (*iter1);
         }
         CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance * container1.size());
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(goal), static_cast<double>(resultScalar), static_cast<double>(tolerance * container1.size()));
 
         container2.SetAll(value_type(1));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(1), container2.ProductOfElements(), tolerance);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(1.0), static_cast<double>(container2.ProductOfElements()), static_cast<double>(tolerance));
 
         resultScalar = container1.L1Norm();
         goal = value_type(0);
@@ -129,12 +131,12 @@ class vctGenericContainerTest
             goal += abs;
         }
         CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(goal), static_cast<double>(resultScalar), static_cast<double>(tolerance));
 
         container2 = value_type(0);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(0), container2.L1Norm(), tolerance);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(0), container2.L1Norm(), tolerance);
         container2.SetAll(value_type(1));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(container2.size()), container2.L1Norm(), tolerance);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(container2.size()), container2.L1Norm(), tolerance);
 
         resultScalar = container1.LinfNorm();
         goal = cmnTypeTraits<value_type>::MinPositiveValue();
@@ -145,7 +147,7 @@ class vctGenericContainerTest
             }
         }
         CPPUNIT_ASSERT(!cmnTypeTraits<value_type>::IsNaN(resultScalar));
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(goal), resultScalar, tolerance);
         resultScalar = container1.MaxAbsElement();
 
         container2.Zeros();
@@ -180,7 +182,7 @@ class vctGenericContainerTest
         CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(0), container2.Norm(), cmnTypeTraits<double>::Tolerance());
         container2.SetAll(value_type(1));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(sqrt((double)container2.size()), container2.Norm(), cmnTypeTraits<double>::Tolerance());
-        
+
         resultScalar = container1.MaxElement();
         goal = cmnTypeTraits<value_type>::MinusInfinityOrMin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -189,7 +191,7 @@ class vctGenericContainerTest
             }
         }
         CPPUNIT_ASSERT_DOUBLES_EQUAL(goal, resultScalar, tolerance);
-        
+
         container2.Zeros();
         CPPUNIT_ASSERT_DOUBLES_EQUAL(value_type(0), container2.MaxElement(), tolerance);
         container2.SetAll(value_type(1));
@@ -232,7 +234,7 @@ class vctGenericContainerTest
         (*(container2.end() - 1)) = value_type(1);
         CPPUNIT_ASSERT(!container2.IsNonNegative());
         CPPUNIT_ASSERT(!container2.IsNonPositive());
-        CPPUNIT_ASSERT(!container2.IsNegative());  
+        CPPUNIT_ASSERT(!container2.IsNegative());
         CPPUNIT_ASSERT(!container2.IsPositive());
 
         container2.AbsSelf();
@@ -246,6 +248,30 @@ class vctGenericContainerTest
         CPPUNIT_ASSERT(container2.IsNonPositive());
         CPPUNIT_ASSERT(container2.IsNegative());
         CPPUNIT_ASSERT(!container2.IsPositive());
+
+        CPPUNIT_ASSERT(!container2.HasNaN());
+        CPPUNIT_ASSERT(container2.IsFinite());
+
+        if (cmnTypeTraits<value_type>::HasNaN()) {
+            value_type oldValue = (*container2.begin());
+            (*container2.begin()) = cmnTypeTraits<value_type>::NaN();
+            CPPUNIT_ASSERT(container2.HasNaN());
+            (*container2.begin()) = oldValue;
+    }
+
+        if (cmnTypeTraits<value_type>::HasInfinity()) {
+            value_type oldValue = (*container2.begin());
+            (*container2.begin()) = cmnTypeTraits<value_type>::PlusInfinityOrMax();
+            CPPUNIT_ASSERT(!container2.IsFinite());
+            (*container2.begin()) = oldValue;
+        }
+
+        if (cmnTypeTraits<value_type>::HasInfinity()) {
+            value_type oldValue = (*container2.begin());
+            (*container2.begin()) = cmnTypeTraits<value_type>::MinusInfinityOrMin();
+            CPPUNIT_ASSERT(!container2.IsFinite());
+            (*container2.begin()) = oldValue;
+        }
     }
 
 
@@ -276,7 +302,7 @@ class vctGenericContainerTest
         CPPUNIT_ASSERT(vctAll(container1.ElementwiseLesserOrEqual(container3)));
         CPPUNIT_ASSERT(!(vctAll(container1.ElementwiseLesser(container3))));
         CPPUNIT_ASSERT(vctAny(container1.ElementwiseLesser(container3)));
-        
+
         container3.Add(value_type(1));
         CPPUNIT_ASSERT(container3.NotEqual(container1));
         CPPUNIT_ASSERT(container3 != container1);
@@ -287,7 +313,7 @@ class vctGenericContainerTest
         CPPUNIT_ASSERT(vctAll(container3.ElementwiseGreater(container1)));
         CPPUNIT_ASSERT(container1.Lesser(container3));
         CPPUNIT_ASSERT(vctAll(container1.ElementwiseLesser(container3)));
-        
+
         container3.Assign(container1);
         CPPUNIT_ASSERT(container1.Equal(container3));
         CPPUNIT_ASSERT(container1.AlmostEqual(container3));
@@ -320,7 +346,7 @@ class vctGenericContainerTest
         typename _containerType1::const_iterator iter1;
         typename _containerType2::const_iterator iter2;
         typename _containerType3::const_iterator iter3;
-        
+
         container3.Assign(container1);
         container3.Add(container2);
         iter2 = container2.begin(); iter3 = container3.begin();
@@ -328,7 +354,7 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter3), (*iter1) + (*iter2), tolerance);
             ++iter2; ++iter3;
         }
-        
+
         container3.Assign(container1);
         container3 += container2;
         iter2 = container2.begin(); iter3 = container3.begin();
@@ -415,7 +441,7 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter3), (*iter1) + (*iter2), tolerance);
             ++iter2; ++iter3;
         }
-        
+
         container3 = container1 + container2;
         iter2 = container2.begin(); iter3 = container3.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -424,7 +450,7 @@ class vctGenericContainerTest
         }
 
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, ((container1 + container2) - (container2 + container1)).LinfNorm(), tolerance);
-        
+
         container3.DifferenceOf(container1, container2);
         iter2 = container2.begin(); iter3 = container3.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -438,7 +464,7 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter3), (*iter1) - (*iter2), tolerance);
             ++iter2; ++iter3;
         }
-        
+
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, ((container1 - container2) + (container2 - container1)).LinfNorm(), tolerance);
 
         container3.ElementwiseProductOf(container1, container2);
@@ -454,14 +480,14 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter3), (*iter1) / (*iter2), tolerance);
             ++iter2; ++iter3;
         }
-        
+
         container3.ElementwiseMinOf(container1, container2);
         iter2 = container2.begin(); iter3 = container3.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             CPPUNIT_ASSERT((*iter3) == std::min((*iter1), (*iter2)));
             ++iter2; ++iter3;
         }
-        
+
         container3.ElementwiseMaxOf(container1, container2);
         iter2 = container2.begin(); iter3 = container3.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -527,7 +553,7 @@ class vctGenericContainerTest
                                          (*iter2), tolerance);
             ++iter2;
         }
-        
+
         container2 = container1.Negation();
         iter2 = container2.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -564,13 +590,13 @@ class vctGenericContainerTest
                                      _containerType2 & container2,
                                      typename _containerType1::value_type tolerance
                                      = cmnTypeTraits<typename _containerType1::value_type>::Tolerance()) {
-        
+
         CPPUNIT_ASSERT(container1.size() == container2.size());
 
         const typename _containerType1::const_iterator end1 = container1.end();
         typename _containerType1::const_iterator iter1;
         typename _containerType2::const_iterator iter2;
-        
+
         container2.SumOf(container1, scalar);
         iter2 = container2.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -581,7 +607,7 @@ class vctGenericContainerTest
         iter2 = container2.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter2), (*iter1) + scalar, tolerance);
-            ++iter2;  
+            ++iter2;
         }
 
         container2.DifferenceOf(container1, scalar);
@@ -629,7 +655,7 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT((*iter2) == std::min((*iter1), scalar));
             ++iter2;
         }
-        
+
         container2.ClippedBelowOf(container1, scalar);
         iter2 = container2.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -655,7 +681,7 @@ class vctGenericContainerTest
         typename _containerType1::const_iterator iter1;
         typename _containerType2::const_iterator iter2;
         typename _containerType3::const_iterator iter3;
-        
+
         container3.Assign(container2);
         container3.AddProductOf(scalar, container1);
         iter1 = container1.begin();
@@ -663,6 +689,37 @@ class vctGenericContainerTest
         iter3 = container3.begin();
         for (; iter1 != end1; ++iter1, ++iter2, ++iter3) {
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter3), (*iter2) + scalar * (*iter1), tolerance);
+        }
+    }
+
+
+    /*! Test CioCiCi based operations. */
+    template <class _containerType1, class _containerType2, class _containerType3, class _containerType4>
+    static void TestCioCiCiOperations(
+        const _containerType1 & container1,
+        const _containerType2 & container2,
+        const _containerType3 & container3,
+        _containerType4 & container4,
+        typename _containerType1::value_type tolerance
+        = cmnTypeTraits<typename _containerType1::value_type>::Tolerance())
+    {
+        CPPUNIT_ASSERT(container1.size() == container2.size());
+        CPPUNIT_ASSERT(container1.size() == container3.size());
+
+        const typename _containerType1::const_iterator end1 = container1.end();
+        typename _containerType1::const_iterator iter1;
+        typename _containerType2::const_iterator iter2;
+        typename _containerType3::const_iterator iter3;
+        typename _containerType4::const_iterator iter4;
+
+        container4.Assign(container1);
+        container4.AddElementwiseProductOf(container2, container3);
+        iter1 = container1.begin();
+        iter2 = container2.begin();
+        iter3 = container3.begin();
+        iter4 = container4.begin();
+        for (; iter1 != end1; ++iter1, ++iter2, ++iter3, ++iter4) {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter4), (*iter1) + (*iter2) * (*iter3), tolerance);
         }
     }
 
@@ -740,7 +797,7 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT((*iter2) == std::min(scalar, (*iter1)));
             ++iter2;
         }
-        
+
         container2.ClippedBelowOf(scalar, container1);
         iter2 = container2.begin();
         for (iter1 = container1.begin(); iter1 != end1; ++iter1) {
@@ -782,7 +839,7 @@ class vctGenericContainerTest
             CPPUNIT_ASSERT_DOUBLES_EQUAL((*iter2), (*iter1) + scalar, tolerance);
             ++iter2;
         }
-        
+
         container2.Assign(container1);
         container2 += scalar;
         iter2 = container2.begin();
@@ -861,7 +918,7 @@ class vctGenericContainerTest
                                   _containerType2 & container2,
                                   typename _containerType1::value_type tolerance
                                   = cmnTypeTraits<typename _containerType1::value_type>::Tolerance()) {
-        
+
         CPPUNIT_ASSERT(container1.size() == container2.size());
 
         const typename _containerType1::const_iterator end1 = container1.end();
@@ -921,7 +978,7 @@ class vctGenericContainerTest
     static void TestSoCiSiOperations(const _containerType1 & container1,
                                      const typename _containerType1::value_type & scalar,
                                      _containerType2 & container2) {
-        
+
         CPPUNIT_ASSERT(container1.size() == container2.size());
         typedef typename _containerType1::value_type value_type;
 
@@ -1068,7 +1125,7 @@ class vctGenericContainerTest
     static void TestSTLFunctions(const _containerType1 & container1,
                                  _containerType2 & container2) {
         CPPUNIT_ASSERT(container1.size() == container2.size());
-        
+
         const typename _containerType2::const_iterator end2 = container2.end();
         typename _containerType2::const_iterator iter2;
 
@@ -1082,8 +1139,8 @@ class vctGenericContainerTest
         }
     }
 
-    
-    
+
+
     /*! Test FastCopyOf */
     template <class _containerType1, class _containerType2>
     static void TestFastCopyOf(const _containerType1 & container1,
@@ -1092,7 +1149,7 @@ class vctGenericContainerTest
         const typename _containerType1::const_iterator end1 = container1.end();
         typename _containerType1::const_iterator iter1;
         typename _containerType2::const_iterator iter2;
-        
+
         CPPUNIT_ASSERT(container2.FastCopyCompatible(container1));
         CPPUNIT_ASSERT(container2.FastCopyOf(container1));
         iter1 = container1.begin();

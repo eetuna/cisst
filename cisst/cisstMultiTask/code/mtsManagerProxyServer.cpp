@@ -19,8 +19,13 @@ http://www.cisst.org/cisst/license.txt.
 --- end cisst license ---
 */
 
-#include "mtsProxyConfig.h"
 #include <cisstOSAbstraction/osaSleep.h>
+
+#include "mtsProxyConfig.h"
+#if IMPROVE_ICE_THREADING
+#include <cisstOSAbstraction/osaThreadSignal.h>
+#endif
+
 #include "mtsManagerProxyServer.h"
 #include <cisstMultiTask/mtsManagerGlobal.h>
 #include <cisstMultiTask/mtsManagerComponentClient.h>
@@ -45,20 +50,35 @@ void ConstructConnectionStringSet(
 
 mtsManagerProxyServer::mtsManagerProxyServer(const std::string & adapterName, const std::string & communicatorID)
     : BaseServerType("config.GCM", adapterName, communicatorID, false)
+#if IMPROVE_ICE_THREADING
+      , IceThreadInitEvent(0)
+#endif
 {
     ProxyName = "ManagerProxyServer";
+
+#if IMPROVE_ICE_THREADING
+    IceThreadInitEvent = new osaThreadSignal;
+#endif
 }
 
 mtsManagerProxyServer::~mtsManagerProxyServer()
 {
     StopProxy();
+
+#if IMPROVE_ICE_THREADING
+    delete IceThreadInitEvent;
+#endif
 }
 
 std::string mtsManagerProxyServer::GetConfigFullName(const std::string & propertyFileName)
 {
     cmnPath path;
+#if CISST_HAS_IOS
+    path.Add("./");
+#else
     path.AddRelativeToCisstShare("cisstMultiTask/Ice");
     path.AddFromEnvironment("PATH", cmnPath::TAIL);
+#endif
     return path.Find(propertyFileName);
 }
 
@@ -121,6 +141,11 @@ bool mtsManagerProxyServer::StartProxy(mtsManagerGlobal * proxyOwner)
     WorkerThread.Create<ProxyWorker<mtsManagerGlobal>, ThreadArguments<mtsManagerGlobal>*>(
         &ProxyWorkerInfo, &ProxyWorker<mtsManagerGlobal>::Run, &ThreadArgumentsInfo, threadName.c_str());
 
+#if IMPROVE_ICE_THREADING
+    // Wait for Ice thread to start
+    IceThreadInitEvent->Wait();
+#endif
+
     return true;
 }
 
@@ -144,6 +169,11 @@ void mtsManagerProxyServer::StartServer(void)
 {
     Sender->Start();
 
+    ChangeProxyState(PROXY_STATE_ACTIVE);
+#if IMPROVE_ICE_THREADING
+    IceThreadInitEvent->Raise();
+#endif
+
     // This is a blocking call that should run in a different thread.
     IceCommunicator->waitForShutdown();
 }
@@ -159,7 +189,6 @@ void mtsManagerProxyServer::Runner(ThreadArguments<mtsManagerGlobal> * arguments
     ProxyServer->GetLogger()->trace("mtsManagerProxyServer", "proxy server starts");
 
     try {
-        ProxyServer->ChangeProxyState(PROXY_STATE_ACTIVE);
         ProxyServer->StartServer();
     } catch (const Ice::Exception& e) {
         std::string error("mtsManagerProxyServer: ");
@@ -409,42 +438,6 @@ void mtsManagerProxyServer::ConvertInterfaceRequiredDescription(
         eventWriteHandler.Name = itEventWrite->Name;
         eventWriteHandler.ArgumentPrototypeSerialized = itEventWrite->ArgumentPrototypeSerialized;
         dest.EventHandlersWrite.push_back(eventWriteHandler);
-    }
-}
-
-void mtsManagerProxyServer::ConvertValuesOfCommand(
-    const ::mtsManagerProxy::SetOfValues & src, mtsManagerLocalInterface::SetOfValues & dest)
-{
-    ValuePair value;
-    Values valueSet;
-
-    for (unsigned int i = 0; i < src.size(); ++i) {
-        valueSet.clear();
-        for (unsigned int j = 0; j < src[i].size(); ++j) {
-            value.Timestamp.sec = static_cast<long>(src[i][j].Timestamp.sec);
-            value.Timestamp.nsec = static_cast<long>(src[i][j].Timestamp.nsec);
-            value.Value = src[i][j].Value;
-            valueSet.push_back(value);
-        }
-        dest.push_back(valueSet);
-    }
-}
-
-void mtsManagerProxyServer::ConstructValuesOfCommand(
-    const mtsManagerLocalInterface::SetOfValues & src, ::mtsManagerProxy::SetOfValues & dest)
-{
-    ::mtsManagerProxy::ValuePair value;
-    ::mtsManagerProxy::Values valueSet;
-
-    for (unsigned int i = 0; i < src.size(); ++i) {
-        valueSet.clear();
-        for (unsigned int j = 0; j < src[i].size(); ++j) {
-            value.Timestamp.sec = src[i][j].Timestamp.sec;
-            value.Timestamp.nsec = src[i][j].Timestamp.nsec;
-            value.Value = src[i][j].Value;
-            valueSet.push_back(value);
-        }
-        dest.push_back(valueSet);
     }
 }
 
@@ -766,20 +759,6 @@ void mtsManagerProxyServer::GetDescriptionOfEventHandler(std::string & descripti
                                                          const std::string & listenerID)
 {
     SendGetDescriptionOfEventHandler(description, componentName, requiredInterfaceName, eventHandlerName, listenerID);
-}
-
-void mtsManagerProxyServer::GetArgumentInformation(std::string & argumentName, std::vector<std::string> & signalNames,
-                                                   const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName,
-                                                   const std::string & listenerID)
-{
-    SendGetArgumentInformation(argumentName, signalNames, componentName, providedInterfaceName, commandName, listenerID);
-}
-
-void mtsManagerProxyServer::GetValuesOfCommand(SetOfValues & values,
-                                               const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const int scalarIndex,
-                                               const std::string & listenerID)
-{
-    SendGetValuesOfCommand(values, componentName, providedInterfaceName, commandName, scalarIndex, listenerID);
 }
 
 //-------------------------------------------------------------------------
@@ -1377,54 +1356,6 @@ void mtsManagerProxyServer::SendGetDescriptionOfEventHandler(std::string & descr
     }
 }
 
-void mtsManagerProxyServer::SendGetArgumentInformation(std::string & argumentName, std::vector<std::string> & signalNames,
-    const std::string & componentName, const std::string & providedInterfaceName, const std::string & commandName, const std::string & clientID)
-{
-    ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
-    if (!clientProxy || !clientProxy->get()) {
-        LogError(mtsManagerProxyServer, "SendGetArgumentInformation: invalid listenerID (" << clientID << ") or inactive server proxy");
-        return;
-    }
-
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendGetArgumentInformation: " << componentName << ", " << providedInterfaceName << ", " << commandName << ", " << clientID);
-#endif
-
-    try {
-        (*clientProxy)->GetArgumentInformation(componentName, providedInterfaceName, commandName, argumentName, signalNames);
-    } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyServer, "SendGetArgumentInformation: network exception: " << ex);
-        OnClientDisconnect(clientID);
-        return;
-    }
-}
-
-void mtsManagerProxyServer::SendGetValuesOfCommand(SetOfValues & values, const std::string & componentName,
-    const std::string & providedInterfaceName, const std::string & commandName, const int scalarIndex, const std::string & clientID)
-{
-    ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
-    if (!clientProxy || !clientProxy->get()) {
-        LogError(mtsManagerProxyServer, "SendGetValuesOfCommand: invalid listenerID (" << clientID << ") or inactive server proxy");
-        return;
-    }
-
-#ifdef ENABLE_DETAILED_MESSAGE_EXCHANGE_LOG
-    LogPrint(mtsManagerProxyServer, ">>>>> SEND: SendGetValuesOfCommand: " << componentName << ", " << providedInterfaceName << ", " << commandName << ", " << scalarIndex << ", " << clientID);
-#endif
-
-    ::mtsManagerProxy::SetOfValues valuesICEtype;
-
-    try {
-        (*clientProxy)->GetValuesOfCommand(componentName, providedInterfaceName, commandName, scalarIndex, valuesICEtype);
-    } catch (const ::Ice::Exception & ex) {
-        LogError(mtsManagerProxyServer, "SendGetValuesOfCommand: network exception: " << ex);
-        OnClientDisconnect(clientID);
-        return;
-    }
-
-    ConvertValuesOfCommand(valuesICEtype, values);
-}
-
 std::string mtsManagerProxyServer::SendGetProcessName(const std::string & clientID)
 {
     ManagerClientProxyType * clientProxy = GetNetworkProxyClient(clientID);
@@ -1462,9 +1393,6 @@ mtsManagerProxyServer::ManagerServerI::ManagerServerI(
 mtsManagerProxyServer::ManagerServerI::~ManagerServerI()
 {
     Stop();
-
-    // Sleep for some time enough for Run() loop to terminate
-    osaSleep(1 * cmn_s);
 }
 
 void mtsManagerProxyServer::ManagerServerI::Start()
@@ -1490,8 +1418,15 @@ void mtsManagerProxyServer::ManagerServerI::Run()
         ManagerProxyServer->SendTestMessageFromServerToClient(ss.str());
     }
 #else
+    double lastTickChecked = 0.0, now;
     while (IsActiveProxy()) {
-        osaSleep(mtsProxyConfig::CheckPeriodForManagerConnections);
+        now = osaGetTime();
+        if (now < lastTickChecked + mtsProxyConfig::CheckPeriodForManagerConnections) {
+            osaSleep(10 * cmn_ms);
+            continue;
+        }
+        lastTickChecked = now;
+
         // If a pending connection fails to be confirmed by LCM, it should be
         // cleaned up
         if (ManagerProxyServer) {
