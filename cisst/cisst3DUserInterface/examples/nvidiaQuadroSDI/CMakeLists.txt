@@ -20,7 +20,6 @@ project (ui3ExNVIDIAQuadroSDI)
 include_directories (${sawIntuitiveDaVinci_INCLUDE_DIR})
 link_directories (${sawIntuitiveDaVinci_LIBRARY_DIR})
 
-add_definitions (-DWIN32 -D_DEBUG -DNDEBUG -D_CONSOLE -DUSE_NVAPI)
 add_executable (ui3ExNVIDIAQuadroSDI
                 svlSDI.cpp)
 

@@ -75,7 +75,6 @@ void ui3VisibleAxes::ShowLabels(void)
     this->Unlock();
 }    
 
-
 void ui3VisibleAxes::HideLabels(void)
 {
     this->Lock();

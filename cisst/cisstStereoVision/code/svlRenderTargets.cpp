@@ -36,12 +36,11 @@ http://www.cisst.org/cisst/license.txt.
 
 #if CISST_SVL_HAS_MIL
 #include "svlVidCapSrcMIL.h"
-//#endif // CISST_SVL_HAS_MIL
+#endif // CISST_SVL_HAS_MIL
 
-//TODO::CMAKE flag for SDI
-#else //#if CISST_HAS_OPENGL
+#if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
-#endif//CISST_HAS_OPENGL
+#endif//CISST_SVL_HAS_NVIDIA_QUADRO_SDI
 
 #define __VERBOSE__  0
 
@@ -73,7 +72,8 @@ svlRenderTargets::svlRenderTargets()
     Targets.SetAll(0);
 
     delete [] devlist;
-#else //#elif CISST_HAS_OPENGL //CISST_SVL_HAS_MIL
+#endif
+#if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
     svlVidCapSrcSDI *device = svlVidCapSrcSDI::GetInstance();
     svlFilterSourceVideoCapture::DeviceInfo *devlist;
     int devicecount = device->GetDeviceList(&devlist);
@@ -90,7 +90,7 @@ svlRenderTargets::svlRenderTargets()
     Targets.SetAll(0);
 
     delete [] devlist;
-#endif // CISST_HAS_OPENGL
+#endif // CISST_SVL_HAS_NVIDIA_QUADRO_SDI
 
 }
 
@@ -129,7 +129,7 @@ svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
     }
     return 0;
 }
-#elif 1 //#elif CISST_HAS_OPENGL // CISST_SVL_HAS_MIL
+#elif CISST_SVL_HAS_NVIDIA_QUADRO_SDI
 svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
 {
 #if __VERBOSE__ == 1

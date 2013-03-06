@@ -105,9 +105,15 @@ class svlVidCapSrcSDIRenderTarget : public svlRenderTargetBase
 public:
     // Functions inherited from svlRenderTargetBase
     bool SetImage(unsigned char* buffer, int offsetx, int offsety, bool vflip, int index=0);
-    unsigned int GetWidth();
-    unsigned int GetHeight();
+    unsigned int GetWidth(){return m_videoWidth;}
+    unsigned int GetHeight(){return m_videoHeight;}
+    void Shutdown();
 
+protected:
+    svlVidCapSrcSDIRenderTarget(unsigned int deviceID, unsigned int displayID=0);
+    ~svlVidCapSrcSDIRenderTarget();
+
+private:
     // Capture and overlay function
     void* ThreadProc(void* CMN_UNUSED(param));
     // Capture call (OpenGL)
@@ -115,28 +121,11 @@ public:
     // SDI output (OpenGL)
     GLboolean OutputVideo ();
     // Render output to OpenGL textures
-    GLboolean DrawOutputScene(GLuint cudaOutTexture1=-1, GLuint cudaOutTexture2=-1, unsigned char* vtkPixelData = new unsigned char[0]);
+    GLboolean DrawOutputScene();
     // Display captured video to screen as GL textures, in stacked windows
-    GLenum DisplayVideo();
+    //GLenum DisplayVideo();
 
-    void Shutdown();
 
-    void MakeCurrentGLCtx(){
-#ifdef _WIN32
-		wglMakeCurrent(m_hDC, m_hRC); 
-#else
-		glXMakeCurrent(dpy, win, ctx);
-#endif
-	}
-
-protected:
-    svlVidCapSrcSDIRenderTarget(unsigned int deviceID, unsigned int displayID=0);
-    ~svlVidCapSrcSDIRenderTarget();
-#ifndef _WIN32
-    svlVidCapSrcSDIRenderTarget(Display * d, HGPUNV * g, unsigned int video_format, GLsizei num_streams, unsigned int deviceID=0, unsigned int displayID = 0);
-#endif
-
-private:
     int SystemID;
     int DigitizerID;
 
@@ -148,8 +137,15 @@ private:
     bool ThreadKilled;
     bool Running;
 
-    void drawUnsignedCharImage(GLuint gWidth, GLuint gHeight, unsigned char* imageData);
+
+    unsigned int m_videoWidth;
+    unsigned int m_videoHeight;
+    unsigned int m_num_streams;
+
+    void drawUnsignedCharImage(unsigned char* imageData);
     void drawCircle(GLuint gWidth, GLuint gHeight);
+    bool translateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip);
+
 #ifdef _WIN32
     CNvSDIin m_SDIin;
     CNvSDIout m_SDIout;
@@ -160,9 +156,7 @@ private:
 	CNvSDIoutGpu *m_gpu;
 	Options options;
 	bool m_bSDIout;
-	GLuint m_num_streams;
-	int m_videoWidth;
-	int m_videoHeight;
+
 	GLuint m_windowWidth;                   // Window width
 	GLuint m_windowHeight;                  // Window height
 	unsigned int m_videoBufferPitch;
@@ -203,7 +197,6 @@ private:
     bool destroyWindow();
 
     HGPUNV *gpu;
-    GLsizei m_num_streams;
 
     //output
     unsigned char *m_overlayBuf[MAX_VIDEO_STREAMS];   // System memory buffers
@@ -225,11 +218,6 @@ private:
     double m_inputFrameRate;
     GLuint gTexObjs[MAX_VIDEO_STREAMS];
 
-    void drawOne();
-    void drawTwo();
-    void drawThree();
-    void drawFour();
-
     bool setupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
     bool setupSDIinDevice(Display *d,HGPUNV *g);
     bool setupSDIoutDevice(Display * d, HGPUNV * g, unsigned int video_format);
@@ -249,7 +237,7 @@ private:
 
     GLuint getTextureFromBuffer(unsigned int index);
 #endif
-    bool translateImage(unsigned char* src, unsigned char* dest, const int width, const int height, const int trhoriz, const int trvert, bool vflip);
+
 };
 
 // Video Capture
@@ -304,47 +292,18 @@ private:
 
 };
 
-// Video Capture Thread
-// 20120710 - Does not render correctly wpliu
+// svlVidCapSrcSDIThread
 /////////////////////////////////////////////////////////////////////////////////////////////
 class svlVidCapSrcSDIThread
 {
 public:
     svlVidCapSrcSDIThread(int streamid);
-#ifdef _WIN32
     ~svlVidCapSrcSDIThread() {Shutdown();}
-#else
-    ~svlVidCapSrcSDIThread() {Shutdown();XCloseDisplay(dpy);}
-#endif
+
     void* Proc(svlVidCapSrcSDI* baseref);
 
     bool WaitForInit() { InitEvent.Wait(); return InitSuccess; }
     bool IsError() { return Error; }
-
-    GLenum DisplayVideo();
-    GLenum  CaptureVideo(float runTime = 0.0);
-
-    CNvSDIin GetSDIin(){return m_SDIin;}
-
-#ifdef _WIN32
-    void Shutdown();
-	HRESULT SetupSDIDevices();	
-	HRESULT StartSDIPipeline();
-#else
-    bool SetupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
-    GLboolean  SetupGL();
-
-    bool StartSDIPipeline();
-    bool StopSDIPipeline();
-    GLenum DisplayVideo();
-    GLenum  CaptureVideo(float runTime = 0.0);
-    Window CreateWindow();
-    CNvSDIin GetSDIin(){return m_SDIin;}
-    void Shutdown();
-    void MakeCurrentGLCtx();
-    Display * GetDisplay(){return dpy;}
-    HGPUNV * GetGPU() {return gpu;}
-#endif
 
 private:
     int StreamID;
@@ -355,35 +314,54 @@ private:
     unsigned char *m_memBuf[MAX_VIDEO_STREAMS];   // System memory buffers
     unsigned char *comprBuffer[MAX_VIDEO_STREAMS];   // System memory buffers
 
+    //GLenum DisplayVideo();
     void flip(unsigned char* image, int index);
+    GLenum  CaptureVideo(float runTime = 0.0);
+    CNvSDIin GetSDIin(){return m_SDIin;}
+    void Shutdown();
+
+#ifdef _WIN32
+
+    HRESULT SetupSDIDevices();
+    HRESULT StartSDIPipeline();
+#else
+    bool SetupSDIDevices(Display *d=NULL,HGPUNV *g=NULL);
+    GLboolean  SetupGL();
+
+    bool StartSDIPipeline();
+    bool StopSDIPipeline();
+    Window CreateWindow();
+    Display * GetDisplay(){return dpy;}
+    HGPUNV * GetGPU() {return gpu;}
+#endif
 
 #ifdef _WIN32
     CNvSDIin m_SDIin;
-	CNvSDIoutGpu *m_gpu;
-	Options options;	
-	GLuint m_num_streams;
-	int m_videoWidth;
-	int m_videoHeight;
-	GLuint m_windowWidth;                   // Window width
-	GLuint m_windowHeight;                  // Window height
-	HWND g_hWnd;
-	HWND m_hWnd;							// Window handle
-	HDC	m_hDC;								// Device context
-	HGLRC m_hRC;							// OpenGL rendering context
-	HDC m_hAffinityDC;
-	GLuint m_videoTextures[MAX_VIDEO_STREAMS];
+    CNvSDIoutGpu *m_gpu;
+    Options options;
+    GLuint m_num_streams;
+    int m_videoWidth;
+    int m_videoHeight;
+    GLuint m_windowWidth;                   // Window width
+    GLuint m_windowHeight;                  // Window height
+    HWND g_hWnd;
+    HWND m_hWnd;							// Window handle
+    HDC	m_hDC;								// Device context
+    HGLRC m_hRC;							// OpenGL rendering context
+    HDC m_hAffinityDC;
+    GLuint m_videoTextures[MAX_VIDEO_STREAMS];
 
-	HRESULT Configure(char *szCmdLine[]);
-	HRESULT setupSDIinDevices();
-	HRESULT setupSDIoutDevice();
-	GLboolean SetupGL();
-	HRESULT setupSDIinGL();
-	HRESULT setupSDIoutGL();
-	void CalcWindowSize();
-	HWND SetupWindow(HINSTANCE hInstance, int x, int y, char *title);
-	HRESULT stopSDIPipeline();
+    HRESULT Configure(char *szCmdLine[]);
+    HRESULT setupSDIinDevices();
+    HRESULT setupSDIoutDevice();
+    GLboolean SetupGL();
+    HRESULT setupSDIinGL();
+    HRESULT setupSDIoutGL();
+    void CalcWindowSize();
+    HWND SetupWindow(HINSTANCE hInstance, int x, int y, char *title);
+    HRESULT stopSDIPipeline();
     GLboolean cleanupSDIGL();
-	HRESULT cleanupSDIinGL();
+    HRESULT cleanupSDIinGL();
     //bool cleanupSDIDevices ();
 #else
 
@@ -404,11 +382,7 @@ private:
     bool setupSDIinDevice(Display *d,HGPUNV *g);
 
     void calcWindowSize();
-    void drawOne();
-    void drawTwo();
     void drawCircle(GLuint gWidth, GLuint gHeight);
-    void drawThree();
-    void drawFour();
     GLuint getTextureFromBuffer(unsigned int index);
 
     GLboolean cleanupGL();

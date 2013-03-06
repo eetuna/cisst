@@ -815,7 +815,7 @@ if (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
     NAME "win/include/nvapi.h"
     HINTS "C:/Users/Wen/Projects/TORS/NVIDIA Quadro SDI Video SDK for OpenGL/")
 
-	find_package (OpenGL REQUIRED)
+    find_package (OpenGL REQUIRED)
     find_package (CUDA REQUIRED)
 
 	set (QUADRO_SDI_INCLUDE_DIRECTORIES
@@ -854,7 +854,7 @@ if (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
   ELSE (WIN32) 
      
 	find_path (QUADRO_SDI_SDK_DIR 
-    NAME "sdk/linux/include/NVCtrl.h"
+    NAME "linux/include/NVCtrl.h"
     HINTS "/home/wen/MyCommon/NVIDIA Quadro 5000 SDI/sdk/")
 
 	find_package (OpenGL REQUIRED)
@@ -862,11 +862,14 @@ if (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
     find_package (CUDA REQUIRED)
 	find_package (Threads REQUIRED)
 
+        add_definitions (-DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES -D_GNU_SOURCE)
+
 	set (QUADRO_SDI_INCLUDE_DIRECTORIES
 			"${GLUT_INCLUDE_DIR}"
             "${CUDA_INCLUDE_DIRS}"
 			"${QUADRO_SDI_SDK_DIR}/linux/include" "${QUADRO_SDI_SDK_DIR}/common" "${QUADRO_SDI_SDK_DIR}/linux/src"
 			)
+        include_directories (${QUADRO_SDI_INCLUDE_DIRECTORIES})
 
 	FIND_LIBRARY(QUADRO_SDI_xnvctrl_LIBRARY XNVCtrl
 				"${QUADRO_SDI_SDK_DIR}/linux/lib64"
@@ -908,8 +911,12 @@ if (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
       svlVidCapSrcSDI.h
 	  )
 
-  cisst_set_package_settings (cisstStereoVision nvidiaquadrosdi INCLUDE_DIRECTORIES QUADRO_SDI_INCLUDE_DIRECTORIES)
-  cisst_set_package_settings (cisstStereoVision nvidiaquadrosdi LIBRARIES QUADRO_SDI_LIBRARIES)
+  cisst_set_package_settings (cisstStereoVision nvidiaQuadroSDI INCLUDE_DIRECTORIES QUADRO_SDI_INCLUDE_DIRECTORIES)
+  cisst_set_package_settings (cisstStereoVision nvidiaQuadroSDI LIBRARIES QUADRO_SDI_LIBRARIES)
+
+else (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
+
+  cisst_unset_all_package_settings (cisstStereoVision nvidiaQuadroSDI)
 
 endif (CISST_SVL_HAS_NVIDIA_QUADRO_SDI)
 

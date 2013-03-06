@@ -57,6 +57,9 @@ http://www.cisst.org/cisst/license.txt.
 // Support for video4linux2
 #cmakedefine01 CISST_SVL_HAS_MIL
 
+// Support for NVIDIA Quadro SDI
+#cmakedefine01 CISST_SVL_HAS_NVIDIA_QUADRO_SDI
+
 // Support for X11
 #cmakedefine01 CISST_SVL_HAS_X11
 

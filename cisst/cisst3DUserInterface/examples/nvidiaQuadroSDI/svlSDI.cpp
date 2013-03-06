@@ -7,9 +7,7 @@
 
 #include <cisstStereoVision.h>
 #include <cisstStereoVision/svlRenderTargets.h>
-#if NOT WIN32
-#include <sys/time.h>
-#endif
+
 #include "vtkSphereSource.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkActor.h"

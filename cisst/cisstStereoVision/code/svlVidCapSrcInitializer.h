@@ -34,12 +34,11 @@
 
 #if CISST_SVL_HAS_MIL
 #include "svlVidCapSrcMIL.h"
-//#endif // CISST_SVL_HAS_MIL
+#endif // CISST_SVL_HAS_MIL
 
-//TODO::CMAKE flag for SDI
-#else //#if CISST_HAS_OPENGL
+#if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
 #include <cisstStereoVision/svlVidCapSrcSDI.h>
-#endif//CISST_HAS_OPENGL
+#endif//CISST_SVL_HAS_NVIDIA_QUADRO_SDI
 
 
 void svlInitializeVideoCapture();

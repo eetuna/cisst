@@ -41,7 +41,6 @@ http://www.cisst.org/cisst/license.txt.
 
 #define HAS_ULTRASOUDS 0
 #define TORS 1
-#define DUAL_RENDER_TARGETS 0
 #define VOLUME_RENDERING 0
 
 int main()
@@ -56,7 +55,7 @@ int main()
     cmnLogger::SetMaskClassMatching("mts", CMN_LOG_ALLOW_ALL);
 
     mtsComponentManager * componentManager = mtsComponentManager::GetInstance();
-#if 1
+#if TORS
     mtsIntuitiveDaVinci * daVinci = new mtsIntuitiveDaVinci("daVinci", 50);
 #else
     cdvReadWrite * daVinci = new cdvReadWrite("daVinci", 60 /* Hz */);
@@ -144,12 +143,11 @@ int main()
     vidUltrasoundStream.Initialize();
 #endif
 
-#if 1
     ////////////////////////////////////////////////////////////////
-    // setup video stream
+    // setup volume rendering stream
 #if VOLUME_RENDERING
     svlInitialize();
-    svlStreamManager vidStream(2);  // running on multiple threads
+    svlStreamManager volumeRenderStream(2);  // running on multiple threads
     svlFilterSourceImageFile source(2);
     svlFilterImageOverlay overlayFilter;
     overlayFilter.AddInputImage("overlayLeft");
@@ -158,64 +156,64 @@ int main()
     svlOverlayImage overlayRight(SVL_RIGHT,true,"overlayRight",SVL_RIGHT,vctInt2(0,0),128);
 
     // Setup dummy video source
+#ifdef _WIN32
+    if (source.SetFilePath("C:/Users/Wen/Images/StructuredLight/20120421/T3/left_1335048565.418", "bmp", SVL_LEFT) != SVL_OK) return 0;
+    if (source.SetFilePath("C:/Users/Wen/Images/StructuredLight/20120421/Phantom/L1", "bmp", SVL_RIGHT) != SVL_OK) return 0;
+#else
     if (source.SetFilePath("/home/wen/Images/CameraCalibration/20120716/left_002", "bmp", SVL_LEFT) != SVL_OK) return 0;
     if (source.SetFilePath("/home/wen/Images/StructuredLight/20120421/Phantom/L1", "bmp", SVL_RIGHT) != SVL_OK) return 0;
+#endif
     overlayFilter.AddOverlay(overlayLeft);
     overlayFilter.AddOverlay(overlayRight);
     //source.SetTargetFrequency(10.0);
 
-    //    svlFilterSourceVideoCapture vidBackgroundSource(true); // stereo source
-    //    if (vidBackgroundSource.LoadSettings("capture_device.dat") != SVL_OK) {
-    //        cout << "Setup LEFT camera:" << endl;
-    //        vidBackgroundSource.DialogSetup(SVL_LEFT);
-    //        cout << "Setup RIGHT camera:" << endl;
-    //        vidBackgroundSource.DialogSetup(SVL_RIGHT);
-    //        vidBackgroundSource.SaveSettings("capture_device.dat");
-    //    }
-    vidStream.SetSourceFilter(&source);
+    volumeRenderStream.SetSourceFilter(&source);
 
     // add guiManager as a filter to the pipeline, so it will receive video frames
     // "StereoVideo" is defined in the UI Manager as a possible video interface
-    //source.GetOutput()->Connect(guiManager.GetStreamSamplerFilter("StereoVideo")->GetInput());
     source.GetOutput()->Connect(overlayFilter.GetInput());
     overlayFilter.GetOutput()->Connect(guiManager.GetStreamSamplerFilter("StereoVideo")->GetInput());
-    //svlFilterImageWindow vidUltrasoundWindow;
-    //manualRegistration.GetStreamSamplerFilter("StereoVideo")->GetOutput()->Connect(vidUltrasoundWindow.GetInput());
-    //vidStream.Trunk().Append(guiManager.GetStreamSamplerFilter("StereoVideo"));
 
-    vidStream.Initialize();
+    volumeRenderStream.Initialize();
 #endif
     ////////////////////////////////////////////////////////////////
 
-#endif
     ////////////////////////////////////////////////////////////////
     // setup renderers
 
     svlCameraGeometry camera_geometry;
-    // Load Camera calibration results
-#if DUAL_RENDER_TARGETS
-    camera_geometry.LoadCalibration("E:/Users/davinci_mock_or/calib_results.txt");
-#else
+    // Load Camera calibration results on TORS
 #ifdef _WIN32
 	camera_geometry.LoadCalibration("C:/Users/Wen/MyCommon/calib_results.txt");
 #else
     camera_geometry.LoadCalibration("/home/wen/MyCommon/calib_results.txt");
 #endif
-#endif
+	//Manubrium
+    //camera_geometry.LoadCalibration("E:/Users/davinci_mock_or/calib_results.txt");
+
     // Center world in between the two cameras (da Vinci specific)
     camera_geometry.SetWorldToCenter();
     // Rotate world by 180 degrees (VTK specific)
     camera_geometry.RotateWorldAboutY(180.0);
 
+#if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
     // *** Left view ***
-    guiManager.AddRenderer(svlRenderTargets::Get(DUAL_RENDER_TARGETS)->GetWidth(),  // render width
-                           svlRenderTargets::Get(DUAL_RENDER_TARGETS)->GetHeight(), // render height
+    guiManager.AddRenderer(svlRenderTargets::Get(0)->GetWidth(),  // render width
+                           svlRenderTargets::Get(0)->GetHeight(), // render height
                            1.0,                                   // virtual camera zoom
                            false,                                 // borderless?
                            0, 0,                                  // window position
                            camera_geometry, SVL_LEFT,             // camera parameters
                            "LeftEyeView");                        // name of renderer
-
+#else
+    guiManager.AddRenderer(svlRenderTargets::Get(1)->GetWidth(),  // render width
+                           svlRenderTargets::Get(1)->GetHeight(), // render height
+                           1.0,                                   // virtual camera zoom
+                           false,                                 // borderless?
+                           0, 0,                                  // window position
+                           camera_geometry, SVL_LEFT,             // camera parameters
+                           "LeftEyeView");                        // name of renderer
+#endif
     // *** Right view ***
 
     guiManager.AddRenderer(svlRenderTargets::Get(0)->GetWidth(),  // render width
@@ -227,7 +225,11 @@ int main()
                            "RightEyeView");                       // name of renderer
 
     // Sending renderer output to external render targets
-    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(DUAL_RENDER_TARGETS));
+#if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
+    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(0));
+#else
+    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(1));
+#endif
     guiManager.SetRenderTargetToRenderer("RightEyeView", svlRenderTargets::Get(0));
 
 #if VOLUME_RENDERING
@@ -256,7 +258,7 @@ int main()
 #endif
 
 #if VOLUME_RENDERING
-    vidStream.Start();
+    volumeRenderStream.Start();
 #endif
 
     vctFrm3 transform;
@@ -329,7 +331,7 @@ int main()
 #endif
 
 #if VOLUME_RENDERING
-    vidStream.Release();
+    volumeRenderStream.Release();
 #endif
 
     std::cout << "Stopping components" << std::endl;
