@@ -38,6 +38,11 @@ set (SOURCE_FILES
      PlaneVirtualFixture.cpp
      PointVirtualFixture.cpp
      VirtualFixture.cpp
+     CurveVirtualFixture.cpp
+     InnerSphereVirtualFixture.cpp
+     ShellSphereVirtualFixture.cpp
+     DoublePlaneVirtualFixture.cpp
+     DoubleSphereVirtualFixture.cpp
      )
 
 # all header files
@@ -68,6 +73,11 @@ set (HEADER_FILES
      PlaneVirtualFixture.h
      PointVirtualFixture.h
      VirtualFixture.h
+     CurveVirtualFixture.h
+     InnerSphereVirtualFixture.h
+     ShellSphereVirtualFixture.h
+     DoublePlaneVirtualFixture.h
+     DoubleSphereVirtualFixture.h
      )
 
 

@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-$Id: PlaneVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
+$Id: InnerSphereVirtualFixture.cpp 3148 2013-06-26 15:46:31Z oozgune1 $
 
 Author(s):	Orhan Ozguner
 Created on:	2013-06-26
@@ -18,8 +18,7 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 */
-
-#include <cisst3DUserInterface/PlaneVirtualFixture.h>
+#include <cisst3DUserInterface/InnerSphereVirtualFixture.h>"
 #include <cisstVector.h>
 #include <iostream>
 #include <conio.h>
@@ -30,19 +29,12 @@ http://www.cisst.org/cisst/license.txt.
 #include<windows.h>
 
 
-PlaneVirtualFixture::PlaneVirtualFixture(void){}
-
-PlaneVirtualFixture::PlaneVirtualFixture(vct3 basePoint, vct3 planeNormal)
-{
-    setBasePoint(basePoint);
-    setPlaneNormal(planeNormal/planeNormal.Norm());
-}
-
-void PlaneVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
+void InnerSphereVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     vct3 vec1, vec2;
     vct3 axisY(0.0 , 1.0 , 0.0);
     vct3 axizZ(0.0 , 0.0 , 1.0);
     double len1, len2, len3;
+
     // Find 1st orthogonal vector
     len1 = in.Norm(); 
     in = in.Divide(len1); 
@@ -63,48 +55,36 @@ void PlaneVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     out2 = vec2.Divide(len3);
 }
 
-
-vct3 PlaneVirtualFixture::closestPoint(vct3 p){
-    return p-getPlaneNormal()*(vctDotProduct((p-getBasePoint()),getPlaneNormal()));
-}
-
-double PlaneVirtualFixture::shortestDistance(vct3 p){
-    return abs(vctDotProduct((p-getBasePoint()),getPlaneNormal()));
-}
-void PlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSet & vfParams) {
-    vct3 position;  //<!final force position
-    vctMatRot3 rotation;  //<!final force orientation
-    vct3 pos_error; //<!position error between current and the closest point position
+void InnerSphereVirtualFixture::update(const vctFrm3 & pos ,prmFixtureGainCartesianSet & vfParams) {
+    vct3 position;  //<! final force position
+    vctMatRot3 rotation;  //<! final force orientation
+    vct3 pos_error; //<! position error between current and center position
     vct3 currentPosition; //<! current MTM position
-    vct3 closest;    //<!closest point from MTM current position to the plane
     vct3 norm_vector; //<! normal vector 
+    vct3 scaled_norm_vector; //<! norm vector scaled with -radius
     vct3 ortho1(0.0); //<! orthogonal vector to the norm vector
-    vct3 ortho2(0.0); //<!orthogonal vector to the norm vector
-    vct3 stiffnessPos; //<!position stiffness constant (positive)
-    vct3 stiffnessNeg; //<!position stiffness constant (negative)
-    double distance; //<!distance between current position and the closest point position
+    vct3 ortho2(0.0); //<! orthogonal vector to the norm vector
+    double distance; //<! distance between current position and center position
+    vct3 stiffnessPos; //<! positive position stiffness
 
-    //get curent MTM position
+    //get curent position
     currentPosition = pos.Translation();
-    //calculate closest point from MTM to the plane
-    closest = closestPoint(currentPosition);
     //calculate position error
-    pos_error = (closest-currentPosition);
-    //find distance
+    pos_error = (center-currentPosition);
+    //find distance (norm of pos_error)
     distance = pos_error.Norm();
-    //calculate normal vector
+    //scale pos_error to calculate norm vector
     norm_vector = pos_error.Divide(distance);
-    norm_vector = getPlaneNormal(); //use plane normal from user
     //find 2 orthogonal vectors to the norm vector
     findOrthogonal(norm_vector,ortho1,ortho2);
-
-    //form force orientation using orthogonal vectors and normal vector
+    //form rotation using orthogonal vectors
     rotation.Column(0).Assign(ortho2);
     rotation.Column(1).Assign(-ortho1);
     rotation.Column(2).Assign(norm_vector);
-
-    //position should be closest point to the plane
-    position = closest;
+    //scale norm vector with radius
+    scaled_norm_vector = norm_vector.Multiply(-radius);
+    //add scaled_norm_vector to the sphere center
+    position = center+scaled_norm_vector;
 
     //set force position
     vfParams.SetForcePosition(position);
@@ -112,22 +92,15 @@ void PlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSe
     vfParams.SetForceOrientation(rotation);
     //set torque orientation 
     vfParams.SetTorqueOrientation(rotation);
-
-    //in order to protect abowe the plane comment out the following line
-    stiffnessPos.SetAll(0.0);
-    //stiffnessPos.Z() = -500.0;
-
-    //in order to protect below the plane comment out the following line
-    stiffnessNeg.SetAll(0.0);
-    stiffnessNeg.Z() = -500.0;
-
     //set Position Stiffness
+    stiffnessPos.SetAll(0.0);
+    stiffnessPos.Z() = -500.0;
     vfParams.SetPositionStiffnessPos(stiffnessPos);
-    vfParams.SetPositionStiffnessNeg(stiffnessNeg);
 
     //Temporary hard code solution ask Anton for better way
     vct3 temp;
     temp.SetAll(0.0);
+    vfParams.SetPositionStiffnessNeg(temp);
     vfParams.SetPositionDampingPos(temp);
     vfParams.SetPositionDampingNeg(temp);
     vfParams.SetForceBiasPos(temp);
@@ -141,18 +114,17 @@ void PlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSe
 
 }
 
-
-void PlaneVirtualFixture::setBasePoint(const vct3 & b){
-    basePoint = b;
+void InnerSphereVirtualFixture::setCenter(const vct3 & c){
+    center = c;
 }
-void PlaneVirtualFixture::setPlaneNormal(const vct3 & n){
-    normVector = n;
-}
-
-vct3 PlaneVirtualFixture::getBasePoint(void){
-    return basePoint;
+void InnerSphereVirtualFixture::setRadius(const double & r){
+    radius = r;
 }
 
-vct3 PlaneVirtualFixture::getPlaneNormal(void){
-    return normVector;
+double InnerSphereVirtualFixture::getRadius(void){
+    return radius;
+}
+
+vct3 InnerSphereVirtualFixture::getCenter(void){
+    return center;
 }

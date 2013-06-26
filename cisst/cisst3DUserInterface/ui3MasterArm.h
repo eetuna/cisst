@@ -24,6 +24,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisstMultiTask/mtsForwardDeclarations.h>
 #include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionRead.h>
 #include <cisstMultiTask/mtsFunctionWrite.h>
 #include <cisstParameterTypes/prmForwardDeclarations.h>
 #include <cisstParameterTypes/prmPositionCartesianGet.h>

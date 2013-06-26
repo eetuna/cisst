@@ -2,13 +2,13 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id: MapBehavior.cpp 3148 2011-11-07 22:44:31Z adeguet1 $
+$Id: VFBehavior.cpp 3148 2013-06-26 15:46:31Z oozgune1 $
 
-  Author(s):	Balazs Vagvolgyi, Simon DiMaio, Anton Deguet
-  Created on:	2008-05-23
+Author(s):	Orhan Ozguner, Anton Deguet
+Created on:	2013-06-26
 
-  (C) Copyright 2008 Johns Hopkins University (JHU), All Rights
-  Reserved.
+(C) Copyright 2013 Johns Hopkins University (JHU), All Rights
+Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -18,6 +18,7 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 */
+
 
 #include <VFBehavior.h>
 #include <cisst3DUserInterface/StayOnPlaneVirtualFixture.h>
@@ -30,51 +31,43 @@ http://www.cisst.org/cisst/license.txt.
 #include <fcntl.h>
 #include <cstdio>
 #include <conio.h>
-
 #include <cisstOSAbstraction/osaThreadedLogFile.h>
 #include <cisstOSAbstraction/osaSleep.h>
 #include <cisstMultiTask/mtsTaskManager.h>
 #include <cisst3DUserInterface/ui3Manager.h>
 #include <cisstMultiTask/mtsInterfaceRequired.h>
 #include <cisst3DUserInterface/ui3SlaveArm.h> // bad, ui3 should not have slave arm to start with (adeguet1)
-
 #include <vtkActor.h>
 #include <vtkAssembly.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkCylinderSource.h>
 
-//FILE *posFile;
-//FILE *orientFile;
-//FILE *posDifFile;
-
 #define POINTVIRTUALFIXTURE 1
 #define PLANEVIRTUALFIXTURE 2
-
-
 
 /*!
 
 This class creates the VTK object that will become the cursor and markers of the map
 @param manager The ui3Manager responsible for this class
 
- */
+*/
 class VFMarker: public ui3VisibleObject
 {
     CMN_DECLARE_SERVICES(CMN_NO_DYNAMIC_CREATION, 5);
-    public:
+public:
     inline VFMarker(const std::string & name):
     ui3VisibleObject(name),
-    mCylinder(0),
-    markerMapper(0),
-    marker(0),
-    Position()
+        mCylinder(0),
+        markerMapper(0),
+        marker(0),
+        Position()
     { 
     }
 
     inline ~VFMarker()
     {
-       
+
     }
 
     inline bool CreateVTKObjects(void) {
@@ -101,7 +94,7 @@ class VFMarker: public ui3VisibleObject
         this->AddPart(this->marker);
         return true;
     }
-    
+
     inline bool UpdateVTKObjects(void) {
         return false;
     }
@@ -113,24 +106,23 @@ class VFMarker: public ui3VisibleObject
     }
 
 
-    protected:
-        vtkCylinderSource *mCylinder;
-        vtkPolyDataMapper *markerMapper;
-        vtkActor *marker;
-    public:
-        vctFrm3 Position; // initial position
+protected:
+    vtkCylinderSource *mCylinder;
+    vtkPolyDataMapper *markerMapper;
+    vtkActor *marker;
+public:
+    vctFrm3 Position; // initial position
 
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION(VFMarker);
 CMN_IMPLEMENT_SERVICES(VFMarker);
 
-
 /*!
 
 The struct to define the marker type that will be used on the map
 
- */
+*/
 
 struct MarkerType
 {
@@ -146,33 +138,23 @@ constructor
 */
 
 VFBehavior::VFBehavior(const std::string & name):
-        ui3BehaviorBase(std::string("VFBehavior::") + name, 0),
-        Ticker(0),
-        Following(false),
-        VisibleList(0),
-        MarkerList(0),
-        MarkerCount(0),
-        VirtualFixtureEnabled(false),
-        ForceEnabled(false),
-        VFEnable(false),
-        VirtualFixtureType(0)
+ui3BehaviorBase(std::string("VFBehavior::") + name, 0),
+Ticker(0),
+Following(false),
+VisibleList(0),
+MarkerList(0),
+MarkerCount(0),
+VirtualFixtureEnabled(false),
+ForceEnabled(false),
+VFEnable(false),
+VirtualFixtureType(0)
 {
     this->VisibleList= new ui3VisibleList("VFBehavior");
     this->MarkerList = new ui3VisibleList("MarkerList");
-    
     this->MapCursor=new VFMarker("MapCursor");
-    
-//     for(int i = 0; i<MARKER_MAX ; i++)
-//     {
-//         MyMarkers[i] = new MapMarker("marker");
-//         this->MarkerList->Add(MyMarkers[i]);
-//     }
-
-    this->MarkerList->Hide();
-    
+    this->MarkerList->Hide();    
     this->VisibleList->Add(MapCursor);
     this->VisibleList->Add(MarkerList);
-
     this->Offset.SetAll(0.0);
     this->MarkerCount = 0;
     this->CameraPressed = false;
@@ -180,12 +162,10 @@ VFBehavior::VFBehavior(const std::string & name):
     this->RightMTMOpen = true;
     this->ClutchPressed = false;
 
-
-
     this->requiredForRead = this->AddInterfaceRequired("MTMRRead");
-    
+
     if (!requiredForRead) {
-         std::cout<<"There is a problem in Add Interface"<<std::endl;
+        std::cout<<"There is a problem in Add Interface"<<std::endl;
     }
 
     if (!(requiredForRead->AddFunction("GetPositionCartesian",this->FunctionReadGetPositionCartesian,MTS_REQUIRED))) {
@@ -194,7 +174,7 @@ VFBehavior::VFBehavior(const std::string & name):
 
     this->requiredForWrite = this->AddInterfaceRequired("MTMRWrite");
     if (!requiredForWrite) {
-         std::cout<<"There is a problem in Add Interface"<<std::endl;
+        std::cout<<"There is a problem in Add Interface"<<std::endl;
     }
     if (!(requiredForWrite->AddFunction("EnableVirtualFixture",this->FunctionVoidEnableVF,MTS_REQUIRED))) {
         std::cout<<"There is a problem in Function EnableVirtualFixture !"<<std::endl;
@@ -205,11 +185,6 @@ VFBehavior::VFBehavior(const std::string & name):
     if (!(requiredForWrite->AddFunction("SetVirtualFixture",this->FunctionWriteSetVF,MTS_REQUIRED))) {
         std::cout<<"There is a problem in Function SetVirtualFixture !"<<std::endl;
     }
-
-   // posFile = fopen("Master-Slave-Positions.txt" , "w");
-   // orientFile = fopen("Master-Slave-Orientation.txt" , "w");
-   // posDifFile = fopen("Master-Slave-Pos-Difference.txt" , "w");
-
 }
 
 
@@ -217,29 +192,28 @@ VFBehavior::~VFBehavior()
 {
 }
 
-
 void VFBehavior::ConfigureMenuBar()
 {
     this->MenuBar->AddClickButton("PointVF",
-                                  1,
-                                  "empty.png",
-                                  &VFBehavior::PointVFCallBack,
-                                  this);
+        1,
+        "empty.png",
+        &VFBehavior::PointVFCallBack,
+        this);
     this->MenuBar->AddClickButton("PlaneVF",
-                                  2,
-                                  "empty.png",
-                                  &VFBehavior::PlaneVFCallBack,
-                                  this);
+        2,
+        "empty.png",
+        &VFBehavior::PlaneVFCallBack,
+        this);
     this->MenuBar->AddClickButton("EnableVF",
-                                  3,
-                                  "empty.png",
-                                  &VFBehavior::EnableVFCallback,
-                                  this);
+        3,
+        "empty.png",
+        &VFBehavior::EnableVFCallback,
+        this);
     this->MenuBar->AddClickButton("DisableVF",
-                                   4,
-                                   "empty.png",
-                                   &VFBehavior::DisableVFCallback,
-                                   this);
+        4,
+        "empty.png",
+        &VFBehavior::DisableVFCallback,
+        this);
 
 }
 
@@ -258,7 +232,8 @@ void VFBehavior::Startup(void)
     CMN_ASSERT(componentManager);
     mtsComponent * daVinci = componentManager->GetComponent("daVinci");
     CMN_ASSERT(daVinci);
-        // get PSM1 interface
+
+    // get PSM1 interface
     mtsInterfaceProvided * interfaceProvided = daVinci->GetInterfaceProvided("PSM1");
     CMN_ASSERT(interfaceProvided);
     mtsCommandRead * command = interfaceProvided->GetCommandRead("GetPositionJoint");
@@ -267,29 +242,29 @@ void VFBehavior::Startup(void)
     command = interfaceProvided->GetCommandRead("GetPositionCartesian");
     CMN_ASSERT(command);
     GetCartesianPositionSlave.Bind(command);
-    
+
     // get slave interface
     interfaceProvided = daVinci->GetInterfaceProvided("ECM1");
     CMN_ASSERT(interfaceProvided);
     command = interfaceProvided->GetCommandRead("GetPositionJoint");
     CMN_ASSERT(command);
     GetJointPositionECM.Bind(command);
-    
+
     // get clutch interface
     interfaceProvided = daVinci->GetInterfaceProvided("Clutch");
     CMN_ASSERT(interfaceProvided);
     mtsCommandWrite<VFBehavior, prmEventButton> * clutchCallbackCommand =
-            new mtsCommandWrite<VFBehavior, prmEventButton>(&VFBehavior::MasterClutchPedalCallback, this,
-                                                         "Button", prmEventButton());
+        new mtsCommandWrite<VFBehavior, prmEventButton>(&VFBehavior::MasterClutchPedalCallback, this,
+        "Button", prmEventButton());
     CMN_ASSERT(clutchCallbackCommand);
     interfaceProvided->AddObserver("Button", clutchCallbackCommand);
-    
+
     //get camera control interface
     interfaceProvided = daVinci->GetInterfaceProvided("Camera");
     CMN_ASSERT(interfaceProvided);
     mtsCommandWrite<VFBehavior, prmEventButton> * cameraCallbackCommand =
-            new mtsCommandWrite<VFBehavior, prmEventButton>(&VFBehavior::CameraControlPedalCallback, this,
-                                                         "Button", prmEventButton());
+        new mtsCommandWrite<VFBehavior, prmEventButton>(&VFBehavior::CameraControlPedalCallback, this,
+        "Button", prmEventButton());
     CMN_ASSERT(cameraCallbackCommand);
     interfaceProvided->AddObserver("Button", cameraCallbackCommand);
 
@@ -301,9 +276,7 @@ void VFBehavior::Startup(void)
 void VFBehavior::Cleanup(void)
 {
     // menu bar will release itself upon destruction
-    //fclose(posFile);
-    //fclose(orientFile);
-    //fclose(posDifFile);
+
 }
 
 
@@ -327,19 +300,6 @@ bool VFBehavior::RunForeground()
     // running in foreground GUI mode
     prmPositionCartesianGet position;
 
-    // compute offset
-//     this->GetPrimaryMasterPosition(position);
-//     if (this->Following) {
-//         if (this->Transition)
-//         {
-//             this->PreviousCursorPosition.Assign(position.Position().Translation());
-//             this->Transition = false;
-//         }
-//         vctDouble3 deltaCursor;
-//         deltaCursor.DifferenceOf(position.Position().Translation(),
-//                                  this->PreviousCursorPosition);
-//         this->Offset.Add(deltaCursor);
-//     }
     this->PreviousCursorPosition.Assign(position.Position().Translation());
 
     // apply to object
@@ -370,99 +330,86 @@ bool VFBehavior::RunBackground()
 void VFBehavior::UpdateVF(void)
 {
     if (VFEnable) {
-            CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" UpdateVF " << std::endl;
-            this->result = this->FunctionVoidEnableVF();
-            if (!result.IsOK()) {
-                CMN_LOG_CLASS_RUN_ERROR << "execution failed, result is \"" << result << "\"" << std::endl;
-            }
-            ForceEnabled = true;
-
-            vctFrm3 points[3];
-            vctFrm3 pointsInMTM[3];
-            vctFrm3 displacement;
-            vctFrm3 markerPositionWRTECM;
-            vctFrm3 currentMTMRPos;
-            vctFrm3 currentPSM1Pos;
-            vctFrm3 tempPos;
-            vct3 tempDisp;
-            vct3 temp;
-            int scale = 3.0;
-            FunctionReadGetPositionCartesian(currentMTMRPosition);
-            currentMTMRPos = currentMTMRPosition.Position();
-            tempPos = currentMTMRPos;
-            GetCartesianPositionSlave(currentPSM1Position);
-            currentPSM1Pos = currentPSM1Position.Position();
-
-            MarkersType::iterator iter;
-            unsigned int index = 0;
-            
-            //Point Virtual Fixture
-            if (Markers.size() > 0 && VirtualFixtureType == POINTVIRTUALFIXTURE) {
-                for (iter = Markers.begin(); index < 1; iter++){
-                    //Convert marker positions from ECMRCM to ECM
-                    markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
-                    //Find displacement between markert and current PSM position
-                    tempDisp = currentPSM1Pos.Translation() - markerPositionWRTECM.Translation() ;
-                    //Scale back to MTM Fine = 3.0
-                    tempDisp.Multiply(scale);                
-                    //Add to current MTM position
-                    tempPos.Translation().Subtract(tempDisp);
-                    points[index] = tempPos;
-                    index++;
-                } 
-                point.setPoint(points[0].Translation());
-                point.update(currentMTMRPosition.Position(), vfParams);
-            }
-            
-            //Plane Virtual Fixture
-            if(Markers.size() > 2 && VirtualFixtureType == PLANEVIRTUALFIXTURE){
-                vct3 line12,line23,pNormal;
-	
-                for (iter = Markers.begin(); index < 3; iter++){
-                    //Convert marker positions from ECMRCM to ECM
-                    markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
-                    //Find displacement between markert and current PSM position
-                    tempDisp = currentPSM1Pos.Translation() - markerPositionWRTECM.Translation() ;
-                    //Scale back to MTM Fine = 3.0
-                    tempDisp.Multiply(scale);                
-                    //Add to current MTM position
-                    tempPos.Translation().Subtract(tempDisp);
-                    points[index] = tempPos;
-                    index++;
-                } 
-                plane.setBasePoint((points[0].Translation()+points[1].Translation()+points[2].Translation())/3.0);
-                line12 = points[0].Translation()-points[1].Translation();
-	            line23 = points[2].Translation()-points[1].Translation();
-                pNormal.CrossProductOf(line12,line23);
-                plane.setPlaneNormal(pNormal);
-                plane.update(currentMTMRPosition.Position(),vfParams );
-            }
-
-        } else {
-            this->result = this->FunctionVoidDisableVF();
-            if (!result.IsOK()) {
-                CMN_LOG_CLASS_RUN_ERROR << "execution failed, result is \"" << result << "\"" << std::endl;
-            }
-            ForceEnabled = false;
+        CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" UpdateVF " << std::endl;
+        this->result = this->FunctionVoidEnableVF();
+        if (!result.IsOK()) {
+            CMN_LOG_CLASS_RUN_ERROR << "execution failed, result is \"" << result << "\"" << std::endl;
         }
+        ForceEnabled = true;
+
+        vctFrm3 points[3];
+        vctFrm3 pointsInMTM[3];
+        vctFrm3 displacement;
+        vctFrm3 markerPositionWRTECM;
+        vctFrm3 currentMTMRPos;
+        vctFrm3 currentPSM1Pos;
+        vctFrm3 tempPos;
+        vct3 tempDisp;
+        vct3 temp;
+        int scale = 3.0;
+        FunctionReadGetPositionCartesian(currentMTMRPosition);
+        currentMTMRPos = currentMTMRPosition.Position();
+        tempPos = currentMTMRPos;
+        GetCartesianPositionSlave(currentPSM1Position);
+        currentPSM1Pos = currentPSM1Position.Position();
+
+        MarkersType::iterator iter;
+        unsigned int index = 0;
+
+        //Point Virtual Fixture
+        if (Markers.size() > 0 && VirtualFixtureType == POINTVIRTUALFIXTURE) {
+            for (iter = Markers.begin(); index < 1; iter++){
+                //Convert marker positions from ECMRCM to ECM
+                markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
+                //Find displacement between markert and current PSM position
+                tempDisp = currentPSM1Pos.Translation() - markerPositionWRTECM.Translation() ;
+                //Scale back to MTM Fine = 3.0
+                tempDisp.Multiply(scale);                
+                //Add to current MTM position
+                tempPos.Translation().Subtract(tempDisp);
+                points[index] = tempPos;
+                index++;
+            } 
+            point.setPoint(points[0].Translation());
+            point.update(currentMTMRPosition.Position(), vfParams);
+        }
+
+        //Plane Virtual Fixture
+        if(Markers.size() > 2 && VirtualFixtureType == PLANEVIRTUALFIXTURE){
+            vct3 line12,line23,pNormal;
+
+            for (iter = Markers.begin(); index < 3; iter++){
+                //Convert marker positions from ECMRCM to ECM
+                markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
+                //Find displacement between markert and current PSM position
+                tempDisp = currentPSM1Pos.Translation() - markerPositionWRTECM.Translation() ;
+                //Scale back to MTM Fine = 3.0
+                tempDisp.Multiply(scale);                
+                //Add to current MTM position
+                tempPos.Translation().Subtract(tempDisp);
+                points[index] = tempPos;
+                index++;
+            } 
+            plane.setBasePoint((points[0].Translation()+points[1].Translation()+points[2].Translation())/3.0);
+            line12 = points[0].Translation()-points[1].Translation();
+            line23 = points[2].Translation()-points[1].Translation();
+            pNormal.CrossProductOf(line12,line23);
+            plane.setPlaneNormal(pNormal);
+            plane.update(currentMTMRPosition.Position(),vfParams );
+        }
+
+    } else {
+        this->result = this->FunctionVoidDisableVF();
+        if (!result.IsOK()) {
+            CMN_LOG_CLASS_RUN_ERROR << "execution failed, result is \"" << result << "\"" << std::endl;
+        }
+        ForceEnabled = false;
     }
+}
 
 bool VFBehavior::RunNoInput()
 {  
     this->Ticker++;
-
-    //vctFrm3 PSM1toMTMR;
-    //vctFrm3 MTMRPosition;
-    //vctFrm3 PSM1Position
-    //Master and Slave positions
-    //fprintf(posFile,"%f,%f,%f,%f,%f,%f\n",MTMRPosition.Translation().X(),MTMRPosition.Translation().Y(),MTMRPosition.Translation().Z(),PSM1Position.Translation().X(),PSM1Position.Translation().Y(),PSM1Position.Translation().Z());
-    //Master and Slave orientation angle difference X-Y-Z
-    //fprintf(orientFile,"%f,%f,%f\n",atan2(rotDif.Element(2,1),rotDif.Element(2,2)),atan2(-rotDif.Element(2,0),(sqrt(pow(rotDif.Element(2,1),2.0)+pow(rotDif.Element(2,2),2.0)))),atan2(rotDif.Element(1,0),rotDif.Element(0,0)));
-    //Master and Slave Position difference
-    //fprintf(posDifFile,"%f,%f,%f\n",PSM1toMTMR.Translation().X(),PSM1toMTMR.Translation().Y(),PSM1toMTMR.Translation().Z());
-    //std::cout<<"PSM to MTM: "<<PSM1toMTMR.Rotation()<<std::endl;
-    //std::cout<<"Rotation: "<<std::endl;
-    //std::cerr << rotMTM * rotPSM.Inverse() <<std::endl;
 
     if (this->Manager->MastersAsMice() != this->PreviousMaM) {
         this->PreviousMaM = this->Manager->MastersAsMice();
@@ -489,15 +436,15 @@ bool VFBehavior::RunNoInput()
         this->AddMarker();
     }
 
-//prepare to remove marker if clutch and left MTM are pressed
+    //prepare to remove marker if clutch and left MTM are pressed
     if(ClutchPressed && !LeftMTMOpen)
     {
         this->RemoveMarker();
     }
 
-//check if the map should be updated
+    //check if the map should be updated
     if(CameraPressed ||
-       (!ClutchPressed && (PreviousSlavePosition == Slave1Position.Position().Translation())))
+        (!ClutchPressed && (PreviousSlavePosition == Slave1Position.Position().Translation())))
     {
         if(this->MapCursor->Visible())
         {
@@ -563,7 +510,7 @@ void VFBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
 /*!
 Function callback triggered by the closing of the left master grip.
 This action will cause a marker to be removed from the map
- */
+*/
 void VFBehavior::SecondaryMasterButtonCallback(const prmEventButton & event)
 {
     if (event.Type() == prmEventButton::PRESSED) {
@@ -577,7 +524,7 @@ void VFBehavior::SecondaryMasterButtonCallback(const prmEventButton & event)
 /*!
 Function callback triggered by pressing the master cluch pedal
 Changes the state of the behavior and allows some other features to become active
- */
+*/
 
 void VFBehavior::MasterClutchPedalCallback(const prmEventButton & payload)
 {
@@ -594,7 +541,7 @@ void VFBehavior::MasterClutchPedalCallback(const prmEventButton & payload)
 /*!
 Function callback triggered by pressing the camera control pedal
 Changes the state of the behavior and allows some other features to become active
- */
+*/
 
 void VFBehavior::CameraControlPedalCallback(const prmEventButton & payload)
 {
@@ -612,7 +559,7 @@ void VFBehavior::CameraControlPedalCallback(const prmEventButton & payload)
 Returns the current position of the center of the tool in the frame of the camera Remote center of motion
 @return the frame of the tool wrt to the ECM RCM
 
- */
+*/
 
 vctFrm3 VFBehavior::GetCurrentCursorPositionWRTECMRCM(void)
 {
@@ -635,7 +582,7 @@ vctFrm3 VFBehavior::GetCurrentCursorPositionWRTECMRCM(void)
     double insert2 = JointsECM.Position()[2]*1000.0;//convert to mm
     double roll3 = JointsECM.Position()[3];
     double angle = 30.0*cmnPI/180.0;
- 
+
     //create frame for yaw
     vctFrm3 yawFrame0;
     yawFrame0.Rotation() = vctMatRot3( vctAxAnRot3(Yaxis, yaw0 ) );
@@ -654,30 +601,24 @@ vctFrm3 VFBehavior::GetCurrentCursorPositionWRTECMRCM(void)
 
     vctFrm3 T_to_horiz;
     T_to_horiz.Rotation() = vctMatRot3( vctAxAnRot3(Xaxis, angle) );
- 
-
 
     // raw cartesian position from slave daVinci, no ui3 correction
     prmPositionCartesianGet slavePosition;
     GetCartesianPositionSlave(slavePosition);
 
-    // std::cerr <<"Slave position: "<<slavePosition.Position()<<std::endl;
-
-
     vctFrm3 finalFrame;
-
     ECMtoECMRCM = yawFrame0 * pitchFrame1 * insertFrame2 * rollFrame3;
     vctFrm3 imdtframe;
-    imdtframe = ECMtoECMRCM * slavePosition.Position(); //* GetCurrentCursorPositionWRTECM(); // working fixed point !!!
-    finalFrame = imdtframe;//.Inverse(); // .InverseSelf();
-    
+    imdtframe = ECMtoECMRCM * slavePosition.Position();
+    finalFrame = imdtframe;
+
     return finalFrame;
 }
 
 /*!
 updates the map cursor position, by converting the absolute frame into to the vtk frame
 
- */ 
+*/ 
 
 void VFBehavior::UpdateCursorPosition(void)
 {
@@ -688,12 +629,11 @@ void VFBehavior::UpdateCursorPosition(void)
     {
         vctFrm3 ECMtoVTK;
         ECMtoVTK.Rotation().From( vctAxAnRot3(vctDouble3(0.0,1.0,0.0), cmnPI) );
-    
+
         ECMRCMtoVTK = ECMtoVTK * ECMtoECMRCM.Inverse();
     }
 
-    ECMRCMtoVTK.ApplyTo(finalFrame, cursorVTK);// cursorVTK = ECMRCMtoVTK * finalframe
-
+    ECMRCMtoVTK.ApplyTo(finalFrame, cursorVTK);
     vctDouble3 t1;
     t1 = (cursorVTK.Translation());
     cursorVTK.Translation().Assign(t1);
@@ -705,7 +645,7 @@ void VFBehavior::UpdateCursorPosition(void)
 
 this needs some serious commenting
 
- */
+*/
 
 void VFBehavior::UpdateVisibleMap(void)
 {
@@ -715,7 +655,7 @@ void VFBehavior::UpdateVisibleMap(void)
     vctDouble3 currentOrigin;
 
     vctDouble3 scaleCompTrans(0.0);
-    
+
     // iterate through all elements to build a bounding box
     if (iter != end)
     {
@@ -751,9 +691,9 @@ void VFBehavior::UpdateVisibleMap(void)
 
         vctFrm3 ECMtoVTK;
         ECMtoVTK.Rotation().From( vctAxAnRot3(vctDouble3(0.0,1.0,0.0), cmnPI) );
-        
+
         vctFrm3 ECMtoECMRCMInverse = ECMtoECMRCM.Inverse();
-        
+
         vctFrm3 temp;
         temp = ECMtoVTK * ECMtoECMRCMInverse;
         vctDouble3 corner1Rotated, corner2Rotated;
@@ -778,10 +718,7 @@ void VFBehavior::UpdateVisibleMap(void)
 
     }
 
- //   std::cout << "Bouding box: [" << corner1 << "] [" << corner2 << "]" << std::endl;
-    
     // apply the transformation to all absolute coordinates
-
     vctFrm3 positionInSAW;
 
 #if 1
@@ -802,7 +739,7 @@ void VFBehavior::UpdateVisibleMap(void)
 
 Adds a marker to the list of markers 
 the position of the marker is the position of the cursor at the time that it is dropped
- */
+*/
 
 void VFBehavior::AddMarker(void)
 {
@@ -823,13 +760,13 @@ void VFBehavior::AddMarker(void)
             std::cout<< "newMarkerVisible: " << newMarkerVisible->Visible() << std::endl;
             newMarker->VisibleObject = newMarkerVisible;
             newMarker->count = MarkerCount;
-                // set the position of the marker based on current cursor position
+            // set the position of the marker based on current cursor position
             newMarker->AbsolutePosition = GetCurrentCursorPositionWRTECMRCM();
             newMarkerVisible->SetTransformation(newMarker->AbsolutePosition);
             std::cout << "GetCurrentCursorPositionWRTECMRCM()" << newMarker->AbsolutePosition << std::endl;
-                // add the marker to the list
+            // add the marker to the list
             this->Markers.push_back(newMarker); //need to delete them too
-                // update the list (updates bounding box and position of all markers
+            // update the list (updates bounding box and position of all markers
             this->UpdateVisibleMap();
             std::cout << "AddMarker has been called " << MapCursor->GetTransformation() << std::endl;
 
@@ -844,7 +781,7 @@ void VFBehavior::AddMarker(void)
 
 Removes the last marker from the list
 
- */
+*/
 void VFBehavior::RemoveMarker(void)
 {
     MarkersType::iterator iter = Markers.begin();
@@ -857,13 +794,6 @@ void VFBehavior::RemoveMarker(void)
             if(remove <= MarkerCount)
                 MyMarkers[remove]->Hide();//NOTE: this should be done directly on the marker type list
 
-//             while(iter != end)
-//             {
-//                 int check = (*iter)->count;
-//                 if(check == remove)
-//                     Markers.erase(iter);
-//                 iter++;
-//             }
             std::cout << "marker removed" << std::endl;
         }else{
             std::cout<< "There are no more markers to remove" << std::endl;
@@ -897,9 +827,9 @@ int VFBehavior::FindClosestMarker()
             closestDist = abs;
         }
     }
-    
-        //if there is one close to the cursor, turn it red
-        //return value is that markers count
+
+    //if there is one close to the cursor, turn it red
+    //return value is that markers count
     for(iter2 = Markers.begin(); iter2 !=end; iter2++)
     {
         if(closestDist < 2.0 && (*iter2)->count == currentCount)
@@ -907,11 +837,11 @@ int VFBehavior::FindClosestMarker()
             (*iter2)->VisibleObject->SetColor(255.0/255.0, 0.0/255.0, 51.0/255.0);
             returnValue = currentCount;
         }else{
-             //otherwise, all the markers should be green, return an invalid number
+            //otherwise, all the markers should be green, return an invalid number
             (*iter2)->VisibleObject->SetColor(153.0/255.0, 255.0/255.0, 153.0/255.0);
         }
     }
-    
+
     if(closestDist >2.0)
     {
         returnValue = MARKER_MAX + 1;

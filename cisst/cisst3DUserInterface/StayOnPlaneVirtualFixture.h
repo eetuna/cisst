@@ -1,3 +1,24 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
+/* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
+
+/*
+$Id: StayOnPlaneVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
+
+Author(s):	Orhan Ozguner
+Created on:	2013-06-26
+
+(C) Copyright 2013 Johns Hopkins University (JHU), All Rights
+Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+
 #include "VirtualFixture.h"
 #include <cisstVector.h>
 
@@ -7,7 +28,7 @@
 /*!@brief StayOnPlane Virtual Fixture.
 *
 *  This class extends the base virtual fixture class and overloads the
-*  two methods in the base class. The stay on a plane virtual fixture keeps the handle 
+*  methods in the base class. The stay on a plane virtual fixture keeps the handle 
 *  on a desired plane. Guidance region is desired plane based on
 *  the user need.
 */
@@ -20,10 +41,10 @@ public:
     StayOnPlaneVirtualFixture(void);
 
     /*! @brief Constructor takes vf base point position and plane normal
-    * and sets them
+    * and sets them.
     */
     StayOnPlaneVirtualFixture(const vct3 basePoint, const vct3 planeNormal);
-    
+
     /*! @brief Update plane virtual fixture parameters.
     *
     *   This method takes the current MTM position and orientation matrix and 
@@ -39,16 +60,7 @@ public:
     *   @param vfparams virtual fixture parameters.
     */
     void update(const vctFrm3 & mtmPos , prmFixtureGainCartesianSet & vfParams);
-    
-    /*!@brief Get the necessary user data.
-    *
-    *  This function asks three different points from the user.
-    *  We check points are on the same line. If they are on the same line, we ask user to
-    *  type new point sets. Using these three different points, we calculate the base point and
-    *  the normal vector and set them.
-    */  
-    void getUserData(void);
-    
+
     /*!@brief Helper method to find two orthogonal vectors.
     *
     *  This method takes 3 vectors. First one is the given vector, other two stores
@@ -62,54 +74,54 @@ public:
     *  @param out2 the second orthogonal vector to the given vector.
     */
     void findOrthogonal(vct3 in, vct3 &out1, vct3 &out2);
-    
+
     /*!@brief Find the closest point to the plane.
     *
     *  @param p current position.
     *  @return closest point.
     */
     vct3 closestPoint(vct3 p);
-    
+
     /*!@brief Find the closest distance the plane.
     *
     *  @param p current position.
     *  @return closest distance to the plane.
     */
     double shortestDistance(vct3 p);
-    
+
     /*@brief This is a helper method for input/output.
     *
     * @param position
     */
     void getPositionFromUser(vct3 & position);
 
-	/*!@brief Set base point vector.
-	*
-	*  @param c base point
-	*/
-	void setBasePoint(const vct3 & c);
+    /*!@brief Set base point vector.
+    *
+    *  @param c base point
+    */
+    void setBasePoint(const vct3 & c);
 
-	/*!@brief Set plane unit normal vector.
-	*
-	*  @param n unit normal vector.
-	*/
-	void setPlaneNormal(const vct3 & n);
+    /*!@brief Set plane unit normal vector.
+    *
+    *  @param n unit normal vector.
+    */
+    void setPlaneNormal(const vct3 & n);
 
-	/*!@brief Return base point vector.
-	*
-	*  @return basePoint.
-	*/
-	vct3 getBasePoint(void);
+    /*!@brief Return base point vector.
+    *
+    *  @return basePoint.
+    */
+    vct3 getBasePoint(void);
 
-	/*!@brief Return plane unit normal vector.
-	*
-	*  @return normVector.
-	*/
-	vct3 getPlaneNormal(void);
+    /*!@brief Return plane unit normal vector.
+    *
+    *  @return normVector.
+    */
+    vct3 getPlaneNormal(void);
 
 protected:
-	vct3 basePoint; //!< Base point position vector.
-	vct3 planeNormal; //!< Plane unit normal vector.
+    vct3 basePoint; //!< Base point position vector.
+    vct3 planeNormal; //!< Plane unit normal vector.
 
 };
 

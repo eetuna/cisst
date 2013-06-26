@@ -1,4 +1,24 @@
-#include "VirtualFixture.h"
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
+/* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
+
+/*
+$Id: PlaneVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
+
+Author(s):	Orhan Ozguner
+Created on:	2013-06-26
+
+(C) Copyright 2013 Johns Hopkins University (JHU), All Rights
+Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
+#include <cisst3DUserInterface/VirtualFixture.h>
 #include <cisstVector.h>
 
 #ifndef planevirtualfixture_h
@@ -11,7 +31,6 @@
 *  below the desired plane. Forbidden region is above or below the plane based on
 *  the user need.
 */
-
 class PlaneVirtualFixture: public VirtualFixture {
 
 public:
@@ -41,15 +60,6 @@ public:
     */
     void update(const vctFrm3 & mtmPos , prmFixtureGainCartesianSet & vfParams);
 
-    /*!@brief Get the necessary user data.
-    *
-    *  This function asks three different points from the user.
-    *  We check points are on the same line. If they are on the same line, we ask user to
-    *  type new point sets. Using these three different points, we calculate the base point and
-    *  the normal vector and set them.
-    */  
-    void getUserData(void);
-
     /*!@brief Helper method to find two orthogonal vectors.
     *
     *  This method takes 3 vectors. First one is the given vector, other two stores
@@ -78,8 +88,6 @@ public:
     */
     double shortestDistance(vct3 p);
 
-
-
     /*!@brief Set base point vector.
     *
     *  @param c base point
@@ -105,8 +113,8 @@ public:
     vct3 getPlaneNormal(void);
 
 protected:
-	vct3 basePoint; //!< Base point position vector.
-	vct3 normVector; //!< Plane unit normal vector.
+    vct3 basePoint; //!< Base point position vector.
+    vct3 normVector; //!< Plane unit normal vector.
 
 };
 

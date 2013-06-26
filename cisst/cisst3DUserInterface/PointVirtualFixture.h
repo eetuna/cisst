@@ -1,3 +1,23 @@
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
+/* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
+
+/*
+$Id: PointVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
+
+Author(s):	Orhan Ozguner
+Created on:	2013-06-26
+
+(C) Copyright 2013 Johns Hopkins University (JHU), All Rights
+Reserved.
+
+--- begin cisst license - do not edit ---
+
+This software is provided "as is" under an open source license, with
+no warranty.  The complete license can be found in license.txt and
+http://www.cisst.org/cisst/license.txt.
+
+--- end cisst license ---
+*/
 #include "VirtualFixture.h"
 #include <cisstVector.h>
 
@@ -21,7 +41,7 @@ public:
     /*! @brief Constructor takes vf point position and sets the point
     */
     PointVirtualFixture(const vct3 pt);
-    
+
     /*! @brief Update point virtual fixture parameters.
     *
     *   This method takes the current MTM position and orientation matrix and 
@@ -34,28 +54,21 @@ public:
     *   @param vfparams virtual fixture parameters.
     */
     void update(const vctFrm3 & mtmPos , prmFixtureGainCartesianSet & vfParams);
-    
-    /*! @brief Get the necessary user data.
-    *
-    *   This function asks user a point position.
-    *   When the user types the necessary infromation, we store it.
-    */
-    void getUserData(void);
-    
-    /*! @brief Set the point position.
-	*
-	*   @param p given point position.
-	*/
-	void setPoint(const vct3 & p);
 
-	/*! @brief Return the point position.
-	*
-	*   @return p point position.
-	*/
-	vct3 getPoint(void);
+    /*! @brief Set the point position.
+    *
+    *   @param p given point position.
+    */
+    void setPoint(const vct3 & p);
+
+    /*! @brief Return the point position.
+    *
+    *   @return p point position.
+    */
+    vct3 getPoint(void);
 
 protected:
-	vct3 point; //!< Point position.
+    vct3 point; //!< Point position.
 
 };
 
