@@ -56,6 +56,8 @@ public:
     */
     typedef ui3MenuButton * ButtonPointer;
     bool IsPointOnMenuBar(const vct3 & point, ButtonPointer & button);
+    vct3 GetButtonCenter(ui3MenuButton & button);
+
 
     /*!
      Adds a click button to the menu bar. The icon file has to contain images for

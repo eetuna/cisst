@@ -45,7 +45,7 @@ ui3BehaviorBase(name, 0),
     ActiveBehavior(0),
     SceneManager(0),
     RendererThread(0),
-    IsOverMenu(0),
+    IsOverMenu(false),
     HasMaMDevice(false),
     PickRequested(false)
 {
@@ -557,16 +557,7 @@ void ui3Manager::Run(void)
             IsOverMenu = this->ActiveBehavior->MenuBar->IsPointOnMenuBar(armPointer->CursorPosition.Translation(),
                                                                          selectedButton);
             armPointer->Cursor->Set2D(IsOverMenu);
-            armPointer->IsOverMenu = IsOverMenu;
-            if (selectedButton) {
-                armPointer->SetScaleFactor(0.2);
-                if (armPointer->ButtonReleased && armPointer->PressedOverMenu) {
-                    // todo, add error code check
-                    selectedButton->Callable->Execute();
-                }
-            } else {
-                armPointer->SetScaleFactor(1.0);
-            }
+            armPointer->SetOnMenu(IsOverMenu, this->ActiveBehavior->MenuBar, selectedButton);
 
             // test if this arm already has something selected
             if (armPointer->Selected) {

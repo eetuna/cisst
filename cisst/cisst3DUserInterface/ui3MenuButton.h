@@ -46,6 +46,7 @@ http://www.cisst.org/cisst/license.txt.
 class CISST_EXPORT ui3MenuButton
 {
     friend class ui3Manager;
+    friend class ui3MasterArm;
 
 public:
     /*!
@@ -157,6 +158,7 @@ public:
     virtual vtkActor * VTKPointer(void);
 
     virtual void SetPosition(vct3 & position);
+    virtual void GetPosition(vct3 & placeHolder) const;
 
     virtual bool IsCursorOver(const vct2 & cursor2D);
 

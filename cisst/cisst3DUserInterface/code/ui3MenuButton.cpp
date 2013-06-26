@@ -150,6 +150,12 @@ void ui3MenuButton::SetPosition(vct3 & position)
     this->Actor->SetPosition(position.Pointer());
 }
 
+void ui3MenuButton::GetPosition(vct3 & placeHolder) const
+{
+    this->Actor->GetPosition(placeHolder.Pointer());
+}
+
+
 bool ui3MenuButton::IsCursorOver(const vct2 & cursor2D)
 {
     return (cursor2D.GreaterOrEqual(this->BottomLeft2D)

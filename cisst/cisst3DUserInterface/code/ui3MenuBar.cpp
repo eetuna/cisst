@@ -162,6 +162,20 @@ bool ui3MenuBar::IsPointOnMenuBar(const vctDouble3 & cursor3D, ButtonPointer & b
 }
 
 
+vct3 ui3MenuBar::GetButtonCenter(ui3MenuButton & button)
+{
+    // get relative position of button in menu, 0 depth
+    vct3 buttonPositionInMenu;
+    button.GetPosition(buttonPositionInMenu);
+    vct3 buttonPosition3D;
+    const double ratio = this->MenuInitialDepth / MenuCenter3D.Z();
+    buttonPosition3D.X() = buttonPositionInMenu.X() / ratio;
+    buttonPosition3D.Y() = (buttonPositionInMenu.Y() + (this->MenuTop2D + this->MenuBottom2D) / 2.0) / ratio;
+    buttonPosition3D.Z() = MenuCenter3D.Z();
+    return buttonPosition3D;
+}
+
+
 bool ui3MenuBar::AddCheckButton(const std::string& description, int position, const std::string& iconFile, bool state)
 {
     return 0;

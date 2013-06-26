@@ -34,6 +34,10 @@ set (SOURCE_FILES
      ui3VisibleObject.cpp
      ui3VisibleAxes.cpp
      ui3Widget3D.cpp
+     StayOnPlaneVirtualFixture.cpp
+     PlaneVirtualFixture.cpp
+     PointVirtualFixture.cpp
+     VirtualFixture.cpp
      )
 
 # all header files
@@ -60,6 +64,10 @@ set (HEADER_FILES
      ui3VisibleObject.h
      ui3VisibleAxes.h
      ui3Widget3D.h
+     StayOnPlaneVirtualFixture.h
+     PlaneVirtualFixture.h
+     PointVirtualFixture.h
+     VirtualFixture.h
      )
 
 

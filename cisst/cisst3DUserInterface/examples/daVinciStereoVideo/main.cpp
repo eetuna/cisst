@@ -39,6 +39,7 @@ http://www.cisst.org/cisst/license.txt.
 #include "BehaviorLUS.h"
 
 #include <MeasurementBehavior.h>
+#include <VFBehavior.h>
 #include <MapBehavior.h>
 #include <ImageViewer.h>
 #include <ImageViewerKidney.h>
@@ -67,7 +68,9 @@ int main()
     cdvReadWrite * daVinci = new cdvReadWrite("daVinci", 60 /* Hz */);
   #endif
 #endif
+    
     componentManager->AddComponent(daVinci);
+
 
     ui3Manager guiManager;
     MeasurementBehavior measurementBehavior("Measure");
@@ -75,24 +78,31 @@ int main()
                            1,
                            "measure.png");
 
+    VFBehavior vfBehavior("VF");
+    guiManager.AddBehavior(&vfBehavior,
+                           2,
+                           "vf.png");
+
     MapBehavior mapBehavior("Map");
     guiManager.AddBehavior(&mapBehavior,
-                           2,
+                           3,
                            "map.png");
 
     ImageViewer imageViewer("image");
     guiManager.AddBehavior(&imageViewer,
-                           3,
+                           4,
                            "move.png");
+
+    
 #if TORS
 	ManualRegistration manualRegistration("manualRegistration");
     guiManager.AddBehavior(&manualRegistration,
-                           4,
+                           5,
                            "move.png");
 #else	
     ImageViewerKidney imageViewerKidney("imageKidney");
     guiManager.AddBehavior(&imageViewerKidney,
-                           4,
+                           6,
                            "move.png");
 #endif
 
@@ -104,7 +114,7 @@ int main()
     if (fileName != "") {
         pngViewer = new PNGViewer3D("PGNViewer", fileName);
         guiManager.AddBehavior(pngViewer,
-                               5,
+                               6,
                                "square.png");
     } else {
         std::cerr << "PNG viewer not added, can't find \"move.png\" in path: " << path << std::endl;
@@ -115,7 +125,7 @@ int main()
 
     BehaviorLUS lus("BehaviorLUS");
     guiManager.AddBehavior(&lus,       // behavior reference
-                           5,             // position in the menu bar: default
+                           6,             // position in the menu bar: default
                            "LUS.png");            // icon file: no texture
 
     svlStreamManager vidUltrasoundStream(1);  // running on single thread
@@ -171,7 +181,6 @@ int main()
                            "LeftEyeView");                        // name of renderer
 
     // *** Right view ***
-
     guiManager.AddRenderer(svlRenderTargets::Get(0)->GetWidth(),  // render width
                            svlRenderTargets::Get(0)->GetHeight(), // render height
                            1.0,                                   // virtual camera zoom
@@ -250,6 +259,14 @@ int main()
     // connect measurement behavior
     componentManager->Connect(measurementBehavior.GetName(), "StartStopMeasure", daVinci->GetName(), "Clutch");
 
+    //connect vfbehavior for FunctionWrite
+    componentManager->Connect(vfBehavior.GetName(),"MTMRWrite",daVinci->GetName(),"MTMR1Wrt");
+
+    //connect vfbehavior for FunctionRead
+    componentManager->Connect(vfBehavior.GetName(),"MTMRRead",daVinci->GetName(),"MTMR1");
+
+    osaSleep(2.0 * cmn_s);
+
     // following should be replaced by a utility function or method of ui3Manager
     std::cout << "Creating components" << std::endl;
     componentManager->CreateAll();
@@ -258,6 +275,8 @@ int main()
     std::cout << "Starting components" << std::endl;
     componentManager->StartAll();
     componentManager->WaitForStateAll(mtsComponentState::ACTIVE);
+
+
     
     int ch;
     

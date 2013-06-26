@@ -34,6 +34,8 @@ add_library (ui3ExBehaviors
              PNGViewer3D.cpp
              VideoViewer3D.h
              VideoViewer3D.cpp
+             VFBehavior.h
+             VFBehavior.cpp     
              )
 set_property (TARGET ui3ExBehaviors PROPERTY FOLDER "cisst3DUserInterface/examples")
 

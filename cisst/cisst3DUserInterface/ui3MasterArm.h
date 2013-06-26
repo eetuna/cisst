@@ -23,11 +23,17 @@ http://www.cisst.org/cisst/license.txt.
 #define _ui3MasterArm_h
 
 #include <cisstMultiTask/mtsForwardDeclarations.h>
+#include <cisstMultiTask/mtsFunctionVoid.h>
+#include <cisstMultiTask/mtsFunctionWrite.h>
 #include <cisstParameterTypes/prmForwardDeclarations.h>
 #include <cisstParameterTypes/prmPositionCartesianGet.h>
 #include <cisstParameterTypes/prmPositionCartesianSet.h>
+#include <cisstParameterTypes/prmFixtureGainCartesianSet.h>
 #include <cisst3DUserInterface/ui3ForwardDeclarations.h>
 #include <cisst3DUserInterface/ui3CursorBase.h>
+#include <cisst3DUserInterface/VirtualFixture.h>
+#include <cisst3DUserInterface/PointVirtualFixture.h>
+#include <cisst3DUserInterface/StayOnPlaneVirtualFixture.h>
 
 // Always include last!
 #include <cisst3DUserInterface/ui3Export.h>
@@ -74,6 +80,8 @@ class CISST_EXPORT ui3MasterArm: public cmnGenericObject
     virtual bool SetCursor(ui3CursorBase * cursor);
 
     void SetScaleFactor(const mtsDouble & factor);
+    
+    void SetOnMenu(bool onMenu, ui3MenuBar * menuBar, ui3MenuButton * onButton);
 
  protected:
 
@@ -102,7 +110,20 @@ class CISST_EXPORT ui3MasterArm: public cmnGenericObject
     // positions in the state table, for behaviors to read
     prmPositionCartesianGet CartesianPosition;
     mtsFunctionRead GetCartesianPosition;
+    mtsFunctionVoid FunctionVoidEnableVF;
+    mtsFunctionVoid FunctionVoidDisableVF;
+    mtsFunctionWrite FunctionWriteSetVF;
 
+    bool WasOnMenu;
+    bool WasOnButton;
+    bool ActiveVF;
+    PointVirtualFixture PointVF;
+    StayOnPlaneVirtualFixture PlaneVF;
+    prmFixtureGainCartesianSet vfParams;
+    vctFrm3 defaultDepth;
+
+    // physical arm position
+    prmPositionCartesianGet ArmPosition;
     // cursor position
     vctFrm3 CursorPosition;
 
