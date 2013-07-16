@@ -123,7 +123,7 @@ bool ui3BehaviorBase::SaveConfiguration(const std::string & CMN_UNUSED(configFil
 
 void ui3BehaviorBase::Run(void)
 {
-    this->ProcessQueuedEvents();
+    
     if (this->Manager->MastersAsMice()) {
         switch(this->State) {
         case Foreground:
@@ -148,6 +148,7 @@ void ui3BehaviorBase::Run(void)
             break;
         }
     }
+    this->ProcessQueuedEvents();
     osaSleep(50.0 * cmn_ms); // bad, needs to be a variable/data member
 }
 

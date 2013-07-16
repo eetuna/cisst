@@ -81,7 +81,7 @@ int main()
     VFBehavior vfBehavior("VF");
     guiManager.AddBehavior(&vfBehavior,
                            2,
-                           "vf.png");
+                           "vfixture.png");
 
     MapBehavior mapBehavior("Map");
     guiManager.AddBehavior(&mapBehavior,

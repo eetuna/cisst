@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-$Id: PlaneVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
+$Id: ButtonVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
 
 Author(s):	Orhan Ozguner
 Created on:	2013-06-26
@@ -23,100 +23,53 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstParameterTypes/prmFixtureGainCartesianSet.h>
 #include <cisstVector.h>
 
-#ifndef planevirtualfixture_h
-#define planevirtualfixture_h
+#ifndef buttonvirtualfixture_h
+#define buttonvirtualfixture_h
 
-/*!@brief Plane Virtual Fixture.
+/*!@brief Point Virtual Fixture Class.
 *
-*  This class extends the base virtual fixture class and overloads the
-*  two methods in the base class. The plane virtual fixture protects above or 
-*  below the desired plane. Forbidden region is above or below the plane based on
-*  the user need.
+*  This class guides the MTM to the given point. Purpose of the type is 
+*  to find a specific location when it is necessary.
 */
 
-class PlaneVirtualFixture: public VirtualFixture {
+class ButtonVirtualFixture: public VirtualFixture {
 public:
-
-    /*! @brief PlaneVirtualFixture contructor that takes
+    /*! @brief ButtonVirtualFixture contructor that takes
     *   no argument
     */
-    PlaneVirtualFixture(void);
+    ButtonVirtualFixture(void);
 
-    /*! @brief PlaneVirtualFixture contructor that takes the plane
-    *   normal vector and the base point and sets them.
+    /*! @brief ButtonVirtualFixture contructor that takes the button position
+    *   and sets it.
     *
-    *   @param basePoint sphere center.
-    *   @param planeNormal sphere radius.
+    *   @param pt button position.
     */
-    PlaneVirtualFixture(const vct3 basePoint, const vct3 planeNormal);
+    ButtonVirtualFixture(const vct3 pt);
 
-    /*! @brief Update plane virtual fixture parameters.
+    /*! @brief Update button virtual fixture parameters.
     *
     *   This method takes the current MTM position and orientation matrix and 
-    *   the virtual fixture parameter reference, it calculates and assigns virtual fixture
-    *   parameters. For the plane virtual fixture, we calculate the closest point to the plane
-    *   and set the point as the force position. Usind the closest point, we calulate the norm
-    *   vector and allign the norm as z-axis and form the force orientation matrix. 
-    *   Since we allign the norm as z-axis, we only apply positive force on the z-axis. 
-    *   We check the distance from the current position to the plane. If it is negative
-    *   we apply force.
+    *   virtual fixture parameter reference, it calculates and assigns virtual fixture
+    *   parameters. For the button virtual fixture, we set the given point as the force position.
+    *   Since we have only a point, we do not need to calculate the force orientation matrix.
+    *   We set all x,y,z position stiffness forces as the same.
     *
     *   @param mtmPos current manipulator position and orientation.
     *   @param vfparams virtual fixture parameters.
     */
     void update(const vctFrm3 & mtmPos , prmFixtureGainCartesianSet & vfParams);
 
-    /*! @brief Helper method to find two orthogonal vectors.
+    /*! @brief Sets the button position.
     *
-    *   This method takes 3 vectors. First one is the given vector, other two stores
-    *   the orthogonal vectors. We use one arbitrary vector(Y- axis in this case).
-    *   We first cross product the given vector and the arbitrary vector to find the 
-    *   first orthogonal vector to the given vector. Then we cross product the given vector
-    *   and the first orthogonal vector to find the second orthogonal vector.
-    *
-    *   @param in given vector.
-    *   @param out1 the first orthogonal vector to the given vector.
-    *   @param out2 the second orthogonal vector to the given vector.
+    *   @param pt given button position.
     */
-    void findOrthogonal(vct3 in, vct3 &out1, vct3 &out2);
+    void setButtonPosition(const vct3 & pt);
 
-    /*! @brief Finds the closest point to the plane.
+    /*! @brief Returns the button position.
     *
-    *   @param pos current position.
-    *   @return closest point.
+    *   @return point button position.
     */
-    vct3 closestPoint(vct3 pos);
-
-    /*! @brief Finds the closest distance to the plane.
-    *
-    *   @param pos current position.
-    *   @return closest distance to the plane.
-    */
-    double shortestDistance(vct3 pos);
-
-    /*! @brief Sets the base point for the plane.
-    *
-    *   @param base base point for the plane.
-    */
-    void setBasePoint(const vct3 & base);
-
-    /*! @brief Sets the plane unit normal vector.
-    *
-    *   @param normal unit normal vector for the plane.
-    */
-    void setPlaneNormal(const vct3 & normal);
-
-    /*! @brief Returns the base point vector for the plane.
-    *
-    *   @return basePoint.
-    */
-    vct3 getBasePoint(void);
-
-    /*! @brief Returns the plane unit normal vector.
-    *
-    *   @return planeNormal.
-    */
-    vct3 getPlaneNormal(void);
+    vct3 getButtonPosition(void);
 
     /*! @brief Sets the given positive position stiffness constant.
     *
@@ -262,9 +215,9 @@ public:
     */
     vct3 getTorqueBiasNegative(void);
 
+
 protected:
-    vct3 basePoint; //!< Base point position vector.
-    vct3 planeNormal; //!< Plane unit normal vector.
+    vct3 button; //<! Button position.
     vct3 PositionStiffnessPositive; //<! Positive position stiffness constant.
     vct3 PositionStiffnessNegative; //<! Negative position stiffness constant.
     vct3 PositionDampingPositive; //<! Positive position damping constant.
@@ -277,7 +230,6 @@ protected:
     vct3 OrientationDampingNegative; //<! Negative orientation damping constant.
     vct3 TorqueBiasPositive; //<! Positive torque bias constant.
     vct3 TorqueBiasNegative; //<! Negative torque bias constant.
-
 };
 
 #endif

@@ -18,27 +18,51 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 */
-
 #include <cisst3DUserInterface/DoublePlaneVirtualFixture.h>
 #include <cisstVector.h>
-#include <iostream>
-#include <conio.h>
-#include <cstdio>
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include<windows.h>
 
+// Constructor that takes no argument.
+DoublePlaneVirtualFixture::DoublePlaneVirtualFixture(void){
+    PositionStiffnessPositive.SetAll(-500.0);
+    PositionStiffnessNegative.SetAll(-500.0);
+    PositionDampingPositive.SetAll(0.0);
+    PositionDampingNegative.SetAll(0.0);
+    ForceBiasPositive.SetAll(0.0);
+    ForceBiasNegative.SetAll(0.0);
+    OrientationStiffnessPositive.SetAll(0.0);
+    OrientationStiffnessNegative.SetAll(0.0);
+    OrientationDampingPositive.SetAll(0.0);
+    OrientationDampingNegative.SetAll(0.0);
+    TorqueBiasPositive.SetAll(0.0);
+    TorqueBiasNegative.SetAll(0.0);}
 
-void DoublePlaneVirtualFixture::getPositionFromUser(vct3 & position){
-    std::cin>>position.X()>>position.Y()>>position.Z();
+// Constructor that takes plane base points and plane normal vectors and sets them.
+DoublePlaneVirtualFixture::DoublePlaneVirtualFixture(vct3 base1, vct3 base2, vct3 planeNormal1, vct3 planeNormal2){
+    setBasePoint1(base1); //set base1
+    setBasePoint2(base2); //set base 2
+    setPlaneNormal1(planeNormal1/(planeNormal1.Norm())); //normalize and set plane normal
+    setPlaneNormal2(planeNormal2/(planeNormal2.Norm())); //normalize and set plane normal
+
+    PositionStiffnessPositive.SetAll(-500.0);
+    PositionStiffnessNegative.SetAll(-500.0);
+    PositionDampingPositive.SetAll(0.0);
+    PositionDampingNegative.SetAll(0.0);
+    ForceBiasPositive.SetAll(0.0);
+    ForceBiasNegative.SetAll(0.0);
+    OrientationStiffnessPositive.SetAll(0.0);
+    OrientationStiffnessNegative.SetAll(0.0);
+    OrientationDampingPositive.SetAll(0.0);
+    OrientationDampingNegative.SetAll(0.0);
+    TorqueBiasPositive.SetAll(0.0);
+    TorqueBiasNegative.SetAll(0.0);
 }
+
+// Finds two orthogonal vectors to the given vector.
 void DoublePlaneVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     vct3 vec1, vec2;
     vct3 axisY(0.0 , 1.0 , 0.0);
-    vct3 axizZ(0.0 , 0.0 , 1.0);
+    vct3 axisZ(0.0 , 0.0 , 1.0);
     double len1, len2, len3;
-
     // Find 1st orthogonal vector
     len1 = in.Norm(); 
     in = in.Divide(len1); 
@@ -47,60 +71,71 @@ void DoublePlaneVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     // Check to make sure the Y-axis unit vector is not too close to input unit vector,
     // if they are close dot product will be large and then use different arbitrary unit vector
     if ( vctDotProduct(in, vec1) >= 0.98){
-        vec1.CrossProductOf(in,axizZ); 
-        std::cout<<"Something is not good..."<<std::endl;
+        vec1.CrossProductOf(in,axisZ); 
+    }
+    //TODO find a better way to handle
+    if(vec1.X()==0.0 && vec1.Y()==0.0 && vec1.Z()== 0.0){
+        vec1.CrossProductOf(in,axisZ);
     }
     // Now find 2nd orthogonal vector
-    vec2.CrossProductOf(in,vec1); 
+    vec2.CrossProductOf(in,vec1);
     len2 = vec1.Norm(); 
     len3 = vec2.Norm(); 
-
+    //orthogonal vectors to the given vector
     out1 = vec1.Divide(len2);
     out2 = vec2.Divide(len3);
 }
 
-vct3 DoublePlaneVirtualFixture::closestPoint(vct3 p , vct3 norm , vct3 base){
-    return p-norm*(vctDotProduct((p-base),norm));
+// Finds the closest point to the plane.
+vct3 DoublePlaneVirtualFixture::closestPoint(vct3 point , vct3 norm , vct3 base){
+    return point-norm*(vctDotProduct((point-base),norm));
 }
 
+// Finds the shortest distance to the plane.
 double DoublePlaneVirtualFixture::shortestDistance(vct3 p ,vct3 norm , vct3 base){
     return abs(vctDotProduct((p-base),norm));
 }
-void DoublePlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSet & vfParams) {
-    vct3 position;  //<! final force position
-    vctMatRot3 rotation; //<! final force orientation
-    vct3 currentPosition; //<! current MTM position
-    double distance1, distance2; //<! distance between current position and the closest point position on the planes
-    vct3 closest1, closest2; //<! closest point from MTM current position to the planes
-    vct3 norm_vector; //<! norm vector
-    vct3 ortho1(0.0); //<! orthogonal vector to the norm vector
-    vct3 ortho2(0.0); //<! orthogonal vector to the norm vector
-    vct3 stiffnessPos, stiffnessNeg; //<! position stiffness constant
 
+// Updates double plane virtual fixture parameters.
+void DoublePlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSet & vfParams) {
+    vct3 position;  //<! Force position
+    vctMatRot3 rotation; //<! Force orientation
+    vct3 currentPosition; //<! Current MTM position
+    double distance1, distance2; //<! Distance between current position and the closest point position on the planes
+    vct3 closest1, closest2; //<! Closest point from MTM current position to the planes
+    vct3 norm_vector; //<! Normal vector to create force orientation
+    vct3 ortho1(0.0); //<! Orthogonal vector to the norm vector to form force/torque orientation
+    vct3 ortho2(0.0); //<! Orthogonal vector to the norm vector to form force/torque orientation
+    vct3 stiffnessPos, stiffnessNeg;    //position stiffness constants
+
+    //reset all values
+    rotation.SetAll(0.0);
+    position.SetAll(0.0);
     stiffnessNeg.SetAll(0.0);
     stiffnessPos.SetAll(0.0);
 
     //get curent MTM position
     currentPosition = pos.Translation();
     //calculate closest point from MTM to the plane 1
-    closest1 = closestPoint(currentPosition,getNormVector1(),getBasePoint1());
+    closest1 = closestPoint(currentPosition,getPlaneNormal1(),getBasePoint1());
     //calculate closest point from MTM to the plane 2
-    closest2 = closestPoint(currentPosition,getNormVector2(),getBasePoint2());
+    closest2 = closestPoint(currentPosition,getPlaneNormal2(),getBasePoint2());
     //calculate position error for the plane 1
     distance1 = (closest1-currentPosition).Norm(); 
     //calculate position error for the plane 2
     distance2 = (currentPosition-closest2).Norm();
 
+    //decide which plane to use
     if(distance1<=distance2){
         position = closest1;
         //norm_vector = pos_error1.Divide(distance1);
-        norm_vector = getNormVector1();
-        stiffnessPos.Z() = -500.0;
+        norm_vector = getPlaneNormal1();
+        stiffnessPos.Z() = PositionStiffnessPositive.Z();
     }else{
         position = closest2;
         //norm_vector = pos_error2.Divide(distance2);
-        norm_vector = getNormVector2();
-        stiffnessNeg.Z() = -500.0;
+        norm_vector = getPlaneNormal2();
+        stiffnessNeg.Z() = PositionStiffnessNegative.Z();
     }
 
     //find 2 orthogonal vectors to the norm vector
@@ -109,62 +144,185 @@ void DoublePlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCarte
     rotation.Column(0).Assign(ortho2);
     rotation.Column(1).Assign(-ortho1);
     rotation.Column(2).Assign(norm_vector);
-
     //set force position
     vfParams.SetForcePosition(position);
     //set force orientation
     vfParams.SetForceOrientation(rotation);
-    //set torque orientation 
+    //set torque orientation
     vfParams.SetTorqueOrientation(rotation);
-
     //set Position Stiffness
     vfParams.SetPositionStiffnessPos(stiffnessPos);
     vfParams.SetPositionStiffnessNeg(stiffnessNeg);
 
     //Temporary hard code solution ask Anton for better way
-    vct3 temp;
-    temp.SetAll(0.0);
-    vfParams.SetPositionDampingPos(temp);
-    vfParams.SetPositionDampingNeg(temp);
-    vfParams.SetForceBiasPos(temp);
-    vfParams.SetForceBiasNeg(temp);
-    vfParams.SetOrientationStiffnessPos(temp);
-    vfParams.SetOrientationStiffnessNeg(temp);
-    vfParams.SetOrientationDampingPos(temp);
-    vfParams.SetOrientationDampingNeg(temp);
-    vfParams.SetTorqueBiasPos(temp);
-    vfParams.SetTorqueBiasNeg(temp);
-
+    vfParams.SetPositionDampingPos(PositionDampingPositive);
+    vfParams.SetPositionDampingNeg(PositionDampingNegative);
+    vfParams.SetForceBiasPos(ForceBiasPositive);
+    vfParams.SetForceBiasNeg(ForceBiasNegative);
+    vfParams.SetOrientationStiffnessPos(OrientationStiffnessPositive);
+    vfParams.SetOrientationStiffnessNeg(OrientationStiffnessNegative);
+    vfParams.SetOrientationDampingPos(OrientationDampingPositive);
+    vfParams.SetOrientationDampingNeg(OrientationDampingNegative);
+    vfParams.SetTorqueBiasPos(TorqueBiasPositive);
+    vfParams.SetTorqueBiasNeg(TorqueBiasNegative);
 }
 
-void DoublePlaneVirtualFixture::setBasePoint1(const vct3 & b){
-    basePoint1 = b;
-}
-void DoublePlaneVirtualFixture::setBasePoint2(const vct3 & b){
-    basePoint2 = b;
-}
-void DoublePlaneVirtualFixture::setNormVector1(const vct3 & n){
-    normVector1 = n;
-}
-void DoublePlaneVirtualFixture::setNormVector2(const vct3 & n){
-    normVector2 = n;
+// Sets the base point for the first plane.
+void DoublePlaneVirtualFixture::setBasePoint1(const vct3 & base1){
+    basePoint1 = base1;
 }
 
+// Sets the base point for the second plane.
+void DoublePlaneVirtualFixture::setBasePoint2(const vct3 & base2){
+    basePoint2 = base2;
+}
+
+// Sets the plane normal vector for the first plane.
+void DoublePlaneVirtualFixture::setPlaneNormal1(const vct3 & normal1){
+    planeNormal1 = normal1;
+}
+
+// Sets the plane normal vector for the second plane.
+void DoublePlaneVirtualFixture::setPlaneNormal2(const vct3 & normal2){
+    planeNormal2 = normal2;
+}
+
+// Returns the base plane for the first plane.
 vct3 DoublePlaneVirtualFixture::getBasePoint1(void){
     return basePoint1;
 }
 
-vct3 DoublePlaneVirtualFixture::getNormVector1(void){
-    return normVector1;
+// Returns the firt plane's plane normal vector.
+vct3 DoublePlaneVirtualFixture::getPlaneNormal1(void){
+    return planeNormal1;
 }
 
+// Returns the base plane for the second plane.
 vct3 DoublePlaneVirtualFixture::getBasePoint2(void){
     return basePoint2;
 }
 
-vct3 DoublePlaneVirtualFixture::getNormVector2(void){
-    return normVector2;
+// Returns the second plane's plane normal vector.
+vct3 DoublePlaneVirtualFixture::getPlaneNormal2(void){
+    return planeNormal2;
 }
 
+// Sets the given positive position stiffness constant.
+void DoublePlaneVirtualFixture::setPositionStiffnessPositive(const vct3 stiffPos){
+    this->PositionStiffnessPositive = stiffPos;
+}
 
+// Sets the given negative position stiffness constant.
+void DoublePlaneVirtualFixture::setPositionStiffnessNegative(const vct3 stiffNeg){
+    this->PositionStiffnessNegative = stiffNeg;
+}
 
+// Sets the given positive position damping constant.
+void DoublePlaneVirtualFixture::setPositionDampingPositive(const vct3 dampPos){
+    this->PositionDampingPositive = dampPos;
+}
+
+// Sets the given negative position damping constant.
+void DoublePlaneVirtualFixture::setPositionDampingNegative(const vct3 dampNeg){
+    this->PositionStiffnessNegative = dampNeg;
+}
+
+// Sets the given positive force bias constant.
+void DoublePlaneVirtualFixture::setForceBiasPositive(const vct3 biasPos){
+    this->ForceBiasPositive = biasPos;
+}
+
+// Sets the given negative force bias constant.
+void DoublePlaneVirtualFixture::setForceBiasNegative(const vct3 biasNeg){
+    this->ForceBiasNegative = biasNeg;
+}
+
+// Sets the given positive orientation stiffness constant.
+void DoublePlaneVirtualFixture::setOrientationStiffnessPositive(const vct3 orientStiffPos){
+    this->OrientationStiffnessPositive = orientStiffPos;
+}
+
+// Sets the given negative orientation stiffness constant.
+void DoublePlaneVirtualFixture::setOrientationStiffnessNegative(const vct3 orientStiffNeg){
+    this->OrientationStiffnessNegative = orientStiffNeg;
+}
+
+// Sets the given positive orientation damping constant.
+void DoublePlaneVirtualFixture::setOrientationDampingPositive(const vct3 orientDampPos){
+    this->OrientationDampingPositive = orientDampPos;
+}
+
+// Sets the given negative orientation damping constant.
+void DoublePlaneVirtualFixture::setOrientationDampingNegative(const vct3 orientDampNeg){
+    this->OrientationDampingNegative = orientDampNeg;
+}
+
+// Sets the given positive torque bias constant.
+void DoublePlaneVirtualFixture::setTorqueBiasPositive(const vct3 torqueBiasPos){
+    this->TorqueBiasPositive = torqueBiasPos;
+}
+
+// Sets the given negative torque bias constant.
+void DoublePlaneVirtualFixture::setTorqueBiasNegative(const vct3 torqueBiasNeg){
+    this->TorqueBiasNegative = torqueBiasNeg;
+}
+
+// Returns the positive position stiffness constant.
+vct3 DoublePlaneVirtualFixture::getPositionStiffnessPositive(void){
+    return this->PositionStiffnessPositive;
+}
+
+// Returns the negative position stiffness constant.
+vct3 DoublePlaneVirtualFixture::getPositionStiffnessNegative(void){
+    return this->PositionStiffnessNegative;
+}
+
+// Returns the positive position damping constant.
+vct3 DoublePlaneVirtualFixture::getPositionDampingPositive(void){
+    return this->PositionDampingPositive;
+}
+
+// Returns the negative position damping constant.
+vct3 DoublePlaneVirtualFixture::getPositionDampingNegative(void){
+    return this->PositionStiffnessNegative;
+}
+
+// Returns the positive force bias constant.
+vct3 DoublePlaneVirtualFixture::getForceBiasPositive(void){
+    return this->ForceBiasPositive;
+}
+
+// Returns the negative force bias constant.
+vct3 DoublePlaneVirtualFixture::getForceBiasNegative(void){
+    return this->ForceBiasNegative;
+}
+
+// Returns the positive orientation stiffness constant.
+vct3 DoublePlaneVirtualFixture::getOrientationStiffnessPositive(void){
+    return this->OrientationStiffnessPositive;
+}
+
+// Returns the negative orientation stiffness constant.
+vct3 DoublePlaneVirtualFixture::getOrientationStiffnessNegative(void){
+    return this->OrientationStiffnessNegative;
+}
+
+// Returns the positive orientation damping constant.
+vct3 DoublePlaneVirtualFixture::getOrientationDampingPositive(void){
+    return this->OrientationDampingPositive;
+}
+
+// Returns the negative orientation damping constant.
+vct3 DoublePlaneVirtualFixture::getOrientationDampingNegative(void){
+    return this->OrientationDampingNegative;
+}
+
+// Returns the positive torque bias constant.
+vct3 DoublePlaneVirtualFixture::getTorqueBiasPositive(void){
+    return this->TorqueBiasPositive;
+}
+
+// Returns the negative torque bias constant.
+vct3 DoublePlaneVirtualFixture::getTorqueBiasNegative(void){
+    return this->TorqueBiasNegative;
+}

@@ -18,27 +18,51 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 */
+
 #include <cisst3DUserInterface/ShellSphereVirtualFixture.h>
 #include <cisstVector.h>
-#include <iostream>
-#include <conio.h>
-#include <cstdio>
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include<windows.h>
 
-ShellSphereVirtualFixture::ShellSphereVirtualFixture(void){}
-
-ShellSphereVirtualFixture::ShellSphereVirtualFixture(vct3 &center, double &radius){
-    setCenter(center); 	//set the center position of the sphere
-    setRadius(radius); //set the radius of the sphere
+// ShellSphereVirtualFixture contructor that takes no argument.
+ShellSphereVirtualFixture::ShellSphereVirtualFixture(void){
+    PositionStiffnessPositive.SetAll(0.0);
+    PositionStiffnessNegative.SetAll(-500.0);
+    PositionDampingPositive.SetAll(0.0);
+    PositionDampingNegative.SetAll(0.0);
+    ForceBiasPositive.SetAll(0.0);
+    ForceBiasNegative.SetAll(0.0);
+    OrientationStiffnessPositive.SetAll(0.0);
+    OrientationStiffnessNegative.SetAll(0.0);
+    OrientationDampingPositive.SetAll(0.0);
+    OrientationDampingNegative.SetAll(0.0);
+    TorqueBiasPositive.SetAll(0.0);
+    TorqueBiasNegative.SetAll(0.0);
 }
 
+/* ShellPlaneVirtualFixture contructor that takes the center
+of the sphere and the radius and sets them.
+*/
+ShellSphereVirtualFixture::ShellSphereVirtualFixture(const vct3 center, const double radius){
+    setCenter(center); //set center position
+    setRadius(radius); //set radius of the sphere
+    PositionStiffnessPositive.SetAll(0.0);
+    PositionStiffnessNegative.SetAll(-500.0);
+    PositionDampingPositive.SetAll(0.0);
+    PositionDampingNegative.SetAll(0.0);
+    ForceBiasPositive.SetAll(0.0);
+    ForceBiasNegative.SetAll(0.0);
+    OrientationStiffnessPositive.SetAll(0.0);
+    OrientationStiffnessNegative.SetAll(0.0);
+    OrientationDampingPositive.SetAll(0.0);
+    OrientationDampingNegative.SetAll(0.0);
+    TorqueBiasPositive.SetAll(0.0);
+    TorqueBiasNegative.SetAll(0.0);
+}
+
+// Finds two orthogonal vectors to the given vector.
 void ShellSphereVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     vct3 vec1, vec2;
     vct3 axisY(0.0 , 1.0 , 0.0);
-    vct3 axizZ(0.0 , 0.0 , 1.0);
+    vct3 axisZ(0.0 , 0.0 , 1.0);
     double len1, len2, len3;
 
     // Find 1st orthogonal vector
@@ -49,30 +73,34 @@ void ShellSphereVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     // Check to make sure the Y-axis unit vector is not too close to input unit vector,
     // if they are close dot product will be large and then use different arbitrary unit vector
     if ( vctDotProduct(in, vec1) >= 0.98){
-        vec1.CrossProductOf(in,axizZ); 
-        std::cout<<"Something is not good..."<<std::endl;
+        vec1.CrossProductOf(in,axisZ); 
+    }
+    //TODO find a better way to handle
+    if(vec1.X()==0.0 && vec1.Y()==0.0 && vec1.Z()== 0.0){
+        vec1.CrossProductOf(in,axisZ);
     }
     // Now find 2nd orthogonal vector
     vec2.CrossProductOf(in,vec1); 
     len2 = vec1.Norm(); 
-    len3 = vec2.Norm(); 
-
+    len3 = vec2.Norm();
+    //orthogonal vectors to the given vector    
     out1 = vec1.Divide(len2);
     out2 = vec2.Divide(len3);
 }
 
+// Updates the shell virtual fixture parameters.
 void ShellSphereVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSet & vfParams) {
-    vct3 position;  //<! final force position
-    vctMatRot3 rotation;  //<! final force orientation
-    vct3 pos_error; //<! position error between current and center position
-    vct3 currentPosition; //<! current MTM position
-    vct3 norm_vector; //<! normal vector 
-    vct3 scaled_norm_vector; //<! norm vector scaled with -radius
-    vct3 ortho1(0.0); //<! orthogonal vector to the norm vector
-    vct3 ortho2(0.0); //<! orthogonal vector to the norm vector
-    double distance;  //<! distance between current position and center position
-    vct3 stiffnessNeg; //<! negative position stiffness constant
-    vctFrm3 compFrame; //<! force compliance frame
+    vct3 position; //<! Force position
+    vctMatRot3 rotation; //<! Force orientation
+    vct3 pos_error; //<! Position error between current and center position
+    vct3 currentPosition; //<! Current MTM position
+    vct3 norm_vector; //<! Normal vector to create froce/torque orientation matrix 
+    vct3 scaled_norm_vector; //<! Norm vector scaled with -radius
+    vct3 ortho1(0.0); //<! Orthogonal vector to the normal vector to form force/torque orientation matrix
+    vct3 ortho2(0.0); //<! Orthogonal vector to the normal vector to form force/torque orientation matrix
+    double distance; //<! Distance between current position and center position
+    vct3 stiffnessNeg; //<! Negative position stiffness constant
+    stiffnessNeg.SetAll(0.0);
 
     //get curent position
     currentPosition = pos.Translation();
@@ -97,53 +125,43 @@ void ShellSphereVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCarte
     vfParams.SetForcePosition(position);
     //set force orientation
     vfParams.SetForceOrientation(rotation);
-    //set torque orientation 
+    //set torque orientation
     vfParams.SetTorqueOrientation(rotation);
 
-    compFrame.Translation() = position;
-    compFrame.Rotation() = rotation;
-    setComplianceFrame(compFrame);
-
     //set Negative Position Stiffness
-    stiffnessNeg.SetAll(0.0);
-    stiffnessNeg.Z() = -400.0;
+    stiffnessNeg.Z() = PositionStiffnessNegative.Z();
     vfParams.SetPositionStiffnessNeg(stiffnessNeg);
 
     //Temporary hard code solution ask Anton for better way
-    vct3 temp;
-    temp.SetAll(0.0);
-    vfParams.SetPositionStiffnessPos(temp);
-    vfParams.SetPositionDampingPos(temp);
-    vfParams.SetPositionDampingNeg(temp);
-    vfParams.SetForceBiasPos(temp);
-    vfParams.SetForceBiasNeg(temp);
-    vfParams.SetOrientationStiffnessPos(temp);
-    vfParams.SetOrientationStiffnessNeg(temp);
-    vfParams.SetOrientationDampingPos(temp);
-    vfParams.SetOrientationDampingNeg(temp);
-    vfParams.SetTorqueBiasPos(temp);
-    vfParams.SetTorqueBiasNeg(temp);
+    vfParams.SetPositionStiffnessPos(PositionStiffnessPositive);
+    vfParams.SetPositionDampingPos(PositionDampingPositive);
+    vfParams.SetPositionDampingNeg(PositionDampingNegative);
+    vfParams.SetForceBiasPos(ForceBiasPositive);
+    vfParams.SetForceBiasNeg(ForceBiasNegative);
+    vfParams.SetOrientationStiffnessPos(OrientationStiffnessPositive);
+    vfParams.SetOrientationStiffnessNeg(OrientationStiffnessNegative);
+    vfParams.SetOrientationDampingPos(OrientationDampingPositive);
+    vfParams.SetOrientationDampingNeg(OrientationDampingNegative);
+    vfParams.SetTorqueBiasPos(TorqueBiasPositive);
+    vfParams.SetTorqueBiasNeg(TorqueBiasNegative);
 }
 
+// Sets the center position of the sphere.
 void ShellSphereVirtualFixture::setCenter(const vct3 & c){
     center = c;
 }
+
+// Sets the radius of the sphere.
 void ShellSphereVirtualFixture::setRadius(const double & r){
     radius = r;
 }
 
-void ShellSphereVirtualFixture::setComplianceFrame(const vctFrm3 &compliance){
-    complianceFrame = compliance;
-}
-
+// Returns the radius of the sphere.
 double ShellSphereVirtualFixture::getRadius(void){
     return radius;
 }
 
+// Returns the center position of the sphere.
 vct3 ShellSphereVirtualFixture::getCenter(void){
     return center;
-}
-
-vctFrm3 ShellSphereVirtualFixture::getComplianceFrame(void){
-    return complianceFrame;
 }

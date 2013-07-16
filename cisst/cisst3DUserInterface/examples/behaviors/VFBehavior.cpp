@@ -45,6 +45,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #define POINTVIRTUALFIXTURE 1
 #define PLANEVIRTUALFIXTURE 2
+#define CURVEVIRTUALFIXTURE 3
 
 /*!
 
@@ -147,6 +148,7 @@ MarkerCount(0),
 VirtualFixtureEnabled(false),
 ForceEnabled(false),
 VFEnable(false),
+CameraJustReleased(false),
 VirtualFixtureType(0)
 {
     this->VisibleList= new ui3VisibleList("VFBehavior");
@@ -196,22 +198,27 @@ void VFBehavior::ConfigureMenuBar()
 {
     this->MenuBar->AddClickButton("PointVF",
         1,
-        "empty.png",
+        "pointvf.png",
         &VFBehavior::PointVFCallBack,
         this);
     this->MenuBar->AddClickButton("PlaneVF",
         2,
-        "empty.png",
+        "planevf.png",
         &VFBehavior::PlaneVFCallBack,
         this);
-    this->MenuBar->AddClickButton("EnableVF",
+    this->MenuBar->AddClickButton("CurveVF",
         3,
-        "empty.png",
+        "curvevf.png",
+        &VFBehavior::CurveVFCallBack,
+        this);
+    this->MenuBar->AddClickButton("EnableVF",
+        4,
+        "enablevf.png",
         &VFBehavior::EnableVFCallback,
         this);
     this->MenuBar->AddClickButton("DisableVF",
-        4,
-        "empty.png",
+        5,
+        "disablevf.png",
         &VFBehavior::DisableVFCallback,
         this);
 
@@ -329,6 +336,7 @@ bool VFBehavior::RunBackground()
 
 void VFBehavior::UpdateVF(void)
 {
+    std::cout<<"Update VF call: "<<std::endl;
     if (VFEnable) {
         CMN_LOG_RUN_VERBOSE << "Behavior \"" << this->GetName() << "\" UpdateVF " << std::endl;
         this->result = this->FunctionVoidEnableVF();
@@ -336,9 +344,6 @@ void VFBehavior::UpdateVF(void)
             CMN_LOG_CLASS_RUN_ERROR << "execution failed, result is \"" << result << "\"" << std::endl;
         }
         ForceEnabled = true;
-
-        vctFrm3 points[3];
-        vctFrm3 pointsInMTM[3];
         vctFrm3 displacement;
         vctFrm3 markerPositionWRTECM;
         vctFrm3 currentMTMRPos;
@@ -347,55 +352,108 @@ void VFBehavior::UpdateVF(void)
         vct3 tempDisp;
         vct3 temp;
         int scale = 3.0;
+        vctFrm3 planePoints[3]; //points for plane vf
+        std::vector<vct3> myPoints; //points for curve vf
+        vctFrm3 pointPoint[1]; //point for point vf
+
         FunctionReadGetPositionCartesian(currentMTMRPosition);
-        currentMTMRPos = currentMTMRPosition.Position();
-        tempPos = currentMTMRPos;
+        tempPos = currentMTMRPosition.Position();
         GetCartesianPositionSlave(currentPSM1Position);
         currentPSM1Pos = currentPSM1Position.Position();
-
         MarkersType::iterator iter;
         unsigned int index = 0;
 
         //Point Virtual Fixture
         if (Markers.size() > 0 && VirtualFixtureType == POINTVIRTUALFIXTURE) {
+            std::cout<<"Point virtual fixture..."<<std::endl;
+            vct3 orientPosTorque, orientNegTorque;
+            vct3 orientPosDamping, orientNegDamping;
             for (iter = Markers.begin(); index < 1; iter++){
                 //Convert marker positions from ECMRCM to ECM
                 markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
                 //Find displacement between markert and current PSM position
-                tempDisp = currentPSM1Pos.Translation() - markerPositionWRTECM.Translation() ;
+                tempDisp = currentPSM1Position.Position().Translation() - markerPositionWRTECM.Translation() ;
                 //Scale back to MTM Fine = 3.0
                 tempDisp.Multiply(scale);                
                 //Add to current MTM position
                 tempPos.Translation().Subtract(tempDisp);
-                points[index] = tempPos;
+                pointPoint[index] = tempPos;
                 index++;
-            } 
-            point.setPoint(points[0].Translation());
+            }
+
+            point.setPoint(pointPoint[0].Translation());
             point.update(currentMTMRPosition.Position(), vfParams);
+            //orientation torque constants
+            orientPosTorque.SetAll(-0.05);
+            orientNegTorque.SetAll(-0.05);
+            orientPosDamping.SetAll(-0.001);
+            orientNegDamping.SetAll(-0.001);
+            //set position orientation
+            vfParams.SetTorqueOrientation(pointPoint[0].Rotation());
+            //orientation torque
+            vfParams.SetOrientationStiffnessPos(orientPosTorque);
+            vfParams.SetOrientationStiffnessNeg(orientNegTorque);
+            //orientation damping
+            vfParams.SetOrientationDampingPos(orientPosDamping);
+            vfParams.SetOrientationDampingNeg(orientNegDamping);
         }
 
         //Plane Virtual Fixture
         if(Markers.size() > 2 && VirtualFixtureType == PLANEVIRTUALFIXTURE){
-            vct3 line12,line23,pNormal;
-
+            std::cout<<"Plane virtual fixture..."<<std::endl;
+            //reset index
+            index = 0;
             for (iter = Markers.begin(); index < 3; iter++){
                 //Convert marker positions from ECMRCM to ECM
                 markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
                 //Find displacement between markert and current PSM position
-                tempDisp = currentPSM1Pos.Translation() - markerPositionWRTECM.Translation() ;
+                tempDisp = currentPSM1Position.Position().Translation() - markerPositionWRTECM.Translation() ;
                 //Scale back to MTM Fine = 3.0
                 tempDisp.Multiply(scale);                
                 //Add to current MTM position
                 tempPos.Translation().Subtract(tempDisp);
-                points[index] = tempPos;
+                planePoints[index] = tempPos;
                 index++;
-            } 
-            plane.setBasePoint((points[0].Translation()+points[1].Translation()+points[2].Translation())/3.0);
-            line12 = points[0].Translation()-points[1].Translation();
-            line23 = points[2].Translation()-points[1].Translation();
+            }
+
+            vct3 line12,line23,pNormal;
+            plane.setBasePoint((planePoints[0].Translation()+planePoints[1].Translation()+planePoints[2].Translation())/3.0);
+
+            //std::cout<<"Base point: "<<(planePoints[0].Translation()+planePoints[1].Translation()+planePoints[2].Translation())/3.0<<std::endl;
+            //std::cout<<"Point 1: "<<planePoints[0].Translation()<<std::endl;
+            //std::cout<<"Point 2: "<<planePoints[1].Translation()<<std::endl;
+            //std::cout<<"Point 3: "<<planePoints[2].Translation()<<std::endl;
+
+            line12 = planePoints[0].Translation()-planePoints[1].Translation();
+            line23 = planePoints[2].Translation()-planePoints[1].Translation();
             pNormal.CrossProductOf(line12,line23);
+            pNormal = pNormal / pNormal.Norm();
             plane.setPlaneNormal(pNormal);
             plane.update(currentMTMRPosition.Position(),vfParams );
+        }
+
+        //Curve Virtual Fixture
+        if(VirtualFixtureType == CURVEVIRTUALFIXTURE){
+            std::cout<<"Curve virtual fixture..."<<std::endl;
+            //reset index
+            index = 0;
+            unsigned int count = Markers.size();
+
+            for (iter = Markers.begin(); index < count; iter++){
+                //Convert marker positions from ECMRCM to ECM
+                markerPositionWRTECM = ECMtoECMRCM.Inverse() * (*iter)->AbsolutePosition;
+                //Find displacement between markert and current PSM position
+                tempDisp = currentPSM1Position.Position().Translation() - markerPositionWRTECM.Translation() ;
+                //Scale back to MTM Fine = 3.0
+                tempDisp.Multiply(scale);                
+                //Add to current MTM position
+                tempPos.Translation().Subtract(tempDisp);                   
+                myPoints.push_back(tempPos.Translation());
+                //curvePoints[index] = tempPos.Translation();
+                index++;
+            }
+            curve.setPoints(myPoints);
+            curve.update(currentMTMRPosition.Position(),vfParams);
         }
 
     } else {
@@ -416,10 +474,7 @@ bool VFBehavior::RunNoInput()
         this->VisibleList->Show();
         UpdateVF();
     }     
-
-    if (VFEnable && ForceEnabled){
-        FunctionWriteSetVF(vfParams);
-    }
+    
 
     this->Transition = true;
     this->Slave1->GetCartesianPosition(this->Slave1Position);
@@ -459,7 +514,28 @@ bool VFBehavior::RunNoInput()
             this->MapCursor->Show();
         }
     }
-    PreviousSlavePosition=Slave1Position.Position().Translation();
+
+    if (CameraJustReleased && (PreviousSlavePosition != Slave1Position.Position().Translation())) {
+        CameraJustReleased = false;
+        // UpdateVF();
+    }
+
+    if (VFEnable && ForceEnabled){
+
+        //set vf
+        if (!CameraPressed && !ClutchPressed) {
+            FunctionVoidEnableVF(); // adeguet1: we shouldn't have to enable continuously?
+            FunctionWriteSetVF(vfParams);
+        }
+
+        //update needed for curve vf
+        if(VirtualFixtureType == CURVEVIRTUALFIXTURE){
+            FunctionReadGetPositionCartesian(MTMRpos);
+            curve.update(MTMRpos.Position(),vfParams);
+        }
+    }
+
+    PreviousSlavePosition = Slave1Position.Position().Translation();
     return true;
 }
 
@@ -492,6 +568,10 @@ void VFBehavior::PointVFCallBack(void)
 void VFBehavior::PlaneVFCallBack(void)
 {
     VirtualFixtureType = PLANEVIRTUALFIXTURE;
+}
+void VFBehavior::CurveVFCallBack(void)
+{
+    VirtualFixtureType = CURVEVIRTUALFIXTURE;
 }
 
 void VFBehavior::PrimaryMasterButtonCallback(const prmEventButton & event)
@@ -530,6 +610,7 @@ void VFBehavior::MasterClutchPedalCallback(const prmEventButton & payload)
 {
     if (payload.Type() == prmEventButton::PRESSED) {
         this->ClutchPressed = true;
+        FunctionVoidDisableVF();
     } else {
         this->ClutchPressed = false;
         if (VFEnable) {
@@ -547,9 +628,10 @@ void VFBehavior::CameraControlPedalCallback(const prmEventButton & payload)
 {
     if (payload.Type() == prmEventButton::PRESSED) {
         this->CameraPressed = true;
+        FunctionVoidDisableVF();
     } else {
         this->CameraPressed = false;
-        this->UpdateVF();
+        CameraJustReleased = true;
     }
 }
 

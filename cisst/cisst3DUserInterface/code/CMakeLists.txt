@@ -43,6 +43,7 @@ set (SOURCE_FILES
      ShellSphereVirtualFixture.cpp
      DoublePlaneVirtualFixture.cpp
      DoubleSphereVirtualFixture.cpp
+     ButtonVirtualFixture.cpp
      )
 
 # all header files
@@ -78,6 +79,7 @@ set (HEADER_FILES
      ShellSphereVirtualFixture.h
      DoublePlaneVirtualFixture.h
      DoubleSphereVirtualFixture.h
+     ButtonVirtualFixture.h
      )
 
 

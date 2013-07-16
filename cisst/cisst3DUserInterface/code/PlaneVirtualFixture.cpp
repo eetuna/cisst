@@ -2,7 +2,7 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-$Id: PlaneVirtualFixture.h 3148 2013-06-26 15:46:31Z oozgune1 $
+$Id: PlaneVirtualFixture.cpp 3148 2013-06-26 15:46:31Z oozgune1 $
 
 Author(s):	Orhan Ozguner
 Created on:	2013-06-26
@@ -21,27 +21,48 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <cisst3DUserInterface/PlaneVirtualFixture.h>
 #include <cisstVector.h>
-#include <iostream>
-#include <conio.h>
-#include <cstdio>
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include<windows.h>
 
-
-PlaneVirtualFixture::PlaneVirtualFixture(void){}
-
-PlaneVirtualFixture::PlaneVirtualFixture(vct3 basePoint, vct3 planeNormal)
-{
-    setBasePoint(basePoint);
-    setPlaneNormal(planeNormal/planeNormal.Norm());
+// PlaneVirtualFixture contructor that takes no argument.
+PlaneVirtualFixture::PlaneVirtualFixture(void){
+    PositionStiffnessPositive.SetAll(0.0);
+    PositionStiffnessNegative.SetAll(-500.0);
+    PositionDampingPositive.SetAll(0.0);
+    PositionDampingNegative.SetAll(0.0);
+    ForceBiasPositive.SetAll(0.0);
+    ForceBiasNegative.SetAll(0.0);
+    OrientationStiffnessPositive.SetAll(0.0);
+    OrientationStiffnessNegative.SetAll(0.0);
+    OrientationDampingPositive.SetAll(0.0);
+    OrientationDampingNegative.SetAll(0.0);
+    TorqueBiasPositive.SetAll(0.0);
+    TorqueBiasNegative.SetAll(0.0);
 }
 
+/* PlaneVirtualFixture contructor that takes the plane normal vector and 
+the base point and sets them.
+*/
+PlaneVirtualFixture::PlaneVirtualFixture(const vct3 basePoint, const vct3 planeNormal){
+    setBasePoint(basePoint); //set base point for the plane
+    setPlaneNormal(planeNormal); //set plane normal vector
+    PositionStiffnessPositive.SetAll(0.0);
+    PositionStiffnessNegative.SetAll(-500.0);
+    PositionDampingPositive.SetAll(0.0);
+    PositionDampingNegative.SetAll(0.0);
+    ForceBiasPositive.SetAll(0.0);
+    ForceBiasNegative.SetAll(0.0);
+    OrientationStiffnessPositive.SetAll(0.0);
+    OrientationStiffnessNegative.SetAll(0.0);
+    OrientationDampingPositive.SetAll(0.0);
+    OrientationDampingNegative.SetAll(0.0);
+    TorqueBiasPositive.SetAll(0.0);
+    TorqueBiasNegative.SetAll(0.0);
+}
+
+// Finds two orthogonal vectors to the given vector.
 void PlaneVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     vct3 vec1, vec2;
     vct3 axisY(0.0 , 1.0 , 0.0);
-    vct3 axizZ(0.0 , 0.0 , 1.0);
+    vct3 axisZ(0.0 , 0.0 , 1.0);
     double len1, len2, len3;
     // Find 1st orthogonal vector
     len1 = in.Norm(); 
@@ -51,38 +72,45 @@ void PlaneVirtualFixture::findOrthogonal(vct3 in, vct3 &out1, vct3 &out2){
     // Check to make sure the Y-axis unit vector is not too close to input unit vector,
     // if they are close dot product will be large and then use different arbitrary unit vector
     if ( vctDotProduct(in, vec1) >= 0.98){
-        vec1.CrossProductOf(in,axizZ); 
-        std::cout<<"Something is not good..."<<std::endl;
+        vec1.CrossProductOf(in,axisZ); 
+    }
+    //TODO find a better way to handle
+    if(vec1.X()==0.0 && vec1.Y()==0.0 && vec1.Z()== 0.0){
+        vec1.CrossProductOf(in,axisZ);
     }
     // Now find 2nd orthogonal vector
     vec2.CrossProductOf(in,vec1); 
     len2 = vec1.Norm(); 
     len3 = vec2.Norm(); 
-
+    //orthogonal vectors to the given vector
     out1 = vec1.Divide(len2);
     out2 = vec2.Divide(len3);
 }
 
-
+// Finds the closest point to the plane.
 vct3 PlaneVirtualFixture::closestPoint(vct3 p){
     return p-getPlaneNormal()*(vctDotProduct((p-getBasePoint()),getPlaneNormal()));
 }
 
+// Finds the closest distance to the plane.
 double PlaneVirtualFixture::shortestDistance(vct3 p){
     return abs(vctDotProduct((p-getBasePoint()),getPlaneNormal()));
 }
+
+// Updates the plane virtual fixture parameters.
 void PlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSet & vfParams) {
-    vct3 position;  //<!final force position
-    vctMatRot3 rotation;  //<!final force orientation
-    vct3 pos_error; //<!position error between current and the closest point position
-    vct3 currentPosition; //<! current MTM position
-    vct3 closest;    //<!closest point from MTM current position to the plane
+    vct3 position;  //<! Force position
+    vctMatRot3 rotation;  //<! Force orientation
+    vct3 pos_error; //<! Position error between current and the closest point position
+    vct3 currentPosition; //<! Current MTM position
+    vct3 closest; //<! Closest point from MTM current position to the plane
     vct3 norm_vector; //<! normal vector 
-    vct3 ortho1(0.0); //<! orthogonal vector to the norm vector
-    vct3 ortho2(0.0); //<!orthogonal vector to the norm vector
-    vct3 stiffnessPos; //<!position stiffness constant (positive)
-    vct3 stiffnessNeg; //<!position stiffness constant (negative)
-    double distance; //<!distance between current position and the closest point position
+    vct3 ortho1(0.0); //<! Orthogonal vector to the normal vector to form force/torque orientation matrix
+    vct3 ortho2(0.0); //<! Orthogonal vector to the normal vector to form force/torque orientation matrix
+    vct3 stiffnessPos, stiffnessNeg; //<! Position stiffness constant (positive and negative)
+    double distance; //<! Distance between current position and the closest point position
+    stiffnessNeg.SetAll(0.0);
+    stiffnessPos.SetAll(0.0);
 
     //get curent MTM position
     currentPosition = pos.Translation();
@@ -97,62 +125,58 @@ void PlaneVirtualFixture::update(const vctFrm3 & pos , prmFixtureGainCartesianSe
     norm_vector = getPlaneNormal(); //use plane normal from user
     //find 2 orthogonal vectors to the norm vector
     findOrthogonal(norm_vector,ortho1,ortho2);
-
     //form force orientation using orthogonal vectors and normal vector
     rotation.Column(0).Assign(ortho2);
     rotation.Column(1).Assign(-ortho1);
     rotation.Column(2).Assign(norm_vector);
-
     //position should be closest point to the plane
     position = closest;
-
     //set force position
     vfParams.SetForcePosition(position);
     //set force orientation
     vfParams.SetForceOrientation(rotation);
-    //set torque orientation 
+    //set torque orientation
     vfParams.SetTorqueOrientation(rotation);
 
     //in order to protect abowe the plane comment out the following line
-    stiffnessPos.SetAll(0.0);
-    //stiffnessPos.Z() = -500.0;
+    //stiffnessPos.Z() = PositionStiffnessPositive.Z();
 
     //in order to protect below the plane comment out the following line
-    stiffnessNeg.SetAll(0.0);
-    stiffnessNeg.Z() = -500.0;
+    stiffnessNeg.Z() = PositionStiffnessNegative.Z();
 
     //set Position Stiffness
     vfParams.SetPositionStiffnessPos(stiffnessPos);
     vfParams.SetPositionStiffnessNeg(stiffnessNeg);
 
     //Temporary hard code solution ask Anton for better way
-    vct3 temp;
-    temp.SetAll(0.0);
-    vfParams.SetPositionDampingPos(temp);
-    vfParams.SetPositionDampingNeg(temp);
-    vfParams.SetForceBiasPos(temp);
-    vfParams.SetForceBiasNeg(temp);
-    vfParams.SetOrientationStiffnessPos(temp);
-    vfParams.SetOrientationStiffnessNeg(temp);
-    vfParams.SetOrientationDampingPos(temp);
-    vfParams.SetOrientationDampingNeg(temp);
-    vfParams.SetTorqueBiasPos(temp);
-    vfParams.SetTorqueBiasNeg(temp);
-
+    vfParams.SetPositionDampingPos(PositionDampingPositive);
+    vfParams.SetPositionDampingNeg(PositionDampingNegative);
+    vfParams.SetForceBiasPos(ForceBiasPositive);
+    vfParams.SetForceBiasNeg(ForceBiasNegative);
+    vfParams.SetOrientationStiffnessPos(OrientationStiffnessPositive);
+    vfParams.SetOrientationStiffnessNeg(OrientationStiffnessNegative);
+    vfParams.SetOrientationDampingPos(OrientationDampingPositive);
+    vfParams.SetOrientationDampingNeg(OrientationDampingNegative);
+    vfParams.SetTorqueBiasPos(TorqueBiasPositive);
+    vfParams.SetTorqueBiasNeg(TorqueBiasNegative);
 }
 
-
-void PlaneVirtualFixture::setBasePoint(const vct3 & b){
-    basePoint = b;
-}
-void PlaneVirtualFixture::setPlaneNormal(const vct3 & n){
-    normVector = n;
+// Sets the base point for the plane.
+void PlaneVirtualFixture::setBasePoint(const vct3 & base){
+    basePoint = base;
 }
 
+// Sets the plane normal vector for the plane.
+void PlaneVirtualFixture::setPlaneNormal(const vct3 & normal){
+    planeNormal = normal;
+}
+
+// Returns the base point for the plane.
 vct3 PlaneVirtualFixture::getBasePoint(void){
     return basePoint;
 }
 
+// Returns the plane normal vector.
 vct3 PlaneVirtualFixture::getPlaneNormal(void){
-    return normVector;
+    return planeNormal;
 }

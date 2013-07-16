@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisst3DUserInterface/VirtualFixture.h>
 #include <cisst3DUserInterface/PointVirtualFixture.h>
 #include <cisst3DUserInterface/PlaneVirtualFixture.h>
+#include <cisst3DUserInterface/CurveVirtualFixture.h>
 #include <list>
 #include <limits>
 #define MARKER_MAX 20
@@ -56,6 +57,7 @@ protected:
     unsigned long Ticker;
     void PointVFCallBack(void);
     void PlaneVFCallBack(void);
+    void CurveVFCallBack(void);
     void EnableVFCallback(void);
     void DisableVFCallback(void);
     void PrimaryMasterButtonCallback(const prmEventButton & event);
@@ -100,9 +102,11 @@ protected:
     mtsFunctionRead FunctionReadGetPositionCartesian;
     prmPositionCartesianGet currentMTMRPosition;
     prmPositionCartesianGet currentPSM1Position;
+    prmPositionCartesianGet MTMRpos;
 
     PointVirtualFixture point;
     PlaneVirtualFixture plane;
+    CurveVirtualFixture curve;
     prmFixtureGainCartesianSet vfParams;
 
     mtsExecutionResult result;
@@ -124,5 +128,5 @@ private:
     bool ForceEnabled;
     bool VFEnable;
     int VirtualFixtureType;
+    bool CameraJustReleased;
 };
-

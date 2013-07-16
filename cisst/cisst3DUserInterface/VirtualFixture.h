@@ -18,7 +18,6 @@ http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
 */
-
 #include <cisstVector.h>
 #include <cisstParameterTypes/prmFixtureGainCartesianSet.h>
 
@@ -36,13 +35,13 @@ public:
     /*! @brief Updates the virtual fixture paramters with the given current position.
     *
     *   This function is responsibe for the math. It takes current position and orientation 
-    *   of the manipulator, calculates the virtual fixture parameters as 
-    *   prmFixtureGainCartesianSet class object.
+    *   of the manipulator, calculates the virtual fixture parameters.
     *
     *   @param pos current position and orientation of the MTM
     *   @param vfParams address of the virtual fixture parameters.
     */
-    virtual void update(const vctFrm3 & pos , prmFixtureGainCartesianSet & vfParams) = 0;
+    virtual void update(const vctFrm3 & position , prmFixtureGainCartesianSet & vfParams) = 0;
+
 };
 
 #endif

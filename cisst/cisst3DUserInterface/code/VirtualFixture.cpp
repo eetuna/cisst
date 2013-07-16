@@ -1,4 +1,3 @@
-
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-    */
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
@@ -18,6 +17,8 @@ no warranty.  The complete license can be found in license.txt and
 http://www.cisst.org/cisst/license.txt.
 
 --- end cisst license ---
-*/#include <cisst3DUserInterface/VirtualFixture.h>
+*/
+
+#include <cisst3DUserInterface/VirtualFixture.h>
 
 
