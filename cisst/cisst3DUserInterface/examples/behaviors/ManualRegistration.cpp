@@ -424,26 +424,6 @@ ManualRegistration::ManualRegistration(const std::string & name):
     model = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::CUBE,25);
     tumor = new ManualRegistrationSurfaceVisibleStippleObject("",ManualRegistrationSurfaceVisibleStippleObject::SPHERE,5);
 
-    // Adding US image plane
-//    ImagePlaneLeft = new ui3ImagePlane();
-//    ImagePlaneRight = new ui3ImagePlane();
-//    CMN_ASSERT(ImagePlaneLeft);
-//    CMN_ASSERT(ImagePlaneRight);
-//    // Get bitmap dimensions from pipeline.
-//    // The pipeline has to be already initialized to get the required info.
-
-//    ImagePlaneLeft->SetBitmapSize(GetStreamWidth("StereoVideo",SVL_LEFT)/4, GetStreamHeight("StereoVideo",SVL_LEFT)/4);
-//    ImagePlaneRight->SetBitmapSize(GetStreamWidth("StereoVideo",SVL_RIGHT)/4, GetStreamHeight("StereoVideo",SVL_RIGHT)/4);
-
-//    // Set plane size (dimensions are already in millimeters), miltuplied by a scaling factor to fit probe dimensions
-//    ImagePlaneLeft->SetPhysicalSize(40.0*.35, 50.0*.35);
-//    ImagePlaneRight->SetPhysicalSize(40.0*.35, 50.0*.35);
-
-//    // Change pivot position to move plane to the right location.
-//    // The pivot point will remain in the origin, only the plane moves.
-//    ImagePlaneLeft->SetPhysicalPositionRelativeToPivot(vct3(0.0, 0.0, 0.0));
-//    ImagePlaneRight->SetPhysicalPositionRelativeToPivot(vct3(0.0, 0.0, 0.0));
-
 #else
     //20121017_T2
     model = new ManualRegistrationSurfaceVisibleStippleObject("/home/wen/Images/20121121_Maori/fixedSegmentation.vtk");
@@ -472,13 +452,6 @@ ManualRegistration::ManualRegistration(const std::string & name):
          iter++) {
         VisibleListVirtual->Add(iter->second);
     }
-
-//    this->ImagePlaneLeft->Lock();
-//    this->VisibleList->Add(this->ImagePlaneLeft);
-//    this->ImagePlaneLeft->Unlock();
-//    this->ImagePlaneRight->Lock();
-//    this->VisibleList->Add(this->ImagePlaneRight);
-//    this->ImagePlaneRight->Unlock();
 
     VisibleListECMRCM->Add(VisibleListVirtual);
     VisibleListECMRCM->Add(VisibleListReal);
@@ -1267,15 +1240,6 @@ void ManualRegistration::Startup(void) {
 
 void ManualRegistration::OnStreamSample(svlSample * sample, int streamindex)
 {
-    //if (State == Foreground) {
-//    int indexLeft = GetStreamIndexFromName(SVL_LEFT);
-//    int indexRight = GetStreamIndexFromName(SVL_LEFT);
-//    if(indexLeft == streamindex)
-//        ImagePlaneLeft->SetImage(dynamic_cast<svlSampleImage *>(sample), streamindex);
-//    if(indexRight == streamindex)
-//        ImagePlaneRight->SetImage(dynamic_cast<svlSampleImage *>(sample), streamindex);
-//        std::cout << "OnStreamSample being called!" << std::endl;
-    //}
 }
 
 void ManualRegistration::PrimaryMasterButtonCallback(const prmEventButton & event)
@@ -1460,7 +1424,7 @@ bool ManualRegistration::ImportFiducialFile(const std::string & inputFile, Visib
         Tokenize(tempLine, token, ",");
         if (inf.eof() || token.size() <= 0)
             break;
-        std::cerr << token << std::endl;
+		std::cerr << cmnData<std::vector<std::string> >::HumanReadable(token) << std::endl;
         if (token.at(0).compare(0,1,"#")) {
             if (token.size() < 4)
                 return false;
@@ -2125,13 +2089,9 @@ void ManualRegistration::UpdateVisibleList()
     if(VisibleToggle == ALL || VisibleToggle == NO_FIDUCIALS || VisibleToggle == TUMOR)
     {
         this->Cursor->Show();
-        //this->ImagePlaneLeft->Show();
-        //this->ImagePlaneRight->Show();
     }else
     {
         this->Cursor->Hide();
-        //this->ImagePlaneLeft->Hide();
-        //this->ImagePlaneRight->Hide();
     }
 
     for (ManualRegistrationObjectType::iterator iter = VisibleObjectsVirtualTumors.begin();

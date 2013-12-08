@@ -28,7 +28,13 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstStereoVision.h>
 #include <cisst3DUserInterface/ui3CursorSphere.h>
 
-#include <sawIntuitiveDaVinci/mtsIntuitiveDaVinci.h>
+#ifdef sawIntuitiveDaVinci
+  #include <sawIntuitiveDaVinci/mtsIntuitiveDaVinci.h>
+#else
+  #ifdef cisstDaVinci_isi_bbapi
+    #include <cisstDaVinci/cdvReadWrite.h>
+  #endif
+#endif
 
 #include "BehaviorLUS.h"
 
@@ -55,10 +61,12 @@ int main()
     cmnLogger::SetMaskClassMatching("mts", CMN_LOG_ALLOW_ALL);
 
     mtsComponentManager * componentManager = mtsComponentManager::GetInstance();
-#if TORS
+#ifdef sawIntuitiveDaVinci
     mtsIntuitiveDaVinci * daVinci = new mtsIntuitiveDaVinci("daVinci", 50);
 #else
+  #ifdef cisstDaVinci_isi_bbapi
     cdvReadWrite * daVinci = new cdvReadWrite("daVinci", 60 /* Hz */);
+  #endif
 #endif
     componentManager->AddComponent(daVinci);
 
@@ -90,7 +98,7 @@ int main()
 #endif
 
     // this is were the icons have been copied by CMake post build rule
-    cmnPath path;;
+    cmnPath path;
     path.AddRelativeToCisstShare("/cisst3DUserInterface/icons");
     std::string fileName = path.Find("move.png", cmnPath::READ);
     PNGViewer3D * pngViewer;
@@ -182,15 +190,14 @@ int main()
     // setup renderers
 
     svlCameraGeometry camera_geometry;
-    // Load Camera calibration results on TORS
-#ifdef _WIN32
-	camera_geometry.LoadCalibration("C:/Users/Wen/MyCommon/calib_results.txt");
-#else
-    camera_geometry.LoadCalibration("/home/wen/MyCommon/calib_results.txt");
-#endif
-	//Manubrium
-    //camera_geometry.LoadCalibration("E:/Users/davinci_mock_or/calib_results.txt");
-
+    // Load Camera calibration results
+    path.AddRelativeToCisstShare("models/cameras");
+    std::string calibrationFile = path.Find("mock_or_calib_results.txt");
+    if (calibrationFile == "") {
+        std::cerr << "Unable to find camera calibration file in path: " << path << std::endl;
+        exit(-1);
+    }
+    camera_geometry.LoadCalibration(calibrationFile);
     // Center world in between the two cameras (da Vinci specific)
     camera_geometry.SetWorldToCenter();
     // Rotate world by 180 degrees (VTK specific)

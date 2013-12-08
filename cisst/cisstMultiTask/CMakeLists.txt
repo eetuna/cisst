@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# (C) Copyright 2005-2012 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2005-2013 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -44,17 +44,17 @@ if (CISST_MTS_HAS_ICE)
     set (ICE_LIBRARIES ${ICE_LIBRARY_NAME})
     cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES)
   else (CISST_HAS_IOS)
-  find_package (Ice REQUIRED)
-  cisst_set_package_settings (cisstMultiTask ZeroCIce INCLUDE_DIRECTORIES ICE_INCLUDE_DIR)
-  cisst_set_package_settings (cisstMultiTask ZeroCIce LINK_DIRECTORIES ICE_LIBRARY_DIR)
-  if (WIN32)
-    set (ICE_LIBRARIES_ALL optimized Ice  optimized IceUtil
-                           debug     Iced debug     IceUtild)
-    cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES_ALL)
-  else (WIN32)
-    set (ICE_LIBRARIES ${ICE_LIBRARY_NAME} IceUtil)
-    cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES)
-  endif (WIN32)
+    find_package (Ice REQUIRED)
+    cisst_set_package_settings (cisstMultiTask ZeroCIce INCLUDE_DIRECTORIES ICE_INCLUDE_DIR)
+    cisst_set_package_settings (cisstMultiTask ZeroCIce LINK_DIRECTORIES ICE_LIBRARY_DIR)
+    if (WIN32)
+      set (ICE_LIBRARIES_ALL optimized Ice  optimized IceUtil
+                             debug     Iced debug     IceUtild)
+      cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES_ALL)
+    else (WIN32)
+      set (ICE_LIBRARIES ${ICE_LIBRARY_NAME} ${ICEUTIL_LIBRARY_NAME})
+      cisst_set_package_settings (cisstMultiTask ZeroCIce LIBRARIES ICE_LIBRARIES)
+    endif (WIN32)
   endif (CISST_HAS_IOS)
 else (CISST_MTS_HAS_ICE)
   cisst_unset_all_package_settings (cisstMultiTask ZeroCIce)

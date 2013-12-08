@@ -168,6 +168,4 @@ private:
     typedef std::map<int, ManualRegistrationSurfaceVisibleStippleObject *> ManualRegistrationObjectType;
     ManualRegistrationObjectType VisibleObjects, VisibleObjectsVirtualFeedback, VisibleObjectsVirtualTumors, VisibleObjectsVirtualFiducials, VisibleObjectsRealFiducials, VisibleObjectsVirtualTargets, VisibleObjectsRealTargets,
         VisibleObjectsVirtualCalibration,VisibleObjectsRealCalibration;
-
-    ui3ImagePlane *ImagePlaneLeft, *ImagePlaneRight;
 };

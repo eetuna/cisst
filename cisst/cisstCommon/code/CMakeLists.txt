@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# (C) Copyright 2003-2012 Johns Hopkins University (JHU), All Rights
+# (C) Copyright 2003-2013 Johns Hopkins University (JHU), All Rights
 # Reserved.
 #
 # --- begin cisst license - do not edit ---
@@ -21,6 +21,8 @@ set (SOURCE_FILES
      cmnClassServices.cpp
      cmnCommandLineOptions.cpp
      cmnDataFunctions.cpp
+     cmnDataFunctionsString.cpp
+     cmnDataFormat.cpp
      cmnDeSerializer.cpp
      cmnGenericObject.cpp
      cmnGetChar.cpp
@@ -50,6 +52,14 @@ set (HEADER_FILES
      cmnCommandLineOptions.h
      cmnConstants.h
      cmnDataFunctions.h
+     cmnDataFunctionsEnumMacros.h
+     cmnDataFunctionsMacros.h
+     cmnDataFunctionsString.h
+     cmnDataFunctionsVector.h
+     cmnDataFunctionsArray.h
+     cmnDataFunctionsVectorHelpers.h
+     cmnDataFunctionsMatrixHelpers.h
+     cmnDataFormat.h
      cmnDeSerializer.h
      cmnExport.h
      cmnExportMacros.h
@@ -80,6 +90,15 @@ set (HEADER_FILES
      cmnUnits.h
      )
 
+if (CISST_HAS_JSON)
+  set (SOURCE_FILES
+       ${SOURCE_FILES}
+       cmnDataFunctionsJSON.cpp)
+  set (HEADER_FILES
+       ${HEADER_FILES}
+       cmnDataFunctionsJSON.h)
+endif (CISST_HAS_JSON)
+
 cisst_add_library (
   LIBRARY cisstCommon
   FOLDER cisstCommon
@@ -87,3 +106,7 @@ cisst_add_library (
   HEADER_FILES ${HEADER_FILES})
 
 add_dependencies (cisstCommon cisstRevision cisstBuildType)
+
+if (CISST_HAS_JSON)
+  add_dependencies (cisstCommon cisstJSONExternal)
+endif (CISST_HAS_JSON)

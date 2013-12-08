@@ -2030,7 +2030,7 @@ svlFilterSourceVideoCapture::PlatformType svlVidCapSrcSDI::GetPlatformType()
     std::cout << "svlVidCapSrcSDI::GetPlatformType()" << std::endl;
 #endif
 
-    return svlFilterSourceVideoCapture::NVIDIAQuadroSDI;
+	return svlFilterSourceVideoCaptureTypes::NVIDIAQuadroSDI;
 }
 
 int svlVidCapSrcSDI::SetStreamCount(unsigned int numofstreams)
@@ -2083,7 +2083,7 @@ int svlVidCapSrcSDI::GetDeviceList(svlFilterSourceVideoCapture::DeviceInfo **dev
 
         for (sys = 0; sys < SDINUMDEVICES; sys ++) {
             // platform
-            deviceinfo[0][sys].platform = svlFilterSourceVideoCapture::NVIDIAQuadroSDI;
+			deviceinfo[0][sys].platform = svlFilterSourceVideoCaptureTypes::PlatformType::NVIDIAQuadroSDI;
 
             // id
             deviceinfo[0][sys].ID = sys;
@@ -2263,7 +2263,7 @@ int svlVidCapSrcSDI::GetFormatList(unsigned int deviceid, svlFilterSourceVideoCa
     formatlist[0] = new svlFilterSourceVideoCapture::ImageFormat[1];
     formatlist[0][0].width = 1920;//CaptureProc[0]->GetSDIin().getWidth();
     formatlist[0][0].height = 1080;//CaptureProc[0]->GetSDIin().getHeight();
-    formatlist[0][0].colorspace = svlFilterSourceVideoCapture::PixelRGB8;
+    formatlist[0][0].colorspace = svlFilterSourceVideoCaptureTypes::PixelRGB8;
     formatlist[0][0].rgb_order = true;
     formatlist[0][0].yuyv_order = false;
     formatlist[0][0].framerate = 59.94;
@@ -2282,7 +2282,7 @@ int svlVidCapSrcSDI::GetFormat(svlFilterSourceVideoCapture::ImageFormat& format,
 
     format.width = 1920;//CaptureProc[0]->GetSDIin().getWidth();
     format.height = 1080;//CaptureProc[0]->GetSDIin().getHeight();
-    format.colorspace = svlFilterSourceVideoCapture::PixelRGB8;
+    format.colorspace = svlFilterSourceVideoCaptureTypes::PixelRGB8;
     format.rgb_order = true;
     format.yuyv_order = false;
     format.framerate = 59.94;
