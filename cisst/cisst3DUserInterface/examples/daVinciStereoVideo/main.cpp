@@ -205,8 +205,8 @@ int main()
 
 #if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
     // *** Left view ***
-    guiManager.AddRenderer(svlRenderTargets::Get(0)->GetWidth(),  // render width
-                           svlRenderTargets::Get(0)->GetHeight(), // render height
+    guiManager.AddRenderer(svlRenderTargets::Get(-1)->GetWidth(),  // render width
+                           svlRenderTargets::Get(-1)->GetHeight(), // render height
                            1.0,                                   // virtual camera zoom
                            false,                                 // borderless?
                            0, 0,                                  // window position
@@ -223,8 +223,8 @@ int main()
 #endif
     // *** Right view ***
 
-    guiManager.AddRenderer(svlRenderTargets::Get(0)->GetWidth(),  // render width
-                           svlRenderTargets::Get(0)->GetHeight(), // render height
+    guiManager.AddRenderer(svlRenderTargets::Get(-1)->GetWidth(),  // render width
+                           svlRenderTargets::Get(-1)->GetHeight(), // render height
                            1.0,                                   // virtual camera zoom
                            false,                                 // borderless?
                            0, 0,                                  // window position
@@ -233,11 +233,11 @@ int main()
 
     // Sending renderer output to external render targets
 #if CISST_SVL_HAS_NVIDIA_QUADRO_SDI
-    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(0));
+    guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(-1));
 #else
     guiManager.SetRenderTargetToRenderer("LeftEyeView",  svlRenderTargets::Get(1));
 #endif
-    guiManager.SetRenderTargetToRenderer("RightEyeView", svlRenderTargets::Get(0));
+    guiManager.SetRenderTargetToRenderer("RightEyeView", svlRenderTargets::Get(-1));
 
 #if VOLUME_RENDERING
     // Creating video background image planes

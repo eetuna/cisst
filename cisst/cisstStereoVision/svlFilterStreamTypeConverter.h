@@ -40,6 +40,7 @@ public:
 
     int SetType(svlStreamType inputtype, svlStreamType outputtype);
     void SetScaling(float ratio) { Scaling = ratio; }
+    void SetAlpha(unsigned char alpha) { Alpha = alpha; }
     float GetScaling() { return Scaling; }
     void SetMono16ShiftDown(unsigned int shiftdown) { Mono16ShiftDown = shiftdown; }
     unsigned int GetMono16ShiftDown() { return Mono16ShiftDown; }
@@ -53,6 +54,7 @@ private:
 
     float Scaling;
     unsigned int Mono16ShiftDown;
+    unsigned char Alpha;
 };
 
 CMN_DECLARE_SERVICES_INSTANTIATION_EXPORT(svlFilterStreamTypeConverter)

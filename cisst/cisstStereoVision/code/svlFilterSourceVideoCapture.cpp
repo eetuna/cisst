@@ -222,7 +222,7 @@ int svlFilterSourceVideoCapture::EnumerateDevices()
 #elif CISST_SVL_HAS_NVIDIA_QUADRO_SDI
             // SDI device object is a singleton, cannot be created dynamically
 			if (APIPlatforms[j] == PlatformType::NVIDIAQuadroSDI) {
-                go = svlVidCapSrcSDI::GetInstance();
+                go = dynamic_cast<svlVidCapSrcBase*>(svlRenderTargets::Get(0));//svlVidCapSrcSDI::GetInstance();
             }
 #endif // CISST_SVL_HAS_NVIDIA_QUADRO_SDI
         }
@@ -522,7 +522,7 @@ void svlFilterSourceVideoCapture::InitializeCaptureAPIs()
                 }
 #elif CISST_SVL_HAS_NVIDIA_QUADRO_SDI
                 if ((*iter).first == "svlVidCapSrcSDI") {
-                    go = svlVidCapSrcSDI::GetInstance();
+                    go = dynamic_cast<svlVidCapSrcBase*>(svlRenderTargets::Get(0));//svlVidCapSrcSDI::GetInstance();
                 }
 #endif // CISST_SVL_HAS_MIL
             }
@@ -596,7 +596,7 @@ int svlFilterSourceVideoCapture::CreateCaptureAPIHandlers()
                 }
 #elif CISST_SVL_HAS_NVIDIA_QUADRO_SDI
                 if (APIPlatforms[j] == PlatformType::NVIDIAQuadroSDI) {
-                    DeviceGenObj[j] = svlVidCapSrcSDI::GetInstance();
+                    DeviceGenObj[j] = dynamic_cast<svlVidCapSrcBase*>(svlRenderTargets::Get(0));//svlVidCapSrcSDI::GetInstance();
                 }
 #endif // CISST_SVL_HAS_MIL
             }

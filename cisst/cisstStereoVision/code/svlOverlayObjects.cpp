@@ -891,6 +891,22 @@ void svlOverlayStaticImage::SetImage(const svlSampleImageRGB & image)
     Buffer->Push(image.GetUCharPointer(), image.GetDataSize(), false);
 }
 
+void svlOverlayStaticImage::SetImage(const svlSampleImageRGBA & image)
+{
+    const unsigned int width  = image.GetWidth();
+    const unsigned int height = image.GetHeight();
+
+    if (Buffer) {
+        if (width != Buffer->GetWidth() || height != Buffer->GetHeight()) return;
+    }
+    else {
+        if (width < 1 || height < 1) return;
+        Buffer = new svlBufferImage(width, height);
+    }
+
+    Buffer->Push(image.GetUCharPointer(), image.GetDataSize(), false);
+}
+
 void svlOverlayStaticImage::SetImage(const svlSampleImageRGBStereo & image, unsigned int imagech)
 {
     if (imagech >= image.GetVideoChannels()) return;
@@ -1391,8 +1407,8 @@ svlOverlayStaticRect::svlOverlayStaticRect() :
 
 svlOverlayStaticRect::svlOverlayStaticRect(unsigned int videoch,
                                            bool visible,
-                                           const svlRect & rect,
-                                           const svlRGB & color,
+                                           svlRect rect,
+                                           svlRGB color,
                                            bool fill) :
     svlOverlay(videoch, visible),
     Rect(rect),
@@ -1407,7 +1423,7 @@ svlOverlayStaticRect::~svlOverlayStaticRect()
     if (DrawInternals) delete DrawInternals;
 }
 
-void svlOverlayStaticRect::SetRect(const svlRect & rect)
+void svlOverlayStaticRect::SetRect(svlRect rect)
 {
     Rect = rect;
 }
@@ -1417,7 +1433,7 @@ void svlOverlayStaticRect::SetRect(int left, int top, int right, int bottom)
     Rect.Assign(left, top, right, bottom);
 }
 
-void svlOverlayStaticRect::SetColor(const svlRGB & color)
+void svlOverlayStaticRect::SetColor(svlRGB color)
 {
     Color = color;
 }
@@ -1501,53 +1517,49 @@ void svlOverlayStaticRect::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_
 
 svlOverlayStaticEllipse::svlOverlayStaticEllipse() :
     svlOverlay(),
-    Ellipse(0, 0, 0, 0, 0.0),
-    Thickness(1),
+    Center(0, 0),
+    RadiusHoriz(0),
+    RadiusVert(0),
+    Angle(0.0),
     Color(255, 255, 255),
-    Fill(true)
+    Fill(true),
+    Thickness(1)
 {
 }
 
 svlOverlayStaticEllipse::svlOverlayStaticEllipse(unsigned int videoch,
                                                  bool visible,
-                                                 const svlEllipse & ellipse,
-                                                 const svlRGB & color,
-                                                 bool fill) :
-    svlOverlay(videoch, visible),
-    Ellipse(ellipse),
-    Thickness(1),
-    Color(color),
-    Fill(fill)
-{
-}
-
-svlOverlayStaticEllipse::svlOverlayStaticEllipse(unsigned int videoch,
-                                                 bool visible,
-                                                 const svlPoint2D & center,
+                                                 const svlPoint2D center,
                                                  int radius_horiz,
                                                  int radius_vert,
                                                  double angle,
-                                                 const svlRGB & color,
+                                                 svlRGB color,
                                                  bool fill) :
     svlOverlay(videoch, visible),
-    Ellipse(center.x, center.y, radius_horiz, radius_vert, angle),
-    Thickness(1),
+    Center(center),
+    RadiusHoriz(radius_horiz),
+    RadiusVert(radius_vert),
+    Angle(angle),
     Color(color),
-    Fill(fill)
+    Fill(fill),
+    Thickness(1)
 {
 }
 
 svlOverlayStaticEllipse::svlOverlayStaticEllipse(unsigned int videoch,
                                                  bool visible,
-                                                 const svlPoint2D & center,
+                                                 const svlPoint2D center,
                                                  int radius,
-                                                 const svlRGB & color,
+                                                 svlRGB color,
                                                  bool fill) :
     svlOverlay(videoch, visible),
-    Ellipse(center.x, center.y, radius, radius, 0.0),
-    Thickness(1),
+    Center(center),
+    RadiusHoriz(radius),
+    RadiusVert(radius),
+    Angle(0.0),
     Color(color),
-    Fill(fill)
+    Fill(fill),
+    Thickness(1)
 {
 }
 
@@ -1555,39 +1567,28 @@ svlOverlayStaticEllipse::~svlOverlayStaticEllipse()
 {
 }
 
-void svlOverlayStaticEllipse::SetEllipse(const svlEllipse & ellipse)
+void svlOverlayStaticEllipse::SetCenter(const svlPoint2D center)
 {
-    Ellipse = ellipse;
-}
-
-void svlOverlayStaticEllipse::SetCenter(const svlPoint2D & center)
-{
-    Ellipse.cx = center.x;
-    Ellipse.cy = center.y;
+    Center = center;
 }
 
 void svlOverlayStaticEllipse::SetRadius(const int radius_horiz, const int radius_vert)
 {
-    Ellipse.rx = radius_horiz;
-    Ellipse.ry = radius_vert;
+    RadiusHoriz = radius_horiz;
+    RadiusVert  = radius_vert;
 }
 
 void svlOverlayStaticEllipse::SetRadius(const int radius)
 {
-    Ellipse.rx = Ellipse.ry = radius;
+    RadiusHoriz = RadiusVert = radius;
 }
 
 void svlOverlayStaticEllipse::SetAngle(const double angle)
 {
-    Ellipse.angle = angle;
+    Angle = angle;
 }
 
-void svlOverlayStaticEllipse::SetThickness(unsigned int thickness) 
-{
-    Thickness = thickness;
-}
-
-void svlOverlayStaticEllipse::SetColor(const svlRGB & color)
+void svlOverlayStaticEllipse::SetColor(svlRGB color)
 {
     Color = color;
 }
@@ -1596,31 +1597,29 @@ void svlOverlayStaticEllipse::SetFill(bool fill)
 {
     Fill = fill;
 }
-
-svlEllipse svlOverlayStaticEllipse::GetEllipse() const
+void svlOverlayStaticEllipse::SetThickness(unsigned int thickness) 
 {
-    return Ellipse;
+    Thickness = thickness;
+}
+unsigned int svlOverlayStaticEllipse::GetThickness()
+{
+    return Thickness;
 }
 
 svlPoint2D svlOverlayStaticEllipse::GetCenter() const
 {
-    return svlPoint2D(Ellipse.cx, Ellipse.cy);
+    return Center;
 }
 
 void svlOverlayStaticEllipse::GetRadius(int & radius_horiz, int & radius_vert) const
 {
-    radius_horiz = Ellipse.rx;
-    radius_vert  = Ellipse.ry;
+    radius_horiz = RadiusHoriz;
+    radius_vert  = RadiusVert;
 }
 
 double svlOverlayStaticEllipse::GetAngle() const
 {
-    return Ellipse.angle;
-}
-
-unsigned int svlOverlayStaticEllipse::GetThickness()
-{
-    return Thickness;
+    return Angle;
 }
 
 svlRGB svlOverlayStaticEllipse::GetColor() const
@@ -1636,36 +1635,35 @@ bool svlOverlayStaticEllipse::GetFill() const
 void svlOverlayStaticEllipse::DrawInternal(svlSampleImage* bgimage, svlSample* CMN_UNUSED(input))
 {
     int cx, cy, rx, ry;
-    double angle;
 
     if (Transformed) {
         // Calculate translation
-        cx = static_cast<int>(Transform.Element(0, 0) * Ellipse.cx +
-                              Transform.Element(0, 1) * Ellipse.cy +
+        cx = static_cast<int>(Transform.Element(0, 0) * Center.x +
+                              Transform.Element(0, 1) * Center.y +
                               Transform.Element(0, 2));
-        cy = static_cast<int>(Transform.Element(1, 0) * Ellipse.cx +
-                              Transform.Element(1, 1) * Ellipse.cy +
+        cy = static_cast<int>(Transform.Element(1, 0) * Center.x +
+                              Transform.Element(1, 1) * Center.y +
                               Transform.Element(1, 2));
         // Calculate scale from rotation matrix norm
         vctFixedSizeMatrixRef<double, 2, 2, 3, 1> rot(Transform.Pointer());
         double norm = rot.Norm();
-        rx = static_cast<int>(norm * Ellipse.rx);
-        ry = static_cast<int>(norm * Ellipse.ry);
-        // Calculate angle
-        angle = Ellipse.angle + acos(Transform.Element(0, 0));
+        rx = static_cast<int>(norm * RadiusHoriz);
+        ry = static_cast<int>(norm * RadiusVert);
+
+        // TO DO: need to take care of rotation as well!
     }
     else {
-        cx = Ellipse.cx; cy = Ellipse.cy;
-        rx = Ellipse.rx; ry = Ellipse.ry;
-        angle = Ellipse.angle;
+        cx = Center.x;    cy = Center.y;
+        rx = RadiusHoriz; ry = RadiusVert;
     }
 
     svlDraw::Ellipse(bgimage, VideoCh,
                      cx, cy, rx, ry,
                      Color,
                      0.0, 360.0,
-                     angle,
+                     Angle * 57.295779513, // Convert from radians to angle
                      (Fill ? -1 : Thickness));
+
 }
 
 

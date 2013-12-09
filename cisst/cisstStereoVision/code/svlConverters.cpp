@@ -5,7 +5,7 @@
   $Id$
   
   Author(s):  Balazs Vagvolgyi
-  Created on: 2007 
+  Created on: 2007
 
   (C) Copyright 2006-2007 Johns Hopkins University (JHU), All Rights
   Reserved.
@@ -28,162 +28,325 @@ http://www.cisst.org/cisst/license.txt.
 int Converter(svlStreamType intype, svlStreamType outtype, unsigned char* inputbuffer, unsigned char* outputbuffer, unsigned int partsize, int param)
 {
     switch (intype) {
-        case svlTypeImageRGB:
-        case svlTypeImageRGBStereo:
-            if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
-                svlConverter::RGB24toRGBA32(inputbuffer, outputbuffer, partsize);
-            }
-            else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
-                svlConverter::RGB24toGray8(inputbuffer, outputbuffer, partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
-            }
-            else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
-                svlConverter::RGB24toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
-            }
-            else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
-                svlConverter::RGB24toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
-            }
-            else return SVL_FAIL;
+    case svlTypeImageRGB:
+    case svlTypeImageRGBStereo:
+        if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::RGB24toRGBA32(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::RGB24toGray8(inputbuffer, outputbuffer, partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::RGB24toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::RGB24toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else return SVL_FAIL;
         break;
 
-        case svlTypeImageRGBA:
-        case svlTypeImageRGBAStereo:
-            if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
-                svlConverter::RGBA32toRGB24(inputbuffer, outputbuffer, partsize);
-            }
-            else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
-                svlConverter::RGBA32toGray8(inputbuffer, outputbuffer, partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
-            }
-            else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
-                svlConverter::RGBA32toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
-            }
-            else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
-                svlConverter::RGBA32toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
-            }
-            else return SVL_FAIL;
+    case svlTypeImageRGBA:
+    case svlTypeImageRGBAStereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::RGBA32toRGB24(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::RGBA32toGray8(inputbuffer, outputbuffer, partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::RGBA32toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::RGBA32toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else return SVL_FAIL;
         break;
 
-        case svlTypeImageMono8:
-        case svlTypeImageMono8Stereo:
-            if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
-                svlConverter::Gray8toRGB24(inputbuffer, outputbuffer, partsize);
-            }
-            else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
-                svlConverter::Gray8toRGBA32(inputbuffer, outputbuffer, partsize);
-            }
-            else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
-                svlConverter::Gray8toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize);
-            }
-            else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
-                svlConverter::Gray8toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize);
-            }
-            else return SVL_FAIL;
+    case svlTypeImageMono8:
+    case svlTypeImageMono8Stereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::Gray8toRGB24(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::Gray8toRGBA32(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::Gray8toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::Gray8toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize);
+        }
+        else return SVL_FAIL;
         break;
 
-        case svlTypeImageMono16:
-        case svlTypeImageMono16Stereo:
-            if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
-                svlConverter::Gray16toRGB24(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
-            }
-            else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
-                svlConverter::Gray16toRGBA32(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
-            }
-            else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
-                svlConverter::Gray16toGray8(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
-            }
-            else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
-                svlConverter::Gray16toGray32(reinterpret_cast<unsigned short*>(inputbuffer), reinterpret_cast<unsigned int*>(outputbuffer), partsize);
-            }
-            else return SVL_FAIL;
+    case svlTypeImageMono16:
+    case svlTypeImageMono16Stereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::Gray16toRGB24(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::Gray16toRGBA32(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::Gray16toGray8(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::Gray16toGray32(reinterpret_cast<unsigned short*>(inputbuffer), reinterpret_cast<unsigned int*>(outputbuffer), partsize);
+        }
+        else return SVL_FAIL;
         break;
 
-        case svlTypeImageMono32:
-        case svlTypeImageMono32Stereo:
-            if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
-                svlConverter::Gray32toRGB24(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
-            }
-            else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
-                svlConverter::Gray32toRGBA32(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
-            }
-            else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
-                svlConverter::Gray32toGray8(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
-            }
-            else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
-                svlConverter::Gray32toGray16(reinterpret_cast<unsigned int*>(inputbuffer), reinterpret_cast<unsigned short*>(outputbuffer), partsize, param);
-            }
-            else return SVL_FAIL;
+    case svlTypeImageMono32:
+    case svlTypeImageMono32Stereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::Gray32toRGB24(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::Gray32toRGBA32(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::Gray32toGray8(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::Gray32toGray16(reinterpret_cast<unsigned int*>(inputbuffer), reinterpret_cast<unsigned short*>(outputbuffer), partsize, param);
+        }
+        else return SVL_FAIL;
         break;
 
-        case svlTypeImage3DMap:
-            if (outtype == svlTypeImageRGB) {
-                    svlConverter::float32toRGB24(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
-                                                 outputbuffer,
-                                                 partsize,
-                                                 static_cast<float>(0.001 * param),
-                                                 3);
-            }
-            else if (outtype == svlTypeImageRGBA) {
-                    svlConverter::float32toRGBA32(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
-                                                  outputbuffer,
-                                                  partsize,
-                                                  static_cast<float>(0.001 * param),
-                                                  3);
-            }
-            else if (outtype == svlTypeImageMono8) {
-                   svlConverter::float32toGray8(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
-                                                outputbuffer,
-                                                partsize,
-                                                static_cast<float>(0.001 * param),
-                                                3);
-            }
-            else if (outtype == svlTypeImageMono16) {
-                    svlConverter::float32toGray16(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
-                                                  reinterpret_cast<unsigned short*>(outputbuffer),
-                                                  partsize,
-                                                  static_cast<float>(0.001 * param),
-                                                  3);
-            }
-            else if (outtype == svlTypeImageMono32) {
-                svlConverter::float32toGray32(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
-                                              reinterpret_cast<unsigned int*>(outputbuffer),
-                                              partsize,
-                                              static_cast<float>(0.001 * param),
-                                              3);
-            }
-            else return SVL_FAIL;
+    case svlTypeImage3DMap:
+        if (outtype == svlTypeImageRGB) {
+            svlConverter::float32toRGB24(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                         outputbuffer,
+                                         partsize,
+                                         static_cast<float>(0.001 * param),
+                                         3);
+        }
+        else if (outtype == svlTypeImageRGBA) {
+            svlConverter::float32toRGBA32(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                          outputbuffer,
+                                          partsize,
+                                          static_cast<float>(0.001 * param),
+                                          3);
+        }
+        else if (outtype == svlTypeImageMono8) {
+            svlConverter::float32toGray8(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                         outputbuffer,
+                                         partsize,
+                                         static_cast<float>(0.001 * param),
+                                         3);
+        }
+        else if (outtype == svlTypeImageMono16) {
+            svlConverter::float32toGray16(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                          reinterpret_cast<unsigned short*>(outputbuffer),
+                                          partsize,
+                                          static_cast<float>(0.001 * param),
+                                          3);
+        }
+        else if (outtype == svlTypeImageMono32) {
+            svlConverter::float32toGray32(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                          reinterpret_cast<unsigned int*>(outputbuffer),
+                                          partsize,
+                                          static_cast<float>(0.001 * param),
+                                          3);
+        }
+        else return SVL_FAIL;
         break;
 
-        case svlTypeCUDAImageRGB:
-        case svlTypeCUDAImageRGBA:
-        case svlTypeCUDAImageRGBStereo:
-        case svlTypeCUDAImageRGBAStereo:
-        case svlTypeCUDAImageMono8:
-        case svlTypeCUDAImageMono8Stereo:
-        case svlTypeCUDAImageMono16:
-        case svlTypeCUDAImageMono16Stereo:
-        case svlTypeCUDAImageMono32:
-        case svlTypeCUDAImageMono32Stereo:
-        case svlTypeCUDAImage3DMap:
-            // TO DO: Implement them in the future
+    case svlTypeCUDAImageRGB:
+    case svlTypeCUDAImageRGBA:
+    case svlTypeCUDAImageRGBStereo:
+    case svlTypeCUDAImageRGBAStereo:
+    case svlTypeCUDAImageMono8:
+    case svlTypeCUDAImageMono8Stereo:
+    case svlTypeCUDAImageMono16:
+    case svlTypeCUDAImageMono16Stereo:
+    case svlTypeCUDAImageMono32:
+    case svlTypeCUDAImageMono32Stereo:
+    case svlTypeCUDAImage3DMap:
+        // TO DO: Implement them in the future
 
-        case svlTypeInvalid:
-        case svlTypeStreamSource:
-        case svlTypeStreamSink:
-        case svlTypeMatrixInt8:
-        case svlTypeMatrixInt16:
-        case svlTypeMatrixInt32:
-        case svlTypeMatrixInt64:
-        case svlTypeMatrixUInt8:
-        case svlTypeMatrixUInt16:
-        case svlTypeMatrixUInt32:
-        case svlTypeMatrixUInt64:
-        case svlTypeMatrixFloat:
-        case svlTypeMatrixDouble:
-        case svlTypeTransform3D:
-        case svlTypeTargets:
-        case svlTypeText:
-        case svlTypeCameraGeometry:
-        case svlTypeBlobs:
-            return SVL_FAIL;
+    case svlTypeInvalid:
+    case svlTypeStreamSource:
+    case svlTypeStreamSink:
+    case svlTypeMatrixInt8:
+    case svlTypeMatrixInt16:
+    case svlTypeMatrixInt32:
+    case svlTypeMatrixInt64:
+    case svlTypeMatrixUInt8:
+    case svlTypeMatrixUInt16:
+    case svlTypeMatrixUInt32:
+    case svlTypeMatrixUInt64:
+    case svlTypeMatrixFloat:
+    case svlTypeMatrixDouble:
+    case svlTypeTransform3D:
+    case svlTypeTargets:
+    case svlTypeText:
+    case svlTypeCameraGeometry:
+    case svlTypeBlobs:
+        return SVL_FAIL;
+    }
+    return SVL_OK;
+}
+
+int Converter(svlStreamType intype, svlStreamType outtype, unsigned char* inputbuffer, unsigned char* outputbuffer, unsigned int partsize, unsigned char param)
+{
+    switch (intype) {
+    case svlTypeImageRGB:
+    case svlTypeImageRGBStereo:
+        if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::RGB24toRGBA32(inputbuffer, outputbuffer, partsize, param, true);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::RGB24toGray8(inputbuffer, outputbuffer, partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::RGB24toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::RGB24toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else return SVL_FAIL;
+        break;
+
+    case svlTypeImageRGBA:
+    case svlTypeImageRGBAStereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::RGBA32toRGB24(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::RGBA32toGray8(inputbuffer, outputbuffer, partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::RGBA32toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::RGBA32toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize, ACCURATE_COLOR_TO_GRAYSCALE, true);
+        }
+        else return SVL_FAIL;
+        break;
+
+    case svlTypeImageMono8:
+    case svlTypeImageMono8Stereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::Gray8toRGB24(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::Gray8toRGBA32(inputbuffer, outputbuffer, partsize);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::Gray8toGray16(inputbuffer, reinterpret_cast<unsigned short*>(outputbuffer), partsize);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::Gray8toGray32(inputbuffer, reinterpret_cast<unsigned int*>(outputbuffer), partsize);
+        }
+        else return SVL_FAIL;
+        break;
+
+    case svlTypeImageMono16:
+    case svlTypeImageMono16Stereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::Gray16toRGB24(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::Gray16toRGBA32(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::Gray16toGray8(reinterpret_cast<unsigned short*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono32 || outtype == svlTypeImageMono32Stereo) {
+            svlConverter::Gray16toGray32(reinterpret_cast<unsigned short*>(inputbuffer), reinterpret_cast<unsigned int*>(outputbuffer), partsize);
+        }
+        else return SVL_FAIL;
+        break;
+
+    case svlTypeImageMono32:
+    case svlTypeImageMono32Stereo:
+        if (outtype == svlTypeImageRGB || outtype == svlTypeImageRGBStereo) {
+            svlConverter::Gray32toRGB24(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageRGBA || outtype == svlTypeImageRGBAStereo) {
+            svlConverter::Gray32toRGBA32(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono8 || outtype == svlTypeImageMono8Stereo) {
+            svlConverter::Gray32toGray8(reinterpret_cast<unsigned int*>(inputbuffer), outputbuffer, partsize, param);
+        }
+        else if (outtype == svlTypeImageMono16 || outtype == svlTypeImageMono16Stereo) {
+            svlConverter::Gray32toGray16(reinterpret_cast<unsigned int*>(inputbuffer), reinterpret_cast<unsigned short*>(outputbuffer), partsize, param);
+        }
+        else return SVL_FAIL;
+        break;
+
+    case svlTypeImage3DMap:
+        if (outtype == svlTypeImageRGB) {
+            svlConverter::float32toRGB24(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                         outputbuffer,
+                                         partsize,
+                                         static_cast<float>(0.001 * param),
+                                         3);
+        }
+        else if (outtype == svlTypeImageRGBA) {
+            svlConverter::float32toRGBA32(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                          outputbuffer,
+                                          partsize,
+                                          static_cast<float>(0.001 * param),
+                                          3);
+        }
+        else if (outtype == svlTypeImageMono8) {
+            svlConverter::float32toGray8(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                         outputbuffer,
+                                         partsize,
+                                         static_cast<float>(0.001 * param),
+                                         3);
+        }
+        else if (outtype == svlTypeImageMono16) {
+            svlConverter::float32toGray16(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                          reinterpret_cast<unsigned short*>(outputbuffer),
+                                          partsize,
+                                          static_cast<float>(0.001 * param),
+                                          3);
+        }
+        else if (outtype == svlTypeImageMono32) {
+            svlConverter::float32toGray32(reinterpret_cast<float*>(inputbuffer) + 2, // offset to Z coordinates
+                                          reinterpret_cast<unsigned int*>(outputbuffer),
+                                          partsize,
+                                          static_cast<float>(0.001 * param),
+                                          3);
+        }
+        else return SVL_FAIL;
+        break;
+
+    case svlTypeCUDAImageRGB:
+    case svlTypeCUDAImageRGBA:
+    case svlTypeCUDAImageRGBStereo:
+    case svlTypeCUDAImageRGBAStereo:
+    case svlTypeCUDAImageMono8:
+    case svlTypeCUDAImageMono8Stereo:
+    case svlTypeCUDAImageMono16:
+    case svlTypeCUDAImageMono16Stereo:
+    case svlTypeCUDAImageMono32:
+    case svlTypeCUDAImageMono32Stereo:
+    case svlTypeCUDAImage3DMap:
+        // TO DO: Implement them in the future
+
+    case svlTypeInvalid:
+    case svlTypeStreamSource:
+    case svlTypeStreamSink:
+    case svlTypeMatrixInt8:
+    case svlTypeMatrixInt16:
+    case svlTypeMatrixInt32:
+    case svlTypeMatrixInt64:
+    case svlTypeMatrixUInt8:
+    case svlTypeMatrixUInt16:
+    case svlTypeMatrixUInt32:
+    case svlTypeMatrixUInt64:
+    case svlTypeMatrixFloat:
+    case svlTypeMatrixDouble:
+    case svlTypeTransform3D:
+    case svlTypeTargets:
+    case svlTypeText:
+    case svlTypeCameraGeometry:
+    case svlTypeBlobs:
+        return SVL_FAIL;
     }
     return SVL_OK;
 }
@@ -202,8 +365,8 @@ int svlConverter::ConvertSample(const svlSample* input, svlSample* output, unsig
     svlSampleMatrix* outmtrx = dynamic_cast<svlSampleMatrix*>(output);
     if (inmtrx && outmtrx) {
         if (threadid == 0) {
-        // Do conversion on a single thread. This will not
-        // affect performance because of the memory bottleneck
+            // Do conversion on a single thread. This will not
+            // affect performance because of the memory bottleneck
 
             // don't modify timestamp
             double timestamp = outmtrx->GetTimestamp();
@@ -232,10 +395,53 @@ int svlConverter::ConvertImage(const svlSampleImage* inimage, svlSampleImage* ou
     return ret;
 }
 
+int svlConverter::ConvertImage(const svlSampleImage* inimage, svlSampleImage* outimage, unsigned char param, unsigned int threads, unsigned int threadid)
+{
+    if (!inimage || !outimage) return SVL_FAIL;
+
+    const unsigned int channels = inimage->GetVideoChannels();
+    if (channels != outimage->GetVideoChannels()) return SVL_FAIL;
+
+    int ret = SVL_OK;
+
+    for (unsigned int i = 0; i < channels; i ++) {
+        if (ConvertImage(inimage, i, outimage, i, param, threads, threadid) != SVL_OK) ret = SVL_FAIL;
+    }
+
+    return ret;
+}
+
 int svlConverter::ConvertImage(const svlSampleImage* inimage, const unsigned int inchannel, svlSampleImage* outimage, const unsigned int outchannel, int param, unsigned int threads, unsigned int threadid)
 {
     if (!inimage || !outimage ||
-        inchannel >= inimage->GetVideoChannels() || outchannel >= outimage->GetVideoChannels()) return SVL_FAIL;
+            inchannel >= inimage->GetVideoChannels() || outchannel >= outimage->GetVideoChannels()) return SVL_FAIL;
+
+    const unsigned int imgsize = inimage->GetWidth(inchannel) * inimage->GetHeight(inchannel);
+
+    unsigned int partsize = imgsize / threads + 1;
+    unsigned int offset = partsize * threadid;
+
+    if (imgsize <= offset) {
+        // Nothing to do on this thread
+        return SVL_OK;
+    }
+
+    if ((partsize + offset) > imgsize) {
+        partsize = imgsize - offset;
+    }
+
+    return Converter(inimage->GetType(),
+                     outimage->GetType(),
+                     const_cast<unsigned char*>(inimage->GetUCharPointer(inchannel)) + offset * inimage->GetBPP(),
+                     outimage->GetUCharPointer(outchannel) + offset * outimage->GetBPP(),
+                     partsize,
+                     param);
+}
+
+int svlConverter::ConvertImage(const svlSampleImage* inimage, const unsigned int inchannel, svlSampleImage* outimage, const unsigned int outchannel, unsigned char param, unsigned int threads, unsigned int threadid)
+{
+    if (!inimage || !outimage ||
+            inchannel >= inimage->GetVideoChannels() || outchannel >= outimage->GetVideoChannels()) return SVL_FAIL;
 
     const unsigned int imgsize = inimage->GetWidth(inchannel) * inimage->GetHeight(inchannel);
 
@@ -659,13 +865,17 @@ void svlConverter::RGB16toRGB24(unsigned char* input, unsigned char* output, con
     }
 }
 
-void svlConverter::RGB24toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount)
+void svlConverter::RGB24toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount, unsigned char alpha, bool useAlpha)
 {
     for (unsigned int i = 0; i < pixelcount; i ++) {
         *output = *input; output ++; input ++;
         *output = *input; output ++; input ++;
         *output = *input; output ++; input ++;
-        *output = 255; output ++;
+        if(useAlpha)
+            *output = alpha;
+        else
+            *output = 255;
+        output ++;
     }
 }
 
@@ -975,9 +1185,9 @@ void svlConverter::RGB24toYUV422P(unsigned char* input, unsigned char* output, c
         if (v2 > 240) v2 = 240;
 
         if (ch1) { *outy = static_cast<unsigned char>(y1); outy ++;
-                   *outy = static_cast<unsigned char>(y2); outy ++; }
-        else     { *outy = 0;  outy ++; 
-                   *outy = 0;  outy ++; }
+            *outy = static_cast<unsigned char>(y2); outy ++; }
+        else     { *outy = 0;  outy ++;
+            *outy = 0;  outy ++; }
         if (ch2) { *outu = static_cast<unsigned char>((u1 + u2) >> 1); outu ++; } else { *outu = 0; }
         if (ch3) { *outv = static_cast<unsigned char>((v1 + v2) >> 1); outv ++; } else { *outv = 0; }
     }
@@ -1693,18 +1903,18 @@ void svlConverter::HSV24toRGB24(unsigned char* input, unsigned char* output, con
         if (s > 0) {
             f = ((h % 43) * 255) / 42;
             h /= 43;
-     
+
             p = (v * (255 - s)) / 255;
             q = (v * (255 - (s * f) / 255)) / 255;
             t = (v * (255 - (s * (255 - f)) / 255)) / 255;
-     
+
             switch (h) {
-                case 0:  r = v; g = t; b = p; break;
-                case 1:  r = q; g = v; b = p; break;
-                case 2:  r = p; g = v; b = t; break;
-                case 3:  r = p; g = q; b = v; break;
-                case 4:  r = t; g = p; b = v; break;
-                default: r = v; g = p; b = q; break;
+            case 0:  r = v; g = t; b = p; break;
+            case 1:  r = q; g = v; b = p; break;
+            case 2:  r = p; g = v; b = t; break;
+            case 3:  r = p; g = q; b = v; break;
+            case 4:  r = t; g = p; b = v; break;
+            default: r = v; g = p; b = q; break;
             }
         }
         else {

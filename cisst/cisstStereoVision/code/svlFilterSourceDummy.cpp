@@ -85,7 +85,7 @@ int svlFilterSourceDummy::SetType(svlStreamType type)
         return SVL_ALREADY_INITIALIZED;
 
     // Other types may be added in the future
-    if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo) return SVL_FAIL;
+    if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo && type != svlTypeImageRGBA && type != svlTypeImageRGBAStereo) return SVL_FAIL;
 
     if (StoredSample && StoredSample->GetType() != type) {
         delete StoredSample;
@@ -125,7 +125,7 @@ int svlFilterSourceDummy::SetImage(const svlSampleImage & image)
     svlStreamType type = image.GetType();
 
     // Other types may be added in the future
-    if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo) return SVL_FAIL;
+    if (type != svlTypeImageRGB && type != svlTypeImageRGBStereo && type != svlTypeImageRGBA && type != svlTypeImageRGBAStereo) return SVL_FAIL;
 
     if (StoredSample && StoredSample->GetType() != type) {
         delete StoredSample;
@@ -133,7 +133,7 @@ int svlFilterSourceDummy::SetImage(const svlSampleImage & image)
     }
     else if (!StoredSample) StoredSample = svlSample::GetNewFromType(type);
 
-    if (OutputSample && OutputSample->GetType() != type) {
+    if (OutputSample && OutputSample->GetType() != type && type != svlTypeImageRGBA && type != svlTypeImageRGBAStereo) {
         delete OutputSample;
         OutputSample = svlSample::GetNewFromType(type);
     }
@@ -232,4 +232,3 @@ int svlFilterSourceDummy::Process(svlProcInfo* procInfo, svlSample* &syncOutput)
 
     return SVL_OK;
 }
-

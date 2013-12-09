@@ -137,9 +137,21 @@ svlRenderTargetBase* svlRenderTargets::Get(unsigned int deviceID)
 #endif
 
     svlRenderTargets* instance = Instance();
-    if (instance->Targets.size() > deviceID) {
+
+	if(deviceID == -1)
+	{
+        if (!instance->Targets[0]) {
+            instance->Targets[0] = new svlVidCapSrcSDIRenderTarget(instance->TargetDeviceID[0]);
+        }
+#if __VERBOSE__ == 1
+        std::cerr << "returning svlVidCapSrcSDIRenderTarget" << std::endl;
+#endif
+        return instance->Targets[0];
+	}
+    else if (instance->Targets.size() > deviceID) 
+	{
         if (!instance->Targets[deviceID]) {
-            instance->Targets[deviceID] = new svlVidCapSrcSDIRenderTarget(instance->TargetDeviceID[deviceID]);
+            instance->Targets[deviceID] = new svlVidCapSrcSDIRenderTargetCapture(instance->TargetDeviceID[deviceID]);
         }
 #if __VERBOSE__ == 1
         std::cerr << "returning svlVidCapSrcSDIRenderTarget" << std::endl;
@@ -193,4 +205,3 @@ void svlRenderTargets::ReleaseAll()
     svlVidCapSrcMIL::GetInstance()->Release();
 #endif // CISST_SVL_HAS_MIL
 }
-

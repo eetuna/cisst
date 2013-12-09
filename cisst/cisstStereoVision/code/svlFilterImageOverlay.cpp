@@ -54,6 +54,8 @@ svlFilterImageOverlay::svlFilterImageOverlay() :
     svlFilterBase::AddInput("input", true);
     AddInputType("input", svlTypeImageRGB);
     AddInputType("input", svlTypeImageRGBStereo);
+    AddInputType("input", svlTypeImageRGBA);
+    AddInputType("input", svlTypeImageRGBAStereo);
 
     AddOutput("output", true);
     SetAutomaticOutputType(true);

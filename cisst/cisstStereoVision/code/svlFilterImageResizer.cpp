@@ -40,9 +40,11 @@ svlFilterImageResizer::svlFilterImageResizer() :
 
     AddInput("input", true);
     AddInputType("input", svlTypeImageRGB);
+    AddInputType("input", svlTypeImageRGBA);
     AddInputType("input", svlTypeImageMono8);
     AddInputType("input", svlTypeImageRGBStereo);
-    AddInputType("input", svlTypeImageMono8Stereo);
+    AddInputType("input", svlTypeImageRGBAStereo);
+	AddInputType("input", svlTypeImageMono8Stereo);
 //  TO DO:
 //    svlTypeImageMono16 and svlTypeImageMono16Stereo
 //    svlTypeImageMono32 and svlTypeImageMono32Stereo
@@ -118,11 +120,11 @@ int svlFilterImageResizer::Initialize(svlSample* syncInput, svlSample* &syncOutp
             case svlTypeImageRGBStereo:
             case svlTypeImageMono8:
             case svlTypeImageMono8Stereo:
-                OutputImage = dynamic_cast<svlSampleImage*>(svlSample::GetNewFromType(type));
-            break;
 
             case svlTypeImageRGBA:          // To be added
             case svlTypeImageRGBAStereo:    // To be added
+                OutputImage = dynamic_cast<svlSampleImage*>(svlSample::GetNewFromType(type));
+            break;
             case svlTypeImageMono16:        // To be added
             case svlTypeImageMono16Stereo:  // To be added
             case svlTypeImageMono32:        // To be added
@@ -311,4 +313,3 @@ void svlFilterImageResizer::GetOutputRatioRCommand(vctDouble2 & ratio) const
     ratio[0] = WidthRatio[SVL_RIGHT];
     ratio[1] = HeightRatio[SVL_RIGHT];
 }
-

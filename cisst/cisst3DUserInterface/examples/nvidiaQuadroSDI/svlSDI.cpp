@@ -192,8 +192,8 @@ void getVTKData(int x2, int y2)
 //-----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-    svlVidCapSrcSDIRenderTarget* target = (svlVidCapSrcSDIRenderTarget*)svlRenderTargets::Get(0);
-    svlRenderTargets::Get(0);
+    svlVidCapSrcSDIRenderTarget* target = (svlVidCapSrcSDIRenderTarget*)svlRenderTargets::Get(-1);
+    //svlRenderTargets::Get(0);
     setupObjects();
     setupVTK(1920,1080);//target->GetWidth(),target->GetHeight()//400,500
     setupVTK0(1920,1080);

@@ -268,6 +268,7 @@ public:
     virtual ~svlOverlayStaticImage();
 
     void SetImage(const svlSampleImageRGB & image);
+    void SetImage(const svlSampleImageRGBA & image);
     void SetImage(const svlSampleImageRGBStereo & image, unsigned int imagech);
     void SetPosition(vctInt2 pos);
     void SetPosition(int x, int y);
@@ -408,14 +409,14 @@ public:
     svlOverlayStaticRect();
     svlOverlayStaticRect(unsigned int videoch,
                          bool visible,
-                         const svlRect & rect,
-                         const svlRGB & color,
+                         svlRect rect,
+                         svlRGB color,
                          bool fill = true);
     virtual ~svlOverlayStaticRect();
 
-    void SetRect(const svlRect & rect);
+    void SetRect(svlRect rect);
     void SetRect(int left, int top, int right, int bottom);
-    void SetColor(const svlRGB & color);
+    void SetColor(svlRGB color);
     void SetFill(bool fill);
 
     svlRect GetRect() const;
@@ -440,47 +441,32 @@ public:
     svlOverlayStaticEllipse();
     svlOverlayStaticEllipse(unsigned int videoch,
                             bool visible,
-                            const svlEllipse & ellipse,
-                            const svlRGB & color,
-                            bool fill = true);
-    svlOverlayStaticEllipse(unsigned int videoch,
-                            bool visible,
-                            const svlPoint2D & center,
+                            const svlPoint2D center,
                             int radius_horiz,
                             int radius_vert,
                             double angle,
-                            const svlRGB & color,
+                            svlRGB color,
                             bool fill = true);
     svlOverlayStaticEllipse(unsigned int videoch,
                             bool visible,
-                            const svlPoint2D & center,
+                            const svlPoint2D center,
                             int radius,
-                            const svlRGB & color,
+                            svlRGB color,
                             bool fill = true);
     virtual ~svlOverlayStaticEllipse();
 
-    void SetEllipse(const svlEllipse & ellipse);
-
-    template <class _Type>
-    void SetCenter(const vctFixedSizeVector<_Type, 2> & center)
-    {
-        Ellipse.cx = static_cast<int>(center[0]);
-        Ellipse.cy = static_cast<int>(center[1]);
-    }
-
-    void SetCenter(const svlPoint2D & center);
+    void SetCenter(const svlPoint2D center);
     void SetRadius(const int radius_horiz, const int radius_vert);
     void SetRadius(const int radius);
     void SetAngle(const double angle);
-    void SetThickness(unsigned int thickness);
-    void SetColor(const svlRGB & color);
+    void SetColor(svlRGB color);
     void SetFill(bool fill);
+    void SetThickness(unsigned int thickness);
+    unsigned int GetThickness();
 
-    svlEllipse GetEllipse() const;
     svlPoint2D GetCenter() const;
     void GetRadius(int & radius_horiz, int & radius_vert) const;
     double GetAngle() const;
-    unsigned int GetThickness();
     svlRGB GetColor() const;
     bool GetFill() const;
 
@@ -488,10 +474,13 @@ protected:
     virtual void DrawInternal(svlSampleImage* bgimage, svlSample* input);
 
 private:
-    svlEllipse Ellipse;
-    unsigned int Thickness;
+    svlPoint2D Center;
+    int RadiusHoriz;
+    int RadiusVert;
+    double Angle;
     svlRGB Color;
     bool Fill;
+    unsigned int Thickness;
 };
 
 

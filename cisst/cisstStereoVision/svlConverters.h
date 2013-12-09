@@ -39,6 +39,12 @@ namespace svlConverter
                                   svlSampleImage* outimage, const unsigned int outchannel,
                                   int param = 0, unsigned int threads = 1, unsigned int threadid = 0);
 
+    CISST_EXPORT int ConvertImage(const svlSampleImage* inimage, svlSampleImage* outimage,
+                                  unsigned char param = 255, unsigned int threads = 1, unsigned int threadid = 0);
+    CISST_EXPORT int ConvertImage(const svlSampleImage* inimage, const unsigned int inchannel,
+                                  svlSampleImage* outimage, const unsigned int outchannel,
+                                  unsigned char param = 255, unsigned int threads = 1, unsigned int threadid = 0);
+
     CISST_EXPORT void Gray8toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
     CISST_EXPORT void Gray8toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
     CISST_EXPORT void Gray8toGray16(unsigned char* input, unsigned short* output, const unsigned int pixelcount);
@@ -62,7 +68,7 @@ namespace svlConverter
     CISST_EXPORT void float32toGray16(float* input, unsigned short* output, const unsigned int pixelcount, const float scalingratio = 1.0f, const int elementstride = 1);
     CISST_EXPORT void float32toGray32(float* input, unsigned int* output, const unsigned int pixelcount, const float scalingratio = 1.0f, const int elementstride = 1);
     CISST_EXPORT void RGB16toRGB24(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool ch1 = true, bool ch2 = true, bool ch3 = true);
-    CISST_EXPORT void RGB24toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount);
+    CISST_EXPORT void RGB24toRGBA32(unsigned char* input, unsigned char* output, const unsigned int pixelcount, unsigned char alpha = 255, bool useAlpha = false);
     CISST_EXPORT void RGB24toGray8(unsigned char* input, unsigned char* output, const unsigned int pixelcount, bool accurate = false, bool bgr = false);
     CISST_EXPORT void RGB24toGray16(unsigned char* input, unsigned short* output, const unsigned int pixelcount, bool accurate = false, bool bgr = false);
     CISST_EXPORT void RGB24toGray32(unsigned char* input, unsigned int* output, const unsigned int pixelcount, bool accurate = false, bool bgr = false);

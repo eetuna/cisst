@@ -26,6 +26,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstOSAbstraction/osaThreadSignal.h>
 #include <cisstOSAbstraction/osaCriticalSection.h>
 #include <cisstStereoVision/svlTypes.h>
+#include <cisstVector/vctDynamicNArrayRef.h>
 
 #if (CISST_OS == CISST_WINDOWS)
 #include <windows.h>
@@ -34,11 +35,10 @@ http://www.cisst.org/cisst/license.txt.
 // Always include last!
 #include <cisstStereoVision/svlExport.h>
 
-
 class CISST_EXPORT svlBufferImage
 {
 public:
-    svlBufferImage(unsigned int width, unsigned int height);
+    svlBufferImage(unsigned int width, unsigned int height, unsigned int  number_of_channels = 3);
     ~svlBufferImage();
 
     unsigned int GetWidth();
@@ -49,6 +49,7 @@ public:
     unsigned char* GetPushBuffer(unsigned int& size);
     void Push();
     bool Push(const unsigned char* buffer, unsigned int size, bool topdown);
+
 #if CISST_SVL_HAS_OPENCV
     bool PushIplImage(IplImage* image);
 #endif // CISST_SVL_HAS_OPENCV
@@ -69,6 +70,7 @@ private:
     int InitializationCounter;
     osaThreadSignal NewFrameEvent;
     svlImageRGB Buffer[3];
+    unsigned int my_number_of_channels;
 #if CISST_SVL_HAS_OPENCV
     IplImage* OCVImage[3];
     vctDynamicVector<unsigned char> OCVConvBuffer;
@@ -83,4 +85,3 @@ private:
 
 
 #endif // _svlBufferImage_h
-
