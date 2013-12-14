@@ -35,7 +35,7 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(ui3Manager)
 
 
-#define VIDEO_BACKGROUND_DISTANCE       10000.0
+#define VIDEO_BACKGROUND_DISTANCE      10000.0
 
 
 ui3Manager::ui3Manager(const std::string & name):
@@ -53,9 +53,11 @@ ui3BehaviorBase(name, 0),
     AddStream(svlTypeImageRGB,       "MonoVideo");
     AddStream(svlTypeImageRGB,       "MonoVideo#2");
     AddStream(svlTypeImageRGB,       "MonoVideo#3");
+    AddStream(svlTypeImageRGBA,      "MonoVideoRGBA");
     AddStream(svlTypeImageRGBStereo, "StereoVideo");
     AddStream(svlTypeImageRGBStereo, "StereoVideo#2");
     AddStream(svlTypeImageRGBStereo, "StereoVideo#3");
+    AddStream(svlTypeImageRGBAStereo, "StereoVideoRGBA");
 
     // add the UI manager to the task manager
     this->ComponentManager = mtsComponentManager::GetInstance();
@@ -107,7 +109,7 @@ bool ui3Manager::AddRenderer(unsigned int width, unsigned int height,
 {
     if (width < 1 || height < 1 || renderername.empty()) return false;
 
-    size_t rendererindex = Renderers.size();
+    int rendererindex = Renderers.size();
     _RendererStruct* renderer = new _RendererStruct;
     CMN_ASSERT(renderer);
 
@@ -158,6 +160,21 @@ bool ui3Manager::AddVideoBackgroundToRenderer(const std::string & renderername, 
             if (Renderers[i] && Renderers[i]->name == renderername) {
                 Renderers[i]->streamindex = index;
                 Renderers[i]->streamchannel = videochannel;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ui3Manager::SetAlphaVideoBackgroundToRenderer(const std::string & renderername, const std::string & streamname, unsigned int videochannel, const unsigned char alpha, unsigned int roiTopBorder)
+{
+    int index = GetStreamIndexFromName(streamname);
+    if (index >= 0) {
+        for (unsigned int i = 0; i < Renderers.size(); i ++) {
+            if (Renderers[i] && Renderers[i]->name == renderername) {
+				Renderers[i]->imageplane->SetROITopBorder(roiTopBorder);
+				Renderers[i]->imageplane->SetAlpha(alpha);
                 return true;
             }
         }
@@ -656,9 +673,9 @@ bool ui3Manager::SetupRenderers()
 {
     CMN_LOG_CLASS_INIT_VERBOSE << "Setting up VTK renderers: begin" << std::endl;
 
-    size_t i;
+    unsigned int i;
     double bgheight, bgwidth, viewangle;
-    const size_t renderercount = this->Renderers.size();
+    const unsigned int renderercount = this->Renderers.size();
 
     for (i = 0; i < renderercount; i ++) {
 
@@ -686,7 +703,7 @@ bool ui3Manager::SetupRenderers()
 
             // Calculate plane height to cover the whole vertical field of view
             viewangle = this->Renderers[i]->camgeometry.GetViewAngleVertical(this->Renderers[i]->height, this->Renderers[i]->camid);
-            bgheight = VIDEO_BACKGROUND_DISTANCE * 2.0 * tan(viewangle * 3.14159265 / 360.0);
+            bgheight = VIDEO_BACKGROUND_DISTANCE * 2.0 * tan(viewangle * cmnPI / 360.0);
             // Calculate plane width from plane height and the bitmap aspect ratio
             bgwidth = bgheight * streamwidth / streamheight;
 
@@ -738,9 +755,9 @@ bool ui3Manager::SetupRenderers()
 void ui3Manager::ReleaseRenderers()
 {
     CMN_LOG_CLASS_INIT_VERBOSE << "ReleaseRenderers: start" << std::endl;
-    const size_t renderercount = this->Renderers.size();
+    const unsigned int renderercount = this->Renderers.size();
 
-    for (size_t i = 0; i < renderercount; i ++) {
+    for (unsigned int i = 0; i < renderercount; i ++) {
         if (this->Renderers[i]) {
             if (this->Renderers[i]->renderer) {
                 delete this->Renderers[i]->renderer;
@@ -891,9 +908,9 @@ void* ui3ManagerCVTKRendererProc::Proc(ui3Manager* baseref)
     ThreadKilled = false;
     ThreadReadySignal.Raise();
 
-    size_t i, framecount = 10;
+    unsigned int i, framecount = 10;
     double prevtime, time;
-    const size_t renderercount = baseref->Renderers.size();
+    const unsigned int renderercount = baseref->Renderers.size();
 
     osaStopwatch stopwatch;
     stopwatch.Start();

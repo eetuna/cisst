@@ -26,7 +26,23 @@ add_executable (ui3ExNVIDIAQuadroSDI
 set_property (TARGET ui3ExNVIDIAQuadroSDI PROPERTY FOLDER "cisst3DUserInterface/examples")
 
 target_link_libraries (ui3ExNVIDIAQuadroSDI
-                       ${sawIntuitiveDaVinci_LIBRARIES})
+                       ${sawIntuitiveDaVinci_LIBRARIES}
+                       )
+if (CISST_SVL_HAS_ISSI)    
+include_directories( ${ISSILIB_INCLUDE_DIR} )
+link_directories(${ISSILIB_LIB_DIR})
+add_definitions(-DISSI_DATA_DIR=${ISSILIB_DATA_DIR})
+add_definitions( -DISSI_PREDEFINED_DaVinciSSC -DISSI_PREDEFINED_DaVinciSi -DISSI_PREDEFINED_EndoscopeImage -DISSI_PREDEFINED_Zeego -DISSI_PREDEFINED_Trumpf -DISSI_PREDEFINED_ULI -DISSI_PREDEFINED_Zpp -DISSI_PREDEFINED_FluoroImage -DISSI_PREDEFINED_RenderedImage)
+                   
+target_link_libraries (ui3ExNVIDIAQuadroSDI
+                       ${sawIntuitiveDaVinci_LIBRARIES}
+                       ${ISSILIB_LIB})
+
+else (CISST_SVL_HAS_ISSI)
+target_link_libraries (ui3ExNVIDIAQuadroSDI
+                       ${sawIntuitiveDaVinci_LIBRARIES}
+                       )
+endif (CISST_SVL_HAS_ISSI)                         
 
 cisst_target_link_libraries (ui3ExNVIDIAQuadroSDI
                              cisstCommon cisstVector cisstOSAbstraction cisstMultiTask

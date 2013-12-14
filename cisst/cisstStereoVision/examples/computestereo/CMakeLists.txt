@@ -29,6 +29,15 @@ if (cisst_FOUND_AS_REQUIRED)
 
     add_executable (svlExComputeStereo computestereo.cpp)
     set_property (TARGET svlExComputeStereo PROPERTY FOLDER "cisstStereoVision/examples")
+	if (CISST_SVL_HAS_ISSI) 
+	include_directories( ${ISSILIB_INCLUDE_DIR} )
+	link_directories(${ISSILIB_LIB_DIR})
+	add_definitions(-DISSI_DATA_DIR=${ISSILIB_DATA_DIR})
+	add_definitions( -DISSI_PREDEFINED_DaVinciSSC -DISSI_PREDEFINED_DaVinciSi -DISSI_PREDEFINED_EndoscopeImage -DISSI_PREDEFINED_Zeego -DISSI_PREDEFINED_Trumpf -DISSI_PREDEFINED_ULI -DISSI_PREDEFINED_Zpp -DISSI_PREDEFINED_FluoroImage -DISSI_PREDEFINED_RenderedImage)
+	                      
+	target_link_libraries (svlExComputeStereo
+						   ${ISSILIB_LIB})
+	endif (CISST_SVL_HAS_ISSI)      
     cisst_target_link_libraries (svlExComputeStereo ${REQUIRED_CISST_LIBRARIES})
 
     # Copy example images to the build tree

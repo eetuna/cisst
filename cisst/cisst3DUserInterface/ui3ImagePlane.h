@@ -31,6 +31,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <vtkActor.h>
 #include <vtkTexture.h>
+#include <vtkJPEGReader.h>
 #include <vtkImageData.h>
 #include <vtkPlaneSource.h>
 #include <vtkPolyDataMapper.h>
@@ -53,6 +54,10 @@ protected:
     vtkPolyDataMapper       * Mapper;
     vtkActor                * Actor;
 
+	unsigned int            ROIBottomBorder;
+    unsigned int            ROITopBorder;
+	unsigned int            ROILeftBorder;
+	unsigned int            ROIRightBorder;
     unsigned int            BitmapWidth;
     unsigned int            BitmapHeight;
     unsigned int            TextureWidth;
@@ -100,6 +105,8 @@ public:
      No critical thread-safety issues.
     */
     virtual void SetAlpha(const unsigned char alpha);
+
+	virtual void SetROITopBorder(unsigned int roiTopBorder){this->ROITopBorder = roiTopBorder;};
 
     /*!
      Should be implemented in a thread-safe way

@@ -941,8 +941,37 @@ ELSE(CISST_SVL_HAS_FFMPEG OR NOT FFMPEG_OPTIONS)
     OPTION(CISST_SVL_HAS_FFMPEG "Compile FFMPEG extensions" OFF)
 ENDIF(CISST_SVL_HAS_FFMPEG OR NOT FFMPEG_OPTIONS)
 
-#TODO
-# add flag for SDI
+#ISSI
+option (CISST_SVL_HAS_ISSI "Find ISSI" OFF)
+if (CISST_SVL_HAS_ISSI) 
+  if(WIN32)
+	find_package(ISSILIB REQUIRED)
+	set (ISSI_INCLUDE_DIRECTORIES "${ISSILIB_INCLUDE_DIR}")
+	link_directories(${ISSILIB_LIB_DIR})
+	add_definitions(-DISSI_DATA_DIR=${ISSILIB_DATA_DIR})
+	add_definitions( -DISSI_PREDEFINED_DaVinciSSC -DISSI_PREDEFINED_DaVinciSi -DISSI_PREDEFINED_Ducati -DISSI_PREDEFINED_EndoscopeImage -DISSI_PREDEFINED_Zeego -DISSI_PREDEFINED_Trumpf -DISSI_PREDEFINED_ULI -DISSI_PREDEFINED_Zpp -DISSI_PREDEFINED_FluoroImage -DISSI_PREDEFINED_RenderedImage)
+	set (ISSI_LIBRARIES "${ISSILIB_LIB}")  
+  
+	cisst_set_package_settings (cisstStereoVision ISSIInterface INCLUDE_DIRECTORIES ISSI_INCLUDE_DIRECTORIES)
+	cisst_set_package_settings (cisstStereoVision nvidiaQuadroSDI LIBRARIES ISSI_LIBRARIES)
+	
+    SET(SOURCE_FILES
+       ${SOURCE_FILES}
+	   svlFilterImageRegistrationGUI.cpp
+    )
+    
+    SET(HEADER_FILES
+       ${HEADER_FILES}
+       svlFilterImageRegistrationGUI.h
+    )	
+	
+  ENDIF(WIN32)
+  
+else (CISST_SVL_HAS_ISSI)
+  cisst_unset_all_package_settings (cisstStereoVision intuitiveSurgicalSiemensInterface)  
+  
+ENDIF(CISST_SVL_HAS_ISSI)      
+
 # USE_NVAPI affects other examples
 #NVIDIA Quadro SDI
 option (CISST_SVL_HAS_NVIDIA_QUADRO_SDI "Compile NVIDIA QUADRO SDI extensions" OFF)
@@ -1564,6 +1593,7 @@ SET(SOURCE_FILES
     svlVideoCodecInitializer.h
     svlVideoCodecInitializer.cpp
     )
+    
 
 set (HEADER_FILES
      ${HEADER_FILES}

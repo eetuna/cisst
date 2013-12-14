@@ -32,9 +32,16 @@ if (cisst_FOUND)
     else (CISST_HAS_QT)
       set (USED_CISST_LIBRARIES cisstCommon cisstVector cisstOSAbstraction cisstMultiTask cisstStereoVision)
     endif (CISST_HAS_QT)
-
     add_executable (svlExCameraViewer cameraviewer.cpp)
     set_property (TARGET svlExCameraViewer PROPERTY FOLDER "cisstStereoVision/examples")
+    if (CISST_SVL_HAS_ISSI) 
+		include_directories( ${ISSILIB_INCLUDE_DIR} )
+		link_directories(${ISSILIB_LIB_DIR})
+		add_definitions(-DISSI_DATA_DIR=${ISSILIB_DATA_DIR})
+		add_definitions( -DISSI_PREDEFINED_DaVinciSSC -DISSI_PREDEFINED_DaVinciSi -DISSI_PREDEFINED_EndoscopeImage -DISSI_PREDEFINED_Zeego -DISSI_PREDEFINED_Trumpf -DISSI_PREDEFINED_ULI -DISSI_PREDEFINED_Zpp -DISSI_PREDEFINED_FluoroImage -DISSI_PREDEFINED_RenderedImage)     
+		target_link_libraries (svlExCameraViewer
+								${ISSILIB_LIB})
+    endif (CISST_SVL_HAS_ISSI)     
     cisst_target_link_libraries (svlExCameraViewer ${USED_CISST_LIBRARIES})
 
   else (CISST_SVL_HAS_X11 OR WIN32)

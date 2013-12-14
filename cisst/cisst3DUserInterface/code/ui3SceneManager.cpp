@@ -53,7 +53,7 @@ ui3SceneManager::~ui3SceneManager(void)
 
 bool ui3SceneManager::AddRenderer(ui3VTKRenderer * renderer)
 {
-    size_t rendererIndex = this->Renderers.size();
+    unsigned int rendererIndex = this->Renderers.size();
     this->Renderers.resize(rendererIndex + 1);
     this->Renderers[rendererIndex] = renderer;
     renderer->Add(this->VisibleObjects);
@@ -88,7 +88,11 @@ bool ui3SceneManager::Delete(VTKHandleType propHandle)
 vtkProp3D * ui3SceneManager::Lock(VTKHandleType propHandle)
 {
     // lock the whole scene
+	//20130415 - wpliu
+	//After discussion with Anton, mutex lock has been observed to be only necessary for non-windows
+#ifndef _WIN32
     this->Mutex.Lock();
+#endif
     this->LockHandle = propHandle;
     // should we test to see if this handle actually exists?
     return reinterpret_cast<vtkProp3D *>(propHandle);
@@ -104,6 +108,10 @@ bool ui3SceneManager::Unlock(VTKHandleType propHandle)
     }
     // set handle to 0 and release
     this->LockHandle = 0;
+	//20130415 - wpliu
+	//After discussion with Anton, mutex lock has been observed to be only necessary for non-windows
+#ifndef _WIN32
     this->Mutex.Unlock();
+#endif
     return true;
 }

@@ -71,6 +71,33 @@ class CISST_EXPORT ui3Manager: public ui3BehaviorBase
 
     typedef cmnNamedMap<ui3SlaveArm> SlaveArmList;
 
+    typedef struct tagRendererStruct {
+        unsigned int width;
+        unsigned int height;
+        double zoom;
+        bool borderless;
+        int windowposx;
+        int windowposy;
+        svlCameraGeometry camgeometry;
+        unsigned int camid;
+        std::string name;
+        ui3VTKRenderer* renderer;
+        svlRenderTargetBase* rendertarget;
+        int streamindex;
+        unsigned int streamchannel;
+        ui3ImagePlane* imageplane;
+    } _RendererStruct;
+
+    /*!
+      Scene manager object that maintains the consistency and thread safety of 3D scene.
+    */
+    ui3SceneManager * SceneManager;
+
+    /*!
+      3D graphics renderer modules.
+    */
+    vctDynamicVector<_RendererStruct*> Renderers;
+
     /*!
       Enumerated display modes
     */
@@ -131,6 +158,8 @@ class CISST_EXPORT ui3Manager: public ui3BehaviorBase
       Assigns a video backgrond to a render window.
     */
     virtual bool AddVideoBackgroundToRenderer(const std::string & renderername, const std::string & streamname, unsigned int videochannel = 0);
+
+	virtual bool SetAlphaVideoBackgroundToRenderer(const std::string & renderername, const std::string & streamname, unsigned int videochannel = 0, const unsigned char alpha = 0, unsigned int roiTopBorder = 0);
 
     /*! Returns a pointer to the main user interface manager object,
       i.e. this object.
@@ -255,22 +284,7 @@ class CISST_EXPORT ui3Manager: public ui3BehaviorBase
 
  protected:
 
-    typedef struct tagRendererStruct {
-        unsigned int width;
-        unsigned int height;
-        double zoom;
-        bool borderless;
-        int windowposx;
-        int windowposy;
-        svlCameraGeometry camgeometry;
-        unsigned int camid;
-        std::string name;
-        ui3VTKRenderer* renderer;
-        svlRenderTargetBase* rendertarget;
-        int streamindex;
-        unsigned int streamchannel;
-        ui3ImagePlane* imageplane;
-    } _RendererStruct;
+
 
  private:
 
@@ -314,15 +328,7 @@ class CISST_EXPORT ui3Manager: public ui3BehaviorBase
     */
     SlaveArmList SlaveArms;
 
-    /*!
-      Scene manager object that maintains the consistency and thread safety of 3D scene.
-    */
-    ui3SceneManager * SceneManager;
 
-    /*!
-      3D graphics renderer modules.
-    */
-    vctDynamicVector<_RendererStruct*> Renderers;
 
     /*!
       3D graphics renderer procedure class.

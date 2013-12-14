@@ -71,7 +71,7 @@ public:
         return this->Objects.back();
     }
     
-    size_t size(void) const  {
+    unsigned int size(void) const  {
         return this->Objects.size();
     }
 

@@ -2,13 +2,13 @@
 /* ex: set filetype=cpp softtabstop=4 shiftwidth=4 tabstop=4 cindent expandtab: */
 
 /*
-  $Id$
+$Id$
 
-  Author(s):	Balazs Vagvolgyi
-  Created on:	2009-03-02
+Author(s):	Balazs Vagvolgyi
+Created on:	2009-03-02
 
-  (C) Copyright 2009 Johns Hopkins University (JHU), All Rights
-  Reserved.
+(C) Copyright 2009 Johns Hopkins University (JHU), All Rights
+Reserved.
 
 --- begin cisst license - do not edit ---
 
@@ -28,391 +28,427 @@ http://www.cisst.org/cisst/license.txt.
 CMN_IMPLEMENT_SERVICES(ui3ImagePlane);
 
 ui3ImagePlane::ui3ImagePlane(void):
-    ui3VisibleObject("ImagePlane"),
-    Texture(0),
-    ImageData(0),
-    PlaneSource(0),
-    Mapper(0),
-    Actor(0),
-    BitmapWidth(0),
-    BitmapHeight(0),
-    TextureWidth(0),
-    TextureHeight(0),
-    TextureBuffer(0),
-    PhysicalWidth(1.0),
-    PhysicalHeight(1.0),
-    PhysicalPositionRelativeToPivot(0.0, 0.0, 0.0)
+ui3VisibleObject("ImagePlane"),
+Texture(0),
+ImageData(0),
+PlaneSource(0),
+Mapper(0),
+Actor(0),
+ROIBottomBorder(0),
+ROITopBorder(0),
+ROILeftBorder(0),
+ROIRightBorder(0),
+BitmapWidth(0),
+BitmapHeight(0),
+TextureWidth(0),
+TextureHeight(0),
+TextureBuffer(0),
+PhysicalWidth(1.0),
+PhysicalHeight(1.0),
+PhysicalPositionRelativeToPivot(0.0, 0.0, 0.0)
 {
+	//hardcoded for now WPLIU 20130407
+	int width = 1920;
+	int height = 1080;
+	this->ROIBottomBorder = height;//height*3/4;
+	this->ROITopBorder = height*1/2;
+	this->ROILeftBorder = width*1/8;
+	this->ROIRightBorder = this->ROILeftBorder + width*1/4;
 }
 
 
 ui3ImagePlane::~ui3ImagePlane()
 {
-    if (this->Texture)   this->Texture->Delete();
-    if (this->ImageData) this->ImageData->Delete();
-    if (this->PlaneSource)  this->PlaneSource->Delete();
-    if (this->Mapper)    this->Mapper->Delete();
-    if (this->Actor)     this->Actor->Delete();
+	if (this->Texture)   this->Texture->Delete();
+	if (this->ImageData) this->ImageData->Delete();
+	if (this->PlaneSource)  this->PlaneSource->Delete();
+	if (this->Mapper)    this->Mapper->Delete();
+	if (this->Actor)     this->Actor->Delete();
 }
 
 
 bool ui3ImagePlane::CreateVTKObjects(void)
 {
-    if (BitmapWidth  < 1 || TextureWidth  < BitmapWidth  ||
-        BitmapHeight < 1 || TextureHeight < BitmapHeight) {
-        // Image size should be initialized before creating VTK objects
-        return false;
-    }
+	if (BitmapWidth  < 1 || TextureWidth  < BitmapWidth  ||
+		BitmapHeight < 1 || TextureHeight < BitmapHeight) {
+			// Image size should be initialized before creating VTK objects
+			return false;
+	}
 
-    // Create VTK objects
-    this->Texture = vtkTexture::New();
-    CMN_ASSERT(this->Texture);
+	// Create VTK objects
+	this->Texture = vtkTexture::New();
+	CMN_ASSERT(this->Texture);
 
-    this->ImageData = vtkImageData::New();
-    CMN_ASSERT(this->ImageData);
+	this->ImageData = vtkImageData::New();
+	CMN_ASSERT(this->ImageData);
 
-    this->PlaneSource = vtkPlaneSource::New();
-    CMN_ASSERT(this->PlaneSource);
+	this->PlaneSource = vtkPlaneSource::New();
+	CMN_ASSERT(this->PlaneSource);
 
-    this->Mapper = vtkPolyDataMapper::New();
-    CMN_ASSERT(this->Mapper);
+	this->Mapper = vtkPolyDataMapper::New();
+	CMN_ASSERT(this->Mapper);
 
-    this->Actor = vtkActor::New();
-    CMN_ASSERT(this->Actor);
+	this->Actor = vtkActor::New();
+	CMN_ASSERT(this->Actor);
 
-    // Create image object
-    this->ImageData->SetDimensions(this->TextureWidth, this->TextureHeight, 1);
-    this->ImageData->SetScalarType(VTK_UNSIGNED_CHAR);
-    this->ImageData->SetOrigin(0.0, 0.0, 0.0);
-    this->ImageData->SetSpacing(1.0, 1.0, 1.0);
-    this->ImageData->SetNumberOfScalarComponents(4);
-    this->ImageData->AllocateScalars();
-    this->TextureBuffer = (unsigned char*)this->ImageData->GetScalarPointer();
+	// Create image object
+	this->ImageData->SetDimensions(this->TextureWidth, this->TextureHeight, 1);
+	this->ImageData->SetScalarType(VTK_UNSIGNED_CHAR);
+	this->ImageData->SetOrigin(0.0, 0.0, 0.0);
+	this->ImageData->SetSpacing(1.0, 1.0, 1.0);
+	this->ImageData->SetNumberOfScalarComponents(4);
+	this->ImageData->AllocateScalars();
+	this->TextureBuffer = (unsigned char*)this->ImageData->GetScalarPointer();
 
-    // Make whole image opaque by default
-    this->SetAlpha(255);
+	// Make whole image opaque by default
+	// Done in SetImage() 20130307 wliu25
+	//this->SetAlpha(200);
 
-    // Create texture object
-    this->Texture->SetInput(this->ImageData);
-    this->Texture->InterpolateOn();
+	// Create texture object
+#if 1
+	this->Texture->SetInput(this->ImageData);
+	this->Texture->InterpolateOn();
+#else
+	std::string inputFilename = "C:/Users/Wen/MyCommon/ISSILIB/data/EndoscopeImages/LeftImage (1).jpg";
+	// Read the image which will be the texture
+	vtkJPEGReader* jPEGReader = vtkJPEGReader::New();
+	jPEGReader->SetFileName ( inputFilename.c_str() );
+	this->Texture->SetInputConnection(jPEGReader->GetOutputPort());
+#endif
 
-    // Create image plane
-    this->PlaneSource->SetOrigin(this->PhysicalPositionRelativeToPivot.X(),
-                                 this->PhysicalPositionRelativeToPivot.Y(),
-                                 this->PhysicalPositionRelativeToPivot.Z());
-    this->PlaneSource->SetPoint1(this->PhysicalPositionRelativeToPivot.X() - this->PhysicalWidth * ((double)this->TextureWidth / this->BitmapWidth),
-                                 this->PhysicalPositionRelativeToPivot.Y(),
-                                 this->PhysicalPositionRelativeToPivot.Z());
-    this->PlaneSource->SetPoint2(this->PhysicalPositionRelativeToPivot.X(),
-                                 this->PhysicalPositionRelativeToPivot.Y() - this->PhysicalHeight * ((double)this->TextureHeight / this->BitmapHeight),
-                                 this->PhysicalPositionRelativeToPivot.Z());
+	// Create image plane
+	this->PlaneSource->SetOrigin(this->PhysicalPositionRelativeToPivot.X(),
+		this->PhysicalPositionRelativeToPivot.Y(),
+		this->PhysicalPositionRelativeToPivot.Z());
+	this->PlaneSource->SetPoint1(this->PhysicalPositionRelativeToPivot.X() - this->PhysicalWidth * ((double)this->TextureWidth / this->BitmapWidth),
+		this->PhysicalPositionRelativeToPivot.Y(),
+		this->PhysicalPositionRelativeToPivot.Z());
+	this->PlaneSource->SetPoint2(this->PhysicalPositionRelativeToPivot.X(),
+		this->PhysicalPositionRelativeToPivot.Y() - this->PhysicalHeight * ((double)this->TextureHeight / this->BitmapHeight),
+		this->PhysicalPositionRelativeToPivot.Z());
 
-    this->PlaneSource->SetXResolution(1);
-    this->PlaneSource->SetYResolution(1);
+	this->PlaneSource->SetXResolution(1);
+	this->PlaneSource->SetYResolution(1);
 
-    // Create mapper
-    this->Mapper->SetInput(this->PlaneSource->GetOutput());
+	// Create mapper
+	this->Mapper->SetInput(this->PlaneSource->GetOutput());
 
-    // Create actor
-    this->Actor->SetMapper(this->Mapper);
+	// Create actor
+	this->Actor->SetMapper(this->Mapper);
 
-    // Map texture onto the plane
-    this->Actor->SetTexture(this->Texture);
-    this->Actor->GetProperty()->SetOpacity(1.0);
-    this->AddPart(this->Actor);
+	// Map texture onto the plane
+	this->Actor->SetTexture(this->Texture);
+	this->Actor->GetProperty()->SetOpacity(1.0);
+	this->AddPart(this->Actor);
 
-    return true;
+	return true;
 }
 
 
 bool ui3ImagePlane::SetBitmapSize(unsigned int width, unsigned int height)
 {
-    if (width < 1 || height < 1) return false;
+	if (width < 1 || height < 1) return false;
 
-    this->BitmapWidth = width;
-    this->BitmapHeight = height;
+	this->BitmapWidth = width;
+	this->BitmapHeight = height;
 
-    unsigned int i, c;
+	unsigned int i, c;
 
-    // Compute texture width
-    c = 0;
-    i = width;
-    while (i > 0) {
-        i >>= 1;
-        c ++;
-    }
-    i = 1 << (c - 1);
-    if (width == i) this->TextureWidth = width;
-    else this->TextureWidth = i << 1;
+	// Compute texture width
+	c = 0;
+	i = width;
+	while (i > 0) {
+		i >>= 1;
+		c ++;
+	}
+	i = 1 << (c - 1);
+	if (width == i) this->TextureWidth = width;
+	else this->TextureWidth = i << 1;
 
-    // Compute texture height
-    c = 0;
-    i = height;
-    while (i > 0) {
-        i >>= 1;
-        c ++;
-    }
-    i = 1 << (c - 1);
-    if (height == i) this->TextureHeight = height;
-    else this->TextureHeight = i << 1;
+	// Compute texture height
+	c = 0;
+	i = height;
+	while (i > 0) {
+		i >>= 1;
+		c ++;
+	}
+	i = 1 << (c - 1);
+	if (height == i) this->TextureHeight = height;
+	else this->TextureHeight = i << 1;
 
-    return true;
+	return true;
 }
 
 
 bool ui3ImagePlane::SetPhysicalSize(double width, double height)
 {
-    if (width <= 0.0 || height <= 0.0) return false;
-    this->PhysicalWidth = width;
-    this->PhysicalHeight = height;
-    return true;
+	if (width <= 0.0 || height <= 0.0) return false;
+	this->PhysicalWidth = width;
+	this->PhysicalHeight = height;
+	return true;
 }
 
 
 void ui3ImagePlane::SetPhysicalPositionRelativeToPivot(vct3 position)
 {
-    this->PhysicalPositionRelativeToPivot.Assign(position);
+	this->PhysicalPositionRelativeToPivot.Assign(position);
 }
 
 
 void ui3ImagePlane::SetAlpha(const unsigned char alpha)
 {
-    const unsigned int  bmpwidth = this->BitmapWidth;
-    const unsigned int  bmpheight = this->BitmapHeight;
-    const unsigned int  texwidth = this->TextureWidth;
-    const unsigned int  rightborder = texwidth - bmpwidth;
-    const unsigned int  bottomborder = this->TextureHeight - bmpheight;
+	const unsigned int  bmpwidth = this->BitmapWidth;
+	const unsigned int  bmpheight = this->BitmapHeight;
+	const unsigned int  texwidth = this->TextureWidth;
+	const unsigned int  rightborder = texwidth - bmpwidth;
+	const unsigned int  bottomborder = this->TextureHeight - bmpheight;
 
-    unsigned char       *texture = this->TextureBuffer + 3; // alpha channel
-    unsigned int        i, j;
+	unsigned char       *texture = this->TextureBuffer + 3; // alpha channel
+	unsigned int        i, j;
 
-    for (j = 0; j < bmpheight; j ++) {
+	for (j = 0; j < bmpheight; j ++) {
 
-        // Set alpha of bitmap area
-        for (i = 0; i < bmpwidth; i ++) {
-            *texture = alpha;
-            texture += 4;
-        }
+		// Set alpha of bitmap area
+		for (i = 0; i < bmpwidth; i ++) {
+			if(j < ROITopBorder)
+				*texture = 0;
+			else
+				*texture = alpha;
+			texture += 4;
+		}
 
-        // Set texture area right of the bitmap fully transparent
-        for (i = 0; i < rightborder; i ++) {
-            *texture = 0;
-            texture += 4;
-        }
-    }
+		// Set texture area right of the bitmap fully transparent
+		for (i = 0; i < rightborder; i ++) {
+			*texture = 0;
+			texture += 4;
+		}
+	}
 
-    // Set texture area under the bitmap fully transparent
-    for (j = 0; j < bottomborder; j ++) {
-        for (i = 0; i < texwidth; i ++) {
-            *texture = 0;
-            texture += 4;
-        }
-    }
+	// Set texture area under the bitmap fully transparent
+	for (j = 0; j < bottomborder; j ++) {
+		for (i = 0; i < texwidth; i ++) {
+			*texture = 0;
+			texture += 4;
+		}
+	}
 }
 
 
 void ui3ImagePlane::SetImage(svlSampleImage* image, unsigned int channel)
 {
-    if (this->TextureBuffer &&
-        image &&
-        image->GetVideoChannels() > channel &&
-        image->GetWidth(channel) == this->BitmapWidth &&
-        image->GetHeight(channel) == this->BitmapHeight) {
+	if (this->TextureBuffer &&
+		image &&
+		image->GetVideoChannels() > channel &&
+		image->GetWidth(channel) == this->BitmapWidth &&
+		image->GetHeight(channel) == this->BitmapHeight) {
 
-        const unsigned int  datachannels = image->GetDataChannels();
-        const unsigned int  bpp = image->GetBPP();
+			const unsigned int  datachannels = image->GetDataChannels();
+			const unsigned int  bpp = image->GetBPP();
 
-        const unsigned int  bmpwidth = this->BitmapWidth;
-        const unsigned int  bmpheight = this->BitmapHeight;
-        const unsigned int  rightborder = (this->TextureWidth - bmpwidth) << 2;
+			const unsigned int  bmpwidth = this->BitmapWidth;
+			const unsigned int  bmpheight = this->BitmapHeight;
+			const unsigned int  rightborder = (this->TextureWidth - bmpwidth) << 2;
 
-        unsigned char *imagebuf = image->GetUCharPointer(channel);
-        unsigned char *texture = this->TextureBuffer;
-        unsigned int i, j;
+			unsigned char *imagebuf = image->GetUCharPointer(channel);
+			unsigned char *texture = this->TextureBuffer;
+			unsigned int i, j;
 
-        if (datachannels == 3 && bpp == 3) {
-            // Copy RGB image to RGBA texture buffer
-
+			if (datachannels == 3 && bpp == 3) {
+				// Copy RGB image to RGBA texture buffer
+				// Make whole image opaque by default
+				unsigned char a = 255;
 #ifdef USE_BGR
-            unsigned char r, g, b;
+				unsigned char r, g, b;
 #endif
 
-            for (j = 0; j < bmpheight; j ++) {
-                for (i = 0; i < bmpwidth; i ++) {
+				for (j = 0; j < bmpheight; j ++) {
+					for (i = 0; i < bmpwidth; i ++) {
 #ifdef USE_BGR
-                    r = *imagebuf; imagebuf ++;
-                    g = *imagebuf; imagebuf ++;
-                    b = *imagebuf; imagebuf ++;
-                    *texture = b; texture ++;
-                    *texture = g; texture ++;
-                    *texture = r; texture += 2;
+						r = *imagebuf; imagebuf ++;
+						g = *imagebuf; imagebuf ++;
+						b = *imagebuf; imagebuf ++;
+						*texture = b; texture ++;
+						*texture = g; texture ++;
+						*texture = r; texture ++;
+						if(j > ROIBottomBorder || j < ROITopBorder || i < ROILeftBorder || i > ROIRightBorder)
+							a = 0;
+						*texture = a; texture ++;
 #else
-                    *texture = *imagebuf; imagebuf ++; texture ++;
-                    *texture = *imagebuf; imagebuf ++; texture ++;
-                    *texture = *imagebuf; imagebuf ++; texture += 2;
+						*texture = *imagebuf; imagebuf ++; texture ++;
+						*texture = *imagebuf; imagebuf ++; texture ++;
+						*texture = *imagebuf; imagebuf ++; texture ++;
+						*texture = a; texture++;
 #endif
-                }
-                texture += rightborder;
-            }
-        }
-        else if (datachannels == 4 && bpp == 4) {
-            // Copy RGBA image to RGBA texture buffer
+					}
+					texture += rightborder;
+				}
+			}
+			else if (datachannels == 4 && bpp == 4) {
+				// Copy RGBA image to RGBA texture buffer
 
 #ifdef USE_BGR
-            unsigned char r, g, b, a;
+				unsigned char r, g, b, a;
 #else
-            i = bmpwidth << 2;
+				i = bmpwidth << 2;
 #endif
 
-            for (j = 0; j < bmpheight; j ++) {
+				for (j = 0; j < bmpheight; j ++) {
 #ifdef USE_BGR
-                for (i = 0; i < bmpwidth; i ++) {
-                    r = *imagebuf; imagebuf ++;
-                    g = *imagebuf; imagebuf ++;
-                    b = *imagebuf; imagebuf ++;
-                    a = *imagebuf; imagebuf ++;
-                    *texture = b; texture ++;
-                    *texture = g; texture ++;
-                    *texture = r; texture ++;
-                    *texture = a; texture ++;
-                }
+					for (i = 0; i < bmpwidth; i ++) {
+						r = *imagebuf; imagebuf ++;
+						g = *imagebuf; imagebuf ++;
+						b = *imagebuf; imagebuf ++;
+						a = *imagebuf; imagebuf ++;
+						if(j > ROIBottomBorder || j < ROITopBorder || i < ROILeftBorder || i > ROIRightBorder)
+							a = 0;
+						*texture = b; texture ++;
+						*texture = g; texture ++;
+						*texture = r; texture ++;
+						*texture = a; texture ++;
+					}
 #else
-                memcpy(texture, imagebuf, i);
-                texture += i; imagebuf += i;
+					memcpy(texture, imagebuf, i);
+					texture += i; imagebuf += i;
 #endif
-                texture += rightborder;
-            }
-        }
-        else {
-            // Other image formats not supported (as of now)
-            return;
-        }
+					texture += rightborder;
+				}
+			}
+			else {
+				// Other image formats not supported (as of now)
+				return;
+			}
 
-        // Signal VTK that the texture has been modified
-        this->ImageData->Modified();
-    }
+			// Signal VTK that the texture has been modified
+			this->ImageData->Modified();
+	}
 }
 
 
 void ui3ImagePlane::SetImage(vtkImageData* image)
 {
-    int dims[3];
-    if (image){
-        image->GetDimensions(dims);
-    }
+	int dims[3];
 
-    if (this->TextureBuffer &&
-        image &&
-        //image->GetVideoChannels() > channel &&
-        //image->GetWidth(channel) == this->BitmapWidth &&
-        //image->GetHeight(channel) == this->BitmapHeight
-        dims[0] == this->BitmapWidth &&
-        dims[1] == this->BitmapHeight &&
-        dims[2] == 1) {
+	if (image){
+		image->GetDimensions(dims);
+	}
 
-        //const unsigned int  datachannels = image->GetDataChannels();
-        //const unsigned int  bpp = image->GetBPP();
+	if (this->TextureBuffer &&
+		image &&
+		//image->GetVideoChannels() > channel &&
+		//image->GetWidth(channel) == this->BitmapWidth &&
+		//image->GetHeight(channel) == this->BitmapHeight
+		dims[0] == this->BitmapWidth &&
+		dims[1] == this->BitmapHeight &&
+		dims[2] == 1) {
 
-        const unsigned int  bmpwidth = this->BitmapWidth;
-        const unsigned int  bmpheight = this->BitmapHeight;
-        const unsigned int  rightborder = (this->TextureWidth - bmpwidth) << 2;
+			//const unsigned int  datachannels = image->GetDataChannels();
+			//const unsigned int  bpp = image->GetBPP();
 
-        //unsigned char *imagebuf = image->GetUCharPointer(channel);
+			const unsigned int  bmpwidth = this->BitmapWidth;
+			const unsigned int  bmpheight = this->BitmapHeight;
+			const unsigned int  rightborder = (this->TextureWidth - bmpwidth) << 2;
 
-        unsigned char *texture = this->TextureBuffer;
-        unsigned int i, j;
+			//unsigned char *imagebuf = image->GetUCharPointer(channel);
 
-        if (image->GetScalarType() == VTK_UNSIGNED_CHAR){
-            // Copy Mono8 image to RGBA texture buffer
+			unsigned char *texture = this->TextureBuffer;
+			unsigned int i, j;
 
-            unsigned char *imagebuf = static_cast<unsigned char*>(image->GetScalarPointer());
+			if (image->GetScalarType() == VTK_UNSIGNED_CHAR){
+				// Copy Mono8 image to RGBA texture buffer
 
+				unsigned char *imagebuf = static_cast<unsigned char*>(image->GetScalarPointer());
+				// Make whole image opaque by default
+				unsigned char a = 255;
 #ifdef USE_BGR
-            unsigned char r, g, b;
+				unsigned char r, g, b;
 #endif
 
-            for (j = 0; j < bmpheight; j ++) {
-                for (i = 0; i < bmpwidth; i ++) {
+				for (j = 0; j < bmpheight; j ++) {
+					for (i = 0; i < bmpwidth; i ++) {
 #ifdef USE_BGR
-                    r = *imagebuf; //imagebuf ++;
-                    g = *imagebuf; //imagebuf ++;
-                    b = *imagebuf; imagebuf ++;
-                    *texture = b; texture ++;
-                    *texture = g; texture ++;
-                    *texture = r; texture += 2;
+						r = *imagebuf; //imagebuf ++;
+						g = *imagebuf; //imagebuf ++;
+						b = *imagebuf; imagebuf ++;
+						if(j < ROITopBorder)
+							a = 0;
+						*texture = b; texture ++;
+						*texture = g; texture ++;
+						*texture = r; texture ++;
+						*texture = a; texture ++;
 #else
-                    *texture = *imagebuf; texture ++;   //imagebuf ++;
-                    *texture = *imagebuf; texture ++;   //imagebuf ++;
-                    *texture = *imagebuf; texture += 2; imagebuf ++;
+						*texture = *imagebuf; texture ++;   //imagebuf ++;
+						*texture = *imagebuf; texture ++;   //imagebuf ++;
+						*texture = *imagebuf; texture ++;
+						*texture = a;imagebuf ++;
 #endif
-                }
-                texture += rightborder;
-            }
-        }
+					}
+					texture += rightborder;
+				}
+			}
 
-//        if (datachannels == 3 && bpp == 3) {
-//            // Copy RGB image to RGBA texture buffer
-//
-//#ifdef USE_BGR
-//            unsigned char r, g, b;
-//#endif
-//
-//            for (j = 0; j < bmpheight; j ++) {
-//                for (i = 0; i < bmpwidth; i ++) {
-//#ifdef USE_BGR
-//                    r = *imagebuf; imagebuf ++;
-//                    g = *imagebuf; imagebuf ++;
-//                    b = *imagebuf; imagebuf ++;
-//                    *texture = b; texture ++;
-//                    *texture = g; texture ++;
-//                    *texture = r; texture += 2;
-//#else
-//                    *texture = *imagebuf; imagebuf ++; texture ++;
-//                    *texture = *imagebuf; imagebuf ++; texture ++;
-//                    *texture = *imagebuf; imagebuf ++; texture += 2;
-//#endif
-//                }
-//                texture += rightborder;
-//            }
-//        }
-//        else if (datachannels == 4 && bpp == 4) {
-//            // Copy RGBA image to RGBA texture buffer
-//
-//#ifdef USE_BGR
-//            unsigned char r, g, b, a;
-//#else
-//            i = bmpwidth << 2;
-//#endif
-//
-//            for (j = 0; j < bmpheight; j ++) {
-//#ifdef USE_BGR
-//                for (i = 0; i < bmpwidth; i ++) {
-//                    r = *imagebuf; imagebuf ++;
-//                    g = *imagebuf; imagebuf ++;
-//                    b = *imagebuf; imagebuf ++;
-//                    a = *imagebuf; imagebuf ++;
-//                    *texture = b; texture ++;
-//                    *texture = g; texture ++;
-//                    *texture = r; texture ++;
-//                    *texture = a; texture ++;
-//                }
-//#else
-//                memcpy(texture, imagebuf, i);
-//                texture += i; imagebuf += i;
-//#endif
-//                texture += rightborder;
-//            }
-//        }
-        else {
-            // Other image formats not supported (as of now)
-            printf("=== Unsupported image for ui3ImagePlane::SetImage(vtkImageData* image) ===\n");
-            return;
-        }
+			//        if (datachannels == 3 && bpp == 3) {
+			//            // Copy RGB image to RGBA texture buffer
+			//
+			//#ifdef USE_BGR
+			//            unsigned char r, g, b;
+			//#endif
+			//
+			//            for (j = 0; j < bmpheight; j ++) {
+			//                for (i = 0; i < bmpwidth; i ++) {
+			//#ifdef USE_BGR
+			//                    r = *imagebuf; imagebuf ++;
+			//                    g = *imagebuf; imagebuf ++;
+			//                    b = *imagebuf; imagebuf ++;
+			//                    *texture = b; texture ++;
+			//                    *texture = g; texture ++;
+			//                    *texture = r; texture += 2;
+			//#else
+			//                    *texture = *imagebuf; imagebuf ++; texture ++;
+			//                    *texture = *imagebuf; imagebuf ++; texture ++;
+			//                    *texture = *imagebuf; imagebuf ++; texture += 2;
+			//#endif
+			//                }
+			//                texture += rightborder;
+			//            }
+			//        }
+			//        else if (datachannels == 4 && bpp == 4) {
+			//            // Copy RGBA image to RGBA texture buffer
+			//
+			//#ifdef USE_BGR
+			//            unsigned char r, g, b, a;
+			//#else
+			//            i = bmpwidth << 2;
+			//#endif
+			//
+			//            for (j = 0; j < bmpheight; j ++) {
+			//#ifdef USE_BGR
+			//                for (i = 0; i < bmpwidth; i ++) {
+			//                    r = *imagebuf; imagebuf ++;
+			//                    g = *imagebuf; imagebuf ++;
+			//                    b = *imagebuf; imagebuf ++;
+			//                    a = *imagebuf; imagebuf ++;
+			//                    *texture = b; texture ++;
+			//                    *texture = g; texture ++;
+			//                    *texture = r; texture ++;
+			//                    *texture = a; texture ++;
+			//                }
+			//#else
+			//                memcpy(texture, imagebuf, i);
+			//                texture += i; imagebuf += i;
+			//#endif
+			//                texture += rightborder;
+			//            }
+			//        }
+			else {
+				// Other image formats not supported (as of now)
+				printf("=== Unsupported image for ui3ImagePlane::SetImage(vtkImageData* image) ===\n");
+				return;
+			}
 
-        // Signal VTK that the texture has been modified
-        this->ImageData->Modified();
-    }
-    else {
-        printf("=== Invalid image for ui3ImagePlane::SetImage(vtkImageData* image) ===\n");
-    }
+			// Signal VTK that the texture has been modified
+			this->ImageData->Modified();
+	}
+	else {
+		printf("=== Invalid image for ui3ImagePlane::SetImage(vtkImageData* image) ===\n");
+	}
 }

@@ -210,15 +210,15 @@ void ui3BehaviorBase::SetState(const StateType & newState)
 }
 
 
-void ui3BehaviorBase::OnStreamSample(svlSample * CMN_UNUSED(sample), size_t CMN_UNUSED(streamindex))
+void ui3BehaviorBase::OnStreamSample(svlSample * CMN_UNUSED(sample), int CMN_UNUSED(streamindex))
 {
     // Default implementation does nothing
 }
 
 
-size_t ui3BehaviorBase::AddStream(svlStreamType type, const std::string & streamname)
+int ui3BehaviorBase::AddStream(svlStreamType type, const std::string & streamname)
 {
-    size_t streamindex = Streams.size();
+    int streamindex = Streams.size();
     ui3VideoInterfaceFilter* filter = new ui3VideoInterfaceFilter(type, streamindex, this);
     CMN_ASSERT(filter);
 
@@ -232,7 +232,7 @@ size_t ui3BehaviorBase::AddStream(svlStreamType type, const std::string & stream
 }
 
 
-unsigned int ui3BehaviorBase::GetStreamWidth(const size_t streamindex, unsigned int channel)
+unsigned int ui3BehaviorBase::GetStreamWidth(const int streamindex, unsigned int channel)
 {
     if (streamindex < 0 || streamindex >= static_cast<int>(Streams.size())) return 0;
     return Streams[streamindex]->GetWidth(channel);
