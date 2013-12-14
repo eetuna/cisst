@@ -221,12 +221,19 @@ public:
         if( !G.empty() ){ GRef.Assign(G); }
         if( !h.empty() ){ hRef.Assign(h); }
 
-        CMN_LOG_INIT_ERROR << W << std::endl;
-        lsei_( W.Pointer(), &MDW, &ME, &MA, &MG, &N, 
-               Options.Pointer(), X.Pointer(), &RNormE,
-               &RNormL, &Mode, 
-               Work.Pointer(), Index.Pointer() );
-
+#if defined(CISSTNETLIB_VERSION_MAJOR)
+#if (CISSTNETLIB_VERSION_MAJOR >= 3)
+        cisstNetlib_lsei_(W.Pointer(), &MDW, &ME, &MA, &MG, &N,
+                          Options.Pointer(), X.Pointer(), &RNormE,
+                          &RNormL, &Mode,
+                          Work.Pointer(), Index.Pointer());
+#endif
+#else // no major version
+        lsei_(W.Pointer(), &MDW, &ME, &MA, &MG, &N,
+              Options.Pointer(), X.Pointer(), &RNormE,
+              &RNormL, &Mode,
+              Work.Pointer(), Index.Pointer());
+#endif // CISSTNETLIB_VERSION
     }
 
     inline void Solve(vctDynamicMatrix<CISSTNETLIB_DOUBLE> &W)
@@ -235,15 +242,24 @@ public:
         if( (MDW != static_cast<CISSTNETLIB_INTEGER>(W.rows()) ) || 
             (N+1 != static_cast<CISSTNETLIB_INTEGER>(W.cols())) ) {
             std::string msg( "nmrLSEISolver::Solve: workspace not allocated." );
-            cmnThrow( std::runtime_error( msg ) );
+            cmnThrow(std::runtime_error(msg));
         }
         
-        lsei_( W.Pointer(), &MDW, &ME, &MA, &MG, &N, 
-               Options.Pointer(), X.Pointer(), &RNormE,
-               &RNormL, &Mode, 
-               Work.Pointer(), Index.Pointer());
+#if defined(CISSTNETLIB_VERSION_MAJOR)
+#if (CISSTNETLIB_VERSION_MAJOR >= 3)
+        cisstNetlib_lsei_(W.Pointer(), &MDW, &ME, &MA, &MG, &N,
+                          Options.Pointer(), X.Pointer(), &RNormE,
+                          &RNormL, &Mode,
+                          Work.Pointer(), Index.Pointer());
+#endif
+#else // no major version
+        lsei_(W.Pointer(), &MDW, &ME, &MA, &MG, &N,
+              Options.Pointer(), X.Pointer(), &RNormE,
+              &RNormL, &Mode,
+              Work.Pointer(), Index.Pointer());
+#endif // CISSTNETLIB_VERSION
     }
-    
+
     /*! Get X.  This method must be used after Solve(). */
     inline const vctDynamicMatrix<CISSTNETLIB_DOUBLE> &GetX(void) const {
         return X;
