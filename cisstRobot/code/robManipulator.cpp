@@ -687,7 +687,12 @@ bool robManipulator::JacobianBody(const vctDynamicVector<double>& q,
 {
   JacobianBody(q);
   if ((J.rows() != 6) && (J.cols() != links.size()))
+  {
+    cout << "J number of rows:" << J.rows() << endl;
+    cout << "J number of cols:" << J.cols() << endl;
+    cout << "number of links:" << links.size() << endl;
     return false;
+  }
   for (size_t r = 0; r < 6; r++)
     for (size_t c = 0; c < links.size(); c++)
       J.Element(r,c) = Jn[c][r];
